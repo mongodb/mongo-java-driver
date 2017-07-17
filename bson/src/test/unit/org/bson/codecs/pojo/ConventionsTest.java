@@ -16,16 +16,24 @@
 
 package org.bson.codecs.pojo;
 
+import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationDefaultsModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationModel;
+import org.bson.codecs.pojo.entities.conventions.AnnotationNameCollision;
+import org.bson.codecs.pojo.entities.conventions.CreatorInvalidConstructorModel;
+import org.bson.codecs.pojo.entities.conventions.CreatorInvalidMethodModel;
+import org.bson.codecs.pojo.entities.conventions.CreatorInvalidTypeConstructorModel;
+import org.bson.codecs.pojo.entities.conventions.CreatorInvalidTypeMethodModel;
+import org.bson.codecs.pojo.entities.conventions.CreatorUnknownPropertyConstructorModel;
+import org.bson.codecs.pojo.entities.conventions.CreatorUnknownPropertyMethodModel;
 import org.junit.Test;
 
 import static java.util.Collections.singletonList;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
 import static org.bson.codecs.pojo.Conventions.ANNOTATION_CONVENTION;
-import static org.bson.codecs.pojo.Conventions.CLASS_AND_FIELD_CONVENTION;
+import static org.bson.codecs.pojo.Conventions.CLASS_AND_PROPERTY_CONVENTION;
 import static org.bson.codecs.pojo.Conventions.DEFAULT_CONVENTIONS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -42,18 +50,18 @@ public final class ConventionsTest {
         assertEquals("_cls", classModel.getDiscriminatorKey());
         assertEquals("MyAnnotationModel", classModel.getDiscriminator());
 
-        assertEquals(3, classModel.getFieldModels().size());
-        FieldModel<?> idFieldModel = classModel.getIdFieldModel();
-        assertNotNull(idFieldModel);
-        assertEquals("customId", idFieldModel.getFieldName());
-        assertEquals("_id", idFieldModel.getDocumentFieldName());
+        assertEquals(3, classModel.getPropertyModels().size());
+        PropertyModel<?> idPropertyModel = classModel.getIdPropertyModel();
+        assertNotNull(idPropertyModel);
+        assertEquals("customId", idPropertyModel.getPropertyName());
+        assertEquals("_id", idPropertyModel.getDocumentPropertyName());
 
-        FieldModel<?> childFieldModel = classModel.getFieldModel("child");
-        assertNotNull(childFieldModel);
-        assertFalse(childFieldModel.useDiscriminator());
+        PropertyModel<?> childPropertyModel = classModel.getPropertyModel("child");
+        assertNotNull(childPropertyModel);
+        assertFalse(childPropertyModel.useDiscriminator());
 
-        FieldModel<?> renamedFieldModel = classModel.getFieldModel("renamed");
-        assertNotNull(renamedFieldModel);
+        PropertyModel<?> renamedPropertyModel = classModel.getPropertyModel("renamed");
+        assertNotNull(renamedPropertyModel);
     }
 
     @Test
@@ -65,15 +73,15 @@ public final class ConventionsTest {
         assertEquals("_t", classModel.getDiscriminatorKey());
         assertEquals("AnnotationDefaultsModel", classModel.getDiscriminator());
 
-        assertEquals(2, classModel.getFieldModels().size());
-        FieldModel<?> idFieldModel = classModel.getIdFieldModel();
-        assertNotNull(idFieldModel);
-        assertEquals("customId", idFieldModel.getFieldName());
-        assertEquals("_id", idFieldModel.getDocumentFieldName());
+        assertEquals(2, classModel.getPropertyModels().size());
+        PropertyModel<?> idPropertyModel = classModel.getIdPropertyModel();
+        assertNotNull(idPropertyModel);
+        assertEquals("customId", idPropertyModel.getPropertyName());
+        assertEquals("_id", idPropertyModel.getDocumentPropertyName());
 
-        FieldModel<?> childFieldModel = classModel.getFieldModel("child");
-        assertNotNull(childFieldModel);
-        assertFalse(childFieldModel.useDiscriminator());
+        PropertyModel<?> childPropertyModel = classModel.getPropertyModel("child");
+        assertNotNull(childPropertyModel);
+        assertFalse(childPropertyModel.useDiscriminator());
     }
 
     @Test
@@ -83,7 +91,7 @@ public final class ConventionsTest {
                 .enableDiscriminator(true)
                 .discriminatorKey("_cls")
                 .discriminator("Simples")
-                .conventions(singletonList(CLASS_AND_FIELD_CONVENTION))
+                .conventions(singletonList(CLASS_AND_PROPERTY_CONVENTION))
                 .instanceCreatorFactory(new InstanceCreatorFactory<SimpleModel>() {
                     @Override
                     public InstanceCreator<SimpleModel> create() {
@@ -91,32 +99,75 @@ public final class ConventionsTest {
                     }
                 });
 
-        FieldModelBuilder<Integer> fieldModelBuilder = (FieldModelBuilder<Integer>) builder.getField("integerField");
-        fieldModelBuilder.documentFieldName("id")
-                .fieldSerialization(new FieldModelSerializationImpl<Integer>())
-                .fieldAccessor(new FieldAccessorTest<Integer>());
+        PropertyModelBuilder<Integer> propertyModelBuilder = (PropertyModelBuilder<Integer>) builder.getProperty("integerField");
+        propertyModelBuilder.documentPropertyName("id")
+                .propertySerialization(new PropertyModelSerializationImpl<Integer>())
+                .propertyAccessor(new PropertyAccessorTest<Integer>());
 
-        FieldModelBuilder<String> fieldModelBuilder2 = (FieldModelBuilder<String>) builder.getField("stringField");
-        fieldModelBuilder2.documentFieldName("_id")
-                .fieldSerialization(new FieldModelSerializationImpl<String>())
-                .fieldAccessor(new FieldAccessorTest<String>());
+        PropertyModelBuilder<String> propertyModelBuilder2 = (PropertyModelBuilder<String>) builder.getProperty("stringField");
+        propertyModelBuilder2.documentPropertyName("_id")
+                .propertySerialization(new PropertyModelSerializationImpl<String>())
+                .propertyAccessor(new PropertyAccessorTest<String>());
 
-        ClassModel<SimpleModel> classModel  = builder.idField("stringField").build();
+        ClassModel<SimpleModel> classModel  = builder.idPropertyName("stringField").build();
 
         assertTrue(classModel.useDiscriminator());
         assertEquals("_cls", classModel.getDiscriminatorKey());
         assertEquals("Simples", classModel.getDiscriminator());
 
-        assertEquals(2, classModel.getFieldModels().size());
-        FieldModel<?> idFieldModel = classModel.getIdFieldModel();
-        assertEquals("stringField", idFieldModel.getFieldName());
-        assertEquals("_id", idFieldModel.getDocumentFieldName());
+        assertEquals(2, classModel.getPropertyModels().size());
+        PropertyModel<?> idPropertyModel = classModel.getIdPropertyModel();
+        assertEquals("stringField", idPropertyModel.getPropertyName());
+        assertEquals("_id", idPropertyModel.getDocumentPropertyName());
 
-        FieldModel<?> childFieldModel = classModel.getFieldModel("id");
-        assertNull(childFieldModel.useDiscriminator());
+        PropertyModel<?> childPropertyModel = classModel.getPropertyModel("id");
+        assertNull(childPropertyModel.useDiscriminator());
     }
 
-    private class FieldAccessorTest<T> implements FieldAccessor<T> {
+    @Test(expected = IllegalStateException.class)
+    public void testAnnotationNameCollision() {
+        ClassModel.builder(AnnotationNameCollision.class)
+                .conventions(singletonList(ANNOTATION_CONVENTION)).build();
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testCreatorInvalidConstructorModel() {
+        ClassModel.builder(CreatorInvalidConstructorModel.class)
+                .conventions(singletonList(ANNOTATION_CONVENTION)).build();
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testCreatorInvalidMethodModel() {
+        ClassModel.builder(CreatorInvalidMethodModel.class)
+                .conventions(singletonList(ANNOTATION_CONVENTION)).build();
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testCreatorInvalidTypeConstructorModel() {
+        ClassModel.builder(CreatorInvalidTypeConstructorModel.class)
+                .conventions(singletonList(ANNOTATION_CONVENTION)).build();
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testCreatorInvalidTypeMethodModel() {
+        ClassModel.builder(CreatorInvalidTypeMethodModel.class)
+                .conventions(singletonList(ANNOTATION_CONVENTION)).build();
+    }
+
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testCreatorUnknownPropertyConstructorModel() {
+        ClassModel.builder(CreatorUnknownPropertyConstructorModel.class)
+                .conventions(singletonList(ANNOTATION_CONVENTION)).build();
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testCreatorUnknownPropertyMethodModel() {
+        ClassModel.builder(CreatorUnknownPropertyMethodModel.class)
+                .conventions(singletonList(ANNOTATION_CONVENTION)).build();
+    }
+
+    private class PropertyAccessorTest<T> implements PropertyAccessor<T> {
 
         @Override
         public <S> T get(final S instance) {

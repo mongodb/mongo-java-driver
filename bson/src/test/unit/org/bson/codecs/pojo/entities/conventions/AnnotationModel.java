@@ -24,12 +24,12 @@ import org.bson.codecs.pojo.annotations.Property;
 public final class AnnotationModel {
 
     @Id()
-    String customId;
+    public String customId;
 
     @Property(useDiscriminator = false)
-    AnnotationModel child;
+    public AnnotationModel child;
 
-    @Property(name = "renamed")
-    AnnotationModel alternative;
+    @Property("renamed")
+    public AnnotationModel alternative;
 
 }

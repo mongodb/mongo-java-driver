@@ -27,15 +27,15 @@ final class ConventionDefaultsImpl implements Convention {
             classModelBuilder.discriminator(classModelBuilder.getType().getSimpleName());
         }
 
-       for (final FieldModelBuilder<?> fieldModel : classModelBuilder.getFields()) {
-            if (fieldModel.getDocumentFieldName() == null) {
-                fieldModel.documentFieldName(fieldModel.getFieldName());
+       for (final PropertyModelBuilder<?> propertyModel : classModelBuilder.getPropertyModelBuilders()) {
+            if (propertyModel.getDocumentPropertyName() == null) {
+                propertyModel.documentPropertyName(propertyModel.getPropertyName());
             }
 
-            if (classModelBuilder.getIdField() == null) {
-                String fieldName = fieldModel.getFieldName();
-                if (fieldName.equals("_id") || fieldName.equals("id")) {
-                    classModelBuilder.idField(fieldName);
+            if (classModelBuilder.getIdPropertyName() == null) {
+                String propertyName = propertyModel.getPropertyName();
+                if (propertyName.equals("_id") || propertyName.equals("id")) {
+                    classModelBuilder.idPropertyName(propertyName);
                 }
             }
         }

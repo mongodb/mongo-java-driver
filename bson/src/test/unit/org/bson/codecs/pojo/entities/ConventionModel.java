@@ -34,14 +34,13 @@ public final class ConventionModel {
     @Property(useDiscriminator = false)
     private ConventionModel child;
 
-    @Property(name = "model", useDiscriminator = false)
+    @Property(value = "model", useDiscriminator = false)
     private SimpleModel simpleModel;
 
     public ConventionModel(){
     }
 
     public ConventionModel(final String customId, final ConventionModel child, final SimpleModel simpleModel) {
-        this.myTransientField = myTransientField;
         this.myIntField = myIntField;
         this.customId = customId;
         this.child = child;
@@ -54,10 +53,6 @@ public final class ConventionModel {
 
     public void setMyIntField(final int myIntField) {
         this.myIntField = myIntField;
-    }
-
-    public static int getMyStaticField() {
-        return myStaticField;
     }
 
     public int getMyFinalField() {

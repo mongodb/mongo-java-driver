@@ -14,15 +14,22 @@
  * limitations under the License.
  */
 
-package org.bson.codecs.pojo.entities.conventions;
+package org.bson.codecs.pojo.annotations;
 
-public final class FieldSelectionModel {
-    private static int myStaticField = 10;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-    private final int myFinalField = 10;
-    private transient int myTransientField = 10;
-    private int myIntField = 10;
-
-    public FieldSelectionModel() {
-    }
+/**
+ * An annotation that configures a constructor or method as the Creator for the Pojo.
+ *
+ * <p>Note: Requires the {@link org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION}</p>
+ *
+ * @since 3.5
+ * @see org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD, ElementType.CONSTRUCTOR})
+public @interface Creator {
 }

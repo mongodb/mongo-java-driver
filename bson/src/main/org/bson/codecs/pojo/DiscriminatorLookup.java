@@ -35,7 +35,6 @@ final class DiscriminatorLookup {
         this.packages = packages;
     }
 
-
     Class<?> lookup(final String discriminator) {
         if (discriminatorClassMap.containsKey(discriminator)) {
             return discriminatorClassMap.get(discriminator);

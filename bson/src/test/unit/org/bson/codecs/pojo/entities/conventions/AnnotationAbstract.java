@@ -23,5 +23,5 @@ import org.bson.codecs.pojo.annotations.Property;
 public abstract class AnnotationAbstract {
 
     @Property
-    AnnotationModel child;
+    public AnnotationModel child;
 }

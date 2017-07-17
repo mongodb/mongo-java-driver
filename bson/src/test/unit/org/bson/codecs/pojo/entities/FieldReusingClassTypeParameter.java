@@ -18,7 +18,7 @@ package org.bson.codecs.pojo.entities;
 
 public final class FieldReusingClassTypeParameter<A> {
 
-    private GenericTreeModel<A, A> tree;
+    public GenericTreeModel<A, A> tree;
 
     public FieldReusingClassTypeParameter(){
     }

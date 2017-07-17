@@ -32,24 +32,12 @@ public final class FieldWithMultipleTypeParamsModel<C, A, B> {
         this.simpleGenericsModel = simpleGenericsModel;
     }
 
-    /**
-     * Returns the nested
-     *
-     * @return the nested
-     */
     public SimpleGenericsModel<A, B, C> getSimpleGenericsModel() {
         return simpleGenericsModel;
     }
 
-    /**
-     * Sets the simpleGenericsModel
-     *
-     * @param simpleGenericsModel the simpleGenericsModel
-     * @return this
-     */
-    public FieldWithMultipleTypeParamsModel<C, A, B> simpleGenericsModel(final SimpleGenericsModel<A, B, C> simpleGenericsModel) {
+    public void setSimpleGenericsModel(final SimpleGenericsModel<A, B, C> simpleGenericsModel) {
         this.simpleGenericsModel = simpleGenericsModel;
-        return this;
     }
 
     @Override

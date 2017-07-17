@@ -17,7 +17,7 @@
 package org.bson.codecs.pojo.entities;
 
 public final class NestedFieldReusingClassTypeParameter {
-    private FieldReusingClassTypeParameter<String> nested;
+    public FieldReusingClassTypeParameter<String> nested;
 
     public NestedFieldReusingClassTypeParameter() {
     }

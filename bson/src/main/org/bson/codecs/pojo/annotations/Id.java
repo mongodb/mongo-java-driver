@@ -23,7 +23,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * An annotation that configures the field as the id field for a {@link  org.bson.codecs.pojo.ClassModel}.
+ * An annotation that configures the property as the id property for a {@link  org.bson.codecs.pojo.ClassModel}.
  *
  * <p>Note: Requires the {@link org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION}</p>
  *
@@ -32,7 +32,6 @@ import java.lang.annotation.Target;
  */
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
+@Target({ElementType.FIELD, ElementType.METHOD})
 public @interface Id {
-
 }

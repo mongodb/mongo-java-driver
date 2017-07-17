@@ -28,6 +28,14 @@ public class MultipleBoundsLevel3<T> {
         this.level3 = level3;
     }
 
+    public Map<String, T> getLevel3() {
+        return level3;
+    }
+
+    public void setLevel3(final Map<String, T> level3) {
+        this.level3 = level3;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

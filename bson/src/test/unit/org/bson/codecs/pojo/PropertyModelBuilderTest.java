@@ -18,54 +18,53 @@ package org.bson.codecs.pojo;
 
 import org.bson.codecs.IntegerCodec;
 import org.bson.codecs.pojo.annotations.Property;
-import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.junit.Test;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;
 
 import static junit.framework.TestCase.assertTrue;
+import static org.bson.codecs.pojo.PojoBuilderHelper.createPropertyModelBuilder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 
-public final class FieldModelBuilderTest {
+public final class PropertyModelBuilderTest {
+
+    private static final String FIELD_NAME = "myFieldName";
+    private static final PropertyMetadata<Integer> PROPERTY_METADATA =
+            new PropertyMetadata<Integer>(FIELD_NAME, TypeData.builder(Integer.class).build());
 
     @Test
-    @SuppressWarnings("rawtypes")
     public void testFieldMapping() throws NoSuchFieldException {
-        Field field = SimpleGenericsModel.class.getDeclaredField("myListField");
-        FieldModelBuilder<SimpleGenericsModel> fieldModelBuilder = FieldModel.<SimpleGenericsModel>builder(field);
-
-        assertEquals(field.getName(), fieldModelBuilder.getFieldName());
-        assertEquals(field.getName(), fieldModelBuilder.getDocumentFieldName());
-        assertTrue(fieldModelBuilder.getAnnotations().isEmpty());
-        assertNull(fieldModelBuilder.isDiscriminatorEnabled());
+        PropertyModelBuilder<Integer> propertyModelBuilder = createPropertyModelBuilder(PROPERTY_METADATA);
+        assertEquals(FIELD_NAME, propertyModelBuilder.getPropertyName());
+        assertEquals(FIELD_NAME, propertyModelBuilder.getDocumentPropertyName());
+        assertTrue(propertyModelBuilder.getAnnotations().isEmpty());
+        assertNull(propertyModelBuilder.isDiscriminatorEnabled());
     }
 
     @Test
     public void testFieldOverrides() throws NoSuchFieldException {
-        IntegerCodec integerCodec = new IntegerCodec();
-        Field field = SimpleGenericsModel.class.getDeclaredField("myIntegerField");
-        FieldModelBuilder<Integer> fieldModelBuilder = FieldModel.<Integer>builder(field)
-                .codec(integerCodec)
-                .documentFieldName("altDocumentFieldName")
+        IntegerCodec codec = new IntegerCodec();
+        PropertyModelBuilder<Integer> propertyModelBuilder = createPropertyModelBuilder(PROPERTY_METADATA)
+                .codec(codec)
+                .documentPropertyName("altDocumentFieldName")
                 .annotations(ANNOTATIONS)
-                .fieldSerialization(CUSTOM_SERIALIZATION)
+                .propertySerialization(CUSTOM_SERIALIZATION)
                 .typeData(TypeData.builder(Integer.class).build())
-                .fieldAccessor(FIELD_ACCESSOR)
+                .propertyAccessor(FIELD_ACCESSOR)
                 .discriminatorEnabled(false);
 
-        assertEquals("myIntegerField", fieldModelBuilder.getFieldName());
-        assertEquals("altDocumentFieldName", fieldModelBuilder.getDocumentFieldName());
-        assertEquals(integerCodec, fieldModelBuilder.getCodec());
-        assertEquals(Integer.class, fieldModelBuilder.getTypeData().getType());
-        assertEquals(ANNOTATIONS, fieldModelBuilder.getAnnotations());
-        assertEquals(CUSTOM_SERIALIZATION, fieldModelBuilder.getFieldSerialization());
-        assertEquals(FIELD_ACCESSOR, fieldModelBuilder.getFieldAccessor());
-        assertFalse(fieldModelBuilder.isDiscriminatorEnabled());
+        assertEquals(FIELD_NAME, propertyModelBuilder.getPropertyName());
+        assertEquals("altDocumentFieldName", propertyModelBuilder.getDocumentPropertyName());
+        assertEquals(codec, propertyModelBuilder.getCodec());
+        assertEquals(Integer.class, propertyModelBuilder.getTypeData().getType());
+        assertEquals(ANNOTATIONS, propertyModelBuilder.getAnnotations());
+        assertEquals(CUSTOM_SERIALIZATION, propertyModelBuilder.getPropertySerialization());
+        assertEquals(FIELD_ACCESSOR, propertyModelBuilder.getPropertyAccessor());
+        assertFalse(propertyModelBuilder.isDiscriminatorEnabled());
     }
 
     private static final List<Annotation> ANNOTATIONS = Collections.<Annotation>singletonList(
@@ -76,7 +75,7 @@ public final class FieldModelBuilderTest {
                 }
 
                 @Override
-                public String name() {
+                public String value() {
                     return "";
                 }
 
@@ -86,14 +85,14 @@ public final class FieldModelBuilderTest {
                 }
             });
 
-    private static final FieldSerialization<Integer> CUSTOM_SERIALIZATION = new FieldSerialization<Integer>() {
+    private static final PropertySerialization<Integer> CUSTOM_SERIALIZATION = new PropertySerialization<Integer>() {
         @Override
         public boolean shouldSerialize(final Integer value) {
             return false;
         }
     };
 
-    private static final FieldAccessor<Integer> FIELD_ACCESSOR = new FieldAccessor<Integer>() {
+    private static final PropertyAccessor<Integer> FIELD_ACCESSOR = new PropertyAccessor<Integer>() {
         @Override
         public <S> Integer get(final S instance) {
             return null;

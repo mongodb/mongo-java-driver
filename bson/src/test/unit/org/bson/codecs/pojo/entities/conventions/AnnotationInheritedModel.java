@@ -24,8 +24,8 @@ import org.bson.codecs.pojo.annotations.Property;
 public final class AnnotationInheritedModel extends AnnotationAbstract {
 
     @Id
-    String customId;
+    public String customId;
 
     @Property(useDiscriminator = true)
-    AnnotationModel child;
+    public AnnotationModel child;
 }

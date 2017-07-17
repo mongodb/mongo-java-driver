@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,21 +14,12 @@
  * limitations under the License.
  */
 
-package org.bson.codecs.pojo;
+package org.bson.codecs.pojo.entities;
 
-/**
- * An interface allowing a {@link FieldModel} to determine if a value should be serialized.
- *
- * @param <T> the FieldModel's type.
- * @since 3.5
- */
-public interface FieldSerialization<T> {
 
-    /**
-     * Determines if a value should be serialized
-     *
-     * @param value the value to check
-     * @return true if the value should be serialized
-     */
-    boolean shouldSerialize(T value);
+public interface InterfaceModelB extends InterfaceModelA {
+
+    String getPropertyB();
+
+    void setPropertyB(String propertyB);
 }

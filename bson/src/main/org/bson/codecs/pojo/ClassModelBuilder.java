@@ -41,17 +41,17 @@ import static org.bson.codecs.pojo.PojoBuilderHelper.stateNotNull;
  * @see ClassModel
  */
 public class ClassModelBuilder<T> {
-    private static final String ID_FIELD_NAME = "_id";
-    private final List<FieldModelBuilder<?>> fields = new ArrayList<FieldModelBuilder<?>>();
+    private static final String ID_PROPERTY_NAME = "_id";
+    private final List<PropertyModelBuilder<?>> propertyModelBuilders = new ArrayList<PropertyModelBuilder<?>>();
     private InstanceCreatorFactory<T> instanceCreatorFactory;
     private Class<T> type;
-    private Map<String, TypeParameterMap> fieldNameToTypeParameterMap = emptyMap();
+    private Map<String, TypeParameterMap> propertyNameToTypeParameterMap = emptyMap();
     private List<Convention> conventions = DEFAULT_CONVENTIONS;
     private List<Annotation> annotations = emptyList();
     private boolean discriminatorEnabled;
     private String discriminator;
     private String discriminatorKey;
-    private String idField;
+    private String idPropertyName;
 
     ClassModelBuilder(final Class<T> type) {
         configureClassModelBuilder(this, notNull("type", type));
@@ -184,59 +184,60 @@ public class ClassModelBuilder<T> {
     }
 
     /**
-     * Designates a field as the {@code _id} field for this type.  If another field is currently marked as the  {@code _id} field,
-     * that setting is cleared in favor of the named field.
+     * Designates a property as the {@code _id} property for this type.  If another property is currently marked as the  {@code _id}
+     * property, that setting is cleared in favor of the named property.
      *
-     * @param idField the FieldModel field name to use for the {@code _id} field
+     * @param idPropertyName the property name to use for the {@code _id} property
+     *
      * @return this
      */
-    public ClassModelBuilder<T> idField(final String idField) {
-        this.idField = notNull("idField", idField);
+    public ClassModelBuilder<T> idPropertyName(final String idPropertyName) {
+        this.idPropertyName = notNull("idPropertyName", idPropertyName);
         return this;
     }
 
     /**
-     * @return the designated {@code _id} field for this type or null if not set
+     * @return the designated {@code _id} property name for this type or null if not set
      */
-    public String getIdField() {
-        return idField;
+    public String getIdPropertyName() {
+        return idPropertyName;
     }
 
     /**
-     * Remove a field from the builder
+     * Remove a property from the builder
      *
-     * @param name the actual field name in the POJO and not the {@code documentFieldName}.
-     * @return returns true if the field matched and was removed
+     * @param propertyName the actual property name in the POJO and not the {@code documentPropertyName}.
+     * @return returns true if the property matched and was removed
      */
-    public boolean removeField(final String name) {
-        return fields.remove(getField(notNull("name", name)));
+    public boolean removeProperty(final String propertyName) {
+        return propertyModelBuilders.remove(getProperty(notNull("propertyName", propertyName)));
     }
 
     /**
-     * Gets a field by the given name.
+     * Gets a property by the given name.
      *
      * <p>
-     * Note: Searches against the actual field name in the POJO and not the {@code documentFieldName}.
+     * Note: Searches against the actual property name in the POJO and not the {@code documentPropertyName}.
      * </p>
      *
-     * @param name the name of the field to find.
-     * @return the field or null if the field is not found
+     * @param propertyName the name of the property to find.
+     * @return the property or null if the property is not found
      */
-    public FieldModelBuilder<?> getField(final String name) {
-        notNull("name", name);
-        for (FieldModelBuilder<?> fieldModelBuilder : fields) {
-            if (fieldModelBuilder.getFieldName().equals(name)) {
-                return fieldModelBuilder;
+    public PropertyModelBuilder<?> getProperty(final String propertyName) {
+        notNull("propertyName", propertyName);
+        for (PropertyModelBuilder<?> propertyModelBuilder : propertyModelBuilders) {
+            if (propertyModelBuilder.getPropertyName().equals(propertyName)) {
+                return propertyModelBuilder;
             }
         }
         return null;
     }
 
     /**
-     * @return the fields on the modeled type
+     * @return the properties on the modeled type
      */
-    public List<FieldModelBuilder<?>> getFields() {
-        return Collections.unmodifiableList(fields);
+    public List<PropertyModelBuilder<?>> getPropertyModelBuilders() {
+        return Collections.unmodifiableList(propertyModelBuilders);
     }
 
     /**
@@ -245,8 +246,8 @@ public class ClassModelBuilder<T> {
      * @return the new instance
      */
     public ClassModel<T> build() {
-        List<FieldModel<?>> fieldModels = new ArrayList<FieldModel<?>>();
-        FieldModel<?> idFieldModel = null;
+        List<PropertyModel<?>> propertyModels = new ArrayList<PropertyModel<?>>();
+        PropertyModel<?> idPropertyModel = null;
 
         stateNotNull("type", type);
         for (Convention convention : conventions) {
@@ -259,23 +260,23 @@ public class ClassModelBuilder<T> {
             stateNotNull("discriminator", discriminator);
         }
 
-        for (FieldModelBuilder<?> fieldModelBuilder : fields) {
-            boolean isIdField = fieldModelBuilder.getFieldName().equals(idField);
-            if (isIdField) {
-                fieldModelBuilder.documentFieldName(ID_FIELD_NAME);
+        for (PropertyModelBuilder<?> propertyModelBuilder : propertyModelBuilders) {
+            boolean isIdProperty = propertyModelBuilder.getPropertyName().equals(idPropertyName);
+            if (isIdProperty) {
+                propertyModelBuilder.documentPropertyName(ID_PROPERTY_NAME);
             }
 
-            FieldModel<?> model = fieldModelBuilder.build();
-            fieldModels.add(model);
-            if (isIdField) {
-                idFieldModel = model;
+            PropertyModel<?> model = propertyModelBuilder.build();
+            propertyModels.add(model);
+            if (isIdProperty) {
+                idPropertyModel = model;
             }
         }
-        validateFieldModels(fieldModels);
+        validatePropertyModels(propertyModels);
 
 
-        return new ClassModel<T>(type, fieldNameToTypeParameterMap, instanceCreatorFactory, discriminatorEnabled, discriminatorKey,
-                discriminator, idFieldModel, unmodifiableList(fieldModels));
+        return new ClassModel<T>(type, propertyNameToTypeParameterMap, instanceCreatorFactory, discriminatorEnabled, discriminatorKey,
+                discriminator, idPropertyModel, unmodifiableList(propertyModels));
     }
 
     @Override
@@ -283,47 +284,47 @@ public class ClassModelBuilder<T> {
         return format("ClassModelBuilder{type=%s}", type);
     }
 
-    Map<String, TypeParameterMap> getFieldNameToTypeParameterMap() {
-        return fieldNameToTypeParameterMap;
+    Map<String, TypeParameterMap> getPropertyNameToTypeParameterMap() {
+        return propertyNameToTypeParameterMap;
     }
 
-    ClassModelBuilder<T> fieldNameToTypeParameterMap(final Map<String, TypeParameterMap> fieldNameToTypeParameterMap) {
-        this.fieldNameToTypeParameterMap = unmodifiableMap(new HashMap<String, TypeParameterMap>(fieldNameToTypeParameterMap));
+    ClassModelBuilder<T> propertyNameToTypeParameterMap(final Map<String, TypeParameterMap> propertyNameToTypeParameterMap) {
+        this.propertyNameToTypeParameterMap = unmodifiableMap(new HashMap<String, TypeParameterMap>(propertyNameToTypeParameterMap));
         return this;
     }
 
-    ClassModelBuilder<T> addField(final FieldModelBuilder<?> fieldModelBuilder) {
-        fields.add(notNull("fieldModelBuilder", fieldModelBuilder));
+    ClassModelBuilder<T> addProperty(final PropertyModelBuilder<?> propertyModelBuilder) {
+        propertyModelBuilders.add(notNull("propertyModelBuilder", propertyModelBuilder));
         return this;
     }
 
-    private void validateFieldModels(final List<FieldModel<?>> fieldModels) {
-        Map<String, Integer> fieldNameMap = new HashMap<String, Integer>();
-        Map<String, Integer> fieldDocumentNameMap = new HashMap<String, Integer>();
-        String duplicateFieldName = null;
-        String duplicateDocumentFieldName = null;
+    private void validatePropertyModels(final List<PropertyModel<?>> propertyModels) {
+        Map<String, Integer> propertyNameMap = new HashMap<String, Integer>();
+        Map<String, Integer> propertyDocumentNameMap = new HashMap<String, Integer>();
+        String duplicatePropertyName = null;
+        String duplicateDocumentPropertyName = null;
 
-        for (FieldModel<?> fieldModel : fieldModels) {
-            String fieldName = fieldModel.getFieldName();
-            if (fieldNameMap.containsKey(fieldName)) {
-                duplicateFieldName = fieldName;
+        for (PropertyModel<?> propertyModel : propertyModels) {
+            String propertyName = propertyModel.getPropertyName();
+            if (propertyNameMap.containsKey(propertyName)) {
+                duplicatePropertyName = propertyName;
                 break;
             }
-            fieldNameMap.put(fieldName, 1);
+            propertyNameMap.put(propertyName, 1);
 
-            String documentFieldName = fieldModel.getDocumentFieldName();
-            if (fieldDocumentNameMap.containsKey(documentFieldName)) {
-                duplicateDocumentFieldName = documentFieldName;
+            String documentPropertyName = propertyModel.getDocumentPropertyName();
+            if (propertyDocumentNameMap.containsKey(documentPropertyName)) {
+                duplicateDocumentPropertyName = documentPropertyName;
                 break;
             }
-            fieldDocumentNameMap.put(documentFieldName, 1);
+            propertyDocumentNameMap.put(documentPropertyName, 1);
         }
-        if (idField != null && !fieldNameMap.containsKey(idField)) {
-            throw new IllegalStateException(format("Invalid id field, field named field '%s' can not be found.", idField));
-        } else if (duplicateFieldName != null) {
-            throw new IllegalStateException(format("Duplicate field named '%s' found.", duplicateFieldName));
-        } else if (duplicateDocumentFieldName != null) {
-            throw new IllegalStateException(format("Duplicate document field named '%s' found.", duplicateDocumentFieldName));
+        if (idPropertyName != null && !propertyNameMap.containsKey(idPropertyName)) {
+            throw new IllegalStateException(format("Invalid id property, property named '%s' can not be found.", idPropertyName));
+        } else if (duplicatePropertyName != null) {
+            throw new IllegalStateException(format("Duplicate property named '%s' found.", duplicatePropertyName));
+        } else if (duplicateDocumentPropertyName != null) {
+            throw new IllegalStateException(format("Duplicate document property named '%s' found.", duplicateDocumentPropertyName));
         }
     }
 

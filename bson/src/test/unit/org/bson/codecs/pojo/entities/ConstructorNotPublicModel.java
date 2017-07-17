@@ -16,10 +16,10 @@
 
 package org.bson.codecs.pojo.entities;
 
-public final class NoConstructorModel {
+public final class ConstructorNotPublicModel {
     private final Integer integerField;
 
-    public NoConstructorModel(final Integer integerField) {
+    ConstructorNotPublicModel(final Integer integerField) {
         this.integerField = integerField;
     }
 
@@ -36,7 +36,7 @@ public final class NoConstructorModel {
             return false;
         }
 
-        NoConstructorModel that = (NoConstructorModel) o;
+        ConstructorNotPublicModel that = (ConstructorNotPublicModel) o;
 
         if (getIntegerField() != null ? !getIntegerField().equals(that.getIntegerField()) : that.getIntegerField() != null) {
             return false;
@@ -53,7 +53,7 @@ public final class NoConstructorModel {
 
     @Override
     public String toString() {
-        return "ConstructorBasedModel{"
+        return "ConstructorNotPublicModel{"
                 + "integerField=" + integerField
                 + "}";
     }

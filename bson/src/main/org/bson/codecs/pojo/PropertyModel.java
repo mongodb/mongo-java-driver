@@ -18,40 +18,44 @@ package org.bson.codecs.pojo;
 
 import org.bson.codecs.Codec;
 
-import java.lang.reflect.Field;
-
 /**
- * Represents a field on a class and stores various metadata such as generic parameters
+ * Represents a property on a class and stores various metadata such as generic parameters
  *
- * @param <T> the type of the field that the FieldModel represents.
+ * @param <T> the type of the property that the PropertyModel represents.
  * @since 3.5
  */
-public final class FieldModel<T> {
-    private final String fieldName;
-    private final String documentFieldName;
+public final class PropertyModel<T> {
+    private final String propertyName;
+    private final String documentPropertyName;
     private final TypeData<T> typeData;
     private final Codec<T> codec;
-    private final FieldSerialization<T> fieldSerialization;
+    private final PropertySerialization<T> propertySerialization;
     private final Boolean useDiscriminator;
-    private final FieldAccessor<T> fieldAccessor;
+    private final PropertyAccessor<T> propertyAccessor;
     private volatile Codec<T> cachedCodec;
 
-    FieldModel(final String fieldName, final String documentFieldName, final TypeData<T> typeData, final Codec<T> codec,
-               final FieldSerialization<T> fieldSerialization, final Boolean useDiscriminator,
-               final FieldAccessor<T> fieldAccessor) {
-        this.fieldName = fieldName;
-        this.documentFieldName = documentFieldName;
+    PropertyModel(final String propertyName, final String documentPropertyName, final TypeData<T> typeData, final Codec<T> codec,
+                  final PropertySerialization<T> propertySerialization, final Boolean useDiscriminator,
+                  final PropertyAccessor<T> propertyAccessor) {
+        this.propertyName = propertyName;
+        this.documentPropertyName = documentPropertyName;
         this.typeData = typeData;
         this.codec = codec;
         this.cachedCodec = codec;
-        this.fieldSerialization = fieldSerialization;
+        this.propertySerialization = propertySerialization;
         this.useDiscriminator = useDiscriminator;
-        this.fieldAccessor = fieldAccessor;
+        this.propertyAccessor = propertyAccessor;
     }
 
-    static <S> FieldModelBuilder<S> builder(final Field field) {
-        return new FieldModelBuilder<S>(field);
+    /**
+     * Create a new {@link PropertyModelBuilder}
+     * @param <T> the type of the property
+     * @return the builder
+     */
+    public static <T> PropertyModelBuilder<T> builder() {
+        return new PropertyModelBuilder<T>();
     }
+
 
     /**
      * Returns true if the value should be serialized.
@@ -60,32 +64,32 @@ public final class FieldModel<T> {
      * @return true if the value should be serialized.
      */
     public boolean shouldSerialize(final T value) {
-        return fieldSerialization.shouldSerialize(value);
+        return propertySerialization.shouldSerialize(value);
     }
 
     /**
-     * @return the field accessor
+     * @return the property accessor
      */
-    public FieldAccessor<T> getFieldAccessor() {
-        return fieldAccessor;
+    public PropertyAccessor<T> getPropertyAccessor() {
+        return propertyAccessor;
     }
 
     /**
-     * @return the unmapped field name as defined in the source file.
+     * @return the unmapped property name as defined in the source file.
      */
-    public String getFieldName() {
-        return fieldName;
+    public String getPropertyName() {
+        return propertyName;
     }
 
     /**
-     * @return the name of the mapped field
+     * @return the name of the mapped property
      */
-    public String getDocumentFieldName() {
-        return documentFieldName;
+    public String getDocumentPropertyName() {
+        return documentPropertyName;
     }
 
     /**
-     * @return the type data for the field
+     * @return the type data for the property
      */
     public TypeData<T> getTypeData() {
         return typeData;
@@ -107,9 +111,9 @@ public final class FieldModel<T> {
 
     @Override
     public String toString() {
-        return "FieldModel{"
-                + "fieldName='" + fieldName + "'"
-                + ", documentFieldName='" + documentFieldName + "'"
+        return "PropertyModel{"
+                + "propertyName='" + propertyName + "'"
+                + ", documentPropertyName='" + documentPropertyName + "'"
                 + ", typeData=" + typeData
                 + "}";
     }
@@ -119,21 +123,21 @@ public final class FieldModel<T> {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof FieldModel)) {
+        if (!(o instanceof PropertyModel)) {
             return false;
         }
 
-        FieldModel<?> that = (FieldModel<?>) o;
+        PropertyModel<?> that = (PropertyModel<?>) o;
 
         if (useDiscriminator() != null ? !useDiscriminator().equals(that.useDiscriminator()) : that.useDiscriminator() != null) {
             return false;
         }
 
-        if (getFieldName() != null ? !getFieldName().equals(that.getFieldName()) : that.getFieldName() != null) {
+        if (getPropertyName() != null ? !getPropertyName().equals(that.getPropertyName()) : that.getPropertyName() != null) {
             return false;
         }
-        if (getDocumentFieldName() != null ? !getDocumentFieldName().equals(that.getDocumentFieldName())
-                : that.getDocumentFieldName() != null) {
+        if (getDocumentPropertyName() != null ? !getDocumentPropertyName().equals(that.getDocumentPropertyName())
+                : that.getDocumentPropertyName() != null) {
             return false;
         }
         if (getTypeData() != null ? !getTypeData().equals(that.getTypeData()) : that.getTypeData() != null) {
@@ -142,11 +146,12 @@ public final class FieldModel<T> {
         if (getCodec() != null ? !getCodec().equals(that.getCodec()) : that.getCodec() != null) {
             return false;
         }
-        if (getFieldSerialization() != null ? !getFieldSerialization().equals(that.getFieldSerialization())
-                : that.getFieldSerialization() != null) {
+        if (getPropertySerialization() != null ? !getPropertySerialization().equals(that.getPropertySerialization())
+                : that.getPropertySerialization() != null) {
             return false;
         }
-        if (getFieldAccessor() != null ? !getFieldAccessor().equals(that.getFieldAccessor()) : that.getFieldAccessor() != null) {
+        if (getPropertyAccessor() != null ? !getPropertyAccessor().equals(that.getPropertyAccessor())
+                : that.getPropertyAccessor() != null) {
             return false;
         }
 
@@ -155,18 +160,18 @@ public final class FieldModel<T> {
 
     @Override
     public int hashCode() {
-        int result = getFieldName() != null ? getFieldName().hashCode() : 0;
-        result = 31 * result + (getDocumentFieldName() != null ? getDocumentFieldName().hashCode() : 0);
+        int result = getPropertyName() != null ? getPropertyName().hashCode() : 0;
+        result = 31 * result + (getDocumentPropertyName() != null ? getDocumentPropertyName().hashCode() : 0);
         result = 31 * result + (getTypeData() != null ? getTypeData().hashCode() : 0);
         result = 31 * result + (getCodec() != null ? getCodec().hashCode() : 0);
-        result = 31 * result + (getFieldSerialization() != null ? getFieldSerialization().hashCode() : 0);
+        result = 31 * result + (getPropertySerialization() != null ? getPropertySerialization().hashCode() : 0);
         result = 31 * result + (useDiscriminator != null ? useDiscriminator.hashCode() : 0);
-        result = 31 * result + (getFieldAccessor() != null ? getFieldAccessor().hashCode() : 0);
+        result = 31 * result + (getPropertyAccessor() != null ? getPropertyAccessor().hashCode() : 0);
         return result;
     }
 
-    FieldSerialization<T> getFieldSerialization() {
-        return fieldSerialization;
+    PropertySerialization<T> getPropertySerialization() {
+        return propertySerialization;
     }
 
     void cachedCodec(final Codec<T> codec) {

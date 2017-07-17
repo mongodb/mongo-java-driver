@@ -19,17 +19,23 @@ package org.bson.codecs.pojo;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.entities.AbstractInterfaceModel;
+import org.bson.codecs.pojo.entities.BeanConverterModel;
 import org.bson.codecs.pojo.entities.CollectionNestedPojoModel;
 import org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.ConcreteCollectionsModel;
 import org.bson.codecs.pojo.entities.ConcreteStandAloneAbstractInterfaceModel;
+import org.bson.codecs.pojo.entities.ConstructorNotPublicModel;
 import org.bson.codecs.pojo.entities.ConventionModel;
 import org.bson.codecs.pojo.entities.ConverterModel;
+import org.bson.codecs.pojo.entities.FieldSelectionModel;
 import org.bson.codecs.pojo.entities.FieldReusingClassTypeParameter;
 import org.bson.codecs.pojo.entities.FieldWithMultipleTypeParamsModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.bson.codecs.pojo.entities.GenericTreeModel;
 import org.bson.codecs.pojo.entities.InterfaceBasedModel;
+import org.bson.codecs.pojo.entities.InterfaceModelImpl;
+import org.bson.codecs.pojo.entities.InvalidGetterAndSetterModel;
+import org.bson.codecs.pojo.entities.InvalidSetterArgsModel;
 import org.bson.codecs.pojo.entities.MultipleBoundsModel;
 import org.bson.codecs.pojo.entities.MultipleLevelGenericModel;
 import org.bson.codecs.pojo.entities.NestedFieldReusingClassTypeParameter;
@@ -42,7 +48,6 @@ import org.bson.codecs.pojo.entities.NestedMultipleLevelGenericModel;
 import org.bson.codecs.pojo.entities.NestedReusedGenericsModel;
 import org.bson.codecs.pojo.entities.NestedSelfReferentialGenericHolderModel;
 import org.bson.codecs.pojo.entities.NestedSelfReferentialGenericModel;
-import org.bson.codecs.pojo.entities.NoConstructorModel;
 import org.bson.codecs.pojo.entities.PrimitivesModel;
 import org.bson.codecs.pojo.entities.ReusedGenericsModel;
 import org.bson.codecs.pojo.entities.SelfReferentialGenericModel;
@@ -56,6 +61,13 @@ import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;
 import org.bson.codecs.pojo.entities.UpperBoundsConcreteModel;
+import org.bson.codecs.pojo.entities.conventions.CreatorAllFinalFieldsModel;
+import org.bson.codecs.pojo.entities.conventions.CreatorConstructorModel;
+import org.bson.codecs.pojo.entities.conventions.CreatorConstructorThrowsExceptionModel;
+import org.bson.codecs.pojo.entities.conventions.CreatorMethodModel;
+import org.bson.codecs.pojo.entities.conventions.CreatorMethodThrowsExceptionModel;
+import org.bson.codecs.pojo.entities.conventions.CreatorNoArgsConstructorModel;
+import org.bson.codecs.pojo.entities.conventions.CreatorNoArgsMethodModel;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
@@ -79,6 +91,13 @@ public final class PojoCodecTest extends PojoTestCase {
     public void testRoundTripSimpleModel() {
         SimpleModel model = getSimpleModel();
         roundTrip(getPojoCodecProviderBuilder(SimpleModel.class), model, SIMPLE_MODEL_JSON);
+    }
+
+    @Test
+    public void testFieldModifiersModel() {
+        FieldSelectionModel model = new FieldSelectionModel();
+        roundTrip(getPojoCodecProviderBuilder(FieldSelectionModel.class), model,
+                "{'finalStringField': 'finalStringField', 'stringField': 'stringField'}");
     }
 
     @Test
@@ -299,6 +318,12 @@ public final class PojoCodecTest extends PojoTestCase {
     }
 
     @Test
+    public void testInterfaceModelImpl() {
+        InterfaceModelImpl model = new InterfaceModelImpl("a", "b");
+        roundTrip(getPojoCodecProviderBuilder(InterfaceModelImpl.class), model, "{'propertyA': 'a', 'propertyB': 'b'}");
+    }
+
+    @Test
     public void testConventionsDefault() {
         ConventionModel model = getConventionModel();
         roundTrip(getPojoCodecProviderBuilder(ConventionModel.class, SimpleModel.class), model,
@@ -328,13 +353,14 @@ public final class PojoCodecTest extends PojoTestCase {
                 new Convention() {
                     @Override
                     public void apply(final ClassModelBuilder<?> classModelBuilder) {
-                        for (FieldModelBuilder<?> fieldModelBuilder : classModelBuilder.getFields()) {
+                        for (PropertyModelBuilder<?> fieldModelBuilder : classModelBuilder.getPropertyModelBuilders()) {
                             fieldModelBuilder.discriminatorEnabled(false);
-                            fieldModelBuilder.documentFieldName(fieldModelBuilder.getFieldName().replaceAll("([^_A-Z])([A-Z])", "$1_$2")
-                                    .toLowerCase());
+                            fieldModelBuilder.documentPropertyName(
+                                    fieldModelBuilder.getPropertyName()
+                                            .replaceAll("([^_A-Z])([A-Z])", "$1_$2").toLowerCase());
                         }
-                        if (classModelBuilder.getField("customId") != null) {
-                            classModelBuilder.idField("customId");
+                        if (classModelBuilder.getProperty("customId") != null) {
+                            classModelBuilder.idPropertyName("customId");
                         }
                         classModelBuilder.enableDiscriminator(true);
                         classModelBuilder.discriminatorKey("_cls");
@@ -373,11 +399,54 @@ public final class PojoCodecTest extends PojoTestCase {
         ConverterModel model = new ConverterModel(id.toHexString(), "myName");
 
         ClassModelBuilder<ConverterModel> classModel = ClassModel.builder(ConverterModel.class);
-        FieldModelBuilder<String> idFieldModelBuilder = (FieldModelBuilder<String>) classModel.getField("id");
-        idFieldModelBuilder.codec(new StringToObjectIdCodec());
+        PropertyModelBuilder<String> idPropertyModelBuilder = (PropertyModelBuilder<String>) classModel.getProperty("id");
+        idPropertyModelBuilder.codec(new StringToObjectIdCodec());
 
         roundTrip(getPojoCodecProviderBuilder(classModel), model,
                 format("{'_id': {'$oid': '%s'}, 'name': 'myName'}", id.toHexString()));
+    }
+
+    @Test
+    public void testBeanConverterModel() {
+        ObjectId id = new ObjectId();
+        BeanConverterModel model = new BeanConverterModel(id, "myName");
+        roundTrip(getPojoCodecProviderBuilder(BeanConverterModel.class), model,
+                format("{'_id': {'$oid': '%s'}, 'name': 'myName'}", id.toHexString()));
+    }
+
+    @Test
+    public void testCreatorConstructorModel() {
+        CreatorConstructorModel model = new CreatorConstructorModel(10, "eleven", 12);
+        roundTrip(getPojoCodecProviderBuilder(CreatorConstructorModel.class), model,
+                "{'integerField': 10, 'stringField': 'eleven', 'longField': {$numberLong: '12'}}");
+    }
+
+    @Test
+    public void testCreatorNoArgsConstructorModel() {
+        CreatorNoArgsConstructorModel model = new CreatorNoArgsConstructorModel(10, "eleven", 12);
+        roundTrip(getPojoCodecProviderBuilder(CreatorNoArgsConstructorModel.class), model,
+                "{'integerField': 10, 'stringField': 'eleven', 'longField': {$numberLong: '12'}}");
+    }
+
+    @Test
+    public void testCreatorMethodModel() {
+        CreatorMethodModel model = new CreatorMethodModel(10, "eleven", 12);
+        roundTrip(getPojoCodecProviderBuilder(CreatorMethodModel.class), model,
+                "{'stringField': 'eleven', 'longField': {$numberLong: '12'}, 'integerField': 10}");
+    }
+
+    @Test
+    public void testCreatorNoArgsMethodModel() {
+        CreatorNoArgsMethodModel model = new CreatorNoArgsMethodModel(10, "eleven", 12);
+        roundTrip(getPojoCodecProviderBuilder(CreatorNoArgsMethodModel.class), model,
+                "{'stringField': 'eleven', 'integerField': 10, 'longField': {$numberLong: '12'}}");
+    }
+
+    @Test
+    public void testCreatorAllFinalFieldsModel() {
+        CreatorAllFinalFieldsModel model = new CreatorAllFinalFieldsModel("pId", "Ada", "Lovelace");
+        roundTrip(getPojoCodecProviderBuilder(CreatorAllFinalFieldsModel.class), model,
+                "{'_id': 'pId', '_t': 'CreatorAllFinalFieldsModel', 'firstName': 'Ada', 'lastName': 'Lovelace'}");
     }
 
     @Test
@@ -386,8 +455,8 @@ public final class PojoCodecTest extends PojoTestCase {
         SimpleModel model = getSimpleModel();
         model.setIntegerField(null);
         ClassModelBuilder<SimpleModel> classModel = ClassModel.builder(SimpleModel.class);
-        ((FieldModelBuilder<Integer>) classModel.getField("integerField"))
-                .fieldSerialization(new FieldSerialization<Integer>() {
+        ((PropertyModelBuilder<Integer>) classModel.getProperty("integerField"))
+                .propertySerialization(new PropertySerialization<Integer>() {
                     @Override
                     public boolean shouldSerialize(final Integer value) {
                         return true;
@@ -403,8 +472,8 @@ public final class PojoCodecTest extends PojoTestCase {
         SimpleNestedPojoModel model = getSimpleNestedPojoModel();
         model.setSimple(null);
         ClassModelBuilder<SimpleNestedPojoModel> classModel = ClassModel.builder(SimpleNestedPojoModel.class);
-        ((FieldModelBuilder<SimpleModel>) classModel.getField("simple"))
-                .fieldSerialization(new FieldSerialization<SimpleModel>() {
+        ((PropertyModelBuilder<SimpleModel>) classModel.getProperty("simple"))
+                .propertySerialization(new PropertySerialization<SimpleModel>() {
                     @Override
                     public boolean shouldSerialize(final SimpleModel value) {
                         return true;
@@ -424,15 +493,15 @@ public final class PojoCodecTest extends PojoTestCase {
 
         ClassModelBuilder<ConcreteCollectionsModel> classModel =
                 ClassModel.builder(ConcreteCollectionsModel.class);
-        ((FieldModelBuilder<Collection<Integer>>) classModel.getField("collection"))
-                .fieldSerialization(new FieldSerialization<Collection<Integer>>() {
+        ((PropertyModelBuilder<Collection<Integer>>) classModel.getProperty("collection"))
+                .propertySerialization(new PropertySerialization<Collection<Integer>>() {
                     @Override
                     public boolean shouldSerialize(final Collection<Integer> value) {
                         return true;
                     }
                 });
-        ((FieldModelBuilder<Map<String, Double>>) classModel.getField("map"))
-                .fieldSerialization(new FieldSerialization<Map<String, Double>>() {
+        ((PropertyModelBuilder<Map<String, Double>>) classModel.getProperty("map"))
+                .propertySerialization(new PropertySerialization<Map<String, Double>>() {
                     @Override
                     public boolean shouldSerialize(final Map<String, Double> value) {
                         return true;
@@ -459,8 +528,8 @@ public final class PojoCodecTest extends PojoTestCase {
     }
 
     @Test(expected = CodecConfigurationException.class)
-    public void testNoConstructor() {
-        decodingShouldFail(getCodec(NoConstructorModel.class), "{'integerField': 99}");
+    public void testConstructorNotPublicModel() {
+        decodingShouldFail(getCodec(ConstructorNotPublicModel.class), "{'integerField': 99}");
     }
 
     @Test(expected = CodecConfigurationException.class)
@@ -502,5 +571,37 @@ public final class PojoCodecTest extends PojoTestCase {
                 "{'field1': 'top', 'field2': 1, "
                         + "'left': {'field1': 'left', 'field2': 2, 'left': {'field1': 'left', 'field2': 3}}, "
                         + "'right': {'field1': 'right', 'field2': 4, 'left': {'field1': 'left', 'field2': 5}}}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testCreatorMethodModelWithMissingParameters() {
+        decodingShouldFail(getCodec(CreatorMethodModel.class), "{'stringField': 'eleven', 'longField': {$numberLong: '12'}}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testCreatorMethodThrowsExceptionModel() {
+        decodingShouldFail(getCodec(CreatorMethodThrowsExceptionModel.class),
+                "{'integerField': 10, 'stringField': 'eleven', 'longField': {$numberLong: '12'}}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testCreatorConstructorThrowsExceptionModel() {
+        decodingShouldFail(getCodec(CreatorConstructorThrowsExceptionModel.class), "{}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testInvalidSetterModel() {
+        decodingShouldFail(getCodec(InvalidSetterArgsModel.class), "{'integerField': 42, 'stringField': 'myString'}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testInvalidGetterAndSetterModelEncoding() {
+        InvalidGetterAndSetterModel model = new InvalidGetterAndSetterModel(42, "myString");
+        roundTrip(getPojoCodecProviderBuilder(InvalidGetterAndSetterModel.class), model, "{'integerField': 42, 'stringField': 'myString'}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testInvalidGetterAndSetterModelDecoding() {
+        decodingShouldFail(getCodec(InvalidGetterAndSetterModel.class), "{'integerField': 42, 'stringField': 'myString'}");
     }
 }

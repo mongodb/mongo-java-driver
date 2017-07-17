@@ -24,9 +24,9 @@ import org.bson.codecs.pojo.annotations.Property;
 public final class AnnotationDefaultsModel {
 
     @Id
-    String customId;
+    public String customId;
 
     @Property
-    AnnotationModel child;
+    public AnnotationModel child;
 
 }
