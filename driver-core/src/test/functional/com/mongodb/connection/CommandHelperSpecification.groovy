@@ -40,7 +40,7 @@ class CommandHelperSpecification extends Specification {
         latch1.await()
 
         then:
-        receivedDocument
+        !receivedDocument.isEmpty()
         receivedDocument.containsKey('ok')
         !receivedException
 

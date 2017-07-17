@@ -658,6 +658,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
                 .collationCaseFirst(CollationCaseFirst.OFF)
                 .collationStrength(CollationStrength.IDENTICAL)
                 .numericOrdering(true)
+                .normalization(false)
                 .collationAlternate(CollationAlternate.SHIFTED)
                 .collationMaxVariable(CollationMaxVariable.SPACE)
                 .backwards(true)
@@ -676,9 +677,10 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         when:
         BsonDocument indexCollation = new BsonDocumentWrapper<DBObject>(collection.getIndexInfo()[1].get('collation'),
                 collection.getDefaultDBObjectCodec())
+        indexCollation.remove('version')
 
         then:
-        collation.asDocument().each { assert indexCollation.get(it.key) == it.value }
+        indexCollation == collation.asDocument()
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 4) })

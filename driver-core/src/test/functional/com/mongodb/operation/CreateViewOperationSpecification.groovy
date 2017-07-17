@@ -85,9 +85,10 @@ class CreateViewOperationSpecification extends OperationFunctionalSpecification 
         when:
         execute(operation, async)
         def collectionCollation = getCollectionInfo(viewName).get('options').get('collation')
+        collectionCollation.remove('version')
 
         then:
-        defaultCollation.asDocument().each { assert collectionCollation.get(it.key) == it.value }
+        collectionCollation == defaultCollation.asDocument()
 
         cleanup:
         getCollectionHelper(viewNamespace).drop()
