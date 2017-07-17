@@ -47,7 +47,7 @@ final class DateTimeFormatter {
 
     private static FormatterImpl loadDateTimeFormatter(final String className) {
         try {
-            return (FormatterImpl) Class.forName(className).newInstance();
+            return (FormatterImpl) Class.forName(className).getDeclaredConstructor().newInstance();
         } catch (ClassNotFoundException e) {
             // this is unexpected as it means the class itself is not found
             throw new ExceptionInInitializerError(e);
@@ -56,6 +56,10 @@ final class DateTimeFormatter {
             throw new ExceptionInInitializerError(e);
         } catch (IllegalAccessException e) {
             // this is unexpected as it means the no-args constructor isn't accessible
+            throw new ExceptionInInitializerError(e);
+        } catch (NoSuchMethodException e) {
+            throw new ExceptionInInitializerError(e);
+        } catch (InvocationTargetException e) {
             throw new ExceptionInInitializerError(e);
         }
     }

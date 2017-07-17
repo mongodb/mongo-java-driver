@@ -19,6 +19,7 @@ package com.mongodb.internal.connection;
 import com.mongodb.ServerAddress;
 
 import javax.net.ssl.SSLParameters;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * <p>This class should not be considered a part of the public API.</p>
@@ -31,7 +32,8 @@ public final class SslHelper {
     static {
         SniSslHelper sniSslHelper;
         try {
-            sniSslHelper = (SniSslHelper) Class.forName("com.mongodb.internal.connection.Java8SniSslHelper").newInstance();
+            sniSslHelper = (SniSslHelper) Class.forName("com.mongodb.internal.connection.Java8SniSslHelper")
+                                                  .getDeclaredConstructor().newInstance();
         } catch (ClassNotFoundException e) {
             // this is unexpected as it means the Java8SniSslHelper class itself is not found
             throw new ExceptionInInitializerError(e);
@@ -41,6 +43,12 @@ public final class SslHelper {
         } catch (IllegalAccessException e) {
             // this is unexpected as it means Java8SniSslHelper's constructor isn't accessible
             throw new ExceptionInInitializerError(e);
+        } catch (NoSuchMethodException e) {
+            // this is unexpected as it means Java8SniSslHelper has no no-args constructor
+            throw new ExceptionInInitializerError(e);
+        } catch (InvocationTargetException e) {
+            // this is unexpected as it means Java8SniSslHelper's constructor threw an exception
+            throw new ExceptionInInitializerError(e.getTargetException());
         } catch (LinkageError t) {
             // this is expected if running on a release prior to Java 8.  We want to just fail silently here
             sniSslHelper = null;

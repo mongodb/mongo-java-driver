@@ -30,7 +30,7 @@ public final class ShortCodecTest extends CodecTestCase {
 
     @Test
     public void shouldHandleAlternativeNumberValues() {
-        Document expected = new Document("a", new Short("10"));
+        Document expected = new Document("a", (short) 10);
         roundTrip(new Document("a", 10), expected);
         roundTrip(new Document("a", 10L), expected);
         roundTrip(new Document("a", 10.00), expected);

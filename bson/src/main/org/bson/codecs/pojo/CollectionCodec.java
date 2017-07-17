@@ -63,7 +63,7 @@ final class CollectionCodec<T> implements Codec<Collection<T>> {
 
     private Collection<T> getInstance() {
         try {
-            return encoderClass.newInstance();
+            return encoderClass.getDeclaredConstructor().newInstance();
         } catch (final Exception e) {
             throw new CodecConfigurationException(e.getMessage(), e);
         }

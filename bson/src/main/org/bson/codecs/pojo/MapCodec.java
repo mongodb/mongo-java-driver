@@ -65,7 +65,7 @@ final class MapCodec<T> implements Codec<Map<String, T>> {
 
     private Map<String, T> getInstance() {
         try {
-            return encoderClass.newInstance();
+            return encoderClass.getDeclaredConstructor().newInstance();
         } catch (final Exception e) {
             throw new CodecConfigurationException(e.getMessage(), e);
         }
