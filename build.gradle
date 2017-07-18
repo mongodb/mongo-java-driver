@@ -311,7 +311,7 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
 
 task docs(type: Javadoc) {
     source subprojects.grep({ it.name != 'util' }).collect {project -> project.sourceSets.main.allJava }
-    options = subprojects.first().javadoc.options
+//    options = subprojects.first().javadoc.options
     dependsOn = subprojects.first().javadoc.dependsOn
     excludes =  subprojects.first().javadoc.excludes
     classpath = files(subprojects.collect {project -> project.sourceSets.main.compileClasspath})
@@ -322,7 +322,7 @@ task docs(type: Javadoc) {
 // Root project configuration           //
 //////////////////////////////////////////
 task wrapper(type: Wrapper) {
-    gradleVersion = '3.5'
+    gradleVersion = '4.0.1'
 }
 
 gradle.buildFinished { BuildResult result ->
