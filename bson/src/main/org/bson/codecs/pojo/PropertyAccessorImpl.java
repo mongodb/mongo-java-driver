@@ -63,11 +63,11 @@ final class PropertyAccessorImpl<T> implements PropertyAccessor<T> {
 
     private CodecConfigurationException getError(final Exception cause) {
         return new CodecConfigurationException(format("Unable to get value for property '%s' in %s", propertyMetadata.getName(),
-                propertyMetadata.getTypeData().getType()), cause);
+                propertyMetadata.getDeclaringClassName()), cause);
     }
 
     private CodecConfigurationException setError(final Exception cause) {
-        return new CodecConfigurationException(format("Unable to get value for property '%s' in %s", propertyMetadata.getName(),
-                propertyMetadata.getTypeData().getType()), cause);
+        return new CodecConfigurationException(format("Unable to set value for property '%s' in %s", propertyMetadata.getName(),
+                propertyMetadata.getDeclaringClassName()), cause);
     }
 }

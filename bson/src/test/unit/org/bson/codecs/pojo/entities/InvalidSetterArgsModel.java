@@ -40,8 +40,8 @@ public final class InvalidSetterArgsModel {
         return stringField;
     }
 
-    public void setStringField(final String stringField, final Integer integerField) {
-        this.stringField = stringField;
+    public void setStringField(final Integer stringField) {
+        this.stringField = stringField.toString();
     }
 
     @Override

@@ -33,7 +33,7 @@ public final class PropertyModelTest {
 
     private static final String FIELD_NAME = "myFieldName";
     private static final PropertyMetadata<Integer> PROPERTY_METADATA =
-            new PropertyMetadata<Integer>(FIELD_NAME, TypeData.builder(Integer.class).build());
+            new PropertyMetadata<Integer>(FIELD_NAME, "MyClass", TypeData.builder(Integer.class).build());
 
     @Test
     public void testFieldMapping() throws NoSuchFieldException {

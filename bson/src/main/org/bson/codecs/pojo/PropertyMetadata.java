@@ -31,6 +31,7 @@ import static java.lang.reflect.Modifier.isTransient;
 
 final class PropertyMetadata<T> {
     private final String name;
+    private final String declaringClassName;
     private final TypeData<T> typeData;
     private final Map<Class<? extends Annotation>, Annotation> annotations = new HashMap<Class<? extends Annotation>, Annotation>();
     private TypeParameterMap typeParameterMap;
@@ -40,8 +41,9 @@ final class PropertyMetadata<T> {
     private Method getter;
     private Method setter;
 
-    PropertyMetadata(final String name, final TypeData<T> typeData) {
+    PropertyMetadata(final String name, final String declaringClassName, final TypeData<T> typeData) {
         this.name = name;
+        this.declaringClassName = declaringClassName;
         this.typeData = typeData;
     }
 
@@ -83,6 +85,10 @@ final class PropertyMetadata<T> {
 
     public void setSetter(final Method setter) {
         this.setter = setter;
+    }
+
+    public String getDeclaringClassName() {
+        return declaringClassName;
     }
 
     public TypeData<T> getTypeData() {
