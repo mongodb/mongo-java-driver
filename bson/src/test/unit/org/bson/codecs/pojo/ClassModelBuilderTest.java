@@ -16,7 +16,8 @@
 
 package org.bson.codecs.pojo;
 
-import org.bson.codecs.pojo.annotations.Property;
+import org.bson.codecs.configuration.CodecConfigurationException;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.bson.codecs.pojo.entities.ConcreteCollectionsModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.bson.codecs.pojo.entities.InvalidMapModel;
@@ -50,7 +51,7 @@ public final class ClassModelBuilderTest {
         ClassModelBuilder<SimpleGenericsModel> builder = ClassModel.builder(clazz);
         assertEquals(4, builder.getPropertyModelBuilders().size());
         for (Field field : clazz.getDeclaredFields()) {
-            assertEquals(field.getName(), builder.getProperty(field.getName()).getDocumentPropertyName());
+            assertEquals(field.getName(), builder.getProperty(field.getName()).getWriteName());
         }
 
         Map<String, TypeParameterMap> fieldNameToTypeParameterMap = new HashMap<String, TypeParameterMap>();
@@ -146,15 +147,15 @@ public final class ClassModelBuilderTest {
         assertEquals(3, builder.getPropertyModelBuilders().size());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = CodecConfigurationException.class)
     public void testValidationIdProperty() {
         ClassModel.builder(SimpleGenericsModel.class).idPropertyName("ID").build();
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = CodecConfigurationException.class)
     public void testValidationDuplicateDocumentFieldName() {
         ClassModelBuilder<SimpleGenericsModel> builder = ClassModel.builder(SimpleGenericsModel.class);
-        builder.getProperty("myIntegerField").documentPropertyName("myGenericField");
+        builder.getProperty("myIntegerField").writeName("myGenericField");
         builder.build();
     }
 
@@ -164,10 +165,10 @@ public final class ClassModelBuilderTest {
     }
 
     private static final List<Annotation> TEST_ANNOTATIONS = Collections.<Annotation>singletonList(
-            new Property() {
+            new BsonProperty() {
                 @Override
                 public Class<? extends Annotation> annotationType() {
-                    return Property.class;
+                    return BsonProperty.class;
                 }
 
                 @Override

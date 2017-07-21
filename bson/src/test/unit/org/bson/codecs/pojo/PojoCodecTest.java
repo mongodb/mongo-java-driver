@@ -19,7 +19,9 @@ package org.bson.codecs.pojo;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.entities.AbstractInterfaceModel;
-import org.bson.codecs.pojo.entities.BeanConverterModel;
+import org.bson.codecs.pojo.entities.AsymmetricalCreatorModel;
+import org.bson.codecs.pojo.entities.AsymmetricalIgnoreModel;
+import org.bson.codecs.pojo.entities.AsymmetricalModel;
 import org.bson.codecs.pojo.entities.CollectionNestedPojoModel;
 import org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.ConcreteCollectionsModel;
@@ -27,9 +29,6 @@ import org.bson.codecs.pojo.entities.ConcreteStandAloneAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.ConstructorNotPublicModel;
 import org.bson.codecs.pojo.entities.ConventionModel;
 import org.bson.codecs.pojo.entities.ConverterModel;
-import org.bson.codecs.pojo.entities.FieldSelectionModel;
-import org.bson.codecs.pojo.entities.FieldReusingClassTypeParameter;
-import org.bson.codecs.pojo.entities.FieldWithMultipleTypeParamsModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.bson.codecs.pojo.entities.GenericTreeModel;
 import org.bson.codecs.pojo.entities.InterfaceBasedModel;
@@ -49,6 +48,9 @@ import org.bson.codecs.pojo.entities.NestedReusedGenericsModel;
 import org.bson.codecs.pojo.entities.NestedSelfReferentialGenericHolderModel;
 import org.bson.codecs.pojo.entities.NestedSelfReferentialGenericModel;
 import org.bson.codecs.pojo.entities.PrimitivesModel;
+import org.bson.codecs.pojo.entities.PropertyReusingClassTypeParameter;
+import org.bson.codecs.pojo.entities.PropertySelectionModel;
+import org.bson.codecs.pojo.entities.PropertyWithMultipleTypeParamsModel;
 import org.bson.codecs.pojo.entities.ReusedGenericsModel;
 import org.bson.codecs.pojo.entities.SelfReferentialGenericModel;
 import org.bson.codecs.pojo.entities.ShapeHolderModel;
@@ -95,8 +97,8 @@ public final class PojoCodecTest extends PojoTestCase {
 
     @Test
     public void testFieldModifiersModel() {
-        FieldSelectionModel model = new FieldSelectionModel();
-        roundTrip(getPojoCodecProviderBuilder(FieldSelectionModel.class), model,
+        PropertySelectionModel model = new PropertySelectionModel();
+        roundTrip(getPojoCodecProviderBuilder(PropertySelectionModel.class), model,
                 "{'finalStringField': 'finalStringField', 'stringField': 'stringField'}");
     }
 
@@ -218,12 +220,13 @@ public final class PojoCodecTest extends PojoTestCase {
     @Test
     public void testNestedGenericHolderFieldWithMultipleTypeParamsModel() {
         PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(NestedGenericHolderFieldWithMultipleTypeParamsModel.class,
-                FieldWithMultipleTypeParamsModel.class, SimpleGenericsModel.class, GenericHolderModel.class).conventions(NO_CONVENTIONS);
+                PropertyWithMultipleTypeParamsModel.class, SimpleGenericsModel.class, GenericHolderModel.class).conventions(NO_CONVENTIONS);
 
         SimpleGenericsModel<Long, String, Integer> simple = getSimpleGenericsModelAlt();
-        FieldWithMultipleTypeParamsModel<Integer, Long, String> field = new FieldWithMultipleTypeParamsModel<Integer, Long, String>(simple);
-        GenericHolderModel<FieldWithMultipleTypeParamsModel<Integer, Long, String>> nested = new
-                GenericHolderModel<FieldWithMultipleTypeParamsModel<Integer, Long, String>>(field, 42L);
+        PropertyWithMultipleTypeParamsModel<Integer, Long, String> field =
+                new PropertyWithMultipleTypeParamsModel<Integer, Long, String>(simple);
+        GenericHolderModel<PropertyWithMultipleTypeParamsModel<Integer, Long, String>> nested = new
+                GenericHolderModel<PropertyWithMultipleTypeParamsModel<Integer, Long, String>>(field, 42L);
         roundTrip(builder, new NestedGenericHolderFieldWithMultipleTypeParamsModel(nested),
                 "{'nested': {'myGenericField': "
                         + "{'simpleGenericsModel': {'myIntegerField': 42, 'myGenericField': {'$numberLong': '101'}, "
@@ -281,8 +284,8 @@ public final class PojoCodecTest extends PojoTestCase {
     @Test
     public void testNestedFieldReusingClassTypeParameter() {
         NestedFieldReusingClassTypeParameter model = new NestedFieldReusingClassTypeParameter(
-                new FieldReusingClassTypeParameter<String>(getGenericTreeModelStrings()));
-        roundTrip(getPojoCodecProviderBuilder(NestedFieldReusingClassTypeParameter.class, FieldReusingClassTypeParameter.class,
+                new PropertyReusingClassTypeParameter<String>(getGenericTreeModelStrings()));
+        roundTrip(getPojoCodecProviderBuilder(NestedFieldReusingClassTypeParameter.class, PropertyReusingClassTypeParameter.class,
                 GenericTreeModel.class), model,
                 "{'nested': {'tree': {'field1': 'top', 'field2': '1', "
                         + "'left': {'field1': 'left', 'field2': '2', 'left': {'field1': 'left', 'field2': '3'}}, "
@@ -333,6 +336,37 @@ public final class PojoCodecTest extends PojoTestCase {
     }
 
     @Test
+    public void testAsymmetricalModel() {
+        AsymmetricalModel model = new AsymmetricalModel(42);
+        CodecRegistry registry = getCodecRegistry(getPojoCodecProviderBuilder(AsymmetricalModel.class));
+
+        encodesTo(registry, model, "{foo: 42}");
+        decodesTo(registry, "{bar: 42}", model);
+    }
+
+    @Test
+    public void testAsymmetricalCreatorModel() {
+        AsymmetricalCreatorModel model = new AsymmetricalCreatorModel("Foo", "Bar");
+        CodecRegistry registry = getCodecRegistry(getPojoCodecProviderBuilder(AsymmetricalCreatorModel.class));
+
+        encodesTo(registry, model, "{baz: 'FooBar'}");
+        decodesTo(registry, "{a: 'Foo', b: 'Bar'}", model);
+    }
+
+    @Test
+    public void testAsymmetricalIgnoreModel() {
+        AsymmetricalIgnoreModel encode = new AsymmetricalIgnoreModel("property", "getter", "setter", "getterAndSetter");
+        AsymmetricalIgnoreModel decoded = new AsymmetricalIgnoreModel();
+        decoded.setGetterIgnored("getter");
+
+        CodecRegistry registry = getCodecRegistry(getPojoCodecProviderBuilder(AsymmetricalIgnoreModel.class));
+
+        encodesTo(registry, encode, "{'setterIgnored': 'setter'}");
+        decodesTo(registry, "{'propertyIgnored': 'property', 'getterIgnored': 'getter', 'setterIgnored': 'setter', "
+                + "'getterAndSetterIgnored': 'getterAndSetter'}", decoded);
+    }
+
+    @Test
     public void testConventionsEmpty() {
         ConventionModel model = getConventionModel();
         ClassModelBuilder<ConventionModel> classModel = ClassModel.builder(ConventionModel.class)
@@ -348,15 +382,17 @@ public final class PojoCodecTest extends PojoTestCase {
     @Test
     public void testConventionsCustom() {
         ConventionModel model = getConventionModel();
-
         List<Convention> conventions = Collections.<Convention>singletonList(
                 new Convention() {
                     @Override
                     public void apply(final ClassModelBuilder<?> classModelBuilder) {
                         for (PropertyModelBuilder<?> fieldModelBuilder : classModelBuilder.getPropertyModelBuilders()) {
                             fieldModelBuilder.discriminatorEnabled(false);
-                            fieldModelBuilder.documentPropertyName(
-                                    fieldModelBuilder.getPropertyName()
+                            fieldModelBuilder.readName(
+                                    fieldModelBuilder.getName()
+                                            .replaceAll("([^_A-Z])([A-Z])", "$1_$2").toLowerCase());
+                            fieldModelBuilder.writeName(
+                                    fieldModelBuilder.getName()
                                             .replaceAll("([^_A-Z])([A-Z])", "$1_$2").toLowerCase());
                         }
                         if (classModelBuilder.getProperty("customId") != null) {
@@ -403,14 +439,6 @@ public final class PojoCodecTest extends PojoTestCase {
         idPropertyModelBuilder.codec(new StringToObjectIdCodec());
 
         roundTrip(getPojoCodecProviderBuilder(classModel), model,
-                format("{'_id': {'$oid': '%s'}, 'name': 'myName'}", id.toHexString()));
-    }
-
-    @Test
-    public void testBeanConverterModel() {
-        ObjectId id = new ObjectId();
-        BeanConverterModel model = new BeanConverterModel(id, "myName");
-        roundTrip(getPojoCodecProviderBuilder(BeanConverterModel.class), model,
                 format("{'_id': {'$oid': '%s'}, 'name': 'myName'}", id.toHexString()));
     }
 

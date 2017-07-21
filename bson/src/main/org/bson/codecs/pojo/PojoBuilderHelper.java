@@ -18,7 +18,6 @@ package org.bson.codecs.pojo;
 
 import org.bson.codecs.configuration.CodecConfigurationException;
 
-import java.beans.Introspector;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -66,26 +65,33 @@ final class PojoBuilderHelper {
                 if (isPropertyMethod(method) && isPublic(method.getModifiers())) {
                     String propertyName = toPropertyName(methodName);
                     propertyNames.add(propertyName);
-                    PropertyMetadata<?> propertyMetadata = getOrCreateProperty(propertyName, declaringClassName, true, propertyNameMap,
+                    PropertyMetadata<?> propertyMetadata = getOrCreateProperty(propertyName, declaringClassName, propertyNameMap,
                             getTypeData(method), propertyTypeParameterMap, parentClassTypeData, genericTypeNames, getGenericType(method));
                     if (isGetter(method) && propertyMetadata.getGetter() == null) {
                         propertyMetadata.setGetter(method);
-                        addAnnotations(propertyMetadata, method.getDeclaredAnnotations());
+                        for (Annotation annotation : method.getDeclaredAnnotations()) {
+                            propertyMetadata.addReadAnnotation(annotation);
+                        }
                     } else if (propertyMetadata.getSetter() == null) {
                         propertyMetadata.setSetter(method);
-                        addAnnotations(propertyMetadata, method.getDeclaredAnnotations());
+                        for (Annotation annotation : method.getDeclaredAnnotations()) {
+                            propertyMetadata.addWriteAnnotation(annotation);
+                        }
                     }
                 }
             }
 
             for (Field field : currentClass.getDeclaredFields()) {
                 propertyNames.add(field.getName());
-                PropertyMetadata<?> propertyMetadata = getOrCreateProperty(field.getName(), declaringClassName,
-                        isPublic(field.getModifiers()), propertyNameMap, getTypeData(field.getGenericType(), field.getType()),
-                        propertyTypeParameterMap, parentClassTypeData, genericTypeNames, field.getGenericType());
+                PropertyMetadata<?> propertyMetadata = getOrCreateProperty(field.getName(), declaringClassName, propertyNameMap,
+                        getTypeData(field.getGenericType(), field.getType()), propertyTypeParameterMap, parentClassTypeData,
+                        genericTypeNames, field.getGenericType());
                 if (propertyMetadata.getField() == null) {
                     propertyMetadata.field(field);
-                    addAnnotations(propertyMetadata, field.getDeclaredAnnotations());
+                    for (Annotation annotation : field.getDeclaredAnnotations()) {
+                        propertyMetadata.addReadAnnotation(annotation);
+                        propertyMetadata.addWriteAnnotation(annotation);
+                    }
                 }
             }
 
@@ -95,7 +101,7 @@ final class PojoBuilderHelper {
 
         for (String propertyName : propertyNames) {
             PropertyMetadata<?> propertyMetadata = propertyNameMap.get(propertyName);
-            if (propertyMetadata.isSerializable()) {
+            if (propertyMetadata.isSerializable() || propertyMetadata.isDeserializable()) {
                 classModelBuilder.addProperty(createPropertyModelBuilder(propertyMetadata));
             }
         }
@@ -106,7 +112,8 @@ final class PojoBuilderHelper {
 
         Constructor<T> noArgsConstructor = null;
         for (Constructor<?> constructor : clazz.getDeclaredConstructors()) {
-            if (constructor.getParameterTypes().length == 0 && isPublicOrProtected(constructor.getModifiers())) {
+            if (constructor.getParameterTypes().length == 0
+                    && (isPublic(constructor.getModifiers()) || isProtected(constructor.getModifiers()))) {
                 noArgsConstructor = (Constructor<T>) constructor;
                 noArgsConstructor.setAccessible(true);
             }
@@ -118,7 +125,6 @@ final class PojoBuilderHelper {
     @SuppressWarnings("unchecked")
     private static <T, S> PropertyMetadata<T> getOrCreateProperty(final String propertyName,
                                                                   final String declaringClassName,
-                                                                  final boolean checkType,
                                                                   final Map<String, PropertyMetadata<?>> propertyNameMap,
                                                                   final TypeData<T> typeData,
                                                                   final Map<String, TypeParameterMap> propertyTypeParameterMap,
@@ -130,7 +136,7 @@ final class PojoBuilderHelper {
             propertyMetadata = new PropertyMetadata<T>(propertyName, declaringClassName, typeData);
             propertyNameMap.put(propertyName, propertyMetadata);
         }
-        if (checkType && !propertyMetadata.getTypeData().equals(typeData)) {
+        if (!propertyMetadata.getTypeData().equals(typeData)) {
             throw new CodecConfigurationException(format("Property '%s' in %s, has differing data types: %s and %s", propertyName,
                     declaringClassName, propertyMetadata.getTypeData(), typeData));
         }
@@ -138,16 +144,6 @@ final class PojoBuilderHelper {
         propertyTypeParameterMap.put(propertyMetadata.getName(), typeParameterMap);
         propertyMetadata.typeParameterInfo(typeParameterMap, parentClassTypeData);
         return propertyMetadata;
-    }
-
-    private static <T> void addAnnotations(final PropertyMetadata<T> propertyMetadata, final Annotation[] annotations) {
-        for (Annotation annotation : annotations) {
-            propertyMetadata.addAnnotation(annotation);
-        }
-    }
-
-    private static boolean isPublicOrProtected(final int modifiers) {
-        return isPublic(modifiers) || isProtected(modifiers);
     }
 
     @SuppressWarnings({"unchecked", "rawtypes"})
@@ -194,9 +190,11 @@ final class PojoBuilderHelper {
     static <T> PropertyModelBuilder<T> createPropertyModelBuilder(final PropertyMetadata<T> propertyMetadata) {
         PropertyModelBuilder<T> propertyModelBuilder = PropertyModel.<T>builder()
                 .propertyName(propertyMetadata.getName())
-                .documentPropertyName(propertyMetadata.getName())
+                .readName(propertyMetadata.getName())
+                .writeName(propertyMetadata.getName())
                 .typeData(propertyMetadata.getTypeData())
-                .annotations(propertyMetadata.getAnnotations())
+                .readAnnotations(propertyMetadata.getReadAnnotations())
+                .writeAnnotations(propertyMetadata.getWriteAnnotations())
                 .propertySerialization(new PropertyModelSerializationImpl<T>())
                 .propertyAccessor(new PropertyAccessorImpl<T>(propertyMetadata));
 
@@ -265,12 +263,22 @@ final class PojoBuilderHelper {
     private static final String SET_PREFIX = "set";
 
     static boolean isSetter(final Method method) {
-        return method.getName().startsWith(SET_PREFIX) && method.getParameterTypes().length == 1;
+        if (method.getName().startsWith(SET_PREFIX) && method.getName().length() > SET_PREFIX.length()
+            && method.getParameterTypes().length == 1) {
+            return Character.isUpperCase(method.getName().charAt(SET_PREFIX.length()));
+        }
+        return false;
     }
 
     static boolean isGetter(final Method method) {
-        return (method.getName().startsWith(GET_PREFIX) || method.getName().startsWith(IS_PREFIX))
-                && method.getParameterTypes().length == 0;
+        if (method.getParameterTypes().length > 0) {
+            return false;
+        } else if (method.getName().startsWith(GET_PREFIX) && method.getName().length() > GET_PREFIX.length()) {
+            return Character.isUpperCase(method.getName().charAt(GET_PREFIX.length()));
+        } else if (method.getName().startsWith(IS_PREFIX) && method.getName().length() > IS_PREFIX.length()) {
+            return Character.isUpperCase(method.getName().charAt(IS_PREFIX.length()));
+        }
+        return false;
     }
 
     static boolean isPropertyMethod(final Method method) {
@@ -278,7 +286,10 @@ final class PojoBuilderHelper {
     }
 
     static String toPropertyName(final String name) {
-        return Introspector.decapitalize(name.substring(name.startsWith(IS_PREFIX) ? 2 : 3, name.length()));
+        String propertyName = name.substring(name.startsWith(IS_PREFIX) ? 2 : 3, name.length());
+        char[] chars = propertyName.toCharArray();
+        chars[0] = Character.toLowerCase(chars[0]);
+        return new String(chars);
     }
 
     private PojoBuilderHelper() {

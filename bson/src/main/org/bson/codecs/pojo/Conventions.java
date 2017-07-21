@@ -36,9 +36,8 @@ public final class Conventions {
      * <ul>
      *     <li>Sets the discriminator key if not set to {@code _t} and the discriminator value if not set to the
      *     ClassModels simple type name.</li>
-     *     <li>Configures the PropertyModels. Sets the document field name if not set to the property name.
-     *     If the idProperty isn't set and there is a property named {@code getId()}, {@code id} or {@code _id} it will be marked as the
-     *     idProperty.</li>
+     *     <li>Configures the PropertyModels. If the {@code idProperty} isn't set and there is a
+     *     property named {@code getId()}, {@code id} or {@code _id} it will be marked as the idProperty.</li>
      * </ul>
      */
     public static final Convention CLASS_AND_PROPERTY_CONVENTION = new ConventionDefaultsImpl();

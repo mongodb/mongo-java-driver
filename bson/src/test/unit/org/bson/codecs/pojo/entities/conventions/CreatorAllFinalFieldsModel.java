@@ -16,27 +16,27 @@
 
 package org.bson.codecs.pojo.entities.conventions;
 
-import org.bson.codecs.pojo.annotations.Creator;
-import org.bson.codecs.pojo.annotations.Discriminator;
-import org.bson.codecs.pojo.annotations.Id;
-import org.bson.codecs.pojo.annotations.Property;
+import org.bson.codecs.pojo.annotations.BsonCreator;
+import org.bson.codecs.pojo.annotations.BsonDiscriminator;
+import org.bson.codecs.pojo.annotations.BsonId;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
-@Discriminator
+@BsonDiscriminator
 public final class CreatorAllFinalFieldsModel {
     private final String pid;
     private final String fName;
     private final String lName;
 
-    @Creator
-    public CreatorAllFinalFieldsModel(@Property("personId") final String personId,
-                                      @Property("firstName") final String firstName,
-                                      @Property("lastName") final String lastName) {
+    @BsonCreator
+    public CreatorAllFinalFieldsModel(@BsonProperty("personId") final String personId,
+                                      @BsonProperty("firstName") final String firstName,
+                                      @BsonProperty("lastName") final String lastName) {
         this.pid = personId;
         this.fName = firstName;
         this.lName = lastName;
     }
 
-    @Id
+    @BsonId
     public String getPersonId() {
         return pid;
     }

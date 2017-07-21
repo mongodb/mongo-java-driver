@@ -16,27 +16,28 @@
 
 package org.bson.codecs.pojo.entities.conventions;
 
-import org.bson.codecs.pojo.annotations.Creator;
-import org.bson.codecs.pojo.annotations.Property;
+import org.bson.codecs.pojo.annotations.BsonCreator;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
-public final class CreatorUnknownPropertyMethodModel {
+public final class CreatorInvalidMultipleConstructorsModel {
     private final Integer integerField;
     private String stringField;
     public long longField;
 
-    private CreatorUnknownPropertyMethodModel(final Integer integerField) {
+    @BsonCreator
+    public CreatorInvalidMultipleConstructorsModel(@BsonProperty("integerField") final Integer integerField) {
         this.integerField = integerField;
     }
 
-    @Creator
-    public static CreatorUnknownPropertyMethodModel create(@Property("unknownField") final Integer integerField) {
-        return new CreatorUnknownPropertyMethodModel(integerField);
-    }
-
-    public CreatorUnknownPropertyMethodModel(final Integer integerField, final String stringField, final long longField) {
+    public CreatorInvalidMultipleConstructorsModel(final Integer integerField, final String stringField, final long longField) {
         this.integerField = integerField;
         this.stringField = stringField;
         this.longField = longField;
+    }
+
+    @BsonCreator
+    public static CreatorInvalidMultipleConstructorsModel create(@BsonProperty("integerField") final Integer integerField) {
+        return new CreatorInvalidMultipleConstructorsModel(integerField);
     }
 
     public Integer getIntegerField() {
@@ -60,7 +61,7 @@ public final class CreatorUnknownPropertyMethodModel {
             return false;
         }
 
-        CreatorUnknownPropertyMethodModel that = (CreatorUnknownPropertyMethodModel) o;
+        CreatorInvalidMultipleConstructorsModel that = (CreatorInvalidMultipleConstructorsModel) o;
 
         if (longField != that.longField) {
             return false;
@@ -85,7 +86,7 @@ public final class CreatorUnknownPropertyMethodModel {
 
     @Override
     public String toString() {
-        return "CreatorUnknownPropertyMethodModel{"
+        return "CreatorInvalidMultipleModel{"
                 + "integerField=" + integerField
                 + ", stringField='" + stringField + "'"
                 + ", longField=" + longField

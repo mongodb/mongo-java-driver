@@ -54,11 +54,11 @@ final class InstanceCreatorImpl<T> implements InstanceCreator<T> {
             propertyModel.getPropertyAccessor().set(newInstance, value);
         } else {
             if (!properties.isEmpty()) {
-                Integer index = properties.get(propertyModel.getPropertyName());
+                Integer index = properties.get(propertyModel.getName());
                 if (index != null) {
                     params[index] = value;
                 }
-                properties.remove(propertyModel.getPropertyName());
+                properties.remove(propertyModel.getName());
             }
 
             if (properties.isEmpty()) {

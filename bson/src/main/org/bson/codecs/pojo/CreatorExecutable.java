@@ -17,7 +17,7 @@
 package org.bson.codecs.pojo;
 
 import org.bson.codecs.configuration.CodecConfigurationException;
-import org.bson.codecs.pojo.annotations.Property;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -32,7 +32,7 @@ final class CreatorExecutable<T> {
     private final Class<T> clazz;
     private final Constructor<T> constructor;
     private final Method method;
-    private final List<Property> properties = new ArrayList<Property>();
+    private final List<BsonProperty> properties = new ArrayList<BsonProperty>();
     private final List<Class<?>> parameterTypes = new ArrayList<Class<?>>();
 
     CreatorExecutable(final Class<T> clazz, final Constructor<T> constructor) {
@@ -55,8 +55,8 @@ final class CreatorExecutable<T> {
 
             for (Annotation[] parameterAnnotation : parameterAnnotations) {
                 for (Annotation annotation : parameterAnnotation) {
-                    if (annotation.annotationType().equals(Property.class)) {
-                        properties.add((Property) annotation);
+                    if (annotation.annotationType().equals(BsonProperty.class)) {
+                        properties.add((BsonProperty) annotation);
                         break;
                     }
                 }
@@ -68,7 +68,7 @@ final class CreatorExecutable<T> {
         return clazz;
     }
 
-    List<Property> getProperties() {
+    List<BsonProperty> getProperties() {
         return properties;
     }
 

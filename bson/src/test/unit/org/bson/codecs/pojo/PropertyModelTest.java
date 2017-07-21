@@ -17,7 +17,7 @@
 package org.bson.codecs.pojo;
 
 import org.bson.codecs.IntegerCodec;
-import org.bson.codecs.pojo.annotations.Property;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.junit.Test;
 
 import java.lang.annotation.Annotation;
@@ -36,15 +36,15 @@ public final class PropertyModelTest {
             new PropertyMetadata<Integer>(FIELD_NAME, "MyClass", TypeData.builder(Integer.class).build());
 
     @Test
-    public void testFieldMapping() throws NoSuchFieldException {
+    public void testPropertyMapping() throws NoSuchFieldException {
         PropertySerialization<Integer> serializer = new PropertyModelSerializationImpl<Integer>();
         PropertyAccessor<Integer> accessor = new PropertyAccessorImpl<Integer>(PROPERTY_METADATA);
         PropertyModel<Integer> propertyModel = createPropertyModelBuilder(PROPERTY_METADATA)
                 .propertySerialization(serializer)
                 .propertyAccessor(accessor)
                 .build();
-        assertEquals(FIELD_NAME, propertyModel.getPropertyName());
-        assertEquals(FIELD_NAME, propertyModel.getDocumentPropertyName());
+        assertEquals(FIELD_NAME, propertyModel.getName());
+        assertEquals(FIELD_NAME, propertyModel.getWriteName());
         assertEquals(serializer, propertyModel.getPropertySerialization());
         assertEquals(accessor, propertyModel.getPropertyAccessor());
         assertNull(propertyModel.getCodec());
@@ -53,20 +53,20 @@ public final class PropertyModelTest {
     }
 
     @Test
-    public void testFieldOverrides() throws NoSuchFieldException {
+    public void testPropertyOverrides() throws NoSuchFieldException {
         IntegerCodec codec = new IntegerCodec();
         PropertyModel<Integer> propertyModel = createPropertyModelBuilder(PROPERTY_METADATA)
                 .codec(codec)
-                .documentPropertyName("altDocumentFieldName")
-                .annotations(ANNOTATIONS)
+                .writeName("altDocumentFieldName")
+                .readAnnotations(ANNOTATIONS)
                 .propertySerialization(CUSTOM_SERIALIZATION)
                 .typeData(TypeData.builder(Integer.class).build())
                 .propertyAccessor(FIELD_ACCESSOR)
                 .discriminatorEnabled(false)
                 .build();
 
-        assertEquals(FIELD_NAME, propertyModel.getPropertyName());
-        assertEquals("altDocumentFieldName", propertyModel.getDocumentPropertyName());
+        assertEquals(FIELD_NAME, propertyModel.getName());
+        assertEquals("altDocumentFieldName", propertyModel.getWriteName());
         assertEquals(codec, propertyModel.getCodec());
         assertEquals(codec, propertyModel.getCachedCodec());
         assertEquals(Integer.class, propertyModel.getTypeData().getType());
@@ -76,10 +76,10 @@ public final class PropertyModelTest {
     }
 
     private static final List<Annotation> ANNOTATIONS = Collections.<Annotation>singletonList(
-            new Property() {
+            new BsonProperty() {
                 @Override
                 public Class<? extends Annotation> annotationType() {
-                    return Property.class;
+                    return BsonProperty.class;
                 }
 
                 @Override

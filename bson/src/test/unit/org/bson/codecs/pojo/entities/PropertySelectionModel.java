@@ -16,10 +16,17 @@
 
 package org.bson.codecs.pojo.entities;
 
-public final class FieldSelectionModel {
+import org.bson.codecs.pojo.annotations.BsonIgnore;
+
+public final class PropertySelectionModel {
     private String stringField = "stringField";
 
     private final String finalStringField = "finalStringField";
+
+    @BsonIgnore
+    private String ignoredStringField = "ignoreMe";
+
+    private String anotherIgnoredStringField = "ignoreMe";
 
     private static final String staticFinalStringField = "staticFinalStringField";
 
@@ -27,7 +34,7 @@ public final class FieldSelectionModel {
 
     private transient String transientString = "transientString";
 
-    public FieldSelectionModel() {
+    public PropertySelectionModel() {
     }
 
     public String getStringField() {
@@ -70,6 +77,44 @@ public final class FieldSelectionModel {
         throw new IllegalStateException("Not allowed");
     }
 
+    public String getIgnoredStringField() {
+        return ignoredStringField;
+    }
+
+    public void setIgnoredStringField(final String ignoredStringField) {
+        this.ignoredStringField = ignoredStringField;
+    }
+
+    @BsonIgnore
+    public String getAnotherIgnoredStringField() {
+        return anotherIgnoredStringField;
+    }
+
+    @BsonIgnore
+    public void setAnotherIgnoredStringField(final String anotherIgnoredStringField) {
+        this.anotherIgnoredStringField = anotherIgnoredStringField;
+    }
+
+    public int getfoo() {
+        return 42;
+    }
+
+    public void setfoo(final int foo) {
+    }
+
+    public void is() {
+    }
+
+    public void isfoo() {
+    }
+
+    public int get() {
+        return 42;
+    }
+
+    public void set(final int foo) {
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {
@@ -79,7 +124,7 @@ public final class FieldSelectionModel {
             return false;
         }
 
-        FieldSelectionModel that = (FieldSelectionModel) o;
+        PropertySelectionModel that = (PropertySelectionModel) o;
 
         if (getStringField() != null ? !getStringField().equals(that.getStringField()) : that.getStringField() != null) {
             return false;

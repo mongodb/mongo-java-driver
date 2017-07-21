@@ -16,6 +16,8 @@
 
 package org.bson.codecs.pojo;
 
+import org.bson.codecs.configuration.CodecConfigurationException;
+
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -214,11 +216,7 @@ public class ClassModelBuilder<T> {
     }
 
     /**
-     * Gets a property by the given name.
-     *
-     * <p>
-     * Note: Searches against the actual property name in the POJO and not the {@code documentPropertyName}.
-     * </p>
+     * Gets a property by the property name.
      *
      * @param propertyName the name of the property to find.
      * @return the property or null if the property is not found
@@ -226,7 +224,7 @@ public class ClassModelBuilder<T> {
     public PropertyModelBuilder<?> getProperty(final String propertyName) {
         notNull("propertyName", propertyName);
         for (PropertyModelBuilder<?> propertyModelBuilder : propertyModelBuilders) {
-            if (propertyModelBuilder.getPropertyName().equals(propertyName)) {
+            if (propertyModelBuilder.getName().equals(propertyName)) {
                 return propertyModelBuilder;
             }
         }
@@ -261,9 +259,9 @@ public class ClassModelBuilder<T> {
         }
 
         for (PropertyModelBuilder<?> propertyModelBuilder : propertyModelBuilders) {
-            boolean isIdProperty = propertyModelBuilder.getPropertyName().equals(idPropertyName);
+            boolean isIdProperty = propertyModelBuilder.getName().equals(idPropertyName);
             if (isIdProperty) {
-                propertyModelBuilder.documentPropertyName(ID_PROPERTY_NAME);
+                propertyModelBuilder.readName(ID_PROPERTY_NAME).writeName(ID_PROPERTY_NAME);
             }
 
             PropertyModel<?> model = propertyModelBuilder.build();
@@ -272,7 +270,7 @@ public class ClassModelBuilder<T> {
                 idPropertyModel = model;
             }
         }
-        validatePropertyModels(propertyModels);
+        validatePropertyModels(type.getSimpleName(), propertyModels);
 
 
         return new ClassModel<T>(type, propertyNameToTypeParameterMap, instanceCreatorFactory, discriminatorEnabled, discriminatorKey,
@@ -298,34 +296,33 @@ public class ClassModelBuilder<T> {
         return this;
     }
 
-    private void validatePropertyModels(final List<PropertyModel<?>> propertyModels) {
+    private void validatePropertyModels(final String declaringClass, final List<PropertyModel<?>> propertyModels) {
         Map<String, Integer> propertyNameMap = new HashMap<String, Integer>();
-        Map<String, Integer> propertyDocumentNameMap = new HashMap<String, Integer>();
-        String duplicatePropertyName = null;
-        String duplicateDocumentPropertyName = null;
+        Map<String, Integer> propertyReadNameMap = new HashMap<String, Integer>();
+        Map<String, Integer> propertyWriteNameMap = new HashMap<String, Integer>();
 
         for (PropertyModel<?> propertyModel : propertyModels) {
-            String propertyName = propertyModel.getPropertyName();
-            if (propertyNameMap.containsKey(propertyName)) {
-                duplicatePropertyName = propertyName;
-                break;
+            checkForDuplicates("property", propertyModel.getName(), propertyNameMap, declaringClass);
+            if (propertyModel.isReadable()) {
+                checkForDuplicates("read property", propertyModel.getReadName(), propertyReadNameMap, declaringClass);
             }
-            propertyNameMap.put(propertyName, 1);
+            if (propertyModel.isWritable()) {
+                checkForDuplicates("write property", propertyModel.getWriteName(), propertyWriteNameMap, declaringClass);
+            }
+        }
 
-            String documentPropertyName = propertyModel.getDocumentPropertyName();
-            if (propertyDocumentNameMap.containsKey(documentPropertyName)) {
-                duplicateDocumentPropertyName = documentPropertyName;
-                break;
-            }
-            propertyDocumentNameMap.put(documentPropertyName, 1);
-        }
         if (idPropertyName != null && !propertyNameMap.containsKey(idPropertyName)) {
-            throw new IllegalStateException(format("Invalid id property, property named '%s' can not be found.", idPropertyName));
-        } else if (duplicatePropertyName != null) {
-            throw new IllegalStateException(format("Duplicate property named '%s' found.", duplicatePropertyName));
-        } else if (duplicateDocumentPropertyName != null) {
-            throw new IllegalStateException(format("Duplicate document property named '%s' found.", duplicateDocumentPropertyName));
+            throw new CodecConfigurationException(format("Invalid id property, property named '%s' can not be found.", idPropertyName));
         }
+    }
+
+    private void checkForDuplicates(final String propertyType, final String propertyName, final Map<String, Integer> propertyNameMap,
+                                    final String declaringClass) {
+        if (propertyNameMap.containsKey(propertyName)) {
+            throw new CodecConfigurationException(format("Duplicate %s named '%s' found in %s.", propertyType, propertyName,
+                    declaringClass));
+        }
+        propertyNameMap.put(propertyName, 1);
     }
 
 }

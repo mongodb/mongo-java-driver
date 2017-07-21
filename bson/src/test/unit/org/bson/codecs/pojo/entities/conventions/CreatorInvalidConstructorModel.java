@@ -16,16 +16,16 @@
 
 package org.bson.codecs.pojo.entities.conventions;
 
-import org.bson.codecs.pojo.annotations.Creator;
-import org.bson.codecs.pojo.annotations.Property;
+import org.bson.codecs.pojo.annotations.BsonCreator;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
 public final class CreatorInvalidConstructorModel {
     private final Integer integerField;
     private String stringField;
     public long longField;
 
-    @Creator
-    public CreatorInvalidConstructorModel(@Property("integerField") final Integer integerField, final String stringField) {
+    @BsonCreator
+    public CreatorInvalidConstructorModel(@BsonProperty("integerField") final Integer integerField, final String stringField) {
         this.integerField = integerField;
         this.stringField = stringField;
     }

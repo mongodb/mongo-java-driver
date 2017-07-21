@@ -16,25 +16,25 @@
 
 package org.bson.codecs.pojo.entities;
 
-import org.bson.codecs.pojo.annotations.Discriminator;
-import org.bson.codecs.pojo.annotations.Id;
-import org.bson.codecs.pojo.annotations.Property;
+import org.bson.codecs.pojo.annotations.BsonDiscriminator;
+import org.bson.codecs.pojo.annotations.BsonId;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
 
-@Discriminator(value = "AnnotatedConventionModel", key = "_cls")
+@BsonDiscriminator(value = "AnnotatedConventionModel", key = "_cls")
 public final class ConventionModel {
     private static final int myStaticField = 10;
     private transient int myTransientField = 10;
     private final int myFinalField = 10;
     private int myIntField = 10;
 
-    @Id()
+    @BsonId()
     private String customId;
 
-    @Property(useDiscriminator = false)
+    @BsonProperty(useDiscriminator = false)
     private ConventionModel child;
 
-    @Property(value = "model", useDiscriminator = false)
+    @BsonProperty(value = "model", useDiscriminator = false)
     private SimpleModel simpleModel;
 
     public ConventionModel(){

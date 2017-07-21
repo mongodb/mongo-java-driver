@@ -16,8 +16,8 @@
 
 package org.bson.codecs.pojo.entities.conventions;
 
-import org.bson.codecs.pojo.annotations.Creator;
-import org.bson.codecs.pojo.annotations.Property;
+import org.bson.codecs.pojo.annotations.BsonCreator;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
 public final class CreatorMethodModel {
     private final Integer integerField;
@@ -28,8 +28,8 @@ public final class CreatorMethodModel {
         this.integerField = integerField;
     }
 
-    @Creator
-    public static CreatorMethodModel create(@Property("integerField") final Integer integerField) {
+    @BsonCreator
+    public static CreatorMethodModel create(@BsonProperty("integerField") final Integer integerField) {
         return new CreatorMethodModel(integerField);
     }
 

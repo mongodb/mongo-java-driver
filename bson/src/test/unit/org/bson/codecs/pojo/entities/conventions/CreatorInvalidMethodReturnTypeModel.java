@@ -16,23 +16,22 @@
 
 package org.bson.codecs.pojo.entities.conventions;
 
-import org.bson.codecs.pojo.annotations.Creator;
-import org.bson.codecs.pojo.annotations.Property;
+import org.bson.codecs.pojo.annotations.BsonCreator;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
-public final class CreatorUnknownPropertyConstructorModel {
+public final class CreatorInvalidMethodReturnTypeModel {
     private final Integer integerField;
     private String stringField;
     public long longField;
 
-    @Creator
-    public CreatorUnknownPropertyConstructorModel(@Property("unknownField") final Integer integerField) {
-        this.integerField = integerField;
-    }
-
-    public CreatorUnknownPropertyConstructorModel(final Integer integerField, final String stringField, final long longField) {
+    private CreatorInvalidMethodReturnTypeModel(final Integer integerField, final String stringField) {
         this.integerField = integerField;
         this.stringField = stringField;
-        this.longField = longField;
+    }
+
+    @BsonCreator
+    public static String create(@BsonProperty("integerField") final Integer integerField) {
+        return "Nope";
     }
 
     public Integer getIntegerField() {
@@ -56,7 +55,7 @@ public final class CreatorUnknownPropertyConstructorModel {
             return false;
         }
 
-        CreatorUnknownPropertyConstructorModel that = (CreatorUnknownPropertyConstructorModel) o;
+        CreatorMethodModel that = (CreatorMethodModel) o;
 
         if (longField != that.longField) {
             return false;
@@ -81,7 +80,7 @@ public final class CreatorUnknownPropertyConstructorModel {
 
     @Override
     public String toString() {
-        return "CreatorUnknownPropertyConstructorModel{"
+        return "CreatorInvalidMethodModel{"
                 + "integerField=" + integerField
                 + ", stringField='" + stringField + "'"
                 + ", longField=" + longField

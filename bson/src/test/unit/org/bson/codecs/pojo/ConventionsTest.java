@@ -23,10 +23,10 @@ import org.bson.codecs.pojo.entities.conventions.AnnotationModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationNameCollision;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidConstructorModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidMethodModel;
+import org.bson.codecs.pojo.entities.conventions.CreatorInvalidMethodReturnTypeModel;
+import org.bson.codecs.pojo.entities.conventions.CreatorInvalidMultipleConstructorsModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidTypeConstructorModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidTypeMethodModel;
-import org.bson.codecs.pojo.entities.conventions.CreatorUnknownPropertyConstructorModel;
-import org.bson.codecs.pojo.entities.conventions.CreatorUnknownPropertyMethodModel;
 import org.junit.Test;
 
 import static java.util.Collections.singletonList;
@@ -53,15 +53,16 @@ public final class ConventionsTest {
         assertEquals(3, classModel.getPropertyModels().size());
         PropertyModel<?> idPropertyModel = classModel.getIdPropertyModel();
         assertNotNull(idPropertyModel);
-        assertEquals("customId", idPropertyModel.getPropertyName());
-        assertEquals("_id", idPropertyModel.getDocumentPropertyName());
+        assertEquals("customId", idPropertyModel.getName());
+        assertEquals("_id", idPropertyModel.getWriteName());
 
         PropertyModel<?> childPropertyModel = classModel.getPropertyModel("child");
         assertNotNull(childPropertyModel);
         assertFalse(childPropertyModel.useDiscriminator());
 
-        PropertyModel<?> renamedPropertyModel = classModel.getPropertyModel("renamed");
-        assertNotNull(renamedPropertyModel);
+        PropertyModel<?> renamedPropertyModel = classModel.getPropertyModel("alternative");
+        assertEquals("renamed", renamedPropertyModel.getReadName());
+        assertEquals("renamed", renamedPropertyModel.getWriteName());
     }
 
     @Test
@@ -76,8 +77,8 @@ public final class ConventionsTest {
         assertEquals(2, classModel.getPropertyModels().size());
         PropertyModel<?> idPropertyModel = classModel.getIdPropertyModel();
         assertNotNull(idPropertyModel);
-        assertEquals("customId", idPropertyModel.getPropertyName());
-        assertEquals("_id", idPropertyModel.getDocumentPropertyName());
+        assertEquals("customId", idPropertyModel.getName());
+        assertEquals("_id", idPropertyModel.getWriteName());
 
         PropertyModel<?> childPropertyModel = classModel.getPropertyModel("child");
         assertNotNull(childPropertyModel);
@@ -100,12 +101,12 @@ public final class ConventionsTest {
                 });
 
         PropertyModelBuilder<Integer> propertyModelBuilder = (PropertyModelBuilder<Integer>) builder.getProperty("integerField");
-        propertyModelBuilder.documentPropertyName("id")
+        propertyModelBuilder.writeName("id")
                 .propertySerialization(new PropertyModelSerializationImpl<Integer>())
                 .propertyAccessor(new PropertyAccessorTest<Integer>());
 
         PropertyModelBuilder<String> propertyModelBuilder2 = (PropertyModelBuilder<String>) builder.getProperty("stringField");
-        propertyModelBuilder2.documentPropertyName("_id")
+        propertyModelBuilder2.writeName("_id")
                 .propertySerialization(new PropertyModelSerializationImpl<String>())
                 .propertyAccessor(new PropertyAccessorTest<String>());
 
@@ -117,14 +118,12 @@ public final class ConventionsTest {
 
         assertEquals(2, classModel.getPropertyModels().size());
         PropertyModel<?> idPropertyModel = classModel.getIdPropertyModel();
-        assertEquals("stringField", idPropertyModel.getPropertyName());
-        assertEquals("_id", idPropertyModel.getDocumentPropertyName());
-
-        PropertyModel<?> childPropertyModel = classModel.getPropertyModel("id");
-        assertNull(childPropertyModel.useDiscriminator());
+        assertEquals("stringField", idPropertyModel.getName());
+        assertEquals("_id", idPropertyModel.getWriteName());
+        assertNull(idPropertyModel.useDiscriminator());
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = CodecConfigurationException.class)
     public void testAnnotationNameCollision() {
         ClassModel.builder(AnnotationNameCollision.class)
                 .conventions(singletonList(ANNOTATION_CONVENTION)).build();
@@ -143,6 +142,18 @@ public final class ConventionsTest {
     }
 
     @Test(expected = CodecConfigurationException.class)
+    public void testCreatorInvalidMultipleConstructorsModel() {
+        ClassModel.builder(CreatorInvalidMultipleConstructorsModel.class)
+                .conventions(singletonList(ANNOTATION_CONVENTION)).build();
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testCreatorInvalidMethodReturnTypeModel() {
+        ClassModel.builder(CreatorInvalidMethodReturnTypeModel.class)
+                .conventions(singletonList(ANNOTATION_CONVENTION)).build();
+    }
+
+    @Test(expected = CodecConfigurationException.class)
     public void testCreatorInvalidTypeConstructorModel() {
         ClassModel.builder(CreatorInvalidTypeConstructorModel.class)
                 .conventions(singletonList(ANNOTATION_CONVENTION)).build();
@@ -151,19 +162,6 @@ public final class ConventionsTest {
     @Test(expected = CodecConfigurationException.class)
     public void testCreatorInvalidTypeMethodModel() {
         ClassModel.builder(CreatorInvalidTypeMethodModel.class)
-                .conventions(singletonList(ANNOTATION_CONVENTION)).build();
-    }
-
-
-    @Test(expected = CodecConfigurationException.class)
-    public void testCreatorUnknownPropertyConstructorModel() {
-        ClassModel.builder(CreatorUnknownPropertyConstructorModel.class)
-                .conventions(singletonList(ANNOTATION_CONVENTION)).build();
-    }
-
-    @Test(expected = CodecConfigurationException.class)
-    public void testCreatorUnknownPropertyMethodModel() {
-        ClassModel.builder(CreatorUnknownPropertyMethodModel.class)
                 .conventions(singletonList(ANNOTATION_CONVENTION)).build();
     }
 

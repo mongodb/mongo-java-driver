@@ -16,12 +16,12 @@
 
 package org.bson.codecs.pojo.entities.conventions;
 
-import org.bson.codecs.pojo.annotations.Property;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
 public final class AnnotationNameCollision {
 
     public String id;
 
-    @Property("id")
+    @BsonProperty("id")
     public String alternative;
 }

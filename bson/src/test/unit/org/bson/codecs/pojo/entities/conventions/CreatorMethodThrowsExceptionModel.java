@@ -16,16 +16,16 @@
 
 package org.bson.codecs.pojo.entities.conventions;
 
-import org.bson.codecs.pojo.annotations.Creator;
-import org.bson.codecs.pojo.annotations.Property;
+import org.bson.codecs.pojo.annotations.BsonCreator;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
 public final class CreatorMethodThrowsExceptionModel {
     private Integer integerField;
     private String stringField;
     public long longField;
 
-    @Creator
-    public static CreatorMethodThrowsExceptionModel create(@Property("integerField") final Integer integerField) {
+    @BsonCreator
+    public static CreatorMethodThrowsExceptionModel create(@BsonProperty("integerField") final Integer integerField) {
         throw new UnsupportedOperationException("Nope");
     }
 

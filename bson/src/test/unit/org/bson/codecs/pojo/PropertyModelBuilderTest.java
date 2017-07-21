@@ -17,7 +17,7 @@
 package org.bson.codecs.pojo;
 
 import org.bson.codecs.IntegerCodec;
-import org.bson.codecs.pojo.annotations.Property;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.junit.Test;
 
 import java.lang.annotation.Annotation;
@@ -39,9 +39,9 @@ public final class PropertyModelBuilderTest {
     @Test
     public void testFieldMapping() throws NoSuchFieldException {
         PropertyModelBuilder<Integer> propertyModelBuilder = createPropertyModelBuilder(PROPERTY_METADATA);
-        assertEquals(FIELD_NAME, propertyModelBuilder.getPropertyName());
-        assertEquals(FIELD_NAME, propertyModelBuilder.getDocumentPropertyName());
-        assertTrue(propertyModelBuilder.getAnnotations().isEmpty());
+        assertEquals(FIELD_NAME, propertyModelBuilder.getName());
+        assertEquals(FIELD_NAME, propertyModelBuilder.getWriteName());
+        assertTrue(propertyModelBuilder.getReadAnnotations().isEmpty());
         assertNull(propertyModelBuilder.isDiscriminatorEnabled());
     }
 
@@ -50,28 +50,36 @@ public final class PropertyModelBuilderTest {
         IntegerCodec codec = new IntegerCodec();
         PropertyModelBuilder<Integer> propertyModelBuilder = createPropertyModelBuilder(PROPERTY_METADATA)
                 .codec(codec)
-                .documentPropertyName("altDocumentFieldName")
-                .annotations(ANNOTATIONS)
+                .writeName("altDocumentFieldName")
+                .readAnnotations(ANNOTATIONS)
                 .propertySerialization(CUSTOM_SERIALIZATION)
                 .typeData(TypeData.builder(Integer.class).build())
                 .propertyAccessor(FIELD_ACCESSOR)
                 .discriminatorEnabled(false);
 
-        assertEquals(FIELD_NAME, propertyModelBuilder.getPropertyName());
-        assertEquals("altDocumentFieldName", propertyModelBuilder.getDocumentPropertyName());
+        assertEquals(FIELD_NAME, propertyModelBuilder.getName());
+        assertEquals("altDocumentFieldName", propertyModelBuilder.getWriteName());
         assertEquals(codec, propertyModelBuilder.getCodec());
         assertEquals(Integer.class, propertyModelBuilder.getTypeData().getType());
-        assertEquals(ANNOTATIONS, propertyModelBuilder.getAnnotations());
+        assertEquals(ANNOTATIONS, propertyModelBuilder.getReadAnnotations());
         assertEquals(CUSTOM_SERIALIZATION, propertyModelBuilder.getPropertySerialization());
         assertEquals(FIELD_ACCESSOR, propertyModelBuilder.getPropertyAccessor());
         assertFalse(propertyModelBuilder.isDiscriminatorEnabled());
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testMustBeReadableOrWritable() {
+        createPropertyModelBuilder(PROPERTY_METADATA)
+                .readName(null)
+                .writeName(null)
+                .build();
+    }
+
     private static final List<Annotation> ANNOTATIONS = Collections.<Annotation>singletonList(
-            new Property() {
+            new BsonProperty() {
                 @Override
                 public Class<? extends Annotation> annotationType() {
-                    return Property.class;
+                    return BsonProperty.class;
                 }
 
                 @Override

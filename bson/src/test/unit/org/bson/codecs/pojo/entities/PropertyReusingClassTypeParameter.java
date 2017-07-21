@@ -16,14 +16,14 @@
 
 package org.bson.codecs.pojo.entities;
 
-public final class FieldReusingClassTypeParameter<A> {
+public final class PropertyReusingClassTypeParameter<A> {
 
     public GenericTreeModel<A, A> tree;
 
-    public FieldReusingClassTypeParameter(){
+    public PropertyReusingClassTypeParameter(){
     }
 
-    public FieldReusingClassTypeParameter(final GenericTreeModel<A, A> tree) {
+    public PropertyReusingClassTypeParameter(final GenericTreeModel<A, A> tree) {
         this.tree = tree;
     }
 
@@ -36,7 +36,7 @@ public final class FieldReusingClassTypeParameter<A> {
             return false;
         }
 
-        FieldReusingClassTypeParameter<?> that = (FieldReusingClassTypeParameter<?>) o;
+        PropertyReusingClassTypeParameter<?> that = (PropertyReusingClassTypeParameter<?>) o;
 
         if (tree != null ? !tree.equals(that.tree) : that.tree != null) {
             return false;

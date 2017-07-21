@@ -16,16 +16,16 @@
 
 package org.bson.codecs.pojo.entities.conventions;
 
-import org.bson.codecs.pojo.annotations.Discriminator;
-import org.bson.codecs.pojo.annotations.Id;
-import org.bson.codecs.pojo.annotations.Property;
+import org.bson.codecs.pojo.annotations.BsonDiscriminator;
+import org.bson.codecs.pojo.annotations.BsonId;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
-@Discriminator(key = "_cls")
+@BsonDiscriminator(key = "_cls")
 public final class AnnotationInheritedModel extends AnnotationAbstract {
 
-    @Id
+    @BsonId
     public String customId;
 
-    @Property(useDiscriminator = true)
+    @BsonProperty(useDiscriminator = true)
     public AnnotationModel child;
 }

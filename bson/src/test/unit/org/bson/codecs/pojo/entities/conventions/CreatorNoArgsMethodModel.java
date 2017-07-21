@@ -16,14 +16,14 @@
 
 package org.bson.codecs.pojo.entities.conventions;
 
-import org.bson.codecs.pojo.annotations.Creator;
+import org.bson.codecs.pojo.annotations.BsonCreator;
 
 public final class CreatorNoArgsMethodModel {
     private Integer integerField;
     private String stringField;
     public long longField;
 
-    @Creator
+    @BsonCreator
     public static CreatorNoArgsMethodModel create() {
         return new CreatorNoArgsMethodModel();
     }

@@ -16,14 +16,19 @@
 
 package org.bson.codecs.pojo.entities;
 
-public final class NestedFieldReusingClassTypeParameter {
-    public PropertyReusingClassTypeParameter<String> nested;
+import org.bson.codecs.pojo.annotations.BsonCreator;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
-    public NestedFieldReusingClassTypeParameter() {
+public final class AsymmetricalCreatorModel {
+    private final String baz;
+
+    @BsonCreator
+    public AsymmetricalCreatorModel(@BsonProperty("a") final String a, @BsonProperty("b") final String b) {
+        this.baz = a + b;
     }
 
-    public NestedFieldReusingClassTypeParameter(final PropertyReusingClassTypeParameter<String> nested) {
-        this.nested = nested;
+    public String getBaz() {
+        return baz;
     }
 
     @Override
@@ -35,9 +40,9 @@ public final class NestedFieldReusingClassTypeParameter {
             return false;
         }
 
-        NestedFieldReusingClassTypeParameter that = (NestedFieldReusingClassTypeParameter) o;
+        AsymmetricalCreatorModel that = (AsymmetricalCreatorModel) o;
 
-        if (nested != null ? !nested.equals(that.nested) : that.nested != null) {
+        if (getBaz() != null ? !getBaz().equals(that.getBaz()) : that.getBaz() != null) {
             return false;
         }
 
@@ -46,6 +51,6 @@ public final class NestedFieldReusingClassTypeParameter {
 
     @Override
     public int hashCode() {
-        return nested != null ? nested.hashCode() : 0;
+        return getBaz() != null ? getBaz().hashCode() : 0;
     }
 }

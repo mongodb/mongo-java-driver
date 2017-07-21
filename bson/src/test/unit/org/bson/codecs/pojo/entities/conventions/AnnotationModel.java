@@ -16,20 +16,20 @@
 
 package org.bson.codecs.pojo.entities.conventions;
 
-import org.bson.codecs.pojo.annotations.Discriminator;
-import org.bson.codecs.pojo.annotations.Id;
-import org.bson.codecs.pojo.annotations.Property;
+import org.bson.codecs.pojo.annotations.BsonDiscriminator;
+import org.bson.codecs.pojo.annotations.BsonId;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
-@Discriminator(value = "MyAnnotationModel", key = "_cls")
+@BsonDiscriminator(value = "MyAnnotationModel", key = "_cls")
 public final class AnnotationModel {
 
-    @Id()
+    @BsonId()
     public String customId;
 
-    @Property(useDiscriminator = false)
+    @BsonProperty(useDiscriminator = false)
     public AnnotationModel child;
 
-    @Property("renamed")
+    @BsonProperty("renamed")
     public AnnotationModel alternative;
 
 }

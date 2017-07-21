@@ -35,7 +35,7 @@ import java.lang.annotation.Target;
 @Documented
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
-public @interface Discriminator {
+public @interface BsonDiscriminator {
 
     /**
      * @return the discriminator value to use for this type.

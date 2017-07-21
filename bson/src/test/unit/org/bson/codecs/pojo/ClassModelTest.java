@@ -19,6 +19,7 @@ package org.bson.codecs.pojo;
 import org.bson.codecs.pojo.entities.CollectionNestedPojoModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.bson.codecs.pojo.entities.NestedGenericHolderMapModel;
+import org.bson.codecs.pojo.entities.PropertySelectionModel;
 import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationInheritedModel;
@@ -32,6 +33,7 @@ import java.util.HashSet;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 public final class ClassModelTest {
@@ -53,7 +55,7 @@ public final class ClassModelTest {
 
     @Test
     @SuppressWarnings("rawtypes")
-    public void testCollectionNestedPojoModelFieldTypes() {
+    public void testCollectionNestedPojoModelPropertyTypes() {
         TypeData<String> string = TypeData.builder(String.class).build();
         TypeData<SimpleModel> simple = TypeData.builder(SimpleModel.class).build();
         TypeData<ArrayList> list = TypeData.builder(ArrayList.class).addTypeParameter(simple).build();
@@ -86,6 +88,15 @@ public final class ClassModelTest {
         assertEquals(listMap, classModel.getPropertyModel("listMapSimple").getTypeData());
         assertEquals(listMapList, classModel.getPropertyModel("listMapListSimple").getTypeData());
         assertEquals(listMapSet, classModel.getPropertyModel("listMapSetSimple").getTypeData());
+    }
+
+    @Test
+    public void testPropertySelection() {
+        ClassModel<PropertySelectionModel> classModel = ClassModel.builder(PropertySelectionModel.class).build();
+
+        assertEquals(2, classModel.getPropertyModels().size());
+        assertNotNull(classModel.getPropertyModel("stringField"));
+        assertNotNull(classModel.getPropertyModel("finalStringField"));
     }
 
     @Test
@@ -128,7 +139,7 @@ public final class ClassModelTest {
         assertEquals("MyAnnotationModel", classModel.getDiscriminator());
         assertEquals(propertyModel, classModel.getIdPropertyModel());
         assertEquals(3, classModel.getPropertyModels().size());
-        assertEquals(propertyModel, classModel.getPropertyModel(propertyModel.getDocumentPropertyName()));
+        assertEquals(propertyModel, classModel.getPropertyModel("customId"));
         assertTrue(classModel.getInstanceCreatorFactory() instanceof InstanceCreatorFactoryImpl);
     }
 
@@ -141,9 +152,8 @@ public final class ClassModelTest {
 
         assertEquals(2, classModel.getPropertyModels().size());
 
-        PropertyModel<?> propertyModel = classModel.getPropertyModel("_id");
+        PropertyModel<?> propertyModel = classModel.getPropertyModel("customId");
         assertEquals(propertyModel, classModel.getIdPropertyModel());
-        assertEquals(propertyModel, classModel.getPropertyModel(propertyModel.getDocumentPropertyName()));
 
         propertyModel = classModel.getPropertyModel("child");
         assertTrue(propertyModel.useDiscriminator());

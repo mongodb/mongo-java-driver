@@ -16,7 +16,6 @@
 
 package org.bson.codecs.pojo;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,7 +36,6 @@ public final class ClassModel<T> {
     private final PropertyModel<?> idProperty;
     private final List<PropertyModel<?>> propertyModels;
     private final Map<String, TypeParameterMap> propertyNameToTypeParameterMap;
-    private final Map<String, PropertyModel<?>> propertyMap;
 
     ClassModel(final Class<T> clazz, final Map<String, TypeParameterMap> propertyNameToTypeParameterMap,
                final InstanceCreatorFactory<T> instanceCreatorFactory, final Boolean discriminatorEnabled, final String discriminatorKey,
@@ -52,7 +50,6 @@ public final class ClassModel<T> {
         this.discriminator = discriminator;
         this.idProperty = idProperty;
         this.propertyModels = propertyModels;
-        this.propertyMap = generatePropertyModelMap(propertyModels);
     }
 
     /**
@@ -113,13 +110,18 @@ public final class ClassModel<T> {
     }
 
     /**
-     * Gets a {@link PropertyModel} by the document property name.
+     * Gets a {@link PropertyModel} by the property name.
      *
-     * @param documentPropertyName the PropertyModel's document name
+     * @param propertyName the PropertyModel's property name
      * @return the PropertyModel or null if the property is not found
      */
-    public PropertyModel<?> getPropertyModel(final String documentPropertyName) {
-        return propertyMap.get(documentPropertyName);
+    public PropertyModel<?> getPropertyModel(final String propertyName) {
+        for (PropertyModel<?> propertyModel : propertyModels) {
+            if (propertyModel.getName().equals(propertyName)) {
+                return propertyModel;
+            }
+        }
+        return null;
     }
 
     /**
@@ -215,14 +217,6 @@ public final class ClassModel<T> {
 
     Map<String, TypeParameterMap> getPropertyNameToTypeParameterMap() {
         return propertyNameToTypeParameterMap;
-    }
-
-    private static Map<String, PropertyModel<?>> generatePropertyModelMap(final List<PropertyModel<?>> propertyModels) {
-        Map<String, PropertyModel<?>> propertyModelMap = new HashMap<String, PropertyModel<?>>();
-        for (PropertyModel<?> propertyModel : propertyModels) {
-            propertyModelMap.put(propertyModel.getDocumentPropertyName(), propertyModel);
-        }
-        return propertyModelMap;
     }
 
 }

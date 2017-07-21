@@ -16,6 +16,8 @@
 
 package org.bson.codecs.pojo;
 
+import org.bson.codecs.configuration.CodecConfigurationException;
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
@@ -24,6 +26,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static java.lang.String.format;
 import static java.lang.reflect.Modifier.isFinal;
 import static java.lang.reflect.Modifier.isPublic;
 import static java.lang.reflect.Modifier.isStatic;
@@ -33,7 +36,8 @@ final class PropertyMetadata<T> {
     private final String name;
     private final String declaringClassName;
     private final TypeData<T> typeData;
-    private final Map<Class<? extends Annotation>, Annotation> annotations = new HashMap<Class<? extends Annotation>, Annotation>();
+    private final Map<Class<? extends Annotation>, Annotation> readAnnotations = new HashMap<Class<? extends Annotation>, Annotation>();
+    private final Map<Class<? extends Annotation>, Annotation> writeAnnotations = new HashMap<Class<? extends Annotation>, Annotation>();
     private TypeParameterMap typeParameterMap;
     private List<TypeData<?>> typeParameters;
 
@@ -51,14 +55,29 @@ final class PropertyMetadata<T> {
         return name;
     }
 
-    public List<Annotation> getAnnotations() {
-        return new ArrayList<Annotation>(annotations.values());
+    public List<Annotation> getReadAnnotations() {
+        return new ArrayList<Annotation>(readAnnotations.values());
     }
 
-    public PropertyMetadata<T> addAnnotation(final Annotation annotation) {
-        if (!annotations.containsKey(annotation.annotationType())) {
-            annotations.put(annotation.annotationType(), annotation);
+    public PropertyMetadata<T> addReadAnnotation(final Annotation annotation) {
+        if (readAnnotations.containsKey(annotation.annotationType())) {
+            throw new CodecConfigurationException(format("Read annotation %s for '%s' already exists in %s", annotation.annotationType(),
+                    name, declaringClassName));
         }
+        readAnnotations.put(annotation.annotationType(), annotation);
+        return this;
+    }
+
+    public List<Annotation> getWriteAnnotations() {
+        return new ArrayList<Annotation>(writeAnnotations.values());
+    }
+
+    public PropertyMetadata<T> addWriteAnnotation(final Annotation annotation) {
+        if (writeAnnotations.containsKey(annotation.annotationType())) {
+            throw new CodecConfigurationException(format("Write annotation %s for '%s' already exists in %s", annotation.annotationType(),
+                    name, declaringClassName));
+        }
+        writeAnnotations.put(annotation.annotationType(), annotation);
         return this;
     }
 

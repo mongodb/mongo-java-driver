@@ -16,8 +16,8 @@
 
 package org.bson.codecs.pojo.entities.conventions;
 
-import org.bson.codecs.pojo.annotations.Creator;
-import org.bson.codecs.pojo.annotations.Property;
+import org.bson.codecs.pojo.annotations.BsonCreator;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
 public final class CreatorInvalidTypeMethodModel {
     private final Integer integerField;
@@ -28,8 +28,8 @@ public final class CreatorInvalidTypeMethodModel {
         this.integerField = integerField;
     }
 
-    @Creator
-    public static CreatorInvalidTypeMethodModel create(@Property("integerField") final String integerField) {
+    @BsonCreator
+    public static CreatorInvalidTypeMethodModel create(@BsonProperty("integerField") final String integerField) {
         return new CreatorInvalidTypeMethodModel(Integer.parseInt(integerField));
     }
 
