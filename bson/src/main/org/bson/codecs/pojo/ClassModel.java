@@ -16,12 +16,11 @@
 
 package org.bson.codecs.pojo;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * This model represents the metadata for a class and all its fields.
+ * This model represents the metadata for a class and all its properties.
  *
  * @param <T> The type of the class the ClassModel represents
  * @since 3.5
@@ -34,25 +33,23 @@ public final class ClassModel<T> {
     private final boolean discriminatorEnabled;
     private final String discriminatorKey;
     private final String discriminator;
-    private final FieldModel<?> idField;
-    private final List<FieldModel<?>> fieldModels;
-    private final Map<String, TypeParameterMap> fieldNameToTypeParameterMap;
-    private final Map<String, FieldModel<?>> fieldMap;
+    private final PropertyModel<?> idProperty;
+    private final List<PropertyModel<?>> propertyModels;
+    private final Map<String, TypeParameterMap> propertyNameToTypeParameterMap;
 
-    ClassModel(final Class<T> clazz, final Map<String, TypeParameterMap> fieldNameToTypeParameterMap,
+    ClassModel(final Class<T> clazz, final Map<String, TypeParameterMap> propertyNameToTypeParameterMap,
                final InstanceCreatorFactory<T> instanceCreatorFactory, final Boolean discriminatorEnabled, final String discriminatorKey,
-               final String discriminator, final FieldModel<?> idField, final List<FieldModel<?>> fieldModels) {
+               final String discriminator, final PropertyModel<?> idProperty, final List<PropertyModel<?>> propertyModels) {
         this.name = clazz.getSimpleName();
         this.type = clazz;
         this.hasTypeParameters = clazz.getTypeParameters().length > 0;
-        this.fieldNameToTypeParameterMap = fieldNameToTypeParameterMap;
+        this.propertyNameToTypeParameterMap = propertyNameToTypeParameterMap;
         this.instanceCreatorFactory = instanceCreatorFactory;
         this.discriminatorEnabled = discriminatorEnabled;
         this.discriminatorKey = discriminatorKey;
         this.discriminator = discriminator;
-        this.idField = idField;
-        this.fieldModels = fieldModels;
-        this.fieldMap = generateFieldMap(fieldModels);
+        this.idProperty = idProperty;
+        this.propertyModels = propertyModels;
     }
 
     /**
@@ -113,31 +110,36 @@ public final class ClassModel<T> {
     }
 
     /**
-     * Gets a field by the document field name.
+     * Gets a {@link PropertyModel} by the property name.
      *
-     * @param documentFieldName the fieldModel's document name
-     * @return the field or null if the field is not found
+     * @param propertyName the PropertyModel's property name
+     * @return the PropertyModel or null if the property is not found
      */
-    public FieldModel<?> getFieldModel(final String documentFieldName) {
-        return fieldMap.get(documentFieldName);
+    public PropertyModel<?> getPropertyModel(final String propertyName) {
+        for (PropertyModel<?> propertyModel : propertyModels) {
+            if (propertyModel.getName().equals(propertyName)) {
+                return propertyModel;
+            }
+        }
+        return null;
     }
 
     /**
-     * Returns all the fields on this model
+     * Returns all the properties on this model
      *
-     * @return the list of fields
+     * @return the list of properties
      */
-    public List<FieldModel<?>> getFieldModels() {
-        return fieldModels;
+    public List<PropertyModel<?>> getPropertyModels() {
+        return propertyModels;
     }
 
     /**
-     * Returns the {@link FieldModel} mapped as the id field for this ClassModel
+     * Returns the {@link PropertyModel} mapped as the id property for this ClassModel
      *
-     * @return the FieldModel for the id
+     * @return the PropertyModel for the id
      */
-    public FieldModel<?> getIdFieldModel() {
-        return idField;
+    public PropertyModel<?> getIdPropertyModel() {
+        return idProperty;
     }
 
     /**
@@ -183,13 +185,13 @@ public final class ClassModel<T> {
         if (getDiscriminator() != null ? !getDiscriminator().equals(that.getDiscriminator()) : that.getDiscriminator() != null) {
             return false;
         }
-        if (idField != null ? !idField.equals(that.idField) : that.idField != null) {
+        if (idProperty != null ? !idProperty.equals(that.idProperty) : that.idProperty != null) {
             return false;
         }
-        if (!getFieldModels().equals(that.getFieldModels())) {
+        if (!getPropertyModels().equals(that.getPropertyModels())) {
             return false;
         }
-        if (!getFieldNameToTypeParameterMap().equals(that.getFieldNameToTypeParameterMap())) {
+        if (!getPropertyNameToTypeParameterMap().equals(that.getPropertyNameToTypeParameterMap())) {
             return false;
         }
 
@@ -203,9 +205,9 @@ public final class ClassModel<T> {
         result = 31 * result + (discriminatorEnabled ? 1 : 0);
         result = 31 * result + (getDiscriminatorKey() != null ? getDiscriminatorKey().hashCode() : 0);
         result = 31 * result + (getDiscriminator() != null ? getDiscriminator().hashCode() : 0);
-        result = 31 * result + (idField != null ? idField.hashCode() : 0);
-        result = 31 * result + getFieldModels().hashCode();
-        result = 31 * result + getFieldNameToTypeParameterMap().hashCode();
+        result = 31 * result + (idProperty != null ? idProperty.hashCode() : 0);
+        result = 31 * result + getPropertyModels().hashCode();
+        result = 31 * result + getPropertyNameToTypeParameterMap().hashCode();
         return result;
     }
 
@@ -213,16 +215,8 @@ public final class ClassModel<T> {
         return instanceCreatorFactory;
     }
 
-    Map<String, TypeParameterMap> getFieldNameToTypeParameterMap() {
-        return fieldNameToTypeParameterMap;
-    }
-
-    private static Map<String, FieldModel<?>> generateFieldMap(final List<FieldModel<?>> fieldModels) {
-        Map<String, FieldModel<?>> fieldMap = new HashMap<String, FieldModel<?>>();
-        for (FieldModel<?> fieldModel : fieldModels) {
-            fieldMap.put(fieldModel.getDocumentFieldName(), fieldModel);
-        }
-        return fieldMap;
+    Map<String, TypeParameterMap> getPropertyNameToTypeParameterMap() {
+        return propertyNameToTypeParameterMap;
     }
 
 }

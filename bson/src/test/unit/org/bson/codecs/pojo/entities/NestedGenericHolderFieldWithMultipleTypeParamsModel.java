@@ -17,21 +17,21 @@
 package org.bson.codecs.pojo.entities;
 
 public final class NestedGenericHolderFieldWithMultipleTypeParamsModel {
-    private GenericHolderModel<FieldWithMultipleTypeParamsModel<Integer, Long, String>> nested;
+    private GenericHolderModel<PropertyWithMultipleTypeParamsModel<Integer, Long, String>> nested;
 
     public NestedGenericHolderFieldWithMultipleTypeParamsModel() {
     }
 
     public NestedGenericHolderFieldWithMultipleTypeParamsModel(
-            final GenericHolderModel<FieldWithMultipleTypeParamsModel<Integer, Long, String>> nested) {
+            final GenericHolderModel<PropertyWithMultipleTypeParamsModel<Integer, Long, String>> nested) {
         this.nested = nested;
     }
 
-    public GenericHolderModel<FieldWithMultipleTypeParamsModel<Integer, Long, String>> getNested() {
+    public GenericHolderModel<PropertyWithMultipleTypeParamsModel<Integer, Long, String>> getNested() {
         return nested;
     }
 
-    public void setNested(final GenericHolderModel<FieldWithMultipleTypeParamsModel<Integer, Long, String>> nested) {
+    public void setNested(final GenericHolderModel<PropertyWithMultipleTypeParamsModel<Integer, Long, String>> nested) {
         this.nested = nested;
     }
 

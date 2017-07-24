@@ -52,23 +52,79 @@ POJOs. Here are the main implementation details:
 
 ```java
 public final class Person {
-    ObjectId id;
-    String name;
-    int age;
-    Address address;
+    private ObjectId id;
+    private String name;
+    private int age;
+    private Address address;
 
     public Person() {
+    }
+
+    public ObjectId getId() {
+        return id;
+    }
+
+    public void setId(final ObjectId id) {
+        this.id = id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(final String name) {
+        this.name = name;
+    }
+
+    public int getAge() {
+        return age;
+    }
+
+    public void setAge(final int age) {
+        this.age = age;
+    }
+
+    public Address getAddress() {
+        return address;
+    }
+
+    public void setAddress(final Address address) {
+        this.address = address;
     }
     
     // Rest of implementation
 }
 
 public final class Address {
-    String street;
-    String city;
-    String zip;
+    private String street;
+    private String city;
+    private String zip;
 
     public Address() {
+    }
+
+    public String getStreet() {
+        return street;
+    }
+
+    public void setStreet(final String street) {
+        this.street = street;
+    }
+
+    public String getCity() {
+        return city;
+    }
+
+    public void setCity(final String city) {
+        this.city = city;
+    }
+
+    public String getZip() {
+        return zip;
+    }
+
+    public void setZip(final String zip) {
+        this.zip = zip;
     }
     
     // Rest of implementation
@@ -177,8 +233,8 @@ To query for Person instance that match certain conditions, pass a filter object
 To facilitate creating filter objects, Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper.
 
 {{% note class="important" %}}
-When querying POJOs you *must* query against the document field name and not the Pojo's field name. 
-By default they are the same but it is possible to change how POJO field names are mapped.
+When querying POJOs you *must* query against the document field name and not the Pojo's property name. 
+By default they are the same but it is possible to change how POJO property names are mapped.
 {{% /note %}}
 
 

@@ -31,6 +31,14 @@ public class MultipleBoundsLevel1<T> extends MultipleBoundsLevel2<Integer> {
         this.level1 = level1;
     }
 
+    public T getLevel1() {
+        return level1;
+    }
+
+    public void setLevel1(final T level1) {
+        this.level1 = level1;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

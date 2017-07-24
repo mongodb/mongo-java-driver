@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,15 +14,14 @@
  * limitations under the License.
  */
 
-package org.bson.codecs.pojo;
+package org.bson.codecs.pojo.entities.conventions;
 
-class FieldModelSerializationImpl<T> implements FieldSerialization<T> {
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
-    FieldModelSerializationImpl() {
-    }
+public final class AnnotationNameCollision {
 
-    @Override
-    public boolean shouldSerialize(final T value) {
-        return value != null;
-    }
+    public String id;
+
+    @BsonProperty("id")
+    public String alternative;
 }

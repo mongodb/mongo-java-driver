@@ -16,7 +16,8 @@
 
 package org.bson.codecs.pojo;
 
-import org.bson.codecs.pojo.annotations.Property;
+import org.bson.codecs.configuration.CodecConfigurationException;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.bson.codecs.pojo.entities.ConcreteCollectionsModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.bson.codecs.pojo.entities.InvalidMapModel;
@@ -48,9 +49,9 @@ public final class ClassModelBuilderTest {
     public void testDefaults() {
         Class<SimpleGenericsModel> clazz = SimpleGenericsModel.class;
         ClassModelBuilder<SimpleGenericsModel> builder = ClassModel.builder(clazz);
-        assertEquals(4, builder.getFields().size());
+        assertEquals(4, builder.getPropertyModelBuilders().size());
         for (Field field : clazz.getDeclaredFields()) {
-            assertEquals(field.getName(), builder.getField(field.getName()).getDocumentFieldName());
+            assertEquals(field.getName(), builder.getProperty(field.getName()).getWriteName());
         }
 
         Map<String, TypeParameterMap> fieldNameToTypeParameterMap = new HashMap<String, TypeParameterMap>();
@@ -59,11 +60,11 @@ public final class ClassModelBuilderTest {
         fieldNameToTypeParameterMap.put("myListField", TypeParameterMap.builder().addIndex(0, 1).build());
         fieldNameToTypeParameterMap.put("myMapField", TypeParameterMap.builder().addIndex(1, 2).build());
 
-        assertEquals(fieldNameToTypeParameterMap, builder.getFieldNameToTypeParameterMap());
+        assertEquals(fieldNameToTypeParameterMap, builder.getPropertyNameToTypeParameterMap());
         assertEquals(2, builder.getConventions().size());
         assertTrue(builder.getAnnotations().isEmpty());
         assertEquals(clazz, builder.getType());
-        assertNull(builder.getIdField());
+        assertNull(builder.getIdPropertyName());
         assertFalse(builder.useDiscriminator());
         assertNull(builder.getDiscriminator());
     }
@@ -73,12 +74,12 @@ public final class ClassModelBuilderTest {
         Class<Object> clazz = Object.class;
         ClassModelBuilder<Object> builder = ClassModel.builder(clazz);
 
-        assertEquals(0, builder.getFields().size());
-        assertTrue(builder.getFieldNameToTypeParameterMap().isEmpty());
+        assertEquals(0, builder.getPropertyModelBuilders().size());
+        assertTrue(builder.getPropertyNameToTypeParameterMap().isEmpty());
         assertEquals(2, builder.getConventions().size());
         assertTrue(builder.getAnnotations().isEmpty());
         assertEquals(clazz, builder.getType());
-        assertNull(builder.getIdField());
+        assertNull(builder.getIdPropertyName());
         assertFalse(builder.useDiscriminator());
         assertNull(builder.getDiscriminator());
     }
@@ -86,19 +87,19 @@ public final class ClassModelBuilderTest {
     @Test
     public void testMappedBoundedClasses() {
         ClassModelBuilder<? extends UpperBoundsModel> builder = ClassModel.builder(UpperBoundsModel.class);
-        assertEquals(Number.class, builder.getField("myGenericField").getTypeData().getType());
+        assertEquals(Number.class, builder.getProperty("myGenericField").getTypeData().getType());
 
         builder = ClassModel.builder(UpperBoundsConcreteModel.class);
-        assertEquals(Long.class, builder.getField("myGenericField").getTypeData().getType());
+        assertEquals(Long.class, builder.getProperty("myGenericField").getTypeData().getType());
     }
 
     @Test
     public void testNestedGenericHolderModel() {
         ClassModelBuilder<NestedGenericHolderModel> builder =
                 ClassModel.builder(NestedGenericHolderModel.class);
-        assertEquals(GenericHolderModel.class, builder.getField("nested").getTypeData().getType());
+        assertEquals(GenericHolderModel.class, builder.getProperty("nested").getTypeData().getType());
         assertEquals(TypeData.builder(GenericHolderModel.class).addTypeParameter(TypeData.builder(String.class).build()).build(),
-                builder.getField("nested").getTypeData());
+                builder.getProperty("nested").getTypeData());
     }
 
     @Test
@@ -106,11 +107,11 @@ public final class ClassModelBuilderTest {
         ClassModelBuilder<ConcreteCollectionsModel> builder =
                 ClassModel.builder(ConcreteCollectionsModel.class);
 
-        assertEquals(ArrayList.class, builder.getField("collection").getTypeData().getType());
-        assertEquals(ArrayList.class, builder.getField("list").getTypeData().getType());
-        assertEquals(LinkedList.class, builder.getField("linked").getTypeData().getType());
-        assertEquals(HashMap.class, builder.getField("map").getTypeData().getType());
-        assertEquals(ConcurrentHashMap.class, builder.getField("concurrent").getTypeData().getType());
+        assertEquals(ArrayList.class, builder.getProperty("collection").getTypeData().getType());
+        assertEquals(ArrayList.class, builder.getProperty("list").getTypeData().getType());
+        assertEquals(LinkedList.class, builder.getProperty("linked").getTypeData().getType());
+        assertEquals(HashMap.class, builder.getProperty("map").getTypeData().getType());
+        assertEquals(ConcurrentHashMap.class, builder.getProperty("concurrent").getTypeData().getType());
     }
 
     @Test
@@ -121,12 +122,12 @@ public final class ClassModelBuilderTest {
                 .discriminatorKey("_cls")
                 .discriminator("myColl")
                 .enableDiscriminator(true)
-                .idField("myIntegerField")
+                .idPropertyName("myIntegerField")
                 .instanceCreatorFactory(TEST_INSTANCE_CREATOR_FACTORY);
 
         assertEquals(TEST_ANNOTATIONS, builder.getAnnotations());
         assertEquals(TEST_CONVENTIONS, builder.getConventions());
-        assertEquals("myIntegerField", builder.getIdField());
+        assertEquals("myIntegerField", builder.getIdPropertyName());
         assertEquals(SimpleGenericsModel.class, builder.getType());
         assertTrue(builder.useDiscriminator());
         assertEquals("_cls", builder.getDiscriminatorKey());
@@ -137,24 +138,24 @@ public final class ClassModelBuilderTest {
     @Test
     public void testCanRemoveField() {
         ClassModelBuilder<SimpleGenericsModel> builder = ClassModel.builder(SimpleGenericsModel.class)
-                .idField("ID");
-        assertEquals(4, builder.getFields().size());
-        builder.removeField("myIntegerField");
-        assertEquals(3, builder.getFields().size());
+                .idPropertyName("ID");
+        assertEquals(4, builder.getPropertyModelBuilders().size());
+        builder.removeProperty("myIntegerField");
+        assertEquals(3, builder.getPropertyModelBuilders().size());
 
-        builder.removeField("myIntegerField");
-        assertEquals(3, builder.getFields().size());
+        builder.removeProperty("myIntegerField");
+        assertEquals(3, builder.getPropertyModelBuilders().size());
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testValidationIdField() {
-        ClassModel.builder(SimpleGenericsModel.class).idField("ID").build();
+    @Test(expected = CodecConfigurationException.class)
+    public void testValidationIdProperty() {
+        ClassModel.builder(SimpleGenericsModel.class).idPropertyName("ID").build();
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test(expected = CodecConfigurationException.class)
     public void testValidationDuplicateDocumentFieldName() {
         ClassModelBuilder<SimpleGenericsModel> builder = ClassModel.builder(SimpleGenericsModel.class);
-        builder.getField("myIntegerField").documentFieldName("myGenericField");
+        builder.getProperty("myIntegerField").writeName("myGenericField");
         builder.build();
     }
 
@@ -164,14 +165,14 @@ public final class ClassModelBuilderTest {
     }
 
     private static final List<Annotation> TEST_ANNOTATIONS = Collections.<Annotation>singletonList(
-            new Property() {
+            new BsonProperty() {
                 @Override
                 public Class<? extends Annotation> annotationType() {
-                    return Property.class;
+                    return BsonProperty.class;
                 }
 
                 @Override
-                public String name() {
+                public String value() {
                     return "";
                 }
 

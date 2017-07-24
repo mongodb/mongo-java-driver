@@ -23,10 +23,10 @@ import static java.util.Collections.unmodifiableMap;
 
 
 /**
- * Maps the index of a class's generic parameter type index to a field's.
+ * Maps the index of a class's generic parameter type index to a property's.
  */
 final class TypeParameterMap {
-    private final Map<Integer, Integer> fieldToClassParamIndexMap;
+    private final Map<Integer, Integer> propertyToClassParamIndexMap;
 
     /**
      * Creates a new builder for the TypeParameterMap
@@ -38,49 +38,49 @@ final class TypeParameterMap {
     }
 
     /**
-     * Returns a mapping of field type parameter index to the class type parameter index.
+     * Returns a mapping of property type parameter index to the class type parameter index.
      *
-     * <p>Note: A field index of -1, means the class's parameter type represents the whole field</p>
+     * <p>Note: A property index of -1, means the class's parameter type represents the whole property</p>
      *
-     * @return a mapping of field type parameter index to the class type parameter index.
+     * @return a mapping of property type parameter index to the class type parameter index.
      */
-    Map<Integer, Integer> getFieldToClassParamIndexMap() {
-        return fieldToClassParamIndexMap;
+    Map<Integer, Integer> getPropertyToClassParamIndexMap() {
+        return propertyToClassParamIndexMap;
     }
 
     boolean hasTypeParameters() {
-        return !fieldToClassParamIndexMap.isEmpty();
+        return !propertyToClassParamIndexMap.isEmpty();
     }
 
     /**
      * A builder for mapping field type parameter indices to the class type parameter indices
      */
     static final class Builder {
-        private final Map<Integer, Integer> fieldToClassParamIndexMap = new HashMap<Integer, Integer>();
+        private final Map<Integer, Integer> propertyToClassParamIndexMap = new HashMap<Integer, Integer>();
 
         private Builder() {
         }
 
         /**
-         * Adds the type parameter index for a class that represents the whole field
+         * Adds the type parameter index for a class that represents the whole property
          *
          * @param classTypeParameterIndex the class's type parameter index that represents the whole field
          * @return this
          */
         Builder addIndex(final int classTypeParameterIndex) {
-            fieldToClassParamIndexMap.put(-1, classTypeParameterIndex);
+            propertyToClassParamIndexMap.put(-1, classTypeParameterIndex);
             return this;
         }
 
         /**
-         * Adds a mapping that represents the fields
+         * Adds a mapping that represents the property
          *
-         * @param fieldTypeParameterIndex the field's type parameter index
+         * @param propertyTypeParameterIndex the property's type parameter index
          * @param classTypeParameterIndex the class's type parameter index
          * @return this
          */
-        Builder addIndex(final int fieldTypeParameterIndex, final int classTypeParameterIndex) {
-            fieldToClassParamIndexMap.put(fieldTypeParameterIndex, classTypeParameterIndex);
+        Builder addIndex(final int propertyTypeParameterIndex, final int classTypeParameterIndex) {
+            propertyToClassParamIndexMap.put(propertyTypeParameterIndex, classTypeParameterIndex);
             return this;
         }
 
@@ -88,17 +88,17 @@ final class TypeParameterMap {
          * @return the TypeParameterMap
          */
         TypeParameterMap build() {
-            if (fieldToClassParamIndexMap.size() > 1 && fieldToClassParamIndexMap.containsKey(-1)) {
+            if (propertyToClassParamIndexMap.size() > 1 && propertyToClassParamIndexMap.containsKey(-1)) {
                 throw new IllegalStateException("You cannot have a generic field that also has type parameters.");
             }
-            return new TypeParameterMap(fieldToClassParamIndexMap);
+            return new TypeParameterMap(propertyToClassParamIndexMap);
         }
     }
 
     @Override
     public String toString() {
         return "TypeParameterMap{"
-                + "fieldToClassParamIndexMap=" + fieldToClassParamIndexMap
+                + "fieldToClassParamIndexMap=" + propertyToClassParamIndexMap
                 + "}";
     }
 
@@ -113,7 +113,7 @@ final class TypeParameterMap {
 
         TypeParameterMap that = (TypeParameterMap) o;
 
-        if (!getFieldToClassParamIndexMap().equals(that.getFieldToClassParamIndexMap())) {
+        if (!getPropertyToClassParamIndexMap().equals(that.getPropertyToClassParamIndexMap())) {
             return false;
         }
 
@@ -122,10 +122,10 @@ final class TypeParameterMap {
 
     @Override
     public int hashCode() {
-        return getFieldToClassParamIndexMap().hashCode();
+        return getPropertyToClassParamIndexMap().hashCode();
     }
 
-    private TypeParameterMap(final Map<Integer, Integer> fieldToClassParamIndexMap) {
-        this.fieldToClassParamIndexMap = unmodifiableMap(fieldToClassParamIndexMap);
+    private TypeParameterMap(final Map<Integer, Integer> propertyToClassParamIndexMap) {
+        this.propertyToClassParamIndexMap = unmodifiableMap(propertyToClassParamIndexMap);
     }
 }

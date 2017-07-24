@@ -17,12 +17,12 @@
 package org.bson.codecs.pojo.entities;
 
 public final class NestedFieldReusingClassTypeParameter {
-    private FieldReusingClassTypeParameter<String> nested;
+    public PropertyReusingClassTypeParameter<String> nested;
 
     public NestedFieldReusingClassTypeParameter() {
     }
 
-    public NestedFieldReusingClassTypeParameter(final FieldReusingClassTypeParameter<String> nested) {
+    public NestedFieldReusingClassTypeParameter(final PropertyReusingClassTypeParameter<String> nested) {
         this.nested = nested;
     }
 
