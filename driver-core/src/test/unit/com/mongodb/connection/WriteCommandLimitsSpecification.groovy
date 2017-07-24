@@ -41,7 +41,8 @@ class WriteCommandLimitsSpecification extends Specification {
                                                MessageSettings.builder().maxBatchCount(3).build(), inserts);
 
         when:
-        def nextMessage = message.encode(buffer)
+        message.encode(buffer)
+        def nextMessage = (InsertCommandMessage) message.getEncodingMetadata().nextMessage
 
         then:
         nextMessage != null
@@ -60,7 +61,8 @@ class WriteCommandLimitsSpecification extends Specification {
                                                MessageSettings.builder().maxDocumentSize(113).build(), inserts);
 
         when:
-        def nextMessage = message.encode(buffer)
+        message.encode(buffer)
+        def nextMessage = (InsertCommandMessage) message.getEncodingMetadata().nextMessage
 
         then:
         nextMessage != null
@@ -79,7 +81,8 @@ class WriteCommandLimitsSpecification extends Specification {
                                                MessageSettings.builder().maxBatchCount(3).build(), deletes);
 
         when:
-        def nextMessage = message.encode(buffer)
+        message.encode(buffer)
+        def nextMessage = (DeleteCommandMessage) message.getEncodingMetadata().nextMessage
 
         then:
         nextMessage != null
@@ -98,7 +101,8 @@ class WriteCommandLimitsSpecification extends Specification {
                                                MessageSettings.builder().maxDocumentSize(187).build(), deletes);
 
         when:
-        def nextMessage = message.encode(buffer)
+        message.encode(buffer)
+        def nextMessage = (DeleteCommandMessage) message.getEncodingMetadata().nextMessage
 
         then:
         nextMessage != null
@@ -117,7 +121,8 @@ class WriteCommandLimitsSpecification extends Specification {
                                                MessageSettings.builder().maxBatchCount(3).build(), replaces);
 
         when:
-        def nextMessage = message.encode(buffer)
+        message.encode(buffer)
+        def nextMessage = (UpdateCommandMessage) message.getEncodingMetadata().nextMessage
 
         then:
         nextMessage != null
@@ -136,7 +141,8 @@ class WriteCommandLimitsSpecification extends Specification {
                                                MessageSettings.builder().maxDocumentSize(175).build(), replaces);
 
         when:
-        def nextMessage = message.encode(buffer)
+        message.encode(buffer)
+        def nextMessage = (UpdateCommandMessage) message.getEncodingMetadata().nextMessage
 
         then:
         nextMessage != null

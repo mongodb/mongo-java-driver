@@ -49,6 +49,16 @@ public class TestConnectionPool implements ConnectionPool {
             }
 
             @Override
+            public ResponseBuffers sendAndReceive(final CommandMessage message) {
+                throw new UnsupportedOperationException("Not implemented yet!");
+            }
+
+            @Override
+            public void sendAndReceiveAsync(final CommandMessage message, final SingleResultCallback<ResponseBuffers> callback) {
+                throw new UnsupportedOperationException("Not implemented yet!");
+            }
+
+            @Override
             public ResponseBuffers receiveMessage(final int responseTo) {
                 throw new UnsupportedOperationException("Not implemented yet!");
             }

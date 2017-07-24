@@ -131,6 +131,28 @@ class TestInternalConnection implements InternalConnection {
         }
     }
 
+    @Override
+    public ResponseBuffers sendAndReceive(final CommandMessage message) {
+        ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this);
+        try {
+            message.encode(bsonOutput);
+            sendMessage(bsonOutput.getByteBuffers(), message.getId());
+            return receiveMessage(message.getId());
+        } finally {
+            bsonOutput.close();
+        }
+    }
+
+    @Override
+    public void sendAndReceiveAsync(final CommandMessage message, final SingleResultCallback<ResponseBuffers> callback) {
+        try {
+            ResponseBuffers buffers = sendAndReceive(message);
+            callback.onResult(buffers, null);
+        } catch (MongoException ex) {
+            callback.onResult(null, ex);
+        }
+    }
+
     private ReplyHeader replaceResponseTo(final ReplyHeader header, final int responseTo) {
         ByteBuffer headerByteBuffer = ByteBuffer.allocate(36);
         headerByteBuffer.order(ByteOrder.LITTLE_ENDIAN);

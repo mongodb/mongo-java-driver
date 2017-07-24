@@ -101,7 +101,7 @@ class PlainAuthenticationSpecification extends Specification {
         new InternalStreamConnection(
                 new ServerId(new ClusterId(), new ServerAddress(getConnectionString().getHosts().get(0))),
                 async ? new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings())
-                        : new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()),
+                        : new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()), null,
                 new InternalStreamConnectionInitializer(credential == null ? [] : [new PlainAuthenticator(credential)], null))
     }
 

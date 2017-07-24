@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2015 MongoDB, Inc.
+ * Copyright 2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,50 +12,13 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package com.mongodb.connection;
 
-import com.mongodb.internal.validator.NoOpFieldNameValidator;
-import org.bson.BsonDocument;
-import org.bson.FieldNameValidator;
-import org.bson.io.BsonOutput;
-
-/**
- * A command message that uses OP_QUERY to send the command.
- *
- * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
- */
-class CommandMessage extends RequestMessage {
-    private final boolean slaveOk;
-    private final BsonDocument command;
-    private final FieldNameValidator validator;
-
-    CommandMessage(final String collectionName, final BsonDocument command, final boolean slaveOk, final MessageSettings settings) {
-        this(collectionName, command, slaveOk, new NoOpFieldNameValidator(), settings);
-    }
-
-    CommandMessage(final String collectionName, final BsonDocument command, final boolean slaveOk,
-                   final FieldNameValidator validator, final MessageSettings settings) {
-        super(collectionName, OpCode.OP_QUERY, settings);
-        this.slaveOk = slaveOk;
-        this.command = command;
-        this.validator = validator;
-    }
-
-    @Override
-    protected RequestMessage encodeMessageBody(final BsonOutput bsonOutput, final int messageStartPosition) {
-        return encodeMessageBodyWithMetadata(bsonOutput, messageStartPosition).getNextMessage();
-    }
-
-    @Override
-    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final int messageStartPosition) {
-        bsonOutput.writeInt32(slaveOk ? 1 << 2 : 0);
-        bsonOutput.writeCString(getCollectionName());
-        bsonOutput.writeInt32(0);
-        bsonOutput.writeInt32(-1);
-        int firstDocumentPosition = bsonOutput.getPosition();
-        addDocument(command, bsonOutput, validator);
-        return new EncodingMetadata(null, firstDocumentPosition);
+abstract class CommandMessage extends RequestMessage {
+    CommandMessage(final String collectionName, final OpCode opCode, final MessageSettings settings) {
+        super(collectionName, opCode, settings);
     }
 }

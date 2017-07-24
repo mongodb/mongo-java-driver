@@ -49,6 +49,7 @@ abstract class RequestMessage {
     private final MessageSettings settings;
     private final int id;
     private final OpCode opCode;
+    private EncodingMetadata encodingMetadata;
 
     static class EncodingMetadata {
         private final RequestMessage nextMessage;
@@ -111,7 +112,7 @@ abstract class RequestMessage {
      * @return the namespace, which may be null for some message types
      */
     public String getNamespace() {
-        return getCollectionName() != null ? getCollectionName() : null;
+        return getCollectionName();
     }
 
     /**
@@ -127,25 +128,21 @@ abstract class RequestMessage {
      * Encoded the message to the given output.
      *
      * @param bsonOutput the output
-     * @return the next message to encode, if the current message is unable to fit all of its contents in a single message due to limits
-     * being exceeded
      */
-    public RequestMessage encode(final BsonOutput bsonOutput) {
-        return encodeWithMetadata(bsonOutput).getNextMessage();
-    }
-
-    /**
-     * Encoded the message to the given output.
-     *
-     * @param bsonOutput the output
-     * @return the next message to encode, if the current message is unable to fit all of its contents in a single message due to limits
-     * being exceeded
-     */
-    public EncodingMetadata encodeWithMetadata(final BsonOutput bsonOutput) {
+    public void encode(final BsonOutput bsonOutput) {
         int messageStartPosition = bsonOutput.getPosition();
         writeMessagePrologue(bsonOutput);
         EncodingMetadata encodingMetadata = encodeMessageBodyWithMetadata(bsonOutput, messageStartPosition);
         backpatchMessageLength(messageStartPosition, bsonOutput);
+        this.encodingMetadata = encodingMetadata;
+    }
+
+    /**
+     * Gets the encoding metadata from the last attempt to encode this message.
+     *
+     * @return Get metadata from the last attempt to encode this message. Returns null if there has not yet been an attempt.
+     */
+    public EncodingMetadata getEncodingMetadata() {
         return encodingMetadata;
     }
 
@@ -160,15 +157,6 @@ abstract class RequestMessage {
         bsonOutput.writeInt32(0); // response to
         bsonOutput.writeInt32(opCode.getValue());
     }
-
-    /**
-     * Encode the message body to the given output.
-     *
-     * @param bsonOutput the output
-     * @param messageStartPosition the start position of the message
-     * @return the next message to encode, if the contents of this message need to overflow into the next
-     */
-    protected abstract RequestMessage encodeMessageBody(BsonOutput bsonOutput, int messageStartPosition);
 
     /**
      * Encode the message body to the given output.

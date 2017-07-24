@@ -84,6 +84,16 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
         }
 
         @Override
+        public ResponseBuffers sendAndReceive(final CommandMessage message) {
+            return null;
+        }
+
+        @Override
+        public void sendAndReceiveAsync(final CommandMessage message, final SingleResultCallback<ResponseBuffers> callback) {
+            callback.onResult(null, null);
+        }
+
+        @Override
         public ResponseBuffers receiveMessage(final int responseTo) {
             return null;
         }

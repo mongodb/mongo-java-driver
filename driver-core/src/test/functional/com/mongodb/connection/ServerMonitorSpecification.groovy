@@ -215,7 +215,7 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
                     }
                 },
                 new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
-                        getSslSettings()), getCredentialList(), null, null),
+                        getSslSettings()), getCredentialList(), null, null, null),
                 new TestConnectionPool())
         serverMonitor.start()
         serverMonitor

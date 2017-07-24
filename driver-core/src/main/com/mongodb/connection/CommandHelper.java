@@ -34,9 +34,9 @@ final class CommandHelper {
 
     static void executeCommandAsync(final String database, final BsonDocument command, final InternalConnection internalConnection,
                                     final SingleResultCallback<BsonDocument> callback) {
-        sendMessageAsync(database, command, internalConnection, new SingleResultCallback<CommandMessage>() {
+        sendMessageAsync(database, command, internalConnection, new SingleResultCallback<SimpleCommandMessage>() {
             @Override
-            public void onResult(final CommandMessage result, final Throwable t) {
+            public void onResult(final SimpleCommandMessage result, final Throwable t) {
                   if (t != null) {
                       callback.onResult(null, t);
                   } else {
@@ -79,11 +79,11 @@ final class CommandHelper {
         }
     }
 
-    private static CommandMessage sendMessage(final String database, final BsonDocument command,
-                                              final InternalConnection internalConnection) {
+    private static SimpleCommandMessage sendMessage(final String database, final BsonDocument command,
+                                                    final InternalConnection internalConnection) {
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(internalConnection);
         try {
-            CommandMessage message = new CommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(),
+            SimpleCommandMessage message = new SimpleCommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(),
                                                         command, false, MessageSettings.builder().build());
             message.encode(bsonOutput);
             internalConnection.sendMessage(bsonOutput.getByteBuffers(), message.getId());
@@ -95,11 +95,12 @@ final class CommandHelper {
 
     private static void sendMessageAsync(final String database, final BsonDocument command,
                                          final InternalConnection internalConnection,
-                                         final SingleResultCallback<CommandMessage> callback) {
+                                         final SingleResultCallback<SimpleCommandMessage> callback) {
         final ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(internalConnection);
         try {
-            final CommandMessage message = new CommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(),
-                                                              command, false, MessageSettings.builder().build());
+            final SimpleCommandMessage message =
+                    new SimpleCommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(), command, false,
+                                                    MessageSettings.builder().build());
             message.encode(bsonOutput);
             internalConnection.sendMessageAsync(bsonOutput.getByteBuffers(), message.getId(), new SingleResultCallback<Void>() {
                 @Override
@@ -117,7 +118,7 @@ final class CommandHelper {
         }
     }
 
-    private static BsonDocument receiveCommandResult(final InternalConnection internalConnection, final CommandMessage message) {
+    private static BsonDocument receiveCommandResult(final InternalConnection internalConnection, final SimpleCommandMessage message) {
         BsonDocument result = receiveReply(internalConnection, message).getDocuments().get(0);
         if (!isCommandOk(result)) {
             throw createCommandFailureException(result, internalConnection);
@@ -142,7 +143,7 @@ final class CommandHelper {
         }
     }
 
-    private static void receiveReplyAsync(final InternalConnection internalConnection, final CommandMessage message,
+    private static void receiveReplyAsync(final InternalConnection internalConnection, final SimpleCommandMessage message,
                                           final SingleResultCallback<ReplyMessage<BsonDocument>> callback) {
         internalConnection.receiveMessageAsync(message.getId(),
                                                new SingleResultCallback<ResponseBuffers>() {

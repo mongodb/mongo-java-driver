@@ -92,6 +92,25 @@ class UsageTrackingInternalConnection implements InternalConnection {
     }
 
     @Override
+    public ResponseBuffers sendAndReceive(final CommandMessage message) {
+        ResponseBuffers responseBuffers =  wrapped.sendAndReceive(message);
+        lastUsedAt = System.currentTimeMillis();
+        return responseBuffers;
+    }
+
+    @Override
+    public void sendAndReceiveAsync(final CommandMessage message, final SingleResultCallback<ResponseBuffers> callback) {
+        SingleResultCallback<ResponseBuffers> errHandlingCallback = errorHandlingCallback(new SingleResultCallback<ResponseBuffers>() {
+            @Override
+            public void onResult(final ResponseBuffers result, final Throwable t) {
+                lastUsedAt = System.currentTimeMillis();
+                callback.onResult(result, t);
+            }
+        }, LOGGER);
+        wrapped.sendAndReceiveAsync(message, errHandlingCallback);
+    }
+
+    @Override
     public ResponseBuffers receiveMessage(final int responseTo) {
         ResponseBuffers responseBuffers = wrapped.receiveMessage(responseTo);
         lastUsedAt = System.currentTimeMillis();
