@@ -57,7 +57,7 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
 
     def setupSpec() {
         connection = new InternalStreamConnectionFactory(new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                getCredentialList(), null, null)
+                getCredentialList(), null, null, null)
                 .create(new ServerId(new ClusterId(), getPrimary()))
         connection.open();
     }

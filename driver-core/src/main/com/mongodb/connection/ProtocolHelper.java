@@ -139,9 +139,9 @@ final class ProtocolHelper {
                               .build();
     }
 
-    static RequestMessage encodeMessage(final RequestMessage message, final BsonOutput bsonOutput) {
+    static void encodeMessage(final RequestMessage message, final BsonOutput bsonOutput) {
         try {
-            return message.encode(bsonOutput);
+            message.encode(bsonOutput);
         } catch (RuntimeException e) {
             bsonOutput.close();
             throw e;
@@ -153,7 +153,8 @@ final class ProtocolHelper {
 
     static RequestMessage.EncodingMetadata encodeMessageWithMetadata(final RequestMessage message, final BsonOutput bsonOutput) {
         try {
-            return message.encodeWithMetadata(bsonOutput);
+            message.encode(bsonOutput);
+            return message.getEncodingMetadata();
         } catch (RuntimeException e) {
             bsonOutput.close();
             throw e;

@@ -16,67 +16,70 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
+import com.mongodb.MongoNamespace;
 import com.mongodb.MongoSocketClosedException;
 import com.mongodb.MongoSocketReadException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoSocketWriteException;
 import com.mongodb.ServerAddress;
+import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.event.CommandListener;
+import org.bson.BsonBinaryReader;
+import org.bson.BsonDocument;
 import org.bson.ByteBuf;
+import org.bson.codecs.BsonDocumentCodec;
+import org.bson.codecs.Decoder;
+import org.bson.codecs.RawBsonDocumentCodec;
 import org.bson.io.ByteBufferBsonInput;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.SocketTimeoutException;
 import java.nio.channels.ClosedByInterruptException;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.connection.ByteBufBsonDocument.createOne;
+import static com.mongodb.connection.ProtocolHelper.getCommandFailureException;
+import static com.mongodb.connection.ProtocolHelper.isCommandOk;
+import static com.mongodb.connection.ProtocolHelper.sendCommandFailedEvent;
+import static com.mongodb.connection.ProtocolHelper.sendCommandStartedEvent;
+import static com.mongodb.connection.ProtocolHelper.sendCommandSucceededEvent;
 import static com.mongodb.connection.ReplyHeader.REPLY_HEADER_LENGTH;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 
-// This class is a bit strange currently.  It supports both concurrent synchronous and asynchronous send and receive, but for simplicity is
-// designed to only handle concurrent synchronous OR concurrent asynchronous requests at any given time.  This works because
-// Server#getConnection returns instances of the synchronous Connection class, which Server#getConnectionAsync returns instances of the
-// asynchronous AsyncConnection class, so at any given time a client's view of a connection is either solely synchronous or solely
-// asynchronous.
+@NotThreadSafe
 class InternalStreamConnection implements InternalConnection {
+
+    private static final Set<String> SECURITY_SENSITIVE_COMMANDS = new HashSet<String>(asList(
+            "authenticate",
+            "saslStart",
+            "saslContinue",
+            "getnonce",
+            "createUser",
+            "updateUser",
+            "copydbgetnonce",
+            "copydbsaslstart",
+            "copydb"));
+
+    private static final Logger LOGGER = Loggers.getLogger("connection");
+
     private final ServerId serverId;
     private final StreamFactory streamFactory;
     private final InternalConnectionInitializer connectionInitializer;
-
-    private final Lock writerLock = new ReentrantLock(false);
-    private final Lock readerLock = new ReentrantLock(false);
-
-    private final Deque<SendMessageRequest> writeQueue = new ArrayDeque<SendMessageRequest>();
-    private final Map<Integer, SingleResultCallback<ResponseBuffers>> readQueue =
-    new HashMap<Integer, SingleResultCallback<ResponseBuffers>>();
-    private final Map<Integer, ResponseBuffers> messages = new ConcurrentHashMap<Integer, ResponseBuffers>();
-
-    private boolean isWriting;
-    private boolean isReading;
-
-    private final AtomicReference<CountDownLatch> readingPhase = new AtomicReference<CountDownLatch>(new CountDownLatch(1));
-
-    private volatile MongoException exceptionThatPrecededStreamClosing;
 
     private volatile ConnectionDescription description;
     private volatile Stream stream;
@@ -84,12 +87,13 @@ class InternalStreamConnection implements InternalConnection {
     private final AtomicBoolean isClosed = new AtomicBoolean();
     private final AtomicBoolean opened = new AtomicBoolean();
 
-    static final Logger LOGGER = Loggers.getLogger("connection");
+    private final CommandListener commandListener;
 
     InternalStreamConnection(final ServerId serverId, final StreamFactory streamFactory,
-                             final InternalConnectionInitializer connectionInitializer) {
+                             final CommandListener commandListener, final InternalConnectionInitializer connectionInitializer) {
         this.serverId = notNull("serverId", serverId);
         this.streamFactory = notNull("streamFactory", streamFactory);
+        this.commandListener = commandListener;
         this.connectionInitializer = notNull("connectionInitializer", connectionInitializer);
         description = new ConnectionDescription(serverId);
     }
@@ -179,6 +183,86 @@ class InternalStreamConnection implements InternalConnection {
     }
 
     @Override
+    public ResponseBuffers sendAndReceive(final CommandMessage message) {
+        long startTimeNanos = System.nanoTime();
+
+        ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this);
+        String commandName = null;
+        try {
+            try {
+                message.encode(bsonOutput);
+                commandName = sendStartedEvent(bsonOutput, message);
+                sendMessage(bsonOutput.getByteBuffers(), message.getId());
+            } finally {
+                bsonOutput.close();
+            }
+
+            ResponseBuffers responseBuffers = receiveMessage(message.getId());
+            boolean commandOk = isCommandOk(new BsonBinaryReader(new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer())));
+            responseBuffers.reset();
+            if (!commandOk) {
+                throw getCommandFailureException(getResponseDocument(responseBuffers, message, new BsonDocumentCodec()),
+                        description.getServerAddress());
+            }
+
+            sendSucceededEvent(startTimeNanos, message, commandName, getResponseDocument(responseBuffers, message,
+                    new RawBsonDocumentCodec()));
+
+            return responseBuffers;
+        } catch (RuntimeException e) {
+            sendFailedEvent(startTimeNanos, message, commandName, e);
+            throw e;
+        }
+    }
+
+    @Override
+    public void sendAndReceiveAsync(final CommandMessage message, final SingleResultCallback<ResponseBuffers> callback) {
+        final long startTimeNanos = System.nanoTime();
+
+        final ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this);
+        message.encode(bsonOutput);
+        final String commandName = sendStartedEvent(bsonOutput, message);
+        sendMessageAsync(bsonOutput.getByteBuffers(), message.getId(), new SingleResultCallback<Void>() {
+            @Override
+            public void onResult(final Void result, final Throwable t) {
+                bsonOutput.close();
+                if (t != null) {
+                    sendFailedEvent(startTimeNanos, message, commandName, t);
+                    callback.onResult(null, t);
+                } else {
+                    receiveMessageAsync(message.getId(), new SingleResultCallback<ResponseBuffers>() {
+                        @Override
+                        public void onResult(final ResponseBuffers responseBuffers, final Throwable throwableFromCallback) {
+                            try {
+                                if (throwableFromCallback != null) {
+                                    throw throwableFromCallback;
+                                } else {
+                                    boolean commandOk =
+                                            isCommandOk(new BsonBinaryReader(new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer())));
+                                    responseBuffers.reset();
+                                    if (!commandOk) {
+                                        throw getCommandFailureException(getResponseDocument(responseBuffers, message,
+                                                new BsonDocumentCodec()), description.getServerAddress());
+                                    }
+                                    sendSucceededEvent(startTimeNanos, message, commandName,
+                                            getResponseDocument(responseBuffers, message, new RawBsonDocumentCodec()));
+                                    callback.onResult(responseBuffers, null);
+                                }
+                            } catch (Throwable t) {
+                                if (responseBuffers != null) {
+                                    responseBuffers.close();
+                                }
+                                sendFailedEvent(startTimeNanos, message, commandName, t);
+                                callback.onResult(null, t);
+                            }
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    @Override
     public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
         notNull("stream is open", stream);
 
@@ -186,14 +270,11 @@ class InternalStreamConnection implements InternalConnection {
             throw new MongoSocketClosedException("Cannot write to a closed stream", getServerAddress());
         }
 
-        writerLock.lock();
         try {
             stream.write(byteBuffers);
         } catch (Exception e) {
             close();
             throw translateWriteException(e);
-        } finally {
-            writerLock.unlock();
         }
     }
 
@@ -204,40 +285,11 @@ class InternalStreamConnection implements InternalConnection {
             throw new MongoSocketClosedException("Cannot read from a closed stream", getServerAddress());
         }
 
-        CountDownLatch localLatch = new CountDownLatch(1);
-        readerLock.lock();
         try {
-            ResponseBuffers responseBuffers = receiveResponseBuffers();
-            messages.put(responseBuffers.getReplyHeader().getResponseTo(), responseBuffers);
-            readingPhase.getAndSet(localLatch).countDown();
+            return receiveResponseBuffers();
         } catch (Throwable t) {
-            exceptionThatPrecededStreamClosing = translateReadException(t);
             close();
-            readingPhase.getAndSet(localLatch).countDown();
-        } finally {
-            readerLock.unlock();
-        }
-
-        while (true) {
-            if (isClosed()) {
-                if (exceptionThatPrecededStreamClosing != null) {
-                    throw exceptionThatPrecededStreamClosing;
-                } else {
-                    throw new MongoSocketClosedException("Socket has been closed", getServerAddress());
-                }
-            }
-            ResponseBuffers myResponse = messages.remove(responseTo);
-            if (myResponse != null) {
-                return myResponse;
-            }
-
-            try {
-                localLatch.await();
-            } catch (InterruptedException e) {
-                throw new MongoInterruptedException("Interrupted while reading from stream", e);
-            }
-
-            localLatch = readingPhase.get();
+            throw translateReadException(t);
         }
     }
 
@@ -250,67 +302,20 @@ class InternalStreamConnection implements InternalConnection {
             return;
         }
 
-        if (LOGGER.isTraceEnabled()) {
-            LOGGER.trace(format("Queuing send message: %s. ([%s])", lastRequestId, getId()));
-        }
-
-        SendMessageRequest sendMessageRequest = new SendMessageRequest(byteBuffers, lastRequestId, errorHandlingCallback(callback, LOGGER));
-
-        boolean mustWrite = false;
-        writerLock.lock();
-        try {
-            if (isWriting) {
-                writeQueue.add(sendMessageRequest);
-            } else {
-                isWriting = true;
-                mustWrite = true;
-            }
-
-        } finally {
-            writerLock.unlock();
-        }
-
-        if (mustWrite) {
-            writeAsync(sendMessageRequest);
-        }
+        writeAsync(byteBuffers, errorHandlingCallback(callback, LOGGER));
     }
 
-    private void writeAsync(final SendMessageRequest request) {
-        stream.writeAsync(request.getByteBuffers(), new AsyncCompletionHandler<Void>() {
+    private void writeAsync(final List<ByteBuf> byteBuffers, final SingleResultCallback<Void> callback) {
+        stream.writeAsync(byteBuffers, new AsyncCompletionHandler<Void>() {
             @Override
             public void completed(final Void v) {
-                SendMessageRequest nextMessage = null;
-                writerLock.lock();
-                try {
-                    nextMessage = writeQueue.poll();
-                    if (nextMessage == null) {
-                        isWriting = false;
-                    }
-                } finally {
-                    writerLock.unlock();
-                }
-                request.getCallback().onResult(null, null);
-
-                if (nextMessage != null) {
-                    writeAsync(nextMessage);
-                }
+                callback.onResult(null, null);
             }
 
             @Override
             public void failed(final Throwable t) {
-                writerLock.lock();
-                try {
-                    MongoException translatedWriteException = translateWriteException(t);
-                    request.getCallback().onResult(null, translatedWriteException);
-                    SendMessageRequest nextMessage;
-                    while ((nextMessage = writeQueue.poll()) != null) {
-                        nextMessage.callback.onResult(null, translatedWriteException);
-                    }
-                    isWriting = false;
-                    close();
-                } finally {
-                    writerLock.unlock();
-                }
+                callback.onResult(null, translateWriteException(t));
+                close();
             }
         });
     }
@@ -325,93 +330,13 @@ class InternalStreamConnection implements InternalConnection {
         }
 
         if (LOGGER.isTraceEnabled()) {
-            LOGGER.trace(format("Queuing read message: %s. ([%s])", responseTo, getId()));
+            LOGGER.trace(String.format("Start receiving response on %s", getId()));
         }
-
-        ResponseBuffers response = null;
-        readerLock.lock();
-        boolean mustRead = false;
-        try {
-            response = messages.remove(responseTo);
-
-            if (response == null) {
-                readQueue.put(responseTo, callback);
-            }
-
-            if (!readQueue.isEmpty() && !isReading) {
-                isReading = true;
-                mustRead = true;
-            }
-        } finally {
-            readerLock.unlock();
-        }
-
-        executeCallbackAndReceiveResponse(callback, response, mustRead);
+        receiveResponseAsync(callback);
     }
 
-    private void executeCallbackAndReceiveResponse(final SingleResultCallback<ResponseBuffers> callback, final ResponseBuffers result,
-                                                   final boolean mustRead) {
-        if (callback != null && result != null) {
-            if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace(String.format("Executing callback for %s on %s", result.getReplyHeader().getResponseTo(), getId()));
-            }
-            callback.onResult(result, null);
-        }
-
-        if (mustRead) {
-            if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace(String.format("Start receiving response on %s", getId()));
-            }
-            receiveResponseAsync();
-        }
-    }
-
-    private class ResponseBuffersCallback implements SingleResultCallback<ResponseBuffers> {
-        @Override
-        public void onResult(final ResponseBuffers result, final Throwable t) {
-                SingleResultCallback<ResponseBuffers> callback = null;
-                boolean mustRead = false;
-                readerLock.lock();
-                try {
-                    if (t != null) {
-                        failAllQueuedReads(t);
-                        return;
-                    }
-
-                    if (LOGGER.isTraceEnabled()) {
-                        LOGGER.trace(String.format("Read response to message %s on %s", result.getReplyHeader().getResponseTo(), getId()));
-                    }
-
-                    callback = readQueue.remove(result.getReplyHeader().getResponseTo());
-
-                    if (readQueue.isEmpty()) {
-                        isReading = false;
-                    } else {
-                        mustRead = true;
-                    }
-
-                    if (callback == null) {
-                        messages.put(result.getReplyHeader().getResponseTo(), result);
-                    }
-                } finally {
-                    readerLock.unlock();
-                }
-
-                executeCallbackAndReceiveResponse(callback, result, mustRead);
-            }
-    }
-
-    private ConnectionId getId() {
-        return description.getConnectionId();
-    }
-
-    private ServerAddress getServerAddress() {
-        return description.getServerAddress();
-    }
-
-    private void receiveResponseAsync() {
-        readAsync(REPLY_HEADER_LENGTH,
-                  errorHandlingCallback(new ResponseHeaderCallback(new ResponseBuffersCallback()), LOGGER));
+    private void receiveResponseAsync(final SingleResultCallback<ResponseBuffers> callback) {
+        readAsync(REPLY_HEADER_LENGTH, errorHandlingCallback(new ResponseHeaderCallback(callback), LOGGER));
     }
 
     private void readAsync(final int numBytes, final SingleResultCallback<ByteBuf> callback) {
@@ -436,6 +361,14 @@ class InternalStreamConnection implements InternalConnection {
         } catch (Exception e) {
             callback.onResult(null, translateReadException(e));
         }
+    }
+
+    private ConnectionId getId() {
+        return description.getConnectionId();
+    }
+
+    private ServerAddress getServerAddress() {
+        return description.getServerAddress();
     }
 
     private MongoException translateWriteException(final Throwable e) {
@@ -522,6 +455,7 @@ class InternalStreamConnection implements InternalConnection {
                                   new ResponseBodyCallback(replyHeader));
                     }
                 } catch (Throwable t) {
+                    close();
                     callback.onResult(null, t);
                 }
             }
@@ -563,45 +497,51 @@ class InternalStreamConnection implements InternalConnection {
         }
     }
 
-    private void failAllQueuedReads(final Throwable t) {
-        close();
-        Iterator<Map.Entry<Integer, SingleResultCallback<ResponseBuffers>>> it = readQueue.entrySet().iterator();
-        while (it.hasNext()) {
-            Map.Entry<Integer, SingleResultCallback<ResponseBuffers>> pairs = it.next();
-            if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace(format("Processing unknown failed message: %s. ([%s] %s)", pairs.getKey(), getId(), serverId));
+    private String sendStartedEvent(final ByteBufferBsonOutput bsonOutput, final CommandMessage message) {
+        if (commandListener != null) {
+            String commandName;
+            ByteBufBsonDocument byteBufBsonDocument = createOne(bsonOutput, message.getEncodingMetadata().getFirstDocumentPosition());
+            BsonDocument commandDocument;
+            if (byteBufBsonDocument.containsKey("$query")) {
+                commandDocument = byteBufBsonDocument.getDocument("$query");
+                commandName = commandDocument.keySet().iterator().next();
+            } else {
+                commandDocument = byteBufBsonDocument;
+                commandName = byteBufBsonDocument.getFirstKey();
             }
-            SingleResultCallback<ResponseBuffers> callback = pairs.getValue();
-            it.remove();
-            try {
-                callback.onResult(null, t);
-            } catch (Throwable tr) {
-                LOGGER.warn("Exception calling callback", tr);
-            }
+            BsonDocument commandDocumentForEvent = (SECURITY_SENSITIVE_COMMANDS.contains(commandName))
+                                                           ? new BsonDocument() : commandDocument;
+            sendCommandStartedEvent(message, new MongoNamespace(message.getCollectionName()).getDatabaseName(), commandName,
+                    commandDocumentForEvent, getDescription(), commandListener);
+            return commandName;
+        }
+        return null;
+    }
+
+    private void sendSucceededEvent(final long startTimeNanos, final CommandMessage commandMessage, final String commandName,
+                                    final BsonDocument response) {
+        if (commandListener != null) {
+            BsonDocument responseDocumentForEvent = (SECURITY_SENSITIVE_COMMANDS.contains(commandName)) ? new BsonDocument() : response;
+            sendCommandSucceededEvent(commandMessage, commandName, responseDocumentForEvent, description, startTimeNanos,
+                    commandListener);
         }
     }
 
-    private static class SendMessageRequest {
-        private final SingleResultCallback<Void> callback;
-        private final List<ByteBuf> byteBuffers;
-        private final int messageId;
-
-        SendMessageRequest(final List<ByteBuf> byteBuffers, final int messageId, final SingleResultCallback<Void> callback) {
-            this.byteBuffers = byteBuffers;
-            this.messageId = messageId;
-            this.callback = callback;
+    private void sendFailedEvent(final long startTimeNanos, final CommandMessage commandMessage, final String commandName,
+                                 final Throwable t) {
+        if (commandListener != null) {
+            Throwable commandEventException = t;
+            if (t instanceof MongoCommandException && (SECURITY_SENSITIVE_COMMANDS.contains(commandName))) {
+                commandEventException = new MongoCommandException(new BsonDocument(), description.getServerAddress());
+            }
+            sendCommandFailedEvent(commandMessage, commandName, description, startTimeNanos, commandEventException, commandListener);
         }
+    }
 
-        public SingleResultCallback<Void> getCallback() {
-            return callback;
-        }
-
-        public List<ByteBuf> getByteBuffers() {
-            return byteBuffers;
-        }
-
-        public int getMessageId() {
-            return messageId;
-        }
+    private static <T extends BsonDocument> T getResponseDocument(final ResponseBuffers responseBuffers,
+                                                                  final CommandMessage commandMessage, final Decoder<T> decoder) {
+        ReplyMessage<T> replyMessage = new ReplyMessage<T>(responseBuffers, decoder, commandMessage.getId());
+        responseBuffers.reset();
+        return replyMessage.getDocuments().get(0);
     }
 }

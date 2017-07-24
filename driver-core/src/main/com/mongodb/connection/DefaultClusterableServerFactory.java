@@ -57,11 +57,11 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
     public ClusterableServer create(final ServerAddress serverAddress, final ServerListener serverListener) {
         ConnectionPool connectionPool = new DefaultConnectionPool(new ServerId(clusterId, serverAddress),
                 new InternalStreamConnectionFactory(streamFactory, credentialList, applicationName,
-                        mongoDriverInformation), connectionPoolSettings);
+                        mongoDriverInformation, commandListener), connectionPoolSettings);
         ServerMonitorFactory serverMonitorFactory =
             new DefaultServerMonitorFactory(new ServerId(clusterId, serverAddress), serverSettings,
                     new InternalStreamConnectionFactory(heartbeatStreamFactory, credentialList, applicationName,
-                            mongoDriverInformation), connectionPool);
+                            mongoDriverInformation, commandListener), connectionPool);
 
         return new DefaultServer(new ServerId(clusterId, serverAddress), clusterSettings.getMode(), connectionPool,
                 new DefaultConnectionFactory(), serverMonitorFactory, serverListener, commandListener);

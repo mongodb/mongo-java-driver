@@ -36,11 +36,6 @@ class DeleteMessage extends RequestMessage {
     }
 
     @Override
-    protected RequestMessage encodeMessageBody(final BsonOutput bsonOutput, final int messageStartPosition) {
-        return encodeMessageBodyWithMetadata(bsonOutput, messageStartPosition).getNextMessage();
-    }
-
-    @Override
     protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final int messageStartPosition) {
         DeleteRequest deleteRequest = deleteRequests.get(0);
         bsonOutput.writeInt32(0); // reserved

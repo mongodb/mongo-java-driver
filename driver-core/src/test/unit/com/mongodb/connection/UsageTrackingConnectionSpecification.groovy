@@ -19,6 +19,8 @@ package com.mongodb.connection
 import category.Async
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
+import org.bson.BsonDocument
+import org.bson.BsonInt32
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 import spock.lang.Specification
@@ -154,6 +156,38 @@ class UsageTrackingConnectionSpecification extends Specification {
 
         when:
         connection.receiveMessageAsync(1, futureResultCallback)
+        futureResultCallback.get(60, SECONDS)
+
+        then:
+        connection.lastUsedAt >= openedLastUsedAt
+        connection.lastUsedAt <= System.currentTimeMillis()
+    }
+
+    def 'lastUsedAt should be set on sendAndReceive'() {
+        given:
+        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);
+        connection.open()
+        def openedLastUsedAt = connection.lastUsedAt
+
+        when:
+        connection.sendAndReceive(new SimpleCommandMessage('test', new BsonDocument('ping', new BsonInt32(1)), true,
+                MessageSettings.builder().build()))
+
+        then:
+        connection.lastUsedAt >= openedLastUsedAt
+        connection.lastUsedAt <= System.currentTimeMillis()
+    }
+
+    def 'lastUsedAt should be set on sendAndReceive asynchronously'() {
+        given:
+        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);
+        connection.open()
+        def openedLastUsedAt = connection.lastUsedAt
+        def futureResultCallback = new FutureResultCallback<Void>()
+
+        when:
+        connection.sendAndReceiveAsync(new SimpleCommandMessage('test', new BsonDocument('ping', new BsonInt32(1)), true,
+                MessageSettings.builder().build()), futureResultCallback)
         futureResultCallback.get(60, SECONDS)
 
         then:

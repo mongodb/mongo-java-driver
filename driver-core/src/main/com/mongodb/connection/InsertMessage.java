@@ -50,11 +50,6 @@ class InsertMessage extends RequestMessage {
     }
 
     @Override
-    protected RequestMessage encodeMessageBody(final BsonOutput outputStream, final int messageStartPosition) {
-        return encodeMessageBodyWithMetadata(outputStream, messageStartPosition).getNextMessage();
-    }
-
-    @Override
     protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput outputStream, final int messageStartPosition) {
         writeInsertPrologue(outputStream);
         int firstDocumentPosition = outputStream.getPosition();

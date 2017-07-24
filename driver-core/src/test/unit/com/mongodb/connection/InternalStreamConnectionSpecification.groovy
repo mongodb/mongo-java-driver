@@ -17,37 +17,30 @@
 package com.mongodb.connection
 
 import category.Async
-import category.SlowUnit
+import com.mongodb.MongoCommandException
 import com.mongodb.MongoInternalException
-import com.mongodb.MongoNamespace
 import com.mongodb.MongoSocketClosedException
+import com.mongodb.MongoSocketException
 import com.mongodb.MongoSocketReadException
 import com.mongodb.MongoSocketWriteException
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
-import org.bson.BsonBinaryWriter
+import com.mongodb.event.CommandFailedEvent
+import com.mongodb.event.CommandStartedEvent
+import com.mongodb.event.CommandSucceededEvent
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.ByteBuf
 import org.bson.ByteBufNIO
-import org.bson.Document
-import org.bson.codecs.DocumentCodec
-import org.bson.codecs.EncoderContext
-import org.bson.io.BasicOutputBuffer
-import org.bson.io.OutputBuffer
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 import spock.lang.Specification
-import spock.util.concurrent.AsyncConditions
 
 import java.nio.ByteBuffer
-import java.nio.ByteOrder
-import java.security.SecureRandom
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-import static MongoNamespace.COMMAND_COLLECTION_NAME
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxWriteBatchSize
 import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize
@@ -60,10 +53,11 @@ class InternalStreamConnectionSpecification extends Specification {
     def helper = new StreamHelper()
     def serverAddress = new ServerAddress()
     def connectionId = new ConnectionId(SERVER_ID, 1, 1)
+    def commandListener = new TestCommandListener()
 
     def connectionDescription = new ConnectionDescription(connectionId, new ServerVersion(), ServerType.STANDALONE,
-                                                          getDefaultMaxWriteBatchSize(), getDefaultMaxDocumentSize(),
-                                                          getDefaultMaxMessageSize())
+            getDefaultMaxWriteBatchSize(), getDefaultMaxDocumentSize(),
+            getDefaultMaxMessageSize())
     def stream = Mock(Stream) {
         openAsync(_) >> { it[0].completed(null) }
     }
@@ -76,7 +70,7 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
     def getConnection() {
-        new InternalStreamConnection(SERVER_ID, streamFactory, initializer)
+        new InternalStreamConnection(SERVER_ID, streamFactory, commandListener, initializer)
     }
 
     def getOpenedConnection() {
@@ -125,86 +119,12 @@ class InternalStreamConnectionSpecification extends Specification {
 
     }
 
-    def 'should handle out of order messages on the stream'() {
-        // Connect then: Send(1), Send(2), Send(3), Receive(3), Receive(2), Receive(1)
-        given:
-        ExecutorService pool = Executors.newFixedThreadPool(3)
-        def connection = getOpenedConnection()
-        def (buffers1, messageId1) = helper.isMaster()
-        def (buffers2, messageId2) = helper.isMaster()
-        def (buffers3, messageId3) = helper.isMaster()
-        stream.read(_) >>> helper.read([messageId1, messageId2, messageId3], ordered)
-
-        when:
-        connection.sendMessage(buffers1, messageId1)
-        connection.sendMessage(buffers2, messageId2)
-        connection.sendMessage(buffers3, messageId3)
-
-        then:
-        def conds = new AsyncConditions()
-        [messageId1, messageId2, messageId3].each { messageId ->
-            pool.submit({
-                            conds.evaluate {
-                                assert connection.receiveMessage(messageId).replyHeader.responseTo == messageId
-                            }
-                        } as Runnable)
-
-        }
-        conds.await(10000)
-
-        cleanup:
-        pool.shutdown()
-
-        where:
-        ordered << [true, false]
-    }
-
-    @Category(Async)
-    @IgnoreIf({ javaVersion < 1.7 })
-    def 'should handle out of order messages on the stream asynchronously'() {
-        // Connect then: SendAsync(1), SendAsync(2), SendAsync(3), ReceiveAsync(3), ReceiveAsync(2), ReceiveAsync(1)
-        given:
-        def (buffers1, messageId1, sndCallbck1, rcvdCallbck1) = helper.isMasterAsync()
-        def (buffers2, messageId2, sndCallbck2, rcvdCallbck2) = helper.isMasterAsync()
-        def (buffers3, messageId3, sndCallbck3, rcvdCallbck3) = helper.isMasterAsync()
-        def headers = helper.generateHeaders([messageId1, messageId2, messageId3], ordered)
-
-        stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
-            callback.completed(null)
-        }
-
-        stream.readAsync(36, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
-            handler.completed(headers.pop())
-        }
-        stream.readAsync(74, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
-            handler.completed(helper.body())
-        }
-
-        def connection = getOpenedConnection()
-
-        when:
-        connection.sendMessageAsync(buffers1, messageId1, sndCallbck1)
-        connection.sendMessageAsync(buffers2, messageId2, sndCallbck2)
-        connection.sendMessageAsync(buffers3, messageId3, sndCallbck3)
-        connection.receiveMessageAsync(messageId3, rcvdCallbck3)
-        connection.receiveMessageAsync(messageId2, rcvdCallbck2)
-        connection.receiveMessageAsync(messageId1, rcvdCallbck1)
-
-        then:
-        rcvdCallbck1.get().replyHeader.responseTo == messageId1
-        rcvdCallbck2.get().replyHeader.responseTo == messageId2
-        rcvdCallbck3.get().replyHeader.responseTo == messageId3
-
-        where:
-        ordered << [true, false]
-    }
-
     def 'should close the stream when initialization throws an exception'() {
         given:
         def failedInitializer = Mock(InternalConnectionInitializer) {
             initialize(_) >> { throw new MongoInternalException('Something went wrong') }
         }
-        def connection = new InternalStreamConnection(SERVER_ID, streamFactory, failedInitializer)
+        def connection = new InternalStreamConnection(SERVER_ID, streamFactory, null, failedInitializer)
 
         when:
         connection.open()
@@ -221,7 +141,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def failedInitializer = Mock(InternalConnectionInitializer) {
             initializeAsync(_, _) >> { it[1].onResult(null, new MongoInternalException('Something went wrong')); }
         }
-        def connection = new InternalStreamConnection(SERVER_ID, streamFactory, failedInitializer)
+        def connection = new InternalStreamConnection(SERVER_ID, streamFactory, null, failedInitializer)
 
         when:
         def futureResultCallback = new FutureResultCallback<Void>()
@@ -293,7 +213,7 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should close the stream when reading the message header throws an exception'() {
         given:
         stream.read(36) >> { throw new IOException('Something went wrong') }
-        stream.read(74) >> helper.body()
+        stream.read(74) >> helper.defaultBody()
 
         def connection = getOpenedConnection()
         def (buffers1, messageId1) = helper.isMaster()
@@ -332,7 +252,7 @@ class InternalStreamConnectionSpecification extends Specification {
     def 'should throw MongoInternalException when reply header message length > max message length asynchronously'() {
         given:
         stream.readAsync(36, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
-            handler.completed(helper.headerWithMessageSizeGreaterThanMax(1))
+            handler.completed(helper.headerWithMessageSizeGreaterThanMax(1, connectionDescription.maxMessageSize))
         }
 
         def connection = getOpenedConnection()
@@ -367,7 +287,7 @@ class InternalStreamConnectionSpecification extends Specification {
             handler.completed(headers.pop())
         }
         stream.readAsync(74, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
-            handler.completed(helper.body())
+            handler.completed(helper.defaultBody())
         }
         def connection = getOpenedConnection()
 
@@ -396,7 +316,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def headers = helper.generateHeaders([messageId1, messageId2])
 
         stream.read(36) >> { headers.pop() }
-        stream.read(74) >> { throw new IOException('Something went wrong') }
+        stream.read(70) >> { throw new IOException('Something went wrong') }
 
         def connection = getOpenedConnection()
 
@@ -430,7 +350,7 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.readAsync(36, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
             handler.completed(headers.remove(0))
         }
-        stream.readAsync(74, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
+        stream.readAsync(70, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
             handler.failed(new IOException('Something went wrong'))
         }
         def connection = getOpenedConnection()
@@ -459,7 +379,7 @@ class InternalStreamConnectionSpecification extends Specification {
         ExecutorService streamPool = Executors.newFixedThreadPool(1)
 
         def messages = (1..numberOfOperations).collect { helper.isMasterAsync() }
-        def headers = messages.collect { buffers, messageId, sndCallbck, rcvdCallbck -> helper.header(messageId) }
+        def headers = messages.collect { buffers, messageId, sndCallbck, rcvdCallbck -> helper.defaultHeader(messageId) }
 
         def streamLatch = new CountDownLatch(1)
         stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
@@ -488,203 +408,328 @@ class InternalStreamConnectionSpecification extends Specification {
         streamPool.shutdown()
     }
 
+    def 'should send events for successful command'() {
+        given:
+        def connection = getOpenedConnection()
+        def pingCommandDocument = new BsonDocument('ping', new BsonInt32(1))
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, true, MessageSettings.builder().build())
+        stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
+        stream.read(36) >> helper.defaultHeader(commandMessage.getId())
+        stream.read(70) >> helper.defaultBody()
+
+        when:
+        connection.sendAndReceive(commandMessage)
+
+        then:
+        commandListener.eventsWereDelivered([
+                new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
+                        pingCommandDocument),
+                new CommandSucceededEvent(1, connection.getDescription(), 'ping',
+                        new BsonDocument('ok', new BsonInt32(1)), 1000)])
+    }
+
+    def 'should send events for command failure with exception writing message'() {
+        given:
+        def connection = getOpenedConnection()
+        def pingCommandDocument = new BsonDocument('ping', new BsonInt32(1))
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, true, MessageSettings.builder().build())
+        stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
+        stream.write(_) >> { throw new MongoSocketWriteException('Failed to write', serverAddress, new IOException()) }
+
+        when:
+        connection.sendAndReceive(commandMessage)
+
+        then:
+        def e = thrown(MongoSocketWriteException)
+        commandListener.eventsWereDelivered([
+                new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
+                        pingCommandDocument),
+                new CommandFailedEvent(1, connection.getDescription(), 'ping', 0, e)])
+    }
+
+    def 'should send events for command failure with exception reading header'() {
+        given:
+        def connection = getOpenedConnection()
+        def pingCommandDocument = new BsonDocument('ping', new BsonInt32(1))
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, true, MessageSettings.builder().build())
+        stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
+        stream.read(36) >> { throw new MongoSocketReadException('Failed to read', serverAddress) }
+
+        when:
+        connection.sendAndReceive(commandMessage)
+
+        then:
+        def e = thrown(MongoSocketReadException)
+        commandListener.eventsWereDelivered([
+                new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
+                        pingCommandDocument),
+                new CommandFailedEvent(1, connection.getDescription(), 'ping', 0, e)])
+    }
+
+    def 'should send events for command failure with exception reading body'() {
+        given:
+        def connection = getOpenedConnection()
+        def pingCommandDocument = new BsonDocument('ping', new BsonInt32(1))
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, true, MessageSettings.builder().build())
+        stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
+        stream.read(36) >> helper.defaultHeader(commandMessage.getId())
+        stream.read(70) >> { throw new MongoSocketReadException('Failed to read', serverAddress) }
+
+        when:
+        connection.sendAndReceive(commandMessage)
+
+        then:
+        def e = thrown(MongoSocketException)
+        commandListener.eventsWereDelivered([
+                new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
+                        pingCommandDocument),
+                new CommandFailedEvent(1, connection.getDescription(), 'ping', 0, e)])
+    }
+
+    def 'should send events for command failure with exception from failed command'() {
+        given:
+        def connection = getOpenedConnection()
+        def pingCommandDocument = new BsonDocument('ping', new BsonInt32(1))
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, true, MessageSettings.builder().build())
+        def response = '{ok : 0, errmsg : "failed"}'
+        stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
+        stream.read(36) >> helper.header(commandMessage.getId(), response)
+        stream.read(_) >> helper.body(response)
+
+        when:
+        connection.sendAndReceive(commandMessage)
+
+        then:
+        def e = thrown(MongoCommandException)
+        commandListener.eventsWereDelivered([
+                new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
+                        pingCommandDocument),
+                new CommandFailedEvent(1, connection.getDescription(), 'ping', 0, e)])
+    }
+
+    def 'should send events with elided command and response in successful security-sensitive commands'() {
+        given:
+        def securitySensitiveCommandName = securitySensitiveCommand.keySet().iterator().next()
+        def connection = getOpenedConnection()
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', securitySensitiveCommand, true, MessageSettings.builder().build())
+        stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
+        stream.read(36) >> helper.defaultHeader(commandMessage.getId())
+        stream.read(_) >> helper.defaultBody()
+
+        when:
+        connection.sendAndReceive(commandMessage)
+
+        then:
+        commandListener.eventsWereDelivered([
+                new CommandStartedEvent(1, connection.getDescription(), 'admin', securitySensitiveCommandName,
+                        new BsonDocument()),
+                new CommandSucceededEvent(1, connection.getDescription(), securitySensitiveCommandName,
+                        new BsonDocument(), 1)])
+
+        where:
+        securitySensitiveCommand << [
+                new BsonDocument('authenticate', new BsonInt32(1)),
+                new BsonDocument('saslStart', new BsonInt32(1)),
+                new BsonDocument('saslContinue', new BsonInt32(1)),
+                new BsonDocument('getnonce', new BsonInt32(1)),
+                new BsonDocument('createUser', new BsonInt32(1)),
+                new BsonDocument('updateUser', new BsonInt32(1)),
+                new BsonDocument('copydbgetnonce', new BsonInt32(1)),
+                new BsonDocument('copydbsaslstart', new BsonInt32(1)),
+                new BsonDocument('copydb', new BsonInt32(1))
+        ]
+    }
+
+    def 'should send events for successful asynchronous command'() {
+        given:
+        def connection = getOpenedConnection()
+        def pingCommandDocument = new BsonDocument('ping', new BsonInt32(1))
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, true, MessageSettings.builder().build())
+        def callback = new FutureResultCallback()
+
+        stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
+        stream.writeAsync(_, _) >> { buffers, handler ->
+            handler.completed(null)
+        }
+        stream.readAsync(36, _) >> { numBytes, handler ->
+            handler.completed(helper.defaultHeader(commandMessage.getId()))
+        }
+        stream.readAsync(70, _) >> { numBytes, handler ->
+            handler.completed(helper.defaultBody())
+        }
+
+        when:
+        connection.sendAndReceiveAsync(commandMessage, callback)
+        callback.get()
+
+        then:
+        commandListener.eventsWereDelivered([
+                new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
+                        pingCommandDocument),
+                new CommandSucceededEvent(1, connection.getDescription(), 'ping',
+                        new BsonDocument('ok', new BsonInt32(1)), 1000)])
+    }
+
+    def 'should send events for asynchronous command failure with exception writing message'() {
+        given:
+        def connection = getOpenedConnection()
+        def pingCommandDocument = new BsonDocument('ping', new BsonInt32(1))
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, true, MessageSettings.builder().build())
+        def callback = new FutureResultCallback()
+
+        stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
+        stream.writeAsync(_, _) >> { buffers, handler ->
+            handler.failed(new MongoSocketWriteException('failed', serverAddress, new IOException()))
+        }
+
+        when:
+        connection.sendAndReceiveAsync(commandMessage, callback)
+        callback.get()
+
+        then:
+        def e = thrown(MongoSocketWriteException)
+        commandListener.eventsWereDelivered([
+                new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
+                        pingCommandDocument),
+                new CommandFailedEvent(1, connection.getDescription(), 'ping', 0, e)])
+    }
+
+    def 'should send events for asynchronous command failure with exception reading header'() {
+        given:
+        def connection = getOpenedConnection()
+        def pingCommandDocument = new BsonDocument('ping', new BsonInt32(1))
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, true, MessageSettings.builder().build())
+        def callback = new FutureResultCallback()
+
+        stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
+        stream.writeAsync(_, _) >> { buffers, handler ->
+            handler.completed(null)
+        }
+        stream.readAsync(36, _) >> { numBytes, handler ->
+            handler.failed(new MongoSocketReadException('Failed to read', serverAddress))
+        }
+
+        when:
+        connection.sendAndReceiveAsync(commandMessage, callback)
+        callback.get()
+
+        then:
+        def e = thrown(MongoSocketReadException)
+        commandListener.eventsWereDelivered([
+                new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
+                        pingCommandDocument),
+                new CommandFailedEvent(1, connection.getDescription(), 'ping', 0, e)])
+    }
+
+    def 'should send events for asynchronous command failure with exception reading body'() {
+        given:
+        def connection = getOpenedConnection()
+        def pingCommandDocument = new BsonDocument('ping', new BsonInt32(1))
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, true, MessageSettings.builder().build())
+        def callback = new FutureResultCallback()
+
+        stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
+        stream.writeAsync(_, _) >> { buffers, handler ->
+            handler.completed(null)
+        }
+        stream.readAsync(36, _) >> { numBytes, handler ->
+            handler.completed(helper.defaultHeader(commandMessage.getId()))
+        }
+        stream.readAsync(70, _) >> { numBytes, handler ->
+            handler.failed(new MongoSocketReadException('Failed to read', serverAddress))
+        }
+
+        when:
+        connection.sendAndReceiveAsync(commandMessage, callback)
+        callback.get()
+
+        then:
+        def e = thrown(MongoSocketReadException)
+        commandListener.eventsWereDelivered([
+                new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
+                        pingCommandDocument),
+                new CommandFailedEvent(1, connection.getDescription(), 'ping', 0, e)])
+    }
+
+    def 'should send events for asynchronous command failure with exception from failed command'() {
+        given:
+        def connection = getOpenedConnection()
+        def pingCommandDocument = new BsonDocument('ping', new BsonInt32(1))
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, true, MessageSettings.builder().build())
+        def callback = new FutureResultCallback()
+        def response = '{ok : 0, errmsg : "failed"}'
+
+        stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
+        stream.writeAsync(_, _) >> { buffers, handler ->
+            handler.completed(null)
+        }
+        stream.readAsync(36, _) >> { numBytes, handler ->
+            handler.completed(helper.header(commandMessage.getId(), response))
+        }
+        stream.readAsync(_, _) >> { numBytes, handler ->
+            handler.completed(helper.body(response))
+        }
+
+        when:
+        connection.sendAndReceiveAsync(commandMessage, callback)
+        callback.get()
+
+        then:
+        def e = thrown(MongoCommandException)
+        commandListener.eventsWereDelivered([
+                new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
+                        pingCommandDocument),
+                new CommandFailedEvent(1, connection.getDescription(), 'ping', 0, e)])
+    }
+
+    def 'should send events with elided command and response in successful security-sensitive asynchronous commands'() {
+        given:
+        def securitySensitiveCommandName = securitySensitiveCommand.keySet().iterator().next()
+        def connection = getOpenedConnection()
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', securitySensitiveCommand, true, MessageSettings.builder().build())
+        def callback = new FutureResultCallback()
+
+        stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
+        stream.writeAsync(_, _) >> { buffers, handler ->
+            handler.completed(null)
+        }
+        stream.readAsync(36, _) >> { numBytes, handler ->
+            handler.completed(helper.defaultHeader(commandMessage.getId()))
+        }
+        stream.readAsync(70, _) >> { numBytes, handler ->
+            handler.completed(helper.defaultBody())
+        }
+
+        when:
+        connection.sendAndReceiveAsync(commandMessage, callback)
+        callback.get()
+
+        then:
+        commandListener.eventsWereDelivered([
+                new CommandStartedEvent(1, connection.getDescription(), 'admin', securitySensitiveCommandName,
+                        new BsonDocument()),
+                new CommandSucceededEvent(1, connection.getDescription(), securitySensitiveCommandName,
+                        new BsonDocument(), 1)])
+
+        where:
+        securitySensitiveCommand << [
+                new BsonDocument('authenticate', new BsonInt32(1)),
+                new BsonDocument('saslStart', new BsonInt32(1)),
+                new BsonDocument('saslContinue', new BsonInt32(1)),
+                new BsonDocument('getnonce', new BsonInt32(1)),
+                new BsonDocument('createUser', new BsonInt32(1)),
+                new BsonDocument('updateUser', new BsonInt32(1)),
+                new BsonDocument('copydbgetnonce', new BsonInt32(1)),
+                new BsonDocument('copydbsaslstart', new BsonInt32(1)),
+                new BsonDocument('copydb', new BsonInt32(1))
+        ]    }
+
     private static boolean expectException(rcvdCallbck) {
         try {
             rcvdCallbck.get()
             false
         } catch (MongoSocketWriteException e) {
             true
-        }
-    }
-
-    @IgnoreIf({ System.getProperty('ignoreSlowUnitTests') == 'true' })
-    @Category(SlowUnit)
-    def 'should have threadsafe connection pipelining'() {
-        given:
-        int threads = 10
-        int numberOfOperations = 10000
-        ExecutorService pool = Executors.newFixedThreadPool(threads)
-        def messages = (1..numberOfOperations).collect { helper.isMaster() }
-        def headers = helper.generateHeaders(messages.collect { buffer, messageId -> messageId })
-        stream.read(36) >> { headers.pop() }
-        stream.read(74) >> { helper.body() }
-
-        when:
-        def connection = getOpenedConnection()
-
-        then:
-        def conds = new AsyncConditions()
-        def latch = new CountDownLatch(numberOfOperations)
-        (1..numberOfOperations).each { n ->
-            def (buffers, messageId) = messages.pop()
-            pool.submit({ connection.sendMessage(buffers, messageId) } as Runnable)
-            pool.submit({
-                            conds.evaluate {
-                                assert connection.receiveMessage(messageId).replyHeader.responseTo == messageId
-                            }
-                            latch.countDown()
-                        } as Runnable)
-
-        }
-        latch.await(10, SECONDS)
-        conds.await(10)
-
-        cleanup:
-        pool.shutdown()
-    }
-
-    @Category([Async, SlowUnit])
-    @IgnoreIf({ System.getProperty('ignoreSlowUnitTests') == 'true' || javaVersion < 1.7 })
-    def 'should have threadsafe connection pipelining asynchronously'() {
-        given:
-        int threads = 10
-        int numberOfOperations = 10000
-        ExecutorService pool = Executors.newFixedThreadPool(threads)
-        ExecutorService streamPool = Executors.newFixedThreadPool(4)
-
-        def messages = (1..numberOfOperations).collect { helper.isMasterAsync() }
-        def headers = messages.collect { buffers, messageId, sndCallbck, rcvdCallbck -> helper.header(messageId) }
-
-        stream.writeAsync(_, _) >> { List<ByteBuf> buffers, AsyncCompletionHandler<Void> callback ->
-            streamPool.submit {
-                callback.completed(null)
-            }
-        }
-        stream.readAsync(36, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
-            streamPool.submit {
-                handler.completed(headers.pop())
-            }
-        }
-        stream.readAsync(74, _) >> { int numBytes, AsyncCompletionHandler<ByteBuf> handler ->
-            streamPool.submit {
-                handler.completed(helper.body())
-            }
-        }
-
-        when:
-        def connection = getOpenedConnection()
-
-        then:
-        def latch = new CountDownLatch(numberOfOperations)
-        def conds = new AsyncConditions()
-        (1..numberOfOperations).each { n ->
-            def (buffers, messageId, sndCallbck, rcvdCallbck) = messages.pop()
-
-            pool.submit {
-                connection.sendMessageAsync(buffers, messageId, sndCallbck)
-            }
-            pool.submit {
-                            connection.receiveMessageAsync(messageId, rcvdCallbck)
-                            conds.evaluate {
-                                assert rcvdCallbck.get().replyHeader.responseTo == messageId
-                            }
-                            latch.countDown()
-                        }
-        }
-
-        latch.await(10, SECONDS)
-        conds.await(10)
-
-        cleanup:
-        pool.shutdown()
-        streamPool.shutdown()
-    }
-
-    class StreamHelper {
-        int nextMessageId = 900000 // Generates a message then adds one to the id
-
-        def remaining(List<ByteBuf> buffers) {
-            int remaining = 0
-            buffers.each {
-                remaining += it.remaining()
-            }
-            remaining
-        }
-
-        def write(List<ByteBuf> buffers) {
-            buffers.each {
-                it.get(new byte[it.remaining()])
-            }
-        }
-
-
-        def read(List<Integer> messageIds) {
-            read(messageIds, true)
-        }
-
-        def read(List<Integer> messageIds, boolean ordered) {
-            List<ByteBuf> headers = messageIds.collect { header(it) }
-            List<ByteBuf> bodies = messageIds.collect { body() }
-            if (!ordered) {
-                Collections.shuffle(headers, new SecureRandom())
-            }
-            [headers, bodies].transpose().flatten()
-        }
-
-        def header(messageId) {
-            ByteBuffer headerByteBuffer = ByteBuffer.allocate(36).with {
-                order(ByteOrder.LITTLE_ENDIAN);
-                putInt(110);           // messageLength
-                putInt(4);             // requestId
-                putInt(messageId);     // responseTo
-                putInt(1);             // opCode
-                putInt(0);             // responseFlags
-                putLong(0);            // cursorId
-                putInt(0);             // starting from
-                putInt(1);             // number returned
-            }
-            headerByteBuffer.flip()
-            new ByteBufNIO(headerByteBuffer)
-        }
-
-        def headerWithMessageSizeGreaterThanMax(messageId) {
-            ByteBuffer headerByteBuffer = ByteBuffer.allocate(36).with {
-                order(ByteOrder.LITTLE_ENDIAN);
-                putInt(connectionDescription.maxMessageSize + 1);   // messageLength
-                putInt(4);             // requestId
-                putInt(messageId);     // responseTo
-                putInt(1);             // opCode
-                putInt(0);             // responseFlags
-                putLong(0);            // cursorId
-                putInt(0);             // starting from
-                putInt(1);             // number returned
-            }
-            headerByteBuffer.flip()
-            new ByteBufNIO(headerByteBuffer)
-        }
-
-        def body() {
-            def okResponse = ['connectionId': 1, 'n': 0, 'syncMillis': 0, 'writtenTo': null, 'err': null, 'ok': 1] as Document
-            OutputBuffer outputBuffer = new BasicOutputBuffer()
-            BsonBinaryWriter binaryResponse = new BsonBinaryWriter(outputBuffer)
-            new DocumentCodec().encode(binaryResponse, okResponse, EncoderContext.builder().build())
-            new ByteBufNIO(ByteBuffer.allocate(outputBuffer.size()).put(outputBuffer.toByteArray()))
-        }
-
-        def generateHeaders(List<Integer> messageIds) {
-            generateHeaders(messageIds, true)
-        }
-
-        def generateHeaders(List<Integer> messageIds, boolean ordered) {
-            List<ByteBuf> headers = messageIds.collect { header(it) }
-            if (!ordered) {
-                Collections.shuffle(headers, new SecureRandom())
-            }
-            headers
-        }
-
-        def isMaster() {
-            def command = new CommandMessage(new MongoNamespace('admin', COMMAND_COLLECTION_NAME).getFullName(),
-                                             new BsonDocument('ismaster', new BsonInt32(1)),
-                                             false, MessageSettings.builder().build());
-            OutputBuffer outputBuffer = new BasicOutputBuffer();
-            command.encode(outputBuffer);
-            nextMessageId++
-            [outputBuffer.byteBuffers, nextMessageId]
-        }
-
-        def isMasterAsync() {
-            isMaster() + [new FutureResultCallback<Void>(), new FutureResultCallback<ResponseBuffers>()]
         }
     }
 }

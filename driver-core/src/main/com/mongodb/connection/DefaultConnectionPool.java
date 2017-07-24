@@ -432,6 +432,31 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
+        public ResponseBuffers sendAndReceive(final CommandMessage message) {
+            isTrue("open", !isClosed.get());
+            try {
+                return wrapped.sendAndReceive(message);
+            } catch (MongoException e) {
+                incrementGenerationOnSocketException(this, e);
+                throw e;
+            }
+        }
+
+        @Override
+        public void sendAndReceiveAsync(final CommandMessage message, final SingleResultCallback<ResponseBuffers> callback) {
+            isTrue("open", !isClosed.get());
+            wrapped.sendAndReceiveAsync(message, new SingleResultCallback<ResponseBuffers>() {
+                @Override
+                public void onResult(final ResponseBuffers result, final Throwable t) {
+                    if (t != null) {
+                        incrementGenerationOnSocketException(PooledConnection.this, t);
+                    }
+                    callback.onResult(result, t);
+                }
+            });
+        }
+
+        @Override
         public ResponseBuffers receiveMessage(final int responseTo) {
             isTrue("open", !isClosed.get());
             try {

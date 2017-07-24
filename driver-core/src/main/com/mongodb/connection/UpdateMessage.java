@@ -44,11 +44,6 @@ class UpdateMessage extends RequestMessage {
     }
 
     @Override
-    protected RequestMessage encodeMessageBody(final BsonOutput bsonOutput, final int messageStartPosition) {
-        return encodeMessageBodyWithMetadata(bsonOutput, messageStartPosition).getNextMessage();
-    }
-
-    @Override
     protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final int messageStartPosition) {
         bsonOutput.writeInt32(0); // reserved
         bsonOutput.writeCString(getCollectionName());

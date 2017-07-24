@@ -24,6 +24,8 @@ import com.mongodb.MongoTimeoutException
 import com.mongodb.MongoWaitQueueFullException
 import com.mongodb.ServerAddress
 import com.mongodb.event.ConnectionPoolListener
+import org.bson.BsonDocument
+import org.bson.BsonInt32
 import org.bson.ByteBuf
 import org.junit.experimental.categories.Category
 import spock.lang.Specification
@@ -125,6 +127,7 @@ class DefaultConnectionPoolSpecification extends Specification {
             Mock(InternalConnection) {
                 sendMessage(_, _) >> { throw new MongoSocketWriteException('', SERVER_ID.address, new IOException()) }
                 receiveMessage(_) >> { throw new MongoSocketReadException('', SERVER_ID.address, new IOException()) }
+                sendAndReceive(_) >> { throw new MongoSocketReadException('', SERVER_ID.address, new IOException()) }
                 getDescription() >> {
                     new ConnectionDescription(SERVER_ID);
                 }
@@ -167,6 +170,25 @@ class DefaultConnectionPoolSpecification extends Specification {
 
         then:
         numberOfConnectionsCreated == 5
+
+        when:
+        c1 = pool.get()
+        c2 = pool.get()
+
+        and:
+        c2.sendAndReceive(new SimpleCommandMessage('test', new BsonDocument('ping', new BsonInt32(1)), true,
+                MessageSettings.builder().build()))
+
+        then:
+        thrown(MongoSocketReadException)
+
+        and:
+        c1.close()
+        c2.close()
+        pool.get().close()
+
+        then:
+        numberOfConnectionsCreated == 7
     }
 
     def 'should expire all connection after exception asynchronously'() {
@@ -181,6 +203,9 @@ class DefaultConnectionPoolSpecification extends Specification {
                     it[2].onResult(null, new MongoSocketWriteException('', SERVER_ID.address, new IOException()))
                 };
                 receiveMessageAsync(_, _) >> {
+                    it[1].onResult(null, new MongoSocketReadException('', SERVER_ID.address, new IOException()))
+                };
+                sendAndReceiveAsync(_, _) >> {
                     it[1].onResult(null, new MongoSocketReadException('', SERVER_ID.address, new IOException()))
                 };
                 getDescription() >> {
@@ -231,6 +256,27 @@ class DefaultConnectionPoolSpecification extends Specification {
 
         then:
         numberOfConnectionsCreated == 5
+
+        when:
+        c1 = pool.get()
+        c2 = pool.get()
+
+        and:
+        c2.sendAndReceiveAsync(new SimpleCommandMessage('test', new BsonDocument('ping', new BsonInt32(1)), true,
+                MessageSettings.builder().build())) {
+            result, t -> e = t
+        }
+
+        then:
+        e instanceof MongoSocketReadException
+
+        and:
+        c1.close()
+        c2.close()
+        pool.get().close()
+
+        then:
+        numberOfConnectionsCreated == 7
     }
 
     def 'should have size of 0 with default settings'() {

@@ -268,8 +268,8 @@ class QueryProtocol<T> implements Protocol<QueryResult<T>> {
             ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
             try {
                 message = createQueryMessage(connection.getDescription());
-                RequestMessage.EncodingMetadata metadata = message.encodeWithMetadata(bsonOutput);
-                isExplain = sendQueryStartedEvent(connection, message, bsonOutput, metadata);
+                message.encode(bsonOutput);
+                isExplain = sendQueryStartedEvent(connection, message, bsonOutput, message.getEncodingMetadata());
                 connection.sendMessage(bsonOutput.getByteBuffers(), message.getId());
             } finally {
                 bsonOutput.close();

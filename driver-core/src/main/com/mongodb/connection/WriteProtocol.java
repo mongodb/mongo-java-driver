@@ -79,14 +79,14 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
                 if (requestMessage == null) {
                     requestMessage = createRequestMessage(getMessageSettings(connection.getDescription()));
                 }
-                encodingMetadata = requestMessage.encodeWithMetadata(bsonOutput);
-
-                sendStartedEvent(connection, requestMessage, encodingMetadata, bsonOutput);
+                requestMessage.encode(bsonOutput);
+                encodingMetadata = requestMessage.getEncodingMetadata();
+                sendStartedEvent(connection, requestMessage, requestMessage.getEncodingMetadata(), bsonOutput);
                 sentCommandStartedEvent = true;
 
                 messageId = requestMessage.getId();
-                if (shouldAcknowledge(encodingMetadata.getNextMessage())) {
-                    CommandMessage getLastErrorMessage = new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
+                if (shouldAcknowledge(requestMessage.getEncodingMetadata().getNextMessage())) {
+                    SimpleCommandMessage getLastErrorMessage = new SimpleCommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
                             COMMAND_COLLECTION_NAME).getFullName(),
                             createGetLastErrorCommandDocument(), false,
                             getMessageSettings(connection.getDescription()));
@@ -155,7 +155,7 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
             sentCommandStartedEvent = true;
 
             if (shouldAcknowledge(encodingMetadata.getNextMessage())) {
-                CommandMessage getLastErrorMessage = new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
+                SimpleCommandMessage getLastErrorMessage = new SimpleCommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
                         COMMAND_COLLECTION_NAME).getFullName(),
                         createGetLastErrorCommandDocument(), false,
                         getMessageSettings(connection.getDescription()));

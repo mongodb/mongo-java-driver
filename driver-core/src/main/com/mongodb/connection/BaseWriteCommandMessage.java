@@ -31,7 +31,7 @@ import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 /**
  * Abstract base class for write command message.  Supports splitting into multiple messages.
  */
-abstract class BaseWriteCommandMessage extends RequestMessage {
+abstract class BaseWriteCommandMessage extends CommandMessage {
     // Server allows command document to exceed max document size by 16K, so that it can comfortably fit a stored document inside it
     private static final int HEADROOM = 16 * 1024;
 
@@ -86,11 +86,6 @@ abstract class BaseWriteCommandMessage extends RequestMessage {
         return bypassDocumentValidation;
     }
 
-    @Override
-    public BaseWriteCommandMessage encode(final BsonOutput outputStream) {
-        return (BaseWriteCommandMessage) super.encode(outputStream);
-    }
-
     /**
      * Gets the number of write requests left to encode.  Note that these may end up being split into multiple messages.
      *
@@ -99,13 +94,8 @@ abstract class BaseWriteCommandMessage extends RequestMessage {
     public abstract int getItemCount();
 
     @Override
-    protected BaseWriteCommandMessage encodeMessageBody(final BsonOutput outputStream, final int messageStartPosition) {
-        return (BaseWriteCommandMessage) encodeMessageBodyWithMetadata(outputStream, messageStartPosition).getNextMessage();
-    }
-
-    @Override
     protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput outputStream, final int messageStartPosition) {
-        BaseWriteCommandMessage nextMessage = null;
+        BaseWriteCommandMessage nextMessage;
 
         writeCommandHeader(outputStream);
 
