@@ -16,15 +16,15 @@
 
 package org.bson.codecs.pojo.entities;
 
-public final class FieldReusingClassTypeParameter<A> {
+public final class ConstructorNotPublicModel {
+    private final Integer integerField;
 
-    private GenericTreeModel<A, A> tree;
-
-    public FieldReusingClassTypeParameter(){
+    ConstructorNotPublicModel(final Integer integerField) {
+        this.integerField = integerField;
     }
 
-    public FieldReusingClassTypeParameter(final GenericTreeModel<A, A> tree) {
-        this.tree = tree;
+    public Integer getIntegerField() {
+        return integerField;
     }
 
     @Override
@@ -36,9 +36,9 @@ public final class FieldReusingClassTypeParameter<A> {
             return false;
         }
 
-        FieldReusingClassTypeParameter<?> that = (FieldReusingClassTypeParameter<?>) o;
+        ConstructorNotPublicModel that = (ConstructorNotPublicModel) o;
 
-        if (tree != null ? !tree.equals(that.tree) : that.tree != null) {
+        if (getIntegerField() != null ? !getIntegerField().equals(that.getIntegerField()) : that.getIntegerField() != null) {
             return false;
         }
 
@@ -47,6 +47,14 @@ public final class FieldReusingClassTypeParameter<A> {
 
     @Override
     public int hashCode() {
-        return tree != null ? tree.hashCode() : 0;
+        int result = getIntegerField() != null ? getIntegerField().hashCode() : 0;
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "ConstructorNotPublicModel{"
+                + "integerField=" + integerField
+                + "}";
     }
 }

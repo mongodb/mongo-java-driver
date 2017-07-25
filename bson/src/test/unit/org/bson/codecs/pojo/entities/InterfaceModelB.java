@@ -14,15 +14,12 @@
  * limitations under the License.
  */
 
-package org.bson.codecs.pojo.entities.conventions;
+package org.bson.codecs.pojo.entities;
 
-public final class FieldSelectionModel {
-    private static int myStaticField = 10;
 
-    private final int myFinalField = 10;
-    private transient int myTransientField = 10;
-    private int myIntField = 10;
+public interface InterfaceModelB extends InterfaceModelA {
 
-    public FieldSelectionModel() {
-    }
+    String getPropertyB();
+
+    void setPropertyB(String propertyB);
 }

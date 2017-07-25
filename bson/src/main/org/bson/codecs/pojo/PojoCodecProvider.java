@@ -117,7 +117,7 @@ public final class PojoCodecProvider implements CodecProvider {
         /**
          * Registers a classes with the builder for inclusion in the Provider.
          *
-         * <p>Note: Uses reflection for the field mapping. If no conventions are configured on the builder the
+         * <p>Note: Uses reflection for the property mapping. If no conventions are configured on the builder the
          * {@link Conventions#DEFAULT_CONVENTIONS} will be used.</p>
          *
          * @param classes the classes to register

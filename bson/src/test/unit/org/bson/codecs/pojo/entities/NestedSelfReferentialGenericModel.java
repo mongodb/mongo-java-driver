@@ -35,6 +35,46 @@ public final class NestedSelfReferentialGenericModel<T, V, Z> {
         this.selfRef2 = selfRef2;
     }
 
+    public T getT() {
+        return t;
+    }
+
+    public void setT(final T t) {
+        this.t = t;
+    }
+
+    public V getV() {
+        return v;
+    }
+
+    public void setV(final V v) {
+        this.v = v;
+    }
+
+    public Z getZ() {
+        return z;
+    }
+
+    public void setZ(final Z z) {
+        this.z = z;
+    }
+
+    public SelfReferentialGenericModel<T, V> getSelfRef1() {
+        return selfRef1;
+    }
+
+    public void setSelfRef1(final SelfReferentialGenericModel<T, V> selfRef1) {
+        this.selfRef1 = selfRef1;
+    }
+
+    public SelfReferentialGenericModel<T, Z> getSelfRef2() {
+        return selfRef2;
+    }
+
+    public void setSelfRef2(final SelfReferentialGenericModel<T, Z> selfRef2) {
+        this.selfRef2 = selfRef2;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

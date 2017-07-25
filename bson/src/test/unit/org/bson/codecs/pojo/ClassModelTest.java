@@ -19,11 +19,11 @@ package org.bson.codecs.pojo;
 import org.bson.codecs.pojo.entities.CollectionNestedPojoModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.bson.codecs.pojo.entities.NestedGenericHolderMapModel;
+import org.bson.codecs.pojo.entities.PropertySelectionModel;
 import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationInheritedModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationModel;
-import org.bson.codecs.pojo.entities.conventions.FieldSelectionModel;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -33,6 +33,7 @@ import java.util.HashSet;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 public final class ClassModelTest {
@@ -41,22 +42,20 @@ public final class ClassModelTest {
     @SuppressWarnings("rawtypes")
     public void testSimpleGenericsModel() {
         ClassModel<?> classModel = ClassModel.builder(SimpleGenericsModel.class).build();
-        FieldModel<?> fieldModel = classModel.getFieldModels().get(0);
 
         assertEquals("SimpleGenericsModel", classModel.getName());
         assertEquals(SimpleGenericsModel.class, classModel.getType());
         assertFalse(classModel.useDiscriminator());
         assertEquals("_t", classModel.getDiscriminatorKey());
         assertEquals("SimpleGenericsModel", classModel.getDiscriminator());
-        assertNull(classModel.getIdFieldModel());
-        assertEquals(4, classModel.getFieldModels().size());
-        assertEquals(fieldModel, classModel.getFieldModel(fieldModel.getDocumentFieldName()));
+        assertNull(classModel.getIdPropertyModel());
+        assertEquals(4, classModel.getPropertyModels().size());
         assertTrue(classModel.getInstanceCreatorFactory() instanceof InstanceCreatorFactoryImpl);
     }
 
     @Test
     @SuppressWarnings("rawtypes")
-    public void testCollectionNestedPojoModelFieldTypes() {
+    public void testCollectionNestedPojoModelPropertyTypes() {
         TypeData<String> string = TypeData.builder(String.class).build();
         TypeData<SimpleModel> simple = TypeData.builder(SimpleModel.class).build();
         TypeData<ArrayList> list = TypeData.builder(ArrayList.class).addTypeParameter(simple).build();
@@ -72,24 +71,32 @@ public final class ClassModelTest {
         TypeData<ArrayList> listMapList = TypeData.builder(ArrayList.class).addTypeParameter(mapList).build();
         TypeData<ArrayList> listMapSet = TypeData.builder(ArrayList.class).addTypeParameter(mapSet).build();
 
-
         ClassModel<?> classModel = ClassModel.builder(CollectionNestedPojoModel.class).build();
-        assertEquals(list, classModel.getFieldModels().get(0).getTypeData());
-        assertEquals(listList, classModel.getFieldModels().get(1).getTypeData());
+        assertEquals(list, classModel.getPropertyModel("listSimple").getTypeData());
+        assertEquals(listList, classModel.getPropertyModel("listListSimple").getTypeData());
 
-        assertEquals(set, classModel.getFieldModels().get(2).getTypeData());
-        assertEquals(setSet, classModel.getFieldModels().get(3).getTypeData());
+        assertEquals(set, classModel.getPropertyModel("setSimple").getTypeData());
+        assertEquals(setSet, classModel.getPropertyModel("setSetSimple").getTypeData());
 
-        assertEquals(map, classModel.getFieldModels().get(4).getTypeData());
-        assertEquals(mapMap, classModel.getFieldModels().get(5).getTypeData());
+        assertEquals(map, classModel.getPropertyModel("mapSimple").getTypeData());
+        assertEquals(mapMap, classModel.getPropertyModel("mapMapSimple").getTypeData());
 
-        assertEquals(mapList, classModel.getFieldModels().get(6).getTypeData());
-        assertEquals(mapListMap, classModel.getFieldModels().get(7).getTypeData());
-        assertEquals(mapSet, classModel.getFieldModels().get(8).getTypeData());
+        assertEquals(mapList, classModel.getPropertyModel("mapListSimple").getTypeData());
+        assertEquals(mapListMap, classModel.getPropertyModel("mapListMapSimple").getTypeData());
+        assertEquals(mapSet, classModel.getPropertyModel("mapSetSimple").getTypeData());
 
-        assertEquals(listMap, classModel.getFieldModels().get(9).getTypeData());
-        assertEquals(listMapList, classModel.getFieldModels().get(10).getTypeData());
-        assertEquals(listMapSet, classModel.getFieldModels().get(11).getTypeData());
+        assertEquals(listMap, classModel.getPropertyModel("listMapSimple").getTypeData());
+        assertEquals(listMapList, classModel.getPropertyModel("listMapListSimple").getTypeData());
+        assertEquals(listMapSet, classModel.getPropertyModel("listMapSetSimple").getTypeData());
+    }
+
+    @Test
+    public void testPropertySelection() {
+        ClassModel<PropertySelectionModel> classModel = ClassModel.builder(PropertySelectionModel.class).build();
+
+        assertEquals(2, classModel.getPropertyModels().size());
+        assertNotNull(classModel.getPropertyModel("stringField"));
+        assertNotNull(classModel.getPropertyModel("finalStringField"));
     }
 
     @Test
@@ -101,7 +108,7 @@ public final class ClassModelTest {
         TypeData<GenericHolderModel> genericHolder = TypeData.builder(GenericHolderModel.class).addTypeParameter(map).build();
 
         ClassModel<?> classModel = ClassModel.builder(NestedGenericHolderMapModel.class).build();
-        assertEquals(genericHolder, classModel.getFieldModels().get(0).getTypeData());
+        assertEquals(genericHolder, classModel.getPropertyModels().get(0).getTypeData());
     }
 
     @Test
@@ -114,25 +121,25 @@ public final class ClassModelTest {
         TypeData<HashMap> map = TypeData.builder(HashMap.class).addTypeParameter(string).addTypeParameter(object).build();
 
         ClassModel<?> classModel = ClassModel.builder(SimpleGenericsModel.class).build();
-        assertEquals(integer, classModel.getFieldModels().get(0).getTypeData());
-        assertEquals(object, classModel.getFieldModels().get(1).getTypeData());
-        assertEquals(list, classModel.getFieldModels().get(2).getTypeData());
-        assertEquals(map, classModel.getFieldModels().get(3).getTypeData());
+        assertEquals(integer, classModel.getPropertyModel("myIntegerField").getTypeData());
+        assertEquals(object, classModel.getPropertyModel("myGenericField").getTypeData());
+        assertEquals(list, classModel.getPropertyModel("myListField").getTypeData());
+        assertEquals(map, classModel.getPropertyModel("myMapField").getTypeData());
     }
 
     @Test
     public void testAnnotationModel() {
         ClassModel<?> classModel = ClassModel.builder(AnnotationModel.class).build();
-        FieldModel<?> fieldModel = classModel.getFieldModels().get(0);
+        PropertyModel<?> propertyModel = classModel.getIdPropertyModel();
 
         assertEquals("AnnotationModel", classModel.getName());
         assertEquals(AnnotationModel.class, classModel.getType());
         assertTrue(classModel.useDiscriminator());
         assertEquals("_cls", classModel.getDiscriminatorKey());
         assertEquals("MyAnnotationModel", classModel.getDiscriminator());
-        assertEquals(fieldModel, classModel.getIdFieldModel());
-        assertEquals(3, classModel.getFieldModels().size());
-        assertEquals(fieldModel, classModel.getFieldModel(fieldModel.getDocumentFieldName()));
+        assertEquals(propertyModel, classModel.getIdPropertyModel());
+        assertEquals(3, classModel.getPropertyModels().size());
+        assertEquals(propertyModel, classModel.getPropertyModel("customId"));
         assertTrue(classModel.getInstanceCreatorFactory() instanceof InstanceCreatorFactoryImpl);
     }
 
@@ -143,23 +150,13 @@ public final class ClassModelTest {
         assertEquals("_cls", classModel.getDiscriminatorKey());
         assertEquals("AnnotationInheritedModel", classModel.getDiscriminator());
 
-        assertEquals(2, classModel.getFieldModels().size());
+        assertEquals(2, classModel.getPropertyModels().size());
 
-        FieldModel<?> fieldModel = classModel.getFieldModel("_id");
-        assertEquals(fieldModel, classModel.getIdFieldModel());
-        assertEquals(fieldModel, classModel.getFieldModel(fieldModel.getDocumentFieldName()));
+        PropertyModel<?> propertyModel = classModel.getPropertyModel("customId");
+        assertEquals(propertyModel, classModel.getIdPropertyModel());
 
-        fieldModel = classModel.getFieldModel("child");
-        assertTrue(fieldModel.useDiscriminator());
-    }
-
-    @Test
-    public void testFieldSelection() {
-        ClassModel<?> classModel = ClassModel.builder(FieldSelectionModel.class).build();
-
-        assertEquals(2, classModel.getFieldModels().size());
-        assertEquals("myFinalField", classModel.getFieldModels().get(0).getFieldName());
-        assertEquals("myIntField", classModel.getFieldModels().get(1).getFieldName());
+        propertyModel = classModel.getPropertyModel("child");
+        assertTrue(propertyModel.useDiscriminator());
     }
 
 }

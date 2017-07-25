@@ -17,11 +17,23 @@
 package org.bson.codecs.pojo;
 
 
-import org.bson.codecs.pojo.annotations.Discriminator;
-import org.bson.codecs.pojo.annotations.Id;
-import org.bson.codecs.pojo.annotations.Property;
+import org.bson.codecs.configuration.CodecConfigurationException;
+import org.bson.codecs.pojo.annotations.BsonCreator;
+import org.bson.codecs.pojo.annotations.BsonDiscriminator;
+import org.bson.codecs.pojo.annotations.BsonId;
+import org.bson.codecs.pojo.annotations.BsonIgnore;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
+
+import static java.lang.String.format;
+import static java.lang.reflect.Modifier.isPublic;
+import static java.lang.reflect.Modifier.isStatic;
+import static org.bson.codecs.pojo.PojoBuilderHelper.createPropertyModelBuilder;
 
 final class ConventionAnnotationImpl implements Convention {
 
@@ -31,16 +43,18 @@ final class ConventionAnnotationImpl implements Convention {
             processClassAnnotation(classModelBuilder, annotation);
         }
 
-        for (final FieldModelBuilder<?> fieldModelBuilder : classModelBuilder.getFields()) {
-            for (final Annotation annotation : fieldModelBuilder.getAnnotations()) {
-                processFieldAnnotation(classModelBuilder, fieldModelBuilder, annotation);
-            }
+        for (PropertyModelBuilder<?> propertyModelBuilder : classModelBuilder.getPropertyModelBuilders()) {
+            processPropertyAnnotations(classModelBuilder, propertyModelBuilder);
         }
+
+        processCreatorAnnotation(classModelBuilder);
+
+        cleanPropertyBuilders(classModelBuilder);
     }
 
-    void processClassAnnotation(final ClassModelBuilder<?> classModelBuilder, final Annotation annotation) {
-        if (annotation instanceof Discriminator) {
-            Discriminator discriminator = (Discriminator) annotation;
+    private void processClassAnnotation(final ClassModelBuilder<?> classModelBuilder, final Annotation annotation) {
+        if (annotation instanceof BsonDiscriminator) {
+            BsonDiscriminator discriminator = (BsonDiscriminator) annotation;
             String key = discriminator.key();
             if (!key.equals("")) {
                 classModelBuilder.discriminatorKey(key);
@@ -54,17 +68,103 @@ final class ConventionAnnotationImpl implements Convention {
         }
     }
 
-    void processFieldAnnotation(final ClassModelBuilder<?> classModelBuilder, final FieldModelBuilder<?> fieldModelBuilder,
-                                          final Annotation annotation) {
-        if (annotation instanceof Property) {
-            Property property = (Property) annotation;
-            if (!"".equals(property.name())) {
-                fieldModelBuilder.documentFieldName(property.name());
+    private void processPropertyAnnotations(final ClassModelBuilder<?> classModelBuilder,
+                                            final PropertyModelBuilder<?> propertyModelBuilder) {
+        for (Annotation annotation : propertyModelBuilder.getReadAnnotations()) {
+            if (annotation instanceof BsonProperty) {
+                BsonProperty bsonProperty = (BsonProperty) annotation;
+                if (!"".equals(bsonProperty.value())) {
+                    propertyModelBuilder.readName(bsonProperty.value());
+                }
+                propertyModelBuilder.discriminatorEnabled(bsonProperty.useDiscriminator());
+            } else if (annotation instanceof BsonId) {
+                classModelBuilder.idPropertyName(propertyModelBuilder.getName());
+            } else if (annotation instanceof BsonIgnore) {
+                propertyModelBuilder.readName(null);
             }
-            fieldModelBuilder.discriminatorEnabled(property.useDiscriminator());
-        } else if (annotation instanceof Id) {
-            classModelBuilder.idField(fieldModelBuilder.getFieldName());
+        }
+
+        for (Annotation annotation : propertyModelBuilder.getWriteAnnotations()) {
+            if (annotation instanceof BsonProperty) {
+                BsonProperty bsonProperty = (BsonProperty) annotation;
+                if (!"".equals(bsonProperty.value())) {
+                    propertyModelBuilder.writeName(bsonProperty.value());
+                }
+            } else if (annotation instanceof BsonIgnore) {
+                propertyModelBuilder.writeName(null);
+            }
         }
     }
 
+    @SuppressWarnings("unchecked")
+    private <T> void processCreatorAnnotation(final ClassModelBuilder<T> classModelBuilder) {
+        Class<T> clazz = classModelBuilder.getType();
+        CreatorExecutable<T> creatorExecutable = null;
+        for (Constructor<?> constructor : clazz.getDeclaredConstructors()) {
+            if (isPublic(constructor.getModifiers())) {
+                for (Annotation annotation : constructor.getDeclaredAnnotations()) {
+                    if (annotation.annotationType().equals(BsonCreator.class)) {
+                        creatorExecutable = new CreatorExecutable<T>(clazz, (Constructor<T>) constructor);
+                        break;
+                    }
+                }
+            }
+        }
+
+        for (Method method : clazz.getDeclaredMethods()) {
+            if (isStatic(method.getModifiers())) {
+                for (Annotation annotation : method.getDeclaredAnnotations()) {
+                    if (annotation.annotationType().equals(BsonCreator.class)) {
+                        if (creatorExecutable != null) {
+                            throw new CodecConfigurationException("Found multiple constructors / methods annotated with @BsonCreator");
+                        } else if (!clazz.isAssignableFrom(method.getReturnType())) {
+                            throw new CodecConfigurationException(
+                                    format("Invalid method annotated with @BsonCreator. Returns '%s', expected %s", method.getReturnType(),
+                                            clazz));
+                        }
+                        creatorExecutable = new CreatorExecutable<T>(clazz, method);
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (creatorExecutable != null) {
+            List<BsonProperty> properties = creatorExecutable.getProperties();
+            List<Class<?>> parameterTypes = creatorExecutable.getParameterTypes();
+            if (properties.size() != parameterTypes.size()) {
+                throw creatorExecutable.getError("All parameters must be annotated with a @Property");
+            }
+            for (int i = 0; i < properties.size(); i++) {
+                BsonProperty bsonProperty = properties.get(i);
+                Class<?> parameterType = parameterTypes.get(i);
+                PropertyModelBuilder<?> propertyModelBuilder = classModelBuilder.getProperty(bsonProperty.value());
+                if (propertyModelBuilder == null) {
+                    addCreatorPropertyToClassModelBuilder(classModelBuilder, bsonProperty.value(), parameterType);
+                } else if (propertyModelBuilder.getTypeData().getType() != parameterType) {
+                    throw creatorExecutable.getError(format("Invalid Property type for '%s'. Expected %s, found %s.", bsonProperty.value(),
+                            propertyModelBuilder.getTypeData().getType(), parameterType));
+                }
+            }
+            classModelBuilder.instanceCreatorFactory(new InstanceCreatorFactoryImpl<T>(creatorExecutable));
+        }
+    }
+
+    private <T, S> void addCreatorPropertyToClassModelBuilder(final ClassModelBuilder<T> classModelBuilder, final String name,
+                                                              final Class<S> clazz) {
+        classModelBuilder.addProperty(createPropertyModelBuilder(new PropertyMetadata<S>(name, classModelBuilder.getType().getSimpleName(),
+                TypeData.builder(clazz).build())).readName(null).writeName(name));
+    }
+
+    private void cleanPropertyBuilders(final ClassModelBuilder<?> classModelBuilder) {
+        List<String> propertiesToRemove = new ArrayList<String>();
+        for (PropertyModelBuilder<?> propertyModelBuilder : classModelBuilder.getPropertyModelBuilders()) {
+            if (!propertyModelBuilder.isReadable() && !propertyModelBuilder.isWritable()) {
+                propertiesToRemove.add(propertyModelBuilder.getName());
+            }
+        }
+        for (String propertyName : propertiesToRemove) {
+            classModelBuilder.removeProperty(propertyName);
+        }
+    }
 }

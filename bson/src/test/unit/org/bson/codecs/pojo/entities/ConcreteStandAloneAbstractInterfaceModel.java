@@ -17,35 +17,13 @@
 package org.bson.codecs.pojo.entities;
 
 public final class ConcreteStandAloneAbstractInterfaceModel extends AbstractInterfaceModel {
-    private String name;
 
     public ConcreteStandAloneAbstractInterfaceModel() {
+        super();
     }
 
     public ConcreteStandAloneAbstractInterfaceModel(final String name) {
-        this.name = name;
+        super(name);
     }
 
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-
-        ConcreteStandAloneAbstractInterfaceModel that = (ConcreteStandAloneAbstractInterfaceModel) o;
-
-        if (name != null ? !name.equals(that.name) : that.name != null) {
-            return false;
-        }
-
-        return true;
-    }
-
-    @Override
-    public int hashCode() {
-        return name != null ? name.hashCode() : 0;
-    }
 }

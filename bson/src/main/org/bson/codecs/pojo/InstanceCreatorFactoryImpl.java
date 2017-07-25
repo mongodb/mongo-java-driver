@@ -16,27 +16,15 @@
 
 package org.bson.codecs.pojo;
 
-import org.bson.codecs.configuration.CodecConfigurationException;
-
-import java.lang.reflect.Constructor;
-
-import static java.lang.String.format;
-
 final class InstanceCreatorFactoryImpl<T> implements InstanceCreatorFactory<T> {
-    private final String className;
-    private final Constructor<T> constructor;
+    private final CreatorExecutable<T> creatorExecutable;
 
-    InstanceCreatorFactoryImpl(final String className, final Constructor<T> constructor) {
-        this.className = className;
-        this.constructor = constructor;
+    InstanceCreatorFactoryImpl(final CreatorExecutable<T> creatorExecutable) {
+        this.creatorExecutable = creatorExecutable;
     }
 
     @Override
     public InstanceCreator<T> create() {
-        if (constructor == null) {
-            throw new CodecConfigurationException(format("Cannot find a no-arg constructor for '%s'. Either create one or "
-                    + "provide your own InstanceCreatorFactory.", className));
-        }
-        return new InstanceCreatorInstanceImpl<T>(constructor);
+        return new InstanceCreatorImpl<T>(creatorExecutable);
     }
 }

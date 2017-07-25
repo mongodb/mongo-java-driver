@@ -14,17 +14,34 @@
  * limitations under the License.
  */
 
-package org.bson.codecs.pojo.entities;
+package org.bson.codecs.pojo.entities.conventions;
 
-public final class NoConstructorModel {
-    private final Integer integerField;
+import org.bson.codecs.pojo.annotations.BsonCreator;
 
-    public NoConstructorModel(final Integer integerField) {
-        this.integerField = integerField;
+public final class CreatorConstructorThrowsExceptionModel {
+    private Integer integerField;
+    private String stringField;
+    public long longField;
+
+    @BsonCreator
+    public CreatorConstructorThrowsExceptionModel(){
+        throw new UnsupportedOperationException("Nope");
     }
 
     public Integer getIntegerField() {
         return integerField;
+    }
+
+    public void setIntegerField(final Integer integerField) {
+        this.integerField = integerField;
+    }
+
+    public String getStringField() {
+        return stringField;
+    }
+
+    public void setStringField(final String stringField) {
+        this.stringField = stringField;
     }
 
     @Override
@@ -36,9 +53,15 @@ public final class NoConstructorModel {
             return false;
         }
 
-        NoConstructorModel that = (NoConstructorModel) o;
+        CreatorConstructorThrowsExceptionModel that = (CreatorConstructorThrowsExceptionModel) o;
 
+        if (longField != that.longField) {
+            return false;
+        }
         if (getIntegerField() != null ? !getIntegerField().equals(that.getIntegerField()) : that.getIntegerField() != null) {
+            return false;
+        }
+        if (getStringField() != null ? !getStringField().equals(that.getStringField()) : that.getStringField() != null) {
             return false;
         }
 
@@ -48,13 +71,17 @@ public final class NoConstructorModel {
     @Override
     public int hashCode() {
         int result = getIntegerField() != null ? getIntegerField().hashCode() : 0;
+        result = 31 * result + (getStringField() != null ? getStringField().hashCode() : 0);
+        result = 31 * result + (int) (longField ^ (longField >>> 32));
         return result;
     }
 
     @Override
     public String toString() {
-        return "ConstructorBasedModel{"
+        return "CreatorNoArgsConstructorModel{"
                 + "integerField=" + integerField
+                + ", stringField='" + stringField + "'"
+                + ", longField=" + longField
                 + "}";
     }
 }

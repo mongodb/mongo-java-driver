@@ -57,11 +57,9 @@ public final class Address {
      * Sets the street
      *
      * @param street the street
-     * @return this
      */
-    public Address street(final String street) {
+    public void setStreet(final String street) {
         this.street = street;
-        return this;
     }
 
     /**
@@ -77,11 +75,9 @@ public final class Address {
      * Sets the city
      *
      * @param city the city
-     * @return this
      */
-    public Address city(final String city) {
+    public void setCity(final String city) {
         this.city = city;
-        return this;
     }
 
     /**
@@ -97,11 +93,9 @@ public final class Address {
      * Sets the zip
      *
      * @param zip the zip
-     * @return this
      */
-    public Address zip(final String zip) {
+    public void setZip(final String zip) {
         this.zip = zip;
-        return this;
     }
 
     @Override

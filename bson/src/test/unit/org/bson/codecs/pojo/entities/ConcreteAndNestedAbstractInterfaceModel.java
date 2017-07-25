@@ -17,19 +17,26 @@
 package org.bson.codecs.pojo.entities;
 
 
-import org.bson.codecs.pojo.annotations.Property;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
 public final class ConcreteAndNestedAbstractInterfaceModel extends AbstractInterfaceModel {
-    private String name;
-
-    @Property(useDiscriminator = true)
+    @BsonProperty(useDiscriminator = true)
     private InterfaceBasedModel child;
 
     public ConcreteAndNestedAbstractInterfaceModel() {
+        super();
     }
 
     public ConcreteAndNestedAbstractInterfaceModel(final String name, final InterfaceBasedModel child) {
-        this.name = name;
+        super(name);
+        this.child = child;
+    }
+
+    public InterfaceBasedModel getChild() {
+        return child;
+    }
+
+    public void setChild(final InterfaceBasedModel child) {
         this.child = child;
     }
 
@@ -41,13 +48,13 @@ public final class ConcreteAndNestedAbstractInterfaceModel extends AbstractInter
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
+        if (!super.equals(o)) {
+            return false;
+        }
 
         ConcreteAndNestedAbstractInterfaceModel that = (ConcreteAndNestedAbstractInterfaceModel) o;
 
-        if (name != null ? !name.equals(that.name) : that.name != null) {
-            return false;
-        }
-        if (child != null ? !child.equals(that.child) : that.child != null) {
+        if (getChild() != null ? !getChild().equals(that.getChild()) : that.getChild() != null) {
             return false;
         }
 
@@ -56,8 +63,8 @@ public final class ConcreteAndNestedAbstractInterfaceModel extends AbstractInter
 
     @Override
     public int hashCode() {
-        int result = name != null ? name.hashCode() : 0;
-        result = 31 * result + (child != null ? child.hashCode() : 0);
+        int result = super.hashCode();
+        result = 31 * result + (getChild() != null ? getChild().hashCode() : 0);
         return result;
     }
 }
