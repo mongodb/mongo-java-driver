@@ -30,6 +30,30 @@ public final class SelfReferentialGenericModel<T, V> {
         this.child = child;
     }
 
+    public T getT() {
+        return t;
+    }
+
+    public void setT(final T t) {
+        this.t = t;
+    }
+
+    public V getV() {
+        return v;
+    }
+
+    public void setV(final V v) {
+        this.v = v;
+    }
+
+    public SelfReferentialGenericModel<V, T> getChild() {
+        return child;
+    }
+
+    public void setChild(final SelfReferentialGenericModel<V, T> child) {
+        this.child = child;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

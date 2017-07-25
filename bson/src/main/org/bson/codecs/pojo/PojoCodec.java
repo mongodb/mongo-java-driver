@@ -67,8 +67,8 @@ final class PojoCodec<T> implements Codec<T> {
         this.specialized = specialized;
         if (specialized) {
             codecCache.put(classModel, this);
-            for (FieldModel<?> fieldModel : classModel.getFieldModels()) {
-                addToCache(fieldModel);
+            for (PropertyModel<?> propertyModel : classModel.getPropertyModels()) {
+                addToCache(propertyModel);
             }
         }
     }
@@ -79,20 +79,20 @@ final class PojoCodec<T> implements Codec<T> {
             throw new CodecConfigurationException("Cannot encode an unspecialized generic ClassModel");
         }
         writer.writeStartDocument();
-        FieldModel<?> idFieldModel = classModel.getIdFieldModel();
-        if (idFieldModel != null) {
-            encodeField(writer, value, encoderContext, idFieldModel);
+        PropertyModel<?> idPropertyModel = classModel.getIdPropertyModel();
+        if (idPropertyModel != null) {
+            encodeProperty(writer, value, encoderContext, idPropertyModel);
         }
 
         if (classModel.useDiscriminator()) {
             writer.writeString(classModel.getDiscriminatorKey(), classModel.getDiscriminator());
         }
 
-        for (FieldModel<?> fieldModel : classModel.getFieldModels()) {
-            if (fieldModel.equals(classModel.getIdFieldModel())) {
+        for (PropertyModel<?> propertyModel : classModel.getPropertyModels()) {
+            if (propertyModel.equals(classModel.getIdPropertyModel())) {
                 continue;
             }
-            encodeField(writer, value, encoderContext, fieldModel);
+            encodeProperty(writer, value, encoderContext, propertyModel);
         }
         writer.writeEndDocument();
     }
@@ -104,7 +104,7 @@ final class PojoCodec<T> implements Codec<T> {
                 throw new CodecConfigurationException("Cannot decode using an unspecialized generic ClassModel");
             }
             InstanceCreator<T> instanceCreator = classModel.getInstanceCreator();
-            decodeFields(reader, decoderContext, instanceCreator);
+            decodeProperties(reader, decoderContext, instanceCreator);
             return instanceCreator.getInstance();
         } else {
             return getCodecFromDocument(reader, classModel.useDiscriminator(), classModel.getDiscriminatorKey(), registry,
@@ -127,45 +127,50 @@ final class PojoCodec<T> implements Codec<T> {
     }
 
     @SuppressWarnings("unchecked")
-    private <S> void encodeField(final BsonWriter writer, final T instance, final EncoderContext encoderContext,
-                                 final FieldModel<S> fieldModel) {
-        S fieldValue = fieldModel.getFieldAccessor().get(instance);
-        if (fieldModel.shouldSerialize(fieldValue)) {
-            writer.writeName(fieldModel.getDocumentFieldName());
-            if (fieldValue == null) {
-                writer.writeNull();
-            } else {
-                getInstanceCodec(fieldModel, fieldValue.getClass()).encode(writer, fieldValue, encoderContext);
+    private <S> void encodeProperty(final BsonWriter writer, final T instance, final EncoderContext encoderContext,
+                                    final PropertyModel<S> propertyModel) {
+        if (propertyModel.isReadable()) {
+            S propertyValue = propertyModel.getPropertyAccessor().get(instance);
+            if (propertyModel.shouldSerialize(propertyValue)) {
+                writer.writeName(propertyModel.getReadName());
+                if (propertyValue == null) {
+                    writer.writeNull();
+                } else {
+                    getInstanceCodec(propertyModel, propertyValue.getClass()).encode(writer, propertyValue, encoderContext);
+                }
             }
         }
     }
 
     @SuppressWarnings("unchecked")
-    private void decodeFields(final BsonReader reader, final DecoderContext decoderContext, final InstanceCreator<T> instanceCreator) {
+    private void decodeProperties(final BsonReader reader, final DecoderContext decoderContext, final InstanceCreator<T> instanceCreator) {
         reader.readStartDocument();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             String name = reader.readName();
             if (classModel.useDiscriminator() && classModel.getDiscriminatorKey().equals(name)) {
                 reader.readString();
             } else {
-                decodeFieldModel(reader, decoderContext, instanceCreator, name, classModel.getFieldModel(name));
+                decodePropertyModel(reader, decoderContext, instanceCreator, name, getPropertyModelByWriteName(classModel, name));
             }
         }
         reader.readEndDocument();
     }
 
     @SuppressWarnings("unchecked")
-    private <S> void decodeFieldModel(final BsonReader reader, final DecoderContext decoderContext,
-                                      final InstanceCreator<T> instanceCreator, final String name, final FieldModel<S> fieldModel) {
-        if (fieldModel != null) {
+    private <S> void decodePropertyModel(final BsonReader reader, final DecoderContext decoderContext,
+                                         final InstanceCreator<T> instanceCreator, final String name,
+                                         final PropertyModel<S> propertyModel) {
+        if (propertyModel != null) {
             try {
                 S value = null;
                 if (reader.getCurrentBsonType() == BsonType.NULL) {
                     reader.readNull();
                 } else {
-                    value = decoderContext.decodeWithChildContext(fieldModel.getCachedCodec(), reader);
+                    value = decoderContext.decodeWithChildContext(propertyModel.getCachedCodec(), reader);
                 }
-                instanceCreator.set(value, fieldModel);
+                if (propertyModel.isWritable()) {
+                    instanceCreator.set(value, propertyModel);
+                }
             } catch (BsonInvalidOperationException e) {
                 throw new CodecConfigurationException(format("Failed to decode '%s'. %s", name, e.getMessage()), e);
             } catch (CodecConfigurationException e) {
@@ -173,16 +178,16 @@ final class PojoCodec<T> implements Codec<T> {
             }
         } else {
             if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace(format("Found field not present in the ClassModel: %s", name));
+                LOGGER.trace(format("Found property not present in the ClassModel: %s", name));
             }
             reader.skipValue();
         }
     }
 
-    private <S> void addToCache(final FieldModel<S> fieldModel) {
-        Codec<S> codec = fieldModel.getCodec() != null ? fieldModel.getCodec()
-                : specializePojoCodec(fieldModel, getCodecFromTypeData(fieldModel.getTypeData()));
-        fieldModel.cachedCodec(codec);
+    private <S> void addToCache(final PropertyModel<S> propertyModel) {
+        Codec<S> codec = propertyModel.getCodec() != null ? propertyModel.getCodec()
+                : specializePojoCodec(propertyModel, getCodecFromTypeData(propertyModel.getTypeData()));
+        propertyModel.cachedCodec(codec);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -209,8 +214,8 @@ final class PojoCodec<T> implements Codec<T> {
     }
 
     @SuppressWarnings("unchecked")
-    private <S, V> Codec<S> getInstanceCodec(final FieldModel<S> fieldModel, final Class<V> instanceType) {
-        Codec<S> codec = fieldModel.getCachedCodec();
+    private <S, V> Codec<S> getInstanceCodec(final PropertyModel<S> propertyModel, final Class<V> instanceType) {
+        Codec<S> codec = propertyModel.getCachedCodec();
         if (!areEquivalentTypes(codec.getEncoderClass(), instanceType)) {
             codec = (Codec<S>) registry.get(instanceType);
         }
@@ -243,11 +248,11 @@ final class PojoCodec<T> implements Codec<T> {
     }
 
     @SuppressWarnings("unchecked")
-    private <S> Codec<S> specializePojoCodec(final FieldModel<S> fieldModel, final Codec<S> defaultCodec) {
+    private <S> Codec<S> specializePojoCodec(final PropertyModel<S> propertyModel, final Codec<S> defaultCodec) {
         Codec<S> codec = defaultCodec;
         if (codec != null && codec instanceof PojoCodec) {
             PojoCodec<S> pojoCodec = (PojoCodec<S>) codec;
-            ClassModel<S> specialized = getSpecializedClassModel(pojoCodec.getClassModel(), fieldModel);
+            ClassModel<S> specialized = getSpecializedClassModel(pojoCodec.getClassModel(), propertyModel);
             if (codecCache.containsKey(specialized)) {
                 codec = (Codec<S>) codecCache.get(specialized);
             } else {
@@ -258,65 +263,67 @@ final class PojoCodec<T> implements Codec<T> {
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private <S, V> ClassModel<S> getSpecializedClassModel(final ClassModel<S> clazzModel, final FieldModel<V> fieldModel) {
-        boolean useDiscriminator = fieldModel.useDiscriminator() == null ? clazzModel.useDiscriminator() : fieldModel.useDiscriminator();
+    private <S, V> ClassModel<S> getSpecializedClassModel(final ClassModel<S> clazzModel, final PropertyModel<V> propertyModel) {
+        boolean useDiscriminator = propertyModel.useDiscriminator() == null ? clazzModel.useDiscriminator()
+                : propertyModel.useDiscriminator();
         boolean validDiscriminator = clazzModel.getDiscriminatorKey() != null && clazzModel.getDiscriminator() != null;
         boolean changeTheDiscriminator = (useDiscriminator != clazzModel.useDiscriminator()) && validDiscriminator;
 
-        if (fieldModel.getTypeData().getTypeParameters().isEmpty() && !changeTheDiscriminator){
+        if (propertyModel.getTypeData().getTypeParameters().isEmpty() && !changeTheDiscriminator){
             return clazzModel;
         }
 
-        ArrayList<FieldModel<?>> concreteFieldModels = new ArrayList<FieldModel<?>>(clazzModel.getFieldModels());
-        FieldModel<?> concreteIdField = clazzModel.getIdFieldModel();
+        ArrayList<PropertyModel<?>> concretePropertyModels = new ArrayList<PropertyModel<?>>(clazzModel.getPropertyModels());
+        PropertyModel<?> concreteIdProperty = clazzModel.getIdPropertyModel();
 
-        List<TypeData<?>> fieldTypeParameters = fieldModel.getTypeData().getTypeParameters();
-        for (int i = 0; i < concreteFieldModels.size(); i++) {
-            FieldModel<?> model = concreteFieldModels.get(i);
-            String fieldName = model.getFieldName();
-            TypeParameterMap typeParameterMap = clazzModel.getFieldNameToTypeParameterMap().get(fieldName);
+        List<TypeData<?>> propertyTypeParameters = propertyModel.getTypeData().getTypeParameters();
+        for (int i = 0; i < concretePropertyModels.size(); i++) {
+            PropertyModel<?> model = concretePropertyModels.get(i);
+            String propertyName = model.getName();
+            TypeParameterMap typeParameterMap = clazzModel.getPropertyNameToTypeParameterMap().get(propertyName);
             if (typeParameterMap.hasTypeParameters()) {
-                FieldModel<?> concreteFieldModel = getSpecializedFieldModel(model, typeParameterMap, fieldTypeParameters);
-                concreteFieldModels.set(i, concreteFieldModel);
-                if (concreteIdField != null && concreteIdField.getFieldName().equals(fieldName)) {
-                    concreteIdField = concreteFieldModel;
+                PropertyModel<?> concretePropertyModel = getSpecializedPropertyModel(model, typeParameterMap, propertyTypeParameters);
+                concretePropertyModels.set(i, concretePropertyModel);
+                if (concreteIdProperty != null && concreteIdProperty.getName().equals(propertyName)) {
+                    concreteIdProperty = concretePropertyModel;
                 }
             }
         }
 
-        boolean discriminatorEnabled = changeTheDiscriminator ? fieldModel.useDiscriminator() : clazzModel.useDiscriminator();
-        return new ClassModel<S>(clazzModel.getType(), clazzModel.getFieldNameToTypeParameterMap(),
+        boolean discriminatorEnabled = changeTheDiscriminator ? propertyModel.useDiscriminator() : clazzModel.useDiscriminator();
+        return new ClassModel<S>(clazzModel.getType(), clazzModel.getPropertyNameToTypeParameterMap(),
                 clazzModel.getInstanceCreatorFactory(), discriminatorEnabled, clazzModel.getDiscriminatorKey(),
-                clazzModel.getDiscriminator(), concreteIdField, concreteFieldModels);
+                clazzModel.getDiscriminator(), concreteIdProperty, concretePropertyModels);
     }
 
     @SuppressWarnings("unchecked")
-    private <V> FieldModel<V> getSpecializedFieldModel(final FieldModel<V> fieldModel, final TypeParameterMap typeParameterMap,
-                                                       final List<TypeData<?>> fieldTypeParameters) {
-        TypeData<V> specializedFieldType = fieldModel.getTypeData();
-        Map<Integer, Integer> fieldToClassParamIndexMap = typeParameterMap.getFieldToClassParamIndexMap();
-        Integer classTypeParamRepresentsWholeField = fieldToClassParamIndexMap.get(-1);
-        if (classTypeParamRepresentsWholeField != null) {
-            specializedFieldType = (TypeData<V>) fieldTypeParameters.get(classTypeParamRepresentsWholeField);
+    private <V> PropertyModel<V> getSpecializedPropertyModel(final PropertyModel<V> propertyModel, final TypeParameterMap typeParameterMap,
+                                                             final List<TypeData<?>> propertyTypeParameters) {
+        TypeData<V> specializedPropertyType = propertyModel.getTypeData();
+        Map<Integer, Integer> propertyToClassParamIndexMap = typeParameterMap.getPropertyToClassParamIndexMap();
+        Integer classTypeParamRepresentsWholeProperty = propertyToClassParamIndexMap.get(-1);
+        if (classTypeParamRepresentsWholeProperty != null) {
+            specializedPropertyType = (TypeData<V>) propertyTypeParameters.get(classTypeParamRepresentsWholeProperty);
         } else {
-            TypeData.Builder<V> builder = TypeData.builder(fieldModel.getTypeData().getType());
-            List<TypeData<?>> typeParameters = new ArrayList<TypeData<?>>(fieldModel.getTypeData().getTypeParameters());
+            TypeData.Builder<V> builder = TypeData.builder(propertyModel.getTypeData().getType());
+            List<TypeData<?>> typeParameters = new ArrayList<TypeData<?>>(propertyModel.getTypeData().getTypeParameters());
             for (int i = 0; i < typeParameters.size(); i++) {
-                for (Map.Entry<Integer, Integer> mapping : fieldToClassParamIndexMap.entrySet()) {
+                for (Map.Entry<Integer, Integer> mapping : propertyToClassParamIndexMap.entrySet()) {
                     if (mapping.getKey().equals(i)) {
-                        typeParameters.set(i, fieldTypeParameters.get(mapping.getValue()));
+                        typeParameters.set(i, propertyTypeParameters.get(mapping.getValue()));
                     }
                 }
             }
             builder.addTypeParameters(typeParameters);
-            specializedFieldType = builder.build();
+            specializedPropertyType = builder.build();
         }
-        if (fieldModel.getTypeData().equals(specializedFieldType)) {
-            return fieldModel;
+        if (propertyModel.getTypeData().equals(specializedPropertyType)) {
+            return propertyModel;
         }
 
-        return new FieldModel<V>(fieldModel.getFieldName(), fieldModel.getDocumentFieldName(), specializedFieldType, null,
-                fieldModel.getFieldSerialization(), fieldModel.useDiscriminator(), fieldModel.getFieldAccessor());
+        return new PropertyModel<V>(propertyModel.getName(), propertyModel.getReadName(), propertyModel.getWriteName(),
+                specializedPropertyType, null, propertyModel.getPropertySerialization(), propertyModel.useDiscriminator(),
+                propertyModel.getPropertyAccessor());
     }
 
     @SuppressWarnings("unchecked")
@@ -340,6 +347,15 @@ final class PojoCodec<T> implements Codec<T> {
             mark.reset();
         }
         return codec;
+    }
+
+    private PropertyModel<?> getPropertyModelByWriteName(final ClassModel<T> classModel, final String readName) {
+        for (PropertyModel<?> propertyModel : classModel.getPropertyModels()) {
+            if (propertyModel.isWritable() && propertyModel.getWriteName().equals(readName)) {
+                return propertyModel;
+            }
+        }
+        return null;
     }
 
 }

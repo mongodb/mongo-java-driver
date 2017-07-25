@@ -26,6 +26,14 @@ public class UpperBoundsModel<T extends Number> {
         this.myGenericField = myGenericField;
     }
 
+    public T getMyGenericField() {
+        return myGenericField;
+    }
+
+    public void setMyGenericField(final T myGenericField) {
+        this.myGenericField = myGenericField;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

@@ -16,19 +16,13 @@
 
 package org.bson.codecs.pojo;
 
-/**
- * An interface allowing a {@link FieldModel} to determine if a value should be serialized.
- *
- * @param <T> the FieldModel's type.
- * @since 3.5
- */
-public interface FieldSerialization<T> {
+class PropertyModelSerializationImpl<T> implements PropertySerialization<T> {
 
-    /**
-     * Determines if a value should be serialized
-     *
-     * @param value the value to check
-     * @return true if the value should be serialized
-     */
-    boolean shouldSerialize(T value);
+    PropertyModelSerializationImpl() {
+    }
+
+    @Override
+    public boolean shouldSerialize(final T value) {
+        return value != null;
+    }
 }

@@ -42,7 +42,7 @@ public final class SimpleEnumModel {
      * @param myEnum the myEnum
      * @return this
      */
-    public SimpleEnumModel myEnum(final SimpleEnum myEnum) {
+    public SimpleEnumModel setMyEnum(final SimpleEnum myEnum) {
         this.myEnum = myEnum;
         return this;
     }

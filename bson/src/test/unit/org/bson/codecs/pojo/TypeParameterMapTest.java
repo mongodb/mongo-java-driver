@@ -29,7 +29,7 @@ public final class TypeParameterMapTest {
     @Test
     public void testDefault() {
         TypeParameterMap typeParameterMap = TypeParameterMap.builder().build();
-        assertTrue(typeParameterMap.getFieldToClassParamIndexMap().isEmpty());
+        assertTrue(typeParameterMap.getPropertyToClassParamIndexMap().isEmpty());
     }
 
     @Test
@@ -37,7 +37,7 @@ public final class TypeParameterMapTest {
         TypeParameterMap typeParameterMap = TypeParameterMap.builder().addIndex(1).build();
         Map<Integer, Integer> expected = new HashMap<Integer, Integer>();
         expected.put(-1, 1);
-        assertEquals(expected, typeParameterMap.getFieldToClassParamIndexMap());
+        assertEquals(expected, typeParameterMap.getPropertyToClassParamIndexMap());
     }
 
     @Test
@@ -46,7 +46,7 @@ public final class TypeParameterMapTest {
         Map<Integer, Integer> expected = new HashMap<Integer, Integer>();
         expected.put(1, 2);
         expected.put(2, 2);
-        assertEquals(expected, typeParameterMap.getFieldToClassParamIndexMap());
+        assertEquals(expected, typeParameterMap.getPropertyToClassParamIndexMap());
     }
 
     @Test(expected = IllegalStateException.class)

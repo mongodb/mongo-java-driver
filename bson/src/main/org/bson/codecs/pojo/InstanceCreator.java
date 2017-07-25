@@ -25,13 +25,13 @@ package org.bson.codecs.pojo;
 public interface InstanceCreator<T> {
 
     /**
-     * Sets a value for the given FieldModel
+     * Sets a value for the given PropertyModel
      *
-     * @param value      the new value for the field
-     * @param fieldModel the FieldModel representing the field to set the value for.
-     * @param <S>        the FieldModel's type
+     * @param value      the new value for the property
+     * @param propertyModel the PropertyModel representing the property to set the value for.
+     * @param <S>        the PropertyModel's type
      */
-    <S> void set(S value, FieldModel<S> fieldModel);
+    <S> void set(S value, PropertyModel<S> propertyModel);
 
     /**
      * Returns the new instance of the class.

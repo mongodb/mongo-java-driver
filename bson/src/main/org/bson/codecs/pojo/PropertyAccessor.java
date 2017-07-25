@@ -17,28 +17,28 @@
 package org.bson.codecs.pojo;
 
 /**
- * Provides access for getting and setting field data.
+ * Provides access for getting and setting property data.
  *
- * @param <T> the type of the field
+ * @param <T> the type of the property
  * @since 3.5
  */
-public interface FieldAccessor<T> {
+public interface PropertyAccessor<T> {
 
     /**
-     * Gets the value for a given FieldModel instance.
+     * Gets the value for a given PropertyModel instance.
      *
-     * @param instance the class instance to get the field value from
+     * @param instance the class instance to get the property value from
      * @param <S>      the class instance type
-     * @return the value of the field.
+     * @return the value of the property.
      */
     <S> T get(S instance);
 
     /**
-     * Sets a value on the given FieldModel
+     * Sets a value on the given PropertyModel
      *
-     * @param instance the instance to set the field value to
+     * @param instance the instance to set the property value to
      * @param <S>      the class instance type
-     * @param value    the new value for the field
+     * @param value    the new value for the property
      */
     <S> void set(S instance, T value);
 }

@@ -60,11 +60,9 @@ public final class Person {
      * Sets the id
      *
      * @param id the id
-     * @return this
      */
-    public Person id(final ObjectId id) {
+    public void setId(final ObjectId id) {
         this.id = id;
-        return this;
     }
 
     /**
@@ -80,11 +78,9 @@ public final class Person {
      * Sets the name
      *
      * @param name the name
-     * @return this
      */
-    public Person name(final String name) {
+    public void setName(final String name) {
         this.name = name;
-        return this;
     }
 
     /**
@@ -100,11 +96,9 @@ public final class Person {
      * Sets the age
      *
      * @param age the age
-     * @return this
      */
-    public Person age(final int age) {
+    public void setAge(final int age) {
         this.age = age;
-        return this;
     }
 
     /**
@@ -120,11 +114,9 @@ public final class Person {
      * Sets the address
      *
      * @param address the address
-     * @return this
      */
-    public Person address(final Address address) {
+    public void setAddress(final Address address) {
         this.address = address;
-        return this;
     }
 
     @Override

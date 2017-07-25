@@ -16,45 +16,33 @@
 
 package org.bson.codecs.pojo.entities;
 
-import org.bson.codecs.pojo.annotations.Discriminator;
-import org.bson.codecs.pojo.annotations.Property;
+import org.bson.codecs.pojo.annotations.BsonDiscriminator;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
-@Discriminator("FieldWithMultipleTypeParamsModel")
-public final class FieldWithMultipleTypeParamsModel<C, A, B> {
+@BsonDiscriminator("PropertyWithMultipleTypeParamsModel")
+public final class PropertyWithMultipleTypeParamsModel<C, A, B> {
 
-    @Property(useDiscriminator = true)
+    @BsonProperty(useDiscriminator = true)
     private SimpleGenericsModel<A, B, C> simpleGenericsModel;
 
-    public FieldWithMultipleTypeParamsModel() {
+    public PropertyWithMultipleTypeParamsModel() {
     }
 
-    public FieldWithMultipleTypeParamsModel(final SimpleGenericsModel<A, B, C> simpleGenericsModel) {
+    public PropertyWithMultipleTypeParamsModel(final SimpleGenericsModel<A, B, C> simpleGenericsModel) {
         this.simpleGenericsModel = simpleGenericsModel;
     }
 
-    /**
-     * Returns the nested
-     *
-     * @return the nested
-     */
     public SimpleGenericsModel<A, B, C> getSimpleGenericsModel() {
         return simpleGenericsModel;
     }
 
-    /**
-     * Sets the simpleGenericsModel
-     *
-     * @param simpleGenericsModel the simpleGenericsModel
-     * @return this
-     */
-    public FieldWithMultipleTypeParamsModel<C, A, B> simpleGenericsModel(final SimpleGenericsModel<A, B, C> simpleGenericsModel) {
+    public void setSimpleGenericsModel(final SimpleGenericsModel<A, B, C> simpleGenericsModel) {
         this.simpleGenericsModel = simpleGenericsModel;
-        return this;
     }
 
     @Override
     public String toString() {
-        return "FieldWithMultipleTypeParamsModel{"
+        return "PropertyWithMultipleTypeParamsModel{"
                 + "nested=" + simpleGenericsModel
                 + "}";
     }
@@ -64,11 +52,11 @@ public final class FieldWithMultipleTypeParamsModel<C, A, B> {
         if (this == o) {
             return true;
         }
-        if (!(o instanceof FieldWithMultipleTypeParamsModel)) {
+        if (!(o instanceof PropertyWithMultipleTypeParamsModel)) {
             return false;
         }
 
-        FieldWithMultipleTypeParamsModel<?, ?, ?> that = (FieldWithMultipleTypeParamsModel<?, ?, ?>) o;
+        PropertyWithMultipleTypeParamsModel<?, ?, ?> that = (PropertyWithMultipleTypeParamsModel<?, ?, ?>) o;
 
         if (getSimpleGenericsModel() != null ? !getSimpleGenericsModel().equals(that.getSimpleGenericsModel())
                 : that.getSimpleGenericsModel() != null) {

@@ -26,6 +26,14 @@ public final class NestedSelfReferentialGenericHolderModel {
         this.nested = nested;
     }
 
+    public NestedSelfReferentialGenericModel<Boolean, Long, Double> getNested() {
+        return nested;
+    }
+
+    public void setNested(final NestedSelfReferentialGenericModel<Boolean, Long, Double> nested) {
+        this.nested = nested;
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

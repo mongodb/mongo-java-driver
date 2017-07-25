@@ -31,16 +31,16 @@ import static java.util.Collections.unmodifiableList;
 public final class Conventions {
 
     /**
-     * The default class and field conventions
+     * The default class and property conventions
      *
      * <ul>
      *     <li>Sets the discriminator key if not set to {@code _t} and the discriminator value if not set to the
      *     ClassModels simple type name.</li>
-     *     <li>Configures the FieldModels. Sets the document field name if not set to the field name.
-     *     If the idField isn't set and there is a field named {@code id} or {@code _id} it will be marked as the idField.</li>
+     *     <li>Configures the PropertyModels. If the {@code idProperty} isn't set and there is a
+     *     property named {@code getId()}, {@code id} or {@code _id} it will be marked as the idProperty.</li>
      * </ul>
      */
-    public static final Convention CLASS_AND_FIELD_CONVENTION = new ConventionDefaultsImpl();
+    public static final Convention CLASS_AND_PROPERTY_CONVENTION = new ConventionDefaultsImpl();
 
     /**
      * The annotation convention.
@@ -52,7 +52,8 @@ public final class Conventions {
     /**
      * The default conventions list
      */
-    public static final List<Convention> DEFAULT_CONVENTIONS = unmodifiableList(asList(CLASS_AND_FIELD_CONVENTION, ANNOTATION_CONVENTION));
+    public static final List<Convention> DEFAULT_CONVENTIONS =
+            unmodifiableList(asList(CLASS_AND_PROPERTY_CONVENTION, ANNOTATION_CONVENTION));
 
     /**
      * An empty conventions list

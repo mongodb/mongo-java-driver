@@ -16,8 +16,47 @@
 
 package org.bson.codecs.pojo.entities;
 
-import org.bson.codecs.pojo.annotations.Discriminator;
+import org.bson.codecs.pojo.annotations.BsonDiscriminator;
 
-@Discriminator
+@BsonDiscriminator
 public abstract class AbstractInterfaceModel implements InterfaceBasedModel {
+    private String name;
+
+    public AbstractInterfaceModel() {
+    }
+
+    public AbstractInterfaceModel(final String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(final String name) {
+        this.name = name;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        AbstractInterfaceModel that = (AbstractInterfaceModel) o;
+
+        if (getName() != null ? !getName().equals(that.getName()) : that.getName() != null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        return getName() != null ? getName().hashCode() : 0;
+    }
 }

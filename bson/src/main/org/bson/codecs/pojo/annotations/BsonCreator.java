@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,23 +16,20 @@
 
 package org.bson.codecs.pojo.annotations;
 
-import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * An annotation that configures the field as the id field for a {@link  org.bson.codecs.pojo.ClassModel}.
+ * An annotation that configures a constructor or method as the Creator for the Pojo.
  *
  * <p>Note: Requires the {@link org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION}</p>
  *
  * @since 3.5
  * @see org.bson.codecs.pojo.Conventions#ANNOTATION_CONVENTION
  */
-@Documented
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface Id {
-
+@Target({ElementType.METHOD, ElementType.CONSTRUCTOR})
+public @interface BsonCreator {
 }

@@ -20,14 +20,13 @@ public final class SimpleModel {
     private Integer integerField;
     private String stringField;
 
+    public SimpleModel(){
+    }
 
     public SimpleModel(final Integer integerField, final String stringField) {
         this.integerField = integerField;
         this.stringField = stringField;
     }
-    private SimpleModel() {
-    }
-
 
     public Integer getIntegerField() {
         return integerField;

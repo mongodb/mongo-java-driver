@@ -19,7 +19,6 @@ package org.bson.codecs.pojo;
 final class ConventionDefaultsImpl implements Convention {
     @Override
     public void apply(final ClassModelBuilder<?> classModelBuilder) {
-
         if (classModelBuilder.getDiscriminatorKey() == null) {
             classModelBuilder.discriminatorKey("_t");
         }
@@ -27,15 +26,11 @@ final class ConventionDefaultsImpl implements Convention {
             classModelBuilder.discriminator(classModelBuilder.getType().getSimpleName());
         }
 
-       for (final FieldModelBuilder<?> fieldModel : classModelBuilder.getFields()) {
-            if (fieldModel.getDocumentFieldName() == null) {
-                fieldModel.documentFieldName(fieldModel.getFieldName());
-            }
-
-            if (classModelBuilder.getIdField() == null) {
-                String fieldName = fieldModel.getFieldName();
-                if (fieldName.equals("_id") || fieldName.equals("id")) {
-                    classModelBuilder.idField(fieldName);
+       for (final PropertyModelBuilder<?> propertyModel : classModelBuilder.getPropertyModelBuilders()) {
+            if (classModelBuilder.getIdPropertyName() == null) {
+                String propertyName = propertyModel.getName();
+                if (propertyName.equals("_id") || propertyName.equals("id")) {
+                    classModelBuilder.idPropertyName(propertyName);
                 }
             }
         }

@@ -16,12 +16,12 @@
 
 package org.bson.codecs.pojo.entities.conventions;
 
-import org.bson.codecs.pojo.annotations.Discriminator;
-import org.bson.codecs.pojo.annotations.Property;
+import org.bson.codecs.pojo.annotations.BsonDiscriminator;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
-@Discriminator(key = "_key")
+@BsonDiscriminator(key = "_key")
 public abstract class AnnotationAbstract {
 
-    @Property
-    AnnotationModel child;
+    @BsonProperty
+    public AnnotationModel child;
 }
