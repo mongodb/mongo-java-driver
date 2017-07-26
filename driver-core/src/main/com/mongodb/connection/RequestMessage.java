@@ -81,10 +81,19 @@ abstract class RequestMessage {
         this(null, opCode, settings);
     }
 
+    RequestMessage(final OpCode opCode, final int requestId, final MessageSettings settings) {
+        this(null, opCode, requestId, settings);
+    }
+
+
     RequestMessage(final String collectionName, final OpCode opCode, final MessageSettings settings) {
+        this(collectionName, opCode, REQUEST_ID.getAndIncrement(), settings);
+    }
+
+    private RequestMessage(final String collectionName, final OpCode opCode, final int requestId, final MessageSettings settings) {
         this.collectionName = collectionName;
         this.settings = settings;
-        id = REQUEST_ID.getAndIncrement();
+        id = requestId;
         this.opCode = opCode;
     }
 
@@ -231,6 +240,7 @@ abstract class RequestMessage {
         }
     }
 
+    // TODO: Move to top-level
     enum OpCode {
         OP_REPLY(1),
         OP_MSG(1000),
@@ -239,7 +249,8 @@ abstract class RequestMessage {
         OP_QUERY(2004),
         OP_GETMORE(2005),
         OP_DELETE(2006),
-        OP_KILL_CURSORS(2007);
+        OP_KILL_CURSORS(2007),
+        OP_COMPRESSED(2012);
 
         OpCode(final int value) {
             this.value = value;
