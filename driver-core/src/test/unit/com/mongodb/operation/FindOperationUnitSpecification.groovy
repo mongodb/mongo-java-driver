@@ -53,7 +53,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
         given:
         def serverVersion = new ServerVersion(3, 0)
         def connectionDescription = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                serverVersion, STANDALONE, 1000, 16000000, 48000000)
+                serverVersion, STANDALONE, 1000, 16000000, 48000000, [])
         def connection = Mock(Connection) {
             _ * getDescription() >> connectionDescription
         }
@@ -223,7 +223,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
         def namespace = new MongoNamespace(dbName, collectionName)
         def decoder = Stub(Decoder)
         def connectionDescription = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                new ServerVersion(3, 0), STANDALONE, 1000, 16000000, 48000000)
+                new ServerVersion(3, 0), STANDALONE, 1000, 16000000, 48000000, [])
         def connection = Mock(Connection) {
             _ * getDescription() >> connectionDescription
         }
@@ -259,7 +259,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
         def namespace = new MongoNamespace(dbName, collectionName)
         def decoder = Stub(Decoder)
         def connectionDescription = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                new ServerVersion(3, 0), STANDALONE, 1000, 16000000, 48000000)
+                new ServerVersion(3, 0), STANDALONE, 1000, 16000000, 48000000, [])
 
         def connection = Mock(AsyncConnection) {
             _ * getDescription() >> connectionDescription

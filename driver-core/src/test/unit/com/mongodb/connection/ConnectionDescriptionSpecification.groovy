@@ -6,7 +6,8 @@ import spock.lang.Specification
 class ConnectionDescriptionSpecification extends Specification {
     private final id = new ConnectionId(new ServerId(new ClusterId(), new ServerAddress()))
     private final version = new ServerVersion(3, 0)
-    private final description = new ConnectionDescription(id, version, ServerType.STANDALONE, 1, 2, 3)
+    private final description = new ConnectionDescription(id, version, ServerType.STANDALONE, 1, 2, 3,
+    ['zlib'])
 
     def 'should initialize all values'() {
         expect:
@@ -16,6 +17,7 @@ class ConnectionDescriptionSpecification extends Specification {
         description.maxBatchCount == 1
         description.maxDocumentSize == 2
         description.maxMessageSize == 3
+        description.compressors == ['zlib']
     }
 
     def 'withConnectionId should return a new instance with the given connectionId and preserve the rest'() {
@@ -31,5 +33,6 @@ class ConnectionDescriptionSpecification extends Specification {
         newDescription.maxBatchCount == 1
         newDescription.maxDocumentSize == 2
         newDescription.maxMessageSize == 3
+        newDescription.compressors == ['zlib']
     }
 }

@@ -535,7 +535,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                new ServerVersion(2, 6), STANDALONE, 1000, 100000, 100000)
+                new ServerVersion(2, 6), STANDALONE, 1000, 100000, 100000, [])
 
 
         1 * connection.query(getNamespace(), operation.filter, operation.projection, 0, 0, 0, false, false, false, false,
@@ -564,7 +564,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                new ServerVersion(2, 6), STANDALONE, 1000, 100000, 100000)
+                new ServerVersion(2, 6), STANDALONE, 1000, 100000, 100000, [])
 
         1 * connection.query(getNamespace(), new BsonDocument('$query', operation.filter)
                 .append('$explain', BsonBoolean.TRUE).append('$orderby', operation.sort),

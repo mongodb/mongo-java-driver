@@ -46,10 +46,10 @@ class DefaultServerConnectionSpecification extends Specification {
     def executor = Mock(ProtocolExecutor)
     @Shared
     def standaloneConnectionDescription = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                                                                    new ServerVersion(3, 0), STANDALONE, 100, 100, 100)
+            new ServerVersion(3, 0), STANDALONE, 100, 100, 100, [])
     @Shared
     def mongosConnectionDescription = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                                                                new ServerVersion(3, 0), SHARD_ROUTER, 100, 100, 100)
+            new ServerVersion(3, 0), SHARD_ROUTER, 100, 100, 100, [])
     def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
 
     def 'should execute insert protocol'() {

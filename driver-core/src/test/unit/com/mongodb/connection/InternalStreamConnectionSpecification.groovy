@@ -57,7 +57,7 @@ class InternalStreamConnectionSpecification extends Specification {
 
     def connectionDescription = new ConnectionDescription(connectionId, new ServerVersion(), ServerType.STANDALONE,
             getDefaultMaxWriteBatchSize(), getDefaultMaxDocumentSize(),
-            getDefaultMaxMessageSize())
+            getDefaultMaxMessageSize(), [])
     def stream = Mock(Stream) {
         openAsync(_) >> { it[0].completed(null) }
     }
