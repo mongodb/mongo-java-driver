@@ -16,6 +16,7 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
@@ -43,6 +44,7 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.SocketTimeoutException;
 import java.nio.channels.ClosedByInterruptException;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -51,18 +53,24 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ByteBufBsonDocument.createOne;
+import static com.mongodb.connection.CompressedHeader.COMPRESSED_HEADER_LENGTH;
 import static com.mongodb.connection.ProtocolHelper.getCommandFailureException;
+import static com.mongodb.connection.ProtocolHelper.getMessageSettings;
 import static com.mongodb.connection.ProtocolHelper.isCommandOk;
 import static com.mongodb.connection.ProtocolHelper.sendCommandFailedEvent;
 import static com.mongodb.connection.ProtocolHelper.sendCommandStartedEvent;
 import static com.mongodb.connection.ProtocolHelper.sendCommandSucceededEvent;
 import static com.mongodb.connection.ReplyHeader.REPLY_HEADER_LENGTH;
+import static com.mongodb.connection.ReplyHeader.TOTAL_REPLY_HEADER_LENGTH;
+import static com.mongodb.connection.RequestMessage.OpCode.OP_COMPRESSED;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
 @NotThreadSafe
 class InternalStreamConnection implements InternalConnection {
+
+    private static final List<Compressor> COMPRESSORS = Arrays.asList(new NoOpCompessor(), null, new ZlibCompressor());
 
     private static final Set<String> SECURITY_SENSITIVE_COMMANDS = new HashSet<String>(asList(
             "authenticate",
@@ -88,6 +96,7 @@ class InternalStreamConnection implements InternalConnection {
     private final AtomicBoolean opened = new AtomicBoolean();
 
     private final CommandListener commandListener;
+    private volatile Compressor sendCompressor;
 
     InternalStreamConnection(final ServerId serverId, final StreamFactory streamFactory,
                              final CommandListener commandListener, final InternalConnectionInitializer connectionInitializer) {
@@ -111,6 +120,7 @@ class InternalStreamConnection implements InternalConnection {
             stream.open();
             description = connectionInitializer.initialize(this);
             opened.set(true);
+            sendCompressor = createCompressor(description);
             LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
         } catch (Throwable t) {
             close();
@@ -159,6 +169,23 @@ class InternalStreamConnection implements InternalConnection {
         });
     }
 
+    private Compressor createCompressor(final ConnectionDescription description) {
+        if (description.getCompressors().isEmpty()) {
+            return null;
+        }
+
+        String firstCompressor = description.getCompressors().get(0);
+
+        for (Compressor cur : COMPRESSORS) {
+            if (cur != null && cur.getName().equals(firstCompressor)) {
+                return cur;
+            }
+        }
+
+        throw new MongoClientException("Unsupported compressor " + firstCompressor);
+    }
+
+
     @Override
     public void close() {
         // All but the first call is a no-op
@@ -184,35 +211,61 @@ class InternalStreamConnection implements InternalConnection {
 
     @Override
     public ResponseBuffers sendAndReceive(final CommandMessage message) {
+        String commandName;
+        ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this);
+        try {
+            message.encode(bsonOutput);
+            commandName = sendStartedEvent(bsonOutput, message);
+        } catch (RuntimeException e) {
+            bsonOutput.close();
+            throw e;
+        }
+
         long startTimeNanos = System.nanoTime();
 
-        ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this);
-        String commandName = null;
         try {
-            try {
-                message.encode(bsonOutput);
-                commandName = sendStartedEvent(bsonOutput, message);
-                sendMessage(bsonOutput.getByteBuffers(), message.getId());
-            } finally {
-                bsonOutput.close();
-            }
-
-            ResponseBuffers responseBuffers = receiveMessage(message.getId());
-            boolean commandOk = isCommandOk(new BsonBinaryReader(new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer())));
-            responseBuffers.reset();
-            if (!commandOk) {
-                throw getCommandFailureException(getResponseDocument(responseBuffers, message, new BsonDocumentCodec()),
-                        description.getServerAddress());
-            }
-
-            sendSucceededEvent(startTimeNanos, message, commandName, getResponseDocument(responseBuffers, message,
-                    new RawBsonDocumentCodec()));
-
-            return responseBuffers;
+            sendCommandMessage(message, bsonOutput);
+            return receiveCommandMessageResponse(message, startTimeNanos, commandName);
         } catch (RuntimeException e) {
             sendFailedEvent(startTimeNanos, message, commandName, e);
             throw e;
         }
+    }
+
+    private void sendCommandMessage(final CommandMessage message, final ByteBufferBsonOutput bsonOutput) {
+        try {
+            if (sendCompressor == null) {
+                sendMessage(bsonOutput.getByteBuffers(), message.getId());
+            } else {
+                CompressedMessage compressedMessage = new CompressedMessage(RequestMessage.OpCode.OP_QUERY, bsonOutput.getByteBuffers(),
+                                                                                   sendCompressor, getMessageSettings(description));
+                ByteBufferBsonOutput compressedBsonOutput = new ByteBufferBsonOutput(this);
+                compressedMessage.encode(compressedBsonOutput);
+                try {
+                    sendMessage(compressedBsonOutput.getByteBuffers(), message.getId());
+                } finally {
+                    compressedBsonOutput.close();
+                }
+            }
+        } finally {
+            bsonOutput.close();
+        }
+    }
+
+    private ResponseBuffers receiveCommandMessageResponse(final CommandMessage message, final long startTimeNanos,
+                                                          final String commandName) {
+        ResponseBuffers responseBuffers = receiveMessage(message.getId());
+        boolean commandOk = isCommandOk(new BsonBinaryReader(new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer())));
+        responseBuffers.reset();
+        if (!commandOk) {
+            throw getCommandFailureException(getResponseDocument(responseBuffers, message, new BsonDocumentCodec()),
+                    description.getServerAddress());
+        }
+
+        sendSucceededEvent(startTimeNanos, message, commandName, getResponseDocument(responseBuffers, message,
+                new RawBsonDocumentCodec()));
+
+        return responseBuffers;
     }
 
     @Override
@@ -336,7 +389,7 @@ class InternalStreamConnection implements InternalConnection {
     }
 
     private void receiveResponseAsync(final SingleResultCallback<ResponseBuffers> callback) {
-        readAsync(REPLY_HEADER_LENGTH, errorHandlingCallback(new ResponseHeaderCallback(callback), LOGGER));
+        readAsync(TOTAL_REPLY_HEADER_LENGTH, errorHandlingCallback(new ResponseHeaderCallback(callback), LOGGER));
     }
 
     private void readAsync(final int numBytes, final SingleResultCallback<ByteBuf> callback) {
@@ -404,21 +457,59 @@ class InternalStreamConnection implements InternalConnection {
     }
 
     private ResponseBuffers receiveResponseBuffers() throws IOException {
-        ByteBuf headerByteBuffer = stream.read(REPLY_HEADER_LENGTH);
-        ReplyHeader replyHeader;
-        ByteBufferBsonInput headerInputBuffer = new ByteBufferBsonInput(headerByteBuffer);
+        ByteBuf messageHeaderBytBuf = stream.read(MessageHeader.MESSAGE_HEADER_LENGTH);
+        ByteBufferBsonInput headerInputBuffer = new ByteBufferBsonInput(messageHeaderBytBuf);
+        MessageHeader messageHeader;
         try {
-            replyHeader = new ReplyHeader(headerInputBuffer, description.getMaxMessageSize());
+            messageHeader = new MessageHeader(headerInputBuffer, description.getMaxMessageSize());
         } finally {
             headerInputBuffer.close();
         }
 
-        ByteBuf bodyByteBuffer = null;
+        if (messageHeader.getOpCode() == OP_COMPRESSED.getValue()) {
+            ByteBuf headerByteBuffer = stream.read(COMPRESSED_HEADER_LENGTH);
+            CompressedHeader compressedHeader;
+            ByteBufferBsonInput compressedHeaderInputBuffer = new ByteBufferBsonInput(headerByteBuffer);
+            try {
+                compressedHeader = new CompressedHeader(compressedHeaderInputBuffer, messageHeader);
+            } finally {
+                compressedHeaderInputBuffer.close();
+            }
 
-        if (replyHeader.getNumberReturned() > 0) {
-            bodyByteBuffer = stream.read(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH);
+            ByteBuf compressedByteBuffer = stream.read(compressedHeader.getCompressedSize());
+            // TODO: unit test this?
+            if (compressedHeader.getCompressorId() > COMPRESSORS.size() - 1
+                        || COMPRESSORS.get(compressedHeader.getCompressorId()) == null) {
+                throw new MongoClientException("Unsupported compressor with identifier " + compressedHeader.getCompressorId());
+            }
+            Compressor compressor = COMPRESSORS.get(compressedHeader.getCompressorId());
+
+            ByteBuf buffer = getBuffer(compressedHeader.getUncompressedSize());
+            compressor.uncompress(compressedByteBuffer, buffer);
+
+            buffer.flip();
+            // Don't close the input, as it doesn't own the buffer.  This is pretty weird
+            ReplyHeader replyHeader = new ReplyHeader(compressedHeader, new ByteBufferBsonInput(buffer));
+
+            return new ResponseBuffers(replyHeader, buffer);
+
+        } else {
+            ByteBuf headerByteBuffer = stream.read(REPLY_HEADER_LENGTH);
+            ReplyHeader replyHeader;
+            ByteBufferBsonInput replyHeaderInputBuffer = new ByteBufferBsonInput(headerByteBuffer);
+            try {
+                replyHeader = new ReplyHeader(replyHeaderInputBuffer, messageHeader);
+            } finally {
+                replyHeaderInputBuffer.close();
+            }
+
+            ByteBuf bodyByteBuffer = null;
+
+            if (replyHeader.getNumberReturned() > 0) {
+                bodyByteBuffer = stream.read(replyHeader.getMessageLength() - TOTAL_REPLY_HEADER_LENGTH);
+            }
+            return new ResponseBuffers(replyHeader, bodyByteBuffer);
         }
-        return new ResponseBuffers(replyHeader, bodyByteBuffer);
     }
 
     @Override
@@ -443,15 +534,16 @@ class InternalStreamConnection implements InternalConnection {
                     ReplyHeader replyHeader;
                     ByteBufferBsonInput headerInputBuffer = new ByteBufferBsonInput(result);
                     try {
-                        replyHeader = new ReplyHeader(headerInputBuffer, description.getMaxMessageSize());
+                        MessageHeader messageHeader = new MessageHeader(headerInputBuffer, description.getMaxMessageSize());
+                        replyHeader = new ReplyHeader(headerInputBuffer, messageHeader);
                     } finally {
                         headerInputBuffer.close();
                     }
 
-                    if (replyHeader.getMessageLength() == REPLY_HEADER_LENGTH) {
+                    if (replyHeader.getMessageLength() == TOTAL_REPLY_HEADER_LENGTH) {
                         onSuccess(new ResponseBuffers(replyHeader, null));
                     } else {
-                        readAsync(replyHeader.getMessageLength() - REPLY_HEADER_LENGTH,
+                        readAsync(replyHeader.getMessageLength() - TOTAL_REPLY_HEADER_LENGTH,
                                   new ResponseBodyCallback(replyHeader));
                     }
                 } catch (Throwable t) {

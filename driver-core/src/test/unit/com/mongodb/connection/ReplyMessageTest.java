@@ -25,6 +25,8 @@ import org.junit.Test;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize;
+
 public class ReplyMessageTest {
     @Test(expected = MongoInternalException.class)
     public void shouldThrowExceptionIfRequestIdDoesNotMatchResponseTo() {
@@ -44,7 +46,7 @@ public class ReplyMessageTest {
         headerByteBuffer.flip();
 
         ByteBufferBsonInput headerInputBuffer = new ByteBufferBsonInput(new ByteBufNIO(headerByteBuffer));
-        ReplyHeader replyHeader = new ReplyHeader(headerInputBuffer, ConnectionDescription.getDefaultMaxMessageSize());
+        ReplyHeader replyHeader = new ReplyHeader(headerInputBuffer, new MessageHeader(headerInputBuffer, getDefaultMaxMessageSize()));
         new ReplyMessage<Document>(replyHeader, expectedResponseTo);
     }
 
@@ -65,7 +67,7 @@ public class ReplyMessageTest {
         headerByteBuffer.flip();
 
         ByteBufferBsonInput headerInputBuffer = new ByteBufferBsonInput(new ByteBufNIO(headerByteBuffer));
-        ReplyHeader replyHeader = new ReplyHeader(headerInputBuffer, ConnectionDescription.getDefaultMaxMessageSize());
+        ReplyHeader replyHeader = new ReplyHeader(headerInputBuffer, new MessageHeader(headerInputBuffer, getDefaultMaxMessageSize()));
         new ReplyMessage<Document>(replyHeader, 5);
     }
 }

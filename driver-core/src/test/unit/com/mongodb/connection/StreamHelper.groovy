@@ -63,6 +63,38 @@ class StreamHelper {
         header(messageId, DEFAULT_JSON_RESPONSE)
     }
 
+    static defaultMessageHeader(messageId) {
+        messageHeader(messageId, DEFAULT_JSON_RESPONSE)
+    }
+
+    static defaultReplyHeader() {
+        replyHeader()
+    }
+
+    static messageHeader(messageId, json) {
+        ByteBuffer headerByteBuffer = ByteBuffer.allocate(16).with {
+            order(ByteOrder.LITTLE_ENDIAN)
+            putInt(36 + body(json).remaining()) // messageLength
+            putInt(4)                     // requestId
+            putInt(messageId)                   // responseTo
+            putInt(1)                     // opCode
+        }
+        headerByteBuffer.flip()
+        new ByteBufNIO(headerByteBuffer)
+    }
+
+    static replyHeader() {
+        ByteBuffer headerByteBuffer = ByteBuffer.allocate(20).with {
+            order(ByteOrder.LITTLE_ENDIAN)
+            putInt(0)                     // responseFlags
+            putLong(0)                    // cursorId
+            putInt(0)                     // starting from
+            putInt(1)                     // number returned
+        }
+        headerByteBuffer.flip()
+        new ByteBufNIO(headerByteBuffer)
+    }
+
     static header(messageId, json) {
         ByteBuffer headerByteBuffer = ByteBuffer.allocate(36).with {
             order(ByteOrder.LITTLE_ENDIAN)

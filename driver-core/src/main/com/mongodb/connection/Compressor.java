@@ -23,6 +23,9 @@ import org.bson.io.BsonOutput;
 import java.util.List;
 
 interface Compressor {
+
+    String getName();
+
     void compress(List<ByteBuf> source, BsonOutput target);
 
     byte getId();

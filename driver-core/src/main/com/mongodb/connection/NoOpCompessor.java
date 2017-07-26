@@ -25,6 +25,11 @@ import java.util.List;
 
 class NoOpCompessor implements Compressor {
     @Override
+    public String getName() {
+        return "noop";
+    }
+
+    @Override
     public void compress(final List<ByteBuf> source, final BsonOutput target) {
         ByteArrayOutputStream baos = new ByteArrayOutputStream();  // TODO
 

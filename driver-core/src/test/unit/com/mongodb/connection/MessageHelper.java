@@ -33,6 +33,8 @@ import org.bson.json.JsonReader;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize;
+
 final class MessageHelper {
 
     private MessageHelper() {
@@ -77,7 +79,7 @@ final class MessageHelper {
         headerByteBuffer.flip();
 
         ByteBufferBsonInput headerInputBuffer = new ByteBufferBsonInput(new ByteBufNIO(headerByteBuffer));
-        return new ReplyHeader(headerInputBuffer, ConnectionDescription.getDefaultMaxMessageSize());
+        return new ReplyHeader(headerInputBuffer, new MessageHeader(headerInputBuffer, getDefaultMaxMessageSize()));
     }
 
     public static BsonDocument decodeCommand(final BsonInput bsonInput) {
