@@ -30,6 +30,11 @@ import java.util.zip.InflaterInputStream;
 
 class ZlibCompressor implements Compressor {
     @Override
+    public String getName() {
+        return "zlib";
+    }
+
+    @Override
     public void compress(final List<ByteBuf> source, final BsonOutput target) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();  // TODO

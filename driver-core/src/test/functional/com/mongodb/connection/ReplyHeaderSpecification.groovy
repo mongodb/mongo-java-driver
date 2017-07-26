@@ -23,6 +23,8 @@ import org.bson.io.BsonInput
 import org.bson.io.ByteBufferBsonInput
 import spock.lang.Specification
 
+import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize
+
 class ReplyHeaderSpecification extends Specification {
 
     def 'should parse reply header'() {
@@ -40,10 +42,49 @@ class ReplyHeaderSpecification extends Specification {
         BsonInput buffer = new ByteBufferBsonInput(outputBuffer.byteBuffers.get(0));
 
         when:
-        def replyHeader = new ReplyHeader(buffer, ConnectionDescription.defaultMaxMessageSize);
+        def replyHeader = new ReplyHeader(buffer, new MessageHeader(buffer, getDefaultMaxMessageSize()));
 
         then:
         replyHeader.messageLength == 186
+        replyHeader.requestId == 45
+        replyHeader.responseTo == 23
+        replyHeader.responseFlags == responseFlags
+        replyHeader.cursorId == 9000
+        replyHeader.startingFrom == 4
+        replyHeader.numberReturned == 30
+        replyHeader.cursorNotFound == cursorNotFound
+        replyHeader.queryFailure == queryFailure
+
+        where:
+        responseFlags << [0, 1, 2, 3]
+        cursorNotFound << [false, true, false, true]
+        queryFailure << [false, false, true, true]
+    }
+
+    def 'should parse reply header with compressed header'() {
+
+        def outputBuffer = new BasicOutputBuffer();
+        outputBuffer.with {
+            writeInt(186)
+            writeInt(45)
+            writeInt(23)
+            writeInt(2012)
+            writeInt(1)
+            writeInt(258)
+            writeByte(2)
+            writeInt(responseFlags)
+            writeLong(9000)
+            writeInt(4)
+            writeInt(30)
+        }
+        BsonInput buffer = new ByteBufferBsonInput(outputBuffer.byteBuffers.get(0));
+        def compressedHeader = new CompressedHeader(buffer, new MessageHeader(buffer, getDefaultMaxMessageSize()))
+
+        when:
+        def replyHeader = new ReplyHeader(compressedHeader, buffer);
+
+        then:
+        replyHeader.messageLength == 274
         replyHeader.requestId == 45
         replyHeader.responseTo == 23
         replyHeader.responseFlags == responseFlags
@@ -74,7 +115,7 @@ class ReplyHeaderSpecification extends Specification {
         BsonInput buffer = new ByteBufferBsonInput(outputBuffer.byteBuffers.get(0));
 
         when:
-        new ReplyHeader(buffer, ConnectionDescription.defaultMaxMessageSize);
+        new ReplyHeader(buffer, new MessageHeader(buffer, getDefaultMaxMessageSize()));
 
         then:
         def ex = thrown(MongoInternalException)
@@ -96,7 +137,7 @@ class ReplyHeaderSpecification extends Specification {
         BsonInput buffer = new ByteBufferBsonInput(outputBuffer.byteBuffers.get(0));
 
         when:
-        new ReplyHeader(buffer, ConnectionDescription.defaultMaxMessageSize);
+        new ReplyHeader(buffer, new MessageHeader(buffer, getDefaultMaxMessageSize()));
 
         then:
         def ex = thrown(MongoInternalException)
@@ -118,7 +159,7 @@ class ReplyHeaderSpecification extends Specification {
         BsonInput buffer = new ByteBufferBsonInput(outputBuffer.byteBuffers.get(0));
 
         when:
-        new ReplyHeader(buffer, 399);
+        new ReplyHeader(buffer, new MessageHeader(buffer, 399));
 
         then:
         def ex = thrown(MongoInternalException)
@@ -140,7 +181,34 @@ class ReplyHeaderSpecification extends Specification {
         BsonInput buffer = new ByteBufferBsonInput(outputBuffer.byteBuffers.get(0));
 
         when:
-        new ReplyHeader(buffer, ConnectionDescription.defaultMaxMessageSize);
+        new ReplyHeader(buffer, new MessageHeader(buffer, getDefaultMaxMessageSize()));
+
+        then:
+        def ex = thrown(MongoInternalException)
+        ex.getMessage() == 'The reply message number of returned documents, -1, is less than 0'
+    }
+
+    def 'should throw MongoInternalException on num documents < 0 with compressed header'() {
+
+        def outputBuffer = new BasicOutputBuffer();
+        outputBuffer.with {
+            writeInt(186)
+            writeInt(45)
+            writeInt(23)
+            writeInt(2012)
+            writeInt(1)
+            writeInt(258)
+            writeByte(2)
+            writeInt(1)
+            writeLong(9000)
+            writeInt(4)
+            writeInt(-1)
+        }
+        BsonInput buffer = new ByteBufferBsonInput(outputBuffer.byteBuffers.get(0));
+        def compressedHeader = new CompressedHeader(buffer, new MessageHeader(buffer, getDefaultMaxMessageSize()))
+
+        when:
+        new ReplyHeader(compressedHeader, buffer);
 
         then:
         def ex = thrown(MongoInternalException)
