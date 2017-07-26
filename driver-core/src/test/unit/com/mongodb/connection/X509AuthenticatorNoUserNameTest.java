@@ -25,6 +25,7 @@ import org.bson.io.BsonInput;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -44,10 +45,10 @@ public class X509AuthenticatorNoUserNameTest {
         connection = new TestInternalConnection(new ServerId(new ClusterId(), new ServerAddress("localhost", 27017)));
         connectionDescriptionThreeTwo = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                                                                          new ServerVersion(3, 2), ServerType.STANDALONE, 1000, 16000,
-                                                                         48000);
+                                                                         48000, Collections.<String>emptyList());
         connectionDescriptionThreeFour = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                                                                           new ServerVersion(3, 4), ServerType.STANDALONE, 1000, 16000,
-                                                                          48000);
+                                                                          48000, Collections.<String>emptyList());
         credential = MongoCredential.createMongoX509Credential(
                 "CN=client,OU=kerneluser,O=10Gen,L=New York City,ST=New York,C=US");
         subject = new X509Authenticator(this.credential);

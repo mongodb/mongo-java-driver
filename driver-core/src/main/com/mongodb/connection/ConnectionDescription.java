@@ -19,6 +19,10 @@ package com.mongodb.connection;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.Immutable;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize;
 
@@ -35,6 +39,7 @@ public class ConnectionDescription {
     private final int maxBatchCount;
     private final int maxDocumentSize;
     private final int maxMessageSize;
+    private final List<String> compressors;
 
     private static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
     private static final int DEFAULT_MAX_WRITE_BATCH_SIZE = 512;
@@ -46,7 +51,7 @@ public class ConnectionDescription {
      */
     public ConnectionDescription(final ServerId serverId) {
         this(new ConnectionId(serverId), new ServerVersion(), ServerType.UNKNOWN, DEFAULT_MAX_WRITE_BATCH_SIZE,
-             getDefaultMaxDocumentSize(), DEFAULT_MAX_MESSAGE_SIZE);
+             getDefaultMaxDocumentSize(), DEFAULT_MAX_MESSAGE_SIZE, Collections.<String>emptyList());
     }
 
     /**
@@ -59,21 +64,42 @@ public class ConnectionDescription {
      * @param maxDocumentSize the max document size in bytes
      * @param maxMessageSize  the max message size in bytes
      */
-    public ConnectionDescription(final ConnectionId connectionId,  final ServerVersion serverVersion,
+    public ConnectionDescription(final ConnectionId connectionId, final ServerVersion serverVersion,
                                  final ServerType serverType, final int maxBatchCount, final int maxDocumentSize,
                                  final int maxMessageSize) {
+
+        this(connectionId, serverVersion, serverType, maxBatchCount, maxDocumentSize, maxMessageSize, Collections.<String>emptyList());
+    }
+
+    /**
+     * Construct an instance.
+     *
+     * @param connectionId    the connection id
+     * @param serverVersion   the server version
+     * @param serverType      the server type
+     * @param maxBatchCount   the max batch count
+     * @param maxDocumentSize the max document size in bytes
+     * @param maxMessageSize  the max message size in bytes
+     * @param compressors     the available compressors on the connection
+     * @since 3.5
+     */
+    public ConnectionDescription(final ConnectionId connectionId, final ServerVersion serverVersion,
+                                 final ServerType serverType, final int maxBatchCount, final int maxDocumentSize,
+                                 final int maxMessageSize, final List<String> compressors) {
         this.connectionId = connectionId;
         this.serverType = serverType;
         this.maxBatchCount = maxBatchCount;
         this.maxDocumentSize = maxDocumentSize;
         this.maxMessageSize = maxMessageSize;
         this.serverVersion = serverVersion;
+        this.compressors = notNull("compressors", Collections.unmodifiableList(new ArrayList<String>(compressors)));
     }
 
 
     ConnectionDescription withConnectionId(final ConnectionId connectionId) {
         notNull("connectionId", connectionId);
-        return new ConnectionDescription(connectionId, serverVersion, serverType, maxBatchCount, maxDocumentSize, maxMessageSize);
+        return new ConnectionDescription(connectionId, serverVersion, serverType, maxBatchCount, maxDocumentSize, maxMessageSize,
+                                                compressors);
     }
 
     /**
@@ -140,6 +166,15 @@ public class ConnectionDescription {
     }
 
     /**
+     * Gets the compressors supported by this connection.
+     *
+     * @return the non-null list of compressors supported by this connection
+     */
+    public List<String> getCompressors() {
+        return compressors;
+    }
+
+    /**
      * Get the default maximum message size.
      *
      * @return the default maximum message size.
@@ -187,6 +222,9 @@ public class ConnectionDescription {
         if (!serverVersion.equals(that.serverVersion)) {
             return false;
         }
+        if (!compressors.equals(that.compressors)) {
+            return false;
+        }
 
         return true;
     }
@@ -199,6 +237,7 @@ public class ConnectionDescription {
         result = 31 * result + maxBatchCount;
         result = 31 * result + maxDocumentSize;
         result = 31 * result + maxMessageSize;
+        result = 31 * result + compressors.hashCode();
         return result;
     }
 }
