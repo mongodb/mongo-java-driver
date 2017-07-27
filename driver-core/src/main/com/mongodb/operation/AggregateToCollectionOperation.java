@@ -42,6 +42,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.LOGGER;
+import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotSix;
 import static com.mongodb.operation.OperationHelper.validateCollation;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo;
@@ -270,6 +271,11 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
         if (bypassDocumentValidation != null && serverIsAtLeastVersionThreeDotTwo(description)) {
             commandDocument.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));
         }
+
+        if (serverIsAtLeastVersionThreeDotSix(description)) {
+            commandDocument.put("cursor", new BsonDocument());
+        }
+
         appendWriteConcernToCommand(writeConcern, commandDocument, description);
         if (collation != null) {
             commandDocument.put("collation", collation.asDocument());

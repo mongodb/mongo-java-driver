@@ -385,6 +385,10 @@ final class OperationHelper {
         return serverIsAtLeastVersion(description, new ServerVersion(3, 4));
     }
 
+    static boolean serverIsAtLeastVersionThreeDotSix(final ConnectionDescription description) {
+        return serverIsAtLeastVersion(description, new ServerVersion(3, 5));
+    }
+
     static boolean serverIsAtLeastVersion(final ConnectionDescription description, final ServerVersion serverVersion) {
         return description.getServerVersion().compareTo(serverVersion) >= 0;
     }
