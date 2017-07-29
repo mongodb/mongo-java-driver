@@ -547,8 +547,11 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.writeAsync(_, _) >> { buffers, handler ->
             handler.completed(null)
         }
-        stream.readAsync(36, _) >> { numBytes, handler ->
-            handler.completed(helper.defaultHeader(commandMessage.getId()))
+        stream.readAsync(16, _) >> { numBytes, handler ->
+            handler.completed(helper.defaultMessageHeader(commandMessage.getId()))
+        }
+        stream.readAsync(20, _) >> { numBytes, handler ->
+            handler.completed(helper.defaultReplyHeader())
         }
         stream.readAsync(70, _) >> { numBytes, handler ->
             handler.completed(helper.defaultBody())
@@ -601,7 +604,7 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.writeAsync(_, _) >> { buffers, handler ->
             handler.completed(null)
         }
-        stream.readAsync(36, _) >> { numBytes, handler ->
+        stream.readAsync(16, _) >> { numBytes, handler ->
             handler.failed(new MongoSocketReadException('Failed to read', serverAddress))
         }
 
@@ -628,8 +631,11 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.writeAsync(_, _) >> { buffers, handler ->
             handler.completed(null)
         }
-        stream.readAsync(36, _) >> { numBytes, handler ->
-            handler.completed(helper.defaultHeader(commandMessage.getId()))
+        stream.readAsync(16, _) >> { numBytes, handler ->
+            handler.completed(helper.defaultMessageHeader(commandMessage.getId()))
+        }
+        stream.readAsync(20, _) >> { numBytes, handler ->
+            handler.completed(helper.defaultReplyHeader())
         }
         stream.readAsync(70, _) >> { numBytes, handler ->
             handler.failed(new MongoSocketReadException('Failed to read', serverAddress))
@@ -659,8 +665,11 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.writeAsync(_, _) >> { buffers, handler ->
             handler.completed(null)
         }
-        stream.readAsync(36, _) >> { numBytes, handler ->
-            handler.completed(helper.header(commandMessage.getId(), response))
+        stream.readAsync(16, _) >> { numBytes, handler ->
+            handler.completed(helper.defaultMessageHeader(commandMessage.getId()))
+        }
+        stream.readAsync(20, _) >> { numBytes, handler ->
+            handler.completed(helper.defaultReplyHeader())
         }
         stream.readAsync(_, _) >> { numBytes, handler ->
             handler.completed(helper.body(response))
@@ -689,8 +698,11 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.writeAsync(_, _) >> { buffers, handler ->
             handler.completed(null)
         }
-        stream.readAsync(36, _) >> { numBytes, handler ->
-            handler.completed(helper.defaultHeader(commandMessage.getId()))
+        stream.readAsync(16, _) >> { numBytes, handler ->
+            handler.completed(helper.defaultMessageHeader(commandMessage.getId()))
+        }
+        stream.readAsync(20, _) >> { numBytes, handler ->
+            handler.completed(helper.defaultReplyHeader())
         }
         stream.readAsync(70, _) >> { numBytes, handler ->
             handler.completed(helper.defaultBody())
