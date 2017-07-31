@@ -20,8 +20,9 @@ package com.mongodb.connection;
 import org.bson.ByteBuf;
 import org.bson.io.BsonOutput;
 
-import java.nio.ByteOrder;
 import java.util.List;
+
+import static com.mongodb.connection.MessageHeader.MESSAGE_HEADER_LENGTH;
 
 class CompressedMessage extends RequestMessage {
     private final OpCode wrappedOpcode;
@@ -38,22 +39,29 @@ class CompressedMessage extends RequestMessage {
 
     @Override
     protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final int messageStartPosition) {
-        int wrappedUncompressedSize = 0;
-        for (ByteBuf cur : wrappedMessageBuffers) {
-            wrappedUncompressedSize += cur.limit() - cur.position();  // TODO: necessary to subtract position?
-        }
-
         bsonOutput.writeInt32(wrappedOpcode.getValue());
-        bsonOutput.writeInt32(wrappedUncompressedSize - 16);
+        bsonOutput.writeInt32(getWrappedMessageSize(wrappedMessageBuffers) - MESSAGE_HEADER_LENGTH);
         bsonOutput.writeByte(compressor.getId());
+
+        getFirstWrappedMessageBuffer(wrappedMessageBuffers)
+                .position(getFirstWrappedMessageBuffer(wrappedMessageBuffers).position() + MESSAGE_HEADER_LENGTH);
 
         compressor.compress(wrappedMessageBuffers, bsonOutput);
 
         return new EncodingMetadata(null, 0);
     }
 
+    private static int getWrappedMessageSize(final List<ByteBuf> wrappedMessageBuffers) {
+        ByteBuf first = getFirstWrappedMessageBuffer(wrappedMessageBuffers);
+        return first.getInt(0);
+    }
+
     private static int getWrappedMessageRequestId(final List<ByteBuf> wrappedMessageBuffers) {
-        // TODO: ugh... the byte order isn't correct for reading
-        return wrappedMessageBuffers.get(0).order(ByteOrder.LITTLE_ENDIAN).getInt(4);
+        ByteBuf first = getFirstWrappedMessageBuffer(wrappedMessageBuffers);
+        return first.getInt(4);
+    }
+
+    private static ByteBuf getFirstWrappedMessageBuffer(final List<ByteBuf> wrappedMessageBuffers) {
+        return wrappedMessageBuffers.get(0);
     }
 }

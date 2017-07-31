@@ -122,7 +122,7 @@ public abstract class OutputBuffer extends OutputStream implements BsonOutput {
      * Get a list of byte buffers that are prepared to be read from; in other words, whose position is 0 and whose limit is the number of
      * bytes that should read. <p> Note that the byte buffers may be read-only. </p>
      *
-     * @return the non-null list of byte buffers.
+     * @return the non-null list of byte buffers, in LITTLE_ENDIAN order
      */
     public abstract List<ByteBuf> getByteBuffers();
 

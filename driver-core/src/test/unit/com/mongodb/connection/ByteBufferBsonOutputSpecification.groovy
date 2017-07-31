@@ -212,6 +212,17 @@ class ByteBufferBsonOutputSpecification extends Specification {
         bsonOutput.size == 4
     }
 
+    def 'should get byte buffers as little endian'() {
+        given:
+        def bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())
+
+        when:
+        bsonOutput.writeBytes([1, 0, 0, 0] as byte[])
+
+        then:
+        bsonOutput.getByteBuffers()[0].getInt() == 1
+    }
+
     def 'null character in CString should throw SerializationException'() {
         given:
         def bsonOutput = new ByteBufferBsonOutput(new SimpleBufferProvider())
