@@ -16,7 +16,11 @@
 
 package org.bson.codecs.pojo.entities;
 
+import org.bson.codecs.pojo.annotations.BsonProperty;
+
 public final class NestedGenericHolderFieldWithMultipleTypeParamsModel {
+
+    @BsonProperty(useDiscriminator = false)
     private GenericHolderModel<PropertyWithMultipleTypeParamsModel<Integer, Long, String>> nested;
 
     public NestedGenericHolderFieldWithMultipleTypeParamsModel() {

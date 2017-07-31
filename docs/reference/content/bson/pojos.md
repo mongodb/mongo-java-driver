@@ -56,7 +56,11 @@ encoded and decoded.
 
 ## POJO support
 
-The entry point for POJO support is the `PojoCodecProvider`. New instances can be created via the
+Automatic POJO support can be provided by setting `PojoCodecProvider.Builder#automatic(true)`, once built the `PojoCodecProvider` will 
+automatically create a `PojoCodec` for any class that contains at least one serializable or deserializable 
+property.
+
+The entry point for customisable POJO support is the `PojoCodecProvider`. New instances can be created via the
 [`PojoCodecProvider.builder()`]({{<apiref "org/bson/codecs/pojo/PojoCodecProvider.html#builder">}}) method. The `builder` allows users to 
 register any combination of:
 
@@ -84,7 +88,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 // Create a CodecRegistry containing the PojoCodecProvider instance.
 CodecProvider pojoCodecProvider = PojoCodecProvider.builder().register("org.example.pojos").build();
-CodecRegistry pojoCodecRegistry = fromRegistries(fromProviders(pojoCodecProvider), defaultCodecRegistry);
+CodecRegistry pojoCodecRegistry = fromRegistries(defaultCodecRegistry, fromProviders(pojoCodecProvider));
 ```
 
 {{% note class="tip" %}}
@@ -330,7 +334,7 @@ ClassModel<SubscriberUser> subscriberUserModel = ClassModel.builder(SubscriberUs
 
 PojoCodecProvider pojoCodecProvider = PojoCodecProvider.builder().register(userModel, freeUserModel, subscriberUserModel).build();
 
-CodecRegistry pojoCodecRegistry = fromRegistries(fromProviders(pojoCodecProvider), defaultCodecRegistry);
+CodecRegistry pojoCodecRegistry = fromRegistries(defaultCodecRegistry, fromProviders(pojoCodecProvider));
 ```
 
 ### Supporting POJOs without no args constructors
@@ -385,4 +389,5 @@ By default `null` values aren't serialized. This is controlled by the default im
 [`FieldSerialization`]({{<apiref "org/bson/codecs/pojo/FieldSerialization.html">}}) interface. Custom implementations can be set on 
 the `PropertyModelBuilder` which is available from the `ClassModelBuilder`.
 
-The 
+The [`BsonIgnore`]({{<apiref "org/bson/codecs/pojo/annotations/BsonIgnore.html">}}) can be used along with the `DEFAULT_CONVENTIONS` to mark
+a property to be ignored when serializing and or deserializing.

@@ -32,4 +32,68 @@ public final class AnnotationModel {
     @BsonProperty("renamed")
     public AnnotationModel alternative;
 
+    public AnnotationModel() {
+    }
+
+    public AnnotationModel(final String customId, final AnnotationModel child, final AnnotationModel alternative) {
+        this.customId = customId;
+        this.child = child;
+        this.alternative = alternative;
+    }
+
+    public String getCustomId() {
+        return customId;
+    }
+
+    public void setCustomId(final String customId) {
+        this.customId = customId;
+    }
+
+    public AnnotationModel getChild() {
+        return child;
+    }
+
+    public void setChild(final AnnotationModel child) {
+        this.child = child;
+    }
+
+    public AnnotationModel getAlternative() {
+        return alternative;
+    }
+
+    public void setAlternative(final AnnotationModel alternative) {
+        this.alternative = alternative;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        AnnotationModel that = (AnnotationModel) o;
+
+        if (getCustomId() != null ? !getCustomId().equals(that.getCustomId()) : that.getCustomId() != null) {
+            return false;
+        }
+        if (getChild() != null ? !getChild().equals(that.getChild()) : that.getChild() != null) {
+            return false;
+        }
+        if (getAlternative() != null ? !getAlternative().equals(that.getAlternative()) : that.getAlternative() != null) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = getCustomId() != null ? getCustomId().hashCode() : 0;
+        result = 31 * result + (getChild() != null ? getChild().hashCode() : 0);
+        result = 31 * result + (getAlternative() != null ? getAlternative().hashCode() : 0);
+        return result;
+    }
 }

@@ -47,7 +47,7 @@ public final class ClassModelTest {
         assertEquals(SimpleGenericsModel.class, classModel.getType());
         assertFalse(classModel.useDiscriminator());
         assertEquals("_t", classModel.getDiscriminatorKey());
-        assertEquals("SimpleGenericsModel", classModel.getDiscriminator());
+        assertEquals("org.bson.codecs.pojo.entities.SimpleGenericsModel", classModel.getDiscriminator());
         assertNull(classModel.getIdPropertyModel());
         assertEquals(4, classModel.getPropertyModels().size());
         assertTrue(classModel.getInstanceCreatorFactory() instanceof InstanceCreatorFactoryImpl);
@@ -148,7 +148,7 @@ public final class ClassModelTest {
         ClassModel<?> classModel = ClassModel.builder(AnnotationInheritedModel.class).build();
         assertTrue(classModel.useDiscriminator());
         assertEquals("_cls", classModel.getDiscriminatorKey());
-        assertEquals("AnnotationInheritedModel", classModel.getDiscriminator());
+        assertEquals("org.bson.codecs.pojo.entities.conventions.AnnotationInheritedModel", classModel.getDiscriminator());
 
         assertEquals(2, classModel.getPropertyModels().size());
 
