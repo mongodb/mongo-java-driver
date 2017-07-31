@@ -21,14 +21,17 @@ import com.mongodb.MongoInternalException;
 import org.bson.ByteBuf;
 import org.bson.io.BsonOutput;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 
 class ZlibCompressor implements Compressor {
+
+    private static final int BUFFER_SIZE = 256;
+
     @Override
     public String getName() {
         return "zlib";
@@ -36,41 +39,53 @@ class ZlibCompressor implements Compressor {
 
     @Override
     public void compress(final List<ByteBuf> source, final BsonOutput target) {
+        BufferExposingByteArrayOutputStream baos = new BufferExposingByteArrayOutputStream(1024);
+        DeflaterOutputStream deflaterOutputStream = new DeflaterOutputStream(baos);
         try {
-            BufferExposingByteArrayOutputStream baos = new BufferExposingByteArrayOutputStream(1024);
-            DeflaterOutputStream deflaterOutputStream = new DeflaterOutputStream(baos);
 
-            // TODO: optimize this loop
+            byte[] scratch = new byte[BUFFER_SIZE];
             for (ByteBuf cur : source) {
                 while (cur.hasRemaining()) {
-                    deflaterOutputStream.write(cur.get());
+                    int numBytes = Math.min(cur.remaining(), scratch.length);
+                    cur.get(scratch, 0, numBytes);
+                    deflaterOutputStream.write(scratch, 0, numBytes);
                 }
             }
 
             deflaterOutputStream.finish();
             target.writeBytes(baos.getInternalBytes(), 0, baos.size());
         } catch (IOException e) {
-            throw new MongoInternalException("", e);  // TODO
+            throw new MongoInternalException("Unexpected IOException", e);
+        } finally {
+            try {
+                deflaterOutputStream.close();
+            } catch (IOException e) {
+                // ignore
+            }
         }
     }
 
 
     @Override
     public void uncompress(final ByteBuf source, final ByteBuf target) {
-        // TODO: avoid double copy
-        byte[] bytes = new byte[source.remaining()];
-        source.get(bytes);
-        ByteArrayInputStream bais = new ByteArrayInputStream(bytes);
-        InflaterInputStream inflaterInputStream = new InflaterInputStream(bais);
+        InputStream is = new ByteBufInputStream(source);
+        InflaterInputStream inflaterInputStream = new InflaterInputStream(is);
 
         try {
-            int curByte = inflaterInputStream.read();
-            while (curByte != -1) {
-                target.put((byte) curByte);
-                curByte = inflaterInputStream.read();
+            byte[] scratch = new byte[256];
+            int numBytes = inflaterInputStream.read(scratch);
+            while (numBytes != -1) {
+                target.put(scratch, 0, numBytes);
+                numBytes = inflaterInputStream.read(scratch);
             }
         } catch (IOException e) {
-            throw new MongoInternalException("", e);  // TODO
+            throw new MongoInternalException("Unexpected IOException", e);
+        } finally {
+            try {
+                inflaterInputStream.close();
+            } catch (IOException e) {
+                // ignore
+            }
         }
 
     }
@@ -81,13 +96,36 @@ class ZlibCompressor implements Compressor {
     }
 
     // Just so we don't have to copy the buffer
-    private static class BufferExposingByteArrayOutputStream extends ByteArrayOutputStream {
+    private static final class BufferExposingByteArrayOutputStream extends ByteArrayOutputStream {
         BufferExposingByteArrayOutputStream(final int size) {
             super(size);
         }
 
         byte[] getInternalBytes() {
             return buf;
+        }
+    }
+
+    private static final class ByteBufInputStream extends InputStream {
+        private final ByteBuf source;
+
+        private ByteBufInputStream(final ByteBuf source) {
+            this.source = source;
+        }
+
+        public int read(final byte[] bytes, final int offset, final int length) {
+            if (!source.hasRemaining()) {
+                return -1;
+            }
+
+            int bytesToRead = length > source.remaining() ? source.remaining() : length;
+            source.get(bytes, offset, bytesToRead);
+            return bytesToRead;
+        }
+
+        @Override
+        public int read() {
+            throw new UnsupportedOperationException();
         }
     }
 }
