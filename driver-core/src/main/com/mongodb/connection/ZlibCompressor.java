@@ -37,23 +37,18 @@ class ZlibCompressor implements Compressor {
     @Override
     public void compress(final List<ByteBuf> source, final BsonOutput target) {
         try {
-            ByteArrayOutputStream baos = new ByteArrayOutputStream();  // TODO
+            BufferExposingByteArrayOutputStream baos = new BufferExposingByteArrayOutputStream(1024);
             DeflaterOutputStream deflaterOutputStream = new DeflaterOutputStream(baos);
 
-            // TODO: optimized this loop
-            int count = 0;
+            // TODO: optimize this loop
             for (ByteBuf cur : source) {
                 while (cur.hasRemaining()) {
-                    byte b = cur.get();
-                    if (count >= 16) {
-                        deflaterOutputStream.write(b);
-                    }
-                    count++;
+                    deflaterOutputStream.write(cur.get());
                 }
             }
 
             deflaterOutputStream.finish();
-            target.writeBytes(baos.toByteArray());
+            target.writeBytes(baos.getInternalBytes(), 0, baos.size());
         } catch (IOException e) {
             throw new MongoInternalException("", e);  // TODO
         }
@@ -83,5 +78,16 @@ class ZlibCompressor implements Compressor {
     @Override
     public byte getId() {
         return 2;
+    }
+
+    // Just so we don't have to copy the buffer
+    private static class BufferExposingByteArrayOutputStream extends ByteArrayOutputStream {
+        BufferExposingByteArrayOutputStream(final int size) {
+            super(size);
+        }
+
+        byte[] getInternalBytes() {
+            return buf;
+        }
     }
 }

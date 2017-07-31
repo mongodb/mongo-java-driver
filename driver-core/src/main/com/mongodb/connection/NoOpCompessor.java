@@ -31,17 +31,12 @@ class NoOpCompessor implements Compressor {
 
     @Override
     public void compress(final List<ByteBuf> source, final BsonOutput target) {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();  // TODO
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
 
-        // TODO: this is wonky to skip the MsgHeader here
-        int count = 0;
         for (ByteBuf cur : source) {
             while (cur.hasRemaining()) {
                 byte b = cur.get();
-                if (count >= 16) {
-                    baos.write(b);
-                }
-                count++;
+                baos.write(b);
             }
         }
 
