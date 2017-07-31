@@ -36,13 +36,15 @@ import static org.bson.assertions.Assertions.notNull;
  * @since 3.5
  */
 public final class PojoCodecProvider implements CodecProvider {
+    private final boolean automatic;
     private final Map<Class<?>, ClassModel<?>> classModels;
     private final Set<String> packages;
     private final List<Convention> conventions;
     private final DiscriminatorLookup discriminatorLookup;
 
-    private PojoCodecProvider(final Map<Class<?>, ClassModel<?>> classModels, final Set<String> packages,
+    private PojoCodecProvider(final boolean automatic, final Map<Class<?>, ClassModel<?>> classModels, final Set<String> packages,
                               final List<Convention> conventions) {
+        this.automatic = automatic;
         this.classModels = classModels;
         this.packages = packages;
         this.conventions = conventions;
@@ -70,8 +72,20 @@ public final class PojoCodecProvider implements CodecProvider {
         if (classModel != null || (clazz.getPackage() != null && packages.contains(clazz.getPackage().getName()))) {
             if (classModel == null) {
                 classModel = createClassModel(clazz, conventions);
+                discriminatorLookup.addClassModel(classModel);
             }
-            return new PojoCodec<T>(classModel, this, registry, discriminatorLookup);
+            return new PojoCodecImpl<T>(classModel, registry, discriminatorLookup);
+        } else if (automatic) {
+            try {
+                classModel = createClassModel(clazz, conventions);
+            } catch (IllegalStateException e) {
+                return null;
+            }
+            if (!clazz.isInterface() && classModel.getPropertyModels().isEmpty()) {
+                return null;
+            }
+            discriminatorLookup.addClassModel(classModel);
+            return new AutomaticPojoCodec<T>(new PojoCodecImpl<T>(classModel, registry, discriminatorLookup));
         }
         return null;
     }
@@ -84,6 +98,7 @@ public final class PojoCodecProvider implements CodecProvider {
         private final Map<Class<?>, ClassModel<?>> classModels = new HashMap<Class<?>, ClassModel<?>>();
         private final List<Class<?>> clazzes = new ArrayList<Class<?>>();
         private List<Convention> conventions = null;
+        private boolean automatic;
 
         /**
          * Creates the PojoCodecProvider with the classes or packages that configured and registered.
@@ -100,7 +115,21 @@ public final class PojoCodecProvider implements CodecProvider {
                     register(createClassModel(clazz, immutableConventions));
                 }
             }
-            return new PojoCodecProvider(classModels, packages, immutableConventions);
+            return new PojoCodecProvider(automatic, classModels, packages, immutableConventions);
+        }
+
+        /**
+         * Sets whether the provider should automatically try to create a {@link ClassModel} for any class that is requested.
+         *
+         * <p>Note: As Java Beans are convention based, when using automatic settings the provider should be the last provider in the
+         * registry.</p>
+         *
+         * @param automatic whether to automatically create {@code ClassModels} or not.
+         * @return this
+         */
+        public Builder automatic(final boolean automatic) {
+            this.automatic = automatic;
+            return this;
         }
 
         /**
@@ -153,10 +182,7 @@ public final class PojoCodecProvider implements CodecProvider {
          * @return this
          */
         public Builder register(final String... packageNames) {
-            notNull("packageNames", packageNames);
-            for (String name : packageNames) {
-                packages.add(name);
-            }
+            packages.addAll(asList(notNull("packageNames", packageNames)));
             return this;
         }
 

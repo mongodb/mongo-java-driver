@@ -35,7 +35,7 @@ final class DiscriminatorLookup {
         this.packages = packages;
     }
 
-    Class<?> lookup(final String discriminator) {
+    public Class<?> lookup(final String discriminator) {
         if (discriminatorClassMap.containsKey(discriminator)) {
             return discriminatorClassMap.get(discriminator);
         }
@@ -51,6 +51,12 @@ final class DiscriminatorLookup {
             discriminatorClassMap.put(discriminator, clazz);
         }
         return clazz;
+    }
+
+    void addClassModel(final ClassModel<?> classModel) {
+        if (classModel.getDiscriminator() != null) {
+            discriminatorClassMap.put(classModel.getDiscriminator(), classModel.getType());
+        }
     }
 
     private Class<?> getClassForName(final String discriminator) {

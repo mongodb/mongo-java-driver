@@ -33,11 +33,18 @@ import org.bson.codecs.pojo.entities.ConcreteCollectionsModel;
 import org.bson.codecs.pojo.entities.ConventionModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.bson.codecs.pojo.entities.GenericTreeModel;
+import org.bson.codecs.pojo.entities.MultipleBoundsModel;
+import org.bson.codecs.pojo.entities.NestedGenericHolderFieldWithMultipleTypeParamsModel;
 import org.bson.codecs.pojo.entities.NestedGenericHolderMapModel;
 import org.bson.codecs.pojo.entities.NestedGenericHolderModel;
+import org.bson.codecs.pojo.entities.NestedGenericHolderSimpleGenericsModel;
 import org.bson.codecs.pojo.entities.NestedReusedGenericsModel;
+import org.bson.codecs.pojo.entities.NestedSelfReferentialGenericHolderModel;
+import org.bson.codecs.pojo.entities.NestedSelfReferentialGenericModel;
 import org.bson.codecs.pojo.entities.PrimitivesModel;
+import org.bson.codecs.pojo.entities.PropertyWithMultipleTypeParamsModel;
 import org.bson.codecs.pojo.entities.ReusedGenericsModel;
+import org.bson.codecs.pojo.entities.SelfReferentialGenericModel;
 import org.bson.codecs.pojo.entities.ShapeModelCircle;
 import org.bson.codecs.pojo.entities.ShapeModelRectangle;
 import org.bson.codecs.pojo.entities.SimpleEnum;
@@ -63,11 +70,17 @@ import java.util.concurrent.ConcurrentHashMap;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static org.bson.codecs.pojo.Conventions.DEFAULT_CONVENTIONS;
 import static org.junit.Assert.assertEquals;
 
 abstract class PojoTestCase {
 
     static final BsonDocumentCodec DOCUMENT_CODEC = new BsonDocumentCodec();
+
+    @SuppressWarnings("unchecked")
+    <T> void roundTrip(final T value, final String json) {
+        roundTrip(PojoCodecProvider.builder().automatic(true), value, json);
+    }
 
     @SuppressWarnings("unchecked")
     <T> void roundTrip(final PojoCodecProvider.Builder builder, final T value, final String json) {
@@ -79,6 +92,10 @@ abstract class PojoTestCase {
     <T> void roundTrip(final CodecRegistry registry, final T value, final String json) {
         encodesTo(registry, value, json);
         decodesTo(registry, json, value);
+    }
+
+    <T> void encodesTo(final PojoCodecProvider.Builder builder, final T value, final String json) {
+        encodesTo(getCodecRegistry(builder), value, json);
     }
 
     @SuppressWarnings("unchecked")
@@ -93,6 +110,10 @@ abstract class PojoTestCase {
 
         BsonDocument asBsonDocument = decode(DOCUMENT_CODEC, encoded);
         assertEquals("Encoded value", BsonDocument.parse(json), asBsonDocument);
+    }
+
+    <T> void decodesTo(final PojoCodecProvider.Builder builder, final String json, final T expected) {
+        decodesTo(getCodecRegistry(builder), json, expected);
     }
 
     @SuppressWarnings("unchecked")
@@ -123,19 +144,20 @@ abstract class PojoTestCase {
         return codec.decode(reader, DecoderContext.builder().build());
     }
 
-    PojoCodecProvider.Builder getPojoCodecProviderBuilder(final Class<?>... classes) {
+    static PojoCodecProvider.Builder getPojoCodecProviderBuilder(final Class<?>... classes) {
         PojoCodecProvider.Builder builder = PojoCodecProvider.builder();
         for (final Class<?> clazz : classes) {
             builder.register(clazz);
         }
+        builder.conventions(DEFAULT_CONVENTIONS);
         return builder;
     }
 
-    <T> PojoCodec<T> getCodec(final PojoCodecProvider.Builder builder, final Class<T> clazz) {
-        return (PojoCodec<T>) getCodecRegistry(builder).get(clazz);
+    <T> PojoCodecImpl<T> getCodec(final PojoCodecProvider.Builder builder, final Class<T> clazz) {
+        return (PojoCodecImpl<T>) getCodecRegistry(builder).get(clazz);
     }
 
-    <T> PojoCodec<T> getCodec(final Class<T> clazz) {
+    <T> PojoCodecImpl<T> getCodec(final Class<T> clazz) {
         return getCodec(getPojoCodecProviderBuilder(clazz), clazz);
     }
 
@@ -147,19 +169,15 @@ abstract class PojoTestCase {
         return PojoCodecProvider.builder().register(builders.toArray(new ClassModel<?>[builders.size()]));
     }
 
-    CodecRegistry getCodecRegistry(final Class<?>... classes) {
-        return getCodecRegistry(getPojoCodecProviderBuilder(classes));
-    }
-
     CodecRegistry getCodecRegistry(final PojoCodecProvider.Builder builder) {
-        return fromProviders(builder.build(), new ValueCodecProvider());
+        return fromProviders(new ValueCodecProvider(), builder.build());
     }
 
-    SimpleModel getSimpleModel() {
+    static SimpleModel getSimpleModel() {
         return new SimpleModel(42, "myString");
     }
 
-    PrimitivesModel getPrimitivesModel() {
+    static PrimitivesModel getPrimitivesModel() {
         return new PrimitivesModel(true, Byte.parseByte("1", 2), '1', 1.0, 2f, 3, 5L, (short) 6);
     }
 
@@ -172,7 +190,7 @@ abstract class PojoTestCase {
         return new SimpleGenericsModel<String, String, Integer>(42, "A", asList("B", "C"), map);
     }
 
-    SimpleGenericsModel<Long, String, Integer> getSimpleGenericsModelAlt() {
+    static SimpleGenericsModel<Long, String, Integer> getSimpleGenericsModelAlt() {
         HashMap<String, Integer> map = new HashMap<String, Integer>();
         map.put("D", 2);
         map.put("E", 3);
@@ -181,7 +199,7 @@ abstract class PojoTestCase {
         return new SimpleGenericsModel<Long, String, Integer>(42, 101L, asList("B", "C"), map);
     }
 
-    ConcreteCollectionsModel getConcreteCollectionsModel() {
+    static ConcreteCollectionsModel getConcreteCollectionsModel() {
         Collection<Integer> collection = asList(1, 2, 3);
         List<Integer> list = asList(4, 5, 6);
         LinkedList<Integer> linked = new LinkedList<Integer>(asList(7, 8, 9));
@@ -197,12 +215,12 @@ abstract class PojoTestCase {
         return new ConcreteCollectionsModel(collection, list, linked, map, concurrent);
     }
 
-    SimpleNestedPojoModel getSimpleNestedPojoModel() {
+    static SimpleNestedPojoModel getSimpleNestedPojoModel() {
         SimpleModel simpleModel = getSimpleModel();
         return new SimpleNestedPojoModel(simpleModel);
     }
 
-    CollectionNestedPojoModel getCollectionNestedPojoModel() {
+    static CollectionNestedPojoModel getCollectionNestedPojoModel() {
         SimpleModel simpleModel = getSimpleModel();
 
         List<SimpleModel> listSimple = singletonList(simpleModel);
@@ -234,36 +252,77 @@ abstract class PojoTestCase {
                 mapListMapSimple, mapSetSimple, listMapSimple, listMapListSimple, listMapSetSimple);
     }
 
-    ConventionModel getConventionModel() {
+    static ConventionModel getConventionModel() {
         SimpleModel simpleModel = getSimpleModel();
         ConventionModel child = new ConventionModel("child", null, simpleModel);
         return new ConventionModel("id", child, null);
     }
 
-    ShapeModelCircle getShapeModelCircle() {
+    static ShapeModelCircle getShapeModelCircle() {
         return new ShapeModelCircle("orange", 4.2);
     }
 
-    ShapeModelRectangle getShapeModelRectangle() {
+    static ShapeModelRectangle getShapeModelRectangle() {
         return new ShapeModelRectangle("green", 22.1, 105.0);
     }
 
-    NestedGenericHolderModel getNestedGenericHolderModel() {
+    static MultipleBoundsModel getMultipleBoundsModel() {
+        HashMap<String, String> map = new HashMap<String, String>();
+        map.put("key", "value");
+        List<Integer> list = asList(1, 2, 3);
+        return new MultipleBoundsModel(map, list, 2.2);
+    }
+
+    static NestedGenericHolderFieldWithMultipleTypeParamsModel getNestedGenericHolderFieldWithMultipleTypeParamsModel() {
+        SimpleGenericsModel<Long, String, Integer> simple = getSimpleGenericsModelAlt();
+        PropertyWithMultipleTypeParamsModel<Integer, Long, String> field =
+                new PropertyWithMultipleTypeParamsModel<Integer, Long, String>(simple);
+        GenericHolderModel<PropertyWithMultipleTypeParamsModel<Integer, Long, String>> nested = new
+                GenericHolderModel<PropertyWithMultipleTypeParamsModel<Integer, Long, String>>(field, 42L);
+        return new NestedGenericHolderFieldWithMultipleTypeParamsModel(nested);
+    }
+
+    static NestedGenericHolderSimpleGenericsModel getNestedGenericHolderSimpleGenericsModel() {
+        SimpleModel simpleModel = getSimpleModel();
+        Map<String, SimpleModel> map = new HashMap<String, SimpleModel>();
+        map.put("A", simpleModel);
+        Map<String, Map<String, SimpleModel>> mapB = new HashMap<String, Map<String, SimpleModel>>();
+        mapB.put("A", map);
+        SimpleGenericsModel<Integer, List<SimpleModel>, Map<String, SimpleModel>> simpleGenericsModel =
+                new SimpleGenericsModel<Integer, List<SimpleModel>, Map<String, SimpleModel>>(42, 42,
+                        singletonList(singletonList(simpleModel)), mapB);
+        GenericHolderModel<SimpleGenericsModel<Integer, List<SimpleModel>, Map<String, SimpleModel>>> nested =
+                new GenericHolderModel<SimpleGenericsModel<Integer, List<SimpleModel>, Map<String, SimpleModel>>>(simpleGenericsModel, 42L);
+
+        return new NestedGenericHolderSimpleGenericsModel(nested);
+    }
+
+    static NestedSelfReferentialGenericHolderModel getNestedSelfReferentialGenericHolderModel() {
+        SelfReferentialGenericModel<Boolean, Long> selfRef1 = new SelfReferentialGenericModel<Boolean, Long>(true, 33L,
+                new SelfReferentialGenericModel<Long, Boolean>(44L, false, null));
+        SelfReferentialGenericModel<Boolean, Double> selfRef2 = new SelfReferentialGenericModel<Boolean, Double>(true, 3.14,
+                new SelfReferentialGenericModel<Double, Boolean>(3.42, true, null));
+        NestedSelfReferentialGenericModel<Boolean, Long, Double> nested =
+                new NestedSelfReferentialGenericModel<Boolean, Long, Double>(true, 42L, 44.0, selfRef1, selfRef2);
+         return new NestedSelfReferentialGenericHolderModel(nested);
+    }
+
+    static NestedGenericHolderModel getNestedGenericHolderModel() {
         return new NestedGenericHolderModel(new GenericHolderModel<String>("generic", 1L));
     }
 
-    NestedGenericHolderMapModel getNestedGenericHolderMapModel() {
+    static NestedGenericHolderMapModel getNestedGenericHolderMapModel() {
         Map<String, SimpleModel> mapSimple = new HashMap<String, SimpleModel>();
         mapSimple.put("s", getSimpleModel());
         return new NestedGenericHolderMapModel(new GenericHolderModel<Map<String, SimpleModel>>(mapSimple, 1L));
     }
 
-    NestedReusedGenericsModel getNestedReusedGenericsModel() {
+    static NestedReusedGenericsModel getNestedReusedGenericsModel() {
         return new NestedReusedGenericsModel(new ReusedGenericsModel<Long, List<SimpleModel>, String>(1L,
                 singletonList(getSimpleModel()), "field3", 42, "field5", asList(getSimpleModel(), getSimpleModel()), 2L, "field8"));
     }
 
-    GenericTreeModel<String, Integer> getGenericTreeModel() {
+    static GenericTreeModel<String, Integer> getGenericTreeModel() {
         return new GenericTreeModel<String, Integer>("top", 1,
                 new GenericTreeModel<String, Integer>("left", 2,
                         new GenericTreeModel<String, Integer>("left", 3, null, null), null),
@@ -271,7 +330,7 @@ abstract class PojoTestCase {
                         new GenericTreeModel<String, Integer>("left", 5, null, null), null));
     }
 
-    GenericTreeModel<String, String> getGenericTreeModelStrings() {
+    static GenericTreeModel<String, String> getGenericTreeModelStrings() {
         return new GenericTreeModel<String, String>("top", "1",
                 new GenericTreeModel<String, String>("left", "2",
                         new GenericTreeModel<String, String>("left", "3", null, null), null),

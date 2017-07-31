@@ -57,13 +57,11 @@ public class PojoQuickTour {
         }
 
         // create codec registry for POJOs
-        CodecRegistry pojoCodecRegistry = fromRegistries(
-                fromProviders(PojoCodecProvider.builder().register(Person.class, Address.class).build()),
-                MongoClient.getDefaultCodecRegistry());
+        CodecRegistry pojoCodecRegistry = fromRegistries(MongoClient.getDefaultCodecRegistry(),
+                fromProviders(PojoCodecProvider.builder().automatic(true).build()));
 
         // get handle to "mydb" database
         MongoDatabase database = mongoClient.getDatabase("mydb").withCodecRegistry(pojoCodecRegistry);
-
 
         // get a handle to the "people" collection
         MongoCollection<Person> collection = database.getCollection("people", Person.class);

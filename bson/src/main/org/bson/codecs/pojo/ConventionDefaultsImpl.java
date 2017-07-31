@@ -23,7 +23,7 @@ final class ConventionDefaultsImpl implements Convention {
             classModelBuilder.discriminatorKey("_t");
         }
         if (classModelBuilder.getDiscriminator() == null && classModelBuilder.getType() != null) {
-            classModelBuilder.discriminator(classModelBuilder.getType().getSimpleName());
+            classModelBuilder.discriminator(classModelBuilder.getType().getName());
         }
 
        for (final PropertyModelBuilder<?> propertyModel : classModelBuilder.getPropertyModelBuilders()) {

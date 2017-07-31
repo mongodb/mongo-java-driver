@@ -25,18 +25,16 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.concurrent.ConcurrentMap;
 
-class LazyPojoCodec<T> implements Codec<T> {
+class LazyPojoCodec<T> extends PojoCodec<T> {
     private final ClassModel<T> classModel;
-    private final PojoCodecProvider codecProvider;
     private final CodecRegistry registry;
     private final DiscriminatorLookup discriminatorLookup;
     private final ConcurrentMap<ClassModel<?>, Codec<?>> codecCache;
-    private volatile PojoCodec<T> pojoCodec;
+    private volatile PojoCodecImpl<T> pojoCodec;
 
-    LazyPojoCodec(final ClassModel<T> classModel, final PojoCodecProvider codecProvider, final CodecRegistry registry,
-                  final DiscriminatorLookup discriminatorLookup, final ConcurrentMap<ClassModel<?>, Codec<?>> codecCache) {
+    LazyPojoCodec(final ClassModel<T> classModel, final CodecRegistry registry, final DiscriminatorLookup discriminatorLookup,
+                  final ConcurrentMap<ClassModel<?>, Codec<?>> codecCache) {
         this.classModel = classModel;
-        this.codecProvider = codecProvider;
         this.registry = registry;
         this.discriminatorLookup = discriminatorLookup;
         this.codecCache = codecCache;
@@ -59,8 +57,13 @@ class LazyPojoCodec<T> implements Codec<T> {
 
     private Codec<T> getPojoCodec() {
         if (pojoCodec == null) {
-            pojoCodec = new PojoCodec<T>(classModel, codecProvider, registry, discriminatorLookup, codecCache, true);
+            pojoCodec = new PojoCodecImpl<T>(classModel, registry, discriminatorLookup, codecCache, true);
         }
         return pojoCodec;
+    }
+
+    @Override
+    ClassModel<T> getClassModel() {
+        return classModel;
     }
 }

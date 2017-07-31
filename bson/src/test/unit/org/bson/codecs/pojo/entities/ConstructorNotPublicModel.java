@@ -23,6 +23,10 @@ public final class ConstructorNotPublicModel {
         this.integerField = integerField;
     }
 
+    public static ConstructorNotPublicModel create(final Integer integerField) {
+        return new ConstructorNotPublicModel(integerField);
+    }
+
     public Integer getIntegerField() {
         return integerField;
     }

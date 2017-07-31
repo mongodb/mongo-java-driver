@@ -1,0 +1,295 @@
+/*
+ * Copyright 2017 MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package org.bson.codecs.pojo;
+
+import org.bson.codecs.pojo.entities.AbstractInterfaceModel;
+import org.bson.codecs.pojo.entities.CollectionNestedPojoModel;
+import org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel;
+import org.bson.codecs.pojo.entities.ConcreteCollectionsModel;
+import org.bson.codecs.pojo.entities.ConcreteStandAloneAbstractInterfaceModel;
+import org.bson.codecs.pojo.entities.ConventionModel;
+import org.bson.codecs.pojo.entities.GenericHolderModel;
+import org.bson.codecs.pojo.entities.GenericTreeModel;
+import org.bson.codecs.pojo.entities.InterfaceBasedModel;
+import org.bson.codecs.pojo.entities.InterfaceModelImpl;
+import org.bson.codecs.pojo.entities.MultipleBoundsModel;
+import org.bson.codecs.pojo.entities.MultipleLevelGenericModel;
+import org.bson.codecs.pojo.entities.NestedFieldReusingClassTypeParameter;
+import org.bson.codecs.pojo.entities.NestedGenericHolderFieldWithMultipleTypeParamsModel;
+import org.bson.codecs.pojo.entities.NestedGenericHolderMapModel;
+import org.bson.codecs.pojo.entities.NestedGenericHolderModel;
+import org.bson.codecs.pojo.entities.NestedGenericHolderSimpleGenericsModel;
+import org.bson.codecs.pojo.entities.NestedGenericTreeModel;
+import org.bson.codecs.pojo.entities.NestedMultipleLevelGenericModel;
+import org.bson.codecs.pojo.entities.NestedReusedGenericsModel;
+import org.bson.codecs.pojo.entities.NestedSelfReferentialGenericHolderModel;
+import org.bson.codecs.pojo.entities.NestedSelfReferentialGenericModel;
+import org.bson.codecs.pojo.entities.PrimitivesModel;
+import org.bson.codecs.pojo.entities.PropertyReusingClassTypeParameter;
+import org.bson.codecs.pojo.entities.PropertySelectionModel;
+import org.bson.codecs.pojo.entities.PropertyWithMultipleTypeParamsModel;
+import org.bson.codecs.pojo.entities.ReusedGenericsModel;
+import org.bson.codecs.pojo.entities.SelfReferentialGenericModel;
+import org.bson.codecs.pojo.entities.ShapeHolderModel;
+import org.bson.codecs.pojo.entities.ShapeModelAbstract;
+import org.bson.codecs.pojo.entities.ShapeModelCircle;
+import org.bson.codecs.pojo.entities.ShapeModelRectangle;
+import org.bson.codecs.pojo.entities.SimpleGenericsModel;
+import org.bson.codecs.pojo.entities.SimpleModel;
+import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;
+import org.bson.codecs.pojo.entities.UpperBoundsConcreteModel;
+import org.bson.codecs.pojo.entities.conventions.CreatorAllFinalFieldsModel;
+import org.bson.codecs.pojo.entities.conventions.CreatorConstructorModel;
+import org.bson.codecs.pojo.entities.conventions.CreatorMethodModel;
+import org.bson.codecs.pojo.entities.conventions.CreatorNoArgsConstructorModel;
+import org.bson.codecs.pojo.entities.conventions.CreatorNoArgsMethodModel;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+
+import static java.lang.String.format;
+
+@RunWith(Parameterized.class)
+public final class PojoRoundTripTest extends PojoTestCase {
+
+    private final String name;
+    private final Object model;
+    private final PojoCodecProvider.Builder builder;
+    private final String json;
+
+    public PojoRoundTripTest(final String name, final Object model, final String json, final PojoCodecProvider.Builder builder) {
+        this.name = name;
+        this.model = model;
+        this.json = json;
+        this.builder = builder;
+    }
+
+    @Test
+    public void test() {
+        roundTrip(builder, model, json);
+    }
+
+    private static List<TestData> testCases() {
+        List<TestData> data = new ArrayList<TestData>();
+        data.add(new TestData("Simple model", getSimpleModel(), PojoCodecProvider.builder().register(SimpleModel.class),
+                SIMPLE_MODEL_JSON));
+
+        data.add(new TestData("Property selection model", new PropertySelectionModel(),
+                getPojoCodecProviderBuilder(PropertySelectionModel.class),
+                "{'finalStringField': 'finalStringField', 'stringField': 'stringField'}"));
+
+        data.add(new TestData("Conventions default", getConventionModel(),
+                getPojoCodecProviderBuilder(ConventionModel.class, SimpleModel.class),
+                "{'_id': 'id', '_cls': 'AnnotatedConventionModel', 'myFinalField': 10, 'myIntField': 10,"
+                        + "'child': {'_id': 'child', 'myFinalField': 10, 'myIntField': 10,"
+                        + "'model': {'integerField': 42, 'stringField': 'myString'}}}"));
+
+        data.add(new TestData("Interfaced based model", new InterfaceModelImpl("a", "b"),
+                getPojoCodecProviderBuilder(InterfaceModelImpl.class),
+                "{'propertyA': 'a', 'propertyB': 'b'}"));
+
+        data.add(new TestData("Interface concrete and abstract model",
+                new ConcreteAndNestedAbstractInterfaceModel("A", new ConcreteAndNestedAbstractInterfaceModel("B",
+                        new ConcreteStandAloneAbstractInterfaceModel("C"))),
+                getPojoCodecProviderBuilder(InterfaceBasedModel.class, AbstractInterfaceModel.class,
+                        ConcreteAndNestedAbstractInterfaceModel.class, ConcreteStandAloneAbstractInterfaceModel.class),
+                "{'_t': 'org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel', 'name': 'A', "
+                        + "'child': {'_t': 'org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel', 'name': 'B', "
+                        + "  'child': {'_t': 'org.bson.codecs.pojo.entities.ConcreteStandAloneAbstractInterfaceModel', 'name': 'C'}}}}"));
+
+        data.add(new TestData("Primitives model", getPrimitivesModel(),
+                getPojoCodecProviderBuilder(PrimitivesModel.class),
+                "{ 'myBoolean': true, 'myByte': 1, 'myCharacter': '1', 'myDouble': 1.0, 'myFloat': 2.0, 'myInteger': 3, "
+                        + "'myLong': { '$numberLong': '5' }, 'myShort': 6}"));
+
+        data.add(new TestData("Concrete collections model", getConcreteCollectionsModel(),
+                getPojoCodecProviderBuilder(ConcreteCollectionsModel.class),
+                "{'collection': [1, 2, 3], 'list': [4, 5, 6], 'linked': [7, 8, 9], 'map': {'A': 1.1, 'B': 2.2, 'C': 3.3},"
+                        + "'concurrent': {'D': 4.4, 'E': 5.5, 'F': 6.6}}"));
+
+        data.add(new TestData("Nested simple", getSimpleNestedPojoModel(),
+                getPojoCodecProviderBuilder(SimpleNestedPojoModel.class, SimpleModel.class),
+                "{'simple': " + SIMPLE_MODEL_JSON + "}"));
+
+        data.add(new TestData("Nested collection", getCollectionNestedPojoModel(),
+                getPojoCodecProviderBuilder(CollectionNestedPojoModel.class, SimpleModel.class),
+                "{ 'listSimple': [" + SIMPLE_MODEL_JSON + "],"
+                        + "'listListSimple': [[" + SIMPLE_MODEL_JSON + "]],"
+                        + "'setSimple': [" + SIMPLE_MODEL_JSON + "],"
+                        + "'setSetSimple': [[" + SIMPLE_MODEL_JSON + "]],"
+                        + "'mapSimple': {'s': " + SIMPLE_MODEL_JSON + "},"
+                        + "'mapMapSimple': {'ms': {'s': " + SIMPLE_MODEL_JSON + "}},"
+                        + "'mapListSimple': {'ls': [" + SIMPLE_MODEL_JSON + "]},"
+                        + "'mapListMapSimple': {'lm': [{'s': " + SIMPLE_MODEL_JSON + "}]},"
+                        + "'mapSetSimple': {'s': [" + SIMPLE_MODEL_JSON + "]},"
+                        + "'listMapSimple': [{'s': " + SIMPLE_MODEL_JSON + "}],"
+                        + "'listMapListSimple': [{'ls': [" + SIMPLE_MODEL_JSON + "]}],"
+                        + "'listMapSetSimple': [{'s': [" + SIMPLE_MODEL_JSON + "]}],"
+                        + "}"));
+
+        data.add(new TestData("Nested generic holder", getNestedGenericHolderModel(),
+                getPojoCodecProviderBuilder(NestedGenericHolderModel.class, GenericHolderModel.class),
+                "{'nested': {'myGenericField': 'generic', 'myLongField': {'$numberLong': '1'}}}"));
+
+        data.add(new TestData("Nested generic holder map", getNestedGenericHolderMapModel(),
+                getPojoCodecProviderBuilder(NestedGenericHolderMapModel.class,
+                        GenericHolderModel.class, SimpleGenericsModel.class, SimpleModel.class),
+                "{ 'nested': { 'myGenericField': {'s': " + SIMPLE_MODEL_JSON + "}, 'myLongField': {'$numberLong': '1'}}}"));
+
+        data.add(new TestData("Nested reused generic", getNestedReusedGenericsModel(),
+                getPojoCodecProviderBuilder(NestedReusedGenericsModel.class, ReusedGenericsModel.class, SimpleModel.class),
+                "{ 'nested':{ 'field1':{ '$numberLong':'1' }, 'field2':[" + SIMPLE_MODEL_JSON + "], "
+                        + "'field3':'field3', 'field4':42, 'field5':'field5', 'field6':[" + SIMPLE_MODEL_JSON + ", "
+                        + SIMPLE_MODEL_JSON + "], 'field7':{ '$numberLong':'2' }, 'field8':'field8' } }"));
+
+
+        data.add(new TestData("Nested generic holder with multiple types", getNestedGenericHolderFieldWithMultipleTypeParamsModel(),
+                getPojoCodecProviderBuilder(NestedGenericHolderFieldWithMultipleTypeParamsModel.class,
+                        PropertyWithMultipleTypeParamsModel.class, SimpleGenericsModel.class, GenericHolderModel.class),
+                "{'nested': {'myGenericField': {_t: 'PropertyWithMultipleTypeParamsModel', "
+                        + "'simpleGenericsModel': {_t: 'org.bson.codecs.pojo.entities.SimpleGenericsModel', 'myIntegerField': 42, "
+                        + "'myGenericField': {'$numberLong': '101'}, 'myListField': ['B', 'C'], 'myMapField': {'D': 2, 'E': 3, 'F': 4 }}},"
+                        + "'myLongField': {'$numberLong': '42'}}}"));
+
+
+        data.add(new TestData("Nested generic tree", new NestedGenericTreeModel(42, getGenericTreeModel()),
+                getPojoCodecProviderBuilder(NestedGenericTreeModel.class, GenericTreeModel.class),
+                "{'intField': 42, 'nested': {'field1': 'top', 'field2': 1, "
+                        + "'left': {'field1': 'left', 'field2': 2, 'left': {'field1': 'left', 'field2': 3}}, "
+                        + "'right': {'field1': 'right', 'field2': 4, 'left': {'field1': 'left', 'field2': 5}}}}"));
+
+        data.add(new TestData("Nested multiple level",
+                new NestedMultipleLevelGenericModel(42, new MultipleLevelGenericModel<String>("string", getGenericTreeModel())),
+                getPojoCodecProviderBuilder(NestedMultipleLevelGenericModel.class, MultipleLevelGenericModel.class, GenericTreeModel.class),
+                "{'intField': 42, 'nested': {'stringField': 'string', 'nested': {'field1': 'top', 'field2': 1, "
+                        + "'left': {'field1': 'left', 'field2': 2, 'left': {'field1': 'left', 'field2': 3}}, "
+                        + "'right': {'field1': 'right', 'field2': 4, 'left': {'field1': 'left', 'field2': 5}}}}}"));
+
+        data.add(new TestData("Nested Generics holder", getNestedGenericHolderSimpleGenericsModel(),
+                getPojoCodecProviderBuilder(NestedGenericHolderSimpleGenericsModel.class, GenericHolderModel.class,
+                        SimpleGenericsModel.class, SimpleModel.class),
+                "{'nested': {'myGenericField': {'myIntegerField': 42, 'myGenericField': 42,"
+                        + "                           'myListField': [[" + SIMPLE_MODEL_JSON + "]], "
+                        + "                           'myMapField': {'A': {'A': " + SIMPLE_MODEL_JSON + "}}},"
+                        + "         'myLongField': {'$numberLong': '42' }}}"));
+
+        data.add(new TestData("Nested property reusing type parameter",
+                new NestedFieldReusingClassTypeParameter(new PropertyReusingClassTypeParameter<String>(getGenericTreeModelStrings())),
+                getPojoCodecProviderBuilder(NestedFieldReusingClassTypeParameter.class, PropertyReusingClassTypeParameter.class,
+                        GenericTreeModel.class),
+                "{'nested': {'tree': {'field1': 'top', 'field2': '1', "
+                        + "'left': {'field1': 'left', 'field2': '2', 'left': {'field1': 'left', 'field2': '3'}}, "
+                        + "'right': {'field1': 'right', 'field2': '4', 'left': {'field1': 'left', 'field2': '5'}}}}}"));
+
+        data.add(new TestData("Abstract shape model - circle",
+                new ShapeHolderModel(getShapeModelCircle()), getPojoCodecProviderBuilder(ShapeModelAbstract.class,
+                ShapeModelCircle.class, ShapeModelRectangle.class, ShapeHolderModel.class),
+                "{'shape': {'_t': 'org.bson.codecs.pojo.entities.ShapeModelCircle', 'color': 'orange', 'radius': 4.2}}"));
+
+        data.add(new TestData("Abstract shape model - rectangle",
+                new ShapeHolderModel(getShapeModelRectangle()), getPojoCodecProviderBuilder(ShapeModelAbstract.class,
+                ShapeModelCircle.class, ShapeModelRectangle.class, ShapeHolderModel.class),
+                "{'shape': {'_t': 'org.bson.codecs.pojo.entities.ShapeModelRectangle', 'color': 'green', 'width': 22.1, 'height': "
+                        + "105.0}}}"));
+
+        data.add(new TestData("Upper bounds",
+                new UpperBoundsConcreteModel(1L), getPojoCodecProviderBuilder(UpperBoundsConcreteModel.class),
+                "{'myGenericField': {'$numberLong': '1'}}"));
+
+        data.add(new TestData("Multiple bounds", getMultipleBoundsModel(), getPojoCodecProviderBuilder(MultipleBoundsModel.class),
+                "{'level1' : 2.2, 'level2': [1, 2, 3], 'level3': {key: 'value'}}"));
+
+        data.add(new TestData("Self referential", getNestedSelfReferentialGenericHolderModel(),
+                getPojoCodecProviderBuilder(NestedSelfReferentialGenericHolderModel.class, NestedSelfReferentialGenericModel.class,
+                        SelfReferentialGenericModel.class),
+                "{'nested': { 't': true, 'v': {'$numberLong': '42'}, 'z': 44.0, "
+                        + "'selfRef1': {'t': true, 'v': {'$numberLong': '33'}, 'child': {'t': {'$numberLong': '44'}, 'v': false}}, "
+                        + "'selfRef2': {'t': true, 'v': 3.14, 'child': {'t': 3.42, 'v': true}}}}"));
+
+        data.add(new TestData("Creator constructor", new CreatorConstructorModel(10, "eleven", 12),
+                getPojoCodecProviderBuilder(CreatorConstructorModel.class),
+                "{'integerField': 10, 'stringField': 'eleven', 'longField': {$numberLong: '12'}}"));
+
+        data.add(new TestData("Creator no-args constructor", new CreatorNoArgsConstructorModel(40, "one", 42),
+                getPojoCodecProviderBuilder(CreatorNoArgsConstructorModel.class),
+                "{'integerField': 40, 'stringField': 'one', 'longField': {$numberLong: '42'}}"));
+
+        data.add(new TestData("Creator method", new CreatorMethodModel(30, "two", 32),
+                getPojoCodecProviderBuilder(CreatorMethodModel.class),
+                "{'integerField': 30, 'stringField': 'two', 'longField': {$numberLong: '32'}}"));
+
+        data.add(new TestData("Creator no-args method", new CreatorNoArgsMethodModel(10, "one", 11),
+                getPojoCodecProviderBuilder(CreatorNoArgsMethodModel.class),
+                "{'integerField': 10, 'stringField': 'one', 'longField': {$numberLong: '11'}}"));
+
+        data.add(new TestData("Creator no-args method", new CreatorAllFinalFieldsModel("pId", "Ada", "Lovelace"),
+                getPojoCodecProviderBuilder(CreatorAllFinalFieldsModel.class),
+                "{'_id': 'pId', '_t': 'org.bson.codecs.pojo.entities.conventions.CreatorAllFinalFieldsModel', "
+                        + "'firstName': 'Ada', 'lastName': 'Lovelace'}"));
+
+        return data;
+    }
+
+    @Parameterized.Parameters(name = "{0}")
+    public static Collection<Object[]> data() {
+        List<Object[]> data = new ArrayList<Object[]>();
+
+        for (TestData testData : testCases()) {
+            data.add(new Object[]{format("%s", testData.getName()), testData.getModel(), testData.getJson(), testData.getBuilder()});
+            data.add(new Object[]{format("%s [Auto]", testData.getName()), testData.getModel(), testData.getJson(), AUTOMATIC_BUILDER});
+        }
+        return data;
+    }
+
+    private static final PojoCodecProvider.Builder AUTOMATIC_BUILDER = PojoCodecProvider.builder().automatic(true);
+
+    private static class TestData {
+        private final String name;
+        private final Object model;
+        private final PojoCodecProvider.Builder builder;
+        private final String json;
+
+        TestData(final String name, final Object model, final PojoCodecProvider.Builder builder, final String json) {
+            this.name = name;
+            this.model = model;
+            this.builder = builder;
+            this.json = json;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public Object getModel() {
+            return model;
+        }
+
+        public PojoCodecProvider.Builder getBuilder() {
+            return builder;
+        }
+
+        public String getJson() {
+            return json;
+        }
+    }
+
+
+}

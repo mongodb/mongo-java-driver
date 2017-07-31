@@ -16,16 +16,15 @@
 
 package org.bson.codecs.pojo;
 
+import org.bson.Document;
 import org.bson.codecs.Codec;
 import org.bson.codecs.ValueCodecProvider;
-import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.pojo.entities.NestedGenericHolderModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.junit.Test;
 
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
-import static org.bson.codecs.pojo.Conventions.NO_CONVENTIONS;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 
 public final class PojoCodecProviderTest extends PojoTestCase {
@@ -47,61 +46,27 @@ public final class PojoCodecProviderTest extends PojoTestCase {
     }
 
     @Test
-    public void testRegisterClassModel() {
-        ClassModel<SimpleModel> classModel = ClassModel.builder(SimpleModel.class).build();
-        PojoCodecProvider provider = PojoCodecProvider.builder().register(classModel).build();
+    public void testAutomatic() {
+        PojoCodecProvider provider = PojoCodecProvider.builder().automatic(true).build();
         CodecRegistry registry = fromProviders(provider, new ValueCodecProvider());
-
-        SimpleModel model = getSimpleModel();
-        roundTrip(registry, model, "{'integerField': 42, 'stringField': 'myString'}");
+        Codec<SimpleModel> codec = provider.get(SimpleModel.class, registry);
+        assertNotNull(codec);
     }
 
     @Test
-    public void testRegisterClass() {
-        PojoCodecProvider provider = PojoCodecProvider.builder().register(SimpleModel.class).build();
-        CodecRegistry registry = fromProviders(provider, new ValueCodecProvider());
-
-        SimpleModel model = getSimpleModel();
-        roundTrip(registry, model, "{'integerField': 42, 'stringField': 'myString'}");
+    public void testAutomaticNoProperty() {
+        PojoCodecProvider provider = PojoCodecProvider.builder().automatic(true).build();
+        CodecRegistry registry = fromProviders(provider);
+        Codec<Integer> codec = provider.get(Integer.class, registry);
+        assertNull(codec);
     }
 
     @Test
-    public void testRegisterPackage() {
-        PojoCodecProvider provider = PojoCodecProvider.builder().register("org.bson.codecs.pojo.entities").build();
-        CodecRegistry registry = fromProviders(provider, new ValueCodecProvider());
-
-        roundTrip(registry, getSimpleModel(), "{'integerField': 42, 'stringField': 'myString'}");
-    }
-
-    @Test
-    public void testRegisterClassModelPreferredOverClass() {
-        ClassModel<SimpleModel> classModel = ClassModel.builder(SimpleModel.class).enableDiscriminator(false).build();
-        PojoCodecProvider provider = PojoCodecProvider.builder().register(SimpleModel.class).register(classModel).build();
-        CodecRegistry registry = fromProviders(provider, new ValueCodecProvider());
-
-        SimpleModel model = getSimpleModel();
-        roundTrip(registry, model, "{'integerField': 42, 'stringField': 'myString'}");
-    }
-
-    @Test
-    public void testConventions() {
-        PojoCodecProvider provider = PojoCodecProvider.builder().conventions(NO_CONVENTIONS)
-                .register("org.bson.codecs.pojo.entities").build();
-        CodecRegistry registry = fromProviders(provider, new ValueCodecProvider());
-
-        roundTrip(registry, getConventionModel(),
-                "{'myFinalField': 10, 'myIntField': 10, 'customId': 'id',"
-                        + "'child': {'myFinalField': 10, 'myIntField': 10, 'customId': 'child',"
-                        + "          'simpleModel': {'integerField': 42, 'stringField': 'myString' } } }");
-    }
-
-    @Test(expected = CodecConfigurationException.class)
-    public void testThrowsIfThereAreMissingCodecs(){
-        ClassModel<NestedGenericHolderModel> classModel =
-                ClassModel.builder(NestedGenericHolderModel.class).build();
-        PojoCodecProvider provider = PojoCodecProvider.builder().register(classModel).build();
-        CodecRegistry registry = fromProviders(provider, new ValueCodecProvider());
-        registry.get(NestedGenericHolderModel.class);
+    public void testAutomaticInvalidMap() {
+        PojoCodecProvider provider = PojoCodecProvider.builder().automatic(true).build();
+        CodecRegistry registry = fromProviders(provider);
+        Codec<Document> codec = provider.get(Document.class, registry);
+        assertNull(codec);
     }
 
 }
