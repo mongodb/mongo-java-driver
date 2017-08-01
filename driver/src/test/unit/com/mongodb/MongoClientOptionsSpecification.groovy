@@ -83,6 +83,7 @@ class MongoClientOptionsSpecification extends Specification {
                                                 .minHeartbeatFrequency(500, MILLISECONDS)
                                                 .build()
         options.sslSettings == SslSettings.builder().build();
+        options.compressorList == []
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')
@@ -145,6 +146,10 @@ class MongoClientOptionsSpecification extends Specification {
         then:
         thrown(IllegalArgumentException)
 
+        when:
+        builder.compressorList(null)
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'should build with set options'() {
@@ -179,6 +184,7 @@ class MongoClientOptionsSpecification extends Specification {
                                         .requiredReplicaSetName('test')
                                         .cursorFinalizerEnabled(false)
                                         .dbEncoderFactory(encoderFactory)
+                                        .compressorList([MongoCompressor.createZlibCompressor()])
                                         .build()
 
         expect:
@@ -223,6 +229,7 @@ class MongoClientOptionsSpecification extends Specification {
                                                 .build()
         options.sslSettings == SslSettings.builder().enabled(true).invalidHostNameAllowed(true)
                 .context(SSLContext.getDefault()).build()
+        options.compressorList == [MongoCompressor.createZlibCompressor()]
     }
 
     @IgnoreIf({ isNotAtLeastJava7() })
@@ -316,6 +323,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .addClusterListener(Mock(ClusterListener))
                 .addServerListener(Mock(ServerListener))
                 .addServerMonitorListener(Mock(ServerMonitorListener))
+                .compressorList([MongoCompressor.createZlibCompressor()])
                 .build()
 
         then:
@@ -625,6 +633,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .addConnectionPoolListener(Mock(ConnectionPoolListener))
                 .addServerListener(Mock(ServerListener))
                 .addServerMonitorListener(Mock(ServerMonitorListener))
+                .compressorList([MongoCompressor.createZlibCompressor()])
                 .build()
 
         when:
@@ -638,9 +647,9 @@ class MongoClientOptionsSpecification extends Specification {
         when:
         // A regression test so that if any more methods are added then the builder(final MongoClientOptions options) should be updated
         def actual = MongoClientOptions.Builder.declaredFields.grep { !it.synthetic } *.name.sort()
-        def expected = ['alwaysUseMBeans', 'applicationName', 'clusterListeners', 'codecRegistry', 'commandListeners', 'connectTimeout',
-                        'connectionPoolListeners', 'cursorFinalizerEnabled', 'dbDecoderFactory', 'dbEncoderFactory', 'description',
-                        'heartbeatConnectTimeout', 'heartbeatFrequency', 'heartbeatSocketTimeout', 'localThreshold',
+        def expected = ['alwaysUseMBeans', 'applicationName', 'clusterListeners', 'codecRegistry', 'commandListeners', 'compressorList',
+                        'connectTimeout', 'connectionPoolListeners', 'cursorFinalizerEnabled', 'dbDecoderFactory', 'dbEncoderFactory',
+                        'description', 'heartbeatConnectTimeout', 'heartbeatFrequency', 'heartbeatSocketTimeout', 'localThreshold',
                         'maxConnectionIdleTime', 'maxConnectionLifeTime', 'maxConnectionsPerHost', 'maxWaitTime', 'minConnectionsPerHost',
                         'minHeartbeatFrequency', 'readConcern', 'readPreference', 'requiredReplicaSetName', 'serverListeners',
                         'serverMonitorListeners', 'serverSelectionTimeout', 'socketFactory', 'socketKeepAlive', 'socketTimeout',

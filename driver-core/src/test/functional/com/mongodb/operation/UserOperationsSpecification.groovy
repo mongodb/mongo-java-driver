@@ -435,7 +435,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         new DefaultClusterFactory().createCluster(builder.hosts(asList(getPrimary())).build(),
                                            ServerSettings.builder().build(),
                                            ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build(),
-                                           streamFactory, streamFactory, asList(credential), null, null, null)
+                                           streamFactory, streamFactory, asList(credential), null, null, null, [])
     }
 
     def testConnection(Connection connection) {

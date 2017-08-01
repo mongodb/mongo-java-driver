@@ -272,7 +272,8 @@ public final class ClusterFixture {
                                                   ConnectionPoolSettings.builder().applyConnectionString(getConnectionString()).build(),
                                                   streamFactory,
                                                   new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                                                  getConnectionString().getCredentialList(), null, null, null);
+                                                  getConnectionString().getCredentialList(), null, null, null,
+                                                  getConnectionString().getCompressorList());
     }
 
     public static StreamFactory getAsyncStreamFactory() {

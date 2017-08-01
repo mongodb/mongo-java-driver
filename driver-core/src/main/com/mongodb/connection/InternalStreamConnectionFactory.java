@@ -16,6 +16,7 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.MongoCompressor;
 import com.mongodb.MongoCredential;
 import com.mongodb.client.MongoDriverInformation;
 import com.mongodb.event.CommandListener;
@@ -31,12 +32,15 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
     private final StreamFactory streamFactory;
     private final BsonDocument clientMetadataDocument;
     private final List<Authenticator> authenticators;
+    private final List<MongoCompressor> compressorList;
     private final CommandListener commandListener;
 
     InternalStreamConnectionFactory(final StreamFactory streamFactory, final List<MongoCredential> credentialList,
                                     final String applicationName, final MongoDriverInformation mongoDriverInformation,
+                                    final List<MongoCompressor> compressorList,
                                     final CommandListener commandListener) {
         this.streamFactory = notNull("streamFactory", streamFactory);
+        this.compressorList = notNull("compressorList", compressorList);
         this.commandListener = commandListener;
         this.clientMetadataDocument = createClientMetadataDocument(applicationName, mongoDriverInformation);
         notNull("credentialList", credentialList);
@@ -48,8 +52,9 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
 
     @Override
     public InternalConnection create(final ServerId serverId) {
-        return new InternalStreamConnection(serverId, streamFactory, commandListener,
-                                            new InternalStreamConnectionInitializer(authenticators, clientMetadataDocument));
+        return new InternalStreamConnection(serverId, streamFactory, compressorList, commandListener,
+                                            new InternalStreamConnectionInitializer(authenticators, clientMetadataDocument,
+                                                                                           compressorList));
     }
 
     private Authenticator createAuthenticator(final MongoCredential credential) {

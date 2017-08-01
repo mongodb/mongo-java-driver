@@ -16,11 +16,13 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.MongoCompressor;
 import com.mongodb.selector.ServerSelector;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.List;
 
 import static com.mongodb.ClusterFixture.getCredentialList;
@@ -48,7 +50,8 @@ public class SingleServerClusterTest {
                                                                               ConnectionPoolSettings.builder().maxSize(1).build(),
                                                                               streamFactory, streamFactory, getCredentialList(),
 
-                                                                              null, null, null));
+                                                                              null, null, null,
+                                                                              Collections.<MongoCompressor>emptyList()));
     }
 
     @After

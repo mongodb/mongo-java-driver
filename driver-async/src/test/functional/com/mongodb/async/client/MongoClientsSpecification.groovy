@@ -17,6 +17,7 @@
 
 package com.mongodb.async.client
 
+import com.mongodb.MongoCompressor
 import com.mongodb.MongoCredential
 import com.mongodb.ReadConcern
 import com.mongodb.ServerAddress
@@ -170,6 +171,23 @@ class MongoClientsSpecification extends FunctionalSpecification {
         uri                                 | applicationName
         'mongodb://localhost'               | null
         'mongodb://localhost/?appname=app1' | 'app1'
+    }
+
+    @Unroll
+    def 'should apply compressors from connection string to settings'() {
+        when:
+        def client = MongoClients.create(uri)
+
+        then:
+        client.settings.getCompressorList() == compressorList
+
+        cleanup:
+        client?.close()
+
+        where:
+        uri                                         | compressorList
+        'mongodb://localhost'                       | []
+        'mongodb://localhost/?compressors=zlib'     | [MongoCompressor.createZlibCompressor()]
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isStandalone() })

@@ -70,7 +70,7 @@ class InternalStreamConnectionSpecification extends Specification {
     }
 
     def getConnection() {
-        new InternalStreamConnection(SERVER_ID, streamFactory, commandListener, initializer)
+        new InternalStreamConnection(SERVER_ID, streamFactory, [], commandListener, initializer)
     }
 
     def getOpenedConnection() {
@@ -124,7 +124,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def failedInitializer = Mock(InternalConnectionInitializer) {
             initialize(_) >> { throw new MongoInternalException('Something went wrong') }
         }
-        def connection = new InternalStreamConnection(SERVER_ID, streamFactory, null, failedInitializer)
+        def connection = new InternalStreamConnection(SERVER_ID, streamFactory, [], null, failedInitializer)
 
         when:
         connection.open()
@@ -141,7 +141,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def failedInitializer = Mock(InternalConnectionInitializer) {
             initializeAsync(_, _) >> { it[1].onResult(null, new MongoInternalException('Something went wrong')); }
         }
-        def connection = new InternalStreamConnection(SERVER_ID, streamFactory, null, failedInitializer)
+        def connection = new InternalStreamConnection(SERVER_ID, streamFactory, [], null, failedInitializer)
 
         when:
         def futureResultCallback = new FutureResultCallback<Void>()

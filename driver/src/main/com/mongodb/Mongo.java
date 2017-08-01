@@ -735,7 +735,8 @@ public class Mongo {
                 credentialsList,
                 getCommandListener(options.getCommandListeners()),
                 options.getApplicationName(),
-                mongoDriverInformation);
+                mongoDriverInformation,
+                options.getCompressorList());
     }
 
     private static ClusterSettings getClusterSettings(final List<ServerAddress> seedList, final MongoClientOptions options,

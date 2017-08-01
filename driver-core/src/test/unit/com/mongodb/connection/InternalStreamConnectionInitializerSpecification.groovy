@@ -1,10 +1,13 @@
 package com.mongodb.connection
 
+import com.mongodb.MongoCompressor
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
+import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.BsonString
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
@@ -20,7 +23,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
     def 'should create correct description'() {
         given:
-        def initializer = new InternalStreamConnectionInitializer([], null)
+        def initializer = new InternalStreamConnectionInitializer([], null, [])
 
         when:
         enqueueSuccessfulReplies(false, null)
@@ -32,7 +35,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
     def 'should create correct description asynchronously'() {
         given:
-        def initializer = new InternalStreamConnectionInitializer([], null)
+        def initializer = new InternalStreamConnectionInitializer([], null, [])
 
         when:
         enqueueSuccessfulReplies(false, null)
@@ -46,7 +49,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
     def 'should create correct description with server connection id'() {
         given:
-        def initializer = new InternalStreamConnectionInitializer([], null)
+        def initializer = new InternalStreamConnectionInitializer([], null, [])
 
         when:
         enqueueSuccessfulReplies(false, 123)
@@ -58,7 +61,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
     def 'should create correct description with server connection id asynchronously'() {
         given:
-        def initializer = new InternalStreamConnectionInitializer([], null)
+        def initializer = new InternalStreamConnectionInitializer([], null, [])
 
         when:
         enqueueSuccessfulReplies(false, 123)
@@ -74,7 +77,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         given:
         def firstAuthenticator = Mock(Authenticator)
         def secondAuthenticator = Mock(Authenticator)
-        def initializer = new InternalStreamConnectionInitializer([firstAuthenticator, secondAuthenticator], null)
+        def initializer = new InternalStreamConnectionInitializer([firstAuthenticator, secondAuthenticator], null, [])
 
         when:
         enqueueSuccessfulReplies(false, null)
@@ -91,7 +94,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         given:
         def firstAuthenticator = Mock(Authenticator)
         def secondAuthenticator = Mock(Authenticator)
-        def initializer = new InternalStreamConnectionInitializer([firstAuthenticator, secondAuthenticator], null)
+        def initializer = new InternalStreamConnectionInitializer([firstAuthenticator, secondAuthenticator], null, [])
 
         when:
         enqueueSuccessfulReplies(false, null)
@@ -109,7 +112,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
     def 'should not authenticate if server is an arbiter'() {
         given:
         def firstAuthenticator = Mock(Authenticator)
-        def initializer = new InternalStreamConnectionInitializer([firstAuthenticator], null)
+        def initializer = new InternalStreamConnectionInitializer([firstAuthenticator], null, [])
 
         when:
         enqueueSuccessfulReplies(true, null)
@@ -124,7 +127,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
     def 'should not authenticate asynchronously if server is an arbiter asynchronously'() {
         given:
         def firstAuthenticator = Mock(Authenticator)
-        def initializer = new InternalStreamConnectionInitializer([firstAuthenticator], null)
+        def initializer = new InternalStreamConnectionInitializer([firstAuthenticator], null, [])
 
         when:
         enqueueSuccessfulReplies(true, null)
@@ -140,7 +143,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
     def 'should add client metadata document to isMaster command'() {
         given:
-        def initializer = new InternalStreamConnectionInitializer([], clientMetadataDocument)
+        def initializer = new InternalStreamConnectionInitializer([], clientMetadataDocument, [])
         def expectedIsMasterCommandDocument = new BsonDocument('ismaster', new BsonInt32(1))
         if (clientMetadataDocument != null) {
             expectedIsMasterCommandDocument.append('client', clientMetadataDocument)
@@ -163,6 +166,38 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         where:
         [clientMetadataDocument, async] << [[createExpectedClientMetadataDocument('appName'), null],
                                             [true, false]].combinations()
+    }
+
+    def 'should add compression to isMaster command'() {
+        given:
+        def initializer = new InternalStreamConnectionInitializer([], null, compressors)
+        def expectedIsMasterCommandDocument = new BsonDocument('ismaster', new BsonInt32(1))
+
+        def compressionArray = new BsonArray()
+        for (def compressor : compressors) {
+            compressionArray.add(new BsonString(compressor.getName()))
+        }
+        if (!compressionArray.isEmpty()) {
+            expectedIsMasterCommandDocument.append('compression', compressionArray)
+        }
+
+        when:
+        enqueueSuccessfulReplies(false, null)
+        if (async) {
+            def latch = new CountDownLatch(1)
+            def callback = { result, t -> latch.countDown() } as SingleResultCallback
+            initializer.initializeAsync(internalConnection, callback)
+            latch.await()
+        } else {
+            initializer.initialize(internalConnection)
+        }
+
+        then:
+        decodeCommand(internalConnection.getSent()[0]) == expectedIsMasterCommandDocument
+
+        where:
+        [compressors, async] << [[[], [MongoCompressor.createZlibCompressor()]],
+                                 [true, false]].combinations()
     }
 
     private ConnectionDescription getExpectedDescription(final Integer localValue, final Integer serverValue) {

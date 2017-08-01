@@ -16,6 +16,7 @@
 
 package com.mongodb.async.client;
 
+import com.mongodb.MongoCompressor;
 import com.mongodb.MongoCredential;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
@@ -63,6 +64,7 @@ public final class MongoClientSettings {
     private final ServerSettings serverSettings;
     private final SslSettings sslSettings;
     private final String applicationName;
+    private final List<MongoCompressor> compressorList;
 
     /**
      * Convenience method to create a Builder.
@@ -107,6 +109,7 @@ public final class MongoClientSettings {
         private SslSettings sslSettings = SslSettings.builder().build();
         private List<MongoCredential> credentialList = Collections.emptyList();
         private String applicationName;
+        private List<MongoCompressor> compressorList = Collections.emptyList();
 
         private Builder() {
         }
@@ -132,6 +135,7 @@ public final class MongoClientSettings {
             connectionPoolSettings = settings.getConnectionPoolSettings();
             sslSettings = settings.getSslSettings();
             applicationName = settings.getApplicationName();
+            compressorList = settings.getCompressorList();
         }
 
         /**
@@ -317,6 +321,23 @@ public final class MongoClientSettings {
         }
 
         /**
+         * Sets the compressors to use for compressing messages to the server. The driver will use the first compressor in the list
+         * that the server is configured to support.
+         *
+         * @param compressorList the list of compressors to request
+         * @return {@code this}
+         * @see #getCompressorList() ()
+         * @since 3.6
+         * @mongodb.server.release 3.4
+         */
+
+        public Builder compressorList(final List<MongoCompressor> compressorList) {
+            notNull("compressorList", compressorList);
+            this.compressorList = compressorList;
+            return this;
+        }
+
+        /**
          * Build an instance of {@code MongoClientSettings}.
          *
          * @return the settings from this builder
@@ -417,6 +438,19 @@ public final class MongoClientSettings {
         return applicationName;
     }
 
+    /**
+     * Gets the compressors to use for compressing messages to the server. The driver will use the first compressor in the list
+     * that the server is configured to support.
+     *
+     * <p>Default is the empty list.</p>
+     *
+     * @return the compressors
+     * @since 3.6
+     * @mongodb.server.release 3.4
+     */
+    public List<MongoCompressor> getCompressorList() {
+        return compressorList;
+    }
 
     /**
      * Gets the cluster settings.
@@ -497,5 +531,6 @@ public final class MongoClientSettings {
         heartbeatSocketSettings = builder.heartbeatSocketSettings;
         connectionPoolSettings = builder.connectionPoolSettings;
         sslSettings = builder.sslSettings;
+        compressorList = builder.compressorList;
     }
 }

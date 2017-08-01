@@ -162,6 +162,13 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <li>{@code appName=string}: Sets the logical name of the application.  The application name may be used by the client to identify
  * the application to the server, for use in server logs, slow query logs, and profile collection.</li>
  * </ul>
+ * <p>Compressor configuration:</p>
+ * <ul>
+ * <li>{@code compressors=string}: A comma-separated list of compressors to request from the server.  The only supported compressor
+ * currently is 'zlib'</li>
+ * <li>{@code zlibCompressionLevel=integer}: Integer value from -1 to 9 representing the zlib compression level. Lower values will make
+ * compression faster, while higher values will make compression better.</li>
+ * </ul>
  *
  * <p>Note: This class is a replacement for {@code MongoURI}, to be used with {@code MongoClient}.  The main difference in
  * behavior is that the default write concern is {@code WriteConcern.ACKNOWLEDGED}.</p>
@@ -332,6 +339,7 @@ public class MongoClientURI {
         if (proxied.getApplicationName() != null) {
             builder.applicationName(proxied.getApplicationName());
         }
+        builder.compressorList(proxied.getCompressorList());
 
         return builder.build();
     }

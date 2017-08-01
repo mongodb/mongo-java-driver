@@ -17,6 +17,7 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.MongoCompressor;
 import com.mongodb.MongoInternalException;
 import org.bson.ByteBuf;
 import org.bson.io.BsonOutput;
@@ -25,6 +26,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.InflaterInputStream;
 
@@ -32,17 +34,32 @@ class ZlibCompressor implements Compressor {
 
     private static final int BUFFER_SIZE = 256;
 
+    private final int level;
+
+    ZlibCompressor(final MongoCompressor mongoCompressor) {
+        this.level = mongoCompressor.getProperty(MongoCompressor.LEVEL, Deflater.DEFAULT_COMPRESSION);
+    }
+
     @Override
     public String getName() {
         return "zlib";
     }
 
+    /**
+     * Gets the compression level
+     *
+     * @return the compression level
+     */
+    public int getLevel() {
+        return level;
+    }
+
     @Override
     public void compress(final List<ByteBuf> source, final BsonOutput target) {
         BufferExposingByteArrayOutputStream baos = new BufferExposingByteArrayOutputStream(1024);
-        DeflaterOutputStream deflaterOutputStream = new DeflaterOutputStream(baos);
+        Deflater deflater = new Deflater(level);
+        DeflaterOutputStream deflaterOutputStream = new DeflaterOutputStream(baos, deflater);
         try {
-
             byte[] scratch = new byte[BUFFER_SIZE];
             for (ByteBuf cur : source) {
                 while (cur.hasRemaining()) {
