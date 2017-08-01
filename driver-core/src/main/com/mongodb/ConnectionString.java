@@ -181,6 +181,13 @@ import static java.util.Collections.singletonList;
  * <li>{@code appName=string}: Sets the logical name of the application.  The application name may be used by the client to identify
  * the application to the server, for use in server logs, slow query logs, and profile collection.</li>
  * </ul>
+ * <p>Compressor configuration:</p>
+ * <ul>
+ * <li>{@code compressors=string}: A comma-separated list of compressors to request from the server.  The only supported compressor
+ * currently is 'zlib'</li>
+ * <li>{@code zlibCompressionLevel=integer}: Integer value from -1 to 9 representing the zlib compression level. Lower values will make
+ * compression faster, while higher values will make compression better.</li>
+ * </ul>
  *
  * @mongodb.driver.manual reference/connection-string Connection String Format
  * @since 3.0.0
@@ -218,6 +225,7 @@ public class ConnectionString {
     private Integer localThreshold;
     private Integer heartbeatFrequency;
     private String applicationName;
+    private List<MongoCompressor> compressorList;
 
     /**
      * Creates a ConnectionString from the given string.
@@ -311,6 +319,7 @@ public class ConnectionString {
     private static final Set<String> AUTH_KEYS = new HashSet<String>();
     private static final Set<String> READ_PREFERENCE_KEYS = new HashSet<String>();
     private static final Set<String> WRITE_CONCERN_KEYS = new HashSet<String>();
+    private static final Set<String> COMPRESSOR_KEYS = new HashSet<String>();
     private static final Set<String> ALL_KEYS = new HashSet<String>();
 
     static {
@@ -335,6 +344,9 @@ public class ConnectionString {
 
         GENERAL_OPTIONS_KEYS.add("appname");
 
+        COMPRESSOR_KEYS.add("compressors");
+        COMPRESSOR_KEYS.add("zlibcompressionlevel");
+
         READ_PREFERENCE_KEYS.add("readpreference");
         READ_PREFERENCE_KEYS.add("readpreferencetags");
         READ_PREFERENCE_KEYS.add("maxstalenessseconds");
@@ -354,6 +366,7 @@ public class ConnectionString {
         ALL_KEYS.addAll(AUTH_KEYS);
         ALL_KEYS.addAll(READ_PREFERENCE_KEYS);
         ALL_KEYS.addAll(WRITE_CONCERN_KEYS);
+        ALL_KEYS.addAll(COMPRESSOR_KEYS);
     }
 
     private void warnOnUnsupportedOptions(final Map<String, List<String>> optionsMap) {
@@ -412,6 +425,44 @@ public class ConnectionString {
 
         writeConcern = createWriteConcern(optionsMap);
         readPreference = createReadPreference(optionsMap);
+        compressorList = createCompressors(optionsMap);
+    }
+
+    private List<MongoCompressor> createCompressors(final Map<String, List<String>> optionsMap) {
+        String compressors = "";
+        Integer zlibCompressionLevel = null;
+
+        for (final String key : COMPRESSOR_KEYS) {
+            String value = getLastValue(optionsMap, key);
+            if (value == null) {
+                continue;
+            }
+
+            if (key.equals("compressors")) {
+                compressors = value;
+            } else if (key.equals("zlibcompressionlevel")) {
+                zlibCompressionLevel = Integer.parseInt(value);
+            }
+        }
+        return buildCompressors(compressors, zlibCompressionLevel);
+    }
+
+    private List<MongoCompressor> buildCompressors(final String compressors, final Integer zlibCompressionLevel) {
+        List<MongoCompressor> compressorsList = new ArrayList<MongoCompressor>();
+
+        for (String cur : compressors.split(",")) {
+            if (cur.equals("zlib")) {
+                MongoCompressor zlibCompressor = MongoCompressor.createZlibCompressor();
+                if (zlibCompressionLevel != null) {
+                    zlibCompressor = zlibCompressor.withProperty(MongoCompressor.LEVEL, zlibCompressionLevel);
+                }
+                compressorsList.add(zlibCompressor);
+            } else if (!cur.isEmpty()) {
+                throw new IllegalArgumentException("Unsupported compressor '" + cur + "'");
+            }
+        }
+
+        return Collections.unmodifiableList(compressorsList);
     }
 
     private WriteConcern createWriteConcern(final Map<String, List<String>> optionsMap) {
@@ -1006,6 +1057,16 @@ public class ConnectionString {
         return applicationName;
     }
 
+    /**
+     * Gets the list of compressors.
+     *
+     * @return the non-null list of compressors
+     * @since 3.6
+     */
+    public List<MongoCompressor> getCompressorList() {
+        return compressorList;
+    }
+
     @Override
     public String toString() {
         return connectionString;
@@ -1080,6 +1141,9 @@ public class ConnectionString {
         if (applicationName != null ? !applicationName.equals(that.applicationName) : that.applicationName != null) {
             return false;
         }
+        if (!compressorList.equals(that.compressorList)) {
+            return false;
+        }
 
         return true;
     }
@@ -1105,6 +1169,7 @@ public class ConnectionString {
         result = 31 * result + (sslEnabled != null ? sslEnabled.hashCode() : 0);
         result = 31 * result + (requiredReplicaSetName != null ? requiredReplicaSetName.hashCode() : 0);
         result = 31 * result + (applicationName != null ? applicationName.hashCode() : 0);
+        result = 31 * result + compressorList.hashCode();
         return result;
     }
 }

@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 
+import com.mongodb.MongoCompressor;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
 import org.junit.After;
@@ -28,7 +29,7 @@ import java.util.Collections;
 
 import static com.mongodb.ClusterFixture.getPrimary;
 import static com.mongodb.ClusterFixture.getSslSettings;
-import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 
 public class AuthenticatingConnectionTest {
     private InternalConnection internalConnection;
@@ -46,7 +47,8 @@ public class AuthenticatingConnectionTest {
 
         InternalConnectionFactory internalConnectionFactory =
             new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                                                Collections.<MongoCredential>emptyList(), null, null, null);
+                                                Collections.<MongoCredential>emptyList(), null, null,
+                                                Collections.<MongoCompressor>emptyList(), null);
         internalConnection = internalConnectionFactory.create(new ServerId(new ClusterId(), serverAddress));
     }
 
@@ -60,9 +62,10 @@ public class AuthenticatingConnectionTest {
     public void testMongoCRAuthentication() throws InterruptedException {
         InternalConnectionFactory internalConnectionFactory =
             new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                                                asList(MongoCredential.createMongoCRCredential(userName, source,
-                                                                                               password.toCharArray())),
-                                                null, null, null);
+                                                singletonList(MongoCredential.createMongoCRCredential(userName, source,
+                                                        password.toCharArray())),
+                                                null, null, Collections.<MongoCompressor>emptyList(),
+                                                null);
         internalConnection = internalConnectionFactory.create(new ServerId(new ClusterId(), serverAddress));
     }
 
@@ -71,9 +74,10 @@ public class AuthenticatingConnectionTest {
     public void testPlainAuthentication() throws InterruptedException {
         InternalConnectionFactory internalConnectionFactory =
             new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                                                asList(MongoCredential.createPlainCredential(userName, source,
+                                                singletonList(MongoCredential.createPlainCredential(userName, source,
                                                                                              password.toCharArray())),
-                                                null, null, null);
+                                                null, null, Collections.<MongoCompressor>emptyList(),
+                                                null);
         internalConnection = internalConnectionFactory.create(new ServerId(new ClusterId(), serverAddress));
     }
 
@@ -82,8 +86,9 @@ public class AuthenticatingConnectionTest {
     public void testGSSAPIAuthentication() throws InterruptedException {
         InternalConnectionFactory internalConnectionFactory =
             new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                                                asList(MongoCredential.createGSSAPICredential(userName)),
-                                                null, null, null);
+                                                singletonList(MongoCredential.createGSSAPICredential(userName)),
+                                                null, null, Collections.<MongoCompressor>emptyList(),
+                                                null);
         internalConnection = internalConnectionFactory.create(new ServerId(new ClusterId(), serverAddress));
     }
 
@@ -93,10 +98,11 @@ public class AuthenticatingConnectionTest {
         InternalConnectionFactory internalConnectionFactory =
             new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
                                                                         getSslSettings()),
-                                                asList(MongoCredential.createMongoX509Credential("CN=client,OU=kerneluser,"
+                                                singletonList(MongoCredential.createMongoX509Credential("CN=client,OU=kerneluser,"
                                                                                                  + "O=10Gen,L=New York City,"
                                                                                                  + "ST=New York,C=US")),
-                                                null, null, null);
+                                                null, null, Collections.<MongoCompressor>emptyList(),
+                                                null);
         internalConnection = internalConnectionFactory.create(new ServerId(new ClusterId(), serverAddress));
 
     }

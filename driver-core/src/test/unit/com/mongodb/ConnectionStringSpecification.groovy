@@ -19,6 +19,8 @@ package com.mongodb
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import static com.mongodb.MongoCompressor.LEVEL
+import static com.mongodb.MongoCompressor.createZlibCompressor
 import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.MongoCredential.createGSSAPICredential
 import static com.mongodb.MongoCredential.createMongoCRCredential
@@ -204,6 +206,7 @@ class ConnectionStringSpecification extends Specification {
         connectionString.getSslEnabled() == null
         connectionString.getStreamType() == null
         connectionString.getApplicationName() == null
+        connectionString.getCompressorList() == []
     }
 
     @Unroll
@@ -353,6 +356,19 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://localhost/')                            | null
         new ConnectionString('mongodb://localhost/?readConcernLevel=local')     | ReadConcern.LOCAL
         new ConnectionString('mongodb://localhost/?readConcernLevel=majority')  | ReadConcern.MAJORITY
+    }
+
+    @Unroll
+    def 'should parse compressors'() {
+        expect:
+        uri.getCompressorList() == [compressor]
+
+        where:
+        uri                                                                          | compressor
+        new ConnectionString('mongodb://localhost/?compressors=zlib') | createZlibCompressor()
+        new ConnectionString('mongodb://localhost/?compressors=zlib' +
+                '&zlibCompressionLevel=5')                                           | createZlibCompressor().withProperty(LEVEL, 5)
+
     }
 
     def 'should be equal to another instance with the same string values'() {

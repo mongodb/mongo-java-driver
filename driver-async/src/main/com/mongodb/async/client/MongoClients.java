@@ -165,6 +165,7 @@ public final class MongoClients {
         if (connectionString.getApplicationName() != null) {
             builder.applicationName(connectionString.getApplicationName());
         }
+        builder.compressorList(connectionString.getCompressorList());
         return create(builder.build(), mongoDriverInformation, connectionString.getStreamType());
     }
 
@@ -188,7 +189,7 @@ public final class MongoClients {
         return new MongoClientImpl(settings, new DefaultClusterFactory().createCluster(settings.getClusterSettings(),
                 settings.getServerSettings(), settings.getConnectionPoolSettings(), streamFactory, heartbeatStreamFactory,
                 settings.getCredentialList(), getCommandListener(settings.getCommandListeners()), settings.getApplicationName(),
-                mongoDriverInformation), externalResourceCloser);
+                mongoDriverInformation, settings.getCompressorList()), externalResourceCloser);
     }
 
     /**

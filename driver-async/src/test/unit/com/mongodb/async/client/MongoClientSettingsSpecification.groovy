@@ -16,6 +16,7 @@
 
 package com.mongodb.async.client
 
+import com.mongodb.MongoCompressor
 import com.mongodb.MongoCredential
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
@@ -51,6 +52,7 @@ class MongoClientSettingsSpecification extends Specification {
         options.heartbeatSocketSettings == SocketSettings.builder().build()
         options.serverSettings == ServerSettings.builder().build()
         options.streamFactoryFactory == null
+        options.compressorList == []
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')
@@ -117,6 +119,11 @@ class MongoClientSettingsSpecification extends Specification {
         builder.addCommandListener(null)
         then:
         thrown(IllegalArgumentException)
+
+        when:
+        builder.compressorList(null)
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'should build with set options'() {
@@ -147,6 +154,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .codecRegistry(codecRegistry)
                 .clusterSettings(clusterSettings)
                                          .streamFactoryFactory(streamFactoryFactory)
+                .compressorList([MongoCompressor.createZlibCompressor()])
                 .build()
 
         expect:
@@ -164,6 +172,7 @@ class MongoClientSettingsSpecification extends Specification {
         options.connectionPoolSettings == connectionPoolSettings
         options.clusterSettings == clusterSettings
         options.streamFactoryFactory == streamFactoryFactory
+        options.compressorList == [MongoCompressor.createZlibCompressor()]
     }
 
     def 'should be easy to create new options from existing'() {
@@ -177,6 +186,7 @@ class MongoClientSettingsSpecification extends Specification {
         def codecRegistry = Stub(CodecRegistry)
         def commandListener = Stub(CommandListener)
         def clusterSettings = ClusterSettings.builder().hosts([new ServerAddress('localhost')]).requiredReplicaSetName('test').build()
+        def compressorList = [MongoCompressor.createZlibCompressor()]
 
         def options = MongoClientSettings.builder()
                 .readPreference(ReadPreference.secondary())
@@ -192,6 +202,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .connectionPoolSettings(connectionPoolSettings)
                 .codecRegistry(codecRegistry)
                 .clusterSettings(clusterSettings)
+                .compressorList(compressorList)
                 .build()
 
         then:
@@ -272,9 +283,9 @@ class MongoClientSettingsSpecification extends Specification {
         when:
         // A regression test so that if anymore methods are added then the builder(final MongoClientSettings settings) should be updated
         def actual = MongoClientSettings.Builder.declaredFields.grep {  !it.synthetic } *.name.sort()
-        def expected = ['applicationName', 'clusterSettings', 'codecRegistry', 'commandListeners', 'connectionPoolSettings',
-                        'credentialList', 'heartbeatSocketSettings', 'readConcern', 'readPreference', 'serverSettings', 'socketSettings',
-                        'sslSettings', 'streamFactoryFactory', 'writeConcern']
+        def expected = ['applicationName', 'clusterSettings', 'codecRegistry', 'commandListeners', 'compressorList',
+                        'connectionPoolSettings', 'credentialList', 'heartbeatSocketSettings', 'readConcern', 'readPreference',
+                        'serverSettings', 'socketSettings', 'sslSettings', 'streamFactoryFactory', 'writeConcern']
 
         then:
         actual == expected

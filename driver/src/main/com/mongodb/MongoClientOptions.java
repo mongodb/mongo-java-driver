@@ -34,6 +34,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
@@ -58,6 +59,7 @@ public class MongoClientOptions {
 
     private final String description;
     private final String applicationName;
+    private final List<MongoCompressor> compressorList;
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;
     private final ReadConcern readConcern;
@@ -102,6 +104,7 @@ public class MongoClientOptions {
     private MongoClientOptions(final Builder builder) {
         description = builder.description;
         applicationName = builder.applicationName;
+        compressorList = builder.compressorList;
         minConnectionsPerHost = builder.minConnectionsPerHost;
         maxConnectionsPerHost = builder.maxConnectionsPerHost;
         threadsAllowedToBlockForConnectionMultiplier = builder.threadsAllowedToBlockForConnectionMultiplier;
@@ -231,6 +234,20 @@ public class MongoClientOptions {
      */
     public String getApplicationName() {
         return applicationName;
+    }
+
+    /**
+     * Gets the compressors to use for compressing messages to the server. The driver will use the first compressor in the list
+     * that the server is configured to support.
+     *
+     * <p>Default is the empty list.</p>
+     *
+     * @return the compressors
+     * @since 3.6
+     * @mongodb.server.release 3.4
+     */
+    public List<MongoCompressor> getCompressorList() {
+        return compressorList;
     }
 
     /**
@@ -779,6 +796,9 @@ public class MongoClientOptions {
         if (socketFactory != null ? !socketFactory.equals(that.socketFactory) : that.socketFactory != null) {
             return false;
         }
+        if (!compressorList.equals(that.compressorList)) {
+            return false;
+        }
 
         return true;
     }
@@ -817,6 +837,7 @@ public class MongoClientOptions {
         result = 31 * result + (dbEncoderFactory != null ? dbEncoderFactory.hashCode() : 0);
         result = 31 * result + (cursorFinalizerEnabled ? 1 : 0);
         result = 31 * result + (socketFactory != null ? socketFactory.hashCode() : 0);
+        result = 31 * result + compressorList.hashCode();
         return result;
     }
 
@@ -825,6 +846,7 @@ public class MongoClientOptions {
         return "MongoClientOptions{"
                + "description='" + description + '\''
                + ", applicationName='" + applicationName + '\''
+               + ", compressors='" + compressorList + '\''
                + ", readPreference=" + readPreference
                + ", writeConcern=" + writeConcern
                + ", readConcern=" + readConcern
@@ -877,6 +899,7 @@ public class MongoClientOptions {
 
         private String description;
         private String applicationName;
+        private List<MongoCompressor> compressorList = Collections.emptyList();
         private ReadPreference readPreference = ReadPreference.primary();
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
         private ReadConcern readConcern = ReadConcern.DEFAULT;
@@ -929,6 +952,7 @@ public class MongoClientOptions {
         public Builder(final MongoClientOptions options) {
             description = options.getDescription();
             applicationName = options.getApplicationName();
+            compressorList = options.getCompressorList();
             minConnectionsPerHost = options.getMinConnectionsPerHost();
             maxConnectionsPerHost = options.getConnectionsPerHost();
             threadsAllowedToBlockForConnectionMultiplier = options.getThreadsAllowedToBlockForConnectionMultiplier();
@@ -993,6 +1017,22 @@ public class MongoClientOptions {
                         applicationName.getBytes(Charset.forName("UTF-8")).length <= 128);
             }
             this.applicationName = applicationName;
+            return this;
+        }
+
+        /**
+         * Sets the compressors to use for compressing messages to the server. The driver will use the first compressor in the list
+         * that the server is configured to support.
+         *
+         * @param compressorList the list of compressors to request
+         * @return {@code this}
+         * @see #getCompressorList()
+         * @since 3.6
+         * @mongodb.server.release 3.4
+         */
+        public Builder compressorList(final List<MongoCompressor> compressorList) {
+            notNull("compressorList", compressorList);
+            this.compressorList = Collections.unmodifiableList(new ArrayList<MongoCompressor>(compressorList));
             return this;
         }
 

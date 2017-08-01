@@ -18,6 +18,7 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoCommandException;
+import com.mongodb.MongoCompressor;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
@@ -44,9 +45,10 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.SocketTimeoutException;
 import java.nio.channels.ClosedByInterruptException;
-import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -69,8 +71,6 @@ import static java.util.Arrays.asList;
 
 @NotThreadSafe
 class InternalStreamConnection implements InternalConnection {
-
-    private static final List<Compressor> COMPRESSORS = Arrays.asList(new NoOpCompessor(), null, new ZlibCompressor());
 
     private static final Set<String> SECURITY_SENSITIVE_COMMANDS = new HashSet<String>(asList(
             "authenticate",
@@ -95,13 +95,17 @@ class InternalStreamConnection implements InternalConnection {
     private final AtomicBoolean isClosed = new AtomicBoolean();
     private final AtomicBoolean opened = new AtomicBoolean();
 
+    private final List<MongoCompressor> compressorList;
     private final CommandListener commandListener;
     private volatile Compressor sendCompressor;
+    private volatile Map<Byte, Compressor> compressorMap;
 
     InternalStreamConnection(final ServerId serverId, final StreamFactory streamFactory,
-                             final CommandListener commandListener, final InternalConnectionInitializer connectionInitializer) {
+                             final List<MongoCompressor> compressorList, final CommandListener commandListener,
+                             final InternalConnectionInitializer connectionInitializer) {
         this.serverId = notNull("serverId", serverId);
         this.streamFactory = notNull("streamFactory", streamFactory);
+        this.compressorList = notNull("compressorList", compressorList);
         this.commandListener = commandListener;
         this.connectionInitializer = notNull("connectionInitializer", connectionInitializer);
         description = new ConnectionDescription(serverId);
@@ -120,7 +124,7 @@ class InternalStreamConnection implements InternalConnection {
             stream.open();
             description = connectionInitializer.initialize(this);
             opened.set(true);
-            sendCompressor = createCompressor(description);
+            initializeCompressors(description);
             LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
         } catch (Throwable t) {
             close();
@@ -153,7 +157,7 @@ class InternalStreamConnection implements InternalConnection {
                         } else {
                             description = result;
                             opened.set(true);
-                            sendCompressor = createCompressor(description);
+                            initializeCompressors(description);
                             if (LOGGER.isInfoEnabled()) {
                                 LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
                             }
@@ -170,20 +174,29 @@ class InternalStreamConnection implements InternalConnection {
         });
     }
 
-    private Compressor createCompressor(final ConnectionDescription description) {
+    private void initializeCompressors(final ConnectionDescription description) {
         if (description.getCompressors().isEmpty()) {
-            return null;
+            return;
         }
 
-        String firstCompressor = description.getCompressors().get(0);
+        compressorMap = new HashMap<Byte, Compressor>(description.getCompressors().size());
 
-        for (Compressor cur : COMPRESSORS) {
-            if (cur != null && cur.getName().equals(firstCompressor)) {
-                return cur;
+        String firstCompressorName = description.getCompressors().get(0);
+
+        for (MongoCompressor mongoCompressor : compressorList) {
+            if (!description.getCompressors().contains(mongoCompressor.getName())) {
+                continue;
+            }
+            if (mongoCompressor.getName().equals("zlib")) {
+                Compressor compressor = new ZlibCompressor(mongoCompressor);
+                compressorMap.put(compressor.getId(), compressor);
+                if (mongoCompressor.getName().equals(firstCompressorName)) {
+                    sendCompressor = compressor;
+                }
+            } else {
+                throw new MongoClientException("Unsupported compressor " + firstCompressorName);
             }
         }
-
-        throw new MongoClientException("Unsupported compressor " + firstCompressor);
     }
 
 
@@ -612,13 +625,12 @@ class InternalStreamConnection implements InternalConnection {
         }
     }
 
-    // TODO: unit test this?
     private Compressor getCompressor(final CompressedHeader compressedHeader) {
-        if (compressedHeader.getCompressorId() > COMPRESSORS.size() - 1
-                    || COMPRESSORS.get(compressedHeader.getCompressorId()) == null) {
+        Compressor compressor = compressorMap.get(compressedHeader.getCompressorId());
+        if (compressor == null) {
             throw new MongoClientException("Unsupported compressor with identifier " + compressedHeader.getCompressorId());
         }
-        return COMPRESSORS.get(compressedHeader.getCompressorId());
+        return compressor;
     }
 
     @Override

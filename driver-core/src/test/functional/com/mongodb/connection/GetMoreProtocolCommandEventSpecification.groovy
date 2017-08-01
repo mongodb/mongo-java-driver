@@ -45,7 +45,7 @@ class GetMoreProtocolCommandEventSpecification extends OperationFunctionalSpecif
 
     def setupSpec() {
         connection = new InternalStreamConnectionFactory(new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                getCredentialList(), null, null, null)
+                getCredentialList(), null, null, [], null)
                 .create(new ServerId(new ClusterId(), getPrimary()))
         connection.open();
     }
