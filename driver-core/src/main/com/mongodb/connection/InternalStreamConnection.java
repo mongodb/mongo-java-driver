@@ -238,7 +238,7 @@ class InternalStreamConnection implements InternalConnection {
         long startTimeNanos = System.nanoTime();
 
         try {
-            sendCommandMessage(message, bsonOutput);
+            sendCommandMessage(message, commandName, bsonOutput);
             return receiveCommandMessageResponse(message, startTimeNanos, commandName);
         } catch (RuntimeException e) {
             sendFailedEvent(startTimeNanos, message, commandName, e);
@@ -246,9 +246,9 @@ class InternalStreamConnection implements InternalConnection {
         }
     }
 
-    private void sendCommandMessage(final CommandMessage message, final ByteBufferBsonOutput bsonOutput) {
+    private void sendCommandMessage(final CommandMessage message, final String commandName, final ByteBufferBsonOutput bsonOutput) {
         try {
-            if (sendCompressor == null) {
+            if (sendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(commandName)) {
                 sendMessage(bsonOutput.getByteBuffers(), message.getId());
             } else {
                 CompressedMessage compressedMessage = new CompressedMessage(RequestMessage.OpCode.OP_QUERY, bsonOutput.getByteBuffers(),
@@ -299,7 +299,7 @@ class InternalStreamConnection implements InternalConnection {
             String commandName = sendStartedEvent(bsonOutput, message);
 
             long startTimeNanos = System.nanoTime();
-            if (sendCompressor == null) {
+            if (sendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(commandName)) {
                 sendCommandMessageAsync(message, callback, bsonOutput, commandName, startTimeNanos);
             } else {
                 CompressedMessage compressedMessage = new CompressedMessage(RequestMessage.OpCode.OP_QUERY, bsonOutput.getByteBuffers(),
@@ -710,8 +710,13 @@ class InternalStreamConnection implements InternalConnection {
         }
     }
 
+    // This is a bit of a hack, but is designed to save work for the normal path where there is no command listener or send compressor
+    // The command name is returned but is a bit expensive to compute, so we only want to do it if necessary and if so do it only once.
+    // So this method returns the command name only if necessary, otherwise it returns null and the caller has to not care.  And the caller
+    // does not care because the command name is only needed to determine if the command is security-sensitive and therefore should not
+    // be compressed.
     private String sendStartedEvent(final ByteBufferBsonOutput bsonOutput, final CommandMessage message) {
-        if (commandListener != null) {
+        if (commandListener != null || sendCompressor != null) {
             String commandName;
             ByteBufBsonDocument byteBufBsonDocument = createOne(bsonOutput, message.getEncodingMetadata().getFirstDocumentPosition());
             BsonDocument commandDocument;
@@ -722,10 +727,12 @@ class InternalStreamConnection implements InternalConnection {
                 commandDocument = byteBufBsonDocument;
                 commandName = byteBufBsonDocument.getFirstKey();
             }
-            BsonDocument commandDocumentForEvent = (SECURITY_SENSITIVE_COMMANDS.contains(commandName))
-                                                           ? new BsonDocument() : commandDocument;
-            sendCommandStartedEvent(message, new MongoNamespace(message.getCollectionName()).getDatabaseName(), commandName,
-                    commandDocumentForEvent, getDescription(), commandListener);
+            if (commandListener != null) {
+                BsonDocument commandDocumentForEvent = (SECURITY_SENSITIVE_COMMANDS.contains(commandName))
+                                                               ? new BsonDocument() : commandDocument;
+                sendCommandStartedEvent(message, new MongoNamespace(message.getCollectionName()).getDatabaseName(), commandName,
+                        commandDocumentForEvent, getDescription(), commandListener);
+            }
             return commandName;
         }
         return null;
