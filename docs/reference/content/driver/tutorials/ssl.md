@@ -35,10 +35,30 @@ MongoClient mongoClient = new MongoClient(uri);
 import com.mongodb.MongoClientOptions;
 ```
 
-To specify TLS/SSL with with [`MongoClientOptions`]({{<apiref "com/mongodb/MongoClientOptions">}}), set the ``sslEnabled`` property to ``true``, as in:
+To specify TLS/SSL with with [`MongoClientOptions`]({{<apiref "com/mongodb/MongoClientOptions">}}), set the `sslEnabled` property to `true`, as in:
 
 ```java
  MongoClientOptions options = MongoClientOptions.builder().sslEnabled(true).build();
+ MongoClient client = new MongoClient("localhost", options);
+```
+
+## Specify `SSLContext` via `MongoClientOptions`
+
+```java
+import javax.net.ssl.SSLContext;
+import com.mongodb.MongoClientOptions;
+import com.mongodb.MongoClient;
+```
+
+To specify the [`javax.net.ssl.SSLContext`](https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLContext.html) with 
+[`MongoClientOptions`]({{<apiref "com/mongodb/MongoClientOptions">}}), set the `sslContext` property, as in:
+
+```java
+ SSLContext sslContext = ...
+ MongoClientOptions options = MongoClientOptions.builder()
+                                                .sslEnabled(true)
+                                                .sslContext(sslContext)
+                                                .build();
  MongoClient client = new MongoClient("localhost", options);
 ```
 

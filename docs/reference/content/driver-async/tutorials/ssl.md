@@ -19,7 +19,7 @@ To use TLS/SSL, you must configure the asynchronous driver to use [Netty](http:/
 
 {{% note %}}
 If your application requires Netty, it must explicitly add a dependency to
-Netty artifacts.  The driver is currently tested against Netty 4.0.
+Netty artifacts.  The driver is currently tested against Netty 4.1.
 {{% /note %}}
 
 ### Via Connection String
@@ -36,7 +36,9 @@ You can also specify the connection string via the [`ConnectionString`]({{< apir
 
 ### Via `MongoClientSettings`
 
-To specify TLS/SSL with  [`MongoClientSettings`]({{< apiref "com/mongodb/async/client/MongoClientSettings.Builder.html#streamFactoryFactory-com.mongodb.connection.StreamFactoryFactory-">}}) , set the ``sslEnabled`` property to ``true``, and the stream factory to [`NettyStreamFactoryFactory`]({{< apiref "com/mongodb/connection/netty/NettyStreamFactoryFactory" >}}), as in
+To specify TLS/SSL with  [`MongoClientSettings`]({{< apiref "com/mongodb/async/client/MongoClientSettings.Builder.html#streamFactoryFactory-com.mongodb.connection.StreamFactoryFactory-">}}) , 
+set the ``sslEnabled`` property to ``true``, and the stream factory to 
+[`NettyStreamFactoryFactory`]({{< apiref "com/mongodb/connection/netty/NettyStreamFactoryFactory" >}}), as in
 
 ```java
 
@@ -64,6 +66,18 @@ configurable via the [`NettyStreamFactoryFactory`]({{< apiref "com/mongodb/conne
 Netty may also be configured by setting the `org.mongodb.async.type` system property to `netty`, but this should be considered as
 deprecated as of the 3.1 driver release.
 {{% /note %}}
+
+To override the default [`javax.net.ssl.SSLContext`](https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLContext.html) used for SSL
+connections, set the `sslContext` property on the `SslSettings`, as in:
+
+```java
+ SSLContext sslContext = ...
+ SslSettings sslSettings = SslSettings.builder()
+                                      .enabled(true)
+                                      .sslContext(sslContext)
+                                      .build();
+ // Pass sslSettings to the MongoClientSettings.Builder
+```
 
 
 ## Disable Hostname Verification

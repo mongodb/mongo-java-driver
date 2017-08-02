@@ -2,19 +2,15 @@
 date = "2015-03-19T12:53:39-04:00"
 title = "Upgrade Considerations"
 [menu.main]
-  identifier = "Upgrading to 3.4"
+  identifier = "Upgrading to 3.5"
   weight = 80
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
-## Upgrading from 3.3.x
+## Upgrading from 3.4.x
 
-There is one breaking API change in the 3.4 release: due to the addition of a new BSON type for 128-bit decimal values, a new method
-had to be added to the BSONCallback({{< apiref "org/bson/BSONCallback.html">}}) interface.  Any clients that directly implement that
-interface must add an implementation of the new method in order to be compatible with the 3.4 driver.
-
-Otherwise, the 3.4 release is binary and source compatible with the 3.3 release, except for methods that have been added to interfaces that
-have been marked as unstable.
+The 3.5 release is binary and source compatible with the 3.4 release, except for methods that have been added to interfaces that
+have been marked as unstable, and changes to classes or interfaces that have been marked as internal or annotated as Beta.
 
 ## Upgrading from 2.x
 
@@ -36,6 +32,7 @@ The following table specifies the compatibility of the MongoDB Java driver for u
 
 |Java Driver Version|MongoDB 2.6|MongoDB 3.0 |MongoDB 3.2|MongoDB 3.4|
 |-------------------|-----------|------------|-----------|-----------|
+|Version 3.5        |  ✓  |  ✓  |  ✓  |  ✓  |
 |Version 3.4        |  ✓  |  ✓  |  ✓  |  ✓  |
 |Version 3.3        |  ✓  |  ✓  |  ✓  |     |
 |Version 3.2        |  ✓  |  ✓  |  ✓  |     |
@@ -46,6 +43,7 @@ The following table specifies the compatibility of the MongoDB Java driver for u
 
 |Java Driver Version|Java 5 | Java 6 | Java 7 | Java 8 |
 |-------------------|-------|--------|--------|--------|
+|Version 3.5        |     | ✓ | ✓ | ✓ |
 |Version 3.4        |     | ✓ | ✓ | ✓ |
 |Version 3.3        |     | ✓ | ✓ | ✓ |
 |Version 3.2        |     | ✓ | ✓ | ✓ |
