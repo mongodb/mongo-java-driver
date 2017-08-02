@@ -17,18 +17,119 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.MongoInternalException;
 import org.bson.ByteBuf;
 import org.bson.io.BsonOutput;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.util.List;
 
-interface Compressor {
+abstract class Compressor {
 
-    String getName();
+    static final int BUFFER_SIZE = 256;
 
-    void compress(List<ByteBuf> source, BsonOutput target);
+    abstract String getName();
 
-    byte getId();
+    abstract byte getId();
 
-    void uncompress(ByteBuf source, ByteBuf target);
+    void compress(final List<ByteBuf> source, final BsonOutput target) {
+        BufferExposingByteArrayOutputStream baos = new BufferExposingByteArrayOutputStream(1024);
+        OutputStream outputStream = null;
+        try {
+            outputStream = getOutputStream(baos);
+            byte[] scratch = new byte[BUFFER_SIZE];
+            for (ByteBuf cur : source) {
+                while (cur.hasRemaining()) {
+                    int numBytes = Math.min(cur.remaining(), scratch.length);
+                    cur.get(scratch, 0, numBytes);
+                    outputStream.write(scratch, 0, numBytes);
+                }
+            }
+
+        } catch (IOException e) {
+            throw new MongoInternalException("Unexpected IOException", e);
+        } finally {
+            try {
+                if (outputStream != null) {
+                    outputStream.close();
+                }
+            } catch (IOException e) {
+                // ignore
+            }
+        }
+        target.writeBytes(baos.getInternalBytes(), 0, baos.size());
+    }
+
+    void uncompress(final ByteBuf source, final ByteBuf target) {
+        InputStream inputStream = null;
+
+        try {
+            inputStream = getInputStream(new ByteBufInputStream(source));
+            byte[] scratch = new byte[BUFFER_SIZE];
+            int numBytes = inputStream.read(scratch);
+            while (numBytes != -1) {
+                target.put(scratch, 0, numBytes);
+                numBytes = inputStream.read(scratch);
+            }
+        } catch (IOException e) {
+            throw new MongoInternalException("Unexpected IOException", e);
+        } finally {
+            try {
+                if (inputStream != null) {
+                    inputStream.close();
+                }
+            } catch (IOException e) {
+                // ignore
+            }
+        }
+    }
+
+    // override this if not overriding the compress method
+    OutputStream getOutputStream(final OutputStream source) throws IOException {
+        throw new UnsupportedEncodingException();
+    }
+
+    // override this if not overriding the uncompress method
+    InputStream getInputStream(final InputStream source) throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
+    private static final class ByteBufInputStream extends InputStream {
+        private final ByteBuf source;
+
+        ByteBufInputStream(final ByteBuf source) {
+            this.source = source;
+        }
+
+        @Override
+        public int read(final byte[] bytes, final int offset, final int length) {
+            if (!source.hasRemaining()) {
+                return -1;
+            }
+
+            int bytesToRead = length > source.remaining() ? source.remaining() : length;
+            source.get(bytes, offset, bytesToRead);
+            return bytesToRead;
+        }
+
+        @Override
+        public int read() {
+            throw new UnsupportedOperationException();
+        }
+    }
+
+    // Just so we don't have to copy the buffer
+    private static final class BufferExposingByteArrayOutputStream extends ByteArrayOutputStream {
+        BufferExposingByteArrayOutputStream(final int size) {
+            super(size);
+        }
+
+        byte[] getInternalBytes() {
+            return buf;
+        }
+    }
 }
