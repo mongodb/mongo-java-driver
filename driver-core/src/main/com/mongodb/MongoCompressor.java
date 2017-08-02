@@ -39,10 +39,22 @@ public final class MongoCompressor {
     private final String name;
     private final Map<String, Object> properties;
 
+
+    /**
+     * Create an instance for snappy compression.
+     *
+     * @return A compressor based on the snappy compression algorithm
+     * @mongodb.server.release 3.4
+     */
+    public static MongoCompressor createSnappyCompressor() {
+        return new MongoCompressor("snappy");
+    }
+
     /**
      * Create an instance for zlib compression.
      *
      * @return A compressor based on the zlib compression algorithm
+     * @mongodb.server.release 3.6
      */
     public static MongoCompressor createZlibCompressor() {
         return new MongoCompressor("zlib");

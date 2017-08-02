@@ -187,18 +187,24 @@ class InternalStreamConnection implements InternalConnection {
             if (!description.getCompressors().contains(mongoCompressor.getName())) {
                 continue;
             }
-            if (mongoCompressor.getName().equals("zlib")) {
-                Compressor compressor = new ZlibCompressor(mongoCompressor);
-                compressorMap.put(compressor.getId(), compressor);
-                if (mongoCompressor.getName().equals(firstCompressorName)) {
-                    sendCompressor = compressor;
-                }
-            } else {
-                throw new MongoClientException("Unsupported compressor " + firstCompressorName);
+
+            Compressor compressor = createCompressor(mongoCompressor);
+            compressorMap.put(compressor.getId(), compressor);
+            if (mongoCompressor.getName().equals(firstCompressorName)) {
+                sendCompressor = compressor;
             }
         }
     }
 
+    private Compressor createCompressor(final MongoCompressor mongoCompressor) {
+        if (mongoCompressor.getName().equals("zlib")) {
+            return new ZlibCompressor(mongoCompressor);
+        } else if (mongoCompressor.getName().equals("snappy")) {
+            return new SnappyCompressor();
+        } else {
+            throw new MongoClientException("Unsupported compressor " + mongoCompressor.getName());
+        }
+    }
 
     @Override
     public void close() {
@@ -248,6 +254,7 @@ class InternalStreamConnection implements InternalConnection {
 
     private void sendCommandMessage(final CommandMessage message, final String commandName, final ByteBufferBsonOutput bsonOutput) {
         try {
+            // TODO: bug, as commandName can be null if there is no commandListener configured
             if (sendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(commandName)) {
                 sendMessage(bsonOutput.getByteBuffers(), message.getId());
             } else {

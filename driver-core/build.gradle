@@ -32,6 +32,7 @@ dependencies {
     compile "io.netty:netty-buffer:$nettyVersion", optional
     compile "io.netty:netty-transport:$nettyVersion", optional
     compile "io.netty:netty-handler:$nettyVersion", optional
+    compile "org.xerial.snappy:snappy-java:1.1.4", optional
 
     testCompile project(':bson').sourceSets.test.output
 }
@@ -50,6 +51,7 @@ jar {
                     'javax.security.auth.callback.*',
                     'org.ietf.jgss.*',
                     'io.netty.*;resolution:=optional',
+                    'org.xerial.snappy.*;resolution:=optional',
                     'org.slf4j;resolution:=optional'
     }
 }
