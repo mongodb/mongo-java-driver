@@ -7,8 +7,41 @@ title = "What's New"
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
-# What's New 3.5
+## What's New in 3.5
 
+Key new features of the 3.5 Java driver release:
+
+### Native POJO support
+
+The 3.5 release adds support for [POJO](https://en.wikipedia.org/wiki/Plain_old_Java_object) serialization at the BSON layer, and can be
+used by the synchronous and asynchronous drivers.  See the POJO Quick start pages for details.
+
+* [POJO Quick Start]({{<ref "driver/getting-started/quick-start-pojo.md">}}) 
+* [POJO Quick Start (Async)]({{<ref "driver-async/getting-started/quick-start-pojo.md">}})
+* [POJO Reference]({{<ref "bson/pojos.md">}}) 
+
+### Improved JSON support
+
+The 3.5 release improves support for JSON parsing and generation.
+
+* Implements the new [Extended JSON specification](https://github.com/mongodb/specifications/blob/master/source/extended-json.rst)
+* Implements custom JSON converters to give applications full control over JSON generation for each BSON type
+
+See the [JSON reference]({{<ref "bson/extended-json.md">}}) for details. 
+
+### Connection pool monitoring
+
+The 3.5 release adds support for monitoring connection pool-related events.
+
+* [Connection pool monitoring in the driver]({{<ref "driver/reference/monitoring.md">}})
+* [Connection pool monitoring in the async driver]({{<ref "driver-async/reference/monitoring.md">}})
+
+### SSLContext configuration
+
+The 3.5 release supports overriding the default `javax.net.ssl.SSLContext` used for SSL connections to MongoDB.
+
+* [SSL configuration in the driver]({{<ref "driver/tutorials/ssl.md">}})
+* [SSL configuration in the async driver]({{<ref "driver-async/tutorials/ssl.md">}})
 
 ### KeepAlive configuration deprecated
 
@@ -22,7 +55,7 @@ documentation for more information.
 
 ## What's New in 3.4
 
-The 3.4 release included full support for the upcoming MongoDB 3.4 server release.  Key new features include:
+The 3.4 release includes full support for the MongoDB 3.4 server release.  Key new features include:
 
 ### Support for Decimal128 Format
 
@@ -182,4 +215,4 @@ The synchronous driver now includes a [JNDI]({{<ref "driver/tutorials/jndi.md">}
 
 ## Upgrading
 
-See the [upgrading guide]({{<ref "upgrading.md">}}) on how to upgrade to 3.4.
+See the [upgrading guide]({{<ref "upgrading.md">}}) on how to upgrade to 3.5.

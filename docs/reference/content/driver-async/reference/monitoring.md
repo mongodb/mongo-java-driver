@@ -182,3 +182,78 @@ and when that MongoClient is closed.  In addition, it will print a message when 
 * without an available server that will accept writes
 * with an available server that will accept reads using the configured `ReadPreference`
 * without an available server that will accept reads using the configured `ReadPreference`
+
+# Connection Pool Monitoring
+
+The driver supports monitoring of connection pool-related events.
+
+An application registers listeners with a `MongoClient` by configuring `MongoClientSettings` with instances of classes that
+implement the [`ConnectionPoolListener`]({{< apiref "com/mongodb/event/ConnectionPoolListener" >}}) interface.
+
+Consider the following, simplistic, example of a connection pool listener:
+
+```java
+public class TestConnectionPoolListener implements ConnectionPoolListener {
+    @Override
+    public void connectionPoolOpened(final ConnectionPoolOpenedEvent event) {
+        System.out.println(event);
+    }
+
+    @Override
+    public void connectionPoolClosed(final ConnectionPoolClosedEvent event) {
+        System.out.println(event);
+    }
+
+    @Override
+    public void connectionCheckedOut(final ConnectionCheckedOutEvent event) {
+        System.out.println(event);
+    }
+
+    @Override
+    public void connectionCheckedIn(final ConnectionCheckedInEvent event) {
+        System.out.println(event);
+    }
+
+    @Override
+    public void waitQueueEntered(final ConnectionPoolWaitQueueEnteredEvent event) {
+        System.out.println(event);
+    }
+
+    @Override
+    public void waitQueueExited(final ConnectionPoolWaitQueueExitedEvent event) {
+        System.out.println(event);
+    }
+
+    @Override
+    public void connectionAdded(final ConnectionAddedEvent event) {
+        System.out.println(event);
+    }
+
+    @Override
+    public void connectionRemoved(final ConnectionRemovedEvent event) {
+        System.out.println(event);
+    }
+}
+```
+
+and an instance of `MongoClientSettings` configured with an instance of `TestConnectionPoolListener`:
+
+```java
+List<ServerAddress> seedList = ...
+TestConnectionPoolListener connectionPoolListener = new TestConnectionPoolListener();
+ClusterSettings clusterSettings = ClusterSettings.builder()
+                                          .hosts(seedList)
+                                          .build();
+ConnectionPoolSettings connectionPoolSettings = 
+        ConnectionPoolSettings.builder()
+                              .addConnectionPoolListener(connectionPoolListener)
+                              .build();
+MongoClientSettings settings = MongoClientSettings.builder()
+                                       .clusterSettings(clusterSettings)
+                                       .connectionPoolSettings(connectionPoolSettings)
+                                       .build();
+MongoClient client = MongoClients.create(settings);
+```
+
+A `MongoClient` configured with these options will print a message to `System.out` for each connection pool-related event for each MongoDB
+server to which the MongoClient is connected.
