@@ -23,7 +23,7 @@ archivesBaseName = 'bson'
 
 clirr {
     excludeFilter = new File("$configDir/clirr-exclude.yml")
-    baseline 'org.mongodb:bson:3.2.0'
+    baseline 'org.mongodb:bson:3.4.0'
     failOnErrors = true
 }
 
