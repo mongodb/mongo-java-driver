@@ -43,6 +43,7 @@ import spock.lang.Shared
 import static com.mongodb.ClusterFixture.getCredentialList
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
+import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
@@ -100,7 +101,7 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         async << [false, true]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 4) })
+    @IgnoreIf({ !serverVersionAtLeast(2, 4) || (serverVersionAtLeast(3, 5) && isSharded()) })
     def 'should deliver started and completed command events for split unacknowleded inserts'() {
         given:
         def binary = new BsonBinary(new byte[15000000])
