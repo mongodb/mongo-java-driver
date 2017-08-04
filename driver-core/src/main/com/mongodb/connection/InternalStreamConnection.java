@@ -106,6 +106,7 @@ class InternalStreamConnection implements InternalConnection {
         this.serverId = notNull("serverId", serverId);
         this.streamFactory = notNull("streamFactory", streamFactory);
         this.compressorList = notNull("compressorList", compressorList);
+        this.compressorMap = createCompressorMap(compressorList);
         this.commandListener = commandListener;
         this.connectionInitializer = notNull("connectionInitializer", connectionInitializer);
         description = new ConnectionDescription(serverId);
@@ -124,7 +125,7 @@ class InternalStreamConnection implements InternalConnection {
             stream.open();
             description = connectionInitializer.initialize(this);
             opened.set(true);
-            initializeCompressors(description);
+            sendCompressor = findSendCompressor(description);
             LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
         } catch (Throwable t) {
             close();
@@ -157,7 +158,7 @@ class InternalStreamConnection implements InternalConnection {
                         } else {
                             description = result;
                             opened.set(true);
-                            initializeCompressors(description);
+                            sendCompressor = findSendCompressor(description);
                             if (LOGGER.isInfoEnabled()) {
                                 LOGGER.info(format("Opened connection [%s] to %s", getId(), serverId.getAddress()));
                             }
@@ -174,26 +175,30 @@ class InternalStreamConnection implements InternalConnection {
         });
     }
 
-    private void initializeCompressors(final ConnectionDescription description) {
-        if (description.getCompressors().isEmpty()) {
-            return;
-        }
+    private Map<Byte, Compressor> createCompressorMap(final List<MongoCompressor> compressorList) {
+        Map<Byte, Compressor> compressorMap = new HashMap<Byte, Compressor>(this.compressorList.size());
 
-        compressorMap = new HashMap<Byte, Compressor>(description.getCompressors().size());
+        for (MongoCompressor mongoCompressor : compressorList) {
+            Compressor compressor = createCompressor(mongoCompressor);
+            compressorMap.put(compressor.getId(), compressor);
+        }
+        return compressorMap;
+    }
+
+    private Compressor findSendCompressor(final ConnectionDescription description) {
+        if (description.getCompressors().isEmpty()) {
+            return null;
+        }
 
         String firstCompressorName = description.getCompressors().get(0);
 
-        for (MongoCompressor mongoCompressor : compressorList) {
-            if (!description.getCompressors().contains(mongoCompressor.getName())) {
-                continue;
-            }
-
-            Compressor compressor = createCompressor(mongoCompressor);
-            compressorMap.put(compressor.getId(), compressor);
-            if (mongoCompressor.getName().equals(firstCompressorName)) {
-                sendCompressor = compressor;
+        for (Compressor compressor : compressorMap.values()) {
+            if (compressor.getName().equals(firstCompressorName)) {
+                return compressor;
             }
         }
+
+        throw new MongoInternalException("Unexpected compressor negotiated: " + firstCompressorName);
     }
 
     private Compressor createCompressor(final MongoCompressor mongoCompressor) {
@@ -254,7 +259,6 @@ class InternalStreamConnection implements InternalConnection {
 
     private void sendCommandMessage(final CommandMessage message, final String commandName, final ByteBufferBsonOutput bsonOutput) {
         try {
-            // TODO: bug, as commandName can be null if there is no commandListener configured
             if (sendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(commandName)) {
                 sendMessage(bsonOutput.getByteBuffers(), message.getId());
             } else {
@@ -734,7 +738,7 @@ class InternalStreamConnection implements InternalConnection {
                 commandDocument = byteBufBsonDocument;
                 commandName = byteBufBsonDocument.getFirstKey();
             }
-            if (commandListener != null) {
+            if (commandListener != null && opened()) {
                 BsonDocument commandDocumentForEvent = (SECURITY_SENSITIVE_COMMANDS.contains(commandName))
                                                                ? new BsonDocument() : commandDocument;
                 sendCommandStartedEvent(message, new MongoNamespace(message.getCollectionName()).getDatabaseName(), commandName,
@@ -747,7 +751,7 @@ class InternalStreamConnection implements InternalConnection {
 
     private void sendSucceededEvent(final long startTimeNanos, final CommandMessage commandMessage, final String commandName,
                                     final BsonDocument response) {
-        if (commandListener != null) {
+        if (commandListener != null && opened()) {
             BsonDocument responseDocumentForEvent = (SECURITY_SENSITIVE_COMMANDS.contains(commandName)) ? new BsonDocument() : response;
             sendCommandSucceededEvent(commandMessage, commandName, responseDocumentForEvent, description, startTimeNanos,
                     commandListener);
@@ -756,7 +760,7 @@ class InternalStreamConnection implements InternalConnection {
 
     private void sendFailedEvent(final long startTimeNanos, final CommandMessage commandMessage, final String commandName,
                                  final Throwable t) {
-        if (commandListener != null) {
+        if (commandListener != null && opened()) {
             Throwable commandEventException = t;
             if (t instanceof MongoCommandException && (SECURITY_SENSITIVE_COMMANDS.contains(commandName))) {
                 commandEventException = new MongoCommandException(new BsonDocument(), description.getServerAddress());

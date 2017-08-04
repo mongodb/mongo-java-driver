@@ -18,8 +18,12 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoException;
 import com.mongodb.async.SingleResultCallback;
+import org.bson.BsonBinaryReader;
+import org.bson.BsonDocument;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
+import org.bson.codecs.BsonDocumentCodec;
+import org.bson.codecs.Decoder;
 import org.bson.io.BsonInput;
 import org.bson.io.ByteBufferBsonInput;
 
@@ -28,6 +32,9 @@ import java.nio.ByteOrder;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+
+import static com.mongodb.connection.ProtocolHelper.getCommandFailureException;
+import static com.mongodb.connection.ProtocolHelper.isCommandOk;
 
 class TestInternalConnection implements InternalConnection {
 
@@ -137,10 +144,24 @@ class TestInternalConnection implements InternalConnection {
         try {
             message.encode(bsonOutput);
             sendMessage(bsonOutput.getByteBuffers(), message.getId());
-            return receiveMessage(message.getId());
+            ResponseBuffers responseBuffers = receiveMessage(message.getId());
+            boolean commandOk = isCommandOk(new BsonBinaryReader(new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer())));
+            responseBuffers.reset();
+            if (!commandOk) {
+                throw getCommandFailureException(getResponseDocument(responseBuffers, message, new BsonDocumentCodec()),
+                        description.getServerAddress());
+            }
+            return responseBuffers;
         } finally {
             bsonOutput.close();
         }
+    }
+
+    private <T extends BsonDocument> T getResponseDocument(final ResponseBuffers responseBuffers,
+                                                           final CommandMessage commandMessage, final Decoder<T> decoder) {
+        ReplyMessage<T> replyMessage = new ReplyMessage<T>(responseBuffers, decoder, commandMessage.getId());
+        responseBuffers.reset();
+        return replyMessage.getDocuments().get(0);
     }
 
     @Override

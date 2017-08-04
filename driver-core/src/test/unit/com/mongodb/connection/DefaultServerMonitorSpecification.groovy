@@ -125,8 +125,8 @@ class DefaultServerMonitorSpecification extends Specification {
 
                     sendMessage(_, _) >> { }
 
-                    receiveMessage(_) >> { int responseTo ->
-                        buildSuccessfulReply(responseTo, isMasterResponse)
+                    sendAndReceive(_) >> { CommandMessage message ->
+                        buildSuccessfulReply(message.getId(), isMasterResponse)
                     }
                 }
             }
@@ -198,9 +198,7 @@ class DefaultServerMonitorSpecification extends Specification {
                         connectionDescription
                     }
 
-                    sendMessage(_, _) >> { }
-
-                    receiveMessage(_) >> {
+                    sendAndReceive(_) >> {
                         throw exception
                     }
                 }

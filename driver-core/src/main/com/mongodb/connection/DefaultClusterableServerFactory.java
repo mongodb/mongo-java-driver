@@ -66,7 +66,7 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
         ServerMonitorFactory serverMonitorFactory =
             new DefaultServerMonitorFactory(new ServerId(clusterId, serverAddress), serverSettings,
                     new InternalStreamConnectionFactory(heartbeatStreamFactory, credentialList, applicationName,
-                            mongoDriverInformation, Collections.<MongoCompressor>emptyList(), commandListener), connectionPool);
+                            mongoDriverInformation, Collections.<MongoCompressor>emptyList(), null), connectionPool);
 
         return new DefaultServer(new ServerId(clusterId, serverAddress), clusterSettings.getMode(), connectionPool,
                 new DefaultConnectionFactory(), serverMonitorFactory, serverListener, commandListener);

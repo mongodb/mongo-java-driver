@@ -17,52 +17,48 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoCommandException;
-import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.MongoServerException;
 import com.mongodb.async.SingleResultCallback;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 
 import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
-import static java.lang.String.format;
 
 final class CommandHelper {
     static BsonDocument executeCommand(final String database, final BsonDocument command, final InternalConnection internalConnection) {
-        return receiveCommandResult(internalConnection, sendMessage(database, command, internalConnection));
-    }
-
-    static void executeCommandAsync(final String database, final BsonDocument command, final InternalConnection internalConnection,
-                                    final SingleResultCallback<BsonDocument> callback) {
-        sendMessageAsync(database, command, internalConnection, new SingleResultCallback<SimpleCommandMessage>() {
-            @Override
-            public void onResult(final SimpleCommandMessage result, final Throwable t) {
-                  if (t != null) {
-                      callback.onResult(null, t);
-                  } else {
-                      receiveReplyAsync(internalConnection, result, new SingleResultCallback<ReplyMessage<BsonDocument>>() {
-                          @Override
-                          public void onResult(final ReplyMessage<BsonDocument> result, final Throwable t) {
-                              if (t != null) {
-                                  callback.onResult(null, t);
-                              } else {
-                                  BsonDocument reply = result.getDocuments().get(0);
-                                  if (!isCommandOk(reply)) {
-                                      callback.onResult(null, createCommandFailureException(reply, internalConnection));
-                                  } else {
-                                      callback.onResult(reply, null);
-                                  }
-                              }
-                          }
-                      });
-                  }
-            }
-        });
+        return sendAndReceive(database, command, internalConnection);
     }
 
     static BsonDocument executeCommandWithoutCheckingForFailure(final String database, final BsonDocument command,
                                                                 final InternalConnection internalConnection) {
-        return receiveCommandDocument(internalConnection, sendMessage(database, command, internalConnection));
+        try {
+            return sendAndReceive(database, command, internalConnection);
+        } catch (MongoServerException e) {
+            return new BsonDocument();
+        }
+    }
+
+    static void executeCommandAsync(final String database, final BsonDocument command, final InternalConnection internalConnection,
+                                    final SingleResultCallback<BsonDocument> callback) {
+        final SimpleCommandMessage message =
+                new SimpleCommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(), command, false,
+                                                MessageSettings.builder().build());
+
+        internalConnection.sendAndReceiveAsync(message, new SingleResultCallback<ResponseBuffers>() {
+            @Override
+            public void onResult(final ResponseBuffers result, final Throwable t) {
+                if (t != null) {
+                    callback.onResult(null, t);
+                } else {
+                    ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(result, new BsonDocumentCodec(),
+                                                                                                    message.getId());
+                    BsonDocument reply = replyMessage.getDocuments().get(0);
+                    callback.onResult(reply, null);
+                }
+            }
+        });
     }
 
     static boolean isCommandOk(final BsonDocument response) {
@@ -79,65 +75,13 @@ final class CommandHelper {
         }
     }
 
-    private static SimpleCommandMessage sendMessage(final String database, final BsonDocument command,
-                                                    final InternalConnection internalConnection) {
-        ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(internalConnection);
+    private static BsonDocument sendAndReceive(final String database, final BsonDocument command,
+                                               final InternalConnection internalConnection) {
+        SimpleCommandMessage message = new SimpleCommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(),
+                                                                       command, false, MessageSettings.builder().build());
+        ResponseBuffers responseBuffers = internalConnection.sendAndReceive(message);
         try {
-            SimpleCommandMessage message = new SimpleCommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(),
-                                                        command, false, MessageSettings.builder().build());
-            message.encode(bsonOutput);
-            internalConnection.sendMessage(bsonOutput.getByteBuffers(), message.getId());
-            return message;
-        } finally {
-            bsonOutput.close();
-        }
-    }
-
-    private static void sendMessageAsync(final String database, final BsonDocument command,
-                                         final InternalConnection internalConnection,
-                                         final SingleResultCallback<SimpleCommandMessage> callback) {
-        final ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(internalConnection);
-        try {
-            final SimpleCommandMessage message =
-                    new SimpleCommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(), command, false,
-                                                    MessageSettings.builder().build());
-            message.encode(bsonOutput);
-            internalConnection.sendMessageAsync(bsonOutput.getByteBuffers(), message.getId(), new SingleResultCallback<Void>() {
-                @Override
-                public void onResult(final Void result, final Throwable t) {
-                    bsonOutput.close();
-                    if (t != null) {
-                        callback.onResult(null, t);
-                    } else {
-                        callback.onResult(message, null);
-                    }
-                }
-            });
-        } catch (Throwable t) {
-            callback.onResult(null, t);
-        }
-    }
-
-    private static BsonDocument receiveCommandResult(final InternalConnection internalConnection, final SimpleCommandMessage message) {
-        BsonDocument result = receiveReply(internalConnection, message).getDocuments().get(0);
-        if (!isCommandOk(result)) {
-            throw createCommandFailureException(result, internalConnection);
-        }
-
-        return result;
-    }
-
-    private static BsonDocument receiveCommandDocument(final InternalConnection internalConnection, final CommandMessage message) {
-        return receiveReply(internalConnection, message).getDocuments().get(0);
-    }
-
-    private static ReplyMessage<BsonDocument> receiveReply(final InternalConnection internalConnection, final CommandMessage message) {
-        ResponseBuffers responseBuffers = internalConnection.receiveMessage(message.getId());
-        if (responseBuffers == null) {
-            throw new MongoInternalException(format("Response buffers received from %s should not be null", internalConnection));
-        }
-        try {
-            return new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(), message.getId());
+            return new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(), message.getId()).getDocuments().get(0);
         } finally {
             responseBuffers.close();
         }
