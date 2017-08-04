@@ -35,6 +35,7 @@ import static com.mongodb.ClusterFixture.getCredentialList
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.ClusterFixture.isSharded
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.connection.ProtocolTestHelper.execute
@@ -132,6 +133,7 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
         async << [false, true]
     }
 
+    @IgnoreIf({ serverVersionAtLeast(3, 5) && isSharded() })
     def 'should execute split acknowledged inserts'() {
         given:
         def binary = new BsonBinary(new byte[15000000])
