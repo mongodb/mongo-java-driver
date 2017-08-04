@@ -212,6 +212,7 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
         async << [false, true]
     }
 
+    @IgnoreIf({ serverVersionAtLeast(3, 5) && isSharded() })
     def 'should report write errors on split acknowledged inserts'() {
         given:
         def binary = new BsonBinary(new byte[15000000])
