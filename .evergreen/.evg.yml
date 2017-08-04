@@ -214,7 +214,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          AUTH=${AUTH} SSL=${SSL} MONGODB_URI="${MONGODB_URI}" TOPOLOGY=${TOPOLOGY} JDK="${JDK}" .evergreen/run-tests.sh
+          AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" .evergreen/run-tests.sh
 
   "run plain auth test":
     - command: shell.exec
@@ -433,7 +433,18 @@ axes:
         display_name: NoSSL
         variables:
            SSL: "nossl"
-  - id: jdk 
+  - id: compressor
+    display_name: Compressor
+    values:
+      - id: "snappy"
+        display_name: Snappy
+        variables:
+           COMPRESSOR: "snappy"
+      - id: "zlib"
+        display_name: Zlib
+        variables:
+           COMPRESSOR: "zlib"
+  - id: jdk
     display_name: JDK
     values:
       - id: "jdk8"
@@ -458,6 +469,20 @@ buildvariants:
     - rhel62-test
   tasks:
     - name: "static-analysis"
+
+- matrix_name: "tests-zlib-compression"
+  matrix_spec: { compressor : "zlib", auth: "noauth", ssl: "nossl", jdk: "jdk6", version: ["latest"], topology: "standalone", os: "rhel62" }
+  display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
+  tags: ["tests-variant"]
+  tasks:
+     - name: "test"
+
+- matrix_name: "tests-snappy-compression"
+  matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: ["3.4", "latest"], topology: "standalone", os: "rhel62" }
+  display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
+  tags: ["tests-variant"]
+  tasks:
+     - name: "test"
 
 - matrix_name: "tests-jdk6"
   matrix_spec: { auth: "*", ssl: "*", jdk: "jdk6", version: "*", topology: "*", os: "*" }

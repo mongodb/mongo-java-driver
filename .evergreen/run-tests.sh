@@ -9,6 +9,7 @@ set -o errexit  # Exit the script with error if any of the commands fail
 #       MONGODB_URI             Set the suggested connection MONGODB_URI (including credentials and topology info)
 #       TOPOLOGY                Allows you to modify variables and the MONGODB_URI based on test topology
 #                               Supported values: "server", "replica_set", "sharded_cluster"
+#       COMPRESSOR              Set to enable compression. Values are "snappy" and "zlib" (default is no compression)
 #       JDK                     Set the version of java to be used.  Java versions can be set from the java toolchain /opt/java
 #                               "jdk5", "jdk6", "jdk7", "jdk8"
 
@@ -18,6 +19,7 @@ MONGODB_URI=${MONGODB_URI:-}
 JDK=${JDK:-jdk}
 JAVA_HOME="/opt/java/${JDK}"
 TOPOLOGY=${TOPOLOGY:-server}
+COMPRESSOR=${COMPRESSOR:-}
 
 # JDK6 needs async.type=netty
 if [ "$JDK" == "jdk6" ]; then
@@ -64,6 +66,14 @@ if [ "$TOPOLOGY" == "sharded_cluster" ]; then
        export MONGODB_URI="mongodb://bob:pwd123@localhost:27017/?authSource=admin"
      else
        export MONGODB_URI="mongodb://localhost:27017"
+     fi
+fi
+
+if [ "$COMPRESSOR" != "" ]; then
+     if [[ "$MONGODB_URI" == *"?"* ]]; then
+       export MONGODB_URI="${MONGODB_URI}&compressors=${COMPRESSOR}"
+     else
+       export MONGODB_URI="${MONGODB_URI}/?compressors=${COMPRESSOR}"
      fi
 fi
 
