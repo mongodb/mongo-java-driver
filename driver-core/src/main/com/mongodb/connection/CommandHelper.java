@@ -16,7 +16,6 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoServerException;
 import com.mongodb.async.SingleResultCallback;
@@ -85,34 +84,6 @@ final class CommandHelper {
         } finally {
             responseBuffers.close();
         }
-    }
-
-    private static void receiveReplyAsync(final InternalConnection internalConnection, final SimpleCommandMessage message,
-                                          final SingleResultCallback<ReplyMessage<BsonDocument>> callback) {
-        internalConnection.receiveMessageAsync(message.getId(),
-                                               new SingleResultCallback<ResponseBuffers>() {
-                                                   @Override
-                                                   public void onResult(final ResponseBuffers result, final Throwable t) {
-                                                       try {
-                                                           if (t != null) {
-                                                               callback.onResult(null, t);
-                                                           } else {
-                                                               callback.onResult(new ReplyMessage<BsonDocument>(result,
-                                                                                                                new BsonDocumentCodec(),
-                                                                                                                message.getId()), null);
-                                                           }
-                                                       } finally {
-                                                           if (result != null) {
-                                                               result.close();
-                                                           }
-                                                       }
-                                                   }
-                                               });
-    }
-
-    private static MongoCommandException createCommandFailureException(final BsonDocument reply,
-                                                                       final InternalConnection internalConnection) {
-        return new MongoCommandException(reply, internalConnection.getDescription().getServerAddress());
     }
 
     private CommandHelper() {
