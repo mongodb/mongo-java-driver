@@ -183,8 +183,8 @@ import static java.util.Collections.singletonList;
  * </ul>
  * <p>Compressor configuration:</p>
  * <ul>
- * <li>{@code compressors=string}: A comma-separated list of compressors to request from the server.  The only supported compressor
- * currently is 'zlib'</li>
+ * <li>{@code compressors=string}: A comma-separated list of compressors to request from the server.  The supported compressors
+ * currently are 'zlib' and 'snappy'.</li>
  * <li>{@code zlibCompressionLevel=integer}: Integer value from -1 to 9 representing the zlib compression level. Lower values will make
  * compression faster, while higher values will make compression better.</li>
  * </ul>
