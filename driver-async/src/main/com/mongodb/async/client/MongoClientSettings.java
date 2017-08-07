@@ -330,7 +330,6 @@ public final class MongoClientSettings {
          * @since 3.6
          * @mongodb.server.release 3.4
          */
-
         public Builder compressorList(final List<MongoCompressor> compressorList) {
             notNull("compressorList", compressorList);
             this.compressorList = compressorList;
