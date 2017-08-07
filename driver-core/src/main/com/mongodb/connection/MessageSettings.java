@@ -33,6 +33,7 @@ final class MessageSettings {
     private final int maxDocumentSize;
     private final int maxMessageSize;
     private final int maxBatchCount;
+    private final ServerVersion serverVersion;
 
     /**
      * Gets the builder
@@ -51,6 +52,7 @@ final class MessageSettings {
         private int maxDocumentSize = DEFAULT_MAX_DOCUMENT_SIZE;
         private int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
         private int maxBatchCount = DEFAULT_MAX_BATCH_COUNT;
+        private ServerVersion serverVersion;
 
         /**
          * Build it.
@@ -93,6 +95,11 @@ final class MessageSettings {
             this.maxBatchCount = maxBatchCount;
             return this;
         }
+
+        public Builder serverVersion(final ServerVersion serverVersion) {
+            this.serverVersion = serverVersion;
+            return this;
+        }
     }
 
     /**
@@ -122,9 +129,14 @@ final class MessageSettings {
         return maxBatchCount;
     }
 
+    public ServerVersion getServerVersion() {
+        return serverVersion;
+    }
+
     private MessageSettings(final Builder builder) {
         this.maxDocumentSize = builder.maxDocumentSize;
         this.maxMessageSize = builder.maxMessageSize;
         this.maxBatchCount = builder.maxBatchCount;
+        this.serverVersion = builder.serverVersion;
     }
 }

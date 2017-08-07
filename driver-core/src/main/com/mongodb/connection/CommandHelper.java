@@ -74,7 +74,15 @@ final class CommandHelper {
     private static BsonDocument sendAndReceive(final String database, final BsonDocument command,
                                                final InternalConnection internalConnection) {
         SimpleCommandMessage message = new SimpleCommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(),
-                                                                       command, false, MessageSettings.builder().build());
+                                                                       command, false,
+                                                                       MessageSettings
+                                                                               .builder()
+                                                                               // Note: server version will be 0.0 at this point when called
+                                                                               // from InternalConnectionInitializer, which means OP_MSG
+                                                                               // will not be used
+                                                                               .serverVersion(internalConnection.getDescription()
+                                                                                                      .getServerVersion())
+                                                                               .build());
         return internalConnection.sendAndReceive(message, new BsonDocumentCodec());
     }
 
