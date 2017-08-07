@@ -239,5 +239,4 @@ abstract class RequestMessage {
             writer.close();
         }
     }
-
 }

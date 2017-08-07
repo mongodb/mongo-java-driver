@@ -16,8 +16,10 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonDocument;
+import org.bson.BsonString;
 import org.bson.FieldNameValidator;
 import org.bson.io.BsonOutput;
 
@@ -37,7 +39,7 @@ class SimpleCommandMessage extends CommandMessage {
 
     SimpleCommandMessage(final String collectionName, final BsonDocument command, final boolean slaveOk,
                          final FieldNameValidator validator, final MessageSettings settings) {
-        super(collectionName, OpCode.OP_QUERY, settings);
+        super(collectionName, useNewOpCode(settings) ? OpCode.OP_MSG : OpCode.OP_QUERY, settings);
         this.slaveOk = slaveOk;
         this.command = command;
         this.validator = validator;
@@ -45,12 +47,28 @@ class SimpleCommandMessage extends CommandMessage {
 
     @Override
     protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final int messageStartPosition) {
-        bsonOutput.writeInt32(slaveOk ? 1 << 2 : 0);
-        bsonOutput.writeCString(getCollectionName());
-        bsonOutput.writeInt32(0);
-        bsonOutput.writeInt32(-1);
+        if (useNewOpCode()) {
+            bsonOutput.writeInt32(0);  // flag bits
+            bsonOutput.writeByte(0);   // payload type
+            // TODO: this is ugly
+            command.put("$db", new BsonString(new MongoNamespace(getCollectionName()).getDatabaseName()));
+        } else {
+            bsonOutput.writeInt32(slaveOk ? 1 << 2 : 0);
+            bsonOutput.writeCString(getCollectionName());
+            bsonOutput.writeInt32(0);
+            bsonOutput.writeInt32(-1);
+        }
+
         int firstDocumentPosition = bsonOutput.getPosition();
         addDocument(command, bsonOutput, validator);
         return new EncodingMetadata(null, firstDocumentPosition);
+    }
+
+    private boolean useNewOpCode() {
+        return useNewOpCode(getSettings());
+    }
+
+    private static boolean useNewOpCode(final MessageSettings settings) {
+        return settings.getServerVersion().compareTo(new ServerVersion(3, 5)) >= 0;
     }
 }
