@@ -64,7 +64,7 @@ import static com.mongodb.connection.ProtocolHelper.sendCommandStartedEvent;
 import static com.mongodb.connection.ProtocolHelper.sendCommandSucceededEvent;
 import static com.mongodb.connection.ReplyHeader.REPLY_HEADER_LENGTH;
 import static com.mongodb.connection.ReplyHeader.TOTAL_REPLY_HEADER_LENGTH;
-import static com.mongodb.connection.RequestMessage.OpCode.OP_COMPRESSED;
+import static com.mongodb.connection.OpCode.OP_COMPRESSED;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -263,7 +263,7 @@ class InternalStreamConnection implements InternalConnection {
             if (sendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(commandName)) {
                 sendMessage(bsonOutput.getByteBuffers(), message.getId());
             } else {
-                CompressedMessage compressedMessage = new CompressedMessage(RequestMessage.OpCode.OP_QUERY, bsonOutput.getByteBuffers(),
+                CompressedMessage compressedMessage = new CompressedMessage(OpCode.OP_QUERY, bsonOutput.getByteBuffers(),
                                                                                    sendCompressor, getMessageSettings(description));
                 ByteBufferBsonOutput compressedBsonOutput = new ByteBufferBsonOutput(this);
                 compressedMessage.encode(compressedBsonOutput);
@@ -314,7 +314,7 @@ class InternalStreamConnection implements InternalConnection {
             if (sendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(commandName)) {
                 sendCommandMessageAsync(message, callback, bsonOutput, commandName, startTimeNanos);
             } else {
-                CompressedMessage compressedMessage = new CompressedMessage(RequestMessage.OpCode.OP_QUERY, bsonOutput.getByteBuffers(),
+                CompressedMessage compressedMessage = new CompressedMessage(OpCode.OP_QUERY, bsonOutput.getByteBuffers(),
                                                                                    sendCompressor, getMessageSettings(description));
                 compressedMessage.encode(compressedBsonOutput);
                 bsonOutput.close();
