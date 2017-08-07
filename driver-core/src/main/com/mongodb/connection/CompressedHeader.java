@@ -20,7 +20,7 @@ import com.mongodb.MongoInternalException;
 import org.bson.io.BsonInput;
 
 import static com.mongodb.connection.MessageHeader.MESSAGE_HEADER_LENGTH;
-import static com.mongodb.connection.RequestMessage.OpCode.OP_COMPRESSED;
+import static com.mongodb.connection.OpCode.OP_COMPRESSED;
 import static java.lang.String.format;
 
 // Contains the details of an OP_COMPRESSED reply from a MongoDB server.

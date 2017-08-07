@@ -240,26 +240,4 @@ abstract class RequestMessage {
         }
     }
 
-    // TODO: Move to top-level
-    enum OpCode {
-        OP_REPLY(1),
-        OP_MSG(1000),
-        OP_UPDATE(2001),
-        OP_INSERT(2002),
-        OP_QUERY(2004),
-        OP_GETMORE(2005),
-        OP_DELETE(2006),
-        OP_KILL_CURSORS(2007),
-        OP_COMPRESSED(2012);
-
-        OpCode(final int value) {
-            this.value = value;
-        }
-
-        private final int value;
-
-        public int getValue() {
-            return value;
-        }
-    }
 }
