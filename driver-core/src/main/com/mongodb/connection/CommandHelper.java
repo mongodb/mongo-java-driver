@@ -45,16 +45,13 @@ final class CommandHelper {
                 new SimpleCommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(), command, false,
                                                 MessageSettings.builder().build());
 
-        internalConnection.sendAndReceiveAsync(message, new SingleResultCallback<ResponseBuffers>() {
+        internalConnection.sendAndReceiveAsync(message, new BsonDocumentCodec(), new SingleResultCallback<BsonDocument>() {
             @Override
-            public void onResult(final ResponseBuffers result, final Throwable t) {
+            public void onResult(final BsonDocument result, final Throwable t) {
                 if (t != null) {
                     callback.onResult(null, t);
                 } else {
-                    ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(result, new BsonDocumentCodec(),
-                                                                                                    message.getId());
-                    BsonDocument reply = replyMessage.getDocuments().get(0);
-                    callback.onResult(reply, null);
+                    callback.onResult(result, null);
                 }
             }
         });
@@ -78,12 +75,7 @@ final class CommandHelper {
                                                final InternalConnection internalConnection) {
         SimpleCommandMessage message = new SimpleCommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(),
                                                                        command, false, MessageSettings.builder().build());
-        ResponseBuffers responseBuffers = internalConnection.sendAndReceive(message);
-        try {
-            return new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(), message.getId()).getDocuments().get(0);
-        } finally {
-            responseBuffers.close();
-        }
+        return internalConnection.sendAndReceive(message, new BsonDocumentCodec());
     }
 
     private CommandHelper() {

@@ -84,8 +84,7 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
             if (getLogger().isDebugEnabled()) {
                 getLogger().debug(format("Sending batch %d", batchNum));
             }
-            ResponseBuffers responseBuffers = connection.sendAndReceive(message);
-            BsonDocument result = createResultDocument(message, responseBuffers);
+            BsonDocument result = connection.sendAndReceive(message, new BsonDocumentCodec());
             nextMessage = (BaseWriteCommandMessage) message.getEncodingMetadata().getNextMessage();
             int itemCount = nextMessage != null ? message.getItemCount() - nextMessage.getItemCount() : message.getItemCount();
             IndexMap indexMap = IndexMap.create(currentRangeStartIndex, itemCount);
@@ -126,9 +125,9 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
                     getLogger().debug(format("Asynchronously sending batch %d", batchNum));
                 }
 
-                connection.sendAndReceiveAsync(message, new SingleResultCallback<ResponseBuffers>() {
+                connection.sendAndReceiveAsync(message, new BsonDocumentCodec(), new SingleResultCallback<BsonDocument>() {
                     @Override
-                    public void onResult(final ResponseBuffers responseBuffers, final Throwable t) {
+                    public void onResult(final BsonDocument result, final Throwable t) {
                         if (t != null) {
                             callback.onResult(null, t);
                         } else {
@@ -141,8 +140,6 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
                             int itemCount = nextMessage != null
                                                     ? message.getItemCount() - nextMessage.getItemCount() : message.getItemCount();
                             IndexMap indexMap = IndexMap.create(currentRangeStartIndex, itemCount);
-
-                            BsonDocument result = createResultDocument(message, responseBuffers);
 
                             if (WriteCommandResultHelper.hasError(result)) {
                                 bulkWriteBatchCombiner.addErrorResult(getBulkWriteException(getType(), result,
@@ -172,14 +169,6 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
     protected abstract WriteRequest.Type getType();
 
     protected abstract BaseWriteCommandMessage createRequestMessage(MessageSettings messageSettings);
-
-    private BsonDocument createResultDocument(final BaseWriteCommandMessage message, final ResponseBuffers responseBuffers) {
-        try {
-            return new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(), message.getId()).getDocuments().get(0);
-        } finally {
-            responseBuffers.close();
-        }
-    }
 
     /**
      * Gets the namespace to execute the protocol in.

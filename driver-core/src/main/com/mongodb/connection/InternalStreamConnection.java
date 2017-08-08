@@ -56,6 +56,7 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ByteBufBsonDocument.createOne;
 import static com.mongodb.connection.CompressedHeader.COMPRESSED_HEADER_LENGTH;
+import static com.mongodb.connection.OpCode.OP_COMPRESSED;
 import static com.mongodb.connection.ProtocolHelper.getCommandFailureException;
 import static com.mongodb.connection.ProtocolHelper.getMessageSettings;
 import static com.mongodb.connection.ProtocolHelper.isCommandOk;
@@ -64,7 +65,6 @@ import static com.mongodb.connection.ProtocolHelper.sendCommandStartedEvent;
 import static com.mongodb.connection.ProtocolHelper.sendCommandSucceededEvent;
 import static com.mongodb.connection.ReplyHeader.REPLY_HEADER_LENGTH;
 import static com.mongodb.connection.ReplyHeader.TOTAL_REPLY_HEADER_LENGTH;
-import static com.mongodb.connection.OpCode.OP_COMPRESSED;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -235,7 +235,7 @@ class InternalStreamConnection implements InternalConnection {
     }
 
     @Override
-    public ResponseBuffers sendAndReceive(final CommandMessage message) {
+    public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder) {
         String commandName;
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this);
         try {
@@ -250,7 +250,7 @@ class InternalStreamConnection implements InternalConnection {
 
         try {
             sendCommandMessage(message, commandName, bsonOutput);
-            return receiveCommandMessageResponse(message, startTimeNanos, commandName);
+            return receiveCommandMessageResponse(message, startTimeNanos, commandName, decoder);
         } catch (RuntimeException e) {
             close();
             sendFailedEvent(startTimeNanos, message, commandName, e);
@@ -278,24 +278,28 @@ class InternalStreamConnection implements InternalConnection {
         }
     }
 
-    private ResponseBuffers receiveCommandMessageResponse(final CommandMessage message, final long startTimeNanos,
-                                                          final String commandName) {
+    private <T> T receiveCommandMessageResponse(final CommandMessage message, final long startTimeNanos,
+                                                final String commandName, final Decoder<T> decoder) {
         ResponseBuffers responseBuffers = receiveMessage(message.getId());
-        boolean commandOk = isCommandOk(new BsonBinaryReader(new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer())));
-        responseBuffers.reset();
-        if (!commandOk) {
-            throw getCommandFailureException(getResponseDocument(responseBuffers, message, new BsonDocumentCodec()),
-                    description.getServerAddress());
+        try {
+            boolean commandOk = isCommandOk(new BsonBinaryReader(new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer())));
+            responseBuffers.reset();
+            if (!commandOk) {
+                throw getCommandFailureException(getResponseDocument(responseBuffers, message, new BsonDocumentCodec()),
+                        description.getServerAddress());
+            }
+
+            sendSucceededEvent(startTimeNanos, message, commandName, getResponseDocument(responseBuffers, message,
+                    new RawBsonDocumentCodec()));
+
+            return new ReplyMessage<T>(responseBuffers, decoder, message.getId()).getDocuments().get(0);
+        } finally {
+            responseBuffers.close();
         }
-
-        sendSucceededEvent(startTimeNanos, message, commandName, getResponseDocument(responseBuffers, message,
-                new RawBsonDocumentCodec()));
-
-        return responseBuffers;
     }
 
     @Override
-    public void sendAndReceiveAsync(final CommandMessage message, final SingleResultCallback<ResponseBuffers> callback) {
+    public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder, final SingleResultCallback<T> callback) {
         notNull("stream is open", stream, callback);
 
         if (isClosed()) {
@@ -312,13 +316,13 @@ class InternalStreamConnection implements InternalConnection {
 
             long startTimeNanos = System.nanoTime();
             if (sendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(commandName)) {
-                sendCommandMessageAsync(message, callback, bsonOutput, commandName, startTimeNanos);
+                sendCommandMessageAsync(message, decoder, callback, bsonOutput, commandName, startTimeNanos);
             } else {
                 CompressedMessage compressedMessage = new CompressedMessage(OpCode.OP_QUERY, bsonOutput.getByteBuffers(),
                                                                                    sendCompressor, getMessageSettings(description));
                 compressedMessage.encode(compressedBsonOutput);
                 bsonOutput.close();
-                sendCommandMessageAsync(message, callback, compressedBsonOutput, commandName, startTimeNanos);
+                sendCommandMessageAsync(message, decoder, callback, compressedBsonOutput, commandName, startTimeNanos);
             }
         } catch (RuntimeException e) {
             close();
@@ -328,7 +332,7 @@ class InternalStreamConnection implements InternalConnection {
         }
     }
 
-    private void sendCommandMessageAsync(final CommandMessage message, final SingleResultCallback<ResponseBuffers> callback,
+    private <T> void sendCommandMessageAsync(final CommandMessage message, final Decoder<T> decoder, final SingleResultCallback<T> callback,
                                          final ByteBufferBsonOutput bsonOutput, final String commandName, final long startTimeNanos) {
         sendMessageAsync(bsonOutput.getByteBuffers(), message.getId(), new SingleResultCallback<Void>() {
             @Override
@@ -429,18 +433,24 @@ class InternalStreamConnection implements InternalConnection {
 
             private void handleReplyAsync(final ByteBuf buffer, final ReplyHeader replyHeader) {
                 ResponseBuffers responseBuffers = new ResponseBuffers(replyHeader, buffer);
-                boolean commandOk =
-                        isCommandOk(new BsonBinaryReader(new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer())));
-                responseBuffers.reset();
-                if (!commandOk) {
-                    MongoException commandFailureException = getCommandFailureException(getResponseDocument(responseBuffers, message,
-                            new BsonDocumentCodec()), description.getServerAddress());
-                    sendFailedEvent(startTimeNanos, message, commandName, commandFailureException);
-                    callback.onResult(null, commandFailureException);
-                } else {
+                try {
+                    boolean commandOk = isCommandOk(new BsonBinaryReader(new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer())));
+                    responseBuffers.reset();
+                    if (!commandOk) {
+                        MongoException commandFailureException = getCommandFailureException(getResponseDocument(responseBuffers, message,
+                                new BsonDocumentCodec()), description.getServerAddress());
+                        sendFailedEvent(startTimeNanos, message, commandName, commandFailureException);
+                        throw commandFailureException;
+                    }
                     sendSucceededEvent(startTimeNanos, message, commandName,
                             getResponseDocument(responseBuffers, message, new RawBsonDocumentCodec()));
-                    callback.onResult(responseBuffers, null);
+                    T result = new ReplyMessage<T>(responseBuffers, decoder, message.getId()).getDocuments().get(0);
+
+                    callback.onResult(result, null);
+                } catch (Throwable t) {
+                    callback.onResult(null, t);
+                } finally {
+                    responseBuffers.close();
                 }
             }
         });

@@ -18,6 +18,7 @@ package com.mongodb.connection;
 
 import com.mongodb.async.SingleResultCallback;
 import org.bson.ByteBuf;
+import org.bson.codecs.Decoder;
 
 import java.util.List;
 
@@ -66,14 +67,14 @@ interface InternalConnection extends BufferProvider {
      *
      * @param message   the command message to send
      */
-    ResponseBuffers sendAndReceive(CommandMessage message);
+    <T> T sendAndReceive(CommandMessage message, Decoder<T> decoder);
 
     /**
      * Send a command message to the server.
      *
      * @param message   the command message to send
      */
-    void sendAndReceiveAsync(CommandMessage message, SingleResultCallback<ResponseBuffers> callback);
+    <T> void sendAndReceiveAsync(CommandMessage message, Decoder<T> decoder, SingleResultCallback<T> callback);
 
     /**
      * Send a message to the server. The connection may not make any attempt to validate the integrity of the message.

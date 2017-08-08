@@ -26,6 +26,7 @@ import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.connection.ProtocolHelper.getMessageSettings;
 import static java.lang.String.format;
 
 /**
@@ -70,25 +71,17 @@ class CommandProtocol<T> implements Protocol<T> {
                                 namespace.getDatabaseName(), connection.getDescription().getConnectionId(),
                                 connection.getDescription().getServerAddress()));
         }
-        ResponseBuffers responseBuffers = null;
-        try {
-            SimpleCommandMessage commandMessage = new SimpleCommandMessage(namespace.getFullName(), command, slaveOk, fieldNameValidator,
-                                                                      ProtocolHelper.getMessageSettings(connection.getDescription()));
-            responseBuffers = connection.sendAndReceive(commandMessage);
-            T retval = getResponseDocument(responseBuffers, commandMessage, commandResultDecoder);
-            LOGGER.debug("Command execution completed");
-            return retval;
-        } finally {
-            if (responseBuffers != null) {
-                responseBuffers.close();
-            }
-        }
+        SimpleCommandMessage commandMessage = new SimpleCommandMessage(namespace.getFullName(), command, slaveOk, fieldNameValidator,
+                                                                              getMessageSettings(connection.getDescription()));
+        T retval = connection.sendAndReceive(commandMessage, commandResultDecoder);
+        LOGGER.debug("Command execution completed");
+        return retval;
     }
 
     @Override
     public void executeAsync(final InternalConnection connection, final SingleResultCallback<T> callback) {
         final SimpleCommandMessage message = new SimpleCommandMessage(namespace.getFullName(), command, slaveOk, fieldNameValidator,
-                ProtocolHelper.getMessageSettings(connection.getDescription()));
+                getMessageSettings(connection.getDescription()));
         try {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(format("Asynchronously sending command {%s : %s} to database %s on connection [%s] to server %s",
@@ -96,18 +89,13 @@ class CommandProtocol<T> implements Protocol<T> {
                                     namespace.getDatabaseName(), connection.getDescription().getConnectionId(),
                                     connection.getDescription().getServerAddress()));
             }
-            connection.sendAndReceiveAsync(message, new SingleResultCallback<ResponseBuffers>() {
+            connection.sendAndReceiveAsync(message, commandResultDecoder, new SingleResultCallback<T>() {
                 @Override
-                public void onResult(final ResponseBuffers responseBuffers, final Throwable t) {
+                public void onResult(final T result, final Throwable t) {
                     if (t != null) {
                         callback.onResult(null, t);
                     } else {
-                        try {
-                            T responseDocument = getResponseDocument(responseBuffers, message, commandResultDecoder);
-                            callback.onResult(responseDocument, null);
-                        } catch (Exception e) {
-                            callback.onResult(null, e);
-                        }
+                        callback.onResult(result, null);
                     }
                 }
             });
@@ -122,13 +110,5 @@ class CommandProtocol<T> implements Protocol<T> {
 
     private String getCommandName() {
         return command.keySet().iterator().next();
-    }
-
-    private static <D> D getResponseDocument(final ResponseBuffers responseBuffers, final SimpleCommandMessage commandMessage,
-                                             final Decoder<D> decoder) {
-        responseBuffers.reset();
-        ReplyMessage<D> replyMessage = new ReplyMessage<D>(responseBuffers, decoder, commandMessage.getId());
-
-        return replyMessage.getDocuments().get(0);
     }
 }

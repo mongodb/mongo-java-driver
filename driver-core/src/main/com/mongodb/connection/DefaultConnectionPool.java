@@ -38,6 +38,7 @@ import com.mongodb.event.ConnectionRemovedEvent;
 import com.mongodb.internal.connection.ConcurrentPool;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import org.bson.ByteBuf;
+import org.bson.codecs.Decoder;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -432,10 +433,10 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
-        public ResponseBuffers sendAndReceive(final CommandMessage message) {
+        public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder) {
             isTrue("open", !isClosed.get());
             try {
-                return wrapped.sendAndReceive(message);
+                return wrapped.sendAndReceive(message, decoder);
             } catch (MongoException e) {
                 incrementGenerationOnSocketException(this, e);
                 throw e;
@@ -443,11 +444,12 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
-        public void sendAndReceiveAsync(final CommandMessage message, final SingleResultCallback<ResponseBuffers> callback) {
+        public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
+                                            final SingleResultCallback<T> callback) {
             isTrue("open", !isClosed.get());
-            wrapped.sendAndReceiveAsync(message, new SingleResultCallback<ResponseBuffers>() {
+            wrapped.sendAndReceiveAsync(message, decoder, new SingleResultCallback<T>() {
                 @Override
-                public void onResult(final ResponseBuffers result, final Throwable t) {
+                public void onResult(final T result, final Throwable t) {
                     if (t != null) {
                         incrementGenerationOnSocketException(PooledConnection.this, t);
                     }

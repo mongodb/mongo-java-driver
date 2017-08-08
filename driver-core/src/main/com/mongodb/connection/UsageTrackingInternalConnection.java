@@ -20,6 +20,7 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import org.bson.ByteBuf;
+import org.bson.codecs.Decoder;
 
 import java.util.List;
 
@@ -92,22 +93,23 @@ class UsageTrackingInternalConnection implements InternalConnection {
     }
 
     @Override
-    public ResponseBuffers sendAndReceive(final CommandMessage message) {
-        ResponseBuffers responseBuffers =  wrapped.sendAndReceive(message);
+    public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder) {
+        T result = wrapped.sendAndReceive(message, decoder);
         lastUsedAt = System.currentTimeMillis();
-        return responseBuffers;
+        return result;
     }
 
     @Override
-    public void sendAndReceiveAsync(final CommandMessage message, final SingleResultCallback<ResponseBuffers> callback) {
-        SingleResultCallback<ResponseBuffers> errHandlingCallback = errorHandlingCallback(new SingleResultCallback<ResponseBuffers>() {
+    public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
+                                    final SingleResultCallback<T> callback) {
+        SingleResultCallback<T> errHandlingCallback = errorHandlingCallback(new SingleResultCallback<T>() {
             @Override
-            public void onResult(final ResponseBuffers result, final Throwable t) {
+            public void onResult(final T result, final Throwable t) {
                 lastUsedAt = System.currentTimeMillis();
                 callback.onResult(result, t);
             }
         }, LOGGER);
-        wrapped.sendAndReceiveAsync(message, errHandlingCallback);
+        wrapped.sendAndReceiveAsync(message, decoder, errHandlingCallback);
     }
 
     @Override

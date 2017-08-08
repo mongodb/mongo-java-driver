@@ -19,6 +19,7 @@ package com.mongodb.connection;
 import com.mongodb.MongoException;
 import com.mongodb.async.SingleResultCallback;
 import org.bson.ByteBuf;
+import org.bson.codecs.Decoder;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -49,12 +50,13 @@ public class TestConnectionPool implements ConnectionPool {
             }
 
             @Override
-            public ResponseBuffers sendAndReceive(final CommandMessage message) {
+            public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder) {
                 throw new UnsupportedOperationException("Not implemented yet!");
             }
 
             @Override
-            public void sendAndReceiveAsync(final CommandMessage message, final SingleResultCallback<ResponseBuffers> callback) {
+            public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
+                                            final SingleResultCallback<T> callback) {
                 throw new UnsupportedOperationException("Not implemented yet!");
             }
 
