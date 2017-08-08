@@ -252,6 +252,7 @@ class InternalStreamConnection implements InternalConnection {
             sendCommandMessage(message, commandName, bsonOutput);
             return receiveCommandMessageResponse(message, startTimeNanos, commandName);
         } catch (RuntimeException e) {
+            close();
             sendFailedEvent(startTimeNanos, message, commandName, e);
             throw e;
         }
@@ -320,6 +321,7 @@ class InternalStreamConnection implements InternalConnection {
                 sendCommandMessageAsync(message, callback, compressedBsonOutput, commandName, startTimeNanos);
             }
         } catch (RuntimeException e) {
+            close();
             bsonOutput.close();
             compressedBsonOutput.close();
             callback.onResult(null, e);
