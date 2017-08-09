@@ -177,7 +177,7 @@ class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
     private BsonDocument asGetMoreCommandResponseDocument(final QueryResult<T> queryResult, final ResponseBuffers responseBuffers) {
         List<ByteBufBsonDocument> rawResultDocuments = Collections.emptyList();
         if (responseBuffers.getReplyHeader().getNumberReturned() != 0) {
-            responseBuffers.getBodyByteBuffer().position(0);
+            responseBuffers.reset();
             rawResultDocuments = ByteBufBsonDocument.create(responseBuffers);
         }
 

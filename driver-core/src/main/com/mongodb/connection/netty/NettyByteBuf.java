@@ -26,8 +26,9 @@ final class NettyByteBuf implements ByteBuf {
     private io.netty.buffer.ByteBuf proxied;
     private boolean isWriting = true;
 
+    @SuppressWarnings("deprecation")
     NettyByteBuf(final io.netty.buffer.ByteBuf proxied) {
-        this.proxied = proxied;
+        this.proxied = proxied.order(ByteOrder.LITTLE_ENDIAN);
     }
 
     NettyByteBuf(final io.netty.buffer.ByteBuf proxied, final boolean isWriting) {

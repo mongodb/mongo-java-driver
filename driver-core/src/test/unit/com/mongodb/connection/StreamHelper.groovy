@@ -40,26 +40,8 @@ class StreamHelper {
     private static int nextMessageId = 900000 // Generates a message then adds one to the id
     private static final DEFAULT_JSON_RESPONSE = '{connectionId: 1,   n: 0,   syncMillis: 0,   writtenTo:  null,  err: null,   ok: 1 }'
 
-    static write(List<ByteBuf> buffers) {
-        buffers.each {
-            it.get(new byte[it.remaining()])
-        }
-    }
 
-    static read(List<Integer> messageIds) {
-        read(messageIds, true)
-    }
-
-    static read(List<Integer> messageIds, boolean ordered) {
-        List<ByteBuf> headers = messageIds.collect { defaultHeader(it) }
-        List<ByteBuf> bodies = messageIds.collect { defaultBody() }
-        if (!ordered) {
-            Collections.shuffle(headers, new SecureRandom())
-        }
-        [headers, bodies].transpose().flatten()
-    }
-
-    static defaultHeader(messageId) {
+    private static defaultHeader(messageId) {
         header(messageId, DEFAULT_JSON_RESPONSE)
     }
 
@@ -67,7 +49,23 @@ class StreamHelper {
         messageHeader(messageId, DEFAULT_JSON_RESPONSE)
     }
 
-    static defaultReplyHeader() {
+    static defaultReply() {
+        ByteBuf header = replyHeader()
+        ByteBuf body = defaultBody()
+        ByteBuffer reply = ByteBuffer.allocate(header.remaining() + body.remaining())
+        append(reply, header)
+        append(reply, body)
+        reply.flip()
+        new ByteBufNIO(reply)
+    }
+
+    private static append(final ByteBuffer to, final ByteBuf from) {
+        byte[] bytes = new byte[from.remaining()]
+        from.get(bytes)
+        to.put(bytes)
+    }
+
+    private static defaultReplyHeader() {
         replyHeader()
     }
 
@@ -83,7 +81,7 @@ class StreamHelper {
         new ByteBufNIO(headerByteBuffer)
     }
 
-    static replyHeader() {
+    private static replyHeader() {
         ByteBuffer headerByteBuffer = ByteBuffer.allocate(20).with {
             order(ByteOrder.LITTLE_ENDIAN)
             putInt(0)                     // responseFlags
@@ -95,7 +93,7 @@ class StreamHelper {
         new ByteBufNIO(headerByteBuffer)
     }
 
-    static header(messageId, json) {
+    private static header(messageId, json) {
         ByteBuffer headerByteBuffer = ByteBuffer.allocate(36).with {
             order(ByteOrder.LITTLE_ENDIAN)
             putInt(36 + body(json).remaining()) // messageLength
@@ -131,7 +129,21 @@ class StreamHelper {
         body(DEFAULT_JSON_RESPONSE)
     }
 
-    static body(json) {
+    static reply(json) {
+        ByteBuf replyHeader = defaultReplyHeader()
+        BsonReader reader = new JsonReader(json)
+        BasicOutputBuffer outputBuffer = new BasicOutputBuffer()
+        BsonWriter writer = new BsonBinaryWriter(outputBuffer)
+        writer.pipe(reader)
+
+        ByteBuffer buffer = ByteBuffer.allocate(replyHeader.remaining() +  outputBuffer.size())
+        append(buffer, replyHeader)
+        buffer.put(outputBuffer.toByteArray())
+        buffer.flip()
+        new ByteBufNIO(buffer)
+    }
+
+    private static body(json) {
         BsonReader reader = new JsonReader(json)
         BasicOutputBuffer outputBuffer = new BasicOutputBuffer()
         BsonWriter writer = new BsonBinaryWriter(outputBuffer)
@@ -140,10 +152,7 @@ class StreamHelper {
     }
 
     static generateHeaders(List<Integer> messageIds) {
-        generateHeaders(messageIds, true)
-    }
-
-    static generateHeaders(List<Integer> messageIds, boolean ordered) {
+        boolean ordered = true
         List<ByteBuf> headers = messageIds.collect { defaultHeader(it) }
         if (!ordered) {
             Collections.shuffle(headers, new SecureRandom())
@@ -154,7 +163,7 @@ class StreamHelper {
     static isMaster() {
         CommandMessage command = new SimpleCommandMessage(new MongoNamespace('admin', COMMAND_COLLECTION_NAME).getFullName(),
                 new BsonDocument('ismaster', new BsonInt32(1)),
-                false, MessageSettings.builder().build())
+                false, MessageSettings.builder().serverVersion(new ServerVersion(0, 0)).build())
         OutputBuffer outputBuffer = new BasicOutputBuffer()
         command.encode(outputBuffer)
         nextMessageId++

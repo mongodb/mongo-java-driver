@@ -192,9 +192,9 @@ class TestInternalConnection implements InternalConnection {
         headerByteBuffer.putInt(header.getNumberReturned());
         headerByteBuffer.flip();
 
-        ByteBufferBsonInput headerInputBuffer = new ByteBufferBsonInput(new ByteBufNIO(headerByteBuffer));
-        MessageHeader messageHeader = new MessageHeader(headerInputBuffer, ConnectionDescription.getDefaultMaxMessageSize());
-        return new ReplyHeader(headerInputBuffer, messageHeader);    }
+        ByteBufNIO buffer = new ByteBufNIO(headerByteBuffer);
+        MessageHeader messageHeader = new MessageHeader(buffer, ConnectionDescription.getDefaultMaxMessageSize());
+        return new ReplyHeader(buffer, messageHeader);    }
 
     @Override
     public ResponseBuffers receiveMessage(final int responseTo) {

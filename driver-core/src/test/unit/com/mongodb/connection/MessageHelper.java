@@ -26,7 +26,6 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.BsonInput;
-import org.bson.io.ByteBufferBsonInput;
 import org.bson.io.OutputBuffer;
 import org.bson.json.JsonReader;
 
@@ -78,8 +77,8 @@ final class MessageHelper {
         headerByteBuffer.putInt(numDocuments); //numberReturned
         headerByteBuffer.flip();
 
-        ByteBufferBsonInput headerInputBuffer = new ByteBufferBsonInput(new ByteBufNIO(headerByteBuffer));
-        return new ReplyHeader(headerInputBuffer, new MessageHeader(headerInputBuffer, getDefaultMaxMessageSize()));
+        ByteBufNIO buffer = new ByteBufNIO(headerByteBuffer);
+        return new ReplyHeader(buffer, new MessageHeader(buffer, getDefaultMaxMessageSize()));
     }
 
     public static BsonDocument decodeCommand(final BsonInput bsonInput) {

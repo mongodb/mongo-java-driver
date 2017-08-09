@@ -472,7 +472,7 @@ class QueryProtocol<T> implements Protocol<QueryResult<T>> {
                                                        final boolean isExplain) {
         List<ByteBufBsonDocument> rawResultDocuments = Collections.emptyList();
         if (responseBuffers.getReplyHeader().getNumberReturned() > 0) {
-            responseBuffers.getBodyByteBuffer().position(0);
+            responseBuffers.reset();
             rawResultDocuments = ByteBufBsonDocument.create(responseBuffers);
         }
 

@@ -30,8 +30,6 @@ import java.nio.ByteBuffer
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.connection.MessageHelper.buildSuccessfulReply
-
 @SuppressWarnings('BusyWait')
 class DefaultServerMonitorSpecification extends Specification {
 
@@ -125,8 +123,8 @@ class DefaultServerMonitorSpecification extends Specification {
 
                     sendMessage(_, _) >> { }
 
-                    sendAndReceive(_) >> { CommandMessage message ->
-                        buildSuccessfulReply(message.getId(), isMasterResponse)
+                    sendAndReceive(_, _) >> {
+                        BsonDocument.parse(isMasterResponse)
                     }
                 }
             }
@@ -198,7 +196,7 @@ class DefaultServerMonitorSpecification extends Specification {
                         connectionDescription
                     }
 
-                    sendAndReceive(_) >> {
+                    sendAndReceive(_, _) >> {
                         throw exception
                     }
                 }
