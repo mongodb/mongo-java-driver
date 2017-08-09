@@ -35,7 +35,7 @@ public class ByteBufNIO implements ByteBuf {
      * @param buf the {@code ByteBuffer} to wrap.
      */
     public ByteBufNIO(final ByteBuffer buf) {
-        this.buf = buf;
+        this.buf = buf.order(ByteOrder.LITTLE_ENDIAN);
     }
 
     @Override

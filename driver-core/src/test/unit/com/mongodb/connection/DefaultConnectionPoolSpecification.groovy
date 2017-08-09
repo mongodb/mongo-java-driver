@@ -27,6 +27,7 @@ import com.mongodb.event.ConnectionPoolListener
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.ByteBuf
+import org.bson.codecs.BsonDocumentCodec
 import org.junit.experimental.categories.Category
 import spock.lang.Specification
 import spock.lang.Subject
@@ -127,7 +128,7 @@ class DefaultConnectionPoolSpecification extends Specification {
             Mock(InternalConnection) {
                 sendMessage(_, _) >> { throw new MongoSocketWriteException('', SERVER_ID.address, new IOException()) }
                 receiveMessage(_) >> { throw new MongoSocketReadException('', SERVER_ID.address, new IOException()) }
-                sendAndReceive(_) >> { throw new MongoSocketReadException('', SERVER_ID.address, new IOException()) }
+                sendAndReceive(_, _) >> { throw new MongoSocketReadException('', SERVER_ID.address, new IOException()) }
                 getDescription() >> {
                     new ConnectionDescription(SERVER_ID);
                 }
@@ -177,7 +178,8 @@ class DefaultConnectionPoolSpecification extends Specification {
 
         and:
         c2.sendAndReceive(new SimpleCommandMessage('test', new BsonDocument('ping', new BsonInt32(1)), true,
-                MessageSettings.builder().build()))
+                MessageSettings.builder().serverVersion(new ServerVersion(0, 0)).build()),
+                new BsonDocumentCodec())
 
         then:
         thrown(MongoSocketReadException)
@@ -205,8 +207,8 @@ class DefaultConnectionPoolSpecification extends Specification {
                 receiveMessageAsync(_, _) >> {
                     it[1].onResult(null, new MongoSocketReadException('', SERVER_ID.address, new IOException()))
                 };
-                sendAndReceiveAsync(_, _) >> {
-                    it[1].onResult(null, new MongoSocketReadException('', SERVER_ID.address, new IOException()))
+                sendAndReceiveAsync(_, _, _) >> {
+                    it[2].onResult(null, new MongoSocketReadException('', SERVER_ID.address, new IOException()))
                 };
                 getDescription() >> {
                     new ConnectionDescription(SERVER_ID);
@@ -263,7 +265,8 @@ class DefaultConnectionPoolSpecification extends Specification {
 
         and:
         c2.sendAndReceiveAsync(new SimpleCommandMessage('test', new BsonDocument('ping', new BsonInt32(1)), true,
-                MessageSettings.builder().build())) {
+                MessageSettings.builder().serverVersion(new ServerVersion(0, 0)).build()),
+                new BsonDocumentCodec()) {
             result, t -> e = t
         }
 

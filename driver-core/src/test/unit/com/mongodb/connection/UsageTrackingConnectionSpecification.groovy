@@ -21,6 +21,7 @@ import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.codecs.BsonDocumentCodec
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 import spock.lang.Specification
@@ -171,7 +172,7 @@ class UsageTrackingConnectionSpecification extends Specification {
 
         when:
         connection.sendAndReceive(new SimpleCommandMessage('test', new BsonDocument('ping', new BsonInt32(1)), true,
-                MessageSettings.builder().build()))
+                MessageSettings.builder().serverVersion(new ServerVersion(0, 0)).build()), new BsonDocumentCodec())
 
         then:
         connection.lastUsedAt >= openedLastUsedAt
@@ -187,7 +188,8 @@ class UsageTrackingConnectionSpecification extends Specification {
 
         when:
         connection.sendAndReceiveAsync(new SimpleCommandMessage('test', new BsonDocument('ping', new BsonInt32(1)), true,
-                MessageSettings.builder().build()), futureResultCallback)
+                MessageSettings.builder().serverVersion(new ServerVersion(0, 0)).build()),
+                new BsonDocumentCodec(), futureResultCallback)
         futureResultCallback.get(60, SECONDS)
 
         then:

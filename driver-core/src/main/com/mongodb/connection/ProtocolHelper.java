@@ -136,6 +136,7 @@ final class ProtocolHelper {
                               .maxDocumentSize(connectionDescription.getMaxDocumentSize())
                               .maxMessageSize(connectionDescription.getMaxMessageSize())
                               .maxBatchCount(connectionDescription.getMaxBatchCount())
+                              .serverVersion(connectionDescription.getServerVersion())
                               .build();
     }
 

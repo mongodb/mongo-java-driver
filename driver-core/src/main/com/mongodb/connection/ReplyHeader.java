@@ -17,9 +17,11 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoInternalException;
-import org.bson.io.BsonInput;
+import org.bson.ByteBuf;
 
 import static com.mongodb.connection.MessageHeader.MESSAGE_HEADER_LENGTH;
+import static com.mongodb.connection.OpCode.OP_MSG;
+import static com.mongodb.connection.OpCode.OP_REPLY;
 import static java.lang.String.format;
 
 /**
@@ -27,7 +29,7 @@ import static java.lang.String.format;
  *
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#database-response-messages Database Response Messages
  */
-class ReplyHeader {
+final class ReplyHeader {
     /**
      * The length of the OP_REPLY header in the MongoDB wire protocol.
      */
@@ -40,7 +42,6 @@ class ReplyHeader {
 
     private static final int CURSOR_NOT_FOUND_RESPONSE_FLAG = 1;
     private static final int QUERY_FAILURE_RESPONSE_FLAG = 2;
-    private static final int OP_REPLY_OP_CODE = 1;
 
     private final int messageLength;
     private final int requestId;
@@ -50,43 +51,47 @@ class ReplyHeader {
     private final int startingFrom;
     private final int numberReturned;
 
-    ReplyHeader(final BsonInput header, final MessageHeader messageHeader) {
-        this.messageLength = messageHeader.getMessageLength();
+    ReplyHeader(final ByteBuf header, final MessageHeader messageHeader) {
+        this(messageHeader.getMessageLength(), messageHeader.getOpCode(), messageHeader, header);
+    }
+
+    ReplyHeader(final ByteBuf header, final CompressedHeader compressedHeader) {
+        this(compressedHeader.getUncompressedSize() + MESSAGE_HEADER_LENGTH, compressedHeader.getOriginalOpcode(),
+                compressedHeader.getMessageHeader(), header);
+    }
+
+    private ReplyHeader(final int messageLength, final int opCode, final MessageHeader messageHeader, final ByteBuf header) {
+        this.messageLength = messageLength;
         this.requestId = messageHeader.getRequestId();
         this.responseTo = messageHeader.getResponseTo();
-        responseFlags = header.readInt32();
-        cursorId = header.readInt64();
-        startingFrom = header.readInt32();
-        numberReturned = header.readInt32();
+        if (opCode == OP_MSG.getValue()) {
+            responseFlags = 0;
+            cursorId = 0;
+            startingFrom = 0;
+            numberReturned = 1;
 
-        if (messageHeader.getOpCode() != OP_REPLY_OP_CODE) {
-            throw new MongoInternalException(format("The reply message opCode %d does not match the expected opCode %d",
-                    messageHeader.getOpCode(), OP_REPLY_OP_CODE));
-        }
+            header.getInt();  // ignore flag bits
+            header.get();     // ignore payload type
+        } else if (opCode == OP_REPLY.getValue()) {
+            if (messageLength < TOTAL_REPLY_HEADER_LENGTH) {
+                throw new MongoInternalException(format("The reply message length %d is less than the mimimum message length %d",
+                        messageLength, TOTAL_REPLY_HEADER_LENGTH));
+            }
 
-        if (messageHeader.getMessageLength() < TOTAL_REPLY_HEADER_LENGTH) {
-            throw new MongoInternalException(format("The reply message length %d is less than the mimimum message length %d", messageLength,
-                    TOTAL_REPLY_HEADER_LENGTH));
-        }
+            responseFlags = header.getInt();
+            cursorId = header.getLong();
+            startingFrom = header.getInt();
+            numberReturned = header.getInt();
 
-        if (numberReturned < 0) {
-            throw new MongoInternalException(format("The reply message number of returned documents, %d, is less than 0", numberReturned));
-        }
-    }
-
-    ReplyHeader(final CompressedHeader compressedHeader, final BsonInput compressedMessage) {
-        messageLength = compressedHeader.getUncompressedSize() + MESSAGE_HEADER_LENGTH;
-        requestId = compressedHeader.getMessageHeader().getRequestId();
-        responseTo = compressedHeader.getMessageHeader().getResponseTo();
-        responseFlags = compressedMessage.readInt32();
-        cursorId = compressedMessage.readInt64();
-        startingFrom = compressedMessage.readInt32();
-        numberReturned = compressedMessage.readInt32();
-
-        if (numberReturned < 0) {
-            throw new MongoInternalException(format("The reply message number of returned documents, %d, is less than 0", numberReturned));
+            if (numberReturned < 0) {
+                throw new MongoInternalException(format("The reply message number of returned documents, %d, is less than 0",
+                        numberReturned));
+            }
+        } else {
+            throw new MongoInternalException(format("Unexpected reply message opCode %d", opCode));
         }
     }
+
 
     /**
      * Gets the total size of the message in bytes. This total includes the 4 bytes that holds the message length.

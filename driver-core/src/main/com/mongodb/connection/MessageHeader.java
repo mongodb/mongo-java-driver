@@ -17,7 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoInternalException;
-import org.bson.io.BsonInput;
+import org.bson.ByteBuf;
 
 // Contains the details of an OP_COMPRESSED reply from a MongoDB server.
 class MessageHeader {
@@ -31,11 +31,11 @@ class MessageHeader {
     private final int responseTo;
     private final int opCode;
 
-    MessageHeader(final BsonInput header, final int maxMessageLength) {
-        messageLength = header.readInt32();
-        requestId = header.readInt32();
-        responseTo = header.readInt32();
-        opCode = header.readInt32();
+    MessageHeader(final ByteBuf header, final int maxMessageLength) {
+        messageLength = header.getInt();
+        requestId = header.getInt();
+        responseTo = header.getInt();
+        opCode = header.getInt();
 
         if (messageLength > maxMessageLength) {
             throw new MongoInternalException(String.format("The reply message length %d is less than the maximum message length %d",

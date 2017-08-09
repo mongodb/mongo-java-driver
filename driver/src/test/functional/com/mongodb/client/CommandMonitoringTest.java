@@ -59,6 +59,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -66,6 +67,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.Fixture.getMongoClientURI;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
@@ -302,17 +304,21 @@ public class CommandMonitoringTest {
             String eventType = curExpectedEventDocument.keySet().iterator().next();
             BsonDocument eventDescriptionDocument = curExpectedEventDocument.getDocument(eventType);
             CommandEvent commandEvent;
+            String commandName = eventDescriptionDocument.getString("command_name").getValue();
             if (eventType.equals("command_started_event")) {
-                commandEvent = new CommandStartedEvent(1, null, databaseName,
-                                                       eventDescriptionDocument.getString("command_name").getValue(),
-                                                       eventDescriptionDocument.getDocument("command"));
+                BsonDocument commandDocument = eventDescriptionDocument.getDocument("command");
+                // TODO: excluding write commands is temporary
+                if (serverVersionAtLeast(3, 5)
+                            && !Arrays.asList("insert", "update", "delete").contains(commandName)) {
+                    commandDocument.put("$db", new BsonString(databaseName));
+                }
+                commandEvent = new CommandStartedEvent(1, null, databaseName, commandName, commandDocument);
             } else if (eventType.equals("command_succeeded_event")) {
                 BsonDocument replyDocument = eventDescriptionDocument.get("reply").asDocument();
-                commandEvent = new CommandSucceededEvent(1, null, eventDescriptionDocument.getString("command_name").getValue(),
-                                                         replyDocument, 1);
+                commandEvent = new CommandSucceededEvent(1, null, commandName, replyDocument, 1);
 
             } else if (eventType.equals("command_failed_event")) {
-                commandEvent = new CommandFailedEvent(1, null, eventDescriptionDocument.getString("command_name").getValue(), 1, null);
+                commandEvent = new CommandFailedEvent(1, null, commandName, 1, null);
             } else {
                 throw new UnsupportedOperationException("Unsupported command event type: " + eventType);
             }

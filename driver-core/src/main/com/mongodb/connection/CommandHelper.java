@@ -43,7 +43,9 @@ final class CommandHelper {
                                     final SingleResultCallback<BsonDocument> callback) {
         final SimpleCommandMessage message =
                 new SimpleCommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(), command, false,
-                                                MessageSettings.builder().build());
+                                                MessageSettings.builder()
+                                                        .serverVersion(internalConnection.getDescription().getServerVersion())
+                                                        .build());
 
         internalConnection.sendAndReceiveAsync(message, new BsonDocumentCodec(), new SingleResultCallback<BsonDocument>() {
             @Override
