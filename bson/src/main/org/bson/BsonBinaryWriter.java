@@ -21,9 +21,11 @@ import org.bson.io.BsonOutput;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
+import java.util.List;
 import java.util.Stack;
 
 import static java.lang.String.format;
+import static org.bson.assertions.Assertions.notNull;
 
 /**
  * A BsonWriter implementation that writes to a binary stream of data.  This is the most commonly used implementation.
@@ -293,6 +295,18 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
 
     @Override
     public void pipe(final BsonReader reader) {
+        notNull("reader", reader);
+        pipeDocument(reader, null);
+    }
+
+    @Override
+    public void pipe(final BsonReader reader, final List<BsonElement> extraElements) {
+        notNull("reader", reader);
+        notNull("extraElements", extraElements);
+        pipeDocument(reader, extraElements);
+    }
+
+    private void pipeDocument(final BsonReader reader, final List<BsonElement> extraElements) {
         if (reader instanceof BsonBinaryReader) {
             BsonBinaryReader binaryReader = (BsonBinaryReader) reader;
             if (getState() == State.VALUE) {
@@ -304,11 +318,23 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
             if (size < 5) {
                 throw new BsonSerializationException("Document size must be at least 5");
             }
+            int pipedDocumentStartPosition = bsonOutput.getPosition();
             bsonOutput.writeInt32(size);
             byte[] bytes = new byte[size - 4];
             bsonInput.readBytes(bytes);
             bsonOutput.writeBytes(bytes);
+
             binaryReader.setState(AbstractBsonReader.State.TYPE);
+
+            if (extraElements != null) {
+                bsonOutput.truncateToPosition(bsonOutput.getPosition() - 1);
+                setContext(new Context(getContext(), BsonContextType.DOCUMENT, pipedDocumentStartPosition));
+                setState(State.NAME);
+                pipeExtraElements(extraElements);
+                bsonOutput.writeByte(0);
+                bsonOutput.writeInt32(pipedDocumentStartPosition, bsonOutput.getPosition() - pipedDocumentStartPosition);
+                setContext(getContext().getParentContext());
+            }
 
             if (getContext() == null) {
                 setState(State.DONE);
@@ -319,6 +345,8 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
                 }
                 setState(getNextState());
             }
+        } else if (extraElements != null) {
+            super.pipe(reader, extraElements);
         } else {
             super.pipe(reader);
         }

@@ -21,5 +21,6 @@ members:
   org.bson.BsonWriter:
   - writeDecimal128(org.bson.types.Decimal128)
   - writeDecimal128(java.lang.String,org.bson.types.Decimal128)
+  - pipe(org.bson.BsonReader,java.util.List)
   org.bson.diagnostics.Loggers:
   - getLogger(java.lang.String)
