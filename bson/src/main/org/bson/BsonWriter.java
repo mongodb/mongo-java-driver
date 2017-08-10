@@ -19,6 +19,8 @@ package org.bson;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
+import java.util.List;
+
 /**
  * An interface for writing a logical BSON document using a push-oriented API.
  *
@@ -356,4 +358,14 @@ public interface BsonWriter {
      * @param reader The source.
      */
     void pipe(BsonReader reader);
+
+    /**
+     * Reads a single document from a BsonReader and writes it to this, appending the given extra elements to the end of
+     * the document.
+     *
+     * @param reader The source.
+     * @param extraElements The extra BSON elements to append
+     * @since 3.6
+     */
+    void pipe(BsonReader reader, List<BsonElement> extraElements);
 }
