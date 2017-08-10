@@ -17,6 +17,7 @@
 package com.mongodb.connection
 
 import com.mongodb.MongoNamespace
+import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.bulk.DeleteRequest
@@ -118,7 +119,7 @@ class DefaultServerConnectionSpecification extends Specification {
         1 * executor.execute({ compare(new DeleteCommandProtocol(namespace, true, ACKNOWLEDGED, deletes), it) }, internalConnection)
     }
 
-    def 'should execute command protocol'() {
+    def 'should execute command protocol with slaveok'() {
         given:
         def command = new BsonDocument('ismaster', new BsonInt32(1))
         def validator = new NoOpFieldNameValidator()
@@ -128,10 +129,14 @@ class DefaultServerConnectionSpecification extends Specification {
         connection.command('test', command, slaveOk, validator, codec)
 
         then:
-        1 * executor.execute({ compare(new CommandProtocol('test', command, validator, codec).slaveOk(slaveOk), it) }, internalConnection)
+        1 * executor.execute({
+            compare(new CommandProtocol('test', command, validator, codec).readPreference(expectedReadPreference), it)
+        }, internalConnection)
 
         where:
-        slaveOk << [true, false]
+        slaveOk  | expectedReadPreference
+        true     | ReadPreference.secondaryPreferred()
+        false    | ReadPreference.primary()
     }
 
     def 'should set slaveOk when executing command protocol on connection in SINGLE connection mode'() {
@@ -146,13 +151,13 @@ class DefaultServerConnectionSpecification extends Specification {
         connection.command('test', command, false, validator, codec)
 
         then:
-        1 * executor.execute({ compare(new CommandProtocol('test', command, validator, codec).slaveOk(expectedSlaveOk), it) },
+        1 * executor.execute({ compare(new CommandProtocol('test', command, validator, codec).readPreference(expectedReadPreference), it) },
                              internalConnection)
 
         where:
-        connectionDescription           | expectedSlaveOk
-        standaloneConnectionDescription | true
-        mongosConnectionDescription     | false
+        connectionDescription           | expectedSlaveOk | expectedReadPreference
+        standaloneConnectionDescription | true            | ReadPreference.secondaryPreferred()
+        mongosConnectionDescription     | false           | ReadPreference.primary()
     }
 
     def 'should execute query protocol'() {
@@ -314,11 +319,14 @@ class DefaultServerConnectionSpecification extends Specification {
         connection.commandAsync('test', command, slaveOk, validator, codec, callback)
 
         then:
-        1 * executor.executeAsync({ compare(new CommandProtocol('test', command, validator, codec).slaveOk(slaveOk), it) },
-                                  internalConnection, callback)
+        1 * executor.executeAsync({
+            compare(new CommandProtocol('test', command, validator, codec).readPreference(expectedReadPreference), it)
+        }, internalConnection, callback)
 
         where:
-        slaveOk << [true, false]
+        slaveOk  | expectedReadPreference
+        true     | ReadPreference.secondaryPreferred()
+        false    | ReadPreference.primary()
     }
 
     def 'should set slaveOk when executing command protocol on connection in SINGLE connection mode asynchronously'() {
@@ -333,13 +341,14 @@ class DefaultServerConnectionSpecification extends Specification {
         connection.commandAsync('test', command, false, validator, codec, callback)
 
         then:
-        1 * executor.executeAsync({ compare(new CommandProtocol('test', command, validator, codec).slaveOk(expectedSlaveOk), it) },
-                                  internalConnection, callback)
+        1 * executor.executeAsync({
+            compare(new CommandProtocol('test', command, validator, codec).readPreference(expectedReadPreference), it)
+        }, internalConnection, callback)
 
         where:
-        connectionDescription           | expectedSlaveOk
-        standaloneConnectionDescription | true
-        mongosConnectionDescription     | false
+        connectionDescription           | expectedSlaveOk  | expectedReadPreference
+        standaloneConnectionDescription | true             | ReadPreference.secondaryPreferred()
+        mongosConnectionDescription     | false            | ReadPreference.primary()
     }
 
     def 'should execute query protocol asynchronously'() {

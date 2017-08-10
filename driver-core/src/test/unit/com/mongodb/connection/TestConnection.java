@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.async.SingleResultCallback;
@@ -169,9 +170,22 @@ class TestConnection implements Connection, AsyncConnection {
     }
 
     @Override
+    public <T> T command(final String database, final BsonDocument command, final ReadPreference readPreference,
+                         final FieldNameValidator fieldNameValidator, final Decoder<T> commandResultDecoder) {
+        return executeEnqueuedProtocol();
+    }
+
+    @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final boolean slaveOk,
                                  final FieldNameValidator fieldNameValidator,
                                  final Decoder<T> commandResultDecoder, final SingleResultCallback<T> callback) {
+        executeEnqueuedProtocolAsync(callback);
+    }
+
+    @Override
+    public <T> void commandAsync(final String database, final BsonDocument command, final ReadPreference readPreference,
+                                 final FieldNameValidator fieldNameValidator, final Decoder<T> commandResultDecoder,
+                                 final SingleResultCallback<T> callback) {
         executeEnqueuedProtocolAsync(callback);
     }
 

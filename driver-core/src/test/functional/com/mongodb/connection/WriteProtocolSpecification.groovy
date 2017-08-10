@@ -20,6 +20,7 @@ package com.mongodb.connection
 
 import com.mongodb.DuplicateKeyException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.ReadPreference
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.connection.netty.NettyStreamFactory
 import com.mongodb.internal.validator.NoOpFieldNameValidator
@@ -77,7 +78,9 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
         cleanup:
         // force acknowledgement
         new CommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
-                            new NoOpFieldNameValidator(), new BsonDocumentCodec()).execute(connection)
+                            new NoOpFieldNameValidator(), new BsonDocumentCodec())
+                .readPreference(ReadPreference.primary())
+                .execute(connection)
 
         where:
         async << [false, true]
@@ -124,7 +127,9 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
         execute(protocol, connection, async)
         // force acknowledgement
         new CommandProtocol(getDatabaseName(), new BsonDocument('ping', new BsonInt32(1)),
-                new NoOpFieldNameValidator(), new BsonDocumentCodec()).execute(connection)
+                new NoOpFieldNameValidator(), new BsonDocumentCodec())
+                .readPreference(ReadPreference.primary())
+                .execute(connection)
 
         then:
         getCollectionHelper().count() == 4
@@ -175,7 +180,9 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
         execute(protocol, connection, async)
         // force acknowledgement
         new CommandProtocol(getDatabaseName(), new BsonDocument('ping', new BsonInt32(1)),
-                new NoOpFieldNameValidator(), new BsonDocumentCodec()).execute(connection)
+                new NoOpFieldNameValidator(), new BsonDocumentCodec())
+                .readPreference(ReadPreference.primary())
+                .execute(connection)
 
         then:
         getCollectionHelper().count() == 1
@@ -203,7 +210,9 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
         execute(protocol, connection, async)
         // force acknowledgement
         new CommandProtocol(getDatabaseName(), new BsonDocument('ping', new BsonInt32(1)),
-                new NoOpFieldNameValidator(), new BsonDocumentCodec()).execute(connection)
+                new NoOpFieldNameValidator(), new BsonDocumentCodec())
+                .readPreference(ReadPreference.primary())
+                .execute(connection)
 
         then:
         getCollectionHelper().count() == 4

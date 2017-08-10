@@ -21,6 +21,7 @@ import com.mongodb.MongoCursorNotFoundException
 import com.mongodb.MongoException
 import com.mongodb.MongoTimeoutException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.ReadPreference
 import com.mongodb.ServerCursor
 import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
@@ -343,24 +344,11 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         executeQuery(0, batchSize)
     }
 
-    private QueryResult<Document> executeQuery(int batchSize, boolean slaveOk) {
-        executeQuery(0, batchSize, slaveOk)
-    }
-
     private QueryResult<Document> executeQuery(int limit, int batchSize) {
         executeQuery(new BsonDocument(), limit, batchSize, false, false)
     }
 
-    private QueryResult<Document> executeQuery(int limit, int batchSize, boolean slaveOk) {
-        executeQuery(new BsonDocument(), limit, batchSize, false, false, slaveOk)
-    }
-
     private QueryResult<Document> executeQuery(BsonDocument filter, int limit, int batchSize, boolean tailable, boolean awaitData) {
-        executeQuery(filter, limit, batchSize, tailable, awaitData, true)
-    }
-
-    private QueryResult<Document> executeQuery(BsonDocument filter, int limit, int batchSize, boolean tailable, boolean awaitData,
-                                               boolean slaveOk) {
         if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
             def findCommand = new BsonDocument('find', new BsonString(getCollectionName()))
                     .append('filter', filter)
@@ -379,14 +367,14 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
             def futureResultCallback = new FutureResultCallback<BsonDocument>();
             connection.commandAsync(getDatabaseName(), findCommand,
-                                    slaveOk, new NoOpFieldNameValidator(),
+                                    ReadPreference.secondaryPreferred(), new NoOpFieldNameValidator(),
                                     CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'), futureResultCallback)
             def response = futureResultCallback.get(60, SECONDS)
             cursorDocumentToQueryResult(response.getDocument('cursor'), connection.getDescription().getServerAddress())
         } else {
             def futureResultCallback = new FutureResultCallback<QueryResult<Document>>();
             connection.queryAsync(getNamespace(), filter, null, 0, limit, batchSize,
-                                  slaveOk, tailable, awaitData, false, false, false,
+                                  true, tailable, awaitData, false, false, false,
                                   new DocumentCodec(), futureResultCallback);
             futureResultCallback.get(60, SECONDS);
         }

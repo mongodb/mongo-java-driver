@@ -18,6 +18,7 @@ package com.mongodb.operation;
 
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.binding.ConnectionSource;
@@ -208,7 +209,7 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
                 try {
                     initFromCommandResult(connection.command(namespace.getDatabaseName(),
                                                              asGetMoreCommandDocument(),
-                                                             false,
+                                                             ReadPreference.primary(),
                                                              new NoOpFieldNameValidator(),
                                                              CommandResultDocumentCodec.create(decoder, "nextBatch")));
                 } catch (MongoCommandException e) {
@@ -273,7 +274,7 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
         if (serverCursor != null) {
             notNull("connection", connection);
             if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
-                connection.command(namespace.getDatabaseName(), asKillCursorsCommandDocument(), false,
+                connection.command(namespace.getDatabaseName(), asKillCursorsCommandDocument(), ReadPreference.primary(),
                         new NoOpFieldNameValidator(), new BsonDocumentCodec());
             } else {
                 connection.killCursor(namespace, singletonList(serverCursor.getId()));

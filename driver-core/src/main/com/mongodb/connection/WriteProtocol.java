@@ -18,6 +18,7 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernException;
 import com.mongodb.WriteConcernResult;
@@ -88,7 +89,7 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
                 if (shouldAcknowledge(requestMessage.getEncodingMetadata().getNextMessage())) {
                     SimpleCommandMessage getLastErrorMessage = new SimpleCommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
                             COMMAND_COLLECTION_NAME).getFullName(),
-                            createGetLastErrorCommandDocument(), false,
+                            createGetLastErrorCommandDocument(), ReadPreference.primary(),
                             getMessageSettings(connection.getDescription()));
                     getLastErrorMessage.encode(bsonOutput);
                     messageId = getLastErrorMessage.getId();
@@ -157,7 +158,7 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
             if (shouldAcknowledge(encodingMetadata.getNextMessage())) {
                 SimpleCommandMessage getLastErrorMessage = new SimpleCommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
                         COMMAND_COLLECTION_NAME).getFullName(),
-                        createGetLastErrorCommandDocument(), false,
+                        createGetLastErrorCommandDocument(), ReadPreference.primary(),
                         getMessageSettings(connection.getDescription()));
                 encodeMessage(getLastErrorMessage, bsonOutput);
                 SingleResultCallback<ResponseBuffers> receiveCallback = new WriteResultCallback(callback,

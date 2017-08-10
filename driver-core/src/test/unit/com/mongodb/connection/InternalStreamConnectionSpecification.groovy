@@ -42,6 +42,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
+import static com.mongodb.ReadPreference.primary
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxWriteBatchSize
 import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize
@@ -405,7 +406,7 @@ class InternalStreamConnectionSpecification extends Specification {
         given:
         def connection = getOpenedConnection()
         def pingCommandDocument = new BsonDocument('ping', new BsonInt32(1))
-        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, true, messageSettings)
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, primary(), messageSettings)
         stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
         stream.read(16) >> helper.defaultMessageHeader(commandMessage.getId())
         stream.read(90) >> helper.defaultReply()
@@ -425,7 +426,7 @@ class InternalStreamConnectionSpecification extends Specification {
         given:
         def connection = getOpenedConnection()
         def pingCommandDocument = new BsonDocument('ping', new BsonInt32(1))
-        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, true, messageSettings)
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, primary(), messageSettings)
         stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
         stream.write(_) >> { throw new MongoSocketWriteException('Failed to write', serverAddress, new IOException()) }
 
@@ -444,7 +445,7 @@ class InternalStreamConnectionSpecification extends Specification {
         given:
         def connection = getOpenedConnection()
         def pingCommandDocument = new BsonDocument('ping', new BsonInt32(1))
-        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, true, messageSettings)
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, primary(), messageSettings)
         stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
         stream.read(16) >> { throw new MongoSocketReadException('Failed to read', serverAddress) }
 
@@ -463,7 +464,7 @@ class InternalStreamConnectionSpecification extends Specification {
         given:
         def connection = getOpenedConnection()
         def pingCommandDocument = new BsonDocument('ping', new BsonInt32(1))
-        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, true, messageSettings)
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, primary(), messageSettings)
         stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
         stream.read(16) >> helper.defaultMessageHeader(commandMessage.getId())
         stream.read(90) >> { throw new MongoSocketReadException('Failed to read', serverAddress) }
@@ -483,7 +484,7 @@ class InternalStreamConnectionSpecification extends Specification {
         given:
         def connection = getOpenedConnection()
         def pingCommandDocument = new BsonDocument('ping', new BsonInt32(1))
-        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, true, messageSettings)
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, primary(), messageSettings)
         def response = '{ok : 0, errmsg : "failed"}'
         stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
         stream.read(16) >> helper.messageHeader(commandMessage.getId(), response)
@@ -504,7 +505,7 @@ class InternalStreamConnectionSpecification extends Specification {
         given:
         def securitySensitiveCommandName = securitySensitiveCommand.keySet().iterator().next()
         def connection = getOpenedConnection()
-        def commandMessage = new SimpleCommandMessage('admin.$cmd', securitySensitiveCommand, true, messageSettings)
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', securitySensitiveCommand, primary(), messageSettings)
         stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
         stream.read(16) >> helper.defaultMessageHeader(commandMessage.getId())
         stream.read(90) >> helper.defaultReply()
@@ -569,7 +570,7 @@ class InternalStreamConnectionSpecification extends Specification {
         given:
         def connection = getOpenedConnection()
         def pingCommandDocument = new BsonDocument('ping', new BsonInt32(1))
-        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, true, messageSettings)
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, primary(), messageSettings)
         def callback = new FutureResultCallback()
 
         stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
@@ -599,7 +600,7 @@ class InternalStreamConnectionSpecification extends Specification {
         given:
         def connection = getOpenedConnection()
         def pingCommandDocument = new BsonDocument('ping', new BsonInt32(1))
-        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, true, messageSettings)
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, primary(), messageSettings)
         def callback = new FutureResultCallback()
 
         stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
@@ -623,7 +624,7 @@ class InternalStreamConnectionSpecification extends Specification {
         given:
         def connection = getOpenedConnection()
         def pingCommandDocument = new BsonDocument('ping', new BsonInt32(1))
-        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, true, messageSettings)
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, primary(), messageSettings)
         def callback = new FutureResultCallback()
 
         stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
@@ -650,7 +651,7 @@ class InternalStreamConnectionSpecification extends Specification {
         given:
         def connection = getOpenedConnection()
         def pingCommandDocument = new BsonDocument('ping', new BsonInt32(1))
-        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, true, messageSettings)
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, primary(), messageSettings)
         def callback = new FutureResultCallback()
 
         stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
@@ -680,7 +681,7 @@ class InternalStreamConnectionSpecification extends Specification {
         given:
         def connection = getOpenedConnection()
         def pingCommandDocument = new BsonDocument('ping', new BsonInt32(1))
-        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, true, messageSettings)
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, primary(), messageSettings)
         def callback = new FutureResultCallback()
         def response = '{ok : 0, errmsg : "failed"}'
 
@@ -711,7 +712,7 @@ class InternalStreamConnectionSpecification extends Specification {
         given:
         def securitySensitiveCommandName = securitySensitiveCommand.keySet().iterator().next()
         def connection = getOpenedConnection()
-        def commandMessage = new SimpleCommandMessage('admin.$cmd', securitySensitiveCommand, true, messageSettings)
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', securitySensitiveCommand, primary(), messageSettings)
         def callback = new FutureResultCallback()
 
         stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }

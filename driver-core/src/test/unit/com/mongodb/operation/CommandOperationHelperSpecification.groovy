@@ -36,6 +36,7 @@ import org.bson.BsonString
 import org.bson.codecs.Decoder
 import spock.lang.Specification
 
+import static com.mongodb.ReadPreference.primary
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync
 import static com.mongodb.operation.CommandOperationHelper.isNamespaceError
@@ -104,7 +105,7 @@ class CommandOperationHelperSpecification extends Specification {
                                                              new ServerAddress()), 'some value') == 'some value'
     }
 
-    def 'should set slaveOK to false when using WriteBinding'() {
+    def 'should set read preference to primary to false when using WriteBinding'() {
         given:
         def dbName = 'db'
         def command = new BsonDocument()
@@ -124,11 +125,11 @@ class CommandOperationHelperSpecification extends Specification {
 
         then:
         _ * connection.getDescription() >> connectionDescription
-        1 * connection.command(dbName, command, false, _, decoder)
+        1 * connection.command(dbName, command, primary(), _, decoder)
         1 * connection.release()
     }
 
-    def 'should use the ReadBindings readPreference to set slaveOK'() {
+    def 'should use the ReadBindings readPreference'() {
         given:
         def dbName = 'db'
         def command = new BsonDocument()
@@ -149,14 +150,14 @@ class CommandOperationHelperSpecification extends Specification {
 
         then:
         _ * connection.getDescription() >> connectionDescription
-        1 * connection.command(dbName, command, readPreference.isSlaveOk(), _, decoder)
+        1 * connection.command(dbName, command, readPreference, _, decoder)
         1 * connection.release()
 
         where:
-        readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
+        readPreference << [primary(), ReadPreference.secondary()]
     }
 
-    def 'should set slaveOK to false when using AsyncWriteBinding'() {
+    def 'should set read preference to primary to false when using AsyncWriteBinding'() {
         given:
         def dbName = 'db'
         def command = new BsonDocument()
@@ -177,11 +178,11 @@ class CommandOperationHelperSpecification extends Specification {
 
         then:
         _ * connection.getDescription() >> connectionDescription
-        1 * connection.commandAsync(dbName, command, false, _, decoder, _) >> { it[5].onResult(1, null) }
+        1 * connection.commandAsync(dbName, command, primary(), _, decoder, _) >> { it[5].onResult(1, null) }
         1 * connection.release()
     }
 
-    def 'should use the AsyncReadBindings readPreference to set slaveOK'() {
+    def 'should use the AsyncReadBindings readPreference'() {
         given:
         def dbName = 'db'
         def command = new BsonDocument()
@@ -203,11 +204,11 @@ class CommandOperationHelperSpecification extends Specification {
 
         then:
         _ * connection.getDescription() >> connectionDescription
-        1 * connection.commandAsync(dbName, command, readPreference.isSlaveOk(), _, decoder, _) >> { it[5].onResult(1, null) }
+        1 * connection.commandAsync(dbName, command, readPreference, _, decoder, _) >> { it[5].onResult(1, null) }
         1 * connection.release()
 
         where:
-        readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
+        readPreference << [primary(), ReadPreference.secondary()]
     }
 
 }
