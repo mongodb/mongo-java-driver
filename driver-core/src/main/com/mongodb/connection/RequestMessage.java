@@ -19,7 +19,10 @@ package com.mongodb.connection;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonBinaryWriterSettings;
 import org.bson.BsonDocument;
+import org.bson.BsonElement;
+import org.bson.BsonWriter;
 import org.bson.BsonWriterSettings;
+import org.bson.ElementExtendingBsonWriter;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.Codec;
@@ -28,6 +31,7 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.io.BsonOutput;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -182,12 +186,17 @@ abstract class RequestMessage {
      * @param document the document
      * @param bsonOutput the output
      * @param validator the field name validator
-     * @param <T> the document type
      */
-    protected <T> void addDocument(final BsonDocument document, final BsonOutput bsonOutput,
-                                   final FieldNameValidator validator) {
+    protected void addDocument(final BsonDocument document, final BsonOutput bsonOutput,
+                               final FieldNameValidator validator) {
         addDocument(document, getCodec(document), EncoderContext.builder().build(), bsonOutput, validator,
-                    settings.getMaxDocumentSize() + QUERY_DOCUMENT_HEADROOM);
+                    settings.getMaxDocumentSize() + QUERY_DOCUMENT_HEADROOM, null);
+    }
+
+    protected void addDocument(final BsonDocument document, final BsonOutput bsonOutput,
+                               final FieldNameValidator validator, final List<BsonElement> extraElements) {
+        addDocument(document, getCodec(document), EncoderContext.builder().build(), bsonOutput, validator,
+                settings.getMaxDocumentSize() + QUERY_DOCUMENT_HEADROOM, extraElements);
     }
 
 
@@ -201,7 +210,7 @@ abstract class RequestMessage {
     protected void addCollectibleDocument(final BsonDocument document, final BsonOutput bsonOutput,
                                           final FieldNameValidator validator) {
         addDocument(document, getCodec(document), EncoderContext.builder().isEncodingCollectibleDocument(true).build(), bsonOutput,
-                    validator, settings.getMaxDocumentSize());
+                    validator, settings.getMaxDocumentSize(), null);
     }
 
     /**
@@ -230,13 +239,13 @@ abstract class RequestMessage {
     }
 
     private <T> void addDocument(final T obj, final Encoder<T> encoder, final EncoderContext encoderContext,
-                                 final BsonOutput bsonOutput, final FieldNameValidator validator, final int maxDocumentSize) {
-        BsonBinaryWriter writer = new BsonBinaryWriter(new BsonWriterSettings(),
-                                                       new BsonBinaryWriterSettings(maxDocumentSize), bsonOutput, validator);
-        try {
-            encoder.encode(writer, obj, encoderContext);
-        } finally {
-            writer.close();
+                                 final BsonOutput bsonOutput, final FieldNameValidator validator, final int maxDocumentSize,
+                                 final List<BsonElement> extraElements) {
+        BsonWriter writer = new BsonBinaryWriter(new BsonWriterSettings(),
+                                                        new BsonBinaryWriterSettings(maxDocumentSize), bsonOutput, validator);
+        if (extraElements != null) {
+            writer = new ElementExtendingBsonWriter(writer, extraElements);
         }
+        encoder.encode(writer, obj, encoderContext);
     }
 }
