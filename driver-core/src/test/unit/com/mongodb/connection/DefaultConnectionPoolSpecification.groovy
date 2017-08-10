@@ -34,6 +34,7 @@ import spock.lang.Subject
 
 import java.util.concurrent.CountDownLatch
 
+import static com.mongodb.ReadPreference.primary
 import static com.mongodb.connection.ConnectionPoolSettings.builder
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.MINUTES
@@ -177,7 +178,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         c2 = pool.get()
 
         and:
-        c2.sendAndReceive(new SimpleCommandMessage('test', new BsonDocument('ping', new BsonInt32(1)), true,
+        c2.sendAndReceive(new SimpleCommandMessage('test', new BsonDocument('ping', new BsonInt32(1)), primary(),
                 MessageSettings.builder().serverVersion(new ServerVersion(0, 0)).build()),
                 new BsonDocumentCodec())
 
@@ -264,7 +265,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         c2 = pool.get()
 
         and:
-        c2.sendAndReceiveAsync(new SimpleCommandMessage('test', new BsonDocument('ping', new BsonInt32(1)), true,
+        c2.sendAndReceiveAsync(new SimpleCommandMessage('test', new BsonDocument('ping', new BsonInt32(1)), primary(),
                 MessageSettings.builder().serverVersion(new ServerVersion(0, 0)).build()),
                 new BsonDocumentCodec()) {
             result, t -> e = t

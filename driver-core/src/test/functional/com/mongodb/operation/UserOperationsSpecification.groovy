@@ -367,7 +367,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
 
         then:
         _ * connection.getDescription() >> helper.twoSixConnectionDescription
-        1 * connection.command(helper.dbName, _, readPreference.isSlaveOk(), _, _) >> helper.cursorResult
+        1 * connection.command(helper.dbName, _, readPreference, _, _) >> helper.cursorResult
 
         where:
         readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
@@ -390,7 +390,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
 
         then:
         _ * connection.getDescription() >> helper.twoSixConnectionDescription
-        1 * connection.commandAsync(helper.dbName, _, readPreference.isSlaveOk(), _, _, _) >> {
+        1 * connection.commandAsync(helper.dbName, _, readPreference, _, _, _) >> {
             it[5].onResult(helper.cursorResult, null) }
 
         where:

@@ -28,7 +28,6 @@ import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
-import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
@@ -37,7 +36,6 @@ import org.bson.codecs.Decoder;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
@@ -213,8 +211,8 @@ final class CommandOperationHelper {
                                                           final Connection connection, final ReadPreference readPreference,
                                                           final CommandTransformer<D, T> transformer) {
 
-        return transformer.apply(connection.command(database, wrapCommand(command, readPreference, connection.getDescription()),
-                readPreference.isSlaveOk(), fieldNameValidator, decoder), connection.getDescription().getServerAddress());
+        return transformer.apply(connection.command(database, command, readPreference, fieldNameValidator, decoder),
+                connection.getDescription().getServerAddress());
     }
 
     /* Async Read Binding Helpers */
@@ -373,8 +371,8 @@ final class CommandOperationHelper {
                                                                   final ReadPreference readPreference,
                                                                   final CommandTransformer<D, T> transformer,
                                                                   final SingleResultCallback<T> callback) {
-        connection.commandAsync(database, wrapCommand(command, readPreference, connection.getDescription()),
-                readPreference.isSlaveOk(), fieldNameValidator, decoder, new SingleResultCallback<D>() {
+        connection.commandAsync(database, command,
+                readPreference, fieldNameValidator, decoder, new SingleResultCallback<D>() {
                     @Override
                     public void onResult(final D result, final Throwable t) {
                         if (t != null) {
@@ -413,15 +411,6 @@ final class CommandOperationHelper {
         }
     }
 
-    static BsonDocument wrapCommand(final BsonDocument command, final ReadPreference readPreference,
-                                    final ConnectionDescription connectionDescription) {
-        if (connectionDescription.getServerType() == SHARD_ROUTER && !readPreference.equals(primary())) {
-            return new BsonDocument("$query", command).append("$readPreference", readPreference.toDocument());
-        } else {
-            return command;
-        }
-    }
-
     private static class CommandProtocolExecutingCallback<D, R> implements SingleResultCallback<AsyncConnectionSource> {
         private final String database;
         private final BsonDocument command;
@@ -455,8 +444,8 @@ final class CommandOperationHelper {
                             callback.onResult(null, t);
                         } else {
                             final SingleResultCallback<R> wrappedCallback = releasingCallback(callback, source, connection);
-                            connection.commandAsync(database, wrapCommand(command, readPreference, connection.getDescription()),
-                                                    readPreference.isSlaveOk(), fieldNameValidator, decoder, new SingleResultCallback<D>() {
+                            connection.commandAsync(database, command,
+                                                    readPreference, fieldNameValidator, decoder, new SingleResultCallback<D>() {
                                 @Override
                                 public void onResult(final D response, final Throwable t) {
                                     if (t != null) {

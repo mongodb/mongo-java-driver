@@ -24,6 +24,7 @@ import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 
 import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
+import static com.mongodb.ReadPreference.primary;
 
 final class CommandHelper {
     static BsonDocument executeCommand(final String database, final BsonDocument command, final InternalConnection internalConnection) {
@@ -42,7 +43,7 @@ final class CommandHelper {
     static void executeCommandAsync(final String database, final BsonDocument command, final InternalConnection internalConnection,
                                     final SingleResultCallback<BsonDocument> callback) {
         final SimpleCommandMessage message =
-                new SimpleCommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(), command, false,
+                new SimpleCommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(), command, primary(),
                                                 MessageSettings.builder()
                                                         .serverVersion(internalConnection.getDescription().getServerVersion())
                                                         .build());
@@ -76,7 +77,7 @@ final class CommandHelper {
     private static BsonDocument sendAndReceive(final String database, final BsonDocument command,
                                                final InternalConnection internalConnection) {
         SimpleCommandMessage message = new SimpleCommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(),
-                                                                       command, false,
+                                                                       command, primary(),
                                                                        MessageSettings
                                                                                .builder()
                                                                                // Note: server version will be 0.0 at this point when called

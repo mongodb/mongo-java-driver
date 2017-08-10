@@ -307,10 +307,16 @@ public class CommandMonitoringTest {
             String commandName = eventDescriptionDocument.getString("command_name").getValue();
             if (eventType.equals("command_started_event")) {
                 BsonDocument commandDocument = eventDescriptionDocument.getDocument("command");
-                // TODO: excluding write commands is temporary
-                if (serverVersionAtLeast(3, 5)
-                            && !Arrays.asList("insert", "update", "delete").contains(commandName)) {
-                    commandDocument.put("$db", new BsonString(databaseName));
+                if (serverVersionAtLeast(3, 5)) {
+                    // TODO: excluding write commands is temporary
+                    if (!Arrays.asList("insert", "update", "delete").contains(commandName)) {
+                        commandDocument.put("$db", new BsonString(databaseName));
+                    }
+                    // TODO: not clear whether this should be included, but also not clear how to efficiently exclude it
+                    BsonDocument operation = definition.getDocument("operation");
+                    if (operation.containsKey("read_preference")) {
+                        commandDocument.put("$readPreference", operation.getDocument("read_preference"));
+                    }
                 }
                 commandEvent = new CommandStartedEvent(1, null, databaseName, commandName, commandDocument);
             } else if (eventType.equals("command_succeeded_event")) {

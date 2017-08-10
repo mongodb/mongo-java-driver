@@ -36,6 +36,7 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import spock.lang.Specification
 
+import static com.mongodb.ReadPreference.primary
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class AsyncQueryBatchCursorSpecification extends Specification {
@@ -97,7 +98,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         then:
         if (firstBatch.getCursor() != null) {
             if (serverVersion.compareTo(new ServerVersion(3, 2)) >= 0) {
-                1 * connection.commandAsync(NAMESPACE.databaseName, createKillCursorsDocument(firstBatch.cursor), false, _, _, _) >> {
+                1 * connection.commandAsync(NAMESPACE.databaseName, createKillCursorsDocument(firstBatch.cursor), primary(), _, _, _) >> {
                     it[5].onResult(null, null)
                 }
             } else {
@@ -228,7 +229,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
 
         then:
         if (serverVersion.compareTo(new ServerVersion(3, 2)) >= 0) {
-            1 * connection.commandAsync(NAMESPACE.databaseName, createKillCursorsDocument(queryResult.cursor), false, _, _, _) >> {
+            1 * connection.commandAsync(NAMESPACE.databaseName, createKillCursorsDocument(queryResult.cursor), primary(), _, _, _) >> {
                 it[5].onResult(null, null)
             }
         } else {
@@ -329,7 +330,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
             1 * connection.commandAsync(_, _, _, _, _, _) >> {
                 it[5].onResult(response, null)
             }
-            1 * connection.commandAsync(NAMESPACE.databaseName, createKillCursorsDocument(initialResult.cursor), false, _, _, _) >> {
+            1 * connection.commandAsync(NAMESPACE.databaseName, createKillCursorsDocument(initialResult.cursor), primary(), _, _, _) >> {
                 it[5].onResult(null, null)
             }
         } else {
@@ -382,7 +383,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
                 cursor.close()
                 it[5].onResult(response, null)
             }
-            1 * connectionB.commandAsync(NAMESPACE.databaseName, createKillCursorsDocument(initialResult.cursor), false, _, _, _) >> {
+            1 * connectionB.commandAsync(NAMESPACE.databaseName, createKillCursorsDocument(initialResult.cursor), primary(), _, _, _) >> {
                 it[5].onResult(null, null)
             }
         } else {

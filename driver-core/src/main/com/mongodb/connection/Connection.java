@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.annotations.ThreadSafe;
@@ -166,8 +167,25 @@ public interface Connection extends ReferenceCounted {
      * @param commandResultDecoder the decoder for the result
      * @param <T>                  the type of the result
      * @return the command result
+     * @deprecated Prefer {@link #command(String, BsonDocument, ReadPreference, FieldNameValidator, Decoder)}
      */
+    @Deprecated
     <T> T command(String database, BsonDocument command, boolean slaveOk, FieldNameValidator fieldNameValidator,
+                  Decoder<T> commandResultDecoder);
+
+    /**
+     * Execute the command.
+     *
+     * @param database             the database to execute the command in
+     * @param command              the command document
+     * @param readPreference       the read preference that was applied to get this connection
+     * @param fieldNameValidator   the field name validator for the command document
+     * @param commandResultDecoder the decoder for the result
+     * @param <T>                  the type of the result
+     * @return the command result
+     * @since 3.6
+     */
+    <T> T command(String database, BsonDocument command, ReadPreference readPreference, FieldNameValidator fieldNameValidator,
                   Decoder<T> commandResultDecoder);
 
     /**

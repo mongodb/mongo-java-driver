@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.annotations.ThreadSafe;
@@ -172,8 +173,25 @@ public interface AsyncConnection extends ReferenceCounted {
      * @param commandResultDecoder the decoder for the result
      * @param callback             the callback to be passed the command result
      * @param <T>                  the type of the result
+     * @deprecated Prefer {@link #commandAsync(String, BsonDocument, ReadPreference, FieldNameValidator, Decoder, SingleResultCallback)}
      */
+    @Deprecated
     <T> void commandAsync(String database, BsonDocument command, boolean slaveOk, FieldNameValidator fieldNameValidator,
+                          Decoder<T> commandResultDecoder, SingleResultCallback<T> callback);
+
+    /**
+     * Execute the command asynchronously.
+     *
+     * @param database             the database to execute the command in
+     * @param command              the command document
+     * @param readPreference       the read preference that was applied to get this connection
+     * @param fieldNameValidator   the field name validator for the command document
+     * @param commandResultDecoder the decoder for the result
+     * @param callback             the callback to be passed the command result
+     * @param <T>                  the type of the result
+     * @since 3.6
+     */
+    <T> void commandAsync(String database, BsonDocument command, ReadPreference readPreference, FieldNameValidator fieldNameValidator,
                           Decoder<T> commandResultDecoder, SingleResultCallback<T> callback);
 
     /**

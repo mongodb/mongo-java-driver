@@ -272,7 +272,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
         then:
         _ * connection.getDescription() >> helper.threeZeroConnectionDescription
-        1 * connection.command(_, _, readPreference.isSlaveOk(), _, _) >> helper.commandResult
+        1 * connection.command(_, _, readPreference, _, _) >> helper.commandResult
         1 * connection.release()
 
         where:
@@ -304,7 +304,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
 
         then:
         _ * connection.getDescription() >> helper.threeZeroConnectionDescription
-        1 * connection.commandAsync(helper.dbName, _, readPreference.isSlaveOk(), _, _, _) >> { it[6].onResult(helper.commandResult, _) }
+        1 * connection.commandAsync(helper.dbName, _, readPreference, _, _, _) >> { it[6].onResult(helper.commandResult, _) }
 
         where:
         readPreference << [ReadPreference.primary(), ReadPreference.secondary()]

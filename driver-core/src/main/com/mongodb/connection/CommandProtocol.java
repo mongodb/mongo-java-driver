@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
@@ -43,7 +44,7 @@ class CommandProtocol<T> implements Protocol<T> {
     private final BsonDocument command;
     private final Decoder<T> commandResultDecoder;
     private final FieldNameValidator fieldNameValidator;
-    private boolean slaveOk;
+    private ReadPreference readPreference;
 
     CommandProtocol(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
                     final Decoder<T> commandResultDecoder) {
@@ -54,12 +55,8 @@ class CommandProtocol<T> implements Protocol<T> {
         this.fieldNameValidator = notNull("fieldNameValidator", fieldNameValidator);
     }
 
-    public boolean isSlaveOk() {
-        return slaveOk;
-    }
-
-    public CommandProtocol<T> slaveOk(final boolean slaveOk) {
-        this.slaveOk = slaveOk;
+    public CommandProtocol<T> readPreference(final ReadPreference readPreference) {
+        this.readPreference = readPreference;
         return this;
     }
 
@@ -71,7 +68,7 @@ class CommandProtocol<T> implements Protocol<T> {
                                 namespace.getDatabaseName(), connection.getDescription().getConnectionId(),
                                 connection.getDescription().getServerAddress()));
         }
-        SimpleCommandMessage commandMessage = new SimpleCommandMessage(namespace.getFullName(), command, slaveOk, fieldNameValidator,
+        SimpleCommandMessage commandMessage = new SimpleCommandMessage(namespace.getFullName(), command, readPreference, fieldNameValidator,
                                                                               getMessageSettings(connection.getDescription()));
         T retval = connection.sendAndReceive(commandMessage, commandResultDecoder);
         LOGGER.debug("Command execution completed");
@@ -80,7 +77,7 @@ class CommandProtocol<T> implements Protocol<T> {
 
     @Override
     public void executeAsync(final InternalConnection connection, final SingleResultCallback<T> callback) {
-        final SimpleCommandMessage message = new SimpleCommandMessage(namespace.getFullName(), command, slaveOk, fieldNameValidator,
+        final SimpleCommandMessage message = new SimpleCommandMessage(namespace.getFullName(), command, readPreference, fieldNameValidator,
                 getMessageSettings(connection.getDescription()));
         try {
             if (LOGGER.isDebugEnabled()) {

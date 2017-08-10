@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.async.SingleResultCallback;
@@ -173,17 +174,30 @@ class DefaultServerConnection extends AbstractReferenceCounted implements Connec
     public <T> T command(final String database, final BsonDocument command, final boolean slaveOk,
                          final FieldNameValidator fieldNameValidator,
                          final Decoder<T> commandResultDecoder) {
+        return command(database, command, getReadPreferenceFromSlaveOk(slaveOk), fieldNameValidator, commandResultDecoder);
+    }
+
+    @Override
+    public <T> T command(final String database, final BsonDocument command, final ReadPreference readPreference,
+                         final FieldNameValidator fieldNameValidator, final Decoder<T> commandResultDecoder) {
         return executeProtocol(new CommandProtocol<T>(database, command, fieldNameValidator, commandResultDecoder)
-                               .slaveOk(getSlaveOk(slaveOk)));
+                                       .readPreference(readPreference));
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final boolean slaveOk,
                                            final FieldNameValidator fieldNameValidator,
                                            final Decoder<T> commandResultDecoder, final SingleResultCallback<T> callback) {
+        commandAsync(database, command, getReadPreferenceFromSlaveOk(slaveOk), fieldNameValidator, commandResultDecoder, callback);
+    }
+
+    @Override
+    public <T> void commandAsync(final String database, final BsonDocument command, final ReadPreference readPreference,
+                                 final FieldNameValidator fieldNameValidator, final Decoder<T> commandResultDecoder,
+                                 final SingleResultCallback<T> callback) {
         executeProtocolAsync(new CommandProtocol<T>(database, command, fieldNameValidator, commandResultDecoder)
-                             .slaveOk(getSlaveOk(slaveOk)),
-                             callback);
+                                     .readPreference(readPreference),
+                callback);
     }
 
     @Override
@@ -278,6 +292,10 @@ class DefaultServerConnection extends AbstractReferenceCounted implements Connec
     @Override
     public void killCursorAsync(final MongoNamespace namespace, final List<Long> cursors, final SingleResultCallback<Void> callback) {
         executeProtocolAsync(new KillCursorProtocol(namespace, cursors), callback);
+    }
+
+    private ReadPreference getReadPreferenceFromSlaveOk(final boolean slaveOk) {
+        return getSlaveOk(slaveOk) ? ReadPreference.secondaryPreferred() : ReadPreference.primary();
     }
 
     private boolean getSlaveOk(final boolean slaveOk) {

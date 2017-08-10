@@ -21,6 +21,7 @@ package com.mongodb.connection
 import com.mongodb.DuplicateKeyException
 import com.mongodb.MongoCommandException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.bulk.DeleteRequest
 import com.mongodb.bulk.InsertRequest
@@ -95,7 +96,9 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         cleanup:
         // force acknowledgement
         new CommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
-                            new NoOpFieldNameValidator(), new BsonDocumentCodec()).execute(connection)
+                            new NoOpFieldNameValidator(), new BsonDocumentCodec())
+                .readPreference(ReadPreference.primary())
+                .execute(connection)
 
         where:
         async << [false, true]
@@ -143,7 +146,9 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         cleanup:
         // force acknowledgement
         new CommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
-                            new NoOpFieldNameValidator(), new BsonDocumentCodec()).execute(connection)
+                            new NoOpFieldNameValidator(), new BsonDocumentCodec())
+                .readPreference(ReadPreference.primary())
+                .execute(connection)
 
         where:
         async << [false, true]
@@ -254,7 +259,9 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         cleanup:
         // force acknowledgement
         new CommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
-                            new NoOpFieldNameValidator(), new BsonDocumentCodec()).execute(connection)
+                            new NoOpFieldNameValidator(), new BsonDocumentCodec())
+                .readPreference(ReadPreference.primary())
+                .execute(connection)
 
         where:
         async << [false, true]

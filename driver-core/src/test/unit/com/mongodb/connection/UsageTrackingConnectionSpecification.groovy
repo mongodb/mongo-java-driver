@@ -26,6 +26,7 @@ import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
+import static com.mongodb.ReadPreference.primary
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class UsageTrackingConnectionSpecification extends Specification {
@@ -171,7 +172,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         def openedLastUsedAt = connection.lastUsedAt
 
         when:
-        connection.sendAndReceive(new SimpleCommandMessage('test', new BsonDocument('ping', new BsonInt32(1)), true,
+        connection.sendAndReceive(new SimpleCommandMessage('test', new BsonDocument('ping', new BsonInt32(1)), primary(),
                 MessageSettings.builder().serverVersion(new ServerVersion(0, 0)).build()), new BsonDocumentCodec())
 
         then:
@@ -187,7 +188,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         def futureResultCallback = new FutureResultCallback<Void>()
 
         when:
-        connection.sendAndReceiveAsync(new SimpleCommandMessage('test', new BsonDocument('ping', new BsonInt32(1)), true,
+        connection.sendAndReceiveAsync(new SimpleCommandMessage('test', new BsonDocument('ping', new BsonInt32(1)), primary(),
                 MessageSettings.builder().serverVersion(new ServerVersion(0, 0)).build()),
                 new BsonDocumentCodec(), futureResultCallback)
         futureResultCallback.get(60, SECONDS)

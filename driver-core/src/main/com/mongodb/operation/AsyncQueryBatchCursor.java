@@ -19,6 +19,7 @@ package com.mongodb.operation;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadPreference;
 import com.mongodb.ServerCursor;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
@@ -146,7 +147,7 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
 
     private void getMore(final AsyncConnection connection, final ServerCursor cursor, final SingleResultCallback<List<T>> callback) {
         if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
-            connection.commandAsync(namespace.getDatabaseName(), asGetMoreCommandDocument(cursor.getId()), false,
+            connection.commandAsync(namespace.getDatabaseName(), asGetMoreCommandDocument(cursor.getId()), ReadPreference.primary(),
                                     new NoOpFieldNameValidator(), CommandResultDocumentCodec.create(decoder, "nextBatch"),
                                     new CommandResultSingleResultCallback(connection, cursor, callback));
 
@@ -199,7 +200,7 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
 
     private void killCursorAsynchronouslyAndReleaseConnectionAndSource(final AsyncConnection connection, final ServerCursor localCursor) {
         if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
-            connection.commandAsync(namespace.getDatabaseName(), asKillCursorsCommandDocument(localCursor), false,
+            connection.commandAsync(namespace.getDatabaseName(), asKillCursorsCommandDocument(localCursor), ReadPreference.primary(),
                     new NoOpFieldNameValidator(), new BsonDocumentCodec(), new SingleResultCallback<BsonDocument>() {
                         @Override
                         public void onResult(final BsonDocument result, final Throwable t) {
