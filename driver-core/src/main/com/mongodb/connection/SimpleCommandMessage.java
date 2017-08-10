@@ -20,9 +20,13 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonDocument;
+import org.bson.BsonElement;
 import org.bson.BsonString;
 import org.bson.FieldNameValidator;
 import org.bson.io.BsonOutput;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.mongodb.ReadPreference.primary;
 
@@ -52,12 +56,15 @@ class SimpleCommandMessage extends CommandMessage {
     @Override
     protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final int messageStartPosition) {
         BsonDocument commandToEncode;
+        List<BsonElement> extraElements = null;
         if (useNewOpCode()) {
             bsonOutput.writeInt32(0);  // flag bits
             bsonOutput.writeByte(0);   // payload type
-            command.put("$db", new BsonString(new MongoNamespace(getCollectionName()).getDatabaseName()));
+
+            extraElements = new ArrayList<BsonElement>();
+            extraElements.add(new BsonElement("$db", new BsonString(new MongoNamespace(getCollectionName()).getDatabaseName())));
             if (!isDefaultReadPreference()) {
-                command.put("$readPreference", readPreference.toDocument());
+                extraElements.add(new BsonElement("$readPreference", readPreference.toDocument()));
             }
             commandToEncode = command;
         } else {
@@ -73,7 +80,7 @@ class SimpleCommandMessage extends CommandMessage {
         }
 
         int firstDocumentPosition = bsonOutput.getPosition();
-        addDocument(commandToEncode, bsonOutput, validator);
+        addDocument(commandToEncode, bsonOutput, validator, extraElements);
         return new EncodingMetadata(null, firstDocumentPosition);
     }
 
