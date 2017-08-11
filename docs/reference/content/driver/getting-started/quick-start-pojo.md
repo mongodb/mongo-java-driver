@@ -139,7 +139,7 @@ to handle the translation to and from [`bson`]({{< relref "bson/index.md" >}}) f
 The following example will combine the default codec registry, with the `PojoCodecProvider` configured to automatically create `PojoCodecs`:
 ```java
 CodecRegistry pojoCodecRegistry = fromRegistries(MongoClient.getDefaultCodecRegistry(),
-                fromProviders(PojoCodecProvider.builder().automatic().build()));
+                fromProviders(PojoCodecProvider.builder().automatic(true).build()));
 ```
 
 ### Using the CodecRegistry
