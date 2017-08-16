@@ -37,7 +37,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.async.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.async.client.Fixture.initializeCollection;
 
@@ -69,7 +68,6 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
 
 
 public final class DocumentationSamples extends DatabaseTestCase {
@@ -846,7 +844,6 @@ public final class DocumentationSamples extends DatabaseTestCase {
 
     @Test
     public void testUpdates() throws InterruptedException, ExecutionException, TimeoutException {
-        assumeTrue(serverVersionAtLeast(2, 6));
         //Start Example 51
         final CountDownLatch insertLatch = new CountDownLatch(1);
         collection.insertMany(asList(

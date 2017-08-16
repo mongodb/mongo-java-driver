@@ -222,7 +222,6 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         [async, useCursor] << [[true, false], useCursorOptions()].combinations()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should allow disk usage'() {
         when:
         AggregateOperation operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).allowDiskUse(allowDiskUse)
@@ -235,7 +234,6 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         allowDiskUse << [null, true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should allow batch size'() {
         when:
         AggregateOperation operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).batchSize(batchSize)
@@ -248,7 +246,6 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         batchSize << [null, 0, 10]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should throw execution timeout exception from execute'() {
         given:
         def operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).maxTime(1, SECONDS)
@@ -267,7 +264,6 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should be able to explain an empty pipeline'() {
         given:
         def operation = new AggregateOperation(getNamespace(), [], new BsonDocumentCodec())
@@ -306,9 +302,6 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         def operation = new AggregateOperation(helper.namespace, [], new BsonDocumentCodec())
 
         then:
-        testOperationSlaveOk(operation, [2, 4, 0], readPreference, async, helper.inlineResult)
-
-        then:
         testOperationSlaveOk(operation, [2, 6, 0], readPreference, async, helper.cursorResult)
 
         where:
@@ -318,9 +311,6 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     def helper = [
             dbName: 'db',
             namespace: new MongoNamespace('db', 'coll'),
-            twoFourConnectionDescription: Stub(ConnectionDescription) {
-                getServerVersion() >> new ServerVersion([2, 4, 0])
-            },
             twoSixConnectionDescription : Stub(ConnectionDescription) {
                 getServerVersion() >> new ServerVersion([2, 6, 0])
             },

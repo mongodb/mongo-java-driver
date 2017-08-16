@@ -171,7 +171,6 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should throw execution timeout exception from execute'() {
         given:
         def operation = new DistinctOperation(getNamespace(), 'name', stringDecoder).maxTime(1, SECONDS)

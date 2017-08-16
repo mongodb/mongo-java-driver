@@ -475,6 +475,7 @@ class MultiServerClusterSpecification extends Specification {
                 .setName('test')
                 .canonicalAddress(firstServer.toString())
                 .setVersion(1)
+                .maxWireVersion(1)
                 .build()
 
         when:

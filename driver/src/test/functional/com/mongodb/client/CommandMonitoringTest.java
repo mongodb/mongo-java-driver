@@ -66,7 +66,6 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.Fixture.getMongoClientURI;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
@@ -175,9 +174,6 @@ public class CommandMonitoringTest {
 
     @Test
     public void shouldPassAllOutcomes() {
-        // On server <= 2.4, insertMany generates an insert command for every document, so the test fails
-        assumeFalse(filename.startsWith("insertMany") && !serverVersionAtLeast(2, 6));
-
         executeOperation();
 
         List<CommandEvent> expectedEvents = getExpectedEvents(definition.getArray("expectations"));

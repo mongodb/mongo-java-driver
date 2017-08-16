@@ -366,14 +366,6 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         operation.execute(readBinding)
 
         then:
-        _ * connection.getDescription() >> helper.twoFourConnectionDescription
-        1 * connection.query(_, _, _, _, _, _, readPreference.isSlaveOk(), _, _, _, _, _, _) >>  helper.queryResult
-        1 * connection.release()
-
-        when: '2.6.0'
-        operation.execute(readBinding)
-
-        then:
         _ * connection.getDescription() >> helper.twoSixConnectionDescription
         1 * connection.command(helper.dbName, _, readPreference.isSlaveOk(), _, _) >> helper.cursorResult
 
@@ -397,14 +389,6 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         operation.executeAsync(readBinding, Stub(SingleResultCallback))
 
         then:
-        _ * connection.getDescription() >> helper.twoFourConnectionDescription
-        1 * connection.queryAsync(_, _, _, _, _, _, readPreference.isSlaveOk(), _, _, _, _, _, _, _) >> {
-            it[13].onResult(helper.queryResult, null) }
-
-        when: '2.6.0'
-        operation.executeAsync(readBinding, Stub(SingleResultCallback))
-
-        then:
         _ * connection.getDescription() >> helper.twoSixConnectionDescription
         1 * connection.commandAsync(helper.dbName, _, readPreference.isSlaveOk(), _, _, _) >> {
             it[5].onResult(helper.cursorResult, null) }
@@ -416,9 +400,6 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
     def helper = [
             dbName: 'db',
             namespace: new MongoNamespace('db', 'coll'),
-            twoFourConnectionDescription: Stub(ConnectionDescription) {
-                getServerVersion() >> new ServerVersion([2, 4, 0])
-            },
             twoSixConnectionDescription : Stub(ConnectionDescription) {
                 getServerVersion() >> new ServerVersion([2, 6, 0])
             },

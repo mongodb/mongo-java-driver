@@ -17,9 +17,7 @@
 package com.mongodb.client.model
 
 import com.mongodb.OperationFunctionalSpecification
-import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.model.Indexes.ascending
 import static com.mongodb.client.model.Indexes.compoundIndex
 import static com.mongodb.client.model.Indexes.descending
@@ -108,7 +106,6 @@ class IndexesFunctionalSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().listIndexes()*.get('key').contains(parse('{x : "geoHaystack", b: -1}'))
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'text'() {
         when:
         getCollectionHelper().createIndex(text('x'))
@@ -117,7 +114,6 @@ class IndexesFunctionalSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().listIndexes()*.get('key').contains(parse('{_fts: "text", _ftsx: 1}'))
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 4) })
     def 'hashed'() {
         when:
         getCollectionHelper().createIndex(hashed('x'))

@@ -903,6 +903,6 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     }
 
     private static Integer expectedModifiedCount(final int expectedCountForServersThatSupportIt) {
-        (serverVersionAtLeast(2, 6)) ? expectedCountForServersThatSupportIt : null
+        expectedCountForServersThatSupportIt
     }
 }

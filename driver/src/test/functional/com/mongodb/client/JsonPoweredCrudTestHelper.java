@@ -43,7 +43,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonNull;
 import org.bson.BsonValue;
-import org.junit.Assume;
 import org.junit.AssumptionViolatedException;
 
 import java.lang.reflect.InvocationTargetException;
@@ -51,8 +50,6 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 
 public class JsonPoweredCrudTestHelper {
     private final String description;
@@ -124,10 +121,6 @@ public class JsonPoweredCrudTestHelper {
     }
 
     BsonDocument getAggregateResult(final BsonDocument arguments) {
-        if (!serverVersionAtLeast(2, 6)) {
-            Assume.assumeFalse(description.contains("$out"));
-        }
-
         List<BsonDocument> pipeline = new ArrayList<BsonDocument>();
         for (BsonValue stage : arguments.getArray("pipeline")) {
             pipeline.add(stage.asDocument());
@@ -226,9 +219,6 @@ public class JsonPoweredCrudTestHelper {
     }
 
     BsonDocument getFindOneAndReplaceResult(final BsonDocument arguments) {
-        // in 2.4 the server can ignore the supplied _id and creates an ObjectID
-        Assume.assumeTrue(serverVersionAtLeast(2, 6));
-
         FindOneAndReplaceOptions options = new FindOneAndReplaceOptions();
         if (arguments.containsKey("projection")) {
             options.projection(arguments.getDocument("projection"));

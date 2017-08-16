@@ -17,13 +17,10 @@
 package com.mongodb.operation;
 
 import com.mongodb.MongoCommandException;
-import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
-import com.mongodb.WriteConcernResult;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
-import com.mongodb.bulk.DeleteRequest;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
@@ -38,13 +35,11 @@ import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
-import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static com.mongodb.operation.UserOperationHelper.translateUserCommandException;
 import static com.mongodb.operation.UserOperationHelper.userCommandCallback;
 import static com.mongodb.operation.WriteConcernHelper.appendWriteConcernToCommand;
 import static com.mongodb.operation.WriteConcernHelper.writeConcernErrorTransformer;
-import static java.util.Arrays.asList;
 
 /**
  * An operation to remove a user.
@@ -88,15 +83,11 @@ public class DropUserOperation implements AsyncWriteOperation<Void>, WriteOperat
         return withConnection(binding, new CallableWithConnection<Void>() {
             @Override
             public Void call(final Connection connection) {
-                if (serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
-                    try {
-                        executeWrappedCommandProtocol(binding, databaseName, getCommand(connection.getDescription()), connection,
-                                writeConcernErrorTransformer());
-                    } catch (MongoCommandException e) {
-                        translateUserCommandException(e);
-                    }
-                } else {
-                    connection.delete(getNamespace(), true, WriteConcern.ACKNOWLEDGED, asList(getDeleteRequest()));
+                try {
+                    executeWrappedCommandProtocol(binding, databaseName, getCommand(connection.getDescription()), connection,
+                            writeConcernErrorTransformer());
+                } catch (MongoCommandException e) {
+                    translateUserCommandException(e);
                 }
                 return null;
             }
@@ -113,30 +104,12 @@ public class DropUserOperation implements AsyncWriteOperation<Void>, WriteOperat
                     errHandlingCallback.onResult(null, t);
                 } else {
                     final SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, connection);
+                    executeWrappedCommandProtocolAsync(binding, databaseName, getCommand(connection.getDescription()), connection,
+                            writeConcernErrorTransformer(), userCommandCallback(wrappedCallback));
 
-                    if (serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
-                        executeWrappedCommandProtocolAsync(binding, databaseName, getCommand(connection.getDescription()), connection,
-                                writeConcernErrorTransformer(), userCommandCallback(wrappedCallback));
-                    } else {
-                        connection.deleteAsync(getNamespace(), true, WriteConcern.ACKNOWLEDGED, asList(getDeleteRequest()),
-                                               new SingleResultCallback<WriteConcernResult>() {
-                                                   @Override
-                                                   public void onResult(final WriteConcernResult result, final Throwable t) {
-                                                       wrappedCallback.onResult(null, t);
-                                                   }
-                                               });
-                    }
                 }
             }
         });
-    }
-
-    private MongoNamespace getNamespace() {
-        return new MongoNamespace(databaseName, "system.users");
-    }
-
-    private DeleteRequest getDeleteRequest() {
-        return new DeleteRequest(new BsonDocument("user", new BsonString(userName)));
     }
 
     private BsonDocument getCommand(final ConnectionDescription description) {

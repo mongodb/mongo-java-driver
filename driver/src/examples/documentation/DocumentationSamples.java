@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.Fixture.getDefaultDatabaseName;
 import static com.mongodb.Fixture.getMongoClient;
 
@@ -62,7 +61,6 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
 
 
 public final class DocumentationSamples extends DatabaseTestCase {
@@ -510,7 +508,6 @@ public final class DocumentationSamples extends DatabaseTestCase {
 
     @Test
     public void testUpdates() {
-        assumeTrue(serverVersionAtLeast(2, 6));
         //Start Example 51
         collection.insertMany(asList(
                 Document.parse("{ item: 'canvas', qty: 100, size: { h: 28, w: 35.5, uom: 'cm' }, status: 'A' }"),

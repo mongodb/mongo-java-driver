@@ -454,7 +454,6 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testMaxTimeForIterator() {
-        assumeThat(serverVersionAtLeast(2, 6), is(true));
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
         cursor.maxTime(1, TimeUnit.SECONDS);
@@ -471,7 +470,6 @@ public class DBCursorTest extends DatabaseTestCase {
     @Test
     public void testMaxTimeForIterable() {
         assumeThat(isSharded(), is(false));
-        assumeThat(serverVersionAtLeast(2, 6), is(true));
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
         cursor.maxTime(1, TimeUnit.SECONDS);
@@ -488,7 +486,6 @@ public class DBCursorTest extends DatabaseTestCase {
     @Test
     public void testMaxTimeForOne() {
         assumeThat(isSharded(), is(false));
-        assumeThat(serverVersionAtLeast(2, 6), is(true));
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
         cursor.maxTime(1, TimeUnit.SECONDS);
@@ -505,7 +502,6 @@ public class DBCursorTest extends DatabaseTestCase {
     @Test
     public void testMaxTimeForCount() {
         assumeThat(isSharded(), is(false));
-        assumeThat(serverVersionAtLeast(2, 6), is(true));
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
         cursor.maxTime(1, TimeUnit.SECONDS);
@@ -522,7 +518,6 @@ public class DBCursorTest extends DatabaseTestCase {
     @Test
     public void testMaxTimeForSize() {
         assumeThat(isSharded(), is(false));
-        assumeThat(serverVersionAtLeast(2, 6), is(true));
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
         cursor.maxTime(1, TimeUnit.SECONDS);

@@ -81,8 +81,6 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
 
     @Test
     public void testAggregationCursor() {
-        assumeTrue(serverVersionAtLeast(2, 6));
-
         List<DBObject> pipeline = prepareData();
 
         verify(pipeline, AggregationOptions.builder()
@@ -105,7 +103,6 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
 
     @Test
     public void testInlineAndDollarOut() {
-        assumeTrue(serverVersionAtLeast(2, 6));
         String aggCollection = "aggCollection";
         database.getCollection(aggCollection)
             .drop();
@@ -124,7 +121,6 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
 
     @Test
     public void testDollarOut() {
-        assumeTrue(serverVersionAtLeast(2, 6));
         String aggCollection = "aggCollection";
         database.getCollection(aggCollection)
             .drop();
@@ -142,7 +138,6 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
 
     @Test
     public void testDollarOutOnSecondary() throws UnknownHostException, InterruptedException {
-        assumeTrue(serverVersionAtLeast(2, 6));
         assumeTrue(clusterIsType(REPLICA_SET));
 
         List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
@@ -174,7 +169,6 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
 
     @Test
     public void testOldAggregationWithOut() {
-        assumeTrue(serverVersionAtLeast(2, 6));
         collection.drop();
         List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         pipeline.add(new BasicDBObject("$out", "aggCollection"));
@@ -188,7 +182,6 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
 
     @Test
     public void testOldAggregationWithOutOnSecondary() throws UnknownHostException, InterruptedException {
-        assumeTrue(serverVersionAtLeast(2, 6));
         collection.drop();
         List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         pipeline.add(new BasicDBObject("$out", "aggCollection"));
@@ -202,7 +195,6 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
 
     @Test
     public void testExplain() {
-        assumeTrue(serverVersionAtLeast(2, 6));
         List<DBObject> pipeline = new ArrayList<DBObject>(prepareData());
         pipeline.add(new BasicDBObject("$out", "aggCollection"));
         CommandResult out = collection.explainAggregate(pipeline, AggregationOptions.builder()
@@ -222,7 +214,6 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
     @Test
     public void testMaxTime() {
         assumeThat(isSharded(), is(false));
-        assumeTrue(serverVersionAtLeast(2, 6));
         enableMaxTimeFailPoint();
         DBCollection collection = database.getCollection("testMaxTime");
         try {

@@ -108,7 +108,6 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         thrown(IllegalArgumentException)
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should be able to output to a collection'() {
         when:
         AggregateToCollectionOperation operation =
@@ -123,7 +122,6 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should be able to match then output to a collection'() {
         when:
         AggregateToCollectionOperation operation =
@@ -139,7 +137,6 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should throw execution timeout exception from execute'() {
         given:
         AggregateToCollectionOperation operation =

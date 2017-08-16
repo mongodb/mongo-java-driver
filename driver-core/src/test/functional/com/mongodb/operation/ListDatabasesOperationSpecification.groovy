@@ -41,7 +41,6 @@ import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class ListDatabasesOperationSpecification extends OperationFunctionalSpecification {
@@ -76,7 +75,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
         names.contains(getDatabaseName())
     }
 
-    @IgnoreIf({ isSharded() || !serverVersionAtLeast(2, 6) })
+    @IgnoreIf({ isSharded() })
     def 'should throw execution timeout exception from execute'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document())
@@ -95,7 +94,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
     }
 
     @Category(Async)
-    @IgnoreIf({ isSharded() || !serverVersionAtLeast(2, 6) })
+    @IgnoreIf({ isSharded() })
     def 'should throw execution timeout exception from executeAsync'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document())
