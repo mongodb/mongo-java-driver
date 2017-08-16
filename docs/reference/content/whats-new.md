@@ -7,6 +7,18 @@ title = "What's New"
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
+
+## What's New in 3.6
+
+Key new features of the 3.6 Java driver release:
+
+### Compression
+
+The 3.6 release adds support for compression of messages to and from appropriately configured MongoDB servers:
+
+* [Compression Tutorial]({{<ref "driver/tutorials/compression.md">}})
+* [Compression Tutorial (Async)]({{<ref "driver-async/tutorials/compression.md">}})
+
 ## What's New in 3.5
 
 Key new features of the 3.5 Java driver release:
