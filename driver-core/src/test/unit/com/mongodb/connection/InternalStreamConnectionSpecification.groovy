@@ -536,6 +536,38 @@ class InternalStreamConnectionSpecification extends Specification {
         ]
     }
 
+    def 'should send failed event with elided exception in failed security-sensitive commands'() {
+        given:
+        def connection = getOpenedConnection()
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', securitySensitiveCommand, primary(), messageSettings)
+        stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
+        stream.read(16) >> helper.defaultMessageHeader(commandMessage.getId())
+        stream.read(_) >> helper.reply('{ok : 0, errmsg : "failed"}')
+
+        when:
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec())
+
+        then:
+        thrown(MongoCommandException)
+        CommandFailedEvent failedEvent = commandListener.getEvents().get(1)
+        failedEvent.throwable.class == MongoCommandException
+        MongoCommandException e = failedEvent.throwable
+        e.response == new BsonDocument()
+
+        where:
+        securitySensitiveCommand << [
+                new BsonDocument('authenticate', new BsonInt32(1)),
+                new BsonDocument('saslStart', new BsonInt32(1)),
+                new BsonDocument('saslContinue', new BsonInt32(1)),
+                new BsonDocument('getnonce', new BsonInt32(1)),
+                new BsonDocument('createUser', new BsonInt32(1)),
+                new BsonDocument('updateUser', new BsonInt32(1)),
+                new BsonDocument('copydbgetnonce', new BsonInt32(1)),
+                new BsonDocument('copydbsaslstart', new BsonInt32(1)),
+                new BsonDocument('copydb', new BsonInt32(1))
+        ]
+    }
+
     def 'should send events for successful asynchronous command'() {
         given:
         def connection = getOpenedConnection()
@@ -730,7 +762,8 @@ class InternalStreamConnectionSpecification extends Specification {
                 new BsonDocument('copydbgetnonce', new BsonInt32(1)),
                 new BsonDocument('copydbsaslstart', new BsonInt32(1)),
                 new BsonDocument('copydb', new BsonInt32(1))
-        ]    }
+        ]
+    }
 
     private static boolean expectException(rcvdCallbck) {
         try {
