@@ -323,7 +323,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ isSharded() || !serverVersionAtLeast(2, 6) })
+    @IgnoreIf({ isSharded() })
     def 'should throw execution timeout exception from execute'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document())

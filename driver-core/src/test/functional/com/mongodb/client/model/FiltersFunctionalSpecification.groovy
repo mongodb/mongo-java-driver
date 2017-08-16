@@ -85,7 +85,6 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(ne('x', 1)) == [b, c]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def '$not'() {
         expect:
         find(not(eq('x', 1))) == [b, c]
@@ -252,7 +251,6 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
     }
 
     @SuppressWarnings('deprecated')
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should render $text'() {
         given:
         getCollectionHelper().createIndex(new Document('y', 'text'))

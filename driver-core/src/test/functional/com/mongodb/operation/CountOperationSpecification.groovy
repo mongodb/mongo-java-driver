@@ -54,7 +54,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
                 new Document('x', 2),
                 new Document('x', 3),
                 new Document('x', 4),
-                new Document('x', 5)
+                new Document('x', 5).append('y', 1)
         ]
         getCollectionHelper().insertDocuments(new DocumentCodec(), documents)
     }
@@ -107,7 +107,6 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         documents.size()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should throw execution timeout exception from execute'() {
         given:
         def countOperation = new CountOperation(getNamespace())
@@ -125,7 +124,6 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     }
 
     @Category(Async)
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should throw execution timeout exception from executeAsync'() {
         given:
         def countOperation = new CountOperation(getNamespace())
@@ -180,31 +178,32 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     def 'should use hint with the count'() {
         given:
         def createIndexOperation = new CreateIndexesOperation(getNamespace(),
-                                                              [new IndexRequest(new BsonDocument('x', new BsonInt32(1))).sparse(true)])
-        def countOperation = new CountOperation(getNamespace()).hint(new BsonString('x_1'))
-
-        when:
+                                                              [new IndexRequest(new BsonDocument('y', new BsonInt32(1))).sparse(true)])
+        def countOperation = new CountOperation(getNamespace()).hint(new BsonString('y_1'))
         createIndexOperation.execute(getBinding())
 
+        when:
+        def count = countOperation.execute(getBinding())
+
         then:
-        countOperation.execute(getBinding()) == serverVersionAtLeast(2, 6) ? 1 : documents.size()
+        count == (serverVersionAtLeast(3, 4) ? 1 : documents.size())
     }
 
     @Category(Async)
     def 'should use hint with the count asynchronously'() {
         given:
         def createIndexOperation = new CreateIndexesOperation(getNamespace(),
-                                                              [new IndexRequest(new BsonDocument('x', new BsonInt32(1))).sparse(true)])
-        def countOperation = new CountOperation(getNamespace()).hint(new BsonString('x_1'))
-
-        when:
+                                                              [new IndexRequest(new BsonDocument('y', new BsonInt32(1))).sparse(true)])
+        def countOperation = new CountOperation(getNamespace()).hint(new BsonString('y_1'))
         executeAsync(createIndexOperation)
 
+        when:
+        def count = executeAsync(countOperation)
+
         then:
-        executeAsync(countOperation) == serverVersionAtLeast(2, 6) ? 1 : documents.size()
+        count == (serverVersionAtLeast(3, 4) ? 1 : documents.size())
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should throw with bad hint with mongod 2.6+'() {
         given:
         def countOperation = new CountOperation(getNamespace())
@@ -219,7 +218,6 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     }
 
     @Category(Async)
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should throw with bad hint with mongod 2.6+ asynchronously'() {
         given:
         def countOperation = new CountOperation(getNamespace())
@@ -231,35 +229,6 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         thrown(MongoException)
-    }
-
-    @IgnoreIf({ serverVersionAtLeast(2, 6) })
-    def 'should ignore with bad hint with mongod < 2.6'() {
-        given:
-        def countOperation = new CountOperation(getNamespace())
-                .filter(new BsonDocument('a', new BsonInt32(1)))
-                .hint(new BsonString('BAD HINT'))
-
-        when:
-        countOperation.execute(getBinding())
-
-        then:
-        notThrown(MongoException)
-    }
-
-    @Category(Async)
-    @IgnoreIf({ serverVersionAtLeast(2, 6) })
-    def 'should ignore with bad hint with mongod < 2.6 asynchronously'() {
-        given:
-        def countOperation = new CountOperation(getNamespace())
-                .filter(new BsonDocument('a', new BsonInt32(1)))
-                .hint(new BsonString('BAD HINT'))
-
-        when:
-        executeAsync(countOperation)
-
-        then:
-        notThrown(MongoException)
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 0) || isSharded() })

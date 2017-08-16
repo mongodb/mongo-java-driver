@@ -244,7 +244,6 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test(expected = MongoCommandException.class)
     public void testCreateIndexWithInvalidIndexType() {
-        assumeThat(serverVersionAtLeast(2, 6), is(true));
         DBObject index = new BasicDBObject("x", "funny");
         collection.createIndex(index);
     }
@@ -317,7 +316,6 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testCreateIndexAsText() {
-        assumeThat(serverVersionAtLeast(2, 6), is(true));
         DBObject index = new BasicDBObject("x", "text");
         collection.createIndex(index);
 
@@ -445,7 +443,6 @@ public class DBCollectionTest extends DatabaseTestCase {
     @Test(expected = MongoExecutionTimeoutException.class)
     public void testFindAndUpdateTimeout() {
         assumeThat(ClusterFixture.isAuthenticated(), is(false));
-        assumeThat(serverVersionAtLeast(2, 6), is(true));
         collection.insert(new BasicDBObject("_id", 1));
         enableMaxTimeFailPoint();
         try {
@@ -459,7 +456,6 @@ public class DBCollectionTest extends DatabaseTestCase {
     @Test(expected = MongoExecutionTimeoutException.class)
     public void testFindAndReplaceTimeout() {
         assumeThat(isSharded(), is(false));
-        assumeThat(serverVersionAtLeast(2, 6), is(true));
         collection.insert(new BasicDBObject("_id", 1));
         enableMaxTimeFailPoint();
         try {
@@ -473,7 +469,6 @@ public class DBCollectionTest extends DatabaseTestCase {
     @Test(expected = MongoExecutionTimeoutException.class)
     public void testFindAndRemoveTimeout() {
         assumeThat(isSharded(), is(false));
-        assumeThat(serverVersionAtLeast(2, 6), is(true));
         collection.insert(new BasicDBObject("_id", 1));
         enableMaxTimeFailPoint();
         try {
@@ -975,7 +970,6 @@ public class DBCollectionTest extends DatabaseTestCase {
     @Category(Slow.class)
     public void testParallelScan() throws UnknownHostException {
         assumeThat(isSharded(), is(false));
-        assumeThat(serverVersionAtLeast(2, 6), is(true));
 
         Set<Integer> ids = new HashSet<Integer>();
         List<BasicDBObject> documents = new ArrayList<BasicDBObject>(2000);
@@ -1356,8 +1350,6 @@ public class DBCollectionTest extends DatabaseTestCase {
     @Test
     @SuppressWarnings("deprecation")
     public void testBypassDocumentValidationForAggregateDollarOut() {
-        assumeThat(serverVersionAtLeast(2, 6), is(true));
-
         //given
         DBObject options = new BasicDBObject("validator", QueryBuilder.start("level").greaterThanEquals(10).get());
         DBCollection cOut = database.createCollection(collectionName + ".out", options);

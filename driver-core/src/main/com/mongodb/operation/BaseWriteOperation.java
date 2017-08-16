@@ -48,7 +48,6 @@ import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.checkBypassDocumentValidationIsSupported;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
-import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
 
@@ -135,7 +134,7 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
             public WriteConcernResult call(final Connection connection) {
                 try {
                     checkBypassDocumentValidationIsSupported(connection, bypassDocumentValidation, writeConcern);
-                    if (writeConcern.isAcknowledged() && serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
+                    if (writeConcern.isAcknowledged()) {
                         return translateBulkWriteResult(executeCommandProtocol(connection));
                     } else {
                         return executeProtocol(connection);
@@ -165,7 +164,7 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
                                     } else {
                                         final SingleResultCallback<WriteConcernResult> wrappedCallback =
                                                 releasingCallback(errHandlingCallback, connection);
-                                        if (writeConcern.isAcknowledged() && serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
+                                        if (writeConcern.isAcknowledged()) {
                                             executeCommandProtocolAsync(connection, new SingleResultCallback<BulkWriteResult>() {
                                                 @Override
                                                 public void onResult(final BulkWriteResult result, final Throwable t) {

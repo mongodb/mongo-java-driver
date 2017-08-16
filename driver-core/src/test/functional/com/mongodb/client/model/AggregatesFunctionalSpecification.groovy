@@ -183,7 +183,6 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                                                                      new Document('_id', false).append('acc', [false])])
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def '$out'() {
         given:
         def outCollectionName = getCollectionName() + '.out'

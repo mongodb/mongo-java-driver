@@ -23,7 +23,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -323,10 +322,6 @@ public class QueryBuilderTest extends DatabaseTestCase {
 
     @Test
     public void textTest() {
-        if (!serverVersionAtLeast(2, 6)) {
-            return;
-        }
-
         BasicDBObject enableTextCommand = new BasicDBObject("setParameter", 1).append("textSearchEnabled", true);
         database.getSisterDB("admin").command(enableTextCommand);
         DBCollection collection = database.getCollection("text-test");

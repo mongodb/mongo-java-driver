@@ -18,7 +18,6 @@ package com.mongodb.operation
 
 import com.mongodb.DuplicateKeyException
 import com.mongodb.MongoCommandException
-import com.mongodb.MongoException
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
@@ -89,7 +88,6 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should be able to create multiple indexes'() {
         given:
         def keysForFirstIndex = new BsonDocument('field', new BsonInt32(1))
@@ -102,24 +100,6 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         getUserCreatedIndexes('key') == [field1Index, field2Index]
-
-        where:
-        async << [true, false]
-    }
-
-    @IgnoreIf({ serverVersionAtLeast(2, 6) })
-    def 'should fail to create multiple indexes with server that does not support createIndexesCommand'() {
-        given:
-        def keysForFirstIndex = new BsonDocument('field', new BsonInt32(1))
-        def keysForSecondIndex = new BsonDocument('field2', new BsonInt32(1))
-        def operation = new CreateIndexesOperation(getNamespace(), [new IndexRequest(keysForFirstIndex),
-                                                                    new IndexRequest(keysForSecondIndex)])
-
-        when:
-        execute(operation, async)
-
-        then:
-        thrown(MongoException)
 
         where:
         async << [true, false]
@@ -173,7 +153,6 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should throw when trying to build an invalid index'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(), [new IndexRequest(new BsonDocument())])
@@ -304,7 +283,6 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 4) })
     def 'should be able to create a 2dSphereIndex'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(),
@@ -315,13 +293,11 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         getUserCreatedIndexes('key') == [['field' :'2dsphere']]
-        if (serverVersionAtLeast(2, 6)) { getUserCreatedIndexes('2dsphereIndexVersion') == [2] }
 
         where:
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should be able to create a 2dSphereIndex with version 1'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(),
@@ -338,7 +314,6 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should be able to create a textIndex'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(),
@@ -360,7 +335,6 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should be able to create a textIndexVersion'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(),
@@ -371,13 +345,11 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         getUserCreatedIndexes().size() == 1
-        if (serverVersionAtLeast(2, 6)) { getUserCreatedIndexes('textIndexVersion') == [2] }
 
         where:
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should be able to create a textIndexVersion with version 1'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(),

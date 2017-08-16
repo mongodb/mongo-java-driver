@@ -131,7 +131,7 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         then:
         result.wasAcknowledged()
         result.count == 1
-        result.upsertedId == (serverVersionAtLeast(2, 6) ? new BsonInt32(1) : null)
+        result.upsertedId == new BsonInt32(1)
         !result.isUpdateOfExisting()
         getCollectionHelper().count(new Document('y', 2)) == 1
 
@@ -139,7 +139,6 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     @Category(Slow)
     def 'should allow update larger than 16MB'() {
         // small enough so the update document is 16MB, but enough to push the the request as a whole over 16MB

@@ -335,7 +335,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         cursor.getBatchSize() == 2
     }
 
-    @IgnoreIf({ isSharded() || !serverVersionAtLeast(2, 6) })
+    @IgnoreIf({ isSharded() })
     def 'should throw execution timeout exception from execute'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document())
@@ -354,7 +354,7 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
     }
 
     @Category(Async)
-    @IgnoreIf({ isSharded() || !serverVersionAtLeast(2, 6) })
+    @IgnoreIf({ isSharded() })
     def 'should throw execution timeout exception from executeAsync'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document())

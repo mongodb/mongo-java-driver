@@ -389,10 +389,6 @@ axes:
         display_name: "2.6"
         variables:
            VERSION: "2.6"
-      - id: "2.4"
-        display_name: "2.4"
-        variables:
-           VERSION: "2.4"
   - id: os
     display_name: OS
     values:
@@ -465,7 +461,6 @@ buildvariants:
 
 - matrix_name: "tests-jdk6"
   matrix_spec: { auth: "*", ssl: "*", jdk: "jdk6", version: "*", topology: "*", os: "*" }
-  exclude_spec: { version: "2.4", ssl: "ssl", jdk: "*", auth: "*", topology: "*", os: "*" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:

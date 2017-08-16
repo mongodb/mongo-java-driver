@@ -143,6 +143,7 @@ public class TestClusterableServerFactory implements ClusterableServerFactory {
                                 .passives(passivesSet)
                                 .setName(setName)
                                 .electionId(electionId)
+                                .maxWireVersion(1)
                                 .setVersion(1);
     }
 }

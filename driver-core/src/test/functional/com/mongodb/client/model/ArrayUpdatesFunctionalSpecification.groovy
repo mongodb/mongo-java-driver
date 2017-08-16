@@ -17,9 +17,7 @@ package com.mongodb.client.model
 import com.mongodb.OperationFunctionalSpecification
 import org.bson.Document
 import org.bson.conversions.Bson
-import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.model.Updates.addEachToSet
 import static com.mongodb.client.model.Updates.addToSet
 import static com.mongodb.client.model.Updates.combine
@@ -91,7 +89,6 @@ class ArrayUpdatesFunctionalSpecification extends OperationFunctionalSpecificati
 
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'push with each'() {
         when:
         updateOne(pushEach('x', [4, 4, 4, 5, 6], new PushOptions()))

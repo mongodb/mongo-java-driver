@@ -69,7 +69,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 0) })
-    def 'should use provided hints for queries mongod > 2.7'() {
+    def 'should use provided hints for queries mongod > 3.0'() {
         given:
         collection.createIndex(new BasicDBObject('a', 1))
 
@@ -152,24 +152,15 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         collection.createIndex(new BasicDBObject('x', 1), new BasicDBObject('sparse', true));
 
         then:
-        collection.find(new BasicDBObject('a', 1)).hint('x_1').count() == (serverVersionAtLeast(2, 6) ? 0 : 1)
+        collection.find(new BasicDBObject('a', 1)).hint('x_1').count() == 0
         collection.find().hint('a_1').count() == 2
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
-    def 'should throw with bad hint with mongod 2.6+'() {
+    def 'should throw with bad hint'() {
         when:
         collection.find(new BasicDBObject('a', 1)).hint('BAD HINT').count()
         then:
         thrown(MongoException)
-    }
-
-    @IgnoreIf({ serverVersionAtLeast(2, 6) })
-    def 'should ignore bad hints with mongod < 2.6'() {
-        when:
-        collection.find(new BasicDBObject('a', 1)).hint('BAD HINT').count()
-        then:
-        notThrown(MongoException)
     }
 
     def 'should be able to use addSpecial with count'() {
@@ -190,7 +181,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         def countWithHint = collection.find(new BasicDBObject('a', 1)).addSpecial('$hint', 'x_1').count()
 
         then:
-        countWithHint == (serverVersionAtLeast(2, 6) ? 0 : 1)
+        countWithHint == 0
     }
 
     @IgnoreIf({ serverVersionAtLeast(3, 0) })

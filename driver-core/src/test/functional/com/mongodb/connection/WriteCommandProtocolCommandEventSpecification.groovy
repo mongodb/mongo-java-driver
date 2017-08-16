@@ -35,18 +35,15 @@ import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
-import spock.lang.IgnoreIf
 import spock.lang.Shared
 
 import static com.mongodb.ClusterFixture.getCredentialList
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.connection.MessageHelper.buildSuccessfulReply
 import static com.mongodb.connection.ProtocolTestHelper.execute
 
-@IgnoreIf({ !serverVersionAtLeast(2, 6) })
 class WriteCommandProtocolCommandEventSpecification extends OperationFunctionalSpecification {
     @Shared
     InternalStreamConnection connection;

@@ -34,13 +34,11 @@ import org.bson.BsonInt64
 import org.bson.BsonString
 import org.bson.BsonTimestamp
 import org.bson.codecs.BsonDocumentCodec
-import spock.lang.IgnoreIf
 import spock.lang.Shared
 
 import static com.mongodb.ClusterFixture.getCredentialList
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.connection.ProtocolTestHelper.execute
 import static org.bson.BsonDocument.parse
 
@@ -209,7 +207,6 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
         async << [false, true]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should deliver start and completed command events with meta operators'() {
         given:
         def documents = [new BsonDocument('_id', new BsonInt32(1)),

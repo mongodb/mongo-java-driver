@@ -52,7 +52,6 @@ import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class ListIndexesOperationSpecification extends OperationFunctionalSpecification {
@@ -210,7 +209,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
         cursor.getBatchSize() == 2
     }
 
-    @IgnoreIf({ isSharded() || !serverVersionAtLeast(2, 6) })
+    @IgnoreIf({ isSharded() })
     def 'should throw execution timeout exception from execute'() {
         given:
         def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec()).maxTime(1000, MILLISECONDS)
@@ -229,7 +228,7 @@ class ListIndexesOperationSpecification extends OperationFunctionalSpecification
     }
 
     @Category(Async)
-    @IgnoreIf({ isSharded() || !serverVersionAtLeast(2, 6) })
+    @IgnoreIf({ isSharded() })
     def 'should throw execution timeout exception from executeAsync'() {
         given:
         def operation = new ListIndexesOperation(getNamespace(), new DocumentCodec()).maxTime(1000, MILLISECONDS)

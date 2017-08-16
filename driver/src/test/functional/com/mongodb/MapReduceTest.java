@@ -88,7 +88,6 @@ public class MapReduceTest extends DatabaseTestCase {
     @Test(expected = MongoExecutionTimeoutException.class)
     public void testMapReduceExecutionTimeout() {
         assumeThat(isSharded(), is(false));
-        assumeThat(serverVersionAtLeast(2, 6), is(true));
         enableMaxTimeFailPoint();
         try {
             MapReduceCommand command = new MapReduceCommand(collection,

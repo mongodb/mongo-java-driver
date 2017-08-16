@@ -20,7 +20,6 @@ import com.mongodb.DuplicateKeyException;
 import com.mongodb.ErrorCategory;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
-import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
@@ -28,7 +27,6 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.bulk.IndexRequest;
-import com.mongodb.bulk.InsertRequest;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
@@ -52,13 +50,11 @@ import static com.mongodb.operation.IndexHelper.generateIndexName;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.LOGGER;
-import static com.mongodb.operation.OperationHelper.validateIndexRequestCollations;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
-import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
+import static com.mongodb.operation.OperationHelper.validateIndexRequestCollations;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static com.mongodb.operation.WriteConcernHelper.appendWriteConcernToCommand;
 import static com.mongodb.operation.WriteConcernHelper.writeConcernErrorTransformer;
-import static java.util.Arrays.asList;
 
 /**
  * An operation that creates one or more indexes.
@@ -72,7 +68,6 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     private final MongoNamespace namespace;
     private final List<IndexRequest> requests;
     private final WriteConcern writeConcern;
-    private final MongoNamespace systemIndexes;
 
     /**
      * Construct a new instance.
@@ -97,7 +92,6 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
      */
     public CreateIndexesOperation(final MongoNamespace namespace, final List<IndexRequest> requests, final WriteConcern writeConcern) {
         this.namespace = notNull("namespace", namespace);
-        this.systemIndexes = new MongoNamespace(namespace.getDatabaseName(), "system.indexes");
         this.requests = notNull("indexRequests", requests);
         this.writeConcern = writeConcern;
     }
@@ -144,19 +138,12 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
         return withConnection(binding, new CallableWithConnection<Void>() {
             @Override
             public Void call(final Connection connection) {
-                if (serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
-                    try {
-                        validateIndexRequestCollations(connection, requests);
-                        executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
-                                connection, writeConcernErrorTransformer());
-                    } catch (MongoCommandException e) {
-                        throw checkForDuplicateKeyError(e);
-                    }
-                } else {
-                    if (requests.size() > 1) {
-                        throw new MongoInternalException("Creation of multiple indexes simultaneously not supported until MongoDB 2.6");
-                    }
-                    connection.insert(systemIndexes, true, WriteConcern.ACKNOWLEDGED, asList(new InsertRequest(getIndex(requests.get(0)))));
+                try {
+                    validateIndexRequestCollations(connection, requests);
+                    executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
+                            connection, writeConcernErrorTransformer());
+                } catch (MongoCommandException e) {
+                    throw checkForDuplicateKeyError(e);
                 }
                 return null;
             }
@@ -173,40 +160,23 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
                     errHandlingCallback.onResult(null, t);
                 } else {
                     final SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, connection);
-                    if (serverIsAtLeastVersionTwoDotSix(connection.getDescription())) {
-                        validateIndexRequestCollations(connection, requests, new AsyncCallableWithConnection(){
-                            @Override
-                            public void call(final AsyncConnection connection, final Throwable t) {
-                                if (t != null) {
-                                    wrappedCallback.onResult(null, t);
-                                } else {
-                                    executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
-                                            getCommand(connection.getDescription()), connection, writeConcernErrorTransformer(),
-                                            new SingleResultCallback<Void>() {
-                                                @Override
-                                                public void onResult(final Void result, final Throwable t) {
-                                                    wrappedCallback.onResult(null, translateException(t));
-                                                }
-                                            });
-                                }
+                    validateIndexRequestCollations(connection, requests, new AsyncCallableWithConnection() {
+                        @Override
+                        public void call(final AsyncConnection connection, final Throwable t) {
+                            if (t != null) {
+                                wrappedCallback.onResult(null, t);
+                            } else {
+                                executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
+                                        getCommand(connection.getDescription()), connection, writeConcernErrorTransformer(),
+                                        new SingleResultCallback<Void>() {
+                                            @Override
+                                            public void onResult(final Void result, final Throwable t) {
+                                                wrappedCallback.onResult(null, translateException(t));
+                                            }
+                                        });
                             }
-                        });
-                    } else {
-                        if (requests.size() > 1) {
-                            wrappedCallback.onResult(null, new MongoInternalException("Creation of multiple indexes simultaneously not "
-                                                                                      + "supported until MongoDB 2.6"));
                         }
-                        else {
-                            connection.insertAsync(systemIndexes, true, WriteConcern.ACKNOWLEDGED,
-                                                   asList(new InsertRequest(getIndex(requests.get(0)))),
-                                                   new SingleResultCallback<WriteConcernResult>() {
-                                                       @Override
-                                                       public void onResult(final WriteConcernResult result, final Throwable t) {
-                                                           wrappedCallback.onResult(null, translateException(t));
-                                                       }
-                                                   });
-                        }
-                    }
+                    });
                 }
             }
         });

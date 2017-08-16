@@ -23,16 +23,11 @@ import org.bson.Document;
 import static java.util.Arrays.asList;
 // @import: end
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static org.junit.Assume.assumeTrue;
-
 
 public class UpdatePrimer extends PrimerTestCase {
 
     @Test
     public void updateTopLevelFields() {
-        assumeTrue(serverVersionAtLeast(2, 6));
-
         // @begin: update-top-level-fields
         // @code: start
         db.getCollection("restaurants").updateOne(new Document("name", "Juni"),
@@ -69,8 +64,6 @@ public class UpdatePrimer extends PrimerTestCase {
 
     @Test
     public void updateMultipleDocuments() {
-        assumeTrue(serverVersionAtLeast(2, 6));
-
         // @begin: update-multiple-documents
         // @code: start
         db.getCollection("restaurants").updateMany(new Document("address.zipcode", "10016").append("cuisine", "Other"),
@@ -89,8 +82,6 @@ public class UpdatePrimer extends PrimerTestCase {
 
     @Test
     public void replaceDocument() {
-        assumeTrue(serverVersionAtLeast(2, 6));
-
         // @begin: replace-document
         // @code: start
         db.getCollection("restaurants").replaceOne(new Document("restaurant_id", "41704620"),

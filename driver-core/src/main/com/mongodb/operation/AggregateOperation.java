@@ -54,7 +54,6 @@ import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotSix;
-import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionTwoDotSix;
 import static com.mongodb.operation.OperationHelper.validateReadConcernAndCollation;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
@@ -328,8 +327,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
     }
 
     private boolean isInline(final ConnectionDescription description) {
-        return !serverIsAtLeastVersionThreeDotSix(description)
-                       && ((useCursor != null && !useCursor) || !serverIsAtLeastVersionTwoDotSix(description));
+        return !serverIsAtLeastVersionThreeDotSix(description) && ((useCursor != null && !useCursor));
     }
 
     private BsonDocument getCommand(final ConnectionDescription description) {

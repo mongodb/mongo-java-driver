@@ -48,10 +48,9 @@ import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.loopCursor
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static org.junit.Assert.assertTrue
 
-@IgnoreIf({ isSharded() || !serverVersionAtLeast(2, 6) })
+@IgnoreIf({ isSharded() })
 @Category(Slow)
 class ParallelCollectionScanOperationSpecification extends OperationFunctionalSpecification {
     Map<Integer, Boolean> ids = [] as ConcurrentHashMap

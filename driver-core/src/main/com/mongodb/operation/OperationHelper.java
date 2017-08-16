@@ -367,10 +367,6 @@ final class OperationHelper {
         }
     }
 
-    static boolean serverIsAtLeastVersionTwoDotSix(final ConnectionDescription description) {
-        return serverIsAtLeastVersion(description, new ServerVersion(2, 6));
-    }
-
     static boolean serverIsAtLeastVersionThreeDotZero(final ConnectionDescription description) {
         return serverIsAtLeastVersion(description, new ServerVersion(3, 0));
     }

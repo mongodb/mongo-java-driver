@@ -33,14 +33,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assume.assumeTrue;
 
 public class MongoCollectionTest extends DatabaseTestCase {
 
@@ -143,8 +141,6 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testAggregationToACollection() {
-        assumeTrue(serverVersionAtLeast(2, 6));
-
         // given
         List<Document> documents = asList(new Document("_id", 1), new Document("_id", 2));
 
