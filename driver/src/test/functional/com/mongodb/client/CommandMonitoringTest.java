@@ -22,6 +22,7 @@ import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
+import com.mongodb.WriteConcern;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.connection.ServerVersion;
 import com.mongodb.connection.TestCommandListener;
@@ -59,7 +60,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -307,12 +307,11 @@ public class CommandMonitoringTest {
             String commandName = eventDescriptionDocument.getString("command_name").getValue();
             if (eventType.equals("command_started_event")) {
                 BsonDocument commandDocument = eventDescriptionDocument.getDocument("command");
+                // Not clear whether these global fields should be included, but also not clear how to efficiently exclude them
                 if (serverVersionAtLeast(3, 5)) {
-                    // TODO: excluding write commands is temporary
-                    if (!Arrays.asList("insert", "update", "delete").contains(commandName)) {
+                    if (!isUnacknowledgedWrite()) {
                         commandDocument.put("$db", new BsonString(databaseName));
                     }
-                    // TODO: not clear whether this should be included, but also not clear how to efficiently exclude it
                     BsonDocument operation = definition.getDocument("operation");
                     if (operation.containsKey("read_preference")) {
                         commandDocument.put("$readPreference", operation.getDocument("read_preference"));
@@ -331,6 +330,15 @@ public class CommandMonitoringTest {
             expectedEvents.add(commandEvent);
         }
         return expectedEvents;
+    }
+
+    private boolean isUnacknowledgedWrite() {
+        BsonDocument arguments = definition.getDocument("operation").getDocument("arguments");
+        if (arguments.containsKey("writeConcern")) {
+            WriteConcern writeConcern = new WriteConcern(arguments.getDocument("writeConcern").getInt32("w").intValue());
+            return !writeConcern.isAcknowledged();
+        }
+        return false;
     }
 
 

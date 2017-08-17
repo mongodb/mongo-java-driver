@@ -42,7 +42,7 @@ abstract class BaseWriteCommandMessage extends CommandMessage {
 
     BaseWriteCommandMessage(final MongoNamespace writeNamespace, final boolean ordered, final WriteConcern writeConcern,
                             final Boolean bypassDocumentValidation, final MessageSettings settings) {
-        super(new MongoNamespace(writeNamespace.getDatabaseName(), COMMAND_COLLECTION_NAME).getFullName(), OpCode.OP_QUERY, settings);
+        super(new MongoNamespace(writeNamespace.getDatabaseName(), COMMAND_COLLECTION_NAME).getFullName(), getOpCode(settings), settings);
 
         this.writeNamespace = writeNamespace;
         this.ordered = ordered;
@@ -108,6 +108,9 @@ abstract class BaseWriteCommandMessage extends CommandMessage {
             writer.writeStartDocument();
             writeCommandPrologue(writer);
             nextMessage = writeTheWrites(outputStream, commandStartPosition, writer);
+            if (useOpMsg()) {
+                writer.writeString("$db", getWriteNamespace().getDatabaseName());
+            }
             writer.writeEndDocument();
         } finally {
             writer.close();
@@ -123,11 +126,16 @@ abstract class BaseWriteCommandMessage extends CommandMessage {
     protected abstract FieldNameValidator getFieldNameValidator();
 
     private void writeCommandHeader(final BsonOutput outputStream) {
-        outputStream.writeInt32(0);
-        outputStream.writeCString(getCollectionName());
+        if (useOpMsg()) {
+            outputStream.writeInt32(0);  // flag bits
+            outputStream.writeByte(0);   // payload type
+        } else {
+            outputStream.writeInt32(0);
+            outputStream.writeCString(getCollectionName());
 
-        outputStream.writeInt32(0);
-        outputStream.writeInt32(-1);
+            outputStream.writeInt32(0);
+            outputStream.writeInt32(-1);
+        }
     }
 
     /**

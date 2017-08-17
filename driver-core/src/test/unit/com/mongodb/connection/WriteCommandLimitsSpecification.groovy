@@ -38,7 +38,10 @@ class WriteCommandLimitsSpecification extends Specification {
 
         def buffer = new ByteBufferBsonOutput(new SimpleBufferProvider());
         def message = new InsertCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, null,
-                                               MessageSettings.builder().maxBatchCount(3).build(), inserts);
+                MessageSettings.builder().maxBatchCount(3)
+                        .serverVersion(new ServerVersion(3, 4))
+                        .build(),
+                inserts);
 
         when:
         message.encode(buffer)
@@ -58,7 +61,10 @@ class WriteCommandLimitsSpecification extends Specification {
 
         def buffer = new ByteBufferBsonOutput(new SimpleBufferProvider());
         def message = new InsertCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, null,
-                                               MessageSettings.builder().maxDocumentSize(113).build(), inserts);
+                MessageSettings.builder().maxDocumentSize(113)
+                        .serverVersion(new ServerVersion(3, 4))
+                        .build(),
+                inserts);
 
         when:
         message.encode(buffer)
@@ -78,7 +84,10 @@ class WriteCommandLimitsSpecification extends Specification {
 
         def buffer = new ByteBufferBsonOutput(new SimpleBufferProvider());
         def message = new DeleteCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED,
-                                               MessageSettings.builder().maxBatchCount(3).build(), deletes);
+                MessageSettings.builder().maxBatchCount(3)
+                        .serverVersion(new ServerVersion(3, 4))
+                        .build(),
+                deletes);
 
         when:
         message.encode(buffer)
@@ -98,7 +107,10 @@ class WriteCommandLimitsSpecification extends Specification {
 
         def buffer = new ByteBufferBsonOutput(new SimpleBufferProvider());
         def message = new DeleteCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED,
-                                               MessageSettings.builder().maxDocumentSize(187).build(), deletes);
+                MessageSettings.builder().maxDocumentSize(187)
+                        .serverVersion(new ServerVersion(3, 4))
+                        .build(),
+                deletes);
 
         when:
         message.encode(buffer)
@@ -118,7 +130,10 @@ class WriteCommandLimitsSpecification extends Specification {
 
         def buffer = new ByteBufferBsonOutput(new SimpleBufferProvider());
         def message = new UpdateCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, null,
-                                               MessageSettings.builder().maxBatchCount(3).build(), replaces);
+                MessageSettings.builder().maxBatchCount(3)
+                        .serverVersion(new ServerVersion(3, 4))
+                        .build(),
+                replaces);
 
         when:
         message.encode(buffer)
@@ -138,7 +153,10 @@ class WriteCommandLimitsSpecification extends Specification {
 
         def buffer = new ByteBufferBsonOutput(new SimpleBufferProvider());
         def message = new UpdateCommandMessage(new MongoNamespace('test', 'test'), true, WriteConcern.ACKNOWLEDGED, null,
-                                               MessageSettings.builder().maxDocumentSize(175).build(), replaces);
+                MessageSettings.builder().maxDocumentSize(175)
+                        .serverVersion(new ServerVersion(3, 4))
+                        .build(),
+                replaces);
 
         when:
         message.encode(buffer)
