@@ -21,4 +21,16 @@ abstract class CommandMessage extends RequestMessage {
     CommandMessage(final String collectionName, final OpCode opCode, final MessageSettings settings) {
         super(collectionName, opCode, settings);
     }
+
+    protected static OpCode getOpCode(final MessageSettings settings) {
+        return useOpMsg(settings) ? OpCode.OP_MSG : OpCode.OP_QUERY;
+    }
+
+    protected static boolean useOpMsg(final MessageSettings settings) {
+        return settings.getServerVersion().compareTo(new ServerVersion(3, 5)) >= 0;
+    }
+
+    protected boolean useOpMsg() {
+        return useOpMsg(getSettings());
+    }
 }

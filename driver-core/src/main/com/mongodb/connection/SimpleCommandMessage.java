@@ -47,7 +47,7 @@ class SimpleCommandMessage extends CommandMessage {
 
     SimpleCommandMessage(final String collectionName, final BsonDocument command, final ReadPreference readPreference,
                          final FieldNameValidator validator, final MessageSettings settings) {
-        super(collectionName, useNewOpCode(settings) ? OpCode.OP_MSG : OpCode.OP_QUERY, settings);
+        super(collectionName, getOpCode(settings), settings);
         this.readPreference = readPreference;
         this.command = command;
         this.validator = validator;
@@ -57,7 +57,7 @@ class SimpleCommandMessage extends CommandMessage {
     protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final int messageStartPosition) {
         BsonDocument commandToEncode;
         List<BsonElement> extraElements = null;
-        if (useNewOpCode()) {
+        if (useOpMsg()) {
             bsonOutput.writeInt32(0);  // flag bits
             bsonOutput.writeByte(0);   // payload type
 
@@ -86,13 +86,5 @@ class SimpleCommandMessage extends CommandMessage {
 
     private boolean isDefaultReadPreference() {
         return readPreference.equals(primary());
-    }
-
-    private boolean useNewOpCode() {
-        return useNewOpCode(getSettings());
-    }
-
-    private static boolean useNewOpCode(final MessageSettings settings) {
-        return settings.getServerVersion().compareTo(new ServerVersion(3, 5)) >= 0;
     }
 }
