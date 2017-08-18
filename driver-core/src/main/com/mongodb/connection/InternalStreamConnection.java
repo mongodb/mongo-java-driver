@@ -249,7 +249,6 @@ class InternalStreamConnection implements InternalConnection {
             sendCommandMessage(message, commandEventSender, bsonOutput);
             return receiveCommandMessageResponse(message, decoder, commandEventSender);
         } catch (RuntimeException e) {
-            close();
             commandEventSender.sendFailedEvent(e);
             throw e;
         }
@@ -344,7 +343,6 @@ class InternalStreamConnection implements InternalConnection {
                         public void onResult(final ResponseBuffers responseBuffers, final Throwable t) {
                             if (t != null) {
                                 commandEventSender.sendFailedEvent(t);
-                                close();
                                 callback.onResult(null, t);
                                 return;
                             }
