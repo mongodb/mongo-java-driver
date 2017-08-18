@@ -368,6 +368,52 @@ class InternalStreamConnectionSpecification extends Specification {
         thrown MongoSocketClosedException
     }
 
+    def 'should not close the stream on a command exception'() {
+        given:
+        def connection = getOpenedConnection()
+        def pingCommandDocument = new BsonDocument('ping', new BsonInt32(1))
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, primary(), messageSettings)
+        def response = '{ok : 0, errmsg : "failed"}'
+        stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
+        stream.read(16) >> helper.messageHeader(commandMessage.getId(), response)
+        stream.read(_) >> helper.reply(response)
+
+        when:
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec())
+
+        then:
+        thrown(MongoCommandException)
+        !connection.isClosed()
+    }
+
+    def 'should not close the stream on an asynchronous command exception'() {
+        given:
+        def connection = getOpenedConnection()
+        def pingCommandDocument = new BsonDocument('ping', new BsonInt32(1))
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, primary(), messageSettings)
+        def callback = new FutureResultCallback()
+        def response = '{ok : 0, errmsg : "failed"}'
+
+        stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
+        stream.writeAsync(_, _) >> { buffers, handler ->
+            handler.completed(null)
+        }
+        stream.readAsync(16, _) >> { numBytes, handler ->
+            handler.completed(helper.defaultMessageHeader(commandMessage.getId()))
+        }
+        stream.readAsync(_, _) >> { numBytes, handler ->
+            handler.completed(helper.reply(response))
+        }
+
+        when:
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), callback)
+        callback.get()
+
+        then:
+        thrown(MongoCommandException)
+        !connection.isClosed()
+    }
+
     def 'should notify all asynchronous writers of an exception'() {
         given:
         int numberOfOperations = 3
