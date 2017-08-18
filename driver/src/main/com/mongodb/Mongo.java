@@ -39,7 +39,6 @@ import com.mongodb.internal.thread.DaemonThreadFactory;
 import com.mongodb.operation.CurrentOpOperation;
 import com.mongodb.operation.FsyncUnlockOperation;
 import com.mongodb.operation.ListDatabasesOperation;
-import com.mongodb.operation.OperationExecutor;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
 import com.mongodb.selector.LatencyMinimizingServerSelector;

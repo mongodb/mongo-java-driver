@@ -16,7 +16,6 @@
 
 package com.mongodb;
 
-import com.mongodb.operation.OperationExecutor;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
 

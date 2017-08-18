@@ -30,7 +30,6 @@ import com.mongodb.operation.CreateViewOperation;
 import com.mongodb.operation.DropDatabaseOperation;
 import com.mongodb.operation.DropUserOperation;
 import com.mongodb.operation.ListCollectionsOperation;
-import com.mongodb.operation.OperationExecutor;
 import com.mongodb.operation.UpdateUserOperation;
 import com.mongodb.operation.UserExistsOperation;
 import org.bson.BsonDocument;
