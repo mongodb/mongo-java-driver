@@ -28,14 +28,6 @@ public final class Loggers {
      * The prefix for all logger names.
      */
     public static final String PREFIX = "org.mongodb.driver";
-    
-    /**
-     * Set this property to <code>true</code> to enforce usage of SLF4J as logging framework.
-     * 
-     * Note: This property is only evaluated once (when this class is loaded) - hence you have to set it 
-     * before using any functionality from mongodb java driver. 
-     */
-    public static final String USE_SLF4J_PROPERTY_NAME = "org.mongodb.driver.use_slf4";   
 
     private static final boolean USE_SLF4J = shouldUseSLF4J();
 
@@ -65,16 +57,8 @@ public final class Loggers {
     }
 
     private static boolean shouldUseSLF4J() {
-    	String property = System.getProperty(USE_SLF4J_PROPERTY_NAME);
-    	if (property != null) {
-    		// property is set - use it's value 
-    		return Boolean.parseBoolean(property);
-    	}
-		// property is not set - perform automatic detection 
         try {
             Class.forName("org.slf4j.LoggerFactory");
-            // Don't use SLF4J unless a logging implementation has been configured for it
-            Class.forName("org.slf4j.impl.StaticLoggerBinder");
             return true;
         } catch (ClassNotFoundException e) {
             return false;
