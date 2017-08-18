@@ -20,7 +20,6 @@ import com.mongodb.client.ListCollectionsIterable;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.operation.ListCollectionsOperation;
-import com.mongodb.operation.OperationExecutor;
 import org.bson.BsonDocument;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;

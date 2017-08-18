@@ -33,7 +33,7 @@ import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.FindOperation
-import com.mongodb.operation.OperationExecutor
+import com.mongodb.OperationExecutor
 import org.bson.BsonDocument
 import org.bson.BsonObjectId
 import org.bson.BsonString

@@ -23,7 +23,6 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.operation.ChangeStreamOperation;
-import com.mongodb.operation.OperationExecutor;
 import org.bson.BsonDocument;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
