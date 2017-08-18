@@ -24,7 +24,6 @@ import com.mongodb.client.model.FindOptions;
 import com.mongodb.client.model.MapReduceAction;
 import com.mongodb.operation.MapReduceToCollectionOperation;
 import com.mongodb.operation.MapReduceWithInlineResultsOperation;
-import com.mongodb.operation.OperationExecutor;
 import org.bson.BsonDocument;
 import org.bson.BsonJavaScript;
 import org.bson.codecs.configuration.CodecRegistry;

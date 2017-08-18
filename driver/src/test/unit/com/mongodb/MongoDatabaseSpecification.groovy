@@ -27,7 +27,6 @@ import com.mongodb.operation.CommandReadOperation
 import com.mongodb.operation.CreateCollectionOperation
 import com.mongodb.operation.CreateViewOperation
 import com.mongodb.operation.DropDatabaseOperation
-import com.mongodb.operation.OperationExecutor
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32

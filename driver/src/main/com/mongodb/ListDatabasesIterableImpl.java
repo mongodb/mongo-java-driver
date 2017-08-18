@@ -19,7 +19,6 @@ import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.operation.ListDatabasesOperation;
-import com.mongodb.operation.OperationExecutor;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.Collection;

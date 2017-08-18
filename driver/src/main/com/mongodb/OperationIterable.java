@@ -19,7 +19,6 @@ package com.mongodb;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.operation.BatchCursor;
-import com.mongodb.operation.OperationExecutor;
 import com.mongodb.operation.ReadOperation;
 
 import java.util.Collection;

@@ -60,7 +60,6 @@ import com.mongodb.operation.FindAndDeleteOperation;
 import com.mongodb.operation.FindAndReplaceOperation;
 import com.mongodb.operation.FindAndUpdateOperation;
 import com.mongodb.operation.MixedBulkWriteOperation;
-import com.mongodb.operation.OperationExecutor;
 import com.mongodb.operation.RenameCollectionOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;

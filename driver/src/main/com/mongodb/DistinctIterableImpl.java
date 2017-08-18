@@ -21,7 +21,6 @@ import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.Collation;
 import com.mongodb.operation.DistinctOperation;
-import com.mongodb.operation.OperationExecutor;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
