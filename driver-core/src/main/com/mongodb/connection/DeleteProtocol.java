@@ -96,12 +96,6 @@ class DeleteProtocol extends WriteProtocol {
     }
 
     @Override
-    protected void appendToWriteCommandResponseDocument(final RequestMessage curMessage, final RequestMessage nextMessage,
-                                                        final WriteConcernResult writeConcernResult, final BsonDocument response) {
-        response.append("n", new BsonInt32(writeConcernResult.getCount()));
-    }
-
-    @Override
     protected Logger getLogger() {
         return LOGGER;
     }

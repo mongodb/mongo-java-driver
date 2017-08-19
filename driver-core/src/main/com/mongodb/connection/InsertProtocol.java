@@ -25,7 +25,6 @@ import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
-import org.bson.BsonInt32;
 
 import java.util.List;
 
@@ -95,14 +94,6 @@ class InsertProtocol extends WriteProtocol {
 
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
         return new InsertMessage(getNamespace().getFullName(), isOrdered(), getWriteConcern(), insertRequestList, settings);
-    }
-
-    @Override
-    protected void appendToWriteCommandResponseDocument(final RequestMessage curMessage, final RequestMessage nextMessage,
-                                                        final WriteConcernResult writeConcernResult, final BsonDocument response) {
-        response.append("n", new BsonInt32(nextMessage == null ? ((InsertMessage) curMessage).getInsertRequestList().size()
-                                                               : ((InsertMessage) curMessage).getInsertRequestList().size()
-                                                                 - ((InsertMessage) nextMessage).getInsertRequestList().size()));
     }
 
     @Override

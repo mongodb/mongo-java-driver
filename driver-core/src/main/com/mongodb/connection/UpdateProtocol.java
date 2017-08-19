@@ -26,8 +26,6 @@ import com.mongodb.diagnostics.logging.Loggers;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
-import org.bson.BsonInt32;
-import org.bson.BsonValue;
 
 import java.util.List;
 
@@ -101,29 +99,6 @@ class UpdateProtocol extends WriteProtocol {
     @Override
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
         return new UpdateMessage(getNamespace().getFullName(), updates, settings);
-    }
-
-    @Override
-    protected void appendToWriteCommandResponseDocument(final RequestMessage curMessage, final RequestMessage nextMessage,
-                                                        final WriteConcernResult writeConcernResult, final BsonDocument response) {
-        response.append("n", new BsonInt32(writeConcernResult.getCount()));
-
-        UpdateMessage updateMessage = (UpdateMessage) curMessage;
-        UpdateRequest updateRequest = updateMessage.getUpdateRequests().get(0);
-        BsonValue upsertedId = null;
-        if (writeConcernResult.getUpsertedId() != null) {
-            upsertedId = writeConcernResult.getUpsertedId();
-        } else if (!writeConcernResult.isUpdateOfExisting() && updateRequest.isUpsert()) {
-            if (updateRequest.getUpdate().containsKey("_id")) {
-                upsertedId = updateRequest.getUpdate().get("_id");
-            } else if (updateRequest.getFilter().containsKey("_id")) {
-                upsertedId = updateRequest.getFilter().get("_id");
-            }
-        }
-        if (upsertedId != null) {
-            response.append("upserted", new BsonArray(singletonList(new BsonDocument("index", new BsonInt32(0))
-                                                                    .append("_id", upsertedId))));
-        }
     }
 
     @Override

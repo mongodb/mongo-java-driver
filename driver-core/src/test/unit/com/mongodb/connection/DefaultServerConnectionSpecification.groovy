@@ -35,6 +35,7 @@ import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.compare
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
+import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.connection.ServerType.SHARD_ROUTER
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback
@@ -58,10 +59,10 @@ class DefaultServerConnectionSpecification extends Specification {
         def inserts = asList(new InsertRequest(new BsonDocument()))
 
         when:
-        connection.insert(namespace, true, ACKNOWLEDGED, inserts)
+        connection.insert(namespace, true, UNACKNOWLEDGED, inserts)
 
         then:
-        1 * executor.execute({ compare(new InsertProtocol(namespace, true, ACKNOWLEDGED, inserts), it) }, internalConnection)
+        1 * executor.execute({ compare(new InsertProtocol(namespace, true, UNACKNOWLEDGED, inserts), it) }, internalConnection)
     }
 
     def 'should execute update protocol'() {
@@ -69,10 +70,10 @@ class DefaultServerConnectionSpecification extends Specification {
         def updates = asList(new UpdateRequest(new BsonDocument(), new BsonDocument(), WriteRequest.Type.REPLACE))
 
         when:
-        connection.update(namespace, true, ACKNOWLEDGED, updates)
+        connection.update(namespace, true, UNACKNOWLEDGED, updates)
 
         then:
-        1 * executor.execute({ compare(new UpdateProtocol(namespace, true, ACKNOWLEDGED, updates), it) }, internalConnection)
+        1 * executor.execute({ compare(new UpdateProtocol(namespace, true, UNACKNOWLEDGED, updates), it) }, internalConnection)
     }
 
     def 'should execute delete protocol'() {
@@ -80,10 +81,10 @@ class DefaultServerConnectionSpecification extends Specification {
         def deletes = asList(new DeleteRequest(new BsonDocument()))
 
         when:
-        connection.delete(namespace, true, ACKNOWLEDGED, deletes)
+        connection.delete(namespace, true, UNACKNOWLEDGED, deletes)
 
         then:
-        1 * executor.execute({ compare(new DeleteProtocol(namespace, true, ACKNOWLEDGED, deletes), it) }, internalConnection)
+        1 * executor.execute({ compare(new DeleteProtocol(namespace, true, UNACKNOWLEDGED, deletes), it) }, internalConnection)
     }
 
     def 'should execute insert command protocol'() {
@@ -244,10 +245,11 @@ class DefaultServerConnectionSpecification extends Specification {
         def inserts = asList(new InsertRequest(new BsonDocument()))
 
         when:
-        connection.insertAsync(namespace, true, ACKNOWLEDGED, inserts, callback)
+        connection.insertAsync(namespace, true, UNACKNOWLEDGED, inserts, callback)
 
         then:
-        1 * executor.executeAsync({ compare(new InsertProtocol(namespace, true, ACKNOWLEDGED, inserts), it) }, internalConnection, callback)
+        1 * executor.executeAsync({ compare(new InsertProtocol(namespace, true, UNACKNOWLEDGED, inserts), it) }, internalConnection,
+                callback)
     }
 
     def 'should execute update protocol asynchronously'() {
@@ -255,10 +257,10 @@ class DefaultServerConnectionSpecification extends Specification {
         def updates = asList(new UpdateRequest(new BsonDocument(), new BsonDocument(), WriteRequest.Type.REPLACE))
 
         when:
-        connection.updateAsync(namespace, true, ACKNOWLEDGED, updates, callback)
+        connection.updateAsync(namespace, true, UNACKNOWLEDGED, updates, callback)
 
         then:
-        1 * executor.executeAsync({ compare(new UpdateProtocol(namespace, true, ACKNOWLEDGED, updates), it) },
+        1 * executor.executeAsync({ compare(new UpdateProtocol(namespace, true, UNACKNOWLEDGED, updates), it) },
                                   internalConnection, callback)
     }
 
@@ -267,10 +269,11 @@ class DefaultServerConnectionSpecification extends Specification {
         def deletes = asList(new DeleteRequest(new BsonDocument()))
 
         when:
-        connection.deleteAsync(namespace, true, ACKNOWLEDGED, deletes, callback)
+        connection.deleteAsync(namespace, true, UNACKNOWLEDGED, deletes, callback)
 
         then:
-        1 * executor.executeAsync({ compare(new DeleteProtocol(namespace, true, ACKNOWLEDGED, deletes), it) }, internalConnection, callback)
+        1 * executor.executeAsync({ compare(new DeleteProtocol(namespace, true, UNACKNOWLEDGED, deletes), it) }, internalConnection,
+                callback)
     }
 
     def 'should execute insert command protocol asynchronously'() {

@@ -25,7 +25,6 @@ import com.mongodb.WriteConcernResult;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.event.CommandListener;
-import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -35,6 +34,7 @@ import org.bson.codecs.Decoder;
 import org.bson.io.OutputBuffer;
 
 import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
+import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.connection.ProtocolHelper.encodeMessage;
 import static com.mongodb.connection.ProtocolHelper.encodeMessageWithMetadata;
 import static com.mongodb.connection.ProtocolHelper.getMessageSettings;
@@ -42,11 +42,9 @@ import static com.mongodb.connection.ProtocolHelper.getWriteResult;
 import static com.mongodb.connection.ProtocolHelper.sendCommandFailedEvent;
 import static com.mongodb.connection.ProtocolHelper.sendCommandStartedEvent;
 import static com.mongodb.connection.ProtocolHelper.sendCommandSucceededEvent;
-import static java.util.Collections.singletonList;
 
 /**
- * Base class for wire protocol messages that perform writes.  In particular, it handles the write followed by the getlasterror command to
- * apply the write concern.
+ * Base class for legacy wire protocol messages that perform unacknowledged writes.
  */
 abstract class WriteProtocol implements Protocol<WriteConcernResult> {
 
@@ -56,6 +54,7 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
     private CommandListener commandListener;
 
     WriteProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern) {
+        isTrue("write concern is unacknowledged", !writeConcern.isAcknowledged());
         this.namespace = namespace;
         this.ordered = ordered;
         this.writeConcern = writeConcern;
@@ -68,7 +67,6 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
 
     @Override
     public WriteConcernResult execute(final InternalConnection connection) {
-        WriteConcernResult writeConcernResult = null;
         RequestMessage requestMessage = null;
         do {
             long startTimeNanos = System.nanoTime();
@@ -109,17 +107,14 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
                     responseBuffers = connection.receiveMessage(messageId);
                     ReplyMessage<BsonDocument> replyMessage = new ReplyMessage<BsonDocument>(responseBuffers, new BsonDocumentCodec(),
                             messageId);
-                    writeConcernResult = getWriteResult(replyMessage.getDocuments().get(0),
-                            connection.getDescription().getServerAddress());
+                    getWriteResult(replyMessage.getDocuments().get(0), connection.getDescription().getServerAddress());
                 } catch (WriteConcernException e) {
-                    sendSucceededEvent(connection, requestMessage, encodingMetadata.getNextMessage(), e, startTimeNanos);
-                    if (writeConcern.isAcknowledged()) {
-                        throw e;
-                    } else if (ordered) {
+                    sendSucceededEvent(connection, requestMessage, startTimeNanos);
+                    if (ordered) {
                         break;
                     }
                 } catch (RuntimeException e) {
-                    sendFailedEvent(connection, requestMessage, sentCommandStartedEvent, e, startTimeNanos);
+                    sendFailedEvent(connection, requestMessage, true, e, startTimeNanos);
                     throw e;
                 } finally {
                     if (responseBuffers != null) {
@@ -128,16 +123,13 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
                 }
             }
 
-            sendSucceededEvent(connection, requestMessage, encodingMetadata.getNextMessage(), writeConcernResult, startTimeNanos);
+            sendSucceededEvent(connection, requestMessage, startTimeNanos);
 
             requestMessage = encodingMetadata.getNextMessage();
         } while (requestMessage != null);
 
-        return writeConcern.isAcknowledged() ? writeConcernResult : WriteConcernResult.unacknowledged();
+        return WriteConcernResult.unacknowledged();
     }
-
-    protected abstract void appendToWriteCommandResponseDocument(RequestMessage curMessage, RequestMessage nextMessage,
-                                                                 WriteConcernResult writeConcernResult, BsonDocument response);
 
     @Override
     public void executeAsync(final InternalConnection connection, final SingleResultCallback<WriteConcernResult> callback) {
@@ -227,22 +219,9 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
     }
 
     private void sendSucceededEvent(final InternalConnection connection, final RequestMessage message,
-                                    final RequestMessage nextMessage,
-                                    final WriteConcernException e,
                                     final long startTimeNanos) {
         if (commandListener != null) {
-            sendSucceededEvent(connection, message,
-                    getResponseDocument(message, nextMessage, e.getWriteConcernResult(), e), startTimeNanos);
-        }
-    }
-
-    private void sendSucceededEvent(final InternalConnection connection, final RequestMessage message,
-                                    final RequestMessage nextMessage,
-                                    final WriteConcernResult writeConcernResult,
-                                    final long startTimeNanos) {
-        if (commandListener != null) {
-            sendSucceededEvent(connection, message,
-                    getResponseDocument(message, nextMessage, writeConcernResult, null), startTimeNanos);
+            sendSucceededEvent(connection, message, getResponseDocument(), startTimeNanos);
         }
     }
 
@@ -261,34 +240,16 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
         }
     }
 
-    private BsonDocument getResponseDocument(final RequestMessage curMessage, final RequestMessage nextMessage,
-                                             final WriteConcernResult writeConcernResult,
-                                             final WriteConcernException writeConcernException) {
-        BsonDocument response = new BsonDocument("ok", new BsonInt32(1));
-        if (writeConcern.isAcknowledged()) {
-            if (writeConcernException == null) {
-                appendToWriteCommandResponseDocument(curMessage, nextMessage, writeConcernResult, response);
-            } else {
-                response.put("n", new BsonInt32(0));
-                BsonDocument writeErrorDocument = new BsonDocument("index", new BsonInt32(0))
-                        .append("code", new BsonInt32(writeConcernException.getErrorCode()));
-                if (writeConcernException.getErrorMessage() != null) {
-                    writeErrorDocument.append("errmsg", new BsonString(writeConcernException.getErrorMessage()));
-                }
-                response.put("writeErrors", new BsonArray(singletonList(writeErrorDocument)));
-            }
-        }
-        return response;
+    private BsonDocument getResponseDocument() {
+        return new BsonDocument("ok", new BsonInt32(1));
     }
 
     private boolean shouldAcknowledge(final RequestMessage nextMessage) {
-        return writeConcern.isAcknowledged() || (isOrdered() && nextMessage != null);
+        return isOrdered() && nextMessage != null;
     }
 
     private BsonDocument createGetLastErrorCommandDocument() {
-        BsonDocument command = new BsonDocument("getlasterror", new BsonInt32(1));
-        command.putAll(writeConcern.asDocument());
-        return command;
+        return new BsonDocument("getlasterror", new BsonInt32(1));
     }
 
     /**
@@ -364,15 +325,12 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
                         try {
                             writeConcernResult = getWriteResult(result, connection.getDescription().getServerAddress());
                         } catch (WriteConcernException e) {
-                            if (writeConcern.isAcknowledged()) {
-                                throw e;
-                            }
                             if (ordered) {
                                 shouldWriteNextMessage = false;
                             }
                         }
 
-                        sendSucceededEvent(connection, message, nextMessage, writeConcernResult, startTimeNanos);
+                        sendSucceededEvent(connection, message, startTimeNanos);
 
                         if (shouldWriteNextMessage && nextMessage != null) {
                             executeAsync(nextMessage, connection, callback);
@@ -380,7 +338,7 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
                             callback.onResult(writeConcernResult, null);
                         }
                     } catch (WriteConcernException e) {
-                        sendSucceededEvent(connection, message, nextMessage, e, startTimeNanos);
+                        sendSucceededEvent(connection, message, startTimeNanos);
                         throw e;
                     } catch (RuntimeException e) {
                         sendFailedEvent(connection, message, true, e, startTimeNanos);
@@ -421,7 +379,7 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
                 sendFailedEvent(connection, message, true, t, startTimeNanos);
                 callback.onResult(null, t);
             } else {
-                sendSucceededEvent(connection, message, nextMessage, (WriteConcernResult) null, startTimeNanos);
+                sendSucceededEvent(connection, message, startTimeNanos);
 
                 if (nextMessage != null) {
                     executeAsync(nextMessage, connection, callback);
