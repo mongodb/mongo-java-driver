@@ -44,6 +44,7 @@
 
     <!--Do not check documentation tests classes -->
     <suppress checks="Javadoc*" files=".*documentation.*"/>
+    <suppress checks="Regexp" files=".*documentation.*"/>
 
     <!--Do not check test classes -->
     <suppress checks="Javadoc*" files=".*test.*"/>

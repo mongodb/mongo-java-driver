@@ -50,6 +50,19 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
     AggregateIterable<TResult> maxTime(long maxTime, TimeUnit timeUnit);
 
     /**
+     * The maximum amount of time for the server to wait on new documents to satisfy a {@code $changeStream} aggregation.
+     *
+     * A zero value will be ignored.
+     *
+     * @param maxAwaitTime  the max await time
+     * @param timeUnit the time unit to return the result in
+     * @return the maximum await execution time in the given time unit
+     * @mongodb.server.release 3.6
+     * @since 3.6
+     */
+    AggregateIterable<TResult> maxAwaitTime(long maxAwaitTime, TimeUnit timeUnit);
+
+    /**
      * Sets whether the server should use a cursor to return results.
      *
      * @param useCursor whether the server should use a cursor to return results

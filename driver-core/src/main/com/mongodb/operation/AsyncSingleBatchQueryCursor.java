@@ -43,7 +43,7 @@ class AsyncSingleBatchQueryCursor<T> implements AsyncBatchCursor<T> {
     public void next(final SingleResultCallback<List<T>> callback) {
         if (closed) {
             callback.onResult(null, new MongoException("next() called after the cursor was closed."));
-        } else if (firstBatch  != null && !firstBatch.getResults().isEmpty()) {
+        } else if (firstBatch != null && !firstBatch.getResults().isEmpty()) {
             List<T> results = firstBatch.getResults();
             firstBatch = null;
             callback.onResult(results, null);
@@ -51,6 +51,11 @@ class AsyncSingleBatchQueryCursor<T> implements AsyncBatchCursor<T> {
             closed = true;
             callback.onResult(null, null);
         }
+    }
+
+    @Override
+    public void tryNext(final SingleResultCallback<List<T>> callback) {
+        next(callback);
     }
 
     @Override

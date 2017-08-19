@@ -57,6 +57,7 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
 
     private Boolean allowDiskUse;
     private Integer batchSize;
+    private long maxAwaitTimeMS;
     private long maxTimeMS;
     private Boolean useCursor;
     private Boolean bypassDocumentValidation;
@@ -89,11 +90,19 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
     }
 
     @Override
+    public AggregateIterable<TResult> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        this.maxAwaitTimeMS = TimeUnit.MILLISECONDS.convert(maxAwaitTime, timeUnit);
+        return this;
+    }
+
+    @Override
     public AggregateIterable<TResult> maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
+
 
     @Override
     @Deprecated
@@ -173,13 +182,14 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
                     .collation(collation);
             MongoIterable<TResult> delegated = new FindIterableImpl<TDocument, TResult>(new MongoNamespace(namespace.getDatabaseName(),
                     outCollection.asString().getValue()), documentClass, resultClass, codecRegistry, primary(), readConcern,
-                    executor, new BsonDocument(), new FindOptions().collation(collation));
+                    executor, new BsonDocument(), new FindOptions().collation(collation).maxAwaitTime(maxAwaitTimeMS, MILLISECONDS));
             if (batchSize != null) {
                 delegated.batchSize(batchSize);
             }
             return new AwaitingWriteOperationIterable<TResult, Void>(operation, executor, delegated);
         } else {
             return new OperationIterable<TResult>(new AggregateOperation<TResult>(namespace, aggregateList, codecRegistry.get(resultClass))
+                    .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
                     .maxTime(maxTimeMS, MILLISECONDS)
                     .allowDiskUse(allowDiskUse)
                     .batchSize(batchSize)

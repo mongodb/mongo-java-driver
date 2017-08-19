@@ -245,6 +245,8 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
 
         then:
         cursor.tryNext().iterator().next().get('_id') == 1
+
+        then:
         !cursor.tryNext()
 
         when:

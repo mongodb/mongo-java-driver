@@ -1,11 +1,11 @@
 /*
- * Copyright 2015-2016 MongoDB, Inc.
+ * Copyright 2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *  http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,16 +26,13 @@ import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.client.model.Collation
-import com.mongodb.operation.AggregateOperation
-import com.mongodb.operation.AggregateToCollectionOperation
+import com.mongodb.client.model.FullDocument
 import com.mongodb.operation.AsyncOperationExecutor
-import com.mongodb.operation.FindOperation
+import com.mongodb.operation.ChangeStreamOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
-import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider
-import org.bson.codecs.DocumentCodec
 import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.ValueCodecProvider
 import org.bson.codecs.configuration.CodecConfigurationException
@@ -47,7 +44,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
 
-class AggregateIterableSpecification extends Specification {
+class ChangeStreamIterableSpecification extends Specification {
 
     def namespace = new MongoNamespace('db', 'coll')
     def codecRegistry = fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()])
@@ -56,103 +53,41 @@ class AggregateIterableSpecification extends Specification {
     def writeConcern = WriteConcern.MAJORITY
     def collation = Collation.builder().locale('en').build()
 
-    def 'should build the expected AggregationOperation'() {
+    def 'should build the expected ChangeStreamOperation'() {
         given:
         def cursor = Stub(AsyncBatchCursor) {
             next(_) >> {
                 it[0].onResult(null, null)
             }
         }
-        def executor = new TestOperationExecutor([cursor, cursor, cursor, cursor, cursor]);
+        def executor = new TestOperationExecutor([cursor, cursor, cursor, cursor, cursor])
         def pipeline = [new Document('$match', 1)]
-        def aggregationIterable = new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                writeConcern, executor, pipeline)
+        def changeStreamIterable = new ChangeStreamIterableImpl(namespace, codecRegistry, readPreference, readConcern, executor, pipeline,
+                Document)
 
         when: 'default input should be as expected'
-        aggregationIterable.into([]) { result, t -> }
+        changeStreamIterable.into([]) { result, t -> }
 
-        def operation = executor.getReadOperation() as AggregateOperation<Document>
+        def operation = executor.getReadOperation() as ChangeStreamOperation<Document>
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new AggregateOperation<Document>(namespace, [new BsonDocument('$match', new BsonInt32(1))],
-                new DocumentCodec()));
+        expect operation, isTheSameAs(new ChangeStreamOperation<Document>(namespace, FullDocument.DEFAULT,
+                [BsonDocument.parse('{$match: 1}')], codecRegistry.get(Document)))
         readPreference == secondary()
 
         when: 'overriding initial options'
-        aggregationIterable
-                .maxAwaitTime(99, MILLISECONDS)
-                .maxTime(999, MILLISECONDS)
-                .collation(collation)
-                .useCursor(true)
-                .into([]) { result, t -> }
+        def resumeToken = BsonDocument.parse('{_id: {a: 1}}')
+        changeStreamIterable.collation(collation).maxAwaitTime(99, MILLISECONDS)
+                .fullDocument(FullDocument.UPDATE_LOOKUP).resumeAfter(resumeToken).into([]) { result, t -> }
 
-        operation = executor.getReadOperation() as AggregateOperation<Document>
+        operation = executor.getReadOperation() as ChangeStreamOperation<Document>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new AggregateOperation<Document>(namespace, [new BsonDocument('$match', new BsonInt32(1))],
-                new DocumentCodec())
-                .maxAwaitTime(99, MILLISECONDS)
-                .maxTime(999, MILLISECONDS)
-                .useCursor(true)
-                .collation(collation))
-
-    }
-
-    def 'should build the expected AggregateToCollectionOperation'() {
-        given:
-        def cursor = Stub(AsyncBatchCursor) {
-            next(_) >> {
-                it[0].onResult(null, null)
-            }
-        }
-        def executor = new TestOperationExecutor([cursor, cursor, cursor, cursor, cursor]);
-        def collectionName = 'collectionName'
-        def collectionNamespace = new MongoNamespace(namespace.getDatabaseName(), collectionName)
-        def pipeline = [new Document('$match', 1), new Document('$out', collectionName)]
-
-        when: 'aggregation includes $out'
-        new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                pipeline)
-                .batchSize(99)
-                .maxAwaitTime(99, MILLISECONDS)
-                .maxTime(999, MILLISECONDS)
-                .allowDiskUse(true)
-                .useCursor(true)
-                .collation(collation).into([]) { result, t -> }
-
-        def operation = executor.getWriteOperation() as AggregateToCollectionOperation
-
-        then: 'should use the overrides'
-        expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
-                [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))], writeConcern)
-                .maxTime(999, MILLISECONDS)
-                .allowDiskUse(true)
-                .collation(collation))
-
-        when: 'the subsequent read should have the batchSize set'
-        operation = executor.getReadOperation() as FindOperation<Document>
-
-        then: 'should use the correct settings'
-        operation.getNamespace() == collectionNamespace
-        operation.getBatchSize() == 99
-        operation.getMaxAwaitTime(MILLISECONDS) == 99
-
-        when: 'toCollection should work as expected'
-        def futureResultCallback = new FutureResultCallback()
-        new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                pipeline)
-                .allowDiskUse(true)
-                .collation(collation)
-                .toCollection(futureResultCallback);
-        futureResultCallback.get()
-
-        operation = executor.getWriteOperation() as AggregateToCollectionOperation
-
-        then:
-        expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
-                [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))], writeConcern)
-                .allowDiskUse(true).collation(collation))
+        expect operation, isTheSameAs(new ChangeStreamOperation<Document>(namespace, FullDocument.UPDATE_LOOKUP,
+                [BsonDocument.parse('{$match: 1}')], codecRegistry.get(Document))
+                .collation(collation).maxAwaitTime(99, MILLISECONDS)
+                .resumeAfter(resumeToken))
     }
 
     def 'should handle exceptions correctly'() {
@@ -160,33 +95,34 @@ class AggregateIterableSpecification extends Specification {
         def codecRegistry = fromProviders([new ValueCodecProvider(), new BsonValueCodecProvider()])
         def executor = new TestOperationExecutor([new MongoException('failure')])
         def pipeline = [new BsonDocument('$match', new BsonInt32(1))]
-        def aggregationIterable = new AggregateIterableImpl(namespace, Document, BsonDocument, codecRegistry, readPreference, readConcern,
-                writeConcern, executor, pipeline)
-
+        def changeStreamIterable = new ChangeStreamIterableImpl(namespace, codecRegistry, readPreference, readConcern, executor, pipeline,
+                BsonDocument)
         def futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
 
         when: 'The operation fails with an exception'
-        aggregationIterable.into([], futureResultCallback)
+        changeStreamIterable.into([], futureResultCallback)
         futureResultCallback.get()
 
-        then: 'the future should handle the exception'
-        thrown(MongoException)
-
-        when: 'toCollection should throw IllegalStateException when last state is not $out'
-        aggregationIterable.toCollection(new FutureResultCallback())
-
         then:
-        thrown(IllegalStateException)
+        thrown(MongoException)
 
         when: 'a codec is missing'
         futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
-        new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference,  readConcern, writeConcern, executor,
-                pipeline)
+        new ChangeStreamIterableImpl(namespace, codecRegistry, readPreference, readConcern, executor, pipeline, Document)
                 .into([], futureResultCallback)
         futureResultCallback.get()
 
         then:
         thrown(CodecConfigurationException)
+
+        when: 'pipeline contains null'
+        futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
+        new ChangeStreamIterableImpl(namespace, codecRegistry, readPreference, readConcern, executor, [null], Document)
+                .into([], futureResultCallback)
+        futureResultCallback.get()
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'should follow the MongoIterable interface as expected'() {
@@ -208,8 +144,8 @@ class AggregateIterableSpecification extends Specification {
             }
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor()]);
-        def mongoIterable = new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, [new BsonDocument('$match', new BsonInt32(1))])
+        def mongoIterable = new ChangeStreamIterableImpl(namespace, codecRegistry, readPreference, readConcern, executor,
+                [new BsonDocument('$match', new BsonInt32(1))], BsonDocument)
 
         when:
         def results = new FutureResultCallback()
@@ -271,8 +207,8 @@ class AggregateIterableSpecification extends Specification {
 
     def 'should check variables using notNull'() {
         given:
-        def mongoIterable = new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, Stub(AsyncOperationExecutor), [Document.parse('{$match: 1}')])
+        def mongoIterable = new ChangeStreamIterableImpl(namespace, codecRegistry, readPreference, readConcern,
+                Stub(AsyncOperationExecutor), [new BsonDocument('$match', new BsonInt32(1))], BsonDocument)
         def callback = Stub(SingleResultCallback)
         def block = Stub(Block)
         def target = Stub(List)
@@ -315,8 +251,8 @@ class AggregateIterableSpecification extends Specification {
 
         when:
         def results = new FutureResultCallback()
-        mongoIterable = new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, Stub(AsyncOperationExecutor), [null])
+        mongoIterable = new ChangeStreamIterableImpl(namespace, codecRegistry, readPreference, readConcern,
+                Stub(AsyncOperationExecutor), [null], BsonDocument)
         mongoIterable.into(target, results)
         results.get()
 

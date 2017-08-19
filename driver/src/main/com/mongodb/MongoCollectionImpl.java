@@ -23,6 +23,7 @@ import com.mongodb.bulk.InsertRequest;
 import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.bulk.WriteRequest;
 import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.ListIndexesIterable;
@@ -72,6 +73,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -229,6 +231,27 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     public <TResult> AggregateIterable<TResult> aggregate(final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
         return new AggregateIterableImpl<TDocument, TResult>(namespace, documentClass, resultClass, codecRegistry, readPreference,
                 readConcern, writeConcern, executor, pipeline);
+    }
+
+    @Override
+    public ChangeStreamIterable<TDocument> watch() {
+        return watch(Collections.<Bson>emptyList());
+    }
+
+    @Override
+    public <TResult> ChangeStreamIterable<TResult> watch(final Class<TResult> resultClass) {
+        return watch(Collections.<Bson>emptyList(), resultClass);
+    }
+
+    @Override
+    public ChangeStreamIterable<TDocument> watch(final List<? extends Bson> pipeline) {
+        return watch(pipeline, documentClass);
+    }
+
+    @Override
+    public <TResult> ChangeStreamIterable<TResult> watch(final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
+        return new ChangeStreamIterableImpl<TResult>(namespace, codecRegistry, readPreference, readConcern, executor, pipeline,
+                resultClass);
     }
 
     @Override

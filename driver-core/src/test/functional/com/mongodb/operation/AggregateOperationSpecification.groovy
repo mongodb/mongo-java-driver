@@ -42,6 +42,8 @@ import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getCluster
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
+import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
@@ -62,11 +64,12 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         then:
         operation.getAllowDiskUse() == null
         operation.getBatchSize() == null
+        operation.getCollation() == null
+        operation.getMaxAwaitTime(MILLISECONDS) == 0
         operation.getMaxTime(MILLISECONDS) == 0
         operation.getPipeline() == []
-        operation.getUseCursor() == null
         operation.getReadConcern() == ReadConcern.DEFAULT
-        operation.getCollation() == null
+        operation.getUseCursor() == null
     }
 
     def 'should set optional values correctly'(){
@@ -74,19 +77,20 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         AggregateOperation operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec())
                 .allowDiskUse(true)
                 .batchSize(10)
-                .maxTime(10, MILLISECONDS)
-                .useCursor(true)
-                .readConcern(ReadConcern.MAJORITY)
                 .collation(defaultCollation)
-
+                .maxAwaitTime(10, MILLISECONDS)
+                .maxTime(10, MILLISECONDS)
+                .readConcern(ReadConcern.MAJORITY)
+                .useCursor(true)
 
         then:
         operation.getAllowDiskUse()
         operation.getBatchSize() == 10
-        operation.getMaxTime(MILLISECONDS) == 10
-        operation.getUseCursor()
-        operation.getReadConcern() == ReadConcern.MAJORITY
         operation.getCollation() == defaultCollation
+        operation.getMaxAwaitTime(MILLISECONDS) == 10
+        operation.getMaxTime(MILLISECONDS) == 10
+        operation.getReadConcern() == ReadConcern.MAJORITY
+        operation.getUseCursor()
     }
 
     def 'should create the expected command'() {
@@ -95,18 +99,19 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         def operation = new AggregateOperation<Document>(helper.namespace, pipeline, new DocumentCodec())
                 .allowDiskUse(true)
                 .batchSize(10)
-                .maxTime(10, MILLISECONDS)
-                .useCursor(true)
-                .readConcern(ReadConcern.MAJORITY)
                 .collation(defaultCollation)
+                .maxAwaitTime(15, MILLISECONDS)
+                .maxTime(10, MILLISECONDS)
+                .readConcern(ReadConcern.MAJORITY)
+                .useCursor(true)
 
         def expectedCommand = new BsonDocument('aggregate', new BsonString(helper.namespace.getCollectionName()))
                 .append('pipeline', new BsonArray(pipeline))
+                .append('allowDiskUse', new BsonBoolean(true))
+                .append('collation', defaultCollation.asDocument())
                 .append('cursor', new BsonDocument('batchSize', new BsonInt32(10)))
                 .append('maxTimeMS', new BsonInt64(10))
-                .append('allowDiskUse', new BsonBoolean(true))
                 .append('readConcern', new BsonDocument('level', new BsonString('majority')))
-                .append('collation', defaultCollation.asDocument())
 
         then:
         testOperation(operation, [3, 4, 0], expectedCommand, async, helper.cursorResult)
@@ -165,6 +170,28 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
         where:
         async << [true, false]
+    }
+
+    @IgnoreIf({ !(serverVersionAtLeast([3, 5, 11]) && isDiscoverableReplicaSet()) })
+    def 'should support changeStreams'() {
+        given:
+        def expected = [createExpectedChangeNotification(namespace, 0), createExpectedChangeNotification(namespace, 1)]
+
+        def pipeline = ['{$changeStream: {}}', '{$project: {"_id.clusterTime": 0}}'].collect { BsonDocument.parse(it) }
+        def operation = new AggregateOperation<BsonDocument>(namespace, pipeline, new BsonDocumentCodec())
+
+        when:
+        def cursor = execute(operation, async)
+        getCollectionHelper().insertDocuments(['{_id: 0, a: 0}', '{_id: 1, a: 1}'].collect { BsonDocument.parse(it) })
+
+        then:
+        next(cursor, async) == expected
+
+        cleanup:
+        cursor?.close()
+
+        where:
+        async << [true]
     }
 
     def 'should be able to aggregate'() {
@@ -246,6 +273,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         batchSize << [null, 0, 10]
     }
 
+    @IgnoreIf({ isSharded() })
     def 'should throw execution timeout exception from execute'() {
         given:
         def operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).maxTime(1, SECONDS)
@@ -297,6 +325,54 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         [async, options] << [[true, false], [defaultCollation, null, Collation.builder().build()]].combinations()
     }
 
+    @IgnoreIf({ isSharded() || !serverVersionAtLeast(3, 2) })
+    def 'should be able to respect maxTime with pipeline'() {
+        given:
+        enableMaxTimeFailPoint()
+        AggregateOperation operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec())
+                .maxTime(10, MILLISECONDS)
+
+        when:
+        execute(operation, async)
+
+        then:
+        thrown(MongoExecutionTimeoutException)
+
+        cleanup:
+        disableMaxTimeFailPoint()
+
+        where:
+        async << [true, false]
+    }
+
+    @IgnoreIf({ isSharded() || !serverVersionAtLeast(3, 2) })
+    def 'should be able to respect maxAwaitTime with pipeline'() {
+        given:
+        enableMaxTimeFailPoint()
+        AggregateOperation operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec())
+                .batchSize(2)
+                .maxAwaitTime(10, MILLISECONDS)
+
+        when:
+        def cursor = execute(operation, async)
+        next(cursor, async)
+
+        then:
+        notThrown(MongoExecutionTimeoutException)
+
+        when:
+        next(cursor, async)
+
+        then:
+        thrown(MongoExecutionTimeoutException)
+
+        cleanup:
+        disableMaxTimeFailPoint()
+
+        where:
+        async << [true, false]
+    }
+
     def 'should use the ReadBindings readPreference to set slaveOK'() {
         when:
         def operation = new AggregateOperation(helper.namespace, [], new BsonDocumentCodec())
@@ -322,5 +398,18 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
     private static List<Boolean> useCursorOptions() {
         [null, true, false]
+    }
+
+    private static BsonDocument createExpectedChangeNotification(MongoNamespace namespace, int idValue) {
+        BsonDocument.parse("""{
+            "_id": {
+                "ns": "$namespace",
+                "documentKey": {"_id": $idValue}
+            },
+            "operationType": "insert",
+            "fullDocument": {"_id": $idValue, "a": $idValue},
+            "ns": {"coll": "${namespace.getCollectionName()}", "db": "${namespace.getDatabaseName()}"},
+            "documentKey": {"_id": $idValue}
+        }""")
     }
 }
