@@ -58,6 +58,7 @@ import static com.mongodb.client.model.Projections.exclude
 import static com.mongodb.client.model.Projections.excludeId
 import static com.mongodb.client.model.Projections.fields
 import static com.mongodb.client.model.Projections.include
+import static com.mongodb.client.model.Sorts.ascending
 import static com.mongodb.client.model.Sorts.descending
 import static java.util.Arrays.asList
 import static org.spockframework.util.CollectionUtil.containsAny
@@ -261,24 +262,29 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                 }"""))
         }
         def stage = facet(
+                new Facet('Manufacturer',
+                        sortByCount('$attributes.manufacturer'),
+                        limit(5)),
                 new Facet('Screen Sizes',
                           unwind('$attributes'),
                           bucketAuto('$attributes.screen_size', 5, new BucketAutoOptions()
-                                  .output(sum('count', 1)))),
-                new Facet('Manufacturer',
-                          sortByCount('$attributes.manufacturer'),
-                          limit(5)))
+                                  .output(sum('count', 1)))))
 
         when:
-        def results = aggregate([stage])
+        def results = aggregate([stage,
+                                 unwind('$Manufacturer'),
+                                 sort(ascending('Manufacturer')),
+                                 group('_id', push('Manufacturer', '$Manufacturer'),
+                                         first('Screen Sizes', '$Screen Sizes')),
+                                 project(excludeId())])
 
         then:
         results == [
             Document.parse(
                     '''{ 'Manufacturer': [
-                        {'_id': "Vizio", 'count': 17},
                         {'_id': "Samsung", 'count': 17},
-                        {'_id': "Sony", 'count': 17}
+                        {'_id': "Sony", 'count': 17},
+                        {'_id': "Vizio", 'count': 17}
                     ], 'Screen Sizes': [
                         {'_id': {'min': 35, 'max': 45}, 'count': 10},
                         {'_id': {'min': 45, 'max': 55}, 'count': 10},
