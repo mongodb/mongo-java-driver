@@ -30,9 +30,11 @@ import com.mongodb.client.model.DBCollectionFindAndModifyOptions
 import com.mongodb.client.model.DBCollectionFindOptions
 import com.mongodb.client.model.DBCollectionRemoveOptions
 import com.mongodb.client.model.DBCollectionUpdateOptions
+import com.mongodb.client.model.FullDocument
 import com.mongodb.operation.AggregateOperation
 import com.mongodb.operation.AggregateToCollectionOperation
 import com.mongodb.operation.BatchCursor
+import com.mongodb.operation.ChangeStreamOperation
 import com.mongodb.operation.CommandReadOperation
 import com.mongodb.operation.CountOperation
 import com.mongodb.operation.CreateIndexesOperation
@@ -712,6 +714,84 @@ class DBCollectionSpecification extends Specification {
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
                 collection.getDefaultDBObjectCodec()).useCursor(false).readConcern(ReadConcern.LOCAL).collation(collation)
                 .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER))
+    }
+
+    def 'should create ChangeStreamIterable correctly'() {
+        given:
+        def cursor = Stub(MapReduceBatchCursor) {
+            next() >> { }
+            hasNext() >> false
+        }
+        def executor = new TestOperationExecutor([cursor, cursor, cursor, cursor])
+        def db = new DB(getMongoClient(), 'myDatabase', executor)
+        def collection = db.getCollection('test')
+        collection.setReadPreference(ReadPreference.primary())
+        def pipeline = [BasicDBObject.parse('{$match: {}}')]
+        def bsonPipeline = [BsonDocument.parse('{$match: {}}')]
+        def resumeToken = BasicDBObject.parse('{_id: {}}')
+        def bsonResumeToken = BsonDocument.parse('{_id: {}}')
+
+        def options = new DBCollectionChangeStreamOptions().batchSize(1).collation(collation)
+                .fullDocument(FullDocument.UPDATE_LOOKUP).maxAwaitTime(10, TimeUnit.MILLISECONDS)
+                .readConcern(ReadConcern.LOCAL).readPreference(ReadPreference.nearest())
+                .resumeToken(resumeToken)
+
+        when:
+        collection.watch()
+
+        then:
+        expect executor.getReadOperation(), isTheSameAs(new ChangeStreamOperation(collection.getNamespace(), FullDocument.DEFAULT,
+                [], collection.getDefaultDBObjectCodec()))
+        executor.getReadPreference() == ReadPreference.primary()
+
+        when:
+        collection.watch(pipeline)
+
+        then:
+        expect executor.getReadOperation(), isTheSameAs(new ChangeStreamOperation(collection.getNamespace(), FullDocument.DEFAULT,
+                bsonPipeline, collection.getDefaultDBObjectCodec()))
+        executor.getReadPreference() == ReadPreference.primary()
+
+        when:
+        collection.watch(options)
+
+        then:
+        expect executor.getReadOperation(), isTheSameAs(new ChangeStreamOperation(collection.getNamespace(), FullDocument.UPDATE_LOOKUP,
+                [], collection.getDefaultDBObjectCodec()).batchSize(1).collation(collation)
+                .maxAwaitTime(10, TimeUnit.MILLISECONDS).readConcern(ReadConcern.LOCAL).resumeAfter(bsonResumeToken))
+        executor.getReadPreference() == ReadPreference.nearest()
+
+        when:
+        collection.watch(pipeline, options)
+
+        then:
+        expect executor.getReadOperation(), isTheSameAs(new ChangeStreamOperation(collection.getNamespace(), FullDocument.UPDATE_LOOKUP,
+                bsonPipeline, collection.getDefaultDBObjectCodec()).batchSize(1).collation(collation)
+                .maxAwaitTime(10, TimeUnit.MILLISECONDS).readConcern(ReadConcern.LOCAL).resumeAfter(bsonResumeToken))
+        executor.getReadPreference() == ReadPreference.nearest()
+    }
+
+    def 'should validate the ChangeStreamIterable pipeline data correctly'() {
+        given:
+        def cursor = Stub(MapReduceBatchCursor) {
+            next() >> { }
+            hasNext() >> false
+        }
+        def executor = new TestOperationExecutor([cursor, cursor, cursor])
+        def db = new DB(getMongoClient(), 'myDatabase', executor)
+        def collection = db.getCollection('test')
+
+        when:
+        collection.watch(null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.watch([null])
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'parallel should create the correct ParallelCollectionScanOperation'() {

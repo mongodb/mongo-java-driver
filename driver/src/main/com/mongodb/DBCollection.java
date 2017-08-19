@@ -32,6 +32,7 @@ import com.mongodb.operation.AggregateOperation;
 import com.mongodb.operation.AggregateToCollectionOperation;
 import com.mongodb.operation.BaseWriteOperation;
 import com.mongodb.operation.BatchCursor;
+import com.mongodb.operation.ChangeStreamOperation;
 import com.mongodb.operation.CountOperation;
 import com.mongodb.operation.CreateIndexesOperation;
 import com.mongodb.operation.DeleteOperation;
@@ -829,6 +830,67 @@ public class DBCollection {
      */
     public DBObject findOne(final DBObject query, final DBCollectionFindOptions findOptions) {
         return find(query, findOptions).one();
+    }
+
+    /**
+     * Creates a change stream for this collection.
+     *
+     * @return the change stream iterable
+     * @mongodb.driver.manual reference/operator/aggregation/changeStream $changeStream
+     * @since 3.6
+     */
+    Cursor watch() {
+        return watch(new DBCollectionChangeStreamOptions());
+    }
+
+    /**
+     * Creates a change stream for this collection.
+     *
+     * @param changeStreamOptions the options for the change stream.
+     * @return the change stream iterable
+     * @mongodb.driver.manual reference/operator/aggregation/changeStream $changeStream
+     * @since 3.6
+     */
+    Cursor watch(final DBCollectionChangeStreamOptions changeStreamOptions) {
+        return watch(Collections.<DBObject>emptyList(), changeStreamOptions);
+    }
+
+    /**
+     * Creates a change stream for this collection.
+     *
+     * @param pipeline the aggregation pipeline to apply to the change stream.
+     * @return the change stream iterable
+     * @mongodb.driver.manual reference/operator/aggregation/changeStream $changeStream
+     * @since 3.6
+     */
+    Cursor watch(final List<? extends DBObject> pipeline) {
+        return watch(pipeline, new DBCollectionChangeStreamOptions());
+    }
+
+    /**
+     * Creates a change stream for this collection.
+     *
+     * @param pipeline the aggregation pipeline to apply to the change stream.
+     * @param options the options for the change stream.
+     * @return the change stream iterable
+     * @mongodb.driver.manual reference/operator/aggregation/changeStream $changeStream
+     * @since 3.6
+     */
+    Cursor watch(final List<? extends DBObject> pipeline, final DBCollectionChangeStreamOptions options) {
+        notNull("pipeline", pipeline);
+        notNull("options", options);
+        List<BsonDocument> stages = preparePipeline(pipeline);
+
+        ChangeStreamOperation<DBObject> operation = new ChangeStreamOperation<DBObject>(getNamespace(), options.getFullDocument(), stages,
+                getDefaultDBObjectCodec())
+                .batchSize(options.getBatchSize())
+                .collation(options.getCollation())
+                .maxAwaitTime(options.getMaxAwaitTime(MILLISECONDS), MILLISECONDS)
+                .readConcern(options.getReadConcern() != null ? options.getReadConcern() : getReadConcern())
+                .resumeAfter(wrapAllowNull(options.getResumeToken()));
+        BatchCursor<DBObject> cursor = executor.execute(operation,
+                options.getReadPreference() != null ? options.getReadPreference() : readPreference);
+        return new MongoCursorAdapter(new MongoBatchCursorAdapter<DBObject>(cursor));
     }
 
     /**

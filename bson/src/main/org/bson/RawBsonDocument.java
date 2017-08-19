@@ -19,6 +19,7 @@ package org.bson;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.Codec;
+import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.RawBsonDocumentCodec;
@@ -147,9 +148,21 @@ public final class RawBsonDocument extends BsonDocument {
      * @return the decoded document
      */
     public <T> T decode(final Codec<T> codec) {
+        return decode((Decoder<T>) codec);
+    }
+
+    /**
+     * Decode this into a document.
+     *
+     * @param decoder the decoder to facilitate the transformation
+     * @param <T>   the BSON type that the codec encodes/decodes
+     * @return the decoded document
+     * @since 3.6
+     */
+    public <T> T decode(final Decoder<T> decoder) {
         BsonBinaryReader reader = createReader();
         try {
-            return codec.decode(reader, DecoderContext.builder().build());
+            return decoder.decode(reader, DecoderContext.builder().build());
         } finally {
             reader.close();
         }

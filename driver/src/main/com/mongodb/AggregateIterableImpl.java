@@ -52,6 +52,7 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
     private Boolean allowDiskUse;
     private Integer batchSize;
     private long maxTimeMS;
+    private long maxAwaitTimeMS;
     private Boolean useCursor;
     private Boolean bypassDocumentValidation;
     private Collation collation;
@@ -104,6 +105,13 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
     @Deprecated
     public AggregateIterable<TResult> useCursor(final Boolean useCursor) {
         this.useCursor = useCursor;
+        return this;
+    }
+
+    @Override
+    public AggregateIterable<TResult> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        this.maxAwaitTimeMS = TimeUnit.MILLISECONDS.convert(maxAwaitTime, timeUnit);
         return this;
     }
 
@@ -162,6 +170,7 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
         } else {
             return new OperationIterable<TResult>(new AggregateOperation<TResult>(namespace, aggregateList, codecRegistry.get(resultClass))
                     .maxTime(maxTimeMS, MILLISECONDS)
+                    .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
                     .allowDiskUse(allowDiskUse)
                     .batchSize(batchSize)
                     .useCursor(useCursor)

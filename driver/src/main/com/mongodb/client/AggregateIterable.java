@@ -82,6 +82,19 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
     AggregateIterable<TResult> useCursor(Boolean useCursor);
 
     /**
+     * The maximum amount of time for the server to wait on new documents to satisfy a {@code $changeStream} aggregation.
+     *
+     * A zero value will be ignored.
+     *
+     * @param maxAwaitTime  the max await time
+     * @param timeUnit the time unit to return the result in
+     * @return the maximum await execution time in the given time unit
+     * @mongodb.server.release 3.6
+     * @since 3.6
+     */
+    AggregateIterable<TResult> maxAwaitTime(long maxAwaitTime, TimeUnit timeUnit);
+
+    /**
      * Sets the bypass document level validation flag.
      *
      * <p>Note: This only applies when an $out stage is specified</p>.

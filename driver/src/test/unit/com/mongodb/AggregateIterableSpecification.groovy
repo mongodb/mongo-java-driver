@@ -66,14 +66,22 @@ class AggregateIterableSpecification extends Specification {
         readPreference == secondary()
 
         when: 'overriding initial options'
-        aggregationIterable.maxTime(999, MILLISECONDS).useCursor(true).collation(collation).iterator()
+        aggregationIterable
+                .maxAwaitTime(99, MILLISECONDS)
+                .maxTime(999, MILLISECONDS)
+                .useCursor(true)
+                .collation(collation)
+                .iterator()
 
         operation = executor.getReadOperation() as AggregateOperation<Document>
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new AggregateOperation<Document>(namespace,
                 [new BsonDocument('$match', new BsonInt32(1))], new DocumentCodec())
-                .collation(collation).maxTime(999, MILLISECONDS).useCursor(true))
+                .collation(collation)
+                .maxAwaitTime(99, MILLISECONDS)
+                .maxTime(999, MILLISECONDS)
+                .useCursor(true))
     }
 
     def 'should build the expected AggregateToCollectionOperation'() {
@@ -112,7 +120,7 @@ class AggregateIterableSpecification extends Specification {
                 pipeline)
                 .allowDiskUse(true)
                 .collation(collation)
-                .toCollection();
+                .toCollection()
 
         operation = executor.getWriteOperation() as AggregateToCollectionOperation
 
@@ -178,7 +186,7 @@ class AggregateIterableSpecification extends Specification {
 
             }
         }
-        def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
+        def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()])
         def mongoIterable = new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
                 readConcern, writeConcern, executor, [new Document('$match', 1)])
 

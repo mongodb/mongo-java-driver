@@ -107,7 +107,7 @@ class QueryBatchCursorSpecification extends Specification {
         cursor.close()
 
         then:
-        thrown(MongoSocketException)
+        notThrown(MongoSocketException)
 
         when:
         cursor.close()

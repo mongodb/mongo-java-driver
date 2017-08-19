@@ -35,26 +35,12 @@ class MappingAsyncBatchCursor<T, U> implements AsyncBatchCursor<U> {
 
     @Override
     public void next(final SingleResultCallback<List<U>> callback) {
-        batchCursor.next(new SingleResultCallback<List<T>>() {
-            @Override
-            public void onResult(final List<T> results, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else if (results != null) {
-                    try {
-                        List<U> mappedResults = new ArrayList<U>();
-                        for (T result : results) {
-                            mappedResults.add(mapper.apply(result));
-                        }
-                        callback.onResult(mappedResults, null);
-                    } catch (Throwable t1) {
-                        callback.onResult(null, t1);
-                    }
-                } else {
-                    callback.onResult(null, null);
-                }
-            }
-        });
+        batchCursor.next(getMappingCallback(callback));
+    }
+
+    @Override
+    public void tryNext(final SingleResultCallback<List<U>> callback) {
+        batchCursor.tryNext(getMappingCallback(callback));
     }
 
     @Override
@@ -75,5 +61,28 @@ class MappingAsyncBatchCursor<T, U> implements AsyncBatchCursor<U> {
     @Override
     public void close() {
         batchCursor.close();
+    }
+
+    private SingleResultCallback<List<T>> getMappingCallback(final SingleResultCallback<List<U>> callback) {
+        return new SingleResultCallback<List<T>>() {
+            @Override
+            public void onResult(final List<T> results, final Throwable t) {
+                if (t != null) {
+                    callback.onResult(null, t);
+                } else if (results != null) {
+                    try {
+                        List<U> mappedResults = new ArrayList<U>();
+                        for (T result : results) {
+                            mappedResults.add(mapper.apply(result));
+                        }
+                        callback.onResult(mappedResults, null);
+                    } catch (Throwable t1) {
+                        callback.onResult(null, t1);
+                    }
+                } else {
+                    callback.onResult(null, null);
+                }
+            }
+        };
     }
 }

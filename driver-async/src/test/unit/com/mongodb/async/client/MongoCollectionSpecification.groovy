@@ -359,6 +359,53 @@ class MongoCollectionSpecification extends Specification {
         thrown(IllegalArgumentException)
     }
 
+    def 'should create ChangeStreamIterable correctly'() {
+        given:
+        def executor = new TestOperationExecutor([])
+        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern, executor)
+
+        when:
+        def changeStreamIterable = collection.watch()
+
+        then:
+        expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl(namespace, codecRegistry, readPreference, readConcern,
+                executor, [], Document))
+
+        when:
+        changeStreamIterable = collection.watch([new Document('$match', 1)])
+
+        then:
+        expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl(namespace, codecRegistry, readPreference, readConcern,
+                executor, [new Document('$match', 1)], Document))
+
+        when:
+        changeStreamIterable = collection.watch([new Document('$match', 1)], BsonDocument)
+
+        then:
+        expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl(namespace, codecRegistry, readPreference, readConcern,
+                executor, [new Document('$match', 1)], BsonDocument))
+    }
+
+    def 'should validate the ChangeStreamIterable pipeline data correctly'() {
+        given:
+        def executor = new TestOperationExecutor([])
+        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern, executor)
+
+        when:
+        collection.watch(null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        def results = new FutureResultCallback()
+        collection.aggregate([null]).into([], results)
+        results.get()
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
     def 'should create MapReduceIterable correctly'() {
         given:
         def executor = new TestOperationExecutor([])
