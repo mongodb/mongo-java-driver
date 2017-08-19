@@ -22,7 +22,6 @@ import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
-import com.mongodb.WriteConcern;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.connection.ServerVersion;
 import com.mongodb.connection.TestCommandListener;
@@ -67,7 +66,6 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.Fixture.getMongoClientURI;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
@@ -308,10 +306,8 @@ public class CommandMonitoringTest {
             if (eventType.equals("command_started_event")) {
                 BsonDocument commandDocument = eventDescriptionDocument.getDocument("command");
                 // Not clear whether these global fields should be included, but also not clear how to efficiently exclude them
-                if (serverVersionAtLeast(3, 5)) {
-                    if (!isUnacknowledgedWrite()) {
-                        commandDocument.put("$db", new BsonString(databaseName));
-                    }
+                if (ClusterFixture.serverVersionAtLeast(3, 5)) {
+                    commandDocument.put("$db", new BsonString(databaseName));
                     BsonDocument operation = definition.getDocument("operation");
                     if (operation.containsKey("read_preference")) {
                         commandDocument.put("$readPreference", operation.getDocument("read_preference"));
@@ -331,16 +327,6 @@ public class CommandMonitoringTest {
         }
         return expectedEvents;
     }
-
-    private boolean isUnacknowledgedWrite() {
-        BsonDocument arguments = definition.getDocument("operation").getDocument("arguments");
-        if (arguments.containsKey("writeConcern")) {
-            WriteConcern writeConcern = new WriteConcern(arguments.getDocument("writeConcern").getInt32("w").intValue());
-            return !writeConcern.isAcknowledged();
-        }
-        return false;
-    }
-
 
     private BsonDocument getWritableCloneOfCommand(final BsonDocument original) {
         BsonDocument clone = new BsonDocument();

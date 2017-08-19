@@ -118,6 +118,12 @@ abstract class BaseWriteCommandMessage extends CommandMessage {
         return new EncodingMetadata(nextMessage, firstDocumentStartPosition);
     }
 
+
+    @Override
+    boolean isResponseExpected() {
+        return !useOpMsg() || writeConcern.isAcknowledged();
+    }
+
     /**
      * Gets the field name validator to apply.
      *
@@ -127,7 +133,7 @@ abstract class BaseWriteCommandMessage extends CommandMessage {
 
     private void writeCommandHeader(final BsonOutput outputStream) {
         if (useOpMsg()) {
-            outputStream.writeInt32(0);  // flag bits
+            outputStream.writeInt32(getFlagBits());  // flag bits
             outputStream.writeByte(0);   // payload type
         } else {
             outputStream.writeInt32(0);
@@ -180,6 +186,14 @@ abstract class BaseWriteCommandMessage extends CommandMessage {
         }
         if (getBypassDocumentValidation() != null) {
             writer.writeBoolean("bypassDocumentValidation", getBypassDocumentValidation());
+        }
+    }
+
+    private int getFlagBits() {
+        if (writeConcern.isAcknowledged()) {
+            return 0;
+        } else {
+            return 1 << 1;
         }
     }
 }

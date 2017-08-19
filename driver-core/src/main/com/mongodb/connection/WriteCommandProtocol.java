@@ -93,14 +93,15 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
                 getLogger().debug(format("Received response for batch %d", batchNum));
             }
 
-            if (WriteCommandResultHelper.hasError(result)) {
-                MongoBulkWriteException bulkWriteException = getBulkWriteException(getType(), result,
-                        connection.getDescription().getServerAddress());
-                bulkWriteBatchCombiner.addErrorResult(bulkWriteException, indexMap);
-            } else {
-                bulkWriteBatchCombiner.addResult(getBulkWriteResult(getType(), result), indexMap);
+            if (writeConcern.isAcknowledged()) {
+                if (WriteCommandResultHelper.hasError(result)) {
+                    MongoBulkWriteException bulkWriteException = getBulkWriteException(getType(), result,
+                            connection.getDescription().getServerAddress());
+                    bulkWriteBatchCombiner.addErrorResult(bulkWriteException, indexMap);
+                } else {
+                    bulkWriteBatchCombiner.addResult(getBulkWriteResult(getType(), result), indexMap);
+                }
             }
-
             currentRangeStartIndex += itemCount;
             message = nextMessage;
         } while (message != null && !bulkWriteBatchCombiner.shouldStopSendingMoreBatches());
@@ -141,14 +142,15 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
                                                     ? message.getItemCount() - nextMessage.getItemCount() : message.getItemCount();
                             IndexMap indexMap = IndexMap.create(currentRangeStartIndex, itemCount);
 
-                            if (WriteCommandResultHelper.hasError(result)) {
-                                bulkWriteBatchCombiner.addErrorResult(getBulkWriteException(getType(), result,
-                                        connection.getDescription().getServerAddress()),
-                                        indexMap);
-                            } else {
-                                bulkWriteBatchCombiner.addResult(getBulkWriteResult(getType(), result), indexMap);
+                            if (writeConcern.isAcknowledged()) {
+                                if (WriteCommandResultHelper.hasError(result)) {
+                                    bulkWriteBatchCombiner.addErrorResult(getBulkWriteException(getType(), result,
+                                            connection.getDescription().getServerAddress()),
+                                            indexMap);
+                                } else {
+                                    bulkWriteBatchCombiner.addResult(getBulkWriteResult(getType(), result), indexMap);
+                                }
                             }
-
                             executeBatchesAsync(connection, nextMessage, bulkWriteBatchCombiner, batchNum + 1,
                                     currentRangeStartIndex + itemCount, callback);
                         }
