@@ -49,6 +49,7 @@ import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
+import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotSix;
 import static com.mongodb.operation.OperationHelper.validateWriteRequests;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static java.lang.String.format;
@@ -411,7 +412,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         }
 
         RunExecutor getDeletesRunExecutor(final List<DeleteRequest> deleteRequests, final Connection connection) {
-            return new RunExecutor() {
+            return new RunExecutor(connection.getDescription()) {
 
                 @Override
                 void executeWriteProtocol(final int index) {
@@ -433,7 +434,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         @SuppressWarnings("unchecked")
         RunExecutor getInsertsRunExecutor(final List<InsertRequest> insertRequests, final Boolean bypassDocumentValidation,
                                           final Connection connection) {
-            return new RunExecutor() {
+            return new RunExecutor(connection.getDescription()) {
 
                 @Override
                 void executeWriteProtocol(final int index) {
@@ -454,7 +455,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
         RunExecutor getUpdatesRunExecutor(final List<UpdateRequest> updates, final Boolean bypassDocumentValidation,
                                           final Connection connection) {
-            return new RunExecutor() {
+            return new RunExecutor(connection.getDescription()) {
 
                 @Override
                 void executeWriteProtocol(final int index) {
@@ -475,7 +476,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         }
 
         AsyncRunExecutor getDeletesRunExecutor(final List<DeleteRequest> deleteRequests, final AsyncConnection connection) {
-            return new AsyncRunExecutor() {
+            return new AsyncRunExecutor(connection.getDescription()) {
 
                 @Override
                 void executeWriteProtocolAsync(final int index, final SingleResultCallback<WriteConcernResult> callback) {
@@ -497,7 +498,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         @SuppressWarnings("unchecked")
         AsyncRunExecutor getInsertsRunExecutor(final List<InsertRequest> insertRequests, final Boolean bypassDocumentValidation,
                                                final AsyncConnection connection) {
-            return new AsyncRunExecutor() {
+            return new AsyncRunExecutor(connection.getDescription()) {
 
                 @Override
                 void executeWriteProtocolAsync(final int index, final SingleResultCallback<WriteConcernResult> callback) {
@@ -518,7 +519,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
         AsyncRunExecutor getUpdatesRunExecutor(final List<UpdateRequest> updates, final Boolean bypassDocumentValidation,
                                                final AsyncConnection connection) {
-            return new AsyncRunExecutor() {
+            return new AsyncRunExecutor(connection.getDescription()) {
 
                 @Override
                 void executeWriteProtocolAsync(final int index, final SingleResultCallback<WriteConcernResult> callback) {
@@ -546,12 +547,19 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
         private abstract class RunExecutor extends BaseRunExecutor {
 
+            private final ConnectionDescription description;
+
+            RunExecutor(final ConnectionDescription description) {
+                super();
+                this.description = description;
+            }
+
             abstract void executeWriteProtocol(int index);
 
             abstract BulkWriteResult executeWriteCommandProtocol();
 
             BulkWriteResult execute() {
-                if (writeConcern.isAcknowledged()) {
+                if (writeConcern.isAcknowledged() || serverIsAtLeastVersionThreeDotSix(description)) {
                     return executeWriteCommandProtocol();
                 } else {
                     for (int i = 0; i < runWrites.size(); i++) {
@@ -566,12 +574,18 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
         private abstract class AsyncRunExecutor extends BaseRunExecutor {
 
+            private final ConnectionDescription description;
+
+            AsyncRunExecutor(final ConnectionDescription description) {
+                this.description = description;
+            }
+
             abstract void executeWriteProtocolAsync(int index, SingleResultCallback<WriteConcernResult> callback);
 
             abstract void executeWriteCommandProtocolAsync(SingleResultCallback<BulkWriteResult> callback);
 
             void executeAsync(final SingleResultCallback<BulkWriteResult> callback) {
-                if (writeConcern.isAcknowledged()) {
+                if (writeConcern.isAcknowledged() || serverIsAtLeastVersionThreeDotSix(description)) {
                     executeWriteCommandProtocolAsync(callback);
                 } else {
                     executeRunWritesAsync(runWrites.size(), 0, callback);

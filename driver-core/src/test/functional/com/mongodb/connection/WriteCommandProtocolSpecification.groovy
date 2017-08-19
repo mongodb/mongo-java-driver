@@ -20,22 +20,28 @@ package com.mongodb.connection
 import category.Slow
 import com.mongodb.MongoBulkWriteException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.ReadPreference
 import com.mongodb.bulk.BulkWriteUpsert
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.bulk.UpdateRequest
 import com.mongodb.bulk.WriteRequest
 import com.mongodb.connection.netty.NettyStreamFactory
+import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonBinary
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.BsonString
 import org.bson.codecs.BsonDocumentCodec
 import org.junit.experimental.categories.Category
+import spock.lang.IgnoreIf
 import spock.lang.Shared
 
 import static com.mongodb.ClusterFixture.getCredentialList
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
+import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.connection.ProtocolTestHelper.execute
 
 class WriteCommandProtocolSpecification extends OperationFunctionalSpecification {
@@ -246,6 +252,37 @@ class WriteCommandProtocolSpecification extends OperationFunctionalSpecification
         then:
         result.matchedCount == 0;
         result.upserts == [new BulkWriteUpsert(0, new BsonInt32(1)), new BulkWriteUpsert(1, new BsonInt32(2))]
+
+        where:
+        async << [false, true]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 5) })
+    def 'should ignore write errors on unacknowledged inserts'() {
+        given:
+        def documentOne = new BsonDocument('_id', new BsonInt32(1))
+        def documentTwo = new BsonDocument('_id', new BsonInt32(2))
+        def documentThree = new BsonDocument('_id', new BsonInt32(3))
+        def documentFour = new BsonDocument('_id', new BsonInt32(4))
+
+        def insertRequest = [new InsertRequest(documentOne), new InsertRequest(documentTwo),
+                             new InsertRequest(documentThree), new InsertRequest(documentFour)]
+        def protocol = new InsertCommandProtocol(getNamespace(), true, UNACKNOWLEDGED, false, insertRequest)
+
+        getCollectionHelper().insertDocuments(documentOne)
+
+        when:
+        execute(protocol, connection, async)
+
+        then:
+        getCollectionHelper().find(new BsonDocumentCodec()) == [documentOne]
+
+        cleanup:
+        // force acknowledgement
+        new CommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
+                new NoOpFieldNameValidator(), new BsonDocumentCodec())
+                .readPreference(ReadPreference.primary())
+                .execute(connection)
 
         where:
         async << [false, true]

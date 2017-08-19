@@ -19,17 +19,21 @@ package com.mongodb.connection
 import category.Async
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoInternalException
+import com.mongodb.MongoNamespace
 import com.mongodb.MongoSocketClosedException
 import com.mongodb.MongoSocketException
 import com.mongodb.MongoSocketReadException
 import com.mongodb.MongoSocketWriteException
 import com.mongodb.ServerAddress
+import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.bulk.InsertRequest
 import com.mongodb.event.CommandFailedEvent
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.event.CommandSucceededEvent
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.BsonString
 import org.bson.ByteBuf
 import org.bson.ByteBufNIO
 import org.bson.codecs.BsonDocumentCodec
@@ -56,11 +60,10 @@ class InternalStreamConnectionSpecification extends Specification {
     def serverAddress = new ServerAddress()
     def connectionId = new ConnectionId(SERVER_ID, 1, 1)
     def commandListener = new TestCommandListener()
-    def messageSettings = MessageSettings.builder().serverVersion(new ServerVersion(0, 0))build()
+    def messageSettings = MessageSettings.builder().serverVersion(new ServerVersion(3, 6)).build()
 
-    def connectionDescription = new ConnectionDescription(connectionId, new ServerVersion(), ServerType.STANDALONE,
-            getDefaultMaxWriteBatchSize(), getDefaultMaxDocumentSize(),
-            getDefaultMaxMessageSize(), [])
+    def connectionDescription = new ConnectionDescription(connectionId, new ServerVersion(3, 6),
+            ServerType.STANDALONE, getDefaultMaxWriteBatchSize(), getDefaultMaxDocumentSize(), getDefaultMaxMessageSize(), [])
     def stream = Mock(Stream) {
         openAsync(_) >> { it[0].completed(null) }
     }
@@ -463,8 +466,27 @@ class InternalStreamConnectionSpecification extends Specification {
         then:
         commandListener.eventsWereDelivered([
                 new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
-                        pingCommandDocument),
+                        pingCommandDocument.append('$db', new BsonString('admin'))),
                 new CommandSucceededEvent(1, connection.getDescription(), 'ping',
+                        new BsonDocument('ok', new BsonInt32(1)), 1000)])
+    }
+
+    def 'should send events for one-way command'() {
+        given:
+        def connection = getOpenedConnection()
+        def commandMessage = new InsertCommandMessage(new MongoNamespace('db', 'test'),
+        true, WriteConcern.UNACKNOWLEDGED, false, messageSettings, [new InsertRequest(new BsonDocument())])
+        stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
+
+        when:
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec())
+
+        then:
+        commandListener.eventsWereDelivered([
+                new CommandStartedEvent(1, connection.getDescription(), 'db', 'insert',
+                        BsonDocument.parse('{ "insert" : "test", "ordered" : true, "writeConcern" : { "w" : 0 }, ' +
+                                '"bypassDocumentValidation" : false, "documents" : [{ }], "$db" : "db" }')),
+                new CommandSucceededEvent(1, connection.getDescription(), 'insert',
                         new BsonDocument('ok', new BsonInt32(1)), 1000)])
     }
 
@@ -483,7 +505,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def e = thrown(MongoSocketWriteException)
         commandListener.eventsWereDelivered([
                 new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
-                        pingCommandDocument),
+                        pingCommandDocument.append('$db', new BsonString('admin'))),
                 new CommandFailedEvent(1, connection.getDescription(), 'ping', 0, e)])
     }
 
@@ -502,7 +524,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def e = thrown(MongoSocketReadException)
         commandListener.eventsWereDelivered([
                 new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
-                        pingCommandDocument),
+                        pingCommandDocument.append('$db', new BsonString('admin'))),
                 new CommandFailedEvent(1, connection.getDescription(), 'ping', 0, e)])
     }
 
@@ -522,7 +544,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def e = thrown(MongoSocketException)
         commandListener.eventsWereDelivered([
                 new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
-                        pingCommandDocument),
+                        pingCommandDocument.append('$db', new BsonString('admin'))),
                 new CommandFailedEvent(1, connection.getDescription(), 'ping', 0, e)])
     }
 
@@ -543,7 +565,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def e = thrown(MongoCommandException)
         commandListener.eventsWereDelivered([
                 new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
-                        pingCommandDocument),
+                        pingCommandDocument.append('$db', new BsonString('admin'))),
                 new CommandFailedEvent(1, connection.getDescription(), 'ping', 0, e)])
     }
 
@@ -637,10 +659,36 @@ class InternalStreamConnectionSpecification extends Specification {
         then:
         commandListener.eventsWereDelivered([
                 new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
-                        pingCommandDocument),
+                        pingCommandDocument.append('$db', new BsonString('admin'))),
                 new CommandSucceededEvent(1, connection.getDescription(), 'ping',
                         new BsonDocument('ok', new BsonInt32(1)), 1000)])
     }
+
+    def 'should send events for asynchronous one-way command'() {
+        given:
+        def connection = getOpenedConnection()
+        def commandMessage = new InsertCommandMessage(new MongoNamespace('db', 'test'),
+                true, WriteConcern.UNACKNOWLEDGED, false, messageSettings, [new InsertRequest(new BsonDocument())])
+        def callback = new FutureResultCallback()
+
+        stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
+        stream.writeAsync(_, _) >> { buffers, handler ->
+            handler.completed(null)
+        }
+
+        when:
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), callback)
+        callback.get()
+
+        then:
+        commandListener.eventsWereDelivered([
+                new CommandStartedEvent(1, connection.getDescription(), 'db', 'insert',
+                        BsonDocument.parse('{ "insert" : "test", "ordered" : true, "writeConcern" : { "w" : 0 }, ' +
+                                '"bypassDocumentValidation" : false, "documents" : [{ }], "$db" : "db" }')),
+                new CommandSucceededEvent(1, connection.getDescription(), 'insert',
+                        new BsonDocument('ok', new BsonInt32(1)), 1000)])
+    }
+
 
     def 'should send events for asynchronous command failure with exception writing message'() {
         given:
@@ -662,7 +710,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def e = thrown(MongoSocketWriteException)
         commandListener.eventsWereDelivered([
                 new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
-                        pingCommandDocument),
+                        pingCommandDocument.append('$db', new BsonString('admin'))),
                 new CommandFailedEvent(1, connection.getDescription(), 'ping', 0, e)])
     }
 
@@ -689,7 +737,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def e = thrown(MongoSocketReadException)
         commandListener.eventsWereDelivered([
                 new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
-                        pingCommandDocument),
+                        pingCommandDocument.append('$db', new BsonString('admin'))),
                 new CommandFailedEvent(1, connection.getDescription(), 'ping', 0, e)])
     }
 
@@ -719,7 +767,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def e = thrown(MongoSocketReadException)
         commandListener.eventsWereDelivered([
                 new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
-                        pingCommandDocument),
+                        pingCommandDocument.append('$db', new BsonString('admin'))),
                 new CommandFailedEvent(1, connection.getDescription(), 'ping', 0, e)])
     }
 
@@ -750,7 +798,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def e = thrown(MongoCommandException)
         commandListener.eventsWereDelivered([
                 new CommandStartedEvent(1, connection.getDescription(), 'admin', 'ping',
-                        pingCommandDocument),
+                        pingCommandDocument.append('$db', new BsonString('admin'))),
                 new CommandFailedEvent(1, connection.getDescription(), 'ping', 0, e)])
     }
 

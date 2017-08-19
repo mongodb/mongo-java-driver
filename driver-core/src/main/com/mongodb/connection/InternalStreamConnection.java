@@ -35,6 +35,7 @@ import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.CommandListener;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
+import org.bson.BsonInt32;
 import org.bson.ByteBuf;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
@@ -247,7 +248,12 @@ class InternalStreamConnection implements InternalConnection {
 
         try {
             sendCommandMessage(message, commandEventSender, bsonOutput);
-            return receiveCommandMessageResponse(message, decoder, commandEventSender);
+            if (message.isResponseExpected()) {
+                return receiveCommandMessageResponse(message, decoder, commandEventSender);
+            } else {
+                commandEventSender.sendSucceededEventForOneWayCommand();
+                return null;
+            }
         } catch (RuntimeException e) {
             commandEventSender.sendFailedEvent(e);
             throw e;
@@ -312,13 +318,14 @@ class InternalStreamConnection implements InternalConnection {
             commandEventSender.sendStartedEvent(bsonOutput);
 
             if (sendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(commandEventSender.getCommandName())) {
-                sendCommandMessageAsync(message.getId(), decoder, callback, bsonOutput, commandEventSender);
+                sendCommandMessageAsync(message.getId(), decoder, callback, bsonOutput, commandEventSender, message.isResponseExpected());
             } else {
                 CompressedMessage compressedMessage = new CompressedMessage(message.getOpCode(), bsonOutput.getByteBuffers(),
                                                                                    sendCompressor, getMessageSettings(description));
                 compressedMessage.encode(compressedBsonOutput);
                 bsonOutput.close();
-                sendCommandMessageAsync(message.getId(), decoder, callback, compressedBsonOutput, commandEventSender);
+                sendCommandMessageAsync(message.getId(), decoder, callback, compressedBsonOutput, commandEventSender,
+                        message.isResponseExpected());
             }
         } catch (Throwable t) {
             bsonOutput.close();
@@ -329,7 +336,7 @@ class InternalStreamConnection implements InternalConnection {
 
     private <T> void sendCommandMessageAsync(final int messageId, final Decoder<T> decoder, final SingleResultCallback<T> callback,
                                              final ByteBufferBsonOutput bsonOutput,
-                                             final CommandEventSender commandEventSender) {
+                                             final CommandEventSender commandEventSender, final boolean responseExpected) {
         sendMessageAsync(bsonOutput.getByteBuffers(), messageId, new SingleResultCallback<Void>() {
             @Override
             public void onResult(final Void result, final Throwable t) {
@@ -337,6 +344,9 @@ class InternalStreamConnection implements InternalConnection {
                 if (t != null) {
                     commandEventSender.sendFailedEvent(t);
                     callback.onResult(null, t);
+                } else if (!responseExpected) {
+                    commandEventSender.sendSucceededEventForOneWayCommand();
+                    callback.onResult(null, null);
                 } else {
                     readAsync(MESSAGE_HEADER_LENGTH, new MessageHeaderCallback(new SingleResultCallback<ResponseBuffers>() {
                         @Override
@@ -687,8 +697,14 @@ class InternalStreamConnection implements InternalConnection {
                                                                 ? new BsonDocument()
                                                                 : getResponseDocument(responseBuffers, message.getId(),
                         new RawBsonDocumentCodec());
-                sendCommandSucceededEvent(message, commandName, responseDocumentForEvent, description, startTimeNanos,
-                        commandListener);
+                sendCommandSucceededEvent(message, commandName, responseDocumentForEvent, description, startTimeNanos, commandListener);
+            }
+        }
+
+        public void sendSucceededEventForOneWayCommand() {
+            if (commandListener != null && opened()) {
+                BsonDocument responseDocumentForEvent = new BsonDocument("ok", new BsonInt32(1));
+                sendCommandSucceededEvent(message, commandName, responseDocumentForEvent, description, startTimeNanos, commandListener);
             }
         }
     }

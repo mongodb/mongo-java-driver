@@ -22,6 +22,8 @@ abstract class CommandMessage extends RequestMessage {
         super(collectionName, opCode, settings);
     }
 
+    abstract boolean isResponseExpected();
+
     protected static OpCode getOpCode(final MessageSettings settings) {
         return useOpMsg(settings) ? OpCode.OP_MSG : OpCode.OP_QUERY;
     }

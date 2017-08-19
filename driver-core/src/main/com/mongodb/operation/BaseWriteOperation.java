@@ -48,6 +48,7 @@ import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.checkBypassDocumentValidationIsSupported;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
+import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotSix;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
 
@@ -134,8 +135,13 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
             public WriteConcernResult call(final Connection connection) {
                 try {
                     checkBypassDocumentValidationIsSupported(connection, bypassDocumentValidation, writeConcern);
-                    if (writeConcern.isAcknowledged()) {
-                        return translateBulkWriteResult(executeCommandProtocol(connection));
+                    if (writeConcern.isAcknowledged() || serverIsAtLeastVersionThreeDotSix(connection.getDescription())) {
+                        BulkWriteResult bulkWriteResult = executeCommandProtocol(connection);
+                        if (writeConcern.isAcknowledged()) {
+                            return translateBulkWriteResult(bulkWriteResult);
+                        } else {
+                            return WriteConcernResult.unacknowledged();
+                        }
                     } else {
                         return executeProtocol(connection);
                     }
@@ -164,15 +170,19 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
                                     } else {
                                         final SingleResultCallback<WriteConcernResult> wrappedCallback =
                                                 releasingCallback(errHandlingCallback, connection);
-                                        if (writeConcern.isAcknowledged()) {
+                                        if (writeConcern.isAcknowledged()
+                                                    || serverIsAtLeastVersionThreeDotSix(connection.getDescription())) {
                                             executeCommandProtocolAsync(connection, new SingleResultCallback<BulkWriteResult>() {
                                                 @Override
                                                 public void onResult(final BulkWriteResult result, final Throwable t) {
                                                     if (t != null) {
                                                         wrappedCallback.onResult(null, translateException(t));
-                                                    } else {
+                                                    } else if (writeConcern.isAcknowledged()) {
                                                         wrappedCallback.onResult(translateBulkWriteResult(result), null);
+                                                    } else {
+                                                        wrappedCallback.onResult(WriteConcernResult.unacknowledged(), null);
                                                     }
+
                                                 }
                                             });
                                         } else {

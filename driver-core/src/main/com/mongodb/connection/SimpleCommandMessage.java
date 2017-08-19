@@ -87,4 +87,9 @@ class SimpleCommandMessage extends CommandMessage {
     private boolean isDefaultReadPreference() {
         return readPreference.equals(primary());
     }
+
+    @Override
+    boolean isResponseExpected() {
+        return true;
+    }
 }
