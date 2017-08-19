@@ -18,7 +18,6 @@
 
 package com.mongodb.connection
 
-import com.mongodb.DuplicateKeyException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
 import com.mongodb.bulk.InsertRequest
@@ -36,8 +35,6 @@ import static com.mongodb.ClusterFixture.getCredentialList
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.ClusterFixture.isSharded
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.connection.ProtocolTestHelper.execute
 
@@ -86,29 +83,6 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
         async << [false, true]
     }
 
-    def 'should report write errors on acknowledged inserts'() {
-        given:
-        def documentOne = new BsonDocument('_id', new BsonInt32(1))
-        def documentTwo = new BsonDocument('_id', new BsonInt32(2))
-        def documentThree = new BsonDocument('_id', new BsonInt32(3))
-        def documentFour = new BsonDocument('_id', new BsonInt32(4))
-
-        def insertRequest = [new InsertRequest(documentOne), new InsertRequest(documentTwo),
-                             new InsertRequest(documentThree), new InsertRequest(documentFour)]
-        def protocol = new InsertProtocol(getNamespace(), true, ACKNOWLEDGED, insertRequest)
-
-        getCollectionHelper().insertDocuments(documentOne)
-
-        when:
-        execute(protocol, connection, async)
-
-        then:
-        thrown(DuplicateKeyException)
-        getCollectionHelper().count() == 1
-
-        where:
-        async << [false, true]
-    }
 
     @IgnoreIf({ isSharded() })
     def 'should execute split unacknowledged inserts'() {
@@ -130,29 +104,6 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
                 new NoOpFieldNameValidator(), new BsonDocumentCodec())
                 .readPreference(ReadPreference.primary())
                 .execute(connection)
-
-        then:
-        getCollectionHelper().count() == 4
-
-        where:
-        async << [false, true]
-    }
-
-    @IgnoreIf({ serverVersionAtLeast(3, 5) && isSharded() })
-    def 'should execute split acknowledged inserts'() {
-        given:
-        def binary = new BsonBinary(new byte[15000000])
-        def documentOne = new BsonDocument('_id', new BsonInt32(1)).append('b', binary)
-        def documentTwo = new BsonDocument('_id', new BsonInt32(2)).append('b', binary)
-        def documentThree = new BsonDocument('_id', new BsonInt32(3)).append('b', binary)
-        def documentFour = new BsonDocument('_id', new BsonInt32(4)).append('b', binary)
-
-        def insertRequest = [new InsertRequest(documentOne), new InsertRequest(documentTwo),
-                             new InsertRequest(documentThree), new InsertRequest(documentFour)]
-        def protocol = new InsertProtocol(getNamespace(), true, ACKNOWLEDGED, insertRequest)
-
-        when:
-        execute(protocol, connection, async)
 
         then:
         getCollectionHelper().count() == 4
@@ -216,32 +167,6 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
 
         then:
         getCollectionHelper().count() == 4
-
-        where:
-        async << [false, true]
-    }
-
-    @IgnoreIf({ serverVersionAtLeast(3, 5) && isSharded() })
-    def 'should report write errors on split acknowledged inserts'() {
-        given:
-        def binary = new BsonBinary(new byte[15000000])
-        def documentOne = new BsonDocument('_id', new BsonInt32(1)).append('b', binary)
-        def documentTwo = new BsonDocument('_id', new BsonInt32(2)).append('b', binary)
-        def documentThree = new BsonDocument('_id', new BsonInt32(3)).append('b', binary)
-        def documentFour = new BsonDocument('_id', new BsonInt32(4)).append('b', binary)
-
-        def insertRequest = [new InsertRequest(documentOne), new InsertRequest(documentTwo),
-                             new InsertRequest(documentThree), new InsertRequest(documentFour)]
-        def protocol = new InsertProtocol(getNamespace(), true, ACKNOWLEDGED, insertRequest)
-
-        getCollectionHelper().insertDocuments(documentOne)
-
-        when:
-        execute(protocol, connection, async)
-
-        then:
-        thrown(DuplicateKeyException)
-        getCollectionHelper().count() == 1
 
         where:
         async << [false, true]

@@ -29,7 +29,6 @@ import org.bson.codecs.DocumentCodec
 import spock.lang.Shared
 import spock.lang.Specification
 
-import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.connection.ProtocolTestHelper.execute
 
@@ -68,9 +67,6 @@ class CommandEventOnConnectionFailureSpecification extends Specification {
                                    ['find',
                                     new QueryProtocol(namespace, 0, 1, 1, new BsonDocument(), new BsonDocument(), new DocumentCodec())],
                                    ['delete',
-                                    new DeleteProtocol(namespace, true, ACKNOWLEDGED,
-                                            [new DeleteRequest(new BsonDocument('_id', new BsonInt32(1)))])],
-                                   ['delete',
                                     new DeleteProtocol(namespace, true, UNACKNOWLEDGED,
                                             [new DeleteRequest(new BsonDocument('_id', new BsonInt32(1)))])],
                                   ],
@@ -99,9 +95,6 @@ class CommandEventOnConnectionFailureSpecification extends Specification {
                                     new GetMoreProtocol(namespace, 42L, 1, new DocumentCodec())],
                                    ['find',
                                     new QueryProtocol(namespace, 0, 1, 1, new BsonDocument(), new BsonDocument(), new DocumentCodec())],
-                                   ['delete',
-                                    new DeleteProtocol(namespace, true, ACKNOWLEDGED,
-                                            [new DeleteRequest(new BsonDocument('_id', new BsonInt32(1)))])],
                                   ],
                                   [false, true]].combinations()
     }
