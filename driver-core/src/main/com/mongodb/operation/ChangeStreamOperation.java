@@ -100,7 +100,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
 
     /**
      * Returns the logical starting point for the new change stream.
-     * <p>
+     *
      * <p>A null value represents the server default.</p>
      *
      * @return the resumeAfter
@@ -156,7 +156,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
      * The maximum amount of time for the server to wait on new documents to satisfy a tailable cursor
      * query. This only applies to a TAILABLE_AWAIT cursor. When the cursor is not a TAILABLE_AWAIT cursor,
      * this option is ignored.
-     * <p>
+     *
      * A zero value will be ignored.
      *
      * @param timeUnit the time unit to return the result in
@@ -217,7 +217,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
 
     /**
      * Sets the collation options
-     * <p>
+     *
      * <p>A null value represents the server default.</p>
      *
      * @param collation the collation options to use
