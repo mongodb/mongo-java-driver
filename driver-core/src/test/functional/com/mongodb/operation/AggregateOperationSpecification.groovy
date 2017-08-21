@@ -24,6 +24,7 @@ import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
 import com.mongodb.client.model.Collation
+import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerVersion
 import org.bson.BsonArray
@@ -172,7 +173,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !(serverVersionAtLeast([3, 5]) && isDiscoverableReplicaSet()) })
+    @IgnoreIf({ !(serverVersionAtLeast(3, 5) && isDiscoverableReplicaSet()) })
     def 'should support changeStreams'() {
         given:
         def expected = [createExpectedChangeNotification(namespace, 0), createExpectedChangeNotification(namespace, 1)]
@@ -182,8 +183,9 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
         when:
         getCollectionHelper().drop()
-        getCollectionHelper().insertDocuments(['{_id: 0, a: 0}', '{_id: 1, a: 1}'].collect { BsonDocument.parse(it) })
+        getCollectionHelper().create(getCollectionHelper().getNamespace().getCollectionName(), new CreateCollectionOptions())
         def cursor = execute(operation, async)
+        getCollectionHelper().insertDocuments(['{_id: 0, a: 0}', '{_id: 1, a: 1}'].collect { BsonDocument.parse(it) })
 
         then:
         next(cursor, async) == expected
