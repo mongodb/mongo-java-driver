@@ -37,7 +37,7 @@ import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
-@IgnoreIf({ !(serverVersionAtLeast([3, 5]) && isDiscoverableReplicaSet()) })
+@IgnoreIf({ !(serverVersionAtLeast(3, 5) && isDiscoverableReplicaSet()) })
 class ChangeStreamOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should have the correct defaults'() {
