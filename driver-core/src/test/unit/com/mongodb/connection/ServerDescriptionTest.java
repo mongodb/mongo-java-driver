@@ -308,7 +308,7 @@ public class ServerDescriptionTest {
     @Test
     public void testShortDescription() throws UnknownHostException {
         assertEquals("{address=127.0.0.1:27017, type=UNKNOWN, TagSet{[Tag{name='dc', value='ny'}, Tag{name='rack', value='1'}]}, "
-                     + "roundTripTime=5000.0 ms, state=CONNECTED, exception={java.lang.IllegalArgumentException: This is illegal}, "
+                     + "roundTripTime=5000,0 ms, state=CONNECTED, exception={java.lang.IllegalArgumentException: This is illegal}, "
                      + "caused by {java.lang.NullPointerException: This is null}}",
                      builder().state(CONNECTED)
                               .address(new ServerAddress())
