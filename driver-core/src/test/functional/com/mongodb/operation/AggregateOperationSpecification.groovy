@@ -172,7 +172,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !(serverVersionAtLeast([3, 5, 11]) && isDiscoverableReplicaSet()) })
+    @IgnoreIf({ !(serverVersionAtLeast([3, 5]) && isDiscoverableReplicaSet()) })
     def 'should support changeStreams'() {
         given:
         def expected = [createExpectedChangeNotification(namespace, 0), createExpectedChangeNotification(namespace, 1)]
@@ -181,8 +181,9 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         def operation = new AggregateOperation<BsonDocument>(namespace, pipeline, new BsonDocumentCodec())
 
         when:
-        def cursor = execute(operation, async)
+        getCollectionHelper().drop()
         getCollectionHelper().insertDocuments(['{_id: 0, a: 0}', '{_id: 1, a: 1}'].collect { BsonDocument.parse(it) })
+        def cursor = execute(operation, async)
 
         then:
         next(cursor, async) == expected
