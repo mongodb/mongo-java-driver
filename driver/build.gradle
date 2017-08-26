@@ -20,7 +20,7 @@ archivesBaseName = 'mongodb-driver'
 def configDir = new File(rootDir, 'config')
 
 sourceSets {
-    test.java.srcDirs += ['src/examples']
+    test.groovy.srcDirs += ['src/examples']
 }
 
 test {
