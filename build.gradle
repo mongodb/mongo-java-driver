@@ -185,7 +185,6 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
         }
         test {
             groovy.srcDirs = ['src/test/functional', 'src/test/unit']
-            java.srcDirs = ['src/test/functional', 'src/test/unit']
         }
     }
 

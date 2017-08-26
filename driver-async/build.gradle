@@ -21,7 +21,7 @@ def configDir = new File(rootDir, 'config')
 archivesBaseName = 'mongodb-driver-async'
 
 sourceSets {
-    test.java.srcDirs += 'src/examples'
+    test.groovy.srcDirs += 'src/examples'
 }
 
 dependencies {
