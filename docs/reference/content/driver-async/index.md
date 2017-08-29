@@ -9,7 +9,7 @@ title = "MongoDB Async Driver"
 
 ## MongoDB Async Java Driver Documentation
 
-The following guide provides information on using the callback-based MongoDB Async Java Driver 3.5.
+The following guide provides information on using the callback-based MongoDB Async Java Driver 3.6.
 
 {{% note %}}
 There are two higher level MongoDB Asynchronous Java Drivers available, that users may find easier to work with due to their friendlier APIs:
@@ -18,7 +18,7 @@ There are two higher level MongoDB Asynchronous Java Drivers available, that use
 * [MongoDB Reactive Streams Java Driver](http://mongodb.github.io/mongo-java-driver-reactivestreams/) A Reactive Streams implementation for the JVM.
 {{% /note %}}
 
-### What's New in 3.5
+### What's New in 3.6
 
 The [What's New]({{< relref "whats-new.md" >}}) guide explains the major new features of the driver.
 
