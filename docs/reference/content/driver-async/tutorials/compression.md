@@ -2,8 +2,8 @@
 date = "2017-06-16T22:05:03-04:00"
 title = "Compression"
 [menu.main]
-  parent = "Connect to MongoDB"
-  identifier = "Compression"
+  parent = "Async Connection Settings"
+  identifier = "Async Compression"
   weight = 25
   pre = "<i class='fa'></i>"
 +++
