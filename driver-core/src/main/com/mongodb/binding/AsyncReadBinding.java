@@ -18,6 +18,7 @@ package com.mongodb.binding;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.connection.SessionContext;
 
 /**
  * An asynchronous factory of connection sources to servers that can be read from and that satisfy the specified read preference.
@@ -30,6 +31,15 @@ public interface AsyncReadBinding extends ReferenceCounted {
      * @return the non-null read preference
      */
     ReadPreference getReadPreference();
+
+    /**
+     * Gets the session context for this binding.
+     *
+     * @return the session context, which may not be null
+     *
+     * @since 3.6
+     */
+    SessionContext getSessionContext();
 
     /**
      * Returns a connection source to a server that satisfies the specified read preference.

@@ -17,6 +17,7 @@
 package com.mongodb.binding;
 
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.connection.SessionContext;
 
 /**
  * An asynchronous factory of connection sources to servers that can be written to, e.g, a standalone, a mongos, or a replica set primary.
@@ -31,6 +32,15 @@ public interface AsyncWriteBinding extends ReferenceCounted {
      * @param callback the to be passed the connection source
      */
     void getWriteConnectionSource(SingleResultCallback<AsyncConnectionSource> callback);
+
+    /**
+     * Gets the session context for this binding.
+     *
+     * @return the session context, which may not be null
+     *
+     * @since 3.6
+     */
+    SessionContext getSessionContext();
 
     @Override
     AsyncWriteBinding retain();

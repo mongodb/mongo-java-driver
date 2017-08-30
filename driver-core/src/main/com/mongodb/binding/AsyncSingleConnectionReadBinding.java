@@ -20,6 +20,8 @@ import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.connection.SessionContext;
+import com.mongodb.internal.connection.NoOpSessionContext;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -53,6 +55,11 @@ public class AsyncSingleConnectionReadBinding extends AbstractReferenceCounted i
     }
 
     @Override
+    public SessionContext getSessionContext() {
+        return NoOpSessionContext.INSTANCE;
+    }
+
+    @Override
     public void getReadConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
           callback.onResult(new AsyncSingleConnectionSource(), null);
     }
@@ -79,6 +86,11 @@ public class AsyncSingleConnectionReadBinding extends AbstractReferenceCounted i
         @Override
         public ServerDescription getServerDescription() {
             return serverDescription;
+        }
+
+        @Override
+        public SessionContext getSessionContext() {
+            return NoOpSessionContext.INSTANCE;
         }
 
         @Override

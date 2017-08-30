@@ -17,6 +17,7 @@
 package com.mongodb.binding;
 
 import com.mongodb.ReadPreference;
+import com.mongodb.connection.SessionContext;
 
 /**
  * A factory of connection sources to servers that can be read from and that satisfy the specified read preference.
@@ -35,6 +36,15 @@ public interface ReadBinding extends ReferenceCounted {
      * @return the connection source
      */
     ConnectionSource getReadConnectionSource();
+
+    /**
+     * Gets the session context for this binding.
+     *
+     * @return the session context, which may not be null
+     *
+     * @since 3.6
+     */
+    SessionContext getSessionContext();
 
     @Override
     ReadBinding retain();

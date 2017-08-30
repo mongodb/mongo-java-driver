@@ -24,6 +24,8 @@ import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.connection.SessionContext;
+import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.selector.ReadPreferenceServerSelector;
 import com.mongodb.selector.WritableServerSelector;
 
@@ -149,6 +151,11 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
     }
 
     @Override
+    public SessionContext getSessionContext() {
+        return NoOpSessionContext.INSTANCE;
+    }
+
+    @Override
     public void getReadConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
         isTrue("open", getCount() > 0);
         if (readPreference == primary()) {
@@ -186,6 +193,11 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
         @Override
         public ServerDescription getServerDescription() {
             return server.getDescription();
+        }
+
+        @Override
+        public SessionContext getSessionContext() {
+            return NoOpSessionContext.INSTANCE;
         }
 
         @Override
