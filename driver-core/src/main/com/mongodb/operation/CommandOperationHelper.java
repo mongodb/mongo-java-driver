@@ -60,13 +60,6 @@ final class CommandOperationHelper {
         }
     }
 
-    static class VoidTransformer<T> implements CommandTransformer<T, Void> {
-        @Override
-        public Void apply(final T t, final ServerAddress serverAddress) {
-            return null;
-        }
-    }
-
     /* Read Binding Helpers */
 
     static BsonDocument executeWrappedCommandProtocol(final ReadBinding binding, final String database, final BsonDocument command) {
