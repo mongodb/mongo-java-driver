@@ -37,24 +37,35 @@ class TestOperationExecutor implements OperationExecutor {
     @Override
     @SuppressWarnings("unchecked")
     public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
-        readOperations.add(operation);
-        readPreferences.add(readPreference);
-        return (T) getResponse();
+        return execute(operation, readPreference, null);
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <T> T execute(final WriteOperation<T> operation) {
-        writeOperations.add(operation);
-        return (T) getResponse();
+        return execute(operation, null);
     }
 
-    private Object getResponse() {
+    @Override
+    public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ClientSession session) {
+        readOperations.add(operation);
+        readPreferences.add(readPreference);
+        return getResponse();
+    }
+
+    @Override
+    public <T> T execute(final WriteOperation<T> operation, final ClientSession session) {
+        writeOperations.add(operation);
+        return getResponse();
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T getResponse() {
         Object response = responses.remove(0);
         if (response instanceof RuntimeException) {
             throw (RuntimeException) response;
         }
-        return response;
+        return (T) response;
     }
 
     ReadOperation getReadOperation() {
