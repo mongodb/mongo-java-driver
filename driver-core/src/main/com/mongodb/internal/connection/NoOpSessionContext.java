@@ -44,8 +44,18 @@ public final class NoOpSessionContext implements SessionContext {
     }
 
     @Override
+    public boolean isCausallyConsistent() {
+        return false;
+    }
+
+    @Override
     public long advanceTransactionNumber() {
         throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public BsonTimestamp getOperationTime() {
+        return null;
     }
 
     @Override

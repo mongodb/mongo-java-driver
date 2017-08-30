@@ -46,8 +46,18 @@ class ClientSessionContext implements SessionContext {
     }
 
     @Override
+    public boolean isCausallyConsistent() {
+        return clientSession.isCausallyConsistent();
+    }
+
+    @Override
     public long advanceTransactionNumber() {
         return clientSession.getServerSession().advanceTransactionNumber();
+    }
+
+    @Override
+    public BsonTimestamp getOperationTime() {
+        return clientSession.getOperationTime();
     }
 
     @Override

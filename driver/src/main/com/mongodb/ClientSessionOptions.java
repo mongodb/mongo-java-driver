@@ -41,7 +41,7 @@ public final class ClientSessionOptions {
      * Whether operations using the session should causally consistent with each other.
      *
      * @return whether operations using the session should be causally consistent.  A null value indicates to use the the global default,
-     * which is currently false.
+     * which is currently true.
      */
     public Boolean isCausallyConsistent() {
         return causallyConsistent;

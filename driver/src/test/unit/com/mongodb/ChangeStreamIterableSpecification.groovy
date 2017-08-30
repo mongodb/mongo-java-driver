@@ -43,7 +43,7 @@ class ChangeStreamIterableSpecification extends Specification {
     def namespace = new MongoNamespace('db', 'coll')
     def codecRegistry = fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()])
     def readPreference = secondary()
-    def readConcern = ReadConcern.DEFAULT
+    def readConcern = ReadConcern.MAJORITY
     def writeConcern = WriteConcern.MAJORITY
     def collation = Collation.builder().locale('en').build()
 
@@ -63,7 +63,8 @@ class ChangeStreamIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new ChangeStreamOperation<Document>(namespace, FullDocument.DEFAULT,
-                [BsonDocument.parse('{$match: 1}')], codec))
+                [BsonDocument.parse('{$match: 1}')], codec)
+                .readConcern(readConcern))
         readPreference == secondary()
 
         when: 'overriding initial options'
@@ -77,7 +78,8 @@ class ChangeStreamIterableSpecification extends Specification {
         expect operation, isTheSameAs(new ChangeStreamOperation<Document>(namespace, FullDocument.UPDATE_LOOKUP,
                 [BsonDocument.parse('{$match: 1}')], codec)
                 .collation(collation).maxAwaitTime(99, MILLISECONDS)
-                .resumeAfter(resumeToken))
+                .resumeAfter(resumeToken)
+                .readConcern(readConcern))
     }
 
     def 'should use ClientSession'() {

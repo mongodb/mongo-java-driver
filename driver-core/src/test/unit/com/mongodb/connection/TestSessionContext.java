@@ -44,6 +44,11 @@ class TestSessionContext implements SessionContext {
     }
 
     @Override
+    public boolean isCausallyConsistent() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public long advanceTransactionNumber() {
         throw new UnsupportedOperationException();
     }

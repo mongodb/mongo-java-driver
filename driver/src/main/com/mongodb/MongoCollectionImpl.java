@@ -200,7 +200,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                                            .skip(options.getSkip())
                                            .limit(options.getLimit())
                                            .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                                           .collation(options.getCollation());
+                                           .collation(options.getCollation())
+                                           .readConcern(readConcern);
         if (options.getHint() != null) {
             operation.hint(toBsonDocument(options.getHint()));
         } else if (options.getHintString() != null) {

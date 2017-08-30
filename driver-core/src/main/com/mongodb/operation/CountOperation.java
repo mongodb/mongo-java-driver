@@ -26,6 +26,8 @@ import com.mongodb.binding.ReadBinding;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
+import com.mongodb.connection.SessionContext;
+import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.operation.CommandOperationHelper.CommandTransformer;
 import com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import com.mongodb.operation.OperationHelper.CallableWithConnection;
@@ -42,10 +44,12 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
+import static com.mongodb.operation.ExplainHelper.asExplainCommand;
 import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.validateReadConcernAndCollation;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
+import static com.mongodb.operation.ReadConcernHelper.appendReadConcernToCommand;
 
 /**
  * An operation that executes a count.
@@ -233,8 +237,8 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
             @Override
             public Long call(final Connection connection) {
                 validateReadConcernAndCollation(connection, readConcern, collation);
-                return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(), new BsonDocumentCodec(),
-                        connection, transformer());
+                return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(binding.getSessionContext()),
+                        new BsonDocumentCodec(), connection, transformer());
             }
         });
     }
@@ -255,8 +259,9 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
                             if (t != null) {
                                 wrappedCallback.onResult(null, t);
                             } else {
-                                executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(),
-                                        new BsonDocumentCodec(), connection, transformer(), wrappedCallback);
+                                executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
+                                        getCommand(binding.getSessionContext()), new BsonDocumentCodec(), connection, transformer(),
+                                        wrappedCallback);
                             }
                         }
                     });
@@ -287,7 +292,7 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
 
     private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
         return new CommandReadOperation<BsonDocument>(namespace.getDatabaseName(),
-                                                      ExplainHelper.asExplainCommand(getCommand(), explainVerbosity),
+                                                      asExplainCommand(getCommand(NoOpSessionContext.INSTANCE), explainVerbosity),
                                                       new BsonDocumentCodec());
     }
 
@@ -300,16 +305,17 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
         };
     }
 
-    private BsonDocument getCommand() {
+    private BsonDocument getCommand(final SessionContext sessionContext) {
         BsonDocument document = new BsonDocument("count", new BsonString(namespace.getCollectionName()));
+
+        appendReadConcernToCommand(readConcern, sessionContext, document);
+
         putIfNotNull(document, "query", filter);
         putIfNotZero(document, "limit", limit);
         putIfNotZero(document, "skip", skip);
         putIfNotNull(document, "hint", hint);
         putIfNotZero(document, "maxTimeMS", maxTimeMS);
-        if (!readConcern.isServerDefault()) {
-            document.put("readConcern", readConcern.asDocument());
-        }
+
         if (collation != null) {
             document.put("collation", collation.asDocument());
         }

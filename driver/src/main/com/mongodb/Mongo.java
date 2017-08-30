@@ -849,7 +849,7 @@ public class Mongo {
                     isTrue("ClientSession from same MongoClient", clientSessionFromOperation.getMongoClient() == Mongo.this);
                     session = clientSessionFromOperation;
                 } else {
-                    session = createClientSession(ClientSessionOptions.builder().build());
+                    session = createClientSession(ClientSessionOptions.builder().causallyConsistent(false).build());
                 }
                 return session;
             }
@@ -890,7 +890,7 @@ public class Mongo {
 
         @Override
         public boolean isCausallyConsistent() {
-            return options.isCausallyConsistent() == null ? false : options.isCausallyConsistent();
+            return options.isCausallyConsistent() == null ? true : options.isCausallyConsistent();
         }
 
         @Override
@@ -919,17 +919,35 @@ public class Mongo {
         }
 
         @Override
-        public void advanceOperationTime(final BsonTimestamp operationTime) {
+        public void advanceOperationTime(final BsonTimestamp newOperationTime) {
             isTrue("open", !closed);
-            this.operationTime = operationTime; // TODO: ensure it's advancing
+            this.operationTime = greaterOf(newOperationTime);
         }
 
         @Override
-        public void advanceClusterTime(final BsonDocument clusterTime) {
+        public void advanceClusterTime(final BsonDocument newClusterTime) {
             isTrue("open", !closed);
-            if (this.clusterTime == null
-                        || clusterTime.getTimestamp(CLUSTER_TIME_KEY).compareTo(this.clusterTime.getTimestamp(CLUSTER_TIME_KEY)) > 0) {
-                this.clusterTime = clusterTime;
+            this.clusterTime = greaterOf(newClusterTime);
+        }
+
+        private BsonDocument greaterOf(final BsonDocument newClusterTime) {
+            if (newClusterTime == null) {
+                return clusterTime;
+            } else if (clusterTime == null) {
+                return newClusterTime;
+            } else {
+                return newClusterTime.getTimestamp(CLUSTER_TIME_KEY).compareTo(clusterTime.getTimestamp(CLUSTER_TIME_KEY)) > 0
+                               ? newClusterTime : clusterTime;
+            }
+        }
+
+        private BsonTimestamp greaterOf(final BsonTimestamp newOperationTime) {
+            if (newOperationTime == null) {
+                return operationTime;
+            } else if (operationTime == null) {
+                return newOperationTime;
+            } else {
+                return newOperationTime.compareTo(operationTime) > 0 ? newOperationTime : operationTime;
             }
         }
 

@@ -21,8 +21,10 @@ import com.mongodb.async.FutureResultCallback;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncClusterBinding;
 import com.mongodb.binding.AsyncConnectionSource;
+import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.AsyncReadWriteBinding;
 import com.mongodb.binding.AsyncSingleConnectionBinding;
+import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.ClusterBinding;
 import com.mongodb.binding.ReadWriteBinding;
 import com.mongodb.binding.SingleConnectionBinding;
@@ -373,7 +375,7 @@ public final class ClusterFixture {
         return executeAsync(op, getAsyncBinding());
     }
 
-    public static <T> T executeAsync(final AsyncWriteOperation<T> op, final AsyncReadWriteBinding binding) throws Throwable {
+    public static <T> T executeAsync(final AsyncWriteOperation<T> op, final AsyncWriteBinding binding) throws Throwable {
         final FutureResultCallback<T> futureResultCallback = new FutureResultCallback<T>();
         op.executeAsync(binding, futureResultCallback);
         return futureResultCallback.get(TIMEOUT, SECONDS);
@@ -383,7 +385,7 @@ public final class ClusterFixture {
         return executeAsync(op, getAsyncBinding());
     }
 
-    public static <T> T executeAsync(final AsyncReadOperation<T> op, final AsyncReadWriteBinding binding) throws Throwable {
+    public static <T> T executeAsync(final AsyncReadOperation<T> op, final AsyncReadBinding binding) throws Throwable {
         final FutureResultCallback<T> futureResultCallback = new FutureResultCallback<T>();
         op.executeAsync(binding, futureResultCallback);
         return futureResultCallback.get(TIMEOUT, SECONDS);

@@ -23,14 +23,15 @@ class ReadConcernSpecification extends Specification {
 
     def 'should have the expected read concern levels'() {
         expect:
-        staticValue == expected
+        staticValue == expectedReadConcern
+        staticValue.getLevel() == expectedLevel
 
         where:
-        staticValue              | expected
-        ReadConcern.DEFAULT      | new ReadConcern()
-        ReadConcern.LOCAL        | new ReadConcern(ReadConcernLevel.LOCAL)
-        ReadConcern.MAJORITY     | new ReadConcern(ReadConcernLevel.MAJORITY)
-        ReadConcern.LINEARIZABLE | new ReadConcern(ReadConcernLevel.LINEARIZABLE)
+        staticValue              | expectedLevel                 | expectedReadConcern
+        ReadConcern.DEFAULT      | null                          | new ReadConcern()
+        ReadConcern.LOCAL        | ReadConcernLevel.LOCAL        | new ReadConcern(ReadConcernLevel.LOCAL)
+        ReadConcern.MAJORITY     | ReadConcernLevel.MAJORITY     | new ReadConcern(ReadConcernLevel.MAJORITY)
+        ReadConcern.LINEARIZABLE | ReadConcernLevel.LINEARIZABLE | new ReadConcern(ReadConcernLevel.LINEARIZABLE)
     }
 
     def 'should create the expected Documents'() {
