@@ -129,7 +129,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         _ * connection.getDescription() >> helper.connectionDescription
-        1 * connection.command(_, _, readPreference, _, _) >> helper.commandResult
+        1 * connection.command(_, _, readPreference, _, _, _) >> helper.commandResult
         1 * connection.release()
 
         where:
@@ -153,7 +153,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         _ * connection.getDescription() >> helper.connectionDescription
-        1 * connection.commandAsync(_, _, readPreference, _, _, _) >> { it[5].onResult(helper.commandResult, null) }
+        1 * connection.commandAsync(_, _, readPreference, _, _, _, _) >> { it[6].onResult(helper.commandResult, null) }
         1 * connection.release()
 
         where:

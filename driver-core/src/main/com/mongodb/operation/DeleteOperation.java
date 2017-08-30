@@ -25,6 +25,7 @@ import com.mongodb.bulk.DeleteRequest;
 import com.mongodb.bulk.WriteRequest;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
+import com.mongodb.connection.SessionContext;
 
 import java.util.List;
 
@@ -87,20 +88,21 @@ public class DeleteOperation extends BaseWriteOperation {
     }
 
     @Override
-    protected BulkWriteResult executeCommandProtocol(final Connection connection) {
+    protected BulkWriteResult executeCommandProtocol(final Connection connection, final SessionContext sessionContext) {
         validateWriteRequestCollations(connection, deleteRequests, getWriteConcern());
-        return connection.deleteCommand(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests);
+        return connection.deleteCommand(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests, sessionContext);
     }
 
     @Override
-    protected void executeCommandProtocolAsync(final AsyncConnection connection, final SingleResultCallback<BulkWriteResult> callback) {
+    protected void executeCommandProtocolAsync(final AsyncConnection connection, final SessionContext sessionContext,
+                                               final SingleResultCallback<BulkWriteResult> callback) {
         validateWriteRequestCollations(connection, deleteRequests, getWriteConcern(), new AsyncCallableWithConnection(){
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
                 if (t != null) {
                     callback.onResult(null, t);
                 } else {
-                    connection.deleteCommandAsync(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests, callback);
+                    connection.deleteCommandAsync(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests, sessionContext, callback);
                 }
             }
         });

@@ -212,7 +212,8 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
                                                              asGetMoreCommandDocument(),
                                                              ReadPreference.primary(),
                                                              new NoOpFieldNameValidator(),
-                                                             CommandResultDocumentCodec.create(decoder, "nextBatch")));
+                                                             CommandResultDocumentCodec.create(decoder, "nextBatch"),
+                                                             connectionSource.getSessionContext()));
                 } catch (MongoCommandException e) {
                     throw translateCommandException(e, serverCursor);
                 }
@@ -277,7 +278,7 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
             notNull("connection", connection);
             if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
                 connection.command(namespace.getDatabaseName(), asKillCursorsCommandDocument(), ReadPreference.primary(),
-                        new NoOpFieldNameValidator(), new BsonDocumentCodec());
+                        new NoOpFieldNameValidator(), new BsonDocumentCodec(), connectionSource.getSessionContext());
             } else {
                 connection.killCursor(namespace, singletonList(serverCursor.getId()));
             }

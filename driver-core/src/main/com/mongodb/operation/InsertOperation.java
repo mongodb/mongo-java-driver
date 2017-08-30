@@ -25,6 +25,7 @@ import com.mongodb.bulk.InsertRequest;
 import com.mongodb.bulk.WriteRequest;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
+import com.mongodb.connection.SessionContext;
 
 import java.util.List;
 
@@ -74,14 +75,16 @@ public class InsertOperation extends BaseWriteOperation {
     }
 
     @Override
-    protected BulkWriteResult executeCommandProtocol(final Connection connection) {
-        return connection.insertCommand(getNamespace(), isOrdered(), getWriteConcern(), getBypassDocumentValidation(), insertRequests);
+    protected BulkWriteResult executeCommandProtocol(final Connection connection, final SessionContext sessionContext) {
+        return connection.insertCommand(getNamespace(), isOrdered(), getWriteConcern(), getBypassDocumentValidation(), insertRequests,
+                sessionContext);
     }
 
     @Override
-    protected void executeCommandProtocolAsync(final AsyncConnection connection, final SingleResultCallback<BulkWriteResult> callback) {
+    protected void executeCommandProtocolAsync(final AsyncConnection connection, final SessionContext sessionContext,
+                                               final SingleResultCallback<BulkWriteResult> callback) {
         connection.insertCommandAsync(getNamespace(), isOrdered(), getWriteConcern(), getBypassDocumentValidation(), insertRequests,
-                callback);
+                sessionContext, callback);
     }
 
     @Override
