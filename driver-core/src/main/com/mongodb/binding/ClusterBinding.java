@@ -21,6 +21,8 @@ import com.mongodb.connection.Cluster;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.connection.SessionContext;
+import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.selector.ReadPreferenceServerSelector;
 import com.mongodb.selector.ServerSelector;
 import com.mongodb.selector.WritableServerSelector;
@@ -64,6 +66,11 @@ public class ClusterBinding extends AbstractReferenceCounted implements ReadWrit
     }
 
     @Override
+    public SessionContext getSessionContext() {
+        return NoOpSessionContext.INSTANCE;
+    }
+
+    @Override
     public ConnectionSource getWriteConnectionSource() {
         return new ClusterBindingConnectionSource(new WritableServerSelector());
     }
@@ -79,6 +86,11 @@ public class ClusterBinding extends AbstractReferenceCounted implements ReadWrit
         @Override
         public ServerDescription getServerDescription() {
             return server.getDescription();
+        }
+
+        @Override
+        public SessionContext getSessionContext() {
+            return NoOpSessionContext.INSTANCE;
         }
 
         @Override

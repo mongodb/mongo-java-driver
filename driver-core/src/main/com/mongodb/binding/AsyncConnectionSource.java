@@ -19,6 +19,7 @@ package com.mongodb.binding;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.connection.SessionContext;
 
 /**
  * A source of connections to a single MongoDB server.
@@ -33,6 +34,15 @@ public interface AsyncConnectionSource extends ReferenceCounted {
      * @return the current details of the server state.
      */
     ServerDescription getServerDescription();
+
+    /**
+     * Gets the session context for this source
+     *
+     * @return the session context, which may not be null
+     *
+     * @since 3.6
+     */
+    SessionContext getSessionContext();
 
     /**
      * Gets a connection from this source.

@@ -16,6 +16,8 @@
 
 package com.mongodb.binding;
 
+import com.mongodb.connection.SessionContext;
+
 /**
  * A factory of connection sources to servers that can be written to, e.g, a standalone, a mongos, or a replica set primary.
  *
@@ -28,6 +30,15 @@ public interface WriteBinding extends ReferenceCounted {
      * @return a connection source
      */
     ConnectionSource getWriteConnectionSource();
+
+    /**
+     * Gets the session context for this binding.
+     *
+     * @return the session context, which may not be null
+     *
+     * @since 3.6
+     */
+    SessionContext getSessionContext();
 
     @Override
     WriteBinding retain();
