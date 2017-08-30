@@ -41,4 +41,25 @@ interface OperationExecutor {
      * @return the result of executing the operation.
      */
     <T> T execute(WriteOperation<T> operation);
+
+    /**
+     * Execute the read operation with the given read preference.
+     *
+     * @param <T> the operations result type.
+     * @param operation the read operation.
+     * @param readPreference the read preference.
+     * @param session the session to associate this operation with
+     * @return the result of executing the operation.
+     */
+    <T> T execute(ReadOperation<T> operation, ReadPreference readPreference, ClientSession session);
+
+    /**
+     * Execute the write operation.
+     *
+     * @param operation the write operation.
+     * @param session the session to associate this operation with
+     * @param <T> the operations result type.
+     * @return the result of executing the operation.
+     */
+    <T> T execute(WriteOperation<T> operation, ClientSession session);
 }

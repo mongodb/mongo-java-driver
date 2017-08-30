@@ -412,6 +412,23 @@ public class MongoClient extends Mongo implements Closeable {
                 clientOptions.getWriteConcern(), clientOptions.getReadConcern(), createOperationExecutor());
     }
 
+    /**
+     * Creates a client session.
+     *
+     * @param options the options for the client session
+     * @return the client session
+     * @throws MongoClientException if the MongoDB cluster to which this client is connected does not support sessions
+     * @mongodb.server.release 3.6
+     * @since 3.6
+     */
+    public ClientSession startSession(final ClientSessionOptions options) {
+        ClientSession clientSession = createClientSession(options);
+        if (clientSession == null) {
+            throw new MongoClientException("Sessions are not supported by the MongoDB cluster to which this client is connected");
+        }
+        return clientSession;
+    }
+
     static DBObjectCodec getCommandCodec() {
         return new DBObjectCodec(getDefaultCodecRegistry());
     }

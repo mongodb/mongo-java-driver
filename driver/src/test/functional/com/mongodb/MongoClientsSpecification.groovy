@@ -52,5 +52,4 @@ class MongoClientsSpecification extends FunctionalSpecification {
         profileCollection?.drop()
         client?.close()
     }
-
 }

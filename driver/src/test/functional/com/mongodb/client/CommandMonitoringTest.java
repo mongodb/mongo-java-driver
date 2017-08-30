@@ -283,6 +283,7 @@ public class CommandMonitoringTest {
             command.getArray("cursors").set(0, new BsonInt64(42));
         }
         command.remove("$clusterTime");
+        command.remove("lsid");
 
         return new CommandStartedEvent(actual.getRequestId(), actual.getConnectionDescription(), actual.getDatabaseName(),
                 actual.getCommandName(), command);
