@@ -19,6 +19,7 @@ package com.mongodb.connection;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoServerException;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.connection.NoOpSessionContext;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
@@ -48,15 +49,16 @@ final class CommandHelper {
                                                         .serverVersion(internalConnection.getDescription().getServerVersion())
                                                         .build());
 
-        internalConnection.sendAndReceiveAsync(message, new BsonDocumentCodec(), new SingleResultCallback<BsonDocument>() {
-            @Override
-            public void onResult(final BsonDocument result, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    callback.onResult(result, null);
-                }
-            }
+        internalConnection.sendAndReceiveAsync(message, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE,
+                new SingleResultCallback<BsonDocument>() {
+                    @Override
+                    public void onResult(final BsonDocument result, final Throwable t) {
+                        if (t != null) {
+                            callback.onResult(null, t);
+                        } else {
+                            callback.onResult(result, null);
+                        }
+                    }
         });
     }
 
@@ -86,7 +88,7 @@ final class CommandHelper {
                                                                                .serverVersion(internalConnection.getDescription()
                                                                                                       .getServerVersion())
                                                                                .build());
-        return internalConnection.sendAndReceive(message, new BsonDocumentCodec());
+        return internalConnection.sendAndReceive(message, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE);
     }
 
     private CommandHelper() {

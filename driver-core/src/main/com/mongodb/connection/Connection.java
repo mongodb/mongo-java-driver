@@ -114,9 +114,27 @@ public interface Connection extends ReferenceCounted {
      * @return the bulk write result
      * @since 3.2
      * @mongodb.driver.manual reference/command/insert/ Insert
+     * @deprecated Prefer {@link #insertCommand(MongoNamespace, boolean, WriteConcern, Boolean, List, SessionContext)}
      */
+    @Deprecated
     BulkWriteResult insertCommand(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, Boolean bypassDocumentValidation,
                                   List<InsertRequest> inserts);
+
+    /**
+     * Insert the documents using the insert command.
+     *
+     * @param namespace                 the namespace
+     * @param ordered                   whether the writes are ordered
+     * @param writeConcern              the write concern
+     * @param bypassDocumentValidation  the bypassDocumentValidation flag
+     * @param inserts                   the inserts
+     * @param sessionContext            the session context
+     * @return the bulk write result
+     * @since 3.6
+     * @mongodb.driver.manual reference/command/insert/ Insert
+     */
+    BulkWriteResult insertCommand(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, Boolean bypassDocumentValidation,
+                                  List<InsertRequest> inserts, SessionContext sessionContext);
 
     /**
      * Update the documents using the update command.
@@ -126,7 +144,7 @@ public interface Connection extends ReferenceCounted {
      * @param writeConcern the write concern
      * @param updates      the updates
      * @return the bulk write result
-     * @deprecated Replaced by {@link Connection#updateCommand(MongoNamespace, boolean, WriteConcern, Boolean, List)}}
+     * @deprecated Replaced by {@link Connection#updateCommand(MongoNamespace, boolean, WriteConcern, Boolean, List, SessionContext)}}
      */
     @Deprecated
     BulkWriteResult updateCommand(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, List<UpdateRequest> updates);
@@ -142,9 +160,27 @@ public interface Connection extends ReferenceCounted {
      * @return the bulk write result
      * @since 3.2
      * @mongodb.driver.manual reference/command/update/ Update
+     * @deprecated Prefer {@link #updateCommand(MongoNamespace, boolean, WriteConcern, Boolean, List, SessionContext)}
      */
+    @Deprecated
     BulkWriteResult updateCommand(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, Boolean bypassDocumentValidation,
                                   List<UpdateRequest> updates);
+
+    /**
+     * Update the documents using the update command.
+     *
+     * @param namespace                 the namespace
+     * @param ordered                   whether the writes are ordered
+     * @param writeConcern              the write concern
+     * @param bypassDocumentValidation  the bypassDocumentValidation flag
+     * @param updates                   the updates
+     * @param sessionContext            the session context
+     * @return the bulk write result
+     * @since 3.6
+     * @mongodb.driver.manual reference/command/update/ Update
+     */
+    BulkWriteResult updateCommand(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, Boolean bypassDocumentValidation,
+                                  List<UpdateRequest> updates, SessionContext sessionContext);
 
     /**
      * Delete the documents using the delete command.
@@ -154,8 +190,24 @@ public interface Connection extends ReferenceCounted {
      * @param writeConcern the write concern
      * @param deletes      the deletes
      * @return the bulk write result
+     * @deprecated Prefer {@link #deleteCommand(MongoNamespace, boolean, WriteConcern, List, SessionContext)}
      */
+    @Deprecated
     BulkWriteResult deleteCommand(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, List<DeleteRequest> deletes);
+
+    /**
+     * Delete the documents using the delete command.
+     *
+     * @param namespace    the namespace
+     * @param ordered      whether the writes are ordered
+     * @param writeConcern the write concern
+     * @param deletes      the deletes
+     * @param sessionContext            the session context
+     * @return the bulk write result
+     * @since 3.6
+     */
+    BulkWriteResult deleteCommand(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, List<DeleteRequest> deletes,
+                                  SessionContext sessionContext);
 
     /**
      * Execute the command.
@@ -167,7 +219,7 @@ public interface Connection extends ReferenceCounted {
      * @param commandResultDecoder the decoder for the result
      * @param <T>                  the type of the result
      * @return the command result
-     * @deprecated Prefer {@link #command(String, BsonDocument, ReadPreference, FieldNameValidator, Decoder)}
+     * @deprecated Prefer {@link #command(String, BsonDocument, ReadPreference, FieldNameValidator, Decoder, SessionContext)}
      */
     @Deprecated
     <T> T command(String database, BsonDocument command, boolean slaveOk, FieldNameValidator fieldNameValidator,
@@ -176,17 +228,18 @@ public interface Connection extends ReferenceCounted {
     /**
      * Execute the command.
      *
+     * @param <T>                  the type of the result
      * @param database             the database to execute the command in
      * @param command              the command document
      * @param readPreference       the read preference that was applied to get this connection
      * @param fieldNameValidator   the field name validator for the command document
      * @param commandResultDecoder the decoder for the result
-     * @param <T>                  the type of the result
+     * @param sessionContext       the session context
      * @return the command result
      * @since 3.6
      */
     <T> T command(String database, BsonDocument command, ReadPreference readPreference, FieldNameValidator fieldNameValidator,
-                  Decoder<T> commandResultDecoder);
+                  Decoder<T> commandResultDecoder, SessionContext sessionContext);
 
     /**
      * Execute the query.

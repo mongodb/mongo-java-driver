@@ -20,6 +20,7 @@ package com.mongodb.connection
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadPreference
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.internal.connection.NoOpSessionContext
 import org.bson.BsonBinaryWriter
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -166,7 +167,7 @@ class StreamHelper {
                 new BsonDocument('ismaster', new BsonInt32(1)),
                 ReadPreference.primary(), MessageSettings.builder().serverVersion(new ServerVersion(0, 0)).build())
         OutputBuffer outputBuffer = new BasicOutputBuffer()
-        command.encode(outputBuffer)
+        command.encode(outputBuffer, NoOpSessionContext.INSTANCE)
         nextMessageId++
         [outputBuffer.byteBuffers, nextMessageId]
     }

@@ -17,6 +17,8 @@
 
 package com.mongodb.connection;
 
+import org.bson.io.BsonOutput;
+
 abstract class CommandMessage extends RequestMessage {
     CommandMessage(final String collectionName, final OpCode opCode, final MessageSettings settings) {
         super(collectionName, opCode, settings);
@@ -24,11 +26,23 @@ abstract class CommandMessage extends RequestMessage {
 
     abstract boolean isResponseExpected();
 
+    abstract EncodingMetadata encodeMessageBodyWithMetadata(BsonOutput bsonOutput, SessionContext sessionContext);
+
+    @Override
+    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final int messageStartPosition,
+                                                             final SessionContext sessionContext) {
+        return encodeMessageBodyWithMetadata(bsonOutput, sessionContext);
+    }
+
     protected static OpCode getOpCode(final MessageSettings settings) {
         return useOpMsg(settings) ? OpCode.OP_MSG : OpCode.OP_QUERY;
     }
 
     protected static boolean useOpMsg(final MessageSettings settings) {
+        return isServerVersionAtLeastThreeDotSix(settings);
+    }
+
+    private static boolean isServerVersionAtLeastThreeDotSix(final MessageSettings settings) {
         return settings.getServerVersion().compareTo(new ServerVersion(3, 5)) >= 0;
     }
 

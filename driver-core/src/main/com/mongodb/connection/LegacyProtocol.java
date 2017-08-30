@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2015 MongoDB, Inc.
+ * Copyright 2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -12,6 +12,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
 package com.mongodb.connection;
@@ -19,26 +20,10 @@ package com.mongodb.connection;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.event.CommandListener;
 
-/**
- * An interface for the execution of a MongoDB wire protocol conversation
- *
- * @param <T> the return value of the Protocol response message
- */
-interface Protocol<T> {
-    /**
-     * Execute the protocol.
-     *
-     * @param connection the connection to execute the protocol on
-     * @return the response from execution of the protocol
-     */
+interface LegacyProtocol<T> {
+
     T execute(InternalConnection connection);
 
-    /**
-     * Execute the protocol asynchronously.
-     *
-     * @param connection the connection to execute the protocol on
-     * @param callback   the callback that is passed the result of the execution
-     */
     void executeAsync(InternalConnection connection, SingleResultCallback<T> callback);
 
     void setCommandListener(CommandListener commandListener);

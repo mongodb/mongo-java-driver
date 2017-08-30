@@ -27,7 +27,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-kill-cursors OP_KILL_CURSOR
  */
-class KillCursorsMessage extends RequestMessage {
+class KillCursorsMessage extends LegacyMessage {
     private final List<Long> cursors;
 
     KillCursorsMessage(final List<Long> cursors) {

@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.bulk.InsertRequest;
+import com.mongodb.internal.connection.NoOpSessionContext;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.junit.After;
@@ -52,10 +53,10 @@ public class MaxMessageSizeTest {
 
     @Test
     public void testMaxDocumentSize() {
-        message.encode(buffer);
+        message.encode(buffer, NoOpSessionContext.INSTANCE);
         RequestMessage next = message.getEncodingMetadata().getNextMessage();
         assertNotNull(next);
-        next.encode(buffer);
+        next.encode(buffer, NoOpSessionContext.INSTANCE);
         assertNull(next.getEncodingMetadata().getNextMessage());
     }
 

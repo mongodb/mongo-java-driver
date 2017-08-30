@@ -22,6 +22,7 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.connection.NoOpSessionContext;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDouble;
@@ -46,7 +47,7 @@ import static java.lang.String.format;
  * @param <T> the type of document to decode query results to
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
  */
-class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
+class GetMoreProtocol<T> implements LegacyProtocol<QueryResult<T>> {
 
     public static final Logger LOGGER = Loggers.getLogger("protocol.getmore");
     private static final String COMMAND_NAME = "getMore";
@@ -160,7 +161,7 @@ class GetMoreProtocol<T> implements Protocol<QueryResult<T>> {
                 sendCommandStartedEvent(message, namespace.getDatabaseName(), COMMAND_NAME, asGetMoreCommandDocument(),
                                         connection.getDescription(), commandListener);
             }
-            message.encode(bsonOutput);
+            message.encode(bsonOutput, NoOpSessionContext.INSTANCE);
             connection.sendMessage(bsonOutput.getByteBuffers(), message.getId());
         } finally {
             bsonOutput.close();

@@ -19,6 +19,7 @@ package com.mongodb.connection
 import category.Async
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.internal.connection.NoOpSessionContext
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.codecs.BsonDocumentCodec
@@ -173,7 +174,8 @@ class UsageTrackingConnectionSpecification extends Specification {
 
         when:
         connection.sendAndReceive(new SimpleCommandMessage('test', new BsonDocument('ping', new BsonInt32(1)), primary(),
-                MessageSettings.builder().serverVersion(new ServerVersion(0, 0)).build()), new BsonDocumentCodec())
+                MessageSettings.builder().serverVersion(new ServerVersion(0, 0)).build()),
+                new BsonDocumentCodec(), NoOpSessionContext.INSTANCE)
 
         then:
         connection.lastUsedAt >= openedLastUsedAt
@@ -190,7 +192,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         when:
         connection.sendAndReceiveAsync(new SimpleCommandMessage('test', new BsonDocument('ping', new BsonInt32(1)), primary(),
                 MessageSettings.builder().serverVersion(new ServerVersion(0, 0)).build()),
-                new BsonDocumentCodec(), futureResultCallback)
+                new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, futureResultCallback)
         futureResultCallback.get(60, SECONDS)
 
         then:

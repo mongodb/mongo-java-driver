@@ -22,6 +22,7 @@ import com.mongodb.WriteConcern
 import com.mongodb.bulk.DeleteRequest
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.bulk.UpdateRequest
+import com.mongodb.internal.connection.NoOpSessionContext
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import spock.lang.Specification
@@ -44,7 +45,7 @@ class WriteCommandLimitsSpecification extends Specification {
                 inserts);
 
         when:
-        message.encode(buffer)
+        message.encode(buffer, NoOpSessionContext.INSTANCE)
         def nextMessage = (InsertCommandMessage) message.getEncodingMetadata().nextMessage
 
         then:
@@ -67,7 +68,7 @@ class WriteCommandLimitsSpecification extends Specification {
                 inserts);
 
         when:
-        message.encode(buffer)
+        message.encode(buffer, NoOpSessionContext.INSTANCE)
         def nextMessage = (InsertCommandMessage) message.getEncodingMetadata().nextMessage
 
         then:
@@ -90,7 +91,7 @@ class WriteCommandLimitsSpecification extends Specification {
                 deletes);
 
         when:
-        message.encode(buffer)
+        message.encode(buffer, NoOpSessionContext.INSTANCE)
         def nextMessage = (DeleteCommandMessage) message.getEncodingMetadata().nextMessage
 
         then:
@@ -113,7 +114,7 @@ class WriteCommandLimitsSpecification extends Specification {
                 deletes);
 
         when:
-        message.encode(buffer)
+        message.encode(buffer, NoOpSessionContext.INSTANCE)
         def nextMessage = (DeleteCommandMessage) message.getEncodingMetadata().nextMessage
 
         then:
@@ -136,7 +137,7 @@ class WriteCommandLimitsSpecification extends Specification {
                 replaces);
 
         when:
-        message.encode(buffer)
+        message.encode(buffer, NoOpSessionContext.INSTANCE)
         def nextMessage = (UpdateCommandMessage) message.getEncodingMetadata().nextMessage
 
         then:
@@ -159,7 +160,7 @@ class WriteCommandLimitsSpecification extends Specification {
                 replaces);
 
         when:
-        message.encode(buffer)
+        message.encode(buffer, NoOpSessionContext.INSTANCE)
         def nextMessage = (UpdateCommandMessage) message.getEncodingMetadata().nextMessage
 
         then:

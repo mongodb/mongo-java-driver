@@ -31,6 +31,7 @@ import com.mongodb.bulk.InsertRequest
 import com.mongodb.event.CommandFailedEvent
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.event.CommandSucceededEvent
+import com.mongodb.internal.connection.NoOpSessionContext
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
@@ -382,7 +383,7 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.read(_) >> helper.reply(response)
 
         when:
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec())
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE)
 
         then:
         thrown(MongoCommandException)
@@ -409,7 +410,7 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         when:
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), callback)
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, callback)
         callback.get()
 
         then:
@@ -461,7 +462,7 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.read(90) >> helper.defaultReply()
 
         when:
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec())
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE)
 
         then:
         commandListener.eventsWereDelivered([
@@ -471,6 +472,66 @@ class InternalStreamConnectionSpecification extends Specification {
                         new BsonDocument('ok', new BsonInt32(1)), 1000)])
     }
 
+    def 'should extract cluster and operation time into session context'() {
+        given:
+        def connection = getOpenedConnection()
+        def pingCommandDocument = new BsonDocument('ping', new BsonInt32(1))
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, primary(), messageSettings)
+        def response = '''{
+                            ok : 1,
+                            operationTime : { $timestamp : { "t" : 40, "i" : 20 } },
+                            $clusterTime :  { clusterTime : { $timestamp : { "t" : 42, "i" : 21 } } }
+                          }'''
+        stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
+        stream.read(16) >> helper.defaultMessageHeader(commandMessage.getId())
+        stream.read(_) >> helper.reply(response)
+        def sessionContext = Mock(SessionContext) {
+            1 * advanceOperationTime(BsonDocument.parse(response).getTimestamp('operationTime'))
+            1 * advanceClusterTime(BsonDocument.parse(response).getDocument('$clusterTime'))
+        }
+
+        when:
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), sessionContext)
+
+        then:
+        true
+    }
+
+    def 'should extract cluster and operation time into session context asynchronously'() {
+        given:
+        def connection = getOpenedConnection()
+        def pingCommandDocument = new BsonDocument('ping', new BsonInt32(1))
+        def commandMessage = new SimpleCommandMessage('admin.$cmd', pingCommandDocument, primary(), messageSettings)
+        def callback = new FutureResultCallback()
+        def response = '''{
+                            ok : 1,
+                            operationTime : { $timestamp : { "t" : 40, "i" : 20 } },
+                            $clusterTime :  { clusterTime : { $timestamp : { "t" : 42, "i" : 21 } } }
+                          }'''
+        stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
+        stream.writeAsync(_, _) >> { buffers, handler ->
+            handler.completed(null)
+        }
+        stream.readAsync(16, _) >> { numBytes, handler ->
+            handler.completed(helper.defaultMessageHeader(commandMessage.getId()))
+        }
+        stream.readAsync(_, _) >> { numBytes, handler ->
+            handler.completed(helper.reply(response))
+        }
+        def sessionContext = Mock(SessionContext) {
+            1 * advanceOperationTime(BsonDocument.parse(response).getTimestamp('operationTime'))
+            1 * advanceClusterTime(BsonDocument.parse(response).getDocument('$clusterTime'))
+        }
+
+        when:
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), sessionContext, callback)
+        callback.get()
+
+        then:
+        true
+    }
+
+
     def 'should send events for one-way command'() {
         given:
         def connection = getOpenedConnection()
@@ -479,7 +540,7 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.getBuffer(1024) >> { new ByteBufNIO(ByteBuffer.wrap(new byte[1024])) }
 
         when:
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec())
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE)
 
         then:
         commandListener.eventsWereDelivered([
@@ -499,7 +560,7 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.write(_) >> { throw new MongoSocketWriteException('Failed to write', serverAddress, new IOException()) }
 
         when:
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec())
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE)
 
         then:
         def e = thrown(MongoSocketWriteException)
@@ -518,7 +579,7 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.read(16) >> { throw new MongoSocketReadException('Failed to read', serverAddress) }
 
         when:
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec())
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE)
 
         then:
         def e = thrown(MongoSocketReadException)
@@ -538,7 +599,7 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.read(90) >> { throw new MongoSocketReadException('Failed to read', serverAddress) }
 
         when:
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec())
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE)
 
         then:
         def e = thrown(MongoSocketException)
@@ -559,7 +620,7 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.read(_) >> helper.reply(response)
 
         when:
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec())
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE)
 
         then:
         def e = thrown(MongoCommandException)
@@ -579,7 +640,7 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.read(90) >> helper.defaultReply()
 
         when:
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec())
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE)
 
         then:
         commandListener.eventsWereDelivered([
@@ -611,7 +672,7 @@ class InternalStreamConnectionSpecification extends Specification {
         stream.read(_) >> helper.reply('{ok : 0, errmsg : "failed"}')
 
         when:
-        connection.sendAndReceive(commandMessage, new BsonDocumentCodec())
+        connection.sendAndReceive(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE)
 
         then:
         thrown(MongoCommandException)
@@ -653,7 +714,7 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         when:
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), callback)
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, callback)
         callback.get()
 
         then:
@@ -677,7 +738,7 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         when:
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), callback)
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, callback)
         callback.get()
 
         then:
@@ -703,7 +764,7 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         when:
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), callback)
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, callback)
         callback.get()
 
         then:
@@ -730,7 +791,7 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         when:
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), callback)
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, callback)
         callback.get()
 
         then:
@@ -760,7 +821,7 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         when:
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), callback)
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, callback)
         callback.get()
 
         then:
@@ -791,7 +852,7 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         when:
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), callback)
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, callback)
         callback.get()
 
         then:
@@ -821,7 +882,7 @@ class InternalStreamConnectionSpecification extends Specification {
         }
 
         when:
-        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), callback)
+        connection.sendAndReceiveAsync(commandMessage, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, callback)
         callback.get()
 
         then:

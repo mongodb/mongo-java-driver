@@ -25,6 +25,7 @@ import com.mongodb.WriteConcernResult;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.connection.NoOpSessionContext;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -35,7 +36,6 @@ import org.bson.io.OutputBuffer;
 
 import static com.mongodb.MongoNamespace.COMMAND_COLLECTION_NAME;
 import static com.mongodb.assertions.Assertions.isTrue;
-import static com.mongodb.connection.ProtocolHelper.encodeMessage;
 import static com.mongodb.connection.ProtocolHelper.encodeMessageWithMetadata;
 import static com.mongodb.connection.ProtocolHelper.getMessageSettings;
 import static com.mongodb.connection.ProtocolHelper.getWriteResult;
@@ -46,7 +46,7 @@ import static com.mongodb.connection.ProtocolHelper.sendCommandSucceededEvent;
 /**
  * Base class for legacy wire protocol messages that perform unacknowledged writes.
  */
-abstract class WriteProtocol implements Protocol<WriteConcernResult> {
+abstract class WriteProtocol implements LegacyProtocol<WriteConcernResult> {
 
     private final MongoNamespace namespace;
     private final boolean ordered;
@@ -78,7 +78,7 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
                 if (requestMessage == null) {
                     requestMessage = createRequestMessage(getMessageSettings(connection.getDescription()));
                 }
-                requestMessage.encode(bsonOutput);
+                requestMessage.encode(bsonOutput, NoOpSessionContext.INSTANCE);
                 encodingMetadata = requestMessage.getEncodingMetadata();
                 sendStartedEvent(connection, requestMessage, requestMessage.getEncodingMetadata(), bsonOutput);
                 sentCommandStartedEvent = true;
@@ -89,7 +89,7 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
                             COMMAND_COLLECTION_NAME).getFullName(),
                             createGetLastErrorCommandDocument(), ReadPreference.primary(),
                             getMessageSettings(connection.getDescription()));
-                    getLastErrorMessage.encode(bsonOutput);
+                    getLastErrorMessage.encode(bsonOutput, NoOpSessionContext.INSTANCE);
                     messageId = getLastErrorMessage.getId();
                 }
 
@@ -152,7 +152,7 @@ abstract class WriteProtocol implements Protocol<WriteConcernResult> {
                         COMMAND_COLLECTION_NAME).getFullName(),
                         createGetLastErrorCommandDocument(), ReadPreference.primary(),
                         getMessageSettings(connection.getDescription()));
-                encodeMessage(getLastErrorMessage, bsonOutput);
+                getLastErrorMessage.encode(bsonOutput, NoOpSessionContext.INSTANCE);
                 SingleResultCallback<ResponseBuffers> receiveCallback = new WriteResultCallback(callback,
                         new BsonDocumentCodec(),
                         requestMessage,

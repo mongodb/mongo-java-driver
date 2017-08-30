@@ -59,7 +59,8 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
     }
 
     @Override
-    public ClusterableServer create(final ServerAddress serverAddress, final ServerListener serverListener) {
+    public ClusterableServer create(final ServerAddress serverAddress, final ServerListener serverListener,
+                                    final ClusterClock clusterClock) {
         ConnectionPool connectionPool = new DefaultConnectionPool(new ServerId(clusterId, serverAddress),
                 new InternalStreamConnectionFactory(streamFactory, credentialList, applicationName,
                         mongoDriverInformation, compressorList, commandListener), connectionPoolSettings);
@@ -69,7 +70,7 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
                             mongoDriverInformation, Collections.<MongoCompressor>emptyList(), null), connectionPool);
 
         return new DefaultServer(new ServerId(clusterId, serverAddress), clusterSettings.getMode(), connectionPool,
-                new DefaultConnectionFactory(), serverMonitorFactory, serverListener, commandListener);
+                new DefaultConnectionFactory(), serverMonitorFactory, serverListener, commandListener, clusterClock);
     }
 
     @Override

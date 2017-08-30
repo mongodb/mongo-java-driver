@@ -44,7 +44,7 @@ class CommandEventOnConnectionFailureSpecification extends Specification {
 
     def 'should publish failed command event when sendMessage throws exception'() {
         String commandName = protocolInfo[0]
-        Protocol protocol = protocolInfo[1]
+        LegacyProtocol protocol = protocolInfo[1]
 
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
@@ -75,7 +75,7 @@ class CommandEventOnConnectionFailureSpecification extends Specification {
 
     def 'should publish failed command event when receiveMessage throws exception'() {
         String commandName = protocolInfo[0]
-        Protocol protocol = protocolInfo[1]
+        LegacyProtocol protocol = protocolInfo[1]
 
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener

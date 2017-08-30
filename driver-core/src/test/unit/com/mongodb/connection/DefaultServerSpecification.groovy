@@ -23,6 +23,7 @@ import com.mongodb.MongoNotPrimaryException
 import com.mongodb.MongoSecurityException
 import com.mongodb.MongoSocketException
 import com.mongodb.MongoSocketReadTimeoutException
+import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcernResult
 import com.mongodb.async.FutureResultCallback
@@ -30,7 +31,6 @@ import com.mongodb.async.SingleResultCallback
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.event.CommandListener
 import com.mongodb.event.ServerListener
-import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.codecs.BsonDocumentCodec
@@ -42,7 +42,7 @@ import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
-import static com.mongodb.internal.event.EventListenerHelper.NO_OP_SERVER_LISTENER;
+import static com.mongodb.internal.event.EventListenerHelper.NO_OP_SERVER_LISTENER
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
 
@@ -58,11 +58,12 @@ class DefaultServerSpecification extends Specification {
         def serverMonitor = Stub(ServerMonitor)
         def internalConnection = Stub(InternalConnection)
         def connection = Stub(Connection)
+        def clusterTime = new ClusterClock()
 
         serverMonitorFactory.create(_, _) >> { serverMonitor }
         connectionPool.get() >> { internalConnection }
         def server = new DefaultServer(serverId, mode, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_LISTENER, null)
+                NO_OP_SERVER_LISTENER, null, clusterTime)
 
         when:
         def receivedConnection = server.getConnection()
@@ -83,6 +84,7 @@ class DefaultServerSpecification extends Specification {
         def serverMonitor = Stub(ServerMonitor)
         def internalConnection = Stub(InternalConnection)
         def connection = Stub(AsyncConnection)
+        def clusterTime = new ClusterClock()
 
         connectionPool.getAsync(_) >> {
             it[0].onResult(internalConnection, null)
@@ -90,7 +92,7 @@ class DefaultServerSpecification extends Specification {
         serverMonitorFactory.create(_, _) >> { serverMonitor }
 
         def server = new DefaultServer(serverId, mode, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_LISTENER, null)
+                NO_OP_SERVER_LISTENER, null, clusterTime)
 
         when:
         def latch = new CountDownLatch(1)
@@ -111,10 +113,10 @@ class DefaultServerSpecification extends Specification {
     def 'invalidate should invoke server listeners'() {
         given:
         def serverListener = Mock(ServerListener)
-
+        def clusterTime = new ClusterClock()
         def connectionFactory = Mock(ConnectionFactory)
         def server = new DefaultServer(serverId, SINGLE, new TestConnectionPool(), connectionFactory,
-                new TestServerMonitorFactory(serverId), serverListener, null)
+                new TestServerMonitorFactory(serverId), serverListener, null, clusterTime)
 
         when:
         server.invalidate()
@@ -128,6 +130,7 @@ class DefaultServerSpecification extends Specification {
 
     def 'failed open should invalidate the server'() {
         given:
+        def clusterTime = new ClusterClock()
         def connectionPool = Mock(ConnectionPool)
         def connectionFactory = Mock(ConnectionFactory)
         def serverMonitorFactory = Stub(ServerMonitorFactory)
@@ -136,7 +139,7 @@ class DefaultServerSpecification extends Specification {
         serverMonitorFactory.create(_) >> { serverMonitor }
 
         def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_LISTENER, null)
+                NO_OP_SERVER_LISTENER, null, clusterTime)
 
         when:
         server.getConnection()
@@ -149,6 +152,7 @@ class DefaultServerSpecification extends Specification {
 
     def 'failed open should invalidate the server asychronously'() {
         given:
+        def clusterTime = new ClusterClock()
         def connectionFactory = Mock(ConnectionFactory)
         def serverMonitorFactory = Stub(ServerMonitorFactory)
         def serverMonitor = Mock(ServerMonitor)
@@ -158,7 +162,7 @@ class DefaultServerSpecification extends Specification {
                 '123'.toCharArray()),
                 'Auth failed')
         def server = new DefaultServer(serverId, SINGLE, new TestConnectionPool(exceptionToThrow), connectionFactory,
-                serverMonitorFactory, NO_OP_SERVER_LISTENER, null)
+                serverMonitorFactory, NO_OP_SERVER_LISTENER, null, clusterTime)
 
         when:
         def latch = new CountDownLatch(1)
@@ -175,6 +179,7 @@ class DefaultServerSpecification extends Specification {
 
     def 'should invalidate on MongoNotPrimaryException'() {
         given:
+        def clusterTime = new ClusterClock()
         def connectionPool = Mock(ConnectionPool)
         def serverMonitorFactory = Stub(ServerMonitorFactory)
         def serverMonitor = Mock(ServerMonitor)
@@ -185,11 +190,11 @@ class DefaultServerSpecification extends Specification {
         TestConnectionFactory connectionFactory = new TestConnectionFactory()
 
         def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_LISTENER, null)
+                NO_OP_SERVER_LISTENER, null, clusterTime)
         def testConnection = (TestConnection) server.getConnection()
 
         when:
-        testConnection.enqueueProtocol(new TestProtocol(new MongoNotPrimaryException(serverId.address)))
+        testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoNotPrimaryException(serverId.address)))
 
         testConnection.insert(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
 
@@ -223,6 +228,7 @@ class DefaultServerSpecification extends Specification {
 
     def 'should invalidate on MongoNodeIsRecoveringException'() {
         given:
+        def clusterTime = new ClusterClock()
         def connectionPool = Mock(ConnectionPool)
         def serverMonitorFactory = Stub(ServerMonitorFactory)
         def serverMonitor = Mock(ServerMonitor)
@@ -233,11 +239,11 @@ class DefaultServerSpecification extends Specification {
         TestConnectionFactory connectionFactory = new TestConnectionFactory()
 
         def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_LISTENER, null)
+                NO_OP_SERVER_LISTENER, null, clusterTime)
         def testConnection = (TestConnection) server.getConnection()
 
         when:
-        testConnection.enqueueProtocol(new TestProtocol(new MongoNodeIsRecoveringException(new ServerAddress())))
+        testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoNodeIsRecoveringException(new ServerAddress())))
 
         testConnection.insert(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
 
@@ -250,6 +256,7 @@ class DefaultServerSpecification extends Specification {
 
     def 'should invalidate on MongoSocketException'() {
         given:
+        def clusterTime = new ClusterClock()
         def connectionPool = Mock(ConnectionPool)
         def serverMonitorFactory = Stub(ServerMonitorFactory)
         def serverMonitor = Mock(ServerMonitor)
@@ -260,11 +267,11 @@ class DefaultServerSpecification extends Specification {
         TestConnectionFactory connectionFactory = new TestConnectionFactory()
 
         def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_LISTENER, null)
+                NO_OP_SERVER_LISTENER, null, clusterTime)
         def testConnection = (TestConnection) server.getConnection()
 
         when:
-        testConnection.enqueueProtocol(new TestProtocol(new MongoSocketException('socket error', new ServerAddress())))
+        testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoSocketException('socket error', new ServerAddress())))
 
         testConnection.insert(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
 
@@ -287,6 +294,7 @@ class DefaultServerSpecification extends Specification {
 
     def 'should not invalidate on MongoSocketReadTimeoutException'() {
         given:
+        def clusterTime = new ClusterClock()
         def connectionPool = Mock(ConnectionPool)
         def serverMonitorFactory = Stub(ServerMonitorFactory)
         def serverMonitor = Mock(ServerMonitor)
@@ -297,11 +305,11 @@ class DefaultServerSpecification extends Specification {
         TestConnectionFactory connectionFactory = new TestConnectionFactory()
 
         def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_LISTENER, null)
+                NO_OP_SERVER_LISTENER, null, clusterTime)
         def testConnection = (TestConnection) server.getConnection()
 
         when:
-        testConnection.enqueueProtocol(new TestProtocol(new MongoSocketReadTimeoutException('socket timeout', new ServerAddress(),
+        testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoSocketReadTimeoutException('socket timeout', new ServerAddress(),
                 new IOException())))
 
         testConnection.insert(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
@@ -325,7 +333,8 @@ class DefaultServerSpecification extends Specification {
 
     def 'should enable command listener'() {
         given:
-        def protocol = new TestProtocol()
+        def clusterTime = new ClusterClock()
+        def protocol = new TestLegacyProtocol()
         def commandListener = Stub(CommandListener)
         def connectionPool = Mock(ConnectionPool)
         def serverMonitorFactory = Stub(ServerMonitorFactory)
@@ -337,7 +346,7 @@ class DefaultServerSpecification extends Specification {
         TestConnectionFactory connectionFactory = new TestConnectionFactory()
 
         def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
-                NO_OP_SERVER_LISTENER, commandListener)
+                NO_OP_SERVER_LISTENER, commandListener, clusterTime)
         def testConnection = (TestConnection) server.getConnection()
 
         testConnection.enqueueProtocol(protocol)
@@ -345,15 +354,13 @@ class DefaultServerSpecification extends Specification {
         when:
         if (async) {
             CountDownLatch latch = new CountDownLatch(1)
-            testConnection.commandAsync('admin', new BsonDocument('ping', new BsonInt32(1)), false, new NoOpFieldNameValidator(),
-                    new BsonDocumentCodec()) {
+            testConnection.killCursorAsync(new MongoNamespace('test.test'), []) {
                 BsonDocument result, Throwable t -> latch.countDown()
             }
             latch.await()
 
         } else {
-            testConnection.command('admin', new BsonDocument('ping', new BsonInt32(1)), false, new NoOpFieldNameValidator(),
-                    new BsonDocumentCodec())
+            testConnection.killCursor(new MongoNamespace('test.test'), [])
         }
 
         then:
@@ -363,33 +370,124 @@ class DefaultServerSpecification extends Specification {
         async << [false, true]
     }
 
-    class TestProtocol implements Protocol {
+    def 'should propagate cluster time'() {
+        given:
+        def clusterClock = new ClusterClock()
+        clusterClock.advance(clusterClockClusterTime)
+        def connectionPool = Mock(ConnectionPool)
+        def serverMonitorFactory = Stub(ServerMonitorFactory)
+        def serverMonitor = Mock(ServerMonitor)
+        def internalConnection = Mock(InternalConnection)
+        connectionPool.get() >> { internalConnection }
+        serverMonitorFactory.create(_) >> { serverMonitor }
+
+        TestConnectionFactory connectionFactory = new TestConnectionFactory()
+
+        def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
+                NO_OP_SERVER_LISTENER, null, clusterClock)
+        def testConnection = (TestConnection) server.getConnection()
+        def sessionContext = new TestSessionContext(initialClusterTime)
+        def response = BsonDocument.parse(
+                '''{
+                           ok : 1,
+                           operationTime : { $timestamp : { "t" : 50, "i" : 20 } },
+                           $clusterTime :  { clusterTime : { $timestamp : { "t" : 42, "i" : 21 } } }
+                          }
+                          ''')
+        def protocol = new TestCommandProtocol(response)
+        testConnection.enqueueProtocol(protocol)
+
+        when:
+        if (async) {
+            CountDownLatch latch = new CountDownLatch(1)
+            testConnection.commandAsync('admin', new BsonDocument('ping', new BsonInt32(1)), ReadPreference.primary(), null,
+                    new BsonDocumentCodec(), sessionContext) {
+                BsonDocument result, Throwable t -> latch.countDown()
+            }
+            latch.await()
+        } else {
+            testConnection.command('admin', new BsonDocument('ping', new BsonInt32(1)), ReadPreference.primary(), null,
+                    new BsonDocumentCodec(), sessionContext)
+        }
+
+        then:
+        clusterClock.getCurrent() == response.getDocument('$clusterTime')
+        protocol.contextClusterTime == (initialClusterTime.getTimestamp('clusterTime')
+                .compareTo(clusterClockClusterTime.getTimestamp('clusterTime')) > 0 ? initialClusterTime : clusterClockClusterTime)
+        sessionContext.clusterTime == response.getDocument('$clusterTime')
+        sessionContext.operationTime == response.getTimestamp('operationTime')
+
+        where:
+        [async, initialClusterTime, clusterClockClusterTime] << [
+                [false, true],
+                [
+                        BsonDocument.parse('{clusterTime : {$timestamp : {"t" : 21, "i" : 11 } } }'),
+                        BsonDocument.parse('{clusterTime : {$timestamp : {"t" : 42, "i" : 11 } } }')
+                ],
+                [
+                        BsonDocument.parse('{clusterTime : {$timestamp : {"t" : 21, "i" : 11 } } }'),
+                        BsonDocument.parse('{clusterTime : {$timestamp : {"t" : 42, "i" : 11 } } }')
+                ]
+        ].combinations()
+    }
+
+    class TestLegacyProtocol implements LegacyProtocol {
         private MongoException mongoException
         private CommandListener commandListener
 
-        TestProtocol() {
+        TestLegacyProtocol() {
             this(null)
         }
 
-        TestProtocol(MongoException mongoException) {
+        TestLegacyProtocol(MongoException mongoException) {
             this.mongoException = mongoException
         }
 
         @Override
         Object execute(final InternalConnection connection) {
             if (mongoException != null) {
-                throw mongoException;
+                throw mongoException
             }
+            null
         }
 
         @Override
         void executeAsync(final InternalConnection connection, final SingleResultCallback callback) {
-            callback.onResult(null, mongoException);
+            callback.onResult(null, mongoException)
         }
 
         @Override
         void setCommandListener(final CommandListener commandListener) {
             this.commandListener = commandListener
+        }
+    }
+
+    class TestCommandProtocol implements CommandProtocol<BsonDocument> {
+        private final BsonDocument commandResult
+        private final BsonDocument responseDocument
+        private BsonDocument contextClusterTime
+
+        TestCommandProtocol(BsonDocument result) {
+            this.commandResult = result
+            this.responseDocument = result
+        }
+
+        @Override
+        BsonDocument execute(final InternalConnection connection) {
+            commandResult
+        }
+
+        @Override
+        void executeAsync(final InternalConnection connection, final SingleResultCallback callback) {
+            callback.onResult(commandResult, null)
+        }
+
+        @Override
+        TestCommandProtocol sessionContext(final SessionContext sessionContext) {
+            contextClusterTime = sessionContext.clusterTime
+            sessionContext.advanceClusterTime(responseDocument.getDocument('$clusterTime'))
+            sessionContext.advanceOperationTime(responseDocument.getTimestamp('operationTime'))
+            this
         }
     }
 }

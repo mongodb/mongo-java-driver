@@ -23,6 +23,7 @@ import org.bson.BsonBinaryWriterSettings;
 import org.bson.BsonDocument;
 import org.bson.BsonWriterSettings;
 import org.bson.FieldNameValidator;
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.BsonOutput;
 
@@ -94,7 +95,7 @@ abstract class BaseWriteCommandMessage extends CommandMessage {
     public abstract int getItemCount();
 
     @Override
-    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput outputStream, final int messageStartPosition) {
+    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput outputStream, final SessionContext sessionContext) {
         BaseWriteCommandMessage nextMessage;
 
         writeCommandHeader(outputStream);
@@ -110,6 +111,17 @@ abstract class BaseWriteCommandMessage extends CommandMessage {
             nextMessage = writeTheWrites(outputStream, commandStartPosition, writer);
             if (useOpMsg()) {
                 writer.writeString("$db", getWriteNamespace().getDatabaseName());
+                if (sessionContext.hasSession()) {
+                    if (sessionContext.getClusterTime() != null) {
+                        writer.writeName("$clusterTime");
+                        new BsonDocumentCodec().encode(writer, sessionContext.getClusterTime(),
+                                EncoderContext.builder().build());
+                    }
+                    writer.writeName("lsid");
+                    new BsonDocumentCodec().encode(writer, sessionContext.getSessionId(),
+                            EncoderContext.builder().build());
+                }
+
             }
             writer.writeEndDocument();
         } finally {

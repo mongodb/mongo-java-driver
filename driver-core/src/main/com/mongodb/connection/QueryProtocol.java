@@ -21,6 +21,7 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.connection.NoOpSessionContext;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -51,7 +52,7 @@ import static java.lang.String.format;
  * @param <T> the type of document to decode query results to
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
  */
-class QueryProtocol<T> implements Protocol<QueryResult<T>> {
+class QueryProtocol<T> implements LegacyProtocol<QueryResult<T>> {
 
     public static final Logger LOGGER = Loggers.getLogger("protocol.query");
     private static final String FIND_COMMAND_NAME = "find";
@@ -268,7 +269,7 @@ class QueryProtocol<T> implements Protocol<QueryResult<T>> {
             ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
             try {
                 message = createQueryMessage(connection.getDescription());
-                message.encode(bsonOutput);
+                message.encode(bsonOutput, NoOpSessionContext.INSTANCE);
                 isExplain = sendQueryStartedEvent(connection, message, bsonOutput, message.getEncodingMetadata());
                 connection.sendMessage(bsonOutput.getByteBuffers(), message.getId());
             } finally {

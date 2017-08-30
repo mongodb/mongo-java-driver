@@ -27,7 +27,7 @@ import java.util.List;
  *
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-delete OP_DELETE
  */
-class DeleteMessage extends RequestMessage {
+class DeleteMessage extends LegacyMessage {
     private final List<DeleteRequest> deleteRequests;
 
     DeleteMessage(final String collectionName, final List<DeleteRequest> deletes, final MessageSettings settings) {
