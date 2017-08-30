@@ -21,27 +21,45 @@ import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
+import com.mongodb.ServerAddress
+import com.mongodb.binding.AsyncConnectionSource
+import com.mongodb.binding.AsyncReadBinding
+import com.mongodb.binding.ConnectionSource
+import com.mongodb.binding.ReadBinding
 import com.mongodb.client.test.Worker
 import com.mongodb.client.test.WorkerCodec
+import com.mongodb.connection.AsyncConnection
+import com.mongodb.connection.ClusterId
+import com.mongodb.connection.Connection
+import com.mongodb.connection.ConnectionDescription
+import com.mongodb.connection.ConnectionId
+import com.mongodb.connection.ServerId
+import com.mongodb.connection.ServerVersion
+import com.mongodb.connection.SessionContext
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonInt64
 import org.bson.BsonInvalidOperationException
 import org.bson.BsonString
+import org.bson.BsonTimestamp
 import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
 import org.bson.codecs.DocumentCodecProvider
+import org.bson.codecs.StringCodec
 import org.bson.codecs.ValueCodecProvider
 import org.bson.types.ObjectId
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
+import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.connection.ServerType.STANDALONE
+import static com.mongodb.operation.ReadConcernHelper.appendReadConcernToCommand
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
@@ -270,6 +288,80 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         where:
         async << [true, false]
     }
+
+    def 'should add read concern to command'() {
+        given:
+        def binding = Stub(ReadBinding)
+        def source = Stub(ConnectionSource)
+        def connection = Mock(Connection)
+        binding.readPreference >> ReadPreference.primary()
+        binding.readConnectionSource >> source
+        binding.sessionContext >> sessionContext
+        source.connection >> connection
+        source.retain() >> source
+        def commandDocument = new BsonDocument('distinct', new BsonString(getCollectionName()))
+                .append('key', new BsonString('str'))
+        appendReadConcernToCommand(ReadConcern.MAJORITY, sessionContext, commandDocument)
+
+        def operation = new DistinctOperation<String>(getNamespace(), 'str', new StringCodec())
+                .readConcern(ReadConcern.MAJORITY)
+
+        when:
+        operation.execute(binding)
+
+        then:
+        _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
+                new ServerVersion(3, 6), STANDALONE, 1000, 100000, 100000, [])
+        1 * connection.command(_, commandDocument, _, _, _, sessionContext) >>
+                new BsonDocument('values', new BsonArrayWrapper([]))
+        1 * connection.release()
+
+        where:
+        sessionContext << [
+                Stub(SessionContext) {
+                    isCausallyConsistent() >> true
+                    getOperationTime() >> new BsonTimestamp(42, 0)
+                }
+        ]
+    }
+
+    def 'should add read concern to command asynchronously'() {
+        given:
+        def binding = Stub(AsyncReadBinding)
+        def source = Stub(AsyncConnectionSource)
+        def connection = Mock(AsyncConnection)
+        binding.readPreference >> ReadPreference.primary()
+        binding.getReadConnectionSource(_) >> { it[0].onResult(source, null) }
+        binding.sessionContext >> sessionContext
+        source.getConnection(_) >> { it[0].onResult(connection, null) }
+        source.retain() >> source
+        def commandDocument = new BsonDocument('distinct', new BsonString(getCollectionName()))
+                .append('key', new BsonString('str'))
+        appendReadConcernToCommand(ReadConcern.MAJORITY, sessionContext, commandDocument)
+
+        def operation = new DistinctOperation<String>(getNamespace(), 'str', new StringCodec())
+                .readConcern(ReadConcern.MAJORITY)
+
+        when:
+        executeAsync(operation, binding)
+
+        then:
+        _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
+                new ServerVersion(3, 6), STANDALONE, 1000, 100000, 100000, [])
+        1 * connection.commandAsync(_, commandDocument, _, _, _, sessionContext, _) >> {
+            it[6].onResult(new BsonDocument('values', new BsonArrayWrapper([])), null)
+        }
+        1 * connection.release()
+
+        where:
+        sessionContext << [
+                Stub(SessionContext) {
+                    isCausallyConsistent() >> true
+                    getOperationTime() >> new BsonTimestamp(42, 0)
+                }
+        ]
+    }
+
 
     def helper = [
         dbName: 'db',

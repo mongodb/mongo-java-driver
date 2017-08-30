@@ -71,6 +71,7 @@ import java.util.concurrent.TimeUnit
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.secondary
+import static com.mongodb.TestHelper.execute
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.bulk.BulkWriteResult.acknowledged
@@ -82,7 +83,6 @@ import static com.mongodb.bulk.WriteRequest.Type.UPDATE
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries
-import static com.mongodb.TestHelper.execute
 import static spock.util.matcher.HamcrestSupport.expect
 
 @SuppressWarnings('ClassSize')
@@ -91,7 +91,7 @@ class MongoCollectionSpecification extends Specification {
     def namespace = new MongoNamespace('databaseName', 'collectionName')
     def codecRegistry = MongoClient.getDefaultCodecRegistry()
     def readPreference = secondary()
-    def readConcern = ReadConcern.DEFAULT
+    def readConcern = ReadConcern.MAJORITY
     def collation = Collation.builder().locale('en').build()
 
     def 'should return the correct name from getName'() {
@@ -183,7 +183,10 @@ class MongoCollectionSpecification extends Specification {
         def executor = new TestOperationExecutor([1L, 2L, 3L])
         def filter = new BsonDocument()
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED, readConcern, executor)
-        def expectedOperation = new CountOperation(namespace).filter(filter)
+        def expectedOperation = new CountOperation(namespace)
+                .filter(filter)
+                .readConcern(readConcern)
+
         def countMethod = collection.&count
 
         when:

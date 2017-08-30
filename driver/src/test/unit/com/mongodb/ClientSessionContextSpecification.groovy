@@ -57,10 +57,22 @@ class ClientSessionContextSpecification extends Specification {
         }
 
         when:
+        context.isCausallyConsistent()
+
+        then:
+        1 * clientSession.isCausallyConsistent()
+
+        when:
         context.advanceClusterTime(expectedClusterTime)
 
         then:
         1 * clientSession.advanceClusterTime(expectedClusterTime)
+
+        when:
+        context.getOperationTime()
+
+        then:
+        1 * clientSession.getOperationTime()
 
         when:
         context.advanceOperationTime(expectedOperationTime)

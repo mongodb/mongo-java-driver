@@ -35,28 +35,50 @@ public interface SessionContext {
     boolean hasSession();
 
     /**
+     * Gets the session identifier if this context has a session backing it.
      *
      * @return the session id
      */
     BsonDocument getSessionId();
 
     /**
+     * Gets whether this context is associated with a causally consistent session.
+     *
+     * @return true ift his context is associated with a causally consistent session
+     */
+    boolean isCausallyConsistent();
+
+    /**
+     * Advance the transaction number.
      *
      * @return the next transaction number for the session
      */
     long advanceTransactionNumber();
 
     /**
+     * Gets the current operation time for this session context
+     *
+     * @return the current operation time, which may be null
+     */
+    BsonTimestamp getOperationTime();
+
+    /**
+     * Advance the operation time.  If the current operation time is greater than the given operation time, this method has no effect.
+     *
      * @param operationTime the new operation time time
      */
     void advanceOperationTime(BsonTimestamp operationTime);
 
     /**
-     * @return the cluster time
+     * Gets the current cluster time for this session context.
+     *
+     * @return the cluster time, which may be null
      */
     BsonDocument getClusterTime();
 
     /**
+     * Advance the cluster time. If the current cluster time is greater than the given cluster time, this method has no effect.
+     *
      * @param clusterTime the new cluster time
      */
     void advanceClusterTime(BsonDocument clusterTime);

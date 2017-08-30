@@ -16,15 +16,23 @@
 
 package com.mongodb
 
+import category.Slow
 import com.mongodb.connection.TestCommandListener
 import com.mongodb.event.CommandStartedEvent
 import org.bson.BsonBinarySubType
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonTimestamp
+import org.bson.Document
+import org.junit.Assert
+import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
+import java.util.concurrent.TimeUnit
+
+import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.Fixture.getDefaultDatabaseName
 import static com.mongodb.Fixture.getMongoClientURI
 
 class MongoClientSessionSpecification extends FunctionalSpecification {
@@ -47,11 +55,90 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         then:
         clientSession != null
         clientSession.getMongoClient() == Fixture.getMongoClient()
-        !clientSession.isCausallyConsistent()
+        clientSession.isCausallyConsistent()
         clientSession.getOptions() == options
         clientSession.getClusterTime() == null
         clientSession.getOperationTime() == null
         clientSession.getServerSession() != null
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 5) })
+    def 'cluster time should advance'() {
+        given:
+        def firstOperationTime = new BsonTimestamp(42, 1)
+        def secondOperationTime = new BsonTimestamp(52, 1)
+        def thirdOperationTime = new BsonTimestamp(22, 1)
+        def firstClusterTime = new BsonDocument('clusterTime', firstOperationTime)
+        def secondClusterTime = new BsonDocument('clusterTime', secondOperationTime)
+        def olderClusterTime = new BsonDocument('clusterTime', thirdOperationTime)
+
+        when:
+        def clientSession = Fixture.getMongoClient().startSession(ClientSessionOptions.builder().build())
+
+        then:
+        clientSession.getClusterTime() == null
+
+        when:
+        clientSession.advanceClusterTime(null)
+
+        then:
+        clientSession.getClusterTime() == null
+
+        when:
+        clientSession.advanceClusterTime(firstClusterTime)
+
+        then:
+        clientSession.getClusterTime() == firstClusterTime
+
+        when:
+        clientSession.advanceClusterTime(secondClusterTime)
+
+        then:
+        clientSession.getClusterTime() == secondClusterTime
+
+        when:
+        clientSession.advanceClusterTime(olderClusterTime)
+
+        then:
+        clientSession.getClusterTime() == secondClusterTime
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 5) })
+    def 'operation time should advance'() {
+        given:
+        def firstOperationTime = new BsonTimestamp(42, 1)
+        def secondOperationTime = new BsonTimestamp(52, 1)
+        def olderOperationTime = new BsonTimestamp(22, 1)
+
+        when:
+        def clientSession = Fixture.getMongoClient().startSession(ClientSessionOptions.builder().build())
+
+        then:
+        clientSession.getOperationTime() == null
+
+        when:
+        clientSession.advanceOperationTime(null)
+
+        then:
+        clientSession.getOperationTime() == null
+
+        when:
+        clientSession.advanceOperationTime(firstOperationTime)
+
+        then:
+        clientSession.getOperationTime() == firstOperationTime
+
+        when:
+        clientSession.advanceOperationTime(secondOperationTime)
+
+        then:
+        clientSession.getOperationTime() == secondOperationTime
+
+        when:
+        clientSession.advanceOperationTime(olderOperationTime)
+
+        then:
+        clientSession.getOperationTime() == secondOperationTime
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 5) })
@@ -158,6 +245,9 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         then:
         def pingCommandStartedEvent = commandListener.events.get(2)
         (pingCommandStartedEvent as CommandStartedEvent).command.containsKey('lsid')
+
+        cleanup:
+        client?.close()
     }
 
     @IgnoreIf({ serverVersionAtLeast(3, 5) })
@@ -174,5 +264,47 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         then:
         def pingCommandStartedEvent = commandListener.events.get(0)
         !(pingCommandStartedEvent as CommandStartedEvent).command.containsKey('lsid')
+
+        cleanup:
+        client?.close()
+    }
+
+    // This test attempts attempts to demonstrate that causal consistency works correctly by inserting a document and then immediately
+    // searching for that document on a secondary by its _id and failing the test if the document is not found.  Without causal consistency
+    // enabled the expectation is that eventually that test would fail since generally the find will execute on the secondary before
+    // the secondary has a chance to replicate the document.
+    // This test is inherently racy as it's possible that the server _does_ replicate fast enough and therefore the test passes anyway
+    // even if causal consistency was not actually in effect.  For that reason the test iterates a number of times in order to increase
+    // confidence that it's really causal consistency that is causing the test to succeed
+    @IgnoreIf({ !serverVersionAtLeast(3, 5) || isStandalone() })
+    @Category(Slow)
+    def 'should find inserted document on a secondary when causal consistency is enabled'() {
+        given:
+        def collection = Fixture.getMongoClient().getDatabase(getDefaultDatabaseName()).getCollection(getCollectionName())
+
+        expect:
+        def clientSession = Fixture.getMongoClient().startSession(ClientSessionOptions.builder()
+                .causallyConsistent(true)
+                .build())
+        try {
+            for (int i = 0; i < 16; i++) {
+                Document document = new Document('_id', i);
+                collection.insertOne(clientSession, document)
+                Document foundDocument = collection
+                        .withReadPreference(ReadPreference.secondary()) // read from secondary
+                        .withReadConcern(readConcern)
+                        .find(clientSession, document)
+                        .maxTime(5000, TimeUnit.MILLISECONDS)  // to avoid the test running forever in case replication is broken
+                        .first();
+                if (foundDocument == null) {
+                    Assert.fail('Should have found recently inserted document on secondary with causal consistency enabled');
+                }
+            }
+        } finally {
+            clientSession.close()
+        }
+
+        where:
+        readConcern << [ReadConcern.DEFAULT, ReadConcern.LOCAL, ReadConcern.MAJORITY]
     }
 }

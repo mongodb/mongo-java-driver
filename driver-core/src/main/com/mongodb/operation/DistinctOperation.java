@@ -30,6 +30,7 @@ import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.QueryResult;
+import com.mongodb.connection.SessionContext;
 import com.mongodb.operation.CommandOperationHelper.CommandTransformer;
 import com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
@@ -50,6 +51,7 @@ import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.validateReadConcernAndCollation;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
+import static com.mongodb.operation.ReadConcernHelper.appendReadConcernToCommand;
 
 /**
  * Finds the distinct values for a specified field across a single collection.
@@ -184,8 +186,8 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
             @Override
             public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
                 validateReadConcernAndCollation(connection, readConcern, collation);
-                return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(), createCommandDecoder(),
-                        connection, transformer(source, connection));
+                return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(binding.getSessionContext()),
+                        createCommandDecoder(), connection, transformer(source, connection));
             }
         });
     }
@@ -208,8 +210,8 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
                                     if (t != null) {
                                         wrappedCallback.onResult(null, t);
                                     } else {
-                                        executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(),
-                                                createCommandDecoder(),
+                                        executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
+                                                getCommand(binding.getSessionContext()), createCommandDecoder(),
                                                 connection, asyncTransformer(connection.getDescription()), wrappedCallback);
                                     }
                                 }
@@ -248,14 +250,12 @@ public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor
         };
     }
 
-    private BsonDocument getCommand() {
+    private BsonDocument getCommand(final SessionContext sessionContext) {
         BsonDocument commandDocument = new BsonDocument("distinct", new BsonString(namespace.getCollectionName()));
+        appendReadConcernToCommand(readConcern, sessionContext, commandDocument);
         commandDocument.put("key", new BsonString(fieldName));
         putIfNotNull(commandDocument, "query", filter);
         putIfNotZero(commandDocument, "maxTimeMS", maxTimeMS);
-        if (!readConcern.isServerDefault()) {
-            commandDocument.put("readConcern", readConcern.asDocument());
-        }
         if (collation != null) {
             commandDocument.put("collation", collation.asDocument());
         }

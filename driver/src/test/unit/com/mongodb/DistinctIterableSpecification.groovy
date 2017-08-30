@@ -40,7 +40,7 @@ class DistinctIterableSpecification extends Specification {
     def namespace = new MongoNamespace('db', 'coll')
     def codecRegistry = fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()])
     def readPreference = secondary()
-    def readConcern = ReadConcern.DEFAULT
+    def readConcern = ReadConcern.MAJORITY
     def collation = Collation.builder().locale('en').build()
 
     def 'should build the expected DistinctOperation'() {
@@ -57,7 +57,8 @@ class DistinctIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new DistinctOperation<Document>(namespace, 'field', new DocumentCodec())
-                .filter(new BsonDocument()));
+                .filter(new BsonDocument())
+                .readConcern(readConcern))
         readPreference == secondary()
 
         when: 'overriding initial options'
@@ -67,7 +68,9 @@ class DistinctIterableSpecification extends Specification {
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new DistinctOperation<Document>(namespace, 'field', new DocumentCodec())
-                .filter(new BsonDocument('field', new BsonInt32(1))).maxTime(999, MILLISECONDS).collation(collation))
+                .filter(new BsonDocument('field', new BsonInt32(1)))
+                .maxTime(999, MILLISECONDS).collation(collation)
+                .readConcern(readConcern))
     }
 
     def 'should use ClientSession'() {

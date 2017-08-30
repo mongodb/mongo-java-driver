@@ -44,7 +44,7 @@ class MapReduceIterableSpecification extends Specification {
     def namespace = new MongoNamespace('db', 'coll')
     def codecRegistry = fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()])
     def readPreference = secondary()
-    def readConcern = ReadConcern.DEFAULT
+    def readConcern = ReadConcern.MAJORITY
     def writeConcern = WriteConcern.MAJORITY
     def collation = Collation.builder().locale('en').build()
 
@@ -62,7 +62,9 @@ class MapReduceIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new MapReduceWithInlineResultsOperation<Document>(namespace, new BsonJavaScript('map'),
-                new BsonJavaScript('reduce'), new DocumentCodec()).verbose(true));
+                new BsonJavaScript('reduce'), new DocumentCodec())
+                .verbose(true)
+                .readConcern(readConcern))
         readPreference == secondary()
 
         when: 'overriding initial options'
@@ -89,6 +91,7 @@ class MapReduceIterableSpecification extends Specification {
                 .sort(new BsonDocument('sort', new BsonInt32(1)))
                 .verbose(false)
                 .collation(collation)
+                .readConcern(readConcern)
         )
     }
 
@@ -214,6 +217,7 @@ class MapReduceIterableSpecification extends Specification {
         where:
         clientSession << [null, Stub(ClientSession)]
     }
+
 
     def 'should handle exceptions correctly'() {
         given:

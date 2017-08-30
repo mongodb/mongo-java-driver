@@ -29,6 +29,8 @@ class NoOpSessionContextSpecification extends Specification {
         expect:
         !sessionContext.hasSession()
         sessionContext.getClusterTime() == null
+        sessionContext.getOperationTime() == null
+        !sessionContext.isCausallyConsistent()
 
         when:
         sessionContext.advanceOperationTime(new BsonTimestamp(42, 1))

@@ -28,6 +28,7 @@ import com.mongodb.binding.ReadBinding;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.QueryResult;
+import com.mongodb.connection.SessionContext;
 import com.mongodb.operation.CommandOperationHelper.CommandTransformer;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -51,6 +52,7 @@ import static com.mongodb.operation.OperationHelper.validateReadConcern;
 import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
+import static com.mongodb.operation.ReadConcernHelper.appendReadConcernToCommand;
 
 /**
  * Return a list of cursors over the collection that can be used to scan it in parallel.
@@ -147,7 +149,7 @@ ParallelCollectionScanOperation<T> implements AsyncReadOperation<List<AsyncBatch
             @Override
             public List<BatchCursor<T>> call(final ConnectionSource source, final Connection connection) {
                 validateReadConcern(connection, readConcern);
-                return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(),
+                return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(binding.getSessionContext()),
                                                      CommandResultDocumentCodec.create(decoder, "firstBatch"), connection,
                                                      transformer(source));
             }
@@ -171,7 +173,8 @@ ParallelCollectionScanOperation<T> implements AsyncReadOperation<List<AsyncBatch
                             if (t != null) {
                                 wrappedCallback.onResult(null, t);
                             } else {
-                                executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(),
+                                executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
+                                        getCommand(binding.getSessionContext()),
                                         CommandResultDocumentCodec.create(decoder, "firstBatch"), connection,
                                         asyncTransformer(source, connection), wrappedCallback);
                             }
@@ -227,12 +230,10 @@ ParallelCollectionScanOperation<T> implements AsyncReadOperation<List<AsyncBatch
         return cursorDocumentToQueryResult(cursorDocument, serverAddress);
     }
 
-    private BsonDocument getCommand() {
+    private BsonDocument getCommand(final SessionContext sessionContext) {
         BsonDocument document = new BsonDocument("parallelCollectionScan", new BsonString(namespace.getCollectionName()))
                .append("numCursors", new BsonInt32(getNumCursors()));
-        if (!readConcern.isServerDefault()) {
-            document.put("readConcern", readConcern.asDocument());
-        }
+        appendReadConcernToCommand(readConcern, sessionContext, document);
         return document;
     }
 }

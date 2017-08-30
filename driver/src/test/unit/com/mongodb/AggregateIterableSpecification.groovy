@@ -43,7 +43,7 @@ class AggregateIterableSpecification extends Specification {
     def namespace = new MongoNamespace('db', 'coll')
     def codecRegistry = fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()])
     def readPreference = secondary()
-    def readConcern = ReadConcern.DEFAULT
+    def readConcern = ReadConcern.MAJORITY
     def writeConcern = WriteConcern.MAJORITY
     def collation = Collation.builder().locale('en').build()
 
@@ -62,7 +62,8 @@ class AggregateIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new AggregateOperation<Document>(namespace,
-                [new BsonDocument('$match', new BsonInt32(1))], new DocumentCodec()));
+                [new BsonDocument('$match', new BsonInt32(1))], new DocumentCodec())
+                .readConcern(readConcern));
         readPreference == secondary()
 
         when: 'overriding initial options'
@@ -81,6 +82,7 @@ class AggregateIterableSpecification extends Specification {
                 .collation(collation)
                 .maxAwaitTime(99, MILLISECONDS)
                 .maxTime(999, MILLISECONDS)
+                .readConcern(readConcern)
                 .useCursor(true))
     }
 

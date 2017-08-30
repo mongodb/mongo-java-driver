@@ -240,8 +240,18 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
+        public boolean isCausallyConsistent() {
+            return wrapped.isCausallyConsistent();
+        }
+
+        @Override
         public long advanceTransactionNumber() {
             return wrapped.advanceTransactionNumber();
+        }
+
+        @Override
+        public BsonTimestamp getOperationTime() {
+            return wrapped.getOperationTime();
         }
 
         @Override
