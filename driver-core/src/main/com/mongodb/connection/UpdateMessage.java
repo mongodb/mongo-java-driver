@@ -31,7 +31,7 @@ import static com.mongodb.bulk.WriteRequest.Type.REPLACE;
  *
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-update OP_UPDATE
  */
-class UpdateMessage extends RequestMessage {
+class UpdateMessage extends LegacyMessage {
     private final List<UpdateRequest> updates;
 
     UpdateMessage(final String collectionName, final List<UpdateRequest> updates, final MessageSettings settings) {

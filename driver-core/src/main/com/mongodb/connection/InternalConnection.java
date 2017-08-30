@@ -66,15 +66,19 @@ interface InternalConnection extends BufferProvider {
      * Send a command message to the server.
      *
      * @param message   the command message to send
+     * @param sessionContext the session context
      */
-    <T> T sendAndReceive(CommandMessage message, Decoder<T> decoder);
+    <T> T sendAndReceive(CommandMessage message, Decoder<T> decoder, SessionContext sessionContext);
 
     /**
      * Send a command message to the server.
      *
      * @param message   the command message to send
+     * @param sessionContext the session context
+     * @param callback the callback
      */
-    <T> void sendAndReceiveAsync(CommandMessage message, Decoder<T> decoder, SingleResultCallback<T> callback);
+    <T> void sendAndReceiveAsync(CommandMessage message, Decoder<T> decoder, SessionContext sessionContext,
+                                 SingleResultCallback<T> callback);
 
     /**
      * Send a message to the server. The connection may not make any attempt to validate the integrity of the message.

@@ -22,6 +22,7 @@ import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.connection.netty.NettyStreamFactory
+import com.mongodb.internal.connection.NoOpSessionContext
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonBinary
 import org.bson.BsonDocument
@@ -74,9 +75,10 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
 
         cleanup:
         // force acknowledgement
-        new CommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
+        new SimpleCommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
                             new NoOpFieldNameValidator(), new BsonDocumentCodec())
                 .readPreference(ReadPreference.primary())
+                .sessionContext(NoOpSessionContext.INSTANCE)
                 .execute(connection)
 
         where:
@@ -100,9 +102,10 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
         when:
         execute(protocol, connection, async)
         // force acknowledgement
-        new CommandProtocol(getDatabaseName(), new BsonDocument('ping', new BsonInt32(1)),
+        new SimpleCommandProtocol(getDatabaseName(), new BsonDocument('ping', new BsonInt32(1)),
                 new NoOpFieldNameValidator(), new BsonDocumentCodec())
                 .readPreference(ReadPreference.primary())
+                .sessionContext(NoOpSessionContext.INSTANCE)
                 .execute(connection)
 
         then:
@@ -130,9 +133,10 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
         when:
         execute(protocol, connection, async)
         // force acknowledgement
-        new CommandProtocol(getDatabaseName(), new BsonDocument('ping', new BsonInt32(1)),
+        new SimpleCommandProtocol(getDatabaseName(), new BsonDocument('ping', new BsonInt32(1)),
                 new NoOpFieldNameValidator(), new BsonDocumentCodec())
                 .readPreference(ReadPreference.primary())
+                .sessionContext(NoOpSessionContext.INSTANCE)
                 .execute(connection)
 
         then:
@@ -160,9 +164,10 @@ class WriteProtocolSpecification extends OperationFunctionalSpecification {
         when:
         execute(protocol, connection, async)
         // force acknowledgement
-        new CommandProtocol(getDatabaseName(), new BsonDocument('ping', new BsonInt32(1)),
+        new SimpleCommandProtocol(getDatabaseName(), new BsonDocument('ping', new BsonInt32(1)),
                 new NoOpFieldNameValidator(), new BsonDocumentCodec())
                 .readPreference(ReadPreference.primary())
+                .sessionContext(NoOpSessionContext.INSTANCE)
                 .execute(connection)
 
         then:

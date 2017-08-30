@@ -93,15 +93,15 @@ class UsageTrackingInternalConnection implements InternalConnection {
     }
 
     @Override
-    public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder) {
-        T result = wrapped.sendAndReceive(message, decoder);
+    public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
+        T result = wrapped.sendAndReceive(message, decoder, sessionContext);
         lastUsedAt = System.currentTimeMillis();
         return result;
     }
 
     @Override
     public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
-                                    final SingleResultCallback<T> callback) {
+                                        final SessionContext sessionContext, final SingleResultCallback<T> callback) {
         SingleResultCallback<T> errHandlingCallback = errorHandlingCallback(new SingleResultCallback<T>() {
             @Override
             public void onResult(final T result, final Throwable t) {
@@ -109,7 +109,7 @@ class UsageTrackingInternalConnection implements InternalConnection {
                 callback.onResult(result, t);
             }
         }, LOGGER);
-        wrapped.sendAndReceiveAsync(message, decoder, errHandlingCallback);
+        wrapped.sendAndReceiveAsync(message, decoder, sessionContext, errHandlingCallback);
     }
 
     @Override

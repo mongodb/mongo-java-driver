@@ -123,7 +123,7 @@ class DefaultServerMonitorSpecification extends Specification {
 
                     sendMessage(_, _) >> { }
 
-                    sendAndReceive(_, _) >> {
+                    sendAndReceive(_, _, _) >> {
                         BsonDocument.parse(isMasterResponse)
                     }
                 }
@@ -196,7 +196,7 @@ class DefaultServerMonitorSpecification extends Specification {
                         connectionDescription
                     }
 
-                    sendAndReceive(_, _) >> {
+                    sendAndReceive(_, _, _) >> {
                         throw exception
                     }
                 }

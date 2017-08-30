@@ -43,14 +43,18 @@ class ReplyMessage<T> {
         this(responseBuffers.getReplyHeader(), requestId);
 
         if (replyHeader.getNumberReturned() > 0) {
-            BsonInput bsonInput = new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer());
-            while (documents.size() < replyHeader.getNumberReturned()) {
-                BsonBinaryReader reader = new BsonBinaryReader(bsonInput);
-                try {
-                    documents.add(decoder.decode(reader, DecoderContext.builder().build()));
-                } finally {
-                    reader.close();
+            try {
+                BsonInput bsonInput = new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer());
+                while (documents.size() < replyHeader.getNumberReturned()) {
+                    BsonBinaryReader reader = new BsonBinaryReader(bsonInput);
+                    try {
+                        documents.add(decoder.decode(reader, DecoderContext.builder().build()));
+                    } finally {
+                        reader.close();
+                    }
                 }
+            } finally {
+               responseBuffers.reset();
             }
         }
     }

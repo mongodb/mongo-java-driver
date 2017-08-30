@@ -30,6 +30,8 @@ import com.mongodb.event.ServerClosedEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerOpeningEvent;
+import org.bson.BsonDocument;
+import org.bson.BsonTimestamp;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -46,14 +48,16 @@ class DefaultServer implements ClusterableServer {
     private final ChangeListener<ServerDescription> serverStateListener;
     private final ServerListener serverListener;
     private final CommandListener commandListener;
+    private final ClusterClock clusterClock;
     private volatile ServerDescription description;
     private volatile boolean isClosed;
 
     DefaultServer(final ServerId serverId, final ClusterConnectionMode clusterConnectionMode, final ConnectionPool connectionPool,
                   final ConnectionFactory connectionFactory, final ServerMonitorFactory serverMonitorFactory,
-                  final ServerListener serverListener, final CommandListener commandListener) {
+                  final ServerListener serverListener, final CommandListener commandListener, final ClusterClock clusterClock) {
         this.serverListener = notNull("serverListener", serverListener);
         this.commandListener = commandListener;
+        this.clusterClock = notNull("clusterClock", clusterClock);
         notNull("serverAddress", serverId);
         notNull("serverMonitorFactory", serverMonitorFactory);
         this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
@@ -153,7 +157,7 @@ class DefaultServer implements ClusterableServer {
 
     private class DefaultServerProtocolExecutor implements ProtocolExecutor {
         @Override
-        public <T> T execute(final Protocol<T> protocol, final InternalConnection connection) {
+        public <T> T execute(final LegacyProtocol<T> protocol, final InternalConnection connection) {
             try {
                 protocol.setCommandListener(commandListener);
                 return protocol.execute(connection);
@@ -164,7 +168,7 @@ class DefaultServer implements ClusterableServer {
         }
 
         @Override
-        public <T> void executeAsync(final Protocol<T> protocol, final InternalConnection connection,
+        public <T> void executeAsync(final LegacyProtocol<T> protocol, final InternalConnection connection,
                                      final SingleResultCallback<T> callback) {
             protocol.setCommandListener(commandListener);
             protocol.executeAsync(connection, errorHandlingCallback(new SingleResultCallback<T>() {
@@ -177,6 +181,35 @@ class DefaultServer implements ClusterableServer {
                 }
             }, LOGGER));
         }
+
+        @Override
+        public <T> T execute(final CommandProtocol<T> protocol, final InternalConnection connection,
+                             final SessionContext sessionContext) {
+            try {
+                protocol.sessionContext(new ClusterClockAdvancingSessionContext(sessionContext));
+                return protocol.execute(connection);
+            } catch (MongoException e) {
+                handleThrowable(e);
+                throw e;
+            }
+        }
+
+        @Override
+        public <T> void executeAsync(final CommandProtocol<T> protocol, final InternalConnection connection,
+                                     final SessionContext sessionContext, final SingleResultCallback<T> callback) {
+            protocol.sessionContext(new ClusterClockAdvancingSessionContext(sessionContext));
+            protocol.executeAsync(connection, errorHandlingCallback(new SingleResultCallback<T>() {
+                @Override
+                public void onResult(final T result, final Throwable t) {
+                    if (t != null) {
+                        handleThrowable(t);
+                        callback.onResult(null, t);
+                    } else {
+                        callback.onResult(result, null);
+                    }
+                }
+            }, LOGGER));
+        }
     }
 
     private final class DefaultServerStateListener implements ChangeListener<ServerDescription> {
@@ -185,6 +218,46 @@ class DefaultServer implements ClusterableServer {
             ServerDescription oldDescription = description;
             description = event.getNewValue();
             serverListener.serverDescriptionChanged(new ServerDescriptionChangedEvent(serverId, description, oldDescription));
+        }
+    }
+
+    private final class ClusterClockAdvancingSessionContext implements SessionContext {
+
+        private SessionContext wrapped;
+
+        private ClusterClockAdvancingSessionContext(final SessionContext wrapped) {
+            this.wrapped = wrapped;
+        }
+
+        @Override
+        public boolean hasSession() {
+            return wrapped.hasSession();
+        }
+
+        @Override
+        public BsonDocument getSessionId() {
+            return wrapped.getSessionId();
+        }
+
+        @Override
+        public long advanceTransactionNumber() {
+            return wrapped.advanceTransactionNumber();
+        }
+
+        @Override
+        public void advanceOperationTime(final BsonTimestamp operationTime) {
+            wrapped.advanceOperationTime(operationTime);
+        }
+
+        @Override
+        public BsonDocument getClusterTime() {
+            return clusterClock.greaterOf(wrapped.getClusterTime());
+        }
+
+        @Override
+        public void advanceClusterTime(final BsonDocument clusterTime) {
+            wrapped.advanceClusterTime(clusterTime);
+            clusterClock.advance(clusterTime);
         }
     }
 }

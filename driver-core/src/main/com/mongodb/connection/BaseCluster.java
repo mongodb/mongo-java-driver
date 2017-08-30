@@ -64,6 +64,7 @@ abstract class BaseCluster implements Cluster {
     private final ClusterListener clusterListener;
     private final Deque<ServerSelectionRequest> waitQueue = new ConcurrentLinkedDeque<ServerSelectionRequest>();
     private final AtomicInteger waitQueueSize = new AtomicInteger(0);
+    private final ClusterClock clusterClock = new ClusterClock();
     private Thread waitQueueHandler;
 
     private volatile boolean isClosed;
@@ -356,7 +357,7 @@ abstract class BaseCluster implements Cluster {
     }
 
     protected ClusterableServer createServer(final ServerAddress serverAddress, final ServerListener serverListener) {
-        return serverFactory.create(serverAddress, createServerListener(serverFactory.getSettings(), serverListener));
+        return serverFactory.create(serverAddress, createServerListener(serverFactory.getSettings(), serverListener), clusterClock);
     }
 
     private void throwIfIncompatible(final ClusterDescription curDescription) {

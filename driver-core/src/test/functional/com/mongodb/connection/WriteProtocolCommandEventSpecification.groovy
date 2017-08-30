@@ -26,6 +26,7 @@ import com.mongodb.bulk.UpdateRequest
 import com.mongodb.connection.netty.NettyStreamFactory
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.event.CommandSucceededEvent
+import com.mongodb.internal.connection.NoOpSessionContext
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonArray
 import org.bson.BsonBinary
@@ -89,9 +90,10 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
 
         cleanup:
         // force acknowledgement
-        new CommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
+        new SimpleCommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
                             new NoOpFieldNameValidator(), new BsonDocumentCodec())
                 .readPreference(ReadPreference.primary())
+                .sessionContext(NoOpSessionContext.INSTANCE)
                 .execute(connection)
 
         where:
@@ -139,9 +141,10 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
 
         cleanup:
         // force acknowledgement
-        new CommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
+        new SimpleCommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
                             new NoOpFieldNameValidator(), new BsonDocumentCodec())
                 .readPreference(ReadPreference.primary())
+                .sessionContext(NoOpSessionContext.INSTANCE)
                 .execute(connection)
 
         where:
@@ -176,9 +179,10 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
 
         cleanup:
         // force acknowledgement
-        new CommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
+        new SimpleCommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
                             new NoOpFieldNameValidator(), new BsonDocumentCodec())
                 .readPreference(ReadPreference.primary())
+                .sessionContext(NoOpSessionContext.INSTANCE)
                 .execute(connection)
 
         where:

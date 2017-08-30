@@ -195,9 +195,9 @@ class OperationFunctionalSpecification extends Specification {
         }
 
         if (checkCommand) {
-            1 * connection.command(_, expectedCommand, _, _, _) >> { result }
+            1 * connection.command(_, expectedCommand, _, _, _, _) >> { result }
         } else if (checkSlaveOk) {
-            1 * connection.command(_, _, readPreference, _, _) >> { result }
+            1 * connection.command(_, _, readPreference, _, _, _) >> { result }
         }
 
         0 * connection.command(_, _, _, _, _) >> {
@@ -236,9 +236,9 @@ class OperationFunctionalSpecification extends Specification {
         def callback = new FutureResultCallback()
 
         if (checkCommand) {
-            1 * connection.commandAsync(_, expectedCommand, _, _, _, _) >> { it[5].onResult(result, null) }
+            1 * connection.commandAsync(_, expectedCommand, _, _, _, _, _) >> { it[6].onResult(result, null) }
         } else if (checkSlaveOk) {
-            1 * connection.commandAsync(_, _, readPreference, _, _, _) >> { it[5].onResult(result, null) }
+            1 * connection.commandAsync(_, _, readPreference, _, _, _, _) >> { it[6].onResult(result, null) }
         }
 
         0 * connection.commandAsync(_, _, _, _, _, _) >> {

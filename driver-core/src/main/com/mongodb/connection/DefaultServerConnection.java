@@ -27,6 +27,7 @@ import com.mongodb.bulk.InsertRequest;
 import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.internal.connection.NoOpSessionContext;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
@@ -116,88 +117,138 @@ class DefaultServerConnection extends AbstractReferenceCounted implements Connec
     @Override
     public BulkWriteResult insertCommand(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                                          final Boolean bypassDocumentValidation, final List<InsertRequest> inserts) {
-        return executeProtocol(new InsertCommandProtocol(namespace, ordered, writeConcern, bypassDocumentValidation, inserts));
+        return executeProtocol(new InsertCommandProtocol(namespace, ordered, writeConcern, bypassDocumentValidation, inserts),
+                NoOpSessionContext.INSTANCE);
+    }
+
+    @Override
+    public BulkWriteResult insertCommand(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                         final Boolean bypassDocumentValidation, final List<InsertRequest> inserts,
+                                         final SessionContext sessionContext) {
+        return executeProtocol(new InsertCommandProtocol(namespace, ordered, writeConcern, bypassDocumentValidation, inserts),
+                sessionContext);
+
     }
 
     @Override
     public void insertCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                                    final List<InsertRequest> inserts, final SingleResultCallback<BulkWriteResult> callback) {
-        insertCommandAsync(namespace, ordered, writeConcern, null, inserts, callback);
+        insertCommandAsync(namespace, ordered, writeConcern, null, inserts, NoOpSessionContext.INSTANCE, callback);
     }
 
     @Override
     public void insertCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                                    final Boolean bypassDocumentValidation, final List<InsertRequest> inserts,
                                    final SingleResultCallback<BulkWriteResult> callback) {
-        executeProtocolAsync(new InsertCommandProtocol(namespace, ordered, writeConcern, bypassDocumentValidation, inserts), callback);
+        insertCommandAsync(namespace, ordered, writeConcern, bypassDocumentValidation, inserts, NoOpSessionContext.INSTANCE, callback);
+    }
+
+    @Override
+    public void insertCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                   final Boolean bypassDocumentValidation, final List<InsertRequest> inserts,
+                                   final SessionContext sessionContext, final SingleResultCallback<BulkWriteResult> callback) {
+        executeProtocolAsync(new InsertCommandProtocol(namespace, ordered, writeConcern, bypassDocumentValidation, inserts),
+                sessionContext, callback);
     }
 
     @Override
     public BulkWriteResult updateCommand(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                                          final List<UpdateRequest> updates) {
-        return updateCommand(namespace, ordered, writeConcern, null, updates);
+        return updateCommand(namespace, ordered, writeConcern, null, updates, NoOpSessionContext.INSTANCE);
     }
 
     @Override
     public BulkWriteResult updateCommand(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                                          final Boolean bypassDocumentValidation, final List<UpdateRequest> updates) {
-        return executeProtocol(new UpdateCommandProtocol(namespace, ordered, writeConcern, bypassDocumentValidation, updates));
+        return executeProtocol(new UpdateCommandProtocol(namespace, ordered, writeConcern, bypassDocumentValidation, updates),
+                NoOpSessionContext.INSTANCE);
+    }
+
+    @Override
+    public BulkWriteResult updateCommand(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                         final Boolean bypassDocumentValidation, final List<UpdateRequest> updates,
+                                         final SessionContext sessionContext) {
+        return executeProtocol(new UpdateCommandProtocol(namespace, ordered, writeConcern, bypassDocumentValidation, updates),
+                sessionContext);
     }
 
     @Override
     public void updateCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                                    final List<UpdateRequest> updates, final SingleResultCallback<BulkWriteResult> callback) {
-        updateCommandAsync(namespace, ordered, writeConcern, null, updates, callback);
+        updateCommandAsync(namespace, ordered, writeConcern, null, updates, NoOpSessionContext.INSTANCE, callback);
     }
 
     @Override
     public void updateCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                                    final Boolean bypassDocumentValidation, final List<UpdateRequest> updates,
                                    final SingleResultCallback<BulkWriteResult> callback) {
-        executeProtocolAsync(new UpdateCommandProtocol(namespace, ordered, writeConcern, bypassDocumentValidation, updates), callback);
+        updateCommandAsync(namespace, ordered, writeConcern, bypassDocumentValidation, updates, NoOpSessionContext.INSTANCE, callback);
+    }
+
+    @Override
+    public void updateCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                   final Boolean bypassDocumentValidation, final List<UpdateRequest> updates,
+                                   final SessionContext sessionContext, final SingleResultCallback<BulkWriteResult> callback) {
+        executeProtocolAsync(new UpdateCommandProtocol(namespace, ordered, writeConcern, bypassDocumentValidation, updates), sessionContext,
+                callback);
     }
 
     @Override
     public BulkWriteResult deleteCommand(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                                          final List<DeleteRequest> deletes) {
-        return executeProtocol(new DeleteCommandProtocol(namespace, ordered, writeConcern, deletes));
+        return executeProtocol(new DeleteCommandProtocol(namespace, ordered, writeConcern, deletes), NoOpSessionContext.INSTANCE);
+    }
 
+    @Override
+    public BulkWriteResult deleteCommand(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                         final List<DeleteRequest> deletes, final SessionContext sessionContext) {
+        return executeProtocol(new DeleteCommandProtocol(namespace, ordered, writeConcern, deletes), sessionContext);
     }
 
     @Override
     public void deleteCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                                    final List<DeleteRequest> deletes, final SingleResultCallback<BulkWriteResult> callback) {
-        executeProtocolAsync(new DeleteCommandProtocol(namespace, ordered, writeConcern, deletes), callback);
+        deleteCommandAsync(namespace, ordered, writeConcern, deletes, NoOpSessionContext.INSTANCE, callback);
+    }
+
+    @Override
+    public void deleteCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                                   final List<DeleteRequest> deletes, final SessionContext sessionContext,
+                                   final SingleResultCallback<BulkWriteResult> callback) {
+        executeProtocolAsync(new DeleteCommandProtocol(namespace, ordered, writeConcern, deletes), sessionContext, callback);
     }
 
     @Override
     public <T> T command(final String database, final BsonDocument command, final boolean slaveOk,
                          final FieldNameValidator fieldNameValidator,
                          final Decoder<T> commandResultDecoder) {
-        return command(database, command, getReadPreferenceFromSlaveOk(slaveOk), fieldNameValidator, commandResultDecoder);
+        return command(database, command, getReadPreferenceFromSlaveOk(slaveOk), fieldNameValidator, commandResultDecoder,
+                NoOpSessionContext.INSTANCE);
     }
 
     @Override
     public <T> T command(final String database, final BsonDocument command, final ReadPreference readPreference,
-                         final FieldNameValidator fieldNameValidator, final Decoder<T> commandResultDecoder) {
-        return executeProtocol(new CommandProtocol<T>(database, command, fieldNameValidator, commandResultDecoder)
-                                       .readPreference(readPreference));
+                         final FieldNameValidator fieldNameValidator, final Decoder<T> commandResultDecoder,
+                         final SessionContext sessionContext) {
+        return executeProtocol(new SimpleCommandProtocol<T>(database, command, fieldNameValidator, commandResultDecoder)
+                                       .readPreference(readPreference), sessionContext);
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final boolean slaveOk,
                                            final FieldNameValidator fieldNameValidator,
                                            final Decoder<T> commandResultDecoder, final SingleResultCallback<T> callback) {
-        commandAsync(database, command, getReadPreferenceFromSlaveOk(slaveOk), fieldNameValidator, commandResultDecoder, callback);
+        commandAsync(database, command, getReadPreferenceFromSlaveOk(slaveOk), fieldNameValidator, commandResultDecoder,
+                NoOpSessionContext.INSTANCE, callback);
     }
 
     @Override
     public <T> void commandAsync(final String database, final BsonDocument command, final ReadPreference readPreference,
                                  final FieldNameValidator fieldNameValidator, final Decoder<T> commandResultDecoder,
-                                 final SingleResultCallback<T> callback) {
-        executeProtocolAsync(new CommandProtocol<T>(database, command, fieldNameValidator, commandResultDecoder)
+                                 final SessionContext sessionContext, final SingleResultCallback<T> callback) {
+        executeProtocolAsync(new SimpleCommandProtocol<T>(database, command, fieldNameValidator, commandResultDecoder)
                                      .readPreference(readPreference),
-                callback);
+                sessionContext, callback);
     }
 
     @Override
@@ -303,14 +354,28 @@ class DefaultServerConnection extends AbstractReferenceCounted implements Connec
                || (clusterConnectionMode == ClusterConnectionMode.SINGLE && wrapped.getDescription().getServerType() != SHARD_ROUTER);
     }
 
-    private <T> T executeProtocol(final Protocol<T> protocol) {
+    private <T> T executeProtocol(final LegacyProtocol<T> protocol) {
         return protocolExecutor.execute(protocol, this.wrapped);
     }
 
-    private <T> void executeProtocolAsync(final Protocol<T> protocol, final SingleResultCallback<T> callback) {
+    private <T> T executeProtocol(final CommandProtocol<T> protocol, final SessionContext sessionContext) {
+        return protocolExecutor.execute(protocol, this.wrapped, sessionContext);
+    }
+
+    private <T> void executeProtocolAsync(final LegacyProtocol<T> protocol, final SingleResultCallback<T> callback) {
         SingleResultCallback<T> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         try {
             protocolExecutor.executeAsync(protocol, this.wrapped, errHandlingCallback);
+        } catch (Throwable t) {
+            errHandlingCallback.onResult(null, t);
+        }
+    }
+
+    private <T> void executeProtocolAsync(final CommandProtocol<T> protocol, final SessionContext sessionContext,
+                                          final SingleResultCallback<T> callback) {
+        SingleResultCallback<T> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
+        try {
+            protocolExecutor.executeAsync(protocol, this.wrapped, sessionContext, errHandlingCallback);
         } catch (Throwable t) {
             errHandlingCallback.onResult(null, t);
         }

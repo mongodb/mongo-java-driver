@@ -433,10 +433,10 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
-        public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder) {
+        public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
             isTrue("open", !isClosed.get());
             try {
-                return wrapped.sendAndReceive(message, decoder);
+                return wrapped.sendAndReceive(message, decoder, sessionContext);
             } catch (MongoException e) {
                 incrementGenerationOnSocketException(this, e);
                 throw e;
@@ -445,9 +445,9 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
-                                            final SingleResultCallback<T> callback) {
+                                            final SessionContext sessionContext, final SingleResultCallback<T> callback) {
             isTrue("open", !isClosed.get());
-            wrapped.sendAndReceiveAsync(message, decoder, new SingleResultCallback<T>() {
+            wrapped.sendAndReceiveAsync(message, decoder, sessionContext, new SingleResultCallback<T>() {
                 @Override
                 public void onResult(final T result, final Throwable t) {
                     if (t != null) {

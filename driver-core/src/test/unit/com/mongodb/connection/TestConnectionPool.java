@@ -50,13 +50,13 @@ public class TestConnectionPool implements ConnectionPool {
             }
 
             @Override
-            public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder) {
+            public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
                 throw new UnsupportedOperationException("Not implemented yet!");
             }
 
             @Override
             public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
-                                            final SingleResultCallback<T> callback) {
+                                                final SessionContext sessionContext, final SingleResultCallback<T> callback) {
                 throw new UnsupportedOperationException("Not implemented yet!");
             }
 

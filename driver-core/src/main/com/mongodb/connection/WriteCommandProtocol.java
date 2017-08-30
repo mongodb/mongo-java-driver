@@ -22,7 +22,6 @@ import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.WriteRequest;
-import com.mongodb.event.CommandListener;
 import com.mongodb.internal.connection.IndexMap;
 import org.bson.BsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
@@ -35,11 +34,12 @@ import static java.lang.String.format;
 /**
  * A base class for implementations of the bulk write commands.
  */
-abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
+abstract class WriteCommandProtocol implements CommandProtocol<BulkWriteResult> {
     private final MongoNamespace namespace;
     private final boolean ordered;
     private final WriteConcern writeConcern;
     private final Boolean bypassDocumentValidation;
+    private SessionContext sessionContext;
 
     WriteCommandProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                          final Boolean bypassDocumentValidation) {
@@ -50,7 +50,9 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
     }
 
     @Override
-    public void setCommandListener(final CommandListener commandListener) {
+    public WriteCommandProtocol sessionContext(final SessionContext sessionContext) {
+        this.sessionContext = sessionContext;
+        return this;
     }
 
     /**
@@ -84,7 +86,7 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
             if (getLogger().isDebugEnabled()) {
                 getLogger().debug(format("Sending batch %d", batchNum));
             }
-            BsonDocument result = connection.sendAndReceive(message, new BsonDocumentCodec());
+            BsonDocument result = connection.sendAndReceive(message, new BsonDocumentCodec(), sessionContext);
             nextMessage = (BaseWriteCommandMessage) message.getEncodingMetadata().getNextMessage();
             int itemCount = nextMessage != null ? message.getItemCount() - nextMessage.getItemCount() : message.getItemCount();
             IndexMap indexMap = IndexMap.create(currentRangeStartIndex, itemCount);
@@ -126,31 +128,33 @@ abstract class WriteCommandProtocol implements Protocol<BulkWriteResult> {
                     getLogger().debug(format("Asynchronously sending batch %d", batchNum));
                 }
 
-                connection.sendAndReceiveAsync(message, new BsonDocumentCodec(), new SingleResultCallback<BsonDocument>() {
-                    @Override
-                    public void onResult(final BsonDocument result, final Throwable t) {
-                        if (t != null) {
-                            callback.onResult(null, t);
-                        } else {
-                            if (getLogger().isDebugEnabled()) {
-                                getLogger().debug(format("Asynchronously received response for batch %d", batchNum));
-                            }
-
-                            BaseWriteCommandMessage nextMessage = (BaseWriteCommandMessage) message.getEncodingMetadata().getNextMessage();
-
-                            int itemCount = nextMessage != null
-                                                    ? message.getItemCount() - nextMessage.getItemCount() : message.getItemCount();
-                            IndexMap indexMap = IndexMap.create(currentRangeStartIndex, itemCount);
-
-                            if (writeConcern.isAcknowledged()) {
-                                if (WriteCommandResultHelper.hasError(result)) {
-                                    bulkWriteBatchCombiner.addErrorResult(getBulkWriteException(getType(), result,
-                                            connection.getDescription().getServerAddress()),
-                                            indexMap);
+                connection.sendAndReceiveAsync(message, new BsonDocumentCodec(), sessionContext,
+                        new SingleResultCallback<BsonDocument>() {
+                            @Override
+                            public void onResult(final BsonDocument result, final Throwable t) {
+                                if (t != null) {
+                                    callback.onResult(null, t);
                                 } else {
-                                    bulkWriteBatchCombiner.addResult(getBulkWriteResult(getType(), result), indexMap);
-                                }
-                            }
+                                    if (getLogger().isDebugEnabled()) {
+                                        getLogger().debug(format("Asynchronously received response for batch %d", batchNum));
+                                    }
+
+                                    BaseWriteCommandMessage nextMessage =
+                                            (BaseWriteCommandMessage) message.getEncodingMetadata().getNextMessage();
+
+                                    int itemCount = nextMessage != null
+                                                            ? message.getItemCount() - nextMessage.getItemCount() : message.getItemCount();
+                                    IndexMap indexMap = IndexMap.create(currentRangeStartIndex, itemCount);
+
+                                    if (writeConcern.isAcknowledged()) {
+                                        if (WriteCommandResultHelper.hasError(result)) {
+                                            bulkWriteBatchCombiner.addErrorResult(getBulkWriteException(getType(), result,
+                                                    connection.getDescription().getServerAddress()),
+                                                    indexMap);
+                                        } else {
+                                            bulkWriteBatchCombiner.addResult(getBulkWriteResult(getType(), result), indexMap);
+                                        }
+                                    }
                             executeBatchesAsync(connection, nextMessage, bulkWriteBatchCombiner, batchNum + 1,
                                     currentRangeStartIndex + itemCount, callback);
                         }

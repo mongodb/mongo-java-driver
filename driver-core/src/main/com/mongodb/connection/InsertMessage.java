@@ -31,7 +31,7 @@ import java.util.List;
  *
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-insert OP_INSERT
  */
-class InsertMessage extends RequestMessage {
+class InsertMessage extends LegacyMessage {
 
     private final boolean ordered;
     private final WriteConcern writeConcern;

@@ -34,6 +34,7 @@ import org.bson.io.BsonOutput;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 /**
@@ -141,11 +142,13 @@ abstract class RequestMessage {
      * Encoded the message to the given output.
      *
      * @param bsonOutput the output
+     * @param sessionContext the session context
      */
-    public void encode(final BsonOutput bsonOutput) {
+    public void encode(final BsonOutput bsonOutput, final SessionContext sessionContext) {
+        notNull("sessionContext", sessionContext);
         int messageStartPosition = bsonOutput.getPosition();
         writeMessagePrologue(bsonOutput);
-        EncodingMetadata encodingMetadata = encodeMessageBodyWithMetadata(bsonOutput, messageStartPosition);
+        EncodingMetadata encodingMetadata = encodeMessageBodyWithMetadata(bsonOutput, messageStartPosition, sessionContext);
         backpatchMessageLength(messageStartPosition, bsonOutput);
         this.encodingMetadata = encodingMetadata;
     }
@@ -178,7 +181,8 @@ abstract class RequestMessage {
      * @param messageStartPosition the start position of the message
      * @return the encoding metadata
      */
-    protected abstract EncodingMetadata encodeMessageBodyWithMetadata(BsonOutput bsonOutput, int messageStartPosition);
+    protected abstract EncodingMetadata encodeMessageBodyWithMetadata(BsonOutput bsonOutput, int messageStartPosition,
+                                                                      SessionContext sessionContext);
 
     /**
      * Appends a document to the message.

@@ -22,7 +22,19 @@ import com.mongodb.async.FutureResultCallback;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 final class ProtocolTestHelper {
-    public static <T> T execute(final Protocol<T> protocol, final InternalConnection connection, final boolean async) throws Throwable{
+    public static <T> T execute(final LegacyProtocol<T> protocol, final InternalConnection connection, final boolean async)
+            throws Throwable{
+        if (async) {
+            final FutureResultCallback<T> futureResultCallback = new FutureResultCallback<T>();
+            protocol.executeAsync(connection, futureResultCallback);
+            return futureResultCallback.get(ClusterFixture.TIMEOUT, SECONDS);
+        } else {
+            return protocol.execute(connection);
+        }
+    }
+
+    public static <T> T execute(final CommandProtocol<T> protocol, final InternalConnection connection, final boolean async)
+            throws Throwable{
         if (async) {
             final FutureResultCallback<T> futureResultCallback = new FutureResultCallback<T>();
             protocol.executeAsync(connection, futureResultCallback);

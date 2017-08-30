@@ -24,6 +24,7 @@ import com.mongodb.MongoTimeoutException
 import com.mongodb.MongoWaitQueueFullException
 import com.mongodb.ServerAddress
 import com.mongodb.event.ConnectionPoolListener
+import com.mongodb.internal.connection.NoOpSessionContext
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.ByteBuf
@@ -129,7 +130,7 @@ class DefaultConnectionPoolSpecification extends Specification {
             Mock(InternalConnection) {
                 sendMessage(_, _) >> { throw new MongoSocketWriteException('', SERVER_ID.address, new IOException()) }
                 receiveMessage(_) >> { throw new MongoSocketReadException('', SERVER_ID.address, new IOException()) }
-                sendAndReceive(_, _) >> { throw new MongoSocketReadException('', SERVER_ID.address, new IOException()) }
+                sendAndReceive(_, _, _) >> { throw new MongoSocketReadException('', SERVER_ID.address, new IOException()) }
                 getDescription() >> {
                     new ConnectionDescription(SERVER_ID);
                 }
@@ -180,7 +181,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         and:
         c2.sendAndReceive(new SimpleCommandMessage('test', new BsonDocument('ping', new BsonInt32(1)), primary(),
                 MessageSettings.builder().serverVersion(new ServerVersion(0, 0)).build()),
-                new BsonDocumentCodec())
+                new BsonDocumentCodec(), NoOpSessionContext.INSTANCE)
 
         then:
         thrown(MongoSocketReadException)
@@ -208,8 +209,8 @@ class DefaultConnectionPoolSpecification extends Specification {
                 receiveMessageAsync(_, _) >> {
                     it[1].onResult(null, new MongoSocketReadException('', SERVER_ID.address, new IOException()))
                 };
-                sendAndReceiveAsync(_, _, _) >> {
-                    it[2].onResult(null, new MongoSocketReadException('', SERVER_ID.address, new IOException()))
+                sendAndReceiveAsync(_, _, _, _) >> {
+                    it[3].onResult(null, new MongoSocketReadException('', SERVER_ID.address, new IOException()))
                 };
                 getDescription() >> {
                     new ConnectionDescription(SERVER_ID);
@@ -267,7 +268,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         and:
         c2.sendAndReceiveAsync(new SimpleCommandMessage('test', new BsonDocument('ping', new BsonInt32(1)), primary(),
                 MessageSettings.builder().serverVersion(new ServerVersion(0, 0)).build()),
-                new BsonDocumentCodec()) {
+                new BsonDocumentCodec(), NoOpSessionContext.INSTANCE) {
             result, t -> e = t
         }
 

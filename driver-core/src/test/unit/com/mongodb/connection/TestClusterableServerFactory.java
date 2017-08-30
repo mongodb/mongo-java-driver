@@ -33,7 +33,8 @@ public class TestClusterableServerFactory implements ClusterableServerFactory {
     private final Map<ServerAddress, TestServer> addressToServerMap = new HashMap<ServerAddress, TestServer>();
 
     @Override
-    public ClusterableServer create(final ServerAddress serverAddress, final ServerListener serverListener) {
+    public ClusterableServer create(final ServerAddress serverAddress, final ServerListener serverListener,
+                                    final ClusterClock clusterClock) {
         addressToServerMap.put(serverAddress, new TestServer(serverAddress, serverListener));
         return addressToServerMap.get(serverAddress);
     }

@@ -33,17 +33,21 @@ import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.event.CommandSucceededEvent;
+import com.mongodb.internal.connection.NoOpSessionContext;
+import org.bson.BsonBinaryReader;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonReader;
 import org.bson.BsonString;
+import org.bson.BsonTimestamp;
 import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.io.BsonOutput;
+import org.bson.io.ByteBufferBsonInput;
 
 import static java.lang.String.format;
 import static org.bson.codecs.BsonValueCodecProvider.getClassForBsonType;
@@ -81,6 +85,51 @@ final class ProtocolHelper {
     static boolean isCommandOk(final BsonReader bsonReader) {
         return isCommandOk(getField(bsonReader, "ok"));
     }
+
+    static boolean isCommandOk(final ResponseBuffers responseBuffers) {
+        try {
+            return isCommandOk(createBsonReader(responseBuffers));
+        } finally {
+            responseBuffers.reset();
+        }
+    }
+
+    static BsonTimestamp getOperationTime(final ResponseBuffers responseBuffers) {
+        try {
+            BsonValue operationTime = getField(createBsonReader(responseBuffers), "operationTime");
+            if (operationTime == null) {
+                return null;
+            }
+            return operationTime.asTimestamp();
+        } finally {
+            responseBuffers.reset();
+        }
+    }
+
+    static BsonDocument getClusterTime(final ResponseBuffers responseBuffers) {
+        try {
+            BsonValue clusterTime = getField(createBsonReader(responseBuffers), "$clusterTime");
+            if (clusterTime == null) {
+                return null;
+            }
+            return clusterTime.asDocument();
+        } finally {
+            responseBuffers.reset();
+        }
+    }
+
+    static BsonDocument getClusterTime(final BsonDocument response) {
+        BsonValue clusterTime = response.get("$clusterTime");
+        if (clusterTime == null) {
+            return null;
+        }
+        return clusterTime.asDocument();
+    }
+
+    private static BsonBinaryReader createBsonReader(final ResponseBuffers responseBuffers) {
+        return new BsonBinaryReader(new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer()));
+    }
+
 
     private static BsonValue getField(final BsonReader bsonReader, final String fieldName) {
         bsonReader.readStartDocument();
@@ -142,7 +191,7 @@ final class ProtocolHelper {
 
     static void encodeMessage(final RequestMessage message, final BsonOutput bsonOutput) {
         try {
-            message.encode(bsonOutput);
+            message.encode(bsonOutput, NoOpSessionContext.INSTANCE);
         } catch (RuntimeException e) {
             bsonOutput.close();
             throw e;
@@ -154,7 +203,7 @@ final class ProtocolHelper {
 
     static RequestMessage.EncodingMetadata encodeMessageWithMetadata(final RequestMessage message, final BsonOutput bsonOutput) {
         try {
-            message.encode(bsonOutput);
+            message.encode(bsonOutput, NoOpSessionContext.INSTANCE);
             return message.getEncodingMetadata();
         } catch (RuntimeException e) {
             bsonOutput.close();

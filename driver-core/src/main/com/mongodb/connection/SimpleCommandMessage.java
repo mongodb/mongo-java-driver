@@ -54,7 +54,7 @@ class SimpleCommandMessage extends CommandMessage {
     }
 
     @Override
-    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final int messageStartPosition) {
+    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final SessionContext sessionContext) {
         BsonDocument commandToEncode;
         List<BsonElement> extraElements = null;
         if (useOpMsg()) {
@@ -63,6 +63,12 @@ class SimpleCommandMessage extends CommandMessage {
 
             extraElements = new ArrayList<BsonElement>();
             extraElements.add(new BsonElement("$db", new BsonString(new MongoNamespace(getCollectionName()).getDatabaseName())));
+            if (sessionContext.hasSession()) {
+                if (sessionContext.getClusterTime() != null) {
+                    extraElements.add(new BsonElement("$clusterTime", sessionContext.getClusterTime()));
+                }
+                extraElements.add(new BsonElement("lsid", sessionContext.getSessionId()));
+            }
             if (!isDefaultReadPreference()) {
                 extraElements.add(new BsonElement("$readPreference", readPreference.toDocument()));
             }
