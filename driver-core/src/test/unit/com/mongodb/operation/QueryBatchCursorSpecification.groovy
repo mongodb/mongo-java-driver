@@ -72,7 +72,7 @@ class QueryBatchCursorSpecification extends Specification {
         cursor.hasNext()
 
         then:
-        1 * connection.command(database, expectedCommand, _, _, _) >> {
+        1 * connection.command(database, expectedCommand, _, _, _, _) >> {
             reply
         }
         1 * connection.release()

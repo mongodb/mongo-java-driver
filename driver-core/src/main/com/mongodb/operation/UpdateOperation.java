@@ -25,6 +25,7 @@ import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.bulk.WriteRequest;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
+import com.mongodb.connection.SessionContext;
 
 import java.util.List;
 
@@ -86,13 +87,15 @@ public class UpdateOperation extends BaseWriteOperation {
     }
 
     @Override
-    protected BulkWriteResult executeCommandProtocol(final Connection connection) {
+    protected BulkWriteResult executeCommandProtocol(final Connection connection, final SessionContext sessionContext) {
         validateWriteRequestCollations(connection, updates, getWriteConcern());
-        return connection.updateCommand(getNamespace(), isOrdered(), getWriteConcern(), getBypassDocumentValidation(), updates);
+        return connection.updateCommand(getNamespace(), isOrdered(), getWriteConcern(), getBypassDocumentValidation(), updates,
+                sessionContext);
     }
 
     @Override
-    protected void executeCommandProtocolAsync(final AsyncConnection connection, final SingleResultCallback<BulkWriteResult> callback) {
+    protected void executeCommandProtocolAsync(final AsyncConnection connection, final SessionContext sessionContext,
+                                               final SingleResultCallback<BulkWriteResult> callback) {
         validateWriteRequestCollations(connection, updates, getWriteConcern(), new AsyncCallableWithConnection(){
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
@@ -100,7 +103,7 @@ public class UpdateOperation extends BaseWriteOperation {
                     callback.onResult(null, t);
                 } else {
                     connection.updateCommandAsync(getNamespace(), isOrdered(), getWriteConcern(), getBypassDocumentValidation(), updates,
-                            callback);
+                            sessionContext, callback);
                 }
             }
         });

@@ -127,9 +127,10 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
         1 * connection.release()
     }
 
+
     def 'should find with correct command'() {
         when:
-        def operation = new FindOperation<BsonDocument>(namespace, new DocumentCodec())
+        def operation = new FindOperation<BsonDocument>(namespace, new BsonDocumentCodec())
         def expectedCommand = new BsonDocument('find', new BsonString(namespace.getCollectionName()))
 
         then:

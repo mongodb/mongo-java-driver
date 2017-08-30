@@ -64,8 +64,8 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         def batch = nextBatch(cursor)
 
         then:
-        1 * connection.commandAsync(NAMESPACE.getDatabaseName(), expectedCommand, _, _, _, _) >> {
-            it[5].onResult(reply, null)
+        1 * connection.commandAsync(NAMESPACE.getDatabaseName(), expectedCommand, _, _, _, _, _) >> {
+            it[6].onResult(reply, null)
         }
         batch == null
 
@@ -98,8 +98,9 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         then:
         if (firstBatch.getCursor() != null) {
             if (serverVersion.compareTo(new ServerVersion(3, 2)) >= 0) {
-                1 * connection.commandAsync(NAMESPACE.databaseName, createKillCursorsDocument(firstBatch.cursor), primary(), _, _, _) >> {
-                    it[5].onResult(null, null)
+                1 * connection.commandAsync(NAMESPACE.databaseName, createKillCursorsDocument(firstBatch.cursor), primary(),
+                        _, _, _, _) >> {
+                    it[6].onResult(null, null)
                 }
             } else {
                 1 * connection.killCursorAsync(NAMESPACE, [42], _) >> {
@@ -170,7 +171,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
 
         then:
         if (commandAsync) {
-            1 * connectionA.commandAsync(_, _, _, _, _, _) >> { it[5].onResult(documentResponse(secondBatch), null) }
+            1 * connectionA.commandAsync(_, _, _, _, _, _, _) >> { it[6].onResult(documentResponse(secondBatch), null) }
         } else {
             1 * connectionA.getMoreAsync(_, _, _, _, _) >> { it[4].onResult(queryResult(secondBatch), null) }
         }
@@ -185,10 +186,10 @@ class AsyncQueryBatchCursorSpecification extends Specification {
 
         then:
         if (commandAsync) {
-            1 * connectionB.commandAsync(_, _, _, _, _, _) >> {
+            1 * connectionB.commandAsync(_, _, _, _, _, _, _) >> {
                 connectionB.getCount() == 1
                 connectionSource.getCount() == 1
-                it[5].onResult(documentResponse(thirdBatch, 0), null)
+                it[6].onResult(documentResponse(thirdBatch, 0), null)
             }
         } else {
             1 * connectionB.getMoreAsync(_, _, _, _, _) >> {
@@ -239,7 +240,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
 
         then:
         if (commandAsync) {
-            1 * connectionA.commandAsync(_, _, _, _, _, _) >> { it[5].onResult(documentResponse(secondBatch), null) }
+            1 * connectionA.commandAsync(_, _, _, _, _, _, _) >> { it[6].onResult(documentResponse(secondBatch), null) }
         } else {
             1 * connectionA.getMoreAsync(_, _, _, _, _) >> { it[4].onResult(queryResult(secondBatch), null) }
         }
@@ -254,10 +255,10 @@ class AsyncQueryBatchCursorSpecification extends Specification {
 
         then:
         if (commandAsync) {
-            1 * connectionB.commandAsync(_, _, _, _, _, _) >> {
+            1 * connectionB.commandAsync(_, _, _, _, _, _, _) >> {
                 connectionB.getCount() == 1
                 connectionSource.getCount() == 1
-                it[5].onResult(documentResponse(thirdBatch, 0), null)
+                it[6].onResult(documentResponse(thirdBatch, 0), null)
             }
         } else {
             1 * connectionB.getMoreAsync(_, _, _, _, _) >> {
@@ -298,8 +299,8 @@ class AsyncQueryBatchCursorSpecification extends Specification {
 
         then:
         if (serverVersion.compareTo(new ServerVersion(3, 2)) >= 0) {
-            1 * connection.commandAsync(NAMESPACE.databaseName, createKillCursorsDocument(queryResult.cursor), primary(), _, _, _) >> {
-                it[5].onResult(null, null)
+            1 * connection.commandAsync(NAMESPACE.databaseName, createKillCursorsDocument(queryResult.cursor), primary(), _, _, _, _) >> {
+                it[6].onResult(null, null)
             }
         } else {
             1 * connection.killCursorAsync(NAMESPACE, [42], _) >> {
@@ -332,16 +333,16 @@ class AsyncQueryBatchCursorSpecification extends Specification {
 
         then:
         if (commandAsync) {
-            1 * connection.commandAsync(_, _, _, _, _, _) >> {
+            1 * connection.commandAsync(_, _, _, _, _, _, _) >> {
                 connection.getCount() == 1
                 connectionSource.getCount() == 1
-                it[5].onResult(response, null)
+                it[6].onResult(response, null)
             }
 
-            1 * connection.commandAsync(_, _, _, _, _, _) >> {
+            1 * connection.commandAsync(_, _, _, _, _, _, _) >> {
                 connection.getCount() == 1
                 connectionSource.getCount() == 1
-                it[5].onResult(response2, null)
+                it[6].onResult(response2, null)
             }
         } else {
             1 * connection.getMoreAsync(_, _, _, _, _) >> {
@@ -396,11 +397,11 @@ class AsyncQueryBatchCursorSpecification extends Specification {
 
         then:
         if (commandAsync) {
-            1 * connection.commandAsync(_, _, _, _, _, _) >> {
-                it[5].onResult(response, null)
+            1 * connection.commandAsync(_, _, _, _, _, _, _) >> {
+                it[6].onResult(response, null)
             }
-            1 * connection.commandAsync(NAMESPACE.databaseName, createKillCursorsDocument(initialResult.cursor), primary(), _, _, _) >> {
-                it[5].onResult(null, null)
+            1 * connection.commandAsync(NAMESPACE.databaseName, createKillCursorsDocument(initialResult.cursor), primary(), _, _, _, _) >> {
+                it[6].onResult(null, null)
             }
         } else {
             1 * connection.getMoreAsync(_, _, _, _, _) >> {
@@ -447,13 +448,14 @@ class AsyncQueryBatchCursorSpecification extends Specification {
 
         then:
         if (commandAsync) {
-            1 * connectionA.commandAsync(_, _, _, _, _, _) >> {
+            1 * connectionA.commandAsync(_, _, _, _, _, _, _) >> {
                 // Simulate the user calling close while the getMore is in flight
                 cursor.close()
-                it[5].onResult(response, null)
+                it[6].onResult(response, null)
             }
-            1 * connectionB.commandAsync(NAMESPACE.databaseName, createKillCursorsDocument(initialResult.cursor), primary(), _, _, _) >> {
-                it[5].onResult(null, null)
+            1 * connectionB.commandAsync(NAMESPACE.databaseName, createKillCursorsDocument(initialResult.cursor), primary(),
+                    _, _, _, _) >> {
+                it[6].onResult(null, null)
             }
         } else {
             1 * connectionA.getMoreAsync(_, _, _, _, _) >> {
@@ -542,10 +544,10 @@ class AsyncQueryBatchCursorSpecification extends Specification {
 
         then:
         if (commandAsync) {
-            1 * connectionA.commandAsync(_, _, _, _, _, _) >> {
+            1 * connectionA.commandAsync(_, _, _, _, _, _, _) >> {
                 connectionA.getCount() == 1
                 connectionSource.getCount() == 1
-                it[5].onResult(null, exception)
+                it[6].onResult(null, exception)
             }
         } else {
             1 * connectionA.getMoreAsync(_, _, _, _, _) >> {
