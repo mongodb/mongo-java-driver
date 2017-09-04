@@ -138,10 +138,11 @@ final class ConventionAnnotationImpl implements Convention {
             for (int i = 0; i < properties.size(); i++) {
                 BsonProperty bsonProperty = properties.get(i);
                 Class<?> parameterType = parameterTypes.get(i);
+                TypeData<?> parameterTypeData = TypeData.builder(parameterType).build();
                 PropertyModelBuilder<?> propertyModelBuilder = classModelBuilder.getProperty(bsonProperty.value());
                 if (propertyModelBuilder == null) {
                     addCreatorPropertyToClassModelBuilder(classModelBuilder, bsonProperty.value(), parameterType);
-                } else if (propertyModelBuilder.getTypeData().getType() != parameterType) {
+                } else if (!propertyModelBuilder.getTypeData().equals(parameterTypeData)) {
                     throw creatorExecutable.getError(format("Invalid Property type for '%s'. Expected %s, found %s.", bsonProperty.value(),
                             propertyModelBuilder.getTypeData().getType(), parameterType));
                 }

@@ -236,14 +236,22 @@ public final class PojoRoundTripTest extends PojoTestCase {
                 getPojoCodecProviderBuilder(CreatorMethodModel.class),
                 "{'integerField': 30, 'stringField': 'two', 'longField': {$numberLong: '32'}}"));
 
+        data.add(new TestData("Creator method", CreatorMethodModel.create(30),
+                getPojoCodecProviderBuilder(CreatorMethodModel.class),
+                "{'integerField': 30, 'longField': {$numberLong: '0'}}"));
+
         data.add(new TestData("Creator no-args method", new CreatorNoArgsMethodModel(10, "one", 11),
                 getPojoCodecProviderBuilder(CreatorNoArgsMethodModel.class),
                 "{'integerField': 10, 'stringField': 'one', 'longField': {$numberLong: '11'}}"));
 
-        data.add(new TestData("Creator no-args method", new CreatorAllFinalFieldsModel("pId", "Ada", "Lovelace"),
+        data.add(new TestData("Creator all final", new CreatorAllFinalFieldsModel("pId", "Ada", "Lovelace"),
                 getPojoCodecProviderBuilder(CreatorAllFinalFieldsModel.class),
                 "{'_id': 'pId', '_t': 'org.bson.codecs.pojo.entities.conventions.CreatorAllFinalFieldsModel', "
                         + "'firstName': 'Ada', 'lastName': 'Lovelace'}"));
+
+        data.add(new TestData("Creator all final with nulls", new CreatorAllFinalFieldsModel("pId", "Ada", null),
+                getPojoCodecProviderBuilder(CreatorAllFinalFieldsModel.class),
+                "{'_id': 'pId', '_t': 'org.bson.codecs.pojo.entities.conventions.CreatorAllFinalFieldsModel', 'firstName': 'Ada'}"));
 
         return data;
     }
