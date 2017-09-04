@@ -216,7 +216,8 @@ final class MultiServerCluster extends BaseCluster {
 
         ensureServers(newDescription);
 
-        if (newDescription.getCanonicalAddress() != null && !newDescription.getAddress().sameHost(newDescription.getCanonicalAddress())) {
+        if (newDescription.getCanonicalAddress() != null
+                && !newDescription.getAddress().equals(new ServerAddress(newDescription.getCanonicalAddress()))) {
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info(format("Canonical address %s does not match server address.  Removing %s from client view of cluster",
                                    newDescription.getCanonicalAddress(), newDescription.getAddress()));

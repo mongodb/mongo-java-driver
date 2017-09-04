@@ -217,16 +217,10 @@ public class ServerAddress implements Serializable {
      *
      * @param hostName the address to compare
      * @return if they are the same
+     * @deprecated use the {@link #equals(Object)} method instead
      */
+    @Deprecated
     public boolean sameHost(final String hostName) {
-        String hostToUse = hostName;
-        int idx = hostToUse.indexOf(":");
-        int portToUse = defaultPort();
-        if (idx > 0) {
-            portToUse = Integer.parseInt(hostToUse.substring(idx + 1));
-            hostToUse = hostToUse.substring(0, idx);
-        }
-
-        return getPort() == portToUse && getHost().equalsIgnoreCase(hostToUse);
+        return equals(new ServerAddress(hostName));
     }
 }
