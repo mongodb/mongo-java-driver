@@ -34,8 +34,8 @@ import org.bson.codecs.pojo.entities.SimpleEnumModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationModel;
+import org.bson.codecs.pojo.entities.conventions.CreatorConstructorPrimitivesModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorConstructorThrowsExceptionModel;
-import org.bson.codecs.pojo.entities.conventions.CreatorMethodModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorMethodThrowsExceptionModel;
 import org.bson.types.ObjectId;
 import org.junit.Test;
@@ -295,8 +295,8 @@ public final class PojoCustomTest extends PojoTestCase {
     }
 
     @Test(expected = CodecConfigurationException.class)
-    public void testCreatorMethodModelWithMissingParameters() {
-        decodingShouldFail(getCodec(CreatorMethodModel.class), "{'stringField': 'eleven', 'longField': {$numberLong: '12'}}");
+    public void testBsonCreatorPrimitivesAndNullValues() {
+        decodingShouldFail(getCodec(CreatorConstructorPrimitivesModel.class), "{intField: 100,  stringField: 'test'}");
     }
 
     @Test(expected = CodecConfigurationException.class)
