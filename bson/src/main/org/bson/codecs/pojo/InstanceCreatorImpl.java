@@ -72,8 +72,16 @@ final class InstanceCreatorImpl<T> implements InstanceCreator<T> {
     @Override
     public T getInstance() {
         if (newInstance == null) {
-            throw new CodecConfigurationException(format("Could not construct new instance of: %s. Missing the following properties: %s",
-                    creatorExecutable.getType().getSimpleName(), properties.keySet()));
+            try {
+                for (Map.Entry<String, Integer> entry : properties.entrySet()) {
+                    params[entry.getValue()] = null;
+                }
+                constructInstanceAndProcessCachedValues();
+            } catch (CodecConfigurationException e) {
+                throw new CodecConfigurationException(format("Could not construct new instance of: %s. "
+                                + "Missing the following properties: %s",
+                        creatorExecutable.getType().getSimpleName(), properties.keySet()), e);
+            }
         }
         return newInstance;
     }
