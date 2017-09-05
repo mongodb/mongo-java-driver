@@ -1,0 +1,110 @@
+/*
+ * Copyright 2017 MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driver' }) {
+    tasks.withType(Test) {
+
+        boolean IS_LIFECYCLE = logger.isEnabled(LogLevel.LIFECYCLE)
+        boolean IS_TRAVIS = project.hasProperty('travistest') ? project.travistest : false  && IS_LIFECYCLE
+        String ANSI_BOLD_WHITE = "\u001B[0;1m"
+        String ANSI_RESET = "\u001B[0m"
+        String ANSI_BLACK = "\u001B[30m"
+        String ANSI_RED = "\u001B[31m"
+        String ANSI_GREEN = "\u001B[32m"
+        String ANSI_YELLOW = "\u001B[33m"
+        String ANSI_WHITE = "\u001B[37m"
+        String PASSED = "\u2713"
+        String SKIPPED = "\u005F"
+        String FAILED = "\u2717" + ' [TEST FAILURE]'
+
+
+        beforeSuite { suite ->
+            if (!IS_LIFECYCLE || suite.name.startsWith("Test Run") || suite.name.startsWith("Gradle Worker")) return
+
+            if (suite.parent != null && suite.className != null) {
+                if (IS_TRAVIS) {
+                    logger.lifecycle("travis_fold:start:" + suite.name + "\r")
+                }
+                logger.lifecycle(ANSI_BOLD_WHITE + suite.name + ANSI_RESET)
+            }
+
+        }
+
+        beforeTest { descr ->
+            if (IS_LIFECYCLE) {
+                System.out.print("     Starting ${descr.name}")
+            }
+        }
+
+        afterTest { descr, result ->
+            if (!IS_LIFECYCLE) return
+            def indicator = ANSI_WHITE
+
+            if (result.failedTestCount > 0) indicator = ANSI_RED + FAILED + ANSI_RESET
+            else if (result.skippedTestCount > 0) indicator = ANSI_YELLOW + SKIPPED + ANSI_RESET
+            else indicator = ANSI_GREEN + PASSED + ANSI_RESET
+
+            System.out.print("\033[1A") // Move up
+            System.out.print("\033[2K") // Erase line content
+
+            logger.lifecycle("     ${indicator} ${descr.name} (${result.getEndTime() - result.getStartTime()} ms)")
+            if (result.failedTestCount > 0) {
+                logger.lifecycle(' ')
+            }
+        }
+
+        afterSuite { suite, result ->
+            if (!IS_LIFECYCLE) return
+            if (suite.parent != null && suite.className != null) {
+                if (IS_TRAVIS && result.failedTestCount == 0) {
+                    println("travis_fold:end:" + suite.name + "\r")
+                }
+                logger.lifecycle(' ')
+            }
+
+            if (!suite.parent) { // will match the outermost suite
+                def failStyle = ANSI_RED
+                def skipStyle = ANSI_YELLOW
+                def summaryStyle = ANSI_WHITE
+                if (result.failedTestCount > 0) {
+                    failStyle = ANSI_RED
+                }
+                if (result.skippedTestCount > 0) {
+                    skipStyle = ANSI_YELLOW
+                }
+
+                switch (result.resultType) {
+                    case TestResult.ResultType.SUCCESS:
+                        summaryStyle = ANSI_GREEN
+                        break
+                    case TestResult.ResultType.FAILURE:
+                        summaryStyle = ANSI_RED
+                        break
+                }
+
+                logger.lifecycle("--------------------------------------------------------------------------")
+                logger.lifecycle("Results: " + summaryStyle + "${result.resultType}" + ANSI_RESET
+                        + " (${result.testCount} tests, "
+                        + ANSI_GREEN + "${result.successfulTestCount} passed" + ANSI_RESET
+                        + ", " + failStyle + "${result.failedTestCount} failed" + ANSI_RESET
+                        + ", " + skipStyle + "${result.skippedTestCount} skipped" + ANSI_RESET
+                        + ")")
+                logger.lifecycle("--------------------------------------------------------------------------")
+            }
+        }
+
+    }
+}
