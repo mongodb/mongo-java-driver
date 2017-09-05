@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.net.ConnectException;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
+import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
 import java.nio.channels.InterruptedByTimeoutException;
@@ -40,14 +41,16 @@ final class AsynchronousSocketChannelStream implements Stream {
     private final ServerAddress serverAddress;
     private final SocketSettings settings;
     private final BufferProvider bufferProvider;
+    private final AsynchronousChannelGroup group;
     private volatile AsynchronousSocketChannel channel;
     private volatile boolean isClosed;
 
     AsynchronousSocketChannelStream(final ServerAddress serverAddress, final SocketSettings settings,
-                                    final BufferProvider bufferProvider) {
+                                    final BufferProvider bufferProvider, final AsynchronousChannelGroup group) {
         this.serverAddress = serverAddress;
         this.settings = settings;
         this.bufferProvider = bufferProvider;
+        this.group = group;
     }
 
     @Override
@@ -67,7 +70,7 @@ final class AsynchronousSocketChannelStream implements Stream {
     public void openAsync(final AsyncCompletionHandler<Void> handler) {
         isTrue("unopened", channel == null);
         try {
-            channel = AsynchronousSocketChannel.open();
+            channel = AsynchronousSocketChannel.open(group);
             channel.setOption(StandardSocketOptions.TCP_NODELAY, true);
             channel.setOption(StandardSocketOptions.SO_KEEPALIVE, settings.isKeepAlive());
             if (settings.getReceiveBufferSize() > 0) {
@@ -152,6 +155,18 @@ final class AsynchronousSocketChannelStream implements Stream {
     @Override
     public boolean isClosed() {
         return isClosed;
+    }
+
+    public ServerAddress getServerAddress() {
+        return serverAddress;
+    }
+
+    public SocketSettings getSettings() {
+        return settings;
+    }
+
+    public AsynchronousChannelGroup getGroup() {
+        return group;
     }
 
     private void pipeOneBuffer(final AsyncWritableByteChannel byteChannel, final ByteBuf byteBuffer,
