@@ -1,3 +1,5 @@
+dist: trusty
+sudo: true
 language: java
 jdk:
 - oraclejdk8
@@ -9,8 +11,6 @@ notifications:
     - ross@mongodb.com
     on_success: change
     on_failure: always
-  flowdock:
-    secure: "Ziw1Be2tV0QAYuiYDrepfdNH/oBfNhnXFMji3AdRi6MePVpc6CtOOT/b9Fra\nQgMMrX3AHk/QIDo6QQx9/aVB3FS1fzOPGQkSsEZmiljZU7wZCct1sSSyttf/\nsRG0lyTnmgFNTHyTSDT3JbXAkyF/vJmG/JJJoBUZhmFxzR2fM0Q="
 
 branches:
   only:
@@ -18,31 +18,26 @@ branches:
 
 env:
   global:
-    - MONGO_REPO="http://repo.mongodb.com/apt/ubuntu"
-    - REPO_TYPE="precise/mongodb-enterprise/2.6 multiverse"
-    - SOURCES_LOC="/etc/apt/sources.list.d/mongodb-enterprise.list"
-    - KEY_SERVER="hkp://keyserver.ubuntu.com:80"
-    - MONGOD_PARAMS="--setParameter=enableTestCommands=1"
-    - MONGOD_OPTS="--dbpath ./data --fork --logpath mongod.log ${MONGOD_PARAMS}"
-    - TERM=dumb
+    - MONGODB_FILE_NAME=mongodb-linux-x86_64-enterprise-ubuntu1404
+    - MONGODB=3.4.7
 
-before_install:
-    # MongoDB Enterprise Edition 2.6
-    - sudo apt-key adv --keyserver ${KEY_SERVER} --recv 7F0CEB10
-    - echo "deb ${MONGO_REPO} ${REPO_TYPE}" | sudo tee ${SOURCES_LOC}
-
-    # Update all the repositories
-    - sudo apt-get update -qq
+addons:
+  apt:
+    packages:
+    - libsnmp-dev
 
 install:
-    # Install MongoDB Enterprise
-    - sudo apt-get install mongodb-enterprise-server
-    - sudo stop mongod
-    - mkdir data
+  - wget http://downloads.mongodb.com/linux/${MONGODB_FILE_NAME}-${MONGODB}.tgz
+  - tar xzf ${MONGODB_FILE_NAME}-${MONGODB}.tgz
+  - ${PWD}/${MONGODB_FILE_NAME}-${MONGODB}/bin/mongod --version
 
 before_script:
-    - mongod ${MONGOD_OPTS}
+  - mkdir ${PWD}/${MONGODB_FILE_NAME}-${MONGODB}/data
+  - ${PWD}/${MONGODB_FILE_NAME}-${MONGODB}/bin/mongod --dbpath ${PWD}/${MONGODB_FILE_NAME}-${MONGODB}/data --logpath ${PWD}/${MONGODB_FILE_NAME}-${MONGODB}/mongodb.log --setParameter enableTestCommands=1 --fork --smallfiles --nojournal
 
 script:
   - ./gradlew -q assemble
-  - ./gradlew check -i -S -Ptravistest=true
+  - ./gradlew check -Ptravistest=true
+
+after_script:
+  - pkill mongod

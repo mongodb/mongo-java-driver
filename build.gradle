@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+import static org.gradle.util.CollectionUtils.single
 
 apply plugin: 'eclipse'
 apply plugin: 'idea'
@@ -110,7 +111,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
         options.author = true
         options.version = true
         options.links 'http://docs.oracle.com/javase/7/docs/api/'
-        options.tagletPath project(':util').sourceSets.main.output.classesDir
+        options.tagletPath single(project(':util').sourceSets.main.output.classesDirs)
         options.taglets 'ManualTaglet'
         options.taglets 'ServerReleaseTaglet'
         options.encoding = 'UTF-8'
@@ -224,6 +225,20 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
                     'java.security.krb5.realm': project.getProperty('krb5.realm'),
                     'java.security.auth.login.config': project.getProperty('auth.login.config'),
                     )
+        }
+
+        if (project.buildingWith('travistest')) {
+            beforeSuite { suite ->
+                if (suite.name.startsWith("Test Run") || suite.name.startsWith("Gradle Worker")) return
+                if (suite.parent != null && suite.className != null) {
+                    println("travis_fold:start:" + suite.name + "\r")
+                }
+            }
+            afterSuite { suite, result ->
+                if (suite.parent != null && suite.className != null && result.failedTestCount == 0) {
+                    println("travis_fold:end:" + suite.name + "\r")
+                }
+            }
         }
 
         useJUnit {
