@@ -227,20 +227,6 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
                     )
         }
 
-        if (project.buildingWith('travistest')) {
-            beforeSuite { suite ->
-                if (suite.name.startsWith("Test Run") || suite.name.startsWith("Gradle Worker")) return
-                if (suite.parent != null && suite.className != null) {
-                    println("travis_fold:start:" + suite.name + "\r")
-                }
-            }
-            afterSuite { suite, result ->
-                if (suite.parent != null && suite.className != null && result.failedTestCount == 0) {
-                    println("travis_fold:end:" + suite.name + "\r")
-                }
-            }
-        }
-
         useJUnit {
             if (!project.buildingWith('rs.enabled')) {
                 excludeCategories 'category.ReplicaSet'
@@ -254,17 +240,6 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
         }
 
         jacoco { enabled = false }
-
-        beforeTest { descr ->
-            logger.info("[Test ${descr.className} > ${descr.name}]")
-        }
-
-        afterTest { descr, result ->
-                def failureStartTime = result.getResultType().toString() == "FAILURE" ? " Started at: ${result.getStartTime()}" : ""
-                logger.info("[Test ${descr.className} > ${descr.name}] ${result.getResultType()} "
-                        + "(${result.getEndTime() - result.getStartTime()} ms) ${failureStartTime}")
-
-        }
 
         testLogging { exceptionFormat = 'full' }
     }
@@ -347,4 +322,5 @@ gradle.buildFinished { BuildResult result ->
 }
 
 apply from: 'gradle/deploy.gradle'
+apply from: 'gradle/TestColorOutput.gradle'
 
