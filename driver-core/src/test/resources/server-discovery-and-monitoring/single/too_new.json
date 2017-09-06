@@ -1,5 +1,5 @@
 {
-  "description": "Handle a not-ok ismaster response",
+  "description": "Standalone with large minWireVersion",
   "uri": "mongodb://a",
   "phases": [
     {
@@ -9,30 +9,22 @@
           {
             "ok": 1,
             "ismaster": true,
-            "minWireVersion": 0,
-            "maxWireVersion": 6
-          }
-        ],
-        [
-          "a:27017",
-          {
-            "ok": 0,
-            "ismaster": true,
-            "minWireVersion": 0,
-            "maxWireVersion": 6
+            "minWireVersion": 999,
+            "maxWireVersion": 1000
           }
         ]
       ],
       "outcome": {
         "servers": {
           "a:27017": {
-            "type": "Unknown",
+            "type": "Standalone",
             "setName": null
           }
         },
         "topologyType": "Single",
         "logicalSessionTimeoutMinutes": null,
-        "setName": null
+        "setName": null,
+        "compatible": false
       }
     }
   ]

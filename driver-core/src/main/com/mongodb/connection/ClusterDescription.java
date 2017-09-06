@@ -167,6 +167,29 @@ public class ClusterDescription {
     }
 
     /**
+     * Gets the logical session timeout in minutes, or null if at least one of the known servers does not support logical sessions.
+     *
+     * @return the logical session timeout in minutes, which may be null
+     * @mongodb.server.release 3.6
+     * @since 3.6
+     */
+    public Integer getLogicalSessionTimeoutMinutes() {
+        Integer retVal = null;
+        for (ServerDescription cur : getServersByPredicate(new Predicate() {
+            @Override
+            public boolean apply(final ServerDescription serverDescription) {
+                return serverDescription.isOk();
+            }
+        })) {
+            if (cur.getLogicalSessionTimeoutMinutes() == null) {
+                return null;
+            }
+            retVal = cur.getLogicalSessionTimeoutMinutes();
+        }
+        return retVal;
+    }
+
+    /**
      * Returns the Set of all server descriptions in this cluster, sorted by the String value of the ServerAddress of each one.
      *
      * @return the set of server descriptions

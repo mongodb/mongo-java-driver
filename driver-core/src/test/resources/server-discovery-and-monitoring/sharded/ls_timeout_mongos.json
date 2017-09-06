@@ -1,5 +1,5 @@
 {
-  "description": "Mongos disconnect",
+  "description": "Parse logicalSessionTimeoutMinutes from mongoses",
   "uri": "mongodb://a,b",
   "phases": [
     {
@@ -10,6 +10,7 @@
             "ok": 1,
             "ismaster": true,
             "msg": "isdbgrid",
+            "logicalSessionTimeoutMinutes": 1,
             "minWireVersion": 0,
             "maxWireVersion": 6
           }
@@ -20,6 +21,7 @@
             "ok": 1,
             "ismaster": true,
             "msg": "isdbgrid",
+            "logicalSessionTimeoutMinutes": 2,
             "minWireVersion": 0,
             "maxWireVersion": 6
           }
@@ -37,7 +39,7 @@
           }
         },
         "topologyType": "Sharded",
-        "logicalSessionTimeoutMinutes": null,
+        "logicalSessionTimeoutMinutes": 1,
         "setName": null
       }
     },
@@ -45,29 +47,17 @@
       "responses": [
         [
           "a:27017",
-          {}
-        ]
-      ],
-      "outcome": {
-        "servers": {
-          "a:27017": {
-            "type": "Unknown",
-            "setName": null
-          },
-          "b:27017": {
-            "type": "Mongos",
-            "setName": null
+          {
+            "ok": 1,
+            "ismaster": true,
+            "msg": "isdbgrid",
+            "logicalSessionTimeoutMinutes": 1,
+            "minWireVersion": 0,
+            "maxWireVersion": 6
           }
-        },
-        "topologyType": "Sharded",
-        "logicalSessionTimeoutMinutes": null,
-        "setName": null
-      }
-    },
-    {
-      "responses": [
+        ],
         [
-          "a:27017",
+          "b:27017",
           {
             "ok": 1,
             "ismaster": true,
