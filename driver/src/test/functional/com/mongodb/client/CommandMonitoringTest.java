@@ -282,6 +282,7 @@ public class CommandMonitoringTest {
         } else if (actual.getCommandName().equals("killCursors")) {
             command.getArray("cursors").set(0, new BsonInt64(42));
         }
+        command.remove("$clusterTime");
 
         return new CommandStartedEvent(actual.getRequestId(), actual.getConnectionDescription(), actual.getDatabaseName(),
                 actual.getCommandName(), command);
