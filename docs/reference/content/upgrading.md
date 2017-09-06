@@ -30,8 +30,8 @@ its implementation.  See [Async]({{< ref "driver-async/index.md" >}}) for detail
 
 The following table specifies the compatibility of the MongoDB Java driver for use with a specific version of MongoDB.
 
-|Java Driver Version|MongoDB 2.6|MongoDB 3.0 |MongoDB 3.2|MongoDB 3.4||MongoDB 3.6|
-|-------------------|-----------|------------|-----------|-----------|
+|Java Driver Version|MongoDB 2.6|MongoDB 3.0 |MongoDB 3.2|MongoDB 3.4|MongoDB 3.6|
+|-------------------|-----------|------------|-----------|-----------|-----------|
 |Version 3.6        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |
 |Version 3.5        |  ✓  |  ✓  |  ✓  |  ✓  |     |
 |Version 3.4        |  ✓  |  ✓  |  ✓  |  ✓  |     |
