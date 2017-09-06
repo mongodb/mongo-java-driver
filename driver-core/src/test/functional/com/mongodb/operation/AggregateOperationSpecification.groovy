@@ -178,7 +178,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         given:
         def expected = [createExpectedChangeNotification(namespace, 0), createExpectedChangeNotification(namespace, 1)]
 
-        def pipeline = ['{$changeStream: {}}', '{$project: {"_id.clusterTime": 0}}'].collect { BsonDocument.parse(it) }
+        def pipeline = ['{$changeStream: {}}', '{$project: {"_id.clusterTime": 0, "_id.uuid": 0}}'].collect { BsonDocument.parse(it) }
         def operation = new AggregateOperation<BsonDocument>(namespace, pipeline, new BsonDocumentCodec())
 
         when:
@@ -194,7 +194,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         cursor?.close()
 
         where:
-        async << [true]
+        async << [true, false]
     }
 
     def 'should be able to aggregate'() {
@@ -406,7 +406,6 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     private static BsonDocument createExpectedChangeNotification(MongoNamespace namespace, int idValue) {
         BsonDocument.parse("""{
             "_id": {
-                "ns": "$namespace",
                 "documentKey": {"_id": $idValue}
             },
             "operationType": "insert",
