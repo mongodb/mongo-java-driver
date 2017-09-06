@@ -287,7 +287,6 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         docs.collect {
             BsonDocument.parse("""{
                 "_id": {
-                    "ns": "${helper.getNamespace()}",
                     "documentKey": {"_id": $it}
                 },
                 "operationType": "insert",
@@ -299,16 +298,17 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
     }
 
     def tryNextAndClean(cursor, boolean async) {
-        removeTimestamp(tryNext(cursor, async))
+        removeTimestampAndUUID(tryNext(cursor, async))
     }
 
     def nextAndClean(cursor, boolean async) {
-        removeTimestamp(next(cursor, async))
+        removeTimestampAndUUID(next(cursor, async))
     }
 
-    def removeTimestamp(List<BsonDocument> next) {
+    def removeTimestampAndUUID(List<BsonDocument> next) {
         next?.collect { doc ->
             doc.getDocument('_id').remove('clusterTime')
+            doc.getDocument('_id').remove('uuid')
             doc
         }
     }
