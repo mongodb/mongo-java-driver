@@ -1,5 +1,5 @@
 {
-  "description": "Connect to standalone",
+  "description": "Standalone with default maxWireVersion of 0",
   "uri": "mongodb://a",
   "phases": [
     {
@@ -8,9 +8,7 @@
           "a:27017",
           {
             "ok": 1,
-            "ismaster": true,
-            "minWireVersion": 0,
-            "maxWireVersion": 6
+            "ismaster": true
           }
         ]
       ],
@@ -23,7 +21,8 @@
         },
         "topologyType": "Single",
         "logicalSessionTimeoutMinutes": null,
-        "setName": null
+        "setName": null,
+        "compatible": false
       }
     }
   ]

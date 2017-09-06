@@ -1,6 +1,6 @@
 {
-  "description": "Handle a not-ok ismaster response",
-  "uri": "mongodb://a",
+  "description": "Multiple mongoses with default maxWireVersion of 0",
+  "uri": "mongodb://a,b",
   "phases": [
     {
       "responses": [
@@ -9,30 +9,35 @@
           {
             "ok": 1,
             "ismaster": true,
-            "minWireVersion": 0,
+            "msg": "isdbgrid",
+            "minWireVersion": 2,
             "maxWireVersion": 6
           }
         ],
         [
-          "a:27017",
+          "b:27017",
           {
-            "ok": 0,
+            "ok": 1,
             "ismaster": true,
-            "minWireVersion": 0,
-            "maxWireVersion": 6
+            "msg": "isdbgrid"
           }
         ]
       ],
       "outcome": {
         "servers": {
           "a:27017": {
-            "type": "Unknown",
+            "type": "Mongos",
+            "setName": null
+          },
+          "b:27017": {
+            "type": "Mongos",
             "setName": null
           }
         },
-        "topologyType": "Single",
+        "topologyType": "Sharded",
         "logicalSessionTimeoutMinutes": null,
-        "setName": null
+        "setName": null,
+        "compatible": false
       }
     }
   ]

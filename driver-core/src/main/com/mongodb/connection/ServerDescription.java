@@ -74,6 +74,8 @@ public class ServerDescription {
     private final Date lastWriteDate;
     private final long lastUpdateTimeNanos;
 
+    private final Integer logicalSessionTimeoutMinutes;
+
     private final Throwable exception;
 
     /**
@@ -93,6 +95,17 @@ public class ServerDescription {
      */
     public String getCanonicalAddress() {
         return canonicalAddress;
+    }
+
+    /**
+     * Gets the session timeout in minutes.
+     *
+     * @return the session timeout in minutes, or null if sessions are not supported by this server
+     * @mongodb.server.release 3.6
+     * @since 3.6
+     */
+    public Integer getLogicalSessionTimeoutMinutes() {
+        return logicalSessionTimeoutMinutes;
     }
 
     /**
@@ -120,6 +133,7 @@ public class ServerDescription {
         private Integer setVersion;
         private Date lastWriteDate;
         private long lastUpdateTimeNanos = Time.nanoTime();
+        private Integer logicalSessionTimeoutMinutes;
 
         private Throwable exception;
 
@@ -357,6 +371,20 @@ public class ServerDescription {
             this.lastUpdateTimeNanos = lastUpdateTimeNanos;
             return this;
         }
+
+        /**
+         * Sets the session timeout in minutes.
+         *
+         * @param logicalSessionTimeoutMinutes the session timeout in minutes, or null if sessions are not supported by this server
+         * @return this
+         * @mongodb.server.release 3.6
+         * @since 3.6
+         */
+        public Builder logicalSessionTimeoutMinutes(final Integer logicalSessionTimeoutMinutes) {
+            this.logicalSessionTimeoutMinutes = logicalSessionTimeoutMinutes;
+            return this;
+        }
+
 
         /**
          * Sets the exception thrown while attempting to determine the server description.
@@ -766,6 +794,12 @@ public class ServerDescription {
             return false;
         }
 
+        if (logicalSessionTimeoutMinutes != null
+                    ? !logicalSessionTimeoutMinutes.equals(that.logicalSessionTimeoutMinutes)
+                    : that.logicalSessionTimeoutMinutes != null) {
+            return false;
+        }
+
         // Compare class equality and message as exceptions rarely override equals
         Class<?> thisExceptionClass = exception != null ? exception.getClass() : null;
         Class<?> thatExceptionClass = that.exception != null ? that.exception.getClass() : null;
@@ -803,6 +837,7 @@ public class ServerDescription {
         result = 31 * result + version.hashCode();
         result = 31 * result + minWireVersion;
         result = 31 * result + maxWireVersion;
+        result = 31 * result + (logicalSessionTimeoutMinutes != null ? logicalSessionTimeoutMinutes.hashCode() : 0);
         result = 31 * result + (exception == null ? 0 : exception.getClass().hashCode());
         result = 31 * result + (exception == null ? 0 : exception.getMessage().hashCode());
         return result;
@@ -836,6 +871,7 @@ public class ServerDescription {
                   + ", setVersion=" + setVersion
                   + ", lastWriteDate=" + lastWriteDate
                   + ", lastUpdateTimeNanos=" + lastUpdateTimeNanos
+                  + ", logicalSessionTimeoutMinutes=" + logicalSessionTimeoutMinutes
                 : "")
                + (exception == null ? "" : ", exception=" + translateExceptionToString())
                + '}';
@@ -900,6 +936,7 @@ public class ServerDescription {
         setVersion = builder.setVersion;
         lastWriteDate = builder.lastWriteDate;
         lastUpdateTimeNanos = builder.lastUpdateTimeNanos;
+        logicalSessionTimeoutMinutes = builder.logicalSessionTimeoutMinutes;
         exception = builder.exception;
     }
 }

@@ -56,9 +56,15 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
                 applyResponse(response.asArray());
             }
             BsonDocument outcome = phase.asDocument().getDocument("outcome");
-            assertTopologyType(outcome.getString("topologyType").getValue());
+            assertTopology(outcome);
             assertServers(outcome.getDocument("servers"));
         }
+    }
+
+    private void assertTopology(final BsonDocument outcome) {
+        assertTopologyType(outcome.getString("topologyType").getValue());
+        assertLogicalSessionTimeout(outcome.get("logicalSessionTimeoutMinutes"));
+        assertDriverCompatibility(outcome.get("compatible"));
     }
 
     @Parameterized.Parameters(name = "{0}")
@@ -137,6 +143,21 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
             assertEquals(getClusterType(topologyType), getCluster().getCurrentDescription().getType());
         } else {
             throw new UnsupportedOperationException("No handler for topology type " + topologyType);
+        }
+    }
+
+    private void assertLogicalSessionTimeout(final BsonValue logicalSessionTimeoutMinutes) {
+        if (logicalSessionTimeoutMinutes.isNull()) {
+            assertNull(getCluster().getCurrentDescription().getLogicalSessionTimeoutMinutes());
+        } else if (logicalSessionTimeoutMinutes.isNumber()) {
+            assertEquals((Integer) logicalSessionTimeoutMinutes.asNumber().intValue(),
+                    getCluster().getCurrentDescription().getLogicalSessionTimeoutMinutes());
+        }
+    }
+
+    private void assertDriverCompatibility(final BsonValue compatible) {
+        if (compatible != null) {
+            assertEquals(compatible.asBoolean().getValue(), getCluster().getCurrentDescription().isCompatibleWithDriver());
         }
     }
 }

@@ -1,5 +1,5 @@
 {
-  "description": "Non-Mongos server in sharded cluster",
+  "description": "Multiple mongoses with large minWireVersion",
   "uri": "mongodb://a,b",
   "phases": [
     {
@@ -10,8 +10,8 @@
             "ok": 1,
             "ismaster": true,
             "msg": "isdbgrid",
-            "minWireVersion": 0,
-            "maxWireVersion": 6
+            "minWireVersion": 999,
+            "maxWireVersion": 1000
           }
         ],
         [
@@ -19,12 +19,7 @@
           {
             "ok": 1,
             "ismaster": true,
-            "hosts": [
-              "b:27017"
-            ],
-            "setName": "rs",
-            "minWireVersion": 0,
-            "maxWireVersion": 6
+            "msg": "isdbgrid"
           }
         ]
       ],
@@ -33,11 +28,16 @@
           "a:27017": {
             "type": "Mongos",
             "setName": null
+          },
+          "b:27017": {
+            "type": "Mongos",
+            "setName": null
           }
         },
         "topologyType": "Sharded",
         "logicalSessionTimeoutMinutes": null,
-        "setName": null
+        "setName": null,
+        "compatible": false
       }
     }
   ]

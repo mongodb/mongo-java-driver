@@ -1,6 +1,6 @@
 {
-  "description": "Member removed by reconfig",
-  "uri": "mongodb://a,b/?replicaSet=rs",
+  "description": "Secondary with mismatched 'me' tells us who the primary is",
+  "uri": "mongodb://a/?replicaSet=rs",
   "phases": [
     {
       "responses": [
@@ -8,12 +8,14 @@
           "a:27017",
           {
             "ok": 1,
-            "ismaster": true,
-            "setName": "rs",
+            "ismaster": false,
+            "secondary": true,
+            "me": "c:27017",
             "hosts": [
-              "a:27017",
               "b:27017"
             ],
+            "setName": "rs",
+            "primary": "b:27017",
             "minWireVersion": 0,
             "maxWireVersion": 6
           }
@@ -21,16 +23,12 @@
       ],
       "outcome": {
         "servers": {
-          "a:27017": {
-            "type": "RSPrimary",
-            "setName": "rs"
-          },
           "b:27017": {
-            "type": "Unknown",
+            "type": "PossiblePrimary",
             "setName": null
           }
         },
-        "topologyType": "ReplicaSetWithPrimary",
+        "topologyType": "ReplicaSetNoPrimary",
         "logicalSessionTimeoutMinutes": null,
         "setName": "rs"
       }
@@ -38,14 +36,15 @@
     {
       "responses": [
         [
-          "a:27017",
+          "b:27017",
           {
             "ok": 1,
             "ismaster": true,
-            "setName": "rs",
+            "me": "b:27017",
             "hosts": [
-              "a:27017"
+              "b:27017"
             ],
+            "setName": "rs",
             "minWireVersion": 0,
             "maxWireVersion": 6
           }
@@ -53,7 +52,7 @@
       ],
       "outcome": {
         "servers": {
-          "a:27017": {
+          "b:27017": {
             "type": "RSPrimary",
             "setName": "rs"
           }

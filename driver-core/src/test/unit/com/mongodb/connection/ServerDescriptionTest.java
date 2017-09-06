@@ -98,6 +98,7 @@ public class ServerDescriptionTest {
         assertNull(serverDescription.getSetVersion());
         assertNull(serverDescription.getLastWriteDate());
         assertTrue(serverDescription.getLastUpdateTime(TimeUnit.NANOSECONDS) > currentNanoTime);
+        assertNull(serverDescription.getLogicalSessionTimeoutMinutes());
         assertNull(serverDescription.getException());
     }
 
@@ -128,6 +129,7 @@ public class ServerDescriptionTest {
                                               .setVersion(2)
                                               .lastWriteDate(new Date(1234L))
                                               .lastUpdateTimeNanos(40000L)
+                                              .logicalSessionTimeoutMinutes(30)
                                               .exception(exception)
                                               .build();
 
@@ -163,6 +165,7 @@ public class ServerDescriptionTest {
         assertEquals(Integer.valueOf(2), serverDescription.getSetVersion());
         assertEquals(new Date(1234), serverDescription.getLastWriteDate());
         assertEquals(40000L, serverDescription.getLastUpdateTime(TimeUnit.NANOSECONDS));
+        assertEquals((Integer) 30, serverDescription.getLogicalSessionTimeoutMinutes());
         assertEquals(exception, serverDescription.getException());
     }
 
@@ -244,6 +247,7 @@ public class ServerDescriptionTest {
         otherDescription = createBuilder().lastWriteDate(new Date()).build();
         assertNotEquals(builder.build(), otherDescription);
 
+        otherDescription = createBuilder().logicalSessionTimeoutMinutes(32).build();
         assertNotEquals(builder.build(), otherDescription);
 
         // roundTripTime is considered equals and equivalent state
@@ -273,6 +277,7 @@ public class ServerDescriptionTest {
                        .setVersion(2)
                        .lastUpdateTimeNanos(1)
                        .lastWriteDate(new Date(42))
+                       .logicalSessionTimeoutMinutes(25)
                        .roundTripTime(56, TimeUnit.MILLISECONDS);
     }
 
