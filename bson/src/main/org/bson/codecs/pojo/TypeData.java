@@ -207,27 +207,31 @@ final class TypeData<T> {
     }
 
     private TypeData(final Class<T> type, final List<TypeData<?>> typeParameters) {
-        this.type = getClass(type);
+        this.type = getTypeClass(type);
         this.typeParameters = typeParameters;
     }
 
+    boolean isAssignableFrom(final Class<?> cls) {
+        return type.isAssignableFrom(getTypeClass(cls));
+    }
+
     @SuppressWarnings("unchecked")
-    private Class<T> getClass(final Class<T> type) {
-        Class<T> instanceType = boxType(type);
+    private <S> Class<S> getTypeClass(final Class<S> type) {
+        Class<S> instanceType = boxType(type);
         if (type.equals(Map.class)) {
-            instanceType = (Class<T>) HashMap.class;
+            instanceType = (Class<S>) HashMap.class;
         } else if (type.equals(List.class) || type.equals(Collection.class)) {
-            instanceType = (Class<T>) ArrayList.class;
+            instanceType = (Class<S>) ArrayList.class;
         } else if (type.equals(Set.class)) {
-            instanceType = (Class<T>) HashSet.class;
+            instanceType = (Class<S>) HashSet.class;
         }
         return instanceType;
     }
 
     @SuppressWarnings("unchecked")
-    private Class<T> boxType(final Class<T> clazz) {
+    private <S> Class<S> boxType(final Class<S> clazz) {
         if (clazz.isPrimitive()) {
-            return (Class<T>) PRIMITIVE_CLASS_MAP.get(clazz);
+            return (Class<S>) PRIMITIVE_CLASS_MAP.get(clazz);
         } else {
             return clazz;
         }
