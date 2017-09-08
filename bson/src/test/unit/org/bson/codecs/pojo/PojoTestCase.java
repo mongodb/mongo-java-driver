@@ -23,6 +23,7 @@ import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.ByteBufNIO;
 import org.bson.codecs.BsonDocumentCodec;
+import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
@@ -170,7 +171,7 @@ abstract class PojoTestCase {
     }
 
     CodecRegistry getCodecRegistry(final PojoCodecProvider.Builder builder) {
-        return fromProviders(new ValueCodecProvider(), builder.build());
+        return fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider(), builder.build());
     }
 
     static SimpleModel getSimpleModel() {

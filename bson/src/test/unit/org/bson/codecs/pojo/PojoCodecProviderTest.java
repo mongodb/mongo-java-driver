@@ -16,7 +16,6 @@
 
 package org.bson.codecs.pojo;
 
-import org.bson.Document;
 import org.bson.codecs.Codec;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -58,14 +57,6 @@ public final class PojoCodecProviderTest extends PojoTestCase {
         PojoCodecProvider provider = PojoCodecProvider.builder().automatic(true).build();
         CodecRegistry registry = fromProviders(provider);
         Codec<Integer> codec = provider.get(Integer.class, registry);
-        assertNull(codec);
-    }
-
-    @Test
-    public void testAutomaticInvalidMap() {
-        PojoCodecProvider provider = PojoCodecProvider.builder().automatic(true).build();
-        CodecRegistry registry = fromProviders(provider);
-        Codec<Document> codec = provider.get(Document.class, registry);
         assertNull(codec);
     }
 

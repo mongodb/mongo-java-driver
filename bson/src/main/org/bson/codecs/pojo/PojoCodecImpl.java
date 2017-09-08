@@ -191,9 +191,9 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
         Codec<S> codec = null;
         Class<S> head = typeData.getType();
 
-        if (Collection.class.isAssignableFrom(head)) {
+        if (Collection.class.isAssignableFrom(head) && typeData.getTypeParameters().size() == 1) {
             codec = new CollectionCodec(head, getCodecFromTypeData(typeData.getTypeParameters().get(0)));
-        } else if (Map.class.isAssignableFrom(head)) {
+        } else if (Map.class.isAssignableFrom(head) && typeData.getTypeParameters().size() == 2) {
             codec = new MapCodec(head, getCodecFromTypeData(typeData.getTypeParameters().get(1)));
         } else if (Enum.class.isAssignableFrom(head)) {
             try {
@@ -204,7 +204,6 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
         } else {
             codec = getCodecFromClass(head);
         }
-
 
         return codec;
     }
