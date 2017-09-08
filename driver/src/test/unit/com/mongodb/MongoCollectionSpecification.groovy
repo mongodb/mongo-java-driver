@@ -478,6 +478,37 @@ class MongoCollectionSpecification extends Specification {
         WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([unacknowledged(), unacknowledged(), unacknowledged()])
     }
 
+    def 'insertOne should use ClientSession properly'() {
+        given:
+        def executor = new TestOperationExecutor([null, null])
+        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern, executor)
+        def session = Stub(ClientSession)
+
+        when:
+        collection.insertOne(null, new Document())
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.insertOne(null, new Document(), new InsertOneOptions())
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.insertOne(session, new Document())
+
+        then:
+        executor.getClientSession() == session
+
+        when:
+        collection.insertOne(session, new Document(), new InsertOneOptions())
+
+        then:
+        executor.getClientSession() == session
+    }
+
     def 'insertMany should use MixedBulkWriteOperation correctly'() {
         given:
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern, executor)
