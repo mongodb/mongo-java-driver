@@ -16,11 +16,13 @@
 
 package org.bson.codecs.pojo;
 
+import org.bson.BsonDocument;
 import org.bson.codecs.pojo.entities.AbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.CollectionNestedPojoModel;
 import org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.ConcreteCollectionsModel;
 import org.bson.codecs.pojo.entities.ConcreteStandAloneAbstractInterfaceModel;
+import org.bson.codecs.pojo.entities.ContainsAlternativeMapAndCollectionModel;
 import org.bson.codecs.pojo.entities.ConventionModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.bson.codecs.pojo.entities.GenericTreeModel;
@@ -252,6 +254,11 @@ public final class PojoRoundTripTest extends PojoTestCase {
         data.add(new TestData("Creator all final with nulls", new CreatorAllFinalFieldsModel("pId", "Ada", null),
                 getPojoCodecProviderBuilder(CreatorAllFinalFieldsModel.class),
                 "{'_id': 'pId', '_t': 'org.bson.codecs.pojo.entities.conventions.CreatorAllFinalFieldsModel', 'firstName': 'Ada'}"));
+
+        data.add(new TestData("Can handle custom Maps and Collections",
+                new ContainsAlternativeMapAndCollectionModel(BsonDocument.parse("{customList: [1,2,3], customMap: {'field': 'value'}}")),
+                getPojoCodecProviderBuilder(ContainsAlternativeMapAndCollectionModel.class),
+                "{customList: [1,2,3], customMap: {'field': 'value'}}"));
 
         return data;
     }
