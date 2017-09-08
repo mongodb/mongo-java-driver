@@ -217,8 +217,38 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public <TResult> FindIterable<TResult> find(final Bson filter, final Class<TResult> resultClass) {
-        return new FindIterableImpl<TDocument, TResult>(namespace, this.documentClass, resultClass, codecRegistry, readPreference,
-                readConcern, executor, filter, new FindOptions());
+        return createFindIterable(null, filter, resultClass);
+    }
+
+    @Override
+    public FindIterable<TDocument> find(final ClientSession clientSession) {
+        notNull("clientSession", clientSession);
+        return find(clientSession, new BsonDocument(), documentClass);
+    }
+
+    @Override
+    public <TResult> FindIterable<TResult> find(final ClientSession clientSession, final Class<TResult> resultClass) {
+        notNull("clientSession", clientSession);
+        return find(clientSession, new BsonDocument(), resultClass);
+    }
+
+    @Override
+    public FindIterable<TDocument> find(final ClientSession clientSession, final Bson filter) {
+        notNull("clientSession", clientSession);
+        return find(clientSession, filter, documentClass);
+    }
+
+    @Override
+    public <TResult> FindIterable<TResult> find(final ClientSession clientSession, final Bson filter,
+                                                final Class<TResult> resultClass) {
+        notNull("clientSession", clientSession);
+        return createFindIterable(clientSession, filter, resultClass);
+    }
+
+    private <TResult> FindIterable<TResult> createFindIterable(final ClientSession clientSession, final Bson filter,
+                                                               final Class<TResult> resultClass) {
+        return new FindIterableImpl<TDocument, TResult>(clientSession, namespace, this.documentClass, resultClass, codecRegistry,
+                                                               readPreference, readConcern, executor, filter, new FindOptions());
     }
 
     @Override
