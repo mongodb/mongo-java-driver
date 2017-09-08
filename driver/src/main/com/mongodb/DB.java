@@ -22,6 +22,7 @@ import com.mongodb.client.model.DBCreateViewOptions;
 import com.mongodb.client.model.ValidationAction;
 import com.mongodb.client.model.ValidationLevel;
 import com.mongodb.connection.BufferProvider;
+import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.CreateCollectionOperation;
@@ -30,6 +31,7 @@ import com.mongodb.operation.CreateViewOperation;
 import com.mongodb.operation.DropDatabaseOperation;
 import com.mongodb.operation.DropUserOperation;
 import com.mongodb.operation.ListCollectionsOperation;
+import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.UpdateUserOperation;
 import com.mongodb.operation.UserExistsOperation;
 import org.bson.BsonDocument;
@@ -255,14 +257,18 @@ public class DB {
      * @mongodb.driver.manual reference/method/db.getCollectionNames/ getCollectionNames()
      */
     public Set<String> getCollectionNames() {
-        List<String> collectionNames = new OperationIterable<DBObject>(new ListCollectionsOperation<DBObject>(name, commandCodec),
-                                                                       primary(), executor)
-                                       .map(new Function<DBObject, String>() {
-                                           @Override
-                                           public String apply(final DBObject result) {
-                                               return (String) result.get("name");
-                                           }
-                                       }).into(new ArrayList<String>());
+        List<String> collectionNames =
+                new MongoIterableImpl<DBObject>(executor, ReadConcern.DEFAULT, primary()) {
+                    @Override
+                    ReadOperation<BatchCursor<DBObject>> asReadOperation() {
+                        return new ListCollectionsOperation<DBObject>(name, commandCodec);
+                    }
+                }.map(new Function<DBObject, String>() {
+                            @Override
+                            public String apply(final DBObject result) {
+                                return (String) result.get("name");
+                            }
+                        }).into(new ArrayList<String>());
         Collections.sort(collectionNames);
         return new LinkedHashSet<String>(collectionNames);
     }

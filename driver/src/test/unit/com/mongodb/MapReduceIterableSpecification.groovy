@@ -57,7 +57,7 @@ class MapReduceIterableSpecification extends Specification {
         when: 'default input should be as expected'
         mapReduceIterable.iterator()
 
-        def operation = executor.getReadOperation() as MapReduceWithInlineResultsOperation<Document>
+        def operation = (executor.getReadOperation() as MapReduceIterableImpl.WrappedMapReduceReadOperation<Document>).getOperation()
         def readPreference = executor.getReadPreference()
 
         then:
@@ -76,7 +76,7 @@ class MapReduceIterableSpecification extends Specification {
                 .collation(collation)
                 .iterator()
 
-        operation = executor.getReadOperation() as MapReduceWithInlineResultsOperation<Document>
+        operation = (executor.getReadOperation() as MapReduceIterableImpl.WrappedMapReduceReadOperation<Document>).getOperation()
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new MapReduceWithInlineResultsOperation<Document>(namespace, new BsonJavaScript('map'),
