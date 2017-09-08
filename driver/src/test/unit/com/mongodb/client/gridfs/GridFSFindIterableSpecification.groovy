@@ -54,7 +54,7 @@ class GridFSFindIterableSpecification extends Specification {
     def 'should build the expected findOperation'() {
         given:
         def executor = new TestOperationExecutor([null, null]);
-        def underlying = new FindIterableImpl(namespace, GridFSFile, GridFSFile, codecRegistry, readPreference, readConcern, executor,
+        def underlying = new FindIterableImpl(null, namespace, GridFSFile, GridFSFile, codecRegistry, readPreference, readConcern, executor,
                 new Document(), new FindOptions())
         def findIterable = new GridFSFindIterableImpl(underlying)
 
@@ -100,8 +100,8 @@ class GridFSFindIterableSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([null, null]);
         def findOptions = new FindOptions()
-        def findIterable = new FindIterableImpl(namespace, GridFSFile, GridFSFile, codecRegistry, readPreference, readConcern, executor,
-                new Document('filter', 1), findOptions)
+        def findIterable = new FindIterableImpl(null, namespace, GridFSFile, GridFSFile, codecRegistry, readPreference, readConcern,
+                executor, new Document('filter', 1), findOptions)
 
         when:
         findIterable.filter(new Document('filter', 1))
@@ -150,7 +150,7 @@ class GridFSFindIterableSpecification extends Specification {
             }
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
-        def underlying = new FindIterableImpl(namespace, GridFSFile, GridFSFile, codecRegistry, readPreference, readConcern, executor,
+        def underlying = new FindIterableImpl(null, namespace, GridFSFile, GridFSFile, codecRegistry, readPreference, readConcern, executor,
                 new Document(), new FindOptions())
         def mongoIterable = new GridFSFindIterableImpl(underlying)
 

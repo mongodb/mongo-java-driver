@@ -26,6 +26,7 @@ import java.util.List;
 class TestOperationExecutor implements OperationExecutor {
 
     private final List<Object> responses;
+    private List<ClientSession> clientSessions = new ArrayList<ClientSession>();
     private List<ReadPreference> readPreferences = new ArrayList<ReadPreference>();
     private List<ReadOperation> readOperations = new ArrayList<ReadOperation>();
     private List<WriteOperation> writeOperations = new ArrayList<WriteOperation>();
@@ -48,6 +49,7 @@ class TestOperationExecutor implements OperationExecutor {
 
     @Override
     public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ClientSession session) {
+        clientSessions.add(session);
         readOperations.add(operation);
         readPreferences.add(readPreference);
         return getResponse();
@@ -55,6 +57,7 @@ class TestOperationExecutor implements OperationExecutor {
 
     @Override
     public <T> T execute(final WriteOperation<T> operation, final ClientSession session) {
+        clientSessions.add(session);
         writeOperations.add(operation);
         return getResponse();
     }
@@ -66,6 +69,10 @@ class TestOperationExecutor implements OperationExecutor {
             throw (RuntimeException) response;
         }
         return (T) response;
+    }
+
+    ClientSession getClientSession() {
+        return clientSessions.remove(0);
     }
 
     ReadOperation getReadOperation() {

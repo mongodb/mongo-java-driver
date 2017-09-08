@@ -235,6 +235,56 @@ public interface MongoCollection<TDocument> {
     <TResult> FindIterable<TResult> find(Bson filter, Class<TResult> resultClass);
 
     /**
+     * Finds all documents in the collection.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @return the find iterable interface
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @mongodb.driver.manual tutorial/query-documents/ Find
+     */
+    FindIterable<TDocument> find(ClientSession clientSession);
+
+    /**
+     * Finds all documents in the collection.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param resultClass the class to decode each document into
+     * @param <TResult>   the target document type of the iterable.
+     * @return the find iterable interface
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @mongodb.driver.manual tutorial/query-documents/ Find
+     */
+    <TResult> FindIterable<TResult> find(ClientSession clientSession, Class<TResult> resultClass);
+
+    /**
+     * Finds all documents in the collection.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param filter the query filter
+     * @return the find iterable interface
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @mongodb.driver.manual tutorial/query-documents/ Find
+     */
+    FindIterable<TDocument> find(ClientSession clientSession, Bson filter);
+
+    /**
+     * Finds all documents in the collection.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param filter      the query filter
+     * @param resultClass the class to decode each document into
+     * @param <TResult>   the target document type of the iterable.
+     * @return the find iterable interface
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @mongodb.driver.manual tutorial/query-documents/ Find
+     */
+    <TResult> FindIterable<TResult> find(ClientSession clientSession, Bson filter, Class<TResult> resultClass);
+
+    /**
      * Aggregates documents according to the specified aggregation pipeline.
      *
      * @param pipeline the aggregation pipeline
