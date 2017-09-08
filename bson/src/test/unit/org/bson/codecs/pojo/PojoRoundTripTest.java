@@ -68,6 +68,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 
 @RunWith(Parameterized.class)
 public final class PojoRoundTripTest extends PojoTestCase {
@@ -226,9 +227,9 @@ public final class PojoRoundTripTest extends PojoTestCase {
                         + "'selfRef1': {'t': true, 'v': {'$numberLong': '33'}, 'child': {'t': {'$numberLong': '44'}, 'v': false}}, "
                         + "'selfRef2': {'t': true, 'v': 3.14, 'child': {'t': 3.42, 'v': true}}}}"));
 
-        data.add(new TestData("Creator constructor", new CreatorConstructorModel(10, "eleven", 12),
+        data.add(new TestData("Creator constructor", new CreatorConstructorModel(asList(10, 11), "twelve", 13),
                 getPojoCodecProviderBuilder(CreatorConstructorModel.class),
-                "{'integerField': 10, 'stringField': 'eleven', 'longField': {$numberLong: '12'}}"));
+                "{'integersField': [10, 11], 'stringField': 'twelve', 'longField': {$numberLong: '13'}}"));
 
         data.add(new TestData("Creator no-args constructor", new CreatorNoArgsConstructorModel(40, "one", 42),
                 getPojoCodecProviderBuilder(CreatorNoArgsConstructorModel.class),

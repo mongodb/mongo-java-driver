@@ -105,8 +105,8 @@ final class CreatorExecutable<T> {
     }
 
 
-    CodecConfigurationException getError(final String msg) {
-        return getError(constructor != null, msg);
+    CodecConfigurationException getError(final Class<?> clazz, final String msg) {
+        return getError(clazz, constructor != null, msg);
     }
 
     void checkHasAnExecutable() {
@@ -115,8 +115,9 @@ final class CreatorExecutable<T> {
         }
     }
 
-    private static CodecConfigurationException getError(final boolean isConstructor, final String msg) {
-        return new CodecConfigurationException(format("Invalid @Creator %s. %s", isConstructor ? "constructor" : "method", msg));
+    private static CodecConfigurationException getError(final Class<?> clazz, final boolean isConstructor, final String msg) {
+        return new CodecConfigurationException(format("Invalid @BsonCreator %s in %s. %s", isConstructor ? "constructor" : "method",
+                clazz.getSimpleName(), msg));
     }
 
 }
