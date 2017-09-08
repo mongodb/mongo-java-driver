@@ -49,6 +49,7 @@ import com.mongodb.operation.MapReduceToCollectionOperation;
 import com.mongodb.operation.MapReduceWithInlineResultsOperation;
 import com.mongodb.operation.MixedBulkWriteOperation;
 import com.mongodb.operation.ParallelCollectionScanOperation;
+import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.RenameCollectionOperation;
 import com.mongodb.operation.UpdateOperation;
 import com.mongodb.operation.WriteOperation;
@@ -1170,13 +1171,16 @@ public class DBCollection {
     @SuppressWarnings("unchecked")
     public List distinct(final String fieldName, final DBCollectionDistinctOptions options) {
         notNull("fieldName", fieldName);
-        return new OperationIterable<BsonValue>(new DistinctOperation<BsonValue>(getNamespace(), fieldName,
-                new BsonValueCodec())
-                .readConcern(options.getReadConcern() != null ? options.getReadConcern() : getReadConcern())
-                .filter(wrapAllowNull(options.getFilter()))
-                .collation(options.getCollation()),
-                options.getReadPreference() != null ? options.getReadPreference() : getReadPreference(), executor)
-                .map(new Function<BsonValue, Object>() {
+        return new MongoIterableImpl<BsonValue>(executor, options.getReadConcern() != null ? options.getReadConcern() : getReadConcern(),
+                                                  options.getReadPreference() != null ? options.getReadPreference() : getReadPreference()) {
+            @Override
+            ReadOperation<BatchCursor<BsonValue>> asReadOperation() {
+                return new DistinctOperation<BsonValue>(getNamespace(), fieldName, new BsonValueCodec())
+                               .readConcern(super.getReadConcern())
+                               .filter(wrapAllowNull(options.getFilter()))
+                               .collation(options.getCollation());
+            }
+        }.map(new Function<BsonValue, Object>() {
             @Override
             public Object apply(final BsonValue bsonValue) {
                 if (bsonValue == null) {
@@ -2139,8 +2143,12 @@ public class DBCollection {
      * @mongodb.driver.manual core/indexes/ Indexes
      */
     public List<DBObject> getIndexInfo() {
-        return new OperationIterable<DBObject>(new ListIndexesOperation<DBObject>(getNamespace(), getDefaultDBObjectCodec()),
-                                               primary(), executor).into(new ArrayList<DBObject>());
+        return new MongoIterableImpl<DBObject>(executor, ReadConcern.DEFAULT, primary()) {
+            @Override
+            ReadOperation<BatchCursor<DBObject>> asReadOperation() {
+                return new ListIndexesOperation<DBObject>(getNamespace(), getDefaultDBObjectCodec());
+            }
+        }.into(new ArrayList<DBObject>());
     }
 
     /**

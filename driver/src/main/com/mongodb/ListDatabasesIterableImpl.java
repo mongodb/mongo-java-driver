@@ -16,32 +16,28 @@
 package com.mongodb;
 
 import com.mongodb.client.ListDatabasesIterable;
-import com.mongodb.client.MongoCursor;
-import com.mongodb.client.MongoIterable;
+import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.ListDatabasesOperation;
+import com.mongodb.operation.ReadOperation;
 import org.bson.codecs.configuration.CodecRegistry;
 
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 
-final class ListDatabasesIterableImpl<TResult> implements ListDatabasesIterable<TResult> {
+final class ListDatabasesIterableImpl<TResult> extends MongoIterableImpl<TResult> implements ListDatabasesIterable<TResult> {
     private final Class<TResult> resultClass;
-    private final ReadPreference readPreference;
     private final CodecRegistry codecRegistry;
-    private final OperationExecutor executor;
 
     private long maxTimeMS;
 
     ListDatabasesIterableImpl(final Class<TResult> resultClass, final CodecRegistry codecRegistry,
                               final ReadPreference readPreference, final OperationExecutor executor) {
+        super(executor, ReadConcern.DEFAULT, readPreference); // TODO: read concern?
         this.resultClass = notNull("clazz", resultClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
-        this.readPreference = notNull("readPreference", readPreference);
-        this.executor = notNull("executor", executor);
     }
 
     @Override
@@ -52,42 +48,13 @@ final class ListDatabasesIterableImpl<TResult> implements ListDatabasesIterable<
     }
 
     @Override
-    public MongoCursor<TResult> iterator() {
-        return execute().iterator();
-    }
-
-    @Override
-    public TResult first() {
-        return execute().first();
-    }
-
-    @Override
-    public <U> MongoIterable<U> map(final Function<TResult, U> mapper) {
-        return new MappingIterable<TResult, U>(this, mapper);
-    }
-
-    @Override
-    public void forEach(final Block<? super TResult> block) {
-        execute().forEach(block);
-    }
-
-    @Override
-    public <A extends Collection<? super TResult>> A into(final A target) {
-        return execute().into(target);
-    }
-
-    @Override
     public ListDatabasesIterable<TResult> batchSize(final int batchSize) {
-        // Noop - not supported by listDatabasesIterable
+        super.batchSize(batchSize);
         return this;
     }
 
-    private MongoIterable<TResult> execute() {
-        return new OperationIterable<TResult>(createListCollectionsOperation(), readPreference, executor);
-    }
-
-    private ListDatabasesOperation<TResult> createListCollectionsOperation() {
+    @Override
+    ReadOperation<BatchCursor<TResult>> asReadOperation() {
         return new ListDatabasesOperation<TResult>(codecRegistry.get(resultClass)).maxTime(maxTimeMS, MILLISECONDS);
     }
-
 }

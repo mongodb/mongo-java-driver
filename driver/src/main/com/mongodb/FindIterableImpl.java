@@ -17,45 +17,38 @@
 package com.mongodb;
 
 import com.mongodb.client.FindIterable;
-import com.mongodb.client.MongoCursor;
-import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.FindOptions;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.FindOperation;
+import com.mongodb.operation.ReadOperation;
 import org.bson.BsonDocument;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 @SuppressWarnings("deprecation")
-final class FindIterableImpl<TDocument, TResult> implements FindIterable<TResult> {
+final class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements FindIterable<TResult> {
     private final MongoNamespace namespace;
     private final Class<TDocument> documentClass;
     private final Class<TResult> resultClass;
-    private final ReadPreference readPreference;
-    private final ReadConcern readConcern;
     private final CodecRegistry codecRegistry;
-    private final OperationExecutor executor;
     private final FindOptions findOptions;
 
     private Bson filter;
 
-    FindIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
-                     final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
-                     final OperationExecutor executor, final Bson filter, final FindOptions findOptions) {
+    FindIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass,
+                     final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
+                     final ReadConcern readConcern, final OperationExecutor executor, final Bson filter, final FindOptions findOptions) {
+        super(executor, readConcern, readPreference);
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.resultClass = notNull("resultClass", resultClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
-        this.readPreference = notNull("readPreference", readPreference);
-        this.readConcern = notNull("readConcern", readConcern);
-        this.executor = notNull("executor", executor);
         this.filter = notNull("filter", filter);
         this.findOptions = notNull("findOptions", findOptions);
     }
@@ -195,32 +188,14 @@ final class FindIterableImpl<TDocument, TResult> implements FindIterable<TResult
     }
 
     @Override
-    public MongoCursor<TResult> iterator() {
-        return execute().iterator();
-    }
-
-    @Override
     public TResult first() {
-        return execute().first();
+        FindOperation<TResult> findFirstOperation = createQueryOperation().batchSize(0).limit(-1);
+        BatchCursor<TResult> batchCursor = getExecutor().execute(findFirstOperation, getReadPreference(), getClientSession());
+        return batchCursor.hasNext() ? batchCursor.next().iterator().next() : null;
     }
 
-    @Override
-    public <U> MongoIterable<U> map(final Function<TResult, U> mapper) {
-        return new MappingIterable<TResult, U>(this, mapper);
-    }
-
-    @Override
-    public void forEach(final Block<? super TResult> block) {
-        execute().forEach(block);
-    }
-
-    @Override
-    public <A extends Collection<? super TResult>> A into(final A target) {
-        return execute().into(target);
-    }
-
-    private MongoIterable<TResult> execute() {
-        return new FindOperationIterable(createQueryOperation(), readPreference, executor);
+    protected ReadOperation<BatchCursor<TResult>> asReadOperation() {
+        return createQueryOperation();
     }
 
     private FindOperation<TResult> createQueryOperation() {
@@ -238,8 +213,8 @@ final class FindIterableImpl<TDocument, TResult> implements FindIterable<TResult
                    .noCursorTimeout(findOptions.isNoCursorTimeout())
                    .oplogReplay(findOptions.isOplogReplay())
                    .partial(findOptions.isPartial())
-                   .slaveOk(readPreference.isSlaveOk())
-                   .readConcern(readConcern)
+                   .slaveOk(getReadPreference().isSlaveOk())
+                   .readConcern(getReadConcern())
                    .collation(findOptions.getCollation())
                    .comment(findOptions.getComment())
                    .hint(toBsonDocument(findOptions.getHint()))
@@ -253,24 +228,5 @@ final class FindIterableImpl<TDocument, TResult> implements FindIterable<TResult
 
     private BsonDocument toBsonDocument(final Bson document) {
         return document == null ? null : document.toBsonDocument(documentClass, codecRegistry);
-    }
-
-    private final class FindOperationIterable extends OperationIterable<TResult> {
-        private final ReadPreference readPreference;
-        private final OperationExecutor executor;
-
-        FindOperationIterable(final FindOperation<TResult> operation, final ReadPreference readPreference,
-                              final OperationExecutor executor) {
-            super(operation, readPreference, executor);
-            this.readPreference = readPreference;
-            this.executor = executor;
-        }
-
-        @Override
-        public TResult first() {
-            FindOperation<TResult> findFirstOperation = createQueryOperation().batchSize(0).limit(-1);
-            BatchCursor<TResult> batchCursor = executor.execute(findFirstOperation, readPreference);
-            return batchCursor.hasNext() ? batchCursor.next().iterator().next() : null;
-        }
     }
 }

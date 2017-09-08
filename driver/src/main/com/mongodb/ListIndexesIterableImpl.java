@@ -17,34 +17,28 @@
 package com.mongodb;
 
 import com.mongodb.client.ListIndexesIterable;
-import com.mongodb.client.MongoCursor;
-import com.mongodb.client.MongoIterable;
+import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.ListIndexesOperation;
+import com.mongodb.operation.ReadOperation;
 import org.bson.codecs.configuration.CodecRegistry;
 
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-final class ListIndexesIterableImpl<TResult> implements ListIndexesIterable<TResult> {
+final class ListIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> implements ListIndexesIterable<TResult> {
     private final MongoNamespace namespace;
     private final Class<TResult> resultClass;
-    private final ReadPreference readPreference;
     private final CodecRegistry codecRegistry;
-    private final OperationExecutor executor;
-
-    private int batchSize;
     private long maxTimeMS;
 
     ListIndexesIterableImpl(final MongoNamespace namespace, final Class<TResult> resultClass, final CodecRegistry codecRegistry,
                             final ReadPreference readPreference, final OperationExecutor executor) {
+        super(executor, ReadConcern.DEFAULT, readPreference); // TODO: ReadConcern?
         this.namespace = notNull("namespace", namespace);
         this.resultClass = notNull("resultClass", resultClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
-        this.readPreference = notNull("readPreference", readPreference);
-        this.executor = notNull("executor", executor);
     }
 
     @Override
@@ -56,43 +50,14 @@ final class ListIndexesIterableImpl<TResult> implements ListIndexesIterable<TRes
 
     @Override
     public ListIndexesIterable<TResult> batchSize(final int batchSize) {
-        this.batchSize = batchSize;
+        super.batchSize(batchSize);
         return this;
     }
 
     @Override
-    public MongoCursor<TResult> iterator() {
-        return execute().iterator();
-    }
-
-    @Override
-    public TResult first() {
-        return execute().first();
-    }
-
-    @Override
-    public <U> MongoIterable<U> map(final Function<TResult, U> mapper) {
-        return new MappingIterable<TResult, U>(this, mapper);
-    }
-
-    @Override
-    public void forEach(final Block<? super TResult> block) {
-        execute().forEach(block);
-    }
-
-    @Override
-    public <A extends Collection<? super TResult>> A into(final A target) {
-        return execute().into(target);
-    }
-
-    private MongoIterable<TResult> execute() {
-        return new OperationIterable<TResult>(createListIndexesOperation(), readPreference, executor);
-    }
-
-    private ListIndexesOperation<TResult> createListIndexesOperation() {
+    ReadOperation<BatchCursor<TResult>> asReadOperation() {
         return new ListIndexesOperation<TResult>(namespace, codecRegistry.get(resultClass))
-                .batchSize(batchSize)
-                .maxTime(maxTimeMS, MILLISECONDS);
+                       .batchSize(getBatchSize() == null ? 0 : getBatchSize())
+                       .maxTime(maxTimeMS, MILLISECONDS);
     }
-
 }

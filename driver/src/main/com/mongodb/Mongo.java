@@ -37,6 +37,7 @@ import com.mongodb.event.ClusterListener;
 import com.mongodb.internal.connection.ConcurrentPool;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 import com.mongodb.internal.thread.DaemonThreadFactory;
+import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.CurrentOpOperation;
 import com.mongodb.operation.FsyncUnlockOperation;
 import com.mongodb.operation.ListDatabasesOperation;
@@ -466,14 +467,17 @@ public class Mongo {
      */
     @Deprecated
     public List<String> getDatabaseNames() {
-      return new OperationIterable<DBObject>(new ListDatabasesOperation<DBObject>(MongoClient.getCommandCodec()),
-          primary(), createOperationExecutor())
-          .map(new Function<DBObject, String>() {
-              @Override
-              public String apply(final DBObject result) {
-                  return (String) result.get("name");
-              }
-          }).into(new ArrayList<String>());
+        return new MongoIterableImpl<DBObject>(createOperationExecutor(), ReadConcern.DEFAULT, primary()) {
+            @Override
+            ReadOperation<BatchCursor<DBObject>> asReadOperation() {
+                return new ListDatabasesOperation<DBObject>(MongoClient.getCommandCodec());
+            }
+        }.map(new Function<DBObject, String>() {
+            @Override
+            public String apply(final DBObject result) {
+                return (String) result.get("name");
+            }
+        }).into(new ArrayList<String>());
     }
 
     /**
