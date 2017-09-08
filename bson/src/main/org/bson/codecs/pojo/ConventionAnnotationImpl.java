@@ -133,18 +133,17 @@ final class ConventionAnnotationImpl implements Convention {
             List<BsonProperty> properties = creatorExecutable.getProperties();
             List<Class<?>> parameterTypes = creatorExecutable.getParameterTypes();
             if (properties.size() != parameterTypes.size()) {
-                throw creatorExecutable.getError("All parameters must be annotated with a @Property");
+                throw creatorExecutable.getError(clazz, "All parameters must be annotated with a @BsonProperty in %s");
             }
             for (int i = 0; i < properties.size(); i++) {
                 BsonProperty bsonProperty = properties.get(i);
                 Class<?> parameterType = parameterTypes.get(i);
-                TypeData<?> parameterTypeData = TypeData.builder(parameterType).build();
                 PropertyModelBuilder<?> propertyModelBuilder = classModelBuilder.getProperty(bsonProperty.value());
                 if (propertyModelBuilder == null) {
                     addCreatorPropertyToClassModelBuilder(classModelBuilder, bsonProperty.value(), parameterType);
-                } else if (!propertyModelBuilder.getTypeData().equals(parameterTypeData)) {
-                    throw creatorExecutable.getError(format("Invalid Property type for '%s'. Expected %s, found %s.", bsonProperty.value(),
-                            propertyModelBuilder.getTypeData().getType(), parameterType));
+                } else if (!propertyModelBuilder.getTypeData().isAssignableFrom(parameterType)) {
+                    throw creatorExecutable.getError(clazz, format("Invalid Property type for '%s'. Expected %s, found %s.",
+                            bsonProperty.value(), propertyModelBuilder.getTypeData().getType(), parameterType));
                 }
             }
             classModelBuilder.instanceCreatorFactory(new InstanceCreatorFactoryImpl<T>(creatorExecutable));

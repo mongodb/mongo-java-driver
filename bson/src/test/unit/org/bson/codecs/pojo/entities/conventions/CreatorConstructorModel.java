@@ -19,24 +19,28 @@ package org.bson.codecs.pojo.entities.conventions;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
+import java.util.List;
+
 public final class CreatorConstructorModel {
-    private final Integer integerField;
+    private final List<Integer> integersField;
     private String stringField;
     public long longField;
 
     @BsonCreator
-    public CreatorConstructorModel(@BsonProperty("integerField") final Integer integerField) {
-        this.integerField = integerField;
+    public CreatorConstructorModel(@BsonProperty("integersField") final List<Integer> integerField,
+                                   @BsonProperty("longField") final long longField) {
+        this.integersField = integerField;
+        this.longField = longField;
     }
 
-    public CreatorConstructorModel(final Integer integerField, final String stringField, final long longField) {
-        this.integerField = integerField;
+    public CreatorConstructorModel(final List<Integer> integersField, final String stringField, final long longField) {
+        this.integersField = integersField;
         this.stringField = stringField;
         this.longField = longField;
     }
 
-    public Integer getIntegerField() {
-        return integerField;
+    public List<Integer> getIntegersField() {
+        return integersField;
     }
 
     public String getStringField() {
@@ -45,6 +49,14 @@ public final class CreatorConstructorModel {
 
     public void setStringField(final String stringField) {
         this.stringField = stringField;
+    }
+
+    public long getLongField() {
+        return longField;
+    }
+
+    public void setLongField(final long longField) {
+        this.longField = longField;
     }
 
     @Override
@@ -58,10 +70,10 @@ public final class CreatorConstructorModel {
 
         CreatorConstructorModel that = (CreatorConstructorModel) o;
 
-        if (longField != that.longField) {
+        if (getLongField() != that.getLongField()) {
             return false;
         }
-        if (getIntegerField() != null ? !getIntegerField().equals(that.getIntegerField()) : that.getIntegerField() != null) {
+        if (getIntegersField() != null ? !getIntegersField().equals(that.getIntegersField()) : that.getIntegersField() != null) {
             return false;
         }
         if (getStringField() != null ? !getStringField().equals(that.getStringField()) : that.getStringField() != null) {
@@ -73,16 +85,16 @@ public final class CreatorConstructorModel {
 
     @Override
     public int hashCode() {
-        int result = getIntegerField() != null ? getIntegerField().hashCode() : 0;
+        int result = getIntegersField() != null ? getIntegersField().hashCode() : 0;
         result = 31 * result + (getStringField() != null ? getStringField().hashCode() : 0);
-        result = 31 * result + (int) (longField ^ (longField >>> 32));
+        result = 31 * result + (int) (getLongField() ^ (getLongField() >>> 32));
         return result;
     }
 
     @Override
     public String toString() {
         return "CreatorConstructorModel{"
-                + "integerField=" + integerField
+                + "integersField=" + integersField
                 + ", stringField='" + stringField + "'"
                 + ", longField=" + longField
                 + "}";
