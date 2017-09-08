@@ -41,10 +41,10 @@ final class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResu
 
     private Bson filter;
 
-    FindIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass,
+    FindIterableImpl(final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
                      final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
                      final ReadConcern readConcern, final OperationExecutor executor, final Bson filter, final FindOptions findOptions) {
-        super(executor, readConcern, readPreference);
+        super(clientSession, executor, readConcern, readPreference);
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.resultClass = notNull("resultClass", resultClass);

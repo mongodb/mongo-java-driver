@@ -70,7 +70,7 @@ class FindIterableSpecification extends Specification {
                 .returnKey(false)
                 .showRecordId(false)
                 .snapshot(false)
-        def findIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern,
+        def findIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
                 executor, new Document('filter', 1), findOptions)
 
         when: 'default input should be as expected'
@@ -158,11 +158,36 @@ class FindIterableSpecification extends Specification {
         )
     }
 
+    def 'should use ClientSession'() {
+        given:
+        def batchCursor = Stub(BatchCursor) {
+            _ * hasNext() >> { false }
+        }
+        def executor = new TestOperationExecutor([batchCursor, batchCursor]);
+        def findIterable = new FindIterableImpl(clientSession, namespace, Document, Document, codecRegistry, readPreference, readConcern,
+                executor, new Document('filter', 1), new FindOptions())
+
+        when:
+        findIterable.first()
+
+        then:
+        executor.getClientSession() == clientSession
+
+        when:
+        findIterable.iterator()
+
+        then:
+        executor.getClientSession() == clientSession
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
+    }
+
     def 'should handle mixed types'() {
         given:
         def executor = new TestOperationExecutor([null, null]);
         def findOptions = new FindOptions()
-        def findIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern,
+        def findIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
                 executor, new Document('filter', 1), findOptions)
 
         when:
@@ -206,7 +231,7 @@ class FindIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
         def findOptions = new FindOptions()
-        def mongoIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern,
+        def mongoIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
                 executor, new Document(), findOptions)
 
         when:
