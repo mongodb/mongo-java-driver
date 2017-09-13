@@ -20,7 +20,7 @@ import com.mongodb.MongoDatabaseImpl
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
-import com.mongodb.operation.OperationExecutor
+import com.mongodb.OperationExecutor
 import org.bson.codecs.configuration.CodecRegistry
 import spock.lang.Specification
 

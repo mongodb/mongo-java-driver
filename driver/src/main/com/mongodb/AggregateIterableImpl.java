@@ -24,7 +24,6 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.FindOptions;
 import com.mongodb.operation.AggregateOperation;
 import com.mongodb.operation.AggregateToCollectionOperation;
-import com.mongodb.operation.OperationExecutor;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;

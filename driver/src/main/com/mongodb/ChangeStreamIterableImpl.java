@@ -22,7 +22,6 @@ import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.FullDocument;
 import com.mongodb.operation.ChangeStreamOperation;
-import com.mongodb.operation.OperationExecutor;
 import org.bson.BsonDocument;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;

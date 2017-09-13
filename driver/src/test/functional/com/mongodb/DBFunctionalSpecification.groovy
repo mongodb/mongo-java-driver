@@ -16,7 +16,6 @@
 
 package com.mongodb
 
-import com.mongodb.operation.OperationExecutor
 import org.bson.BsonDocument
 import org.bson.BsonDouble
 import org.bson.BsonInt32

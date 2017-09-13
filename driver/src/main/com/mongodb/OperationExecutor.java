@@ -14,23 +14,21 @@
  * limitations under the License.
  */
 
-package com.mongodb.operation;
+package com.mongodb;
 
-import com.mongodb.ReadPreference;
+import com.mongodb.operation.ReadOperation;
+import com.mongodb.operation.WriteOperation;
 
 /**
  * An interface describing the execution of a read or a write operation.
- *
- * @since 3.0
  */
-@Deprecated
-public interface OperationExecutor {
+interface OperationExecutor {
     /**
      * Execute the read operation with the given read preference.
      *
+     * @param <T> the operations result type.
      * @param operation the read operation.
      * @param readPreference the read preference.
-     * @param <T> the operations result type.
      * @return the result of executing the operation.
      */
     <T> T execute(ReadOperation<T> operation, ReadPreference readPreference);
@@ -43,4 +41,25 @@ public interface OperationExecutor {
      * @return the result of executing the operation.
      */
     <T> T execute(WriteOperation<T> operation);
+
+    /**
+     * Execute the read operation with the given read preference.
+     *
+     * @param <T> the operations result type.
+     * @param operation the read operation.
+     * @param readPreference the read preference.
+     * @param session the session to associate this operation with
+     * @return the result of executing the operation.
+     */
+    <T> T execute(ReadOperation<T> operation, ReadPreference readPreference, ClientSession session);
+
+    /**
+     * Execute the write operation.
+     *
+     * @param operation the write operation.
+     * @param session the session to associate this operation with
+     * @param <T> the operations result type.
+     * @return the result of executing the operation.
+     */
+    <T> T execute(WriteOperation<T> operation, ClientSession session);
 }
