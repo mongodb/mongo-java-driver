@@ -484,15 +484,22 @@ buildvariants:
   tasks:
      - name: "test"
 
-- matrix_name: "tests-jdk6"
-  matrix_spec: { auth: "*", ssl: "*", jdk: "jdk6", version: "*", topology: "*", os: "*" }
+- matrix_name: "tests-jdk6-unsecure"
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk6", version: "*", topology: "*", os: "*" }
+  display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
+  tags: ["tests-variant"]
+  tasks:
+     - name: "test"
+
+- matrix_name: "tests-jdk6-secure"
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: "jdk6", version: "*", topology: "*", os: "*" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
      - name: "test"
 
 - matrix_name: "tests-jdk-other"
-  matrix_spec: { auth: "*", ssl: "*", jdk: "*", version: "3.4", topology: "standalone", os: "rhel62" }
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: "*", version: "3.4", topology: "standalone", os: "rhel62" }
   exclude_spec: { jdk: "jdk6", auth: "*", ssl: "*", version: "*", topology: "*", os: "*" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
