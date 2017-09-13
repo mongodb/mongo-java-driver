@@ -49,20 +49,20 @@ import static com.mongodb.connection.ProtocolTestHelper.execute
 
 class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecification {
     @Shared
-    InternalStreamConnection connection;
+    InternalStreamConnection connection
 
     def setupSpec() {
         connection = new InternalStreamConnectionFactory(new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
                 getCredentialList(), null, null, [], null)
                 .create(new ServerId(new ClusterId(), getPrimary()))
-        connection.open();
+        connection.open()
     }
 
     def cleanupSpec() {
         connection?.close()
     }
 
-    def 'should deliver started and completed command events for a single unacknowleded insert'() {
+    def 'should deliver started and completed command events for a single unacknowledged insert'() {
         given:
         def document = new BsonDocument('_id', new BsonInt32(1))
 
@@ -100,7 +100,8 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         async << [false, true]
     }
 
-    def 'should deliver started and completed command events for split unacknowleded inserts'() {
+    @IgnoreIf({ (serverVersionAtLeast(3, 5) && isSharded()) })
+    def 'should deliver started and completed command events for split unacknowledged inserts'() {
         given:
         def binary = new BsonBinary(new byte[15000000])
         def documentOne = new BsonDocument('_id', new BsonInt32(1)).append('b', binary)
@@ -150,7 +151,7 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         async << [false, true]
     }
 
-    def 'should deliver started and completed command events for a single unacknowleded update'() {
+    def 'should deliver started and completed command events for a single unacknowledged update'() {
         given:
         def filter = new BsonDocument('_id', new BsonInt32(1))
         def update = new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1)))
@@ -188,7 +189,7 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         async << [false, true]
     }
 
-    def 'should deliver started and completed command events for a single unacknowleded delete'() {
+    def 'should deliver started and completed command events for a single unacknowledged delete'() {
         given:
         def filter = new BsonDocument('_id', new BsonInt32(1))
         def deleteRequest = [new DeleteRequest(filter).multi(true)]
