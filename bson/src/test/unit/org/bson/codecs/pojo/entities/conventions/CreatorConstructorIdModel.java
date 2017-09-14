@@ -1,3 +1,19 @@
+/*
+ * Copyright 2017 MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.bson.codecs.pojo.entities.conventions;
 
 import org.bson.codecs.pojo.annotations.BsonCreator;
@@ -13,7 +29,7 @@ public class CreatorConstructorIdModel {
   public long longField;
 
   @BsonCreator
-  public CreatorConstructorIdModel(@BsonId String id, @BsonProperty("integersField") final List<Integer> integerField,
+  public CreatorConstructorIdModel(final @BsonId String id, @BsonProperty("integersField") final List<Integer> integerField,
       @BsonProperty("longField") final long longField) {
     this.id = id;
     this.integersField = integerField;
@@ -52,7 +68,7 @@ public class CreatorConstructorIdModel {
   }
 
   @Override
-  public boolean equals(Object o) {
+  public boolean equals(final Object o) {
     if (this == o) {
       return true;
     }
@@ -68,8 +84,8 @@ public class CreatorConstructorIdModel {
     if (getId() != null ? !getId().equals(that.getId()) : that.getId() != null) {
       return false;
     }
-    if (getIntegersField() != null ? !getIntegersField().equals(that.getIntegersField()) :
-        that.getIntegersField() != null) {
+    if (getIntegersField() != null ? !getIntegersField().equals(that.getIntegersField())
+        : that.getIntegersField() != null) {
       return false;
     }
     return getStringField() != null ? getStringField().equals(that.getStringField()) : that.getStringField() == null;
@@ -86,11 +102,11 @@ public class CreatorConstructorIdModel {
 
   @Override
   public String toString() {
-    return "CreatorConstructorIdModel{" +
-        "id='" + id + '\'' +
-        ", integersField=" + integersField +
-        ", stringField='" + stringField + '\'' +
-        ", longField=" + longField +
-        '}';
+    return "CreatorConstructorIdModel{"
+        + "id='" + id + '\''
+        + ", integersField=" + integersField
+        + ", stringField='" + stringField + '\''
+        + ", longField=" + longField
+        + '}';
   }
 }

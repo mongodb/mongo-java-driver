@@ -170,7 +170,8 @@ final class ConventionAnnotationImpl implements Convention {
                     }
 
                     if (propertyModelBuilder == null) {
-                        propertyModelBuilder = addCreatorPropertyToClassModelBuilder(classModelBuilder, bsonProperty.value(), parameterType);
+                        propertyModelBuilder = addCreatorPropertyToClassModelBuilder(classModelBuilder, bsonProperty.value(),
+                            parameterType);
                     } else {
                         // An existing property is found, set its write name
                         propertyModelBuilder.writeName(bsonProperty.value());
@@ -186,10 +187,11 @@ final class ConventionAnnotationImpl implements Convention {
         }
     }
 
-    private <T, S> PropertyModelBuilder<S> addCreatorPropertyToClassModelBuilder(final ClassModelBuilder<T> classModelBuilder, final String name,
-                                                              final Class<S> clazz) {
-        PropertyModelBuilder<S> propertyModelBuilder = createPropertyModelBuilder(new PropertyMetadata<S>(name, classModelBuilder.getType().getSimpleName(),
-            TypeData.builder(clazz).build())).readName(null).writeName(name);
+    private <T, S> PropertyModelBuilder<S> addCreatorPropertyToClassModelBuilder(final ClassModelBuilder<T> classModelBuilder,
+                                                                                 final String name,
+                                                                                 final Class<S> clazz) {
+        PropertyModelBuilder<S> propertyModelBuilder = createPropertyModelBuilder(new PropertyMetadata<S>(name,
+            classModelBuilder.getType().getSimpleName(), TypeData.builder(clazz).build())).readName(null).writeName(name);
         classModelBuilder.addProperty(propertyModelBuilder);
         return propertyModelBuilder;
     }

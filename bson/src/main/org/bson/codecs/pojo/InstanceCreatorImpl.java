@@ -17,7 +17,6 @@
 package org.bson.codecs.pojo;
 
 import org.bson.codecs.configuration.CodecConfigurationException;
-import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import java.util.HashMap;
 import java.util.Map;
