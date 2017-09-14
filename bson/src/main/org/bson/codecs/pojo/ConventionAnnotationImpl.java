@@ -139,7 +139,7 @@ final class ConventionAnnotationImpl implements Convention {
                 // BsonId may be missing, and thus creatorExecutable.getIdPropertyIndex() may be null.
                 boolean isIdProperty = Integer.valueOf(i).equals(creatorExecutable.getIdPropertyIndex());
                 Class<?> parameterType = parameterTypes.get(i);
-                PropertyModelBuilder<?> propertyModelBuilder;
+                PropertyModelBuilder<?> propertyModelBuilder = null;
 
                 if (isIdProperty) {
                     // This handles the BsonId annotation on the BsonCreator parameter.
@@ -147,27 +147,26 @@ final class ConventionAnnotationImpl implements Convention {
                 } else {
                     BsonProperty bsonProperty = properties.get(i);
 
-                    // BsonProperty value should be the BSON property name (write name). However, in legacy, when BsonProperty is used
-                    // in BsonCreator parameters, it is mapped to the actual POJO property name (e.g. method name or field name).
-                    // To support it, we still need to look it up.
-                    propertyModelBuilder = classModelBuilder.getProperty(bsonProperty.value());
+                    // Find the property using write name and falls back to read name
+                    for (PropertyModelBuilder<?> builder : classModelBuilder.getPropertyModelBuilders()) {
+                        if (bsonProperty.value().equals(builder.getWriteName())) {
+                            // When there is a property that matches the write name of the parameter, use it and stop looking
+                            propertyModelBuilder = builder;
+                            break;
+                        }
+
+                        if (bsonProperty.value().equals(builder.getReadName())) {
+                            // When there is a property that matches the read name of the parameter, save it but continue to look
+                            // This is so just in case there is another property that matches the write name.
+                            propertyModelBuilder = builder;
+                        }
+                    }
 
                     if (propertyModelBuilder == null) {
-                        // When the property cannot be found in the legacy way
-                        // Find the property using write name and falls back to read name
-                        for (PropertyModelBuilder<?> builder : classModelBuilder.getPropertyModelBuilders()) {
-                            if (bsonProperty.value().equals(builder.getWriteName())) {
-                                // When there is a property that matches the write name of the parameter, use it and stop looking
-                                propertyModelBuilder = builder;
-                                break;
-                            }
-
-                            if (bsonProperty.value().equals(builder.getReadName())) {
-                                // When there is a property that matches the read name of the parameter, save it but continue to look
-                                // This is so just in case there is another property that matches the write name.
-                                propertyModelBuilder = builder;
-                            }
-                        }
+                        // BsonProperty value should be the BSON property name (write name). However, in legacy, when BsonProperty is used
+                        // in BsonCreator parameters, it is mapped to the actual POJO property name (e.g. method name or field name).
+                        // To support it, we still need to look it up.
+                        propertyModelBuilder = classModelBuilder.getProperty(bsonProperty.value());
                     }
 
                     if (propertyModelBuilder == null) {
