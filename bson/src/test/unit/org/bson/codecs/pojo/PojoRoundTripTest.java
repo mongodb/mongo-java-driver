@@ -239,7 +239,7 @@ public final class PojoRoundTripTest extends PojoTestCase {
 
         data.add(new TestData("Creator constructor with ID", new CreatorConstructorIdModel("1234-34567-890", asList(10, 11), "twelve", 13),
             getPojoCodecProviderBuilder(CreatorConstructorIdModel.class),
-            "{'_id': '1234-34567-890', integersField': [10, 11], 'stringField': 'twelve', 'longField': {$numberLong: '13'}}"));
+            "{'_id': '1234-34567-890', 'integersField': [10, 11], 'stringField': 'twelve', 'longField': {$numberLong: '13'}}"));
 
         data.add(new TestData("Creator no-args constructor", new CreatorNoArgsConstructorModel(40, "one", 42),
                 getPojoCodecProviderBuilder(CreatorNoArgsConstructorModel.class),

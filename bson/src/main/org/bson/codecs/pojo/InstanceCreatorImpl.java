@@ -54,11 +54,20 @@ final class InstanceCreatorImpl<T> implements InstanceCreator<T> {
             propertyModel.getPropertyAccessor().set(newInstance, value);
         } else {
             if (!properties.isEmpty()) {
-                Integer index = properties.get(propertyModel.getName());
+                String propertyName = propertyModel.getWriteName();
+
+                if (!properties.containsKey(propertyName)) {
+                    // If the property name cannot be found using write name, falls back to the property name
+                    // This is to provide backward compatibility with the legacy BsonProperty annotation on
+                    // BsonCreator parameters
+                    propertyName = propertyModel.getName();
+                }
+
+                Integer index = properties.get(propertyName);
                 if (index != null) {
                     params[index] = value;
                 }
-                properties.remove(propertyModel.getName());
+                properties.remove(propertyName);
             }
 
             if (properties.isEmpty()) {
