@@ -17,6 +17,7 @@
 package org.bson.codecs.pojo;
 
 import org.bson.codecs.configuration.CodecConfigurationException;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -41,9 +42,18 @@ final class InstanceCreatorImpl<T> implements InstanceCreator<T> {
         } else {
             this.cachedValues = new HashMap<PropertyModel<?>, Object>();
             this.properties = new HashMap<String, Integer>();
-            for (int i = 0; i < creatorExecutable.getProperties().size(); i++) {
-                this.properties.put(creatorExecutable.getProperties().get(i).value(), i);
+
+            if (creatorExecutable.getIdPropertyIndex() != null) {
+              this.properties.put(ClassModelBuilder.ID_PROPERTY_NAME, creatorExecutable.getIdPropertyIndex());
             }
+
+            for (int i = 0; i < creatorExecutable.getProperties().size(); i++) {
+                if (!Integer.valueOf(i).equals(creatorExecutable.getIdPropertyIndex())) {
+                    // Skip the ID property
+                    this.properties.put(creatorExecutable.getProperties().get(i).value(), i);
+                }
+            }
+
             this.params = new Object[properties.size()];
         }
     }

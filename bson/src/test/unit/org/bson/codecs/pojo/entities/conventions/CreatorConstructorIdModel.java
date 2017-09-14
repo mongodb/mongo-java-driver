@@ -13,7 +13,7 @@ public class CreatorConstructorIdModel {
   public long longField;
 
   @BsonCreator
-  public CreatorConstructorIdModel(@BsonProperty("_id") String id, @BsonProperty("integersField") final List<Integer> integerField,
+  public CreatorConstructorIdModel(@BsonId String id, @BsonProperty("integersField") final List<Integer> integerField,
       @BsonProperty("longField") final long longField) {
     this.id = id;
     this.integersField = integerField;

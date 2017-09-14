@@ -136,19 +136,24 @@ final class ConventionAnnotationImpl implements Convention {
                 throw creatorExecutable.getError(clazz, "All parameters must be annotated with a @BsonProperty in %s");
             }
             for (int i = 0; i < properties.size(); i++) {
-                BsonProperty bsonProperty = properties.get(i);
+                // BsonId may be missing, and thus creatorExecutable.getIdPropertyIndex() may be null.
+                boolean isIdProperty = Integer.valueOf(i).equals(creatorExecutable.getIdPropertyIndex());
                 Class<?> parameterType = parameterTypes.get(i);
-                // BsonProperty value should be the BSON property name (write name). However, in legacy, when BsonProperty is used
-                // in BsonCreator parameters, it is mapped to the actual POJO property name (e.g. method name or field name).
-                // To support it, we still need to look it up.
-                PropertyModelBuilder<?> propertyModelBuilder = classModelBuilder.getProperty(bsonProperty.value());
+                PropertyModelBuilder<?> propertyModelBuilder;
 
-                if (propertyModelBuilder == null) {
-                    // When the property cannot be found in the legacy way
-                    if ("_id".equals(bsonProperty.value())) {
-                        // Special case for ID properties
-                        propertyModelBuilder = classModelBuilder.getProperty(classModelBuilder.getIdPropertyName());
-                    } else {
+                if (isIdProperty) {
+                    // This handles the BsonId annotation on the BsonCreator parameter.
+                    propertyModelBuilder = classModelBuilder.getProperty(classModelBuilder.getIdPropertyName());
+                } else {
+                    BsonProperty bsonProperty = properties.get(i);
+
+                    // BsonProperty value should be the BSON property name (write name). However, in legacy, when BsonProperty is used
+                    // in BsonCreator parameters, it is mapped to the actual POJO property name (e.g. method name or field name).
+                    // To support it, we still need to look it up.
+                    propertyModelBuilder = classModelBuilder.getProperty(bsonProperty.value());
+
+                    if (propertyModelBuilder == null) {
+                        // When the property cannot be found in the legacy way
                         // Find the property using write name and falls back to read name
                         for (PropertyModelBuilder<?> builder : classModelBuilder.getPropertyModelBuilders()) {
                             if (bsonProperty.value().equals(builder.getWriteName())) {
@@ -164,26 +169,30 @@ final class ConventionAnnotationImpl implements Convention {
                             }
                         }
                     }
+
+                    if (propertyModelBuilder == null) {
+                        propertyModelBuilder = addCreatorPropertyToClassModelBuilder(classModelBuilder, bsonProperty.value(), parameterType);
+                    } else {
+                        // An existing property is found, set its write name
+                        propertyModelBuilder.writeName(bsonProperty.value());
+                    }
                 }
 
-                if (propertyModelBuilder == null) {
-                    addCreatorPropertyToClassModelBuilder(classModelBuilder, bsonProperty.value(), parameterType);
-                } else if (!propertyModelBuilder.getTypeData().isAssignableFrom(parameterType)) {
+                if (!propertyModelBuilder.getTypeData().isAssignableFrom(parameterType)) {
                     throw creatorExecutable.getError(clazz, format("Invalid Property type for '%s'. Expected %s, found %s.",
-                            bsonProperty.value(), propertyModelBuilder.getTypeData().getType(), parameterType));
-                } else {
-                    // An existing property is found, set its write name
-                    propertyModelBuilder.writeName(bsonProperty.value());
+                        propertyModelBuilder.getWriteName(), propertyModelBuilder.getTypeData().getType(), parameterType));
                 }
             }
             classModelBuilder.instanceCreatorFactory(new InstanceCreatorFactoryImpl<T>(creatorExecutable));
         }
     }
 
-    private <T, S> void addCreatorPropertyToClassModelBuilder(final ClassModelBuilder<T> classModelBuilder, final String name,
+    private <T, S> PropertyModelBuilder<S> addCreatorPropertyToClassModelBuilder(final ClassModelBuilder<T> classModelBuilder, final String name,
                                                               final Class<S> clazz) {
-        classModelBuilder.addProperty(createPropertyModelBuilder(new PropertyMetadata<S>(name, classModelBuilder.getType().getSimpleName(),
-                TypeData.builder(clazz).build())).readName(null).writeName(name));
+        PropertyModelBuilder<S> propertyModelBuilder = createPropertyModelBuilder(new PropertyMetadata<S>(name, classModelBuilder.getType().getSimpleName(),
+            TypeData.builder(clazz).build())).readName(null).writeName(name);
+        classModelBuilder.addProperty(propertyModelBuilder);
+        return propertyModelBuilder;
     }
 
     private void cleanPropertyBuilders(final ClassModelBuilder<?> classModelBuilder) {

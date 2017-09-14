@@ -43,7 +43,7 @@ import static org.bson.codecs.pojo.PojoBuilderHelper.stateNotNull;
  * @see ClassModel
  */
 public class ClassModelBuilder<T> {
-    private static final String ID_PROPERTY_NAME = "_id";
+    static final String ID_PROPERTY_NAME = "_id";
     private final List<PropertyModelBuilder<?>> propertyModelBuilders = new ArrayList<PropertyModelBuilder<?>>();
     private InstanceCreatorFactory<T> instanceCreatorFactory;
     private Class<T> type;
