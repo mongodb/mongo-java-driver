@@ -138,12 +138,34 @@ final class ConventionAnnotationImpl implements Convention {
             for (int i = 0; i < properties.size(); i++) {
                 BsonProperty bsonProperty = properties.get(i);
                 Class<?> parameterType = parameterTypes.get(i);
-                PropertyModelBuilder<?> propertyModelBuilder = classModelBuilder.getProperty(bsonProperty.value());
+                PropertyModelBuilder<?> propertyModelBuilder = null;
+                if ("_id".equals(bsonProperty.value())) {
+                    // Special case for ID properties
+                    propertyModelBuilder = classModelBuilder.getProperty(classModelBuilder.getIdPropertyName());
+                } else {
+                    // Find the property using write name and falls back to read name
+                    for (PropertyModelBuilder<?> builder : classModelBuilder.getPropertyModelBuilders()) {
+                        if (builder.getWriteName().equals(bsonProperty.value())) {
+                            // When there is a property that matches the write name of the parameter, use it and stop looking
+                            propertyModelBuilder = builder;
+                            break;
+                        }
+
+                        if (builder.getReadName().equals(bsonProperty.value())) {
+                            // When there is a property that matches the read name of the parameter, save it but continue to look
+                            // This is so just in case there is another property that matches the write name.
+                            propertyModelBuilder = builder;
+                        }
+                    }
+                }
                 if (propertyModelBuilder == null) {
                     addCreatorPropertyToClassModelBuilder(classModelBuilder, bsonProperty.value(), parameterType);
                 } else if (!propertyModelBuilder.getTypeData().isAssignableFrom(parameterType)) {
                     throw creatorExecutable.getError(clazz, format("Invalid Property type for '%s'. Expected %s, found %s.",
                             bsonProperty.value(), propertyModelBuilder.getTypeData().getType(), parameterType));
+                } else {
+                    // An existing property is found, set its write name
+                    propertyModelBuilder.writeName(bsonProperty.value());
                 }
             }
             classModelBuilder.instanceCreatorFactory(new InstanceCreatorFactoryImpl<T>(creatorExecutable));
