@@ -20,10 +20,12 @@ import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.Collation;
-import com.mongodb.client.model.FullDocument;
+import com.mongodb.client.model.changestream.ChangeStreamDocument;
+import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.operation.ChangeStreamOperation;
 import com.mongodb.operation.OperationExecutor;
 import org.bson.BsonDocument;
+import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -42,11 +44,11 @@ final class ChangeStreamIterableImpl<TResult> implements ChangeStreamIterable<TR
     private final CodecRegistry codecRegistry;
     private final OperationExecutor executor;
     private final List<? extends Bson> pipeline;
-    private final Class<TResult> resultClass;
+    private final Codec<ChangeStreamDocument<TResult>> codec;
 
     private Integer batchSize;
     private FullDocument fullDocument = FullDocument.DEFAULT;
-    private Bson resumeToken;
+    private BsonDocument resumeToken;
     private long maxAwaitTimeMS;
     private Collation collation;
 
@@ -60,9 +62,8 @@ final class ChangeStreamIterableImpl<TResult> implements ChangeStreamIterable<TR
         this.readConcern = notNull("readConcern", readConcern);
         this.executor = notNull("executor", executor);
         this.pipeline = notNull("pipeline", pipeline);
-        this.resultClass = notNull("resultClass", resultClass);
+        this.codec = ChangeStreamDocument.createCodec(notNull("resultClass", resultClass), codecRegistry);
     }
-
 
     @Override
     public ChangeStreamIterable<TResult> fullDocument(final FullDocument fullDocument) {
@@ -71,7 +72,7 @@ final class ChangeStreamIterableImpl<TResult> implements ChangeStreamIterable<TR
     }
 
     @Override
-    public ChangeStreamIterable<TResult> resumeAfter(final Bson resumeAfter) {
+    public ChangeStreamIterable<TResult> resumeAfter(final BsonDocument resumeAfter) {
         this.resumeToken = notNull("resumeAfter", resumeAfter);
         return this;
     }
@@ -96,45 +97,49 @@ final class ChangeStreamIterableImpl<TResult> implements ChangeStreamIterable<TR
     }
 
     @Override
-    public MongoCursor<TResult> iterator() {
-        return execute().iterator();
+    public <TDocument> MongoIterable<TDocument> withDocumentClass(final Class<TDocument> clazz) {
+        return execute(codecRegistry.get(clazz));
     }
 
     @Override
-    public TResult first() {
-        return execute().first();
+    public MongoCursor<ChangeStreamDocument<TResult>> iterator() {
+        return execute(codec).iterator();
     }
 
     @Override
-    public <U> MongoIterable<U> map(final Function<TResult, U> mapper) {
-        return execute().map(mapper);
+    public ChangeStreamDocument<TResult> first() {
+        return execute(codec).first();
     }
 
     @Override
-    public void forEach(final Block<? super TResult> block) {
-        execute().forEach(block);
+    public <U> MongoIterable<U> map(final Function<ChangeStreamDocument<TResult>, U> mapper) {
+        return execute(codec).map(mapper);
     }
 
     @Override
-    public <A extends Collection<? super TResult>> A into(final A target) {
-        return execute().into(target);
+    public void forEach(final Block<? super ChangeStreamDocument<TResult>> block) {
+        execute(codec).forEach(block);
     }
 
-    private MongoIterable<TResult> execute() {
+    @Override
+    public <A extends Collection<? super ChangeStreamDocument<TResult>>> A into(final A target) {
+        return execute(codec).into(target);
+    }
+
+    private <S> MongoIterable<S> execute(final Codec<S> codec) {
         List<BsonDocument> aggregateList = createBsonDocumentList(pipeline);
 
-        ChangeStreamOperation<TResult> changeStreamOperation = new ChangeStreamOperation<TResult>(namespace, fullDocument, aggregateList,
-                codecRegistry.get(resultClass))
+        ChangeStreamOperation<S> changeStreamOperation = new ChangeStreamOperation<S>(namespace, fullDocument, aggregateList, codec)
                 .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
                 .batchSize(batchSize)
                 .readConcern(readConcern)
                 .collation(collation);
 
         if (resumeToken != null) {
-            changeStreamOperation.resumeAfter(resumeToken.toBsonDocument(BsonDocument.class, codecRegistry));
+            changeStreamOperation.resumeAfter(resumeToken);
         }
 
-        return new OperationIterable<TResult>(changeStreamOperation, readPreference, executor);
+        return new OperationIterable<S>(changeStreamOperation, readPreference, executor);
     }
 
 

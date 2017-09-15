@@ -23,8 +23,10 @@ import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
-import com.mongodb.client.model.FullDocument;
 import com.mongodb.client.model.Updates;
+import com.mongodb.client.model.changestream.ChangeStreamDocument;
+import com.mongodb.client.model.changestream.FullDocument;
+import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
@@ -67,14 +69,13 @@ public final class ChangeStreamSamples {
          */
         System.out.println("1. Initial document from the Change Stream:");
 
-
         // Create the change stream cursor.
-        MongoCursor<Document> cursor = collection.watch().iterator();
+        MongoCursor<ChangeStreamDocument<Document>> cursor = collection.watch().iterator();
 
         // Insert a test document into the collection.
         collection.insertOne(Document.parse("{username: 'alice123', name: 'Alice'}"));
-        Document next = cursor.next();
-        System.out.println(next.toJson());
+        ChangeStreamDocument<Document> next = cursor.next();
+        System.out.println(next);
         cursor.close();
         sleep();
 
@@ -93,7 +94,7 @@ public final class ChangeStreamSamples {
 
         // Block until the next result is returned
         next = cursor.next();
-        System.out.println(next.toJson());
+        System.out.println(next);
         cursor.close();
         sleep();
 
@@ -125,17 +126,17 @@ public final class ChangeStreamSamples {
         // Update the test document.
         collection.updateOne(Filters.eq("updateMe", 1), Updates.set("updated", true));
         next = cursor.next();
-        System.out.println(format("Update operationType: %s %n %s", next.get("updateDescription", Document.class).toJson(), next.toJson()));
+        System.out.println(format("Update operationType: %s %n %s", next.getUpdateDescription(), next));
 
         // Replace the test document.
         collection.replaceOne(Filters.eq("replaceMe", 1), Document.parse("{replaced: true}"));
         next = cursor.next();
-        System.out.println(format("Replace operationType: %s", next.toJson()));
+        System.out.println(format("Replace operationType: %s", next));
 
         // Delete the test document.
         collection.deleteOne(Filters.eq("username", "alice123"));
         next = cursor.next();
-        System.out.println(format("Delete operationType: %s", next.toJson()));
+        System.out.println(format("Delete operationType: %s", next));
         cursor.close();
         sleep();
 
@@ -146,7 +147,8 @@ public final class ChangeStreamSamples {
         System.out.println("4. Document from the Change Stream including a resume token:");
 
         // Get the resume token from the last document we saw in the previous change stream cursor.
-        Document resumeToken = next.get("_id", Document.class);
+        BsonDocument resumeToken = next.getResumeToken();
+        System.out.println(resumeToken);
 
         // Pass the resume token to the resume after function to continue the change stream cursor.
         cursor = collection.watch().resumeAfter(resumeToken).iterator();
@@ -156,7 +158,7 @@ public final class ChangeStreamSamples {
 
         // Block until the next result is returned
         next = cursor.next();
-        System.out.println(next.toJson());
+        System.out.println(next);
         cursor.close();
     }
 

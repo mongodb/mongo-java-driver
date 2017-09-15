@@ -26,12 +26,15 @@ import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.client.model.Collation
-import com.mongodb.client.model.FullDocument
+import com.mongodb.client.model.changestream.ChangeStreamDocument
+import com.mongodb.client.model.changestream.ChangeStreamDocumentCodec
+import com.mongodb.client.model.changestream.FullDocument
 import com.mongodb.operation.AsyncOperationExecutor
 import com.mongodb.operation.ChangeStreamOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document
+import org.bson.RawBsonDocument
 import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.ValueCodecProvider
@@ -62,6 +65,7 @@ class ChangeStreamIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor, cursor, cursor, cursor, cursor])
         def pipeline = [new Document('$match', 1)]
+        def codec = new ChangeStreamDocumentCodec(Document, codecRegistry)
         def changeStreamIterable = new ChangeStreamIterableImpl(namespace, codecRegistry, readPreference, readConcern, executor, pipeline,
                 Document)
 
@@ -73,11 +77,11 @@ class ChangeStreamIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new ChangeStreamOperation<Document>(namespace, FullDocument.DEFAULT,
-                [BsonDocument.parse('{$match: 1}')], codecRegistry.get(Document)))
+                [BsonDocument.parse('{$match: 1}')], codec))
         readPreference == secondary()
 
         when: 'overriding initial options'
-        def resumeToken = BsonDocument.parse('{_id: {a: 1}}')
+        def resumeToken = RawBsonDocument.parse('{_id: {a: 1}}')
         changeStreamIterable.collation(collation).maxAwaitTime(99, MILLISECONDS)
                 .fullDocument(FullDocument.UPDATE_LOOKUP).resumeAfter(resumeToken).into([]) { result, t -> }
 
@@ -85,14 +89,14 @@ class ChangeStreamIterableSpecification extends Specification {
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new ChangeStreamOperation<Document>(namespace, FullDocument.UPDATE_LOOKUP,
-                [BsonDocument.parse('{$match: 1}')], codecRegistry.get(Document))
+                [BsonDocument.parse('{$match: 1}')], codec)
                 .collation(collation).maxAwaitTime(99, MILLISECONDS)
                 .resumeAfter(resumeToken))
     }
 
     def 'should handle exceptions correctly'() {
         given:
-        def codecRegistry = fromProviders([new ValueCodecProvider(), new BsonValueCodecProvider()])
+        def altRegistry = fromProviders([new ValueCodecProvider(), new BsonValueCodecProvider()])
         def executor = new TestOperationExecutor([new MongoException('failure')])
         def pipeline = [new BsonDocument('$match', new BsonInt32(1))]
         def changeStreamIterable = new ChangeStreamIterableImpl(namespace, codecRegistry, readPreference, readConcern, executor, pipeline,
@@ -108,7 +112,7 @@ class ChangeStreamIterableSpecification extends Specification {
 
         when: 'a codec is missing'
         futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
-        new ChangeStreamIterableImpl(namespace, codecRegistry, readPreference, readConcern, executor, pipeline, Document)
+        new ChangeStreamIterableImpl(namespace, altRegistry, readPreference, readConcern, executor, pipeline, Document)
                 .into([], futureResultCallback)
         futureResultCallback.get()
 
@@ -127,25 +131,14 @@ class ChangeStreamIterableSpecification extends Specification {
 
     def 'should follow the MongoIterable interface as expected'() {
         given:
-        def cannedResults = [new Document('_id', 1), new Document('_id', 1), new Document('_id', 1)]
-        def cursor = {
-            Stub(AsyncBatchCursor) {
-                def count = 0
-                def results;
-                def getResult = {
-                    count++
-                    results = count == 1 ? cannedResults : null
-                    results
-                }
-                next(_) >> {
-                    it[0].onResult(getResult(), null)
-                }
-                isClosed() >> { count >= 1 }
-            }
+        def count = 0
+        def cannedResults = ['{_id: 1}', '{_id: 2}', '{_id: 3}'].collect {
+            new ChangeStreamDocument(RawBsonDocument.parse(it), null, Document.parse(it), null, null)
+
         }
-        def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor()]);
-        def mongoIterable = new ChangeStreamIterableImpl(namespace, codecRegistry, readPreference, readConcern, executor,
-                [new BsonDocument('$match', new BsonInt32(1))], BsonDocument)
+        def executor = new TestOperationExecutor([cursor(cannedResults), cursor(cannedResults), cursor(cannedResults),
+                                                  cursor(cannedResults), cursor(cannedResults)])
+        def mongoIterable = new ChangeStreamIterableImpl(namespace, codecRegistry, readPreference, readConcern, executor, [], Document)
 
         when:
         def results = new FutureResultCallback()
@@ -155,11 +148,10 @@ class ChangeStreamIterableSpecification extends Specification {
         results.get() == cannedResults[0]
 
         when:
-        def count = 0
         results = new FutureResultCallback()
-        mongoIterable.forEach(new Block<Document>() {
+        mongoIterable.forEach(new Block<ChangeStreamDocument<Document>>() {
             @Override
-            void apply(Document document) {
+            void apply(ChangeStreamDocument<Document> document) {
                 count++
             }
         }, results)
@@ -179,14 +171,80 @@ class ChangeStreamIterableSpecification extends Specification {
         when:
         target = []
         results = new FutureResultCallback()
-        mongoIterable.map(new Function<Document, Integer>() {
+        mongoIterable.map(new Function<ChangeStreamDocument<Document>, Integer>() {
             @Override
-            Integer apply(Document document) {
-                document.getInteger('_id')
+            Integer apply(ChangeStreamDocument<Document> document) {
+                document.getFullDocument().getInteger('_id')
             }
         }).into(target, results)
         then:
-        results.get() == [1, 1, 1]
+        results.get() == [1, 2, 3]
+
+        when:
+        results = new FutureResultCallback()
+        mongoIterable.batchCursor(results)
+        def batchCursor = results.get()
+
+        then:
+        !batchCursor.isClosed()
+
+        when:
+        results = new FutureResultCallback()
+        batchCursor.next(results)
+
+        then:
+        results.get() == cannedResults
+        batchCursor.isClosed()
+    }
+
+    def 'should be able to provide custom document class'() {
+        given:
+        def count = 0
+        def cannedResults = ['{_id: 1}', '{_id: 2}', '{_id: 3}'].collect { RawBsonDocument.parse(it) }
+        def executor = new TestOperationExecutor([cursor(cannedResults), cursor(cannedResults), cursor(cannedResults),
+                                                  cursor(cannedResults), cursor(cannedResults)])
+        def mongoIterable = new ChangeStreamIterableImpl(namespace, codecRegistry, readPreference, readConcern, executor, [], Document)
+                .withDocumentClass(RawBsonDocument)
+
+        when:
+        def results = new FutureResultCallback()
+        mongoIterable.first(results)
+
+        then:
+        results.get() == cannedResults[0]
+
+        when:
+        results = new FutureResultCallback()
+        mongoIterable.forEach(new Block<RawBsonDocument>() {
+            @Override
+            void apply(RawBsonDocument document) {
+                count++
+            }
+        }, results)
+        results.get()
+
+        then:
+        count == 3
+
+        when:
+        def target = []
+        results = new FutureResultCallback()
+        mongoIterable.into(target, results)
+
+        then:
+        results.get() == cannedResults
+
+        when:
+        target = []
+        results = new FutureResultCallback()
+        mongoIterable.map(new Function<RawBsonDocument, Integer>() {
+            @Override
+            Integer apply(RawBsonDocument document) {
+                document.getInt32('_id').intValue()
+            }
+        }).into(target, results)
+        then:
+        results.get() == [1, 2, 3]
 
         when:
         results = new FutureResultCallback()
@@ -258,6 +316,22 @@ class ChangeStreamIterableSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+    }
+
+    def cursor(List<?> cannedResults) {
+        Stub(AsyncBatchCursor) {
+            def count = 0
+            def results
+            def getResult = {
+                count++
+                results = count == 1 ? cannedResults : null
+                results
+            }
+            next(_) >> {
+                it[0].onResult(getResult(), null)
+            }
+            isClosed() >> { count >= 1 }
+        }
     }
 
 }

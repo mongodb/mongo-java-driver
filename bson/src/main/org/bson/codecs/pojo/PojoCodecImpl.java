@@ -50,8 +50,9 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
 
 
     PojoCodecImpl(final ClassModel<T> classModel, final CodecRegistry registry, final DiscriminatorLookup discriminatorLookup) {
-        this(classModel, registry, discriminatorLookup, new ConcurrentHashMap<ClassModel<?>, Codec<?>>(), !classModel.hasTypeParameters());
+        this(classModel, registry, discriminatorLookup, new ConcurrentHashMap<ClassModel<?>, Codec<?>>(), shouldSpecialize(classModel));
     }
+
     PojoCodecImpl(final ClassModel<T> classModel, final CodecRegistry registry, final DiscriminatorLookup discriminatorLookup,
                   final ConcurrentMap<ClassModel<?>, Codec<?>> codecCache, final boolean specialized) {
         this.classModel = classModel;
@@ -59,6 +60,7 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
         this.discriminatorLookup = discriminatorLookup;
         this.codecCache = codecCache;
         this.specialized = specialized;
+
         if (specialized) {
             codecCache.put(classModel, this);
             for (PropertyModel<?> propertyModel : classModel.getPropertyModels()) {
@@ -349,6 +351,20 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
             }
         }
         return null;
+    }
+
+    private static <T> boolean shouldSpecialize(final ClassModel<T> classModel) {
+        if (!classModel.hasTypeParameters()) {
+            return true;
+        }
+
+        for (Map.Entry<String, TypeParameterMap> entry : classModel.getPropertyNameToTypeParameterMap().entrySet()) {
+            TypeParameterMap typeParameterMap = entry.getValue();
+            if (typeParameterMap.hasTypeParameters() && classModel.getPropertyModel(entry.getKey()).getCodec() == null) {
+                return false;
+            }
+        }
+        return true;
     }
 
 }

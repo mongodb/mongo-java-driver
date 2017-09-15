@@ -21,7 +21,7 @@ import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadConcern
 import com.mongodb.WriteConcern
 import com.mongodb.client.model.CreateCollectionOptions
-import com.mongodb.client.model.FullDocument
+import com.mongodb.client.model.changestream.FullDocument
 import com.mongodb.client.test.CollectionHelper
 import org.bson.BsonArray
 import org.bson.BsonDocument

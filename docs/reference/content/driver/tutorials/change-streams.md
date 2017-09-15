@@ -29,7 +29,7 @@ to resume if it encounters a potentially recoverable error.
      import com.mongodb.MongoClientURI;
      import com.mongodb.client.MongoCollection;
      import com.mongodb.client.MongoDatabase;
-     import com.mongodb.client.model.FullDocument;
+     import com.mongodb.client.model.changestream.FullDocument;
      
      import org.bson.Document;
      ```

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.client.model;
+package com.mongodb.client.model.changestream;
 
 import static java.lang.String.format;
 
