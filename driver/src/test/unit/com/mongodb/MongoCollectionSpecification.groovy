@@ -312,21 +312,21 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl(namespace, codecRegistry, readPreference, readConcern,
-                executor, [], Document))
+                executor, [], Document), ['codec'])
 
         when:
         changeStreamIterable = collection.watch([new Document('$match', 1)])
 
         then:
         expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl(namespace, codecRegistry, readPreference, readConcern,
-                executor, [new Document('$match', 1)], Document))
+                executor, [new Document('$match', 1)], Document), ['codec'])
 
         when:
         changeStreamIterable = collection.watch([new Document('$match', 1)], BsonDocument)
 
         then:
         expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl(namespace, codecRegistry, readPreference, readConcern,
-                executor, [new Document('$match', 1)], BsonDocument))
+                executor, [new Document('$match', 1)], BsonDocument), ['codec'])
     }
 
     def 'should validate the ChangeStreamIterable pipeline data correctly'() {

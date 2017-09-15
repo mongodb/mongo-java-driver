@@ -16,6 +16,7 @@
 
 package org.bson.codecs.pojo;
 
+import org.bson.codecs.LongCodec;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.entities.AsymmetricalCreatorModel;
@@ -33,6 +34,7 @@ import org.bson.codecs.pojo.entities.SimpleEnum;
 import org.bson.codecs.pojo.entities.SimpleEnumModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;
+import org.bson.codecs.pojo.entities.UpperBoundsModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorConstructorPrimitivesModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorConstructorThrowsExceptionModel;
@@ -246,6 +248,18 @@ public final class PojoCustomTest extends PojoTestCase {
         model.setIntegerField(null);
 
         decodesTo(getCodec(SimpleModel.class), "{'_t': 'SimpleModel', 'stringField': 'myString'}", model);
+    }
+
+    @Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public void testCanHandleTopLevelGenericIfHasCodec() {
+        UpperBoundsModel<Long> model = new UpperBoundsModel<Long>(5L);
+
+        ClassModelBuilder<UpperBoundsModel> classModelBuilder = ClassModel.builder(UpperBoundsModel.class);
+        ((PropertyModelBuilder<Long>) classModelBuilder.getProperty("myGenericField")).codec(new LongCodec());
+
+        roundTrip(getPojoCodecProviderBuilder(classModelBuilder), model,
+                "{'myGenericField': {'$numberLong': '5'}}");
     }
 
     @Test(expected = CodecConfigurationException.class)

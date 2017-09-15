@@ -17,19 +17,23 @@
 package com.mongodb.async.client;
 
 import com.mongodb.client.model.Collation;
-import com.mongodb.client.model.FullDocument;
-import org.bson.conversions.Bson;
+import com.mongodb.client.model.changestream.ChangeStreamDocument;
+import com.mongodb.client.model.changestream.FullDocument;
+import org.bson.BsonDocument;
 
 import java.util.concurrent.TimeUnit;
 
 /**
  * Iterable for change streams.
  *
+ * <p>Note: the {@link ChangeStreamDocument} class will not be applicable for all change stream outputs. If using custom pipelines that
+ * radically change the result, then the {@link #withDocumentClass(Class)} method can be used to provide an alternative document format.</p>
+ *
  * @param <TResult> The type of the result.
  * @mongodb.server.release 3.6
  * @since 3.6
  */
-public interface ChangeStreamIterable<TResult> extends MongoIterable<TResult> {
+public interface ChangeStreamIterable<TResult> extends MongoIterable<ChangeStreamDocument<TResult>> {
 
     /**
      * Sets the fullDocument value.
@@ -45,7 +49,7 @@ public interface ChangeStreamIterable<TResult> extends MongoIterable<TResult> {
      * @param resumeToken the resume token
      * @return this
      */
-    ChangeStreamIterable<TResult> resumeAfter(Bson resumeToken);
+    ChangeStreamIterable<TResult> resumeAfter(BsonDocument resumeToken);
 
     /**
      * Sets the number of documents to return per batch.
@@ -74,5 +78,14 @@ public interface ChangeStreamIterable<TResult> extends MongoIterable<TResult> {
      * @return this
      */
     ChangeStreamIterable<TResult> collation(Collation collation);
+
+    /**
+     * Returns a {@code MongoIterable} containing the results of the change stream based on the document class provided.
+     *
+     * @param clazz the class to use for the raw result.
+     * @param <TDocument> the result type
+     * @return the new Mongo Iterable
+     */
+    <TDocument> MongoIterable<TDocument> withDocumentClass(Class<TDocument> clazz);
 
 }

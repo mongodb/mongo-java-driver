@@ -14,35 +14,42 @@
  * limitations under the License.
  */
 
-package com.mongodb.client.model
+package com.mongodb.client.model.changestream
 
 import spock.lang.Specification
 
-class FullDocumentSpecification extends Specification {
+class OperationTypeSpecification extends Specification {
 
     def 'should return the expected string value'() {
         expect:
-        fullDocument.getValue() == expectedString
+        operationType.getValue() == expectedString
 
         where:
-        fullDocument               | expectedString
-        FullDocument.DEFAULT       | 'default'
-        FullDocument.UPDATE_LOOKUP | 'updateLookup'
+        operationType            | expectedString
+        OperationType.DELETE     | 'delete'
+        OperationType.INSERT     | 'insert'
+        OperationType.INVALIDATE | 'invalidate'
+        OperationType.REPLACE    | 'replace'
+        OperationType.UPDATE     | 'update'
+
     }
 
     def 'should support valid string representations'() {
         expect:
-        FullDocument.fromString(stringValue) == fullDocument
+        OperationType.fromString(stringValue) == operationType
 
         where:
-        fullDocument               | stringValue
-        FullDocument.DEFAULT       | 'default'
-        FullDocument.UPDATE_LOOKUP | 'updateLookup'
+        operationType            | stringValue
+        OperationType.DELETE     | 'delete'
+        OperationType.INSERT     | 'insert'
+        OperationType.INVALIDATE | 'invalidate'
+        OperationType.REPLACE    | 'replace'
+        OperationType.UPDATE     | 'update'
     }
 
     def 'should throw an illegal argument exception for invalid values'() {
         when:
-        FullDocument.fromString(stringValue)
+        OperationType.fromString(stringValue)
 
         then:
         thrown(IllegalArgumentException)
