@@ -856,6 +856,7 @@ public class ServerDescription {
                   + ", minWireVersion=" + minWireVersion
                   + ", maxWireVersion=" + maxWireVersion
                   + ", maxDocumentSize=" + maxDocumentSize
+                  + ", logicalSessionTimeoutMinutes=" + logicalSessionTimeoutMinutes
                   + ", roundTripTimeNanos=" + roundTripTimeNanos
                   : "")
                + (isReplicaSetMember()
@@ -871,7 +872,6 @@ public class ServerDescription {
                   + ", setVersion=" + setVersion
                   + ", lastWriteDate=" + lastWriteDate
                   + ", lastUpdateTimeNanos=" + lastUpdateTimeNanos
-                  + ", logicalSessionTimeoutMinutes=" + logicalSessionTimeoutMinutes
                 : "")
                + (exception == null ? "" : ", exception=" + translateExceptionToString())
                + '}';
