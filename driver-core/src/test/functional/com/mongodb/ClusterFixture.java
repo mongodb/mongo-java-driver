@@ -51,8 +51,8 @@ import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
 import com.mongodb.selector.ServerSelector;
 import org.bson.BsonDocument;
-import org.bson.BsonDocumentWrapper;
 import org.bson.BsonInt32;
+import org.bson.BsonString;
 import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DocumentCodec;
@@ -70,6 +70,7 @@ import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assume.assumeThat;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Helper class for the acceptance tests.  Used primarily by DatabaseTestCase and FunctionalSpecification.  This fixture allows Test
@@ -79,6 +80,7 @@ public final class ClusterFixture {
     public static final String DEFAULT_URI = "mongodb://localhost:27017";
     public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
     private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
+    private static final int COMMAND_NOT_FOUND_ERROR_CODE = 59;
     public static final long TIMEOUT = 60L;
 
     private static ConnectionString connectionString;
@@ -320,24 +322,34 @@ public final class ClusterFixture {
 
     public static void enableMaxTimeFailPoint() {
         assumeThat(isSharded(), is(false));
-        new CommandWriteOperation<BsonDocument>("admin",
-                                                new BsonDocumentWrapper<Document>(new Document("configureFailPoint", "maxTimeAlwaysTimeOut")
-                                                                                  .append("mode", "alwaysOn"),
-                                                                                  new DocumentCodec()),
-                                                new BsonDocumentCodec())
-        .execute(getBinding());
+        boolean failsPointsSupported = true;
+        try {
+            new CommandWriteOperation<BsonDocument>("admin",
+                                                    new BsonDocument("configureFailPoint", new BsonString("maxTimeAlwaysTimeOut"))
+                                                                                      .append("mode", new BsonString("alwaysOn")),
+                                                    new BsonDocumentCodec())
+            .execute(getBinding());
+        } catch (MongoCommandException e) {
+            if (e.getErrorCode() == COMMAND_NOT_FOUND_ERROR_CODE) {
+                failsPointsSupported = false;
+            }
+        }
+        assumeTrue("configureFailPoint is not enabled", failsPointsSupported);
     }
 
     public static void disableMaxTimeFailPoint() {
         assumeThat(isSharded(), is(false));
         if (!isSharded()) {
-            new CommandWriteOperation<BsonDocument>("admin",
-                                                    new BsonDocumentWrapper<Document>(new Document("configureFailPoint",
-                                                                                                   "maxTimeAlwaysTimeOut")
-                                                                                      .append("mode", "off"),
-                                                                                      new DocumentCodec()),
-                                                    new BsonDocumentCodec())
-            .execute(getBinding());
+            try {
+                new CommandWriteOperation<BsonDocument>("admin",
+                                                               new BsonDocument("configureFailPoint",
+                                                                                       new BsonString("maxTimeAlwaysTimeOut"))
+                                                                       .append("mode", new BsonString("off")),
+                                                               new BsonDocumentCodec())
+                .execute(getBinding());
+            } catch (MongoCommandException e) {
+                // ignore
+            }
         }
     }
 
