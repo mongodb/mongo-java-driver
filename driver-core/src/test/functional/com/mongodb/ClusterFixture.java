@@ -49,6 +49,7 @@ import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.DropDatabaseOperation;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
+import com.mongodb.selector.ServerSelector;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonInt32;
@@ -103,13 +104,18 @@ public final class ClusterFixture {
         return getCluster().getDescription().getType() == clusterType;
     }
 
-    @SuppressWarnings("deprecation")
     public static ServerVersion getServerVersion() {
-        return getCluster().getDescription().getAny().get(0).getVersion();
+        return getCluster().selectServer(new ServerSelector() {
+            @Override
+            @SuppressWarnings("deprecation")
+            public List<ServerDescription> select(final ClusterDescription clusterDescription) {
+                return clusterDescription.getAny();
+            }
+        }).getDescription().getVersion();
     }
 
     public static boolean serverVersionAtLeast(final List<Integer> versionArray) {
-        return getConnectedServerVersion().compareTo(new ServerVersion(versionArray)) >= 0;
+        return getServerVersion().compareTo(new ServerVersion(versionArray)) >= 0;
     }
 
     public static boolean serverVersionAtLeast(final int majorVersion, final int minorVersion) {
@@ -117,11 +123,11 @@ public final class ClusterFixture {
     }
 
     public static boolean serverVersionLessThan(final String versionString) {
-        return getConnectedServerVersion().compareTo(new ServerVersion(getVersionList(versionString).subList(0, 3))) < 0;
+        return getServerVersion().compareTo(new ServerVersion(getVersionList(versionString).subList(0, 3))) < 0;
     }
 
     public static boolean serverVersionGreaterThan(final String versionString) {
-        return getConnectedServerVersion().compareTo(new ServerVersion(getVersionList(versionString).subList(0, 3))) > 0;
+        return getServerVersion().compareTo(new ServerVersion(getVersionList(versionString).subList(0, 3))) > 0;
     }
 
     private static List<Integer> getVersionList(final String versionString) {
@@ -161,25 +167,6 @@ public final class ClusterFixture {
         Document storageEngine = (Document) serverStatus.get("storageEngine");
 
         return storageEngine != null && !storageEngine.get("name").equals("inMemory");
-    }
-
-    @SuppressWarnings("deprecation")
-    public static ServerVersion getConnectedServerVersion() {
-        ClusterDescription clusterDescription = getCluster().getDescription();
-        int retries = 0;
-        while (clusterDescription.getAny().isEmpty() && retries <= 3) {
-            try {
-                Thread.sleep(1000);
-                retries++;
-            } catch (InterruptedException e) {
-                throw new RuntimeException("Interrupted", e);
-            }
-            clusterDescription = getCluster().getDescription();
-        }
-        if (clusterDescription.getAny().isEmpty()) {
-            throw new RuntimeException("There are no servers available in " + clusterDescription);
-        }
-        return clusterDescription.getAny().get(0).getVersion();
     }
 
     public static boolean isNotAtLeastJava7() {
