@@ -17,7 +17,9 @@
 package com.mongodb;
 
 import com.mongodb.annotations.Immutable;
+import jnr.unixsocket.UnixSocketAddress;
 
+import java.io.File;
 import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -86,6 +88,15 @@ public class ServerAddress implements Serializable {
      */
     public ServerAddress(final ServerAddress serverAddress) {
         this(serverAddress.host, serverAddress.port, serverAddress.address);
+    }
+
+    /**
+     * Creates a ServerAddress
+     *
+     * @param path the file used for the Unix domain socket
+     */
+    public ServerAddress(final File path) {
+        this(path.toString(), 0, new UnixSocketAddress(path));
     }
 
     /**

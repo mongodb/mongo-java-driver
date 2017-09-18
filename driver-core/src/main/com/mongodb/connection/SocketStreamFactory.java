@@ -24,6 +24,8 @@ import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
 import java.security.NoSuchAlgorithmException;
 
+import jnr.unixsocket.UnixSocketAddress;
+
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -63,7 +65,9 @@ public class SocketStreamFactory implements StreamFactory {
     @Override
     public Stream create(final ServerAddress serverAddress) {
         Stream stream;
-        if (socketFactory != null) {
+        if (serverAddress.getSocketAddress() instanceof UnixSocketAddress) {
+            stream = new SocketChannelStream(serverAddress, settings, sslSettings, bufferProvider);
+        } else if (socketFactory != null) {
             stream = new SocketStream(serverAddress, settings, sslSettings, socketFactory, bufferProvider);
         } else if (sslSettings.isEnabled()) {
             stream = new SocketStream(serverAddress, settings, sslSettings, getSslContext().getSocketFactory(), bufferProvider);
