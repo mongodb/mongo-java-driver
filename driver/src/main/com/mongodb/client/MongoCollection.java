@@ -16,6 +16,7 @@
 
 package com.mongodb.client;
 
+import com.mongodb.ClientSession;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
@@ -234,6 +235,56 @@ public interface MongoCollection<TDocument> {
     <TResult> FindIterable<TResult> find(Bson filter, Class<TResult> resultClass);
 
     /**
+     * Finds all documents in the collection.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @return the find iterable interface
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @mongodb.driver.manual tutorial/query-documents/ Find
+     */
+    FindIterable<TDocument> find(ClientSession clientSession);
+
+    /**
+     * Finds all documents in the collection.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param resultClass the class to decode each document into
+     * @param <TResult>   the target document type of the iterable.
+     * @return the find iterable interface
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @mongodb.driver.manual tutorial/query-documents/ Find
+     */
+    <TResult> FindIterable<TResult> find(ClientSession clientSession, Class<TResult> resultClass);
+
+    /**
+     * Finds all documents in the collection.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param filter the query filter
+     * @return the find iterable interface
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @mongodb.driver.manual tutorial/query-documents/ Find
+     */
+    FindIterable<TDocument> find(ClientSession clientSession, Bson filter);
+
+    /**
+     * Finds all documents in the collection.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param filter      the query filter
+     * @param resultClass the class to decode each document into
+     * @param <TResult>   the target document type of the iterable.
+     * @return the find iterable interface
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @mongodb.driver.manual tutorial/query-documents/ Find
+     */
+    <TResult> FindIterable<TResult> find(ClientSession clientSession, Bson filter, Class<TResult> resultClass);
+
+    /**
      * Aggregates documents according to the specified aggregation pipeline.
      *
      * @param pipeline the aggregation pipeline
@@ -362,6 +413,34 @@ public interface MongoCollection<TDocument> {
      * @since 3.2
      */
     void insertOne(TDocument document, InsertOneOptions options);
+
+    /**
+     * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param document      the document to insert
+     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the insert command
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoException             if the write failed due some other failure
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    void insertOne(ClientSession clientSession, TDocument document);
+
+    /**
+     * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param document      the document to insert
+     * @param options       the options to apply to the operation
+     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the insert command
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to document validation reasons
+     * @throws com.mongodb.MongoException             if the write failed due some other failure
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    void insertOne(ClientSession clientSession, TDocument document, InsertOneOptions options);
 
     /**
      * Inserts one or more documents.  A call to this method is equivalent to a call to the {@code bulkWrite} method

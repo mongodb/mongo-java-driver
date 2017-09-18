@@ -233,34 +233,64 @@ class MongoCollectionSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern, executor)
+        def clientSession = Stub(ClientSession)
 
         when:
         def findIterable = collection.find()
 
         then:
-        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, executor, new BsonDocument(), new FindOptions()))
+        expect findIterable, isTheSameAs(new FindIterableImpl(null, namespace, Document, Document, codecRegistry,
+                readPreference, readConcern, executor, new BsonDocument(), new FindOptions()))
 
         when:
         findIterable = collection.find(BsonDocument)
 
         then:
-        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, Document, BsonDocument, codecRegistry, readPreference,
-                readConcern, executor, new BsonDocument(), new FindOptions()))
+        expect findIterable, isTheSameAs(new FindIterableImpl(null, namespace, Document, BsonDocument, codecRegistry,
+                readPreference, readConcern, executor, new BsonDocument(), new FindOptions()))
 
         when:
         findIterable = collection.find(new Document())
 
         then:
-        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, executor, new Document(), new FindOptions()))
+        expect findIterable, isTheSameAs(new FindIterableImpl(null, namespace, Document, Document, codecRegistry,
+                readPreference, readConcern, executor, new Document(), new FindOptions()))
 
         when:
         findIterable = collection.find(new Document(), BsonDocument)
 
         then:
-        expect findIterable, isTheSameAs(new FindIterableImpl(namespace, Document, BsonDocument, codecRegistry, readPreference,
-                readConcern, executor, new Document(), new FindOptions()))
+        expect findIterable, isTheSameAs(new FindIterableImpl(null, namespace, Document, BsonDocument, codecRegistry,
+                readPreference, readConcern, executor, new Document(), new FindOptions()))
+
+        when:
+        findIterable = collection.find(clientSession)
+
+        then:
+        expect findIterable, isTheSameAs(new FindIterableImpl(clientSession, namespace, Document, Document, codecRegistry,
+                readPreference, readConcern, executor, new BsonDocument(), new FindOptions()))
+
+        when:
+        findIterable = collection.find(clientSession, BsonDocument)
+
+        then:
+        expect findIterable, isTheSameAs(new FindIterableImpl(clientSession, namespace, Document, BsonDocument, codecRegistry,
+                readPreference, readConcern, executor, new BsonDocument(), new FindOptions()))
+
+        when:
+        findIterable = collection.find(clientSession, new Document())
+
+        then:
+        expect findIterable, isTheSameAs(new FindIterableImpl(clientSession, namespace, Document, Document, codecRegistry,
+                readPreference, readConcern, executor, new Document(), new FindOptions()))
+
+        when:
+        findIterable = collection.find(clientSession, new Document(), BsonDocument)
+
+        then:
+        expect findIterable, isTheSameAs(new FindIterableImpl(clientSession, namespace, Document, BsonDocument, codecRegistry,
+                readPreference, readConcern, executor, new Document(), new FindOptions()))
+
     }
 
     def 'should create AggregateIterable correctly'() {
@@ -476,6 +506,37 @@ class MongoCollectionSpecification extends Specification {
                                                                  acknowledged(INSERT, 0, []),
                                                                  acknowledged(INSERT, 0, [])])
         WriteConcern.UNACKNOWLEDGED | new TestOperationExecutor([unacknowledged(), unacknowledged(), unacknowledged()])
+    }
+
+    def 'insertOne should use ClientSession properly'() {
+        given:
+        def executor = new TestOperationExecutor([null, null])
+        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, writeConcern, readConcern, executor)
+        def session = Stub(ClientSession)
+
+        when:
+        collection.insertOne(null, new Document())
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.insertOne(null, new Document(), new InsertOneOptions())
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.insertOne(session, new Document())
+
+        then:
+        executor.getClientSession() == session
+
+        when:
+        collection.insertOne(session, new Document(), new InsertOneOptions())
+
+        then:
+        executor.getClientSession() == session
     }
 
     def 'insertMany should use MixedBulkWriteOperation correctly'() {

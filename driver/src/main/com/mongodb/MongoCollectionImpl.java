@@ -217,8 +217,38 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public <TResult> FindIterable<TResult> find(final Bson filter, final Class<TResult> resultClass) {
-        return new FindIterableImpl<TDocument, TResult>(namespace, this.documentClass, resultClass, codecRegistry, readPreference,
-                readConcern, executor, filter, new FindOptions());
+        return createFindIterable(null, filter, resultClass);
+    }
+
+    @Override
+    public FindIterable<TDocument> find(final ClientSession clientSession) {
+        notNull("clientSession", clientSession);
+        return find(clientSession, new BsonDocument(), documentClass);
+    }
+
+    @Override
+    public <TResult> FindIterable<TResult> find(final ClientSession clientSession, final Class<TResult> resultClass) {
+        notNull("clientSession", clientSession);
+        return find(clientSession, new BsonDocument(), resultClass);
+    }
+
+    @Override
+    public FindIterable<TDocument> find(final ClientSession clientSession, final Bson filter) {
+        notNull("clientSession", clientSession);
+        return find(clientSession, filter, documentClass);
+    }
+
+    @Override
+    public <TResult> FindIterable<TResult> find(final ClientSession clientSession, final Bson filter,
+                                                final Class<TResult> resultClass) {
+        notNull("clientSession", clientSession);
+        return createFindIterable(clientSession, filter, resultClass);
+    }
+
+    private <TResult> FindIterable<TResult> createFindIterable(final ClientSession clientSession, final Bson filter,
+                                                               final Class<TResult> resultClass) {
+        return new FindIterableImpl<TDocument, TResult>(clientSession, namespace, this.documentClass, resultClass, codecRegistry,
+                                                               readPreference, readConcern, executor, filter, new FindOptions());
     }
 
     @Override
@@ -332,11 +362,28 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     @Override
     public void insertOne(final TDocument document, final InsertOneOptions options) {
         notNull("document", document);
+        executeInsertOne(null, document, options);
+    }
+
+    @Override
+    public void insertOne(final ClientSession clientSession, final TDocument document) {
+        insertOne(clientSession, document, new InsertOneOptions());
+    }
+
+    @Override
+    public void insertOne(final ClientSession clientSession, final TDocument document, final InsertOneOptions options) {
+        notNull("clientSession", clientSession);
+        notNull("document", document);
+        executeInsertOne(clientSession, document, options);
+    }
+
+    private void executeInsertOne(final ClientSession clientSession, final TDocument document, final InsertOneOptions options) {
         TDocument insertDocument = document;
         if (getCodec() instanceof CollectibleCodec) {
             insertDocument = ((CollectibleCodec<TDocument>) getCodec()).generateIdIfAbsentFromDocument(document);
         }
-        executeSingleWriteRequest(new InsertRequest(documentToBsonDocument(insertDocument)), options.getBypassDocumentValidation());
+        executeSingleWriteRequest(clientSession, new InsertRequest(documentToBsonDocument(insertDocument)),
+                options.getBypassDocumentValidation());
     }
 
     @Override
@@ -388,7 +435,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public UpdateResult replaceOne(final Bson filter, final TDocument replacement, final UpdateOptions updateOptions) {
-        return toUpdateResult(executeSingleWriteRequest(new UpdateRequest(toBsonDocument(filter), documentToBsonDocument(replacement),
+        return toUpdateResult(executeSingleWriteRequest(null, new UpdateRequest(toBsonDocument(filter), documentToBsonDocument(replacement),
                 WriteRequest.Type.REPLACE).upsert(updateOptions.isUpsert()).collation(updateOptions.getCollation()),
                 updateOptions.getBypassDocumentValidation()));
     }
@@ -551,7 +598,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     private DeleteResult delete(final Bson filter, final DeleteOptions deleteOptions, final boolean multi) {
-        com.mongodb.bulk.BulkWriteResult result = executeSingleWriteRequest(new DeleteRequest(toBsonDocument(filter)).multi(multi)
+        com.mongodb.bulk.BulkWriteResult result = executeSingleWriteRequest(null, new DeleteRequest(toBsonDocument(filter)).multi(multi)
                 .collation(deleteOptions.getCollation()), null);
         if (result.wasAcknowledged()) {
             return DeleteResult.acknowledged(result.getDeletedCount());
@@ -561,16 +608,17 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     private UpdateResult update(final Bson filter, final Bson update, final UpdateOptions updateOptions, final boolean multi) {
-        return toUpdateResult(executeSingleWriteRequest(new UpdateRequest(toBsonDocument(filter), toBsonDocument(update),
+        return toUpdateResult(executeSingleWriteRequest(null, new UpdateRequest(toBsonDocument(filter), toBsonDocument(update),
                 WriteRequest.Type.UPDATE).upsert(updateOptions.isUpsert()).multi(multi).collation(updateOptions.getCollation()),
                 updateOptions.getBypassDocumentValidation()));
     }
 
 
-    private BulkWriteResult executeSingleWriteRequest(final WriteRequest request, final Boolean bypassDocumentValidation) {
+    private BulkWriteResult executeSingleWriteRequest(final ClientSession clientSession, final WriteRequest request,
+                                                      final Boolean bypassDocumentValidation) {
         try {
             return executor.execute(new MixedBulkWriteOperation(namespace, asList(request), true, writeConcern)
-                    .bypassDocumentValidation(bypassDocumentValidation));
+                    .bypassDocumentValidation(bypassDocumentValidation), clientSession);
         } catch (MongoBulkWriteException e) {
             if (e.getWriteErrors().isEmpty()) {
                 throw new MongoWriteConcernException(e.getWriteConcernError(),
