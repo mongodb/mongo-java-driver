@@ -54,17 +54,23 @@ import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;
 import org.bson.codecs.pojo.entities.UpperBoundsConcreteModel;
+import org.bson.codecs.pojo.entities.conventions.CollectionDiscriminatorModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorAllFinalFieldsModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorConstructorModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorMethodModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorNoArgsConstructorModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorNoArgsMethodModel;
+import org.bson.codecs.pojo.entities.conventions.Subclass1Model;
+import org.bson.codecs.pojo.entities.conventions.Subclass2Model;
+import org.bson.codecs.pojo.entities.conventions.SuperClassModel;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 import static java.lang.String.format;
@@ -155,7 +161,8 @@ public final class PojoRoundTripTest extends PojoTestCase {
         data.add(new TestData("Nested generic holder map", getNestedGenericHolderMapModel(),
                 getPojoCodecProviderBuilder(NestedGenericHolderMapModel.class,
                         GenericHolderModel.class, SimpleGenericsModel.class, SimpleModel.class),
-                "{ 'nested': { 'myGenericField': {'s': " + SIMPLE_MODEL_JSON + "}, 'myLongField': {'$numberLong': '1'}}}"));
+                "{ 'nested': { 'myGenericField': {'s': " + SIMPLE_MODEL_JSON
+                        + "}, 'myLongField': {'$numberLong': '1'}}}"));
 
         data.add(new TestData("Nested reused generic", getNestedReusedGenericsModel(),
                 getPojoCodecProviderBuilder(NestedReusedGenericsModel.class, ReusedGenericsModel.class, SimpleModel.class),
@@ -260,6 +267,16 @@ public final class PojoRoundTripTest extends PojoTestCase {
                 new ContainsAlternativeMapAndCollectionModel(BsonDocument.parse("{customList: [1,2,3], customMap: {'field': 'value'}}")),
                 getPojoCodecProviderBuilder(ContainsAlternativeMapAndCollectionModel.class),
                 "{customList: [1,2,3], customMap: {'field': 'value'}}"));
+
+        data.add(new TestData("Collection of discriminators", new CollectionDiscriminatorModel().setList(Arrays
+                .asList(new Subclass1Model().setName("abc").setValue(true),
+                        new Subclass2Model().setInteger(234).setValue(false))).setMap(
+                Collections.singletonMap("key", new Subclass2Model().setInteger(123).setValue(true))),
+                getPojoCodecProviderBuilder(CollectionDiscriminatorModel.class, SuperClassModel.class, Subclass1Model.class,
+                        Subclass2Model.class),
+                "{list: [{_t:'org.bson.codecs.pojo.entities.conventions.Subclass1Model',value:true,name:'abc'},"
+                        + "{_t:'org.bson.codecs.pojo.entities.conventions.Subclass2Model',value:false,integer:234}],"
+                        + "map:{key:{_t:'org.bson.codecs.pojo.entities.conventions.Subclass2Model',value:true,integer:123}}}"));
 
         return data;
     }
