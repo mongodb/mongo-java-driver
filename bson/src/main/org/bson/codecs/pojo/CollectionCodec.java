@@ -24,7 +24,11 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecConfigurationException;
 
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
+
+import static java.lang.String.format;
 
 
 final class CollectionCodec<T> implements Codec<Collection<T>> {
@@ -62,6 +66,16 @@ final class CollectionCodec<T> implements Codec<Collection<T>> {
     }
 
     private Collection<T> getInstance() {
+        if (encoderClass.isInterface()) {
+            if (encoderClass.isAssignableFrom(ArrayList.class)) {
+                return new ArrayList<T>();
+            } else if (encoderClass.isAssignableFrom(HashSet.class) ){
+                return new HashSet<T>();
+            } else {
+                throw new CodecConfigurationException(format("Unsupported Collection interface of %s!", encoderClass.getName()));
+            }
+        }
+
         try {
             return encoderClass.getDeclaredConstructor().newInstance();
         } catch (final Exception e) {

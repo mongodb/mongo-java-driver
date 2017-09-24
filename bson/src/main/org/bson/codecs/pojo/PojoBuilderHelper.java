@@ -38,9 +38,11 @@ import static java.lang.reflect.Modifier.isPublic;
 import static java.util.Arrays.asList;
 import static java.util.Collections.reverse;
 import static org.bson.assertions.Assertions.notNull;
+import static org.bson.codecs.pojo.PropertyReflectionUtils.isGetter;
+import static org.bson.codecs.pojo.PropertyReflectionUtils.getPropertyMethods;
+import static org.bson.codecs.pojo.PropertyReflectionUtils.toPropertyName;
 
 final class PojoBuilderHelper {
-
     @SuppressWarnings("unchecked")
     static <T> void configureClassModelBuilder(final ClassModelBuilder<T> classModelBuilder, final Class<T> clazz) {
         classModelBuilder.type(notNull("clazz", clazz));
@@ -60,23 +62,34 @@ final class PojoBuilderHelper {
                 genericTypeNames.add(classTypeVariable.getName());
             }
 
-            for (Method method : currentClass.getDeclaredMethods()) {
-                String methodName = method.getName();
-                if (isPropertyMethod(method) && isPublic(method.getModifiers())) {
-                    String propertyName = toPropertyName(methodName);
-                    propertyNames.add(propertyName);
-                    PropertyMetadata<?> propertyMetadata = getOrCreateProperty(propertyName, declaringClassName, propertyNameMap,
-                            getTypeData(method), propertyTypeParameterMap, parentClassTypeData, genericTypeNames, getGenericType(method));
-                    if (isGetter(method) && propertyMetadata.getGetter() == null) {
-                        propertyMetadata.setGetter(method);
-                        for (Annotation annotation : method.getDeclaredAnnotations()) {
-                            propertyMetadata.addReadAnnotation(annotation);
-                        }
-                    } else if (propertyMetadata.getSetter() == null) {
-                        propertyMetadata.setSetter(method);
-                        for (Annotation annotation : method.getDeclaredAnnotations()) {
-                            propertyMetadata.addWriteAnnotation(annotation);
-                        }
+            PropertyReflectionUtils.PropertyMethods propertyMethods = getPropertyMethods(currentClass);
+
+            // Note that we're processing setters before getters. It's typical for setters to have more general types
+            // than getters (e.g.: getter returning ImmutableList, but setter accepting Collection), so by evaluating
+            // setters first, we'll initialize the PropertyMetadata with the more general type
+            for (Method method : propertyMethods.getSetterMethods()) {
+                String propertyName = toPropertyName(method);
+                propertyNames.add(propertyName);
+                PropertyMetadata<?> propertyMetadata = getOrCreateProperty(propertyName, declaringClassName, propertyNameMap,
+                        TypeData.newInstance(method), propertyTypeParameterMap, parentClassTypeData, genericTypeNames, getGenericType(method));
+                if (propertyMetadata.getSetter() == null) {
+                    propertyMetadata.setSetter(method);
+                    for (Annotation annotation : method.getDeclaredAnnotations()) {
+                        propertyMetadata.addWriteAnnotation(annotation);
+                    }
+                }
+            }
+
+            for (Method method : propertyMethods.getGetterMethods()) {
+                String propertyName = toPropertyName(method);
+                propertyNames.add(propertyName);
+                PropertyMetadata<?> propertyMetadata = getOrCreateProperty(propertyName, declaringClassName, propertyNameMap,
+                        TypeData.newInstance(method), propertyTypeParameterMap, parentClassTypeData, genericTypeNames, getGenericType(method));
+
+                if (propertyMetadata.getGetter() == null) {
+                    propertyMetadata.setGetter(method);
+                    for (Annotation annotation : method.getDeclaredAnnotations()) {
+                        propertyMetadata.addReadAnnotation(annotation);
                     }
                 }
             }
@@ -84,7 +97,7 @@ final class PojoBuilderHelper {
             for (Field field : currentClass.getDeclaredFields()) {
                 propertyNames.add(field.getName());
                 PropertyMetadata<?> propertyMetadata = getOrCreateProperty(field.getName(), declaringClassName, propertyNameMap,
-                        getTypeData(field.getGenericType(), field.getType()), propertyTypeParameterMap, parentClassTypeData,
+                        TypeData.newInstance(field), propertyTypeParameterMap, parentClassTypeData,
                         genericTypeNames, field.getGenericType());
                 if (propertyMetadata.getField() == null) {
                     propertyMetadata.field(field);
@@ -95,7 +108,7 @@ final class PojoBuilderHelper {
                 }
             }
 
-            parentClassTypeData = getTypeData(currentClass.getGenericSuperclass(), currentClass);
+            parentClassTypeData = TypeData.newInstance(currentClass.getGenericSuperclass(), currentClass);
             currentClass = currentClass.getSuperclass();
         }
 
@@ -136,7 +149,11 @@ final class PojoBuilderHelper {
             propertyMetadata = new PropertyMetadata<T>(propertyName, declaringClassName, typeData);
             propertyNameMap.put(propertyName, propertyMetadata);
         }
-        if (!propertyMetadata.getTypeData().equals(typeData)) {
+
+        // This allows subsequent invocations for the same property to provide more specific types
+        // (Collection -> ImmutableList). The patterns this method is called in ensures that ordering by evaluating
+        // setters (often accept more general types) before getters (often returns more specific types)
+        if (!propertyMetadata.getTypeData().getType().isAssignableFrom(typeData.getType())) {
             throw new CodecConfigurationException(format("Property '%s' in %s, has differing data types: %s and %s", propertyName,
                     declaringClassName, propertyMetadata.getTypeData(), typeData));
         }
@@ -144,42 +161,6 @@ final class PojoBuilderHelper {
         propertyTypeParameterMap.put(propertyMetadata.getName(), typeParameterMap);
         propertyMetadata.typeParameterInfo(typeParameterMap, parentClassTypeData);
         return propertyMetadata;
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private static <T> TypeData<T> getTypeData(final Type genericType, final Class<T> clazz) {
-        TypeData.Builder<T> builder = TypeData.builder(clazz);
-        if (genericType instanceof ParameterizedType) {
-            ParameterizedType pType = (ParameterizedType) genericType;
-            for (Type argType : pType.getActualTypeArguments()) {
-                getNestedTypeData(builder, argType);
-            }
-        }
-        return builder.build();
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private static <T> void getNestedTypeData(final TypeData.Builder<T> builder, final Type type) {
-        if (type instanceof ParameterizedType) {
-            ParameterizedType pType = (ParameterizedType) type;
-            TypeData.Builder paramBuilder = TypeData.builder((Class) pType.getRawType());
-            for (Type argType : pType.getActualTypeArguments()) {
-                getNestedTypeData(paramBuilder, argType);
-            }
-            builder.addTypeParameter(paramBuilder.build());
-        } else if (type instanceof TypeVariable) {
-            builder.addTypeParameter(TypeData.builder(Object.class).build());
-        } else if (type instanceof Class) {
-            builder.addTypeParameter(TypeData.builder((Class) type).build());
-        }
-    }
-
-    private static TypeData<?> getTypeData(final Method method) {
-        if (isGetter(method)) {
-            return getTypeData(method.getGenericReturnType(), method.getReturnType());
-        } else {
-            return getTypeData(method.getGenericParameterTypes()[0], method.getParameterTypes()[0]);
-        }
     }
 
     private static Type getGenericType(final Method method) {
@@ -227,7 +208,7 @@ final class PojoBuilderHelper {
     private static <V> void specializePropertyModelBuilder(final PropertyModelBuilder<V> propertyModelBuilder,
                                                            final PropertyMetadata<V> propertyMetadata) {
         if (propertyMetadata.getTypeParameterMap().hasTypeParameters() && !propertyMetadata.getTypeParameters().isEmpty()) {
-            TypeData<V> specializedFieldType = propertyModelBuilder.getTypeData();
+            TypeData<V> specializedFieldType;
             Map<Integer, Integer> fieldToClassParamIndexMap = propertyMetadata.getTypeParameterMap().getPropertyToClassParamIndexMap();
             Integer classTypeParamRepresentsWholeField = fieldToClassParamIndexMap.get(-1);
             if (classTypeParamRepresentsWholeField != null) {
@@ -254,42 +235,6 @@ final class PojoBuilderHelper {
             throw new IllegalStateException(format("%s cannot be null", property));
         }
         return value;
-    }
-
-    private static final String IS_PREFIX = "is";
-
-    private static final String GET_PREFIX = "get";
-
-    private static final String SET_PREFIX = "set";
-
-    static boolean isSetter(final Method method) {
-        if (method.getName().startsWith(SET_PREFIX) && method.getName().length() > SET_PREFIX.length()
-            && method.getParameterTypes().length == 1) {
-            return Character.isUpperCase(method.getName().charAt(SET_PREFIX.length()));
-        }
-        return false;
-    }
-
-    static boolean isGetter(final Method method) {
-        if (method.getParameterTypes().length > 0) {
-            return false;
-        } else if (method.getName().startsWith(GET_PREFIX) && method.getName().length() > GET_PREFIX.length()) {
-            return Character.isUpperCase(method.getName().charAt(GET_PREFIX.length()));
-        } else if (method.getName().startsWith(IS_PREFIX) && method.getName().length() > IS_PREFIX.length()) {
-            return Character.isUpperCase(method.getName().charAt(IS_PREFIX.length()));
-        }
-        return false;
-    }
-
-    static boolean isPropertyMethod(final Method method) {
-        return isGetter(method) || isSetter(method);
-    }
-
-    static String toPropertyName(final String name) {
-        String propertyName = name.substring(name.startsWith(IS_PREFIX) ? 2 : 3, name.length());
-        char[] chars = propertyName.toCharArray();
-        chars[0] = Character.toLowerCase(chars[0]);
-        return new String(chars);
     }
 
     private PojoBuilderHelper() {
