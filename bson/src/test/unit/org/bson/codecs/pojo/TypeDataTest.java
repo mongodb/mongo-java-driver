@@ -19,9 +19,7 @@ package org.bson.codecs.pojo;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 

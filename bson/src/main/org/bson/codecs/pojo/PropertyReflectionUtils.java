@@ -1,15 +1,29 @@
+/*
+ * Copyright 2017 MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package org.bson.codecs.pojo;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static java.lang.reflect.Modifier.isPublic;
 
-public class PropertyReflectionUtils {
+final class PropertyReflectionUtils {
     private PropertyReflectionUtils() {}
 
     private static final String IS_PREFIX = "is";
@@ -35,10 +49,6 @@ public class PropertyReflectionUtils {
         return false;
     }
 
-    static boolean isPropertyMethod(final Method method) {
-        return isGetter(method) || isSetter(method);
-    }
-
     static String toPropertyName(final Method method) {
         String name = method.getName();
         String propertyName = name.substring(name.startsWith(IS_PREFIX) ? 2 : 3, name.length());
@@ -47,7 +57,7 @@ public class PropertyReflectionUtils {
         return new String(chars);
     }
 
-    static PropertyMethods getPropertyMethods(Class<?> clazz) {
+    static PropertyMethods getPropertyMethods(final Class<?> clazz) {
         List<Method> setters = new ArrayList<Method>();
         List<Method> getters = new ArrayList<Method>();
         for (Method method : clazz.getDeclaredMethods()) {
@@ -68,20 +78,20 @@ public class PropertyReflectionUtils {
         return new PropertyMethods(getters, setters);
     }
 
-    public static class PropertyMethods {
+    static class PropertyMethods {
         private final Collection<Method> getterMethods;
         private final Collection<Method> setterMethods;
 
-        public PropertyMethods(Collection<Method> getterMethods, Collection<Method> setterMethods) {
+        PropertyMethods(final Collection<Method> getterMethods, final Collection<Method> setterMethods) {
             this.getterMethods = getterMethods;
             this.setterMethods = setterMethods;
         }
 
-        public Collection<Method> getGetterMethods() {
+        Collection<Method> getGetterMethods() {
             return getterMethods;
         }
 
-        public Collection<Method> getSetterMethods() {
+        Collection<Method> getSetterMethods() {
             return setterMethods;
         }
     }

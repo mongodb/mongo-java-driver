@@ -71,7 +71,8 @@ final class PojoBuilderHelper {
                 String propertyName = toPropertyName(method);
                 propertyNames.add(propertyName);
                 PropertyMetadata<?> propertyMetadata = getOrCreateProperty(propertyName, declaringClassName, propertyNameMap,
-                        TypeData.newInstance(method), propertyTypeParameterMap, parentClassTypeData, genericTypeNames, getGenericType(method));
+                        TypeData.newInstance(method), propertyTypeParameterMap, parentClassTypeData, genericTypeNames,
+                        getGenericType(method));
                 if (propertyMetadata.getSetter() == null) {
                     propertyMetadata.setSetter(method);
                     for (Annotation annotation : method.getDeclaredAnnotations()) {
@@ -84,7 +85,8 @@ final class PojoBuilderHelper {
                 String propertyName = toPropertyName(method);
                 propertyNames.add(propertyName);
                 PropertyMetadata<?> propertyMetadata = getOrCreateProperty(propertyName, declaringClassName, propertyNameMap,
-                        TypeData.newInstance(method), propertyTypeParameterMap, parentClassTypeData, genericTypeNames, getGenericType(method));
+                        TypeData.newInstance(method), propertyTypeParameterMap, parentClassTypeData, genericTypeNames,
+                        getGenericType(method));
 
                 if (propertyMetadata.getGetter() == null) {
                     propertyMetadata.setGetter(method);

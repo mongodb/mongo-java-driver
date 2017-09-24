@@ -123,8 +123,8 @@ final class ConventionAnnotationImpl implements Convention {
                                 throw new CodecConfigurationException("Found multiple constructors / methods annotated with @BsonCreator");
                             } else if (!bsonCreatorClass.isAssignableFrom(method.getReturnType())) {
                                 throw new CodecConfigurationException(
-                                        format("Invalid method annotated with @BsonCreator. Returns '%s', expected %s", method.getReturnType(),
-                                                bsonCreatorClass));
+                                        format("Invalid method annotated with @BsonCreator. Returns '%s', expected %s",
+                                                method.getReturnType(), bsonCreatorClass));
                             }
                             creatorExecutable = new CreatorExecutable<T>(clazz, method);
                             foundStaticBsonCreatorMethod = true;
@@ -149,7 +149,7 @@ final class ConventionAnnotationImpl implements Convention {
                 Class<?> parameterType = parameterTypes.get(i);
                 Type genericType = parameterGenericTypes.get(i);
                 PropertyModelBuilder<Object> propertyModelBuilder =
-                        (PropertyModelBuilder<Object>)classModelBuilder.getProperty(bsonProperty.value());
+                        (PropertyModelBuilder<Object>) classModelBuilder.getProperty(bsonProperty.value());
                 if (propertyModelBuilder == null) {
                     addCreatorPropertyToClassModelBuilder(classModelBuilder, bsonProperty.value(), parameterType);
                 } else if (parameterType.isAssignableFrom(propertyModelBuilder.getTypeData().getType())) {
@@ -169,7 +169,7 @@ final class ConventionAnnotationImpl implements Convention {
 
     @SuppressWarnings("unchecked")
     private static <T> TypeData<T> newTypeData(final Type genericType, final Class<?> clazz) {
-        return TypeData.newInstance(genericType, (Class<T>)clazz);
+        return TypeData.newInstance(genericType, (Class<T>) clazz);
     }
 
     private <T, S> void addCreatorPropertyToClassModelBuilder(final ClassModelBuilder<T> classModelBuilder, final String name,

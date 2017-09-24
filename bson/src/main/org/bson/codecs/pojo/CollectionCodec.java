@@ -69,7 +69,7 @@ final class CollectionCodec<T> implements Codec<Collection<T>> {
         if (encoderClass.isInterface()) {
             if (encoderClass.isAssignableFrom(ArrayList.class)) {
                 return new ArrayList<T>();
-            } else if (encoderClass.isAssignableFrom(HashSet.class) ){
+            } else if (encoderClass.isAssignableFrom(HashSet.class)) {
                 return new HashSet<T>();
             } else {
                 throw new CodecConfigurationException(format("Unsupported Collection interface of %s!", encoderClass.getName()));
