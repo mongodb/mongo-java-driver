@@ -1171,7 +1171,8 @@ public class DBCollection {
     @SuppressWarnings("unchecked")
     public List distinct(final String fieldName, final DBCollectionDistinctOptions options) {
         notNull("fieldName", fieldName);
-        return new MongoIterableImpl<BsonValue>(executor, options.getReadConcern() != null ? options.getReadConcern() : getReadConcern(),
+        return new MongoIterableImpl<BsonValue>(null, executor,
+                                                  options.getReadConcern() != null ? options.getReadConcern() : getReadConcern(),
                                                   options.getReadPreference() != null ? options.getReadPreference() : getReadPreference()) {
             @Override
             ReadOperation<BatchCursor<BsonValue>> asReadOperation() {
@@ -2143,7 +2144,7 @@ public class DBCollection {
      * @mongodb.driver.manual core/indexes/ Indexes
      */
     public List<DBObject> getIndexInfo() {
-        return new MongoIterableImpl<DBObject>(executor, ReadConcern.DEFAULT, primary()) {
+        return new MongoIterableImpl<DBObject>(null, executor, ReadConcern.DEFAULT, primary()) {
             @Override
             ReadOperation<BatchCursor<DBObject>> asReadOperation() {
                 return new ListIndexesOperation<DBObject>(getNamespace(), getDefaultDBObjectCodec());

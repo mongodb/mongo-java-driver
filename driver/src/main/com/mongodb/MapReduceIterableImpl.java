@@ -63,11 +63,11 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     private Boolean bypassDocumentValidation;
     private Collation collation;
 
-    MapReduceIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
-                          final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
-                          final WriteConcern writeConcern, final OperationExecutor executor, final String mapFunction,
-                          final String reduceFunction) {
-        super(executor, readConcern, readPreference);
+    MapReduceIterableImpl(final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
+                          final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
+                          final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
+                          final String mapFunction, final String reduceFunction) {
+        super(clientSession, executor, readConcern, readPreference);
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.resultClass = notNull("resultClass", resultClass);
@@ -83,7 +83,7 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
             throw new IllegalStateException("The options must specify a non-inline result");
         }
 
-        getExecutor().execute(createMapReduceToCollectionOperation());
+        getExecutor().execute(createMapReduceToCollectionOperation(), getClientSession());
     }
 
     @Override
@@ -215,7 +215,7 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
             }
             return new WrappedMapReduceReadOperation<TResult>(operation);
         } else {
-            getExecutor().execute(createMapReduceToCollectionOperation());
+            getExecutor().execute(createMapReduceToCollectionOperation(), getClientSession());
 
             String dbName = databaseName != null ? databaseName : namespace.getDatabaseName();
             return new FindOperation<TResult>(new MongoNamespace(dbName, collectionName), codecRegistry.get(resultClass))

@@ -49,10 +49,10 @@ final class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeSt
     private Collation collation;
 
 
-    ChangeStreamIterableImpl(final MongoNamespace namespace, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                             final ReadConcern readConcern, final OperationExecutor executor, final List<? extends Bson> pipeline,
-                             final Class<TResult> resultClass) {
-        super(executor, readConcern, readPreference);
+    ChangeStreamIterableImpl(final ClientSession clientSession, final MongoNamespace namespace, final CodecRegistry codecRegistry,
+                             final ReadPreference readPreference, final ReadConcern readConcern, final OperationExecutor executor,
+                             final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
+        super(clientSession, executor, readConcern, readPreference);
         this.namespace = notNull("namespace", namespace);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.pipeline = notNull("pipeline", pipeline);
@@ -92,7 +92,7 @@ final class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeSt
 
     @Override
     public <TDocument> MongoIterable<TDocument> withDocumentClass(final Class<TDocument> clazz) {
-        return new MongoIterableImpl<TDocument>(getExecutor(), getReadConcern(), getReadPreference()) {
+        return new MongoIterableImpl<TDocument>(getClientSession(), getExecutor(), getReadConcern(), getReadPreference()) {
             private ReadOperation<BatchCursor<TDocument>> operation = createChangeStreamOperation(codecRegistry.get(clazz));
 
             @Override

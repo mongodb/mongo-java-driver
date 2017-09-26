@@ -41,7 +41,7 @@ class ListIndexesIterableSpecification extends Specification {
     def 'should build the expected listIndexesOperation'() {
         given:
         def executor = new TestOperationExecutor([null, null]);
-        def listIndexesIterable = new ListIndexesIterableImpl<Document>(namespace, Document, codecRegistry, readPreference, executor)
+        def listIndexesIterable = new ListIndexesIterableImpl<Document>(null, namespace, Document, codecRegistry, readPreference, executor)
                 .batchSize(100).maxTime(1000, MILLISECONDS)
 
         when: 'default input should be as expected'
@@ -67,6 +67,31 @@ class ListIndexesIterableSpecification extends Specification {
                 .batchSize(99).maxTime(999, MILLISECONDS))
     }
 
+    def 'should use ClientSession'() {
+        given:
+        def batchCursor = Stub(BatchCursor) {
+            _ * hasNext() >> { false }
+        }
+        def executor = new TestOperationExecutor([batchCursor, batchCursor]);
+        def listIndexesIterable = new ListIndexesIterableImpl<Document>(clientSession, namespace, Document, codecRegistry, readPreference,
+                executor)
+
+        when:
+        listIndexesIterable.first()
+
+        then:
+        executor.getClientSession() == clientSession
+
+        when:
+        listIndexesIterable.iterator()
+
+        then:
+        executor.getClientSession() == clientSession
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
+    }
+
 
     def 'should follow the MongoIterable interface as expected'() {
         given:
@@ -90,7 +115,7 @@ class ListIndexesIterableSpecification extends Specification {
             }
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
-        def mongoIterable = new ListIndexesIterableImpl<Document>(namespace, Document, codecRegistry, readPreference, executor)
+        def mongoIterable = new ListIndexesIterableImpl<Document>(null, namespace, Document, codecRegistry, readPreference, executor)
 
         when:
         def results = mongoIterable.first()

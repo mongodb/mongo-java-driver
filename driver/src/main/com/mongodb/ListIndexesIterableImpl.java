@@ -33,9 +33,9 @@ final class ListIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> 
     private final CodecRegistry codecRegistry;
     private long maxTimeMS;
 
-    ListIndexesIterableImpl(final MongoNamespace namespace, final Class<TResult> resultClass, final CodecRegistry codecRegistry,
-                            final ReadPreference readPreference, final OperationExecutor executor) {
-        super(executor, ReadConcern.DEFAULT, readPreference); // TODO: ReadConcern?
+    ListIndexesIterableImpl(final ClientSession clientSession, final MongoNamespace namespace, final Class<TResult> resultClass,
+                            final CodecRegistry codecRegistry, final ReadPreference readPreference, final OperationExecutor executor) {
+        super(clientSession, executor, ReadConcern.DEFAULT, readPreference);
         this.namespace = notNull("namespace", namespace);
         this.resultClass = notNull("resultClass", resultClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
