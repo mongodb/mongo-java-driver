@@ -32,11 +32,6 @@ abstract class MongoIterableImpl<TResult> implements MongoIterable<TResult> {
     private ReadPreference readPreference;
     private Integer batchSize;
 
-    MongoIterableImpl(final OperationExecutor executor, final ReadConcern readConcern,
-                      final ReadPreference readPreference) {
-        this(null, executor, readConcern, readPreference);
-    }
-
     MongoIterableImpl(final ClientSession clientSession, final OperationExecutor executor, final ReadConcern readConcern,
                       final ReadPreference readPreference) {
         this.clientSession = clientSession;

@@ -41,6 +41,7 @@ import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.primaryPreferred
 import static com.mongodb.ReadPreference.secondary
+import static com.mongodb.TestHelper.execute
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
 
@@ -142,70 +143,88 @@ class MongoDatabaseSpecification extends Specification {
         def command = new BsonDocument('command', new BsonInt32(1))
         def executor = new TestOperationExecutor([null, null, null, null])
         def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, executor)
+        def runCommandMethod = database.&runCommand
 
         when:
-        database.runCommand(command)
+        execute(runCommandMethod, session, command)
         def operation = executor.getReadOperation() as CommandReadOperation<Document>
 
         then:
         operation.command == command
+        executor.getClientSession() == session
         executor.getReadPreference() == primary()
 
         when:
-        database.runCommand(command, primaryPreferred())
+        execute(runCommandMethod, session, command, primaryPreferred())
         operation = executor.getReadOperation() as CommandReadOperation<Document>
 
         then:
         operation.command == command
+        executor.getClientSession() == session
         executor.getReadPreference() == primaryPreferred()
 
         when:
-        database.runCommand(command, BsonDocument)
+        execute(runCommandMethod, session, command, BsonDocument)
         operation = executor.getReadOperation() as CommandReadOperation<BsonDocument>
 
         then:
         operation.command == command
+        executor.getClientSession() == session
         executor.getReadPreference() == primary()
 
         when:
-        database.runCommand(command, primaryPreferred(), BsonDocument)
+        execute(runCommandMethod, session, command, primaryPreferred(), BsonDocument)
         operation = executor.getReadOperation() as CommandReadOperation<BsonDocument>
 
         then:
         operation.command == command
+        executor.getClientSession() == session
         executor.getReadPreference() == primaryPreferred()
+
+        where:
+        session << [null, Stub(ClientSession)]
     }
 
     def 'should use DropDatabaseOperation correctly'() {
         given:
         def executor = new TestOperationExecutor([null])
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, executor)
+        def dropMethod = database.&drop
 
         when:
-        new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, executor).drop()
+        execute(dropMethod, session)
         def operation = executor.getWriteOperation() as DropDatabaseOperation
 
         then:
         expect operation, isTheSameAs(new DropDatabaseOperation(name, writeConcern))
+        executor.getClientSession() == session
+
+        where:
+        session << [null, Stub(ClientSession)]
     }
 
     def 'should use ListCollectionsOperation correctly'() {
         given:
         def executor = new TestOperationExecutor([null, null, null])
         def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, executor)
+        def listCollectionsMethod = database.&listCollections
 
         when:
-        def listCollectionIterable = database.listCollections()
+        def listCollectionIterable = execute(listCollectionsMethod, session)
 
         then:
-        expect listCollectionIterable, isTheSameAs(new ListCollectionsIterableImpl<Document>(name, Document, codecRegistry, primary(),
-                executor))
-
-        when:
-        listCollectionIterable = database.listCollections(BsonDocument)
-
-        then:
-        expect listCollectionIterable, isTheSameAs(new ListCollectionsIterableImpl<BsonDocument>(name, BsonDocument, codecRegistry,
+        expect listCollectionIterable, isTheSameAs(new ListCollectionsIterableImpl<Document>(session, name, Document, codecRegistry,
                 primary(), executor))
+
+        when:
+        listCollectionIterable = execute(listCollectionsMethod, session, BsonDocument)
+
+        then:
+        expect listCollectionIterable, isTheSameAs(new ListCollectionsIterableImpl<BsonDocument>(session, name, BsonDocument, codecRegistry,
+                primary(), executor))
+
+        where:
+        session << [null, Stub(ClientSession)]
     }
 
     def 'should use CreateCollectionOperation correctly'() {
@@ -213,13 +232,15 @@ class MongoDatabaseSpecification extends Specification {
         def collectionName = 'collectionName'
         def executor = new TestOperationExecutor([null, null])
         def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, executor)
+        def createCollectionMethod = database.&createCollection
 
         when:
-        database.createCollection(collectionName)
+        execute(createCollectionMethod, session, collectionName)
         def operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:
         expect operation, isTheSameAs(new CreateCollectionOperation(name, collectionName, writeConcern))
+        executor.getClientSession() == session
 
         when:
         def createCollectionOptions = new CreateCollectionOptions()
@@ -235,7 +256,7 @@ class MongoDatabaseSpecification extends Specification {
                     .validationAction(ValidationAction.WARN))
                 .collation(collation)
 
-        database.createCollection(collectionName, createCollectionOptions)
+        execute(createCollectionMethod, session, collectionName, createCollectionOptions)
         operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:
@@ -251,6 +272,10 @@ class MongoDatabaseSpecification extends Specification {
                 .validator(BsonDocument.parse('{level: {$gte: 10}}'))
                 .validationLevel(ValidationLevel.MODERATE)
                 .validationAction(ValidationAction.WARN))
+        executor.getClientSession() == session
+
+        where:
+        session << [null, Stub(ClientSession)]
     }
 
     def 'should use CreateViewOperation correctly'() {
@@ -261,22 +286,28 @@ class MongoDatabaseSpecification extends Specification {
         def writeConcern = WriteConcern.JOURNALED
         def executor = new TestOperationExecutor([null, null])
         def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, executor)
+        def createViewMethod = database.&createView
 
         when:
-        database.createView(viewName, viewOn, pipeline)
+        execute(createViewMethod, session, viewName, viewOn, pipeline)
         def operation = executor.getWriteOperation() as CreateViewOperation
 
         then:
         expect operation, isTheSameAs(new CreateViewOperation(name, viewName, viewOn,
                 [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern))
+        executor.getClientSession() == session
 
         when:
-        database.createView(viewName, viewOn, pipeline, new CreateViewOptions().collation(collation))
+        execute(createViewMethod, session, viewName, viewOn, pipeline, new CreateViewOptions().collation(collation))
         operation = executor.getWriteOperation() as CreateViewOperation
 
         then:
         expect operation, isTheSameAs(new CreateViewOperation(name, viewName, viewOn,
                 [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern).collation(collation))
+        executor.getClientSession() == session
+
+        where:
+        session << [null, Stub(ClientSession)]
     }
 
     def 'should validate the createView pipeline data correctly'() {

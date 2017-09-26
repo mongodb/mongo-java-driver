@@ -16,6 +16,7 @@
 
 package com.mongodb.client;
 
+import com.mongodb.ClientSession;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
@@ -152,7 +153,7 @@ public interface MongoDatabase {
      * Executes the given command in the context of the current database with a read preference of {@link ReadPreference#primary()}.
      *
      * @param command     the command to be run
-     * @param resultClass the default class to cast any documents returned from the database into.
+     * @param resultClass the class to decode each document into
      * @param <TResult> the type of the class to use instead of {@code Document}.
      * @return the command result
      */
@@ -163,11 +164,61 @@ public interface MongoDatabase {
      *
      * @param command        the command to be run
      * @param readPreference the {@link ReadPreference} to be used when executing the command
-     * @param resultClass    the default class to cast any documents returned from the database into.
+     * @param resultClass    the class to decode each document into
      * @param <TResult>      the type of the class to use instead of {@code Document}.
      * @return the command result
      */
     <TResult> TResult runCommand(Bson command, ReadPreference readPreference, Class<TResult> resultClass);
+
+    /**
+     * Executes the given command in the context of the current database with a read preference of {@link ReadPreference#primary()}.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param command the command to be run
+     * @return the command result
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    Document runCommand(ClientSession clientSession, Bson command);
+
+    /**
+     * Executes the given command in the context of the current database with the given read preference.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param command        the command to be run
+     * @param readPreference the {@link ReadPreference} to be used when executing the command
+     * @return the command result
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    Document runCommand(ClientSession clientSession, Bson command, ReadPreference readPreference);
+
+    /**
+     * Executes the given command in the context of the current database with a read preference of {@link ReadPreference#primary()}.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param command     the command to be run
+     * @param resultClass the class to decode each document into
+     * @param <TResult> the type of the class to use instead of {@code Document}.
+     * @return the command result
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    <TResult> TResult runCommand(ClientSession clientSession, Bson command, Class<TResult> resultClass);
+
+    /**
+     * Executes the given command in the context of the current database with the given read preference.
+     *
+     * @param clientSession  the client session with which to associate this operation
+     * @param command        the command to be run
+     * @param readPreference the {@link ReadPreference} to be used when executing the command
+     * @param resultClass    the class to decode each document into
+     * @param <TResult>      the type of the class to use instead of {@code Document}.
+     * @return the command result
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    <TResult> TResult runCommand(ClientSession clientSession, Bson command, ReadPreference readPreference, Class<TResult> resultClass);
 
     /**
      * Drops this database.
@@ -175,6 +226,16 @@ public interface MongoDatabase {
      * @mongodb.driver.manual reference/command/dropDatabase/#dbcmd.dropDatabase Drop database
      */
     void drop();
+
+    /**
+     * Drops this database.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @mongodb.driver.manual reference/command/dropDatabase/#dbcmd.dropDatabase Drop database
+     */
+    void drop(ClientSession clientSession);
 
     /**
      * Gets the names of all the collections in this database.
@@ -202,6 +263,41 @@ public interface MongoDatabase {
     <TResult> ListCollectionsIterable<TResult> listCollections(Class<TResult> resultClass);
 
     /**
+     * Gets the names of all the collections in this database.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @return an iterable containing all the names of all the collections in this database
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    MongoIterable<String> listCollectionNames(ClientSession clientSession);
+
+    /**
+     * Finds all the collections in this database.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @return the list collections iterable interface
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @mongodb.driver.manual reference/command/listCollections listCollections
+     */
+    ListCollectionsIterable<Document> listCollections(ClientSession clientSession);
+
+    /**
+     * Finds all the collections in this database.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param resultClass the class to decode each document into
+     * @param <TResult>   the target document type of the iterable.
+     * @return the list collections iterable interface
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @mongodb.driver.manual reference/command/listCollections listCollections
+     */
+    <TResult> ListCollectionsIterable<TResult> listCollections(ClientSession clientSession, Class<TResult> resultClass);
+
+
+    /**
      * Create a new collection with the given name.
      *
      * @param collectionName the name for the new collection to create
@@ -217,6 +313,29 @@ public interface MongoDatabase {
      * @mongodb.driver.manual reference/command/create Create Command
      */
     void createCollection(String collectionName, CreateCollectionOptions createCollectionOptions);
+
+    /**
+     * Create a new collection with the given name.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param collectionName the name for the new collection to create
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @mongodb.driver.manual reference/command/create Create Command
+     */
+    void createCollection(ClientSession clientSession, String collectionName);
+
+    /**
+     * Create a new collection with the selected options
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param collectionName          the name for the new collection to create
+     * @param createCollectionOptions various options for creating the collection
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @mongodb.driver.manual reference/command/create Create Command
+     */
+    void createCollection(ClientSession clientSession, String collectionName, CreateCollectionOptions createCollectionOptions);
 
     /**
      * Creates a view with the given name, backing collection/view name, and aggregation pipeline that defines the view.
@@ -242,4 +361,32 @@ public interface MongoDatabase {
      * @mongodb.driver.manual reference/command/create Create Command
      */
     void createView(String viewName, String viewOn, List<? extends Bson> pipeline, CreateViewOptions createViewOptions);
+
+    /**
+     * Creates a view with the given name, backing collection/view name, and aggregation pipeline that defines the view.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param viewName the name of the view to create
+     * @param viewOn   the backing collection/view for the view
+     * @param pipeline the pipeline that defines the view
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @mongodb.driver.manual reference/command/create Create Command
+     */
+    void createView(ClientSession clientSession, String viewName, String viewOn, List<? extends Bson> pipeline);
+
+    /**
+     * Creates a view with the given name, backing collection/view name, aggregation pipeline, and options that defines the view.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param viewName the name of the view to create
+     * @param viewOn   the backing collection/view for the view
+     * @param pipeline the pipeline that defines the view
+     * @param createViewOptions various options for creating the view
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @mongodb.driver.manual reference/command/create Create Command
+     */
+    void createView(ClientSession clientSession, String viewName, String viewOn, List<? extends Bson> pipeline,
+                    CreateViewOptions createViewOptions);
 }
