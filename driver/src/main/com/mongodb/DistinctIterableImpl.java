@@ -41,10 +41,10 @@ class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult
     private Collation collation;
 
 
-    DistinctIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
-                         final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
-                         final OperationExecutor executor, final String fieldName, final Bson filter) {
-        super(executor, readConcern, readPreference);
+    DistinctIterableImpl(final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
+                         final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
+                         final ReadConcern readConcern, final OperationExecutor executor, final String fieldName, final Bson filter) {
+        super(clientSession, executor, readConcern, readPreference);
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.resultClass = notNull("resultClass", resultClass);

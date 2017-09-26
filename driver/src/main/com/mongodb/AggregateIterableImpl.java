@@ -50,10 +50,11 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     private Boolean bypassDocumentValidation;
     private Collation collation;
 
-    AggregateIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
-                          final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
-                          final WriteConcern writeConcern, final OperationExecutor executor, final List<? extends Bson> pipeline) {
-        super(executor, readConcern, readPreference);
+    AggregateIterableImpl(final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
+                          final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
+                          final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
+                          final List<? extends Bson> pipeline) {
+        super(clientSession, executor, readConcern, readPreference);
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.resultClass = notNull("resultClass", resultClass);
@@ -70,7 +71,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
             throw new IllegalStateException("The last stage of the aggregation pipeline must be $out");
         }
 
-        getExecutor().execute(createAggregateToCollectionOperation(aggregateList));
+        getExecutor().execute(createAggregateToCollectionOperation(aggregateList), getClientSession());
     }
 
     @Override
@@ -126,7 +127,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         BsonValue outCollection = getOutCollection(aggregateList);
 
         if (outCollection != null) {
-            getExecutor().execute(createAggregateToCollectionOperation(aggregateList));
+            getExecutor().execute(createAggregateToCollectionOperation(aggregateList), getClientSession());
             FindOperation<TResult> findOperation =
                     new FindOperation<TResult>(new MongoNamespace(namespace.getDatabaseName(), outCollection.asString().getValue()),
                                                       codecRegistry.get(resultClass))

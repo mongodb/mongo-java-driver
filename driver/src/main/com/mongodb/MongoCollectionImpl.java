@@ -175,19 +175,40 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public long count(final Bson filter, final CountOptions options) {
+        return executeCount(null, filter, options);
+    }
+
+    @Override
+    public long count(final ClientSession clientSession) {
+        return count(clientSession, new BsonDocument());
+    }
+
+    @Override
+    public long count(final ClientSession clientSession, final Bson filter) {
+        return count(clientSession, filter, new CountOptions());
+    }
+
+    @Override
+    public long count(final ClientSession clientSession, final Bson filter, final CountOptions options) {
+        notNull("clientSession", clientSession);
+        return executeCount(clientSession, filter, options);
+    }
+
+    private long executeCount(final ClientSession clientSession, final Bson filter, final CountOptions options) {
         CountOperation operation = new CountOperation(namespace)
-                                       .filter(toBsonDocument(filter))
-                                       .skip(options.getSkip())
-                                       .limit(options.getLimit())
-                                       .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                                       .collation(options.getCollation());
+                                           .filter(toBsonDocument(filter))
+                                           .skip(options.getSkip())
+                                           .limit(options.getLimit())
+                                           .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                                           .collation(options.getCollation());
         if (options.getHint() != null) {
             operation.hint(toBsonDocument(options.getHint()));
         } else if (options.getHintString() != null) {
             operation.hint(new BsonString(options.getHintString()));
         }
-        return executor.execute(operation, readPreference);
+        return executor.execute(operation, readPreference, clientSession);
     }
+
 
     @Override
     public <TResult> DistinctIterable<TResult> distinct(final String fieldName, final Class<TResult> resultClass) {
@@ -196,8 +217,26 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public <TResult> DistinctIterable<TResult> distinct(final String fieldName, final Bson filter, final Class<TResult> resultClass) {
-        return new DistinctIterableImpl<TDocument, TResult>(namespace, documentClass, resultClass, codecRegistry, readPreference,
-                readConcern, executor, fieldName, filter);
+        return executeDistinct(null, fieldName, filter, resultClass);
+    }
+
+    @Override
+    public <TResult> DistinctIterable<TResult> distinct(final ClientSession clientSession, final String fieldName,
+                                                        final Class<TResult> resultClass) {
+        return distinct(clientSession, fieldName, new BsonDocument(), resultClass);
+    }
+
+    @Override
+    public <TResult> DistinctIterable<TResult> distinct(final ClientSession clientSession, final String fieldName, final Bson filter,
+                                                        final Class<TResult> resultClass) {
+        notNull("clientSession", clientSession);
+        return executeDistinct(clientSession, fieldName, filter, resultClass);
+    }
+
+    private <TResult> DistinctIterable<TResult> executeDistinct(final ClientSession clientSession, final String fieldName,
+                                                                final Bson filter, final Class<TResult> resultClass) {
+        return new DistinctIterableImpl<TDocument, TResult>(clientSession, namespace, documentClass, resultClass, codecRegistry,
+                                                                   readPreference, readConcern, executor, fieldName, filter);
     }
 
     @Override
@@ -258,8 +297,25 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public <TResult> AggregateIterable<TResult> aggregate(final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
-        return new AggregateIterableImpl<TDocument, TResult>(namespace, documentClass, resultClass, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, pipeline);
+        return executeAggregate(null, pipeline, resultClass);
+    }
+
+    @Override
+    public AggregateIterable<TDocument> aggregate(final ClientSession clientSession, final List<? extends Bson> pipeline) {
+        return aggregate(clientSession, pipeline, documentClass);
+    }
+
+    @Override
+    public <TResult> AggregateIterable<TResult> aggregate(final ClientSession clientSession, final List<? extends Bson> pipeline,
+                                                          final Class<TResult> resultClass) {
+        notNull("clientSession", clientSession);
+        return executeAggregate(clientSession, pipeline, resultClass);
+    }
+
+    private <TResult> AggregateIterable<TResult> executeAggregate(final ClientSession clientSession, final List<? extends Bson> pipeline,
+                                                                  final Class<TResult> resultClass) {
+        return new AggregateIterableImpl<TDocument, TResult>(clientSession, namespace, documentClass, resultClass, codecRegistry,
+                                                                    readPreference, readConcern, writeConcern, executor, pipeline);
     }
 
     @Override
@@ -279,8 +335,35 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public <TResult> ChangeStreamIterable<TResult> watch(final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
-        return new ChangeStreamIterableImpl<TResult>(namespace, codecRegistry, readPreference, readConcern, executor, pipeline,
-                resultClass);
+        return executeWatch(null, pipeline, resultClass);
+    }
+
+    @Override
+    public ChangeStreamIterable<TDocument> watch(final ClientSession clientSession) {
+        return watch(clientSession, Collections.<Bson>emptyList(), documentClass);
+    }
+
+    @Override
+    public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final Class<TResult> resultClass) {
+        return watch(clientSession, Collections.<Bson>emptyList(), resultClass);
+    }
+
+    @Override
+    public ChangeStreamIterable<TDocument> watch(final ClientSession clientSession, final List<? extends Bson> pipeline) {
+        return watch(clientSession, pipeline, documentClass);
+    }
+
+    @Override
+    public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final List<? extends Bson> pipeline,
+                                                         final Class<TResult> resultClass) {
+        notNull("clientSession", clientSession);
+        return executeWatch(clientSession, pipeline, resultClass);
+    }
+
+    private <TResult> ChangeStreamIterable<TResult> executeWatch(final ClientSession clientSession, final List<? extends Bson> pipeline,
+                                                                 final Class<TResult> resultClass) {
+        return new ChangeStreamIterableImpl<TResult>(clientSession, namespace, codecRegistry, readPreference, readConcern, executor,
+                                                            pipeline, resultClass);
     }
 
     @Override
@@ -291,8 +374,27 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     @Override
     public <TResult> MapReduceIterable<TResult> mapReduce(final String mapFunction, final String reduceFunction,
                                                           final Class<TResult> resultClass) {
-        return new MapReduceIterableImpl<TDocument, TResult>(namespace, documentClass, resultClass, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, mapFunction, reduceFunction);
+        return executeMapReduce(null, mapFunction, reduceFunction, resultClass);
+    }
+
+    @Override
+    public MapReduceIterable<TDocument> mapReduce(final ClientSession clientSession, final String mapFunction,
+                                                  final String reduceFunction) {
+        return mapReduce(clientSession, mapFunction, reduceFunction, documentClass);
+    }
+
+    @Override
+    public <TResult> MapReduceIterable<TResult> mapReduce(final ClientSession clientSession, final String mapFunction,
+                                                          final String reduceFunction, final Class<TResult> resultClass) {
+        notNull("clientSession", clientSession);
+        return executeMapReduce(clientSession, mapFunction, reduceFunction, resultClass);
+    }
+
+    private <TResult> MapReduceIterable<TResult> executeMapReduce(final ClientSession clientSession, final String mapFunction,
+                                                                  final String reduceFunction, final Class<TResult> resultClass) {
+        return new MapReduceIterableImpl<TDocument, TResult>(clientSession, namespace, documentClass, resultClass, codecRegistry,
+                                                                    readPreference, readConcern, writeConcern, executor, mapFunction,
+                                                                    reduceFunction);
     }
 
     @Override
@@ -301,8 +403,26 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    @SuppressWarnings("unchecked")
     public BulkWriteResult bulkWrite(final List<? extends WriteModel<? extends TDocument>> requests, final BulkWriteOptions options) {
+        return executeBulkWrite(null, requests, options);
+    }
+
+    @Override
+    public BulkWriteResult bulkWrite(final ClientSession clientSession, final List<? extends WriteModel<? extends TDocument>> requests) {
+        return bulkWrite(clientSession, requests, new BulkWriteOptions());
+    }
+
+    @Override
+    public BulkWriteResult bulkWrite(final ClientSession clientSession, final List<? extends WriteModel<? extends TDocument>> requests,
+                                     final BulkWriteOptions options) {
+        notNull("clientSession", clientSession);
+        return executeBulkWrite(clientSession, requests, options);
+    }
+
+    @SuppressWarnings("unchecked")
+    private BulkWriteResult executeBulkWrite(final ClientSession clientSession,
+                                             final List<? extends WriteModel<? extends TDocument>> requests,
+                                             final BulkWriteOptions options) {
         notNull("requests", requests);
         List<WriteRequest> writeRequests = new ArrayList<WriteRequest>(requests.size());
         for (WriteModel<? extends TDocument> writeModel : requests) {
@@ -319,31 +439,31 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                 ReplaceOneModel<TDocument> replaceOneModel = (ReplaceOneModel<TDocument>) writeModel;
                 writeRequest = new UpdateRequest(toBsonDocument(replaceOneModel.getFilter()), documentToBsonDocument(replaceOneModel
                                                                                                                      .getReplacement()),
-                                                 WriteRequest.Type.REPLACE)
-                                   .upsert(replaceOneModel.getOptions().isUpsert())
-                                   .collation(replaceOneModel.getOptions().getCollation());
+                                                        WriteRequest.Type.REPLACE)
+                                       .upsert(replaceOneModel.getOptions().isUpsert())
+                                       .collation(replaceOneModel.getOptions().getCollation());
             } else if (writeModel instanceof UpdateOneModel) {
                 UpdateOneModel<TDocument> updateOneModel = (UpdateOneModel<TDocument>) writeModel;
                 writeRequest = new UpdateRequest(toBsonDocument(updateOneModel.getFilter()), toBsonDocument(updateOneModel.getUpdate()),
-                                                 WriteRequest.Type.UPDATE)
-                                   .multi(false)
-                                   .upsert(updateOneModel.getOptions().isUpsert())
-                                   .collation(updateOneModel.getOptions().getCollation());
+                                                        WriteRequest.Type.UPDATE)
+                                       .multi(false)
+                                       .upsert(updateOneModel.getOptions().isUpsert())
+                                       .collation(updateOneModel.getOptions().getCollation());
             } else if (writeModel instanceof UpdateManyModel) {
                 UpdateManyModel<TDocument> updateManyModel = (UpdateManyModel<TDocument>) writeModel;
                 writeRequest = new UpdateRequest(toBsonDocument(updateManyModel.getFilter()), toBsonDocument(updateManyModel.getUpdate()),
-                                                 WriteRequest.Type.UPDATE)
-                                   .multi(true)
-                                   .upsert(updateManyModel.getOptions().isUpsert())
-                                   .collation(updateManyModel.getOptions().getCollation());
+                                                        WriteRequest.Type.UPDATE)
+                                       .multi(true)
+                                       .upsert(updateManyModel.getOptions().isUpsert())
+                                       .collation(updateManyModel.getOptions().getCollation());
             } else if (writeModel instanceof DeleteOneModel) {
                 DeleteOneModel<TDocument> deleteOneModel = (DeleteOneModel<TDocument>) writeModel;
                 writeRequest = new DeleteRequest(toBsonDocument(deleteOneModel.getFilter())).multi(false)
-                        .collation(deleteOneModel.getOptions().getCollation());
+                                       .collation(deleteOneModel.getOptions().getCollation());
             } else if (writeModel instanceof DeleteManyModel) {
                 DeleteManyModel<TDocument> deleteManyModel = (DeleteManyModel<TDocument>) writeModel;
                 writeRequest = new DeleteRequest(toBsonDocument(deleteManyModel.getFilter())).multi(true)
-                        .collation(deleteManyModel.getOptions().getCollation());
+                                       .collation(deleteManyModel.getOptions().getCollation());
             } else {
                 throw new UnsupportedOperationException(format("WriteModel of type %s is not supported", writeModel.getClass()));
             }
@@ -351,7 +471,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         }
 
         return executor.execute(new MixedBulkWriteOperation(namespace, writeRequests, options.isOrdered(), writeConcern)
-                .bypassDocumentValidation(options.getBypassDocumentValidation()));
+                                        .bypassDocumentValidation(options.getBypassDocumentValidation()), clientSession);
     }
 
     @Override
@@ -393,6 +513,22 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public void insertMany(final List<? extends TDocument> documents, final InsertManyOptions options) {
+        executeInsertMany(null, documents, options);
+    }
+
+    @Override
+    public void insertMany(final ClientSession clientSession, final List<? extends TDocument> documents) {
+        insertMany(clientSession, documents, new InsertManyOptions());
+    }
+
+    @Override
+    public void insertMany(final ClientSession clientSession, final List<? extends TDocument> documents, final InsertManyOptions options) {
+        notNull("clientSession", clientSession);
+        executeInsertMany(clientSession, documents, options);
+    }
+
+    private void executeInsertMany(final ClientSession clientSession, final List<? extends TDocument> documents,
+                                   final InsertManyOptions options) {
         notNull("documents", documents);
         List<InsertRequest> requests = new ArrayList<InsertRequest>(documents.size());
         for (TDocument document : documents) {
@@ -405,7 +541,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
             requests.add(new InsertRequest(documentToBsonDocument(document)));
         }
         executor.execute(new MixedBulkWriteOperation(namespace, requests, options.isOrdered(), writeConcern)
-                .bypassDocumentValidation(options.getBypassDocumentValidation()));
+                                 .bypassDocumentValidation(options.getBypassDocumentValidation()), clientSession);
     }
 
     @Override
@@ -415,7 +551,18 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public DeleteResult deleteOne(final Bson filter, final DeleteOptions options) {
-        return delete(filter, options, false);
+        return executeDelete(null, filter, options, false);
+    }
+
+    @Override
+    public DeleteResult deleteOne(final ClientSession clientSession, final Bson filter) {
+        return deleteOne(clientSession, filter, new DeleteOptions());
+    }
+
+    @Override
+    public DeleteResult deleteOne(final ClientSession clientSession, final Bson filter, final DeleteOptions options) {
+        notNull("clientSession", clientSession);
+        return executeDelete(clientSession, filter, options, false);
     }
 
     @Override
@@ -425,7 +572,18 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public DeleteResult deleteMany(final Bson filter, final DeleteOptions options) {
-        return delete(filter, options, true);
+        return executeDelete(null, filter, options, true);
+    }
+
+    @Override
+    public DeleteResult deleteMany(final ClientSession clientSession, final Bson filter) {
+        return deleteMany(clientSession, filter, new DeleteOptions());
+    }
+
+    @Override
+    public DeleteResult deleteMany(final ClientSession clientSession, final Bson filter, final DeleteOptions options) {
+        notNull("clientSession", clientSession);
+        return executeDelete(clientSession, filter, options, true);
     }
 
     @Override
@@ -435,8 +593,26 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public UpdateResult replaceOne(final Bson filter, final TDocument replacement, final UpdateOptions updateOptions) {
-        return toUpdateResult(executeSingleWriteRequest(null, new UpdateRequest(toBsonDocument(filter), documentToBsonDocument(replacement),
-                WriteRequest.Type.REPLACE).upsert(updateOptions.isUpsert()).collation(updateOptions.getCollation()),
+        return executeReplaceOne(null, filter, replacement, updateOptions);
+    }
+
+    @Override
+    public UpdateResult replaceOne(final ClientSession clientSession, final Bson filter, final TDocument replacement) {
+        return replaceOne(clientSession, filter, replacement, new UpdateOptions());
+    }
+
+    @Override
+    public UpdateResult replaceOne(final ClientSession clientSession, final Bson filter, final TDocument replacement,
+                                   final UpdateOptions updateOptions) {
+        notNull("clientSession", clientSession);
+        return executeReplaceOne(clientSession, filter, replacement, updateOptions);
+    }
+
+    private UpdateResult executeReplaceOne(final ClientSession clientSession, final Bson filter, final TDocument replacement,
+                                           final UpdateOptions updateOptions) {
+        return toUpdateResult(executeSingleWriteRequest(clientSession,
+                new UpdateRequest(toBsonDocument(filter), documentToBsonDocument(replacement), WriteRequest.Type.REPLACE)
+                        .upsert(updateOptions.isUpsert()).collation(updateOptions.getCollation()),
                 updateOptions.getBypassDocumentValidation()));
     }
 
@@ -447,7 +623,20 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public UpdateResult updateOne(final Bson filter, final Bson update, final UpdateOptions updateOptions) {
-        return update(filter, update, updateOptions, false);
+        return executeUpdate(null, filter, update, updateOptions, false);
+    }
+
+    @Override
+    public UpdateResult updateOne(final ClientSession clientSession, final Bson filter, final Bson update) {
+        return updateOne(clientSession, filter, update, new UpdateOptions());
+    }
+
+    @Override
+    public UpdateResult updateOne(final ClientSession clientSession, final Bson filter, final Bson update,
+                                  final UpdateOptions updateOptions) {
+        notNull("clientSession", clientSession);
+        return executeUpdate(clientSession, filter, update, updateOptions, false);
+
     }
 
     @Override
@@ -457,7 +646,19 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public UpdateResult updateMany(final Bson filter, final Bson update, final UpdateOptions updateOptions) {
-        return update(filter, update, updateOptions, true);
+        return executeUpdate(null, filter, update, updateOptions, true);
+    }
+
+    @Override
+    public UpdateResult updateMany(final ClientSession clientSession, final Bson filter, final Bson update) {
+        return updateMany(clientSession, filter, update, new UpdateOptions());
+    }
+
+    @Override
+    public UpdateResult updateMany(final ClientSession clientSession, final Bson filter, final Bson update,
+                                   final UpdateOptions updateOptions) {
+        notNull("clientSession", clientSession);
+        return executeUpdate(clientSession, filter, update, updateOptions, true);
     }
 
     @Override
@@ -467,12 +668,28 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public TDocument findOneAndDelete(final Bson filter, final FindOneAndDeleteOptions options) {
+        return executeFindOneAndDelete(null, filter, options);
+    }
+
+    @Override
+    public TDocument findOneAndDelete(final ClientSession clientSession, final Bson filter) {
+        return findOneAndDelete(clientSession, filter, new FindOneAndDeleteOptions());
+    }
+
+    @Override
+    public TDocument findOneAndDelete(final ClientSession clientSession, final Bson filter, final FindOneAndDeleteOptions options) {
+        notNull("clientSession", clientSession);
+        return executeFindOneAndDelete(clientSession, filter, options);
+    }
+
+    private TDocument executeFindOneAndDelete(final ClientSession clientSession, final Bson filter, final FindOneAndDeleteOptions options) {
         return executor.execute(new FindAndDeleteOperation<TDocument>(namespace, writeConcern, getCodec())
-                .filter(toBsonDocument(filter))
-                .projection(toBsonDocument(options.getProjection()))
-                .sort(toBsonDocument(options.getSort()))
-                .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                .collation(options.getCollation()));
+                                        .filter(toBsonDocument(filter))
+                                        .projection(toBsonDocument(options.getProjection()))
+                                        .sort(toBsonDocument(options.getSort()))
+                                        .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                                        .collation(options.getCollation()),
+                clientSession);
     }
 
     @Override
@@ -482,16 +699,34 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public TDocument findOneAndReplace(final Bson filter, final TDocument replacement, final FindOneAndReplaceOptions options) {
+        return executeFindOneAndReplace(null, filter, replacement, options);
+    }
+
+    @Override
+    public TDocument findOneAndReplace(final ClientSession clientSession, final Bson filter, final TDocument replacement) {
+        return findOneAndReplace(clientSession, filter, replacement, new FindOneAndReplaceOptions());
+    }
+
+    @Override
+    public TDocument findOneAndReplace(final ClientSession clientSession, final Bson filter, final TDocument replacement,
+                                       final FindOneAndReplaceOptions options) {
+        notNull("clientSession", clientSession);
+        return executeFindOneAndReplace(clientSession, filter, replacement, options);
+    }
+
+    private TDocument executeFindOneAndReplace(final ClientSession clientSession, final Bson filter, final TDocument replacement,
+                                               final FindOneAndReplaceOptions options) {
         return executor.execute(new FindAndReplaceOperation<TDocument>(namespace, writeConcern, getCodec(),
-                documentToBsonDocument(replacement))
-                .filter(toBsonDocument(filter))
-                .projection(toBsonDocument(options.getProjection()))
-                .sort(toBsonDocument(options.getSort()))
-                .returnOriginal(options.getReturnDocument() == ReturnDocument.BEFORE)
-                .upsert(options.isUpsert())
-                .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                .bypassDocumentValidation(options.getBypassDocumentValidation())
-                .collation(options.getCollation()));
+                                                                              documentToBsonDocument(replacement))
+                                        .filter(toBsonDocument(filter))
+                                        .projection(toBsonDocument(options.getProjection()))
+                                        .sort(toBsonDocument(options.getSort()))
+                                        .returnOriginal(options.getReturnDocument() == ReturnDocument.BEFORE)
+                                        .upsert(options.isUpsert())
+                                        .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                                        .bypassDocumentValidation(options.getBypassDocumentValidation())
+                                        .collation(options.getCollation()),
+                clientSession);
     }
 
     @Override
@@ -501,20 +736,46 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public TDocument findOneAndUpdate(final Bson filter, final Bson update, final FindOneAndUpdateOptions options) {
-        return executor.execute(new FindAndUpdateOperation<TDocument>(namespace, writeConcern, getCodec(), toBsonDocument(update))
-                .filter(toBsonDocument(filter))
-                .projection(toBsonDocument(options.getProjection()))
-                .sort(toBsonDocument(options.getSort()))
-                .returnOriginal(options.getReturnDocument() == ReturnDocument.BEFORE)
-                .upsert(options.isUpsert())
-                .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                .bypassDocumentValidation(options.getBypassDocumentValidation())
-                .collation(options.getCollation()));
+        return executeFindOneAndUpdate(null, filter, update, options);
     }
 
     @Override
+    public TDocument findOneAndUpdate(final ClientSession clientSession, final Bson filter, final Bson update) {
+        return findOneAndUpdate(clientSession, filter, update, new FindOneAndUpdateOptions());
+    }
+
+    @Override
+    public TDocument findOneAndUpdate(final ClientSession clientSession, final Bson filter, final Bson update,
+                                      final FindOneAndUpdateOptions options) {
+        notNull("clientSession", clientSession);
+        return executeFindOneAndUpdate(clientSession, filter, update, options);
+    }
+
+    private TDocument executeFindOneAndUpdate(final ClientSession clientSession, final Bson filter, final Bson update,
+                                              final FindOneAndUpdateOptions options) {
+        return executor.execute(new FindAndUpdateOperation<TDocument>(namespace, writeConcern, getCodec(), toBsonDocument(update))
+                                        .filter(toBsonDocument(filter))
+                                        .projection(toBsonDocument(options.getProjection()))
+                                        .sort(toBsonDocument(options.getSort()))
+                                        .returnOriginal(options.getReturnDocument() == ReturnDocument.BEFORE)
+                                        .upsert(options.isUpsert())
+                                        .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                                        .bypassDocumentValidation(options.getBypassDocumentValidation())
+                                        .collation(options.getCollation()),
+                clientSession);
+    }
+    @Override
     public void drop() {
-        executor.execute(new DropCollectionOperation(namespace, writeConcern));
+        executeDrop(null);
+    }
+
+    @Override
+    public void drop(final ClientSession clientSession) {
+        executeDrop(clientSession);
+    }
+
+    private void executeDrop(final ClientSession clientSession) {
+        executor.execute(new DropCollectionOperation(namespace, writeConcern), clientSession);
     }
 
     @Override
@@ -528,7 +789,27 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
+    public String createIndex(final ClientSession clientSession, final Bson keys) {
+        return createIndex(clientSession, keys, new IndexOptions());
+    }
+
+    @Override
+    public String createIndex(final ClientSession clientSession, final Bson keys, final IndexOptions indexOptions) {
+        return createIndexes(clientSession, singletonList(new IndexModel(keys, indexOptions))).get(0);
+    }
+
+    @Override
     public List<String> createIndexes(final List<IndexModel> indexes) {
+        return executeCreateIndexes(null, indexes);
+    }
+
+    @Override
+    public List<String> createIndexes(final ClientSession clientSession, final List<IndexModel> indexes) {
+        notNull("clientSession", clientSession);
+        return executeCreateIndexes(clientSession, indexes);
+    }
+
+    private List<String> executeCreateIndexes(final ClientSession clientSession, final List<IndexModel> indexes) {
         notNull("indexes", indexes);
         List<IndexRequest> indexRequests = new ArrayList<IndexRequest>(indexes.size());
         for (IndexModel model : indexes) {
@@ -536,28 +817,28 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                 throw new IllegalArgumentException("indexes can not contain a null value");
             }
             indexRequests.add(new IndexRequest(toBsonDocument(model.getKeys()))
-                         .name(model.getOptions().getName())
-                         .background(model.getOptions().isBackground())
-                         .unique(model.getOptions().isUnique())
-                         .sparse(model.getOptions().isSparse())
-                         .expireAfter(model.getOptions().getExpireAfter(TimeUnit.SECONDS), TimeUnit.SECONDS)
-                         .version(model.getOptions().getVersion())
-                         .weights(toBsonDocument(model.getOptions().getWeights()))
-                         .defaultLanguage(model.getOptions().getDefaultLanguage())
-                         .languageOverride(model.getOptions().getLanguageOverride())
-                         .textVersion(model.getOptions().getTextVersion())
-                         .sphereVersion(model.getOptions().getSphereVersion())
-                         .bits(model.getOptions().getBits())
-                         .min(model.getOptions().getMin())
-                         .max(model.getOptions().getMax())
-                         .bucketSize(model.getOptions().getBucketSize())
-                         .storageEngine(toBsonDocument(model.getOptions().getStorageEngine()))
-                         .partialFilterExpression(toBsonDocument(model.getOptions().getPartialFilterExpression()))
-                         .collation(model.getOptions().getCollation())
+                                      .name(model.getOptions().getName())
+                                      .background(model.getOptions().isBackground())
+                                      .unique(model.getOptions().isUnique())
+                                      .sparse(model.getOptions().isSparse())
+                                      .expireAfter(model.getOptions().getExpireAfter(TimeUnit.SECONDS), TimeUnit.SECONDS)
+                                      .version(model.getOptions().getVersion())
+                                      .weights(toBsonDocument(model.getOptions().getWeights()))
+                                      .defaultLanguage(model.getOptions().getDefaultLanguage())
+                                      .languageOverride(model.getOptions().getLanguageOverride())
+                                      .textVersion(model.getOptions().getTextVersion())
+                                      .sphereVersion(model.getOptions().getSphereVersion())
+                                      .bits(model.getOptions().getBits())
+                                      .min(model.getOptions().getMin())
+                                      .max(model.getOptions().getMax())
+                                      .bucketSize(model.getOptions().getBucketSize())
+                                      .storageEngine(toBsonDocument(model.getOptions().getStorageEngine()))
+                                      .partialFilterExpression(toBsonDocument(model.getOptions().getPartialFilterExpression()))
+                                      .collation(model.getOptions().getCollation())
             );
         }
         CreateIndexesOperation createIndexesOperation = new CreateIndexesOperation(getNamespace(), indexRequests, writeConcern);
-        executor.execute(createIndexesOperation);
+        executor.execute(createIndexesOperation, clientSession);
         return createIndexesOperation.getIndexNames();
     }
 
@@ -568,22 +849,65 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public <TResult> ListIndexesIterable<TResult> listIndexes(final Class<TResult> resultClass) {
-        return new ListIndexesIterableImpl<TResult>(getNamespace(), resultClass, codecRegistry, ReadPreference.primary(), executor);
+        return executeListIndexes(null, resultClass);
+    }
+
+    @Override
+    public ListIndexesIterable<Document> listIndexes(final ClientSession clientSession) {
+        return listIndexes(clientSession, Document.class);
+    }
+
+    @Override
+    public <TResult> ListIndexesIterable<TResult> listIndexes(final ClientSession clientSession, final Class<TResult> resultClass) {
+        notNull("clientSession", clientSession);
+        return executeListIndexes(clientSession, resultClass);
+    }
+
+    private <TResult> ListIndexesIterable<TResult> executeListIndexes(final ClientSession clientSession, final Class<TResult> resultClass) {
+        return new ListIndexesIterableImpl<TResult>(clientSession, getNamespace(), resultClass, codecRegistry, ReadPreference.primary(),
+                                                           executor);
     }
 
     @Override
     public void dropIndex(final String indexName) {
-        executor.execute(new DropIndexOperation(namespace, indexName, writeConcern));
+        executeDropIndex(null, indexName);
     }
 
     @Override
     public void dropIndex(final Bson keys) {
-        executor.execute(new DropIndexOperation(namespace, keys.toBsonDocument(BsonDocument.class, codecRegistry), writeConcern));
+        executeDropIndex(null, keys);
+    }
+
+    @Override
+    public void dropIndex(final ClientSession clientSession, final String indexName) {
+        notNull("clientSession", clientSession);
+        executeDropIndex(clientSession, indexName);
+    }
+
+    @Override
+    public void dropIndex(final ClientSession clientSession, final Bson keys) {
+        notNull("clientSession", clientSession);
+        executeDropIndex(clientSession, keys);
     }
 
     @Override
     public void dropIndexes() {
         dropIndex("*");
+    }
+
+    @Override
+    public void dropIndexes(final ClientSession clientSession) {
+        notNull("clientSession", clientSession);
+        executeDropIndex(clientSession, "*");
+    }
+
+    private void executeDropIndex(final ClientSession clientSession, final String indexName) {
+        executor.execute(new DropIndexOperation(namespace, indexName, writeConcern), clientSession);
+    }
+
+    private void executeDropIndex(final ClientSession clientSession, final Bson keys) {
+        executor.execute(new DropIndexOperation(namespace, keys.toBsonDocument(BsonDocument.class, codecRegistry), writeConcern),
+                clientSession);
     }
 
     @Override
@@ -593,13 +917,33 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public void renameCollection(final MongoNamespace newCollectionNamespace, final RenameCollectionOptions renameCollectionOptions) {
-        executor.execute(new RenameCollectionOperation(getNamespace(), newCollectionNamespace, writeConcern)
-                             .dropTarget(renameCollectionOptions.isDropTarget()));
+        executeRenameCollection(null, newCollectionNamespace, renameCollectionOptions);
     }
 
-    private DeleteResult delete(final Bson filter, final DeleteOptions deleteOptions, final boolean multi) {
-        com.mongodb.bulk.BulkWriteResult result = executeSingleWriteRequest(null, new DeleteRequest(toBsonDocument(filter)).multi(multi)
-                .collation(deleteOptions.getCollation()), null);
+    @Override
+    public void renameCollection(final ClientSession clientSession, final MongoNamespace newCollectionNamespace) {
+        renameCollection(clientSession, newCollectionNamespace, new RenameCollectionOptions());
+    }
+
+    @Override
+    public void renameCollection(final ClientSession clientSession, final MongoNamespace newCollectionNamespace,
+                                 final RenameCollectionOptions renameCollectionOptions) {
+        notNull("clientSession", clientSession);
+        executeRenameCollection(clientSession, newCollectionNamespace, renameCollectionOptions);
+    }
+
+    private void executeRenameCollection(final ClientSession clientSession, final MongoNamespace newCollectionNamespace,
+                                         final RenameCollectionOptions renameCollectionOptions) {
+        executor.execute(new RenameCollectionOperation(getNamespace(), newCollectionNamespace, writeConcern)
+                                 .dropTarget(renameCollectionOptions.isDropTarget()),
+                clientSession);
+    }
+
+    private DeleteResult executeDelete(final ClientSession clientSession, final Bson filter, final DeleteOptions deleteOptions,
+                                       final boolean multi) {
+        com.mongodb.bulk.BulkWriteResult result = executeSingleWriteRequest(clientSession,
+                new DeleteRequest(toBsonDocument(filter)).multi(multi)
+                        .collation(deleteOptions.getCollation()), null);
         if (result.wasAcknowledged()) {
             return DeleteResult.acknowledged(result.getDeletedCount());
         } else {
@@ -607,8 +951,9 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         }
     }
 
-    private UpdateResult update(final Bson filter, final Bson update, final UpdateOptions updateOptions, final boolean multi) {
-        return toUpdateResult(executeSingleWriteRequest(null, new UpdateRequest(toBsonDocument(filter), toBsonDocument(update),
+    private UpdateResult executeUpdate(final ClientSession clientSession, final Bson filter, final Bson update,
+                                       final UpdateOptions updateOptions, final boolean multi) {
+        return toUpdateResult(executeSingleWriteRequest(clientSession, new UpdateRequest(toBsonDocument(filter), toBsonDocument(update),
                 WriteRequest.Type.UPDATE).upsert(updateOptions.isUpsert()).multi(multi).collation(updateOptions.getCollation()),
                 updateOptions.getBypassDocumentValidation()));
     }
