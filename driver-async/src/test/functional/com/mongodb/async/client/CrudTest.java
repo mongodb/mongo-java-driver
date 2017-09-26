@@ -18,6 +18,7 @@ package com.mongodb.async.client;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CollationAlternate;
 import com.mongodb.client.model.CollationCaseFirst;
@@ -28,8 +29,12 @@ import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
+import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.model.UpdateManyModel;
+import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.BsonArray;
@@ -98,7 +103,16 @@ public class CrudTest extends DatabaseTestCase {
         BsonDocument outcome = getOperationMongoOperations(definition.getDocument("operation"));
         BsonDocument expectedOutcome = definition.getDocument("outcome");
 
-        assertEquals(description, expectedOutcome.get("result"), outcome.get("result"));
+        // Hack to workaround the lack of upsertedCount
+        BsonValue expectedResult = expectedOutcome.get("result");
+        BsonValue actualResult = outcome.get("result");
+        if (actualResult.isDocument()
+                    && actualResult.asDocument().containsKey("upsertedCount")
+                    && actualResult.asDocument().getNumber("upsertedCount").intValue() == 0
+                    && !expectedResult.asDocument().containsKey("upsertedCount")) {
+            expectedResult.asDocument().append("upsertedCount", actualResult.asDocument().get("upsertedCount"));
+        }
+        assertEquals(description, expectedResult, actualResult);
 
         if (expectedOutcome.containsKey("collection")) {
             assertCollectionEquals(expectedOutcome.getDocument("collection"));
@@ -170,6 +184,8 @@ public class CrudTest extends DatabaseTestCase {
             return toResult(BsonNull.VALUE);
         } else if (result instanceof MongoOperationBsonDocument) {
             return toResult((MongoOperationBsonDocument) result);
+        } else if (result instanceof MongoOperationBulkWriteResult) {
+            return toResult((MongoOperationBulkWriteResult) result);
         } else if (result instanceof MongoOperationUpdateResult) {
             return toResult((MongoOperationUpdateResult) result);
         } else if (result instanceof MongoOperationDeleteResult) {
@@ -223,6 +239,23 @@ public class CrudTest extends DatabaseTestCase {
             resultDoc.append("upsertedId", updateResult.getUpsertedId());
         }
         resultDoc.append("upsertedCount", updateResult.getUpsertedId() == null ? new BsonInt32(0) : new BsonInt32(1));
+        return toResult(resultDoc);
+    }
+
+    private BsonDocument toResult(final MongoOperationBulkWriteResult operation) {
+        BulkWriteResult bulkWriteResult = operation.get();
+        BsonDocument resultDoc = new BsonDocument();
+        if (bulkWriteResult.wasAcknowledged()) {
+            resultDoc.append("deletedCount", new BsonInt32(bulkWriteResult.getDeletedCount()));
+            resultDoc.append("insertedIds", new BsonDocument());
+            resultDoc.append("matchedCount", new BsonInt32(bulkWriteResult.getMatchedCount()));
+            if (bulkWriteResult.isModifiedCountAvailable()) {
+                resultDoc.append("modifiedCount", new BsonInt32(bulkWriteResult.getModifiedCount()));
+            }
+            resultDoc.append("upsertedCount", bulkWriteResult.getUpserts() == null
+                                                      ? new BsonInt32(0) : new BsonInt32(bulkWriteResult.getUpserts().size()));
+            resultDoc.append("upsertedIds", new BsonDocument());
+        }
         return toResult(resultDoc);
     }
 
@@ -401,6 +434,9 @@ public class CrudTest extends DatabaseTestCase {
                 if (arguments.containsKey("collation")) {
                     options.collation(getCollation(arguments.getDocument("collation")));
                 }
+                if (arguments.containsKey("arrayFilters")) {
+                    options.arrayFilters((getArrayFilters(arguments.getArray("arrayFilters"))));
+                }
                 collection.findOneAndUpdate(arguments.getDocument("filter"), arguments.getDocument("update"), options, getCallback());
             }
         };
@@ -479,6 +515,9 @@ public class CrudTest extends DatabaseTestCase {
                 if (arguments.containsKey("collation")) {
                     options.collation(getCollation(arguments.getDocument("collation")));
                 }
+                if (arguments.containsKey("arrayFilters")) {
+                    options.arrayFilters((getArrayFilters(arguments.getArray("arrayFilters"))));
+                }
                 collection.updateMany(arguments.getDocument("filter"), arguments.getDocument("update"), options, getCallback());
             }
         };
@@ -495,7 +534,57 @@ public class CrudTest extends DatabaseTestCase {
                 if (arguments.containsKey("collation")) {
                     options.collation(getCollation(arguments.getDocument("collation")));
                 }
+                if (arguments.containsKey("arrayFilters")) {
+                    options.arrayFilters((getArrayFilters(arguments.getArray("arrayFilters"))));
+                }
                 collection.updateOne(arguments.getDocument("filter"), arguments.getDocument("update"), options, getCallback());
+            }
+        };
+    }
+
+    private MongoOperationBulkWriteResult getBulkWriteMongoOperation(final BsonDocument arguments) {
+        return new MongoOperationBulkWriteResult() {
+            @Override
+            public void execute() {
+                List<WriteModel<BsonDocument>> writeModels = new ArrayList<WriteModel<BsonDocument>>();
+                for (BsonValue bsonValue : arguments.getArray("requests")) {
+                    BsonDocument cur = bsonValue.asDocument();
+                    if (cur.containsKey("name")) {
+                        String name = cur.getString("name").getValue();
+                        BsonDocument requestArguments = cur.getDocument("arguments");
+                        if (name.equals("insertOne")) {
+                            writeModels.add(new InsertOneModel<BsonDocument>(requestArguments.getDocument("document")));
+                        } else if (name.equals("updateOne")) {
+                            writeModels.add(new UpdateOneModel<BsonDocument>(requestArguments.getDocument("filter"),
+                                                                                    requestArguments.getDocument("update"),
+                                                                                    getUpdateOptions(requestArguments)));
+                        } else if (name.equals("updateMany")) {
+                            writeModels.add(new UpdateManyModel<BsonDocument>(requestArguments.getDocument("filter"),
+                                                                                     requestArguments.getDocument("update"),
+                                                                                     getUpdateOptions(requestArguments)));
+                        } else {
+                            throw new UnsupportedOperationException("Unsupported write request type");
+                        }
+                    } else {
+                        if (cur.get("insertOne") != null) {
+                            BsonDocument insertOneArguments = cur.getDocument("insertOne");
+                            writeModels.add(new InsertOneModel<BsonDocument>(insertOneArguments.getDocument("document")));
+                        } else if (cur.get("updateOne") != null) {
+                            BsonDocument updateOneArguments = cur.getDocument("updateOne");
+                            writeModels.add(new UpdateOneModel<BsonDocument>(updateOneArguments.getDocument("filter"),
+                                                                                    updateOneArguments.getDocument("update"),
+                                                                                    getUpdateOptions(updateOneArguments)));
+                        } else if (cur.get("updateMany") != null) {
+                            BsonDocument updateManyArguments = cur.getDocument("updateMany");
+                            writeModels.add(new UpdateManyModel<BsonDocument>(updateManyArguments.getDocument("filter"),
+                                                                                     updateManyArguments.getDocument("update"),
+                                                                                     getUpdateOptions(updateManyArguments)));
+                        } else {
+                            throw new UnsupportedOperationException("Unsupported write request type");
+                        }
+                    }
+                }
+                collection.bulkWrite(writeModels, getCallback());
             }
         };
     }
@@ -536,6 +625,23 @@ public class CrudTest extends DatabaseTestCase {
         return builder.build();
     }
 
+    private UpdateOptions getUpdateOptions(final BsonDocument requestArguments) {
+        return new UpdateOptions()
+                       .arrayFilters(getArrayFilters(requestArguments.getArray("arrayFilters", null)));
+    }
+
+
+    private List<BsonDocument> getArrayFilters(final BsonArray bsonArray) {
+        if (bsonArray == null) {
+            return null;
+        }
+        List<BsonDocument> arrayFilters = new ArrayList<BsonDocument>(bsonArray.size());
+        for (BsonValue cur : bsonArray) {
+            arrayFilters.add(cur.asDocument());
+        }
+        return arrayFilters;
+    }
+
     abstract class MongoOperationLong extends MongoOperation<Long> {
     }
 
@@ -544,6 +650,9 @@ public class CrudTest extends DatabaseTestCase {
 
 
     abstract class MongoOperationUpdateResult extends MongoOperation<UpdateResult> {
+    }
+
+    abstract class MongoOperationBulkWriteResult extends MongoOperation<BulkWriteResult> {
     }
 
     abstract class MongoOperationDeleteResult extends MongoOperation<DeleteResult> {
