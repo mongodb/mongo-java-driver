@@ -34,6 +34,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import java.io.Closeable;
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
@@ -368,8 +369,25 @@ public class MongoClient extends Mongo implements Closeable {
      * @since 3.0
      */
     public MongoIterable<String> listDatabaseNames() {
-        return new ListDatabasesIterableImpl<BsonDocument>(BsonDocument.class, getDefaultCodecRegistry(),
-                ReadPreference.primary(), createOperationExecutor()).map(new Function<BsonDocument, String>() {
+        return executeListDatabaseNames(null);
+    }
+
+    /**
+     * Get a list of the database names
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @return an iterable containing all the names of all the databases
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @mongodb.driver.manual reference/command/listDatabases List Databases
+     */
+    public MongoIterable<String> listDatabaseNames(final ClientSession clientSession) {
+        return executeListDatabaseNames(clientSession);
+    }
+
+    private MongoIterable<String> executeListDatabaseNames(final ClientSession clientSession) {
+        notNull("clientSession", clientSession);
+        return executeListDatabases(clientSession, BsonDocument.class).map(new Function<BsonDocument, String>() {
             @Override
             public String apply(final BsonDocument result) {
                 return result.getString("name").getValue();
@@ -396,8 +414,39 @@ public class MongoClient extends Mongo implements Closeable {
      * @since 3.0
      */
     public <T> ListDatabasesIterable<T> listDatabases(final Class<T> clazz) {
-        return new ListDatabasesIterableImpl<T>(clazz, getMongoClientOptions().getCodecRegistry(),
-                ReadPreference.primary(), createOperationExecutor());
+        return executeListDatabases(null, clazz);
+    }
+
+    /**
+     * Gets the list of databases
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @return the list of databases
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public ListDatabasesIterable<Document> listDatabases(final ClientSession clientSession) {
+        return listDatabases(clientSession, Document.class);
+    }
+
+    /**
+     * Gets the list of databases
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param clazz the class to cast the database documents to
+     * @param <T>   the type of the class to use instead of {@code Document}.
+     * @return the list of databases
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public <T> ListDatabasesIterable<T> listDatabases(final ClientSession clientSession, final Class<T> clazz) {
+        notNull("clientSession", clientSession);
+        return executeListDatabases(clientSession, clazz);
+    }
+
+    private <T> ListDatabasesIterable<T> executeListDatabases(final ClientSession clientSession, final Class<T> clazz) {
+        return new ListDatabasesIterableImpl<T>(clientSession, clazz, getMongoClientOptions().getCodecRegistry(),
+                                                       ReadPreference.primary(), createOperationExecutor());
     }
 
     /**

@@ -33,9 +33,9 @@ final class ListDatabasesIterableImpl<TResult> extends MongoIterableImpl<TResult
 
     private long maxTimeMS;
 
-    ListDatabasesIterableImpl(final Class<TResult> resultClass, final CodecRegistry codecRegistry,
+    ListDatabasesIterableImpl(final ClientSession clientSession, final Class<TResult> resultClass, final CodecRegistry codecRegistry,
                               final ReadPreference readPreference, final OperationExecutor executor) {
-        super(executor, ReadConcern.DEFAULT, readPreference); // TODO: read concern?
+        super(clientSession, executor, ReadConcern.DEFAULT, readPreference); // TODO: read concern?
         this.resultClass = notNull("clazz", resultClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
     }

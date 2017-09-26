@@ -42,7 +42,8 @@ class ListCollectionsIterableSpecification extends Specification {
     def 'should build the expected listCollectionOperation'() {
         given:
         def executor = new TestOperationExecutor([null, null]);
-        def listCollectionIterable = new ListCollectionsIterableImpl<Document>('db', Document, codecRegistry, readPreference, executor)
+        def listCollectionIterable = new ListCollectionsIterableImpl<Document>(null, 'db', Document, codecRegistry,
+                readPreference, executor)
                 .filter(new Document('filter', 1))
                 .batchSize(100)
                 .maxTime(1000, MILLISECONDS)
@@ -68,6 +69,31 @@ class ListCollectionsIterableSpecification extends Specification {
                 .filter(new BsonDocument('filter', new BsonInt32(2))).batchSize(99).maxTime(999, MILLISECONDS))
     }
 
+    def 'should use ClientSession'() {
+        given:
+        def batchCursor = Stub(BatchCursor) {
+            _ * hasNext() >> { false }
+        }
+        def executor = new TestOperationExecutor([batchCursor, batchCursor]);
+        def listCollectionIterable = new ListCollectionsIterableImpl<Document>(clientSession, 'db', Document, codecRegistry,
+                readPreference, executor)
+
+        when:
+        listCollectionIterable.first()
+
+        then:
+        executor.getClientSession() == clientSession
+
+        when:
+        listCollectionIterable.iterator()
+
+        then:
+        executor.getClientSession() == clientSession
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
+    }
+
     def 'should follow the MongoIterable interface as expected'() {
         given:
         def cannedResults = [new Document('_id', 1), new Document('_id', 2), new Document('_id', 3)]
@@ -90,7 +116,8 @@ class ListCollectionsIterableSpecification extends Specification {
             }
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
-        def mongoIterable = new ListCollectionsIterableImpl<Document>('db', Document, codecRegistry, readPreference, executor)
+        def mongoIterable = new ListCollectionsIterableImpl<Document>(null, 'db', Document, codecRegistry, readPreference,
+                executor)
 
         when:
         def results = mongoIterable.first()

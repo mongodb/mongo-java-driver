@@ -82,6 +82,7 @@ import static com.mongodb.bulk.WriteRequest.Type.UPDATE
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries
+import static com.mongodb.TestHelper.execute
 import static spock.util.matcher.HamcrestSupport.expect
 
 @SuppressWarnings('ClassSize')
@@ -175,14 +176,6 @@ class MongoCollectionSpecification extends Specification {
         collection.getReadConcern() == newWReadConcern
         expect collection, isTheSameAs(new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED,
                 newWReadConcern, executor))
-    }
-
-    def <T> T execute(final Closure<T> method, final ClientSession session, ... restOfArgs) {
-        if (session == null) {
-            method.call(restOfArgs)
-        }  else {
-            method.call([session, *restOfArgs] as Object[])
-        }
     }
 
     def 'should use CountOperation correctly'() {
