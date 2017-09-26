@@ -84,7 +84,13 @@ final class PojoBuilderHelper {
             for (Method method : propertyMethods.getGetterMethods()) {
                 String propertyName = toPropertyName(method);
                 propertyNames.add(propertyName);
-                PropertyMetadata<?> propertyMetadata = getOrCreateProperty(propertyName, declaringClassName, propertyNameMap,
+                // If the getter is overridden in a subclass, we only want to process that property, and ignore
+                // potentially less specific methods from super classes
+                PropertyMetadata<?> propertyMetadata = propertyNameMap.get(propertyName);
+                if (propertyMetadata != null && propertyMetadata.getGetter() != null) {
+                    continue;
+                }
+                propertyMetadata = getOrCreateProperty(propertyName, declaringClassName, propertyNameMap,
                         TypeData.newInstance(method), propertyTypeParameterMap, parentClassTypeData, genericTypeNames,
                         getGenericType(method));
 

@@ -22,7 +22,7 @@ import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import java.util.List;
 
-public class CollectionSpecificReturnTypeCreatorModel {
+public class CollectionSpecificReturnTypeCreatorModel extends AbstractCollectionSpecificReturnTypeCreatorModel {
     private final ImmutableList<String> properties;
 
     @BsonCreator
