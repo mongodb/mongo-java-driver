@@ -18,6 +18,7 @@ package com.mongodb.client.model;
 
 import org.bson.conversions.Bson;
 
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -37,8 +38,9 @@ public class FindOneAndUpdateOptions {
     private long maxTimeMS;
     private Boolean bypassDocumentValidation;
     private Collation collation;
+    private List<? extends Bson> arrayFilters;
 
-     /**
+    /**
      * Gets a document describing the fields to return for all matching documents.
      *
      * @return the project document, which may be null
@@ -194,5 +196,28 @@ public class FindOneAndUpdateOptions {
     public FindOneAndUpdateOptions collation(final Collation collation) {
         this.collation = collation;
         return this;
+    }
+    /**
+     * Sets the array filters option
+     *
+     * @param arrayFilters the array filters, which may be null
+     * @return this
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public FindOneAndUpdateOptions arrayFilters(final List<? extends Bson> arrayFilters) {
+        this.arrayFilters = arrayFilters;
+        return this;
+    }
+
+    /**
+     * Returns the array filters option
+     *
+     * @return the array filters, which may be null
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public List<? extends Bson> getArrayFilters() {
+        return arrayFilters;
     }
 }

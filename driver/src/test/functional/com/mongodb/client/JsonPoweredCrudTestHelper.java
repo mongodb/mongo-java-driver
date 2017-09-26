@@ -33,6 +33,7 @@ import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.ReturnDocument;
+import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
@@ -48,7 +49,6 @@ import org.junit.AssumptionViolatedException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 
 public class JsonPoweredCrudTestHelper {
@@ -112,7 +112,18 @@ public class JsonPoweredCrudTestHelper {
     }
 
     BsonDocument toResult(final BulkWriteResult bulkWriteResult) {
-        BsonDocument resultDoc = new BsonDocument();  // TODO: complete this, but not needed for command monitoring tests
+        BsonDocument resultDoc = new BsonDocument();
+        if (bulkWriteResult.wasAcknowledged()) {
+            resultDoc.append("deletedCount", new BsonInt32(bulkWriteResult.getDeletedCount()));
+            resultDoc.append("insertedIds", new BsonDocument());
+            resultDoc.append("matchedCount", new BsonInt32(bulkWriteResult.getMatchedCount()));
+            if (bulkWriteResult.isModifiedCountAvailable()) {
+                resultDoc.append("modifiedCount", new BsonInt32(bulkWriteResult.getModifiedCount()));
+            }
+            resultDoc.append("upsertedCount", bulkWriteResult.getUpserts() == null
+                                                      ? new BsonInt32(0) : new BsonInt32(bulkWriteResult.getUpserts().size()));
+            resultDoc.append("upsertedIds", new BsonDocument());
+        }
         return toResult(resultDoc);
     }
 
@@ -258,6 +269,9 @@ public class JsonPoweredCrudTestHelper {
         if (arguments.containsKey("collation")) {
             options.collation(getCollation(arguments.getDocument("collation")));
         }
+        if (arguments.containsKey("arrayFilters")) {
+            options.arrayFilters((getArrayFilters(arguments.getArray("arrayFilters"))));
+        }
         return toResult(collection
                                 .findOneAndUpdate(arguments.getDocument("filter"), arguments.getDocument("update"), options));
     }
@@ -302,9 +316,13 @@ public class JsonPoweredCrudTestHelper {
         if (arguments.containsKey("collation")) {
             options.collation(getCollation(arguments.getDocument("collation")));
         }
+        if (arguments.containsKey("arrayFilters")) {
+            options.arrayFilters((getArrayFilters(arguments.getArray("arrayFilters"))));
+        }
         return toResult(collection.updateMany(arguments.getDocument("filter"), arguments.getDocument("update"), options));
     }
 
+    @SuppressWarnings("unchecked")
     BsonDocument getUpdateOneResult(final BsonDocument arguments) {
         UpdateOptions options = new UpdateOptions();
         if (arguments.containsKey("upsert")) {
@@ -312,6 +330,9 @@ public class JsonPoweredCrudTestHelper {
         }
         if (arguments.containsKey("collation")) {
             options.collation(getCollation(arguments.getDocument("collation")));
+        }
+        if (arguments.containsKey("arrayFilters")) {
+            options.arrayFilters((getArrayFilters(arguments.getArray("arrayFilters"))));
         }
         return toResult(collection.updateOne(arguments.getDocument("filter"), arguments.getDocument("update"), options));
     }
@@ -327,15 +348,41 @@ public class JsonPoweredCrudTestHelper {
         }
 
         List<WriteModel<BsonDocument>> writeModels = new ArrayList<WriteModel<BsonDocument>>();
-        for (Iterator<BsonValue> iter = arguments.getArray("requests").iterator(); iter.hasNext();) {
-            BsonDocument cur = iter.next().asDocument();
-            if (cur.get("insertOne") != null) {
-                writeModels.add(new InsertOneModel<BsonDocument>(cur.getDocument("insertOne").getDocument("document")));
-            } else if (cur.get("updateOne") != null) {
-                writeModels.add(new UpdateOneModel<BsonDocument>(cur.getDocument("updateOne").getDocument("filter"),
-                                                                 cur.getDocument("updateOne").getDocument("update")));
+        for (BsonValue bsonValue : arguments.getArray("requests")) {
+            BsonDocument cur = bsonValue.asDocument();
+            if (cur.containsKey("name")) {
+                String name = cur.getString("name").getValue();
+                BsonDocument requestArguments = cur.getDocument("arguments");
+                if (name.equals("insertOne")) {
+                    writeModels.add(new InsertOneModel<BsonDocument>(requestArguments.getDocument("document")));
+                } else if (name.equals("updateOne")) {
+                    writeModels.add(new UpdateOneModel<BsonDocument>(requestArguments.getDocument("filter"),
+                                                                            requestArguments.getDocument("update"),
+                                                                            getUpdateOptions(requestArguments)));
+                } else if (name.equals("updateMany")) {
+                    writeModels.add(new UpdateManyModel<BsonDocument>(requestArguments.getDocument("filter"),
+                                                                             requestArguments.getDocument("update"),
+                                                                             getUpdateOptions(requestArguments)));
+                } else {
+                    throw new UnsupportedOperationException("Unsupported write request type");
+                }
             } else {
-                throw new UnsupportedOperationException("Unsupported write request type");
+                if (cur.get("insertOne") != null) {
+                    BsonDocument insertOneArguments = cur.getDocument("insertOne");
+                    writeModels.add(new InsertOneModel<BsonDocument>(insertOneArguments.getDocument("document")));
+                } else if (cur.get("updateOne") != null) {
+                    BsonDocument updateOneArguments = cur.getDocument("updateOne");
+                    writeModels.add(new UpdateOneModel<BsonDocument>(updateOneArguments.getDocument("filter"),
+                                                                            updateOneArguments.getDocument("update"),
+                                                                            getUpdateOptions(updateOneArguments)));
+                } else if (cur.get("updateMany") != null) {
+                    BsonDocument updateManyArguments = cur.getDocument("updateMany");
+                    writeModels.add(new UpdateManyModel<BsonDocument>(updateManyArguments.getDocument("filter"),
+                                                                             updateManyArguments.getDocument("update"),
+                                                                             getUpdateOptions(updateManyArguments)));
+                } else {
+                    throw new UnsupportedOperationException("Unsupported write request type");
+                }
             }
         }
 
@@ -379,5 +426,21 @@ public class JsonPoweredCrudTestHelper {
             builder.backwards(bsonCollation.getBoolean("backwards").getValue());
         }
         return builder.build();
+    }
+
+    private UpdateOptions getUpdateOptions(final BsonDocument requestArguments) {
+        return new UpdateOptions()
+                       .arrayFilters(getArrayFilters(requestArguments.getArray("arrayFilters", null)));
+    }
+
+    private List<BsonDocument> getArrayFilters(final BsonArray bsonArray) {
+        if (bsonArray == null) {
+            return null;
+        }
+        List<BsonDocument> arrayFilters = new ArrayList<BsonDocument>(bsonArray.size());
+        for (BsonValue cur : bsonArray) {
+            arrayFilters.add(cur.asDocument());
+        }
+        return arrayFilters;
     }
 }

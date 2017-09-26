@@ -16,6 +16,10 @@
 
 package com.mongodb.client.model;
 
+import org.bson.conversions.Bson;
+
+import java.util.List;
+
 /**
  * The options to apply when updating documents.
  *
@@ -28,6 +32,7 @@ public class UpdateOptions {
     private boolean upsert;
     private Boolean bypassDocumentValidation;
     private Collation collation;
+    private List<? extends Bson> arrayFilters;
 
     /**
      * Returns true if a new document should be inserted if there are no matches to the query filter.  The default is false.
@@ -96,5 +101,29 @@ public class UpdateOptions {
     public UpdateOptions collation(final Collation collation) {
         this.collation = collation;
         return this;
+    }
+
+    /**
+     * Sets the array filters option
+     *
+     * @param arrayFilters the array filters, which may be null
+     * @return this
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public UpdateOptions arrayFilters(final List<? extends Bson> arrayFilters) {
+        this.arrayFilters = arrayFilters;
+        return this;
+    }
+
+    /**
+     * Returns the array filters option
+     *
+     * @return the array filters, which may be null
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public List<? extends Bson> getArrayFilters() {
+        return arrayFilters;
     }
 }
