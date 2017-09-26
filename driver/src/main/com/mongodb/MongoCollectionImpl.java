@@ -449,14 +449,16 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                                                         WriteRequest.Type.UPDATE)
                                        .multi(false)
                                        .upsert(updateOneModel.getOptions().isUpsert())
-                                       .collation(updateOneModel.getOptions().getCollation());
+                                       .collation(updateOneModel.getOptions().getCollation())
+                                       .arrayFilters(toBsonDocumentList(updateOneModel.getOptions().getArrayFilters()));
             } else if (writeModel instanceof UpdateManyModel) {
                 UpdateManyModel<TDocument> updateManyModel = (UpdateManyModel<TDocument>) writeModel;
                 writeRequest = new UpdateRequest(toBsonDocument(updateManyModel.getFilter()), toBsonDocument(updateManyModel.getUpdate()),
                                                         WriteRequest.Type.UPDATE)
                                        .multi(true)
                                        .upsert(updateManyModel.getOptions().isUpsert())
-                                       .collation(updateManyModel.getOptions().getCollation());
+                                       .collation(updateManyModel.getOptions().getCollation())
+                                       .arrayFilters(toBsonDocumentList(updateManyModel.getOptions().getArrayFilters()));
             } else if (writeModel instanceof DeleteOneModel) {
                 DeleteOneModel<TDocument> deleteOneModel = (DeleteOneModel<TDocument>) writeModel;
                 writeRequest = new DeleteRequest(toBsonDocument(deleteOneModel.getFilter())).multi(false)
@@ -762,7 +764,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                                         .upsert(options.isUpsert())
                                         .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                                         .bypassDocumentValidation(options.getBypassDocumentValidation())
-                                        .collation(options.getCollation()),
+                                        .collation(options.getCollation())
+                                        .arrayFilters(toBsonDocumentList(options.getArrayFilters())),
                 clientSession);
     }
     @Override
@@ -955,7 +958,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private UpdateResult executeUpdate(final ClientSession clientSession, final Bson filter, final Bson update,
                                        final UpdateOptions updateOptions, final boolean multi) {
         return toUpdateResult(executeSingleWriteRequest(clientSession, new UpdateRequest(toBsonDocument(filter), toBsonDocument(update),
-                WriteRequest.Type.UPDATE).upsert(updateOptions.isUpsert()).multi(multi).collation(updateOptions.getCollation()),
+                WriteRequest.Type.UPDATE).upsert(updateOptions.isUpsert()).multi(multi).collation(updateOptions.getCollation())
+                                         .arrayFilters(toBsonDocumentList(updateOptions.getArrayFilters())),
                 updateOptions.getBypassDocumentValidation()));
     }
 
@@ -1013,5 +1017,16 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private BsonDocument toBsonDocument(final Bson bson) {
         return bson == null ? null : bson.toBsonDocument(documentClass, codecRegistry);
+    }
+
+    private List<BsonDocument> toBsonDocumentList(final List<? extends Bson> bsonList) {
+        if (bsonList == null) {
+            return null;
+        }
+        List<BsonDocument> bsonDocumentList = new ArrayList<BsonDocument>(bsonList.size());
+        for (Bson cur : bsonList) {
+            bsonDocumentList.add(toBsonDocument(cur));
+        }
+        return bsonDocumentList;
     }
 }

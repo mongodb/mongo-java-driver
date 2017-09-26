@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model
 
+import org.bson.BsonDocument
+import org.bson.BsonInt32
 import spock.lang.Specification
 
 class UpdateOptionsSpecification extends Specification {
@@ -51,5 +53,13 @@ class UpdateOptionsSpecification extends Specification {
 
         where:
         collation << [null, Collation.builder().locale('en').build()]
+    }
+
+    def 'should set array filters'() {
+        expect:
+        new UpdateOptions().arrayFilters(arrayFilters).getArrayFilters() == arrayFilters
+
+        where:
+        arrayFilters << [null, [], [new BsonDocument('a.b', new BsonInt32(1))]]
     }
 }
