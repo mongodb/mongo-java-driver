@@ -208,6 +208,7 @@ class MongoDatabaseSpecification extends Specification {
         def executor = new TestOperationExecutor([null, null, null])
         def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, executor)
         def listCollectionsMethod = database.&listCollections
+        def listCollectionNamesMethod = database.&listCollectionNames
 
         when:
         def listCollectionIterable = execute(listCollectionsMethod, session)
@@ -222,6 +223,14 @@ class MongoDatabaseSpecification extends Specification {
         then:
         expect listCollectionIterable, isTheSameAs(new ListCollectionsIterableImpl<BsonDocument>(session, name, BsonDocument, codecRegistry,
                 primary(), executor))
+
+        when:
+        def listCollectionNamesIterable = execute(listCollectionNamesMethod, session)
+
+        then:
+        // listCollectionNamesIterable is an instance of a MappingIterable, so have to get the mapped iterable inside it
+        expect listCollectionNamesIterable.getMapped(), isTheSameAs(new ListCollectionsIterableImpl<BsonDocument>(session, name,
+                BsonDocument, codecRegistry, primary(), executor))
 
         where:
         session << [null, Stub(ClientSession)]

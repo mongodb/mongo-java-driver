@@ -31,6 +31,10 @@ class MappingIterable<U, V> implements MongoIterable<V> {
         this.mapper = mapper;
     }
 
+    MongoIterable<U> getMapped() {
+        return iterable;
+    }
+
     @Override
     public MongoCursor<V> iterator() {
         return new MongoMappingCursor<U, V>(iterable.iterator(), mapper);

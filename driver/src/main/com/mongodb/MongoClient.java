@@ -382,11 +382,11 @@ public class MongoClient extends Mongo implements Closeable {
      * @mongodb.driver.manual reference/command/listDatabases List Databases
      */
     public MongoIterable<String> listDatabaseNames(final ClientSession clientSession) {
+        notNull("clientSession", clientSession);
         return executeListDatabaseNames(clientSession);
     }
 
     private MongoIterable<String> executeListDatabaseNames(final ClientSession clientSession) {
-        notNull("clientSession", clientSession);
         return executeListDatabases(clientSession, BsonDocument.class).map(new Function<BsonDocument, String>() {
             @Override
             public String apply(final BsonDocument result) {
