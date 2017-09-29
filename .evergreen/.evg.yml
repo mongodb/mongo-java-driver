@@ -306,6 +306,15 @@ functions:
         file="${PROJECT_DIRECTORY}/.evergreen/install-dependencies.sh"
         [ -f ${file} ] && sh ${file} || echo "${file} not available, skipping"
 
+# Anchors
+
+hosts: &hosts
+ - rhel62-small
+ - rhel70-small
+ - ubuntu1404-test
+ - ubuntu1604-test
+ - debian81-test
+
 pre:
   - func: "fetch source"
   - func: "prepare resources"
@@ -392,9 +401,9 @@ axes:
   - id: os
     display_name: OS
     values:
-      - id: "rhel62"
-        display_name: "RHEL 6.2"
-        run_on: rhel62-test
+      - id: "linux"
+        display_name: "Linux"
+        run_on: *hosts
 
   - id: topology
     display_name: Topology
@@ -465,20 +474,19 @@ buildvariants:
 # Test packaging and other release related routines
 - name: static-checks
   display_name: "Static Checks"
-  run_on:
-    - rhel62-test
+  run_on: *hosts
   tasks:
     - name: "static-analysis"
 
 - matrix_name: "tests-zlib-compression"
-  matrix_spec: { compressor : "zlib", auth: "noauth", ssl: "nossl", jdk: "jdk6", version: ["latest"], topology: "standalone", os: "rhel62" }
+  matrix_spec: { compressor : "zlib", auth: "noauth", ssl: "nossl", jdk: "jdk6", version: ["latest"], topology: "standalone", os: "linux" }
   display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
      - name: "test"
 
 - matrix_name: "tests-snappy-compression"
-  matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: ["3.4", "latest"], topology: "standalone", os: "rhel62" }
+  matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: ["3.4", "latest"], topology: "standalone", os: "linux" }
   display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
@@ -499,7 +507,7 @@ buildvariants:
      - name: "test"
 
 - matrix_name: "tests-jdk-other"
-  matrix_spec: { auth: "auth", ssl: "ssl", jdk: "*", version: "3.4", topology: "standalone", os: "rhel62" }
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: "*", version: "3.4", topology: "standalone", os: "linux" }
   exclude_spec: { jdk: "jdk6", auth: "*", ssl: "*", version: "*", topology: "*", os: "*" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
@@ -507,7 +515,7 @@ buildvariants:
      - name: "test"
 
 - matrix_name: "test-gssapi"
-  matrix_spec: { jdk: "*", os: "rhel62" }
+  matrix_spec: { jdk: "*", os: "linux" }
   display_name: "GSSAPI (Kerberos) Auth test ${jdk} ${os} "
   tags: ["test-gssapi-variant"]
   tasks:
@@ -515,14 +523,12 @@ buildvariants:
 
 - name: plain-auth-test
   display_name: "PLAIN (LDAP) Auth test"
-  run_on:
-    - rhel62-test
+  run_on: *hosts
   tasks:
     - name: "plain-auth-test"
 
 - name: publish-snapshot
   display_name: "Publish Snapshot"
-  run_on:
-    - rhel62-test
+  run_on: *hosts
   tasks:
     - name: "publish-snapshot"
