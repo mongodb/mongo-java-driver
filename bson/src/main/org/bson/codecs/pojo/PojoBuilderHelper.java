@@ -72,7 +72,7 @@ final class PojoBuilderHelper {
                 propertyNames.add(propertyName);
                 PropertyMetadata<?> propertyMetadata = getOrCreateProperty(propertyName, declaringClassName, propertyNameMap,
                         TypeData.newInstance(method), propertyTypeParameterMap, parentClassTypeData, genericTypeNames,
-                        getGenericType(method));
+                        getGenericType(method), PropertyTypeCheck.THROW_ON_MISMATCH);
                 if (propertyMetadata.getSetter() == null) {
                     propertyMetadata.setSetter(method);
                     for (Annotation annotation : method.getDeclaredAnnotations()) {
@@ -92,7 +92,7 @@ final class PojoBuilderHelper {
                 }
                 propertyMetadata = getOrCreateProperty(propertyName, declaringClassName, propertyNameMap,
                         TypeData.newInstance(method), propertyTypeParameterMap, parentClassTypeData, genericTypeNames,
-                        getGenericType(method));
+                        getGenericType(method), PropertyTypeCheck.THROW_ON_MISMATCH);
 
                 if (propertyMetadata.getGetter() == null) {
                     propertyMetadata.setGetter(method);
@@ -104,10 +104,13 @@ final class PojoBuilderHelper {
 
             for (Field field : currentClass.getDeclaredFields()) {
                 propertyNames.add(field.getName());
+                // Note we do a PropertyTypeCheck.NULL_ON_MISMATCH type check here. If properties are present, the
+                // underlying field should be treated as an implementation detail, so we won't forcefully assert the
+                // type matches, and similarly, won't use it for populating the model.
                 PropertyMetadata<?> propertyMetadata = getOrCreateProperty(field.getName(), declaringClassName, propertyNameMap,
                         TypeData.newInstance(field), propertyTypeParameterMap, parentClassTypeData,
-                        genericTypeNames, field.getGenericType());
-                if (propertyMetadata.getField() == null) {
+                        genericTypeNames, field.getGenericType(), PropertyTypeCheck.NULL_ON_MISMATCH);
+                if (propertyMetadata != null && propertyMetadata.getField() == null) {
                     propertyMetadata.field(field);
                     for (Annotation annotation : field.getDeclaredAnnotations()) {
                         propertyMetadata.addReadAnnotation(annotation);
@@ -151,19 +154,22 @@ final class PojoBuilderHelper {
                                                                   final Map<String, TypeParameterMap> propertyTypeParameterMap,
                                                                   final TypeData<S> parentClassTypeData,
                                                                   final List<String> genericTypeNames,
-                                                                  final Type genericType) {
+                                                                  final Type genericType,
+                                                                  final PropertyTypeCheck propertyTypeCheck) {
         PropertyMetadata<T> propertyMetadata = (PropertyMetadata<T>) propertyNameMap.get(propertyName);
         if (propertyMetadata == null) {
             propertyMetadata = new PropertyMetadata<T>(propertyName, declaringClassName, typeData);
             propertyNameMap.put(propertyName, propertyMetadata);
-        }
-
-        // This allows subsequent invocations for the same property to provide more specific types
-        // (Collection -> ImmutableList). The patterns this method is called in ensures that ordering by evaluating
-        // setters (often accept more general types) before getters (often returns more specific types)
-        if (!propertyMetadata.getTypeData().getType().isAssignableFrom(typeData.getType())) {
-            throw new CodecConfigurationException(format("Property '%s' in %s, has differing data types: %s and %s", propertyName,
-                    declaringClassName, propertyMetadata.getTypeData(), typeData));
+        } else if (!propertyMetadata.getTypeData().getType().isAssignableFrom(typeData.getType())) {
+            // This allows subsequent invocations for the same property to provide more specific types
+            // (Collection -> ImmutableList). The patterns this method is called in ensures that ordering by evaluating
+            // setters (often accept more general types) before getters (often returns more specific types)
+            if (propertyTypeCheck == PropertyTypeCheck.THROW_ON_MISMATCH) {
+                throw new CodecConfigurationException(format("Property '%s' in %s, has differing data types: %s and %s", propertyName,
+                        declaringClassName, propertyMetadata.getTypeData(), typeData));
+            } else {
+                return null;
+            }
         }
         TypeParameterMap typeParameterMap = getTypeParameterMap(genericTypeNames, genericType);
         propertyTypeParameterMap.put(propertyMetadata.getName(), typeParameterMap);
@@ -243,6 +249,17 @@ final class PojoBuilderHelper {
             throw new IllegalStateException(format("%s cannot be null", property));
         }
         return value;
+    }
+
+    private enum PropertyTypeCheck {
+        /**
+         * Throw an exception if the existing property type and incoming type don't match
+         */
+        THROW_ON_MISMATCH,
+        /**
+         * If the existing and incoming types don't match, don't throw and instead return null
+         */
+        NULL_ON_MISMATCH
     }
 
     private PojoBuilderHelper() {

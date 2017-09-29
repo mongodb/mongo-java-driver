@@ -26,6 +26,7 @@ import org.bson.codecs.pojo.entities.ConcreteCollectionsModel;
 import org.bson.codecs.pojo.entities.ConcreteStandAloneAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.ContainsAlternativeMapAndCollectionModel;
 import org.bson.codecs.pojo.entities.ConventionModel;
+import org.bson.codecs.pojo.entities.FieldAndPropertyTypeMismatchModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.bson.codecs.pojo.entities.GenericTreeModel;
 import org.bson.codecs.pojo.entities.InterfaceBasedModel;
@@ -292,6 +293,10 @@ public final class PojoRoundTripTest extends PojoTestCase {
                 getPojoCodecProviderBuilder(CreatorInSuperClassModelImpl.class),
                 "{'propertyA': 'a', 'propertyB': 'b'}"));
 
+        data.add(new TestData("Primitive field type doesn't match private property",
+                new FieldAndPropertyTypeMismatchModel("foo"),
+                getPojoCodecProviderBuilder(FieldAndPropertyTypeMismatchModel.class),
+                "{'stringField': 'foo'}"));
         return data;
     }
 
