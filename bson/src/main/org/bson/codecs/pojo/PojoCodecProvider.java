@@ -41,14 +41,16 @@ public final class PojoCodecProvider implements CodecProvider {
     private final Set<String> packages;
     private final List<Convention> conventions;
     private final DiscriminatorLookup discriminatorLookup;
+    private final List<PropertyCodecProvider> propertyCodecProviders;
 
     private PojoCodecProvider(final boolean automatic, final Map<Class<?>, ClassModel<?>> classModels, final Set<String> packages,
-                              final List<Convention> conventions) {
+                              final List<Convention> conventions, final List<PropertyCodecProvider> propertyCodecProviders) {
         this.automatic = automatic;
         this.classModels = classModels;
         this.packages = packages;
         this.conventions = conventions;
         this.discriminatorLookup = new DiscriminatorLookup(classModels, packages);
+        this.propertyCodecProviders = propertyCodecProviders;
     }
 
     /**
@@ -67,14 +69,14 @@ public final class PojoCodecProvider implements CodecProvider {
     }
 
     @SuppressWarnings("unchecked")
-    <T> PojoCodec<T> getPojoCodec(final Class<T> clazz, final CodecRegistry registry) {
+    private <T> PojoCodec<T> getPojoCodec(final Class<T> clazz, final CodecRegistry registry) {
         ClassModel<T> classModel = (ClassModel<T>) classModels.get(clazz);
         if (classModel != null || (clazz.getPackage() != null && packages.contains(clazz.getPackage().getName()))) {
             if (classModel == null) {
                 classModel = createClassModel(clazz, conventions);
                 discriminatorLookup.addClassModel(classModel);
             }
-            return new PojoCodecImpl<T>(classModel, registry, discriminatorLookup);
+            return new PojoCodecImpl<T>(classModel, registry, propertyCodecProviders, discriminatorLookup);
         } else if (automatic) {
             try {
                 classModel = createClassModel(clazz, conventions);
@@ -85,7 +87,7 @@ public final class PojoCodecProvider implements CodecProvider {
                 return null;
             }
             discriminatorLookup.addClassModel(classModel);
-            return new AutomaticPojoCodec<T>(new PojoCodecImpl<T>(classModel, registry, discriminatorLookup));
+            return new AutomaticPojoCodec<T>(new PojoCodecImpl<T>(classModel, registry, propertyCodecProviders, discriminatorLookup));
         }
         return null;
     }
@@ -98,6 +100,7 @@ public final class PojoCodecProvider implements CodecProvider {
         private final Map<Class<?>, ClassModel<?>> classModels = new HashMap<Class<?>, ClassModel<?>>();
         private final List<Class<?>> clazzes = new ArrayList<Class<?>>();
         private List<Convention> conventions = null;
+        private final List<PropertyCodecProvider> propertyCodecProviders = new ArrayList<PropertyCodecProvider>();
         private boolean automatic;
 
         /**
@@ -115,7 +118,7 @@ public final class PojoCodecProvider implements CodecProvider {
                     register(createClassModel(clazz, immutableConventions));
                 }
             }
-            return new PojoCodecProvider(automatic, classModels, packages, immutableConventions);
+            return new PojoCodecProvider(automatic, classModels, packages, immutableConventions, propertyCodecProviders);
         }
 
         /**
@@ -186,6 +189,23 @@ public final class PojoCodecProvider implements CodecProvider {
             return this;
         }
 
+        /**
+         * Registers codec providers that receive the type parameters of properties for instances encoded and decoded
+         * by a {@link PojoCodec} handled by this provider.
+         *
+         * <p>Note that you should prefer working with the {@link CodecRegistry}/{@link CodecProvider} hierarchy. Providers
+         * should only be registered here if a codec needs to be created for custom container types like optionals and
+         * collections. Support for types {@link Map} and {@link java.util.Collection} are built-in so explicitly handling
+         * them is not necessary.
+         * @param providers property codec providers to register
+         * @return this
+         * @since 3.6
+         */
+        public Builder register(final PropertyCodecProvider... providers) {
+            propertyCodecProviders.addAll(asList(notNull("providers", providers)));
+            return this;
+        }
+
         private Builder() {
         }
     }
@@ -197,5 +217,4 @@ public final class PojoCodecProvider implements CodecProvider {
         }
         return builder.build();
     }
-
 }
