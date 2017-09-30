@@ -34,7 +34,6 @@ import com.mongodb.connection.DefaultClusterFactory;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.event.ClusterListener;
-import com.mongodb.internal.connection.ConcurrentPool;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import com.mongodb.operation.BatchCursor;
@@ -44,20 +43,14 @@ import com.mongodb.operation.ListDatabasesOperation;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
 import com.mongodb.selector.LatencyMinimizingServerSelector;
-import org.bson.BsonBinary;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
-import org.bson.BsonDocumentWriter;
 import org.bson.BsonTimestamp;
-import org.bson.UuidRepresentation;
-import org.bson.codecs.EncoderContext;
-import org.bson.codecs.UuidCodec;
 
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
@@ -106,6 +99,7 @@ public class Mongo {
 
     private final ConcurrentLinkedQueue<ServerCursorAndNamespace> orphanedCursors = new ConcurrentLinkedQueue<ServerCursorAndNamespace>();
     private final ExecutorService cursorCleaningService;
+    private final ServerSessionPool serverSessionPool = new ServerSessionPool();
 
     /**
      * Creates a Mongo instance based on a (single) mongodb node (localhost, default port)
@@ -538,6 +532,7 @@ public class Mongo {
      */
     public void close() {
         cluster.close();
+        serverSessionPool.close();
         if (cursorCleaningService != null) {
             cursorCleaningService.shutdownNow();
         }
@@ -960,28 +955,6 @@ public class Mongo {
         }
     }
 
-    private final ConcurrentPool<ServerSession> serverSessionPool =
-            new ConcurrentPool<ServerSession>(Integer.MAX_VALUE, new ServerSessionItemFactory());
-
-    private static class ServerSessionImpl implements ServerSession {
-        private final BsonDocument identifier;
-        private int transactionNumber;
-
-        ServerSessionImpl(final BsonBinary identifier) {
-            this.identifier = new BsonDocument("id", identifier);
-        }
-
-        @Override
-        public BsonDocument getIdentifier() {
-            return identifier;
-        }
-
-        @Override
-        public long advanceTransactionNumber() {
-            return transactionNumber++;
-        }
-    }
-
     private ExecutorService createCursorCleaningService() {
         ScheduledExecutorService newTimer = Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory("CleanCursors"));
         newTimer.scheduleAtFixedRate(new Runnable() {
@@ -1030,35 +1003,6 @@ public class Mongo {
         ServerCursorAndNamespace(final ServerCursor serverCursor, final MongoNamespace namespace) {
             this.serverCursor = serverCursor;
             this.namespace = namespace;
-        }
-    }
-
-
-    private static final class ServerSessionItemFactory implements ConcurrentPool.ItemFactory<ServerSession> {
-        @Override
-        public ServerSession create(final boolean initialize) {
-            return new ServerSessionImpl(createNewServerSessionIdentifier());
-        }
-
-        @Override
-        public void close(final ServerSession serverSession) {
-            // TODO: pruning
-        }
-
-        @Override
-        public boolean shouldPrune(final ServerSession serverSession) {
-            return false;
-        }
-
-        private BsonBinary createNewServerSessionIdentifier() {
-            UuidCodec uuidCodec = new UuidCodec(UuidRepresentation.STANDARD);
-            BsonDocument holder = new BsonDocument();
-            BsonDocumentWriter bsonDocumentWriter = new BsonDocumentWriter(holder);
-            bsonDocumentWriter.writeStartDocument();
-            bsonDocumentWriter.writeName("id");
-            uuidCodec.encode(bsonDocumentWriter, UUID.randomUUID(), EncoderContext.builder().build());
-            bsonDocumentWriter.writeEndDocument();
-            return holder.getBinary("id");
         }
     }
 
