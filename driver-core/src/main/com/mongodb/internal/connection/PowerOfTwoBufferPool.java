@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.connection.BufferProvider;
+import com.mongodb.internal.connection.ConcurrentPool.Prune;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
 
@@ -63,8 +64,8 @@ public class PowerOfTwoBufferPool implements BufferProvider {
                                                                              }
 
                                                                              @Override
-                                                                             public boolean shouldPrune(final ByteBuffer byteBuffer) {
-                                                                                 return false;
+                                                                             public Prune shouldPrune(final ByteBuffer byteBuffer) {
+                                                                                 return Prune.STOP;
                                                                              }
                                                                          }));
             powerOfTwo = powerOfTwo << 1;

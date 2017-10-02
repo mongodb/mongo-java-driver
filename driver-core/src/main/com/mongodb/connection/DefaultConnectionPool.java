@@ -36,6 +36,7 @@ import com.mongodb.event.ConnectionPoolWaitQueueEnteredEvent;
 import com.mongodb.event.ConnectionPoolWaitQueueExitedEvent;
 import com.mongodb.event.ConnectionRemovedEvent;
 import com.mongodb.internal.connection.ConcurrentPool;
+import com.mongodb.internal.connection.ConcurrentPool.Prune;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
@@ -551,8 +552,8 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
-        public boolean shouldPrune(final UsageTrackingInternalConnection usageTrackingConnection) {
-            return DefaultConnectionPool.this.shouldPrune(usageTrackingConnection);
+        public Prune shouldPrune(final UsageTrackingInternalConnection usageTrackingConnection) {
+            return DefaultConnectionPool.this.shouldPrune(usageTrackingConnection) ? Prune.YES : Prune.NO;
         }
     }
 }
