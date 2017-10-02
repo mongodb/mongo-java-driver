@@ -30,10 +30,12 @@ import spock.lang.IgnoreIf
 
 import java.util.concurrent.TimeUnit
 
+import static com.mongodb.ClusterFixture.isAuthenticated
 import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.Fixture.getDefaultDatabaseName
 import static com.mongodb.Fixture.getMongoClientURI
+import static com.mongodb.MongoCredential.createCredential
 
 class MongoClientSessionSpecification extends FunctionalSpecification {
 
@@ -235,7 +237,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         def commandListener = new TestCommandListener()
         def optionsBuilder = MongoClientOptions.builder()
                 .addCommandListener(commandListener)
-        def client = new MongoClient(getMongoClientURI(optionsBuilder))
+        def client = new MongoClient(Fixture.getMongoClientURI(optionsBuilder))
         // TODO: Remove this once SPEC-944 is resolved
         client.getDatabase('admin').runCommand(new BsonDocument('ping', new BsonInt32(1)))
 
@@ -306,5 +308,34 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
 
         where:
         readConcern << [ReadConcern.DEFAULT, ReadConcern.LOCAL, ReadConcern.MAJORITY]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 5) || !isAuthenticated() })
+    @SuppressWarnings('deprecation')
+    def 'should not use a default session when there is more than one authenticated user'() {
+        given:
+        def sessionTestUserName = 'sessionTestUser'
+        def sessionTestPassword = 'sessionTestPassword'
+        Fixture.getMongoClient().getDB('admin').addUser(sessionTestUserName, sessionTestPassword.toCharArray())
+
+        def commandListener = new TestCommandListener()
+        def optionsBuilder = MongoClientOptions.builder()
+                .addCommandListener(commandListener)
+        def mongoClientURI = getMongoClientURI(optionsBuilder)
+        def credentials = [mongoClientURI.getCredentials(),
+                           createCredential(sessionTestUserName, 'admin', sessionTestPassword.toCharArray())]
+        def client = new MongoClient(mongoClientURI.getHosts().collect { new ServerAddress(it) },
+                credentials, mongoClientURI.getOptions())
+
+        when:
+        client.getDatabase('admin').runCommand(new BsonDocument('ping', new BsonInt32(1)))
+
+        then:
+        def pingCommandStartedEvent = commandListener.events.get(0)
+        !(pingCommandStartedEvent as CommandStartedEvent).command.containsKey('lsid')
+
+        cleanup:
+        Fixture.getMongoClient().getDB('admin').removeUser(sessionTestUserName)
+        client?.close()
     }
 }

@@ -857,7 +857,7 @@ public class Mongo {
     }
 
     ClientSession createClientSession(final ClientSessionOptions options) {
-        if (cluster.getDescription().getLogicalSessionTimeoutMinutes() != null) {
+        if (cluster.getDescription().getLogicalSessionTimeoutMinutes() != null && credentialsList.size() < 2) {
             return new ClientSessionImpl(this, options);
         } else {
             return null;
