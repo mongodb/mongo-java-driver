@@ -108,33 +108,76 @@ class ServerSessionPoolSpecification extends Specification {
         session == pooledSession
     }
 
-    def 'should prune session'() {
+    def 'should prune sessions on release'() {
         given:
         def cluster = Mock(Cluster) {
             getDescription() >> connectedDescription
         }
         def clock = Stub(ServerSessionPool.Clock) {
-            millis() >>> [0,
-                          1,
-                          MINUTES.toMillis(29),
-                          MINUTES.toMillis(29) + 1]
+            millis() >>> [0, 0,                                // first get
+                          1, 1,                                // second get
+                          2, 2,                                // third get
+                          3,                                   // first release
+                          MINUTES.toMillis(29),       // second release
+                          MINUTES.toMillis(29) + 2,   // third release
+                          MINUTES.toMillis(29) + 2,
+                          MINUTES.toMillis(29) + 2
+            ]
         }
         def pool = new ServerSessionPool(cluster, clock)
-        def session = pool.get()
+        def sessionOne = pool.get()
+        def sessionTwo = pool.get()
+        def sessionThree = pool.get()
 
         when:
-        pool.release(session)
-        def newSession = pool.get()
+        pool.release(sessionOne)
 
         then:
-        session == newSession
+        !sessionOne.closed
 
         when:
-        pool.release(newSession)
-        newSession = pool.get()
+        pool.release(sessionTwo)
 
         then:
-        session != newSession
+        !sessionOne.closed
+        !sessionTwo.closed
+
+        when:
+        pool.release(sessionThree)
+
+        then:
+        sessionOne.closed
+        sessionTwo.closed
+        !sessionThree.closed
+        0 * cluster.selectServer(_)
+    }
+
+    def 'should prune sessions on get'() {
+        given:
+        def cluster = Mock(Cluster) {
+            getDescription() >> connectedDescription
+        }
+        def clock = Stub(ServerSessionPool.Clock) {
+            millis() >>> [0, 0,                               // first get
+                          0,                                  // first release
+                          MINUTES.toMillis(29) + 1,   // second get
+            ]
+        }
+        def pool = new ServerSessionPool(cluster, clock)
+        def sessionOne = pool.get()
+
+        when:
+        pool.release(sessionOne)
+
+        then:
+        !sessionOne.closed
+
+        when:
+        def sessionTwo = pool.get()
+
+        then:
+        sessionTwo != sessionOne
+        sessionOne.closed
         0 * cluster.selectServer(_)
     }
 
