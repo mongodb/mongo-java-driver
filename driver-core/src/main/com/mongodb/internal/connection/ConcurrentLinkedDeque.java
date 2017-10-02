@@ -866,11 +866,11 @@ implements Deque<E>, java.io.Serializable {
      *
      * @return an iterator over the elements in this deque in proper sequence
      */
-    public Iterator<E> iterator() {
+    public RemovalReportingIterator<E> iterator() {
         return new CLDIterator();
     }
 
-    final class CLDIterator implements Iterator<E> {
+    final class CLDIterator implements RemovalReportingIterator<E> {
         Node<E> last;
         Node<E> next = header.forward();
 
@@ -887,11 +887,19 @@ implements Deque<E>, java.io.Serializable {
         }
 
         public void remove() {
+            reportingRemove();
+        }
+
+        @Override
+        public boolean reportingRemove() {
             Node<E> l = last;
             if (l == null)
                 throw new IllegalStateException();
-            while (!l.delete() && !l.isDeleted())
-                ;
+            boolean successfullyRemoved = l.delete();
+            while (!successfullyRemoved && !l.isDeleted()) {
+                successfullyRemoved = l.delete();
+            }
+            return successfullyRemoved;
         }
     }
 
@@ -900,5 +908,20 @@ implements Deque<E>, java.io.Serializable {
      */
     public Iterator<E> descendingIterator() {
         throw new UnsupportedOperationException();
+    }
+
+    public interface RemovalReportingIterator<E> extends Iterator<E> {
+        /**
+         * Removes from the underlying collection the last element returned by this iterator and reports whether the current element was
+         * removed by the call.  This method can be called only once per call to {@link #next}.
+         *
+         * @return true if the element was successfully removed by this call, false if the element had already been removed by a concurrent
+         * removal
+         * @throws IllegalStateException if the {@code next} method has not
+         *         yet been called, or the {@code remove} method has already
+         *         been called after the last call to the {@code next}
+         *         method
+         */
+        boolean reportingRemove();
     }
 }

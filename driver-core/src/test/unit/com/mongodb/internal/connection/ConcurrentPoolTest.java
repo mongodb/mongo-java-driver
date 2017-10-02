@@ -190,21 +190,34 @@ public class ConcurrentPoolTest {
 
     @Test
     public void testPrune() {
-        pool = new ConcurrentPool<TestCloseable>(3, new TestItemFactory());
+        pool = new ConcurrentPool<TestCloseable>(5, new TestItemFactory());
 
         TestCloseable t1 = pool.get();
         TestCloseable t2 = pool.get();
-        t1.shouldPrune = true;
-        t2.shouldPrune = true;
+        TestCloseable t3 = pool.get();
+        TestCloseable t4 = pool.get();
+        TestCloseable t5 = pool.get();
+        t1.shouldPrune = ConcurrentPool.Prune.YES;
+        t2.shouldPrune = ConcurrentPool.Prune.NO;
+        t3.shouldPrune = ConcurrentPool.Prune.YES;
+        t4.shouldPrune = ConcurrentPool.Prune.STOP;
+        t5.shouldPrune = null;
 
         pool.release(t1);
         pool.release(t2);
+        pool.release(t3);
+        pool.release(t4);
+        pool.release(t5);
 
         pool.prune();
-        assertEquals(0, pool.getAvailableCount());
+
+        assertEquals(3, pool.getAvailableCount());
         assertEquals(0, pool.getInUseCount());
         assertTrue(t1.isClosed());
-        assertTrue(t2.isClosed());
+        assertTrue(!t2.isClosed());
+        assertTrue(t3.isClosed());
+        assertTrue(!t4.isClosed());
+        assertTrue(!t5.isClosed());
     }
 
     class TestItemFactory implements ConcurrentPool.ItemFactory<TestCloseable> {
@@ -232,14 +245,14 @@ public class ConcurrentPoolTest {
         }
 
         @Override
-        public boolean shouldPrune(final TestCloseable testCloseable) {
+        public ConcurrentPool.Prune shouldPrune(final TestCloseable testCloseable) {
             return testCloseable.shouldPrune();
         }
     }
 
     static class TestCloseable implements Closeable {
         private boolean closed;
-        private boolean shouldPrune;
+        private ConcurrentPool.Prune shouldPrune;
         private final boolean initialized;
 
         TestCloseable(final boolean initialize) {
@@ -259,7 +272,7 @@ public class ConcurrentPoolTest {
             return initialized;
         }
 
-        public boolean shouldPrune() {
+        public ConcurrentPool.Prune shouldPrune() {
             return shouldPrune;
         }
     }

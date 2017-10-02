@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.internal.connection.ConcurrentPool;
+import com.mongodb.internal.connection.ConcurrentPool.Prune;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
@@ -73,8 +74,8 @@ class ServerSessionPool {
         }
 
         @Override
-        public boolean shouldPrune(final ServerSession serverSession) {
-            return false;
+        public Prune shouldPrune(final ServerSession serverSession) {
+            return Prune.STOP;
         }
 
         private BsonBinary createNewServerSessionIdentifier() {
