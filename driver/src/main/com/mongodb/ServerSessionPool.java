@@ -16,43 +16,145 @@
 
 package com.mongodb;
 
+import com.mongodb.connection.Cluster;
+import com.mongodb.connection.Connection;
 import com.mongodb.internal.connection.ConcurrentPool;
 import com.mongodb.internal.connection.ConcurrentPool.Prune;
+import com.mongodb.internal.connection.NoOpSessionContext;
+import com.mongodb.internal.validator.NoOpFieldNameValidator;
+import com.mongodb.selector.ReadPreferenceServerSelector;
+import org.bson.BsonArray;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
 import org.bson.UuidRepresentation;
+import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.UuidCodec;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
+import static com.mongodb.assertions.Assertions.isTrue;
+import static java.util.concurrent.TimeUnit.MINUTES;
+
 class ServerSessionPool {
-    private final ConcurrentPool<ServerSession> serverSessionPool =
-            new ConcurrentPool<ServerSession>(Integer.MAX_VALUE, new ServerSessionItemFactory());
+
+    private static final int END_SESSIONS_BATCH_SIZE = 10000;
+
+    private final ConcurrentPool<ServerSessionImpl> serverSessionPool =
+            new ConcurrentPool<ServerSessionImpl>(Integer.MAX_VALUE, new ServerSessionItemFactory());
+    private final Cluster cluster;
+    private final ServerSessionPool.Clock clock;
+    private volatile boolean closing;
+    private volatile boolean closed;
+    private final List<BsonDocument> closedSessionIdentifiers = new ArrayList<BsonDocument>();
+
+    interface Clock {
+        long millis();
+    }
+
+    ServerSessionPool(final Cluster cluster) {
+        this(cluster, new Clock() {
+            @Override
+            public long millis() {
+                return System.currentTimeMillis();
+            }
+        });
+    }
+
+    ServerSessionPool(final Cluster cluster, final Clock clock) {
+        this.cluster = cluster;
+        this.clock = clock;
+    }
 
     ServerSession get() {
-        return serverSessionPool.get();
+        isTrue("server session pool is open", !closed);
+        ServerSessionImpl serverSession = serverSessionPool.get();
+        while (shouldPrune(serverSession)) {
+            serverSessionPool.release(serverSession, true);
+            serverSession = serverSessionPool.get();
+        }
+        return serverSession;
     }
 
     void release(final ServerSession serverSession) {
-        serverSessionPool.release(serverSession);
+        serverSessionPool.release((ServerSessionImpl) serverSession);
     }
 
     void close() {
-        serverSessionPool.close();
+        try {
+            closing = true;
+            serverSessionPool.close();
+            endClosedSessions();
+        } finally {
+            closed = true;
+        }
     }
 
-    private static class ServerSessionImpl implements ServerSession {
+    private void closeSession(final ServerSessionImpl serverSession) {
+        // only track closed sessions when pool is in the process of closing
+        if (!closing) {
+            return;
+        }
+
+        closedSessionIdentifiers.add(serverSession.getIdentifier());
+        if (closedSessionIdentifiers.size() == END_SESSIONS_BATCH_SIZE) {
+            endClosedSessions();
+        }
+    }
+
+    private void endClosedSessions() {
+        if (closedSessionIdentifiers.isEmpty()) {
+            return;
+        }
+
+        Connection connection = cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.primaryPreferred())).getConnection();
+        try {
+            connection.command("admin",
+                    new BsonDocument("endSessions", new BsonArray(closedSessionIdentifiers)),
+                    ReadPreference.primaryPreferred(), new NoOpFieldNameValidator(),
+                    new BsonDocumentCodec(), NoOpSessionContext.INSTANCE);
+        } catch (MongoException e) {
+            // ignore exceptions
+        } finally {
+            closedSessionIdentifiers.clear();
+            connection.release();
+        }
+    }
+
+    private boolean shouldPrune(final ServerSessionImpl serverSession) {
+        Integer logicalSessionTimeoutMinutes = cluster.getDescription().getLogicalSessionTimeoutMinutes();
+        if (logicalSessionTimeoutMinutes == null) {
+            return false;
+        }
+        long currentTimeMillis = clock.millis();
+        final long timeSinceLastUse = currentTimeMillis - serverSession.lastUsedAtMillis;
+        final long oneMinuteFromTimeout = MINUTES.toMillis(logicalSessionTimeoutMinutes - 1);
+        return timeSinceLastUse > oneMinuteFromTimeout;
+    }
+
+    final class ServerSessionImpl implements ServerSession {
         private final BsonDocument identifier;
         private int transactionNumber;
+        private volatile long lastUsedAtMillis = clock.millis();
 
         ServerSessionImpl(final BsonBinary identifier) {
             this.identifier = new BsonDocument("id", identifier);
         }
 
+        long getLastUsedAtMillis() {
+            return lastUsedAtMillis;
+        }
+
+        int getTransactionNumber() {
+            return transactionNumber;
+        }
+
         @Override
         public BsonDocument getIdentifier() {
+            lastUsedAtMillis = clock.millis();
             return identifier;
         }
 
@@ -62,19 +164,19 @@ class ServerSessionPool {
         }
     }
 
-    private static final class ServerSessionItemFactory implements ConcurrentPool.ItemFactory<ServerSession> {
+    private final class ServerSessionItemFactory implements ConcurrentPool.ItemFactory<ServerSessionImpl> {
         @Override
-        public ServerSession create(final boolean initialize) {
+        public ServerSessionImpl create(final boolean initialize) {
             return new ServerSessionImpl(createNewServerSessionIdentifier());
         }
 
         @Override
-        public void close(final ServerSession serverSession) {
-            // TODO: pruning
+        public void close(final ServerSessionImpl serverSession) {
+            closeSession(serverSession);
         }
 
         @Override
-        public Prune shouldPrune(final ServerSession serverSession) {
+        public Prune shouldPrune(final ServerSessionImpl serverSession) {
             return Prune.STOP;
         }
 
