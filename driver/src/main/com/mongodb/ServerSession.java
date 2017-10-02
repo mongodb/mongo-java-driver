@@ -38,4 +38,11 @@ public interface ServerSession {
      * @return the next transaction number
      */
     long advanceTransactionNumber();
+
+    /**
+     * Whether the server session is closed.
+     *
+     * @return true if the session has been closed
+     */
+    boolean isClosed();
 }

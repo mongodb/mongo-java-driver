@@ -81,6 +81,7 @@ class ServerSessionPool {
 
     void release(final ServerSession serverSession) {
         serverSessionPool.release((ServerSessionImpl) serverSession);
+        serverSessionPool.prune();
     }
 
     void close() {
@@ -94,6 +95,7 @@ class ServerSessionPool {
     }
 
     private void closeSession(final ServerSessionImpl serverSession) {
+        serverSession.close();
         // only track closed sessions when pool is in the process of closing
         if (!closing) {
             return;
@@ -139,9 +141,14 @@ class ServerSessionPool {
         private final BsonDocument identifier;
         private int transactionNumber;
         private volatile long lastUsedAtMillis = clock.millis();
+        private volatile boolean closed;
 
         ServerSessionImpl(final BsonBinary identifier) {
             this.identifier = new BsonDocument("id", identifier);
+        }
+
+        void close() {
+            closed = true;
         }
 
         long getLastUsedAtMillis() {
@@ -162,6 +169,11 @@ class ServerSessionPool {
         public long advanceTransactionNumber() {
             return transactionNumber++;
         }
+
+        @Override
+        public boolean isClosed() {
+            return closed;
+        }
     }
 
     private final class ServerSessionItemFactory implements ConcurrentPool.ItemFactory<ServerSessionImpl> {
@@ -177,7 +189,7 @@ class ServerSessionPool {
 
         @Override
         public Prune shouldPrune(final ServerSessionImpl serverSession) {
-            return Prune.STOP;
+            return ServerSessionPool.this.shouldPrune(serverSession) ? Prune.YES : Prune.STOP;
         }
 
         private BsonBinary createNewServerSessionIdentifier() {
