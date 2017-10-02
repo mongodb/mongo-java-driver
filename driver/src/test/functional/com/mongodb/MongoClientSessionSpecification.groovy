@@ -266,7 +266,6 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         then:
         def pingCommandStartedEvent = commandListener.events.get(0)
         !(pingCommandStartedEvent as CommandStartedEvent).command.containsKey('lsid')
-
         cleanup:
         client?.close()
     }

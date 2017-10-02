@@ -99,7 +99,7 @@ public class Mongo {
 
     private final ConcurrentLinkedQueue<ServerCursorAndNamespace> orphanedCursors = new ConcurrentLinkedQueue<ServerCursorAndNamespace>();
     private final ExecutorService cursorCleaningService;
-    private final ServerSessionPool serverSessionPool = new ServerSessionPool();
+    private final ServerSessionPool serverSessionPool;
 
     /**
      * Creates a Mongo instance based on a (single) mongodb node (localhost, default port)
@@ -314,6 +314,7 @@ public class Mongo {
 
     Mongo(final Cluster cluster, final MongoClientOptions options, final List<MongoCredential> credentialsList) {
         this.cluster = cluster;
+        this.serverSessionPool = new ServerSessionPool(cluster);
         this.options = options;
         this.readPreference = options.getReadPreference() != null ? options.getReadPreference() : primary();
         this.writeConcern = options.getWriteConcern() != null ? options.getWriteConcern() : WriteConcern.UNACKNOWLEDGED;
@@ -531,8 +532,8 @@ public class Mongo {
      * databases obtained from it can no longer be used.
      */
     public void close() {
-        cluster.close();
         serverSessionPool.close();
+        cluster.close();
         if (cursorCleaningService != null) {
             cursorCleaningService.shutdownNow();
         }
