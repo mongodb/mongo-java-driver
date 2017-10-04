@@ -34,6 +34,7 @@ class DBCollectionFindAndModifyOptionsSpecification extends Specification {
         !options.returnNew()
         options.getBypassDocumentValidation() == null
         options.getCollation() == null
+        options.getArrayFilters() == null
         options.getMaxTime(TimeUnit.MILLISECONDS) == 0
         options.getProjection() == null
         options.getSort() == null
@@ -48,6 +49,7 @@ class DBCollectionFindAndModifyOptionsSpecification extends Specification {
         def projection = BasicDBObject.parse('{a: 1, _id: 0}')
         def sort = BasicDBObject.parse('{a: 1}')
         def update = BasicDBObject.parse('{$set: {a:  2}}')
+        def arrayFilters = [new BasicDBObject('i.b', 1)]
 
         when:
         def options = new DBCollectionFindAndModifyOptions()
@@ -60,6 +62,7 @@ class DBCollectionFindAndModifyOptionsSpecification extends Specification {
                 .sort(sort)
                 .update(update)
                 .upsert(true)
+                .arrayFilters(arrayFilters)
                 .writeConcern(writeConcern)
 
         then:
@@ -73,6 +76,7 @@ class DBCollectionFindAndModifyOptionsSpecification extends Specification {
         options.isRemove()
         options.isUpsert()
         options.returnNew()
+        options.arrayFilters(arrayFilters)
     }
 
 }

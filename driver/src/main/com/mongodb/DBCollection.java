@@ -74,7 +74,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.BulkWriteHelper.translateBulkWriteResult;
-import static com.mongodb.BulkWriteHelper.translateWriteRequestsToNew;
 import static com.mongodb.MongoNamespace.checkCollectionNameValidity;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
@@ -552,19 +551,15 @@ public class DBCollection {
         notNull("options", options);
         WriteConcern writeConcern = options.getWriteConcern() != null ? options.getWriteConcern() : getWriteConcern();
 
-        if (!update.keySet().isEmpty() && update.keySet().iterator().next().startsWith("$")) {
-            UpdateRequest updateRequest = new UpdateRequest(wrap(query), wrap(update, options.getEncoder()),
-                    com.mongodb.bulk.WriteRequest.Type.UPDATE).upsert(options.isUpsert()).multi(options.isMulti())
-                    .collation(options.getCollation());
-            return executeWriteOperation(new UpdateOperation(getNamespace(), false, writeConcern, singletonList(updateRequest))
-                    .bypassDocumentValidation(options.getBypassDocumentValidation()));
-        } else {
-            UpdateRequest replaceRequest = new UpdateRequest(wrap(query), wrap(update, options.getEncoder()),
-                    com.mongodb.bulk.WriteRequest.Type.REPLACE).upsert(options.isUpsert()).multi(options.isMulti())
-                    .collation(options.getCollation());
-            return executeWriteOperation(new UpdateOperation(getNamespace(), true, writeConcern, singletonList(replaceRequest))
-                    .bypassDocumentValidation(options.getBypassDocumentValidation()));
-        }
+        com.mongodb.bulk.WriteRequest.Type updateType = !update.keySet().isEmpty() && update.keySet().iterator().next().startsWith("$")
+                                                                ? com.mongodb.bulk.WriteRequest.Type.UPDATE
+                                                                : com.mongodb.bulk.WriteRequest.Type.REPLACE;
+        UpdateRequest updateRequest = new UpdateRequest(wrap(query), wrap(update, options.getEncoder()), updateType)
+                                              .upsert(options.isUpsert()).multi(options.isMulti())
+                                              .collation(options.getCollation())
+                                              .arrayFilters(wrapAllowNull(options.getArrayFilters(), options.getEncoder()));
+        return executeWriteOperation(new UpdateOperation(getNamespace(), true, writeConcern, singletonList(updateRequest))
+                                             .bypassDocumentValidation(options.getBypassDocumentValidation()));
     }
 
     /**
@@ -1916,7 +1911,8 @@ public class DBCollection {
                         .upsert(options.isUpsert())
                         .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                         .bypassDocumentValidation(options.getBypassDocumentValidation())
-                        .collation(options.getCollation());
+                        .collation(options.getCollation())
+                        .arrayFilters(wrapAllowNull(options.getArrayFilters(), (Encoder<DBObject>) null));
             } else {
                 operation = new FindAndReplaceOperation<DBObject>(getNamespace(), writeConcern, objectCodec,
                         wrap(options.getUpdate()))
@@ -2325,6 +2321,14 @@ public class DBCollection {
         }
     }
 
+    private List<com.mongodb.bulk.WriteRequest> translateWriteRequestsToNew(final List<WriteRequest> writeRequests) {
+        List<com.mongodb.bulk.WriteRequest> retVal = new ArrayList<com.mongodb.bulk.WriteRequest>(writeRequests.size());
+        for (WriteRequest cur : writeRequests) {
+            retVal.add(cur.toNew(this));
+        }
+        return retVal;
+    }
+
     DBObjectCodec getDefaultDBObjectCodec() {
         return new DBObjectCodec(MongoClient.getDefaultCodecRegistry(),
                                  DBObjectCodec.getDefaultBsonTypeClassMap(),
@@ -2474,6 +2478,22 @@ public class DBCollection {
         }
         return wrap(document);
     }
+
+    List<BsonDocument> wrapAllowNull(final List<? extends DBObject> documentList, final DBEncoder encoder) {
+        return wrapAllowNull(documentList, encoder == null ? null : new DBEncoderAdapter(encoder));
+    }
+
+    List<BsonDocument> wrapAllowNull(final List<? extends DBObject> documentList, final Encoder<DBObject> encoder) {
+        if (documentList == null) {
+            return null;
+        }
+        List<BsonDocument> wrappedDocumentList = new ArrayList<BsonDocument>(documentList.size());
+        for (DBObject cur : documentList) {
+            wrappedDocumentList.add(encoder == null ? wrap(cur) : wrap(cur, encoder));
+        }
+        return wrappedDocumentList;
+    }
+
 
     BsonDocument wrap(final DBObject document) {
         return new BsonDocumentWrapper<DBObject>(document, getDefaultDBObjectCodec());
