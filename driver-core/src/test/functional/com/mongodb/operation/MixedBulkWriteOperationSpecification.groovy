@@ -37,6 +37,7 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonObjectId
 import org.bson.Document
+import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import org.bson.types.ObjectId
 import org.junit.experimental.categories.Category
@@ -875,6 +876,34 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         then:
         result.getDeletedCount() == 1
         result.getModifiedCount() == 1
+
+        where:
+        async << [true, false]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 5) })
+    def 'should support array filters'() {
+        given:
+        def documentOne = BsonDocument.parse('{_id: 1, y: [ {b: 3}, {b: 1}]}')
+        def documentTwo = BsonDocument.parse('{_id: 2, y: [ {b: 0}, {b: 1}]}')
+        getCollectionHelper().insertDocuments(documentOne, documentTwo)
+        def requests = [
+                new UpdateRequest(new BsonDocument(), BsonDocument.parse('{ $set: {"y.$[i].b": 2}}'), UPDATE)
+                        .arrayFilters([BsonDocument.parse('{"i.b": 3}')]),
+                new UpdateRequest(new BsonDocument(), BsonDocument.parse('{ $set: {"y.$[i].b": 4}}'), UPDATE)
+                        .multi(true)
+                        .arrayFilters([BsonDocument.parse('{"i.b": 1}')]),
+        ]
+        def operation = new MixedBulkWriteOperation(namespace, requests, true, ACKNOWLEDGED)
+
+        when:
+        execute(operation, async)
+
+        then:
+        getCollectionHelper().find(new BsonDocumentCodec()) == [
+                BsonDocument.parse('{_id: 1, y: [ {b: 2}, {b: 4}]}'),
+                BsonDocument.parse('{_id: 2, y: [ {b: 0}, {b: 4}]}')
+        ]
 
         where:
         async << [true, false]

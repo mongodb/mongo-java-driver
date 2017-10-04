@@ -19,6 +19,8 @@ package com.mongodb.bulk;
 import com.mongodb.client.model.Collation;
 import org.bson.BsonDocument;
 
+import java.util.List;
+
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -33,6 +35,7 @@ public final class UpdateRequest extends WriteRequest {
     private boolean isMulti = true;
     private boolean isUpsert = false;
     private Collation collation;
+    private List<BsonDocument> arrayFilters;
 
     /**
      * Construct a new instance.
@@ -138,6 +141,30 @@ public final class UpdateRequest extends WriteRequest {
     public UpdateRequest collation(final Collation collation) {
         this.collation = collation;
         return this;
+    }
+
+    /**
+     * Sets the array filters option
+     *
+     * @param arrayFilters the array filters, which may be null
+     * @return this
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public UpdateRequest arrayFilters(final List<BsonDocument> arrayFilters) {
+        this.arrayFilters = arrayFilters;
+        return this;
+    }
+
+    /**
+     * Returns the array filters option
+     *
+     * @return the array filters, which may be null
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public List<BsonDocument> getArrayFilters() {
+        return arrayFilters;
     }
 }
 

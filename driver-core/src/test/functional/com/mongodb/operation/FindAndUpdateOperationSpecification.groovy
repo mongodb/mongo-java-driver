@@ -354,4 +354,26 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         where:
         async << [true, false]
     }
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 5) })
+    def 'should support array filters'() {
+        given:
+        def documentOne = Document.parse('{_id: 1, y: [ {b: 3}, {b: 1}]}')
+        def documentTwo = Document.parse('{_id: 2, y: [ {b: 0}, {b: 1}]}')
+        getCollectionHelper().insertDocuments(documentOne, documentTwo)
+        def update = BsonDocument.parse('{ $set: {"y.$[i].b": 2}}')
+        def arrayFilters = [BsonDocument.parse('{"i.b": 3}')]
+        def operation = new FindAndUpdateOperation<Document>(getNamespace(), writeConcern, documentCodec, update)
+                .returnOriginal(false)
+                .arrayFilters(arrayFilters)
+
+        when:
+        def result = execute(operation, async)
+
+        then:
+        result == Document.parse('{_id: 1, y: [ {b: 2}, {b: 1}]}')
+
+        where:
+        async << [true, false]
+    }
 }

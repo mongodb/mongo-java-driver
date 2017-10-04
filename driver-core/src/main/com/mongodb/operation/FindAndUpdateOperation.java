@@ -30,6 +30,7 @@ import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.internal.validator.UpdateFieldNameValidator;
 import com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import com.mongodb.operation.OperationHelper.CallableWithConnection;
+import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -37,6 +38,7 @@ import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -48,9 +50,9 @@ import static com.mongodb.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.operation.DocumentHelper.putIfTrue;
 import static com.mongodb.operation.OperationHelper.LOGGER;
-import static com.mongodb.operation.OperationHelper.validateCollation;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo;
+import static com.mongodb.operation.OperationHelper.validateCollation;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -74,6 +76,7 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
     private boolean upsert;
     private Boolean bypassDocumentValidation;
     private Collation collation;
+    private List<BsonDocument> arrayFilters;
 
     /**
      * Construct a new instance.
@@ -326,6 +329,31 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
         return this;
     }
 
+
+    /**
+     * Sets the array filters option
+     *
+     * @param arrayFilters the array filters, which may be null
+     * @return this
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public FindAndUpdateOperation<T> arrayFilters(final List<BsonDocument> arrayFilters) {
+        this.arrayFilters = arrayFilters;
+        return this;
+    }
+
+    /**
+     * Returns the array filters option
+     *
+     * @return the array filters, which may be null
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public List<BsonDocument> getArrayFilters() {
+        return arrayFilters;
+    }
+
     @Override
     public T execute(final WriteBinding binding) {
         return withConnection(binding, new CallableWithConnection<T>() {
@@ -384,6 +412,9 @@ public class FindAndUpdateOperation<T> implements AsyncWriteOperation<T>, WriteO
         }
         if (collation != null) {
             commandDocument.put("collation", collation.asDocument());
+        }
+        if (arrayFilters != null) {
+            commandDocument.put("arrayFilters", new BsonArray(arrayFilters));
         }
         return commandDocument;
     }

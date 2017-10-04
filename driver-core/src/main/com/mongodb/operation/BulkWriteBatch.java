@@ -358,6 +358,13 @@ final class BulkWriteBatch {
                     BsonDocument collation = update.getCollation().asDocument();
                     getCodec(collation).encode(writer, collation, EncoderContext.builder().build());
                 }
+                if (update.getArrayFilters() != null) {
+                    writer.writeStartArray("arrayFilters");
+                    for (BsonDocument cur: update.getArrayFilters()) {
+                        getCodec(cur).encode(writer, cur, EncoderContext.builder().build());
+                    }
+                    writer.writeEndArray();
+                }
                 writer.writeEndDocument();
             } else {
                 DeleteRequest deleteRequest = (DeleteRequest) writeRequest;
