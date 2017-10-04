@@ -17,7 +17,10 @@
 package com.mongodb.client.model;
 
 import com.mongodb.DBEncoder;
+import com.mongodb.DBObject;
 import com.mongodb.WriteConcern;
+
+import java.util.List;
 
 /**
  * The options to apply when updating documents in the DBCollection
@@ -32,6 +35,7 @@ public class DBCollectionUpdateOptions {
     private Boolean bypassDocumentValidation;
     private boolean multi;
     private Collation collation;
+    private List<? extends DBObject> arrayFilters;
     private WriteConcern writeConcern;
     private DBEncoder encoder;
 
@@ -123,6 +127,30 @@ public class DBCollectionUpdateOptions {
     public DBCollectionUpdateOptions collation(final Collation collation) {
         this.collation = collation;
         return this;
+    }
+
+    /**
+     * Sets the array filters option
+     *
+     * @param arrayFilters the array filters, which may be null
+     * @return this
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public DBCollectionUpdateOptions arrayFilters(final List<? extends DBObject> arrayFilters) {
+        this.arrayFilters = arrayFilters;
+        return this;
+    }
+
+    /**
+     * Returns the array filters option
+     *
+     * @return the array filters, which may be null
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public List<? extends DBObject> getArrayFilters() {
+        return arrayFilters;
     }
 
     /**

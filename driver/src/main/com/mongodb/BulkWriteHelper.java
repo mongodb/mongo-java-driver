@@ -69,14 +69,6 @@ final class BulkWriteHelper {
         return retVal;
     }
 
-    static List<com.mongodb.bulk.WriteRequest> translateWriteRequestsToNew(final List<WriteRequest> writeRequests) {
-        List<com.mongodb.bulk.WriteRequest> retVal = new ArrayList<com.mongodb.bulk.WriteRequest>(writeRequests.size());
-        for (WriteRequest cur : writeRequests) {
-            retVal.add(cur.toNew());
-        }
-        return retVal;
-    }
-
     private BulkWriteHelper() {
     }
 }
