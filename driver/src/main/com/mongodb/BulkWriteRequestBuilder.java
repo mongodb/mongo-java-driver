@@ -19,6 +19,8 @@ package com.mongodb;
 import com.mongodb.client.model.Collation;
 import org.bson.codecs.Encoder;
 
+import java.util.List;
+
 /**
  * A builder for a single write request.
  *
@@ -88,7 +90,7 @@ public class BulkWriteRequestBuilder {
      *                 update operators.
      */
     public void replaceOne(final DBObject document) {
-        new BulkUpdateRequestBuilder(bulkWriteOperation, query, false, codec, replacementCodec, collation).replaceOne(document);
+        new BulkUpdateRequestBuilder(bulkWriteOperation, query, false, codec, replacementCodec, collation, null).replaceOne(document);
     }
 
     /**
@@ -97,7 +99,7 @@ public class BulkWriteRequestBuilder {
      * @param update the update criteria
      */
     public void update(final DBObject update) {
-        new BulkUpdateRequestBuilder(bulkWriteOperation, query, false, codec, replacementCodec, collation).update(update);
+        new BulkUpdateRequestBuilder(bulkWriteOperation, query, false, codec, replacementCodec, collation, null).update(update);
     }
 
     /**
@@ -106,7 +108,7 @@ public class BulkWriteRequestBuilder {
      * @param update the update criteria
      */
     public void updateOne(final DBObject update) {
-        new BulkUpdateRequestBuilder(bulkWriteOperation, query, false, codec, replacementCodec, collation).updateOne(update);
+        new BulkUpdateRequestBuilder(bulkWriteOperation, query, false, codec, replacementCodec, collation, null).updateOne(update);
     }
 
     /**
@@ -116,6 +118,19 @@ public class BulkWriteRequestBuilder {
      * @mongodb.driver.manual tutorial/modify-documents/#upsert-option Upsert
      */
     public BulkUpdateRequestBuilder upsert() {
-        return new BulkUpdateRequestBuilder(bulkWriteOperation, query, true, codec, replacementCodec, collation);
+        return new BulkUpdateRequestBuilder(bulkWriteOperation, query, true, codec, replacementCodec, collation, null);
+    }
+
+    /**
+     * Specifies that the request being built should use the given array filters for an update.  Note that this option only applies to
+     * update operations and will be ignored for replace operations
+     *
+     * @param arrayFilters the array filters to apply to the update operation
+     * @return a new builder that allows only update and replace, since upsert does not apply to remove.
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public BulkUpdateRequestBuilder arrayFilters(final List<? extends DBObject> arrayFilters) {
+        return new BulkUpdateRequestBuilder(bulkWriteOperation, query, false, codec, replacementCodec, collation, arrayFilters);
     }
 }

@@ -55,7 +55,7 @@ class ReplaceRequest extends WriteRequest {
     }
 
     @Override
-    com.mongodb.bulk.WriteRequest toNew() {
+    com.mongodb.bulk.WriteRequest toNew(final DBCollection dbCollection) {
         return new com.mongodb.bulk.UpdateRequest(new BsonDocumentWrapper<DBObject>(query, codec),
                                                        new BsonDocumentWrapper<DBObject>(document, replacementCodec),
                                                        com.mongodb.bulk.WriteRequest.Type.REPLACE)

@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model
 
+import com.mongodb.BasicDBObject
 import com.mongodb.DefaultDBEncoder
 import com.mongodb.WriteConcern
 import spock.lang.Specification
@@ -29,6 +30,7 @@ class DBCollectionUpdateOptionsSpecification extends Specification {
         then:
         !options.isMulti()
         !options.isUpsert()
+        options.getArrayFilters() == null
         options.getBypassDocumentValidation() == null
         options.getEncoder() == null
         options.getWriteConcern() == null
@@ -38,6 +40,7 @@ class DBCollectionUpdateOptionsSpecification extends Specification {
         given:
         def writeConcern = WriteConcern.MAJORITY
         def encoder = new DefaultDBEncoder()
+        def arrayFilters = [new BasicDBObject('i.b', 1)]
 
         when:
         def options = new DBCollectionUpdateOptions()
@@ -45,6 +48,7 @@ class DBCollectionUpdateOptionsSpecification extends Specification {
                 .encoder(encoder)
                 .multi(true)
                 .upsert(true)
+                .arrayFilters(arrayFilters)
                 .writeConcern(writeConcern)
 
         then:
@@ -53,6 +57,7 @@ class DBCollectionUpdateOptionsSpecification extends Specification {
         options.getWriteConcern() == writeConcern
         options.isMulti()
         options.isUpsert()
+        options.getArrayFilters() == arrayFilters
     }
 
 }

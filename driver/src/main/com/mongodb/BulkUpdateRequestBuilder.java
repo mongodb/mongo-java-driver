@@ -19,6 +19,8 @@ package com.mongodb;
 import com.mongodb.client.model.Collation;
 import org.bson.codecs.Encoder;
 
+import java.util.List;
+
 /**
  * A builder for a single update request.
  *
@@ -33,16 +35,18 @@ public class BulkUpdateRequestBuilder {
     private final Encoder<DBObject> queryCodec;
     private final Encoder<DBObject> replacementCodec;
     private Collation collation;
+    private final List<? extends DBObject> arrayFilters;
 
     BulkUpdateRequestBuilder(final BulkWriteOperation bulkWriteOperation, final DBObject query, final boolean upsert,
                              final Encoder<DBObject> queryCodec, final Encoder<DBObject> replacementCodec,
-                             final Collation collation) {
+                             final Collation collation, final List<? extends DBObject> arrayFilters) {
         this.bulkWriteOperation = bulkWriteOperation;
         this.query = query;
         this.upsert = upsert;
         this.queryCodec = queryCodec;
         this.replacementCodec = replacementCodec;
         this.collation = collation;
+        this.arrayFilters = arrayFilters;
     }
 
     /**
@@ -70,6 +74,16 @@ public class BulkUpdateRequestBuilder {
     }
 
     /**
+     * Gets the array filters to apply to the update operation
+     * @return the array filters, which may be null
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public List<? extends DBObject> getArrayFilters() {
+        return arrayFilters;
+    }
+
+    /**
      * Adds a request to replace one document in the collection that matches the query with which this builder was created.
      *
      * @param document the replacement document, which must be structured just as a document you would insert.  It can not contain any
@@ -85,7 +99,7 @@ public class BulkUpdateRequestBuilder {
      * @param update the update criteria
      */
     public void update(final DBObject update) {
-        bulkWriteOperation.addRequest(new UpdateRequest(query, update, true, upsert, queryCodec, collation));
+        bulkWriteOperation.addRequest(new UpdateRequest(query, update, true, upsert, queryCodec, collation, arrayFilters));
     }
 
     /**
@@ -94,6 +108,6 @@ public class BulkUpdateRequestBuilder {
      * @param update the update criteria
      */
     public void updateOne(final DBObject update) {
-        bulkWriteOperation.addRequest(new UpdateRequest(query, update, false, upsert, queryCodec, collation));
+        bulkWriteOperation.addRequest(new UpdateRequest(query, update, false, upsert, queryCodec, collation, arrayFilters));
     }
 }

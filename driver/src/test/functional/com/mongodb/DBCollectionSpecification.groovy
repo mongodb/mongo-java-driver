@@ -18,6 +18,7 @@ package com.mongodb
 
 import com.mongodb.bulk.DeleteRequest
 import com.mongodb.bulk.IndexRequest
+import com.mongodb.bulk.InsertRequest
 import com.mongodb.bulk.UpdateRequest
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CollationAlternate
@@ -51,6 +52,7 @@ import com.mongodb.operation.MixedBulkWriteOperation
 import com.mongodb.operation.ParallelCollectionScanOperation
 import com.mongodb.operation.UpdateOperation
 import org.bson.BsonDocument
+import org.bson.BsonDocumentWrapper
 import org.bson.BsonInt32
 import org.bson.BsonJavaScript
 import org.bson.BsonString
@@ -66,6 +68,10 @@ import static java.util.Arrays.asList
 import static spock.util.matcher.HamcrestSupport.expect
 
 class DBCollectionSpecification extends Specification {
+
+    private static final DEFAULT_DBOBJECT_CODEC_FACTORY = new DBObjectCodec(MongoClient.getDefaultCodecRegistry(),
+            DBObjectCodec.getDefaultBsonTypeClassMap(),
+            new DBCollectionObjectFactory());
 
     def 'should throw IllegalArgumentException if name is invalid'() {
         when:
@@ -369,13 +375,18 @@ class DBCollectionSpecification extends Specification {
 
         when: // With options
         collection.findAndModify(query, new DBCollectionFindAndModifyOptions().update(update).collation(collation)
-                .writeConcern(WriteConcern.W3))
+                .arrayFilters(dbObjectArrayFilters).writeConcern(WriteConcern.W3))
 
         then:
         expect executor.getWriteOperation(), isTheSameAs(new FindAndUpdateOperation<DBObject>(collection.getNamespace(), WriteConcern.W3,
                 collection.getObjectCodec(), bsonUpdate)
                 .filter(new BsonDocument())
-                .collation(collation))
+                .collation(collation).arrayFilters(bsonDocumentWrapperArrayFilters))
+
+        where:
+        dbObjectArrayFilters <<            [null, [], [new BasicDBObject('i.b', 1)]]
+        bsonDocumentWrapperArrayFilters << [null, [], [new BsonDocumentWrapper<BasicDBObject>(new BasicDBObject('i.b', 1),
+                DEFAULT_DBOBJECT_CODEC_FACTORY)]]
     }
 
     def 'findAndModify should create the correct FindAndReplaceOperation'() {
@@ -750,7 +761,7 @@ class DBCollectionSpecification extends Specification {
         collection.update(BasicDBObject.parse(query), BasicDBObject.parse(update))
 
         then:
-        expect executor.getWriteOperation(), isTheSameAs(new UpdateOperation(collection.getNamespace(), false,
+        expect executor.getWriteOperation(), isTheSameAs(new UpdateOperation(collection.getNamespace(), true,
                 WriteConcern.ACKNOWLEDGED, asList(updateRequest)))
 
         when: // Inherits from DB
@@ -759,17 +770,23 @@ class DBCollectionSpecification extends Specification {
 
 
         then:
-        expect executor.getWriteOperation(), isTheSameAs(new UpdateOperation(collection.getNamespace(), false,
+        expect executor.getWriteOperation(), isTheSameAs(new UpdateOperation(collection.getNamespace(), true,
                 WriteConcern.W3, asList(updateRequest)))
 
         when:
         collection.setWriteConcern(WriteConcern.W1)
         updateRequest.collation(collation)
-        collection.update(BasicDBObject.parse(query), BasicDBObject.parse(update), new DBCollectionUpdateOptions().collation(collation))
+        collection.update(BasicDBObject.parse(query), BasicDBObject.parse(update),
+                new DBCollectionUpdateOptions().collation(collation).arrayFilters(dbObjectArrayFilters))
 
         then:
-        expect executor.getWriteOperation(), isTheSameAs(new UpdateOperation(collection.getNamespace(), false,
-                WriteConcern.W1, asList(updateRequest)))
+        expect executor.getWriteOperation(), isTheSameAs(new UpdateOperation(collection.getNamespace(), true,
+                WriteConcern.W1, asList(updateRequest.arrayFilters(bsonDocumentWrapperArrayFilters))))
+
+        where:
+        dbObjectArrayFilters <<            [null, [], [new BasicDBObject('i.b', 1)]]
+        bsonDocumentWrapperArrayFilters << [null, [], [new BsonDocumentWrapper<BasicDBObject>(new BasicDBObject('i.b', 1),
+                DEFAULT_DBOBJECT_CODEC_FACTORY)]]
     }
 
     def 'remove should create the correct DeleteOperation'() {
@@ -814,22 +831,28 @@ class DBCollectionSpecification extends Specification {
         def collection = db.getCollection('test')
         def query = '{a: 1}'
         def update = '{$set: {level: 1}}'
+        def insertedDocument = new BasicDBObject('_id', 1)
+        def insertRequest = new InsertRequest(new BsonDocumentWrapper(insertedDocument, collection.getDefaultDBObjectCodec()))
         def updateRequest = new UpdateRequest(BsonDocument.parse(query), BsonDocument.parse(update),
                 com.mongodb.bulk.WriteRequest.Type.UPDATE).multi(false).collation(collation)
+                .arrayFilters(bsonDocumentWrapperArrayFilters)
         def deleteRequest = new DeleteRequest(BsonDocument.parse(query)).multi(false).collation(frenchCollation)
+        def writeRequests = asList(insertRequest, updateRequest, deleteRequest)
+
+        when:
         def bulk = {
             def bulkOp = ordered ? collection.initializeOrderedBulkOperation() : collection.initializeUnorderedBulkOperation()
-            bulkOp.find(BasicDBObject.parse(query)).collation(collation).updateOne(BasicDBObject.parse(update))
+            bulkOp.insert(insertedDocument)
+            bulkOp.find(BasicDBObject.parse(query)).collation(collation).arrayFilters(dbObjectArrayFilters)
+                    .updateOne(BasicDBObject.parse(update))
             bulkOp.find(BasicDBObject.parse(query)).collation(frenchCollation).removeOne()
             bulkOp
         }
-
-        when:
         bulk().execute()
 
         then:
         expect executor.getWriteOperation(), isTheSameAs(new MixedBulkWriteOperation(collection.getNamespace(),
-                asList(updateRequest, deleteRequest), ordered, WriteConcern.ACKNOWLEDGED))
+                writeRequests, ordered, WriteConcern.ACKNOWLEDGED))
 
         when: // Inherits from DB
         db.setWriteConcern(WriteConcern.W3)
@@ -837,7 +860,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getWriteOperation(), isTheSameAs(new MixedBulkWriteOperation(collection.getNamespace(),
-                asList(updateRequest, deleteRequest), ordered, WriteConcern.W3))
+                writeRequests, ordered, WriteConcern.W3))
 
         when:
         collection.setWriteConcern(WriteConcern.W1)
@@ -845,10 +868,13 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getWriteOperation(), isTheSameAs(new MixedBulkWriteOperation(collection.getNamespace(),
-                asList(updateRequest, deleteRequest), ordered, WriteConcern.W1))
+                writeRequests, ordered, WriteConcern.W1))
 
         where:
-        ordered << [true, false]
+        ordered << [true, false, true]
+        dbObjectArrayFilters <<            [null, [], [new BasicDBObject('i.b', 1)]]
+        bsonDocumentWrapperArrayFilters << [null, [], [new BsonDocumentWrapper<BasicDBObject>(new BasicDBObject('i.b', 1),
+                DEFAULT_DBOBJECT_CODEC_FACTORY)]]
     }
 
     def collation = Collation.builder()

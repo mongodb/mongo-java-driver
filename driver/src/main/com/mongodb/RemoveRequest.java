@@ -43,7 +43,7 @@ class RemoveRequest extends WriteRequest {
     }
 
     @Override
-    com.mongodb.bulk.WriteRequest toNew() {
+    com.mongodb.bulk.WriteRequest toNew(final DBCollection dbCollection) {
         return new DeleteRequest(new BsonDocumentWrapper<DBObject>(query, this.codec)).multi(isMulti()).collation(collation);
     }
 }
