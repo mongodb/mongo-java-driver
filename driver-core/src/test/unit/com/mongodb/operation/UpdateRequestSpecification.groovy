@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -115,5 +115,14 @@ class UpdateRequestSpecification extends Specification {
 
         where:
         type << [WriteRequest.Type.UPDATE, WriteRequest.Type.REPLACE]
+    }
+
+    def 'should set arrayFilters property'() {
+        expect:
+        new UpdateRequest(new BsonDocument(), new BsonDocument(), WriteRequest.Type.UPDATE).arrayFilters(arrayFilters)
+                .getArrayFilters() == arrayFilters
+
+        where:
+        arrayFilters << [null, [], [new BsonDocument('a.b', new BsonInt32(42))]]
     }
 }
