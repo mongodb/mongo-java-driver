@@ -23,27 +23,27 @@ to resume if it encounters a potentially recoverable error.
 
 - Include the following import statements:
 
-     ```java
-     import com.mongodb.Block;
-     import com.mongodb.MongoClient;
-     import com.mongodb.MongoClientURI;
-     import com.mongodb.client.MongoCollection;
-     import com.mongodb.client.MongoDatabase;
-     import com.mongodb.client.model.changestream.FullDocument;
-     
-     import org.bson.Document;
-     ```
+```java
+import com.mongodb.Block;
+import com.mongodb.MongoClient;
+import com.mongodb.MongoClientURI;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.changestream.FullDocument;
+import com.mongodb.client.model.changestream.ChangeStreamDocument;
+import org.bson.Document;
+```
 
-- Include the following code which the examples in the tutorials will use to print the results of the aggregation:
+- Include the following code which the examples in the tutorials will use to print the results of the change stream:
 
-     ```java
-     Block<Document> printBlock = new Block<Document>() {
-            @Override
-            public void apply(final Document document) {
-                System.out.println(document.toJson());
-            }
-        };
-     ```
+```java
+Block<ChangeStreamDocument<Document>> printBlock = new Block<>() {
+    @Override
+    public void apply(final ChangeStreamDocument<Document> changeStreamDocument) {
+        System.out.println(changeStreamDocument);
+    }
+};
+```
 
 ## Connect to a MongoDB Deployment
 

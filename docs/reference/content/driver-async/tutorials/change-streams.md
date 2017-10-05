@@ -23,28 +23,39 @@ to resume if it encounters a potentially recoverable error.
 
 - Include the following import statements:
 
-     ```java
-    import com.mongodb.Block;
-    import com.mongodb.async.client.*;
-    import com.mongodb.async.SingleResultCallback;
-    
-    import com.mongodb.client.model.*;
-    
-    import org.bson.Document;
-    
-    import java.util.Arrays;
-     ```
+```java
+import com.mongodb.Block;
+import com.mongodb.async.client.*;
+import com.mongodb.async.SingleResultCallback;
 
-- Include the following code which the examples in the tutorials will use to print the results of the aggregation:
+import com.mongodb.client.model.*;
 
-     ```java
-     Block<Document> printBlock = new Block<Document>() {
-            @Override
-            public void apply(final Document document) {
-                System.out.println(document.toJson());
-            }
-        };
-     ```
+import org.bson.Document;
+
+import java.util.Arrays;
+```
+
+- Include the following callback code which the examples in the tutorials will use:
+
+```java
+SingleResultCallback<Void> callbackWhenFinished = new SingleResultCallback<Void>() {
+    @Override
+    public void onResult(final Void result, final Throwable t) {
+        System.out.println("Operation Finished!");
+    }
+};
+```
+
+- Include the following code which the examples in the tutorials will use to print the results of the change stream:
+
+```java
+Block<ChangeStreamDocument<Document>> printBlock = new Block<>() {
+    @Override
+    public void apply(final ChangeStreamDocument<Document> changeStreamDocument) {
+        System.out.println(changeStreamDocument);
+    }
+};
+```
 
 ## Connect to a MongoDB Deployment
 
