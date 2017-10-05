@@ -20,10 +20,14 @@ The 3.6 release adds support for compression of messages to and from appropriate
 
 ### Change Stream support
 
-The 3.6 release add support for [change streams](https://docs.mongodb.com/manual/operator/aggregation/changeStream).
+The 3.6 release adds support for [change streams](https://docs.mongodb.com/manual/operator/aggregation/changeStream).
 
-* [Change Stream Quick Start]({{<ref "driver/getting-started/quick-start-pojo.md">}}) 
-* [Change Stream Quick Start (Async)]({{<ref "driver-async/getting-started/quick-start-pojo.md">}})
+* [Change Stream Quick Start]({{<ref "driver/tutorials/change-streams.md">}}) 
+* [Change Stream Quick Start (Async)]({{<ref "driver-async/tutorials/change-streams.md">}})
+
+### Causal consistency
+
+The 3.6 release adds support for causally consistency.
 
 ## What's New in 3.5
 
