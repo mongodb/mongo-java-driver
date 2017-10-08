@@ -23,6 +23,7 @@ import com.mongodb.annotations.NotThreadSafe;
 import org.bson.types.ObjectId;
 
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -912,7 +913,9 @@ public class ServerDescription {
 
 
     private String getRoundTripFormattedInMilliseconds() {
-        return new DecimalFormat("#0.0").format(roundTripTimeNanos / 1000.0 / 1000.0);
+        DecimalFormatSymbols decimalFormatSymbols = new DecimalFormatSymbols();
+        decimalFormatSymbols.setDecimalSeparator('.');
+        return new DecimalFormat("#0.0", decimalFormatSymbols).format(roundTripTimeNanos / 1000.0 / 1000.0);
     }
 
     ServerDescription(final Builder builder) {
