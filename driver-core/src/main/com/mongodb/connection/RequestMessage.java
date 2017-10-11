@@ -56,16 +56,10 @@ abstract class RequestMessage {
     private EncodingMetadata encodingMetadata;
 
     static class EncodingMetadata {
-        private final RequestMessage nextMessage;
         private final int firstDocumentPosition;
 
-        EncodingMetadata(final RequestMessage nextMessage, final int firstDocumentPosition) {
-            this.nextMessage = nextMessage;
+        EncodingMetadata(final int firstDocumentPosition) {
             this.firstDocumentPosition = firstDocumentPosition;
-        }
-
-        public RequestMessage getNextMessage() {
-            return nextMessage;
         }
 
         public int getFirstDocumentPosition() {

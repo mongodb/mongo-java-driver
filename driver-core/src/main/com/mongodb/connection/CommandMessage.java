@@ -120,7 +120,7 @@ final class CommandMessage extends RequestMessage {
                 addDocumentWithPayload(bsonOutput);
             }
         }
-        return new EncodingMetadata(null, commandStartPosition);
+        return new EncodingMetadata(commandStartPosition);
     }
 
     private FieldNameValidator getPayloadArrayFieldNameValidator() {

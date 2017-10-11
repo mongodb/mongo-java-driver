@@ -16,15 +16,9 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.WriteConcern;
 import com.mongodb.bulk.InsertRequest;
 import com.mongodb.internal.validator.CollectibleDocumentFieldNameValidator;
-import com.mongodb.internal.validator.NoOpFieldNameValidator;
-import org.bson.BsonDocument;
-import org.bson.FieldNameValidator;
 import org.bson.io.BsonOutput;
-
-import java.util.List;
 
 /**
  * An insert message.
@@ -33,53 +27,23 @@ import java.util.List;
  */
 class InsertMessage extends LegacyMessage {
 
-    private final boolean ordered;
-    private final WriteConcern writeConcern;
-    private final List<InsertRequest> insertRequestList;
+    private final InsertRequest insertRequest;
 
-    InsertMessage(final String collectionName, final boolean ordered, final WriteConcern writeConcern,
-                  final List<InsertRequest> insertRequestList, final MessageSettings settings) {
+    InsertMessage(final String collectionName, final InsertRequest insertRequest, final MessageSettings settings) {
         super(collectionName, OpCode.OP_INSERT, settings);
-        this.ordered = ordered;
-        this.writeConcern = writeConcern;
-        this.insertRequestList = insertRequestList;
-    }
-
-    public List<InsertRequest> getInsertRequestList() {
-        return insertRequestList;
+        this.insertRequest = insertRequest;
     }
 
     @Override
     protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput outputStream) {
         writeInsertPrologue(outputStream);
         int firstDocumentPosition = outputStream.getPosition();
-        for (int i = 0; i < insertRequestList.size(); i++) {
-            BsonDocument document = insertRequestList.get(i).getDocument();
-            int pos = outputStream.getPosition();
-            addCollectibleDocument(document, outputStream, createValidator());
-            if (outputStream.getPosition() > getSettings().getMaxMessageSize()) {
-                outputStream.truncateToPosition(pos);
-                return new EncodingMetadata(new InsertMessage(getCollectionName(), ordered, writeConcern,
-                        insertRequestList.subList(i, insertRequestList.size()), getSettings()), firstDocumentPosition);
-            }
-        }
-        return new EncodingMetadata(null, firstDocumentPosition);
-    }
-
-    private FieldNameValidator createValidator() {
-        if (getCollectionName().endsWith(".system.indexes")) {
-            return new NoOpFieldNameValidator();
-        } else {
-            return new CollectibleDocumentFieldNameValidator();
-        }
+        addCollectibleDocument(insertRequest.getDocument(), outputStream, new CollectibleDocumentFieldNameValidator());
+        return new EncodingMetadata(firstDocumentPosition);
     }
 
     private void writeInsertPrologue(final BsonOutput outputStream) {
-        int flags = 0;
-        if (!ordered) {
-            flags |= 1;
-        }
-        outputStream.writeInt32(flags);
+        outputStream.writeInt32(0);  // flags
         outputStream.writeCString(getCollectionName());
     }
 }

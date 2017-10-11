@@ -48,7 +48,7 @@ class CompressedMessage extends RequestMessage {
 
         compressor.compress(wrappedMessageBuffers, bsonOutput);
 
-        return new EncodingMetadata(null, 0);
+        return new EncodingMetadata(0);
     }
 
     private static int getWrappedMessageSize(final List<ByteBuf> wrappedMessageBuffers) {
