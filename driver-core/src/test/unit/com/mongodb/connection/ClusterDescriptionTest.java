@@ -232,6 +232,76 @@ public class ClusterDescriptionTest {
     }
 
     @Test
+    public void testLogicalSessionTimeoutMinutes() {
+        ClusterDescription description = new ClusterDescription(MULTIPLE, REPLICA_SET, asList(
+                builder().state(CONNECTING)
+                        .address(new ServerAddress("loc:27017")).build()
+        ));
+        assertEquals(null, description.getLogicalSessionTimeoutMinutes());
+
+        description = new ClusterDescription(MULTIPLE, REPLICA_SET, asList(
+                builder().state(CONNECTED)
+                        .address(new ServerAddress("loc:27017"))
+                        .build()
+        ));
+        assertEquals(null, description.getLogicalSessionTimeoutMinutes());
+
+        description = new ClusterDescription(MULTIPLE, REPLICA_SET, asList(
+                builder().state(CONNECTED)
+                        .ok(true)
+                        .address(new ServerAddress("loc:27017"))
+                        .build()
+        ));
+        assertEquals(null, description.getLogicalSessionTimeoutMinutes());
+
+        description = new ClusterDescription(MULTIPLE, REPLICA_SET, asList(
+                builder().state(CONNECTED)
+                        .ok(true)
+                        .address(new ServerAddress("loc:27017"))
+                        .logicalSessionTimeoutMinutes(5)
+                        .build(),
+                builder().state(CONNECTING)
+                        .address(new ServerAddress("loc:27018"))
+                        .build()
+        ));
+        assertEquals(new Integer(5), description.getLogicalSessionTimeoutMinutes());
+
+        description = new ClusterDescription(MULTIPLE, REPLICA_SET, asList(
+                builder().state(CONNECTED)
+                        .ok(true)
+                        .address(new ServerAddress("loc:27017"))
+                        .logicalSessionTimeoutMinutes(5)
+                        .build(),
+                builder().state(CONNECTED)
+                        .ok(true)
+                        .address(new ServerAddress("loc:27018"))
+                        .logicalSessionTimeoutMinutes(3)
+                        .build(),
+                builder().state(CONNECTING)
+                        .address(new ServerAddress("loc:27017"))
+                        .build()
+        ));
+        assertEquals(new Integer(3), description.getLogicalSessionTimeoutMinutes());
+
+        description = new ClusterDescription(MULTIPLE, REPLICA_SET, asList(
+                builder().state(CONNECTED)
+                        .ok(true)
+                        .address(new ServerAddress("loc:27017"))
+                        .logicalSessionTimeoutMinutes(3)
+                        .build(),
+                builder().state(CONNECTED)
+                        .ok(true)
+                        .address(new ServerAddress("loc:27018"))
+                        .logicalSessionTimeoutMinutes(5)
+                        .build(),
+                builder().state(CONNECTING)
+                        .address(new ServerAddress("loc:27017"))
+                        .build()
+        ));
+        assertEquals(new Integer(3), description.getLogicalSessionTimeoutMinutes());
+    }
+
+    @Test
     public void testObjectOverrides() throws UnknownHostException {
         ClusterDescription description =
         new ClusterDescription(MULTIPLE, UNKNOWN, asList(

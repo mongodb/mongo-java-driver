@@ -184,7 +184,11 @@ public class ClusterDescription {
             if (cur.getLogicalSessionTimeoutMinutes() == null) {
                 return null;
             }
-            retVal = cur.getLogicalSessionTimeoutMinutes();
+            if (retVal == null) {
+                retVal = cur.getLogicalSessionTimeoutMinutes();
+            } else {
+                retVal = Math.min(retVal, cur.getLogicalSessionTimeoutMinutes());
+            }
         }
         return retVal;
     }
