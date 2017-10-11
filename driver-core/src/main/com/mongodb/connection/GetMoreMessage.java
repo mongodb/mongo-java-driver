@@ -45,7 +45,7 @@ class GetMoreMessage extends LegacyMessage {
     @Override
     protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput) {
         writeGetMore(bsonOutput);
-        return new EncodingMetadata(null, bsonOutput.getPosition());
+        return new EncodingMetadata(bsonOutput.getPosition());
     }
 
     private void writeGetMore(final BsonOutput buffer) {

@@ -18,7 +18,6 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
-import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.DeleteRequest;
@@ -62,38 +61,38 @@ class TestConnection implements Connection, AsyncConnection {
     }
 
     @Override
-    public WriteConcernResult insert(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                     final List<InsertRequest> inserts) {
+    public WriteConcernResult insert(final MongoNamespace namespace, final boolean ordered,
+                                     final InsertRequest insertRequest) {
         return executeEnqueuedLegacyProtocol();
     }
 
     @Override
-    public void insertAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                            final List<InsertRequest> inserts, final SingleResultCallback<WriteConcernResult> callback) {
+    public void insertAsync(final MongoNamespace namespace, final boolean ordered,
+                            final InsertRequest insertRequest, final SingleResultCallback<WriteConcernResult> callback) {
         executeEnqueuedLegacyProtocolAsync(callback);
     }
 
     @Override
-    public WriteConcernResult update(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                     final List<UpdateRequest> updates) {
+    public WriteConcernResult update(final MongoNamespace namespace, final boolean ordered,
+                                     final UpdateRequest updateRequest) {
         return executeEnqueuedLegacyProtocol();
     }
 
     @Override
-    public void updateAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                            final List<UpdateRequest> updates, final SingleResultCallback<WriteConcernResult> callback) {
+    public void updateAsync(final MongoNamespace namespace, final boolean ordered,
+                            final UpdateRequest updateRequest, final SingleResultCallback<WriteConcernResult> callback) {
         executeEnqueuedLegacyProtocolAsync(callback);
     }
 
     @Override
-    public WriteConcernResult delete(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                     final List<DeleteRequest> deletes) {
+    public WriteConcernResult delete(final MongoNamespace namespace, final boolean ordered,
+                                     final DeleteRequest deleteRequest) {
         return executeEnqueuedLegacyProtocol();
     }
 
     @Override
-    public void deleteAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                            final List<DeleteRequest> deletes,
+    public void deleteAsync(final MongoNamespace namespace, final boolean ordered,
+                            final DeleteRequest deleteRequest,
                             final SingleResultCallback<WriteConcernResult> callback) {
         executeEnqueuedLegacyProtocolAsync(callback);
     }

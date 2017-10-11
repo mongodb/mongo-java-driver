@@ -41,11 +41,9 @@ import spock.lang.Specification
 import java.util.concurrent.CountDownLatch
 
 import static com.mongodb.MongoCredential.createCredential
-import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.internal.event.EventListenerHelper.NO_OP_SERVER_LISTENER
-import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class DefaultServerSpecification extends Specification {
@@ -198,7 +196,7 @@ class DefaultServerSpecification extends Specification {
         when:
         testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoNotPrimaryException(serverId.address)))
 
-        testConnection.insert(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
+        testConnection.insert(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()))
 
         then:
         thrown(MongoNotPrimaryException)
@@ -207,7 +205,7 @@ class DefaultServerSpecification extends Specification {
 
         when:
         def futureResultCallback = new FutureResultCallback()
-        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())),
+        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
                 futureResultCallback);
         futureResultCallback.get(60, SECONDS)
 
@@ -218,7 +216,7 @@ class DefaultServerSpecification extends Specification {
 
         when:
         futureResultCallback = new FutureResultCallback()
-        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())),
+        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
                 futureResultCallback);
         futureResultCallback.get(60, SECONDS)
 
@@ -247,7 +245,7 @@ class DefaultServerSpecification extends Specification {
         when:
         testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoNodeIsRecoveringException(new ServerAddress())))
 
-        testConnection.insert(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
+        testConnection.insert(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()))
 
         then:
         thrown(MongoNodeIsRecoveringException)
@@ -275,7 +273,7 @@ class DefaultServerSpecification extends Specification {
         when:
         testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoSocketException('socket error', new ServerAddress())))
 
-        testConnection.insert(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
+        testConnection.insert(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()))
 
         then:
         thrown(MongoSocketException)
@@ -284,7 +282,7 @@ class DefaultServerSpecification extends Specification {
 
         when:
         def futureResultCallback = new FutureResultCallback<WriteConcernResult>()
-        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())),
+        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
                 futureResultCallback)
         futureResultCallback.get(60, SECONDS)
 
@@ -314,7 +312,7 @@ class DefaultServerSpecification extends Specification {
         testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoSocketReadTimeoutException('socket timeout', new ServerAddress(),
                 new IOException())))
 
-        testConnection.insert(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
+        testConnection.insert(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()))
 
         then:
         thrown(MongoSocketReadTimeoutException)
@@ -323,7 +321,7 @@ class DefaultServerSpecification extends Specification {
 
         when:
         def futureResultCallback = new FutureResultCallback<WriteConcernResult>()
-        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())),
+        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
                 futureResultCallback)
         futureResultCallback.get(60, SECONDS)
 

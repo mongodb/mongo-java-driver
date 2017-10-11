@@ -17,7 +17,6 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.UpdateRequest;
@@ -40,12 +39,11 @@ import static java.util.Collections.singletonList;
 class UpdateProtocol extends WriteProtocol {
     private static final com.mongodb.diagnostics.logging.Logger LOGGER = Loggers.getLogger("protocol.update");
 
-    private final List<UpdateRequest> updates;
+    private final UpdateRequest updateRequest;
 
-    UpdateProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                   final List<UpdateRequest> updates) {
-        super(namespace, ordered, writeConcern);
-        this.updates = updates;
+    UpdateProtocol(final MongoNamespace namespace, final boolean ordered, final UpdateRequest updateRequest) {
+        super(namespace, ordered);
+        this.updateRequest = updateRequest;
     }
 
     @Override
@@ -86,10 +84,10 @@ class UpdateProtocol extends WriteProtocol {
     protected BsonDocument getAsWriteCommand(final ByteBufferBsonOutput bsonOutput, final int firstDocumentPosition) {
         List<ByteBufBsonDocument> documents = ByteBufBsonDocument.create(bsonOutput, firstDocumentPosition);
         BsonDocument updateDocument = new BsonDocument("q", documents.get(0)).append("u", documents.get(1));
-        if (updates.get(0).isMulti()) {
+        if (updateRequest.isMulti()) {
             updateDocument.append("multi", BsonBoolean.TRUE);
         }
-        if (updates.get(0).isUpsert()) {
+        if (updateRequest.isUpsert()) {
             updateDocument.append("upsert", BsonBoolean.TRUE);
         }
         return getBaseCommandDocument("update").append("updates", new BsonArray(singletonList(updateDocument)));
@@ -98,7 +96,7 @@ class UpdateProtocol extends WriteProtocol {
 
     @Override
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new UpdateMessage(getNamespace().getFullName(), updates, settings);
+        return new UpdateMessage(getNamespace().getFullName(), updateRequest, settings);
     }
 
     @Override

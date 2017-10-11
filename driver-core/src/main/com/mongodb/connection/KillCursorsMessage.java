@@ -41,7 +41,7 @@ class KillCursorsMessage extends LegacyMessage {
         for (final Long cur : cursors) {
             bsonOutput.writeInt64(cur);
         }
-        return new EncodingMetadata(null, bsonOutput.getPosition());
+        return new EncodingMetadata(bsonOutput.getPosition());
     }
 
     private void writeKillCursorsPrologue(final int numCursors, final BsonOutput bsonOutput) {

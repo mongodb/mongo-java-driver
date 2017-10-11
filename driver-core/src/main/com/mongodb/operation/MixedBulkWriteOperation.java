@@ -50,7 +50,6 @@ import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotSix;
 import static com.mongodb.operation.OperationHelper.validateWriteRequests;
 import static com.mongodb.operation.OperationHelper.withConnection;
-import static java.util.Collections.singletonList;
 
 /**
  * An operation to execute a series of write operations in bulk.
@@ -222,11 +221,11 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
     private BulkWriteResult executeLegacyBatches(final Connection connection) {
         for (WriteRequest writeRequest : getWriteRequests()) {
             if (writeRequest.getType() == INSERT) {
-                connection.insert(getNamespace(), isOrdered(), getWriteConcern(), singletonList((InsertRequest) writeRequest));
+                connection.insert(getNamespace(), isOrdered(), (InsertRequest) writeRequest);
             } else if (writeRequest.getType() == UPDATE || writeRequest.getType() == REPLACE) {
-                connection.update(getNamespace(), isOrdered(), getWriteConcern(), singletonList((UpdateRequest) writeRequest));
+                connection.update(getNamespace(), isOrdered(), (UpdateRequest) writeRequest);
             } else {
-                connection.delete(getNamespace(), isOrdered(), getWriteConcern(), singletonList((DeleteRequest) writeRequest));
+                connection.delete(getNamespace(), isOrdered(), (DeleteRequest) writeRequest);
             }
         }
         return BulkWriteResult.unacknowledged();
@@ -281,14 +280,11 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 };
 
                 if (writeRequest.getType() == INSERT) {
-                    connection.insertAsync(getNamespace(), isOrdered(), getWriteConcern(), singletonList((InsertRequest) writeRequest),
-                            writeCallback);
+                    connection.insertAsync(getNamespace(), isOrdered(), (InsertRequest) writeRequest, writeCallback);
                 } else if (writeRequest.getType() == UPDATE || writeRequest.getType() == REPLACE) {
-                    connection.updateAsync(getNamespace(), isOrdered(), getWriteConcern(), singletonList((UpdateRequest) writeRequest),
-                            writeCallback);
+                    connection.updateAsync(getNamespace(), isOrdered(), (UpdateRequest) writeRequest, writeCallback);
                 } else {
-                    connection.deleteAsync(getNamespace(), isOrdered(), getWriteConcern(), singletonList((DeleteRequest) writeRequest),
-                            writeCallback);
+                    connection.deleteAsync(getNamespace(), isOrdered(), (DeleteRequest) writeRequest, writeCallback);
                 }
             } else {
                 callback.onResult(BulkWriteResult.unacknowledged(), null);

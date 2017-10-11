@@ -18,7 +18,6 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
-import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.async.SingleResultCallback;
@@ -56,38 +55,32 @@ public interface AsyncConnection extends ReferenceCounted {
 
     /**
      * Insert the documents using the insert wire protocol and apply the write concern asynchronously.
-     *
      * @param namespace    the namespace
      * @param ordered      whether the writes are ordered
-     * @param writeConcern the write concern
-     * @param inserts      the inserts
+     * @param insertRequest the insert request
      * @param callback     the callback to be passed the write result
      */
-    void insertAsync(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern,
-                     List<InsertRequest> inserts, SingleResultCallback<WriteConcernResult> callback);
+    void insertAsync(MongoNamespace namespace, boolean ordered, InsertRequest insertRequest,
+                     SingleResultCallback<WriteConcernResult> callback);
 
     /**
      * Update the documents using the update wire protocol and apply the write concern asynchronously.
-     *
      * @param namespace    the namespace
      * @param ordered      whether the writes are ordered
-     * @param writeConcern the write concern
-     * @param updates      the updates
+     * @param updateRequest the update request
      * @param callback     the callback to be passed the write result
      */
-    void updateAsync(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, List<UpdateRequest> updates,
+    void updateAsync(MongoNamespace namespace, boolean ordered, UpdateRequest updateRequest,
                      SingleResultCallback<WriteConcernResult> callback);
 
     /**
      * Delete the documents using the delete wire protocol and apply the write concern asynchronously.
-     *
      * @param namespace    the namespace
      * @param ordered      whether the writes are ordered
-     * @param writeConcern the write concern
-     * @param deletes      the deletes
+     * @param deleteRequest the delete request
      * @param callback     the callback to be passed the write result
      */
-    void deleteAsync(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, List<DeleteRequest> deletes,
+    void deleteAsync(MongoNamespace namespace, boolean ordered, DeleteRequest deleteRequest,
                      SingleResultCallback<WriteConcernResult> callback);
 
     /**

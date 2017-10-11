@@ -44,6 +44,6 @@ class QueryMessage extends BaseQueryMessage {
         if (fields != null) {
             addDocument(fields, bsonOutput, new NoOpFieldNameValidator());
         }
-        return new EncodingMetadata(null, firstDocumentStartPosition);
+        return new EncodingMetadata(firstDocumentStartPosition);
     }
 }

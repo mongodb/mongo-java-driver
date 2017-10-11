@@ -17,7 +17,6 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.InsertRequest;
@@ -25,8 +24,6 @@ import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
-
-import java.util.List;
 
 import static java.lang.String.format;
 
@@ -39,19 +36,17 @@ class InsertProtocol extends WriteProtocol {
 
     private static final Logger LOGGER = Loggers.getLogger("protocol.insert");
 
-    private final List<InsertRequest> insertRequestList;
+    private final InsertRequest insertRequest;
 
-    InsertProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                   final List<InsertRequest> insertRequestList) {
-        super(namespace, ordered, writeConcern);
-        this.insertRequestList = insertRequestList;
+    InsertProtocol(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest) {
+        super(namespace, ordered);
+        this.insertRequest = insertRequest;
     }
 
     @Override
     public WriteConcernResult execute(final InternalConnection connection) {
         if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(format("Inserting %d documents into namespace %s on connection [%s] to server %s",
-                                insertRequestList.size(),
+            LOGGER.debug(format("Inserting 1 document into namespace %s on connection [%s] to server %s",
                                 getNamespace(),
                                 connection.getDescription().getConnectionId(),
                                 connection.getDescription().getServerAddress()));
@@ -65,8 +60,8 @@ class InsertProtocol extends WriteProtocol {
     public void executeAsync(final InternalConnection connection, final SingleResultCallback<WriteConcernResult> callback) {
         try {
             if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(format("Asynchronously inserting %d documents into namespace %s on connection [%s] to server %s",
-                                    insertRequestList.size(), getNamespace(), connection.getDescription().getConnectionId(),
+                LOGGER.debug(format("Asynchronously inserting 1 document into namespace %s on connection [%s] to server %s",
+                                    getNamespace(), connection.getDescription().getConnectionId(),
                                     connection.getDescription().getServerAddress()));
             }
             super.executeAsync(connection, new SingleResultCallback<WriteConcernResult>() {
@@ -93,7 +88,7 @@ class InsertProtocol extends WriteProtocol {
     }
 
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new InsertMessage(getNamespace().getFullName(), isOrdered(), getWriteConcern(), insertRequestList, settings);
+        return new InsertMessage(getNamespace().getFullName(), insertRequest, settings);
     }
 
     @Override

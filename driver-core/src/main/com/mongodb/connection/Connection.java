@@ -18,7 +18,6 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
-import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.binding.ReferenceCounted;
@@ -59,35 +58,30 @@ public interface Connection extends ReferenceCounted {
      *
      * @param namespace    the namespace
      * @param ordered      whether the writes are ordered
-     * @param writeConcern the write concern
-     * @param inserts      the inserts
+     * @param insertRequest the insert request
      * @return the write concern result
      */
-    WriteConcernResult insert(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern, List<InsertRequest> inserts);
+    WriteConcernResult insert(MongoNamespace namespace, boolean ordered, InsertRequest insertRequest);
 
     /**
      * Update the documents using the update wire protocol and apply the write concern.
      *
      * @param namespace    the namespace
      * @param ordered      whether the writes are ordered
-     * @param writeConcern the write concern
-     * @param updates      the updates
+     * @param updateRequest the update request
      * @return the write concern result
      */
-    WriteConcernResult update(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern,
-                              List<UpdateRequest> updates);
+    WriteConcernResult update(MongoNamespace namespace, boolean ordered, UpdateRequest updateRequest);
 
     /**
      * Delete the documents using the delete wire protocol and apply the write concern.
      *
      * @param namespace    the namespace
      * @param ordered      whether the writes are ordered
-     * @param writeConcern the write concern
-     * @param deletes      the deletes
+     * @param deleteRequest the delete request
      * @return the write concern result
      */
-    WriteConcernResult delete(MongoNamespace namespace, boolean ordered, WriteConcern writeConcern,
-                              List<DeleteRequest> deletes);
+    WriteConcernResult delete(MongoNamespace namespace, boolean ordered, DeleteRequest deleteRequest);
 
     /**
      * Execute the command.

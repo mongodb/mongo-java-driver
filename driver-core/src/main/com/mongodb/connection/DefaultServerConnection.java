@@ -18,7 +18,6 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
-import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.DeleteRequest;
@@ -72,39 +71,36 @@ class DefaultServerConnection extends AbstractReferenceCounted implements Connec
     }
 
     @Override
-    public WriteConcernResult insert(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                     final List<InsertRequest> inserts) {
-        return executeProtocol(new InsertProtocol(namespace, ordered, writeConcern, inserts));
+    public WriteConcernResult insert(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest) {
+        return executeProtocol(new InsertProtocol(namespace, ordered, insertRequest));
     }
 
     @Override
-    public void insertAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                            final List<InsertRequest> inserts, final SingleResultCallback<WriteConcernResult> callback) {
-        executeProtocolAsync(new InsertProtocol(namespace, ordered, writeConcern, inserts), callback);
+    public void insertAsync(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest,
+                            final SingleResultCallback<WriteConcernResult> callback) {
+        executeProtocolAsync(new InsertProtocol(namespace, ordered, insertRequest), callback);
     }
 
     @Override
-    public WriteConcernResult update(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                     final List<UpdateRequest> updates) {
-        return executeProtocol(new UpdateProtocol(namespace, ordered, writeConcern, updates));
+    public WriteConcernResult update(final MongoNamespace namespace, final boolean ordered, final UpdateRequest updateRequest) {
+        return executeProtocol(new UpdateProtocol(namespace, ordered, updateRequest));
     }
 
     @Override
-    public void updateAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                            final List<UpdateRequest> updates, final SingleResultCallback<WriteConcernResult> callback) {
-        executeProtocolAsync(new UpdateProtocol(namespace, ordered, writeConcern, updates), callback);
+    public void updateAsync(final MongoNamespace namespace, final boolean ordered, final UpdateRequest updateRequest,
+                            final SingleResultCallback<WriteConcernResult> callback) {
+        executeProtocolAsync(new UpdateProtocol(namespace, ordered, updateRequest), callback);
     }
 
     @Override
-    public WriteConcernResult delete(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                     final List<DeleteRequest> deletes) {
-        return executeProtocol(new DeleteProtocol(namespace, ordered, writeConcern, deletes));
+    public WriteConcernResult delete(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest) {
+        return executeProtocol(new DeleteProtocol(namespace, ordered, deleteRequest));
     }
 
     @Override
-    public void deleteAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                            final List<DeleteRequest> deletes, final SingleResultCallback<WriteConcernResult> callback) {
-        executeProtocolAsync(new DeleteProtocol(namespace, ordered, writeConcern, deletes), callback);
+    public void deleteAsync(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest,
+                            final SingleResultCallback<WriteConcernResult> callback) {
+        executeProtocolAsync(new DeleteProtocol(namespace, ordered, deleteRequest), callback);
     }
 
     @Override
