@@ -389,15 +389,15 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         fromHelper.drop()
 
         fromHelper.insertDocuments(
-        Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"], 
+            Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"],
                 hobbies : ["tennis", "unicycling", "golf"] }'''),
-        Document.parse('''{ _id: 1, name: "Anna Jones", friends: ["Bob Smith", "Chris Green", "Joe Lee"],
+            Document.parse('''{ _id: 1, name: "Anna Jones", friends: ["Bob Smith", "Chris Green", "Joe Lee"],
                  hobbies : ["archery", "golf", "woodworking"] }'''),
-        Document.parse('''{ _id: 2, name: "Chris Green", friends: ["Anna Jones", "Bob Smith"],
+            Document.parse('''{ _id: 2, name: "Chris Green", friends: ["Anna Jones", "Bob Smith"],
                 hobbies : ["knitting", "frisbee"] }'''),
-        Document.parse('''{ _id: 3, name: "Joe Lee", friends: ["Anna Jones", "Fred Brown"],
+            Document.parse('''{ _id: 3, name: "Joe Lee", friends: ["Anna Jones", "Fred Brown"],
                 hobbies : [ "tennis", "golf", "topiary" ] }'''),
-        Document.parse('''{ _id: 4, name: "Fred Brown", friends: ["Joe Lee"],
+            Document.parse('''{ _id: 4, name: "Fred Brown", friends: ["Joe Lee"],
                 hobbies : [ "travel", "ceramics", "golf" ] }'''))
 
 
@@ -413,11 +413,11 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
         then:
         results.subList(0, 4) == [
-                Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"], 
+                Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"],
                         hobbies : ["tennis", "unicycling", "golf"], golfers: {_id: 0, name: "Bob Smith",
                         friends: ["Anna Jones", "Chris Green"], hobbies : ["tennis", "unicycling", "golf"] } }'''),
                 Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"],
-                       hobbies: ["tennis", "unicycling", "golf"], golfers:{ _id: 1, name: "Anna Jones", 
+                       hobbies: ["tennis", "unicycling", "golf"], golfers:{ _id: 1, name: "Anna Jones",
                        friends: ["Bob Smith", "Chris Green", "Joe Lee"], hobbies : ["archery", "golf", "woodworking"] } } }'''),
                 Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"],
                        hobbies: ["tennis", "unicycling", "golf"], golfers: { _id: 3, name: "Joe Lee",
@@ -440,7 +440,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         fromHelper.drop()
 
         fromHelper.insertDocuments(
-                Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"], 
+                Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"],
                 hobbies : ["tennis", "unicycling", "golf"] }'''),
                 Document.parse('''{ _id: 1, name: "Anna Jones", friends: ["Bob Smith", "Chris Green", "Joe Lee"],
                  hobbies : ["archery", "golf", "woodworking"] }'''),
@@ -463,11 +463,11 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
         then:
         results.subList(0, 3 ) == [
-            Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"], 
-                hobbies : ["tennis", "unicycling", "golf"], golfers: { _id: 1, name: "Anna Jones", 
+            Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"],
+                hobbies : ["tennis", "unicycling", "golf"], golfers: { _id: 1, name: "Anna Jones",
                 friends: ["Bob Smith", "Chris Green", "Joe Lee"], hobbies : ["archery", "golf", "woodworking"], depth:0 } }'''),
             Document.parse('''{ _id: 1, name: "Anna Jones", friends: ["Bob Smith", "Chris Green", "Joe Lee"],
-                 hobbies : ["archery", "golf", "woodworking"], golfers: { _id: 0, name: "Bob Smith", 
+                 hobbies : ["archery", "golf", "woodworking"], golfers: { _id: 0, name: "Bob Smith",
                  friends: ["Anna Jones", "Chris Green"], hobbies : ["tennis", "unicycling", "golf"], depth:0 } }'''),
             Document.parse('''{ _id: 1, name: "Anna Jones", friends: ["Bob Smith", "Chris Green", "Joe Lee"],
                  hobbies : ["archery", "golf", "woodworking"], golfers: { _id: 3, name: "Joe Lee",
