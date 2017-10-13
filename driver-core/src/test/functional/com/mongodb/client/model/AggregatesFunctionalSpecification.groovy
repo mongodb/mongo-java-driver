@@ -432,53 +432,6 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 4) })
-    def '$graphLookup with all options'() {
-        given:
-        def fromCollectionName = 'contacts'
-        def fromHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), fromCollectionName))
-
-        fromHelper.drop()
-
-        fromHelper.insertDocuments(
-                Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"],
-                hobbies : ["tennis", "unicycling", "golf"] }'''),
-                Document.parse('''{ _id: 1, name: "Anna Jones", friends: ["Bob Smith", "Chris Green", "Joe Lee"],
-                 hobbies : ["archery", "golf", "woodworking"] }'''),
-                Document.parse('''{ _id: 2, name: "Chris Green", friends: ["Anna Jones", "Bob Smith"],
-                hobbies : ["knitting", "frisbee"] }'''),
-                Document.parse('''{ _id: 3, name: "Joe Lee", friends: ["Anna Jones", "Fred Brown"],
-                hobbies : [ "tennis", "golf", "topiary" ] }'''),
-                Document.parse('''{ _id: 4, name: "Fred Brown", friends: ["Joe Lee"],
-                hobbies : [ "travel", "ceramics", "golf" ] }'''))
-
-        def lookupDoc = graphLookup('contacts', new BsonString('$friends'), 'friends', 'name', 'golfers',
-                new GraphLookupOptions().depthField('depth').maxDepth(0)
-                        .restrictSearchWithMatch(eq('hobbies', 'golf')))
-
-        when:
-        def results = fromHelper.aggregate([lookupDoc,
-                                            unwind('$golfers'),
-                                            sort(new Document('_id', 1)
-                                                    .append('golfers._id', 1))])
-
-        then:
-        results.subList(0, 3 ) == [
-            Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"],
-                hobbies : ["tennis", "unicycling", "golf"], golfers: { _id: 1, name: "Anna Jones",
-                friends: ["Bob Smith", "Chris Green", "Joe Lee"], hobbies : ["archery", "golf", "woodworking"], depth:0 } }'''),
-            Document.parse('''{ _id: 1, name: "Anna Jones", friends: ["Bob Smith", "Chris Green", "Joe Lee"],
-                 hobbies : ["archery", "golf", "woodworking"], golfers: { _id: 0, name: "Bob Smith",
-                 friends: ["Anna Jones", "Chris Green"], hobbies : ["tennis", "unicycling", "golf"], depth:0 } }'''),
-            Document.parse('''{ _id: 1, name: "Anna Jones", friends: ["Bob Smith", "Chris Green", "Joe Lee"],
-                 hobbies : ["archery", "golf", "woodworking"], golfers: { _id: 3, name: "Joe Lee",
-                 friends: ["Anna Jones", "Fred Brown"], hobbies : [ "tennis", "golf", "topiary" ], depth:0 } }''')
-        ]
-
-        cleanup:
-        fromHelper?.drop()
-    }
-
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def '$bucket'() {
         given:
         def helper = getCollectionHelper()
