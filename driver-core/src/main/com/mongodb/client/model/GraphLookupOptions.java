@@ -28,7 +28,7 @@ import org.bson.conversions.Bson;
 public final class GraphLookupOptions {
     private Integer maxDepth;
     private String depthField;
-    private Bson  restrictSearchWithMatch;
+    private Bson restrictSearchWithMatch;
 
     /**
      * The name of the field in which to store the depth value
@@ -71,6 +71,7 @@ public final class GraphLookupOptions {
      *
      * @param filter the filter expression
      * @return this
+     * @since 3.6
      */
     public GraphLookupOptions restrictSearchWithMatch(final Bson filter) {
         restrictSearchWithMatch = filter;
@@ -79,6 +80,7 @@ public final class GraphLookupOptions {
 
     /**
      * @return the filter expression
+     * @since 3.6
      */
     public Bson getRestrictSearchWithMatch() {
         return restrictSearchWithMatch;
