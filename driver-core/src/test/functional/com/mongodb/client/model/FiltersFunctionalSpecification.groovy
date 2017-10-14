@@ -35,8 +35,10 @@ import static com.mongodb.client.model.Filters.bitsAnySet
 import static com.mongodb.client.model.Filters.elemMatch
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Filters.exists
+import static com.mongodb.client.model.Filters.expr
 import static com.mongodb.client.model.Filters.gt
 import static com.mongodb.client.model.Filters.gte
+import static com.mongodb.client.model.Filters.jsonSchema
 import static com.mongodb.client.model.Filters.lt
 import static com.mongodb.client.model.Filters.lte
 import static com.mongodb.client.model.Filters.mod
@@ -295,5 +297,18 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
     def 'should render $where'() {
         expect:
         find(where('Array.isArray(this.a)')) == [a, b]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    def '$expr'() {
+        expect:
+        find(expr(Document.parse('{ $eq: [ "$x" , 3 ] } '))) == [c]
+    }
+
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    def '$jsonSchema'() {
+        expect:
+        find(jsonSchema(Document.parse('{ bsonType : "object", properties: { x : {type : "number", minimum : 2} } } '))) == [b, c]
     }
 }

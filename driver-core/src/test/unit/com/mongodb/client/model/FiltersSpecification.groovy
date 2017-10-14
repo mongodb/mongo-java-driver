@@ -24,6 +24,7 @@ import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonInt64
+import org.bson.BsonString
 import org.bson.BsonType
 import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider
@@ -45,6 +46,7 @@ import static com.mongodb.client.model.Filters.bitsAnyClear
 import static com.mongodb.client.model.Filters.bitsAnySet
 import static com.mongodb.client.model.Filters.elemMatch
 import static com.mongodb.client.model.Filters.eq
+import static com.mongodb.client.model.Filters.expr
 import static com.mongodb.client.model.Filters.geoIntersects
 import static com.mongodb.client.model.Filters.geoWithin
 import static com.mongodb.client.model.Filters.geoWithinBox
@@ -53,6 +55,7 @@ import static com.mongodb.client.model.Filters.geoWithinCenterSphere
 import static com.mongodb.client.model.Filters.geoWithinPolygon
 import static com.mongodb.client.model.Filters.gt
 import static com.mongodb.client.model.Filters.gte
+import static com.mongodb.client.model.Filters.jsonSchema
 import static com.mongodb.client.model.Filters.lt
 import static com.mongodb.client.model.Filters.lte
 import static com.mongodb.client.model.Filters.mod
@@ -273,6 +276,12 @@ class FiltersSpecification extends Specification {
     def 'should render $where'() {
         expect:
         toBson(where('this.credits == this.debits')) == parse('{$where: "this.credits == this.debits"}')
+    }
+
+    def 'should render $expr'() {
+        expect:
+        toBson(expr(new BsonDocument('$gt', new BsonArray([new BsonString('$spent'), new BsonString('$budget')])))) ==
+                parse('{$expr: { $gt: [ "$spent" , "$budget" ] } }')
     }
 
     def 'should render $geoWithin'() {
@@ -612,6 +621,15 @@ class FiltersSpecification extends Specification {
                                                                                          $minDistance: 1000.0,
                                                                                          }
                                                                                       }
+                                                                                    }''')
+    }
+
+    def 'should render $jsonSchema'() {
+        expect:
+        toBson(jsonSchema(new BsonDocument('bsonType', new BsonString('object')))) == parse( '''{
+                                                                                       $jsonSchema : {
+                                                                                          bsonType : "object"
+                                                                                       }
                                                                                     }''')
     }
 
