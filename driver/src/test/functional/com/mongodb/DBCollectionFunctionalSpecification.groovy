@@ -33,6 +33,7 @@ import spock.lang.Unroll
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static org.hamcrest.Matchers.contains
+import static org.hamcrest.Matchers.containsInAnyOrder
 import static spock.util.matcher.HamcrestSupport.that
 
 @SuppressWarnings('DuplicateMapLiteral')
@@ -348,7 +349,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
         then:
         distinctValues.size() == 5
-        that distinctValues, contains(null, 'a', 1, ~['b': 'c'], ~['list': [2, 'd', ~['e': 3]]])
+        that distinctValues, containsInAnyOrder(null, 'a', 1, ~['b': 'c'], ~['list': [2, 'd', ~['e': 3]]])
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')
