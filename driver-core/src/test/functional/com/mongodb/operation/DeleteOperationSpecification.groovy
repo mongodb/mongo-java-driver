@@ -18,7 +18,6 @@ package com.mongodb.operation
 
 import category.Slow
 import com.mongodb.MongoClientException
-import com.mongodb.MongoException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcernResult
 import com.mongodb.bulk.DeleteRequest
@@ -92,10 +91,6 @@ class DeleteOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         def exception = thrown(Exception)
-        if (async) {
-            exception instanceof MongoException
-            exception = exception.cause
-        }
         exception instanceof IllegalArgumentException
         exception.getMessage().startsWith('Collation not supported by server version:')
 

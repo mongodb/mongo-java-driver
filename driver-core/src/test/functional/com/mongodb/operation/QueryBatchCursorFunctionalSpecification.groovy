@@ -27,7 +27,6 @@ import com.mongodb.binding.ConnectionSource
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.connection.Connection
 import com.mongodb.connection.QueryResult
-import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -545,7 +544,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
                 }
 
                 def response = connection.command(getDatabaseName(), findCommand,
-                                                  slaveOk, new NoOpFieldNameValidator(),
+                                                  slaveOk, NO_OP_FIELD_NAME_VALIDATOR,
                                                   CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'))
                 cursorDocumentToQueryResult(response.getDocument('cursor'), connection.getDescription().getServerAddress())
             } else {

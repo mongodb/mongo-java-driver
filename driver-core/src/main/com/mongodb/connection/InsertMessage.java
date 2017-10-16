@@ -50,18 +50,17 @@ class InsertMessage extends LegacyMessage {
     }
 
     @Override
-    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput outputStream, final int messageStartPosition) {
+    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput outputStream) {
         writeInsertPrologue(outputStream);
         int firstDocumentPosition = outputStream.getPosition();
         for (int i = 0; i < insertRequestList.size(); i++) {
             BsonDocument document = insertRequestList.get(i).getDocument();
             int pos = outputStream.getPosition();
             addCollectibleDocument(document, outputStream, createValidator());
-            if (outputStream.getPosition() - messageStartPosition > getSettings().getMaxMessageSize()) {
+            if (outputStream.getPosition() > getSettings().getMaxMessageSize()) {
                 outputStream.truncateToPosition(pos);
                 return new EncodingMetadata(new InsertMessage(getCollectionName(), ordered, writeConcern,
-                                                          insertRequestList.subList(i, insertRequestList.size()), getSettings()),
-                                            firstDocumentPosition);
+                        insertRequestList.subList(i, insertRequestList.size()), getSettings()), firstDocumentPosition);
             }
         }
         return new EncodingMetadata(null, firstDocumentPosition);

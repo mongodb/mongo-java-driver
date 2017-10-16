@@ -18,21 +18,13 @@ package com.mongodb.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
-import com.mongodb.WriteConcernResult;
-import com.mongodb.async.SingleResultCallback;
-import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.DeleteRequest;
 import com.mongodb.bulk.WriteRequest;
-import com.mongodb.connection.AsyncConnection;
-import com.mongodb.connection.Connection;
-import com.mongodb.connection.SessionContext;
 
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
-import static com.mongodb.operation.OperationHelper.validateWriteRequestCollations;
 
 /**
  * An operation that deletes one or more documents from a collection.
@@ -67,55 +59,13 @@ public class DeleteOperation extends BaseWriteOperation {
     }
 
     @Override
-    protected WriteConcernResult executeProtocol(final Connection connection) {
-        validateWriteRequestCollations(connection, deleteRequests, getWriteConcern());
-        return connection.delete(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests);
-    }
-
-    @Override
-    protected void executeProtocolAsync(final AsyncConnection connection,
-                                        final SingleResultCallback<WriteConcernResult> callback) {
-        validateWriteRequestCollations(connection, deleteRequests, getWriteConcern(), new AsyncCallableWithConnection(){
-            @Override
-            public void call(final AsyncConnection connection, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    connection.deleteAsync(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests, callback);
-                }
-            }
-        });
-    }
-
-    @Override
-    protected BulkWriteResult executeCommandProtocol(final Connection connection, final SessionContext sessionContext) {
-        validateWriteRequestCollations(connection, deleteRequests, getWriteConcern());
-        return connection.deleteCommand(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests, sessionContext);
-    }
-
-    @Override
-    protected void executeCommandProtocolAsync(final AsyncConnection connection, final SessionContext sessionContext,
-                                               final SingleResultCallback<BulkWriteResult> callback) {
-        validateWriteRequestCollations(connection, deleteRequests, getWriteConcern(), new AsyncCallableWithConnection(){
-            @Override
-            public void call(final AsyncConnection connection, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    connection.deleteCommandAsync(getNamespace(), isOrdered(), getWriteConcern(), deleteRequests, sessionContext, callback);
-                }
-            }
-        });
+    protected List<? extends WriteRequest> getWriteRequests() {
+        return getDeleteRequests();
     }
 
     @Override
     protected WriteRequest.Type getType() {
         return WriteRequest.Type.DELETE;
-    }
-
-    @Override
-    protected int getCount(final BulkWriteResult bulkWriteResult) {
-        return bulkWriteResult.getDeletedCount();
     }
 
 }
