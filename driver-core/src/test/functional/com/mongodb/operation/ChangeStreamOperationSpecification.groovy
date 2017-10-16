@@ -107,7 +107,8 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         def expected = insertDocuments(helper, [1, 2])
 
         then:
-        nextAndClean(cursor, async) == expected
+        def next = nextAndClean(cursor, async)
+        next == expected
 
         when:
         expected = insertDocuments(helper, [3, 4, 5, 6, 7])
@@ -286,29 +287,25 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         helper.insertDocuments(docs.collect { BsonDocument.parse("{_id: $it, a: $it}") }, WriteConcern.MAJORITY)
         docs.collect {
             BsonDocument.parse("""{
-                "_id": {
-                    "documentKey": {"_id": $it}
-                },
                 "operationType": "insert",
                 "fullDocument": {"_id": $it, "a": $it},
-                "ns": {"coll": "${helper.getNamespace().getCollectionName()}", "db": "${helper.getNamespace().getDatabaseName()}"},
+                "ns": {"db": "${helper.getNamespace().getDatabaseName()}", "coll": "${helper.getNamespace().getCollectionName()}"},
                 "documentKey": {"_id": $it}
             }""")
         }
     }
 
     def tryNextAndClean(cursor, boolean async) {
-        removeTimestampAndUUID(tryNext(cursor, async))
+        removeId(tryNext(cursor, async))
     }
 
     def nextAndClean(cursor, boolean async) {
-        removeTimestampAndUUID(next(cursor, async))
+        removeId(next(cursor, async))
     }
 
-    def removeTimestampAndUUID(List<BsonDocument> next) {
+    def removeId(List<BsonDocument> next) {
         next?.collect { doc ->
-            doc.getDocument('_id').remove('clusterTime')
-            doc.getDocument('_id').remove('uuid')
+            doc.remove('_id')
             doc
         }
     }
