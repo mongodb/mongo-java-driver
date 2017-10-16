@@ -24,6 +24,7 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.text.DecimalFormatSymbols;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -313,8 +314,10 @@ public class ServerDescriptionTest {
 
     @Test
     public void testShortDescription() throws UnknownHostException {
+        final char decimalSeparator = new DecimalFormatSymbols().getDecimalSeparator();
         assertEquals("{address=127.0.0.1:27017, type=UNKNOWN, TagSet{[Tag{name='dc', value='ny'}, Tag{name='rack', value='1'}]}, "
-                     + "roundTripTime=5000.0 ms, state=CONNECTED, exception={java.lang.IllegalArgumentException: This is illegal}, "
+                     + "roundTripTime=5000" + decimalSeparator + "0 ms, "
+                     + "state=CONNECTED, exception={java.lang.IllegalArgumentException: This is illegal}, "
                      + "caused by {java.lang.NullPointerException: This is null}}",
                      builder().state(CONNECTED)
                               .address(new ServerAddress())
