@@ -37,7 +37,7 @@ class QueryMessage extends BaseQueryMessage {
     }
 
     @Override
-    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final int messageStartPosition) {
+    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput) {
         writeQueryPrologue(bsonOutput);
         int firstDocumentStartPosition = bsonOutput.getPosition();
         addDocument(queryDocument, bsonOutput, new NoOpFieldNameValidator());

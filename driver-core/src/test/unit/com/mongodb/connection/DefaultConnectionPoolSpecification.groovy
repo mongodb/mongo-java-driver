@@ -18,6 +18,7 @@ package com.mongodb.connection
 
 import category.Slow
 import com.mongodb.MongoException
+import com.mongodb.MongoNamespace
 import com.mongodb.MongoSocketReadException
 import com.mongodb.MongoSocketWriteException
 import com.mongodb.MongoTimeoutException
@@ -25,6 +26,7 @@ import com.mongodb.MongoWaitQueueFullException
 import com.mongodb.ServerAddress
 import com.mongodb.event.ConnectionPoolListener
 import com.mongodb.internal.connection.NoOpSessionContext
+import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.ByteBuf
@@ -179,8 +181,8 @@ class DefaultConnectionPoolSpecification extends Specification {
         c2 = pool.get()
 
         and:
-        c2.sendAndReceive(new SimpleCommandMessage('test', new BsonDocument('ping', new BsonInt32(1)), primary(),
-                MessageSettings.builder().serverVersion(new ServerVersion(0, 0)).build()),
+        c2.sendAndReceive(new CommandMessage(new MongoNamespace('test.coll'), new BsonDocument('ping', new BsonInt32(1)),
+                new NoOpFieldNameValidator(), primary(), MessageSettings.builder().serverVersion(new ServerVersion(0, 0)).build()),
                 new BsonDocumentCodec(), NoOpSessionContext.INSTANCE)
 
         then:
@@ -266,7 +268,8 @@ class DefaultConnectionPoolSpecification extends Specification {
         c2 = pool.get()
 
         and:
-        c2.sendAndReceiveAsync(new SimpleCommandMessage('test', new BsonDocument('ping', new BsonInt32(1)), primary(),
+        c2.sendAndReceiveAsync(new CommandMessage(new MongoNamespace('test.coll'),
+                new BsonDocument('ping', new BsonInt32(1)), new NoOpFieldNameValidator(), primary(),
                 MessageSettings.builder().serverVersion(new ServerVersion(0, 0)).build()),
                 new BsonDocumentCodec(), NoOpSessionContext.INSTANCE) {
             result, t -> e = t

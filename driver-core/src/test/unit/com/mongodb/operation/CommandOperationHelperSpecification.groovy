@@ -125,7 +125,7 @@ class CommandOperationHelperSpecification extends Specification {
 
         then:
         _ * connection.getDescription() >> connectionDescription
-        1 * connection.command(dbName, command, primary(), _, decoder, _)
+        1 * connection.command(dbName, command, _, primary(), decoder, _)
         1 * connection.release()
     }
 
@@ -150,7 +150,7 @@ class CommandOperationHelperSpecification extends Specification {
 
         then:
         _ * connection.getDescription() >> connectionDescription
-        1 * connection.command(dbName, command, readPreference, _, decoder, _)
+        1 * connection.command(dbName, command, _, readPreference, decoder, _)
         1 * connection.release()
 
         where:
@@ -178,7 +178,7 @@ class CommandOperationHelperSpecification extends Specification {
 
         then:
         _ * connection.getDescription() >> connectionDescription
-        1 * connection.commandAsync(dbName, command, primary(), _, decoder, _, _) >> { it[6].onResult(1, null) }
+        1 * connection.commandAsync(dbName, command, _, primary(), decoder, _, _) >> { it[6].onResult(1, null) }
         1 * connection.release()
     }
 
@@ -204,7 +204,7 @@ class CommandOperationHelperSpecification extends Specification {
 
         then:
         _ * connection.getDescription() >> connectionDescription
-        1 * connection.commandAsync(dbName, command, readPreference, _, decoder, _, _) >> { it[6].onResult(1, null) }
+        1 * connection.commandAsync(dbName, command, _, readPreference, decoder, _, _) >> { it[6].onResult(1, null) }
         1 * connection.release()
 
         where:

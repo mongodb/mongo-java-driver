@@ -5,55 +5,43 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package org.bson;
+package com.mongodb.connection;
 
-import org.bson.codecs.BsonTypeCodecMap;
-import org.bson.codecs.BsonValueCodecProvider;
-import org.bson.codecs.Codec;
-import org.bson.codecs.EncoderContext;
-import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.BsonBinary;
+import org.bson.BsonDbPointer;
+import org.bson.BsonReader;
+import org.bson.BsonRegularExpression;
+import org.bson.BsonTimestamp;
+import org.bson.BsonWriter;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
-import java.util.List;
-
 import static org.bson.assertions.Assertions.notNull;
-import static org.bson.codecs.BsonValueCodecProvider.getBsonTypeClassMap;
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
-/**
- * A BsonWriter implementation that delegates to another BsonWriter, appending a list of extra Bson elements to the end of the document.
- *
- * @since 3.6
- */
-public class ElementExtendingBsonWriter implements BsonWriter {
-    private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
-    private static final BsonTypeCodecMap CODEC_MAP = new BsonTypeCodecMap(getBsonTypeClassMap(), REGISTRY);
-    private static final EncoderContext ENCODER_CONTEXT = EncoderContext.builder().build();
 
+abstract class LevelCountingBsonWriter implements BsonWriter {
     private final BsonWriter bsonWriter;
-    private final List<BsonElement> extraElements;
-    private int level;
+    private int level = -1;
 
-    /**
-     * Construct an instance
-     *
-     * @param bsonWriter    the delegate
-     * @param extraElements the extra elements
-     */
-    public ElementExtendingBsonWriter(final BsonWriter bsonWriter, final List<BsonElement> extraElements) {
+    LevelCountingBsonWriter(final BsonWriter bsonWriter) {
         this.bsonWriter = notNull("bsonWriter", bsonWriter);
-        this.extraElements = notNull("extraElements", extraElements);
+    }
+
+    public int getCurrentLevel() {
+        return level;
+    }
+
+    public BsonWriter getBsonWriter() {
+        return bsonWriter;
     }
 
     @Override
@@ -71,19 +59,7 @@ public class ElementExtendingBsonWriter implements BsonWriter {
     @Override
     public void writeEndDocument() {
         level--;
-        if (level == 0) {
-            writeExtraElements();
-        }
         bsonWriter.writeEndDocument();
-    }
-
-    @SuppressWarnings({"unchecked", "rawtypes"})
-    private void writeExtraElements() {
-        for (BsonElement cur : extraElements) {
-            bsonWriter.writeName(cur.getName());
-            Codec codec = CODEC_MAP.get(cur.getValue().getBsonType());
-            codec.encode(bsonWriter, cur.getValue(), ENCODER_CONTEXT);
-        }
     }
 
     @Override
@@ -298,16 +274,7 @@ public class ElementExtendingBsonWriter implements BsonWriter {
 
     @Override
     public void pipe(final BsonReader reader) {
-        if (level == 0) {
-            bsonWriter.pipe(reader, extraElements);
-        } else {
-            bsonWriter.pipe(reader);
-        }
-    }
-
-    @Override
-    public void pipe(final BsonReader reader, final List<BsonElement> extraElements) {
-        bsonWriter.pipe(reader, extraElements);
+        bsonWriter.pipe(reader);
     }
 
     @Override

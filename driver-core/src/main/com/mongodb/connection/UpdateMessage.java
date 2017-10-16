@@ -44,7 +44,7 @@ class UpdateMessage extends LegacyMessage {
     }
 
     @Override
-    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final int messageStartPosition) {
+    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput) {
         bsonOutput.writeInt32(0); // reserved
         bsonOutput.writeCString(getCollectionName());
 

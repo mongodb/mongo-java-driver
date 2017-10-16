@@ -36,7 +36,7 @@ class DeleteMessage extends LegacyMessage {
     }
 
     @Override
-    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final int messageStartPosition) {
+    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput) {
         DeleteRequest deleteRequest = deleteRequests.get(0);
         bsonOutput.writeInt32(0); // reserved
         bsonOutput.writeCString(getCollectionName());

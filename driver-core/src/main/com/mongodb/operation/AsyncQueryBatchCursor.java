@@ -32,6 +32,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
+import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 
@@ -52,6 +53,7 @@ import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 
 class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
+    private static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator();
 
     private final MongoNamespace namespace;
     private final int limit;
@@ -162,8 +164,8 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
     private void getMore(final AsyncConnection connection, final ServerCursor cursor, final SingleResultCallback<List<T>> callback,
                          final boolean tryNext) {
         if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
-            connection.commandAsync(namespace.getDatabaseName(), asGetMoreCommandDocument(cursor.getId()), ReadPreference.primary(),
-                                    new NoOpFieldNameValidator(), CommandResultDocumentCodec.create(decoder, "nextBatch"),
+            connection.commandAsync(namespace.getDatabaseName(), asGetMoreCommandDocument(cursor.getId()), NO_OP_FIELD_NAME_VALIDATOR,
+                    ReadPreference.primary(), CommandResultDocumentCodec.create(decoder, "nextBatch"),
                     connectionSource.getSessionContext(), new CommandResultSingleResultCallback(connection, cursor, callback, tryNext));
 
         } else {
@@ -215,8 +217,8 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
 
     private void killCursorAsynchronouslyAndReleaseConnectionAndSource(final AsyncConnection connection, final ServerCursor localCursor) {
         if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
-            connection.commandAsync(namespace.getDatabaseName(), asKillCursorsCommandDocument(localCursor), ReadPreference.primary(),
-                    new NoOpFieldNameValidator(), new BsonDocumentCodec(), connectionSource.getSessionContext(),
+            connection.commandAsync(namespace.getDatabaseName(), asKillCursorsCommandDocument(localCursor), NO_OP_FIELD_NAME_VALIDATOR,
+                    ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getSessionContext(),
                     new SingleResultCallback<BsonDocument>() {
                         @Override
                         public void onResult(final BsonDocument result, final Throwable t) {

@@ -100,7 +100,7 @@
     </Match>
 
     <Match>
-        <Class name="~com.mongodb.connection.ByteBufBsonDocument.*"/>
+        <Class name="~com.mongodb.connection.AbstractByteBufBsonDocument.*"/>
         <Bug pattern="NP_BOOLEAN_RETURN_NULL"/>
     </Match>
 

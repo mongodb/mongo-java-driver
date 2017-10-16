@@ -21,7 +21,6 @@ import org.bson.io.BsonOutput;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
-import java.util.List;
 import java.util.Stack;
 
 import static java.lang.String.format;
@@ -98,6 +97,14 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
      */
     public BsonOutput getBsonOutput() {
         return bsonOutput;
+    }
+
+    /**
+     * @return the BsonBinaryWriterSettings
+     * @since 3.6
+     */
+    public BsonBinaryWriterSettings getBinaryWriterSettings() {
+        return binaryWriterSettings;
     }
 
     @Override
@@ -296,17 +303,6 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     @Override
     public void pipe(final BsonReader reader) {
         notNull("reader", reader);
-        pipeDocument(reader, null);
-    }
-
-    @Override
-    public void pipe(final BsonReader reader, final List<BsonElement> extraElements) {
-        notNull("reader", reader);
-        notNull("extraElements", extraElements);
-        pipeDocument(reader, extraElements);
-    }
-
-    private void pipeDocument(final BsonReader reader, final List<BsonElement> extraElements) {
         if (reader instanceof BsonBinaryReader) {
             BsonBinaryReader binaryReader = (BsonBinaryReader) reader;
             if (getState() == State.VALUE) {
@@ -326,16 +322,6 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
 
             binaryReader.setState(AbstractBsonReader.State.TYPE);
 
-            if (extraElements != null) {
-                bsonOutput.truncateToPosition(bsonOutput.getPosition() - 1);
-                setContext(new Context(getContext(), BsonContextType.DOCUMENT, pipedDocumentStartPosition));
-                setState(State.NAME);
-                pipeExtraElements(extraElements);
-                bsonOutput.writeByte(0);
-                bsonOutput.writeInt32(pipedDocumentStartPosition, bsonOutput.getPosition() - pipedDocumentStartPosition);
-                setContext(getContext().getParentContext());
-            }
-
             if (getContext() == null) {
                 setState(State.DONE);
             } else {
@@ -345,8 +331,8 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
                 }
                 setState(getNextState());
             }
-        } else if (extraElements != null) {
-            super.pipe(reader, extraElements);
+
+            validateSize(bsonOutput.getPosition() - pipedDocumentStartPosition);
         } else {
             super.pipe(reader);
         }
@@ -399,11 +385,15 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
 
     private void backpatchSize() {
         int size = bsonOutput.getPosition() - getContext().startPosition;
+        validateSize(size);
+        bsonOutput.writeInt32(bsonOutput.getPosition() - size, size);
+    }
+
+    private void validateSize(final int size) {
         if (size > maxDocumentSizeStack.peek()) {
             throw new BsonSerializationException(format("Document size of %d is larger than maximum of %d.", size,
                     maxDocumentSizeStack.peek()));
         }
-        bsonOutput.writeInt32(bsonOutput.getPosition() - size, size);
     }
 
     protected class Context extends AbstractBsonWriter.Context {

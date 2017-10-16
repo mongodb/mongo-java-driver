@@ -115,9 +115,8 @@ class ServerSessionPool {
         Connection connection = cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.primaryPreferred())).getConnection();
         try {
             connection.command("admin",
-                    new BsonDocument("endSessions", new BsonArray(closedSessionIdentifiers)),
-                    ReadPreference.primaryPreferred(), new NoOpFieldNameValidator(),
-                    new BsonDocumentCodec(), NoOpSessionContext.INSTANCE);
+                    new BsonDocument("endSessions", new BsonArray(closedSessionIdentifiers)), new NoOpFieldNameValidator(),
+                    ReadPreference.primaryPreferred(), new BsonDocumentCodec(), NoOpSessionContext.INSTANCE);
         } catch (MongoException e) {
             // ignore exceptions
         } finally {

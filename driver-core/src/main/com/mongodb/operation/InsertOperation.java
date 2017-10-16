@@ -18,14 +18,8 @@ package com.mongodb.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
-import com.mongodb.WriteConcernResult;
-import com.mongodb.async.SingleResultCallback;
-import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.InsertRequest;
 import com.mongodb.bulk.WriteRequest;
-import com.mongodb.connection.AsyncConnection;
-import com.mongodb.connection.Connection;
-import com.mongodb.connection.SessionContext;
 
 import java.util.List;
 
@@ -65,35 +59,13 @@ public class InsertOperation extends BaseWriteOperation {
     }
 
     @Override
-    protected WriteConcernResult executeProtocol(final Connection connection) {
-        return connection.insert(getNamespace(), isOrdered(), getWriteConcern(), insertRequests);
-    }
-
-    @Override
-    protected void executeProtocolAsync(final AsyncConnection connection, final SingleResultCallback<WriteConcernResult> callback) {
-        connection.insertAsync(getNamespace(), isOrdered(), getWriteConcern(), insertRequests, callback);
-    }
-
-    @Override
-    protected BulkWriteResult executeCommandProtocol(final Connection connection, final SessionContext sessionContext) {
-        return connection.insertCommand(getNamespace(), isOrdered(), getWriteConcern(), getBypassDocumentValidation(), insertRequests,
-                sessionContext);
-    }
-
-    @Override
-    protected void executeCommandProtocolAsync(final AsyncConnection connection, final SessionContext sessionContext,
-                                               final SingleResultCallback<BulkWriteResult> callback) {
-        connection.insertCommandAsync(getNamespace(), isOrdered(), getWriteConcern(), getBypassDocumentValidation(), insertRequests,
-                sessionContext, callback);
-    }
-
-    @Override
     protected WriteRequest.Type getType() {
         return WriteRequest.Type.INSERT;
     }
 
     @Override
-    protected int getCount(final BulkWriteResult bulkWriteResult) {
-        return 0;
+    protected List<? extends WriteRequest> getWriteRequests() {
+        return getInsertRequests();
     }
+
 }

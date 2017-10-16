@@ -255,14 +255,14 @@ class ServerSessionPoolSpecification extends Specification {
         1 * cluster.selectServer { (it as ReadPreferenceServerSelector).readPreference == primaryPreferred() }  >> server
         1 * connection.command('admin',
                 new BsonDocument('endSessions', new BsonArray(sessions*.getIdentifier())),
-                primaryPreferred(), { it instanceof NoOpFieldNameValidator },
+                { it instanceof NoOpFieldNameValidator }, primaryPreferred(),
                 { it instanceof BsonDocumentCodec }, NoOpSessionContext.INSTANCE) >> new BsonDocument()
         1 * connection.release()
 
         1 * cluster.selectServer { (it as ReadPreferenceServerSelector).readPreference == primaryPreferred() }  >> server
         1 * connection.command('admin',
                 new BsonDocument('endSessions', new BsonArray([oneOverBatchSizeSession.getIdentifier()])),
-                primaryPreferred(), { it instanceof NoOpFieldNameValidator },
+                { it instanceof NoOpFieldNameValidator }, primaryPreferred(),
                 { it instanceof BsonDocumentCodec }, NoOpSessionContext.INSTANCE) >> new BsonDocument()
         1 * connection.release()
     }

@@ -27,7 +27,6 @@ import com.mongodb.connection.netty.NettyStreamFactory
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.event.CommandSucceededEvent
 import com.mongodb.internal.connection.NoOpSessionContext
-import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonArray
 import org.bson.BsonBinary
 import org.bson.BsonBoolean
@@ -90,9 +89,8 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
 
         cleanup:
         // force acknowledgement
-        new SimpleCommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
-                            new NoOpFieldNameValidator(), new BsonDocumentCodec())
-                .readPreference(ReadPreference.primary())
+        new CommandProtocolImpl(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
+                            NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec())
                 .sessionContext(NoOpSessionContext.INSTANCE)
                 .execute(connection)
 
@@ -141,9 +139,8 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
 
         cleanup:
         // force acknowledgement
-        new SimpleCommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
-                            new NoOpFieldNameValidator(), new BsonDocumentCodec())
-                .readPreference(ReadPreference.primary())
+        new CommandProtocolImpl(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
+                NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec())
                 .sessionContext(NoOpSessionContext.INSTANCE)
                 .execute(connection)
 
@@ -179,9 +176,8 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
 
         cleanup:
         // force acknowledgement
-        new SimpleCommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
-                            new NoOpFieldNameValidator(), new BsonDocumentCodec())
-                .readPreference(ReadPreference.primary())
+        new CommandProtocolImpl(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
+                NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec())
                 .sessionContext(NoOpSessionContext.INSTANCE)
                 .execute(connection)
 

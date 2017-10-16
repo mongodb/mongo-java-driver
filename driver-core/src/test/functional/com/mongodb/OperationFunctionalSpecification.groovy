@@ -26,10 +26,10 @@ import com.mongodb.binding.ReadBinding
 import com.mongodb.binding.SingleConnectionBinding
 import com.mongodb.binding.WriteBinding
 import com.mongodb.bulk.InsertRequest
+import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CollationAlternate
 import com.mongodb.client.model.CollationCaseFirst
 import com.mongodb.client.model.CollationMaxVariable
-import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CollationStrength
 import com.mongodb.client.test.CollectionHelper
 import com.mongodb.client.test.Worker
@@ -39,6 +39,7 @@ import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerHelper
 import com.mongodb.connection.ServerVersion
+import com.mongodb.internal.validator.NoOpFieldNameValidator
 import com.mongodb.operation.AsyncReadOperation
 import com.mongodb.operation.AsyncWriteOperation
 import com.mongodb.operation.InsertOperation
@@ -46,6 +47,7 @@ import com.mongodb.operation.ReadOperation
 import com.mongodb.operation.WriteOperation
 import org.bson.BsonDocument
 import org.bson.Document
+import org.bson.FieldNameValidator
 import org.bson.codecs.DocumentCodec
 import spock.lang.Shared
 import spock.lang.Specification
@@ -70,11 +72,11 @@ class OperationFunctionalSpecification extends Specification {
     }
 
     String getDatabaseName() {
-        ClusterFixture.getDefaultDatabaseName();
+        ClusterFixture.getDefaultDatabaseName()
     }
 
     String getCollectionName() {
-        getClass().getName();
+        getClass().getName()
     }
 
     MongoNamespace getNamespace() {
@@ -82,13 +84,13 @@ class OperationFunctionalSpecification extends Specification {
     }
 
     void acknowledgeWrite(final SingleConnectionBinding binding) {
-        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, [new InsertRequest(new BsonDocument())]).execute(binding);
-        binding.release();
+        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, [new InsertRequest(new BsonDocument())]).execute(binding)
+        binding.release()
     }
 
     void acknowledgeWrite(final AsyncSingleConnectionBinding binding) {
-        executeAsync(new InsertOperation(getNamespace(), true, ACKNOWLEDGED, [new InsertRequest(new BsonDocument())]), binding);
-        binding.release();
+        executeAsync(new InsertOperation(getNamespace(), true, ACKNOWLEDGED, [new InsertRequest(new BsonDocument())]), binding)
+        binding.release()
     }
 
     CollectionHelper<Document> getCollectionHelper() {
@@ -197,7 +199,7 @@ class OperationFunctionalSpecification extends Specification {
         if (checkCommand) {
             1 * connection.command(_, expectedCommand, _, _, _, _) >> { result }
         } else if (checkSlaveOk) {
-            1 * connection.command(_, _, readPreference, _, _, _) >> { result }
+            1 * connection.command(_, _, _, readPreference, _, _) >> { result }
         }
 
         0 * connection.command(_, _, _, _, _) >> {
@@ -238,7 +240,7 @@ class OperationFunctionalSpecification extends Specification {
         if (checkCommand) {
             1 * connection.commandAsync(_, expectedCommand, _, _, _, _, _) >> { it[6].onResult(result, null) }
         } else if (checkSlaveOk) {
-            1 * connection.commandAsync(_, _, readPreference, _, _, _, _) >> { it[6].onResult(result, null) }
+            1 * connection.commandAsync(_, _, _, readPreference, _, _, _) >> { it[6].onResult(result, null) }
         }
 
         0 * connection.commandAsync(_, _, _, _, _, _) >> {
@@ -278,4 +280,6 @@ class OperationFunctionalSpecification extends Specification {
             .locale('en')
             .collationStrength(CollationStrength.SECONDARY)
             .build()
+
+    static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator()
 }

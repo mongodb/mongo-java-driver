@@ -208,7 +208,7 @@ final class CommandOperationHelper {
                                                           final Connection connection, final ReadPreference readPreference,
                                                           final CommandTransformer<D, T> transformer, final SessionContext sessionContext) {
 
-        return transformer.apply(connection.command(database, command, readPreference, fieldNameValidator, decoder, sessionContext),
+        return transformer.apply(connection.command(database, command, fieldNameValidator, readPreference, decoder, sessionContext),
                 connection.getDescription().getServerAddress());
     }
 
@@ -373,8 +373,8 @@ final class CommandOperationHelper {
                                                                   final CommandTransformer<D, T> transformer,
                                                                   final SessionContext sessionContext,
                                                                   final SingleResultCallback<T> callback) {
-        connection.commandAsync(database, command,
-                readPreference, fieldNameValidator, decoder, sessionContext, new SingleResultCallback<D>() {
+        connection.commandAsync(database, command, fieldNameValidator, readPreference, decoder, sessionContext,
+                new SingleResultCallback<D>() {
                     @Override
                     public void onResult(final D result, final Throwable t) {
                         if (t != null) {
@@ -449,8 +449,7 @@ final class CommandOperationHelper {
                             callback.onResult(null, t);
                         } else {
                             final SingleResultCallback<R> wrappedCallback = releasingCallback(callback, source, connection);
-                            connection.commandAsync(database, command,
-                                                    readPreference, fieldNameValidator, decoder, sessionContext,
+                            connection.commandAsync(database, command, fieldNameValidator, readPreference, decoder, sessionContext,
                                     new SingleResultCallback<D>() {
                                         @Override
                                         public void onResult(final D response, final Throwable t) {

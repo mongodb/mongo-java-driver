@@ -56,6 +56,8 @@ public class MaxMessageSizeTest {
         message.encode(buffer, NoOpSessionContext.INSTANCE);
         RequestMessage next = message.getEncodingMetadata().getNextMessage();
         assertNotNull(next);
+
+        buffer.truncateToPosition(0);
         next.encode(buffer, NoOpSessionContext.INSTANCE);
         assertNull(next.getEncodingMetadata().getNextMessage());
     }

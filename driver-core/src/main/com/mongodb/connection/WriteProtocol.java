@@ -26,6 +26,7 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.event.CommandListener;
 import com.mongodb.internal.connection.NoOpSessionContext;
+import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -85,10 +86,7 @@ abstract class WriteProtocol implements LegacyProtocol<WriteConcernResult> {
 
                 messageId = requestMessage.getId();
                 if (shouldAcknowledge(requestMessage.getEncodingMetadata().getNextMessage())) {
-                    SimpleCommandMessage getLastErrorMessage = new SimpleCommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
-                            COMMAND_COLLECTION_NAME).getFullName(),
-                            createGetLastErrorCommandDocument(), ReadPreference.primary(),
-                            getMessageSettings(connection.getDescription()));
+                    CommandMessage getLastErrorMessage = getLastErrorCommandMessage(connection);
                     getLastErrorMessage.encode(bsonOutput, NoOpSessionContext.INSTANCE);
                     messageId = getLastErrorMessage.getId();
                 }
@@ -148,10 +146,7 @@ abstract class WriteProtocol implements LegacyProtocol<WriteConcernResult> {
             sentCommandStartedEvent = true;
 
             if (shouldAcknowledge(encodingMetadata.getNextMessage())) {
-                SimpleCommandMessage getLastErrorMessage = new SimpleCommandMessage(new MongoNamespace(getNamespace().getDatabaseName(),
-                        COMMAND_COLLECTION_NAME).getFullName(),
-                        createGetLastErrorCommandDocument(), ReadPreference.primary(),
-                        getMessageSettings(connection.getDescription()));
+                CommandMessage getLastErrorMessage = getLastErrorCommandMessage(connection);
                 getLastErrorMessage.encode(bsonOutput, NoOpSessionContext.INSTANCE);
                 SingleResultCallback<ResponseBuffers> receiveCallback = new WriteResultCallback(callback,
                         new BsonDocumentCodec(),
@@ -183,7 +178,6 @@ abstract class WriteProtocol implements LegacyProtocol<WriteConcernResult> {
         }
     }
 
-
     protected abstract BsonDocument getAsWriteCommand(ByteBufferBsonOutput bsonOutput, int firstDocumentPosition);
 
     protected BsonDocument getBaseCommandDocument(final String commandName) {
@@ -208,6 +202,12 @@ abstract class WriteProtocol implements LegacyProtocol<WriteConcernResult> {
         }
     }
 
+
+    private CommandMessage getLastErrorCommandMessage(final InternalConnection connection) {
+        return new CommandMessage(new MongoNamespace(getNamespace().getDatabaseName(), COMMAND_COLLECTION_NAME),
+                createGetLastErrorCommandDocument(), new NoOpFieldNameValidator(), ReadPreference.primary(),
+                getMessageSettings(connection.getDescription()));
+    }
 
     private void sendStartedEvent(final InternalConnection connection, final RequestMessage message,
                                   final RequestMessage.EncodingMetadata encodingMetadata, final ByteBufferBsonOutput bsonOutput) {

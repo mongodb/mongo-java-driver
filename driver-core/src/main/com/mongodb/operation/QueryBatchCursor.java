@@ -31,6 +31,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
+import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 
@@ -46,6 +47,7 @@ import static com.mongodb.operation.QueryHelper.translateCommandException;
 import static java.util.Collections.singletonList;
 
 class QueryBatchCursor<T> implements BatchCursor<T> {
+    private static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator();
     private final MongoNamespace namespace;
     private final int limit;
     private final Decoder<T> decoder;
@@ -210,8 +212,8 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
                 try {
                     initFromCommandResult(connection.command(namespace.getDatabaseName(),
                                                              asGetMoreCommandDocument(),
+                                                             NO_OP_FIELD_NAME_VALIDATOR,
                                                              ReadPreference.primary(),
-                                                             new NoOpFieldNameValidator(),
                                                              CommandResultDocumentCodec.create(decoder, "nextBatch"),
                                                              connectionSource.getSessionContext()));
                 } catch (MongoCommandException e) {
@@ -277,8 +279,8 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
         if (serverCursor != null) {
             notNull("connection", connection);
             if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
-                connection.command(namespace.getDatabaseName(), asKillCursorsCommandDocument(), ReadPreference.primary(),
-                        new NoOpFieldNameValidator(), new BsonDocumentCodec(), connectionSource.getSessionContext());
+                connection.command(namespace.getDatabaseName(), asKillCursorsCommandDocument(), NO_OP_FIELD_NAME_VALIDATOR,
+                        ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getSessionContext());
             } else {
                 connection.killCursor(namespace, singletonList(serverCursor.getId()));
             }

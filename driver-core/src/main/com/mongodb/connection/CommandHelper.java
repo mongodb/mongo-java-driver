@@ -20,6 +20,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.MongoServerException;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.internal.connection.NoOpSessionContext;
+import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
@@ -43,14 +44,8 @@ final class CommandHelper {
 
     static void executeCommandAsync(final String database, final BsonDocument command, final InternalConnection internalConnection,
                                     final SingleResultCallback<BsonDocument> callback) {
-        final SimpleCommandMessage message =
-                new SimpleCommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(), command, primary(),
-                                                MessageSettings.builder()
-                                                        .serverVersion(internalConnection.getDescription().getServerVersion())
-                                                        .build());
-
-        internalConnection.sendAndReceiveAsync(message, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE,
-                new SingleResultCallback<BsonDocument>() {
+        internalConnection.sendAndReceiveAsync(getCommandMessage(database, command, internalConnection), new BsonDocumentCodec(),
+                NoOpSessionContext.INSTANCE, new SingleResultCallback<BsonDocument>() {
                     @Override
                     public void onResult(final BsonDocument result, final Throwable t) {
                         if (t != null) {
@@ -78,17 +73,20 @@ final class CommandHelper {
 
     private static BsonDocument sendAndReceive(final String database, final BsonDocument command,
                                                final InternalConnection internalConnection) {
-        SimpleCommandMessage message = new SimpleCommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME).getFullName(),
-                                                                       command, primary(),
-                                                                       MessageSettings
-                                                                               .builder()
-                                                                               // Note: server version will be 0.0 at this point when called
-                                                                               // from InternalConnectionInitializer, which means OP_MSG
-                                                                               // will not be used
-                                                                               .serverVersion(internalConnection.getDescription()
-                                                                                                      .getServerVersion())
-                                                                               .build());
-        return internalConnection.sendAndReceive(message, new BsonDocumentCodec(), NoOpSessionContext.INSTANCE);
+        return internalConnection.sendAndReceive(getCommandMessage(database, command, internalConnection), new BsonDocumentCodec(),
+                NoOpSessionContext.INSTANCE);
+    }
+
+    private static CommandMessage getCommandMessage(final String database, final BsonDocument command,
+                                                    final InternalConnection internalConnection) {
+        return new CommandMessage(new MongoNamespace(database, COMMAND_COLLECTION_NAME), command, new NoOpFieldNameValidator(), primary(),
+                MessageSettings
+                        .builder()
+                         // Note: server version will be 0.0 at this point when called from InternalConnectionInitializer,
+                         // which means OP_MSG will not be used
+                        .serverVersion(internalConnection.getDescription().getServerVersion())
+                        .build()
+        );
     }
 
     private CommandHelper() {

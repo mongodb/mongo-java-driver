@@ -36,7 +36,7 @@ class KillCursorsMessage extends LegacyMessage {
     }
 
     @Override
-    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final int messageStartPosition) {
+    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput) {
         writeKillCursorsPrologue(cursors.size(), bsonOutput);
         for (final Long cur : cursors) {
             bsonOutput.writeInt64(cur);

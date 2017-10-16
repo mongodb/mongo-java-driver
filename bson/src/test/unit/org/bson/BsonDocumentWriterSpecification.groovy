@@ -46,22 +46,4 @@ class BsonDocumentWriterSpecification extends Specification {
         then:
         document == documentWithValuesOfEveryType()
     }
-
-    def 'should pipe all types with extra elements'() {
-        given:
-        def document = new BsonDocument()
-        def reader = new BsonDocumentReader(new BsonDocument())
-        def writer = new BsonDocumentWriter(document)
-
-        def extraElements = []
-        for (def entry : documentWithValuesOfEveryType()) {
-            extraElements.add(new BsonElement(entry.getKey(), entry.getValue()))
-        }
-
-        when:
-        writer.pipe(reader, extraElements)
-
-        then:
-        document == documentWithValuesOfEveryType()
-    }
 }

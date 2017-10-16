@@ -22,7 +22,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonElement;
 import org.bson.BsonWriter;
 import org.bson.BsonWriterSettings;
-import org.bson.ElementExtendingBsonWriter;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.Codec;
@@ -46,7 +45,7 @@ abstract class RequestMessage {
 
     // Allow an extra 16K to the maximum allowed size of a query or command document, so that, for example,
     // a 16M document can be upserted via findAndModify
-    private static final int QUERY_DOCUMENT_HEADROOM = 16 * 1024;
+    private static final int DOCUMENT_HEADROOM = 16 * 1024;
 
     private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
 
@@ -148,7 +147,7 @@ abstract class RequestMessage {
         notNull("sessionContext", sessionContext);
         int messageStartPosition = bsonOutput.getPosition();
         writeMessagePrologue(bsonOutput);
-        EncodingMetadata encodingMetadata = encodeMessageBodyWithMetadata(bsonOutput, messageStartPosition, sessionContext);
+        EncodingMetadata encodingMetadata = encodeMessageBodyWithMetadata(bsonOutput, sessionContext);
         backpatchMessageLength(messageStartPosition, bsonOutput);
         this.encodingMetadata = encodingMetadata;
     }
@@ -178,11 +177,10 @@ abstract class RequestMessage {
      * Encode the message body to the given output.
      *
      * @param bsonOutput the output
-     * @param messageStartPosition the start position of the message
+     * @param sessionContext the session context
      * @return the encoding metadata
      */
-    protected abstract EncodingMetadata encodeMessageBodyWithMetadata(BsonOutput bsonOutput, int messageStartPosition,
-                                                                      SessionContext sessionContext);
+    protected abstract EncodingMetadata encodeMessageBodyWithMetadata(BsonOutput bsonOutput, SessionContext sessionContext);
 
     /**
      * Appends a document to the message.
@@ -194,15 +192,14 @@ abstract class RequestMessage {
     protected void addDocument(final BsonDocument document, final BsonOutput bsonOutput,
                                final FieldNameValidator validator) {
         addDocument(document, getCodec(document), EncoderContext.builder().build(), bsonOutput, validator,
-                    settings.getMaxDocumentSize() + QUERY_DOCUMENT_HEADROOM, null);
+                    settings.getMaxDocumentSize() + DOCUMENT_HEADROOM, null);
     }
 
     protected void addDocument(final BsonDocument document, final BsonOutput bsonOutput,
                                final FieldNameValidator validator, final List<BsonElement> extraElements) {
         addDocument(document, getCodec(document), EncoderContext.builder().build(), bsonOutput, validator,
-                settings.getMaxDocumentSize() + QUERY_DOCUMENT_HEADROOM, extraElements);
+                settings.getMaxDocumentSize() + DOCUMENT_HEADROOM, extraElements);
     }
-
 
     /**
      * Appends a document to the message that is intended for storage in a collection.
@@ -211,8 +208,7 @@ abstract class RequestMessage {
      * @param bsonOutput the output
      * @param validator the field name validator
      */
-    protected void addCollectibleDocument(final BsonDocument document, final BsonOutput bsonOutput,
-                                          final FieldNameValidator validator) {
+    protected void addCollectibleDocument(final BsonDocument document, final BsonOutput bsonOutput, final FieldNameValidator validator) {
         addDocument(document, getCodec(document), EncoderContext.builder().isEncodingCollectibleDocument(true).build(), bsonOutput,
                     validator, settings.getMaxDocumentSize(), null);
     }
@@ -242,13 +238,14 @@ abstract class RequestMessage {
         return (Codec<BsonDocument>) REGISTRY.get(document.getClass());
     }
 
+    @SuppressWarnings("unchecked")
     private <T> void addDocument(final T obj, final Encoder<T> encoder, final EncoderContext encoderContext,
                                  final BsonOutput bsonOutput, final FieldNameValidator validator, final int maxDocumentSize,
                                  final List<BsonElement> extraElements) {
-        BsonWriter writer = new BsonBinaryWriter(new BsonWriterSettings(),
-                                                        new BsonBinaryWriterSettings(maxDocumentSize), bsonOutput, validator);
+        BsonWriter writer = new BsonBinaryWriter(new BsonWriterSettings(), new BsonBinaryWriterSettings(maxDocumentSize), bsonOutput,
+                validator);
         if (extraElements != null) {
-            writer = new ElementExtendingBsonWriter(writer, extraElements);
+            writer = new ElementExtendingBsonWriter((BsonBinaryWriter) writer, extraElements);
         }
         encoder.encode(writer, obj, encoderContext);
     }

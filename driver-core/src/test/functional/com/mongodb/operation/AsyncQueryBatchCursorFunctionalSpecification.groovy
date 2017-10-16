@@ -32,7 +32,6 @@ import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.connection.AsyncConnection
 import com.mongodb.connection.Connection
 import com.mongodb.connection.QueryResult
-import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -367,7 +366,7 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
 
             def futureResultCallback = new FutureResultCallback<BsonDocument>();
             connection.commandAsync(getDatabaseName(), findCommand,
-                    ReadPreference.secondaryPreferred(), new NoOpFieldNameValidator(),
+                    NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.secondaryPreferred(),
                     CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'), binding.sessionContext,
                     futureResultCallback)
             def response = futureResultCallback.get(60, SECONDS)

@@ -33,6 +33,7 @@ import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
 import com.mongodb.operation.AggregateOperation;
 import com.mongodb.operation.BatchCursor;
+import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.CountOperation;
 import com.mongodb.operation.CreateCollectionOperation;
@@ -82,6 +83,10 @@ public final class CollectionHelper<T> {
     public CollectionHelper(final Codec<T> codec, final MongoNamespace namespace) {
         this.codec = codec;
         this.namespace = namespace;
+    }
+
+    public T isMaster() {
+        return new CommandReadOperation<T>("admin", BsonDocument.parse("{isMaster: 1}"), codec).execute(getBinding());
     }
 
     public static void drop(final MongoNamespace namespace) {

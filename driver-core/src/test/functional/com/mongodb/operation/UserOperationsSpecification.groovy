@@ -44,7 +44,6 @@ import com.mongodb.connection.ServerVersion
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SocketStreamFactory
 import com.mongodb.connection.StreamFactory
-import com.mongodb.internal.validator.NoOpFieldNameValidator
 import com.mongodb.selector.WritableServerSelector
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -367,7 +366,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
 
         then:
         _ * connection.getDescription() >> helper.twoSixConnectionDescription
-        1 * connection.command(helper.dbName, _, readPreference, _, _, _) >> helper.cursorResult
+        1 * connection.command(helper.dbName, _, _, readPreference, _, _) >> helper.cursorResult
 
         where:
         readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
@@ -390,7 +389,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
 
         then:
         _ * connection.getDescription() >> helper.twoSixConnectionDescription
-        1 * connection.commandAsync(helper.dbName, _, readPreference, _, _, _, _) >> {
+        1 * connection.commandAsync(helper.dbName, _, _, readPreference, _, _, _) >> {
             it[6].onResult(helper.cursorResult, null) }
 
         where:
@@ -439,7 +438,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
     }
 
     def testConnection(Connection connection) {
-        connection.command('admin', new BsonDocument('ismaster', new BsonInt32(1)), false, new NoOpFieldNameValidator(),
+        connection.command('admin', new BsonDocument('ismaster', new BsonInt32(1)), false, NO_OP_FIELD_NAME_VALIDATOR,
                            new BsonDocumentCodec())
     }
 }
