@@ -51,6 +51,8 @@ public class ServerDescription {
 
     private static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
 
+    private static final DecimalFormatSymbols DECIMAL_FORMAT_SYMBOLS =  initializeDecimalFormatSymbols();
+
     private final ServerAddress address;
 
     private final ServerType type;
@@ -78,6 +80,18 @@ public class ServerDescription {
     private final Integer logicalSessionTimeoutMinutes;
 
     private final Throwable exception;
+
+    /**
+     * Initialize the character used for decimal separator
+     *
+     * @return the character used for decimal separator
+     * @since 3.6
+     */
+    private static DecimalFormatSymbols initializeDecimalFormatSymbols() {
+        DecimalFormatSymbols decimalFormatSymbols = new DecimalFormatSymbols();
+        decimalFormatSymbols.setDecimalSeparator('.');
+        return decimalFormatSymbols;
+    }
 
     /**
      * Gets a Builder for creating a new ServerDescription instance.
@@ -913,9 +927,7 @@ public class ServerDescription {
 
 
     private String getRoundTripFormattedInMilliseconds() {
-        DecimalFormatSymbols decimalFormatSymbols = new DecimalFormatSymbols();
-        decimalFormatSymbols.setDecimalSeparator('.');
-        return new DecimalFormat("#0.0", decimalFormatSymbols).format(roundTripTimeNanos / 1000.0 / 1000.0);
+        return new DecimalFormat("#0.0", DECIMAL_FORMAT_SYMBOLS).format(roundTripTimeNanos / 1000.0 / 1000.0);
     }
 
     ServerDescription(final Builder builder) {
