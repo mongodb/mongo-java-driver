@@ -80,6 +80,8 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
     private Boolean allowDiskUse;
     private Integer batchSize;
     private Collation collation;
+    private String comment;
+    private BsonDocument hint;
     private long maxAwaitTimeMS;
     private long maxTimeMS;
     private Boolean useCursor;
@@ -297,6 +299,54 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
         return this;
     }
 
+    /**
+     * Returns the comment to send with the aggregate. The default is not to include a comment with the aggregation.
+     *
+     * @return the comment
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public String getComment() {
+        return comment;
+    }
+
+    /**
+     * Sets the comment to the aggregation. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public AggregateOperation<T> comment(final String comment) {
+        this.comment = comment;
+        return this;
+    }
+
+    /**
+     * Returns the hint for which index to use. The default is not to set a hint.
+     *
+     * @return the hint
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public BsonDocument getHint() {
+        return hint;
+    }
+
+    /**
+     * Sets the hint for which index to use. A null value means no hint is set.
+     *
+     * @param hint the hint
+     * @return this
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public AggregateOperation<T> hint(final BsonDocument hint) {
+        this.hint = hint;
+        return this;
+    }
+
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         return withConnection(binding, new CallableWithConnectionAndSource<BatchCursor<T>>() {
@@ -350,7 +400,8 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
     public ReadOperation<BsonDocument> asExplainableOperation(final ExplainVerbosity explainVerbosity) {
         return new AggregateExplainOperation(namespace, pipeline)
                .allowDiskUse(allowDiskUse)
-               .maxTime(maxTimeMS, TimeUnit.MILLISECONDS);
+               .maxTime(maxTimeMS, TimeUnit.MILLISECONDS)
+               .hint(hint);
     }
 
     /**
@@ -390,7 +441,12 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
         if (collation != null) {
             commandDocument.put("collation", collation.asDocument());
         }
-
+        if (comment != null) {
+            commandDocument.put("comment", new BsonString(comment));
+        }
+        if (hint != null) {
+            commandDocument.put("hint", hint);
+        }
         return commandDocument;
     }
 
@@ -435,6 +491,8 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
                 + ", allowDiskUse=" + allowDiskUse
                 + ", batchSize=" + batchSize
                 + ", collation=" + collation
+                + ", comment=" + comment
+                + ", hint=" + hint
                 + ", maxAwaitTimeMS=" + maxAwaitTimeMS
                 + ", maxTimeMS=" + maxTimeMS
                 + ", useCursor=" + useCursor

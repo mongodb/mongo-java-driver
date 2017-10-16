@@ -447,7 +447,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         if (serverVersionAtLeast(3, 0)) {
-            assertEquals(hint, getKeyPattern(explainPlan))
+            assertEquals(hint, QueryOperationHelper.getKeyPattern(explainPlan))
         } else {
             assertEquals(new BsonString('BtreeCursor a_1'), explainPlan.cursor)
         }
@@ -691,7 +691,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def explainResult = execute(explainOperation, async)
 
         then:
-        sanitizeExplainResult(cursorResult) == sanitizeExplainResult(explainResult)
+        QueryOperationHelper.sanitizeExplainResult(cursorResult) == QueryOperationHelper.sanitizeExplainResult(explainResult)
 
         where:
         async << [true, false]
@@ -756,23 +756,5 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    static BsonDocument sanitizeExplainResult(BsonDocument document) {
-        document.remove('ok')
-        document.remove('millis')
-        document.remove('executionStats')
-        document.remove('serverInfo')
-        document.remove('executionTimeMillis')
-        document
-    }
-
-    static BsonDocument getKeyPattern(BsonDocument explainPlan) {
-        def winningPlan = explainPlan.getDocument('queryPlanner').getDocument('winningPlan')
-        if (winningPlan.containsKey('inputStage')) {
-            return winningPlan.getDocument('inputStage').getDocument('keyPattern')
-        } else if (winningPlan.containsKey('shards')) {
-            return winningPlan.getArray('shards')[0].asDocument().getDocument('winningPlan')
-                    .getDocument('inputStage').getDocument('keyPattern')
-        }
-    }
 
 }

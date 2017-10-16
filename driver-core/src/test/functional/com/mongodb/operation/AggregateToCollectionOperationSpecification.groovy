@@ -16,20 +16,25 @@
 
 package com.mongodb.operation
 
+import com.mongodb.ExplainVerbosity
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
+import com.mongodb.client.model.Aggregates
 import com.mongodb.client.model.CreateCollectionOptions
+import com.mongodb.client.model.Filters
 import com.mongodb.client.model.ValidationOptions
 import com.mongodb.client.test.CollectionHelper
 import org.bson.BsonArray
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
+import org.bson.BsonInt32
 import org.bson.BsonString
 import org.bson.Document
+import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
@@ -38,8 +43,10 @@ import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
+import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.model.Filters.gte
+import static com.mongodb.operation.QueryOperationHelper.getKeyPattern
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 
@@ -280,6 +287,52 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
 
         then:
         getCollectionHelper(aggregateCollectionNamespace).count() == 1
+
+        where:
+        async << [true, false]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    def 'should apply $hint'() {
+        given:
+        def hint = new BsonDocument('a', new BsonInt32(1))
+        collectionHelper.createIndex(hint)
+
+        def operation = new AggregateToCollectionOperation(getNamespace(), [Aggregates.out('outputCollection')])
+                .hint(hint)
+
+        when:
+        execute(operation, async)
+        BsonDocument explainPlan = execute(operation.asExplainableOperation(ExplainVerbosity.QUERY_PLANNER), async)
+
+        then:
+        getKeyPattern(explainPlan.getArray('stages').get(0).asDocument().getDocument('$cursor')) == hint
+
+        where:
+        async << [true, false]
+    }
+
+    @IgnoreIf({ isSharded() || !serverVersionAtLeast(3, 6) })
+    def 'should apply comment'() {
+        given:
+        def profileCollectionHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'system.profile'))
+        new CommandWriteOperation(getDatabaseName(), new BsonDocument('profile', new BsonInt32(2)), new BsonDocumentCodec())
+                .execute(getBinding())
+        def expectedComment = 'this is a comment'
+        def operation = new AggregateToCollectionOperation(getNamespace(), [Aggregates.out('outputCollection')])
+                .comment(expectedComment)
+
+        when:
+        execute(operation, async)
+
+        then:
+        Document profileDocument = profileCollectionHelper.find(Filters.exists('command.aggregate')).get(0)
+        ((Document) profileDocument.get('command')).get('comment') == expectedComment
+
+        cleanup:
+        new CommandWriteOperation(getDatabaseName(), new BsonDocument('profile', new BsonInt32(0)), new BsonDocumentCodec())
+                .execute(getBinding())
+        profileCollectionHelper.drop();
 
         where:
         async << [true, false]
