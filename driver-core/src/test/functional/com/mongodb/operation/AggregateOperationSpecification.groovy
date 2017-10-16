@@ -203,7 +203,11 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().insertDocuments(['{_id: 0, a: 0}', '{_id: 1, a: 1}'].collect { BsonDocument.parse(it) })
 
         then:
-        next(cursor, async) == expected
+        def next = next(cursor, async).collect { doc ->
+            doc.remove('_id')
+            doc
+        }
+        next == expected
 
         cleanup:
         cursor?.close()
@@ -499,9 +503,6 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
     private static BsonDocument createExpectedChangeNotification(MongoNamespace namespace, int idValue) {
         BsonDocument.parse("""{
-            "_id": {
-                "documentKey": {"_id": $idValue}
-            },
             "operationType": "insert",
             "fullDocument": {"_id": $idValue, "a": $idValue},
             "ns": {"coll": "${namespace.getCollectionName()}", "db": "${namespace.getDatabaseName()}"},
