@@ -84,6 +84,8 @@ class AggregateIterableSpecification extends Specification {
                 .maxAwaitTime(99, MILLISECONDS)
                 .maxTime(999, MILLISECONDS)
                 .collation(collation)
+                .hint(new Document('a', 1))
+                .comment('this is a comment')
                 .useCursor(true)
                 .into([]) { result, t -> }
 
@@ -95,8 +97,10 @@ class AggregateIterableSpecification extends Specification {
                 .maxAwaitTime(99, MILLISECONDS)
                 .maxTime(999, MILLISECONDS)
                 .useCursor(true)
-                .collation(collation))
-
+                .collation(collation)
+                .hint(new BsonDocument('a', new BsonInt32(1)))
+                .comment('this is a comment')
+        )
     }
 
     def 'should build the expected AggregateToCollectionOperation'() {
@@ -119,7 +123,10 @@ class AggregateIterableSpecification extends Specification {
                 .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
                 .useCursor(true)
-                .collation(collation).into([]) { result, t -> }
+                .collation(collation)
+                .hint(new Document('a', 1))
+                .comment('this is a comment')
+                .into([]) { result, t -> }
 
         def operation = executor.getWriteOperation() as AggregateToCollectionOperation
 
@@ -128,7 +135,9 @@ class AggregateIterableSpecification extends Specification {
                 [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))], writeConcern)
                 .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
-                .collation(collation))
+                .collation(collation)
+                .hint(new BsonDocument('a', new BsonInt32(1)))
+                .comment('this is a comment'))
 
         when: 'the subsequent read should have the batchSize set'
         operation = executor.getReadOperation() as FindOperation<Document>
@@ -144,6 +153,8 @@ class AggregateIterableSpecification extends Specification {
                 pipeline)
                 .allowDiskUse(true)
                 .collation(collation)
+                .hint(new Document('a', 1))
+                .comment('this is a comment')
                 .toCollection(futureResultCallback);
         futureResultCallback.get()
 
@@ -152,7 +163,10 @@ class AggregateIterableSpecification extends Specification {
         then:
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
                 [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))], writeConcern)
-                .allowDiskUse(true).collation(collation))
+                .allowDiskUse(true)
+                .collation(collation)
+                .hint(new BsonDocument('a', new BsonInt32(1)))
+                .comment('this is a comment'))
     }
 
     def 'should handle exceptions correctly'() {

@@ -72,6 +72,8 @@ class AggregateIterableSpecification extends Specification {
                 .maxTime(999, MILLISECONDS)
                 .useCursor(true)
                 .collation(collation)
+                .hint(new Document('a', 1))
+                .comment('this is a comment')
                 .iterator()
 
         operation = executor.getReadOperation() as AggregateOperation<Document>
@@ -80,6 +82,8 @@ class AggregateIterableSpecification extends Specification {
         expect operation, isTheSameAs(new AggregateOperation<Document>(namespace,
                 [new BsonDocument('$match', new BsonInt32(1))], new DocumentCodec())
                 .collation(collation)
+                .hint(new BsonDocument('a', new BsonInt32(1)))
+                .comment('this is a comment')
                 .maxAwaitTime(99, MILLISECONDS)
                 .maxTime(999, MILLISECONDS)
                 .readConcern(readConcern)
@@ -100,14 +104,21 @@ class AggregateIterableSpecification extends Specification {
                 .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
                 .useCursor(true)
-                .collation(collation).iterator()
+                .collation(collation)
+                .hint(new Document('a', 1))
+                .comment('this is a comment').iterator()
 
         def operation = executor.getWriteOperation() as AggregateToCollectionOperation
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
                 [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))], writeConcern)
-                .maxTime(999, MILLISECONDS).allowDiskUse(true).collation(collation))
+                .maxTime(999, MILLISECONDS)
+                .allowDiskUse(true)
+                .collation(collation)
+                .hint(new BsonDocument('a', new BsonInt32(1)))
+                .comment('this is a comment')
+        )
 
         when: 'the subsequent read should have the batchSize set'
         operation = executor.getReadOperation() as FindOperation<Document>
@@ -122,6 +133,8 @@ class AggregateIterableSpecification extends Specification {
                 pipeline)
                 .allowDiskUse(true)
                 .collation(collation)
+                .hint(new Document('a', 1))
+                .comment('this is a comment')
                 .toCollection()
 
         operation = executor.getWriteOperation() as AggregateToCollectionOperation
@@ -129,7 +142,10 @@ class AggregateIterableSpecification extends Specification {
         then:
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
                 [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))], writeConcern)
-                .allowDiskUse(true).collation(collation))
+                .allowDiskUse(true)
+                .collation(collation)
+                .hint(new BsonDocument('a', new BsonInt32(1)))
+                .comment('this is a comment'))
     }
 
     def 'should use ClientSession for AggregationOperation'() {

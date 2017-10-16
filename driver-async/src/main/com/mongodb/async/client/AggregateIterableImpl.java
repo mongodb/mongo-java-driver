@@ -62,6 +62,8 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
     private Boolean useCursor;
     private Boolean bypassDocumentValidation;
     private Collation collation;
+    private String comment;
+    private Bson hint;
 
     AggregateIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
                           final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
@@ -123,7 +125,9 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
         executor.execute(new AggregateToCollectionOperation(namespace, aggregateList, writeConcern)
                 .maxTime(maxTimeMS, MILLISECONDS)
                 .allowDiskUse(allowDiskUse)
-                .collation(collation), callback);
+                .collation(collation)
+                .hint(hint == null ? null : hint.toBsonDocument(documentClass, codecRegistry))
+                .comment(comment), callback);
     }
 
     @Override
@@ -169,6 +173,18 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
         return this;
     }
 
+    @Override
+    public AggregateIterable<TResult> comment(final String comment) {
+        this.comment = comment;
+        return this;
+    }
+
+    @Override
+    public AggregateIterable<TResult> hint(final Bson hint) {
+        this.hint = hint;
+        return this;
+    }
+
     @SuppressWarnings("deprecation")
     private MongoIterable<TResult> execute() {
         List<BsonDocument> aggregateList = createBsonDocumentList();
@@ -179,7 +195,9 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
                     .maxTime(maxTimeMS, MILLISECONDS)
                     .allowDiskUse(allowDiskUse)
                     .bypassDocumentValidation(bypassDocumentValidation)
-                    .collation(collation);
+                    .collation(collation)
+                    .hint(hint == null ? null : hint.toBsonDocument(documentClass, codecRegistry))
+                    .comment(comment);
             MongoIterable<TResult> delegated = new FindIterableImpl<TDocument, TResult>(new MongoNamespace(namespace.getDatabaseName(),
                     outCollection.asString().getValue()), documentClass, resultClass, codecRegistry, primary(), readConcern,
                     executor, new BsonDocument(), new FindOptions().collation(collation).maxAwaitTime(maxAwaitTimeMS, MILLISECONDS));
@@ -195,7 +213,9 @@ class AggregateIterableImpl<TDocument, TResult> implements AggregateIterable<TRe
                     .batchSize(batchSize)
                     .useCursor(useCursor)
                     .readConcern(readConcern)
-                    .collation(collation),
+                    .collation(collation)
+                    .hint(hint == null ? null : hint.toBsonDocument(documentClass, codecRegistry))
+                    .comment(comment),
                     readPreference,
                     executor);
         }
