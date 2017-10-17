@@ -29,11 +29,11 @@ import org.junit.Test;
 
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -262,7 +262,6 @@ public class JsonReaderTest {
         bsonReader = new JsonReader(json);
         assertEquals(BsonType.BINARY, bsonReader.readBsonType());
         BsonBinary binary = bsonReader.readBinaryData();
-        byte[] bytes = binary.getData();
         assertArrayEquals(expectedBytes, binary.getData());
         assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
     }
@@ -274,7 +273,6 @@ public class JsonReaderTest {
         bsonReader = new JsonReader(json);
         assertEquals(BsonType.BINARY, bsonReader.readBsonType());
         BsonBinary binary = bsonReader.readBinaryData();
-        byte[] bytes = binary.getData();
         assertArrayEquals(expectedBytes, binary.getData());
         assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
     }
@@ -309,7 +307,7 @@ public class JsonReaderTest {
 
     @Test
     public void testNumberLong() {
-        List<String> jsonTexts = Arrays.asList(
+        List<String> jsonTexts = asList(
                 "NumberLong(123)",
                 "NumberLong(\"123\")",
                 "new NumberLong(123)",
@@ -324,7 +322,7 @@ public class JsonReaderTest {
 
     @Test
     public void testNumberInt() {
-        List<String> jsonTexts = Arrays.asList(
+        List<String> jsonTexts = asList(
                 "NumberInt(123)",
                 "NumberInt(\"123\")",
                 "new NumberInt(123)",
@@ -432,22 +430,30 @@ public class JsonReaderTest {
 
     @Test
     public void testMaxKey() {
-        String json = "{ \"$maxKey\" : 1 }";
-        bsonReader = new JsonReader(json);
-        assertEquals(BsonType.MAX_KEY, bsonReader.readBsonType());
-        bsonReader.readMaxKey();
-        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
-
+        for (String maxKeyJson : asList("{ \"$maxKey\" : 1 }", "MaxKey", "MaxKey()", "new MaxKey", "new MaxKey()")) {
+            String json = "{ maxKey : " + maxKeyJson + " }";
+            bsonReader = new JsonReader(json);
+            bsonReader.readStartDocument();
+            assertEquals("maxKey", bsonReader.readName());
+            assertEquals(BsonType.MAX_KEY, bsonReader.getCurrentBsonType());
+            bsonReader.readMaxKey();
+            bsonReader.readEndDocument();
+            assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+        }
     }
 
     @Test
     public void testMinKey() {
-        String json = "{ \"$minKey\" : 1 }";
-        bsonReader = new JsonReader(json);
-        assertEquals(BsonType.MIN_KEY, bsonReader.readBsonType());
-        bsonReader.readMinKey();
-        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
-
+        for (String minKeyJson : asList("{ \"$minKey\" : 1 }", "MinKey", "MinKey()", "new MinKey", "new MinKey()")) {
+            String json = "{ minKey : " + minKeyJson + " }";
+            bsonReader = new JsonReader(json);
+            bsonReader.readStartDocument();
+            assertEquals("minKey", bsonReader.readName());
+            assertEquals(BsonType.MIN_KEY, bsonReader.getCurrentBsonType());
+            bsonReader.readMinKey();
+            bsonReader.readEndDocument();
+            assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+        }
     }
 
     @Test
