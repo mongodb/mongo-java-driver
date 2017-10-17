@@ -186,6 +186,14 @@ public class JsonReader extends AbstractBsonReader {
                     setCurrentBsonType(BsonType.NULL);
                 } else if ("undefined".equals(value)) {
                     setCurrentBsonType(BsonType.UNDEFINED);
+                } else if ("MinKey".equals(value)) {
+                    visitEmptyConstructor();
+                    setCurrentBsonType(BsonType.MIN_KEY);
+                    currentValue = new MinKey();
+                } else if ("MaxKey".equals(value)) {
+                    visitEmptyConstructor();
+                    setCurrentBsonType(BsonType.MAX_KEY);
+                    currentValue = new MaxKey();
                 } else if ("BinData".equals(value)) {
                     setCurrentBsonType(BsonType.BINARY);
                     currentValue = visitBinDataConstructor();
@@ -531,7 +539,15 @@ public class JsonReader extends AbstractBsonReader {
 
         String value = typeToken.getValue(String.class);
 
-        if ("BinData".equals(value)) {
+        if ("MinKey".equals(value)) {
+            visitEmptyConstructor();
+            setCurrentBsonType(BsonType.MIN_KEY);
+            currentValue = new MinKey();
+        } else if ("MaxKey".equals(value)) {
+            visitEmptyConstructor();
+            setCurrentBsonType(BsonType.MAX_KEY);
+            currentValue = new MaxKey();
+        } else if ("BinData".equals(value)) {
             currentValue = visitBinDataConstructor();
             setCurrentBsonType(BsonType.BINARY);
         } else if ("Date".equals(value)) {
@@ -655,6 +671,15 @@ public class JsonReader extends AbstractBsonReader {
 
         pushToken(nameToken);
         setCurrentBsonType(BsonType.DOCUMENT);
+    }
+
+    private void visitEmptyConstructor() {
+        JsonToken nextToken = popToken();
+        if (nextToken.getType() == JsonTokenType.LEFT_PAREN) {
+            verifyToken(JsonTokenType.RIGHT_PAREN);
+        } else {
+            pushToken(nextToken);
+        }
     }
 
     private BsonBinary visitBinDataConstructor() {
