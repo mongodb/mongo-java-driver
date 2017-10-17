@@ -51,7 +51,7 @@ public class ServerDescription {
 
     private static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
 
-    private static final DecimalFormatSymbols DECIMAL_FORMAT_SYMBOLS =  initializeDecimalFormatSymbols();
+    private static final DecimalFormatSymbols DECIMAL_FORMAT_SYMBOLS = initializeDecimalFormatSymbols();
 
     private final ServerAddress address;
 
