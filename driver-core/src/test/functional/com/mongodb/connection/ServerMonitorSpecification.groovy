@@ -207,6 +207,7 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
 
     def initializeServerMonitor(ServerAddress address) {
         serverMonitor = new DefaultServerMonitor(new ServerId(new ClusterId(), address), ServerSettings.builder().build(),
+                new ClusterClock(),
                 new ChangeListener<ServerDescription>() {
                     @Override
                     void stateChanged(final ChangeEvent<ServerDescription> event) {

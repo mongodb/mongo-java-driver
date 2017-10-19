@@ -31,6 +31,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.CommandHelper.executeCommand;
 import static com.mongodb.connection.DescriptionHelper.createServerDescription;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
@@ -47,6 +48,7 @@ class DefaultServerMonitor implements ServerMonitor {
 
     private final ServerId serverId;
     private final ServerMonitorListener serverMonitorListener;
+    private final ClusterClock clusterClock;
     private final ChangeListener<ServerDescription> serverStateListener;
     private final InternalConnectionFactory internalConnectionFactory;
     private final ConnectionPool connectionPool;
@@ -58,13 +60,14 @@ class DefaultServerMonitor implements ServerMonitor {
     private volatile boolean isClosed;
 
     DefaultServerMonitor(final ServerId serverId, final ServerSettings serverSettings,
-                         final ChangeListener<ServerDescription> serverStateListener,
+                         final ClusterClock clusterClock, final ChangeListener<ServerDescription> serverStateListener,
                          final InternalConnectionFactory internalConnectionFactory, final ConnectionPool connectionPool) {
-        this.serverSettings = serverSettings;
-        this.serverId = serverId;
+        this.serverSettings = notNull("serverSettings", serverSettings);
+        this.serverId = notNull("serverId", serverId);
         this.serverMonitorListener = getServerMonitorListener(serverSettings);
+        this.clusterClock = notNull("clusterClock", clusterClock);
         this.serverStateListener = serverStateListener;
-        this.internalConnectionFactory = internalConnectionFactory;
+        this.internalConnectionFactory = notNull("internalConnectionFactory", internalConnectionFactory);
         this.connectionPool = connectionPool;
         monitor = new ServerMonitorRunnable();
         monitorThread = new Thread(monitor, "cluster-" + this.serverId.getClusterId() + "-" + this.serverId.getAddress());
@@ -170,7 +173,8 @@ class DefaultServerMonitor implements ServerMonitor {
 
             long start = System.nanoTime();
             try {
-                BsonDocument isMasterResult = executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), connection);
+                BsonDocument isMasterResult =
+                        executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)), clusterClock, connection);
                 long elapsedTimeNanos = System.nanoTime() - start;
                 averageRoundTripTime.addSample(elapsedTimeNanos);
 

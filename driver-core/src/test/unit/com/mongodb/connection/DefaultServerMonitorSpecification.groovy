@@ -52,7 +52,7 @@ class DefaultServerMonitorSpecification extends Specification {
             }
         }
         monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()), ServerSettings.builder().build(),
-                changeListener, internalConnectionFactory, new TestConnectionPool())
+                new ClusterClock(), changeListener, internalConnectionFactory, new TestConnectionPool())
         monitor.start()
 
         when:
@@ -131,7 +131,7 @@ class DefaultServerMonitorSpecification extends Specification {
         }
         monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()),
                 ServerSettings.builder().heartbeatFrequency(1, TimeUnit.HOURS).addServerMonitorListener(serverMonitorListener).build(),
-                changeListener, internalConnectionFactory, new TestConnectionPool())
+                new ClusterClock(), changeListener, internalConnectionFactory, new TestConnectionPool())
 
         when:
         monitor.start()
@@ -204,7 +204,7 @@ class DefaultServerMonitorSpecification extends Specification {
         }
         monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()),
                 ServerSettings.builder().heartbeatFrequency(1, TimeUnit.HOURS).addServerMonitorListener(serverMonitorListener).build(),
-                changeListener, internalConnectionFactory, new TestConnectionPool())
+                new ClusterClock(), changeListener, internalConnectionFactory, new TestConnectionPool())
 
         when:
         monitor.start()

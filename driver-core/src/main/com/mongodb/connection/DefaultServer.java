@@ -30,8 +30,6 @@ import com.mongodb.event.ServerClosedEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerOpeningEvent;
-import org.bson.BsonDocument;
-import org.bson.BsonTimestamp;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -186,7 +184,7 @@ class DefaultServer implements ClusterableServer {
         public <T> T execute(final CommandProtocol<T> protocol, final InternalConnection connection,
                              final SessionContext sessionContext) {
             try {
-                protocol.sessionContext(new ClusterClockAdvancingSessionContext(sessionContext));
+                protocol.sessionContext(new ClusterClockAdvancingSessionContext(sessionContext, clusterClock));
                 return protocol.execute(connection);
             } catch (MongoException e) {
                 handleThrowable(e);
@@ -197,7 +195,7 @@ class DefaultServer implements ClusterableServer {
         @Override
         public <T> void executeAsync(final CommandProtocol<T> protocol, final InternalConnection connection,
                                      final SessionContext sessionContext, final SingleResultCallback<T> callback) {
-            protocol.sessionContext(new ClusterClockAdvancingSessionContext(sessionContext));
+            protocol.sessionContext(new ClusterClockAdvancingSessionContext(sessionContext, clusterClock));
             protocol.executeAsync(connection, errorHandlingCallback(new SingleResultCallback<T>() {
                 @Override
                 public void onResult(final T result, final Throwable t) {
@@ -218,56 +216,6 @@ class DefaultServer implements ClusterableServer {
             ServerDescription oldDescription = description;
             description = event.getNewValue();
             serverListener.serverDescriptionChanged(new ServerDescriptionChangedEvent(serverId, description, oldDescription));
-        }
-    }
-
-    private final class ClusterClockAdvancingSessionContext implements SessionContext {
-
-        private SessionContext wrapped;
-
-        private ClusterClockAdvancingSessionContext(final SessionContext wrapped) {
-            this.wrapped = wrapped;
-        }
-
-        @Override
-        public boolean hasSession() {
-            return wrapped.hasSession();
-        }
-
-        @Override
-        public BsonDocument getSessionId() {
-            return wrapped.getSessionId();
-        }
-
-        @Override
-        public boolean isCausallyConsistent() {
-            return wrapped.isCausallyConsistent();
-        }
-
-        @Override
-        public long advanceTransactionNumber() {
-            return wrapped.advanceTransactionNumber();
-        }
-
-        @Override
-        public BsonTimestamp getOperationTime() {
-            return wrapped.getOperationTime();
-        }
-
-        @Override
-        public void advanceOperationTime(final BsonTimestamp operationTime) {
-            wrapped.advanceOperationTime(operationTime);
-        }
-
-        @Override
-        public BsonDocument getClusterTime() {
-            return clusterClock.greaterOf(wrapped.getClusterTime());
-        }
-
-        @Override
-        public void advanceClusterTime(final BsonDocument clusterTime) {
-            wrapped.advanceClusterTime(clusterTime);
-            clusterClock.advance(clusterTime);
         }
     }
 }

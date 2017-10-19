@@ -57,10 +57,10 @@ class CommandMessageSpecification extends Specification {
         def expectedCommandDocument = command.clone()
                 .append('$db', new BsonString('db'))
 
+        if (sessionContext.clusterTime != null) {
+            expectedCommandDocument.append('$clusterTime', sessionContext.clusterTime)
+        }
         if (sessionContext.hasSession()) {
-            if (sessionContext.clusterTime != null) {
-                expectedCommandDocument.append('$clusterTime', sessionContext.clusterTime)
-            }
             expectedCommandDocument.append('lsid', sessionContext.sessionId)
         }
 
@@ -75,6 +75,12 @@ class CommandMessageSpecification extends Specification {
                 [
                         Stub(SessionContext) {
                             hasSession() >> false
+                            getClusterTime() >> null
+                            getSessionId() >> new BsonDocument('id', new BsonBinary([1, 2, 3] as byte[]))
+                        },
+                        Stub(SessionContext) {
+                            hasSession() >> false
+                            getClusterTime() >> new BsonDocument('clusterTime', new BsonTimestamp(42, 1))
                         },
                         Stub(SessionContext) {
                             hasSession() >> true
