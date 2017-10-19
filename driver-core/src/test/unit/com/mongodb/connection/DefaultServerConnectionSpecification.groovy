@@ -21,7 +21,6 @@ import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcernResult
 import com.mongodb.async.SingleResultCallback
-import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.bulk.DeleteRequest
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.bulk.UpdateRequest
@@ -37,12 +36,9 @@ import spock.lang.Shared
 import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.compare
-import static com.mongodb.WriteConcern.ACKNOWLEDGED
-import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.connection.ServerType.SHARD_ROUTER
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback
-import static java.util.Arrays.asList
 
 class DefaultServerConnectionSpecification extends Specification {
     def namespace = new MongoNamespace('test', 'test')
@@ -57,16 +53,16 @@ class DefaultServerConnectionSpecification extends Specification {
 
     def 'should execute insert protocol'() {
         given:
-        def inserts = asList(new InsertRequest(new BsonDocument()))
+        def insertRequest = new InsertRequest(new BsonDocument())
         def executor = Mock(ProtocolExecutor) {
-            1 * execute({ compare(new InsertProtocol(namespace, true, UNACKNOWLEDGED, inserts), it) }, internalConnection) >> {
+            1 * execute({ compare(new InsertProtocol(namespace, true, insertRequest), it) }, internalConnection) >> {
                 WriteConcernResult.unacknowledged()
             }
         }
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
 
         when:
-        def result = connection.insert(namespace, true, UNACKNOWLEDGED, inserts)
+        def result = connection.insert(namespace, true, insertRequest)
 
         then:
         result == WriteConcernResult.unacknowledged()
@@ -74,16 +70,16 @@ class DefaultServerConnectionSpecification extends Specification {
 
     def 'should execute update protocol'() {
         given:
-        def updates = asList(new UpdateRequest(new BsonDocument(), new BsonDocument(), WriteRequest.Type.REPLACE))
+        def updateRequest = new UpdateRequest(new BsonDocument(), new BsonDocument(), WriteRequest.Type.REPLACE)
         def executor = Mock(ProtocolExecutor) {
-            1 * execute({ compare(new UpdateProtocol(namespace, true, UNACKNOWLEDGED, updates), it) }, internalConnection) >> {
+            1 * execute({ compare(new UpdateProtocol(namespace, true, updateRequest), it) }, internalConnection) >> {
                 WriteConcernResult.unacknowledged()
             }
         }
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
 
         when:
-        def result = connection.update(namespace, true, UNACKNOWLEDGED, updates)
+        def result = connection.update(namespace, true,  updateRequest)
 
         then:
         result == WriteConcernResult.unacknowledged()
@@ -91,74 +87,19 @@ class DefaultServerConnectionSpecification extends Specification {
 
     def 'should execute delete protocol'() {
         given:
-        def deletes = asList(new DeleteRequest(new BsonDocument()))
+        def deleteRequest = new DeleteRequest(new BsonDocument())
         def executor = Mock(ProtocolExecutor) {
-            1 * execute({ compare(new DeleteProtocol(namespace, true, UNACKNOWLEDGED, deletes), it) }, internalConnection) >> {
+            1 * execute({ compare(new DeleteProtocol(namespace, true, deleteRequest), it) }, internalConnection) >> {
                 WriteConcernResult.unacknowledged()
             }
         }
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
 
         when:
-        def result = connection.delete(namespace, true, UNACKNOWLEDGED, deletes)
+        def result = connection.delete(namespace, true, deleteRequest)
 
         then:
         result == WriteConcernResult.unacknowledged()
-    }
-
-    def 'should execute insert command protocol'() {
-        given:
-        def inserts = asList(new InsertRequest(new BsonDocument()))
-        def executor = Mock(ProtocolExecutor) {
-            1 * execute({
-                compare(new InsertCommandProtocol(namespace, true, UNACKNOWLEDGED, null, inserts), it) },
-                    internalConnection, NoOpSessionContext.INSTANCE) >> { (BulkWriteResult.unacknowledged())
-            }
-        }
-        def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
-
-        when:
-        def result = connection.insertCommand(namespace, true, UNACKNOWLEDGED, inserts)
-
-        then:
-        result == BulkWriteResult.unacknowledged()
-    }
-
-    def 'should execute update command protocol'() {
-        given:
-        def updates = asList(new UpdateRequest(new BsonDocument(), new BsonDocument(), WriteRequest.Type.REPLACE))
-        def executor = Mock(ProtocolExecutor) {
-            1 * execute({
-                compare(new UpdateCommandProtocol(namespace, true, UNACKNOWLEDGED, null, updates), it) },
-                    internalConnection, NoOpSessionContext.INSTANCE) >> {
-                BulkWriteResult.unacknowledged()
-            }
-        }
-        def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
-
-        when:
-        def result = connection.updateCommand(namespace, true, ACKNOWLEDGED, updates)
-
-        then:
-        result == BulkWriteResult.unacknowledged()
-    }
-
-    def 'should execute delete command protocol'() {
-        given:
-        def deletes = asList(new DeleteRequest(new BsonDocument()))
-        def executor = Mock(ProtocolExecutor) {
-            1 * execute({ compare(new DeleteCommandProtocol(namespace, true, UNACKNOWLEDGED, deletes), it) },
-                    internalConnection, NoOpSessionContext.INSTANCE) >> {
-                BulkWriteResult.unacknowledged()
-            }
-        }
-        def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
-
-        when:
-        def result = connection.deleteCommand(namespace, true, ACKNOWLEDGED, deletes)
-
-        then:
-        result == BulkWriteResult.unacknowledged()
     }
 
     def 'should execute command protocol with slaveok'() {
@@ -168,7 +109,7 @@ class DefaultServerConnectionSpecification extends Specification {
         def codec = new BsonDocumentCodec()
         def executor = Mock(ProtocolExecutor) {
             1 * execute({
-                compare(new SimpleCommandProtocol('test', command, validator, codec).readPreference(expectedReadPreference), it) },
+                compare(new CommandProtocolImpl('test', command, validator, expectedReadPreference, codec), it) },
                     internalConnection, NoOpSessionContext.INSTANCE) >> {
                 new BsonDocument()
             }
@@ -194,7 +135,7 @@ class DefaultServerConnectionSpecification extends Specification {
         def codec = new BsonDocumentCodec()
         def executor = Mock(ProtocolExecutor) {
             1 * execute({
-                compare(new SimpleCommandProtocol('test', command, validator, codec).readPreference(expectedReadPreference), it) },
+                compare(new CommandProtocolImpl('test', command, validator, expectedReadPreference, codec), it) },
                     internalConnection, NoOpSessionContext.INSTANCE) >> {
                 new BsonDocument()
             }
@@ -315,87 +256,44 @@ class DefaultServerConnectionSpecification extends Specification {
 
     def 'should execute insert protocol asynchronously'() {
         given:
-        def inserts = asList(new InsertRequest(new BsonDocument()))
+        def insertRequest = new InsertRequest(new BsonDocument())
         def executor = Mock(ProtocolExecutor)
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
 
         when:
-        connection.insertAsync(namespace, true, UNACKNOWLEDGED, inserts, callback)
+        connection.insertAsync(namespace, true, insertRequest, callback)
 
         then:
-        1 * executor.executeAsync({ compare(new InsertProtocol(namespace, true, UNACKNOWLEDGED, inserts), it) }, internalConnection,
+        1 * executor.executeAsync({ compare(new InsertProtocol(namespace, true, insertRequest), it) }, internalConnection,
                 callback)
     }
 
     def 'should execute update protocol asynchronously'() {
         given:
-        def updates = asList(new UpdateRequest(new BsonDocument(), new BsonDocument(), WriteRequest.Type.REPLACE))
+        def updateRequest = new UpdateRequest(new BsonDocument(), new BsonDocument(), WriteRequest.Type.REPLACE)
         def executor = Mock(ProtocolExecutor)
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
 
         when:
-        connection.updateAsync(namespace, true, UNACKNOWLEDGED, updates, callback)
+        connection.updateAsync(namespace, true, updateRequest, callback)
 
         then:
-        1 * executor.executeAsync({ compare(new UpdateProtocol(namespace, true, UNACKNOWLEDGED, updates), it) },
+        1 * executor.executeAsync({ compare(new UpdateProtocol(namespace, true, updateRequest), it) },
                                   internalConnection, callback)
     }
 
     def 'should execute delete protocol asynchronously'() {
         given:
-        def deletes = asList(new DeleteRequest(new BsonDocument()))
+        def deleteRequest = new DeleteRequest(new BsonDocument())
         def executor = Mock(ProtocolExecutor)
-
         def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
 
         when:
-        connection.deleteAsync(namespace, true, UNACKNOWLEDGED, deletes, callback)
+        connection.deleteAsync(namespace, true, deleteRequest, callback)
 
         then:
-        1 * executor.executeAsync({ compare(new DeleteProtocol(namespace, true, UNACKNOWLEDGED, deletes), it) }, internalConnection,
+        1 * executor.executeAsync({ compare(new DeleteProtocol(namespace, true, deleteRequest), it) }, internalConnection,
                 callback)
-    }
-
-    def 'should execute insert command protocol asynchronously'() {
-        given:
-        def inserts = asList(new InsertRequest(new BsonDocument()))
-        def executor = Mock(ProtocolExecutor)
-        def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
-
-        when:
-        connection.insertCommandAsync(namespace, true, ACKNOWLEDGED, inserts, callback)
-
-        then:
-        1 * executor.executeAsync({ compare(new InsertCommandProtocol(namespace, true, ACKNOWLEDGED, null, inserts), it) },
-                                  internalConnection, NoOpSessionContext.INSTANCE, callback)
-    }
-
-    def 'should execute update command protocol asynchronously'() {
-        given:
-        def updates = asList(new UpdateRequest(new BsonDocument(), new BsonDocument(), WriteRequest.Type.REPLACE))
-        def executor = Mock(ProtocolExecutor)
-        def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
-
-        when:
-        connection.updateCommandAsync(namespace, true, ACKNOWLEDGED, updates, callback)
-
-        then:
-        1 * executor.executeAsync({ compare(new UpdateCommandProtocol(namespace, true, ACKNOWLEDGED, null, updates), it) },
-                                  internalConnection, NoOpSessionContext.INSTANCE, callback)
-    }
-
-    def 'should execute delete command protocol asynchronously'() {
-        given:
-        def deletes = asList(new DeleteRequest(new BsonDocument()))
-        def executor = Mock(ProtocolExecutor)
-        def connection = new DefaultServerConnection(internalConnection, executor, ClusterConnectionMode.MULTIPLE)
-
-        when:
-        connection.deleteCommandAsync(namespace, true, ACKNOWLEDGED, deletes, callback)
-
-        then:
-        1 * executor.executeAsync({ compare(new DeleteCommandProtocol(namespace, true, ACKNOWLEDGED, deletes), it) },
-                                  internalConnection, NoOpSessionContext.INSTANCE, callback)
     }
 
     def 'should execute command protocol asynchronously'() {
@@ -411,7 +309,7 @@ class DefaultServerConnectionSpecification extends Specification {
 
         then:
         1 * executor.executeAsync({
-            compare(new SimpleCommandProtocol('test', command, validator, codec).readPreference(expectedReadPreference), it)
+            compare(new CommandProtocolImpl('test', command, validator, expectedReadPreference, codec), it)
         }, internalConnection, NoOpSessionContext.INSTANCE, callback)
 
         where:
@@ -434,7 +332,7 @@ class DefaultServerConnectionSpecification extends Specification {
 
         then:
         1 * executor.executeAsync({
-            compare(new SimpleCommandProtocol('test', command, validator, codec).readPreference(expectedReadPreference), it)
+            compare(new CommandProtocolImpl('test', command, validator, expectedReadPreference, codec), it)
         }, internalConnection, NoOpSessionContext.INSTANCE, callback)
 
         where:

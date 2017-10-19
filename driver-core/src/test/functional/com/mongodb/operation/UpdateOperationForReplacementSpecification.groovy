@@ -16,9 +16,7 @@
 
 package com.mongodb.operation
 
-import category.Async
 import category.Slow
-import com.mongodb.MongoException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.bulk.UpdateRequest
@@ -29,42 +27,29 @@ import org.bson.BsonSerializationException
 import org.bson.codecs.BsonDocumentCodec
 import org.junit.experimental.categories.Category
 
-import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.bulk.WriteRequest.Type.REPLACE
 import static java.util.Arrays.asList
 
 class UpdateOperationForReplacementSpecification extends OperationFunctionalSpecification {
+
     def 'should return correct result'() {
         given:
         def replacement = new UpdateRequest(new BsonDocument(), new BsonDocument('_id', new BsonInt32(1)), REPLACE)
-        def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
+        def operation = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
 
         when:
-        def result = op.execute(getBinding())
+        def result = execute(operation, async)
 
         then:
         result.wasAcknowledged()
         result.count == 0
         result.upsertedId == null
         !result.isUpdateOfExisting()
-    }
 
-    @Category(Async)
-    def 'should return correct result asynchronously'() {
-        given:
-        def replacement = new UpdateRequest(new BsonDocument(), new BsonDocument('_id', new BsonInt32(1)), REPLACE)
-        def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
-
-        when:
-        def result = executeAsync(op)
-
-        then:
-        result.wasAcknowledged()
-        result.count == 0
-        result.upsertedId == null
-        !result.isUpdateOfExisting()
+        where:
+        async << [true, false]
     }
 
     def 'should replace a single document'() {
@@ -74,10 +59,10 @@ class UpdateOperationForReplacementSpecification extends OperationFunctionalSpec
 
         def replacement = new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                                             new BsonDocument('_id', new BsonInt32(1)).append('x', new BsonInt32(1)), REPLACE)
-        def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
+        def operation = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
 
         when:
-        def result = op.execute(getBinding())
+        def result = execute(operation, async)
 
         then:
         result.wasAcknowledged()
@@ -86,28 +71,9 @@ class UpdateOperationForReplacementSpecification extends OperationFunctionalSpec
         result.isUpdateOfExisting()
         asList(replacement.getUpdate()) == getCollectionHelper().find(new BsonDocumentCodec())
         getCollectionHelper().find().get(0).keySet().iterator().next() == '_id'
-    }
 
-    @Category(Async)
-    def 'should replace a single document asynchronously'() {
-        given:
-        def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
-        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, asList(insert)).execute(getBinding())
-
-        def replacement = new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
-                                            new BsonDocument('_id', new BsonInt32(1)).append('x', new BsonInt32(1)), REPLACE)
-        def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
-
-
-        when:
-        def result = executeAsync(op)
-
-        then:
-        result.wasAcknowledged()
-        result.count == 1
-        result.upsertedId == null
-        result.isUpdateOfExisting()
-        asList(replacement.getUpdate()) == getCollectionHelper().find(new BsonDocumentCodec())
+        where:
+        async << [true, false]
     }
 
     def 'should upsert a single document'() {
@@ -115,27 +81,16 @@ class UpdateOperationForReplacementSpecification extends OperationFunctionalSpec
         def replacement = new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                                             new BsonDocument('_id', new BsonInt32(1)).append('x', new BsonInt32(1)), REPLACE)
                 .upsert(true)
-        def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
+        def operation = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
 
         when:
-        op.execute(getBinding())
+        execute(operation, async)
 
         then:
         asList(replacement.getUpdate()) == getCollectionHelper().find(new BsonDocumentCodec())
-    }
 
-    def 'should upsert a single document asynchronously'() {
-        given:
-        def replacement = new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
-                                            new BsonDocument('_id', new BsonInt32(1)).append('x', new BsonInt32(1)), REPLACE)
-                .upsert(true)
-        def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
-
-        when:
-        executeAsync(op)
-
-        then:
-        asList(replacement.getUpdate()) == getCollectionHelper().find(new BsonDocumentCodec())
+        where:
+        async << [true, false]
     }
 
     def 'should fail if replacement contains an update operator'() {
@@ -143,44 +98,35 @@ class UpdateOperationForReplacementSpecification extends OperationFunctionalSpec
         def replacement = new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                                             new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))), REPLACE)
                 .upsert(true)
-        def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
+        def operation = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
 
         when:
-        op.execute(getBinding())
+        execute(operation, async)
 
         then:
         thrown(IllegalArgumentException)
+
+        where:
+        async << [true, false]
     }
 
     @Category(Slow)
     def 'should throw exception if document is too large'() {
         given:
-        byte[] hugeByteArray = new byte[1024 * 1024 * 16];
+        byte[] hugeByteArray = new byte[(1024 * 1024 * 16) + 16 * 1024]
         def replacements = [new UpdateRequest(new BsonDocument(),
                                               new BsonDocument('_id', new BsonInt32(1)).append('b', new BsonBinary(hugeByteArray)),
                                               REPLACE)]
+        def operation = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, replacements)
 
         when:
-        new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, replacements).execute(getBinding())
+        execute(operation, async)
 
         then:
         thrown(BsonSerializationException)
-    }
 
-    @Category(Slow)
-    def 'should throw exception if document is too large asynchronously'() {
-        given:
-        byte[] hugeByteArray = new byte[1024 * 1024 * 16];
-        def replacements = [new UpdateRequest(new BsonDocument(),
-                                              new BsonDocument('_id', new BsonInt32(1)).append('b', new BsonBinary(hugeByteArray)),
-                                              REPLACE)]
-
-        when:
-        executeAsync(new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, replacements))
-
-        then:
-        def ex = thrown(MongoException)
-        ex.getCause() instanceof BsonSerializationException
+        where:
+        async << [true, false]
     }
 
     def 'should move _id to the beginning'() {
@@ -189,12 +135,15 @@ class UpdateOperationForReplacementSpecification extends OperationFunctionalSpec
 
         def replacement = new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                                             new BsonDocument('x', new BsonInt32(1)).append('_id', new BsonInt32(1)), REPLACE)
-        def op = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
+        def operation = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
 
         when:
-        op.execute(getBinding())
+        execute(operation, async)
 
         then:
         getCollectionHelper().find().get(0).keySet() as List == ['_id', 'x']
+
+        where:
+        async << [true, false]
     }
 }

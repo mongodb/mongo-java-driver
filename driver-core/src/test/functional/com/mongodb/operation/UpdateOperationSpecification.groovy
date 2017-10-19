@@ -240,10 +240,6 @@ class UpdateOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         def exception = thrown(Exception)
-        if (async) {
-            exception instanceof MongoException
-            exception = exception.cause
-        }
         exception instanceof IllegalArgumentException
         exception.getMessage().startsWith('Collation not supported by server version:')
 

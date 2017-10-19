@@ -28,10 +28,9 @@ abstract class LegacyMessage extends RequestMessage {
         super(opCode, settings);
     }
 
-    abstract EncodingMetadata encodeMessageBodyWithMetadata(BsonOutput bsonOutput, int messageStartPosition);
+    abstract EncodingMetadata encodeMessageBodyWithMetadata(BsonOutput bsonOutput);
 
-    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final int messageStartPosition,
-                                                             final SessionContext sessionContext) {
-        return encodeMessageBodyWithMetadata(bsonOutput, messageStartPosition);
+    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final SessionContext sessionContext) {
+        return encodeMessageBodyWithMetadata(bsonOutput);
     }
 }

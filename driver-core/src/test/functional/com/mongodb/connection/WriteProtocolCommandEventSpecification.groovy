@@ -27,23 +27,17 @@ import com.mongodb.connection.netty.NettyStreamFactory
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.event.CommandSucceededEvent
 import com.mongodb.internal.connection.NoOpSessionContext
-import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonArray
-import org.bson.BsonBinary
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
 import org.bson.codecs.BsonDocumentCodec
-import spock.lang.IgnoreIf
 import spock.lang.Shared
 
 import static com.mongodb.ClusterFixture.getCredentialList
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
-import static com.mongodb.ClusterFixture.isSharded
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.bulk.WriteRequest.Type.UPDATE
 import static com.mongodb.connection.ProtocolTestHelper.execute
 
@@ -66,8 +60,8 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         given:
         def document = new BsonDocument('_id', new BsonInt32(1))
 
-        def insertRequest = [new InsertRequest(document)]
-        def protocol = new InsertProtocol(getNamespace(), true, UNACKNOWLEDGED, insertRequest)
+        def insertRequest = new InsertRequest(document)
+        def protocol = new InsertProtocol(getNamespace(), true, insertRequest)
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
 
@@ -90,9 +84,8 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
 
         cleanup:
         // force acknowledgement
-        new SimpleCommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
-                            new NoOpFieldNameValidator(), new BsonDocumentCodec())
-                .readPreference(ReadPreference.primary())
+        new CommandProtocolImpl(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
+                            NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec())
                 .sessionContext(NoOpSessionContext.INSTANCE)
                 .execute(connection)
 
@@ -100,63 +93,12 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         async << [false, true]
     }
 
-    @IgnoreIf({ (serverVersionAtLeast(3, 5) && isSharded()) })
-    def 'should deliver started and completed command events for split unacknowledged inserts'() {
-        given:
-        def binary = new BsonBinary(new byte[15000000])
-        def documentOne = new BsonDocument('_id', new BsonInt32(1)).append('b', binary)
-        def documentTwo = new BsonDocument('_id', new BsonInt32(2)).append('b', binary)
-        def documentThree = new BsonDocument('_id', new BsonInt32(3)).append('b', binary)
-        def documentFour = new BsonDocument('_id', new BsonInt32(4)).append('b', binary)
-
-        def insertRequest = [new InsertRequest(documentOne), new InsertRequest(documentTwo),
-                             new InsertRequest(documentThree), new InsertRequest(documentFour)]
-        def protocol = new InsertProtocol(getNamespace(), true, UNACKNOWLEDGED, insertRequest)
-        def commandListener = new TestCommandListener()
-        protocol.commandListener = commandListener
-
-        when:
-        execute(protocol, connection, async)
-
-        then:
-        commandListener.eventsWereDelivered([
-                new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'insert',
-                                        new BsonDocument('insert', new BsonString(getCollectionName()))
-                                                .append('ordered', BsonBoolean.TRUE)
-                                                .append('writeConcern',
-                                                        new BsonDocument('w', new BsonInt32(0)))
-                                                .append('documents',
-                                                        new BsonArray([documentOne, documentTwo,
-                                                                       documentThree]))),
-                new CommandSucceededEvent(1, connection.getDescription(), 'insert',
-                                          new BsonDocument('ok', new BsonInt32(1)), 0),
-                new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'insert',
-                                        new BsonDocument('insert', new BsonString(getCollectionName()))
-                                                .append('ordered', BsonBoolean.TRUE)
-                                                .append('writeConcern',
-                                                        new BsonDocument('w', new BsonInt32(0)))
-                                                .append('documents', new BsonArray([documentFour]))),
-                new CommandSucceededEvent(1, connection.getDescription(), 'insert',
-                                          new BsonDocument('ok', new BsonInt32(1)), 0)])
-
-        cleanup:
-        // force acknowledgement
-        new SimpleCommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
-                            new NoOpFieldNameValidator(), new BsonDocumentCodec())
-                .readPreference(ReadPreference.primary())
-                .sessionContext(NoOpSessionContext.INSTANCE)
-                .execute(connection)
-
-        where:
-        async << [false, true]
-    }
-
-    def 'should deliver started and completed command events for a single unacknowledged update'() {
+    def 'should deliver started and completed command events for a update'() {
         given:
         def filter = new BsonDocument('_id', new BsonInt32(1))
         def update = new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1)))
-        def updateRequest = [new UpdateRequest(filter, update, UPDATE).multi(true).upsert(true)]
-        def protocol = new UpdateProtocol(getNamespace(), true, UNACKNOWLEDGED, updateRequest)
+        def updateRequest = new UpdateRequest(filter, update, UPDATE).multi(true).upsert(true)
+        def protocol = new UpdateProtocol(getNamespace(), true, updateRequest)
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
 
@@ -179,9 +121,8 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
 
         cleanup:
         // force acknowledgement
-        new SimpleCommandProtocol(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
-                            new NoOpFieldNameValidator(), new BsonDocumentCodec())
-                .readPreference(ReadPreference.primary())
+        new CommandProtocolImpl(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
+                NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec())
                 .sessionContext(NoOpSessionContext.INSTANCE)
                 .execute(connection)
 
@@ -189,11 +130,11 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
         async << [false, true]
     }
 
-    def 'should deliver started and completed command events for a single unacknowledged delete'() {
+    def 'should deliver started and completed command events for a delete'() {
         given:
         def filter = new BsonDocument('_id', new BsonInt32(1))
-        def deleteRequest = [new DeleteRequest(filter).multi(true)]
-        def protocol = new DeleteProtocol(getNamespace(), true, UNACKNOWLEDGED, deleteRequest)
+        def deleteRequest = new DeleteRequest(filter).multi(true)
+        def protocol = new DeleteProtocol(getNamespace(), true, deleteRequest)
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
 
@@ -221,8 +162,8 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
 
     def 'should not deliver any events if encoding fails'() {
         given:
-        def insertRequest = [new InsertRequest(new BsonDocument('$set', new BsonInt32(1)))]
-        def protocol = new InsertProtocol(getNamespace(), true, UNACKNOWLEDGED, insertRequest)
+        def insertRequest = new InsertRequest(new BsonDocument('$set', new BsonInt32(1)))
+        def protocol = new InsertProtocol(getNamespace(), true, insertRequest)
         def commandListener = new TestCommandListener()
         protocol.commandListener = commandListener
 

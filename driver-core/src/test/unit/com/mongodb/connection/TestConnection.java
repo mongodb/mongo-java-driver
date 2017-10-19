@@ -18,10 +18,8 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
-import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.DeleteRequest;
 import com.mongodb.bulk.InsertRequest;
 import com.mongodb.bulk.UpdateRequest;
@@ -55,7 +53,6 @@ class TestConnection implements Connection, AsyncConnection {
 
     @Override
     public void release() {
-
     }
 
     @Override
@@ -64,145 +61,42 @@ class TestConnection implements Connection, AsyncConnection {
     }
 
     @Override
-    public WriteConcernResult insert(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                     final List<InsertRequest> inserts) {
+    public WriteConcernResult insert(final MongoNamespace namespace, final boolean ordered,
+                                     final InsertRequest insertRequest) {
         return executeEnqueuedLegacyProtocol();
     }
 
     @Override
-    public void insertAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                            final List<InsertRequest> inserts, final SingleResultCallback<WriteConcernResult> callback) {
+    public void insertAsync(final MongoNamespace namespace, final boolean ordered,
+                            final InsertRequest insertRequest, final SingleResultCallback<WriteConcernResult> callback) {
         executeEnqueuedLegacyProtocolAsync(callback);
     }
 
     @Override
-    public WriteConcernResult update(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                     final List<UpdateRequest> updates) {
+    public WriteConcernResult update(final MongoNamespace namespace, final boolean ordered,
+                                     final UpdateRequest updateRequest) {
         return executeEnqueuedLegacyProtocol();
     }
 
     @Override
-    public void updateAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                            final List<UpdateRequest> updates, final SingleResultCallback<WriteConcernResult> callback) {
+    public void updateAsync(final MongoNamespace namespace, final boolean ordered,
+                            final UpdateRequest updateRequest, final SingleResultCallback<WriteConcernResult> callback) {
         executeEnqueuedLegacyProtocolAsync(callback);
     }
 
     @Override
-    public WriteConcernResult delete(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                     final List<DeleteRequest> deletes) {
+    public WriteConcernResult delete(final MongoNamespace namespace, final boolean ordered,
+                                     final DeleteRequest deleteRequest) {
         return executeEnqueuedLegacyProtocol();
     }
 
     @Override
-    public void deleteAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                            final List<DeleteRequest> deletes,
+    public void deleteAsync(final MongoNamespace namespace, final boolean ordered,
+                            final DeleteRequest deleteRequest,
                             final SingleResultCallback<WriteConcernResult> callback) {
         executeEnqueuedLegacyProtocolAsync(callback);
     }
 
-    @Override
-    public BulkWriteResult insertCommand(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                         final List<InsertRequest> inserts) {
-        throw new UnsupportedOperationException("Deprecated method called directly - this should have been updated");
-    }
-
-    @Override
-    public BulkWriteResult insertCommand(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                         final Boolean bypassDocumentValidation, final List<InsertRequest> inserts) {
-        throw new UnsupportedOperationException("Deprecated method called directly - this should have been updated");
-    }
-
-    @Override
-    public BulkWriteResult insertCommand(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                         final Boolean bypassDocumentValidation, final List<InsertRequest> inserts,
-                                         final SessionContext sessionContext) {
-        return executeEnqueuedCommandBasedProtocol(sessionContext);
-    }
-
-    @Override
-    public void insertCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                   final List<InsertRequest> inserts, final SingleResultCallback<BulkWriteResult> callback) {
-        throw new UnsupportedOperationException("Deprecated method called directly - this should have been updated");
-    }
-
-    @Override
-    public void insertCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                   final Boolean bypassDocumentValidation, final List<InsertRequest> inserts,
-                                   final SingleResultCallback<BulkWriteResult> callback) {
-        throw new UnsupportedOperationException("Deprecated method called directly - this should have been updated");
-    }
-
-    @Override
-    public void insertCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                   final Boolean bypassDocumentValidation, final List<InsertRequest> inserts,
-                                   final SessionContext sessionContext, final SingleResultCallback<BulkWriteResult> callback) {
-        executeEnqueuedCommandBasedProtocolAsync(null, callback);
-    }
-
-    @Override
-    public BulkWriteResult updateCommand(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                         final List<UpdateRequest> updates) {
-        throw new UnsupportedOperationException("Deprecated method called directly - this should have been updated");
-    }
-
-    @Override
-    public BulkWriteResult updateCommand(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                         final Boolean bypassDocumentValidation, final List<UpdateRequest> updates) {
-        throw new UnsupportedOperationException("Deprecated method called directly - this should have been updated");
-    }
-
-    @Override
-    public BulkWriteResult updateCommand(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                         final Boolean bypassDocumentValidation, final List<UpdateRequest> updates,
-                                         final SessionContext sessionContext) {
-        return executeEnqueuedCommandBasedProtocol(sessionContext);
-    }
-
-    @Override
-    public void updateCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                   final List<UpdateRequest> updates, final SingleResultCallback<BulkWriteResult> callback) {
-        throw new UnsupportedOperationException("Deprecated method called directly - this should have been updated");
-    }
-
-    @Override
-    public void updateCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                   final Boolean bypassDocumentValidation, final List<UpdateRequest> updates,
-                                   final SingleResultCallback<BulkWriteResult> callback) {
-        throw new UnsupportedOperationException("Deprecated method called directly - this should have been updated");
-    }
-
-    @Override
-    public void updateCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                   final Boolean bypassDocumentValidation, final List<UpdateRequest> updates,
-                                   final SessionContext sessionContext, final SingleResultCallback<BulkWriteResult> callback) {
-        executeEnqueuedCommandBasedProtocolAsync(null, callback);
-    }
-
-    @Override
-    public BulkWriteResult deleteCommand(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                         final List<DeleteRequest> deletes) {
-        throw new UnsupportedOperationException("Deprecated method called directly - this should have been updated");
-    }
-
-    @Override
-    public BulkWriteResult deleteCommand(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                         final List<DeleteRequest> deletes, final SessionContext sessionContext) {
-        return executeEnqueuedCommandBasedProtocol(sessionContext);
-    }
-
-    @Override
-    public void deleteCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                   final List<DeleteRequest> deletes,
-                                   final SingleResultCallback<BulkWriteResult> callback) {
-        throw new UnsupportedOperationException("Deprecated method called directly - this should have been updated");
-    }
-
-    @Override
-    public void deleteCommandAsync(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                                   final List<DeleteRequest> deletes, final SessionContext sessionContext,
-                                   final SingleResultCallback<BulkWriteResult> callback) {
-        executeEnqueuedCommandBasedProtocolAsync(null, callback);
-    }
 
     @Override
     public <T> T command(final String database, final BsonDocument command, final boolean slaveOk,
@@ -212,9 +106,16 @@ class TestConnection implements Connection, AsyncConnection {
     }
 
     @Override
-    public <T> T command(final String database, final BsonDocument command,
-                         final ReadPreference readPreference, final FieldNameValidator fieldNameValidator,
-                         final Decoder<T> commandResultDecoder, final SessionContext sessionContext) {
+    public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
+                         final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext) {
+        return executeEnqueuedCommandBasedProtocol(sessionContext);
+    }
+
+    @Override
+    public <T> T command(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
+                         final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext,
+                         final boolean responseExpected, final SplittablePayload payload,
+                         final FieldNameValidator payloadFieldNameValidator) {
         return executeEnqueuedCommandBasedProtocol(sessionContext);
     }
 
@@ -226,9 +127,17 @@ class TestConnection implements Connection, AsyncConnection {
     }
 
     @Override
-    public <T> void commandAsync(final String database, final BsonDocument command, final ReadPreference readPreference,
-                                 final FieldNameValidator fieldNameValidator, final Decoder<T> commandResultDecoder,
+    public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
+                                 final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
                                  final SessionContext sessionContext, final SingleResultCallback<T> callback) {
+        executeEnqueuedCommandBasedProtocolAsync(sessionContext, callback);
+    }
+
+    @Override
+    public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
+                                 final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
+                                 final SessionContext sessionContext, final boolean responseExpected, final SplittablePayload payload,
+                                 final FieldNameValidator payloadFieldNameValidator, final SingleResultCallback<T> callback) {
         executeEnqueuedCommandBasedProtocolAsync(sessionContext, callback);
     }
 

@@ -469,6 +469,20 @@ public final class Filters {
     }
 
     /**
+     * Creates a filter that matches all documents that validate against the given JSON schema document.
+     *
+     * @param expression the aggregation expression
+     * @param <TExpression> the expression type
+     * @return the filter
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @mongodb.driver.manual reference/operator/query/expr/ $expr
+     */
+    public static <TExpression> Bson expr(final TExpression expression) {
+        return new SimpleEncodingFilter<TExpression>("$expr", expression);
+    }
+
+    /**
      * Creates a filter that matches all documents where the value of a field is an array that contains all the specified values.
      *
      * @param fieldName the field name
@@ -826,6 +840,19 @@ public final class Filters {
     public static Bson nearSphere(final String fieldName, final double x, final double y, final Double maxDistance,
                                   final Double minDistance) {
         return createNearFilterDocument(fieldName, x, y, maxDistance, minDistance, "$nearSphere");
+    }
+
+    /**
+     * Creates a filter that matches all documents that validate against the given JSON schema document.
+     *
+     * @param schema the JSON schema to validate against
+     * @return the filter
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @mongodb.driver.manual reference/operator/query/jsonSchema/ $jsonSchema
+     */
+    public static Bson jsonSchema(final Bson schema) {
+        return new SimpleEncodingFilter<Bson>("$jsonSchema", schema);
     }
 
     private static Bson createNearFilterDocument(final String fieldName, final double x, final double y, final Double maxDistance,

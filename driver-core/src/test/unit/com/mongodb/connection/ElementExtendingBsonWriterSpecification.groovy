@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,8 +14,13 @@
  * limitations under the License.
  */
 
-package org.bson
+package com.mongodb.connection
 
+import org.bson.BsonDocument
+import org.bson.BsonDocumentReader
+import org.bson.BsonDocumentWriter
+import org.bson.BsonElement
+import org.bson.BsonString
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.EncoderContext
 import spock.lang.Specification
@@ -26,7 +31,7 @@ class ElementExtendingBsonWriterSpecification extends Specification {
 
     def 'should write all types'() {
         given:
-        def encodedDoc = new BsonDocument();
+        def encodedDoc = new BsonDocument()
 
         when:
         new BsonDocumentCodec().encode(new ElementExtendingBsonWriter(new BsonDocumentWriter(encodedDoc), []),
@@ -58,7 +63,7 @@ class ElementExtendingBsonWriterSpecification extends Specification {
 
     def 'should extend with extra elements when piping a reader at the top level'() {
         given:
-        def encodedDoc = new BsonDocument();
+        def encodedDoc = new BsonDocument()
         def extraElements = [
                 new BsonElement('$db', new BsonString('test')),
                 new BsonElement('$readPreference', new BsonDocument('mode', new BsonString('primary')))
@@ -78,7 +83,7 @@ class ElementExtendingBsonWriterSpecification extends Specification {
 
     def 'should not extend with extra elements when piping a reader at nested level'() {
         given:
-        def encodedDoc = new BsonDocument();
+        def encodedDoc = new BsonDocument()
         def extraElements = [
                 new BsonElement('$db', new BsonString('test')),
                 new BsonElement('$readPreference', new BsonDocument('mode', new BsonString('primary')))

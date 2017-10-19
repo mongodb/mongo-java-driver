@@ -55,7 +55,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.connection.ByteBufBsonDocument.createOne;
 import static com.mongodb.connection.MessageHeader.MESSAGE_HEADER_LENGTH;
 import static com.mongodb.connection.OpCode.OP_COMPRESSED;
 import static com.mongodb.connection.ProtocolHelper.getClusterTime;
@@ -674,22 +673,30 @@ class InternalStreamConnection implements InternalConnection {
         }
 
         public void sendStartedEvent(final ByteBufferBsonOutput bsonOutput) {
-            if (commandListener != null || sendCompressor != null) {
-                ByteBufBsonDocument byteBufBsonDocument = createOne(bsonOutput, message.getEncodingMetadata().getFirstDocumentPosition());
-                BsonDocument commandDocument;
-                if (byteBufBsonDocument.containsKey("$query")) {
-                    commandDocument = byteBufBsonDocument.getDocument("$query");
-                    commandName = commandDocument.keySet().iterator().next();
+            if ((commandListener != null || sendCompressor != null) && opened()) {
+
+                AbstractByteBufBsonDocument byteBufBsonDocument;
+                if (message.containsPayload()) {
+                    byteBufBsonDocument = ByteBufPayloadBsonDocument.create(bsonOutput,
+                            message.getEncodingMetadata().getFirstDocumentPosition());
                 } else {
-                    commandDocument = byteBufBsonDocument;
+                    byteBufBsonDocument = ByteBufBsonDocument.createOne(bsonOutput,
+                            message.getEncodingMetadata().getFirstDocumentPosition());
+                }
+
+                BsonDocument commandBsonDocument = byteBufBsonDocument;
+                if (byteBufBsonDocument.containsKey("$query")) {
+                    commandBsonDocument = byteBufBsonDocument.getDocument("$query");
+                    commandName = commandBsonDocument.keySet().iterator().next();
+                } else {
                     commandName = byteBufBsonDocument.getFirstKey();
                 }
-                if (commandListener != null && opened()) {
-                    BsonDocument commandDocumentForEvent = (SECURITY_SENSITIVE_COMMANDS.contains(commandName))
-                                                                   ? new BsonDocument() : commandDocument;
-                    sendCommandStartedEvent(message, new MongoNamespace(message.getCollectionName()).getDatabaseName(), commandName,
-                            commandDocumentForEvent, getDescription(), commandListener);
-                }
+
+                BsonDocument commandDocumentForEvent = (SECURITY_SENSITIVE_COMMANDS.contains(commandName))
+                                                               ? new BsonDocument() : commandBsonDocument;
+                sendCommandStartedEvent(message, new MongoNamespace(message.getCollectionName()).getDatabaseName(), commandName,
+                        commandDocumentForEvent, getDescription(), commandListener);
+
             }
         }
 

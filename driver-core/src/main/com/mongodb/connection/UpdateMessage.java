@@ -22,8 +22,6 @@ import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.internal.validator.UpdateFieldNameValidator;
 import org.bson.io.BsonOutput;
 
-import java.util.List;
-
 import static com.mongodb.bulk.WriteRequest.Type.REPLACE;
 
 /**
@@ -32,23 +30,18 @@ import static com.mongodb.bulk.WriteRequest.Type.REPLACE;
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-update OP_UPDATE
  */
 class UpdateMessage extends LegacyMessage {
-    private final List<UpdateRequest> updates;
+    private final UpdateRequest updateRequest;
 
-    UpdateMessage(final String collectionName, final List<UpdateRequest> updates, final MessageSettings settings) {
+    UpdateMessage(final String collectionName, final UpdateRequest updateRequest, final MessageSettings settings) {
         super(collectionName, OpCode.OP_UPDATE, settings);
-        this.updates = updates;
-    }
-
-    public List<UpdateRequest> getUpdateRequests() {
-        return updates;
+        this.updateRequest = updateRequest;
     }
 
     @Override
-    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final int messageStartPosition) {
+    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput) {
         bsonOutput.writeInt32(0); // reserved
         bsonOutput.writeCString(getCollectionName());
 
-        UpdateRequest updateRequest = updates.get(0);
         int flags = 0;
         if (updateRequest.isUpsert()) {
             flags |= 1;
@@ -71,12 +64,7 @@ class UpdateMessage extends LegacyMessage {
             }
         }
 
-        if (updates.size() == 1) {
-            return new EncodingMetadata(null, firstDocumentStartPosition);
-        } else {
-            return new EncodingMetadata(new UpdateMessage(getCollectionName(), updates.subList(1, updates.size()), getSettings()),
-                                    firstDocumentStartPosition);
-        }
+        return new EncodingMetadata(firstDocumentStartPosition);
     }
 
 }

@@ -38,8 +38,7 @@ class CompressedMessage extends RequestMessage {
     }
 
     @Override
-    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final int messageStartPosition,
-                                                             final SessionContext sessionContext) {
+    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final SessionContext sessionContext) {
         bsonOutput.writeInt32(wrappedOpcode.getValue());
         bsonOutput.writeInt32(getWrappedMessageSize(wrappedMessageBuffers) - MESSAGE_HEADER_LENGTH);
         bsonOutput.writeByte(compressor.getId());
@@ -49,7 +48,7 @@ class CompressedMessage extends RequestMessage {
 
         compressor.compress(wrappedMessageBuffers, bsonOutput);
 
-        return new EncodingMetadata(null, 0);
+        return new EncodingMetadata(0);
     }
 
     private static int getWrappedMessageSize(final List<ByteBuf> wrappedMessageBuffers) {

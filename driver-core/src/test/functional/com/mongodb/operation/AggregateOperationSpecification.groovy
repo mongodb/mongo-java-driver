@@ -30,6 +30,7 @@ import com.mongodb.binding.ConnectionSource
 import com.mongodb.binding.ReadBinding
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CreateCollectionOptions
+import com.mongodb.client.model.Filters
 import com.mongodb.connection.AsyncConnection
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.Connection
@@ -59,7 +60,9 @@ import static com.mongodb.ClusterFixture.getCluster
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.ExplainVerbosity.QUERY_PLANNER
 import static com.mongodb.connection.ServerType.STANDALONE
+import static com.mongodb.operation.QueryOperationHelper.getKeyPattern
 import static com.mongodb.operation.ReadConcernHelper.appendReadConcernToCommand
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
@@ -203,7 +206,11 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().insertDocuments(['{_id: 0, a: 0}', '{_id: 1, a: 1}'].collect { BsonDocument.parse(it) })
 
         then:
-        next(cursor, async) == expected
+        def next = next(cursor, async).collect { doc ->
+            doc.remove('_id')
+            doc
+        }
+        next == expected
 
         cleanup:
         cursor?.close()
@@ -341,6 +348,52 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
         where:
         [async, options] << [[true, false], [defaultCollation, null, Collation.builder().build()]].combinations()
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    def 'should apply $hint'() {
+        given:
+        def hint = new BsonDocument('a', new BsonInt32(1))
+        collectionHelper.createIndex(hint)
+
+        def operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec())
+                .hint(hint)
+
+        when:
+        execute(operation, async)
+        BsonDocument explainPlan = execute(operation.asExplainableOperation(QUERY_PLANNER), async)
+
+        then:
+        getKeyPattern(explainPlan.getArray('stages').get(0).asDocument().getDocument('$cursor')) == hint
+
+        where:
+        async << [true, false]
+    }
+
+    @IgnoreIf({ isSharded() || !serverVersionAtLeast(3, 6) })
+    def 'should apply comment'() {
+        given:
+        def profileCollectionHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), 'system.profile'))
+        new CommandWriteOperation(getDatabaseName(), new BsonDocument('profile', new BsonInt32(2)), new BsonDocumentCodec())
+                .execute(getBinding())
+        def expectedComment = 'this is a comment'
+        def operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec())
+                .comment(expectedComment)
+
+        when:
+        execute(operation, async)
+
+        then:
+        Document profileDocument = profileCollectionHelper.find(Filters.exists('command.aggregate')).get(0)
+        ((Document) profileDocument.get('command')).get('comment') == expectedComment
+
+        cleanup:
+        new CommandWriteOperation(getDatabaseName(), new BsonDocument('profile', new BsonInt32(0)), new BsonDocumentCodec())
+                .execute(getBinding())
+        profileCollectionHelper.drop();
+
+        where:
+        async << [true, false]
     }
 
     @IgnoreIf({ isSharded() || !serverVersionAtLeast(3, 2) })
@@ -499,9 +552,6 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
     private static BsonDocument createExpectedChangeNotification(MongoNamespace namespace, int idValue) {
         BsonDocument.parse("""{
-            "_id": {
-                "documentKey": {"_id": $idValue}
-            },
             "operationType": "insert",
             "fullDocument": {"_id": $idValue, "a": $idValue},
             "ns": {"coll": "${namespace.getCollectionName()}", "db": "${namespace.getDatabaseName()}"},

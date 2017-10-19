@@ -20,6 +20,8 @@ import com.mongodb.client.model.Collation;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Encoder;
 
+import java.util.List;
+
 class UpdateRequest extends WriteRequest {
     private final DBObject query;
     private final DBObject update;
@@ -27,15 +29,17 @@ class UpdateRequest extends WriteRequest {
     private final boolean upsert;
     private final Encoder<DBObject> codec;
     private final Collation collation;
+    private final List<? extends DBObject> arrayFilters;
 
     UpdateRequest(final DBObject query, final DBObject update, final boolean multi, final boolean upsert,
-                  final Encoder<DBObject> codec, final Collation collation) {
+                  final Encoder<DBObject> codec, final Collation collation, final List<? extends DBObject> arrayFilters) {
         this.query = query;
         this.update = update;
         this.multi = multi;
         this.upsert = upsert;
         this.codec = codec;
         this.collation = collation;
+        this.arrayFilters = arrayFilters;
     }
 
     public DBObject getQuery() {
@@ -58,13 +62,18 @@ class UpdateRequest extends WriteRequest {
         return collation;
     }
 
+    public List<? extends DBObject> getArrayFilters() {
+        return arrayFilters;
+    }
+
     @Override
-    com.mongodb.bulk.WriteRequest toNew() {
+    com.mongodb.bulk.WriteRequest toNew(final DBCollection dbCollection) {
         return new com.mongodb.bulk.UpdateRequest(new BsonDocumentWrapper<DBObject>(query, codec),
                                                        new BsonDocumentWrapper<DBObject>(update, codec),
                                                        com.mongodb.bulk.WriteRequest.Type.UPDATE)
                .upsert(isUpsert())
                .multi(isMulti())
-               .collation(getCollation());
+               .collation(getCollation())
+               .arrayFilters(dbCollection.wrapAllowNull(arrayFilters, codec));
     }
 }

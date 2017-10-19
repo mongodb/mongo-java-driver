@@ -52,6 +52,7 @@ class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, Rea
     private Boolean allowDiskUse;
     private long maxTimeMS;
     private Collation collation;
+    private BsonDocument hint;
 
     AggregateExplainOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline) {
         this.namespace = notNull("namespace", namespace);
@@ -97,6 +98,30 @@ class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, Rea
      */
     public AggregateExplainOperation collation(final Collation collation) {
         this.collation = collation;
+        return this;
+    }
+
+    /**
+     * Returns the hint for which index to use. The default is not to set a hint.
+     *
+     * @return the hint
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public BsonDocument getHint() {
+        return hint;
+    }
+
+    /**
+     * Sets the hint for which index to use. A null value means no hint is set.
+     *
+     * @param hint the hint
+     * @return this
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public AggregateExplainOperation hint(final BsonDocument hint) {
+        this.hint = hint;
         return this;
     }
 
@@ -149,6 +174,9 @@ class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, Rea
         }
         if (collation != null) {
             commandDocument.put("collation", collation.asDocument());
+        }
+        if (hint != null) {
+            commandDocument.put("hint", hint);
         }
         return commandDocument;
     }

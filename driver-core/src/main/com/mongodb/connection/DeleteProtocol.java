@@ -17,7 +17,6 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.DeleteRequest;
@@ -26,8 +25,6 @@ import com.mongodb.diagnostics.logging.Loggers;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
-
-import java.util.List;
 
 import static com.mongodb.connection.ByteBufBsonDocument.createOne;
 import static java.lang.String.format;
@@ -41,12 +38,11 @@ import static java.util.Collections.singletonList;
 class DeleteProtocol extends WriteProtocol {
     private static final Logger LOGGER = Loggers.getLogger("protocol.delete");
 
-    private final List<DeleteRequest> deletes;
+    private final DeleteRequest deleteRequest;
 
-    DeleteProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                   final List<DeleteRequest> deletes) {
-        super(namespace, ordered, writeConcern);
-        this.deletes = deletes;
+    DeleteProtocol(final MongoNamespace namespace, final boolean ordered, final DeleteRequest deleteRequest) {
+        super(namespace, ordered);
+        this.deleteRequest = deleteRequest;
     }
 
     @Override
@@ -86,13 +82,13 @@ class DeleteProtocol extends WriteProtocol {
     @Override
     protected BsonDocument getAsWriteCommand(final ByteBufferBsonOutput bsonOutput, final int firstDocumentPosition) {
         BsonDocument deleteDocument = new BsonDocument("q", createOne(bsonOutput, firstDocumentPosition))
-                                      .append("limit", deletes.get(0).isMulti() ? new BsonInt32(0) : new BsonInt32(1));
+                                      .append("limit", deleteRequest.isMulti() ? new BsonInt32(0) : new BsonInt32(1));
         return getBaseCommandDocument("delete").append("deletes", new BsonArray(singletonList(deleteDocument)));
     }
 
     @Override
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new DeleteMessage(getNamespace().getFullName(), deletes, settings);
+        return new DeleteMessage(getNamespace().getFullName(), deleteRequest, settings);
     }
 
     @Override

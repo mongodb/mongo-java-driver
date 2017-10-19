@@ -49,6 +49,8 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     private Boolean useCursor;
     private Boolean bypassDocumentValidation;
     private Collation collation;
+    private String comment;
+    private Bson hint;
 
     AggregateIterableImpl(final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
                           final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
@@ -120,6 +122,18 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
+    public AggregateIterable<TResult> comment(final String comment) {
+        this.comment = comment;
+        return this;
+    }
+
+    @Override
+    public AggregateIterable<TResult> hint(final Bson hint) {
+        this.hint = hint;
+        return this;
+    }
+
+    @Override
     @SuppressWarnings("deprecation")
     ReadOperation<BatchCursor<TResult>> asReadOperation() {
         List<BsonDocument> aggregateList = createBsonDocumentList(pipeline);
@@ -145,7 +159,9 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
                     .batchSize(getBatchSize())
                     .useCursor(useCursor)
                     .readConcern(getReadConcern())
-                    .collation(collation);
+                    .collation(collation)
+                    .hint(hint == null ? null : hint.toBsonDocument(documentClass, codecRegistry))
+                    .comment(comment);
         }
     }
 
@@ -158,7 +174,9 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
                         .maxTime(maxTimeMS, MILLISECONDS)
                         .allowDiskUse(allowDiskUse)
                         .bypassDocumentValidation(bypassDocumentValidation)
-                        .collation(collation);
+                        .collation(collation)
+                        .hint(hint == null ? null : hint.toBsonDocument(documentClass, codecRegistry))
+                        .comment(comment);
     }
 
     private List<BsonDocument> createBsonDocumentList(final List<? extends Bson> pipeline) {

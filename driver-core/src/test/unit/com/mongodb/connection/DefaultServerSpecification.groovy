@@ -31,23 +31,23 @@ import com.mongodb.async.SingleResultCallback
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.event.CommandListener
 import com.mongodb.event.ServerListener
+import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.FieldNameValidator
 import org.bson.codecs.BsonDocumentCodec
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
 
 import static com.mongodb.MongoCredential.createCredential
-import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.internal.event.EventListenerHelper.NO_OP_SERVER_LISTENER
-import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class DefaultServerSpecification extends Specification {
-
+    private static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator()
     def serverId = new ServerId(new ClusterId(), new ServerAddress())
 
     def 'should get a connection'() {
@@ -196,7 +196,7 @@ class DefaultServerSpecification extends Specification {
         when:
         testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoNotPrimaryException(serverId.address)))
 
-        testConnection.insert(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
+        testConnection.insert(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()))
 
         then:
         thrown(MongoNotPrimaryException)
@@ -205,7 +205,7 @@ class DefaultServerSpecification extends Specification {
 
         when:
         def futureResultCallback = new FutureResultCallback()
-        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())),
+        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
                 futureResultCallback);
         futureResultCallback.get(60, SECONDS)
 
@@ -216,7 +216,7 @@ class DefaultServerSpecification extends Specification {
 
         when:
         futureResultCallback = new FutureResultCallback()
-        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())),
+        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
                 futureResultCallback);
         futureResultCallback.get(60, SECONDS)
 
@@ -245,7 +245,7 @@ class DefaultServerSpecification extends Specification {
         when:
         testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoNodeIsRecoveringException(new ServerAddress())))
 
-        testConnection.insert(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
+        testConnection.insert(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()))
 
         then:
         thrown(MongoNodeIsRecoveringException)
@@ -273,7 +273,7 @@ class DefaultServerSpecification extends Specification {
         when:
         testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoSocketException('socket error', new ServerAddress())))
 
-        testConnection.insert(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
+        testConnection.insert(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()))
 
         then:
         thrown(MongoSocketException)
@@ -282,7 +282,7 @@ class DefaultServerSpecification extends Specification {
 
         when:
         def futureResultCallback = new FutureResultCallback<WriteConcernResult>()
-        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())),
+        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
                 futureResultCallback)
         futureResultCallback.get(60, SECONDS)
 
@@ -312,7 +312,7 @@ class DefaultServerSpecification extends Specification {
         testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoSocketReadTimeoutException('socket timeout', new ServerAddress(),
                 new IOException())))
 
-        testConnection.insert(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
+        testConnection.insert(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()))
 
         then:
         thrown(MongoSocketReadTimeoutException)
@@ -321,7 +321,7 @@ class DefaultServerSpecification extends Specification {
 
         when:
         def futureResultCallback = new FutureResultCallback<WriteConcernResult>()
-        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())),
+        testConnection.insertAsync(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()),
                 futureResultCallback)
         futureResultCallback.get(60, SECONDS)
 
@@ -400,14 +400,14 @@ class DefaultServerSpecification extends Specification {
         when:
         if (async) {
             CountDownLatch latch = new CountDownLatch(1)
-            testConnection.commandAsync('admin', new BsonDocument('ping', new BsonInt32(1)), ReadPreference.primary(), null,
-                    new BsonDocumentCodec(), sessionContext) {
+            testConnection.commandAsync('admin', new BsonDocument('ping', new BsonInt32(1)), NO_OP_FIELD_NAME_VALIDATOR,
+                    ReadPreference.primary(), new BsonDocumentCodec(), sessionContext) {
                 BsonDocument result, Throwable t -> latch.countDown()
             }
             latch.await()
         } else {
-            testConnection.command('admin', new BsonDocument('ping', new BsonInt32(1)), ReadPreference.primary(), null,
-                    new BsonDocumentCodec(), sessionContext)
+            testConnection.command('admin', new BsonDocument('ping', new BsonInt32(1)), NO_OP_FIELD_NAME_VALIDATOR,
+                    ReadPreference.primary(), new BsonDocumentCodec(), sessionContext)
         }
 
         then:
