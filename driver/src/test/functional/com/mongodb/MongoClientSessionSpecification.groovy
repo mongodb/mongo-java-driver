@@ -230,15 +230,14 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         def optionsBuilder = MongoClientOptions.builder()
                 .addCommandListener(commandListener)
         def client = new MongoClient(Fixture.getMongoClientURI(optionsBuilder))
-        // TODO: Remove this once SPEC-944 is resolved
-        client.getDatabase('admin').runCommand(new BsonDocument('ping', new BsonInt32(1)))
 
         when:
         client.getDatabase('admin').runCommand(new BsonDocument('ping', new BsonInt32(1)))
 
         then:
-        def pingCommandStartedEvent = commandListener.events.get(2)
-        (pingCommandStartedEvent as CommandStartedEvent).command.containsKey('lsid')
+        commandListener.events.size() == 2
+        def pingCommandStartedEvent = commandListener.events.get(0) as CommandStartedEvent
+        pingCommandStartedEvent.command.containsKey('lsid')
 
         cleanup:
         client?.close()
