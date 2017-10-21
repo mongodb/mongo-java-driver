@@ -43,6 +43,7 @@ import com.mongodb.operation.ListDatabasesOperation;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
 import com.mongodb.selector.LatencyMinimizingServerSelector;
+import com.mongodb.selector.ServerSelector;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
@@ -853,11 +854,29 @@ public class Mongo {
     }
 
     ClientSession createClientSession(final ClientSessionOptions options) {
-        if (cluster.getDescription().getLogicalSessionTimeoutMinutes() != null && credentialsList.size() < 2) {
+        if (credentialsList.size() > 1) {
+            return null;
+        }
+        if (getConnectedClusterDescription().getLogicalSessionTimeoutMinutes() != null) {
             return new ClientSessionImpl(this, options);
         } else {
             return null;
         }
+    }
+
+    @SuppressWarnings("deprecation")
+    private ClusterDescription getConnectedClusterDescription() {
+        ClusterDescription clusterDescription = cluster.getDescription();
+        if (clusterDescription.getAny().isEmpty()) {
+            cluster.selectServer(new ServerSelector() {
+                @Override
+                public List<ServerDescription> select(final ClusterDescription clusterDescription) {
+                    return clusterDescription.getAny();
+                }
+            });
+            clusterDescription = cluster.getDescription();
+        }
+        return clusterDescription;
     }
 
     static class ClientSessionImpl implements ClientSession {
