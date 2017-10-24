@@ -30,9 +30,12 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.internal.dns.DnsResolver.resolveAdditionalQueryParametersFromTxtRecords;
+import static com.mongodb.internal.dns.DnsResolver.resolveHostFromSrvRecords;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
+import static java.util.Collections.unmodifiableList;
 
 
 /**
@@ -57,7 +60,27 @@ import static java.util.Collections.singletonList;
  * are separated by "&amp;". For backwards compatibility, ";" is accepted as a separator in addition to "&amp;",
  * but should be considered as deprecated.</li>
  * </ul>
- *
+ * <p>An alternative format, using the mongodb+srv protocol, is:
+ * <pre>
+ *   mongodb+srv://[username:password@]host[/[database][?options]]
+ * </pre>
+ * <ul>
+ * <li>{@code mongodb+srv://} is a required prefix for this format.</li>
+ * <li>{@code username:password@} are optional.  If given, the driver will attempt to login to a database after
+ * connecting to a database server.  For some authentication mechanisms, only the username is specified and the password is not,
+ * in which case the ":" after the username is left off as well</li>
+ * <li>{@code host} is the only required part of the URI.  It identifies a single host name for which SRV records are looked up
+ * from a Domain Name Server after prefixing the host name with {@code "_mongodb._tcp"}.  The host/port for each SRV record becomes the
+ * seed list used to connect, as if each one were provided as host/port pair in a URI using the normal mongodb protocol.</li>
+ * <li>{@code /database} is the name of the database to login to and thus is only relevant if the
+ * {@code username:password@} syntax is used. If not specified the "admin" database will be used by default.</li>
+ * <li>{@code ?options} are connection options. Note that if {@code database} is absent there is still a {@code /}
+ * required between the last host and the {@code ?} introducing the options. Options are name=value pairs and the pairs
+ * are separated by "&amp;". For backwards compatibility, ";" is accepted as a separator in addition to "&amp;",
+ * but should be considered as deprecated. Additionally with the mongodb+srv protocol, TXT records are looked up from a Domain Name
+ * Server for the given host, and the text value of each one is prepended to any options on the URI itself.  Because the last specified
+ * value for any option wins, that means that options provided on the URI will override any that are provided via TXT records.</li>
+ * </ul>
  * <p>The following options are supported (case insensitive):</p>
  *
  * <p>Server Selection Configuration:</p>
@@ -196,7 +219,9 @@ import static java.util.Collections.singletonList;
  */
 public class ConnectionString {
 
-    private static final String PREFIX = "mongodb://";
+    private static final String MONGODB_PREFIX = "mongodb://";
+    private static final String MONGODB_SRV_PREFIX = "mongodb+srv://";
+    private static final Set<String> ALLOWED_OPTIONS_IN_TXT_RECORD = new HashSet<String>(asList("authsource", "replicaset"));
     private static final String UTF_8 = "UTF-8";
 
     private static final Logger LOGGER = Loggers.getLogger("uri");
@@ -238,15 +263,22 @@ public class ConnectionString {
      */
     public ConnectionString(final String connectionString) {
         this.connectionString = connectionString;
-        if (!connectionString.startsWith(PREFIX)) {
+        boolean isMongoDBProtocol = connectionString.startsWith(MONGODB_PREFIX);
+        boolean isSRVProtocol = connectionString.startsWith(MONGODB_SRV_PREFIX);
+        if (!isMongoDBProtocol && !isSRVProtocol) {
             throw new IllegalArgumentException(format("The connection string is invalid. "
-                    + "Connection strings must start with '%s'", PREFIX));
+                    + "Connection strings must start with either '%s' or '%s", MONGODB_PREFIX, MONGODB_SRV_PREFIX));
         }
 
-        String unprocessedConnectionString = connectionString.substring(PREFIX.length());
+        String unprocessedConnectionString;
+        if (isMongoDBProtocol) {
+            unprocessedConnectionString = connectionString.substring(MONGODB_PREFIX.length());
+        } else {
+            unprocessedConnectionString = connectionString.substring(MONGODB_SRV_PREFIX.length());
+        }
 
         // Split out the user and host information
-        String userAndHostInformation = null;
+        String userAndHostInformation;
         int idx = unprocessedConnectionString.lastIndexOf("/");
         if (idx == -1) {
             if (unprocessedConnectionString.contains("?")) {
@@ -260,8 +292,8 @@ public class ConnectionString {
         }
 
         // Split the user and host information
-        String userInfo = null;
-        String hostIdentifier = null;
+        String userInfo;
+        String hostIdentifier;
         String userName = null;
         char[] password = null;
         idx = userAndHostInformation.lastIndexOf("@");
@@ -285,10 +317,11 @@ public class ConnectionString {
         }
 
         // Validate the hosts
-        hosts = Collections.unmodifiableList(parseHosts(asList(hostIdentifier.split(","))));
+        List<String> unresolvedHosts = unmodifiableList(parseHosts(asList(hostIdentifier.split(",")), isSRVProtocol));
+        this.hosts = isSRVProtocol ? resolveHostFromSrvRecords(unresolvedHosts.get(0)) : unresolvedHosts;
 
         // Process the authDB section
-        String nsPart = null;
+        String nsPart;
         idx = unprocessedConnectionString.indexOf("?");
         if (idx == -1) {
             nsPart = unprocessedConnectionString;
@@ -312,10 +345,22 @@ public class ConnectionString {
             collection = null;
         }
 
-        Map<String, List<String>> optionsMap = parseOptions(unprocessedConnectionString);
-        translateOptions(optionsMap);
-        credential = createCredentials(optionsMap, userName, password);
-        warnOnUnsupportedOptions(optionsMap);
+        String txtRecordsQueryParameters = isSRVProtocol ? resolveAdditionalQueryParametersFromTxtRecords(unresolvedHosts.get(0)) : "";
+        String connectionStringQueryParamenters = unprocessedConnectionString;
+
+        Map<String, List<String>> connectionStringOptionsMap = parseOptions(connectionStringQueryParamenters);
+        Map<String, List<String>> txtRecordsOptionsMap = parseOptions(txtRecordsQueryParameters);
+        if (!ALLOWED_OPTIONS_IN_TXT_RECORD.containsAll(txtRecordsOptionsMap.keySet())) {
+            throw new MongoConfigurationException(format("A TXT record is only permitted to contain the keys %s, but the TXT record for "
+            + "'%s' contains the keys %s", ALLOWED_OPTIONS_IN_TXT_RECORD, unresolvedHosts.get(0), txtRecordsOptionsMap.keySet()));
+        }
+        Map<String, List<String>> combinedOptionsMaps = combineOptionsMaps(txtRecordsOptionsMap, connectionStringOptionsMap);
+        if (isSRVProtocol && !combinedOptionsMaps.containsKey("ssl")) {
+            combinedOptionsMaps.put("ssl", singletonList("true"));
+        }
+        translateOptions(combinedOptionsMaps);
+        credential = createCredentials(combinedOptionsMaps, userName, password);
+        warnOnUnsupportedOptions(combinedOptionsMaps);
     }
 
     private static final Set<String> GENERAL_OPTIONS_KEYS = new HashSet<String>();
@@ -373,6 +418,18 @@ public class ConnectionString {
         ALL_KEYS.addAll(COMPRESSOR_KEYS);
     }
 
+    // Any options contained in the connection string completely replace the corresponding options specified in TXT records,
+    // even for options which multiple values, e.g. readPreferenceTags
+    private Map<String, List<String>> combineOptionsMaps(final Map<String, List<String>> txtRecordsOptionsMap,
+                                                         final Map<String, List<String>> connectionStringOptionsMap) {
+        Map<String, List<String>> combinedOptionsMaps = new HashMap<String, List<String>>(txtRecordsOptionsMap);
+        for (Map.Entry<String, List<String>> entry : connectionStringOptionsMap.entrySet()) {
+            combinedOptionsMaps.put(entry.getKey(), entry.getValue());
+        }
+        return combinedOptionsMaps;
+    }
+
+
     private void warnOnUnsupportedOptions(final Map<String, List<String>> optionsMap) {
         for (final String key : optionsMap.keySet()) {
             if (!ALL_KEYS.contains(key)) {
@@ -406,10 +463,10 @@ public class ConnectionString {
                 connectTimeout = parseInteger(value, "connecttimeoutms");
             } else if (key.equals("sockettimeoutms")) {
                 socketTimeout = parseInteger(value, "sockettimeoutms");
-            } else if (key.equals("sslinvalidhostnameallowed") && parseBoolean(value, "sslinvalidhostnameallowed")) {
-                sslInvalidHostnameAllowed = true;
-            } else if (key.equals("ssl") && parseBoolean(value, "ssl")) {
-                sslEnabled = true;
+            } else if (key.equals("sslinvalidhostnameallowed")) {
+                sslInvalidHostnameAllowed = parseBoolean(value, "sslinvalidhostnameallowed");
+            } else if (key.equals("ssl")) {
+                sslEnabled = parseBoolean(value, "ssl");
             } else if (key.equals("streamtype")) {
                 streamType = value;
             } else if (key.equals("replicaset")) {
@@ -424,8 +481,8 @@ public class ConnectionString {
                 heartbeatFrequency = parseInteger(value, "heartbeatfrequencyms");
             } else if (key.equals("appname")) {
                 applicationName = value;
-            } else if (key.equals("retrywrites") && parseBoolean(value, "retrywrites")) {
-                retryWrites = true;
+            } else if (key.equals("retrywrites")) {
+                retryWrites = parseBoolean(value, "retrywrites");
             }
         }
 
@@ -470,7 +527,7 @@ public class ConnectionString {
             }
         }
 
-        return Collections.unmodifiableList(compressorsList);
+        return unmodifiableList(compressorsList);
     }
 
     private WriteConcern createWriteConcern(final Map<String, List<String>> optionsMap) {
@@ -749,7 +806,7 @@ public class ConnectionString {
         }
     }
 
-    private List<String> parseHosts(final List<String> rawHosts) {
+    private List<String> parseHosts(final List<String> rawHosts, final boolean isSRVProtocol) {
         if (rawHosts.size() == 0){
             throw new IllegalArgumentException("The connection string must contain at least one host");
         }
@@ -776,10 +833,19 @@ public class ConnectionString {
                             + "Reserved characters such as ':' must be escaped according RFC 2396. "
                             + "Any IPv6 address literal must be enclosed in '[' and ']' according to RFC 2732.", host));
                 } else if (colonCount == 1) {
+                    if (isSRVProtocol) {
+                        throw new IllegalArgumentException("A connection string using the mongodb+srv protocol can not"
+                                + "contain a host name that specifies a port");
+                    }
+
                     validatePort(host, host.substring(host.indexOf(":") + 1));
                 }
             }
             hosts.add(host);
+        }
+        if (isSRVProtocol && hosts.size() > 1) {
+            throw new IllegalArgumentException("The mongodb+srv protocol requires a single host name but this connection string has more "
+                    + "than one: " + connectionString);
         }
         Collections.sort(hosts);
         return hosts;

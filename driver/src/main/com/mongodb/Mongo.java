@@ -703,7 +703,6 @@ public class Mongo {
     }
 
     private static Cluster createCluster(final MongoClientURI mongoURI, final MongoDriverInformation mongoDriverInformation) {
-
         List<MongoCredential> credentialList = mongoURI.getCredentials() != null
                                                ? singletonList(mongoURI.getCredentials())
                                                : Collections.<MongoCredential>emptyList();
