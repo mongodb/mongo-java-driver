@@ -33,4 +33,16 @@ public class MongoConfigurationException extends MongoClientException {
     public MongoConfigurationException(final String message) {
         super(message);
     }
+
+    /**
+     * Construct an instance with the given message and cause.
+     *
+     * @param message the message
+     * @param cause the cause
+     *
+     * @since 3.6
+     */
+    public MongoConfigurationException(final String message, final Throwable cause) {
+        super(message, cause);
+    }
 }
