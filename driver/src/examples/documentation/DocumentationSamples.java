@@ -21,6 +21,12 @@ import com.mongodb.DatabaseTestCase;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+// imports required for change streams
+import com.mongodb.client.MongoCursor;
+import com.mongodb.client.model.changestream.ChangeStreamDocument;
+import com.mongodb.client.model.changestream.FullDocument;
+import org.bson.BsonDocument;
+// end required change streams imports
 import org.bson.BsonType;
 import org.bson.Document;
 import org.junit.After;
@@ -29,7 +35,10 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.Fixture.getDefaultDatabaseName;
 import static com.mongodb.Fixture.getMongoClient;
 
@@ -61,6 +70,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeTrue;
 
 
 public final class DocumentationSamples extends DatabaseTestCase {
@@ -603,6 +613,52 @@ public final class DocumentationSamples extends DatabaseTestCase {
         assertEquals(0, collection.count());
     }
 
+    @Test
+    public void testWatch() {
+        assumeTrue(isDiscoverableReplicaSet() && serverVersionAtLeast(3, 5));
+
+        final MongoCollection<Document> inventory = collection;
+        final AtomicBoolean stop = new AtomicBoolean(false);
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (!stop.get()) {
+                    collection.insertOne(new Document());
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        // ignore
+                    }
+                }
+            }
+        }).start();
+
+
+        // Start Changestream Example 1
+        MongoCursor<ChangeStreamDocument<Document>> cursor = inventory.watch().iterator();
+        ChangeStreamDocument<Document> next = cursor.next();
+        // End Changestream Example 1
+
+        cursor.close();
+
+        // Start Changestream Example 2
+        cursor = inventory.watch().fullDocument(FullDocument.UPDATE_LOOKUP).iterator();
+        next = cursor.next();
+        // End Changestream Example 2
+
+        cursor.close();
+
+        // Start Changestream Example 3
+        BsonDocument resumeToken = next.getResumeToken();
+        cursor = inventory.watch().resumeAfter(resumeToken).iterator();
+        next = cursor.next();
+        // End Changestream Example 3
+
+        cursor.close();
+
+        stop.set(true);
+    }
 
     @After
     public void tearDown() {
