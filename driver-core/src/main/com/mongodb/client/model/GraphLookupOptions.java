@@ -71,7 +71,7 @@ public final class GraphLookupOptions {
      *
      * @param filter the filter expression
      * @return this
-     * @since 3.6
+     * @since 3.7
      */
     public GraphLookupOptions restrictSearchWithMatch(final Bson filter) {
         restrictSearchWithMatch = filter;
@@ -80,7 +80,7 @@ public final class GraphLookupOptions {
 
     /**
      * @return the filter expression
-     * @since 3.6
+     * @since 3.7
      */
     public Bson getRestrictSearchWithMatch() {
         return restrictSearchWithMatch;
