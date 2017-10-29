@@ -197,22 +197,14 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         when:
         def clientSession = Fixture.getMongoClient().startSession(ClientSessionOptions.builder()
                 .causallyConsistent(causallyConsistent)
-                .initialClusterTime(initialClusterTime)
-                .initialOperationTime(initialOperationTime)
                 .build())
 
         then:
         clientSession != null
         clientSession.isCausallyConsistent() == causallyConsistent
-        clientSession.getClusterTime() == initialClusterTime
-        clientSession.getOperationTime() == initialOperationTime
 
         where:
-        [causallyConsistent, initialClusterTime, initialOperationTime] << [
-                [true, false],
-                [null, new BsonDocument('x', new BsonInt32(1))],
-                [null, new BsonTimestamp(42, 1)]
-        ].combinations()
+        causallyConsistent << [true, false]
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 5) })

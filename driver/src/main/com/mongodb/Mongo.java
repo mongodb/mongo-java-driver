@@ -874,8 +874,6 @@ public class Mongo {
             this.mongo = mongo;
             this.serverSession = mongo.serverSessionPool.get();
             this.options = options;
-            clusterTime = options.getInitialClusterTime();
-            operationTime = options.getInitialOperationTime();
             closed = false;
         }
 

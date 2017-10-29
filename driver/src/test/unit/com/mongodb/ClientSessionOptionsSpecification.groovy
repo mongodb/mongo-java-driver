@@ -16,9 +16,6 @@
 
 package com.mongodb
 
-import org.bson.BsonDocument
-import org.bson.BsonInt32
-import org.bson.BsonTimestamp
 import spock.lang.Specification
 
 class ClientSessionOptionsSpecification extends Specification {
@@ -29,28 +26,18 @@ class ClientSessionOptionsSpecification extends Specification {
 
         then:
         options.isCausallyConsistent() == null
-        options.getInitialClusterTime() == null
-        options.getInitialOperationTime() == null
     }
 
     def 'should apply options set in builder'() {
         when:
         def options = ClientSessionOptions.builder()
                 .causallyConsistent(causallyConsistent)
-                .initialClusterTime(initialClusterTime)
-                .initialOperationTime(initialOperationTime)
                 .build()
 
         then:
         options.isCausallyConsistent() == causallyConsistent
-        options.getInitialClusterTime() == initialClusterTime
-        options.getInitialOperationTime() == initialOperationTime
 
         where:
-        [causallyConsistent, initialClusterTime, initialOperationTime] << [
-                [true, false],
-                [null, new BsonDocument('x', new BsonInt32(1))],
-                [null, new BsonTimestamp(42, 1)]
-        ].combinations()
+        causallyConsistent << [true, false]
     }
 }
