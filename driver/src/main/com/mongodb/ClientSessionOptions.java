@@ -19,8 +19,6 @@ package com.mongodb;
 
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
-import org.bson.BsonDocument;
-import org.bson.BsonTimestamp;
 
 /**
  * The options to apply to a {@code ClientSession}.
@@ -34,8 +32,6 @@ import org.bson.BsonTimestamp;
 public final class ClientSessionOptions {
 
     private final Boolean causallyConsistent;
-    private final BsonDocument initialClusterTime;
-    private final BsonTimestamp initialOperationTime;
 
     /**
      * Whether operations using the session should causally consistent with each other.
@@ -45,23 +41,6 @@ public final class ClientSessionOptions {
      */
     public Boolean isCausallyConsistent() {
         return causallyConsistent;
-    }
-
-    /**
-     * Gets the initial cluster time to apply to the client session
-     *
-     * @return the initial cluster time, which may be null
-     */
-    public BsonDocument getInitialClusterTime() {
-        return initialClusterTime;
-    }
-
-    /**
-     * Gets the initial operation time to apply to the client session
-     * @return the initial operation time, which may be null
-     */
-    public BsonTimestamp getInitialOperationTime() {
-        return initialOperationTime;
     }
 
     /**
@@ -79,8 +58,6 @@ public final class ClientSessionOptions {
     @NotThreadSafe
     public static final class Builder {
         private Boolean causallyConsistent;
-        private BsonDocument initialClusterTime;
-        private BsonTimestamp initialOperationTime;
 
         /**
          * Sets whether operations using the session should causally consistent with each other.
@@ -93,27 +70,6 @@ public final class ClientSessionOptions {
             return this;
         }
 
-        /**
-         * Sets the initial cluster time to apply to the client session
-         *
-         * @param initialClusterTime the initial cluster time, which may be null
-         * @return this
-         */
-        public Builder initialClusterTime(final BsonDocument initialClusterTime) {
-            this.initialClusterTime = initialClusterTime;
-            return this;
-        }
-
-        /**
-         * Gets the initial operation time to apply to the client session
-         *
-         * @param initialOperationTime the initial operation time, which may be null
-         * @return this
-         */
-        public Builder initialOperationTime(final BsonTimestamp initialOperationTime) {
-            this.initialOperationTime = initialOperationTime;
-            return this;
-        }
         /**
          * Build the session options instance.
          *
@@ -129,7 +85,5 @@ public final class ClientSessionOptions {
 
     private ClientSessionOptions(final Builder builder) {
         this.causallyConsistent = builder.causallyConsistent;
-        this.initialClusterTime = builder.initialClusterTime;
-        this.initialOperationTime = builder.initialOperationTime;
     }
 }
