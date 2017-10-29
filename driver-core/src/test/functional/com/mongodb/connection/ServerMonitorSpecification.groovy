@@ -200,7 +200,7 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
                 .hosts(new HashSet<String>(asList('localhost:27017', 'localhost:27018')))
                 .passives(new HashSet<String>(asList('localhost:27019')))
                 .arbiters(new HashSet<String>(asList('localhost:27020')))
-                .version(new ServerVersion(asList(2, 4, 1)))
+                .version(new ServerVersion(asList(3, 4, 1)))
                 .electionId(new ObjectId('abcdabcdabcdabcdabcdabcd'))
                 .setVersion(2)
     }

@@ -26,7 +26,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Arrays.asList;
 
 /**
- * Holds an array of three integers representing the server version, e.g. [2, 4, 1].
+ * Holds an array of three integers representing the server version, e.g. [3, 4, 1].
  *
  * @since 3.0
  */
