@@ -232,10 +232,7 @@ public class CrudTest extends DatabaseTestCase {
         if (updateResult.isModifiedCountAvailable()) {
             resultDoc.append("modifiedCount", new BsonInt32((int) updateResult.getModifiedCount()));
         }
-        // If the upsertedId is an ObjectId that means it came from the server and can't be verified.
-        // This check is to handle the "ReplaceOne with upsert when no documents match without an id specified" test
-        // in replaceOne-pre_2.6
-        if (updateResult.getUpsertedId() != null && !updateResult.getUpsertedId().isObjectId()) {
+        if (updateResult.getUpsertedId() != null) {
             resultDoc.append("upsertedId", updateResult.getUpsertedId());
         }
         resultDoc.append("upsertedCount", updateResult.getUpsertedId() == null ? new BsonInt32(0) : new BsonInt32(1));

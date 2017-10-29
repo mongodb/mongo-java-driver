@@ -122,7 +122,7 @@ public class ServerDescriptionTest {
                                               .passives(new HashSet<String>(singletonList("localhost:27020")))
                                               .ok(true)
                                               .state(CONNECTED)
-                                              .version(new ServerVersion(asList(2, 4, 1)))
+                                              .version(new ServerVersion(asList(3, 4, 1)))
                                               .minWireVersion(1)
                                               .maxWireVersion(2)
                                               .electionId(new ObjectId("123412341234123412341234"))
@@ -158,7 +158,7 @@ public class ServerDescriptionTest {
         assertEquals(new HashSet<String>(singletonList("localhost:27019")), serverDescription.getArbiters());
         assertEquals(new HashSet<String>(singletonList("localhost:27020")), serverDescription.getPassives());
         assertEquals("test", serverDescription.getSetName());
-        assertEquals(new ServerVersion(asList(2, 4, 1)), serverDescription.getVersion());
+        assertEquals(new ServerVersion(asList(3, 4, 1)), serverDescription.getVersion());
         assertEquals(1, serverDescription.getMinWireVersion());
         assertEquals(2, serverDescription.getMaxWireVersion());
         assertEquals(new ObjectId("123412341234123412341234"), serverDescription.getElectionId());
@@ -269,7 +269,7 @@ public class ServerDescriptionTest {
                        .arbiters(new HashSet<String>(singletonList("localhost:27020")))
                        .ok(true)
                        .state(CONNECTED)
-                       .version(new ServerVersion(asList(2, 4, 1)))
+                       .version(new ServerVersion(asList(3, 4, 1)))
                        .minWireVersion(1)
                        .lastWriteDate(new Date())
                        .maxWireVersion(2)

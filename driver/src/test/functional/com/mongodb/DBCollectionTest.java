@@ -303,8 +303,6 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testCreateIndexAs2dsphere() {
-        assumeThat(serverVersionAtLeast(2, 4), is(true));
-
         // when
         DBObject index = new BasicDBObject("x", "2dsphere");
         collection.createIndex(index);
