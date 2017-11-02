@@ -40,6 +40,7 @@ public final class ChangeStreamDocument<TDocument> {
     @BsonProperty("ns")
     private final MongoNamespace namespace;
     private final TDocument fullDocument;
+    private final BsonDocument documentKey;
     private final OperationType operationType;
     private final UpdateDescription updateDescription;
 
@@ -48,6 +49,7 @@ public final class ChangeStreamDocument<TDocument> {
      *
      * @param resumeToken the resume token
      * @param namespace the namespace
+     * @param documentKey a document containing the _id of the changed document
      * @param fullDocument the fullDocument
      * @param operationType the operation type
      * @param updateDescription the update description
@@ -56,10 +58,12 @@ public final class ChangeStreamDocument<TDocument> {
     public ChangeStreamDocument(@BsonProperty("resumeToken") final BsonDocument resumeToken,
                                 @BsonProperty("namespace") final MongoNamespace namespace,
                                 @BsonProperty("fullDocument") final TDocument fullDocument,
+                                @BsonProperty("documentKey") final BsonDocument documentKey,
                                 @BsonProperty("operationType") final OperationType operationType,
                                 @BsonProperty("updateDescription") final UpdateDescription updateDescription) {
         this.resumeToken = resumeToken;
         this.namespace = namespace;
+        this.documentKey = documentKey;
         this.fullDocument = fullDocument;
         this.operationType = operationType;
         this.updateDescription = updateDescription;
@@ -90,6 +94,21 @@ public final class ChangeStreamDocument<TDocument> {
      */
     public TDocument getFullDocument() {
         return fullDocument;
+    }
+
+    /**
+     * Returns a document containing just the _id of the changed document.
+     * <p>
+     * For unsharded collections this contains a single field, _id, with the
+     * value of the _id of the document updated.  For sharded collections,
+     * this will contain all the components of the shard key in order,
+     * followed by the _id if the _id isn’t part of the shard key.
+     * </p>
+     *
+     * @return the document key
+     */
+    public BsonDocument getDocumentKey() {
+        return documentKey;
     }
 
     /**
@@ -134,20 +153,22 @@ public final class ChangeStreamDocument<TDocument> {
 
         ChangeStreamDocument<?> that = (ChangeStreamDocument<?>) o;
 
-        if (!getResumeToken().equals(that.getResumeToken())) {
+        if (resumeToken != null ? !resumeToken.equals(that.resumeToken) : that.resumeToken != null) {
             return false;
         }
-        if (!getNamespace().equals(that.getNamespace())) {
+        if (namespace != null ? !namespace.equals(that.namespace) : that.namespace != null) {
             return false;
         }
-        if (!getFullDocument().equals(that.getFullDocument())) {
+        if (fullDocument != null ? !fullDocument.equals(that.fullDocument) : that.fullDocument != null) {
             return false;
         }
-        if (getOperationType() != that.getOperationType()) {
+        if (documentKey != null ? !documentKey.equals(that.documentKey) : that.documentKey != null) {
             return false;
         }
-        if (getUpdateDescription() != null ? !getUpdateDescription().equals(that.getUpdateDescription())
-                : that.getUpdateDescription() != null) {
+        if (operationType != that.operationType) {
+            return false;
+        }
+        if (updateDescription != null ? !updateDescription.equals(that.updateDescription) : that.updateDescription != null) {
             return false;
         }
 
@@ -156,20 +177,22 @@ public final class ChangeStreamDocument<TDocument> {
 
     @Override
     public int hashCode() {
-        int result = getResumeToken().hashCode();
-        result = 31 * result + getNamespace().hashCode();
-        result = 31 * result + getFullDocument().hashCode();
-        result = 31 * result + getOperationType().hashCode();
-        result = 31 * result + (getUpdateDescription() != null ? getUpdateDescription().hashCode() : 0);
+        int result = resumeToken != null ? resumeToken.hashCode() : 0;
+        result = 31 * result + (namespace != null ? namespace.hashCode() : 0);
+        result = 31 * result + (fullDocument != null ? fullDocument.hashCode() : 0);
+        result = 31 * result + (documentKey != null ? documentKey.hashCode() : 0);
+        result = 31 * result + (operationType != null ? operationType.hashCode() : 0);
+        result = 31 * result + (updateDescription != null ? updateDescription.hashCode() : 0);
         return result;
     }
 
     @Override
     public String toString() {
-        return "ChangeStreamOutput{"
+        return "ChangeStreamDocument{"
                 + "resumeToken=" + resumeToken
                 + ", namespace=" + namespace
                 + ", fullDocument=" + fullDocument
+                + ", documentKey=" + documentKey
                 + ", operationType=" + operationType
                 + ", updateDescription=" + updateDescription
                 + "}";
