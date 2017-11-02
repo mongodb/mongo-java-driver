@@ -36,7 +36,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 @SuppressWarnings({"unchecked", "rawtypes"})
 final class ChangeStreamDocumentCodec<TResult> implements Codec<ChangeStreamDocument<TResult>> {
 
-    private static final BsonDocumentCodec RESUME_TOKEN_CODEC = new BsonDocumentCodec();
+    private static final BsonDocumentCodec BSON_DOCUMENT_CODEC = new BsonDocumentCodec();
     private static final OperationTypeCodec OPERATION_TYPE_CODEC = new OperationTypeCodec();
 
     private final Codec<ChangeStreamDocument<TResult>> codec;
@@ -44,8 +44,9 @@ final class ChangeStreamDocumentCodec<TResult> implements Codec<ChangeStreamDocu
     ChangeStreamDocumentCodec(final Class<TResult> fullDocumentClass, final CodecRegistry codecRegistry) {
 
         ClassModelBuilder<ChangeStreamDocument> classModelBuilder = ClassModel.builder(ChangeStreamDocument.class);
+        ((PropertyModelBuilder<BsonDocument>) classModelBuilder.getProperty("documentKey")).codec(BSON_DOCUMENT_CODEC);
         ((PropertyModelBuilder<TResult>) classModelBuilder.getProperty("fullDocument")).codec(codecRegistry.get(fullDocumentClass));
-        ((PropertyModelBuilder<BsonDocument>) classModelBuilder.getProperty("resumeToken")).codec(RESUME_TOKEN_CODEC);
+        ((PropertyModelBuilder<BsonDocument>) classModelBuilder.getProperty("resumeToken")).codec(BSON_DOCUMENT_CODEC);
         ((PropertyModelBuilder<OperationType>) classModelBuilder.getProperty("operationType")).codec(OPERATION_TYPE_CODEC);
         ClassModel<ChangeStreamDocument> changeStreamDocumentClassModel = classModelBuilder.build();
 
