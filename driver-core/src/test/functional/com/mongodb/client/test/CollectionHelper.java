@@ -23,6 +23,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.binding.AsyncReadWriteBinding;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.bulk.DeleteRequest;
 import com.mongodb.bulk.IndexRequest;
 import com.mongodb.bulk.InsertRequest;
 import com.mongodb.bulk.UpdateRequest;
@@ -226,6 +227,24 @@ public final class CollectionHelper<T> {
                                                   .upsert(isUpsert)),
                                     true, WriteConcern.ACKNOWLEDGED)
         .execute(getBinding());
+    }
+
+    public void replaceOne(final Bson filter, final Bson update, final boolean isUpsert) {
+        new MixedBulkWriteOperation(namespace,
+                singletonList(new UpdateRequest(filter.toBsonDocument(Document.class, registry),
+                        update.toBsonDocument(Document.class, registry),
+                        WriteRequest.Type.REPLACE)
+                        .upsert(isUpsert)),
+                true, WriteConcern.ACKNOWLEDGED)
+                .execute(getBinding());
+    }
+
+    public void deleteOne(final Bson filter) {
+        new MixedBulkWriteOperation(namespace,
+                singletonList(new DeleteRequest(filter.toBsonDocument(Document.class, registry))),
+                true, WriteConcern.ACKNOWLEDGED)
+                .execute(getBinding());
+
     }
 
     public List<T> find(final Bson filter) {
