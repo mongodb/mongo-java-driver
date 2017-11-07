@@ -60,7 +60,7 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
     private boolean closed;
 
     QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize, final Decoder<T> decoder) {
-        this(firstQueryResult, limit, batchSize, decoder, (ConnectionSource) null);
+        this(firstQueryResult, limit, batchSize, decoder, null);
     }
 
     QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize,
