@@ -57,7 +57,7 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
     private ServerCursor serverCursor;
     private List<T> nextBatch;
     private int count;
-    private boolean closed;
+    private volatile boolean closed;
 
     QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize, final Decoder<T> decoder) {
         this(firstQueryResult, limit, batchSize, decoder, null);
@@ -107,6 +107,9 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
 
         while (serverCursor != null) {
             getMore();
+            if (closed) {
+                throw new IllegalStateException("Cursor has been closed");
+            }
             if (nextBatch != null) {
                 return true;
             }
