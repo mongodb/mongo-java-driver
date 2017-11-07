@@ -257,6 +257,27 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         nextBatch.iterator().next().get('_id') == 2
     }
 
+    @Category(Slow)
+    def 'hasNext should throw when cursor is closed in another thread'() {
+        collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
+        collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
+        def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, true);
+        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource)
+        cursor.next()
+
+        // wait a second then close the cursor
+        new Thread({
+            sleep(1000)
+            cursor.close()
+        } as Runnable).start()
+
+        when:
+        cursor.hasNext()
+
+        then:
+        thrown(Exception)
+    }
+
     @IgnoreIf({ !serverVersionAtLeast(3, 2) || isSharded() })
     @Category(Slow)
     def 'test maxTimeMS'() {
