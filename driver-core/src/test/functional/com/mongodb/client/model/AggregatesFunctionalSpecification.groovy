@@ -52,6 +52,7 @@ import static com.mongodb.client.model.Aggregates.skip
 import static com.mongodb.client.model.Aggregates.sort
 import static com.mongodb.client.model.Aggregates.sortByCount
 import static com.mongodb.client.model.Aggregates.unwind
+import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Filters.exists
 import static com.mongodb.client.model.Projections.computed
 import static com.mongodb.client.model.Projections.exclude
@@ -339,7 +340,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 4) })
-    def '$graphLookup with options'() {
+    def '$graphLookup with depth options'() {
         given:
         def fromCollectionName = 'contacts'
         def fromHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), fromCollectionName))
@@ -373,6 +374,57 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                     _id: 2, name: "Chris Green", friends: ["Anna Jones", "Bob Smith"], depth:0 } }'''),
                 Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"], socialNetwork: {
                     _id: 3, name: "Joe Lee", friends: ["Anna Jones", "Fred Brown" ], depth:1 } }''')
+        ]
+
+        cleanup:
+        fromHelper?.drop()
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
+    def '$graphLookup with query filter option'() {
+        given:
+        def fromCollectionName = 'contacts'
+        def fromHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), fromCollectionName))
+
+        fromHelper.drop()
+
+        fromHelper.insertDocuments(
+            Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"],
+                hobbies : ["tennis", "unicycling", "golf"] }'''),
+            Document.parse('''{ _id: 1, name: "Anna Jones", friends: ["Bob Smith", "Chris Green", "Joe Lee"],
+                 hobbies : ["archery", "golf", "woodworking"] }'''),
+            Document.parse('''{ _id: 2, name: "Chris Green", friends: ["Anna Jones", "Bob Smith"],
+                hobbies : ["knitting", "frisbee"] }'''),
+            Document.parse('''{ _id: 3, name: "Joe Lee", friends: ["Anna Jones", "Fred Brown"],
+                hobbies : [ "tennis", "golf", "topiary" ] }'''),
+            Document.parse('''{ _id: 4, name: "Fred Brown", friends: ["Joe Lee"],
+                hobbies : [ "travel", "ceramics", "golf" ] }'''))
+
+
+        def lookupDoc = graphLookup('contacts', new BsonString('$friends'), 'friends', 'name', 'golfers',
+                new GraphLookupOptions()
+                        .restrictSearchWithMatch(eq('hobbies', 'golf')))
+
+        when:
+        def results = fromHelper.aggregate([lookupDoc,
+                                            unwind('$golfers'),
+                                            sort(new Document('_id', 1)
+                                                    .append('golfers._id', 1))])
+
+        then:
+        results.subList(0, 4) == [
+                Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"],
+                        hobbies : ["tennis", "unicycling", "golf"], golfers: {_id: 0, name: "Bob Smith",
+                        friends: ["Anna Jones", "Chris Green"], hobbies : ["tennis", "unicycling", "golf"] } }'''),
+                Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"],
+                       hobbies: ["tennis", "unicycling", "golf"], golfers:{ _id: 1, name: "Anna Jones",
+                       friends: ["Bob Smith", "Chris Green", "Joe Lee"], hobbies : ["archery", "golf", "woodworking"] } } }'''),
+                Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"],
+                       hobbies: ["tennis", "unicycling", "golf"], golfers: { _id: 3, name: "Joe Lee",
+                       friends: ["Anna Jones", "Fred Brown"], hobbies : [ "tennis", "golf", "topiary" ] } }'''),
+                Document.parse('''{ _id: 0, name: "Bob Smith", friends: ["Anna Jones", "Chris Green"],
+                       hobbies: ["tennis", "unicycling", "golf"], golfers:{ _id: 4, name: "Fred Brown", friends: ["Joe Lee"],
+                       hobbies : [ "travel", "ceramics", "golf" ] } }''')
         ]
 
         cleanup:

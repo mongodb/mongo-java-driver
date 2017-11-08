@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model;
 
+import org.bson.conversions.Bson;
+
 /**
  * The options for a graphLookup aggregation pipeline stage
  *
@@ -26,6 +28,7 @@ package com.mongodb.client.model;
 public final class GraphLookupOptions {
     private Integer maxDepth;
     private String depthField;
+    private Bson restrictSearchWithMatch;
 
     /**
      * The name of the field in which to store the depth value
@@ -63,6 +66,26 @@ public final class GraphLookupOptions {
         return maxDepth;
     }
 
+    /**
+     * A document specifying additional conditions for the recursive search
+     *
+     * @param filter the filter expression
+     * @return this
+     * @since 3.6
+     */
+    public GraphLookupOptions restrictSearchWithMatch(final Bson filter) {
+        restrictSearchWithMatch = filter;
+        return this;
+    }
+
+    /**
+     * @return the filter expression
+     * @since 3.6
+     */
+    public Bson getRestrictSearchWithMatch() {
+        return restrictSearchWithMatch;
+    }
+
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder()
@@ -79,7 +102,16 @@ public final class GraphLookupOptions {
             stringBuilder
                 .append("maxDepth=")
                 .append(maxDepth);
+            if (restrictSearchWithMatch != null) {
+                stringBuilder.append(", ");
+            }
         }
+        if (restrictSearchWithMatch != null) {
+            stringBuilder
+                .append("restrictSearchWithMatch=")
+                .append(restrictSearchWithMatch);
+        }
+
         return stringBuilder
             .append('}')
             .toString();

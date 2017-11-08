@@ -580,6 +580,10 @@ public final class Aggregates {
             if (options.getDepthField() != null) {
                 writer.writeString("depthField", options.getDepthField());
             }
+            if (options.getRestrictSearchWithMatch() != null) {
+                writer.writeName("restrictSearchWithMatch");
+                BuildersHelper.encodeValue(writer, options.getRestrictSearchWithMatch(), codecRegistry);
+            }
 
             writer.writeEndDocument();
 
