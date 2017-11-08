@@ -17,10 +17,10 @@
 package com.mongodb
 
 import com.mongodb.bulk.IndexRequest
+import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CollationAlternate
 import com.mongodb.client.model.CollationCaseFirst
 import com.mongodb.client.model.CollationMaxVariable
-import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CollationStrength
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -164,6 +164,12 @@ class IndexRequestSpecification extends Specification {
 
         when:
         options.sphereVersion(3)
+
+        then:
+        notThrown(IllegalArgumentException)
+
+        when:
+        options.sphereVersion(4)
 
         then:
         thrown(IllegalArgumentException)
