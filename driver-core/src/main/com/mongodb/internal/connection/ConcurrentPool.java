@@ -176,7 +176,9 @@ public class ConcurrentPool<T> implements Pool<T> {
         try {
             if (closed) {
                 return false;
-            } else if (timeout >= 0) {
+            } else if (timeout == 0) {
+                return permits.tryAcquire();
+            } else if (timeout > 0) {
                 return permits.tryAcquire(timeout, timeUnit);
             } else {
                 permits.acquire();
