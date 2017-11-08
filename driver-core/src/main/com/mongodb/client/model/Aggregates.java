@@ -701,7 +701,7 @@ public final class Aggregates {
         @Override
         public String toString() {
             return "Stage{"
-                + "name='$fact', "
+                + "name='$facet', "
                 + "facets=" + facets + '}';
         }
 
