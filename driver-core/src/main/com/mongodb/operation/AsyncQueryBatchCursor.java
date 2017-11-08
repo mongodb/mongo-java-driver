@@ -334,8 +334,9 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
         synchronized (lock) {
             localCursor = cursor.get();
             if (localCursor == null) {
-                isClosed.getAndSet(true);
-                connectionSource.release();
+                if (!isClosed.getAndSet(true)) {
+                    connectionSource.release();
+                }
             } else {
                 connectionSource.retain();
             }
