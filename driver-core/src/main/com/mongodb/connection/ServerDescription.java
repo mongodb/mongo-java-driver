@@ -23,6 +23,7 @@ import com.mongodb.annotations.NotThreadSafe;
 import org.bson.types.ObjectId;
 
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -49,6 +50,8 @@ public class ServerDescription {
     static final int MAX_DRIVER_WIRE_VERSION = 6;
 
     private static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
+
+    private static final DecimalFormatSymbols DECIMAL_FORMAT_SYMBOLS = initializeDecimalFormatSymbols();
 
     private final ServerAddress address;
 
@@ -77,6 +80,18 @@ public class ServerDescription {
     private final Integer logicalSessionTimeoutMinutes;
 
     private final Throwable exception;
+
+    /**
+     * Initialize the character used for decimal separator
+     *
+     * @return the character used for decimal separator
+     * @since 3.6
+     */
+    private static DecimalFormatSymbols initializeDecimalFormatSymbols() {
+        DecimalFormatSymbols decimalFormatSymbols = new DecimalFormatSymbols();
+        decimalFormatSymbols.setDecimalSeparator('.');
+        return decimalFormatSymbols;
+    }
 
     /**
      * Gets a Builder for creating a new ServerDescription instance.
@@ -912,7 +927,7 @@ public class ServerDescription {
 
 
     private String getRoundTripFormattedInMilliseconds() {
-        return new DecimalFormat("#0.0").format(roundTripTimeNanos / 1000.0 / 1000.0);
+        return new DecimalFormat("#0.0", DECIMAL_FORMAT_SYMBOLS).format(roundTripTimeNanos / 1000.0 / 1000.0);
     }
 
     ServerDescription(final Builder builder) {
