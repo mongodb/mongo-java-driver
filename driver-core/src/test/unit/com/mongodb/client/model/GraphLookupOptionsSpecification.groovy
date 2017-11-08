@@ -18,15 +18,19 @@ package com.mongodb.client.model
 
 import spock.lang.Specification
 
+import static org.bson.BsonDocument.parse
+
 class GraphLookupOptionsSpecification extends Specification {
     def "should return new options with the same property values"() {
         when:
         def options = new GraphLookupOptions()
                 .maxDepth(10)
                 .depthField('field')
+                .restrictSearchWithMatch(parse('{x : 1}'))
 
         then:
         options.maxDepth == 10
         options.depthField == 'field'
+        options.restrictSearchWithMatch == parse('{x : 1}')
     }
 }

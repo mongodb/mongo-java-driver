@@ -180,6 +180,14 @@ graphLookup("contacts", "$friends", "friends", "name", "socialNetwork",
 
 Using `GraphLookupOptions`, the output can be tailored to restrict the depth of the recursion as well to inject a field containing the depth of the recursion at which a document was included.
 
+The recursive search can be filtered by specifying additional conditions.
+
+```java
+graphLookup("contacts", "$friends", "friends", "name", "socialNetwork",
+	new GraphLookupOptions().maxDepth(1).restrictSearchWithMatch(Filters.eq("hobbies","golf"))
+```
+
+
 ### SortByCount
 
 The [`$sortByCount`]({{< docsref "reference/operator/aggregation/sortByCount/" >}}) stage groups documents by a given expression and then sorts these groups by count in descending order. The `sortByCount` outputs documents that contains an `_id` field, which contains the discrete values of the given expression, and the `count` field that contains the number of documents that fall into that group.
