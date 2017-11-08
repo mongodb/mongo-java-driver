@@ -35,7 +35,7 @@ import static java.util.Arrays.asList;
 public class IndexRequest {
     private final BsonDocument keys;
     private static final List<Integer> VALID_TEXT_INDEX_VERSIONS = asList(1, 2, 3);
-    private static final List<Integer> VALID_SPHERE_INDEX_VERSIONS = asList(1, 2);
+    private static final List<Integer> VALID_SPHERE_INDEX_VERSIONS = asList(1, 2, 3);
     private boolean background;
     private boolean unique;
     private String name;
@@ -323,7 +323,7 @@ public class IndexRequest {
      */
     public IndexRequest sphereVersion(final Integer sphereVersion) {
         if (sphereVersion != null) {
-            isTrueArgument("sphereIndexVersion must be 1 or 2", VALID_SPHERE_INDEX_VERSIONS.contains(sphereVersion));
+            isTrueArgument("sphereIndexVersion must be 1, 2 or 3", VALID_SPHERE_INDEX_VERSIONS.contains(sphereVersion));
         }
         this.sphereVersion = sphereVersion;
         return this;
