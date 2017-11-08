@@ -28,15 +28,18 @@ class ChangeStreamDocumentSpecification extends Specification {
         def resumeToken = RawBsonDocument.parse('{token: true}')
         def namespace = new MongoNamespace('databaseName.collectionName')
         def fullDocument = BsonDocument.parse('{key: "value for fullDocument"}')
+        def documentKey = BsonDocument.parse('{_id : 1}')
         def operationType = OperationType.UPDATE
         def updateDesc = new UpdateDescription(['a', 'b'], BsonDocument.parse('{c: 1}'))
 
         when:
-        def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(resumeToken, namespace, fullDocument, operationType, updateDesc)
+        def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(resumeToken, namespace, fullDocument, documentKey,
+                operationType, updateDesc)
 
         then:
         changeStreamDocument.getResumeToken() == resumeToken
         changeStreamDocument.getFullDocument() == fullDocument
+        changeStreamDocument.getDocumentKey() == documentKey
         changeStreamDocument.getNamespace() == namespace
         changeStreamDocument.getOperationType() == operationType
         changeStreamDocument.getUpdateDescription() == updateDesc

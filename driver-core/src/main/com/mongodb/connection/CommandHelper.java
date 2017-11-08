@@ -30,13 +30,18 @@ import static com.mongodb.ReadPreference.primary;
 
 final class CommandHelper {
     static BsonDocument executeCommand(final String database, final BsonDocument command, final InternalConnection internalConnection) {
-        return sendAndReceive(database, command, internalConnection);
+        return sendAndReceive(database, command, null, internalConnection);
+    }
+
+    static BsonDocument executeCommand(final String database, final BsonDocument command, final ClusterClock clusterClock,
+                                       final InternalConnection internalConnection) {
+        return sendAndReceive(database, command, clusterClock, internalConnection);
     }
 
     static BsonDocument executeCommandWithoutCheckingForFailure(final String database, final BsonDocument command,
                                                                 final InternalConnection internalConnection) {
         try {
-            return sendAndReceive(database, command, internalConnection);
+            return sendAndReceive(database, command, null, internalConnection);
         } catch (MongoServerException e) {
             return new BsonDocument();
         }
@@ -72,9 +77,11 @@ final class CommandHelper {
     }
 
     private static BsonDocument sendAndReceive(final String database, final BsonDocument command,
-                                               final InternalConnection internalConnection) {
+                                               final ClusterClock clusterClock, final InternalConnection internalConnection) {
+        SessionContext sessionContext = clusterClock == null ? NoOpSessionContext.INSTANCE
+                : new ClusterClockAdvancingSessionContext(NoOpSessionContext.INSTANCE, clusterClock);
         return internalConnection.sendAndReceive(getCommandMessage(database, command, internalConnection), new BsonDocumentCodec(),
-                NoOpSessionContext.INSTANCE);
+                sessionContext);
     }
 
     private static CommandMessage getCommandMessage(final String database, final BsonDocument command,

@@ -21,7 +21,10 @@ import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadConcern
 import com.mongodb.WriteConcern
 import com.mongodb.client.model.CreateCollectionOptions
+import com.mongodb.client.model.changestream.ChangeStreamDocument
 import com.mongodb.client.model.changestream.FullDocument
+import com.mongodb.client.model.changestream.OperationType
+import com.mongodb.client.model.changestream.UpdateDescription
 import com.mongodb.client.test.CollectionHelper
 import org.bson.BsonArray
 import org.bson.BsonDocument
@@ -30,12 +33,15 @@ import org.bson.BsonInt64
 import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
+import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodec
+import org.bson.codecs.ValueCodecProvider
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.concurrent.TimeUnit.MILLISECONDS
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
 @IgnoreIf({ !(serverVersionAtLeast(3, 5) && isDiscoverableReplicaSet()) })
 class ChangeStreamOperationSpecification extends OperationFunctionalSpecification {
@@ -95,7 +101,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         async << [true, false]
     }
 
-    def 'should support return the expected results'() {
+    def 'should return the expected results'() {
         given:
         def helper = getHelper()
 
@@ -131,6 +137,120 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
         where:
         async << [true, false]
+    }
+
+    def 'should decode insert to ChangeStreamDocument '() {
+        given:
+        def helper = getHelper()
+
+        def pipeline = [BsonDocument.parse('{$match: {operationType: "insert"}}')]
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, pipeline,
+                ChangeStreamDocument.createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())))
+
+        when:
+        def cursor = execute(operation, false)
+        helper.insertDocuments(BsonDocument.parse('{ _id : 2, x : 2 }'))
+        ChangeStreamDocument<BsonDocument> next = next(cursor, false).get(0)
+
+        then:
+        next.getResumeToken() != null
+        next.getDocumentKey() == BsonDocument.parse('{ _id : 2 }')
+        next.getFullDocument() == BsonDocument.parse('{ _id : 2, x : 2 }')
+        next.getNamespace() == helper.getNamespace()
+        next.getOperationType() == OperationType.INSERT
+        next.getUpdateDescription() == null
+    }
+
+    def 'should decode update to ChangeStreamDocument '() {
+        given:
+        def helper = getHelper()
+
+        def pipeline = [BsonDocument.parse('{$match: {operationType: "update"}}')]
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.UPDATE_LOOKUP, pipeline,
+                ChangeStreamDocument.createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())))
+        helper.insertDocuments(BsonDocument.parse('{ _id : 2, x : 2, y : 3 }'))
+
+        when:
+        def cursor = execute(operation, false)
+        helper.updateOne(BsonDocument.parse('{ _id : 2}'), BsonDocument.parse('{ $set : {x : 3}, $unset : {y : 1}}'))
+        ChangeStreamDocument<BsonDocument> next = next(cursor, false).get(0)
+
+        then:
+        next.getResumeToken() != null
+        next.getDocumentKey() == BsonDocument.parse('{ _id : 2 }')
+        next.getFullDocument() == BsonDocument.parse('{ _id : 2, x : 3 }')
+        next.getNamespace() == helper.getNamespace()
+        next.getOperationType() == OperationType.UPDATE
+        next.getUpdateDescription() == new UpdateDescription(['y'], BsonDocument.parse('{x : 3}'))
+    }
+
+    def 'should decode replace to ChangeStreamDocument '() {
+        given:
+        def helper = getHelper()
+
+        def pipeline = [BsonDocument.parse('{$match: {operationType: "replace"}}')]
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.UPDATE_LOOKUP, pipeline,
+                ChangeStreamDocument.createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())))
+        helper.insertDocuments(BsonDocument.parse('{ _id : 2, x : 2, y : 3 }'))
+
+        when:
+        def cursor = execute(operation, false)
+        helper.replaceOne(BsonDocument.parse('{ _id : 2}'), BsonDocument.parse('{ _id : 2, x : 3}'), false)
+        ChangeStreamDocument<BsonDocument> next = next(cursor, false).get(0)
+
+        then:
+        next.getResumeToken() != null
+        next.getDocumentKey() == BsonDocument.parse('{ _id : 2 }')
+        next.getFullDocument() == BsonDocument.parse('{ _id : 2, x : 3 }')
+        next.getNamespace() == helper.getNamespace()
+        next.getOperationType() == OperationType.REPLACE
+        next.getUpdateDescription() == null
+    }
+
+    def 'should decode delete to ChangeStreamDocument '() {
+        given:
+        def helper = getHelper()
+
+        def pipeline = [BsonDocument.parse('{$match: {operationType: "delete"}}')]
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.UPDATE_LOOKUP, pipeline,
+                ChangeStreamDocument.createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())))
+        helper.insertDocuments(BsonDocument.parse('{ _id : 2, x : 2, y : 3 }'))
+
+        when:
+        def cursor = execute(operation, false)
+        helper.deleteOne(BsonDocument.parse('{ _id : 2}'))
+        ChangeStreamDocument<BsonDocument> next = next(cursor, false).get(0)
+
+        then:
+        next.getResumeToken() != null
+        next.getDocumentKey() == BsonDocument.parse('{ _id : 2 }')
+        next.getFullDocument() == null
+        next.getNamespace() == helper.getNamespace()
+        next.getOperationType() == OperationType.DELETE
+        next.getUpdateDescription() == null
+    }
+
+    def 'should decode invalidate to ChangeStreamDocument '() {
+        given:
+        def helper = getHelper()
+
+        def pipeline = [BsonDocument.parse('{$match: {operationType: "invalidate"}}')]
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.UPDATE_LOOKUP, pipeline,
+                ChangeStreamDocument.createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())))
+        helper.insertDocuments(BsonDocument.parse('{ _id : 2, x : 2, y : 3 }'))
+
+        when:
+        def cursor = execute(operation, false)
+        helper.drop()
+        ChangeStreamDocument<BsonDocument> next = next(cursor, false).get(0)
+
+        then:
+        next.getResumeToken() != null
+        next.getDocumentKey() == null
+        next.getFullDocument() == null
+        next.getNamespace() == null
+        next.getOperationType() == OperationType.INVALIDATE
+        next.getUpdateDescription() == null
     }
 
     def 'should throw if the _id field is projected out'() {

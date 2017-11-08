@@ -197,22 +197,14 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         when:
         def clientSession = Fixture.getMongoClient().startSession(ClientSessionOptions.builder()
                 .causallyConsistent(causallyConsistent)
-                .initialClusterTime(initialClusterTime)
-                .initialOperationTime(initialOperationTime)
                 .build())
 
         then:
         clientSession != null
         clientSession.isCausallyConsistent() == causallyConsistent
-        clientSession.getClusterTime() == initialClusterTime
-        clientSession.getOperationTime() == initialOperationTime
 
         where:
-        [causallyConsistent, initialClusterTime, initialOperationTime] << [
-                [true, false],
-                [null, new BsonDocument('x', new BsonInt32(1))],
-                [null, new BsonTimestamp(42, 1)]
-        ].combinations()
+        causallyConsistent << [true, false]
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 5) })
@@ -238,15 +230,14 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         def optionsBuilder = MongoClientOptions.builder()
                 .addCommandListener(commandListener)
         def client = new MongoClient(Fixture.getMongoClientURI(optionsBuilder))
-        // TODO: Remove this once SPEC-944 is resolved
-        client.getDatabase('admin').runCommand(new BsonDocument('ping', new BsonInt32(1)))
 
         when:
         client.getDatabase('admin').runCommand(new BsonDocument('ping', new BsonInt32(1)))
 
         then:
-        def pingCommandStartedEvent = commandListener.events.get(2)
-        (pingCommandStartedEvent as CommandStartedEvent).command.containsKey('lsid')
+        commandListener.events.size() == 2
+        def pingCommandStartedEvent = commandListener.events.get(0) as CommandStartedEvent
+        pingCommandStartedEvent.command.containsKey('lsid')
 
         cleanup:
         client?.close()

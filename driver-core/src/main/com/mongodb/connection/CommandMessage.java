@@ -169,10 +169,10 @@ final class CommandMessage extends RequestMessage {
     private List<BsonElement> getExtraElements(final SessionContext sessionContext) {
         List<BsonElement> extraElements = new ArrayList<BsonElement>();
         extraElements.add(new BsonElement("$db", new BsonString(new MongoNamespace(getCollectionName()).getDatabaseName())));
+        if (sessionContext.getClusterTime() != null) {
+            extraElements.add(new BsonElement("$clusterTime", sessionContext.getClusterTime()));
+        }
         if (sessionContext.hasSession()) {
-            if (sessionContext.getClusterTime() != null) {
-                extraElements.add(new BsonElement("$clusterTime", sessionContext.getClusterTime()));
-            }
             extraElements.add(new BsonElement("lsid", sessionContext.getSessionId()));
         }
         if (!isDefaultReadPreference(getReadPreference())) {

@@ -21,20 +21,22 @@ import static com.mongodb.assertions.Assertions.notNull;
 class DefaultServerMonitorFactory implements ServerMonitorFactory {
     private final ServerId serverId;
     private final ServerSettings settings;
+    private final ClusterClock clusterClock;
     private final InternalConnectionFactory internalConnectionFactory;
     private final ConnectionPool connectionPool;
 
     DefaultServerMonitorFactory(final ServerId serverId, final ServerSettings settings,
-                                final InternalConnectionFactory internalConnectionFactory,
+                                final ClusterClock clusterClock, final InternalConnectionFactory internalConnectionFactory,
                                 final ConnectionPool connectionPool) {
         this.serverId = notNull("serverId", serverId);
         this.settings = notNull("settings", settings);
+        this.clusterClock = notNull("clusterClock", clusterClock);
         this.internalConnectionFactory = notNull("internalConnectionFactory", internalConnectionFactory);
         this.connectionPool = notNull("connectionPool", connectionPool);
     }
 
     @Override
     public ServerMonitor create(final ChangeListener<ServerDescription> serverStateListener) {
-        return new DefaultServerMonitor(serverId, settings, serverStateListener, internalConnectionFactory, connectionPool);
+        return new DefaultServerMonitor(serverId, settings, clusterClock, serverStateListener, internalConnectionFactory, connectionPool);
     }
 }

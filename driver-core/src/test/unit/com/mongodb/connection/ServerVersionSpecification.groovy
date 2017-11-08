@@ -53,15 +53,15 @@ class ServerVersionSpecification extends Specification {
 
     def 'should have same version array as when constructed'() {
         when:
-        def version = new ServerVersion([2, 4, 1])
+        def version = new ServerVersion([3, 4, 1])
 
         then:
-        version.versionList == [2, 4, 1]
+        version.versionList == [3, 4, 1]
     }
 
     def 'should have immutable version array'() {
         given:
-        def version = new ServerVersion([2, 4, 1])
+        def version = new ServerVersion([3, 4, 1])
 
         when:
         version.versionList[0] = 1
@@ -72,23 +72,23 @@ class ServerVersionSpecification extends Specification {
 
     def 'identical versions should be equal'() {
         when:
-        def version = new ServerVersion([2, 4, 1])
+        def version = new ServerVersion([3, 4, 1])
 
         then:
-        version == new ServerVersion([2, 4, 1])
+        version == new ServerVersion([3, 4, 1])
     }
 
     def 'identical versions should have the same hash code'() {
         when:
-        def version = new ServerVersion([2, 4, 1])
+        def version = new ServerVersion([3, 4, 1])
 
         then:
-        version.hashCode() == new ServerVersion([2, 4, 1]).hashCode()
+        version.hashCode() == new ServerVersion([3, 4, 1]).hashCode()
     }
 
     def 'different versions should not be equal'() {
         when:
-        def version = new ServerVersion([2, 4, 1])
+        def version = new ServerVersion([3, 4, 1])
 
         then:
         version != new ServerVersion([2, 5, 1])
@@ -116,29 +116,29 @@ class ServerVersionSpecification extends Specification {
 
     def 'higher version should compare greater than'() {
         when:
-        def version = new ServerVersion([3, 4, 1])
+        def version = new ServerVersion([3, 6, 0])
 
         then:
-        version.compareTo(new ServerVersion([2, 4, 1])) > 0
+        version.compareTo(new ServerVersion([3, 4, 1])) > 0
 
         when:
-        version = new ServerVersion([2, 5, 1])
+        version = new ServerVersion([3, 5, 1])
 
         then:
-        version.compareTo(new ServerVersion([2, 4, 1])) > 0
+        version.compareTo(new ServerVersion([3, 4, 1])) > 0
 
         when:
-        version = new ServerVersion([2, 4, 2])
+        version = new ServerVersion([3, 4, 2])
 
         then:
-        version.compareTo(new ServerVersion([2, 4, 1])) > 0
+        version.compareTo(new ServerVersion([3, 4, 1])) > 0
     }
 
     def 'same version should compare equal'() {
         when:
-        def version = new ServerVersion([2, 4, 1])
+        def version = new ServerVersion([3, 4, 1])
 
         then:
-        version.compareTo(new ServerVersion([2, 4, 1])) == 0
+        version.compareTo(new ServerVersion([3, 4, 1])) == 0
     }
 }
