@@ -293,7 +293,7 @@ To query for documents that match certain conditions, pass a filter object to th
 For example, to find the first document where the field ``i`` has the value `71`, pass an [`eq`]({{<apiref  "com/mongodb/client/model/Filters.html#eq-java.lang.String-TItem-">}}) filter object to specify the equality condition:
 
 ```java
-myDoc = collection.find(eq("i", 71)).first();
+myDoc = collection.find(Filters.eq("i", 71)).first();
 System.out.println(myDoc.toJson());
 ```
 The example prints one document:
