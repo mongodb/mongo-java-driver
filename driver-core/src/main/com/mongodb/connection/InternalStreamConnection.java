@@ -675,28 +675,13 @@ class InternalStreamConnection implements InternalConnection {
         public void sendStartedEvent(final ByteBufferBsonOutput bsonOutput) {
             if ((commandListener != null || sendCompressor != null) && opened()) {
 
-                AbstractByteBufBsonDocument byteBufBsonDocument;
-                if (message.containsPayload()) {
-                    byteBufBsonDocument = ByteBufPayloadBsonDocument.create(bsonOutput,
-                            message.getEncodingMetadata().getFirstDocumentPosition());
-                } else {
-                    byteBufBsonDocument = ByteBufBsonDocument.createOne(bsonOutput,
-                            message.getEncodingMetadata().getFirstDocumentPosition());
-                }
-
-                BsonDocument commandBsonDocument = byteBufBsonDocument;
-                if (byteBufBsonDocument.containsKey("$query")) {
-                    commandBsonDocument = byteBufBsonDocument.getDocument("$query");
-                    commandName = commandBsonDocument.keySet().iterator().next();
-                } else {
-                    commandName = byteBufBsonDocument.getFirstKey();
-                }
+                BsonDocument commandDocument = message.getCommandDocument(bsonOutput);
+                commandName = commandDocument.getFirstKey();
 
                 BsonDocument commandDocumentForEvent = (SECURITY_SENSITIVE_COMMANDS.contains(commandName))
-                                                               ? new BsonDocument() : commandBsonDocument;
+                                                               ? new BsonDocument() : commandDocument;
                 sendCommandStartedEvent(message, new MongoNamespace(message.getCollectionName()).getDatabaseName(), commandName,
                         commandDocumentForEvent, getDescription(), commandListener);
-
             }
         }
 

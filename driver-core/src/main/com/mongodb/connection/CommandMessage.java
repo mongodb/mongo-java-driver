@@ -20,6 +20,7 @@ package com.mongodb.connection;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
+import org.bson.BsonArray;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
 import org.bson.BsonElement;
@@ -29,6 +30,7 @@ import org.bson.FieldNameValidator;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.BsonOutput;
 
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -66,6 +68,31 @@ final class CommandMessage extends RequestMessage {
         this.payload = payload;
         this.payloadFieldNameValidator = payloadFieldNameValidator;
         this.readPreference = readPreference;
+    }
+
+    BsonDocument getCommandDocument(final ByteBufferBsonOutput bsonOutput) {
+        ByteBufBsonDocument byteBufBsonDocument = ByteBufBsonDocument.createOne(bsonOutput,
+                getEncodingMetadata().getFirstDocumentPosition());
+        BsonDocument commandBsonDocument;
+
+        if (useOpMsg() && containsPayload()) {
+            commandBsonDocument = byteBufBsonDocument.toBsonDocument();
+
+            int payloadStartPosition = getEncodingMetadata().getFirstDocumentPosition()
+                    + byteBufBsonDocument.getSizeInBytes()
+                    + 1 // payload type
+                    + 4 // payload size
+                    + payload.getPayloadName().getBytes(Charset.forName("UTF-8")).length + 1;  // null-terminated UTF-8 payload name
+            commandBsonDocument.append(payload.getPayloadName(),
+                    new BsonArray(ByteBufBsonDocument.createList(bsonOutput, payloadStartPosition)));
+        } else {
+            commandBsonDocument = byteBufBsonDocument;
+        }
+
+        if (commandBsonDocument.containsKey("$query")) {
+            commandBsonDocument = commandBsonDocument.getDocument("$query");
+        }
+        return commandBsonDocument;
     }
 
     boolean containsPayload() {

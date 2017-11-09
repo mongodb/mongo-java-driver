@@ -179,7 +179,7 @@ class GetMoreProtocol<T> implements LegacyProtocol<QueryResult<T>> {
         List<ByteBufBsonDocument> rawResultDocuments = Collections.emptyList();
         if (responseBuffers.getReplyHeader().getNumberReturned() != 0) {
             responseBuffers.reset();
-            rawResultDocuments = ByteBufBsonDocument.create(responseBuffers);
+            rawResultDocuments = ByteBufBsonDocument.createList(responseBuffers);
         }
 
         BsonDocument cursorDocument = new BsonDocument("id",

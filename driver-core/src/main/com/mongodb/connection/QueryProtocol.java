@@ -413,7 +413,7 @@ class QueryProtocol<T> implements LegacyProtocol<QueryResult<T>> {
 
         boolean isExplain = false;
 
-        List<ByteBufBsonDocument> documents = ByteBufBsonDocument.create(bsonOutput, firstDocumentPosition);
+        List<ByteBufBsonDocument> documents = ByteBufBsonDocument.createList(bsonOutput, firstDocumentPosition);
 
         ByteBufBsonDocument rawQueryDocument = documents.get(0);
         for (Map.Entry<String, BsonValue> cur : rawQueryDocument.entrySet()) {
@@ -474,7 +474,7 @@ class QueryProtocol<T> implements LegacyProtocol<QueryResult<T>> {
         List<ByteBufBsonDocument> rawResultDocuments = Collections.emptyList();
         if (responseBuffers.getReplyHeader().getNumberReturned() > 0) {
             responseBuffers.reset();
-            rawResultDocuments = ByteBufBsonDocument.create(responseBuffers);
+            rawResultDocuments = ByteBufBsonDocument.createList(responseBuffers);
         }
 
         if (isExplain) {
