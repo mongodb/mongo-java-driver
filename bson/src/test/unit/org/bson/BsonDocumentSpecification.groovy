@@ -324,6 +324,25 @@ class BsonDocumentSpecification extends Specification {
         thrown(BsonInvalidOperationException)
     }
 
+    def 'should get first key'() {
+        given:
+        def document = new BsonDocument('i', new BsonInt32(2))
+
+        expect:
+        document.getFirstKey() == 'i'
+    }
+
+    def 'getFirstKey should throw NoSuchElementException if the document is empty'() {
+        given:
+        def document = new BsonDocument()
+
+        when:
+        document.getFirstKey()
+
+        then:
+        thrown(NoSuchElementException)
+    }
+
     def 'should serialize and deserialize'() {
         given:
         def document = new BsonDocument('d', new BsonDocument().append('i2', new BsonInt32(1)))
