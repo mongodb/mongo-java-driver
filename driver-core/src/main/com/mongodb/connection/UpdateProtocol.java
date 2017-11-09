@@ -82,7 +82,7 @@ class UpdateProtocol extends WriteProtocol {
 
     @Override
     protected BsonDocument getAsWriteCommand(final ByteBufferBsonOutput bsonOutput, final int firstDocumentPosition) {
-        List<ByteBufBsonDocument> documents = ByteBufBsonDocument.create(bsonOutput, firstDocumentPosition);
+        List<ByteBufBsonDocument> documents = ByteBufBsonDocument.createList(bsonOutput, firstDocumentPosition);
         BsonDocument updateDocument = new BsonDocument("q", documents.get(0)).append("u", documents.get(1));
         if (updateRequest.isMulti()) {
             updateDocument.append("multi", BsonBoolean.TRUE);

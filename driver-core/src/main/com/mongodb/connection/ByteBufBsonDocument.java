@@ -41,7 +41,7 @@ class ByteBufBsonDocument extends AbstractByteBufBsonDocument {
 
     private final transient ByteBuf byteBuf;
 
-    static List<ByteBufBsonDocument> create(final ResponseBuffers responseBuffers) {
+    static List<ByteBufBsonDocument> createList(final ResponseBuffers responseBuffers) {
         int numDocuments = responseBuffers.getReplyHeader().getNumberReturned();
         ByteBuf documentsBuffer = responseBuffers.getBodyByteBuffer();
         documentsBuffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -57,11 +57,7 @@ class ByteBufBsonDocument extends AbstractByteBufBsonDocument {
         return documents;
     }
 
-    static ByteBufBsonDocument createOne(final ByteBufferBsonOutput bsonOutput, final int startPosition) {
-        return create(bsonOutput, startPosition).get(0);
-    }
-
-    static List<ByteBufBsonDocument> create(final ByteBufferBsonOutput bsonOutput, final int startPosition) {
+    static List<ByteBufBsonDocument> createList(final ByteBufferBsonOutput bsonOutput, final int startPosition) {
         List<ByteBuf> duplicateByteBuffers = bsonOutput.getByteBuffers();
         CompositeByteBuf outputByteBuf = new CompositeByteBuf(duplicateByteBuffers);
         outputByteBuf.position(startPosition);
@@ -80,6 +76,20 @@ class ByteBufBsonDocument extends AbstractByteBufBsonDocument {
             byteBuffer.release();
         }
         return documents;
+    }
+
+    static ByteBufBsonDocument createOne(final ByteBufferBsonOutput bsonOutput, final int startPosition) {
+        List<ByteBuf> duplicateByteBuffers = bsonOutput.getByteBuffers();
+        CompositeByteBuf outputByteBuf = new CompositeByteBuf(duplicateByteBuffers);
+        outputByteBuf.position(startPosition);
+        int documentSizeInBytes = outputByteBuf.getInt();
+        ByteBuf slice = outputByteBuf.duplicate();
+        slice.position(startPosition);
+        slice.limit(startPosition + documentSizeInBytes);
+        for (ByteBuf byteBuffer : duplicateByteBuffers) {
+            byteBuffer.release();
+        }
+        return new ByteBufBsonDocument(slice);
     }
 
     @Override
@@ -128,6 +138,10 @@ class ByteBufBsonDocument extends AbstractByteBufBsonDocument {
         byte[] clonedBytes = new byte[byteBuf.remaining()];
         byteBuf.get(byteBuf.position(), clonedBytes);
         return new RawBsonDocument(clonedBytes);
+    }
+
+    int getSizeInBytes() {
+        return byteBuf.getInt(byteBuf.position());
     }
 
     BsonDocument toBsonDocument() {

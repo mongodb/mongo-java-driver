@@ -83,7 +83,7 @@ class InsertProtocol extends WriteProtocol {
     @Override
     protected BsonDocument getAsWriteCommand(final ByteBufferBsonOutput bsonOutput, final int firstDocumentPosition) {
         return getBaseCommandDocument("insert")
-               .append("documents", new BsonArray(ByteBufBsonDocument.create(bsonOutput, firstDocumentPosition)));
+               .append("documents", new BsonArray(ByteBufBsonDocument.createList(bsonOutput, firstDocumentPosition)));
 
     }
 
