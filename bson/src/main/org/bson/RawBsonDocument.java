@@ -38,6 +38,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Collection;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 import static org.bson.assertions.Assertions.isTrueArgument;
@@ -241,6 +242,21 @@ public final class RawBsonDocument extends BsonDocument {
     @Override
     public Set<String> keySet() {
         return toBsonDocument().keySet();
+    }
+
+    @Override
+    public String getFirstKey() {
+        BsonBinaryReader bsonReader = createReader();
+        try {
+            bsonReader.readStartDocument();
+            try {
+                return bsonReader.readName();
+            } catch (BsonInvalidOperationException e) {
+                throw new NoSuchElementException();
+            }
+        } finally {
+            bsonReader.close();
+        }
     }
 
     @Override

@@ -771,6 +771,17 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, C
         return this;
     }
 
+    /**
+     * Gets the first key in the document.
+     *
+     * @return the first key in the document
+     * @throws java.util.NoSuchElementException if the document is empty
+     * @since 3.6
+     */
+    public String getFirstKey() {
+        return keySet().iterator().next();
+    }
+
     @Override
     public boolean equals(final Object o) {
         if (this == o) {

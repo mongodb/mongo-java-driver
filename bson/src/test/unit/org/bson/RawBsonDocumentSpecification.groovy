@@ -250,6 +250,22 @@ class RawBsonDocumentSpecification extends Specification {
         rawDocument << createRawDocumentVariants()
     }
 
+    def 'should get first key'() {
+        expect:
+        document.getFirstKey() == 'a'
+
+        where:
+        rawDocument << createRawDocumentVariants()
+    }
+
+    def 'getFirstKey should throw NoSuchElementException if the document is empty'() {
+        when:
+        emptyRawDocument.getFirstKey()
+
+        then:
+        thrown(NoSuchElementException)
+    }
+
     def 'toJson should return equivalent JSON'() {
         expect:
         new RawBsonDocumentCodec().decode(new JsonReader(rawDocument.toJson()), DecoderContext.builder().build()) == document
