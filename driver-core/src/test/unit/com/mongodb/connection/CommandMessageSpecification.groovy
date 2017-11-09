@@ -19,9 +19,12 @@ package com.mongodb.connection
 
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadPreference
+import com.mongodb.internal.connection.NoOpSessionContext
 import com.mongodb.internal.validator.NoOpFieldNameValidator
+import org.bson.BsonArray
 import org.bson.BsonBinary
 import org.bson.BsonDocument
+import org.bson.BsonInt32
 import org.bson.BsonSerializationException
 import org.bson.BsonString
 import org.bson.BsonTimestamp
@@ -31,6 +34,8 @@ import org.bson.io.BasicOutputBuffer
 import spock.lang.Specification
 
 import java.nio.ByteBuffer
+
+import static com.mongodb.connection.SplittablePayload.Type.INSERT
 
 class CommandMessageSpecification extends Specification {
 
@@ -96,11 +101,59 @@ class CommandMessageSpecification extends Specification {
         ].combinations()
     }
 
+    def 'should get command document'() {
+        given:
+        def message = new CommandMessage(namespace, originalCommandDocument, fieldNameValidator, ReadPreference.primary(),
+                MessageSettings.builder().serverVersion(serverVersion).build(), true, payload, new NoOpFieldNameValidator())
+        def output = new ByteBufferBsonOutput(new SimpleBufferProvider())
+        message.encode(output, NoOpSessionContext.INSTANCE)
+
+        when:
+        def commandDocument = message.getCommandDocument(output)
+
+        def expectedCommandDocument = new BsonDocument('insert', new BsonString('coll')).append('documents',
+                new BsonArray([new BsonDocument('_id', new BsonInt32(1)), new BsonDocument('_id', new BsonInt32(2))]))
+        if (serverVersion == new ServerVersion(3, 6)) {
+            expectedCommandDocument.append('$db', new BsonString(namespace.getDatabaseName()))
+        }
+        then:
+        commandDocument == expectedCommandDocument
+
+
+        where:
+        [serverVersion, originalCommandDocument, payload] << [
+                [
+                        new ServerVersion(3, 4),
+                        new BsonDocument('insert', new BsonString('coll')),
+                        new SplittablePayload(INSERT, [new BsonDocument('_id', new BsonInt32(1)),
+                                                       new BsonDocument('_id', new BsonInt32(2))]),
+                ],
+                [
+                        new ServerVersion(3, 4),
+                        new BsonDocument('insert', new BsonString('coll')).append('documents',
+                                new BsonArray([new BsonDocument('_id', new BsonInt32(1)), new BsonDocument('_id', new BsonInt32(2))])),
+                        null
+                ],
+                [
+                        new ServerVersion(3, 6),
+                        new BsonDocument('insert', new BsonString('coll')),
+                        new SplittablePayload(INSERT, [new BsonDocument('_id', new BsonInt32(1)),
+                                                       new BsonDocument('_id', new BsonInt32(2))]),
+                ],
+                [
+                        new ServerVersion(3, 6),
+                        new BsonDocument('insert', new BsonString('coll')).append('documents',
+                                new BsonArray([new BsonDocument('_id', new BsonInt32(1)), new BsonDocument('_id', new BsonInt32(2))])),
+                        null
+                ]
+        ]
+    }
+
     def 'should respect the message settings limits'() {
         given:
-        def payload = new SplittablePayload(SplittablePayload.Type.INSERT, [new BsonDocument('a', new BsonBinary(new byte[900])),
-                                                                            new BsonDocument('b', new BsonBinary(new byte[450])),
-                                                                            new BsonDocument('c', new BsonBinary(new byte[450]))])
+        def payload = new SplittablePayload(INSERT, [new BsonDocument('a', new BsonBinary(new byte[900])),
+                                                     new BsonDocument('b', new BsonBinary(new byte[450])),
+                                                     new BsonDocument('c', new BsonBinary(new byte[450]))])
         def message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
                 false, payload, fieldNameValidator)
         def output = new BasicOutputBuffer()
@@ -145,7 +198,7 @@ class CommandMessageSpecification extends Specification {
     def 'should throw if payload document bigger than max document size'() {
         given:
         def messageSettings = MessageSettings.builder().maxDocumentSize(900).serverVersion(new ServerVersion(3, 6)).build()
-        def payload = new SplittablePayload(SplittablePayload.Type.INSERT, [new BsonDocument('a', new BsonBinary(new byte[900]))])
+        def payload = new SplittablePayload(INSERT, [new BsonDocument('a', new BsonBinary(new byte[900]))])
         def message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
                 false, payload, fieldNameValidator)
         def output = new BasicOutputBuffer()
