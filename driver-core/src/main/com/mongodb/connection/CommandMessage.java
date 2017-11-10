@@ -190,7 +190,7 @@ final class CommandMessage extends RequestMessage {
     }
 
     private static boolean isServerVersionAtLeastThreeDotSix(final MessageSettings settings) {
-        return settings.getServerVersion().compareTo(new ServerVersion(3, 5)) >= 0;
+        return settings.getServerVersion().compareTo(new ServerVersion(3, 6)) >= 0;
     }
 
 }

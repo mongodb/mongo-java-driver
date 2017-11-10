@@ -355,7 +355,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 5) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'should support array filters'() {
         given:
         def documentOne = Document.parse('{_id: 1, y: [ {b: 3}, {b: 1}]}')

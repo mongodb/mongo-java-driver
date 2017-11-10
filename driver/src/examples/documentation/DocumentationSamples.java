@@ -20,13 +20,11 @@ import com.mongodb.Block;
 import com.mongodb.DatabaseTestCase;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
-import com.mongodb.client.MongoDatabase;
-// imports required for change streams
 import com.mongodb.client.MongoCursor;
+import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
 import org.bson.BsonDocument;
-// end required change streams imports
 import org.bson.BsonType;
 import org.bson.Document;
 import org.junit.After;
@@ -41,8 +39,6 @@ import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.Fixture.getDefaultDatabaseName;
 import static com.mongodb.Fixture.getMongoClient;
-
-// imports required for filters, projections and updates
 import static com.mongodb.client.model.Filters.all;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.elemMatch;
@@ -64,13 +60,16 @@ import static com.mongodb.client.model.Projections.slice;
 import static com.mongodb.client.model.Updates.combine;
 import static com.mongodb.client.model.Updates.currentDate;
 import static com.mongodb.client.model.Updates.set;
-// end required filters, projections and updates imports
-
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
+
+// imports required for change streams
+// end required change streams imports
+// imports required for filters, projections and updates
+// end required filters, projections and updates imports
 
 
 public final class DocumentationSamples extends DatabaseTestCase {
@@ -615,7 +614,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
 
     @Test
     public void testWatch() {
-        assumeTrue(isDiscoverableReplicaSet() && serverVersionAtLeast(3, 5));
+        assumeTrue(isDiscoverableReplicaSet() && serverVersionAtLeast(3, 6));
 
         final MongoCollection<Document> inventory = collection;
         final AtomicBoolean stop = new AtomicBoolean(false);

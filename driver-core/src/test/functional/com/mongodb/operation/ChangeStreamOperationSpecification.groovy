@@ -43,7 +43,7 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
-@IgnoreIf({ !(serverVersionAtLeast(3, 5) && !isStandalone()) })
+@IgnoreIf({ !(serverVersionAtLeast(3, 6) && !isStandalone()) })
 class ChangeStreamOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should have the correct defaults'() {
