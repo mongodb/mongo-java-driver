@@ -27,6 +27,7 @@ import com.mongodb.event.CommandListener;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerMonitorListener;
+import com.mongodb.selector.ServerSelector;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import javax.net.SocketFactory;
@@ -65,6 +66,7 @@ public class MongoClientOptions {
     private final boolean retryWrites;
     private final ReadConcern readConcern;
     private final CodecRegistry codecRegistry;
+    private final ServerSelector serverSelector;
 
     private final int minConnectionsPerHost;
     private final int maxConnectionsPerHost;
@@ -121,6 +123,7 @@ public class MongoClientOptions {
         retryWrites = builder.retryWrites;
         readConcern = builder.readConcern;
         codecRegistry = builder.codecRegistry;
+        serverSelector = builder.serverSelector;
         sslEnabled = builder.sslEnabled;
         sslInvalidHostNameAllowed = builder.sslInvalidHostNameAllowed;
         sslContext = builder.sslContext;
@@ -565,6 +568,34 @@ public class MongoClientOptions {
     }
 
     /**
+     * Gets the server selector.
+     *
+     * <p>The server selector augments the normal server selection rules applied by the driver when determining
+     * which server to send an operation to.  At the point that it's called by the driver, the
+     * {@link com.mongodb.connection.ClusterDescription} which is passed to it contains a list of
+     * {@link com.mongodb.connection.ServerDescription} instances which satisfy either the configured {@link ReadPreference} for any
+     * read operation or ones that can take writes (e.g. a standalone, mongos, or replica set primary).</p>
+     * <p>The server selector can then filter the {@code ServerDescription} list using whatever criteria that is required by the
+     * application.</p>
+     * <p>After this selector executes, two additional selectors are applied by the driver:</p>
+     * <ul>
+     * <li>select from within the latency window</li>
+     * <li>select a random server from those remaining</li>
+     * </ul>
+     * <p>To skip the latency window selector, an application can:</p>
+     * <ul>
+     * <li>configure the local threshold to a sufficiently high value so that it doesn't exclude any servers</li>
+     * <li>return a list containing a single server from this selector (which will also make the random member selector a no-op)</li>
+     * </ul>
+     *
+     * @return the server selector, which may be null
+     * @since 3.6
+     */
+    public ServerSelector getServerSelector() {
+        return serverSelector;
+    }
+
+    /**
      * Gets the list of added {@code ClusterListener}. The default is an empty list.
      *
      * @return the unmodifiable list of cluster listeners
@@ -799,6 +830,9 @@ public class MongoClientOptions {
         if (!codecRegistry.equals(that.codecRegistry)) {
             return false;
         }
+        if (serverSelector != null ? !serverSelector.equals(that.serverSelector) : that.serverSelector != null) {
+            return false;
+        }
         if (!clusterListeners.equals(that.clusterListeners)) {
             return false;
         }
@@ -828,6 +862,7 @@ public class MongoClientOptions {
         result = 31 * result + (retryWrites ? 1 : 0);
         result = 31 * result + (readConcern != null ? readConcern.hashCode() : 0);
         result = 31 * result + codecRegistry.hashCode();
+        result = 31 * result + (serverSelector != null ? serverSelector.hashCode() : 0);
         result = 31 * result + clusterListeners.hashCode();
         result = 31 * result + commandListeners.hashCode();
         result = 31 * result + minConnectionsPerHost;
@@ -869,6 +904,7 @@ public class MongoClientOptions {
                + ", retryWrites=" + retryWrites
                + ", readConcern=" + readConcern
                + ", codecRegistry=" + codecRegistry
+               + ", serverSelector=" + serverSelector
                + ", clusterListeners=" + clusterListeners
                + ", commandListeners=" + commandListeners
                + ", minConnectionsPerHost=" + minConnectionsPerHost
@@ -923,7 +959,7 @@ public class MongoClientOptions {
         private boolean retryWrites = false;
         private ReadConcern readConcern = ReadConcern.DEFAULT;
         private CodecRegistry codecRegistry = MongoClient.getDefaultCodecRegistry();
-
+        private ServerSelector serverSelector;
         private int minConnectionsPerHost;
         private int maxConnectionsPerHost = 100;
         private int threadsAllowedToBlockForConnectionMultiplier = 5;
@@ -987,6 +1023,7 @@ public class MongoClientOptions {
             retryWrites = options.getRetryWrites();
             readConcern = options.getReadConcern();
             codecRegistry = options.getCodecRegistry();
+            serverSelector = options.getServerSelector();
             sslEnabled = options.isSslEnabled();
             sslInvalidHostNameAllowed = options.isSslInvalidHostNameAllowed();
             sslContext = options.getSslContext();
@@ -1313,6 +1350,19 @@ public class MongoClientOptions {
             return this;
         }
 
+        /**
+         * Sets a server selector that augments the normal server selection rules applied by the driver when determining
+         * which server to send an operation to.  See {@link #getServerSelector()} for further details.
+         *
+         * @param serverSelector the server selector
+         * @return this
+         * @since 3.6
+         * @see #getServerSelector()
+         */
+        public Builder serverSelector(final ServerSelector serverSelector) {
+            this.serverSelector = serverSelector;
+            return this;
+        }
         /**
          * Adds the given command listener.
          *

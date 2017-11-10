@@ -11,13 +11,6 @@ title = "What's New"
 
 Key new features of the 3.6 Java driver release:
 
-### Compression
-
-The 3.6 release adds support for compression of messages to and from appropriately configured MongoDB servers:
-
-* [Compression Tutorial]({{<ref "driver/tutorials/compression.md">}})
-* [Compression Tutorial (Async)]({{<ref "driver-async/tutorials/compression.md">}})
-
 ### Change Stream support
 
 The 3.6 release adds support for [change streams](https://docs.mongodb.com/manual/operator/aggregation/changeStream).
@@ -25,13 +18,25 @@ The 3.6 release adds support for [change streams](https://docs.mongodb.com/manua
 * [Change Stream Quick Start]({{<ref "driver/tutorials/change-streams.md">}}) 
 * [Change Stream Quick Start (Async)]({{<ref "driver-async/tutorials/change-streams.md">}})
 
+### Retryable writes
+
+The 3.6 release adds support for retryable writes using the `retryWrites` option in 
+[`MongoClientOptions`]({{<apiref "com/mongodb/MongoClientOptions">}}).
+
+### Compression
+
+The 3.6 release adds support for compression of messages to and from appropriately configured MongoDB servers:
+
+* [Compression Tutorial]({{<ref "driver/tutorials/compression.md">}})
+* [Compression Tutorial (Async)]({{<ref "driver-async/tutorials/compression.md">}})
+
 ### Causal consistency
 
 The 3.6 release adds support for causally consistency.
 
-### Retryable writes
+### Application-configured server selection
 
-The 3.6 release adds support for retryable writes using the `retryWrites` option in 
+The 3.6 release adds support for application-configured control over server selection, using the `serverSelector` option in
 [`MongoClientOptions`]({{<apiref "com/mongodb/MongoClientOptions">}}).
 
 ## What's New in 3.5

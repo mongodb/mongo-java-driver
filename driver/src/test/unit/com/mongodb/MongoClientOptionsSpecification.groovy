@@ -25,6 +25,7 @@ import com.mongodb.event.CommandListener
 import com.mongodb.event.ConnectionPoolListener
 import com.mongodb.event.ServerListener
 import com.mongodb.event.ServerMonitorListener
+import com.mongodb.selector.ServerSelector
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
@@ -56,6 +57,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.getConnectionsPerHost() == 100
         options.getConnectTimeout() == 10000
         options.getReadPreference() == ReadPreference.primary()
+        options.getServerSelector() == null;
         options.getThreadsAllowedToBlockForConnectionMultiplier() == 5
         options.isSocketKeepAlive()
         !options.isSslEnabled()
@@ -157,6 +159,7 @@ class MongoClientOptionsSpecification extends Specification {
         given:
         def encoderFactory = new MyDBEncoderFactory()
         def socketFactory = SSLSocketFactory.getDefault()
+        def serverSelector = Mock(ServerSelector)
         def options = MongoClientOptions.builder()
                                         .description('test')
                                         .applicationName('appName')
@@ -167,6 +170,7 @@ class MongoClientOptionsSpecification extends Specification {
                                         .connectionsPerHost(500)
                                         .connectTimeout(100)
                                         .socketTimeout(700)
+                                        .serverSelector(serverSelector)
                                         .serverSelectionTimeout(150)
                                         .maxWaitTime(200)
                                         .maxConnectionIdleTime(300)
@@ -194,6 +198,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.getApplicationName() == 'appName'
         options.getReadPreference() == ReadPreference.secondary()
         options.getWriteConcern() == WriteConcern.JOURNALED
+        options.getServerSelector() == serverSelector
         options.getRetryWrites()
         options.getServerSelectionTimeout() == 150
         options.getMaxWaitTime() == 200
@@ -656,8 +661,8 @@ class MongoClientOptionsSpecification extends Specification {
                         'description', 'heartbeatConnectTimeout', 'heartbeatFrequency', 'heartbeatSocketTimeout', 'localThreshold',
                         'maxConnectionIdleTime', 'maxConnectionLifeTime', 'maxConnectionsPerHost', 'maxWaitTime', 'minConnectionsPerHost',
                         'minHeartbeatFrequency', 'readConcern', 'readPreference', 'requiredReplicaSetName', 'retryWrites',
-                        'serverListeners', 'serverMonitorListeners', 'serverSelectionTimeout', 'socketFactory', 'socketKeepAlive',
-                        'socketTimeout', 'sslContext', 'sslEnabled', 'sslInvalidHostNameAllowed',
+                        'serverListeners', 'serverMonitorListeners', 'serverSelectionTimeout', 'serverSelector', 'socketFactory',
+                        'socketKeepAlive', 'socketTimeout', 'sslContext', 'sslEnabled', 'sslInvalidHostNameAllowed',
                         'threadsAllowedToBlockForConnectionMultiplier', 'writeConcern']
 
         then:

@@ -18,11 +18,19 @@
 package com.mongodb
 
 import com.mongodb.client.MongoDriverInformation
+import com.mongodb.connection.ClusterDescription
+import com.mongodb.connection.ServerDescription
+import com.mongodb.event.CommandFailedEvent
+import com.mongodb.event.CommandListener
+import com.mongodb.event.CommandStartedEvent
+import com.mongodb.event.CommandSucceededEvent
 import org.bson.Document
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.Fixture.getDefaultDatabaseName
 import static com.mongodb.Fixture.getMongoClientURI
 
 class MongoClientsSpecification extends FunctionalSpecification {
@@ -51,5 +59,49 @@ class MongoClientsSpecification extends FunctionalSpecification {
         database?.runCommand(new Document('profile', 0))
         profileCollection?.drop()
         client?.close()
+    }
+
+    @IgnoreIf({ !isDiscoverableReplicaSet() })
+    def 'should use server selector from MongoClientOptions'() {
+        given:
+        def expectedWinner
+        def actualWinningAddresses = [] as Set
+        def optionsBuilder = MongoClientOptions.builder()
+        // select the suitable server with the highest port number
+                .serverSelector { ClusterDescription clusterDescription ->
+            for (ServerDescription cur : clusterDescription.getServerDescriptions()) {
+                if (expectedWinner == null || cur.address.port > expectedWinner.address.port) {
+                    expectedWinner = cur
+                }
+            }
+            expectedWinner == null ? [] : [expectedWinner]
+        }.addCommandListener(new CommandListener() {
+            // record each address actually used
+            @Override
+            void commandStarted(final CommandStartedEvent event) {
+                actualWinningAddresses.add(event.connectionDescription.connectionId.serverId.address)
+            }
+
+            @Override
+            void commandSucceeded(final CommandSucceededEvent event) {
+            }
+
+            @Override
+            void commandFailed(final CommandFailedEvent event) {
+            }
+        })
+
+        def client = new MongoClient(getMongoClientURI(optionsBuilder))
+        def collection = client.getDatabase(getDefaultDatabaseName()).getCollection(getCollectionName())
+                .withReadPreference(ReadPreference.nearest())
+
+        when:
+        for (int i = 0; i < 10; i++) {
+            collection.count()
+        }
+
+        then:
+        actualWinningAddresses.size() == 1
+        actualWinningAddresses.contains(expectedWinner.address)
     }
 }
