@@ -54,6 +54,8 @@ class MongoClientSettingsSpecification extends Specification {
         options.serverSettings == ServerSettings.builder().build()
         options.streamFactoryFactory == null
         options.compressorList == []
+        options.credentialList == []
+        options.credential == null
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')
@@ -102,6 +104,11 @@ class MongoClientSettingsSpecification extends Specification {
         thrown(IllegalArgumentException)
 
         when:
+        builder.credential(null)
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
         builder.credentialList(null)
         then:
         thrown(IllegalArgumentException)
@@ -140,6 +147,7 @@ class MongoClientSettingsSpecification extends Specification {
         def commandListener = Stub(CommandListener)
         def clusterSettings = ClusterSettings.builder().hosts([new ServerAddress('localhost')]).requiredReplicaSetName('test').build()
 
+        when:
         def options = MongoClientSettings.builder()
                 .readPreference(ReadPreference.secondary())
                 .writeConcern(WriteConcern.JOURNALED)
@@ -159,7 +167,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .compressorList([MongoCompressor.createZlibCompressor()])
                 .build()
 
-        expect:
+        then:
         options.getReadPreference() == ReadPreference.secondary()
         options.getWriteConcern() == WriteConcern.JOURNALED
         options.getRetryWrites()
@@ -172,10 +180,20 @@ class MongoClientSettingsSpecification extends Specification {
         options.serverSettings == serverSettings
         options.codecRegistry == codecRegistry
         options.credentialList == credentialList
+        options.credential == credentialList.get(0)
         options.connectionPoolSettings == connectionPoolSettings
         options.clusterSettings == clusterSettings
         options.streamFactoryFactory == streamFactoryFactory
         options.compressorList == [MongoCompressor.createZlibCompressor()]
+
+        when:
+        options = MongoClientSettings.builder()
+                .credential(credentialList.get(0))
+                .build()
+
+        then:
+        options.credentialList == credentialList
+        options.credential == credentialList.get(0)
     }
 
     def 'should be easy to create new options from existing'() {
