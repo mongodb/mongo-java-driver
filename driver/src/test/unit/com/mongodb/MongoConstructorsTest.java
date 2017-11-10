@@ -21,7 +21,6 @@ import org.junit.Test;
 
 import java.net.UnknownHostException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -72,13 +71,6 @@ public class MongoConstructorsTest {
     }
 
     @Test
-    public void shouldUseGivenCredentials() throws UnknownHostException {
-        Mongo mongo = new MongoClient(new ServerAddress(),
-                                      Arrays.asList(MongoCredential.createMongoCRCredential("user", "admin", "pwd".toCharArray())));
-        mongo.close();
-    }
-
-    @Test
     public void shouldDefaultToPrimaryReadPreference() throws UnknownHostException {
         Mongo mongo = new MongoClient();
         try {
@@ -93,8 +85,7 @@ public class MongoConstructorsTest {
         Mongo mongo = new MongoClient("localhost", MongoClientOptions.builder().requiredReplicaSetName("test").build());
         mongo.close();
 
-        mongo = new MongoClient(new ServerAddress(), Collections.<MongoCredential>emptyList(),
-                                MongoClientOptions.builder().requiredReplicaSetName("test").build());
+        mongo = new MongoClient(new ServerAddress(), MongoClientOptions.builder().requiredReplicaSetName("test").build());
         mongo.close();
 
         mongo = new MongoClient(new MongoClientURI("mongodb://localhost/?setName=test"));
