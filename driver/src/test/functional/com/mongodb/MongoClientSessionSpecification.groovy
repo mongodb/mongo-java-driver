@@ -283,7 +283,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
                 Document document = new Document('_id', i);
                 collection.insertOne(clientSession, document)
                 Document foundDocument = collection
-                        .withReadPreference(ReadPreference.secondary()) // read from secondary
+                        .withReadPreference(ReadPreference.secondaryPreferred()) // read from secondary if available
                         .withReadConcern(readConcern)
                         .find(clientSession, document)
                         .maxTime(5000, TimeUnit.MILLISECONDS)  // to avoid the test running forever in case replication is broken
