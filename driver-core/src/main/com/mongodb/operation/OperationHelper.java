@@ -380,7 +380,7 @@ final class OperationHelper {
     }
 
     static boolean serverIsAtLeastVersionThreeDotSix(final ConnectionDescription description) {
-        return serverIsAtLeastVersion(description, new ServerVersion(3, 5));
+        return serverIsAtLeastVersion(description, new ServerVersion(3, 6));
     }
 
     static boolean serverIsAtLeastVersion(final ConnectionDescription description, final ServerVersion serverVersion) {

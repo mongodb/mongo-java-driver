@@ -191,7 +191,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !(serverVersionAtLeast(3, 5) && isDiscoverableReplicaSet()) })
+    @IgnoreIf({ !(serverVersionAtLeast(3, 6) && isDiscoverableReplicaSet()) })
     def 'should support changeStreams'() {
         given:
         def expected = [createExpectedChangeNotification(namespace, 0), createExpectedChangeNotification(namespace, 1)]

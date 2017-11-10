@@ -308,7 +308,7 @@ public class CommandMonitoringTest {
             if (eventType.equals("command_started_event")) {
                 BsonDocument commandDocument = eventDescriptionDocument.getDocument("command");
                 // Not clear whether these global fields should be included, but also not clear how to efficiently exclude them
-                if (ClusterFixture.serverVersionAtLeast(3, 5)) {
+                if (ClusterFixture.serverVersionAtLeast(3, 6)) {
                     commandDocument.put("$db", new BsonString(databaseName));
                     BsonDocument operation = definition.getDocument("operation");
                     if (operation.containsKey("read_preference")) {
