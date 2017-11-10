@@ -37,8 +37,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.Collections.singletonList;
 
 
 /**
@@ -272,9 +274,24 @@ public final class MongoClientSettings {
          * @param credentialList the credential list
          * @return {@code this}
          * @see MongoClientSettings#getCredentialList()
+         * @deprecated Prefer {@link #credential(MongoCredential)}
          */
+        @Deprecated
         public Builder credentialList(final List<MongoCredential> credentialList) {
             this.credentialList = Collections.unmodifiableList(notNull("credentialList", credentialList));
+            return this;
+        }
+
+        /**
+         * Sets the credential.
+         *
+         * @param credential the credential
+         * @return {@code this}
+         * @see MongoClientSettings#getCredentialList()
+         * @since 3.6
+         */
+        public Builder credential(final MongoCredential credential) {
+            this.credentialList = singletonList(notNull("credential", credential));
             return this;
         }
 
@@ -379,9 +396,22 @@ public final class MongoClientSettings {
      * Gets the credential list.
      *
      * @return the credential list
+     * @deprecated Prefer {@link #getCredential()}
      */
+    @Deprecated
     public List<MongoCredential> getCredentialList() {
         return credentialList;
+    }
+
+    /**
+     * Gets the credential list.
+     *
+     * @return the credential list
+     * @since 3.6
+     */
+    public MongoCredential getCredential() {
+        isTrue("Single or no credential", credentialList.size() <= 1);
+        return credentialList.isEmpty() ? null : credentialList.get(0);
     }
 
     /**
