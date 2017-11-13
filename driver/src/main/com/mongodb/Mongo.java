@@ -864,19 +864,27 @@ public class Mongo {
         }
     }
 
-    @SuppressWarnings("deprecation")
     private ClusterDescription getConnectedClusterDescription() {
         ClusterDescription clusterDescription = cluster.getDescription();
-        if (clusterDescription.getAny().isEmpty()) {
+        if (getServerDescriptionListToConsiderForSessionSupport(clusterDescription).isEmpty()) {
             cluster.selectServer(new ServerSelector() {
                 @Override
                 public List<ServerDescription> select(final ClusterDescription clusterDescription) {
-                    return clusterDescription.getAny();
+                    return getServerDescriptionListToConsiderForSessionSupport(clusterDescription);
                 }
             });
             clusterDescription = cluster.getDescription();
         }
         return clusterDescription;
+    }
+
+    @SuppressWarnings("deprecation")
+    private List<ServerDescription> getServerDescriptionListToConsiderForSessionSupport(final ClusterDescription clusterDescription) {
+        if (clusterDescription.getConnectionMode() == ClusterConnectionMode.SINGLE) {
+            return clusterDescription.getAny();
+        } else {
+            return clusterDescription.getAnyPrimaryOrSecondary();
+        }
     }
 
     static class ClientSessionImpl implements ClientSession {
