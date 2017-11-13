@@ -224,54 +224,55 @@ class ConnectionStringSpecification extends Specification {
     @Unroll
     def 'should support all credential types'() {
         expect:
-        uri.credentialList == credentialList
+        uri.credential == credential
+        uri.credentialList == [credential]
 
         where:
-        uri                                                   | credentialList
-        new ConnectionString('mongodb://jeff:123@localhost')  | asList(createCredential('jeff', 'admin', '123'.toCharArray()))
+        uri                                                   | credential
+        new ConnectionString('mongodb://jeff:123@localhost')  | createCredential('jeff', 'admin', '123'.toCharArray())
         new ConnectionString('mongodb://jeff:123@localhost/?' +
-                           '&authSource=test')                | asList(createCredential('jeff', 'test', '123'.toCharArray()))
+                           '&authSource=test')                | createCredential('jeff', 'test', '123'.toCharArray())
         new ConnectionString('mongodb://jeff:123@localhost/?' +
-                           'authMechanism=MONGODB-CR')        | asList(createMongoCRCredential('jeff', 'admin', '123'.toCharArray()))
+                           'authMechanism=MONGODB-CR')        | createMongoCRCredential('jeff', 'admin', '123'.toCharArray())
         new ConnectionString('mongodb://jeff:123@localhost/?' +
                            'authMechanism=MONGODB-CR' +
-                           '&authSource=test')                | asList(createMongoCRCredential('jeff', 'test', '123'.toCharArray()))
+                           '&authSource=test')                | createMongoCRCredential('jeff', 'test', '123'.toCharArray())
         new ConnectionString('mongodb://jeff:123@localhost/?' +
-                             'authMechanism=SCRAM-SHA-1')     | asList(createScramSha1Credential('jeff', 'admin', '123'.toCharArray()))
+                             'authMechanism=SCRAM-SHA-1')     | createScramSha1Credential('jeff', 'admin', '123'.toCharArray())
         new ConnectionString('mongodb://jeff:123@localhost/?' +
                              'authMechanism=SCRAM-SHA-1' +
-                             '&authSource=test')              | asList(createScramSha1Credential('jeff', 'test', '123'.toCharArray()))
+                             '&authSource=test')              | createScramSha1Credential('jeff', 'test', '123'.toCharArray())
         new ConnectionString('mongodb://jeff@localhost/?' +
-                           'authMechanism=GSSAPI')            | asList(createGSSAPICredential('jeff'))
+                           'authMechanism=GSSAPI')            | createGSSAPICredential('jeff')
         new ConnectionString('mongodb://jeff:123@localhost/?' +
-                           'authMechanism=PLAIN')             | asList(createPlainCredential('jeff', 'admin', '123'.toCharArray()))
+                           'authMechanism=PLAIN')             | createPlainCredential('jeff', 'admin', '123'.toCharArray())
         new ConnectionString('mongodb://jeff@localhost/?' +
-                           'authMechanism=MONGODB-X509')      | asList(createMongoX509Credential('jeff'))
+                           'authMechanism=MONGODB-X509')      | createMongoX509Credential('jeff')
         new ConnectionString('mongodb://localhost/?' +
-                           'authMechanism=MONGODB-X509')      | asList(createMongoX509Credential())
+                           'authMechanism=MONGODB-X509')      | createMongoX509Credential()
         new ConnectionString('mongodb://jeff@localhost/?' +
                            'authMechanism=GSSAPI' +
-                           '&gssapiServiceName=foo')          | asList(createGSSAPICredential('jeff')
-                                                                            .withMechanismProperty('SERVICE_NAME', 'foo'))
+                           '&gssapiServiceName=foo')          | createGSSAPICredential('jeff')
+                                                                            .withMechanismProperty('SERVICE_NAME', 'foo')
         new ConnectionString('mongodb://jeff@localhost/?' +
                              'authMechanism=GSSAPI' +
                              '&authMechanismProperties=' +
-                             'SERVICE_NAME:foo')              | asList(createGSSAPICredential('jeff')
-                                                                            .withMechanismProperty('SERVICE_NAME', 'foo'))
+                             'SERVICE_NAME:foo')              | createGSSAPICredential('jeff')
+                                                                            .withMechanismProperty('SERVICE_NAME', 'foo')
         new ConnectionString('mongodb://jeff@localhost/?' +
                              'authMechanism=GSSAPI' +
                              '&authMechanismProperties=' +
-                             'SERVICE_NAME :foo')              | asList(createGSSAPICredential('jeff')
-                                                                            .withMechanismProperty('SERVICE_NAME', 'foo'))
+                             'SERVICE_NAME :foo')              | createGSSAPICredential('jeff')
+                                                                            .withMechanismProperty('SERVICE_NAME', 'foo')
         new ConnectionString('mongodb://jeff@localhost/?' +
                              'authMechanism=GSSAPI' +
                              '&authMechanismProperties=' +
                              'SERVICE_NAME:foo,' +
                              'CANONICALIZE_HOST_NAME:true,' +
-                             'SERVICE_REALM:AWESOME')        | asList(createGSSAPICredential('jeff')
+                             'SERVICE_REALM:AWESOME')        | createGSSAPICredential('jeff')
                                                                           .withMechanismProperty('SERVICE_NAME', 'foo')
                                                                           .withMechanismProperty('CANONICALIZE_HOST_NAME', true)
-                                                                          .withMechanismProperty('SERVICE_REALM', 'AWESOME'))
+                                                                          .withMechanismProperty('SERVICE_REALM', 'AWESOME')
     }
 
     def 'should ignore authSource if there is no credential'() {

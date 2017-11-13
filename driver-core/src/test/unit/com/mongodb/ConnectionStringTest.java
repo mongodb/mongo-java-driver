@@ -14,11 +14,8 @@
  * limitations under the License.
  */
 
-package com.mongodb.client;
+package com.mongodb;
 
-import com.mongodb.AuthenticationMechanism;
-import com.mongodb.ConnectionString;
-import com.mongodb.MongoCredential;
 import junit.framework.TestCase;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
@@ -125,7 +122,7 @@ public class ConnectionStringTest extends TestCase {
         for (Map.Entry<String, BsonValue> option : definition.getDocument("options").entrySet()) {
             if (option.getKey().equals("authmechanism")) {
                 String expected = option.getValue().asString().getValue();
-                String actual = connectionString.getCredentialList().get(0).getAuthenticationMechanism().getMechanismName();
+                String actual = connectionString.getCredential().getAuthenticationMechanism().getMechanismName();
                 assertEquals(expected, actual);
             } else if (option.getKey().equals("replicaset")) {
                 String expected = option.getValue().asString().getValue();
@@ -161,9 +158,8 @@ public class ConnectionStringTest extends TestCase {
         if (connectionString.getPassword() != null) {
             password = new String(connectionString.getPassword());
         }
-        List<MongoCredential> credentials = connectionString.getCredentialList();
-        if (credentials.size() > 0) {
-            AuthenticationMechanism mechanism = credentials.get(0).getAuthenticationMechanism();
+        if (connectionString.getCredential() != null) {
+            AuthenticationMechanism mechanism = connectionString.getCredential().getAuthenticationMechanism();
             if (mechanism == null) {
                 assertString("auth.password", password);
             } else {
