@@ -208,7 +208,7 @@ public class ClusterDescription {
         for (ServerDescription cur : getServersByPredicate(new Predicate() {
             @Override
             public boolean apply(final ServerDescription serverDescription) {
-                return serverDescription.isOk();
+                return serverDescription.isPrimary() || serverDescription.isSecondary();
             }
         })) {
             if (cur.getLogicalSessionTimeoutMinutes() == null) {
