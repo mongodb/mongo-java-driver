@@ -201,7 +201,7 @@ public class ConnectionString {
 
     private static final Logger LOGGER = Loggers.getLogger("uri");
 
-    private final MongoCredential credentials;
+    private final MongoCredential credential;
     private final List<String> hosts;
     private final String database;
     private final String collection;
@@ -314,7 +314,7 @@ public class ConnectionString {
 
         Map<String, List<String>> optionsMap = parseOptions(unprocessedConnectionString);
         translateOptions(optionsMap);
-        credentials = createCredentials(optionsMap, userName, password);
+        credential = createCredentials(optionsMap, userName, password);
         warnOnUnsupportedOptions(optionsMap);
     }
 
@@ -830,7 +830,7 @@ public class ConnectionString {
      * @return the username
      */
     public String getUsername() {
-        return credentials != null ? credentials.getUserName() : null;
+        return credential != null ? credential.getUserName() : null;
     }
 
     /**
@@ -839,7 +839,7 @@ public class ConnectionString {
      * @return the password
      */
     public char[] getPassword() {
-        return credentials != null ? credentials.getPassword() : null;
+        return credential != null ? credential.getPassword() : null;
     }
 
     /**
@@ -896,9 +896,21 @@ public class ConnectionString {
      * Gets the credentials in an immutable list.  The list will be empty if no credentials were specified in the connection string.
      *
      * @return the credentials in an immutable list
+     * @deprecated Prefer {@link #getCredential()}
      */
+    @Deprecated
     public List<MongoCredential> getCredentialList() {
-        return credentials != null ? singletonList(credentials) : Collections.<MongoCredential>emptyList();
+        return credential != null ? singletonList(credential) : Collections.<MongoCredential>emptyList();
+    }
+
+    /**
+     * Gets the credentials in an immutable list.  The list will be empty if no credentials were specified in the connection string.
+     *
+     * @return the credentials in an immutable list
+     * @since 3.6
+     */
+    public MongoCredential getCredential() {
+        return credential;
     }
 
     /**
@@ -1108,7 +1120,7 @@ public class ConnectionString {
         if (connectTimeout != null ? !connectTimeout.equals(that.connectTimeout) : that.connectTimeout != null) {
             return false;
         }
-        if (credentials != null ? !credentials.equals(that.credentials) : that.credentials != null) {
+        if (credential != null ? !credential.equals(that.credential) : that.credential != null) {
             return false;
         }
         if (database != null ? !database.equals(that.database) : that.database != null) {
@@ -1169,7 +1181,7 @@ public class ConnectionString {
 
     @Override
     public int hashCode() {
-        int result = credentials != null ? credentials.hashCode() : 0;
+        int result = credential != null ? credential.hashCode() : 0;
         result = 31 * result + hosts.hashCode();
         result = 31 * result + (database != null ? database.hashCode() : 0);
         result = 31 * result + (collection != null ? collection.hashCode() : 0);

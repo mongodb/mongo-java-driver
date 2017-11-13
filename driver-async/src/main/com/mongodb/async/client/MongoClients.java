@@ -145,13 +145,16 @@ public final class MongoClients {
                 .serverSettings(ServerSettings.builder()
                         .applyConnectionString(connectionString)
                         .build())
-                .credentialList(connectionString.getCredentialList())
                 .sslSettings(SslSettings.builder()
                         .applyConnectionString(connectionString)
                         .build())
                 .socketSettings(SocketSettings.builder()
                         .applyConnectionString(connectionString)
                         .build());
+
+        if (connectionString.getCredential() != null) {
+            builder.credential(connectionString.getCredential());
+        }
 
         if (connectionString.getReadPreference() != null) {
             builder.readPreference(connectionString.getReadPreference());
@@ -183,6 +186,7 @@ public final class MongoClients {
         }
     }
 
+    @SuppressWarnings("deprecation")
     static MongoClient createMongoClient(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation,
                                          final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory,
                                          final Closeable externalResourceCloser) {
