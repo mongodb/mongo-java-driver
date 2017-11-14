@@ -45,6 +45,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.connection.ServerDescription.MAX_DRIVER_WIRE_VERSION;
+import static com.mongodb.connection.ServerDescription.MIN_DRIVER_SERVER_VERSION;
+import static com.mongodb.connection.ServerDescription.MIN_DRIVER_WIRE_VERSION;
 import static com.mongodb.internal.event.EventListenerHelper.createServerListener;
 import static com.mongodb.internal.event.EventListenerHelper.getClusterListener;
 import static java.lang.String.format;
@@ -131,7 +134,7 @@ abstract class BaseCluster implements Cluster {
         isTrue("open", !isClosed());
 
         if (LOGGER.isTraceEnabled()) {
-            LOGGER.trace(String.format("Asynchronously selecting server with selector %s", serverSelector));
+            LOGGER.trace(format("Asynchronously selecting server with selector %s", serverSelector));
         }
         ServerSelectionRequest request = new ServerSelectionRequest(serverSelector, getCompositeServerSelector(serverSelector),
                                                                     getMaxWaitTimeNanos(), callback);
@@ -276,7 +279,7 @@ abstract class BaseCluster implements Cluster {
                 Server server = selectRandomServer(request.compositeSelector, description);
                 if (server != null) {
                     if (LOGGER.isTraceEnabled()) {
-                        LOGGER.trace(String.format("Asynchronously selected server %s", server.getDescription().getAddress()));
+                        LOGGER.trace(format("Asynchronously selected server %s", server.getDescription().getAddress()));
                     }
                     request.onResult(server, null);
                     return true;
@@ -367,9 +370,18 @@ abstract class BaseCluster implements Cluster {
     }
 
     private MongoIncompatibleDriverException createIncompatibleException(final ClusterDescription curDescription) {
-        return new MongoIncompatibleDriverException(format("This version of the driver is not compatible with one or more of "
-                                                           + "the servers to which it is connected: %s", curDescription),
-                                                    curDescription);
+        String message;
+        ServerDescription incompatibleServer = curDescription.findServerIncompatiblyOlderThanDriver();
+        if (incompatibleServer != null) {
+            message = format("Server at %s reports wire version %d, but this version of the driver requires at least %d (MongoDB %s).",
+                    incompatibleServer.getAddress(), incompatibleServer.getMaxWireVersion(),
+                    MIN_DRIVER_WIRE_VERSION, MIN_DRIVER_SERVER_VERSION);
+        } else {
+            incompatibleServer = curDescription.findServerIncompatiblyNewerThanDriver();
+            message = format("Server at %s requires wire version %d, but this version of the driver only supports up to %d.",
+                    incompatibleServer.getAddress(), incompatibleServer.getMinWireVersion(), MAX_DRIVER_WIRE_VERSION);
+        }
+        throw new MongoIncompatibleDriverException(message, curDescription);
     }
 
     private MongoTimeoutException createTimeoutException(final ServerSelector serverSelector, final ClusterDescription curDescription) {

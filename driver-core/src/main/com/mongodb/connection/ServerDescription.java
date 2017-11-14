@@ -46,6 +46,7 @@ import static com.mongodb.connection.ServerType.UNKNOWN;
 @Immutable
 public class ServerDescription {
 
+    static final String MIN_DRIVER_SERVER_VERSION = "2.6";
     static final int MIN_DRIVER_WIRE_VERSION = 1;
     static final int MAX_DRIVER_WIRE_VERSION = 6;
 
@@ -429,19 +430,37 @@ public class ServerDescription {
      * @return true if the server is compatible with the driver.
      */
     public boolean isCompatibleWithDriver() {
-        if (!ok) {
-            return true;
-        }
-
-        if (minWireVersion > MAX_DRIVER_WIRE_VERSION) {
+        if (isIncompatiblyOlderThanDriver()) {
             return false;
         }
 
-        if (maxWireVersion < MIN_DRIVER_WIRE_VERSION) {
+        if (isIncompatiblyNewerThanDriver()) {
             return false;
         }
 
         return true;
+    }
+
+    /**
+     * Return whether the server is compatible with the driver. An incompatible server is one that has a min wire version greater that the
+     * driver's max wire version or a max wire version less than the driver's min wire version.
+     *
+     * @return true if the server is compatible with the driver.
+     * @since 3.6
+     */
+    public boolean isIncompatiblyNewerThanDriver() {
+        return ok && minWireVersion > MAX_DRIVER_WIRE_VERSION;
+    }
+
+    /**
+     * Return whether the server is compatible with the driver. An incompatible server is one that has a min wire version greater that the
+     * driver's max wire version or a max wire version less than the driver's min wire version.
+     *
+     * @return true if the server is compatible with the driver.
+     * @since 3.6
+     */
+    public boolean isIncompatiblyOlderThanDriver() {
+        return ok && maxWireVersion < MIN_DRIVER_WIRE_VERSION;
     }
 
     /**
