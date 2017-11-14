@@ -124,6 +124,7 @@ public class DBCollection {
     private final DB database;
     private final OperationExecutor executor;
     private final Bytes.OptionHolder optionHolder;
+    private final boolean retryWrites;
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
     private volatile ReadConcern readConcern;
@@ -147,6 +148,7 @@ public class DBCollection {
         this.optionHolder = new Bytes.OptionHolder(database.getOptionHolder());
         this.objectFactory = new DBCollectionObjectFactory();
         this.objectCodec = new CompoundDBObjectCodec(getDefaultDBObjectCodec());
+        this.retryWrites = database.getMongo().getMongoClientOptions().getRetryWrites();
     }
 
     /**
@@ -331,7 +333,7 @@ public class DBCollection {
 
     private WriteResult insert(final List<InsertRequest> insertRequestList, final WriteConcern writeConcern,
                                final boolean continueOnError, final Boolean bypassDocumentValidation) {
-        return executeWriteOperation(new InsertOperation(getNamespace(), !continueOnError, writeConcern, insertRequestList)
+        return executeWriteOperation(new InsertOperation(getNamespace(), !continueOnError, writeConcern, retryWrites, insertRequestList)
                                      .bypassDocumentValidation(bypassDocumentValidation));
     }
 
@@ -414,7 +416,8 @@ public class DBCollection {
         UpdateRequest replaceRequest = new UpdateRequest(wrap(filter), wrap(obj, objectCodec),
                                                          com.mongodb.bulk.WriteRequest.Type.REPLACE).upsert(true);
 
-        return executeWriteOperation(new UpdateOperation(getNamespace(), false, writeConcern, asList(replaceRequest)));
+        return executeWriteOperation(new UpdateOperation(getNamespace(), false, writeConcern, retryWrites,
+                singletonList(replaceRequest)));
     }
 
     /**
@@ -550,7 +553,6 @@ public class DBCollection {
         notNull("update", update);
         notNull("options", options);
         WriteConcern writeConcern = options.getWriteConcern() != null ? options.getWriteConcern() : getWriteConcern();
-
         com.mongodb.bulk.WriteRequest.Type updateType = !update.keySet().isEmpty() && update.keySet().iterator().next().startsWith("$")
                                                                 ? com.mongodb.bulk.WriteRequest.Type.UPDATE
                                                                 : com.mongodb.bulk.WriteRequest.Type.REPLACE;
@@ -558,8 +560,8 @@ public class DBCollection {
                                               .upsert(options.isUpsert()).multi(options.isMulti())
                                               .collation(options.getCollation())
                                               .arrayFilters(wrapAllowNull(options.getArrayFilters(), options.getEncoder()));
-        return executeWriteOperation(new UpdateOperation(getNamespace(), true, writeConcern, singletonList(updateRequest))
-                                             .bypassDocumentValidation(options.getBypassDocumentValidation()));
+        return executeWriteOperation(new UpdateOperation(getNamespace(), true, writeConcern, retryWrites,
+                singletonList(updateRequest)).bypassDocumentValidation(options.getBypassDocumentValidation()));
     }
 
     /**
@@ -624,7 +626,8 @@ public class DBCollection {
         notNull("options", options);
         WriteConcern writeConcern = options.getWriteConcern() != null ? options.getWriteConcern() : getWriteConcern();
         DeleteRequest deleteRequest = new DeleteRequest(wrap(query, options.getEncoder())).collation(options.getCollation());
-        return executeWriteOperation(new DeleteOperation(getNamespace(), false, writeConcern, singletonList(deleteRequest)));
+        return executeWriteOperation(new DeleteOperation(getNamespace(), false, writeConcern, retryWrites,
+                singletonList(deleteRequest)));
     }
 
     /**
@@ -1893,7 +1896,7 @@ public class DBCollection {
         WriteConcern writeConcern = options.getWriteConcern() != null ? options.getWriteConcern() : getWriteConcern();
         WriteOperation<DBObject> operation;
         if (options.isRemove()) {
-            operation = new FindAndDeleteOperation<DBObject>(getNamespace(), writeConcern, objectCodec)
+            operation = new FindAndDeleteOperation<DBObject>(getNamespace(), writeConcern, retryWrites, objectCodec)
                         .filter(wrapAllowNull(query))
                         .projection(wrapAllowNull(options.getProjection()))
                         .sort(wrapAllowNull(options.getSort()))
@@ -1902,7 +1905,7 @@ public class DBCollection {
         } else {
             notNull("options#getUpdate", options.getUpdate());
             if (!options.getUpdate().keySet().isEmpty() && options.getUpdate().keySet().iterator().next().charAt(0) == '$') {
-                operation = new FindAndUpdateOperation<DBObject>(getNamespace(), writeConcern, objectCodec,
+                operation = new FindAndUpdateOperation<DBObject>(getNamespace(), writeConcern, retryWrites, objectCodec,
                         wrap(options.getUpdate()))
                         .filter(wrap(query))
                         .projection(wrapAllowNull(options.getProjection()))
@@ -1914,7 +1917,7 @@ public class DBCollection {
                         .collation(options.getCollation())
                         .arrayFilters(wrapAllowNull(options.getArrayFilters(), (Encoder<DBObject>) null));
             } else {
-                operation = new FindAndReplaceOperation<DBObject>(getNamespace(), writeConcern, objectCodec,
+                operation = new FindAndReplaceOperation<DBObject>(getNamespace(), writeConcern, retryWrites, objectCodec,
                         wrap(options.getUpdate()))
                         .filter(wrap(query))
                         .projection(wrapAllowNull(options.getProjection()))
@@ -2314,7 +2317,7 @@ public class DBCollection {
                                               final WriteConcern writeConcern) {
         try {
             return translateBulkWriteResult(executor.execute(new MixedBulkWriteOperation(getNamespace(),
-                            translateWriteRequestsToNew(writeRequests), ordered, writeConcern)
+                            translateWriteRequestsToNew(writeRequests), ordered, writeConcern, false)
                             .bypassDocumentValidation(bypassDocumentValidation)), getObjectCodec());
         } catch (MongoBulkWriteException e) {
             throw BulkWriteHelper.translateBulkWriteException(e, MongoClient.getDefaultCodecRegistry().get(DBObject.class));

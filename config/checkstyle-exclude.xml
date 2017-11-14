@@ -110,6 +110,8 @@
     <suppress checks="HideUtilityClassConstructor" files="QuickTour"/>
     <suppress checks="HideUtilityClassConstructor" files="Util"/>
 
+    <suppress checks="ParameterNumber" files="BulkWriteBatch"/>
+
     <!-- Alternative copyrights -->
     <suppress checks="RegexpSingleline" files="Immutable"/>
     <suppress checks="RegexpSingleline" files="NotThreadSafe"/>

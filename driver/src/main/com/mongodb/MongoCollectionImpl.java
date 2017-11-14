@@ -88,17 +88,19 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private final ReadPreference readPreference;
     private final CodecRegistry codecRegistry;
     private final WriteConcern writeConcern;
+    private final boolean retryWrites;
     private final ReadConcern readConcern;
     private final OperationExecutor executor;
 
     MongoCollectionImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final CodecRegistry codecRegistry,
-                        final ReadPreference readPreference, final WriteConcern writeConcern, final ReadConcern readConcern,
-                        final OperationExecutor executor) {
+                        final ReadPreference readPreference, final WriteConcern writeConcern, final boolean retryWrites,
+                        final ReadConcern readConcern, final OperationExecutor executor) {
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.readPreference = notNull("readPreference", readPreference);
         this.writeConcern = notNull("writeConcern", writeConcern);
+        this.retryWrites = retryWrites;
         this.readConcern = notNull("readConcern", readConcern);
         this.executor = notNull("executor", executor);
     }
@@ -135,32 +137,32 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public <NewTDocument> MongoCollection<NewTDocument> withDocumentClass(final Class<NewTDocument> clazz) {
-        return new MongoCollectionImpl<NewTDocument>(namespace, clazz, codecRegistry, readPreference, writeConcern, readConcern,
-                executor);
+        return new MongoCollectionImpl<NewTDocument>(namespace, clazz, codecRegistry, readPreference, writeConcern, retryWrites,
+                readConcern, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withCodecRegistry(final CodecRegistry codecRegistry) {
-        return new MongoCollectionImpl<TDocument>(namespace, documentClass, codecRegistry, readPreference, writeConcern, readConcern,
-                executor);
+        return new MongoCollectionImpl<TDocument>(namespace, documentClass, codecRegistry, readPreference, writeConcern, retryWrites,
+                readConcern, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withReadPreference(final ReadPreference readPreference) {
-        return new MongoCollectionImpl<TDocument>(namespace, documentClass, codecRegistry, readPreference, writeConcern, readConcern,
-                executor);
+        return new MongoCollectionImpl<TDocument>(namespace, documentClass, codecRegistry, readPreference, writeConcern, retryWrites,
+                readConcern, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withWriteConcern(final WriteConcern writeConcern) {
-        return new MongoCollectionImpl<TDocument>(namespace, documentClass, codecRegistry, readPreference, writeConcern, readConcern,
-                executor);
+        return new MongoCollectionImpl<TDocument>(namespace, documentClass, codecRegistry, readPreference, writeConcern, retryWrites,
+                readConcern, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withReadConcern(final ReadConcern readConcern) {
-        return new MongoCollectionImpl<TDocument>(namespace, documentClass, codecRegistry, readPreference, writeConcern, readConcern,
-                executor);
+        return new MongoCollectionImpl<TDocument>(namespace, documentClass, codecRegistry, readPreference, writeConcern, retryWrites,
+                readConcern, executor);
     }
 
     @Override
@@ -473,7 +475,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
             writeRequests.add(writeRequest);
         }
 
-        return executor.execute(new MixedBulkWriteOperation(namespace, writeRequests, options.isOrdered(), writeConcern)
+        return executor.execute(new MixedBulkWriteOperation(namespace, writeRequests, options.isOrdered(), writeConcern, retryWrites)
                                         .bypassDocumentValidation(options.getBypassDocumentValidation()), clientSession);
     }
 
@@ -543,7 +545,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
             }
             requests.add(new InsertRequest(documentToBsonDocument(document)));
         }
-        executor.execute(new MixedBulkWriteOperation(namespace, requests, options.isOrdered(), writeConcern)
+
+        executor.execute(new MixedBulkWriteOperation(namespace, requests, options.isOrdered(), writeConcern, retryWrites)
                                  .bypassDocumentValidation(options.getBypassDocumentValidation()), clientSession);
     }
 
@@ -686,7 +689,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     private TDocument executeFindOneAndDelete(final ClientSession clientSession, final Bson filter, final FindOneAndDeleteOptions options) {
-        return executor.execute(new FindAndDeleteOperation<TDocument>(namespace, writeConcern, getCodec())
+        return executor.execute(new FindAndDeleteOperation<TDocument>(namespace, writeConcern, retryWrites, getCodec())
                                         .filter(toBsonDocument(filter))
                                         .projection(toBsonDocument(options.getProjection()))
                                         .sort(toBsonDocument(options.getSort()))
@@ -719,7 +722,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private TDocument executeFindOneAndReplace(final ClientSession clientSession, final Bson filter, final TDocument replacement,
                                                final FindOneAndReplaceOptions options) {
-        return executor.execute(new FindAndReplaceOperation<TDocument>(namespace, writeConcern, getCodec(),
+        return executor.execute(new FindAndReplaceOperation<TDocument>(namespace, writeConcern, retryWrites, getCodec(),
                                                                               documentToBsonDocument(replacement))
                                         .filter(toBsonDocument(filter))
                                         .projection(toBsonDocument(options.getProjection()))
@@ -756,7 +759,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private TDocument executeFindOneAndUpdate(final ClientSession clientSession, final Bson filter, final Bson update,
                                               final FindOneAndUpdateOptions options) {
-        return executor.execute(new FindAndUpdateOperation<TDocument>(namespace, writeConcern, getCodec(), toBsonDocument(update))
+        return executor.execute(new FindAndUpdateOperation<TDocument>(namespace, writeConcern, retryWrites, getCodec(),
+                        toBsonDocument(update))
                                         .filter(toBsonDocument(filter))
                                         .projection(toBsonDocument(options.getProjection()))
                                         .sort(toBsonDocument(options.getSort()))
@@ -967,7 +971,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private BulkWriteResult executeSingleWriteRequest(final ClientSession clientSession, final WriteRequest request,
                                                       final Boolean bypassDocumentValidation) {
         try {
-            return executor.execute(new MixedBulkWriteOperation(namespace, asList(request), true, writeConcern)
+            return executor.execute(new MixedBulkWriteOperation(namespace, asList(request), true, writeConcern, retryWrites)
                     .bypassDocumentValidation(bypassDocumentValidation), clientSession);
         } catch (MongoBulkWriteException e) {
             if (e.getWriteErrors().isEmpty()) {

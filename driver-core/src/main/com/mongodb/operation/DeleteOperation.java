@@ -41,10 +41,27 @@ public class DeleteOperation extends BaseWriteOperation {
      * @param ordered        whether the writes are ordered.
      * @param writeConcern   the write concern for the operation.
      * @param deleteRequests the remove requests.
+     * @deprecated           use {@link #DeleteOperation(MongoNamespace, boolean, WriteConcern, boolean, List)} instead
      */
+    @Deprecated
     public DeleteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                            final List<DeleteRequest> deleteRequests) {
-        super(namespace, ordered, writeConcern);
+        this(namespace, ordered, writeConcern, false, deleteRequests);
+    }
+
+    /**
+     * Construct an instance.
+     *
+     * @param namespace      the database and collection namespace for the operation.
+     * @param ordered        whether the writes are ordered.
+     * @param writeConcern   the write concern for the operation.
+     * @param retryWrites   if writes should be retried if they fail due to a network error.
+     * @param deleteRequests the remove requests.
+     * @since 3.6
+     */
+    public DeleteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                           final boolean retryWrites, final List<DeleteRequest> deleteRequests) {
+        super(namespace, ordered, writeConcern, retryWrites);
         this.deleteRequests = notNull("removes", deleteRequests);
         isTrueArgument("deleteRequests not empty", !deleteRequests.isEmpty());
     }

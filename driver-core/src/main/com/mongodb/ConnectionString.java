@@ -119,6 +119,8 @@ import static java.util.Collections.singletonList;
  * {@code "majority"}</li>
  * </ul>
  * </li>
+ * <li>{@code retryWrites=true|false}. If true the driver will retry supported write operations if they fail due to a network error.
+ *  Defaults to false.</li>
  * <li>{@code wtimeoutMS=ms}
  * <ul>
  * <li>The driver adds { wtimeout : ms } to all write commands. Implies {@code safe=true}.</li>
@@ -207,6 +209,7 @@ public class ConnectionString {
 
     private ReadPreference readPreference;
     private WriteConcern writeConcern;
+    private boolean retryWrites;
     private ReadConcern readConcern;
 
     private Integer minConnectionPoolSize;
@@ -341,6 +344,7 @@ public class ConnectionString {
         GENERAL_OPTIONS_KEYS.add("serverselectiontimeoutms");
         GENERAL_OPTIONS_KEYS.add("localthresholdms");
         GENERAL_OPTIONS_KEYS.add("heartbeatfrequencyms");
+        GENERAL_OPTIONS_KEYS.add("retrywrites");
 
         GENERAL_OPTIONS_KEYS.add("appname");
 
@@ -420,6 +424,8 @@ public class ConnectionString {
                 heartbeatFrequency = parseInteger(value, "heartbeatfrequencyms");
             } else if (key.equals("appname")) {
                 applicationName = value;
+            } else if (key.equals("retrywrites") && parseBoolean(value, "retrywrites")) {
+                retryWrites = true;
             }
         }
 
@@ -917,6 +923,17 @@ public class ConnectionString {
      */
     public WriteConcern getWriteConcern() {
         return writeConcern;
+    }
+
+    /**
+     * Returns true if writes should be retried if they fail due to a network error.
+     *
+     * @return the retryWrites value
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public boolean getRetryWrites() {
+        return retryWrites;
     }
 
     /**

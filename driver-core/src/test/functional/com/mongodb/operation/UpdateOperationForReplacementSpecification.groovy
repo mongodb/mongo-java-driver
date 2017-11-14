@@ -37,7 +37,7 @@ class UpdateOperationForReplacementSpecification extends OperationFunctionalSpec
     def 'should return correct result'() {
         given:
         def replacement = new UpdateRequest(new BsonDocument(), new BsonDocument('_id', new BsonInt32(1)), REPLACE)
-        def operation = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
+        def operation = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, false, asList(replacement))
 
         when:
         def result = execute(operation, async)
@@ -55,11 +55,11 @@ class UpdateOperationForReplacementSpecification extends OperationFunctionalSpec
     def 'should replace a single document'() {
         given:
         def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
-        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, asList(insert)).execute(getBinding())
+        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, false, asList(insert)).execute(getBinding())
 
         def replacement = new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                                             new BsonDocument('_id', new BsonInt32(1)).append('x', new BsonInt32(1)), REPLACE)
-        def operation = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
+        def operation = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, false, asList(replacement))
 
         when:
         def result = execute(operation, async)
@@ -81,7 +81,7 @@ class UpdateOperationForReplacementSpecification extends OperationFunctionalSpec
         def replacement = new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                                             new BsonDocument('_id', new BsonInt32(1)).append('x', new BsonInt32(1)), REPLACE)
                 .upsert(true)
-        def operation = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
+        def operation = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, false, asList(replacement))
 
         when:
         execute(operation, async)
@@ -98,7 +98,7 @@ class UpdateOperationForReplacementSpecification extends OperationFunctionalSpec
         def replacement = new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                                             new BsonDocument('$set', new BsonDocument('x', new BsonInt32(1))), REPLACE)
                 .upsert(true)
-        def operation = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
+        def operation = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, false, asList(replacement))
 
         when:
         execute(operation, async)
@@ -117,7 +117,7 @@ class UpdateOperationForReplacementSpecification extends OperationFunctionalSpec
         def replacements = [new UpdateRequest(new BsonDocument(),
                                               new BsonDocument('_id', new BsonInt32(1)).append('b', new BsonBinary(hugeByteArray)),
                                               REPLACE)]
-        def operation = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, replacements)
+        def operation = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, false, replacements)
 
         when:
         execute(operation, async)
@@ -131,11 +131,11 @@ class UpdateOperationForReplacementSpecification extends OperationFunctionalSpec
 
     def 'should move _id to the beginning'() {
         def insert = new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))
-        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, asList(insert)).execute(getBinding())
+        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, false, asList(insert)).execute(getBinding())
 
         def replacement = new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
                                             new BsonDocument('x', new BsonInt32(1)).append('_id', new BsonInt32(1)), REPLACE)
-        def operation = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, asList(replacement))
+        def operation = new UpdateOperation(getNamespace(), true, ACKNOWLEDGED, false, asList(replacement))
 
         when:
         execute(operation, async)

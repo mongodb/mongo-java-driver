@@ -80,7 +80,7 @@ class ConnectionStringSpecification extends Specification {
 
     def 'should correctly parse different write concerns'() {
         expect:
-        uri.getWriteConcern() == writeConcern;
+        uri.getWriteConcern() == writeConcern
 
         where:
         uri                                                                                  | writeConcern
@@ -93,6 +93,18 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://localhost/?journal=true')                            | WriteConcern.ACKNOWLEDGED.withJournal(true)
         new ConnectionString('mongodb://localhost/?w=2&wtimeout=5&fsync=true&journal=true')  | new WriteConcern(2, 5, true, true)
         new ConnectionString('mongodb://localhost/?w=majority&wtimeout=5&fsync=true&j=true') | new WriteConcern('majority', 5, true, true)
+    }
+
+    @Unroll
+    def 'should correct parse retryWrites'() {
+        expect:
+        uri.getRetryWrites() == retryWrites
+
+        where:
+        uri                                                             | retryWrites
+        new ConnectionString('mongodb://localhost/')                    | false
+        new ConnectionString('mongodb://localhost/?retryWrites=false')  | false
+        new ConnectionString('mongodb://localhost/?retryWrites=true')   | true
     }
 
     @Unroll
@@ -191,7 +203,7 @@ class ConnectionStringSpecification extends Specification {
 
     def 'should have correct defaults for options'() {
         when:
-        def connectionString = new ConnectionString('mongodb://localhost');
+        def connectionString = new ConnectionString('mongodb://localhost')
 
         then:
         connectionString.getMaxConnectionPoolSize() == null;

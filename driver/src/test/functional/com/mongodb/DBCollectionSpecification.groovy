@@ -343,6 +343,7 @@ class DBCollectionSpecification extends Specification {
         def cannedResult = BasicDBObject.parse('{value: {}}')
         def executor = new TestOperationExecutor([cannedResult, cannedResult, cannedResult])
         def db = new DB(getMongoClient(), 'myDatabase', executor)
+        def retryWrites = db.getMongo().getMongoClientOptions().getRetryWrites()
         def collection = db.getCollection('test')
 
         when:
@@ -350,8 +351,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getWriteOperation(), isTheSameAs(new FindAndDeleteOperation<DBObject>(collection.getNamespace(),
-                collection.getObjectCodec())
-                .filter(new BsonDocument()))
+                WriteConcern.ACKNOWLEDGED, retryWrites, collection.getObjectCodec()).filter(new BsonDocument()))
     }
 
     def 'findAndModify should create the correct FindAndUpdateOperation'() {
@@ -363,6 +363,7 @@ class DBCollectionSpecification extends Specification {
         def cannedResult = BasicDBObject.parse('{value: {}}')
         def executor = new TestOperationExecutor([cannedResult, cannedResult, cannedResult])
         def db = new DB(getMongoClient(), 'myDatabase', executor)
+        def retryWrites = db.getMongo().getMongoClientOptions().getRetryWrites()
         def collection = db.getCollection('test')
 
         when:
@@ -370,7 +371,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getWriteOperation(), isTheSameAs(new FindAndUpdateOperation<DBObject>(collection.getNamespace(),
-                collection.getObjectCodec(), bsonUpdate)
+                WriteConcern.ACKNOWLEDGED, retryWrites, collection.getObjectCodec(), bsonUpdate)
                 .filter(new BsonDocument()))
 
         when: // With options
@@ -379,7 +380,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getWriteOperation(), isTheSameAs(new FindAndUpdateOperation<DBObject>(collection.getNamespace(), WriteConcern.W3,
-                collection.getObjectCodec(), bsonUpdate)
+                retryWrites, collection.getObjectCodec(), bsonUpdate)
                 .filter(new BsonDocument())
                 .collation(collation).arrayFilters(bsonDocumentWrapperArrayFilters))
 
@@ -398,6 +399,7 @@ class DBCollectionSpecification extends Specification {
         def cannedResult = BasicDBObject.parse('{value: {}}')
         def executor = new TestOperationExecutor([cannedResult, cannedResult, cannedResult])
         def db = new DB(getMongoClient(), 'myDatabase', executor)
+        def retryWrites = db.getMongo().getMongoClientOptions().getRetryWrites()
         def collection = db.getCollection('test')
 
         when:
@@ -405,7 +407,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getWriteOperation(), isTheSameAs(new FindAndReplaceOperation<DBObject>(collection.getNamespace(),
-                collection.getObjectCodec(), bsonReplace)
+                WriteConcern.ACKNOWLEDGED, retryWrites, collection.getObjectCodec(), bsonReplace)
                 .filter(new BsonDocument()))
 
         when: // With options
@@ -414,7 +416,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getWriteOperation(), isTheSameAs(new FindAndReplaceOperation<DBObject>(collection.getNamespace(), WriteConcern.W3,
-                collection.getObjectCodec(), bsonReplace)
+                retryWrites, collection.getObjectCodec(), bsonReplace)
                 .filter(new BsonDocument())
                 .collation(collation))
     }
@@ -751,6 +753,7 @@ class DBCollectionSpecification extends Specification {
         def result = Stub(WriteConcernResult)
         def executor = new TestOperationExecutor([result, result, result])
         def db = new DB(getMongoClient(), 'myDatabase', executor)
+        def retryWrites = db.getMongo().getMongoClientOptions().getRetryWrites()
         def collection = db.getCollection('test')
         def query = '{a: 1}'
         def update = '{$set: {a: 2}}'
@@ -762,7 +765,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getWriteOperation(), isTheSameAs(new UpdateOperation(collection.getNamespace(), true,
-                WriteConcern.ACKNOWLEDGED, asList(updateRequest)))
+                WriteConcern.ACKNOWLEDGED, retryWrites, asList(updateRequest)))
 
         when: // Inherits from DB
         db.setWriteConcern(WriteConcern.W3)
@@ -771,7 +774,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getWriteOperation(), isTheSameAs(new UpdateOperation(collection.getNamespace(), true,
-                WriteConcern.W3, asList(updateRequest)))
+                WriteConcern.W3, retryWrites, asList(updateRequest)))
 
         when:
         collection.setWriteConcern(WriteConcern.W1)
@@ -781,7 +784,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getWriteOperation(), isTheSameAs(new UpdateOperation(collection.getNamespace(), true,
-                WriteConcern.W1, asList(updateRequest.arrayFilters(bsonDocumentWrapperArrayFilters))))
+                WriteConcern.W1, retryWrites, asList(updateRequest.arrayFilters(bsonDocumentWrapperArrayFilters))))
 
         where:
         dbObjectArrayFilters <<            [null, [], [new BasicDBObject('i.b', 1)]]
@@ -794,6 +797,7 @@ class DBCollectionSpecification extends Specification {
         def result = Stub(WriteConcernResult)
         def executor = new TestOperationExecutor([result, result, result])
         def db = new DB(getMongoClient(), 'myDatabase', executor)
+        def retryWrites = db.getMongo().getMongoClientOptions().getRetryWrites()
         def collection = db.getCollection('test')
         def query = '{a: 1}'
 
@@ -803,7 +807,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getWriteOperation(), isTheSameAs(new DeleteOperation(collection.getNamespace(), false,
-                WriteConcern.ACKNOWLEDGED, asList(deleteRequest)))
+                WriteConcern.ACKNOWLEDGED, retryWrites, asList(deleteRequest)))
 
         when: // Inherits from DB
         db.setWriteConcern(WriteConcern.W3)
@@ -811,7 +815,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getWriteOperation(), isTheSameAs(new DeleteOperation(collection.getNamespace(), false,
-                WriteConcern.W3, asList(deleteRequest)))
+                WriteConcern.W3, retryWrites, asList(deleteRequest)))
 
         when:
         collection.setWriteConcern(WriteConcern.W1)
@@ -820,7 +824,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getWriteOperation(), isTheSameAs(new DeleteOperation(collection.getNamespace(), false,
-                WriteConcern.W1, asList(deleteRequest)))
+                WriteConcern.W1, retryWrites, asList(deleteRequest)))
     }
 
     def 'should create the correct MixedBulkWriteOperation'() {
@@ -851,24 +855,24 @@ class DBCollectionSpecification extends Specification {
         bulk().execute()
 
         then:
-        expect executor.getWriteOperation(), isTheSameAs(new MixedBulkWriteOperation(collection.getNamespace(),
-                writeRequests, ordered, WriteConcern.ACKNOWLEDGED))
+        expect executor.getWriteOperation(), isTheSameAs(new MixedBulkWriteOperation(collection.getNamespace(), writeRequests, ordered,
+                WriteConcern.ACKNOWLEDGED, false))
 
         when: // Inherits from DB
         db.setWriteConcern(WriteConcern.W3)
         bulk().execute()
 
         then:
-        expect executor.getWriteOperation(), isTheSameAs(new MixedBulkWriteOperation(collection.getNamespace(),
-                writeRequests, ordered, WriteConcern.W3))
+        expect executor.getWriteOperation(), isTheSameAs(new MixedBulkWriteOperation(collection.getNamespace(), writeRequests, ordered,
+                WriteConcern.W3, false))
 
         when:
         collection.setWriteConcern(WriteConcern.W1)
         bulk().execute()
 
         then:
-        expect executor.getWriteOperation(), isTheSameAs(new MixedBulkWriteOperation(collection.getNamespace(),
-                writeRequests, ordered, WriteConcern.W1))
+        expect executor.getWriteOperation(), isTheSameAs(new MixedBulkWriteOperation(collection.getNamespace(), writeRequests, ordered,
+                WriteConcern.W1, false))
 
         where:
         ordered << [true, false, true]
