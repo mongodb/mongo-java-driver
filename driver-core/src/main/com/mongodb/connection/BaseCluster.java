@@ -170,7 +170,7 @@ abstract class BaseCluster implements Cluster {
                 if (!selectionFailureLogged) {
                     if (LOGGER.isInfoEnabled()) {
                         if (settings.getServerSelectionTimeout(MILLISECONDS) < 0) {
-                            LOGGER.info(format("Cluster description not yet available. Waiting indefinitely."));
+                            LOGGER.info("Cluster description not yet available. Waiting indefinitely.");
                         } else {
                             LOGGER.info(format("Cluster description not yet available. Waiting for %d ms before timing out",
                                                settings.getServerSelectionTimeout(MILLISECONDS)));
@@ -267,7 +267,7 @@ abstract class BaseCluster implements Cluster {
                 request.phase = currentPhase;
                 if (!description.isCompatibleWithDriver()) {
                     if (LOGGER.isTraceEnabled()) {
-                        LOGGER.trace(String.format("Asynchronously failed server selection due to driver incompatibility with server"));
+                        LOGGER.trace("Asynchronously failed server selection due to driver incompatibility with server");
                     }
                     request.onResult(null, createIncompatibleException(description));
                     return true;
@@ -288,7 +288,7 @@ abstract class BaseCluster implements Cluster {
 
             if (request.timedOut()) {
                 if (LOGGER.isTraceEnabled()) {
-                    LOGGER.trace(String.format("Asynchronously failed server selection after timeout"));
+                    LOGGER.trace("Asynchronously failed server selection after timeout");
                 }
                 request.onResult(null, createTimeoutException(request.originalSelector, description));
                 return true;
