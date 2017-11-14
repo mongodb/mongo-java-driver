@@ -29,6 +29,11 @@ The 3.6 release adds support for [change streams](https://docs.mongodb.com/manua
 
 The 3.6 release adds support for causally consistency.
 
+### Retryable writes
+
+The 3.6 release adds support for retryable writes using the `retryWrites` option in 
+[`MongoClientOptions`]({{<apiref "com/mongodb/MongoClientOptions">}}).
+
 ## What's New in 3.5
 
 Key new features of the 3.5 Java driver release:

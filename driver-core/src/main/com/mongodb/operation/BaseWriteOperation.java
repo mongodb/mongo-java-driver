@@ -53,6 +53,7 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
     private final WriteConcern writeConcern;
     private final MongoNamespace namespace;
     private final boolean ordered;
+    private final boolean retryWrites;
     private Boolean bypassDocumentValidation;
 
     /**
@@ -61,11 +62,28 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
      * @param namespace    the database and collection namespace for the operation.
      * @param ordered      whether the writes are ordered.
      * @param writeConcern the write concern for the operation.
+     * @deprecated         use {@link #BaseWriteOperation(MongoNamespace, boolean, WriteConcern, boolean)} instead
      */
+    @Deprecated
     public BaseWriteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern) {
+        this(namespace, ordered, writeConcern, false);
+    }
+
+    /**
+     * Construct an instance
+     *
+     * @param namespace    the database and collection namespace for the operation.
+     * @param ordered      whether the writes are ordered.
+     * @param writeConcern the write concern for the operation.
+     * @param retryWrites   if writes should be retried if they fail due to a network error.
+     * @since 3.6
+     */
+    public BaseWriteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                              final boolean retryWrites) {
         this.ordered = ordered;
         this.namespace = notNull("namespace", namespace);
         this.writeConcern = notNull("writeConcern", writeConcern);
+        this.retryWrites = retryWrites;
     }
 
     protected abstract List<? extends WriteRequest> getWriteRequests();
@@ -159,7 +177,7 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
     }
 
     private MixedBulkWriteOperation getMixedBulkOperation() {
-        return new MixedBulkWriteOperation(namespace, getWriteRequests(), ordered, writeConcern)
+        return new MixedBulkWriteOperation(namespace, getWriteRequests(), ordered, writeConcern, retryWrites)
                 .bypassDocumentValidation(bypassDocumentValidation);
     }
 

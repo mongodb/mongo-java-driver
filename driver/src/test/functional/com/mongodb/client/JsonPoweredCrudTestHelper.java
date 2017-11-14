@@ -19,6 +19,7 @@ package com.mongodb.client;
 import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
 import com.mongodb.bulk.BulkWriteResult;
+import com.mongodb.bulk.BulkWriteUpsert;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CollationAlternate;
@@ -26,12 +27,14 @@ import com.mongodb.client.model.CollationCaseFirst;
 import com.mongodb.client.model.CollationMaxVariable;
 import com.mongodb.client.model.CollationStrength;
 import com.mongodb.client.model.CountOptions;
+import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneModel;
+import com.mongodb.client.model.ReplaceOneModel;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
@@ -50,6 +53,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+
+import static java.lang.String.format;
 
 public class JsonPoweredCrudTestHelper {
     private final String description;
@@ -109,17 +114,23 @@ public class JsonPoweredCrudTestHelper {
     }
 
     BsonDocument toResult(final BulkWriteResult bulkWriteResult) {
+
         BsonDocument resultDoc = new BsonDocument();
         if (bulkWriteResult.wasAcknowledged()) {
             resultDoc.append("deletedCount", new BsonInt32(bulkWriteResult.getDeletedCount()));
             resultDoc.append("insertedIds", new BsonDocument());
+            resultDoc.append("insertedCount", new BsonInt32(bulkWriteResult.getInsertedCount()));
             resultDoc.append("matchedCount", new BsonInt32(bulkWriteResult.getMatchedCount()));
             if (bulkWriteResult.isModifiedCountAvailable()) {
                 resultDoc.append("modifiedCount", new BsonInt32(bulkWriteResult.getModifiedCount()));
             }
             resultDoc.append("upsertedCount", bulkWriteResult.getUpserts() == null
                                                       ? new BsonInt32(0) : new BsonInt32(bulkWriteResult.getUpserts().size()));
-            resultDoc.append("upsertedIds", new BsonDocument());
+            BsonDocument upserts = new BsonDocument();
+            for (BulkWriteUpsert bulkWriteUpsert : bulkWriteResult.getUpserts()) {
+                upserts.put(String.valueOf(bulkWriteUpsert.getIndex()), bulkWriteUpsert.getId());
+            }
+            resultDoc.append("upsertedIds", upserts);
         }
         return toResult(resultDoc);
     }
@@ -360,8 +371,13 @@ public class JsonPoweredCrudTestHelper {
                     writeModels.add(new UpdateManyModel<BsonDocument>(requestArguments.getDocument("filter"),
                                                                              requestArguments.getDocument("update"),
                                                                              getUpdateOptions(requestArguments)));
+                } else if (name.equals("deleteOne")) {
+                    writeModels.add(new DeleteOneModel<BsonDocument>(requestArguments.getDocument("filter")));
+                } else if (name.equals("replaceOne")) {
+                    writeModels.add(new ReplaceOneModel<BsonDocument>(requestArguments.getDocument("filter"),
+                            requestArguments.getDocument("replacement")));
                 } else {
-                    throw new UnsupportedOperationException("Unsupported write request type");
+                    throw new UnsupportedOperationException(format("Unsupported write request type: %s", name));
                 }
             } else {
                 if (cur.get("insertOne") != null) {
@@ -378,16 +394,14 @@ public class JsonPoweredCrudTestHelper {
                                                                              updateManyArguments.getDocument("update"),
                                                                              getUpdateOptions(updateManyArguments)));
                 } else {
-                    throw new UnsupportedOperationException("Unsupported write request type");
+                    throw new UnsupportedOperationException(format("Unsupported write request type: %s", cur.toJson()));
                 }
             }
         }
 
-        return toResult(collection.withWriteConcern(writeConcern).bulkWrite(writeModels,
-                                                                            new BulkWriteOptions()
-                                                                            .ordered(arguments.getBoolean("ordered", BsonBoolean.TRUE)
-                                                                                              .getValue())));
-
+        return toResult(collection.withWriteConcern(writeConcern)
+                .bulkWrite(writeModels, new BulkWriteOptions().ordered(arguments.getBoolean("ordered", BsonBoolean.TRUE).getValue()))
+        );
     }
 
     Collation getCollation(final BsonDocument bsonCollation) {
@@ -426,8 +440,14 @@ public class JsonPoweredCrudTestHelper {
     }
 
     private UpdateOptions getUpdateOptions(final BsonDocument requestArguments) {
-        return new UpdateOptions()
-                       .arrayFilters(getArrayFilters(requestArguments.getArray("arrayFilters", null)));
+        UpdateOptions options = new UpdateOptions();
+        if (requestArguments.containsKey("upsert")) {
+            options.upsert(true);
+        }
+        if (requestArguments.containsKey("arrayFilters")) {
+            options.arrayFilters(getArrayFilters(requestArguments.getArray("arrayFilters")));
+        }
+        return options;
     }
 
     private List<BsonDocument> getArrayFilters(final BsonArray bsonArray) {

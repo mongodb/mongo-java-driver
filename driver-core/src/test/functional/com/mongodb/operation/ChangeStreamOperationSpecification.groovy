@@ -133,7 +133,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         }
 
         cleanup:
-        cursor?.close()
+        //cursor?.close()
 
         where:
         async << [true, false]

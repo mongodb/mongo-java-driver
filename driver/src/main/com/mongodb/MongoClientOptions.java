@@ -62,6 +62,7 @@ public class MongoClientOptions {
     private final List<MongoCompressor> compressorList;
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;
+    private final boolean retryWrites;
     private final ReadConcern readConcern;
     private final CodecRegistry codecRegistry;
 
@@ -117,6 +118,7 @@ public class MongoClientOptions {
         socketKeepAlive = builder.socketKeepAlive;
         readPreference = builder.readPreference;
         writeConcern = builder.writeConcern;
+        retryWrites = builder.retryWrites;
         readConcern = builder.readConcern;
         codecRegistry = builder.codecRegistry;
         sslEnabled = builder.sslEnabled;
@@ -525,6 +527,17 @@ public class MongoClientOptions {
     }
 
     /**
+     * Returns true if writes should be retried if they fail due to a network error.
+     *
+     * @return the retryWrites value
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public boolean getRetryWrites() {
+        return retryWrites;
+    }
+
+    /**
      * <p>The read concern to use.</p>
      *
      * @return the read concern
@@ -777,6 +790,9 @@ public class MongoClientOptions {
         if (!writeConcern.equals(that.writeConcern)) {
             return false;
         }
+        if (retryWrites != that.retryWrites) {
+            return false;
+        }
         if (!readConcern.equals(that.readConcern)) {
             return false;
         }
@@ -809,6 +825,7 @@ public class MongoClientOptions {
         result = 31 * result + (applicationName != null ? applicationName.hashCode() : 0);
         result = 31 * result + readPreference.hashCode();
         result = 31 * result + writeConcern.hashCode();
+        result = 31 * result + (retryWrites ? 1 : 0);
         result = 31 * result + (readConcern != null ? readConcern.hashCode() : 0);
         result = 31 * result + codecRegistry.hashCode();
         result = 31 * result + clusterListeners.hashCode();
@@ -849,6 +866,7 @@ public class MongoClientOptions {
                + ", compressors='" + compressorList + '\''
                + ", readPreference=" + readPreference
                + ", writeConcern=" + writeConcern
+               + ", retryWrites=" + retryWrites
                + ", readConcern=" + readConcern
                + ", codecRegistry=" + codecRegistry
                + ", clusterListeners=" + clusterListeners
@@ -902,6 +920,7 @@ public class MongoClientOptions {
         private List<MongoCompressor> compressorList = Collections.emptyList();
         private ReadPreference readPreference = ReadPreference.primary();
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
+        private boolean retryWrites = false;
         private ReadConcern readConcern = ReadConcern.DEFAULT;
         private CodecRegistry codecRegistry = MongoClient.getDefaultCodecRegistry();
 
@@ -965,6 +984,7 @@ public class MongoClientOptions {
             socketKeepAlive = options.isSocketKeepAlive();
             readPreference = options.getReadPreference();
             writeConcern = options.getWriteConcern();
+            retryWrites = options.getRetryWrites();
             readConcern = options.getReadConcern();
             codecRegistry = options.getCodecRegistry();
             sslEnabled = options.isSslEnabled();
@@ -1249,6 +1269,19 @@ public class MongoClientOptions {
             return this;
         }
 
+        /**
+         * Sets whether writes should be retried if they fail due to a network error.
+         *
+         * @param retryWrites sets if writes should be retried if they fail due to a network error.
+         * @return {@code this}
+         * @see #getRetryWrites()
+         * @since 3.6
+         * @mongodb.server.release 3.6
+         */
+        public Builder retryWrites(final boolean retryWrites) {
+            this.retryWrites = retryWrites;
+            return this;
+        }
 
         /**
          * Sets the read concern.
@@ -1270,7 +1303,6 @@ public class MongoClientOptions {
          *
          * <p>Note that instances of {@code DB} and {@code DBCollection} do not use the registry, so it's not necessary to include a
          * codec for DBObject in the registry.</p>
-
          * @param codecRegistry the codec registry
          * @return {@code this}
          * @see MongoClientOptions#getCodecRegistry()

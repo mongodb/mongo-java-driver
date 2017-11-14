@@ -37,14 +37,31 @@ public class UpdateOperation extends BaseWriteOperation {
     /**
      * Construct an instance.
      *
+     * @param namespace     the database and collection namespace for the operation.
+     * @param ordered       whether the updates are ordered.
+     * @param writeConcern  the write concern for the operation.
+     * @param updates       the update requests.
+     * @deprecated          use {@link #UpdateOperation(MongoNamespace, boolean, WriteConcern, boolean, List)} instead
+     */
+    @Deprecated
+    public UpdateOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                           final List<UpdateRequest> updates) {
+        this(namespace, ordered, writeConcern, false, updates);
+    }
+
+    /**
+     * Construct an instance.
+     *
      * @param namespace the database and collection namespace for the operation.
      * @param ordered whether the updates are ordered.
      * @param writeConcern the write concern for the operation.
+     * @param retryWrites   if writes should be retried if they fail due to a network error.
      * @param updates the update requests.
+     * @since 3.6
      */
     public UpdateOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                           final List<UpdateRequest> updates) {
-        super(namespace, ordered, writeConcern);
+                           final boolean retryWrites, final List<UpdateRequest> updates) {
+        super(namespace, ordered, writeConcern, retryWrites);
         this.updates = notNull("update", updates);
         isTrueArgument("updateRequests not empty", !updates.isEmpty());
     }

@@ -66,6 +66,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
+import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.Fixture.getMongoClientURI;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
@@ -142,7 +143,7 @@ public class CommandMonitoringTest {
                 } else if (typeString.equals("replica_set")) {
                     assumeFalse(isDiscoverableReplicaSet());
                 } else if (typeString.equals("standalone")) {
-                    assumeFalse(isSharded());
+                    assumeFalse(isStandalone());
                 }
             }
         }

@@ -221,7 +221,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         def cluster = getCluster()
 
         when:
-        def result = new InsertOperation(getNamespace(), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
+        def result = new InsertOperation(getNamespace(), true, ACKNOWLEDGED, false, asList(new InsertRequest(new BsonDocument())))
                 .execute(getBinding(cluster))
         then:
         result.getCount() == 0
@@ -238,8 +238,8 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         def cluster = getAsyncCluster()
 
         when:
-        def result = executeAsync(new InsertOperation(getNamespace(), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument()))),
-                                  getAsyncBinding(cluster))
+        def result = executeAsync(new InsertOperation(getNamespace(), true, ACKNOWLEDGED, false,
+                asList(new InsertRequest(new BsonDocument()))), getAsyncBinding(cluster))
         then:
         result.getCount() == 0
 
@@ -255,8 +255,8 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         def cluster = getCluster(credential)
 
         when:
-        new InsertOperation(getNamespace(), true, ACKNOWLEDGED,
-                            asList(new InsertRequest(new BsonDocument()))).execute(getBinding(cluster))
+        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, false,
+                asList(new InsertRequest(new BsonDocument()))).execute(getBinding(cluster))
 
         then:
         thrown(MongoServerException)
@@ -274,8 +274,8 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         def cluster = getCluster(rwCredential)
 
         when:
-        new InsertOperation(getNamespace(), true, ACKNOWLEDGED,
-                            asList(new InsertRequest(new BsonDocument()))).execute(getBinding(cluster))
+        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, false,
+                asList(new InsertRequest(new BsonDocument()))).execute(getBinding(cluster))
 
         then:
         new CountOperation(getNamespace()).execute(getBinding(cluster)) == 1L
@@ -293,8 +293,8 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         def cluster = getCluster(roCredential)
 
         when:
-        new InsertOperation(getNamespace(), true, ACKNOWLEDGED,
-                            asList(new InsertRequest(new BsonDocument()))).execute(getBinding(cluster))
+        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, false,
+                asList(new InsertRequest(new BsonDocument()))).execute(getBinding(cluster))
 
         then:
         thrown(MongoServerException)

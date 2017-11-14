@@ -43,6 +43,7 @@ class MongoClientSettingsSpecification extends Specification {
 
         expect:
         options.getWriteConcern() == WriteConcern.ACKNOWLEDGED
+        !options.getRetryWrites()
         options.getReadConcern() == ReadConcern.DEFAULT
         options.getReadPreference() == ReadPreference.primary()
         options.getCommandListeners().isEmpty()
@@ -142,6 +143,7 @@ class MongoClientSettingsSpecification extends Specification {
         def options = MongoClientSettings.builder()
                 .readPreference(ReadPreference.secondary())
                 .writeConcern(WriteConcern.JOURNALED)
+                .retryWrites(true)
                 .readConcern(ReadConcern.LOCAL)
                 .applicationName('app1')
                 .addCommandListener(commandListener)
@@ -160,6 +162,7 @@ class MongoClientSettingsSpecification extends Specification {
         expect:
         options.getReadPreference() == ReadPreference.secondary()
         options.getWriteConcern() == WriteConcern.JOURNALED
+        options.getRetryWrites()
         options.getReadConcern() == ReadConcern.LOCAL
         options.getApplicationName() == 'app1'
         options.commandListeners.get(0) == commandListener
@@ -191,6 +194,7 @@ class MongoClientSettingsSpecification extends Specification {
         def options = MongoClientSettings.builder()
                 .readPreference(ReadPreference.secondary())
                 .writeConcern(WriteConcern.JOURNALED)
+                .retryWrites(true)
                 .readConcern(ReadConcern.LOCAL)
                 .applicationName('app1')
                 .addCommandListener(commandListener)
@@ -285,7 +289,7 @@ class MongoClientSettingsSpecification extends Specification {
         def actual = MongoClientSettings.Builder.declaredFields.grep {  !it.synthetic } *.name.sort()
         def expected = ['applicationName', 'clusterSettings', 'codecRegistry', 'commandListeners', 'compressorList',
                         'connectionPoolSettings', 'credentialList', 'heartbeatSocketSettings', 'readConcern', 'readPreference',
-                        'serverSettings', 'socketSettings', 'sslSettings', 'streamFactoryFactory', 'writeConcern']
+                        'retryWrites', 'serverSettings', 'socketSettings', 'sslSettings', 'streamFactoryFactory', 'writeConcern']
 
         then:
         actual == expected

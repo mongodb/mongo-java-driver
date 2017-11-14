@@ -78,9 +78,15 @@ class OperationUnitSpecification extends Specification {
         }
 
         if (checkCommand) {
-            1 * connection.command(_, expectedCommand, _, _, _, _) >> { result }
+            1 * connection.command(*_) >> {
+                it[1] == expectedCommand
+                result
+            }
         } else if (checkSlaveOk) {
-            1 * connection.command(_, _, _, readPreference, _, _) >> { result }
+            1 * connection.command(*_) >> {
+                it[4] == readPreference
+                result
+            }
         }
 
         0 * connection.command(_, _, _, _, _, _) >> {
@@ -119,9 +125,15 @@ class OperationUnitSpecification extends Specification {
         def callback = new FutureResultCallback()
 
         if (checkCommand) {
-            1 * connection.commandAsync(_, expectedCommand, _, _, _, _, _) >> { it[6].onResult(result, null) }
+            1 * connection.commandAsync(*_) >> {
+                it[1] == expectedCommand
+                it.last().onResult(result, null)
+            }
         } else if (checkSlaveOk) {
-            1 * connection.commandAsync(_, _, _, readPreference, _, _, _) >> { it[6].onResult(result, null) }
+            1 * connection.commandAsync(*_) >> {
+                it[4] == readPreference
+                it.last().onResult(result, null)
+            }
         }
 
         0 * connection.commandAsync(_, _, _, _, _, _, _) >> {

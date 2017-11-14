@@ -73,20 +73,21 @@ class MongoClientSpecification extends Specification {
         def settings = MongoClientSettings.builder()
                                           .readPreference(secondary())
                                           .writeConcern(WriteConcern.MAJORITY)
+                                          .retryWrites(true)
                                           .readConcern(ReadConcern.MAJORITY)
                                           .codecRegistry(codecRegistry)
                                           .build()
         def client = new MongoClientImpl(settings, Stub(Cluster), new TestOperationExecutor([]))
 
         when:
-        def database = client.getDatabase('name');
+        def database = client.getDatabase('name')
 
         then:
         expect database, isTheSameAs(expectedDatabase)
 
         where:
         expectedDatabase << new MongoDatabaseImpl('name', fromProviders([new BsonValueCodecProvider()]), secondary(),
-                WriteConcern.MAJORITY, ReadConcern.MAJORITY, new TestOperationExecutor([]))
+                WriteConcern.MAJORITY, true, ReadConcern.MAJORITY, new TestOperationExecutor([]))
     }
 
 

@@ -37,17 +37,35 @@ public class InsertOperation extends BaseWriteOperation {
     /**
      * Construct an instance.
      *
+     * @param namespace         the database and collection namespace for the operation.
+     * @param ordered           whether the inserts are ordered.
+     * @param writeConcern      the write concern for the operation.
+     * @param insertRequests    the list of inserts.
+     * @deprecated              use {@link #InsertOperation(MongoNamespace, boolean, WriteConcern, boolean, List)} instead
+     */
+    @Deprecated
+    public InsertOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                           final List<InsertRequest> insertRequests) {
+        this(namespace, ordered, writeConcern, false, insertRequests);
+    }
+
+    /**
+     * Construct an instance.
+     *
      * @param namespace the database and collection namespace for the operation.
      * @param ordered whether the inserts are ordered.
      * @param writeConcern the write concern for the operation.
+     * @param retryWrites   if writes should be retried if they fail due to a network error.
      * @param insertRequests the list of inserts.
+     * @since 3.6
      */
     public InsertOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                           final List<InsertRequest> insertRequests) {
-        super(namespace, ordered, writeConcern);
+                           final boolean retryWrites, final List<InsertRequest> insertRequests) {
+        super(namespace, ordered, writeConcern, retryWrites);
         this.insertRequests = notNull("insertRequests", insertRequests);
         isTrueArgument("insertRequests not empty", !insertRequests.isEmpty());
     }
+
 
     /**
      * Gets the list of insert requests.

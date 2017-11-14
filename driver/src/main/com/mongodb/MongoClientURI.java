@@ -108,7 +108,10 @@ import static com.mongodb.assertions.Assertions.notNull;
  *          <li>Used in combination with {@code w}</li>
  *      </ul>
  *  </li>
+ *  <li>{@code retryWrites=true|false}. If true the driver will retry supported write operations if they fail due to a network error.
+ *  Defaults to false.</li>
  * </ul>
+ *
  *
  * <p>Read preference configuration:</p>
  * <ul>
@@ -293,6 +296,9 @@ public class MongoClientURI {
         }
         if (proxied.getWriteConcern() != null) {
             builder.writeConcern(proxied.getWriteConcern());
+        }
+        if (proxied.getRetryWrites()) {
+            builder.retryWrites(proxied.getRetryWrites());
         }
         if (proxied.getMaxConnectionPoolSize() != null) {
             builder.connectionsPerHost(proxied.getMaxConnectionPoolSize());

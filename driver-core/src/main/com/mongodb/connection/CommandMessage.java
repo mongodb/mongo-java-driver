@@ -64,10 +64,10 @@ final class CommandMessage extends RequestMessage {
         this.namespace = namespace;
         this.command = command;
         this.commandFieldNameValidator = commandFieldNameValidator;
+        this.readPreference = readPreference;
         this.responseExpected = responseExpected;
         this.payload = payload;
         this.payloadFieldNameValidator = payloadFieldNameValidator;
-        this.readPreference = readPreference;
     }
 
     BsonDocument getCommandDocument(final ByteBufferBsonOutput bsonOutput) {

@@ -79,6 +79,12 @@ public class CrudTest extends DatabaseTestCase {
                     && !expectedResult.asDocument().containsKey("upsertedCount")) {
             expectedResult.asDocument().append("upsertedCount", actualResult.asDocument().get("upsertedCount"));
         }
+
+        // Remove insertCount
+        if (actualResult.isDocument() && actualResult.asDocument().containsKey("insertedCount")) {
+            actualResult.asDocument().remove("insertedCount");
+        }
+
         assertEquals(description, expectedResult, actualResult);
 
         if (expectedOutcome.containsKey("collection")) {
