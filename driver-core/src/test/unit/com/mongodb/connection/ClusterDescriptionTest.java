@@ -36,6 +36,7 @@ import static com.mongodb.connection.ClusterType.UNKNOWN;
 import static com.mongodb.connection.ServerConnectionState.CONNECTED;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.connection.ServerDescription.MAX_DRIVER_WIRE_VERSION;
+import static com.mongodb.connection.ServerDescription.MIN_DRIVER_WIRE_VERSION;
 import static com.mongodb.connection.ServerDescription.builder;
 import static com.mongodb.connection.ServerType.REPLICA_SET_OTHER;
 import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
@@ -189,7 +190,7 @@ public class ClusterDescriptionTest {
     }
 
     @Test
-    public void clusterDescriptionWithAnIncompatibleServerShouldBeIncompatible() throws UnknownHostException {
+    public void clusterDescriptionWithAnIncompatiblyNewServerShouldBeIncompatible() throws UnknownHostException {
         ClusterDescription description =
         new ClusterDescription(MULTIPLE, UNKNOWN, asList(
                                                         builder()
@@ -209,6 +210,33 @@ public class ClusterDescriptionTest {
                                                         .build())
         );
         assertFalse(description.isCompatibleWithDriver());
+        assertEquals(new ServerAddress("loc:27018"), description.findServerIncompatiblyNewerThanDriver().getAddress());
+        assertNull(description.findServerIncompatiblyOlderThanDriver());
+    }
+
+    @Test
+    public void clusterDescriptionWithAnIncompatiblyOlderServerShouldBeIncompatible() throws UnknownHostException {
+        ClusterDescription description =
+                new ClusterDescription(MULTIPLE, UNKNOWN, asList(
+                        builder()
+                                .state(CONNECTING)
+                                .address(new ServerAddress("loc:27019"))
+                                .build(),
+                        builder()
+                                .state(CONNECTED)
+                                .ok(true)
+                                .address(new ServerAddress("loc:27018"))
+                                .minWireVersion(0)
+                                .maxWireVersion(MIN_DRIVER_WIRE_VERSION - 1)
+                                .build(),
+                        builder()
+                                .state(CONNECTING)
+                                .address(new ServerAddress("loc:27017"))
+                                .build())
+                );
+        assertFalse(description.isCompatibleWithDriver());
+        assertEquals(new ServerAddress("loc:27018"), description.findServerIncompatiblyOlderThanDriver().getAddress());
+        assertNull(description.findServerIncompatiblyNewerThanDriver());
     }
 
     @Test
@@ -229,6 +257,8 @@ public class ClusterDescriptionTest {
                                                         .build())
         );
         assertTrue(description.isCompatibleWithDriver());
+        assertNull(description.findServerIncompatiblyNewerThanDriver());
+        assertNull(description.findServerIncompatiblyOlderThanDriver());
     }
 
     @Test
