@@ -57,12 +57,16 @@ final class PropertyAccessorImpl<T> implements PropertyAccessor<T> {
                 } else {
                     propertyMetadata.getField().set(instance, value);
                 }
-            } else if (propertyMetadata.getGetter() != null
-                    && value instanceof Collection) {
+            } else if (propertyMetadata.isSerializable() && value instanceof Collection) {
                 // PCB : https://jira.mongodb.org/browse/JAVA-2648
                 // If a type is a collection and there is no setter then use the getter and addAll to it from the value
                 // Also check that the collection is currently empty. Without this check some test cases fail.
-                T collection = (T) propertyMetadata.getGetter().invoke(instance);
+                T collection;
+                if (propertyMetadata.getGetter() != null) {
+                    collection = (T) propertyMetadata.getGetter().invoke(instance);
+                } else {
+                    collection = (T) propertyMetadata.getField().get(instance);
+                }
                 Collection<?> col = ((Collection<?>) collection);
                 if (col != null && col.isEmpty()) {
                     col.addAll((Collection) value);
