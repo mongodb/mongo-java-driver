@@ -106,6 +106,6 @@ class  MongoClientsSpecification extends FunctionalSpecification {
         }
 
         then:
-        actualWinningAddresses == expectedWinningAddresses
+        expectedWinningAddresses.containsAll(actualWinningAddresses)
     }
 }
