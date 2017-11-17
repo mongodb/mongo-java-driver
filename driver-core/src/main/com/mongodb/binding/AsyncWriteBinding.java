@@ -17,7 +17,7 @@
 package com.mongodb.binding;
 
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.connection.SessionContext;
+import com.mongodb.session.SessionContext;
 
 /**
  * An asynchronous factory of connection sources to servers that can be written to, e.g, a standalone, a mongos, or a replica set primary.

@@ -17,6 +17,7 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.session.SessionContext;
 import org.bson.ByteBuf;
 import org.bson.io.BsonOutput;
 

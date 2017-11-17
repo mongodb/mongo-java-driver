@@ -16,6 +16,7 @@
 
 package com.mongodb.async.client;
 
+import com.mongodb.session.ClientSession;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.operation.AsyncOperationExecutor;
@@ -30,6 +31,7 @@ public class TestOperationExecutor implements AsyncOperationExecutor {
 
     private final List<Object> responses;
     private final boolean queueExecution;
+    private List<ClientSession> clientSessions = new ArrayList<ClientSession>();
     private final List<ReadPreference> readPreferences = new ArrayList<ReadPreference>();
     private final List<AsyncReadOperation> queuedReadOperations = new ArrayList<AsyncReadOperation>();
     private final List<AsyncWriteOperation> queuedWriteOperations = new ArrayList<AsyncWriteOperation>();
@@ -50,7 +52,14 @@ public class TestOperationExecutor implements AsyncOperationExecutor {
     @Override
     public <T> void execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference,
                             final SingleResultCallback<T> callback) {
+        execute(operation, readPreference, null, callback);
+    }
+
+    @Override
+    public <T> void execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference, final ClientSession session,
+                            final SingleResultCallback<T> callback) {
         readPreferences.add(readPreference);
+        clientSessions.add(session);
         if (queueExecution) {
             queuedReadOperations.add(operation);
             queuedReadCallbacks.add(callback);
@@ -63,6 +72,12 @@ public class TestOperationExecutor implements AsyncOperationExecutor {
 
     @Override
     public <T> void execute(final AsyncWriteOperation<T> operation, final SingleResultCallback<T> callback) {
+        execute(operation, null, callback);
+    }
+
+    @Override
+    public <T> void execute(final AsyncWriteOperation<T> operation, final ClientSession session, final SingleResultCallback<T> callback) {
+        clientSessions.add(session);
         if (queueExecution) {
             queuedWriteOperations.add(operation);
             queuedWriteCallbacks.add(callback);
@@ -89,6 +104,10 @@ public class TestOperationExecutor implements AsyncOperationExecutor {
         } else {
             callback.onResult((T) response, null);
         }
+    }
+
+    ClientSession getClientSession() {
+        return clientSessions.isEmpty() ? null : clientSessions.remove(0);
     }
 
     AsyncReadOperation getReadOperation() {

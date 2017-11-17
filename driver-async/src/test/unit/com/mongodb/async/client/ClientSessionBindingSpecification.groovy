@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,21 +14,25 @@
  * limitations under the License.
  */
 
-package com.mongodb
+package com.mongodb.async.client
 
-import com.mongodb.binding.ClusterBinding
-import com.mongodb.binding.ConnectionSource
-import com.mongodb.binding.ReadWriteBinding
-import com.mongodb.connection.Cluster
-import com.mongodb.internal.session.ClientSessionContext
 import com.mongodb.session.ClientSession
+import com.mongodb.ReadPreference
+import com.mongodb.async.FutureResultCallback
+import com.mongodb.binding.AsyncClusterBinding
+import com.mongodb.binding.AsyncConnectionSource
+import com.mongodb.binding.AsyncReadWriteBinding
+import com.mongodb.connection.Cluster
+import com.mongodb.connection.Server
+import com.mongodb.internal.session.ClientSessionContext
 import spock.lang.Specification
+
 
 class ClientSessionBindingSpecification extends Specification {
     def 'should return the session context from the binding'() {
         given:
         def session = Stub(ClientSession)
-        def wrappedBinding = Stub(ReadWriteBinding)
+        def wrappedBinding = Stub(AsyncReadWriteBinding)
         def binding = new ClientSessionBinding(session, false, wrappedBinding)
 
         when:
@@ -41,28 +45,38 @@ class ClientSessionBindingSpecification extends Specification {
     def 'should return the session context from the connection source'() {
         given:
         def session = Stub(ClientSession)
-        def wrappedBinding = Mock(ReadWriteBinding)
+        def wrappedBinding = Mock(AsyncReadWriteBinding)
         def binding = new ClientSessionBinding(session, false, wrappedBinding)
 
         when:
-        def readConnectionSource = binding.getReadConnectionSource()
-        def context = readConnectionSource.getSessionContext()
+        def futureResultCallback = new FutureResultCallback<AsyncConnectionSource>()
+        binding.getReadConnectionSource(futureResultCallback)
 
         then:
-        (context as ClientSessionContext).getClientSession() == session
-        1 * wrappedBinding.getReadConnectionSource() >> {
-            Stub(ConnectionSource)
+        1 * wrappedBinding.getReadConnectionSource(_) >> {
+            it[0].onResult(Stub(AsyncConnectionSource), null)
         }
 
         when:
-        def writeConnectionSource = binding.getWriteConnectionSource()
-        context = writeConnectionSource.getSessionContext()
+        def context = futureResultCallback.get().getSessionContext()
 
         then:
         (context as ClientSessionContext).getClientSession() == session
-        1 * wrappedBinding.getWriteConnectionSource() >> {
-            Stub(ConnectionSource)
+
+        when:
+        futureResultCallback = new FutureResultCallback<AsyncConnectionSource>()
+        binding.getWriteConnectionSource(futureResultCallback)
+
+        then:
+        1 * wrappedBinding.getWriteConnectionSource(_) >> {
+            it[0].onResult(Stub(AsyncConnectionSource), null)
         }
+
+        when:
+        context = futureResultCallback.get().getSessionContext()
+
+        then:
+        (context as ClientSessionContext).getClientSession() == session
     }
 
     def 'should close client session when binding reference count drops to zero if it is owned by the binding'() {
@@ -90,8 +104,12 @@ class ClientSessionBindingSpecification extends Specification {
         def session = Mock(ClientSession)
         def wrappedBinding = createStubBinding()
         def binding = new ClientSessionBinding(session, true, wrappedBinding)
-        def readConnectionSource = binding.getReadConnectionSource()
-        def writeConnectionSource = binding.getWriteConnectionSource()
+        def futureResultCallback = new FutureResultCallback<AsyncConnectionSource>()
+        binding.getReadConnectionSource(futureResultCallback)
+        def readConnectionSource = futureResultCallback.get()
+        futureResultCallback = new FutureResultCallback<AsyncConnectionSource>()
+        binding.getWriteConnectionSource(futureResultCallback)
+        def writeConnectionSource = futureResultCallback.get()
 
         when:
         binding.release()
@@ -132,8 +150,12 @@ class ClientSessionBindingSpecification extends Specification {
         0 * session.close()
     }
 
-    private ReadWriteBinding createStubBinding() {
-        def cluster = Stub(Cluster)
-        new ClusterBinding(cluster, ReadPreference.primary())
+    private AsyncReadWriteBinding createStubBinding() {
+        def cluster = Mock(Cluster) {
+            selectServerAsync(_, _) >> {
+                it[1].onResult(Stub(Server), null)
+            }
+        }
+        new AsyncClusterBinding(cluster, ReadPreference.primary())
     }
 }

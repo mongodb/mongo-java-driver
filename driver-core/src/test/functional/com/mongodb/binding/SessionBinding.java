@@ -19,7 +19,7 @@ package com.mongodb.binding;
 import com.mongodb.ReadPreference;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.connection.SessionContext;
+import com.mongodb.session.SessionContext;
 
 import static org.bson.assertions.Assertions.notNull;
 

@@ -19,6 +19,7 @@ package com.mongodb.connection;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.session.SessionContext;
 import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
 

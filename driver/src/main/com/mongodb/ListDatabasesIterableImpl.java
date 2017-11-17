@@ -19,6 +19,7 @@ import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.ListDatabasesOperation;
 import com.mongodb.operation.ReadOperation;
+import com.mongodb.session.ClientSession;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.concurrent.TimeUnit;

@@ -15,6 +15,7 @@
 package com.mongodb
 
 import com.mongodb.client.model.geojson.MultiPolygon
+import com.mongodb.session.ClientSession
 import org.bson.BsonDocument
 import org.bson.Document
 import spock.lang.Specification

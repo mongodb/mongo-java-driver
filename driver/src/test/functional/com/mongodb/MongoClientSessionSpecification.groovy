@@ -56,7 +56,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
 
         then:
         clientSession != null
-        clientSession.getMongoClient() == Fixture.getMongoClient()
+        clientSession.getOriginator() == Fixture.getMongoClient()
         clientSession.isCausallyConsistent()
         clientSession.getOptions() == options
         clientSession.getClusterTime() == null
@@ -164,12 +164,6 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
 
         when:
         clientSession.advanceClusterTime(new BsonDocument())
-
-        then:
-        thrown(IllegalStateException)
-
-        when:
-        clientSession.getMongoClient()
 
         then:
         thrown(IllegalStateException)

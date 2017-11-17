@@ -18,6 +18,7 @@ package com.mongodb;
 
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
+import com.mongodb.session.ClientSession;
 
 /**
  * An interface describing the execution of a read or a write operation.

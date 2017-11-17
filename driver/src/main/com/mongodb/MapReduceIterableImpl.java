@@ -26,6 +26,7 @@ import com.mongodb.operation.MapReduceBatchCursor;
 import com.mongodb.operation.MapReduceToCollectionOperation;
 import com.mongodb.operation.MapReduceWithInlineResultsOperation;
 import com.mongodb.operation.ReadOperation;
+import com.mongodb.session.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.BsonJavaScript;
 import org.bson.codecs.configuration.CodecRegistry;

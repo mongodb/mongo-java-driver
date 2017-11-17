@@ -235,16 +235,15 @@ public final class CollectionHelper<T> {
                         update.toBsonDocument(Document.class, registry),
                         WriteRequest.Type.REPLACE)
                         .upsert(isUpsert)),
-                true, WriteConcern.ACKNOWLEDGED)
+                true, WriteConcern.ACKNOWLEDGED, false)
                 .execute(getBinding());
     }
 
     public void deleteOne(final Bson filter) {
         new MixedBulkWriteOperation(namespace,
                 singletonList(new DeleteRequest(filter.toBsonDocument(Document.class, registry))),
-                true, WriteConcern.ACKNOWLEDGED)
+                true, WriteConcern.ACKNOWLEDGED, false)
                 .execute(getBinding());
-
     }
 
     public List<T> find(final Bson filter) {

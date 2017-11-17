@@ -5,18 +5,18 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
-package com.mongodb;
+package com.mongodb.session;
 
+import com.mongodb.ClientSessionOptions;
 import com.mongodb.annotations.NotThreadSafe;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
@@ -47,15 +47,15 @@ public interface ClientSession extends Closeable {
     boolean isCausallyConsistent();
 
     /**
-     * Gets the MongoClient on which this is a session.
+     * Gets the originator for the session.
      *
      * <p>
-     * Important so that the MongoClient can check that the session is from the same MongoClient instance to which it's passed
+     * Important because sessions must only be used by their own originator.
      * </p>
      *
-     * @return the MongoClient on which this is a session
+     * @return the sessions originator
      */
-    MongoClient getMongoClient();
+    Object getOriginator();
 
     /**
      *

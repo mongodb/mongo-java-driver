@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,8 +14,10 @@
  * limitations under the License.
  */
 
-package com.mongodb;
+package com.mongodb.internal.session;
 
+import com.mongodb.MongoException;
+import com.mongodb.ReadPreference;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.Connection;
 import com.mongodb.internal.connection.ConcurrentPool;
@@ -23,6 +25,7 @@ import com.mongodb.internal.connection.ConcurrentPool.Prune;
 import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.selector.ReadPreferenceServerSelector;
+import com.mongodb.session.ServerSession;
 import org.bson.BsonArray;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
@@ -39,8 +42,7 @@ import java.util.UUID;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static java.util.concurrent.TimeUnit.MINUTES;
 
-class ServerSessionPool {
-
+public class ServerSessionPool {
     private static final int END_SESSIONS_BATCH_SIZE = 10000;
 
     private final ConcurrentPool<ServerSessionImpl> serverSessionPool =
@@ -55,7 +57,7 @@ class ServerSessionPool {
         long millis();
     }
 
-    ServerSessionPool(final Cluster cluster) {
+    public ServerSessionPool(final Cluster cluster) {
         this(cluster, new Clock() {
             @Override
             public long millis() {
@@ -64,12 +66,12 @@ class ServerSessionPool {
         });
     }
 
-    ServerSessionPool(final Cluster cluster, final Clock clock) {
+    public ServerSessionPool(final Cluster cluster, final Clock clock) {
         this.cluster = cluster;
         this.clock = clock;
     }
 
-    ServerSession get() {
+    public ServerSession get() {
         isTrue("server session pool is open", !closed);
         ServerSessionImpl serverSession = serverSessionPool.get();
         while (shouldPrune(serverSession)) {
@@ -79,12 +81,12 @@ class ServerSessionPool {
         return serverSession;
     }
 
-    void release(final ServerSession serverSession) {
+    public void release(final ServerSession serverSession) {
         serverSessionPool.release((ServerSessionImpl) serverSession);
         serverSessionPool.prune();
     }
 
-    void close() {
+    public void close() {
         try {
             closing = true;
             serverSessionPool.close();
@@ -131,10 +133,11 @@ class ServerSessionPool {
             return false;
         }
         long currentTimeMillis = clock.millis();
-        final long timeSinceLastUse = currentTimeMillis - serverSession.lastUsedAtMillis;
+        final long timeSinceLastUse = currentTimeMillis - serverSession.getLastUsedAtMillis();
         final long oneMinuteFromTimeout = MINUTES.toMillis(logicalSessionTimeoutMinutes - 1);
         return timeSinceLastUse > oneMinuteFromTimeout;
     }
+
 
     final class ServerSessionImpl implements ServerSession {
         private final BsonDocument identifier;
