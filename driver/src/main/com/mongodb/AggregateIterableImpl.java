@@ -23,6 +23,7 @@ import com.mongodb.operation.AggregateToCollectionOperation;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.FindOperation;
 import com.mongodb.operation.ReadOperation;
+import com.mongodb.session.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;

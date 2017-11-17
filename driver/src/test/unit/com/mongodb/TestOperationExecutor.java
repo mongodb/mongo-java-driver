@@ -18,6 +18,7 @@ package com.mongodb;
 
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
+import com.mongodb.session.ClientSession;
 
 import java.util.ArrayList;
 import java.util.List;

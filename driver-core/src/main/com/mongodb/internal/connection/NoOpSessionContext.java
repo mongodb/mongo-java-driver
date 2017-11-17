@@ -17,7 +17,7 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.connection.SessionContext;
+import com.mongodb.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 

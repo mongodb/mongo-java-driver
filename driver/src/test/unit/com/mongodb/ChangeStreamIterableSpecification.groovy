@@ -22,6 +22,7 @@ import com.mongodb.client.model.changestream.ChangeStreamDocumentCodec
 import com.mongodb.client.model.changestream.FullDocument
 import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.ChangeStreamOperation
+import com.mongodb.session.ClientSession
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document

@@ -38,7 +38,7 @@ import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.QueryResult;
-import com.mongodb.connection.SessionContext;
+import com.mongodb.session.SessionContext;
 import com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;

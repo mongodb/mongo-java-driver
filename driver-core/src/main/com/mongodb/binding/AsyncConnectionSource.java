@@ -19,7 +19,7 @@ package com.mongodb.binding;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.connection.SessionContext;
+import com.mongodb.session.SessionContext;
 
 /**
  * A source of connections to a single MongoDB server.

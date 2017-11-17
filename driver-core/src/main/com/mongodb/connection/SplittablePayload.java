@@ -33,10 +33,10 @@ import static com.mongodb.connection.SplittablePayload.Type.UPDATE;
  * another split to consume, {@link #getNextSplit} method will return the next SplittablePayload.</p>
  *
  * @see com.mongodb.connection.Connection#command(String, org.bson.BsonDocument, org.bson.FieldNameValidator, com.mongodb.ReadPreference,
- * org.bson.codecs.Decoder, com.mongodb.connection.SessionContext, boolean, com.mongodb.connection.SplittablePayload,
+ * org.bson.codecs.Decoder, com.mongodb.session.SessionContext, boolean, com.mongodb.connection.SplittablePayload,
  * org.bson.FieldNameValidator)
  * @see com.mongodb.connection.AsyncConnection#commandAsync(String, org.bson.BsonDocument, org.bson.FieldNameValidator,
- * com.mongodb.ReadPreference, org.bson.codecs.Decoder, com.mongodb.connection.SessionContext, boolean,
+ * com.mongodb.ReadPreference, org.bson.codecs.Decoder, com.mongodb.session.SessionContext, boolean,
  * com.mongodb.connection.SplittablePayload, org.bson.FieldNameValidator, com.mongodb.async.SingleResultCallback)
  * @since 3.6
  */

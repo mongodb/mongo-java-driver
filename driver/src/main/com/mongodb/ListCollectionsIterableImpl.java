@@ -20,6 +20,7 @@ import com.mongodb.client.ListCollectionsIterable;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.ListCollectionsOperation;
 import com.mongodb.operation.ReadOperation;
+import com.mongodb.session.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;

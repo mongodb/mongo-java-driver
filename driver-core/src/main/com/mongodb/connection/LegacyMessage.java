@@ -17,6 +17,7 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.session.SessionContext;
 import org.bson.io.BsonOutput;
 
 abstract class LegacyMessage extends RequestMessage {

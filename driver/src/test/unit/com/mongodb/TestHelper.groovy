@@ -16,6 +16,8 @@
 
 package com.mongodb
 
+import com.mongodb.session.ClientSession
+
 class TestHelper {
     static <T> T execute(final Closure<T> method, final ClientSession session, ... restOfArgs) {
         if (session == null) {

@@ -23,6 +23,7 @@ import com.mongodb.async.FutureResultCallback;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.connection.ServerVersion;
 import org.bson.BsonArray;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
@@ -81,7 +82,7 @@ public class RetryableWritesTest extends DatabaseTestCase {
     @BeforeClass
     public static void beforeClass() {
         MongoClientSettings.Builder builder = getMongoClientBuilderFromConnectionString();
-        mongoClient = (MongoClientImpl) MongoClients.create(builder.retryWrites(true).build());
+        mongoClient = MongoClients.create(builder.retryWrites(true).build());
     }
 
     @AfterClass
@@ -95,7 +96,6 @@ public class RetryableWritesTest extends DatabaseTestCase {
     @Override
     public void setUp() {
         assumeTrue(canRunTests());
-        assumeTrue(false); // TODO - enable once sessions plugged in at the client.
 
         ServerVersion serverVersion = ClusterFixture.getServerVersion();
         if (definition.containsKey("ignore_if_server_version_less_than")) {
@@ -142,7 +142,6 @@ public class RetryableWritesTest extends DatabaseTestCase {
 
     @Test
     public void shouldPassAllOutcomes() {
-
         BsonDocument operation = definition.getDocument("operation");
         BsonDocument outcome = definition.getDocument("outcome");
 
@@ -154,16 +153,17 @@ public class RetryableWritesTest extends DatabaseTestCase {
             wasException = true;
         }
 
-        BsonDocument fixedResult = fixResult(result.getDocument("result", new BsonDocument()));
-        BsonDocument fixedExpectedResult = fixExpectedResult(outcome.getDocument("result", new BsonDocument()));
-
-        assertEquals(outcome.containsKey("error"), wasException);
-        assertEquals(fixedResult, fixedExpectedResult);
-
         if (outcome.containsKey("collection")) {
             FutureResultCallback<List<BsonDocument>> futureResultCallback = new FutureResultCallback<List<BsonDocument>>();
             collection.withDocumentClass(BsonDocument.class).find().into(new ArrayList<BsonDocument>(), futureResultCallback);
             assertEquals(outcome.getDocument("collection").getArray("data").getValues(), futureResult(futureResultCallback));
+        }
+
+        if (outcome.getBoolean("error", BsonBoolean.FALSE).getValue()) {
+            assertEquals(outcome.containsKey("error"), wasException);
+        } else {
+            BsonDocument fixedExpectedResult = fixExpectedResult(outcome.getDocument("result", new BsonDocument()));
+            assertEquals(result.getDocument("result", new BsonDocument()), fixedExpectedResult);
         }
     }
 
@@ -197,8 +197,8 @@ public class RetryableWritesTest extends DatabaseTestCase {
             result.put("insertedIds", new BsonArray(new ArrayList<BsonValue>(insertedIds.values())));
 
             if (result.containsKey("modifiedCount") && !result.containsKey("insertedCount")) {
-                result.remove("insertedIds");
                 result.put("insertedCount", new BsonInt32(insertedIds.size()));
+                result.put("insertedIds", new BsonDocument());
             }
         }
 

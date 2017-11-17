@@ -21,6 +21,7 @@ import com.mongodb.MongoNamespace
 import com.mongodb.ReadPreference
 import com.mongodb.internal.connection.NoOpSessionContext
 import com.mongodb.internal.validator.NoOpFieldNameValidator
+import com.mongodb.session.SessionContext
 import org.bson.BsonArray
 import org.bson.BsonBinary
 import org.bson.BsonDocument

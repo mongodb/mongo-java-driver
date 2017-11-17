@@ -19,7 +19,7 @@ package com.mongodb.operation;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
-import com.mongodb.connection.SessionContext;
+import com.mongodb.session.SessionContext;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
 

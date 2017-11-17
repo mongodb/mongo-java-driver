@@ -55,6 +55,7 @@ import com.mongodb.operation.FindAndUpdateOperation
 import com.mongodb.operation.ListIndexesOperation
 import com.mongodb.operation.MixedBulkWriteOperation
 import com.mongodb.operation.RenameCollectionOperation
+import com.mongodb.session.ClientSession
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document

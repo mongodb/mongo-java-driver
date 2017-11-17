@@ -18,7 +18,7 @@ package com.mongodb.binding;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.connection.SessionContext;
+import com.mongodb.session.SessionContext;
 
 /**
  * An asynchronous factory of connection sources to servers that can be read from and that satisfy the specified read preference.

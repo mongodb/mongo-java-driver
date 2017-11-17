@@ -35,6 +35,8 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
+import com.mongodb.internal.session.ClientSessionImpl;
+import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.CurrentOpOperation;
@@ -44,9 +46,8 @@ import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
 import com.mongodb.selector.LatencyMinimizingServerSelector;
 import com.mongodb.selector.ServerSelector;
+import com.mongodb.session.ClientSession;
 import org.bson.BsonBoolean;
-import org.bson.BsonDocument;
-import org.bson.BsonTimestamp;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -832,7 +833,7 @@ public class Mongo {
             }
 
             ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, final ClientSession session,
-                                                         final boolean ownsSession) {
+                                                 final boolean ownsSession) {
                 ReadWriteBinding readWriteBinding = new ClusterBinding(getCluster(), readPreference);
                 if (session != null) {
                     readWriteBinding = new ClientSessionBinding(session, ownsSession, readWriteBinding);
@@ -843,7 +844,7 @@ public class Mongo {
             ClientSession getClientSession(final ClientSession clientSessionFromOperation) {
                 ClientSession session;
                 if (clientSessionFromOperation != null) {
-                    isTrue("ClientSession from same MongoClient", clientSessionFromOperation.getMongoClient() == Mongo.this);
+                    isTrue("ClientSession from same MongoClient", clientSessionFromOperation.getOriginator() == Mongo.this);
                     session = clientSessionFromOperation;
                 } else {
                     session = createClientSession(ClientSessionOptions.builder().causallyConsistent(false).build());
@@ -858,7 +859,7 @@ public class Mongo {
             return null;
         }
         if (getConnectedClusterDescription().getLogicalSessionTimeoutMinutes() != null) {
-            return new ClientSessionImpl(this, options);
+            return new ClientSessionImpl(serverSessionPool, serverSessionPool.get(), this, options);
         } else {
             return null;
         }
@@ -884,100 +885,6 @@ public class Mongo {
             return clusterDescription.getAny();
         } else {
             return clusterDescription.getAnyPrimaryOrSecondary();
-        }
-    }
-
-    static class ClientSessionImpl implements ClientSession {
-        private static final String CLUSTER_TIME_KEY = "clusterTime";
-
-        private final Mongo mongo;
-        private final ServerSession serverSession;
-        private final ClientSessionOptions options;
-        private BsonDocument clusterTime;
-        private BsonTimestamp operationTime;
-        private volatile boolean closed;
-
-        ClientSessionImpl(final Mongo mongo, final ClientSessionOptions options) {
-            this.mongo = mongo;
-            this.serverSession = mongo.serverSessionPool.get();
-            this.options = options;
-            closed = false;
-        }
-
-        @Override
-        public ClientSessionOptions getOptions() {
-            return options;
-        }
-
-        @Override
-        public boolean isCausallyConsistent() {
-            return options.isCausallyConsistent() == null ? true : options.isCausallyConsistent();
-        }
-
-        @Override
-        public BsonDocument getClusterTime() {
-            return clusterTime;
-        }
-
-        @Override
-        public BsonTimestamp getOperationTime() {
-            return operationTime;
-        }
-
-        @Override
-        public MongoClient getMongoClient() {
-            isTrue("open", !closed);
-            if (mongo instanceof MongoClient) {
-                return (MongoClient) mongo;
-            }
-            return null;
-        }
-
-        @Override
-        public ServerSession getServerSession() {
-            isTrue("open", !closed);
-            return serverSession;
-        }
-
-        @Override
-        public void advanceOperationTime(final BsonTimestamp newOperationTime) {
-            isTrue("open", !closed);
-            this.operationTime = greaterOf(newOperationTime);
-        }
-
-        @Override
-        public void advanceClusterTime(final BsonDocument newClusterTime) {
-            isTrue("open", !closed);
-            this.clusterTime = greaterOf(newClusterTime);
-        }
-
-        private BsonDocument greaterOf(final BsonDocument newClusterTime) {
-            if (newClusterTime == null) {
-                return clusterTime;
-            } else if (clusterTime == null) {
-                return newClusterTime;
-            } else {
-                return newClusterTime.getTimestamp(CLUSTER_TIME_KEY).compareTo(clusterTime.getTimestamp(CLUSTER_TIME_KEY)) > 0
-                               ? newClusterTime : clusterTime;
-            }
-        }
-
-        private BsonTimestamp greaterOf(final BsonTimestamp newOperationTime) {
-            if (newOperationTime == null) {
-                return operationTime;
-            } else if (operationTime == null) {
-                return newOperationTime;
-            } else {
-                return newOperationTime.compareTo(operationTime) > 0 ? newOperationTime : operationTime;
-            }
-        }
-
-        @Override
-        public void close() {
-            if (!closed) {
-                closed = true;
-                mongo.serverSessionPool.release(serverSession);
-            }
         }
     }
 

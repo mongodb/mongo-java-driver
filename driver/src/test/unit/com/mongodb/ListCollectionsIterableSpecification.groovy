@@ -18,6 +18,7 @@ package com.mongodb
 
 import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.ListCollectionsOperation
+import com.mongodb.session.ClientSession
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document

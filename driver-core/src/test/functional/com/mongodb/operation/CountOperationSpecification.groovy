@@ -37,7 +37,7 @@ import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerVersion
-import com.mongodb.connection.SessionContext
+import com.mongodb.session.SessionContext
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonInt64

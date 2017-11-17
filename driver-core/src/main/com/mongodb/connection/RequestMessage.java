@@ -16,6 +16,7 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.session.SessionContext;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonBinaryWriterSettings;
 import org.bson.BsonDocument;

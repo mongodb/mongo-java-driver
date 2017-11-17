@@ -916,7 +916,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
         where:
         [async, ordered, failPoint] << [
-            [false], // TODO async support
+            [true, false],
             [true, false],
             ['{mode: {times: 5}}', // SDAM will retry multiple times to find a server
              '{mode: {times: 1}, data: {failBeforeCommitExceptionCode : 1}}']
@@ -927,7 +927,6 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     def 'should fail as expected with retryWrites and failPoints'() {
         given:
         def testWrites = getTestWrites()
-        Collections.shuffle(testWrites)
         getCollectionHelper().insertDocuments(getTestInserts())
         def operation = new MixedBulkWriteOperation(getNamespace(), testWrites, true, ACKNOWLEDGED, true)
 
@@ -943,7 +942,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
         where:
         [async, failPoint] << [
-                [false], // TODO async support
+                [true, false],
                 ['{mode: {times: 2}, data: {failBeforeCommitExceptionCode : 1}}',
                  '{mode: {skip: 2}, data: {failBeforeCommitExceptionCode : 1}}']
         ].combinations()

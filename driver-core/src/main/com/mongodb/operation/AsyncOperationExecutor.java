@@ -16,6 +16,7 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.session.ClientSession;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
 
@@ -36,6 +37,19 @@ public interface AsyncOperationExecutor {
     <T> void execute(AsyncReadOperation<T> operation, ReadPreference readPreference, SingleResultCallback<T> callback);
 
     /**
+     * Execute the read operation with the given read preference.
+     *
+     * @param operation the read operation.
+     * @param readPreference the read preference.
+     * @param session the session to associate this operation with
+     * @param callback the callback to be called when the operation has been executed
+     * @param <T> the operations result type.
+     * @since 3.6
+     */
+    <T> void execute(AsyncReadOperation<T> operation, ReadPreference readPreference, ClientSession session,
+                     SingleResultCallback<T> callback);
+
+    /**
      * Execute the write operation.
      *
      * @param operation the write operation.
@@ -43,4 +57,15 @@ public interface AsyncOperationExecutor {
      * @param <T> the operations result type.
      */
     <T> void execute(AsyncWriteOperation<T> operation, SingleResultCallback<T> callback);
+
+    /**
+     * Execute the write operation.
+     *
+     * @param operation the write operation.
+     * @param session the session to associate this operation with
+     * @param callback the callback to be called when the operation has been executed
+     * @param <T> the operations result type.
+     * @since 3.6
+     */
+    <T> void execute(AsyncWriteOperation<T> operation, ClientSession session, SingleResultCallback<T> callback);
 }

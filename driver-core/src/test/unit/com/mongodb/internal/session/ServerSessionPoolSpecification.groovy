@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package com.mongodb
+package com.mongodb.internal.session
 
+import com.mongodb.ServerAddress
 import com.mongodb.connection.Cluster
 import com.mongodb.connection.ClusterDescription
 import com.mongodb.connection.ClusterSettings
@@ -90,6 +91,7 @@ class ServerSessionPoolSpecification extends Specification {
 
         then:
         thrown(IllegalStateException)
+
     }
 
     def 'should pool session'() {
@@ -114,10 +116,10 @@ class ServerSessionPoolSpecification extends Specification {
             getDescription() >> connectedDescription
         }
         def clock = Stub(ServerSessionPool.Clock) {
-            millis() >>> [0, 0,                                // first get
-                          1, 1,                                // second get
-                          2, 2,                                // third get
-                          3,                                   // first release
+            millis() >>> [0, 0,                          // first get
+                          1, 1,                          // second get
+                          2, 2,                          // third get
+                          3,                             // first release
                           MINUTES.toMillis(29),       // second release
                           MINUTES.toMillis(29) + 2,   // third release
                           MINUTES.toMillis(29) + 2,
@@ -152,14 +154,14 @@ class ServerSessionPoolSpecification extends Specification {
         0 * cluster.selectServer(_)
     }
 
-    def 'should prune sessions on get'() {
+    def 'should prune sessions when getting'() {
         given:
         def cluster = Mock(Cluster) {
             getDescription() >> connectedDescription
         }
         def clock = Stub(ServerSessionPool.Clock) {
-            millis() >>> [0, 0,                               // first get
-                          0,                                  // first release
+            millis() >>> [0, 0,                          // first get
+                          0,                             // first release
                           MINUTES.toMillis(29) + 1,   // second get
             ]
         }
@@ -199,6 +201,7 @@ class ServerSessionPoolSpecification extends Specification {
 
         then:
         session == newSession
+
     }
 
     def 'should initialize session'() {
@@ -266,5 +269,4 @@ class ServerSessionPoolSpecification extends Specification {
                 { it instanceof BsonDocumentCodec }, NoOpSessionContext.INSTANCE) >> new BsonDocument()
         1 * connection.release()
     }
-
 }
