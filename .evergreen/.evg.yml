@@ -382,6 +382,10 @@ axes:
         display_name: "latest"
         variables:
            VERSION: "latest"
+      - id: "3.6"
+        display_name: "3.6"
+        variables:
+           VERSION: "3.6"
       - id: "3.4"
         display_name: "3.4"
         variables:
@@ -479,14 +483,15 @@ buildvariants:
     - name: "static-analysis"
 
 - matrix_name: "tests-zlib-compression"
-  matrix_spec: { compressor : "zlib", auth: "noauth", ssl: "nossl", jdk: "jdk6", version: ["latest"], topology: "standalone", os: "linux" }
+  matrix_spec: { compressor : "zlib", auth: "noauth", ssl: "nossl", jdk: "jdk6", version: ["3.6", "latest"], topology: "standalone", os:
+  "linux" }
   display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
      - name: "test"
 
 - matrix_name: "tests-snappy-compression"
-  matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: ["3.4", "latest"], topology: "standalone", os: "linux" }
+  matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: ["3.4", "3.6", "latest"], topology: "standalone", os: "linux" }
   display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
@@ -507,7 +512,7 @@ buildvariants:
      - name: "test"
 
 - matrix_name: "tests-jdk-other"
-  matrix_spec: { auth: "auth", ssl: "ssl", jdk: "*", version: "3.4", topology: "standalone", os: "linux" }
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: "*", version: "3.6", topology: "standalone", os: "linux" }
   exclude_spec: { jdk: "jdk6", auth: "*", ssl: "*", version: "*", topology: "*", os: "*" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
