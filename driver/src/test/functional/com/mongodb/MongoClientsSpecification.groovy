@@ -33,7 +33,7 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.Fixture.getDefaultDatabaseName
 import static com.mongodb.Fixture.getMongoClientURI
 
-class MongoClientsSpecification extends FunctionalSpecification {
+class  MongoClientsSpecification extends FunctionalSpecification {
     @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isStandalone() })
     def 'application name should appear in the system.profile collection'() {
         given:
@@ -64,17 +64,22 @@ class MongoClientsSpecification extends FunctionalSpecification {
     @IgnoreIf({ !isDiscoverableReplicaSet() })
     def 'should use server selector from MongoClientOptions'() {
         given:
-        def expectedWinner
+        def expectedWinningAddresses = [] as Set
         def actualWinningAddresses = [] as Set
         def optionsBuilder = MongoClientOptions.builder()
         // select the suitable server with the highest port number
                 .serverSelector { ClusterDescription clusterDescription ->
+            def highestPortServer
             for (ServerDescription cur : clusterDescription.getServerDescriptions()) {
-                if (expectedWinner == null || cur.address.port > expectedWinner.address.port) {
-                    expectedWinner = cur
+                if (highestPortServer == null || cur.address.port > highestPortServer.address.port) {
+                    highestPortServer = cur
                 }
             }
-            expectedWinner == null ? [] : [expectedWinner]
+            if (highestPortServer == null) {
+                return []
+            }
+            expectedWinningAddresses.add(highestPortServer.address)
+            [highestPortServer]
         }.addCommandListener(new CommandListener() {
             // record each address actually used
             @Override
@@ -101,7 +106,6 @@ class MongoClientsSpecification extends FunctionalSpecification {
         }
 
         then:
-        actualWinningAddresses.size() == 1
-        actualWinningAddresses.contains(expectedWinner.address)
+        actualWinningAddresses == expectedWinningAddresses
     }
 }
