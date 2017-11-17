@@ -584,15 +584,6 @@
         "arguments": {
           "requests": [
             {
-              "name": "insertOne",
-              "arguments": {
-                "document": {
-                  "_id": 2,
-                  "x": 22
-                }
-              }
-            },
-            {
               "name": "updateOne",
               "arguments": {
                 "filter": {
@@ -602,6 +593,15 @@
                   "$inc": {
                     "x": 1
                   }
+                }
+              }
+            },
+            {
+              "name": "insertOne",
+              "arguments": {
+                "document": {
+                  "_id": 2,
+                  "x": 22
                 }
               }
             },
