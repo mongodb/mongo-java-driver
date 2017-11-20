@@ -116,6 +116,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
         options.links 'http://docs.oracle.com/javase/7/docs/api/'
         options.tagletPath single(project(':util').sourceSets.main.output.classesDirs)
         options.taglets 'ManualTaglet'
+        options.taglets 'DochubTaglet'
         options.taglets 'ServerReleaseTaglet'
         options.encoding = 'UTF-8'
         options.charSet 'UTF-8'
