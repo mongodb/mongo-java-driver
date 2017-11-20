@@ -13,7 +13,7 @@ Key new features of the 3.6 Java driver release:
 
 ### Change Stream support
 
-The 3.6 release adds support for [change streams](https://docs.mongodb.com/manual/operator/aggregation/changeStream).
+The 3.6 release adds support for [change streams](http://dochub.mongodb.org/core/changestreams).
 
 * [Change Stream Quick Start]({{<ref "driver/tutorials/change-streams.md">}}) 
 * [Change Stream Quick Start (Async)]({{<ref "driver-async/tutorials/change-streams.md">}})
@@ -31,8 +31,9 @@ The 3.6 release adds support for compression of messages to and from appropriate
 * [Compression Tutorial (Async)]({{<ref "driver-async/tutorials/compression.md">}})
 
 ### Causal consistency
-
-The 3.6 release adds support for causally consistency.
+              
+The 3.6 release adds support for [causally consistency](http://dochub.mongodb.org/core/causal-consistency) via the new
+[`ClientSession`]({{<apiref "com/mongodb/session/ClientSession">}}) API. 
 
 ### Application-configured server selection
 

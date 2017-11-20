@@ -19,7 +19,7 @@ package com.mongodb;
 /**
  * An exception indicating that a failure occurred when running a {@code $changeStream}.
  *
- * @mongodb.driver.manual reference/operator/aggregation/changeStream $changeStream
+ * @mongodb.driver.dochub core/changestreams Change Streams
  * @since 3.6
  */
 public class MongoChangeStreamException extends MongoException {

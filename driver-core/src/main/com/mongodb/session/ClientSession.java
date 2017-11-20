@@ -28,6 +28,7 @@ import java.io.Closeable;
  *
  * @mongodb.server.release 3.6
  * @since 3.6
+ * @see ClientSessionOptions
  */
 @NotThreadSafe
 public interface ClientSession extends Closeable {

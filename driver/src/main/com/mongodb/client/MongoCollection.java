@@ -16,7 +16,6 @@
 
 package com.mongodb.client;
 
-import com.mongodb.session.ClientSession;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
@@ -38,6 +37,7 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
+import com.mongodb.session.ClientSession;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -398,7 +398,7 @@ public interface MongoCollection<TDocument> {
      * Creates a change stream for this collection.
      *
      * @return the change stream iterable
-     * @mongodb.driver.manual reference/operator/aggregation/changeStream $changeStream
+     * @mongodb.driver.dochub core/changestreams Change Streams
      * @since 3.6
      */
     ChangeStreamIterable<TDocument> watch();
@@ -409,7 +409,7 @@ public interface MongoCollection<TDocument> {
      * @param resultClass the class to decode each document into
      * @param <TResult>   the target document type of the iterable.
      * @return the change stream iterable
-     * @mongodb.driver.manual reference/operator/aggregation/changeStream $changeStream
+     * @mongodb.driver.dochub core/changestreams Change Streams
      * @since 3.6
      */
     <TResult> ChangeStreamIterable<TResult> watch(Class<TResult> resultClass);
@@ -419,7 +419,7 @@ public interface MongoCollection<TDocument> {
      *
      * @param pipeline the aggregation pipeline to apply to the change stream.
      * @return the change stream iterable
-     * @mongodb.driver.manual reference/operator/aggregation/changeStream $changeStream
+     * @mongodb.driver.dochub core/changestreams Change Streams
      * @since 3.6
      */
     ChangeStreamIterable<TDocument> watch(List<? extends Bson> pipeline);
@@ -431,7 +431,7 @@ public interface MongoCollection<TDocument> {
      * @param resultClass the class to decode each document into
      * @param <TResult>   the target document type of the iterable.
      * @return the change stream iterable
-     * @mongodb.driver.manual reference/operator/aggregation/changeStream $changeStream
+     * @mongodb.driver.dochub core/changestreams Change Streams
      * @since 3.6
      */
     <TResult> ChangeStreamIterable<TResult> watch(List<? extends Bson> pipeline, Class<TResult> resultClass);
@@ -443,7 +443,7 @@ public interface MongoCollection<TDocument> {
      * @return the change stream iterable
      * @since 3.6
      * @mongodb.server.release 3.6
-     * @mongodb.driver.manual reference/operator/aggregation/changeStream $changeStream
+     * @mongodb.driver.dochub core/changestreams Change Streams
      */
     ChangeStreamIterable<TDocument> watch(ClientSession clientSession);
 
@@ -456,7 +456,7 @@ public interface MongoCollection<TDocument> {
      * @return the change stream iterable
      * @since 3.6
      * @mongodb.server.release 3.6
-     * @mongodb.driver.manual reference/operator/aggregation/changeStream $changeStream
+     * @mongodb.driver.dochub core/changestreams Change Streams
      */
     <TResult> ChangeStreamIterable<TResult> watch(ClientSession clientSession, Class<TResult> resultClass);
 
@@ -468,7 +468,7 @@ public interface MongoCollection<TDocument> {
      * @return the change stream iterable
      * @since 3.6
      * @mongodb.server.release 3.6
-     * @mongodb.driver.manual reference/operator/aggregation/changeStream $changeStream
+     * @mongodb.driver.dochub core/changestreams Change Streams
      */
     ChangeStreamIterable<TDocument> watch(ClientSession clientSession, List<? extends Bson> pipeline);
 
@@ -482,7 +482,7 @@ public interface MongoCollection<TDocument> {
      * @return the change stream iterable
      * @since 3.6
      * @mongodb.server.release 3.6
-     * @mongodb.driver.manual reference/operator/aggregation/changeStream $changeStream
+     * @mongodb.driver.dochub core/changestreams Change Streams
      */
     <TResult> ChangeStreamIterable<TResult> watch(ClientSession clientSession, List<? extends Bson> pipeline, Class<TResult> resultClass);
 
