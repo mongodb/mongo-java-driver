@@ -10,7 +10,7 @@ title = "Change Streams"
 
 ## Change Streams - Draft
 
-MongoDB 3.6 introduces a new [`$changeStream`](https://docs.mongodb.com/manual/operator/aggregation/changeStream) aggregation pipeline
+MongoDB 3.6 introduces a new [`$changeStream`](http://dochub.mongodb.org/core/changestreams) aggregation pipeline
 operator.
 
 Change streams provide a way to watch changes to documents in a collection. To improve the usability of this new stage, the 
@@ -86,7 +86,7 @@ collection.watch().forEach(printBlock, callbackWhenFinished);
 
 The `watch` method can also be passed a list of [aggregation stages]({{< docsref "meta/aggregation-quick-reference" >}}), that can modify 
 the data returned by the `$changeStream` operator. Note: not all aggregation operators are supported. See the 
-[`$changeStream`](https://docs.mongodb.com/manual/operator/aggregation/changeStream) documentation for more information.
+[`$changeStream`](http://dochub.mongodb.org/core/changestreams) documentation for more information.
 
 In the following example the change stream prints out all changes it observes, for `insert`, `update`, `replace` and `delete` operations:
 

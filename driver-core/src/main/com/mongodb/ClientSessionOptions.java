@@ -26,6 +26,7 @@ import com.mongodb.session.ClientSession;
  * @mongodb.server.release 3.6
  * @since 3.6
  * @see ClientSession
+ * @mongodb.driver.dochub core/causal-consistency Causal Consistency
  */
 @Immutable
 public final class ClientSessionOptions {
@@ -37,6 +38,7 @@ public final class ClientSessionOptions {
      *
      * @return whether operations using the session should be causally consistent.  A null value indicates to use the the global default,
      * which is currently true.
+     * @mongodb.driver.dochub core/causal-consistency Causal Consistency
      */
     public Boolean isCausallyConsistent() {
         return causallyConsistent;
@@ -63,6 +65,7 @@ public final class ClientSessionOptions {
          *
          * @param causallyConsistent whether operations using the session should be causally consistent
          * @return this
+         * @mongodb.driver.dochub core/causal-consistency Causal Consistency
          */
         public Builder causallyConsistent(final boolean causallyConsistent) {
             this.causallyConsistent = causallyConsistent;
