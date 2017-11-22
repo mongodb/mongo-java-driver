@@ -16,39 +16,33 @@
 
 package com.mongodb.async.client;
 
-import com.mongodb.Block;
-import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.AsyncBatchCursor;
-import com.mongodb.async.SingleResultCallback;
 import com.mongodb.operation.AsyncOperationExecutor;
+import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.ListIndexesOperation;
+import com.mongodb.session.ClientSession;
 import org.bson.codecs.configuration.CodecRegistry;
 
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-final class ListIndexesIterableImpl<TResult> implements ListIndexesIterable<TResult> {
+final class ListIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> implements ListIndexesIterable<TResult> {
     private final MongoNamespace namespace;
     private final Class<TResult> resultClass;
-    private final ReadPreference readPreference;
     private final CodecRegistry codecRegistry;
-    private final AsyncOperationExecutor executor;
-
-    private int batchSize;
     private long maxTimeMS;
 
-    ListIndexesIterableImpl(final MongoNamespace namespace, final Class<TResult> resultClass, final CodecRegistry codecRegistry,
-                            final ReadPreference readPreference, final AsyncOperationExecutor executor) {
+    ListIndexesIterableImpl(final ClientSession clientSession, final MongoNamespace namespace, final Class<TResult> resultClass,
+                            final CodecRegistry codecRegistry, final ReadPreference readPreference, final AsyncOperationExecutor executor) {
+        super(clientSession, executor, ReadConcern.DEFAULT, readPreference);
         this.namespace = notNull("namespace", namespace);
         this.resultClass = notNull("resultClass", resultClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
-        this.readPreference = notNull("readPreference", readPreference);
-        this.executor = notNull("executor", executor);
     }
 
     @Override
@@ -60,53 +54,15 @@ final class ListIndexesIterableImpl<TResult> implements ListIndexesIterable<TRes
 
     @Override
     public ListIndexesIterable<TResult> batchSize(final int batchSize) {
-        this.batchSize = batchSize;
+        super.batchSize(batchSize);
         return this;
     }
 
     @Override
-    public void first(final SingleResultCallback<TResult> callback) {
-        notNull("callback", callback);
-        execute(createListIndexesOperation().batchSize(-1)).first(callback);
-    }
-
-    @Override
-    public void forEach(final Block<? super TResult> block, final SingleResultCallback<Void> callback) {
-        notNull("block", block);
-        notNull("callback", callback);
-        execute().forEach(block, callback);
-    }
-
-    @Override
-    public <A extends Collection<? super TResult>> void into(final A target, final SingleResultCallback<A> callback) {
-        notNull("target", target);
-        notNull("callback", callback);
-        execute().into(target, callback);
-    }
-
-    @Override
-    public <U> MongoIterable<U> map(final Function<TResult, U> mapper) {
-        return new MappingIterable<TResult, U>(this, mapper);
-    }
-
-    @Override
-    public void batchCursor(final SingleResultCallback<AsyncBatchCursor<TResult>> callback) {
-        notNull("callback", callback);
-        execute().batchCursor(callback);
-    }
-
-    private MongoIterable<TResult> execute() {
-        return execute(createListIndexesOperation());
-    }
-
-    private MongoIterable<TResult> execute(final ListIndexesOperation<TResult> operation) {
-        return new OperationIterable<TResult>(operation, readPreference, executor);
-    }
-
-    private ListIndexesOperation<TResult> createListIndexesOperation() {
+    AsyncReadOperation<AsyncBatchCursor<TResult>> asAsyncReadOperation() {
         return new ListIndexesOperation<TResult>(namespace, codecRegistry.get(resultClass))
-                .batchSize(batchSize)
-                .maxTime(maxTimeMS, MILLISECONDS);
+            .batchSize(getBatchSize() == null ? 0 : getBatchSize())
+            .maxTime(maxTimeMS, MILLISECONDS);
     }
 
 }

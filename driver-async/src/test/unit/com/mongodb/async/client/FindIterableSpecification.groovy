@@ -82,7 +82,7 @@ class FindIterableSpecification extends Specification {
                 .returnKey(false)
                 .showRecordId(false)
                 .snapshot(false)
-        def findIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, executor,
+        def findIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, executor,
                                                 new Document('filter', 1), findOptions)
 
         when: 'default input should be as expected'
@@ -179,7 +179,7 @@ class FindIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor]);
         def findOptions = new FindOptions()
-        def findIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, executor,
+        def findIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, executor,
                                                 new Document('filter', 1), findOptions)
 
         when:
@@ -222,7 +222,7 @@ class FindIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor()]);
         def findOptions = new FindOptions()
-        def mongoIterable = new FindIterableImpl(new MongoNamespace('db', 'coll'), Document, Document, codecRegistry,
+        def mongoIterable = new FindIterableImpl(null, new MongoNamespace('db', 'coll'), Document, Document, codecRegistry,
                                                  readPreference, readConcern, executor, new Document(), findOptions)
 
         when:
@@ -285,7 +285,7 @@ class FindIterableSpecification extends Specification {
 
     def 'should check variables using notNull'() {
         given:
-        def mongoIterable = new FindIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
+        def mongoIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
                 readConcern, Stub(AsyncOperationExecutor), new Document(), new FindOptions())
         def callback = Stub(SingleResultCallback)
         def block = Stub(Block)

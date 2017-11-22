@@ -17,7 +17,10 @@
 
 package com.mongodb.async.client
 
+import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.async.SingleResultCallback
+import com.mongodb.session.ClientSession
 
 import java.util.concurrent.TimeUnit
 
@@ -35,5 +38,33 @@ class TestHelper {
         List opArgs = (args != null) ? args : []
         operation.call(*opArgs + futureResultCallback)
         futureResultCallback.get(timeout, TimeUnit.SECONDS)
+    }
+
+    static <T> T execute(final Closure<T> method, final ClientSession session, ... args) {
+        List opArgs = (args != null) ? args : []
+        if (session != null) {
+            opArgs = [session, *opArgs]
+        }
+        if (method.getParameterTypes().last() == SingleResultCallback) {
+            runOp(method, 60, *opArgs)
+        } else {
+            method.call(*opArgs)
+        }
+    }
+
+    static <T> void execute(final MongoIterable method) {
+        method.batchCursor(new SingleResultCallback<AsyncBatchCursor>() {
+            @Override
+            void onResult(final AsyncBatchCursor result, final Throwable t) {
+            }
+        })
+    }
+
+    static <T> MongoIterable<T> createIterable(final Closure<T> method, ClientSession session, ... args) {
+        List opArgs = (args != null) ? args : []
+        if (session != null) {
+            opArgs = [session, *opArgs]
+        }
+        method.call(*opArgs)
     }
 }

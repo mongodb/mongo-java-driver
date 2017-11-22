@@ -872,7 +872,7 @@ public class Mongo {
             return null;
         }
         if (getConnectedClusterDescription().getLogicalSessionTimeoutMinutes() != null) {
-            return new ClientSessionImpl(serverSessionPool, serverSessionPool.get(), this, options);
+            return new ClientSessionImpl(serverSessionPool, this, options);
         } else {
             return null;
         }

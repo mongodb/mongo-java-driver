@@ -51,10 +51,8 @@ class ListCollectionsIterableSpecification extends Specification {
             }
         }
         def executor = new TestOperationExecutor([cursor, cursor]);
-        def listCollectionIterable = new ListCollectionsIterableImpl<Document>('db', Document, codecRegistry, readPreference, executor)
-                .filter(new Document('filter', 1))
-                .batchSize(100)
-                .maxTime(1000, MILLISECONDS)
+        def listCollectionIterable = new ListCollectionsIterableImpl<Document>(null, 'db', Document, codecRegistry, readPreference,
+                executor).filter(new Document('filter', 1)).batchSize(100).maxTime(1000, MILLISECONDS)
 
         when: 'default input should be as expected'
         listCollectionIterable.into([]) { result, t -> }
@@ -96,7 +94,7 @@ class ListCollectionsIterableSpecification extends Specification {
             }
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor()]);
-        def mongoIterable = new ListCollectionsIterableImpl<Document>('db', Document, codecRegistry, readPreference, executor)
+        def mongoIterable = new ListCollectionsIterableImpl<Document>(null, 'db', Document, codecRegistry, readPreference, executor)
 
         when:
         def results = new FutureResultCallback()
@@ -158,7 +156,7 @@ class ListCollectionsIterableSpecification extends Specification {
 
     def 'should check variables using notNull'() {
         given:
-        def mongoIterable = new ListCollectionsIterableImpl<Document>('db', Document, codecRegistry, readPreference,
+        def mongoIterable = new ListCollectionsIterableImpl<Document>(null, 'db', Document, codecRegistry, readPreference,
                 Stub(AsyncOperationExecutor))
         def callback = Stub(SingleResultCallback)
         def block = Stub(Block)

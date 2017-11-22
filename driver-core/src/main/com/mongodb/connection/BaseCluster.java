@@ -247,7 +247,8 @@ abstract class BaseCluster implements Cluster {
         clusterListener.clusterDescriptionChanged(event);
     }
 
-    ClusterDescription getCurrentDescription() {
+    @Override
+    public ClusterDescription getCurrentDescription() {
         return description;
     }
 

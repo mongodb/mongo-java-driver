@@ -362,4 +362,46 @@ class MongoDatabaseSpecification extends Specification {
                 WriteConcern.MAJORITY, true, ReadConcern.MAJORITY, new TestOperationExecutor([]))
     }
 
+    def 'should validate the client session correctly'() {
+        given:
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference,  writeConcern,
+                false, readConcern, Stub(OperationExecutor))
+
+        when:
+        database.createCollection(null, 'newColl')
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        database.createView(null, 'newView', [Document.parse('{$match: {}}')])
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        database.drop(null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        database.listCollectionNames(null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        database.listCollections(null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        database.runCommand(null, Document.parse('{}'))
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
 }

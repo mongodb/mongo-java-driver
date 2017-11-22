@@ -554,7 +554,7 @@ public class MongoClient extends Mongo implements Closeable {
      * @since 3.6
      */
     public ClientSession startSession(final ClientSessionOptions options) {
-        ClientSession clientSession = createClientSession(options);
+        ClientSession clientSession = createClientSession(notNull("options", options));
         if (clientSession == null) {
             throw new MongoClientException("Sessions are not supported by the MongoDB cluster to which this client is connected");
         }
