@@ -20,6 +20,7 @@ import com.mongodb.ReadConcern
 import com.mongodb.WriteConcern
 import com.mongodb.client.model.geojson.MultiPolygon
 import com.mongodb.connection.Cluster
+import com.mongodb.session.ClientSession
 import org.bson.BsonDocument
 import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider
@@ -28,32 +29,47 @@ import spock.lang.Specification
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.secondary
+import static com.mongodb.async.client.MongoClients.getDefaultCodecRegistry
+import static com.mongodb.async.client.TestHelper.execute
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
 
 class MongoClientSpecification extends Specification {
 
-    def 'should use ListCollectionsOperation correctly'() {
+    def 'should use ListDatabasesIterableImpl correctly'() {
         given:
-        def settings = MongoClientSettings.builder().build()
-        def cluster = Stub(Cluster)
-        def executor = new TestOperationExecutor([null, null, null])
-        def client = new MongoClientImpl(settings, cluster, executor)
-        def codecRegistry = MongoClients.getDefaultCodecRegistry()
+        def executor = new TestOperationExecutor([null, null])
+        def client = new MongoClientImpl(MongoClientSettings.builder().build(), Stub(Cluster), executor)
+        def listDatabasesMethod = client.&listDatabases
+        def listDatabasesNamesMethod = client.&listDatabaseNames
 
         when:
-        def listDatabasesIterable = client.listDatabases()
+        def listDatabasesIterable = execute(listDatabasesMethod, session)
 
         then:
-        expect listDatabasesIterable, isTheSameAs(new ListDatabasesIterableImpl<Document>(Document, codecRegistry, primary(),
-                executor))
+        expect listDatabasesIterable, isTheSameAs(new ListDatabasesIterableImpl<Document>(session, Document, getDefaultCodecRegistry(),
+                primary(), executor))
 
         when:
-        listDatabasesIterable = client.listDatabases(BsonDocument)
+        listDatabasesIterable = execute(listDatabasesMethod, session, BsonDocument)
 
         then:
-        expect listDatabasesIterable, isTheSameAs(new ListDatabasesIterableImpl<BsonDocument>(BsonDocument, codecRegistry, primary(),
-                executor))
+        expect listDatabasesIterable, isTheSameAs(new ListDatabasesIterableImpl<BsonDocument>(session, BsonDocument,
+                getDefaultCodecRegistry(), primary(), executor))
+
+        when:
+        def listDatabaseNamesIterable = execute(listDatabasesNamesMethod, session)
+
+        then:
+        // listDatabaseNamesIterable is an instance of a MappingIterable, so have to get the mapped iterable inside it
+        expect listDatabaseNamesIterable.getMapped(), isTheSameAs(new ListDatabasesIterableImpl<BsonDocument>(session, BsonDocument,
+                getDefaultCodecRegistry(), primary(), executor))
+
+        cleanup:
+        client?.close()
+
+        where:
+        session << [null, Stub(ClientSession)]
     }
 
     def 'should provide the same settings'() {
@@ -108,7 +124,7 @@ class MongoClientSpecification extends Specification {
 
     def 'default codec registry should contain all supported providers'() {
         given:
-        def codecRegistry = MongoClients.getDefaultCodecRegistry()
+        def codecRegistry = getDefaultCodecRegistry()
 
         expect:
         codecRegistry.get(BsonDocument)

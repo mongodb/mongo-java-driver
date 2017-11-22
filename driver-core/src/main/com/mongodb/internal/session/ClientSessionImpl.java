@@ -35,10 +35,9 @@ public class ClientSessionImpl implements ClientSession {
     private BsonTimestamp operationTime;
     private volatile boolean closed;
 
-    public ClientSessionImpl(final ServerSessionPool serverSessionPool, final ServerSession serverSession,
-                             final Object originator, final ClientSessionOptions options) {
+    public ClientSessionImpl(final ServerSessionPool serverSessionPool, final Object originator, final ClientSessionOptions options) {
         this.serverSessionPool = serverSessionPool;
-        this.serverSession = serverSession;
+        this.serverSession = serverSessionPool.get();
         this.originator = originator;
         this.options = options;
         closed = false;

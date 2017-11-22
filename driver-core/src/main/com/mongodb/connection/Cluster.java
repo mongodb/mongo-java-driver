@@ -27,7 +27,7 @@ import java.io.Closeable;
  *
  * @since 3.0
  */
-public interface Cluster extends Closeable{
+public interface Cluster extends Closeable {
 
     /**
      * Gets the cluster settings with which this cluster was created.
@@ -44,6 +44,13 @@ public interface Cluster extends Closeable{
      * @throws com.mongodb.MongoTimeoutException if the timeout has been reached before the cluster type is known
      */
     ClusterDescription getDescription();
+
+    /**
+     * Get the current description of this cluster.
+     *
+     * @return the current ClusterDescription representing the current state of the cluster.
+     */
+    ClusterDescription getCurrentDescription();
 
     /**
      * Get a MongoDB server that matches the criteria defined by the serverSelector

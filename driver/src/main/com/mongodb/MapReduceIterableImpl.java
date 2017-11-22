@@ -227,22 +227,21 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     private MapReduceToCollectionOperation createMapReduceToCollectionOperation() {
-        MapReduceToCollectionOperation operation =
-                new MapReduceToCollectionOperation(namespace, new BsonJavaScript(mapFunction), new BsonJavaScript(reduceFunction),
-                        collectionName, writeConcern)
-                        .filter(toBsonDocument(filter))
-                        .limit(limit)
-                        .maxTime(maxTimeMS, MILLISECONDS)
-                        .jsMode(jsMode)
-                        .scope(toBsonDocument(scope))
-                        .sort(toBsonDocument(sort))
-                        .verbose(verbose)
-                        .action(action.getValue())
-                        .nonAtomic(nonAtomic)
-                        .sharded(sharded)
-                        .databaseName(databaseName)
-                        .bypassDocumentValidation(bypassDocumentValidation)
-                        .collation(collation);
+        MapReduceToCollectionOperation operation = new MapReduceToCollectionOperation(namespace, new BsonJavaScript(mapFunction),
+                new BsonJavaScript(reduceFunction), collectionName, writeConcern)
+                .filter(toBsonDocument(filter))
+                .limit(limit)
+                .maxTime(maxTimeMS, MILLISECONDS)
+                .jsMode(jsMode)
+                .scope(toBsonDocument(scope))
+                .sort(toBsonDocument(sort))
+                .verbose(verbose)
+                .action(action.getValue())
+                .nonAtomic(nonAtomic)
+                .sharded(sharded)
+                .databaseName(databaseName)
+                .bypassDocumentValidation(bypassDocumentValidation)
+                .collation(collation);
 
         if (finalizeFunction != null) {
             operation.finalizeFunction(new BsonJavaScript(finalizeFunction));

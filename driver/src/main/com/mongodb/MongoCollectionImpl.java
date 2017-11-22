@@ -213,7 +213,6 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         return executor.execute(operation, readPreference, clientSession);
     }
 
-
     @Override
     public <TResult> DistinctIterable<TResult> distinct(final String fieldName, final Class<TResult> resultClass) {
         return distinct(fieldName, new BsonDocument(), resultClass);
@@ -221,7 +220,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public <TResult> DistinctIterable<TResult> distinct(final String fieldName, final Bson filter, final Class<TResult> resultClass) {
-        return executeDistinct(null, fieldName, filter, resultClass);
+        return createDistinctIterable(null, fieldName, filter, resultClass);
     }
 
     @Override
@@ -234,11 +233,11 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     public <TResult> DistinctIterable<TResult> distinct(final ClientSession clientSession, final String fieldName, final Bson filter,
                                                         final Class<TResult> resultClass) {
         notNull("clientSession", clientSession);
-        return executeDistinct(clientSession, fieldName, filter, resultClass);
+        return createDistinctIterable(clientSession, fieldName, filter, resultClass);
     }
 
-    private <TResult> DistinctIterable<TResult> executeDistinct(final ClientSession clientSession, final String fieldName,
-                                                                final Bson filter, final Class<TResult> resultClass) {
+    private <TResult> DistinctIterable<TResult> createDistinctIterable(final ClientSession clientSession, final String fieldName,
+                                                                       final Bson filter, final Class<TResult> resultClass) {
         return new DistinctIterableImpl<TDocument, TResult>(clientSession, namespace, documentClass, resultClass, codecRegistry,
                                                                    readPreference, readConcern, executor, fieldName, filter);
     }
@@ -291,7 +290,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private <TResult> FindIterable<TResult> createFindIterable(final ClientSession clientSession, final Bson filter,
                                                                final Class<TResult> resultClass) {
         return new FindIterableImpl<TDocument, TResult>(clientSession, namespace, this.documentClass, resultClass, codecRegistry,
-                                                               readPreference, readConcern, executor, filter, new FindOptions());
+                readPreference, readConcern, executor, filter, new FindOptions());
     }
 
     @Override
@@ -301,7 +300,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public <TResult> AggregateIterable<TResult> aggregate(final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
-        return executeAggregate(null, pipeline, resultClass);
+        return createAggregateIterable(null, pipeline, resultClass);
     }
 
     @Override
@@ -313,11 +312,12 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     public <TResult> AggregateIterable<TResult> aggregate(final ClientSession clientSession, final List<? extends Bson> pipeline,
                                                           final Class<TResult> resultClass) {
         notNull("clientSession", clientSession);
-        return executeAggregate(clientSession, pipeline, resultClass);
+        return createAggregateIterable(clientSession, pipeline, resultClass);
     }
 
-    private <TResult> AggregateIterable<TResult> executeAggregate(final ClientSession clientSession, final List<? extends Bson> pipeline,
-                                                                  final Class<TResult> resultClass) {
+    private <TResult> AggregateIterable<TResult> createAggregateIterable(final ClientSession clientSession,
+                                                                         final List<? extends Bson> pipeline,
+                                                                         final Class<TResult> resultClass) {
         return new AggregateIterableImpl<TDocument, TResult>(clientSession, namespace, documentClass, resultClass, codecRegistry,
                                                                     readPreference, readConcern, writeConcern, executor, pipeline);
     }
@@ -339,7 +339,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public <TResult> ChangeStreamIterable<TResult> watch(final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
-        return executeWatch(null, pipeline, resultClass);
+        return createChangeStreamIterable(null, pipeline, resultClass);
     }
 
     @Override
@@ -361,13 +361,14 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final List<? extends Bson> pipeline,
                                                          final Class<TResult> resultClass) {
         notNull("clientSession", clientSession);
-        return executeWatch(clientSession, pipeline, resultClass);
+        return createChangeStreamIterable(clientSession, pipeline, resultClass);
     }
 
-    private <TResult> ChangeStreamIterable<TResult> executeWatch(final ClientSession clientSession, final List<? extends Bson> pipeline,
-                                                                 final Class<TResult> resultClass) {
+    private <TResult> ChangeStreamIterable<TResult> createChangeStreamIterable(final ClientSession clientSession,
+                                                                               final List<? extends Bson> pipeline,
+                                                                               final Class<TResult> resultClass) {
         return new ChangeStreamIterableImpl<TResult>(clientSession, namespace, codecRegistry, readPreference, readConcern, executor,
-                                                            pipeline, resultClass);
+                pipeline, resultClass);
     }
 
     @Override
@@ -378,7 +379,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     @Override
     public <TResult> MapReduceIterable<TResult> mapReduce(final String mapFunction, final String reduceFunction,
                                                           final Class<TResult> resultClass) {
-        return executeMapReduce(null, mapFunction, reduceFunction, resultClass);
+        return createMapReduceIterable(null, mapFunction, reduceFunction, resultClass);
     }
 
     @Override
@@ -391,14 +392,13 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     public <TResult> MapReduceIterable<TResult> mapReduce(final ClientSession clientSession, final String mapFunction,
                                                           final String reduceFunction, final Class<TResult> resultClass) {
         notNull("clientSession", clientSession);
-        return executeMapReduce(clientSession, mapFunction, reduceFunction, resultClass);
+        return createMapReduceIterable(clientSession, mapFunction, reduceFunction, resultClass);
     }
 
-    private <TResult> MapReduceIterable<TResult> executeMapReduce(final ClientSession clientSession, final String mapFunction,
-                                                                  final String reduceFunction, final Class<TResult> resultClass) {
+    private <TResult> MapReduceIterable<TResult> createMapReduceIterable(final ClientSession clientSession, final String mapFunction,
+                                                                         final String reduceFunction, final Class<TResult> resultClass) {
         return new MapReduceIterableImpl<TDocument, TResult>(clientSession, namespace, documentClass, resultClass, codecRegistry,
-                                                                    readPreference, readConcern, writeConcern, executor, mapFunction,
-                                                                    reduceFunction);
+                readPreference, readConcern, writeConcern, executor, mapFunction, reduceFunction);
     }
 
     @Override
@@ -780,6 +780,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public void drop(final ClientSession clientSession) {
+        notNull("clientSession", clientSession);
         executeDrop(clientSession);
     }
 
@@ -858,7 +859,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public <TResult> ListIndexesIterable<TResult> listIndexes(final Class<TResult> resultClass) {
-        return executeListIndexes(null, resultClass);
+        return createListIndexesIterable(null, resultClass);
     }
 
     @Override
@@ -869,12 +870,13 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     @Override
     public <TResult> ListIndexesIterable<TResult> listIndexes(final ClientSession clientSession, final Class<TResult> resultClass) {
         notNull("clientSession", clientSession);
-        return executeListIndexes(clientSession, resultClass);
+        return createListIndexesIterable(clientSession, resultClass);
     }
 
-    private <TResult> ListIndexesIterable<TResult> executeListIndexes(final ClientSession clientSession, final Class<TResult> resultClass) {
+    private <TResult> ListIndexesIterable<TResult> createListIndexesIterable(final ClientSession clientSession,
+                                                                             final Class<TResult> resultClass) {
         return new ListIndexesIterableImpl<TResult>(clientSession, getNamespace(), resultClass, codecRegistry, ReadPreference.primary(),
-                                                           executor);
+                executor);
     }
 
     @Override

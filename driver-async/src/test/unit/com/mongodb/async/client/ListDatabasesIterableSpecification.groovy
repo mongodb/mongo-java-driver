@@ -49,7 +49,7 @@ class ListDatabasesIterableSpecification extends Specification {
             }
         }
         def executor = new TestOperationExecutor([cursor, cursor]);
-        def listDatabasesIterable = new ListDatabasesIterableImpl<Document>(Document, codecRegistry, readPreference, executor)
+        def listDatabasesIterable = new ListDatabasesIterableImpl<Document>(null, Document, codecRegistry, readPreference, executor)
                 .maxTime(1000, MILLISECONDS)
                 .batchSize(1) // batchSize should be silently ignored
 
@@ -91,7 +91,7 @@ class ListDatabasesIterableSpecification extends Specification {
             }
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor()]);
-        def mongoIterable = new ListDatabasesIterableImpl<Document>(Document, codecRegistry, readPreference, executor)
+        def mongoIterable = new ListDatabasesIterableImpl<Document>(null, Document, codecRegistry, readPreference, executor)
 
         when:
         def results = new FutureResultCallback()
@@ -153,7 +153,7 @@ class ListDatabasesIterableSpecification extends Specification {
 
     def 'should check variables using notNull'() {
         given:
-        def mongoIterable = new ListDatabasesIterableImpl<Document>(Document, codecRegistry, readPreference,
+        def mongoIterable = new ListDatabasesIterableImpl<Document>(null, Document, codecRegistry, readPreference,
                 Stub(AsyncOperationExecutor))
         def callback = Stub(SingleResultCallback)
         def block = Stub(Block)

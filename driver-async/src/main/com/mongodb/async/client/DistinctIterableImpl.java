@@ -16,49 +16,43 @@
 
 package com.mongodb.async.client;
 
-import com.mongodb.Block;
-import com.mongodb.Function;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.AsyncBatchCursor;
-import com.mongodb.async.SingleResultCallback;
 import com.mongodb.client.model.Collation;
 import com.mongodb.operation.AsyncOperationExecutor;
+import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.DistinctOperation;
+import com.mongodb.session.ClientSession;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-class DistinctIterableImpl<TDocument, TResult> implements DistinctIterable<TResult> {
+class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements DistinctIterable<TResult> {
     private final MongoNamespace namespace;
-    private final Class<TDocument> documentclass;
+    private final Class<TDocument> documentClass;
     private final Class<TResult> resultClass;
-    private final ReadPreference readPreference;
-    private final ReadConcern readConcern;
     private final CodecRegistry codecRegistry;
-    private final AsyncOperationExecutor executor;
     private final String fieldName;
 
     private Bson filter;
     private long maxTimeMS;
     private Collation collation;
 
-    DistinctIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
-                         final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
-                         final AsyncOperationExecutor executor, final String fieldName, final Bson filter) {
+
+    DistinctIterableImpl(final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
+                         final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
+                         final ReadConcern readConcern, final AsyncOperationExecutor executor, final String fieldName, final Bson filter) {
+        super(clientSession, executor, readConcern, readPreference);
         this.namespace = notNull("namespace", namespace);
-        this.documentclass = notNull("documentClass", documentClass);
+        this.documentClass = notNull("documentClass", documentClass);
         this.resultClass = notNull("resultClass", resultClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
-        this.readPreference = notNull("readPreference", readPreference);
-        this.readConcern = notNull("readConcern", readConcern);
-        this.executor = notNull("executor", executor);
         this.fieldName = notNull("mapFunction", fieldName);
         this.filter = filter;
     }
@@ -78,52 +72,22 @@ class DistinctIterableImpl<TDocument, TResult> implements DistinctIterable<TResu
 
     @Override
     public DistinctIterable<TResult> batchSize(final int batchSize) {
-        // Noop - not supported by DistinctIterable
+        super.batchSize(batchSize);
         return this;
     }
 
+    @Override
     public DistinctIterable<TResult> collation(final Collation collation) {
         this.collation = collation;
         return this;
     }
 
     @Override
-    public void first(final SingleResultCallback<TResult> callback) {
-        notNull("callback", callback);
-        execute().first(callback);
-    }
-
-    @Override
-    public void forEach(final Block<? super TResult> block, final SingleResultCallback<Void> callback) {
-        notNull("block", block);
-        notNull("callback", callback);
-        execute().forEach(block, callback);
-    }
-
-    @Override
-    public <A extends Collection<? super TResult>> void into(final A target, final SingleResultCallback<A> callback) {
-        notNull("target", target);
-        notNull("callback", callback);
-        execute().into(target, callback);
-    }
-
-    @Override
-    public <U> MongoIterable<U> map(final Function<TResult, U> mapper) {
-        return new MappingIterable<TResult, U>(this, mapper);
-    }
-
-    @Override
-    public void batchCursor(final SingleResultCallback<AsyncBatchCursor<TResult>> callback) {
-        notNull("callback", callback);
-        execute().batchCursor(callback);
-    }
-
-    private MongoIterable<TResult> execute() {
-        DistinctOperation<TResult> operation = new DistinctOperation<TResult>(namespace, fieldName, codecRegistry.get(resultClass))
-                .filter(filter == null ? null : filter.toBsonDocument(documentclass, codecRegistry))
+    AsyncReadOperation<AsyncBatchCursor<TResult>> asAsyncReadOperation() {
+        return new DistinctOperation<TResult>(namespace, fieldName, codecRegistry.get(resultClass))
+                .filter(filter == null ? null : filter.toBsonDocument(documentClass, codecRegistry))
                 .maxTime(maxTimeMS, MILLISECONDS)
-                .readConcern(readConcern)
+                .readConcern(getReadConcern())
                 .collation(collation);
-        return new OperationIterable<TResult>(operation, readPreference, executor);
     }
 }

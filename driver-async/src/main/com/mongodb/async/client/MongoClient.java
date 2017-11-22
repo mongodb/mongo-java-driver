@@ -16,7 +16,10 @@
 
 package com.mongodb.async.client;
 
+import com.mongodb.ClientSessionOptions;
 import com.mongodb.annotations.Immutable;
+import com.mongodb.async.SingleResultCallback;
+import com.mongodb.session.ClientSession;
 import org.bson.Document;
 
 import java.io.Closeable;
@@ -32,6 +35,20 @@ import java.io.Closeable;
  */
 @Immutable
 public interface MongoClient extends Closeable {
+
+    /**
+     * Creates a client session.
+     *
+     * <p>Note: A ClientSession instance can not be used concurrently in multiple asynchronous operations.</p>
+     *
+     * @param options  the options for the client session
+     * @param callback the callback that is passed the clientSession or a {@code MongoClientException} if the MongoDB cluster to which
+     *                 this client is connected does not support sessions
+     * @mongodb.server.release 3.6
+     * @since 3.6
+     */
+    void startSession(ClientSessionOptions options, SingleResultCallback<ClientSession> callback);
+
     /**
      * Gets the database with the given name.
      *
@@ -60,10 +77,21 @@ public interface MongoClient extends Closeable {
     /**
      * Get a list of the database names
      *
-     * @mongodb.driver.manual reference/command/listDatabases List Databases
      * @return an iterable containing all the names of all the databases
+     * @mongodb.driver.manual reference/command/listDatabases List Databases
      */
     MongoIterable<String> listDatabaseNames();
+
+    /**
+     * Get a list of the database names
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @return an iterable containing all the names of all the databases
+     * @mongodb.driver.manual reference/command/listDatabases List Databases
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    MongoIterable<String> listDatabaseNames(ClientSession clientSession);
 
     /**
      * Gets the list of databases
@@ -75,10 +103,34 @@ public interface MongoClient extends Closeable {
     /**
      * Gets the list of databases
      *
+     * @param clientSession the client session with which to associate this operation
+     * @return the list databases iterable interface
+     * @mongodb.driver.manual reference/command/listDatabases List Databases
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    ListDatabasesIterable<Document> listDatabases(ClientSession clientSession);
+
+    /**
+     * Gets the list of databases
+     *
      * @param resultClass the class to cast the database documents to
      * @param <TResult>   the type of the class to use instead of {@code Document}.
      * @return the list databases iterable interface
      */
     <TResult> ListDatabasesIterable<TResult> listDatabases(Class<TResult> resultClass);
+
+    /**
+     * Gets the list of databases
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param resultClass the class to cast the database documents to
+     * @param <TResult>   the type of the class to use instead of {@code Document}.
+     * @return the list databases iterable interface
+     * @mongodb.driver.manual reference/command/listDatabases List Databases
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    <TResult> ListDatabasesIterable<TResult> listDatabases(ClientSession clientSession, Class<TResult> resultClass);
 
 }

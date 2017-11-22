@@ -167,17 +167,17 @@ class MongoCollectionSpecification extends Specification {
 
     def 'should behave correctly when using withReadConcern'() {
         given:
-        def newWReadConcern = ReadConcern.MAJORITY
+        def newReadConcern = ReadConcern.MAJORITY
         def executor = new TestOperationExecutor([])
 
         when:
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED,
-                true, readConcern, executor).withReadConcern(newWReadConcern)
+                true, readConcern, executor).withReadConcern(newReadConcern)
 
         then:
-        collection.getReadConcern() == newWReadConcern
+        collection.getReadConcern() == newReadConcern
         expect collection, isTheSameAs(new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED,
-                true, newWReadConcern, executor))
+                true, newReadConcern, executor))
     }
 
     def 'should use CountOperation correctly'() {
@@ -1314,6 +1314,142 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         request.getDocument().containsKey('_id')
+    }
+
+    def 'should validate the client session correctly'() {
+        given:
+        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED,
+                true, readConcern, Stub(OperationExecutor))
+
+        when:
+        collection.aggregate(null, [Document.parse('{$match:{}}')])
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.bulkWrite(null, [new InsertOneModel(new Document())])
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.count((ClientSession) null)
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.createIndex(null, new Document())
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.createIndexes(null, [Stub(IndexModel)])
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.deleteMany(null, new Document())
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.deleteOne(null, new Document())
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.distinct(null, 'field', Document)
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.distinct(null, new Document(), Document)
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.drop((ClientSession) null)
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.dropIndex(null, 'index')
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.dropIndex(null, new Document())
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.dropIndexes((ClientSession) null)
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.find((ClientSession) null)
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.findOneAndDelete(null, new Document())
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.findOneAndReplace(null, new Document(), new Document())
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.findOneAndUpdate(null, new Document(), new Document())
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.insertMany(null, [new Document()])
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.insertOne(null, new Document())
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.listIndexes((ClientSession) null)
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.mapReduce(null, '')
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.renameCollection(null, new MongoNamespace('db', 'coll'))
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.replaceOne(null, new Document(), new Document())
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.updateMany(null, new Document(), Document.parse('{$set: {a: 1}}'))
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.updateOne(null, new Document(), Document.parse('{$set: {a: 1}}'))
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        collection.watch((ClientSession) null)
+        then:
+        thrown(IllegalArgumentException)
     }
 
 }

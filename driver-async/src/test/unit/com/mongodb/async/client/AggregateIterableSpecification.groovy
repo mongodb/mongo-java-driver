@@ -29,7 +29,6 @@ import com.mongodb.client.model.Collation
 import com.mongodb.operation.AggregateOperation
 import com.mongodb.operation.AggregateToCollectionOperation
 import com.mongodb.operation.AsyncOperationExecutor
-import com.mongodb.operation.FindOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
@@ -65,7 +64,7 @@ class AggregateIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor, cursor, cursor, cursor, cursor]);
         def pipeline = [new Document('$match', 1)]
-        def aggregationIterable = new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern,
+        def aggregationIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
                 writeConcern, executor, pipeline)
 
         when: 'default input should be as expected'
@@ -116,7 +115,7 @@ class AggregateIterableSpecification extends Specification {
         def pipeline = [new Document('$match', 1), new Document('$out', collectionName)]
 
         when: 'aggregation includes $out'
-        new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
+        new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
                 pipeline)
                 .batchSize(99)
                 .maxAwaitTime(99, MILLISECONDS)
@@ -128,10 +127,10 @@ class AggregateIterableSpecification extends Specification {
                 .comment('this is a comment')
                 .into([]) { result, t -> }
 
-        def operation = executor.getWriteOperation() as AggregateToCollectionOperation
+        def operation = executor.getReadOperation() as AggregateToCollectionThenFindOperation
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
+        expect operation.getAggregateToCollectionOperation(), isTheSameAs(new AggregateToCollectionOperation(namespace,
                 [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))], writeConcern)
                 .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
@@ -140,7 +139,7 @@ class AggregateIterableSpecification extends Specification {
                 .comment('this is a comment'))
 
         when: 'the subsequent read should have the batchSize set'
-        operation = executor.getReadOperation() as FindOperation<Document>
+        operation = operation.getFindOperation()
 
         then: 'should use the correct settings'
         operation.getNamespace() == collectionNamespace
@@ -149,7 +148,7 @@ class AggregateIterableSpecification extends Specification {
 
         when: 'toCollection should work as expected'
         def futureResultCallback = new FutureResultCallback()
-        new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
+        new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
                 pipeline)
                 .allowDiskUse(true)
                 .collation(collation)
@@ -174,8 +173,8 @@ class AggregateIterableSpecification extends Specification {
         def codecRegistry = fromProviders([new ValueCodecProvider(), new BsonValueCodecProvider()])
         def executor = new TestOperationExecutor([new MongoException('failure')])
         def pipeline = [new BsonDocument('$match', new BsonInt32(1))]
-        def aggregationIterable = new AggregateIterableImpl(namespace, Document, BsonDocument, codecRegistry, readPreference, readConcern,
-                writeConcern, executor, pipeline)
+        def aggregationIterable = new AggregateIterableImpl(null, namespace, Document, BsonDocument, codecRegistry, readPreference,
+                readConcern, writeConcern, executor, pipeline)
 
         def futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
 
@@ -194,7 +193,7 @@ class AggregateIterableSpecification extends Specification {
 
         when: 'a codec is missing'
         futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
-        new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference,  readConcern, writeConcern, executor,
+        new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,  readConcern, writeConcern, executor,
                 pipeline)
                 .into([], futureResultCallback)
         futureResultCallback.get()
@@ -222,7 +221,7 @@ class AggregateIterableSpecification extends Specification {
             }
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor()]);
-        def mongoIterable = new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
+        def mongoIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
                 readConcern, writeConcern, executor, [new BsonDocument('$match', new BsonInt32(1))])
 
         when:
@@ -285,7 +284,7 @@ class AggregateIterableSpecification extends Specification {
 
     def 'should check variables using notNull'() {
         given:
-        def mongoIterable = new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
+        def mongoIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
                 readConcern, writeConcern, Stub(AsyncOperationExecutor), [Document.parse('{$match: 1}')])
         def callback = Stub(SingleResultCallback)
         def block = Stub(Block)
@@ -329,7 +328,7 @@ class AggregateIterableSpecification extends Specification {
 
         when:
         def results = new FutureResultCallback()
-        mongoIterable = new AggregateIterableImpl(namespace, Document, Document, codecRegistry, readPreference,
+        mongoIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
                 readConcern, writeConcern, Stub(AsyncOperationExecutor), [null])
         mongoIterable.into(target, results)
         results.get()

@@ -19,7 +19,6 @@ package com.mongodb.async.client
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.WriteConcern
-import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CreateCollectionOptions
@@ -33,6 +32,7 @@ import com.mongodb.operation.CommandReadOperation
 import com.mongodb.operation.CreateCollectionOperation
 import com.mongodb.operation.CreateViewOperation
 import com.mongodb.operation.DropDatabaseOperation
+import com.mongodb.session.ClientSession
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -45,6 +45,7 @@ import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.primaryPreferred
 import static com.mongodb.ReadPreference.secondary
+import static com.mongodb.async.client.TestHelper.execute
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
 
@@ -151,103 +152,116 @@ class MongoDatabaseSpecification extends Specification {
         given:
         def command = new BsonDocument('command', new BsonInt32(1))
         def executor = new TestOperationExecutor([null, null, null, null])
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference,  writeConcern, false, readConcern, executor)
-        def futureResultCallback = new FutureResultCallback<Document>()
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, readConcern, executor)
+        def runCommandMethod = database.&runCommand
 
         when:
-        database.runCommand(command, futureResultCallback)
-        futureResultCallback.get()
-
-        then:
+        execute(runCommandMethod, session, command)
         def operation = executor.getReadOperation() as CommandReadOperation<Document>
 
         then:
         operation.command == command
+        executor.getClientSession() == session
         executor.getReadPreference() == primary()
 
         when:
-        futureResultCallback = new FutureResultCallback<Document>()
-        database.runCommand(command, primaryPreferred(), futureResultCallback)
+        execute(runCommandMethod, session, command, primaryPreferred())
         operation = executor.getReadOperation() as CommandReadOperation<Document>
-        futureResultCallback.get()
 
         then:
         operation.command == command
+        executor.getClientSession() == session
         executor.getReadPreference() == primaryPreferred()
 
         when:
-        futureResultCallback = new FutureResultCallback<BsonDocument>()
-        database.runCommand(command, BsonDocument, futureResultCallback)
+        execute(runCommandMethod, session, command, BsonDocument)
         operation = executor.getReadOperation() as CommandReadOperation<BsonDocument>
-        futureResultCallback.get()
 
         then:
         operation.command == command
+        executor.getClientSession() == session
         executor.getReadPreference() == primary()
 
         when:
-        futureResultCallback = new FutureResultCallback<BsonDocument>()
-        database.runCommand(command, primaryPreferred(), BsonDocument, futureResultCallback)
+        execute(runCommandMethod, session, command, primaryPreferred(), BsonDocument)
         operation = executor.getReadOperation() as CommandReadOperation<BsonDocument>
-        futureResultCallback.get()
 
         then:
         operation.command == command
+        executor.getClientSession() == session
         executor.getReadPreference() == primaryPreferred()
+
+        where:
+        session << [null, Stub(ClientSession)]
     }
 
     def 'should use DropDatabaseOperation correctly'() {
         given:
         def executor = new TestOperationExecutor([null])
-        def futureResultCallback = new FutureResultCallback<Void>()
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, readConcern, executor)
+        def dropMethod = database.&drop
 
         when:
-        new MongoDatabaseImpl(name, codecRegistry, readPreference,  writeConcern, false, readConcern, executor)
-                .drop(futureResultCallback)
+        execute(dropMethod, session)
         def operation = executor.getWriteOperation() as DropDatabaseOperation
-        futureResultCallback.get()
 
         then:
         expect operation, isTheSameAs(new DropDatabaseOperation(name, writeConcern))
+        executor.getClientSession() == session
+
+        where:
+        session << [null, Stub(ClientSession)]
     }
 
     def 'should use ListCollectionsOperation correctly'() {
         given:
         def executor = new TestOperationExecutor([null, null, null])
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference,  writeConcern, false, readConcern, executor)
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, readConcern, executor)
+        def listCollectionsMethod = database.&listCollections
+        def listCollectionNamesMethod = database.&listCollectionNames
 
         when:
-        def listCollectionIterable = database.listCollections()
+        def listCollectionIterable = execute(listCollectionsMethod, session)
 
         then:
-        expect listCollectionIterable, isTheSameAs(new ListCollectionsIterableImpl<Document>(name, Document, codecRegistry, primary(),
-                executor))
-
-        when:
-        listCollectionIterable = database.listCollections(BsonDocument)
-
-        then:
-        expect listCollectionIterable, isTheSameAs(new ListCollectionsIterableImpl<BsonDocument>(name, BsonDocument, codecRegistry,
+        expect listCollectionIterable, isTheSameAs(new ListCollectionsIterableImpl<Document>(session, name, Document, codecRegistry,
                 primary(), executor))
+
+        when:
+        listCollectionIterable = execute(listCollectionsMethod, session, BsonDocument)
+
+        then:
+        expect listCollectionIterable, isTheSameAs(new ListCollectionsIterableImpl<BsonDocument>(session, name, BsonDocument, codecRegistry,
+                primary(), executor))
+
+        when:
+        def listCollectionNamesIterable = execute(listCollectionNamesMethod, session)
+
+        then:
+        // listCollectionNamesIterable is an instance of a MappingIterable, so have to get the mapped iterable inside it
+        expect listCollectionNamesIterable.getMapped(), isTheSameAs(new ListCollectionsIterableImpl<BsonDocument>(session, name,
+                BsonDocument, codecRegistry, primary(), executor))
+
+        where:
+        session << [null, Stub(ClientSession)]
     }
 
     def 'should use CreateCollectionOperation correctly'() {
         given:
         def collectionName = 'collectionName'
         def executor = new TestOperationExecutor([null, null])
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference,  writeConcern, false, readConcern, executor)
-        def futureResultCallback = new FutureResultCallback<Void>()
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, readConcern, executor)
+        def createCollectionMethod = database.&createCollection
 
         when:
-        database.createCollection(collectionName, futureResultCallback)
-        futureResultCallback.get()
+        execute(createCollectionMethod, session, collectionName)
         def operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:
         expect operation, isTheSameAs(new CreateCollectionOperation(name, collectionName, writeConcern))
+        executor.getClientSession() == session
 
         when:
-        futureResultCallback = new FutureResultCallback<Void>()
         def createCollectionOptions = new CreateCollectionOptions()
                 .autoIndex(false)
                 .capped(true)
@@ -261,12 +275,12 @@ class MongoDatabaseSpecification extends Specification {
                 .validationAction(ValidationAction.WARN))
                 .collation(collation)
 
-        database.createCollection(collectionName, createCollectionOptions, futureResultCallback)
-        futureResultCallback.get()
+        execute(createCollectionMethod, session, collectionName, createCollectionOptions)
         operation = executor.getWriteOperation() as CreateCollectionOperation
 
         then:
         expect operation, isTheSameAs(new CreateCollectionOperation(name, collectionName, writeConcern)
+                .collation(collation)
                 .autoIndex(false)
                 .capped(true)
                 .usePowerOf2Sizes(true)
@@ -276,38 +290,43 @@ class MongoDatabaseSpecification extends Specification {
                 .indexOptionDefaults(BsonDocument.parse('{ storageEngine : { mmapv1 : {}}}'))
                 .validator(BsonDocument.parse('{level: {$gte: 10}}'))
                 .validationLevel(ValidationLevel.MODERATE)
-                .validationAction(ValidationAction.WARN)
-                .collation(collation))
+                .validationAction(ValidationAction.WARN))
+        executor.getClientSession() == session
+
+        where:
+        session << [null, Stub(ClientSession)]
     }
 
     def 'should use CreateViewOperation correctly'() {
         given:
         def viewName = 'view1'
         def viewOn = 'col1'
-        def pipeline = [new Document('$match', new Document('x', true))];
+        def pipeline = [new Document('$match', new Document('x', true))]
         def writeConcern = WriteConcern.JOURNALED
         def executor = new TestOperationExecutor([null, null])
-        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference,  writeConcern, false, readConcern, executor)
-        def futureResultCallback = new FutureResultCallback<Void>()
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, readConcern, executor)
+        def createViewMethod = database.&createView
 
         when:
-        database.createView(viewName, viewOn, pipeline, futureResultCallback)
-        futureResultCallback.get()
+        execute(createViewMethod, session, viewName, viewOn, pipeline)
         def operation = executor.getWriteOperation() as CreateViewOperation
 
         then:
         expect operation, isTheSameAs(new CreateViewOperation(name, viewName, viewOn,
                 [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern))
+        executor.getClientSession() == session
 
         when:
-        futureResultCallback = new FutureResultCallback<Void>()
-        database.createView(viewName, viewOn, pipeline, new CreateViewOptions().collation(collation), futureResultCallback)
-        futureResultCallback.get()
+        execute(createViewMethod, session, viewName, viewOn, pipeline, new CreateViewOptions().collation(collation))
         operation = executor.getWriteOperation() as CreateViewOperation
 
         then:
         expect operation, isTheSameAs(new CreateViewOperation(name, viewName, viewOn,
                 [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern).collation(collation))
+        executor.getClientSession() == session
+
+        where:
+        session << [null, Stub(ClientSession)]
     }
 
     def 'should validate the createView pipeline data correctly'() {
@@ -345,6 +364,49 @@ class MongoDatabaseSpecification extends Specification {
 
         then:
         expect collection, isTheSameAs(expectedCollection)
+    }
+
+    def 'should validate the client session correctly'() {
+        given:
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference,  writeConcern,
+                false, readConcern, Stub(AsyncOperationExecutor))
+        def callback = Stub(SingleResultCallback)
+
+        when:
+        database.createCollection(null, 'newColl', callback)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        database.createView(null, 'newView', [Document.parse('{$match: {}}')], callback)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        database.drop(null, callback)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        database.listCollectionNames(null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        database.listCollections(null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        database.runCommand(null, Document.parse('{}'), callback)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
 }
