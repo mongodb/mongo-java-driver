@@ -57,7 +57,7 @@ class CommandMessageSpecification extends Specification {
         def byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
         def messageHeader = new MessageHeader(byteBuf, 512)
         messageHeader.opCode == OpCode.OP_MSG.value
-        messageHeader.requestId == RequestMessage.currentGlobalId - 1
+        messageHeader.requestId < RequestMessage.currentGlobalId
         messageHeader.responseTo == 0
 
         def expectedCommandDocument = command.clone()
@@ -167,13 +167,14 @@ class CommandMessageSpecification extends Specification {
 
         then:
         messageHeader.opCode == OpCode.OP_MSG.value
-        messageHeader.requestId == RequestMessage.currentGlobalId - 1
+        messageHeader.requestId < RequestMessage.currentGlobalId
         messageHeader.responseTo == 0
         byteBuf.getInt() == 0
         payload.getPosition() == pos1
         payload.hasAnotherSplit()
 
         when:
+        def initialRequestId = messageHeader.requestId
         payload = payload.getNextSplit()
         message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
                 false, payload, fieldNameValidator)
@@ -184,7 +185,8 @@ class CommandMessageSpecification extends Specification {
 
         then:
         messageHeader.opCode == OpCode.OP_MSG.value
-        messageHeader.requestId == RequestMessage.currentGlobalId - 1
+        messageHeader.requestId < RequestMessage.currentGlobalId
+        messageHeader.requestId > initialRequestId
         messageHeader.responseTo == 0
         byteBuf.getInt() == 1 << 1
         payload.getPosition() == pos2

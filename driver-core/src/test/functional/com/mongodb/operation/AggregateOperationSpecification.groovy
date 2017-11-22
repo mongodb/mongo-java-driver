@@ -31,6 +31,7 @@ import com.mongodb.binding.ReadBinding
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.Filters
+import com.mongodb.client.test.CollectionHelper
 import com.mongodb.connection.AsyncConnection
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.Connection
@@ -195,15 +196,14 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     def 'should support changeStreams'() {
         given:
         def expected = [createExpectedChangeNotification(namespace, 0), createExpectedChangeNotification(namespace, 1)]
-
         def pipeline = ['{$changeStream: {}}', '{$project: {"_id.clusterTime": 0, "_id.uuid": 0}}'].collect { BsonDocument.parse(it) }
         def operation = new AggregateOperation<BsonDocument>(namespace, pipeline, new BsonDocumentCodec())
+        def helper = getCollectionHelper()
 
         when:
-        getCollectionHelper().drop()
-        getCollectionHelper().create(getCollectionHelper().getNamespace().getCollectionName(), new CreateCollectionOptions())
+        helper.create(helper.getNamespace().getCollectionName(), new CreateCollectionOptions())
         def cursor = execute(operation, async)
-        getCollectionHelper().insertDocuments(['{_id: 0, a: 0}', '{_id: 1, a: 1}'].collect { BsonDocument.parse(it) })
+        helper.insertDocuments(['{_id: 0, a: 0}', '{_id: 1, a: 1}'].collect { BsonDocument.parse(it) })
 
         then:
         def next = next(cursor, async).collect { doc ->
@@ -214,6 +214,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
         cleanup:
         cursor?.close()
+        helper?.drop()
 
         where:
         async << [true, false]
