@@ -140,7 +140,7 @@ class GridFSFindIterableSpecification extends Specification {
                     count++
                     count == 1 ? cannedResults : null
                 }
-                next(_) >> { it[0].onResult(getResult(), null) }
+                next(_) >> { it.last().onResult(getResult(), null) }
             }
         }
         def executor = new TestOperationExecutor([batchCursor(), batchCursor(), batchCursor(), batchCursor()]);

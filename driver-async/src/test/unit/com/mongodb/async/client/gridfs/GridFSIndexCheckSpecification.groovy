@@ -22,6 +22,7 @@ import com.mongodb.async.SingleResultCallback
 import com.mongodb.async.client.FindIterable
 import com.mongodb.async.client.ListIndexesIterable
 import com.mongodb.async.client.MongoCollection
+import com.mongodb.session.ClientSession
 import org.bson.Document
 import spock.lang.Specification
 
@@ -36,7 +37,7 @@ class GridFSIndexCheckSpecification extends Specification {
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
         def findIterable = Mock(FindIterable)
-        def indexChecker = new GridFSIndexCheckImpl(filesCollection, chunksCollection)
+        def indexChecker = new GridFSIndexCheckImpl(clientSession, filesCollection, chunksCollection)
 
         when:
         indexChecker.checkAndCreateIndex(Stub(SingleResultCallback))
@@ -44,9 +45,16 @@ class GridFSIndexCheckSpecification extends Specification {
         then:
         1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
-        1 * filesCollection.find() >> findIterable
+        if (clientSession != null){
+            1 * filesCollection.find(clientSession) >> findIterable
+        } else {
+            1 * filesCollection.find() >> findIterable
+        }
         1 * findIterable.projection(projection) >> findIterable
-        1 * findIterable.first(_) >> { it[0].onResult(new Document(), null) }
+        1 * findIterable.first(_) >> { it.last().onResult(new Document(), null) }
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should not do anything if indexes exist'() {
@@ -55,7 +63,7 @@ class GridFSIndexCheckSpecification extends Specification {
         def chunksCollection = Mock(MongoCollection)
         def listIndexesIterable = Mock(ListIndexesIterable)
         def findIterable = Mock(FindIterable)
-        def indexChecker = new GridFSIndexCheckImpl(filesCollection, chunksCollection)
+        def indexChecker = new GridFSIndexCheckImpl(clientSession, filesCollection, chunksCollection)
 
         when:
         indexChecker.checkAndCreateIndex(Stub(SingleResultCallback))
@@ -63,27 +71,42 @@ class GridFSIndexCheckSpecification extends Specification {
         then:
         1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
-        1 * filesCollection.find() >> findIterable
+        if (clientSession != null){
+            1 * filesCollection.find(clientSession) >> findIterable
+        } else {
+            1 * filesCollection.find() >> findIterable
+        }
         1 * findIterable.projection(projection) >> findIterable
-        1 * findIterable.first(_) >> { it[0].onResult(null, null) }
+        1 * findIterable.first(_) >> { it.last().onResult(null, null) }
 
         // Files Index check
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
-        1 * filesCollection.listIndexes() >> listIndexesIterable
+        if (clientSession != null){
+            1 * filesCollection.listIndexes(clientSession) >> listIndexesIterable
+        } else {
+            1 * filesCollection.listIndexes() >> listIndexesIterable
+        }
         1 * listIndexesIterable.into(_, _) >> {
-            it[1].onResult([Document.parse('{"key": {"_id": 1}}'),
+            it.last().onResult([Document.parse('{"key": {"_id": 1}}'),
                             Document.parse('{"key": {"filename": 1, "uploadDate": 1 }}')], null)
         }
-        0 * filesCollection.createIndex(_, _)
+        0 * filesCollection.createIndex(*_)
 
         // Chunks Index check
         1 * chunksCollection.withReadPreference(primary()) >> chunksCollection
-        1 * chunksCollection.listIndexes() >> listIndexesIterable
+        if (clientSession != null){
+            1 * chunksCollection.listIndexes(clientSession) >> listIndexesIterable
+        } else {
+            1 * chunksCollection.listIndexes() >> listIndexesIterable
+        }
         1 * listIndexesIterable.into(_, _) >> {
-            it[1].onResult([Document.parse('{"key": {"_id": 1}}'),
+            it.last().onResult([Document.parse('{"key": {"_id": 1}}'),
                             Document.parse('{"key": {"files_id": 1, "n": 1 }}')], null)
         }
-        0 * chunksCollection.createIndex(_, _, _)
+        0 * chunksCollection.createIndex(*_)
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should create a chunks index but not a files index if it exists'() {
@@ -92,7 +115,7 @@ class GridFSIndexCheckSpecification extends Specification {
         def chunksCollection = Mock(MongoCollection)
         def listIndexesIterable = Mock(ListIndexesIterable)
         def findIterable = Mock(FindIterable)
-        def indexChecker = new GridFSIndexCheckImpl(filesCollection, chunksCollection)
+        def indexChecker = new GridFSIndexCheckImpl(clientSession, filesCollection, chunksCollection)
 
         when:
         indexChecker.checkAndCreateIndex(Stub(SingleResultCallback))
@@ -100,25 +123,46 @@ class GridFSIndexCheckSpecification extends Specification {
         then:
         1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
-        1 * filesCollection.find() >> findIterable
+        if (clientSession != null){
+            1 * filesCollection.find(clientSession) >> findIterable
+        } else {
+            1 * filesCollection.find() >> findIterable
+        }
         1 * findIterable.projection(projection) >> findIterable
-        1 * findIterable.first(_) >> { it[0].onResult(null, null) }
+        1 * findIterable.first(_) >> { it.last().onResult(null, null) }
 
         // Files Index check
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
-        1 * filesCollection.listIndexes() >> listIndexesIterable
+        if (clientSession != null){
+            1 * filesCollection.listIndexes(clientSession) >> listIndexesIterable
+        } else {
+            1 * filesCollection.listIndexes() >> listIndexesIterable
+        }
         1 * listIndexesIterable.into(_, _) >> {
-            it[1].onResult([Document.parse('{"key": {"_id": 1}}'),
+            it.last().onResult([Document.parse('{"key": {"_id": 1}}'),
                             Document.parse('{"key": {"filename": 1, "uploadDate": 1 }}')], null)
         }
-        0 * filesCollection.createIndex(_, _)
+        0 * filesCollection.createIndex(*_)
 
         // Chunks Index check
         1 * chunksCollection.withReadPreference(primary()) >> chunksCollection
-        1 * chunksCollection.listIndexes() >> listIndexesIterable
-        1 * listIndexesIterable.into(_, _) >> { it[1].onResult([], null) }
-        1 * chunksCollection.createIndex({ index -> index == Document.parse('{"files_id": 1, "n": 1}') },
-                { indexOptions -> indexOptions.isUnique() }, _) >> { it[2].onResult('files_id_1', null) }
+        if (clientSession != null){
+            1 * chunksCollection.listIndexes(clientSession) >> listIndexesIterable
+        } else {
+            1 * chunksCollection.listIndexes() >> listIndexesIterable
+        }
+        1 * listIndexesIterable.into(_, _) >> { it.last().onResult([], null) }
+        if (clientSession != null) {
+            1 * chunksCollection.createIndex(clientSession, { index -> index == Document.parse('{"files_id": 1, "n": 1}') },
+                    { indexOptions -> indexOptions.isUnique() }, _) >> { it.last().onResult('files_id_1', null) }
+
+        } else {
+            1 * chunksCollection.createIndex({ index -> index == Document.parse('{"files_id": 1, "n": 1}') },
+                    { indexOptions -> indexOptions.isUnique() }, _) >> { it.last().onResult('files_id_1', null) }
+        }
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should create a files index but not a chunks index if it exists'() {
@@ -127,34 +171,53 @@ class GridFSIndexCheckSpecification extends Specification {
         def chunksCollection = Mock(MongoCollection)
         def listIndexesIterable = Mock(ListIndexesIterable)
         def findIterable = Mock(FindIterable)
-        def indexChecker = new GridFSIndexCheckImpl(filesCollection, chunksCollection)
+        def indexChecker = new GridFSIndexCheckImpl(clientSession, filesCollection, chunksCollection)
 
         when:
         indexChecker.checkAndCreateIndex(Stub(SingleResultCallback))
 
         then:
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
-        1 * filesCollection.find() >> findIterable
+        if (clientSession != null){
+            1 * filesCollection.find(clientSession) >> findIterable
+        } else {
+            1 * filesCollection.find() >> findIterable
+        }
         1 * findIterable.projection(projection) >> findIterable
-        1 * findIterable.first(_) >> { it[0].onResult(null, null) }
+        1 * findIterable.first(_) >> { it.last().onResult(null, null) }
 
         // Files Index check
         1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
-        1 * filesCollection.listIndexes() >> listIndexesIterable
-        1 * listIndexesIterable.into(_, _) >> { it[1].onResult([], null) }
-        1 * filesCollection.createIndex({ index -> index == Document.parse('{"filename": 1, "uploadDate": 1 }') }, _) >> {
-            it[1].onResult('filename_1', null)
+        if (clientSession != null){
+            1 * filesCollection.listIndexes(clientSession) >> listIndexesIterable
+        } else {
+            1 * filesCollection.listIndexes() >> listIndexesIterable
+        }
+        1 * listIndexesIterable.into(_, _) >> { it.last().onResult([], null) }
+        if (clientSession != null){
+            1 * filesCollection.createIndex(clientSession, { index -> index == Document.parse('{"filename": 1, "uploadDate": 1 }') }, _) >>
+                    { it.last().onResult('filename_1', null) }
+        } else {
+            1 * filesCollection.createIndex({ index -> index == Document.parse('{"filename": 1, "uploadDate": 1 }') }, _) >>
+                    { it.last().onResult('filename_1', null) }
         }
 
         // Chunks Index check
         1 * chunksCollection.withReadPreference(primary()) >> chunksCollection
-        1 * chunksCollection.listIndexes() >> listIndexesIterable
+        if (clientSession != null){
+            1 * chunksCollection.listIndexes(clientSession) >> listIndexesIterable
+        } else {
+            1 * chunksCollection.listIndexes() >> listIndexesIterable
+        }
         1 * listIndexesIterable.into(_, _) >> {
-            it[1].onResult([Document.parse('{"key": {"_id": 1}}'),
+            it.last().onResult([Document.parse('{"key": {"_id": 1}}'),
                             Document.parse('{"key": {"files_id": 1, "n": 1 }}')], null)
         }
-        0 * chunksCollection.createIndex(_, _, _)
+        0 * chunksCollection.createIndex(*_)
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should create indexes if empty files collection and no indexes'() {
@@ -163,7 +226,7 @@ class GridFSIndexCheckSpecification extends Specification {
         def chunksCollection = Mock(MongoCollection)
         def listIndexesIterable = Mock(ListIndexesIterable)
         def findIterable = Mock(FindIterable)
-        def indexChecker = new GridFSIndexCheckImpl(filesCollection, chunksCollection)
+        def indexChecker = new GridFSIndexCheckImpl(clientSession, filesCollection, chunksCollection)
 
         when:
         indexChecker.checkAndCreateIndex(Stub(SingleResultCallback))
@@ -171,25 +234,50 @@ class GridFSIndexCheckSpecification extends Specification {
         then:
         1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
-        1 * filesCollection.find() >> findIterable
+        if (clientSession != null){
+            1 * filesCollection.find(clientSession) >> findIterable
+        } else {
+            1 * filesCollection.find() >> findIterable
+        }
         1 * findIterable.projection(projection) >> findIterable
-        1 * findIterable.first(_) >> { it[0].onResult(null, null) }
+        1 * findIterable.first(_) >> { it.last().onResult(null, null) }
 
         // Files Index check
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
-        1 * filesCollection.listIndexes() >> listIndexesIterable
-        1 * listIndexesIterable.into(_, _) >> { it[1].onResult([], null) }
-        1 * filesCollection.createIndex({ index -> index == Document.parse('{"filename": 1, "uploadDate": 1 }') }, _) >> {
-            it[1].onResult('filename_1', null)
+        if (clientSession != null){
+            1 * filesCollection.listIndexes(clientSession) >> listIndexesIterable
+        } else {
+            1 * filesCollection.listIndexes() >> listIndexesIterable
+        }
+        1 * listIndexesIterable.into(_, _) >> { it.last().onResult([], null) }
+        if (clientSession != null){
+            1 * filesCollection.createIndex(clientSession, { index -> index == Document.parse('{"filename": 1, "uploadDate": 1 }') }, _) >>
+                    { it.last().onResult('filename_1', null) }
+        } else {
+            1 * filesCollection.createIndex({ index -> index == Document.parse('{"filename": 1, "uploadDate": 1 }') }, _) >>
+                    { it.last().onResult('filename_1', null) }
         }
 
         // Chunks Index check
         1 * chunksCollection.withReadPreference(primary()) >> chunksCollection
-        1 * chunksCollection.listIndexes() >> listIndexesIterable
-        1 * listIndexesIterable.into(_, _) >> { it[1].onResult([], null) }
-        1 * chunksCollection.createIndex({ index -> index == Document.parse('{"files_id": 1, "n": 1}') },
-                { indexOptions -> indexOptions.isUnique() }, _) >> { it[2].onResult('files_id_1', null) }
+        if (clientSession != null){
+            1 * chunksCollection.listIndexes(clientSession) >> listIndexesIterable
+        } else {
+            1 * chunksCollection.listIndexes() >> listIndexesIterable
+        }
+        1 * listIndexesIterable.into(_, _) >> { it.last().onResult([], null) }
 
+        if (clientSession != null) {
+            1 * chunksCollection.createIndex(clientSession, { index -> index == Document.parse('{"files_id": 1, "n": 1}') },
+                    { indexOptions -> indexOptions.isUnique() }, _) >> { it.last().onResult('files_id_1', null) }
+
+        } else {
+            1 * chunksCollection.createIndex({ index -> index == Document.parse('{"files_id": 1, "n": 1}') },
+                    { indexOptions -> indexOptions.isUnique() }, _) >> { it.last().onResult('files_id_1', null) }
+        }
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should propagate errors if error when checking files collection'() {
@@ -197,7 +285,7 @@ class GridFSIndexCheckSpecification extends Specification {
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
         def findIterable = Mock(FindIterable)
-        def indexChecker = new GridFSIndexCheckImpl(filesCollection, chunksCollection)
+        def indexChecker = new GridFSIndexCheckImpl(clientSession, filesCollection, chunksCollection)
         def futureResult = new FutureResultCallback()
 
         when:
@@ -206,9 +294,13 @@ class GridFSIndexCheckSpecification extends Specification {
         then:
         1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
-        1 * filesCollection.find() >> findIterable
+        if (clientSession != null){
+            1 * filesCollection.find(clientSession) >> findIterable
+        } else {
+            1 * filesCollection.find() >> findIterable
+        }
         1 * findIterable.projection(projection) >> findIterable
-        1 * findIterable.first(_) >> { it[0].onResult(null, exception) }
+        1 * findIterable.first(_) >> { it.last().onResult(null, exception) }
 
         when:
         futureResult.get()
@@ -216,6 +308,9 @@ class GridFSIndexCheckSpecification extends Specification {
         then:
         def ex = thrown(MongoException)
         ex == exception
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should propagate errors if error when checking has files index'() {
@@ -224,7 +319,7 @@ class GridFSIndexCheckSpecification extends Specification {
         def chunksCollection = Mock(MongoCollection)
         def listIndexesIterable = Mock(ListIndexesIterable)
         def findIterable = Mock(FindIterable)
-        def indexChecker = new GridFSIndexCheckImpl(filesCollection, chunksCollection)
+        def indexChecker = new GridFSIndexCheckImpl(clientSession, filesCollection, chunksCollection)
         def futureResult = new FutureResultCallback()
 
         when:
@@ -233,14 +328,22 @@ class GridFSIndexCheckSpecification extends Specification {
         then:
         1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
-        1 * filesCollection.find() >> findIterable
+        if (clientSession != null){
+            1 * filesCollection.find(clientSession) >> findIterable
+        } else {
+            1 * filesCollection.find() >> findIterable
+        }
         1 * findIterable.projection(projection) >> findIterable
-        1 * findIterable.first(_) >> { it[0].onResult(null, null) }
+        1 * findIterable.first(_) >> { it.last().onResult(null, null) }
 
         // Files Index check
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
-        1 * filesCollection.listIndexes() >> listIndexesIterable
-        1 * listIndexesIterable.into(_, _) >> { it[1].onResult(null, exception) }
+        if (clientSession != null){
+            1 * filesCollection.listIndexes(clientSession) >> listIndexesIterable
+        } else {
+            1 * filesCollection.listIndexes() >> listIndexesIterable
+        }
+        1 * listIndexesIterable.into(_, _) >> { it.last().onResult(null, exception) }
 
         when:
         futureResult.get()
@@ -248,6 +351,9 @@ class GridFSIndexCheckSpecification extends Specification {
         then:
         def ex = thrown(MongoException)
         ex == exception
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should propagate errors if error when creating files index'() {
@@ -256,7 +362,7 @@ class GridFSIndexCheckSpecification extends Specification {
         def chunksCollection = Mock(MongoCollection)
         def listIndexesIterable = Mock(ListIndexesIterable)
         def findIterable = Mock(FindIterable)
-        def indexChecker = new GridFSIndexCheckImpl(filesCollection, chunksCollection)
+        def indexChecker = new GridFSIndexCheckImpl(clientSession, filesCollection, chunksCollection)
         def futureResult = new FutureResultCallback()
 
         when:
@@ -265,16 +371,28 @@ class GridFSIndexCheckSpecification extends Specification {
         then:
         1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
-        1 * filesCollection.find() >> findIterable
+        if (clientSession != null){
+            1 * filesCollection.find(clientSession) >> findIterable
+        } else {
+            1 * filesCollection.find() >> findIterable
+        }
         1 * findIterable.projection(projection) >> findIterable
-        1 * findIterable.first(_) >> { it[0].onResult(null, null) }
+        1 * findIterable.first(_) >> { it.last().onResult(null, null) }
 
         // Files Index check
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
-        1 * filesCollection.listIndexes() >> listIndexesIterable
-        1 * listIndexesIterable.into(_, _) >> { it[1].onResult([], null) }
-        1 * filesCollection.createIndex({ index -> index == Document.parse('{"filename": 1, "uploadDate": 1 }') }, _) >> {
-            it[1].onResult(null, exception)
+        if (clientSession != null){
+            1 * filesCollection.listIndexes(clientSession) >> listIndexesIterable
+        } else {
+            1 * filesCollection.listIndexes() >> listIndexesIterable
+        }
+        1 * listIndexesIterable.into(_, _) >> { it.last().onResult([], null) }
+        if (clientSession != null){
+            1 * filesCollection.createIndex(clientSession, { index -> index == Document.parse('{"filename": 1, "uploadDate": 1 }') }, _) >>
+                    { it.last().onResult(null, exception) }
+        } else {
+            1 * filesCollection.createIndex({ index -> index == Document.parse('{"filename": 1, "uploadDate": 1 }') }, _) >>
+                    { it.last().onResult(null, exception) }
         }
 
         when:
@@ -283,6 +401,9 @@ class GridFSIndexCheckSpecification extends Specification {
         then:
         def ex = thrown(MongoException)
         ex == exception
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should propagate errors if error when checking has chunks index'() {
@@ -291,7 +412,7 @@ class GridFSIndexCheckSpecification extends Specification {
         def chunksCollection = Mock(MongoCollection)
         def listIndexesIterable = Mock(ListIndexesIterable)
         def findIterable = Mock(FindIterable)
-        def indexChecker = new GridFSIndexCheckImpl(filesCollection, chunksCollection)
+        def indexChecker = new GridFSIndexCheckImpl(clientSession, filesCollection, chunksCollection)
         def futureResult = new FutureResultCallback()
 
         when:
@@ -300,22 +421,38 @@ class GridFSIndexCheckSpecification extends Specification {
         then:
         1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
-        1 * filesCollection.find() >> findIterable
+        if (clientSession != null){
+            1 * filesCollection.find(clientSession) >> findIterable
+        } else {
+            1 * filesCollection.find() >> findIterable
+        }
         1 * findIterable.projection(projection) >> findIterable
-        1 * findIterable.first(_) >> { it[0].onResult(null, null) }
+        1 * findIterable.first(_) >> { it.last().onResult(null, null) }
 
         // Files Index check
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
-        1 * filesCollection.listIndexes() >> listIndexesIterable
-        1 * listIndexesIterable.into(_, _) >> { it[1].onResult([], null) }
-        1 * filesCollection.createIndex({ index -> index == Document.parse('{"filename": 1, "uploadDate": 1 }') }, _) >> {
-            it[1].onResult('filename_1', null)
+        if (clientSession != null){
+            1 * filesCollection.listIndexes(clientSession) >> listIndexesIterable
+        } else {
+            1 * filesCollection.listIndexes() >> listIndexesIterable
+        }
+        1 * listIndexesIterable.into(_, _) >> { it.last().onResult([], null) }
+        if (clientSession != null){
+            1 * filesCollection.createIndex(clientSession, { index -> index == Document.parse('{"filename": 1, "uploadDate": 1 }') }, _) >>
+                    { it.last().onResult('filename_1', null) }
+        } else {
+            1 * filesCollection.createIndex({ index -> index == Document.parse('{"filename": 1, "uploadDate": 1 }') }, _) >>
+                    { it.last().onResult('filename_1', null) }
         }
 
         // Chunks Index check
         1 * chunksCollection.withReadPreference(primary()) >> chunksCollection
-        1 * chunksCollection.listIndexes() >> listIndexesIterable
-        1 * listIndexesIterable.into(_, _) >> { it[1].onResult([], exception) }
+        if (clientSession != null){
+            1 * chunksCollection.listIndexes(clientSession) >> listIndexesIterable
+        } else {
+            1 * chunksCollection.listIndexes() >> listIndexesIterable
+        }
+        1 * listIndexesIterable.into(_, _) >> { it.last().onResult([], exception) }
 
         when:
         futureResult.get()
@@ -323,6 +460,9 @@ class GridFSIndexCheckSpecification extends Specification {
         then:
         def ex = thrown(MongoException)
         ex == exception
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should propagate errors if error when creating chunks index'() {
@@ -331,7 +471,7 @@ class GridFSIndexCheckSpecification extends Specification {
         def chunksCollection = Mock(MongoCollection)
         def listIndexesIterable = Mock(ListIndexesIterable)
         def findIterable = Mock(FindIterable)
-        def indexChecker = new GridFSIndexCheckImpl(filesCollection, chunksCollection)
+        def indexChecker = new GridFSIndexCheckImpl(clientSession, filesCollection, chunksCollection)
         def futureResult = new FutureResultCallback()
 
         when:
@@ -340,24 +480,46 @@ class GridFSIndexCheckSpecification extends Specification {
         then:
         1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
-        1 * filesCollection.find() >> findIterable
+        if (clientSession != null){
+            1 * filesCollection.find(clientSession) >> findIterable
+        } else {
+            1 * filesCollection.find() >> findIterable
+        }
         1 * findIterable.projection(projection) >> findIterable
-        1 * findIterable.first(_) >> { it[0].onResult(null, null) }
+        1 * findIterable.first(_) >> { it.last().onResult(null, null) }
 
         // Files Index check
         1 * filesCollection.withReadPreference(primary()) >> filesCollection
-        1 * filesCollection.listIndexes() >> listIndexesIterable
-        1 * listIndexesIterable.into(_, _) >> { it[1].onResult([], null) }
-        1 * filesCollection.createIndex({ index -> index == Document.parse('{"filename": 1, "uploadDate": 1 }') }, _) >> {
-            it[1].onResult('filename_1', null)
+        if (clientSession != null){
+            1 * filesCollection.listIndexes(clientSession) >> listIndexesIterable
+        } else {
+            1 * filesCollection.listIndexes() >> listIndexesIterable
         }
+        1 * listIndexesIterable.into(_, _) >> { it.last().onResult([], null) }
+        if (clientSession != null){
+            1 * filesCollection.createIndex(clientSession, { index -> index == Document.parse('{"filename": 1, "uploadDate": 1 }') }, _) >>
+                    { it.last().onResult('filename_1', null) }
+        } else {
+            1 * filesCollection.createIndex({ index -> index == Document.parse('{"filename": 1, "uploadDate": 1 }') }, _) >>
+                    { it.last().onResult('filename_1', null) }
+        }
+
 
         // Chunks Index check
         1 * chunksCollection.withReadPreference(primary()) >> chunksCollection
-        1 * chunksCollection.listIndexes() >> listIndexesIterable
-        1 * listIndexesIterable.into(_, _) >> { it[1].onResult([], null) }
-        1 * chunksCollection.createIndex({ index -> index == Document.parse('{"files_id": 1, "n": 1}') },
-                { indexOptions -> indexOptions.isUnique() }, _) >> { it[2].onResult(null, exception) }
+        if (clientSession != null){
+            1 * chunksCollection.listIndexes(clientSession) >> listIndexesIterable
+        } else {
+            1 * chunksCollection.listIndexes() >> listIndexesIterable
+        }
+        1 * listIndexesIterable.into(_, _) >> { it.last().onResult([], null) }
+        if (clientSession != null){
+            1 * chunksCollection.createIndex(clientSession, { index -> index == Document.parse('{"files_id": 1, "n": 1}') },
+                    { indexOptions -> indexOptions.isUnique() }, _) >> { it.last().onResult(null, exception) }
+        } else {
+            1 * chunksCollection.createIndex({ index -> index == Document.parse('{"files_id": 1, "n": 1}') },
+                    { indexOptions -> indexOptions.isUnique() }, _) >> { it.last().onResult(null, exception) }
+        }
 
         when:
         futureResult.get()
@@ -365,5 +527,8 @@ class GridFSIndexCheckSpecification extends Specification {
         then:
         def ex = thrown(MongoException)
         ex == exception
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 }
