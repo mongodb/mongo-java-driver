@@ -35,6 +35,7 @@ import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 import com.mongodb.operation.AsyncOperationExecutor
 import com.mongodb.operation.FindOperation
+import com.mongodb.session.ClientSession
 import org.bson.BsonDocument
 import org.bson.BsonObjectId
 import org.bson.BsonString
@@ -55,7 +56,7 @@ import static com.mongodb.async.client.gridfs.helpers.AsyncStreamHelper.toAsyncO
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
 
-@SuppressWarnings('ClosureAsLastMethodParameter')
+@SuppressWarnings(['ClosureAsLastMethodParameter', 'ClassSize'])
 class GridFSBucketSpecification extends Specification {
 
     def readConcern = ReadConcern.DEFAULT
@@ -173,11 +174,20 @@ class GridFSBucketSpecification extends Specification {
         def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
 
         when:
-        def stream = gridFSBucket.openUploadStream('filename')
+        def stream
+        if (clientSession != null){
+            stream = gridFSBucket.openUploadStream(clientSession, 'filename')
+        } else {
+            stream = gridFSBucket.openUploadStream('filename')
+        }
 
         then:
-        expect stream, isTheSameAs(new GridFSUploadStreamImpl(filesCollection, chunksCollection, stream.getId(), 'filename', 255,
-                null, new GridFSIndexCheckImpl(filesCollection, chunksCollection)), ['md5', 'closeAndWritingLock'])
+        expect stream, isTheSameAs(new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, stream.getId(),
+                'filename', 255, null, new GridFSIndexCheckImpl(clientSession, filesCollection, chunksCollection)),
+                ['md5', 'closeAndWritingLock'])
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should upload from stream'() {
@@ -190,17 +200,33 @@ class GridFSBucketSpecification extends Specification {
         def inputStream = toAsyncInputStream(new ByteArrayInputStream(contentBytes))
 
         when:
-        gridFSBucket.uploadFromStream('filename', inputStream, Stub(SingleResultCallback))
+        if (clientSession != null){
+            gridFSBucket.uploadFromStream(clientSession, 'filename', inputStream, Stub(SingleResultCallback))
+        } else {
+            gridFSBucket.uploadFromStream('filename', inputStream, Stub(SingleResultCallback))
+        }
 
         then:
         1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(_) >> filesCollection
-        1 * filesCollection.find() >> findIterable
+        if (clientSession != null){
+            1 * filesCollection.find(clientSession) >> findIterable
+        } else {
+            1 * filesCollection.find() >> findIterable
+        }
         1 * findIterable.projection(new Document('_id', 1)) >> findIterable
-        1 * findIterable.first(_) >> { it[0].onResult(new Document(), null) }
+        1 * findIterable.first(_) >> { it.last().onResult(new Document(), null) }
 
-        1 * chunksCollection.insertOne(_, _) >> { it[1].onResult(null, null) }
-        1 * filesCollection.insertOne(_, _)
+        if (clientSession != null){
+            1 * chunksCollection.insertOne(clientSession, _, _) >> { it.last().onResult(null, null) }
+            1 * filesCollection.insertOne(clientSession, _, _)
+        } else {
+            1 * chunksCollection.insertOne(_, _) >> { it.last().onResult(null, null) }
+            1 * filesCollection.insertOne(_, _)
+        }
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should clean up any chunks when upload from stream throws an IOException'() {
@@ -210,27 +236,44 @@ class GridFSBucketSpecification extends Specification {
         def chunksCollection = Mock(MongoCollection)
         def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
         def inputStream = Mock(AsyncInputStream) {
-            2 * read(_, _) >> { it[0].put(new byte[255]); it[1].onResult(255, null) } >> {
-                it[1].onResult(null, new IOException('stream failure'))
+            2 * read(_, _) >> { it[0].put(new byte[255]); it.last().onResult(255, null) } >> {
+                it.last().onResult(null, new IOException('stream failure'))
             }
         }
         def futureResult = new FutureResultCallback()
 
         when:
-        gridFSBucket.uploadFromStream('filename', inputStream, futureResult)
+        if (clientSession != null){
+            gridFSBucket.uploadFromStream(clientSession, 'filename', inputStream, futureResult)
+        } else {
+            gridFSBucket.uploadFromStream('filename', inputStream, futureResult)
+        }
 
         then:
         1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(_) >> filesCollection
-        1 * filesCollection.find() >> findIterable
+        if (clientSession != null){
+            1 * filesCollection.find(clientSession) >> findIterable
+        } else {
+            1 * filesCollection.find() >> findIterable
+        }
         1 * findIterable.projection(new Document('_id', 1)) >> findIterable
-        1 * findIterable.first(_) >> { it[0].onResult(new Document(), null) }
+        1 * findIterable.first(_) >> { it.last().onResult(new Document(), null) }
 
-        1 * chunksCollection.insertOne(_, _) >> { it[1].onResult(null, null) }
-        1 * chunksCollection.deleteMany(_, _) >> { it[1].onResult(null, null) }
+        if (clientSession != null) {
+            1 * chunksCollection.insertOne(clientSession, _, _) >> { it.last().onResult(null, null) }
+        } else {
+            1 * chunksCollection.insertOne(_, _) >> { it.last().onResult(null, null) }
+        }
+
+        if (clientSession != null) {
+            1 * chunksCollection.deleteMany(clientSession, _, _) >> { it.last().onResult(null, null) }
+        } else {
+            1 * chunksCollection.deleteMany(_, _) >> { it.last().onResult(null, null) }
+        }
 
         then:
-        0 * filesCollection.insertOne(_, _)
+        0 * filesCollection.insertOne(*_)
 
         when:
         futureResult.get()
@@ -238,8 +281,10 @@ class GridFSBucketSpecification extends Specification {
         then:
         def exception = thrown(MongoGridFSException)
         exception.getMessage() == 'IOException when reading from the InputStream'
-    }
 
+        where:
+        clientSession << [null, Stub(ClientSession)]
+    }
 
     def 'should not clean up any chunks when upload throws an exception'() {
         given:
@@ -249,23 +294,35 @@ class GridFSBucketSpecification extends Specification {
         def alternativeException = new MongoGridFSException('Alternative failure')
         def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
         def inputStream = Mock(AsyncInputStream) {
-            2 * read(_, _) >> { it[0].put(new byte[255]); it[1].onResult(255, null) } >> {
-                it[1].onResult(null, alternativeException)
+            2 * read(_, _) >> {  it[0].put(new byte[255]); it.last().onResult(255, null) } >> {
+                it.last().onResult(null, alternativeException)
             }
         }
         def futureResult = new FutureResultCallback()
 
         when:
-        gridFSBucket.uploadFromStream('filename', inputStream, futureResult)
+        if (clientSession != null){
+            gridFSBucket.uploadFromStream(clientSession, 'filename', inputStream, futureResult)
+        } else {
+            gridFSBucket.uploadFromStream('filename', inputStream, futureResult)
+        }
 
         then:
         1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(_) >> filesCollection
-        1 * filesCollection.find() >> findIterable
+        if (clientSession != null){
+            1 * filesCollection.find(clientSession) >> findIterable
+        } else {
+            1 * filesCollection.find() >> findIterable
+        }
         1 * findIterable.projection(new Document('_id', 1)) >> findIterable
-        1 * findIterable.first(_) >> { it[0].onResult(new Document(), null) }
+        1 * findIterable.first(_) >> { it.last().onResult(new Document(), null) }
 
-        1 * chunksCollection.insertOne(_, _) >> { it[1].onResult(null, null) }
+        if (clientSession != null){
+            1 * chunksCollection.insertOne(clientSession, _, _) >> { it.last().onResult(null, null) }
+        } else {
+            1 * chunksCollection.insertOne(_, _) >> { it.last().onResult(null, null) }
+        }
 
         when:
         futureResult.get()
@@ -273,6 +330,9 @@ class GridFSBucketSpecification extends Specification {
         then:
         def exception = thrown(MongoGridFSException)
         exception == alternativeException
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should propagate errors when writing to the uploadStream'() {
@@ -286,17 +346,30 @@ class GridFSBucketSpecification extends Specification {
         def futureResult = new FutureResultCallback()
 
         when:
-        gridFSBucket.uploadFromStream('filename', inputStream, futureResult)
+        if (clientSession != null){
+            gridFSBucket.uploadFromStream(clientSession, 'filename', inputStream, futureResult)
+        } else {
+            gridFSBucket.uploadFromStream('filename', inputStream, futureResult)
+        }
 
         then: 'When writing to the stream'
         1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(_) >> filesCollection
-        1 * filesCollection.find() >> findIterable
+        if (clientSession != null){
+            1 * filesCollection.find(clientSession) >> findIterable
+        } else {
+            1 * filesCollection.find() >> findIterable
+        }
         1 * findIterable.projection(new Document('_id', 1)) >> findIterable
-        1 * findIterable.first(_) >> { it[0].onResult(new Document(), null) }
+        1 * findIterable.first(_) >> { it.last().onResult(new Document(), null) }
 
-        1 * inputStream.read(_, _) >> { it[0].put(new byte[255]); it[1].onResult(255, null) }
-        1 * chunksCollection.insertOne(_, _) >> { it[1].onResult(null, uploadStreamException) }
+        1 * inputStream.read(_, _) >> { it[0].put(new byte[255]); it.last().onResult(255, null) }
+
+        if (clientSession != null){
+            1 * chunksCollection.insertOne(clientSession, _, _) >> { it.last().onResult(null, uploadStreamException) }
+        } else {
+            1 * chunksCollection.insertOne(_, _) >> { it.last().onResult(null, uploadStreamException) }
+        }
 
         when:
         futureResult.get()
@@ -312,13 +385,23 @@ class GridFSBucketSpecification extends Specification {
         then: 'When closing the stream'
         1 * filesCollection.withDocumentClass(Document) >> filesCollection
         1 * filesCollection.withReadPreference(_) >> filesCollection
-        1 * filesCollection.find() >> findIterable
+        if (clientSession != null){
+            1 * filesCollection.find(clientSession) >> findIterable
+        } else {
+            1 * filesCollection.find() >> findIterable
+        }
         1 * findIterable.projection(new Document('_id', 1)) >> findIterable
-        1 * findIterable.first(_) >> { it[0].onResult(new Document(), null) }
+        1 * findIterable.first(_) >> { it.last().onResult(new Document(), null) }
 
-        2 * inputStream.read(_, _) >> { it[0].put(new byte[255]); it[1].onResult(255, null) } >> { it[1].onResult(-1, null) }
-        1 * chunksCollection.insertOne(_, _) >> { it[1].onResult(null, null) }
-        1 * filesCollection.insertOne(_, _) >> { it[1].onResult(null, uploadStreamException) }
+        2 * inputStream.read(_, _) >> { it[0].put(new byte[255]); it.last().onResult(255, null) } >> { it.last().onResult(-1, null) }
+
+        if (clientSession != null){
+            1 * chunksCollection.insertOne(clientSession, _, _) >> { it.last().onResult(null, null) }
+            1 * filesCollection.insertOne(clientSession, _, _) >> { it.last().onResult(null, uploadStreamException) }
+        } else {
+            1 * chunksCollection.insertOne(_, _) >> { it.last().onResult(null, null) }
+            1 * filesCollection.insertOne(_, _) >> { it.last().onResult(null, uploadStreamException) }
+        }
 
         when:
         futureResult.get()
@@ -326,6 +409,9 @@ class GridFSBucketSpecification extends Specification {
         then:
         exception = thrown(MongoException)
         exception == uploadStreamException
+
+        where:
+        clientSession << [null]
     }
 
     def 'should create the expected GridFSDownloadStream'() {
@@ -338,14 +424,27 @@ class GridFSBucketSpecification extends Specification {
         def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
 
         when:
-        def stream = gridFSBucket.openDownloadStream(fileId.getValue())
+        def stream
+        if (clientSession != null){
+            stream = gridFSBucket.openDownloadStream(clientSession, fileId.getValue())
+        } else {
+            stream = gridFSBucket.openDownloadStream(fileId.getValue())
+        }
 
         then:
-        1 * filesCollection.find(_) >> findIterable
+        if (clientSession != null){
+            1 * filesCollection.find(clientSession) >> findIterable
+        } else {
+            1 * filesCollection.find() >> findIterable
+        }
+        1 * findIterable.filter(_) >> findIterable
 
         then:
-        expect stream, isTheSameAs(new GridFSDownloadStreamImpl(gridFSFindIterable, chunksCollection),
+        expect stream, isTheSameAs(new GridFSDownloadStreamImpl(clientSession, gridFSFindIterable, chunksCollection),
                 ['closeAndReadingLock', 'resultsQueue'])
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should download to stream'() {
@@ -367,24 +466,40 @@ class GridFSBucketSpecification extends Specification {
 
         when:
         def futureResult = new FutureResultCallback()
-        gridFSBucket.downloadToStream(fileId, asyncOutputStream, futureResult)
+        if (clientSession != null){
+            gridFSBucket.downloadToStream(clientSession, fileId, asyncOutputStream, futureResult)
+        } else {
+            gridFSBucket.downloadToStream(fileId, asyncOutputStream, futureResult)
+        }
         asyncOutputStream.close(Stub(SingleResultCallback))
         def size = futureResult.get()
 
         then:
-        1 * filesCollection.find(new Document('_id', fileId)) >> filesFindIterable
+        if (clientSession != null){
+            1 * filesCollection.find(clientSession) >> filesFindIterable
+        } else {
+            1 * filesCollection.find() >> filesFindIterable
+        }
+        1 * filesFindIterable.filter(new Document('_id', fileId)) >> filesFindIterable
 
         then:
-        1 * filesFindIterable.first(_) >> { it[0].onResult(fileInfo, null) }
-        1 * chunksCollection.find(_) >> chunksFindIterable
+        1 * filesFindIterable.first(_) >> { it.last().onResult(fileInfo, null) }
+        if (clientSession != null){
+            1 * chunksCollection.find(clientSession, _) >> chunksFindIterable
+        } else {
+            1 * chunksCollection.find(_) >> chunksFindIterable
+        }
         1 * chunksFindIterable.sort(_) >> chunksFindIterable
         1 * chunksFindIterable.batchSize(_) >> chunksFindIterable
-        1 * chunksFindIterable.batchCursor(_) >> { it[0].onResult(batchCursor, null) }
-        1 * batchCursor.next(_) >> { it[0].onResult([chunkDocument], null) }
+        1 * chunksFindIterable.batchCursor(_) >> { it.last().onResult(batchCursor, null) }
+        1 * batchCursor.next(_) >> { it.last().onResult([chunkDocument], null) }
 
         then:
         size == sizeOfStream
         outputStream.toByteArray() == tenBytes
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     @Unroll
@@ -406,29 +521,44 @@ class GridFSBucketSpecification extends Specification {
 
         when:
         def futureResult = new FutureResultCallback()
-        gridFSBucket.downloadToStream(fileId, asyncOutputStream, futureResult)
+        if (clientSession != null){
+            gridFSBucket.downloadToStream(clientSession, fileId, asyncOutputStream, futureResult)
+        } else {
+            gridFSBucket.downloadToStream(fileId, asyncOutputStream, futureResult)
+        }
         asyncOutputStream.close(Stub(SingleResultCallback))
         def size = futureResult.get()
 
         then:
-        1 * filesCollection.find(new Document('_id', fileId)) >> filesFindIterable
+        if (clientSession != null){
+            1 * filesCollection.find(clientSession) >> filesFindIterable
+        } else {
+            1 * filesCollection.find() >> filesFindIterable
+        }
+        1 * filesFindIterable.filter(new Document('_id', fileId)) >> filesFindIterable
 
         then:
-        1 * filesFindIterable.first(_) >> { it[0].onResult(fileInfo, null) }
-        1 * chunksCollection.find(_) >> chunksFindIterable
+        1 * filesFindIterable.first(_) >> { it.last().onResult(fileInfo, null) }
+        if (clientSession != null){
+            1 * chunksCollection.find(clientSession, _) >> chunksFindIterable
+        } else {
+            1 * chunksCollection.find(_) >> chunksFindIterable
+        }
         1 * chunksFindIterable.sort(_) >> chunksFindIterable
         1 * chunksFindIterable.batchSize(_) >> chunksFindIterable
-        1 * chunksFindIterable.batchCursor(_) >> { it[0].onResult(batchCursor, null) }
-        1 * batchCursor.next(_) >> { it[0].onResult([chunkDocument], null) }
+        1 * chunksFindIterable.batchCursor(_) >> { it.last().onResult(batchCursor, null) }
+        1 * batchCursor.next(_) >> { it.last().onResult([chunkDocument], null) }
 
         then:
         size == sizeOfStream
         outputStream.toByteArray() == tenBytes
 
         where:
-        description       | fileId
-        'using objectId'  | new ObjectId()
-        'using bsonValue' | new BsonString('1')
+        description                    | fileId              | clientSession
+        'using objectId'               | new ObjectId()      | null
+        'using bsonValue'              | new BsonString('1') | null
+        'using objectId with session'  | new ObjectId()      | Stub(ClientSession)
+        'using bsonValue with session' | new BsonString('1') | Stub(ClientSession)
     }
 
     def 'should download to stream by name'() {
@@ -450,26 +580,42 @@ class GridFSBucketSpecification extends Specification {
 
         when:
         def futureResult = new FutureResultCallback()
-        gridFSBucket.downloadToStream(filename, asyncOutputStream, futureResult)
+        if (clientSession != null){
+            gridFSBucket.downloadToStream(clientSession, filename, asyncOutputStream, futureResult)
+        } else {
+            gridFSBucket.downloadToStream(filename, asyncOutputStream, futureResult)
+        }
         asyncOutputStream.close(Stub(SingleResultCallback))
         def size = futureResult.get()
 
         then:
-        1 * filesCollection.find(new Document('filename', filename)) >> filesFindIterable
+        if (clientSession != null){
+            1 * filesCollection.find(clientSession) >> filesFindIterable
+        } else {
+            1 * filesCollection.find() >> filesFindIterable
+        }
+        1 * filesFindIterable.filter(new Document('filename', filename)) >> filesFindIterable
         1 * filesFindIterable.sort(_) >> filesFindIterable
         1 * filesFindIterable.skip(_) >> filesFindIterable
 
         then:
-        1 * filesFindIterable.first(_) >> { it[0].onResult(fileInfo, null) }
-        1 * chunksCollection.find(_) >> chunksFindIterable
+        1 * filesFindIterable.first(_) >> { it.last().onResult(fileInfo, null) }
+        if (clientSession != null){
+            1 * chunksCollection.find(clientSession, _) >> chunksFindIterable
+        } else {
+            1 * chunksCollection.find(_) >> chunksFindIterable
+        }
         1 * chunksFindIterable.sort(_) >> chunksFindIterable
         1 * chunksFindIterable.batchSize(_) >> chunksFindIterable
-        1 * chunksFindIterable.batchCursor(_) >> { it[0].onResult(batchCursor, null) }
-        1 * batchCursor.next(_) >> { it[0].onResult([chunkDocument], null) }
+        1 * chunksFindIterable.batchCursor(_) >> { it.last().onResult(batchCursor, null) }
+        1 * batchCursor.next(_) >> { it.last().onResult([chunkDocument], null) }
 
         then:
         size == sizeOfStream
         outputStream.toByteArray() == tenBytes
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should throw an exception if file not found'() {
@@ -482,14 +628,29 @@ class GridFSBucketSpecification extends Specification {
 
         when:
         def futureResult = new FutureResultCallback()
-        def stream = gridFSBucket.openDownloadStream(fileId)
+
+        def stream
+        if (clientSession != null){
+            stream = gridFSBucket.openDownloadStream(clientSession, fileId)
+        } else {
+            stream = gridFSBucket.openDownloadStream(fileId)
+        }
         stream.read(ByteBuffer.wrap(new byte[10]), futureResult)
         futureResult.get()
 
         then:
-        1 * filesCollection.find(new Document('_id', fileId)) >> findIterable
-        1 * findIterable.first(_) >> { it[0].onResult(null, null) }
+
+        if (clientSession != null){
+            1 * filesCollection.find(clientSession) >> findIterable
+        } else {
+            1 * filesCollection.find() >> findIterable
+        }
+        1 * findIterable.filter(new Document('_id', fileId)) >> findIterable
+        1 * findIterable.first(_) >> { it.last().onResult(null, null) }
         thrown(MongoGridFSException)
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     @Unroll
@@ -506,25 +667,44 @@ class GridFSBucketSpecification extends Specification {
 
         when:
         def futureResult = new FutureResultCallback()
-        def stream = gridFSBucket.openDownloadStream(filename, new GridFSDownloadOptions().revision(version))
+        def stream
+        if (clientSession != null) {
+            stream = gridFSBucket.openDownloadStream(clientSession, filename, new GridFSDownloadOptions().revision(version))
+        } else {
+            stream = gridFSBucket.openDownloadStream(filename, new GridFSDownloadOptions().revision(version))
+        }
         stream.getGridFSFile(futureResult)
         futureResult.get()
 
         then:
-        1 * filesCollection.find(new Document('filename', filename)) >> findIterable
+        if (clientSession != null) {
+            1 * filesCollection.find(clientSession) >> findIterable
+        } else {
+            1 * filesCollection.find() >> findIterable
+        }
+        1 * findIterable.filter(new Document('filename', filename)) >> findIterable
         1 * findIterable.skip(skip) >> findIterable
         1 * findIterable.sort(new Document('uploadDate', sortOrder)) >> findIterable
-        1 * findIterable.first(_) >> { it[0].onResult(fileInfo, null) }
+        1 * findIterable.first(_) >> { it.last().onResult(fileInfo, null) }
 
         where:
-        version | skip | sortOrder
-        0       | 0    | 1
-        1       | 1    | 1
-        2       | 2    | 1
-        3       | 3    | 1
-        -1      | 0    | -1
-        -2      | 1    | -1
-        -3      | 2    | -1
+        version | skip | sortOrder  | clientSession
+        0       | 0    | 1          | null
+        1       | 1    | 1          | null
+        2       | 2    | 1          | null
+        3       | 3    | 1          | null
+        -3      | 2    | -1         | null
+        -1      | 0    | -1         | null
+        -2      | 1    | -1         | null
+        0       | 0    | 1          | Stub(ClientSession)
+        1       | 1    | 1          | Stub(ClientSession)
+        2       | 2    | 1          | Stub(ClientSession)
+        3       | 3    | 1          | Stub(ClientSession)
+        -3      | 2    | -1         | Stub(ClientSession)
+        -1      | 0    | -1         | Stub(ClientSession)
+        -2      | 1    | -1         | Stub(ClientSession)
+
+        // todo
     }
 
     def 'should create the expected GridFSFindIterable'() {
@@ -540,6 +720,9 @@ class GridFSBucketSpecification extends Specification {
         then:
         1 * collection.find() >> findIterable
         expect result, isTheSameAs(new GridFSFindIterableImpl(findIterable))
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should execute the expected FindOperation when finding a file'() {
@@ -567,6 +750,9 @@ class GridFSBucketSpecification extends Specification {
         executor.getReadPreference() == secondary()
         expect executor.getReadOperation(), isTheSameAs(new FindOperation<GridFSFile>(new MongoNamespace('test.fs.files'), decoder)
                 .readConcern(readConcern).filter(filter).slaveOk(true))
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should throw an exception if file not found when opening by name'() {
@@ -577,18 +763,31 @@ class GridFSBucketSpecification extends Specification {
         def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
         when:
         def futureResult = new FutureResultCallback()
-        def stream = gridFSBucket.openDownloadStream('filename')
+        def stream
+        if (clientSession != null) {
+            stream = gridFSBucket.openDownloadStream(clientSession, 'filename')
+        } else {
+            stream = gridFSBucket.openDownloadStream('filename')
+        }
         stream.read(ByteBuffer.wrap(new byte[10]), futureResult)
         futureResult.get()
 
         then:
-        1 * filesCollection.find(new Document('filename', 'filename')) >> findIterable
+        if (clientSession != null) {
+            1 * filesCollection.find(clientSession) >> findIterable
+        } else {
+            1 * filesCollection.find() >> findIterable
+        }
+        1 * findIterable.filter(new Document('filename', 'filename')) >> findIterable
         1 * findIterable.skip(0) >> findIterable
         1 * findIterable.sort(new Document('uploadDate', -1)) >> findIterable
-        1 * findIterable.first(_) >> { it[0].onResult(null, null) }
+        1 * findIterable.first(_) >> { it.last().onResult(null, null) }
 
         then:
         thrown(MongoGridFSException)
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should delete from files collection then chunks collection'() {
@@ -605,11 +804,14 @@ class GridFSBucketSpecification extends Specification {
 
         then:
         1 * filesCollection.deleteOne(new Document('_id', new BsonObjectId(fileId)), _) >> {
-            it[1].onResult(DeleteResult.acknowledged(1), null)
+            it.last().onResult(DeleteResult.acknowledged(1), null)
         }
         1 * chunksCollection.deleteMany(new Document('files_id', new BsonObjectId(fileId)), _) >> {
-            it[1].onResult(DeleteResult.acknowledged(1), null)
+            it.last().onResult(DeleteResult.acknowledged(1), null)
         }
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should throw an exception when deleting if no record in the files collection'() {
@@ -626,14 +828,17 @@ class GridFSBucketSpecification extends Specification {
 
         then:
         1 * filesCollection.deleteOne(new Document('_id', new BsonObjectId(fileId)), _) >> {
-            it[1].onResult(DeleteResult.acknowledged(0), null)
+            it.last().onResult(DeleteResult.acknowledged(0), null)
         }
         1 * chunksCollection.deleteMany(new Document('files_id', new BsonObjectId(fileId)), _) >> {
-            it[1].onResult(DeleteResult.acknowledged(1), null)
+            it.last().onResult(DeleteResult.acknowledged(1), null)
         }
 
         then:
         thrown(MongoGridFSException)
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should propagate exceptions when deleting'() {
@@ -650,7 +855,7 @@ class GridFSBucketSpecification extends Specification {
 
         then:
         1 * filesCollection.deleteOne(new Document('_id', new BsonObjectId(fileId)), _) >> {
-            it[1].onResult(null, deleteException)
+            it.last().onResult(null, deleteException)
         }
 
         when:
@@ -666,10 +871,10 @@ class GridFSBucketSpecification extends Specification {
 
         then:
         1 * filesCollection.deleteOne(new Document('_id', new BsonObjectId(fileId)), _) >> {
-            it[1].onResult(DeleteResult.acknowledged(0), null)
+            it.last().onResult(DeleteResult.acknowledged(0), null)
         }
         1 * chunksCollection.deleteMany(new Document('files_id', new BsonObjectId(fileId)), _) >> {
-            it[1].onResult(null, deleteException)
+            it.last().onResult(null, deleteException)
         }
 
         when:
@@ -678,6 +883,9 @@ class GridFSBucketSpecification extends Specification {
         then:
         exception = thrown(MongoException)
         exception == deleteException
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should rename a file'() {
@@ -696,8 +904,11 @@ class GridFSBucketSpecification extends Specification {
         1 * filesCollection.updateOne(new BsonDocument('_id', new BsonObjectId(fileId)),
                 new BsonDocument('$set',
                         new BsonDocument('filename', new BsonString(newFilename))), _) >> {
-            it[2].onResult(new UpdateResult.UnacknowledgedUpdateResult(), null)
+            it.last().onResult(new UpdateResult.UnacknowledgedUpdateResult(), null)
         }
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should throw an exception renaming non existent file'() {
@@ -713,10 +924,13 @@ class GridFSBucketSpecification extends Specification {
         futureResult.get()
 
         then:
-        1 * filesCollection.updateOne(_, _, _) >> { it[2].onResult(new UpdateResult.AcknowledgedUpdateResult(0, 0, null), null) }
+        1 * filesCollection.updateOne(_, _, _) >> { it.last().onResult(new UpdateResult.AcknowledgedUpdateResult(0, 0, null), null) }
 
         then:
         thrown(MongoGridFSException)
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should handle exceptions when renaming a file'() {
@@ -733,11 +947,14 @@ class GridFSBucketSpecification extends Specification {
         futureResult.get()
 
         then:
-        1 * filesCollection.updateOne(_, _, _) >> { it[2].onResult(null, exception) }
+        1 * filesCollection.updateOne(_, _, _) >> { it.last().onResult(null, exception) }
 
         then:
         def e = thrown(MongoException)
         e == exception
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should be able to drop the bucket'() {
@@ -752,8 +969,11 @@ class GridFSBucketSpecification extends Specification {
         futureResult.get()
 
         then:
-        1 * filesCollection.drop(_) >> { it[0].onResult(null, null) }
-        1 * chunksCollection.drop(_) >> { it[0].onResult(null, null) }
+        1 * filesCollection.drop(_) >> { it.last().onResult(null, null) }
+        1 * chunksCollection.drop(_) >> { it.last().onResult(null, null) }
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should handle exceptions when dropping the bucket'() {
@@ -769,7 +989,7 @@ class GridFSBucketSpecification extends Specification {
         futureResult.get()
 
         then:
-        1 * filesCollection.drop(_) >> { it[0].onResult(null, exception) }
+        1 * filesCollection.drop(_) >> { it.last().onResult(null, exception) }
 
         then:
         def e = thrown(MongoException)
@@ -781,11 +1001,87 @@ class GridFSBucketSpecification extends Specification {
         futureResult.get()
 
         then:
-        1 * filesCollection.drop(_) >> { it[0].onResult(null, null) }
-        1 * chunksCollection.drop(_) >> { it[0].onResult(null, exception) }
+        1 * filesCollection.drop(_) >> { it.last().onResult(null, null) }
+        1 * chunksCollection.drop(_) >> { it.last().onResult(null, exception) }
 
         then:
         e = thrown(MongoException)
         e == exception
+    }
+
+    def 'should validate the clientSession is not null'() {
+        given:
+        def objectId = new ObjectId()
+        def bsonValue = new BsonObjectId(objectId)
+        def filename = 'filename'
+        def filesCollection = Mock(MongoCollection)
+        def chunksCollection = Mock(MongoCollection)
+        def callback = Stub(SingleResultCallback)
+        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
+
+        when:
+        gridFSBucket.delete(null, objectId, callback)
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        gridFSBucket.downloadToStream(null, filename, Stub(AsyncOutputStream), callback)
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        gridFSBucket.downloadToStream(null, objectId, Stub(AsyncOutputStream), callback)
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        gridFSBucket.drop(null, callback)
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        gridFSBucket.find((ClientSession) null)
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        gridFSBucket.find((ClientSession) null, new Document())
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        gridFSBucket.openDownloadStream(null, filename)
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        gridFSBucket.openDownloadStream(null, objectId)
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        gridFSBucket.openUploadStream(null, filename)
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        gridFSBucket.openUploadStream(null, bsonValue, filename)
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        gridFSBucket.rename(null, objectId, filename, callback)
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        gridFSBucket.uploadFromStream((ClientSession) null, filename, Stub(AsyncInputStream), callback)
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        gridFSBucket.uploadFromStream(null, bsonValue, filename, Stub(AsyncInputStream), callback)
+        then:
+        thrown(IllegalArgumentException)
     }
 }
