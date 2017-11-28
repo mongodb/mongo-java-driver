@@ -205,7 +205,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
             try {
                 sleep(500)
                 collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 2).append('ts', new BsonTimestamp(6, 0)))
-            } catch (interrupt) {
+            } catch (ignored) {
                 //pass
             } finally {
                 latch.countDown()
@@ -320,14 +320,14 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource)
 
         CountDownLatch latch = new CountDownLatch(1)
-        def seen;
+        def seen = 0
         def thread = Thread.start {
             try {
                 cursor.next()
                 seen = 1
                 cursor.next()
                 seen = 2
-            } catch (interrupt) {
+            } catch (ignored) {
                 // pass
             } finally {
                 latch.countDown()
