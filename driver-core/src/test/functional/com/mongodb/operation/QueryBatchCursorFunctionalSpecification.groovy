@@ -264,11 +264,13 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         def firstBatch = executeQuery(new BsonDocument('ts', new BsonDocument('$gte', new BsonTimestamp(5, 0))), 0, 2, true, true);
         cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource)
         cursor.next()
+        def latch = new CountDownLatch(1)
 
         // wait a second then close the cursor
         new Thread({
             sleep(1000)
             cursor.close()
+            latch.countDown()
         } as Runnable).start()
 
         when:
@@ -276,6 +278,9 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
 
         then:
         thrown(Exception)
+
+        cleanup:
+        latch.await(5, TimeUnit.SECONDS)  // wait for cursor.close to complete
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 2) || isSharded() })
