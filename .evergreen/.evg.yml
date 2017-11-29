@@ -311,9 +311,6 @@ functions:
 hosts: &hosts
  - rhel62-small
  - rhel70-small
- - ubuntu1404-test
- - ubuntu1604-test
- - debian81-test
 
 pre:
   - func: "fetch source"
