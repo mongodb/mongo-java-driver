@@ -21,6 +21,7 @@ import com.mongodb.operation.ListDatabasesOperation;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.session.ClientSession;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
 
@@ -33,6 +34,8 @@ final class ListDatabasesIterableImpl<TResult> extends MongoIterableImpl<TResult
     private final CodecRegistry codecRegistry;
 
     private long maxTimeMS;
+    private Bson filter;
+    private Boolean nameOnly;
 
     ListDatabasesIterableImpl(final ClientSession clientSession, final Class<TResult> resultClass, final CodecRegistry codecRegistry,
                               final ReadPreference readPreference, final OperationExecutor executor) {
@@ -55,7 +58,20 @@ final class ListDatabasesIterableImpl<TResult> extends MongoIterableImpl<TResult
     }
 
     @Override
+    public ListDatabasesIterable<TResult> filter(final Bson filter) {
+        this.filter = filter;
+        return this;
+    }
+
+    @Override
+    public ListDatabasesIterable<TResult> nameOnly(final Boolean nameOnly) {
+        this.nameOnly = nameOnly;
+        return this;
+    }
+
+    @Override
     ReadOperation<BatchCursor<TResult>> asReadOperation() {
-        return new ListDatabasesOperation<TResult>(codecRegistry.get(resultClass)).maxTime(maxTimeMS, MILLISECONDS);
+        return new ListDatabasesOperation<TResult>(codecRegistry.get(resultClass)).maxTime(maxTimeMS, MILLISECONDS)
+                .filter(toBsonDocumentOrNull(filter, codecRegistry)).nameOnly(nameOnly);
     }
 }

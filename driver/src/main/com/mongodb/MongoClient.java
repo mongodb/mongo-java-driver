@@ -452,7 +452,7 @@ public class MongoClient extends Mongo implements Closeable {
      * @since 3.0
      */
     public MongoIterable<String> listDatabaseNames() {
-        return executeListDatabaseNames(null);
+        return createListDatabaseNamesIterable(null);
     }
 
     /**
@@ -466,11 +466,11 @@ public class MongoClient extends Mongo implements Closeable {
      */
     public MongoIterable<String> listDatabaseNames(final ClientSession clientSession) {
         notNull("clientSession", clientSession);
-        return executeListDatabaseNames(clientSession);
+        return createListDatabaseNamesIterable(clientSession);
     }
 
-    private MongoIterable<String> executeListDatabaseNames(final ClientSession clientSession) {
-        return executeListDatabases(clientSession, BsonDocument.class).map(new Function<BsonDocument, String>() {
+    private MongoIterable<String> createListDatabaseNamesIterable(final ClientSession clientSession) {
+        return createListDatabasesIterable(clientSession, BsonDocument.class).nameOnly(true).map(new Function<BsonDocument, String>() {
             @Override
             public String apply(final BsonDocument result) {
                 return result.getString("name").getValue();
@@ -497,7 +497,7 @@ public class MongoClient extends Mongo implements Closeable {
      * @since 3.0
      */
     public <T> ListDatabasesIterable<T> listDatabases(final Class<T> clazz) {
-        return executeListDatabases(null, clazz);
+        return createListDatabasesIterable(null, clazz);
     }
 
     /**
@@ -524,12 +524,12 @@ public class MongoClient extends Mongo implements Closeable {
      */
     public <T> ListDatabasesIterable<T> listDatabases(final ClientSession clientSession, final Class<T> clazz) {
         notNull("clientSession", clientSession);
-        return executeListDatabases(clientSession, clazz);
+        return createListDatabasesIterable(clientSession, clazz);
     }
 
-    private <T> ListDatabasesIterable<T> executeListDatabases(final ClientSession clientSession, final Class<T> clazz) {
+    private <T> ListDatabasesIterable<T> createListDatabasesIterable(final ClientSession clientSession, final Class<T> clazz) {
         return new ListDatabasesIterableImpl<T>(clientSession, clazz, getMongoClientOptions().getCodecRegistry(),
-                                                       ReadPreference.primary(), createOperationExecutor());
+                ReadPreference.primary(), createOperationExecutor());
     }
 
     /**

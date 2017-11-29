@@ -23,7 +23,6 @@ import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.ListCollectionsOperation;
 import com.mongodb.session.ClientSession;
-import org.bson.BsonDocument;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -72,7 +71,7 @@ final class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResu
     @Override
     AsyncReadOperation<AsyncBatchCursor<TResult>> asAsyncReadOperation() {
         ListCollectionsOperation<TResult> operation = new ListCollectionsOperation<TResult>(databaseName, codecRegistry.get(resultClass))
-                .filter(toBsonDocument(filter))
+                .filter(toBsonDocumentOrNull(filter, codecRegistry))
                 .maxTime(maxTimeMS, MILLISECONDS);
 
         if (getBatchSize() != null) {
@@ -82,7 +81,4 @@ final class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResu
         return operation;
     }
 
-    private BsonDocument toBsonDocument(final Bson document) {
-        return document == null ? null : document.toBsonDocument(BsonDocument.class, codecRegistry);
-    }
 }

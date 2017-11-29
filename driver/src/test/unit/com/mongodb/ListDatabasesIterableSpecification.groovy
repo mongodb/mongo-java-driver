@@ -18,6 +18,7 @@ package com.mongodb
 
 import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.ListDatabasesOperation
+import org.bson.BsonDocument
 import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodec
@@ -54,12 +55,13 @@ class ListDatabasesIterableSpecification extends Specification {
         readPreference == secondary()
 
         when: 'overriding initial options'
-        listDatabaseIterable.maxTime(999, MILLISECONDS).iterator()
+        listDatabaseIterable.maxTime(999, MILLISECONDS).filter(Document.parse('{a: 1}')).nameOnly(true).iterator()
 
         operation = executor.getReadOperation() as ListDatabasesOperation<Document>
 
         then: 'should use the overrides'
-        expect operation, isTheSameAs(new ListDatabasesOperation<Document>(new DocumentCodec()).maxTime(999, MILLISECONDS))
+        expect operation, isTheSameAs(new ListDatabasesOperation<Document>(new DocumentCodec()).maxTime(999, MILLISECONDS)
+                .filter(BsonDocument.parse('{a: 1}')).nameOnly(true))
     }
 
     def 'should follow the MongoIterable interface as expected'() {

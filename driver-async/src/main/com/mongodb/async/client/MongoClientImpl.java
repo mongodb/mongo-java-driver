@@ -113,17 +113,17 @@ class MongoClientImpl implements MongoClient {
 
     @Override
     public MongoIterable<String> listDatabaseNames() {
-        return executeListDatabaseNames(null);
+        return createListDatabaseNamesIterable(null);
     }
 
     @Override
     public MongoIterable<String> listDatabaseNames(final ClientSession clientSession) {
         notNull("clientSession", clientSession);
-        return executeListDatabaseNames(clientSession);
+        return createListDatabaseNamesIterable(clientSession);
     }
 
-    private MongoIterable<String> executeListDatabaseNames(final ClientSession clientSession) {
-        return executeListDatabases(clientSession, BsonDocument.class).map(new Function<BsonDocument, String>() {
+    private MongoIterable<String> createListDatabaseNamesIterable(final ClientSession clientSession) {
+        return createListDatabasesIterable(clientSession, BsonDocument.class).nameOnly(true).map(new Function<BsonDocument, String>() {
             @Override
             public String apply(final BsonDocument result) {
                 return result.getString("name").getValue();
@@ -133,7 +133,7 @@ class MongoClientImpl implements MongoClient {
 
     @Override
     public ListDatabasesIterable<Document> listDatabases() {
-        return executeListDatabases(null, Document.class);
+        return createListDatabasesIterable(null, Document.class);
     }
 
     @Override
@@ -143,16 +143,16 @@ class MongoClientImpl implements MongoClient {
 
     @Override
     public <T> ListDatabasesIterable<T> listDatabases(final Class<T> resultClass) {
-        return executeListDatabases(null, resultClass);
+        return createListDatabasesIterable(null, resultClass);
     }
 
     @Override
     public <TResult> ListDatabasesIterable<TResult> listDatabases(final ClientSession clientSession, final Class<TResult> resultClass) {
         notNull("clientSession", clientSession);
-        return executeListDatabases(clientSession, resultClass);
+        return createListDatabasesIterable(clientSession, resultClass);
     }
 
-    private <T> ListDatabasesIterable<T> executeListDatabases(final ClientSession clientSession, final Class<T> clazz) {
+    private <T> ListDatabasesIterable<T> createListDatabasesIterable(final ClientSession clientSession, final Class<T> clazz) {
         return new ListDatabasesIterableImpl<T>(clientSession, clazz, settings.getCodecRegistry(),
                 ReadPreference.primary(), executor);
     }

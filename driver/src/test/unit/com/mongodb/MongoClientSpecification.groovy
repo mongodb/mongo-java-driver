@@ -72,7 +72,7 @@ class MongoClientSpecification extends Specification {
         then:
         // listDatabaseNamesIterable is an instance of a MappingIterable, so have to get the mapped iterable inside it
         expect listDatabaseNamesIterable.getMapped(), isTheSameAs(new ListDatabasesIterableImpl<BsonDocument>(session, BsonDocument,
-                getDefaultCodecRegistry(), primary(), executor))
+                getDefaultCodecRegistry(), primary(), executor).nameOnly(true))
 
         cleanup:
         client?.close()
