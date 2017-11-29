@@ -31,13 +31,13 @@ import com.mongodb.bulk.WriteRequest;
 import com.mongodb.connection.BulkWriteBatchCombiner;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.session.SessionContext;
 import com.mongodb.connection.SplittablePayload;
 import com.mongodb.internal.connection.IndexMap;
 import com.mongodb.internal.validator.CollectibleDocumentFieldNameValidator;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.internal.validator.UpdateFieldNameValidator;
+import com.mongodb.session.SessionContext;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -101,7 +101,7 @@ final class BulkWriteBatch {
         boolean writeRequestsAreRetryable = true;
         for (int i = 0; i < writeRequests.size(); i++) {
             WriteRequest writeRequest = writeRequests.get(i);
-            writeRequestsAreRetryable = isRetryable(writeRequest);
+            writeRequestsAreRetryable = writeRequestsAreRetryable && isRetryable(writeRequest);
             writeRequestsWithIndex.add(new WriteRequestWithIndex(writeRequest, i));
         }
         if (canRetryWrites && !writeRequestsAreRetryable) {

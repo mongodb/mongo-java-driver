@@ -64,6 +64,7 @@ import static com.mongodb.client.model.Filters.gte
 import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY
 import static com.mongodb.connection.ServerType.STANDALONE
 
+@SuppressWarnings('ClassSize')
 class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should throw IllegalArgumentException for empty list of requests'() {
@@ -997,6 +998,45 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
 
         where:
         async << [true, false]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    def 'should not request retryable write for multi updates or deletes'() {
+        given:
+        def operation = new MixedBulkWriteOperation(getNamespace(),
+                writes, true, ACKNOWLEDGED, true)
+
+        when:
+        executeWithSession(operation, async)
+
+        then:
+        noExceptionThrown()
+
+        where:
+        [async, writes] << [
+                [true, false],
+                // Test scenarios where the multi:true request is at the beginning and at the end of the list
+                [
+                        [
+                                new DeleteRequest(new BsonDocument()).multi(true),
+                                new InsertRequest(new BsonDocument())
+                        ],
+                        [
+                                new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
+                                        new BsonDocument('$set', new BsonDocument('_id', new BsonInt32(1))), UPDATE).multi(true),
+                                new InsertRequest(new BsonDocument())
+                        ],
+                        [
+                                new InsertRequest(new BsonDocument()),
+                                new DeleteRequest(new BsonDocument()).multi(true)
+                        ],
+                        [
+                                new InsertRequest(new BsonDocument()),
+                                new UpdateRequest(new BsonDocument('_id', new BsonInt32(1)),
+                                        new BsonDocument('$set', new BsonDocument('_id', new BsonInt32(1))), UPDATE).multi(true)
+                        ]
+                ]
+        ].combinations()
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 6) })

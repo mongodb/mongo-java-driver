@@ -28,8 +28,11 @@ import com.mongodb.bulk.WriteRequest
 import com.mongodb.client.model.Collation
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
+import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerId
+import com.mongodb.connection.ServerType
+import com.mongodb.connection.ServerVersion
 import com.mongodb.internal.connection.NoOpSessionContext
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -41,8 +44,13 @@ import static com.mongodb.connection.ServerConnectionState.CONNECTED
 
 class BulkWriteBatchSpecification extends Specification {
     def namespace = new MongoNamespace('db.coll')
-    def serverDescription = ServerDescription.builder().address(new ServerAddress()).state(CONNECTED).build()
-    def connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), serverDescription.getAddress()))
+    def serverDescription = ServerDescription.builder().address(new ServerAddress()).state(CONNECTED)
+            .version(new ServerVersion(3, 6))
+            .logicalSessionTimeoutMinutes(30)
+            .build()
+    def connectionDescription = new ConnectionDescription(
+            new ConnectionId(new ServerId(new ClusterId(), serverDescription.getAddress())), new ServerVersion(3, 6),
+            ServerType.REPLICA_SET_PRIMARY, 1000, 16000, 48000, [])
     def sessionContext = new NoOpSessionContext()
 
     def 'should split payloads by type when ordered'() {
@@ -219,6 +227,16 @@ class BulkWriteBatchSpecification extends Specification {
         payload.getPayloadName() == 'updates'
         payload.getPayload() == [getWriteRequestsAsDocuments()[2]]
         !bulkWriteBatch.hasAnotherBatch()
+    }
+
+    def 'should not retry when at least one write is not retryable'() {
+        when:
+        def bulkWriteBatch = BulkWriteBatch.createBulkWriteBatch(namespace, serverDescription, connectionDescription, false,
+                WriteConcern.ACKNOWLEDGED, null, true,
+                [new DeleteRequest(new BsonDocument()).multi(true), new InsertRequest(new BsonDocument())], sessionContext)
+
+        then:
+        !bulkWriteBatch.getRetryWrites()
     }
 
     def 'should handle operation responses'() {
