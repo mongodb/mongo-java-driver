@@ -18,6 +18,7 @@ package com.mongodb.operation
 
 import com.mongodb.DuplicateKeyException
 import com.mongodb.MongoCommandException
+import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
@@ -31,8 +32,11 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
+import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
+import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.concurrent.TimeUnit.SECONDS
 
@@ -72,6 +76,26 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
+    @IgnoreIf({ isSharded() })
+    def 'should throw execution timeout exception from execute'() {
+        given:
+        def keys = new BsonDocument('field', new BsonInt32(1))
+        def operation = new CreateIndexesOperation(getNamespace(), [new IndexRequest(keys)]).maxTime(30, SECONDS)
+
+        enableMaxTimeFailPoint()
+
+        when:
+        execute(operation, async)
+
+        then:
+        thrown(MongoExecutionTimeoutException)
+
+        cleanup:
+        disableMaxTimeFailPoint()
+
+        where:
+        async << [true, false]
+    }
 
     def 'should be able to create a single index with a BsonInt64'() {
         given:
@@ -464,7 +488,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         }
     }
 
-    def List<Document> getIndexes() {
+    List<Document> getIndexes() {
         def indexes = []
         def cursor = new ListIndexesOperation(getNamespace(), new DocumentCodec()).execute(getBinding())
         while (cursor.hasNext()) {
