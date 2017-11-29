@@ -277,7 +277,7 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
     }
 
     codenarc {
-        toolVersion = '0.24'
+        toolVersion = '1.0'
         reportFormat = project.buildingWith('xmlReports.enabled') ? 'xml' : 'html'
     }
 
