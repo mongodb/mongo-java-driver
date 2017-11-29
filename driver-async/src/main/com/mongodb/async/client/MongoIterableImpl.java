@@ -25,7 +25,10 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.session.ClientSession;
+import org.bson.BsonDocument;
 import org.bson.assertions.Assertions;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
 
 import java.util.Collection;
 import java.util.List;
@@ -159,6 +162,14 @@ abstract class MongoIterableImpl<TResult> implements MongoIterable<TResult> {
     public void batchCursor(final SingleResultCallback<AsyncBatchCursor<TResult>> callback) {
         notNull("callback", callback);
         executor.execute(asAsyncReadOperation(), readPreference, clientSession, callback);
+    }
+
+    BsonDocument toBsonDocumentOrNull(final Bson document, final CodecRegistry codecRegistry) {
+        return toBsonDocumentOrNull(document, BsonDocument.class, codecRegistry);
+    }
+
+    <T> BsonDocument toBsonDocumentOrNull(final Bson document, final Class<T> documentClass, final CodecRegistry codecRegistry) {
+        return document == null ? null : document.toBsonDocument(documentClass, codecRegistry);
     }
 
     private void loopCursor(final AsyncBatchCursor<TResult> batchCursor, final Block<? super TResult> block,

@@ -35,7 +35,6 @@ import com.mongodb.operation.MapReduceStatistics;
 import com.mongodb.operation.MapReduceToCollectionOperation;
 import com.mongodb.operation.MapReduceWithInlineResultsOperation;
 import com.mongodb.session.ClientSession;
-import org.bson.BsonDocument;
 import org.bson.BsonJavaScript;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -214,12 +213,12 @@ class MapReduceIterableImpl<TDocument, TResult>  extends MongoIterableImpl<TResu
     private WrappedMapReduceReadOperation<TResult> createMapReduceInlineOperation() {
         final MapReduceWithInlineResultsOperation<TResult> operation = new MapReduceWithInlineResultsOperation<TResult>(namespace,
                 new BsonJavaScript(mapFunction), new BsonJavaScript(reduceFunction), codecRegistry.get(resultClass))
-                .filter(toBsonDocument(filter))
+                .filter(toBsonDocumentOrNull(filter, documentClass, codecRegistry))
                 .limit(limit)
                 .maxTime(maxTimeMS, MILLISECONDS)
                 .jsMode(jsMode)
-                .scope(toBsonDocument(scope))
-                .sort(toBsonDocument(sort))
+                .scope(toBsonDocumentOrNull(scope, documentClass, codecRegistry))
+                .sort(toBsonDocumentOrNull(sort, documentClass, codecRegistry))
                 .verbose(verbose)
                 .readConcern(getReadConcern())
                 .collation(collation);
@@ -232,12 +231,12 @@ class MapReduceIterableImpl<TDocument, TResult>  extends MongoIterableImpl<TResu
     private WrappedMapReduceWriteOperation createMapReduceToCollectionOperation() {
         MapReduceToCollectionOperation operation = new MapReduceToCollectionOperation(namespace, new BsonJavaScript(mapFunction),
                 new BsonJavaScript(reduceFunction), collectionName, writeConcern)
-                .filter(toBsonDocument(filter))
+                .filter(toBsonDocumentOrNull(filter, documentClass, codecRegistry))
                 .limit(limit)
                 .maxTime(maxTimeMS, MILLISECONDS)
                 .jsMode(jsMode)
-                .scope(toBsonDocument(scope))
-                .sort(toBsonDocument(sort))
+                .scope(toBsonDocumentOrNull(scope, documentClass, codecRegistry))
+                .sort(toBsonDocumentOrNull(sort, documentClass, codecRegistry))
                 .verbose(verbose)
                 .action(action.getValue())
                 .nonAtomic(nonAtomic)
@@ -257,10 +256,6 @@ class MapReduceIterableImpl<TDocument, TResult>  extends MongoIterableImpl<TResu
         return new FindOperation<TResult>(new MongoNamespace(dbName, collectionName), codecRegistry.get(resultClass))
                 .collation(collation)
                 .batchSize(getBatchSize() == null ? 0 : getBatchSize());
-    }
-
-    private BsonDocument toBsonDocument(final Bson document) {
-        return document == null ? null : document.toBsonDocument(documentClass, codecRegistry);
     }
 
     // this could be inlined, but giving it a name so that it's unit-testable

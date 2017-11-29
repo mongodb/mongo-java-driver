@@ -28,7 +28,6 @@ import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.FindOperation;
 import com.mongodb.session.ClientSession;
-import org.bson.BsonDocument;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -238,9 +237,9 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
                 .limit(findOptions.getLimit())
                 .maxTime(findOptions.getMaxTime(MILLISECONDS), MILLISECONDS)
                 .maxAwaitTime(findOptions.getMaxAwaitTime(MILLISECONDS), MILLISECONDS)
-                .modifiers(toBsonDocument(findOptions.getModifiers()))
-                .projection(toBsonDocument(findOptions.getProjection()))
-                .sort(toBsonDocument(findOptions.getSort()))
+                .modifiers(toBsonDocumentOrNull(findOptions.getModifiers(), documentClass, codecRegistry))
+                .projection(toBsonDocumentOrNull(findOptions.getProjection(), documentClass, codecRegistry))
+                .sort(toBsonDocumentOrNull(findOptions.getSort(), documentClass, codecRegistry))
                 .cursorType(findOptions.getCursorType())
                 .noCursorTimeout(findOptions.isNoCursorTimeout())
                 .oplogReplay(findOptions.isOplogReplay())
@@ -249,17 +248,12 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
                 .readConcern(getReadConcern())
                 .collation(findOptions.getCollation())
                 .comment(findOptions.getComment())
-                .hint(toBsonDocument(findOptions.getHint()))
-                .min(toBsonDocument(findOptions.getMin()))
-                .max(toBsonDocument(findOptions.getMax()))
+                .hint(toBsonDocumentOrNull(findOptions.getHint(), documentClass, codecRegistry))
+                .min(toBsonDocumentOrNull(findOptions.getMin(), documentClass, codecRegistry))
+                .max(toBsonDocumentOrNull(findOptions.getMax(), documentClass, codecRegistry))
                 .maxScan(findOptions.getMaxScan())
                 .returnKey(findOptions.isReturnKey())
                 .showRecordId(findOptions.isShowRecordId())
                 .snapshot(findOptions.isSnapshot());
     }
-
-    private BsonDocument toBsonDocument(final Bson document) {
-        return document == null ? null : document.toBsonDocument(documentClass, codecRegistry);
-    }
-
 }

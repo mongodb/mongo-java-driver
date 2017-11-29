@@ -16,6 +16,8 @@
 
 package com.mongodb.client;
 
+import org.bson.conversions.Bson;
+
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -45,4 +47,25 @@ public interface ListDatabasesIterable<TResult> extends MongoIterable<TResult> {
      */
     @Override
     ListDatabasesIterable<TResult> batchSize(int batchSize);
+
+    /**
+     * Sets the query filter to apply to the returned database names.
+     *
+     * @param filter the filter, which may be null.
+     * @return this
+     * @since 3.6
+     * @mongodb.server.release 3.4.2
+     */
+    ListDatabasesIterable<TResult> filter(Bson filter);
+
+    /**
+     * Sets the nameOnly flag that indicates whether the command should return just the database names or return the database names and
+     * size information.
+     *
+     * @param nameOnly the nameOnly flag, which may be null
+     * @return this
+     * @since 3.6
+     * @mongodb.server.release 3.4.3
+     */
+    ListDatabasesIterable<TResult> nameOnly(Boolean nameOnly);
 }

@@ -28,6 +28,7 @@ import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.QueryResult;
 import com.mongodb.operation.CommandOperationHelper.CommandTransformer;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
@@ -55,6 +56,8 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
     private final Decoder<T> decoder;
 
     private long maxTimeMS;
+    private BsonDocument filter;
+    private Boolean nameOnly;
 
     /**
      * Construct a new instance.
@@ -89,6 +92,56 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
+    }
+
+    /**
+     * Sets the query filter to apply to the returned database names.
+     *
+     * @param filter the filter, which may be null.
+     * @return this
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public ListDatabasesOperation<T> filter(final BsonDocument filter) {
+        this.filter = filter;
+        return this;
+    }
+
+    /**
+     * Gets the query filter to apply to the returned database names.
+     *
+     * @return this
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public BsonDocument getFilter() {
+        return filter;
+    }
+
+    /**
+     * Sets the nameOnly flag that indicates whether the command should return just the database names or return the database names and
+     * size information.
+     *
+     * @param nameOnly the nameOnly flag, which may be null
+     * @return this
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public ListDatabasesOperation<T> nameOnly(final Boolean nameOnly) {
+        this.nameOnly = nameOnly;
+        return this;
+    }
+
+    /**
+     * Gets the nameOnly flag that indicates whether the command should return just the database names or return the database names and
+     * size information.
+     *
+     * @return this
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public Boolean getNameOnly() {
+        return nameOnly;
     }
 
     /**
@@ -155,6 +208,12 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
         BsonDocument command = new BsonDocument("listDatabases", new BsonInt32(1));
         if (maxTimeMS > 0) {
             command.put("maxTimeMS", new BsonInt64(maxTimeMS));
+        }
+        if (filter != null) {
+            command.put("filter", filter);
+        }
+        if (nameOnly != null) {
+            command.put("nameOnly", new BsonBoolean(nameOnly));
         }
         return command;
     }

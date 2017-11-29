@@ -21,7 +21,6 @@ import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.ListCollectionsOperation;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.session.ClientSession;
-import org.bson.BsonDocument;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -69,12 +68,8 @@ final class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResu
     @Override
     ReadOperation<BatchCursor<TResult>> asReadOperation() {
         return new ListCollectionsOperation<TResult>(databaseName, codecRegistry.get(resultClass))
-                       .filter(toBsonDocument(filter))
+                       .filter(toBsonDocumentOrNull(filter, codecRegistry))
                        .batchSize(getBatchSize() == null ? 0 : getBatchSize())
                        .maxTime(maxTimeMS, MILLISECONDS);
-    }
-
-    private BsonDocument toBsonDocument(final Bson document) {
-        return document == null ? null : document.toBsonDocument(BsonDocument.class, codecRegistry);
     }
 }

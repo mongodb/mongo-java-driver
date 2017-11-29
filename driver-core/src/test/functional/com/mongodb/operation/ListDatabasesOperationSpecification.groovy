@@ -20,7 +20,6 @@ import category.Async
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
-import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.binding.AsyncConnectionSource
 import com.mongodb.binding.AsyncReadBinding
@@ -30,6 +29,7 @@ import com.mongodb.connection.AsyncConnection
 import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
 import org.bson.BsonDocument
+import org.bson.BsonRegularExpression
 import org.bson.Document
 import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
@@ -52,27 +52,20 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
         def operation = new ListDatabasesOperation(codec)
 
         when:
-        def names = operation.execute(getBinding()).next()*.get('name')
-
+        def names = executeAndCollectBatchCursorResults(operation, async)*.get('name')
 
         then:
         names.contains(getDatabaseName())
-    }
-
-    @Category(Async)
-    def 'should return a list of database names asynchronously'() {
-        given:
-        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1))
-        def operation = new ListDatabasesOperation(codec)
 
         when:
-        def callback = new FutureResultCallback()
-        def cursor = executeAsync(operation)
-        cursor.next(callback)
-        def names = callback.get()*.get('name')
+        operation = operation.nameOnly(true).filter(new BsonDocument('name',  new BsonRegularExpression("^${getDatabaseName()}")))
+        names = executeAndCollectBatchCursorResults(operation, async)*.get('name')
 
         then:
         names.contains(getDatabaseName())
+
+        where:
+        async << [true, false]
     }
 
     @IgnoreIf({ isSharded() })
