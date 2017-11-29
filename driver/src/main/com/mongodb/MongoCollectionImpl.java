@@ -31,9 +31,11 @@ import com.mongodb.client.MapReduceIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
+import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.DropIndexOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
@@ -810,17 +812,30 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public List<String> createIndexes(final List<IndexModel> indexes) {
-        return executeCreateIndexes(null, indexes);
+        return createIndexes(indexes, new CreateIndexOptions());
+    }
+
+    @Override
+    public List<String> createIndexes(final List<IndexModel> indexes, final CreateIndexOptions createIndexOptions) {
+        return executeCreateIndexes(null, indexes, createIndexOptions);
     }
 
     @Override
     public List<String> createIndexes(final ClientSession clientSession, final List<IndexModel> indexes) {
-        notNull("clientSession", clientSession);
-        return executeCreateIndexes(clientSession, indexes);
+        return createIndexes(clientSession, indexes, new CreateIndexOptions());
     }
 
-    private List<String> executeCreateIndexes(final ClientSession clientSession, final List<IndexModel> indexes) {
+    @Override
+    public List<String> createIndexes(final ClientSession clientSession, final List<IndexModel> indexes,
+                                      final CreateIndexOptions createIndexOptions) {
+        notNull("clientSession", clientSession);
+        return executeCreateIndexes(clientSession, indexes, createIndexOptions);
+    }
+
+    private List<String> executeCreateIndexes(final ClientSession clientSession, final List<IndexModel> indexes,
+                                              final CreateIndexOptions createIndexOptions) {
         notNull("indexes", indexes);
+        notNull("createIndexOptions", createIndexOptions);
         List<IndexRequest> indexRequests = new ArrayList<IndexRequest>(indexes.size());
         for (IndexModel model : indexes) {
             if (model == null) {
@@ -847,7 +862,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                                       .collation(model.getOptions().getCollation())
             );
         }
-        CreateIndexesOperation createIndexesOperation = new CreateIndexesOperation(getNamespace(), indexRequests, writeConcern);
+        CreateIndexesOperation createIndexesOperation = new CreateIndexesOperation(getNamespace(), indexRequests, writeConcern)
+                .maxTime(createIndexOptions.getMaxTime(MILLISECONDS), MILLISECONDS);
         executor.execute(createIndexesOperation, clientSession);
         return createIndexesOperation.getIndexNames();
     }
@@ -881,24 +897,44 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public void dropIndex(final String indexName) {
-        executeDropIndex(null, indexName);
+        dropIndex(indexName, new DropIndexOptions());
+    }
+
+    @Override
+    public void dropIndex(final String indexName, final DropIndexOptions dropIndexOptions) {
+        executeDropIndex(null, indexName, dropIndexOptions);
     }
 
     @Override
     public void dropIndex(final Bson keys) {
-        executeDropIndex(null, keys);
+        dropIndex(keys, new DropIndexOptions());
+    }
+
+    @Override
+    public void dropIndex(final Bson keys, final DropIndexOptions dropIndexOptions) {
+        executeDropIndex(null, keys, dropIndexOptions);
     }
 
     @Override
     public void dropIndex(final ClientSession clientSession, final String indexName) {
-        notNull("clientSession", clientSession);
-        executeDropIndex(clientSession, indexName);
+        dropIndex(clientSession, indexName, new DropIndexOptions());
     }
 
     @Override
     public void dropIndex(final ClientSession clientSession, final Bson keys) {
+        dropIndex(clientSession, keys, new DropIndexOptions());
+    }
+
+    @Override
+    public void dropIndex(final ClientSession clientSession, final String indexName, final DropIndexOptions dropIndexOptions) {
         notNull("clientSession", clientSession);
-        executeDropIndex(clientSession, keys);
+        executeDropIndex(clientSession, indexName, dropIndexOptions);
+    }
+
+    @Override
+    public void dropIndex(final ClientSession clientSession, final Bson keys, final DropIndexOptions dropIndexOptions) {
+        notNull("clientSession", clientSession);
+        executeDropIndex(clientSession, keys, dropIndexOptions);
     }
 
     @Override
@@ -909,16 +945,28 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     @Override
     public void dropIndexes(final ClientSession clientSession) {
         notNull("clientSession", clientSession);
-        executeDropIndex(clientSession, "*");
+        executeDropIndex(clientSession, "*", new DropIndexOptions());
     }
 
-    private void executeDropIndex(final ClientSession clientSession, final String indexName) {
-        executor.execute(new DropIndexOperation(namespace, indexName, writeConcern), clientSession);
+    @Override
+    public void dropIndexes(final DropIndexOptions dropIndexOptions) {
+        dropIndex("*", dropIndexOptions);
     }
 
-    private void executeDropIndex(final ClientSession clientSession, final Bson keys) {
-        executor.execute(new DropIndexOperation(namespace, keys.toBsonDocument(BsonDocument.class, codecRegistry), writeConcern),
-                clientSession);
+    @Override
+    public void dropIndexes(final ClientSession clientSession, final DropIndexOptions dropIndexOptions) {
+        dropIndex(clientSession, "*", dropIndexOptions);
+    }
+
+    private void executeDropIndex(final ClientSession clientSession, final String indexName, final DropIndexOptions dropIndexOptions) {
+        notNull("dropIndexOptions", dropIndexOptions);
+        executor.execute(new DropIndexOperation(namespace, indexName, writeConcern)
+                .maxTime(dropIndexOptions.getMaxTime(MILLISECONDS), MILLISECONDS), clientSession);
+    }
+
+    private void executeDropIndex(final ClientSession clientSession, final Bson keys, final DropIndexOptions dropIndexOptions) {
+        executor.execute(new DropIndexOperation(namespace, keys.toBsonDocument(BsonDocument.class, codecRegistry), writeConcern)
+                        .maxTime(dropIndexOptions.getMaxTime(MILLISECONDS), MILLISECONDS), clientSession);
     }
 
     @Override

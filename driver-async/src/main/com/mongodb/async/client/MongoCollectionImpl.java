@@ -35,9 +35,11 @@ import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.bulk.WriteRequest;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
+import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.DropIndexOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
@@ -908,19 +910,32 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public void createIndexes(final List<IndexModel> indexes, final SingleResultCallback<List<String>> callback) {
-        executeCreateIndexes(null, indexes, callback);
+        createIndexes(indexes, new CreateIndexOptions(), callback);
+    }
+
+    @Override
+    public void createIndexes(final List<IndexModel> indexes, final CreateIndexOptions createIndexOptions,
+                              final SingleResultCallback<List<String>> callback) {
+        executeCreateIndexes(null, indexes, createIndexOptions, callback);
     }
 
     @Override
     public void createIndexes(final ClientSession clientSession, final List<IndexModel> indexes,
                               final SingleResultCallback<List<String>> callback) {
+        createIndexes(clientSession, indexes, new CreateIndexOptions(), callback);
+    }
+
+    @Override
+    public void createIndexes(final ClientSession clientSession, final List<IndexModel> indexes,
+                              final CreateIndexOptions createIndexOptions, final SingleResultCallback<List<String>> callback) {
         notNull("clientSession", clientSession);
-        executeCreateIndexes(clientSession, indexes, callback);
+        executeCreateIndexes(clientSession, indexes, createIndexOptions, callback);
     }
 
     private void executeCreateIndexes(final ClientSession clientSession, final List<IndexModel> indexes,
-                                      final SingleResultCallback<List<String>> callback) {
+                                      final CreateIndexOptions createIndexOptions, final SingleResultCallback<List<String>> callback) {
         notNull("indexes", indexes);
+        notNull("createIndexOptions", createIndexOptions);
 
         List<IndexRequest> indexRequests = new ArrayList<IndexRequest>(indexes.size());
         for (IndexModel model : indexes) {
@@ -947,7 +962,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                     .partialFilterExpression(toBsonDocument(model.getOptions().getPartialFilterExpression()))
                     .collation(model.getOptions().getCollation()));
         }
-        final CreateIndexesOperation createIndexesOperation = new CreateIndexesOperation(getNamespace(), indexRequests, writeConcern);
+        final CreateIndexesOperation createIndexesOperation = new CreateIndexesOperation(getNamespace(), indexRequests, writeConcern)
+                .maxTime(createIndexOptions.getMaxTime(MILLISECONDS), MILLISECONDS);
         executor.execute(createIndexesOperation, clientSession, new SingleResultCallback<Void>() {
             @Override
             public void onResult(final Void result, final Throwable t) {
@@ -988,43 +1004,79 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public void dropIndex(final String indexName, final SingleResultCallback<Void> callback) {
-        executeDropIndex(null, indexName, callback);
+        dropIndex(indexName, new DropIndexOptions(), callback);
+    }
+
+    @Override
+    public void dropIndex(final String indexName, final DropIndexOptions dropIndexOptions, final SingleResultCallback<Void> callback) {
+        executeDropIndex(null, indexName, dropIndexOptions, callback);
     }
 
     @Override
     public void dropIndex(final Bson keys, final SingleResultCallback<Void> callback) {
-        executeDropIndex(null, keys, callback);
+        dropIndex(keys, new DropIndexOptions(), callback);
+    }
+
+    @Override
+    public void dropIndex(final Bson keys, final DropIndexOptions dropIndexOptions, final SingleResultCallback<Void> callback) {
+        executeDropIndex(null, keys, dropIndexOptions, callback);
     }
 
     @Override
     public void dropIndex(final ClientSession clientSession, final String indexName, final SingleResultCallback<Void> callback) {
+        dropIndex(clientSession, indexName, new DropIndexOptions(), callback);
+    }
+
+    @Override
+    public void dropIndex(final ClientSession clientSession, final String indexName, final DropIndexOptions dropIndexOptions,
+                          final SingleResultCallback<Void> callback) {
         notNull("clientSession", clientSession);
-        executeDropIndex(clientSession, indexName, callback);
+        executeDropIndex(clientSession, indexName, dropIndexOptions, callback);
     }
 
     @Override
     public void dropIndex(final ClientSession clientSession, final Bson keys, final SingleResultCallback<Void> callback) {
+        dropIndex(clientSession, keys, new DropIndexOptions(), callback);
+    }
+
+    @Override
+    public void dropIndex(final ClientSession clientSession, final Bson keys, final DropIndexOptions dropIndexOptions,
+                          final SingleResultCallback<Void> callback) {
         notNull("clientSession", clientSession);
-        executeDropIndex(clientSession, keys, callback);
+        executeDropIndex(clientSession, keys, dropIndexOptions, callback);
     }
 
     @Override
     public void dropIndexes(final SingleResultCallback<Void> callback) {
-        dropIndex("*", callback);
+        dropIndexes(new DropIndexOptions(), callback);
+    }
+
+    @Override
+    public void dropIndexes(final DropIndexOptions dropIndexOptions, final SingleResultCallback<Void> callback) {
+        dropIndex("*", dropIndexOptions, callback);
     }
 
     @Override
     public void dropIndexes(final ClientSession clientSession, final SingleResultCallback<Void> callback) {
-        dropIndex(clientSession, "*", callback);
+        dropIndexes(clientSession, new DropIndexOptions(), callback);
     }
 
-    private void executeDropIndex(final ClientSession clientSession, final Bson keys, final SingleResultCallback<Void> callback) {
-        executor.execute(new DropIndexOperation(namespace, keys.toBsonDocument(BsonDocument.class, codecRegistry), writeConcern),
-                clientSession, callback);
+    @Override
+    public void dropIndexes(final ClientSession clientSession, final DropIndexOptions dropIndexOptions,
+                            final SingleResultCallback<Void> callback) {
+        dropIndex(clientSession, "*", dropIndexOptions, callback);
     }
 
-    private void executeDropIndex(final ClientSession clientSession, final String indexName, final SingleResultCallback<Void> callback) {
-        executor.execute(new DropIndexOperation(namespace, indexName, writeConcern), clientSession, callback);
+    private void executeDropIndex(final ClientSession clientSession, final Bson keys,
+                                  final DropIndexOptions dropIndexOptions, final SingleResultCallback<Void> callback) {
+        executor.execute(new DropIndexOperation(namespace, keys.toBsonDocument(BsonDocument.class, codecRegistry), writeConcern)
+                        .maxTime(dropIndexOptions.getMaxTime(MILLISECONDS), MILLISECONDS), clientSession, callback);
+    }
+
+    private void executeDropIndex(final ClientSession clientSession, final String indexName,
+                                  final DropIndexOptions dropIndexOptions, final SingleResultCallback<Void> callback) {
+        executor.execute(new DropIndexOperation(namespace, indexName, writeConcern)
+                .maxTime(dropIndexOptions.getMaxTime(MILLISECONDS), MILLISECONDS), clientSession, callback);
     }
 
     @Override

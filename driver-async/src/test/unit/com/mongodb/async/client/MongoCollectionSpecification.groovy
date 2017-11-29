@@ -40,9 +40,11 @@ import com.mongodb.client.ImmutableDocumentCodecProvider
 import com.mongodb.client.model.BulkWriteOptions
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CountOptions
+import com.mongodb.client.model.CreateIndexOptions
 import com.mongodb.client.model.DeleteManyModel
 import com.mongodb.client.model.DeleteOneModel
 import com.mongodb.client.model.DeleteOptions
+import com.mongodb.client.model.DropIndexOptions
 import com.mongodb.client.model.FindOneAndDeleteOptions
 import com.mongodb.client.model.FindOneAndReplaceOptions
 import com.mongodb.client.model.FindOneAndUpdateOptions
@@ -1078,7 +1080,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'should use CreateIndexOperations correctly'() {
         given:
-        def executor = new TestOperationExecutor([null, null, null])
+        def executor = new TestOperationExecutor([null, null, null, null])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED,
                 true, readConcern, executor)
         def createIndexMethod = collection.&createIndex
@@ -1100,6 +1102,18 @@ class MongoCollectionSpecification extends Specification {
                  new IndexRequest(new BsonDocument('key1', new BsonInt32(1)))], ACKNOWLEDGED)
         def indexNames = execute(createIndexesMethod, session, [new IndexModel(new Document('key', 1)),
                                                                 new IndexModel(new Document('key1', 1))])
+        operation = executor.getWriteOperation() as CreateIndexesOperation
+
+        then:
+        expect operation, isTheSameAs(expectedOperation)
+        executor.getClientSession() == session
+        indexNames == ['key_1', 'key1_1']
+
+        when:
+        expectedOperation = expectedOperation.maxTime(10, MILLISECONDS)
+        indexNames = execute(createIndexesMethod, session,
+                [new IndexModel(new Document('key', 1)), new IndexModel(new Document('key1', 1))],
+                new CreateIndexOptions().maxTime(10, MILLISECONDS))
         operation = executor.getWriteOperation() as CreateIndexesOperation
 
         then:
@@ -1216,7 +1230,7 @@ class MongoCollectionSpecification extends Specification {
 
     def 'should use DropIndexOperation correctly for dropIndex'() {
         given:
-        def executor = new TestOperationExecutor([null, null])
+        def executor = new TestOperationExecutor([null, null, null])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED,
                 true, readConcern, executor)
         def dropIndexMethod = collection.&dropIndex
@@ -1240,13 +1254,22 @@ class MongoCollectionSpecification extends Specification {
         expect operation, isTheSameAs(expectedOperation)
         executor.getClientSession() == session
 
+        when:
+        expectedOperation = expectedOperation.maxTime(10, MILLISECONDS)
+        execute(dropIndexMethod, session, keys, new DropIndexOptions().maxTime(10, MILLISECONDS))
+        operation = executor.getWriteOperation() as DropIndexOperation
+
+        then:
+        expect operation, isTheSameAs(expectedOperation)
+        executor.getClientSession() == session
+
         where:
         session << [null, Stub(ClientSession)]
     }
 
     def 'should use DropIndexOperation correctly for dropIndexes'() {
         given:
-        def executor = new TestOperationExecutor([null])
+        def executor = new TestOperationExecutor([null, null])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED,
                 true, readConcern, executor)
         def expectedOperation = new DropIndexOperation(namespace, '*', ACKNOWLEDGED)
@@ -1255,6 +1278,15 @@ class MongoCollectionSpecification extends Specification {
         when:
         execute(dropIndexesMethod, session)
         def operation = executor.getWriteOperation() as DropIndexOperation
+
+        then:
+        expect operation, isTheSameAs(expectedOperation)
+        executor.getClientSession() == session
+
+        when:
+        expectedOperation = expectedOperation.maxTime(10, MILLISECONDS)
+        execute(dropIndexesMethod, session, new DropIndexOptions().maxTime(10, MILLISECONDS))
+        operation = executor.getWriteOperation() as DropIndexOperation
 
         then:
         expect operation, isTheSameAs(expectedOperation)

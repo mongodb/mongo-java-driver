@@ -24,7 +24,9 @@ import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
+import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteOptions;
+import com.mongodb.client.model.DropIndexOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
@@ -1199,6 +1201,17 @@ public interface MongoCollection<TDocument> {
     /**
      * Create multiple indexes.
      *
+     * @param indexes the list of indexes
+     * @param createIndexOptions options to use when creating indexes
+     * @return the list of index names
+     * @mongodb.driver.manual reference/command/createIndexes Create indexes
+     * @since 3.6
+     */
+    List<String> createIndexes(List<IndexModel> indexes, CreateIndexOptions createIndexOptions);
+
+    /**
+     * Create multiple indexes.
+     *
      * @param clientSession the client session with which to associate this operation
      * @param indexes the list of indexes
      * @return the list of index names
@@ -1207,6 +1220,19 @@ public interface MongoCollection<TDocument> {
      * @mongodb.driver.manual reference/command/createIndexes Create indexes
      */
     List<String> createIndexes(ClientSession clientSession, List<IndexModel> indexes);
+
+    /**
+     * Create multiple indexes.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param indexes the list of indexes
+     * @param createIndexOptions options to use when creating indexes
+     * @return the list of index names
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @mongodb.driver.manual reference/command/createIndexes Create indexes
+     */
+    List<String> createIndexes(ClientSession clientSession, List<IndexModel> indexes, CreateIndexOptions createIndexOptions);
 
     /**
      * Get all the indexes in this collection.
@@ -1259,12 +1285,32 @@ public interface MongoCollection<TDocument> {
     void dropIndex(String indexName);
 
     /**
+     * Drops the index given its name.
+     *
+     * @param indexName the name of the index to remove
+     * @param dropIndexOptions the options to use when dropping indexes
+     * @mongodb.driver.manual reference/command/dropIndexes/ Drop indexes
+     * @since 3.6
+     */
+    void dropIndex(String indexName, DropIndexOptions dropIndexOptions);
+
+    /**
      * Drops the index given the keys used to create it.
      *
      * @param keys the keys of the index to remove
      * @mongodb.driver.manual reference/command/dropIndexes/ Drop indexes
      */
     void dropIndex(Bson keys);
+
+    /**
+     * Drops the index given the keys used to create it.
+     *
+     * @param keys the keys of the index to remove
+     * @param dropIndexOptions the options to use when dropping indexes
+     * @mongodb.driver.manual reference/command/dropIndexes/ Drop indexes
+     * @since 3.6
+     */
+    void dropIndex(Bson keys, DropIndexOptions dropIndexOptions);
 
     /**
      * Drops the index given its name.
@@ -1289,6 +1335,30 @@ public interface MongoCollection<TDocument> {
     void dropIndex(ClientSession clientSession, Bson keys);
 
     /**
+     * Drops the index given its name.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param indexName the name of the index to remove
+     * @param dropIndexOptions the options to use when dropping indexes
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @mongodb.driver.manual reference/command/dropIndexes/ Drop indexes
+     */
+    void dropIndex(ClientSession clientSession, String indexName, DropIndexOptions dropIndexOptions);
+
+    /**
+     * Drops the index given the keys used to create it.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param keys the keys of the index to remove
+     * @param dropIndexOptions the options to use when dropping indexes
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @mongodb.driver.manual reference/command/dropIndexes/ Drop indexes
+     */
+    void dropIndex(ClientSession clientSession, Bson keys, DropIndexOptions dropIndexOptions);
+
+    /**
      * Drop all the indexes on this collection, except for the default on _id.
      *
      * @mongodb.driver.manual reference/command/dropIndexes/ Drop indexes
@@ -1304,6 +1374,26 @@ public interface MongoCollection<TDocument> {
      * @mongodb.driver.manual reference/command/dropIndexes/ Drop indexes
      */
     void dropIndexes(ClientSession clientSession);
+
+    /**
+     * Drop all the indexes on this collection, except for the default on _id.
+     *
+     * @param dropIndexOptions the options to use when dropping indexes
+     * @mongodb.driver.manual reference/command/dropIndexes/ Drop indexes
+     * @since 3.6
+     */
+    void dropIndexes(DropIndexOptions dropIndexOptions);
+
+    /**
+     * Drop all the indexes on this collection, except for the default on _id.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param dropIndexOptions the options to use when dropping indexes
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @mongodb.driver.manual reference/command/dropIndexes/ Drop indexes
+     */
+    void dropIndexes(ClientSession clientSession, DropIndexOptions dropIndexOptions);
 
     /**
      * Rename the collection with oldCollectionName to the newCollectionName.

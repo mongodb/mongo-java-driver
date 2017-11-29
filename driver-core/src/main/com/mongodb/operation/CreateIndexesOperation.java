@@ -42,10 +42,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.operation.IndexHelper.generateIndexName;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
@@ -68,6 +70,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
     private final MongoNamespace namespace;
     private final List<IndexRequest> requests;
     private final WriteConcern writeConcern;
+    private long maxTimeMS;
 
     /**
      * Construct a new instance.
@@ -131,6 +134,33 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
             }
         }
         return indexNames;
+    }
+
+    /**
+     * Gets the maximum execution time on the server for this operation.  The default is 0, which places no limit on the execution time.
+     *
+     * @param timeUnit the time unit to return the result in
+     * @return the maximum execution time in the given time unit
+     * @since 3.6
+     */
+    public long getMaxTime(final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Sets the maximum execution time on the server for this operation.
+     *
+     * @param maxTime  the max time
+     * @param timeUnit the time unit, which may not be null
+     * @return this
+     * @since 3.6
+     */
+    public CreateIndexesOperation maxTime(final long maxTime, final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        isTrueArgument("maxTime >= 0", maxTime >= 0);
+        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
+        return this;
     }
 
     @Override
@@ -251,6 +281,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
             values.add(getIndex(request));
         }
         command.put("indexes", new BsonArray(values));
+        putIfNotZero(command, "maxTimeMS", maxTimeMS);
         appendWriteConcernToCommand(writeConcern, command, description);
         return command;
     }

@@ -16,8 +16,8 @@
 
 package com.mongodb.operation
 
-import category.Async
 import com.mongodb.MongoException
+import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
@@ -26,31 +26,28 @@ import org.bson.BsonInt32
 import org.bson.BsonInt64
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
-import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.executeAsync
+import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
+import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
+import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static java.util.concurrent.TimeUnit.MILLISECONDS
+import static java.util.concurrent.TimeUnit.SECONDS
 
 class DropIndexOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should not error when dropping non-existent index on non-existent collection'() {
         when:
-        new DropIndexOperation(getNamespace(), 'made_up_index_1').execute(getBinding())
+        execute(new DropIndexOperation(getNamespace(), 'made_up_index_1'), async)
 
         then:
         getIndexes().size() == 0
-    }
 
-    @Category(Async)
-    def 'should not error when dropping non-existent index on non-existent collection asynchronously'() {
-        when:
-        executeAsync(new DropIndexOperation(getNamespace(), 'made_up_index_1'))
-
-        then:
-        getIndexes().size() == 0
+        where:
+        async << [true, false]
     }
 
     def 'should error when dropping non-existent index on existing collection'() {
@@ -58,22 +55,13 @@ class DropIndexOperationSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
 
         when:
-        new DropIndexOperation(getNamespace(), 'made_up_index_1').execute(getBinding())
+        execute(new DropIndexOperation(getNamespace(), 'made_up_index_1'), async)
 
         then:
         thrown(MongoException)
-    }
 
-    @Category(Async)
-    def 'should error when dropping non-existent index  on existing collection asynchronously'() {
-        given:
-        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentThat', 'forces creation of the Collection'))
-
-        when:
-        executeAsync(new DropIndexOperation(getNamespace(), 'made_up_index_1'))
-
-        then:
-        thrown(MongoException)
+        where:
+        async << [true, false]
     }
 
     def 'should drop existing index by name'() {
@@ -81,12 +69,15 @@ class DropIndexOperationSpecification extends OperationFunctionalSpecification {
         collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))
 
         when:
-        new DropIndexOperation(getNamespace(), 'theField_1').execute(getBinding())
+        execute(new DropIndexOperation(getNamespace(), 'theField_1'), async)
         List<Document> indexes = getIndexes()
 
         then:
         indexes.size() == 1
         indexes[0].name == '_id_'
+
+        where:
+        async << [true, false]
     }
 
     def 'should drop existing index by keys'() {
@@ -95,30 +86,38 @@ class DropIndexOperationSpecification extends OperationFunctionalSpecification {
         collectionHelper.createIndex(keys)
 
         when:
-        new DropIndexOperation(getNamespace(), keys).execute(getBinding())
+        execute(new DropIndexOperation(getNamespace(), keys), async)
         List<Document> indexes = getIndexes()
 
         then:
         indexes.size() == 1
         indexes[0].name == '_id_'
+
+        where:
+        async << [true, false]
     }
 
-    @Category(Async)
-    def 'should drop existing index asynchronously'() {
+    @IgnoreIf({ isSharded() })
+    def 'should throw execution timeout exception from execute'() {
         given:
         def keys = new BsonDocument('theField', new BsonInt32(1))
         collectionHelper.createIndex(keys)
-        def operation = new DropIndexOperation(getNamespace(), keys);
+        def operation = new DropIndexOperation(getNamespace(), keys).maxTime(30, SECONDS)
+
+        enableMaxTimeFailPoint()
 
         when:
-        executeAsync(operation)
-        List<Document> indexes = getIndexes()
+        execute(operation, async)
 
         then:
-        indexes.size() == 1
-        indexes[0].name == '_id_'
-    }
+        thrown(MongoExecutionTimeoutException)
 
+        cleanup:
+        disableMaxTimeFailPoint()
+
+        where:
+        async << [true, false]
+    }
 
     def 'should drop existing index by key when using BsonInt64'() {
         given:
@@ -126,28 +125,15 @@ class DropIndexOperationSpecification extends OperationFunctionalSpecification {
         collectionHelper.createIndex(keys)
 
         when:
-        new DropIndexOperation(getNamespace(), new BsonDocument('theField', new BsonInt64(1))).execute(getBinding())
+        execute(new DropIndexOperation(getNamespace(), new BsonDocument('theField', new BsonInt64(1))), async)
         List<Document> indexes = getIndexes()
 
         then:
         indexes.size() == 1
         indexes[0].name == '_id_'
-    }
 
-    @Category(Async)
-    def 'should drop existing index by key when using BsonInt64 asynchronously'() {
-        given:
-        def keys = new BsonDocument('theField', new BsonInt32(1))
-        collectionHelper.createIndex(keys)
-        def operation = new DropIndexOperation(getNamespace(), new BsonDocument('theField', new BsonInt64(1)));
-
-        when:
-        executeAsync(operation)
-        List<Document> indexes = getIndexes()
-
-        then:
-        indexes.size() == 1
-        indexes[0].name == '_id_'
+        where:
+        async << [true, false]
     }
 
     def 'should drop all indexes when passed *'() {
@@ -156,27 +142,15 @@ class DropIndexOperationSpecification extends OperationFunctionalSpecification {
         collectionHelper.createIndex(new BsonDocument('theOtherField', new BsonInt32(1)))
 
         when:
-        new DropIndexOperation(getNamespace(), '*').execute(getBinding())
+        execute(new DropIndexOperation(getNamespace(), '*'), async)
         List<Document> indexes = getIndexes()
 
         then:
         indexes.size() == 1
         indexes[0].name == '_id_'
-    }
 
-    @Category(Async)
-    def 'should drop all indexes when passed * asynchronously'() {
-        given:
-        collectionHelper.createIndex(new BsonDocument('theField', new BsonInt32(1)))
-        collectionHelper.createIndex(new BsonDocument('theOtherField', new BsonInt32(1)))
-
-        when:
-        executeAsync(new DropIndexOperation(getNamespace(), '*'))
-        List<Document> indexes = getIndexes()
-
-        then:
-        indexes.size() == 1
-        indexes[0].name == '_id_'
+        where:
+        async << [true, false]
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
@@ -186,7 +160,7 @@ class DropIndexOperationSpecification extends OperationFunctionalSpecification {
         def operation = new DropIndexOperation(getNamespace(), 'theField_1', new WriteConcern(5))
 
         when:
-        async ? executeAsync(operation) : operation.execute(getBinding())
+        execute(operation, async)
 
         then:
         def ex = thrown(MongoWriteConcernException)
