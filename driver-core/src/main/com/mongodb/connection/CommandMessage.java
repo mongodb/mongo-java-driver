@@ -200,7 +200,7 @@ final class CommandMessage extends RequestMessage {
         if (sessionContext.getClusterTime() != null) {
             extraElements.add(new BsonElement("$clusterTime", sessionContext.getClusterTime()));
         }
-        if (sessionContext.hasSession()) {
+        if (sessionContext.hasSession() && responseExpected) {
             extraElements.add(new BsonElement("lsid", sessionContext.getSessionId()));
         }
         if (!isDefaultReadPreference(getReadPreference())) {

@@ -47,7 +47,8 @@ class CommandMessageSpecification extends Specification {
     def 'should encode command message with OP_MSG'() {
         given:
         def message = new CommandMessage(namespace, command, fieldNameValidator, readPreference,
-                MessageSettings.builder().serverVersion(new ServerVersion(3, 6)).build())
+                MessageSettings.builder().serverVersion(new ServerVersion(3, 6)).build(),
+                responseExpected, null, null)
         def output = new BasicOutputBuffer()
 
         when:
@@ -66,7 +67,7 @@ class CommandMessageSpecification extends Specification {
         if (sessionContext.clusterTime != null) {
             expectedCommandDocument.append('$clusterTime', sessionContext.clusterTime)
         }
-        if (sessionContext.hasSession()) {
+        if (sessionContext.hasSession() && responseExpected) {
             expectedCommandDocument.append('lsid', sessionContext.sessionId)
         }
 
@@ -76,7 +77,7 @@ class CommandMessageSpecification extends Specification {
         getCommandDocument(byteBuf, messageHeader) == expectedCommandDocument
 
         where:
-        [readPreference, sessionContext] << [
+        [readPreference, sessionContext, responseExpected] << [
                 [ReadPreference.primary(), ReadPreference.secondary()],
                 [
                         Stub(SessionContext) {
@@ -98,7 +99,8 @@ class CommandMessageSpecification extends Specification {
                             getClusterTime() >> new BsonDocument('clusterTime', new BsonTimestamp(42, 1))
                             getSessionId() >> new BsonDocument('id', new BsonBinary([1, 2, 3] as byte[]))
                         }
-                ]
+                ],
+                [true, false]
         ].combinations()
     }
 

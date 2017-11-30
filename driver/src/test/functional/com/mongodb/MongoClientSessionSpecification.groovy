@@ -323,11 +323,33 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         client.getDatabase('admin').runCommand(new BsonDocument('ping', new BsonInt32(1)))
 
         then:
-        def pingCommandStartedEvent = commandListener.events.get(0)
-        !(pingCommandStartedEvent as CommandStartedEvent).command.containsKey('lsid')
+        def pingCommandStartedEvent = commandListener.events.get(0) as CommandStartedEvent
+        !pingCommandStartedEvent.command.containsKey('lsid')
 
         cleanup:
         Fixture.getMongoClient().getDB('admin').removeUser(sessionTestUserName)
+        client?.close()
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    def 'should not use a session for an unacknowledged write'() {
+        given:
+        def commandListener = new TestCommandListener()
+        def optionsBuilder = MongoClientOptions.builder()
+                .addCommandListener(commandListener)
+        def mongoClientURI = getMongoClientURI(optionsBuilder)
+        def client = new MongoClient(mongoClientURI)
+
+        when:
+        client.getDatabase(getDatabaseName()).getCollection(getCollectionName())
+                .withWriteConcern(WriteConcern.UNACKNOWLEDGED)
+                .insertOne(new Document())
+
+        then:
+        def insertEvent = commandListener.events.get(0) as CommandStartedEvent
+        !insertEvent.command.containsKey('lsid')
+
+        cleanup:
         client?.close()
     }
 }
