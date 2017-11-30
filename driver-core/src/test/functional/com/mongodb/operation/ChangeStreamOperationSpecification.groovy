@@ -367,7 +367,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
         operation.resumeAfter(result.head().getDocument('_id'))
         cursor = execute(operation, async)
-        result = tryNextAndClean(cursor, async)
+        result = nextAndClean(cursor, async)
 
         then:
         result == expected.tail()
