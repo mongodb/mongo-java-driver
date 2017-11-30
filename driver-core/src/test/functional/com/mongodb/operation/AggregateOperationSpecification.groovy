@@ -55,12 +55,14 @@ import static com.mongodb.ClusterFixture.collectCursorResults
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.executeAsync
+import static com.mongodb.ClusterFixture.getAsyncCluster
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getCluster
-import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
+import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.ExplainVerbosity.QUERY_PLANNER
+import static com.mongodb.connection.ServerHelper.waitForLastRelease
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.operation.QueryOperationHelper.getKeyPattern
 import static com.mongodb.operation.ReadConcernHelper.appendReadConcernToCommand
@@ -191,7 +193,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !(serverVersionAtLeast(3, 6) && isDiscoverableReplicaSet()) })
+    @IgnoreIf({ !(serverVersionAtLeast(3, 6) && !isStandalone()) })
     def 'should support changeStreams'() {
         given:
         def expected = [createExpectedChangeNotification(namespace, 0), createExpectedChangeNotification(namespace, 1)]
@@ -213,7 +215,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
         cleanup:
         cursor?.close()
-        helper?.drop()
+        waitForLastRelease(async ? getAsyncCluster() : getCluster())
 
         where:
         async << [true, false]
