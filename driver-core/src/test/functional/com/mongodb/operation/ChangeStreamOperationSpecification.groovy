@@ -38,8 +38,11 @@ import org.bson.codecs.DocumentCodec
 import org.bson.codecs.ValueCodecProvider
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.getAsyncCluster
+import static com.mongodb.ClusterFixture.getCluster
 import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.connection.ServerHelper.waitForLastRelease
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
@@ -134,7 +137,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
         cleanup:
         cursor?.close()
-        helper?.drop()
+        waitForLastRelease(async ? getAsyncCluster() : getCluster())
 
         where:
         async << [true, false]
@@ -302,7 +305,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
         cleanup:
         cursor?.close()
-        helper?.drop()
+        waitForLastRelease(async ? getAsyncCluster() : getCluster())
 
         where:
         async << [true, false]
@@ -341,7 +344,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
         cleanup:
         cursor?.close()
-        helper?.drop()
+        waitForLastRelease(async ? getAsyncCluster() : getCluster())
 
         where:
         async << [true, false]
@@ -364,6 +367,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
         when:
         cursor.close()
+        waitForLastRelease(async ? getAsyncCluster() : getCluster())
 
         operation.resumeAfter(result.head().getDocument('_id'))
         cursor = execute(operation, async)
@@ -374,7 +378,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
         cleanup:
         cursor?.close()
-        helper?.drop()
+        waitForLastRelease(async ? getAsyncCluster() : getCluster())
 
         where:
         async << [true, false]
