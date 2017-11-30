@@ -295,7 +295,7 @@ public class ClusterDescriptionTest {
                         .logicalSessionTimeoutMinutes(5)
                         .build()
         ));
-        assertEquals(new Integer(5), description.getLogicalSessionTimeoutMinutes());
+        assertEquals(Integer.valueOf(5), description.getLogicalSessionTimeoutMinutes());
 
         description = new ClusterDescription(SINGLE, SHARDED, asList(
                 builder().state(CONNECTED)
@@ -305,7 +305,7 @@ public class ClusterDescriptionTest {
                         .logicalSessionTimeoutMinutes(5)
                         .build()
         ));
-        assertEquals(new Integer(5), description.getLogicalSessionTimeoutMinutes());
+        assertEquals(Integer.valueOf(5), description.getLogicalSessionTimeoutMinutes());
 
         description = new ClusterDescription(MULTIPLE, SHARDED, asList(
                 builder().state(CONNECTED)
@@ -318,7 +318,7 @@ public class ClusterDescriptionTest {
                         .address(new ServerAddress("loc:27018"))
                         .build()
         ));
-        assertEquals(new Integer(5), description.getLogicalSessionTimeoutMinutes());
+        assertEquals(Integer.valueOf(5), description.getLogicalSessionTimeoutMinutes());
 
         description = new ClusterDescription(MULTIPLE, SHARDED, asList(
                 builder().state(CONNECTED)
@@ -334,7 +334,7 @@ public class ClusterDescriptionTest {
                         .logicalSessionTimeoutMinutes(3)
                         .build()
         ));
-        assertEquals(new Integer(3), description.getLogicalSessionTimeoutMinutes());
+        assertEquals(Integer.valueOf(3), description.getLogicalSessionTimeoutMinutes());
 
         description = new ClusterDescription(MULTIPLE, REPLICA_SET, asList(
                 builder().state(CONNECTED)
