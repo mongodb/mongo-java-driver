@@ -17,6 +17,7 @@
 package org.bson.codecs.pojo;
 
 import org.bson.codecs.configuration.CodecConfigurationException;
+import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import java.lang.annotation.Annotation;
@@ -33,6 +34,7 @@ final class CreatorExecutable<T> {
     private final Constructor<T> constructor;
     private final Method method;
     private final List<BsonProperty> properties = new ArrayList<BsonProperty>();
+    private final Integer idPropertyIndex;
     private final List<Class<?>> parameterTypes = new ArrayList<Class<?>>();
 
     CreatorExecutable(final Class<T> clazz, final Constructor<T> constructor) {
@@ -47,21 +49,32 @@ final class CreatorExecutable<T> {
         this.clazz = clazz;
         this.constructor = constructor;
         this.method = method;
+        Integer idPropertyIndex = null;
 
         if (constructor != null || method != null) {
             parameterTypes.addAll(asList(constructor != null ? constructor.getParameterTypes() : method.getParameterTypes()));
             Annotation[][] parameterAnnotations = constructor != null ? constructor.getParameterAnnotations()
                     : method.getParameterAnnotations();
 
-            for (Annotation[] parameterAnnotation : parameterAnnotations) {
+            for (int i = 0; i < parameterAnnotations.length; ++i) {
+                Annotation[] parameterAnnotation = parameterAnnotations[i];
+
                 for (Annotation annotation : parameterAnnotation) {
                     if (annotation.annotationType().equals(BsonProperty.class)) {
                         properties.add((BsonProperty) annotation);
                         break;
                     }
+
+                    if (annotation.annotationType().equals(BsonId.class)) {
+                        properties.add(null);
+                        idPropertyIndex = i;
+                        break;
+                    }
                 }
             }
         }
+
+        this.idPropertyIndex = idPropertyIndex;
     }
 
     public Class<T> getType() {
@@ -70,6 +83,10 @@ final class CreatorExecutable<T> {
 
     List<BsonProperty> getProperties() {
         return properties;
+    }
+
+    Integer getIdPropertyIndex() {
+        return idPropertyIndex;
     }
 
     public List<Class<?>> getParameterTypes() {

@@ -41,9 +41,18 @@ final class InstanceCreatorImpl<T> implements InstanceCreator<T> {
         } else {
             this.cachedValues = new HashMap<PropertyModel<?>, Object>();
             this.properties = new HashMap<String, Integer>();
-            for (int i = 0; i < creatorExecutable.getProperties().size(); i++) {
-                this.properties.put(creatorExecutable.getProperties().get(i).value(), i);
+
+            if (creatorExecutable.getIdPropertyIndex() != null) {
+              this.properties.put(ClassModelBuilder.ID_PROPERTY_NAME, creatorExecutable.getIdPropertyIndex());
             }
+
+            for (int i = 0; i < creatorExecutable.getProperties().size(); i++) {
+                if (!Integer.valueOf(i).equals(creatorExecutable.getIdPropertyIndex())) {
+                    // Skip the ID property
+                    this.properties.put(creatorExecutable.getProperties().get(i).value(), i);
+                }
+            }
+
             this.params = new Object[properties.size()];
         }
     }
@@ -54,11 +63,20 @@ final class InstanceCreatorImpl<T> implements InstanceCreator<T> {
             propertyModel.getPropertyAccessor().set(newInstance, value);
         } else {
             if (!properties.isEmpty()) {
-                Integer index = properties.get(propertyModel.getName());
+                String propertyName = propertyModel.getWriteName();
+
+                if (!properties.containsKey(propertyName)) {
+                    // If the property name cannot be found using write name, falls back to the property name
+                    // This is to provide backward compatibility with the legacy BsonProperty annotation on
+                    // BsonCreator parameters
+                    propertyName = propertyModel.getName();
+                }
+
+                Integer index = properties.get(propertyName);
                 if (index != null) {
                     params[index] = value;
                 }
-                properties.remove(propertyModel.getName());
+                properties.remove(propertyName);
             }
 
             if (properties.isEmpty()) {
