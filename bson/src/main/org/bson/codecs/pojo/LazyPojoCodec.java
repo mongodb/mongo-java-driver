@@ -28,14 +28,16 @@ import java.util.concurrent.ConcurrentMap;
 class LazyPojoCodec<T> extends PojoCodec<T> {
     private final ClassModel<T> classModel;
     private final CodecRegistry registry;
+    private final PropertyCodecRegistry propertyCodecRegistry;
     private final DiscriminatorLookup discriminatorLookup;
     private final ConcurrentMap<ClassModel<?>, Codec<?>> codecCache;
     private volatile PojoCodecImpl<T> pojoCodec;
 
-    LazyPojoCodec(final ClassModel<T> classModel, final CodecRegistry registry, final DiscriminatorLookup discriminatorLookup,
-                  final ConcurrentMap<ClassModel<?>, Codec<?>> codecCache) {
+    LazyPojoCodec(final ClassModel<T> classModel, final CodecRegistry registry, final PropertyCodecRegistry propertyCodecRegistry,
+                  final DiscriminatorLookup discriminatorLookup, final ConcurrentMap<ClassModel<?>, Codec<?>> codecCache) {
         this.classModel = classModel;
         this.registry = registry;
+        this.propertyCodecRegistry = propertyCodecRegistry;
         this.discriminatorLookup = discriminatorLookup;
         this.codecCache = codecCache;
     }
@@ -57,7 +59,7 @@ class LazyPojoCodec<T> extends PojoCodec<T> {
 
     private Codec<T> getPojoCodec() {
         if (pojoCodec == null) {
-            pojoCodec = new PojoCodecImpl<T>(classModel, registry, discriminatorLookup, codecCache, true);
+            pojoCodec = new PojoCodecImpl<T>(classModel, registry, null, propertyCodecRegistry, discriminatorLookup, codecCache, true);
         }
         return pojoCodec;
     }
