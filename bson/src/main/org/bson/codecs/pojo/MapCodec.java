@@ -24,6 +24,7 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecConfigurationException;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -64,11 +65,13 @@ final class MapCodec<T> implements Codec<Map<String, T>> {
     }
 
     private Map<String, T> getInstance() {
+        if (encoderClass.isInterface()) {
+            return new HashMap<String, T>();
+        }
         try {
             return encoderClass.getDeclaredConstructor().newInstance();
         } catch (final Exception e) {
             throw new CodecConfigurationException(e.getMessage(), e);
         }
     }
-
 }

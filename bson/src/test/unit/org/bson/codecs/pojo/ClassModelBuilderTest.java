@@ -29,7 +29,7 @@ import org.junit.Test;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -107,10 +107,10 @@ public final class ClassModelBuilderTest {
         ClassModelBuilder<ConcreteCollectionsModel> builder =
                 ClassModel.builder(ConcreteCollectionsModel.class);
 
-        assertEquals(ArrayList.class, builder.getProperty("collection").getTypeData().getType());
-        assertEquals(ArrayList.class, builder.getProperty("list").getTypeData().getType());
+        assertEquals(Collection.class, builder.getProperty("collection").getTypeData().getType());
+        assertEquals(List.class, builder.getProperty("list").getTypeData().getType());
         assertEquals(LinkedList.class, builder.getProperty("linked").getTypeData().getType());
-        assertEquals(HashMap.class, builder.getProperty("map").getTypeData().getType());
+        assertEquals(Map.class, builder.getProperty("map").getTypeData().getType());
         assertEquals(ConcurrentHashMap.class, builder.getProperty("concurrent").getTypeData().getType());
     }
 
