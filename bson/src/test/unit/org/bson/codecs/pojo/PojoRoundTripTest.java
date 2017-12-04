@@ -23,6 +23,7 @@ import org.bson.codecs.pojo.entities.CollectionSpecificReturnTypeCreatorModel;
 import org.bson.codecs.pojo.entities.CollectionSpecificReturnTypeModel;
 import org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.ConcreteCollectionsModel;
+import org.bson.codecs.pojo.entities.ConcreteInterfaceGenericModel;
 import org.bson.codecs.pojo.entities.ConcreteStandAloneAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.ContainsAlternativeMapAndCollectionModel;
 import org.bson.codecs.pojo.entities.ConventionModel;
@@ -136,6 +137,9 @@ public final class PojoRoundTripTest extends PojoTestCase {
                 "{'_t': 'org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel', 'name': 'A', "
                         + "'child': {'_t': 'org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel', 'name': 'B', "
                         + "  'child': {'_t': 'org.bson.codecs.pojo.entities.ConcreteStandAloneAbstractInterfaceModel', 'name': 'C'}}}}"));
+
+        data.add(new TestData("Concrete generic interface model", new ConcreteInterfaceGenericModel("someValue"),
+                getPojoCodecProviderBuilder(ConcreteInterfaceGenericModel.class), "{propertyA: 'someValue'}"));
 
         data.add(new TestData("Primitives model", getPrimitivesModel(),
                 getPojoCodecProviderBuilder(PrimitivesModel.class),
