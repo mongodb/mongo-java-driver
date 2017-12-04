@@ -123,6 +123,10 @@ final class PojoBuilderHelper {
             currentClass = currentClass.getSuperclass();
         }
 
+        if (currentClass.isInterface()) {
+            annotations.addAll(asList(currentClass.getDeclaredAnnotations()));
+        }
+
         for (String propertyName : propertyNames) {
             PropertyMetadata<?> propertyMetadata = propertyNameMap.get(propertyName);
             if (propertyMetadata.isSerializable() || propertyMetadata.isDeserializable()) {

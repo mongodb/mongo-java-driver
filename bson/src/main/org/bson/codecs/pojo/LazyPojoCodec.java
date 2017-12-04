@@ -59,7 +59,7 @@ class LazyPojoCodec<T> extends PojoCodec<T> {
 
     private Codec<T> getPojoCodec() {
         if (pojoCodec == null) {
-            pojoCodec = new PojoCodecImpl<T>(classModel, registry, null, propertyCodecRegistry, discriminatorLookup, codecCache, true);
+            pojoCodec = new PojoCodecImpl<T>(classModel, registry, propertyCodecRegistry, discriminatorLookup, codecCache, true);
         }
         return pojoCodec;
     }

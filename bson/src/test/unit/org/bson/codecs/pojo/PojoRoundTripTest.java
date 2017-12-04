@@ -60,7 +60,8 @@ import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;
 import org.bson.codecs.pojo.entities.UpperBoundsConcreteModel;
 import org.bson.codecs.pojo.entities.conventions.BsonIgnoreInvalidMapModel;
-import org.bson.codecs.pojo.entities.conventions.CollectionDiscriminatorModel;
+import org.bson.codecs.pojo.entities.conventions.CollectionDiscriminatorAbstractClassesModel;
+import org.bson.codecs.pojo.entities.conventions.CollectionDiscriminatorInterfacesModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorAllFinalFieldsModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorConstructorIdModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorConstructorModel;
@@ -70,6 +71,9 @@ import org.bson.codecs.pojo.entities.conventions.CreatorInSuperClassModelImpl;
 import org.bson.codecs.pojo.entities.conventions.CreatorMethodModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorNoArgsConstructorModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorNoArgsMethodModel;
+import org.bson.codecs.pojo.entities.conventions.InterfaceModel;
+import org.bson.codecs.pojo.entities.conventions.InterfaceModelImplA;
+import org.bson.codecs.pojo.entities.conventions.InterfaceModelImplB;
 import org.bson.codecs.pojo.entities.conventions.Subclass1Model;
 import org.bson.codecs.pojo.entities.conventions.Subclass2Model;
 import org.bson.codecs.pojo.entities.conventions.SuperClassModel;
@@ -312,15 +316,24 @@ public final class PojoRoundTripTest extends PojoTestCase {
                 getPojoCodecProviderBuilder(ContainsAlternativeMapAndCollectionModel.class),
                 "{customList: [1,2,3], customMap: {'field': 'value'}}"));
 
-        data.add(new TestData("Collection of discriminators", new CollectionDiscriminatorModel().setList(Arrays
-                .asList(new Subclass1Model().setName("abc").setValue(true),
-                        new Subclass2Model().setInteger(234).setValue(false))).setMap(
+        data.add(new TestData("Collection of discriminators abstract classes", new CollectionDiscriminatorAbstractClassesModel().setList(
+                asList(new Subclass1Model().setName("abc").setValue(true), new Subclass2Model().setInteger(234).setValue(false))).setMap(
                 Collections.singletonMap("key", new Subclass2Model().setInteger(123).setValue(true))),
-                getPojoCodecProviderBuilder(CollectionDiscriminatorModel.class, SuperClassModel.class, Subclass1Model.class,
+                getPojoCodecProviderBuilder(CollectionDiscriminatorAbstractClassesModel.class, SuperClassModel.class, Subclass1Model.class,
                         Subclass2Model.class),
                 "{list: [{_t: 'org.bson.codecs.pojo.entities.conventions.Subclass1Model', value: true, name: 'abc'},"
                         + "{_t: 'org.bson.codecs.pojo.entities.conventions.Subclass2Model', value: false, integer: 234}],"
                         + "map: {key: {_t: 'org.bson.codecs.pojo.entities.conventions.Subclass2Model', value: true, integer: 123}}}"));
+
+        data.add(new TestData("Collection of discriminators interfaces", new CollectionDiscriminatorInterfacesModel().setList(
+                asList(new InterfaceModelImplA().setName("abc").setValue(true),
+                       new InterfaceModelImplB().setInteger(234).setValue(false))).setMap(
+                Collections.<String, InterfaceModel>singletonMap("key", new InterfaceModelImplB().setInteger(123).setValue(true))),
+                getPojoCodecProviderBuilder(CollectionDiscriminatorInterfacesModel.class, InterfaceModelImplA.class,
+                        InterfaceModelImplB.class, InterfaceModel.class),
+                "{list: [{_t: 'org.bson.codecs.pojo.entities.conventions.InterfaceModelImplA', value: true, name: 'abc'},"
+                        + "{_t: 'org.bson.codecs.pojo.entities.conventions.InterfaceModelImplB', value: false, integer: 234}],"
+                        + "map: {key: {_t: 'org.bson.codecs.pojo.entities.conventions.InterfaceModelImplB', value: true, integer: 123}}}"));
 
         data.add(new TestData("Creator in super class factory method",
                 CreatorInSuperClassModel.newInstance("a", "b"),
