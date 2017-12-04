@@ -136,24 +136,57 @@ final class ConventionAnnotationImpl implements Convention {
                 throw creatorExecutable.getError(clazz, "All parameters must be annotated with a @BsonProperty in %s");
             }
             for (int i = 0; i < properties.size(); i++) {
-                BsonProperty bsonProperty = properties.get(i);
+                boolean isIdProperty = creatorExecutable.getIdPropertyIndex() != null && creatorExecutable.getIdPropertyIndex().equals(i);
                 Class<?> parameterType = parameterTypes.get(i);
-                PropertyModelBuilder<?> propertyModelBuilder = classModelBuilder.getProperty(bsonProperty.value());
-                if (propertyModelBuilder == null) {
-                    addCreatorPropertyToClassModelBuilder(classModelBuilder, bsonProperty.value(), parameterType);
-                } else if (!propertyModelBuilder.getTypeData().isAssignableFrom(parameterType)) {
+                PropertyModelBuilder<?> propertyModelBuilder = null;
+
+                if (isIdProperty) {
+                    propertyModelBuilder = classModelBuilder.getProperty(classModelBuilder.getIdPropertyName());
+                } else {
+                    BsonProperty bsonProperty = properties.get(i);
+
+                    // Find the property using write name and falls back to read name
+                    for (PropertyModelBuilder<?> builder : classModelBuilder.getPropertyModelBuilders()) {
+                        if (bsonProperty.value().equals(builder.getWriteName())) {
+                            propertyModelBuilder = builder;
+                            break;
+                        } else if (bsonProperty.value().equals(builder.getReadName())) {
+                            // When there is a property that matches the read name of the parameter, save it but continue to look
+                            // This is just in case there is another property that matches the write name.
+                            propertyModelBuilder = builder;
+                        }
+                    }
+
+                    // Support legacy options, when BsonProperty matches the actual POJO property name (e.g. method name or field name).
+                    if (propertyModelBuilder == null) {
+                        propertyModelBuilder = classModelBuilder.getProperty(bsonProperty.value());
+                    }
+
+                    if (propertyModelBuilder == null) {
+                        propertyModelBuilder = addCreatorPropertyToClassModelBuilder(classModelBuilder, bsonProperty.value(),
+                            parameterType);
+                    } else {
+                        // An existing property is found, set its write name
+                        propertyModelBuilder.writeName(bsonProperty.value());
+                    }
+                }
+
+                if (!propertyModelBuilder.getTypeData().isAssignableFrom(parameterType)) {
                     throw creatorExecutable.getError(clazz, format("Invalid Property type for '%s'. Expected %s, found %s.",
-                            bsonProperty.value(), propertyModelBuilder.getTypeData().getType(), parameterType));
+                        propertyModelBuilder.getWriteName(), propertyModelBuilder.getTypeData().getType(), parameterType));
                 }
             }
             classModelBuilder.instanceCreatorFactory(new InstanceCreatorFactoryImpl<T>(creatorExecutable));
         }
     }
 
-    private <T, S> void addCreatorPropertyToClassModelBuilder(final ClassModelBuilder<T> classModelBuilder, final String name,
-                                                              final Class<S> clazz) {
-        classModelBuilder.addProperty(createPropertyModelBuilder(new PropertyMetadata<S>(name, classModelBuilder.getType().getSimpleName(),
-                TypeData.builder(clazz).build())).readName(null).writeName(name));
+    private <T, S> PropertyModelBuilder<S> addCreatorPropertyToClassModelBuilder(final ClassModelBuilder<T> classModelBuilder,
+                                                                                 final String name,
+                                                                                 final Class<S> clazz) {
+        PropertyModelBuilder<S> propertyModelBuilder = createPropertyModelBuilder(new PropertyMetadata<S>(name,
+            classModelBuilder.getType().getSimpleName(), TypeData.builder(clazz).build())).readName(null).writeName(name);
+        classModelBuilder.addProperty(propertyModelBuilder);
+        return propertyModelBuilder;
     }
 
     private void cleanPropertyBuilders(final ClassModelBuilder<?> classModelBuilder) {
