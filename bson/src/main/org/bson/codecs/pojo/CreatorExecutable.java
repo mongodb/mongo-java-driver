@@ -23,6 +23,7 @@ import org.bson.codecs.pojo.annotations.BsonProperty;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -36,6 +37,7 @@ final class CreatorExecutable<T> {
     private final List<BsonProperty> properties = new ArrayList<BsonProperty>();
     private final Integer idPropertyIndex;
     private final List<Class<?>> parameterTypes = new ArrayList<Class<?>>();
+    private final List<Type> parameterGenericTypes = new ArrayList<Type>();
 
     CreatorExecutable(final Class<T> clazz, final Constructor<T> constructor) {
         this(clazz, constructor, null);
@@ -52,7 +54,10 @@ final class CreatorExecutable<T> {
         Integer idPropertyIndex = null;
 
         if (constructor != null || method != null) {
-            parameterTypes.addAll(asList(constructor != null ? constructor.getParameterTypes() : method.getParameterTypes()));
+            Class<?>[] paramTypes = constructor != null ? constructor.getParameterTypes() : method.getParameterTypes();
+            Type[] genericParamTypes = constructor != null ? constructor.getGenericParameterTypes() : method.getGenericParameterTypes();
+            parameterTypes.addAll(asList(paramTypes));
+            parameterGenericTypes.addAll(asList(genericParamTypes));
             Annotation[][] parameterAnnotations = constructor != null ? constructor.getParameterAnnotations()
                     : method.getParameterAnnotations();
 
@@ -91,6 +96,10 @@ final class CreatorExecutable<T> {
 
     List<Class<?>> getParameterTypes() {
         return parameterTypes;
+    }
+
+    List<Type> getParameterGenericTypes() {
+        return parameterGenericTypes;
     }
 
     @SuppressWarnings("unchecked")

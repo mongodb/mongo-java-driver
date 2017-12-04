@@ -19,15 +19,19 @@ package org.bson.codecs.pojo;
 import org.bson.BsonDocument;
 import org.bson.codecs.pojo.entities.AbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.CollectionNestedPojoModel;
+import org.bson.codecs.pojo.entities.CollectionSpecificReturnTypeCreatorModel;
+import org.bson.codecs.pojo.entities.CollectionSpecificReturnTypeModel;
 import org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.ConcreteCollectionsModel;
 import org.bson.codecs.pojo.entities.ConcreteStandAloneAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.ContainsAlternativeMapAndCollectionModel;
 import org.bson.codecs.pojo.entities.ConventionModel;
+import org.bson.codecs.pojo.entities.FieldAndPropertyTypeMismatchModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.bson.codecs.pojo.entities.GenericTreeModel;
 import org.bson.codecs.pojo.entities.InterfaceBasedModel;
 import org.bson.codecs.pojo.entities.InterfaceModelImpl;
+import org.bson.codecs.pojo.entities.InterfaceUpperBoundsModelAbstractImpl;
 import org.bson.codecs.pojo.entities.MultipleBoundsModel;
 import org.bson.codecs.pojo.entities.MultipleLevelGenericModel;
 import org.bson.codecs.pojo.entities.NestedFieldReusingClassTypeParameter;
@@ -59,6 +63,8 @@ import org.bson.codecs.pojo.entities.conventions.CreatorAllFinalFieldsModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorConstructorIdModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorConstructorModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorConstructorRenameModel;
+import org.bson.codecs.pojo.entities.conventions.CreatorInSuperClassModel;
+import org.bson.codecs.pojo.entities.conventions.CreatorInSuperClassModelImpl;
 import org.bson.codecs.pojo.entities.conventions.CreatorMethodModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorNoArgsConstructorModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorNoArgsMethodModel;
@@ -117,6 +123,11 @@ public final class PojoRoundTripTest extends PojoTestCase {
                 getPojoCodecProviderBuilder(InterfaceModelImpl.class),
                 "{'propertyA': 'a', 'propertyB': 'b'}"));
 
+        data.add(new TestData("Interfaced based model with bound", new InterfaceUpperBoundsModelAbstractImpl("someName",
+                new InterfaceModelImpl("a", "b")),
+                getPojoCodecProviderBuilder(InterfaceUpperBoundsModelAbstractImpl.class, InterfaceModelImpl.class),
+                "{'name': 'someName', 'nestedModel': {'propertyA': 'a', 'propertyB': 'b'}}"));
+
         data.add(new TestData("Interface concrete and abstract model",
                 new ConcreteAndNestedAbstractInterfaceModel("A", new ConcreteAndNestedAbstractInterfaceModel("B",
                         new ConcreteStandAloneAbstractInterfaceModel("C"))),
@@ -132,6 +143,21 @@ public final class PojoRoundTripTest extends PojoTestCase {
                         + "'myLong': { '$numberLong': '5' }, 'myShort': 6}"));
 
         data.add(new TestData("Concrete collections model", getConcreteCollectionsModel(),
+                getPojoCodecProviderBuilder(ConcreteCollectionsModel.class),
+                "{'collection': [1, 2, 3], 'list': [4, 5, 6], 'linked': [7, 8, 9], 'map': {'A': 1.1, 'B': 2.2, 'C': 3.3},"
+                        + "'concurrent': {'D': 4.4, 'E': 5.5, 'F': 6.6}}"));
+
+        data.add(new TestData("Concrete specific return collection type model through BsonCreator",
+                new CollectionSpecificReturnTypeCreatorModel(Arrays.asList("foo", "bar")),
+                getPojoCodecProviderBuilder(CollectionSpecificReturnTypeCreatorModel.class),
+                "{'properties': ['foo', 'bar']}"));
+
+        data.add(new TestData("Concrete specific return collection type model through getter and setter",
+                new CollectionSpecificReturnTypeModel(Arrays.asList("foo", "bar")),
+                getPojoCodecProviderBuilder(CollectionSpecificReturnTypeModel.class),
+                "{'properties': ['foo', 'bar']}"));
+
+        data.add(new TestData("Concrete specific return collection type model", getConcreteCollectionsModel(),
                 getPojoCodecProviderBuilder(ConcreteCollectionsModel.class),
                 "{'collection': [1, 2, 3], 'list': [4, 5, 6], 'linked': [7, 8, 9], 'map': {'A': 1.1, 'B': 2.2, 'C': 3.3},"
                         + "'concurrent': {'D': 4.4, 'E': 5.5, 'F': 6.6}}"));
@@ -286,6 +312,16 @@ public final class PojoRoundTripTest extends PojoTestCase {
                 "{list: [{_t: 'org.bson.codecs.pojo.entities.conventions.Subclass1Model', value: true, name: 'abc'},"
                         + "{_t: 'org.bson.codecs.pojo.entities.conventions.Subclass2Model', value: false, integer: 234}],"
                         + "map: {key: {_t: 'org.bson.codecs.pojo.entities.conventions.Subclass2Model', value: true, integer: 123}}}"));
+
+        data.add(new TestData("Creator in super class factory method",
+                CreatorInSuperClassModel.newInstance("a", "b"),
+                getPojoCodecProviderBuilder(CreatorInSuperClassModelImpl.class),
+                "{'propertyA': 'a', 'propertyB': 'b'}"));
+
+        data.add(new TestData("Primitive field type doesn't match private property",
+                new FieldAndPropertyTypeMismatchModel("foo"),
+                getPojoCodecProviderBuilder(FieldAndPropertyTypeMismatchModel.class),
+                "{'stringField': 'foo'}"));
 
         return data;
     }

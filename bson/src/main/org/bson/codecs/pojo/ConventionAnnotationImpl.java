@@ -27,6 +27,7 @@ import org.bson.codecs.pojo.annotations.BsonProperty;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -111,33 +112,43 @@ final class ConventionAnnotationImpl implements Convention {
             }
         }
 
-        for (Method method : clazz.getDeclaredMethods()) {
-            if (isStatic(method.getModifiers())) {
-                for (Annotation annotation : method.getDeclaredAnnotations()) {
-                    if (annotation.annotationType().equals(BsonCreator.class)) {
-                        if (creatorExecutable != null) {
-                            throw new CodecConfigurationException("Found multiple constructors / methods annotated with @BsonCreator");
-                        } else if (!clazz.isAssignableFrom(method.getReturnType())) {
-                            throw new CodecConfigurationException(
-                                    format("Invalid method annotated with @BsonCreator. Returns '%s', expected %s", method.getReturnType(),
-                                            clazz));
+        Class<?> bsonCreatorClass = clazz;
+        boolean foundStaticBsonCreatorMethod = false;
+        while (bsonCreatorClass != null && !foundStaticBsonCreatorMethod) {
+            for (Method method : bsonCreatorClass.getDeclaredMethods()) {
+                if (isStatic(method.getModifiers())) {
+                    for (Annotation annotation : method.getDeclaredAnnotations()) {
+                        if (annotation.annotationType().equals(BsonCreator.class)) {
+                            if (creatorExecutable != null) {
+                                throw new CodecConfigurationException("Found multiple constructors / methods annotated with @BsonCreator");
+                            } else if (!bsonCreatorClass.isAssignableFrom(method.getReturnType())) {
+                                throw new CodecConfigurationException(
+                                        format("Invalid method annotated with @BsonCreator. Returns '%s', expected %s",
+                                                method.getReturnType(), bsonCreatorClass));
+                            }
+                            creatorExecutable = new CreatorExecutable<T>(clazz, method);
+                            foundStaticBsonCreatorMethod = true;
+                            break;
                         }
-                        creatorExecutable = new CreatorExecutable<T>(clazz, method);
-                        break;
                     }
                 }
             }
+
+            bsonCreatorClass = bsonCreatorClass.getSuperclass();
         }
 
         if (creatorExecutable != null) {
             List<BsonProperty> properties = creatorExecutable.getProperties();
             List<Class<?>> parameterTypes = creatorExecutable.getParameterTypes();
+            List<Type> parameterGenericTypes = creatorExecutable.getParameterGenericTypes();
+
             if (properties.size() != parameterTypes.size()) {
                 throw creatorExecutable.getError(clazz, "All parameters must be annotated with a @BsonProperty in %s");
             }
             for (int i = 0; i < properties.size(); i++) {
                 boolean isIdProperty = creatorExecutable.getIdPropertyIndex() != null && creatorExecutable.getIdPropertyIndex().equals(i);
                 Class<?> parameterType = parameterTypes.get(i);
+                Type genericType = parameterGenericTypes.get(i);
                 PropertyModelBuilder<?> propertyModelBuilder = null;
 
                 if (isIdProperty) {
@@ -168,6 +179,7 @@ final class ConventionAnnotationImpl implements Convention {
                     } else {
                         // An existing property is found, set its write name
                         propertyModelBuilder.writeName(bsonProperty.value());
+                        tryToExpandToGenericType(parameterType, propertyModelBuilder, genericType);
                     }
                 }
 
@@ -177,6 +189,17 @@ final class ConventionAnnotationImpl implements Convention {
                 }
             }
             classModelBuilder.instanceCreatorFactory(new InstanceCreatorFactoryImpl<T>(creatorExecutable));
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> void tryToExpandToGenericType(final Class<?> parameterType, final PropertyModelBuilder<T> propertyModelBuilder,
+                                                     final Type genericType) {
+        if (parameterType.isAssignableFrom(propertyModelBuilder.getTypeData().getType())) {
+            // The existing getter for this field returns a more specific type than what the constructor accepts
+            // This is typical when the getter returns a specific subtype, but the constructor accepts a more
+            // general one (e.g.: getter returns ImmutableList<T>, while constructor just accepts List<T>)
+            propertyModelBuilder.typeData(TypeData.newInstance(genericType, (Class<T>) parameterType));
         }
     }
 
