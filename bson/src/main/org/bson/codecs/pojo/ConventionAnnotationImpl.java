@@ -177,8 +177,10 @@ final class ConventionAnnotationImpl implements Convention {
                         propertyModelBuilder = addCreatorPropertyToClassModelBuilder(classModelBuilder, bsonProperty.value(),
                             parameterType);
                     } else {
-                        // An existing property is found, set its write name
-                        propertyModelBuilder.writeName(bsonProperty.value());
+                        // If not using a legacy BsonProperty reference to the property set the write name to be the annotated name.
+                        if (!bsonProperty.value().equals(propertyModelBuilder.getName())) {
+                            propertyModelBuilder.writeName(bsonProperty.value());
+                        }
                         tryToExpandToGenericType(parameterType, propertyModelBuilder, genericType);
                     }
                 }
