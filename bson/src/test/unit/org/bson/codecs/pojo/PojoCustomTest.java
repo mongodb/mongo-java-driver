@@ -36,6 +36,7 @@ import org.bson.codecs.pojo.entities.InvalidSetterArgsModel;
 import org.bson.codecs.pojo.entities.Optional;
 import org.bson.codecs.pojo.entities.OptionalPropertyCodecProvider;
 import org.bson.codecs.pojo.entities.PrimitivesModel;
+import org.bson.codecs.pojo.entities.PrivateSetterFieldModel;
 import org.bson.codecs.pojo.entities.SimpleEnum;
 import org.bson.codecs.pojo.entities.SimpleEnumModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
@@ -48,6 +49,7 @@ import org.bson.codecs.pojo.entities.conventions.CreatorMethodThrowsExceptionMod
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -58,7 +60,9 @@ import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
+import static org.bson.codecs.pojo.Conventions.DEFAULT_CONVENTIONS;
 import static org.bson.codecs.pojo.Conventions.NO_CONVENTIONS;
+import static org.bson.codecs.pojo.Conventions.SET_PRIVATE_FIELDS_CONVENTION;
 
 public final class PojoCustomTest extends PojoTestCase {
 
@@ -151,6 +155,17 @@ public final class PojoCustomTest extends PojoTestCase {
                 "{ '_id': 'id', '_cls': 'convention_model', 'my_final_field': 10, 'my_int_field': 10,"
                         + "'child': { '_id': 'child', 'my_final_field': 10, 'my_int_field': 10, "
                         + "           'simple_model': {'integer_field': 42, 'string_field': 'myString' } } }");
+    }
+
+    @Test
+    public void testSetPrivateFieldConvention() {
+        PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(PrivateSetterFieldModel.class);
+        ArrayList<Convention> conventions = new ArrayList<Convention>(DEFAULT_CONVENTIONS);
+        conventions.add(SET_PRIVATE_FIELDS_CONVENTION);
+        builder.conventions(conventions);
+
+        roundTrip(builder, new PrivateSetterFieldModel(1, "2", asList("a", "b")),
+                "{'integerField': 1, 'stringField': '2', listField: ['a', 'b']}");
     }
 
     @Test

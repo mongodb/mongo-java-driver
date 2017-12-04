@@ -61,6 +61,10 @@ final class PropertyAccessorImpl<T> implements PropertyAccessor<T> {
         }
     }
 
+    PropertyMetadata<T> getPropertyMetadata() {
+        return propertyMetadata;
+    }
+
     private CodecConfigurationException getError(final Exception cause) {
         return new CodecConfigurationException(format("Unable to get value for property '%s' in %s", propertyMetadata.getName(),
                 propertyMetadata.getDeclaringClassName()), cause);
