@@ -25,6 +25,8 @@ import org.bson.codecs.pojo.entities.conventions.CreatorInvalidConstructorModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidMethodModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidMethodReturnTypeModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidMultipleConstructorsModel;
+import org.bson.codecs.pojo.entities.conventions.CreatorInvalidMultipleCreatorsModel;
+import org.bson.codecs.pojo.entities.conventions.CreatorInvalidMultipleStaticCreatorsModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidTypeConstructorModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidTypeMethodModel;
 import org.junit.Test;
@@ -144,6 +146,18 @@ public final class ConventionsTest {
     @Test(expected = CodecConfigurationException.class)
     public void testCreatorInvalidMultipleConstructorsModel() {
         ClassModel.builder(CreatorInvalidMultipleConstructorsModel.class)
+                .conventions(singletonList(ANNOTATION_CONVENTION)).build();
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testCreatorInvalidMultipleCreatorsModel() {
+        ClassModel.builder(CreatorInvalidMultipleCreatorsModel.class)
+                .conventions(singletonList(ANNOTATION_CONVENTION)).build();
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testCreatorInvalidMultipleStaticCreatorsModel() {
+        ClassModel.builder(CreatorInvalidMultipleStaticCreatorsModel.class)
                 .conventions(singletonList(ANNOTATION_CONVENTION)).build();
     }
 
