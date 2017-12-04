@@ -48,6 +48,7 @@ The 3.6 release brings new improvements to the `PojoCodec`:
   * Support for custom Collection and Map implementations.
   * Improvements to the `BsonCreator` annotation, which now supports `@BsonId` and `@BsonProperty` with values that represent the read name of the property.
   * A new [`PropertyCodecProvider`]({{<apiref "org/bson/codecs/pojo/PropertyCodecProvider">}}) API, allowing for easy and type-safe handling of container types.
+  * Added the [`SET_PRIVATE_FIELDS_CONVENTION`]({{<apiref "org/bson/codecs/pojo/Conventions.html#SET_PRIVATE_FIELDS_CONVENTION">}}) convention.
 
 The MongoDB Java drivers team would like to thank both [Joseph Florencio](https://github.com/jflorencio) and [Qi Liu](https://github.com/visualage)
 for their excellent contributions to the PojoCodec.
