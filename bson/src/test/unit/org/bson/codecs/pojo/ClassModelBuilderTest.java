@@ -20,7 +20,6 @@ import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.bson.codecs.pojo.entities.ConcreteCollectionsModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
-import org.bson.codecs.pojo.entities.InvalidMapModel;
 import org.bson.codecs.pojo.entities.NestedGenericHolderModel;
 import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.UpperBoundsModel;
@@ -157,11 +156,6 @@ public final class ClassModelBuilderTest {
         ClassModelBuilder<SimpleGenericsModel> builder = ClassModel.builder(SimpleGenericsModel.class);
         builder.getProperty("myIntegerField").writeName("myGenericField");
         builder.build();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testIllegalMapKey() {
-        ClassModel.builder(InvalidMapModel.class).build();
     }
 
     private static final List<Annotation> TEST_ANNOTATIONS = Collections.<Annotation>singletonList(

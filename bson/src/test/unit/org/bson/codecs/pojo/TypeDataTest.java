@@ -77,37 +77,4 @@ public final class TypeDataTest {
 
         typeData.toString();
     }
-
-    @Test(expected = IllegalStateException.class)
-    public void testListNoParamsValidation() {
-        TypeData.builder(List.class).build();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testListToManyParamsValidation() {
-        TypeData<String> stringTypeData = TypeData.builder(String.class).build();
-        TypeData.builder(List.class).addTypeParameter(stringTypeData).addTypeParameter(stringTypeData).build();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testMapNoParamsValidation() {
-        TypeData.builder(Map.class).build();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testMapKeyValidation() {
-        TypeData.builder(Map.class).addTypeParameter(TypeData.builder(Integer.class).build()).build();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testInvalidMapImplementationValidation() {
-        TypeData.builder(InvalidMapImplementation.class).build();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testMapToManyParamsValidation() {
-        TypeData<String> stringTypeData = TypeData.builder(String.class).build();
-        TypeData.builder(Map.class).addTypeParameter(stringTypeData).addTypeParameter(stringTypeData)
-                .addTypeParameter(stringTypeData).build();
-    }
 }

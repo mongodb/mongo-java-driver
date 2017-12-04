@@ -34,6 +34,7 @@ import org.bson.codecs.pojo.entities.ConcreteCollectionsModel;
 import org.bson.codecs.pojo.entities.ConventionModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.bson.codecs.pojo.entities.GenericTreeModel;
+import org.bson.codecs.pojo.entities.InvalidMapModel;
 import org.bson.codecs.pojo.entities.MultipleBoundsModel;
 import org.bson.codecs.pojo.entities.NestedGenericHolderFieldWithMultipleTypeParamsModel;
 import org.bson.codecs.pojo.entities.NestedGenericHolderMapModel;
@@ -337,6 +338,13 @@ abstract class PojoTestCase {
                         new GenericTreeModel<String, String>("left", "3", null, null), null),
                 new GenericTreeModel<String, String>("right", "4",
                         new GenericTreeModel<String, String>("left", "5", null, null), null));
+    }
+
+    static InvalidMapModel getInvalidMapModel() {
+        Map<Integer, Integer> map = new HashMap<Integer, Integer>();
+        map.put(1, 1);
+        map.put(2, 2);
+        return new InvalidMapModel(map);
     }
 
     static final String SIMPLE_MODEL_JSON = "{'integerField': 42, 'stringField': 'myString'}";

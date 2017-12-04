@@ -16,24 +16,25 @@
 
 package org.bson.codecs.pojo.entities;
 
-public class ConcreteInterfaceGenericModel implements InterfaceGenericModel<String> {
-    private String property;
+import java.util.List;
 
-    public ConcreteInterfaceGenericModel() {
+public class InvalidCollectionModel {
+
+    private InvalidCollection collectionField;
+
+    public InvalidCollectionModel() {
     }
 
-    public ConcreteInterfaceGenericModel(final String property) {
-        this.property = property;
+    public InvalidCollectionModel(final List<Integer> list) {
+        this.collectionField = new InvalidCollection(list);
     }
 
-    @Override
-    public String getPropertyA() {
-        return property;
+    public InvalidCollection getCollectionField() {
+        return collectionField;
     }
 
-    @Override
-    public void setPropertyA(final String property) {
-        this.property = property;
+    public void setCollectionField(final InvalidCollection collectionField) {
+        this.collectionField = collectionField;
     }
 
     @Override
@@ -44,14 +45,12 @@ public class ConcreteInterfaceGenericModel implements InterfaceGenericModel<Stri
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-
-        ConcreteInterfaceGenericModel that = (ConcreteInterfaceGenericModel) o;
-
-        return property != null ? property.equals(that.property) : that.property == null;
+        InvalidCollectionModel that = (InvalidCollectionModel) o;
+        return collectionField.equals(that.collectionField);
     }
 
     @Override
     public int hashCode() {
-        return property != null ? property.hashCode() : 0;
+        return collectionField.hashCode();
     }
 }
