@@ -22,7 +22,6 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -146,53 +145,9 @@ final class TypeData<T> implements TypeWithTypeParameters<T> {
          * @return the class type data
          */
         public TypeData<T> build() {
-            validate();
             return new TypeData<T>(type, Collections.unmodifiableList(typeParameters));
         }
-
-        private void validate() {
-            if (Collection.class.isAssignableFrom(type)) {
-                if (typeParameters.size() == 0) {
-                    for (Type interfaceType : type.getGenericInterfaces()) {
-                        if (interfaceType instanceof ParameterizedType) {
-                            ParameterizedType pType = (ParameterizedType) interfaceType;
-                            if (Collection.class.equals((Class<?>) pType.getRawType())) {
-                                Type rawListType = pType.getActualTypeArguments()[0];
-                                if (!(rawListType instanceof Class<?>)) {
-                                    throw new IllegalStateException("Invalid Collection type. Collections must have a defined type.");
-                                }
-                            }
-                        }
-                    }
-                } else if (typeParameters.size() > 1) {
-                    throw new IllegalStateException("Invalid Collection type. Collections must have a single type parameter defined.");
-                }
-            } else if (Map.class.isAssignableFrom(type)) {
-                Class<?> keyType = Object.class;
-                if (typeParameters.size() != 2) {
-                    for (Type interfaceType : type.getGenericInterfaces()) {
-                        if (interfaceType instanceof ParameterizedType) {
-                            ParameterizedType pType = (ParameterizedType) interfaceType;
-                            if (Map.class.equals((Class<?>) pType.getRawType())) {
-                                Type rawKeyType = pType.getActualTypeArguments()[0];
-                                if (!(rawKeyType instanceof Class<?>)) {
-                                    throw new IllegalStateException("Invalid Map type. Maps MUST have string keys");
-                                } else {
-                                    keyType = (Class<?>) rawKeyType;
-                                }
-                            }
-                        }
-                    }
-                } else {
-                    keyType = typeParameters.get(0).getType();
-                }
-                if (!keyType.equals(String.class)) {
-                    throw new IllegalStateException(format("Invalid Map type. Maps MUST have string keys, found %s instead.", keyType));
-                }
-            }
-        }
     }
-
 
     @Override
     public String toString() {

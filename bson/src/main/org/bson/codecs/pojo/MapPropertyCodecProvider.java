@@ -27,11 +27,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import static java.lang.String.format;
+
 final class MapPropertyCodecProvider implements PropertyCodecProvider {
+
     @SuppressWarnings({"rawtypes", "unchecked"})
     @Override
     public <T> Codec<T> get(final TypeWithTypeParameters<T> type, final PropertyCodecRegistry registry) {
         if (Map.class.isAssignableFrom(type.getType()) && type.getTypeParameters().size() == 2) {
+            Class<?> keyType = type.getTypeParameters().get(0).getType();
+            if (!keyType.equals(String.class)) {
+                throw new CodecConfigurationException(format("Invalid Map type. Maps MUST have string keys, found %s instead.", keyType));
+            }
             return new MapCodec(type.getType(), registry.get(type.getTypeParameters().get(1)));
         } else {
             return null;

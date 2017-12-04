@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,18 +14,32 @@
  * limitations under the License.
  */
 
-package org.bson.codecs.pojo.entities;
+package org.bson.codecs.pojo.entities.conventions;
+
+import org.bson.codecs.pojo.annotations.BsonIgnore;
 
 import java.util.Map;
 
-public final class InvalidMapModel {
+public class BsonIgnoreInvalidMapModel {
+
+    private String stringField;
+
+    @BsonIgnore
     private Map<Integer, Integer> invalidMap;
 
-    public InvalidMapModel() {
+    public BsonIgnoreInvalidMapModel() {
     }
 
-    public InvalidMapModel(final Map<Integer, Integer> invalidMap) {
-        this.invalidMap = invalidMap;
+    public BsonIgnoreInvalidMapModel(final String stringField) {
+        this.stringField = stringField;
+    }
+
+    public String getStringField() {
+        return stringField;
+    }
+
+    public void setStringField(final String stringField) {
+        this.stringField = stringField;
     }
 
     public Map<Integer, Integer> getInvalidMap() {
@@ -45,13 +59,18 @@ public final class InvalidMapModel {
             return false;
         }
 
-        InvalidMapModel that = (InvalidMapModel) o;
+        BsonIgnoreInvalidMapModel that = (BsonIgnoreInvalidMapModel) o;
 
+        if (stringField != null ? !stringField.equals(that.stringField) : that.stringField != null) {
+            return false;
+        }
         return invalidMap != null ? invalidMap.equals(that.invalidMap) : that.invalidMap == null;
     }
 
     @Override
     public int hashCode() {
-        return invalidMap != null ? invalidMap.hashCode() : 0;
+        int result = stringField != null ? stringField.hashCode() : 0;
+        result = 31 * result + (invalidMap != null ? invalidMap.hashCode() : 0);
+        return result;
     }
 }

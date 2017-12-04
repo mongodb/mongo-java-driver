@@ -28,7 +28,10 @@ import org.bson.codecs.pojo.entities.ConventionModel;
 import org.bson.codecs.pojo.entities.ConverterModel;
 import org.bson.codecs.pojo.entities.CustomPropertyCodecOptionalModel;
 import org.bson.codecs.pojo.entities.GenericTreeModel;
+import org.bson.codecs.pojo.entities.InvalidCollectionModel;
 import org.bson.codecs.pojo.entities.InvalidGetterAndSetterModel;
+import org.bson.codecs.pojo.entities.InvalidMapModel;
+import org.bson.codecs.pojo.entities.InvalidMapPropertyCodecProvider;
 import org.bson.codecs.pojo.entities.InvalidSetterArgsModel;
 import org.bson.codecs.pojo.entities.Optional;
 import org.bson.codecs.pojo.entities.OptionalPropertyCodecProviderForTest;
@@ -51,12 +54,14 @@ import java.util.List;
 import java.util.Map;
 
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 import static org.bson.codecs.pojo.Conventions.NO_CONVENTIONS;
 
 public final class PojoCustomTest extends PojoTestCase {
+
     @Test
     public void testRegisterClassModelPreferredOverClass() {
         ClassModel<SimpleModel> classModel = ClassModel.builder(SimpleModel.class).enableDiscriminator(true).build();
@@ -267,21 +272,42 @@ public final class PojoCustomTest extends PojoTestCase {
     @Test
     public void testCustomRegisteredPropertyCodecWithValue() {
         CustomPropertyCodecOptionalModel model = new CustomPropertyCodecOptionalModel(Optional.of("foo"));
-        ClassModelBuilder<CustomPropertyCodecOptionalModel> classModel =
-                ClassModel.builder(CustomPropertyCodecOptionalModel.class);
-
-        roundTrip(getPojoCodecProviderBuilder(classModel).register(new OptionalPropertyCodecProviderForTest()), model,
-                "{'optionalField': 'foo'}");
+        roundTrip(getPojoCodecProviderBuilder(CustomPropertyCodecOptionalModel.class).register(new OptionalPropertyCodecProviderForTest()),
+                model, "{'optionalField': 'foo'}");
     }
 
     @Test
     public void testCustomRegisteredPropertyCodecOmittedValue() {
         CustomPropertyCodecOptionalModel model = new CustomPropertyCodecOptionalModel(Optional.<String>empty());
-        ClassModelBuilder<CustomPropertyCodecOptionalModel> classModel =
-                ClassModel.builder(CustomPropertyCodecOptionalModel.class);
+        roundTrip(getPojoCodecProviderBuilder(CustomPropertyCodecOptionalModel.class).register(new OptionalPropertyCodecProviderForTest()),
+                model, "{'optionalField': null}");
+    }
 
-        roundTrip(getPojoCodecProviderBuilder(classModel).register(new OptionalPropertyCodecProviderForTest()), model,
-                "{'optionalField': null}");
+    @Test(expected = CodecConfigurationException.class)
+    public void testEncodingInvalidMapModel() {
+        encodesTo(getPojoCodecProviderBuilder(InvalidMapModel.class), getInvalidMapModel(), "{'invalidMap': {'1': 1, '2': 2}}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testDecodingInvalidMapModel() {
+        decodingShouldFail(getCodec(InvalidMapModel.class), "{'invalidMap': {'1': 1, '2': 2}}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testEncodingInvalidCollectionModel() {
+        encodesTo(getPojoCodecProviderBuilder(InvalidCollectionModel.class), new InvalidCollectionModel(asList(1, 2, 3)),
+                "{collectionField: [1, 2, 3]}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testDecodingInvalidCollectionModel() {
+        decodingShouldFail(getCodec(InvalidCollectionModel.class), "{collectionField: [1, 2, 3]}");
+    }
+
+    @Test
+    public void testInvalidMapModelWithCustomPropertyCodecProvider() {
+        encodesTo(getPojoCodecProviderBuilder(InvalidMapModel.class).register(new InvalidMapPropertyCodecProvider()), getInvalidMapModel(),
+                "{'invalidMap': {'1': 1, '2': 2}}");
     }
 
     @Test(expected = CodecConfigurationException.class)

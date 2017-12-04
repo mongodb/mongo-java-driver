@@ -59,6 +59,7 @@ import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;
 import org.bson.codecs.pojo.entities.UpperBoundsConcreteModel;
+import org.bson.codecs.pojo.entities.conventions.BsonIgnoreInvalidMapModel;
 import org.bson.codecs.pojo.entities.conventions.CollectionDiscriminatorModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorAllFinalFieldsModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorConstructorIdModel;
@@ -119,6 +120,10 @@ public final class PojoRoundTripTest extends PojoTestCase {
                 "{'_id': 'id', '_cls': 'AnnotatedConventionModel', 'myFinalField': 10, 'myIntField': 10,"
                         + "'child': {'_id': 'child', 'myFinalField': 10, 'myIntField': 10,"
                         + "'model': {'integerField': 42, 'stringField': 'myString'}}}"));
+
+        data.add(new TestData("BsonIgnore invalid map", new BsonIgnoreInvalidMapModel("myString"),
+                getPojoCodecProviderBuilder(BsonIgnoreInvalidMapModel.class),
+                "{stringField: 'myString'}"));
 
         data.add(new TestData("Interfaced based model", new InterfaceModelImpl("a", "b"),
                 getPojoCodecProviderBuilder(InterfaceModelImpl.class),
