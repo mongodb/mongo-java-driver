@@ -64,6 +64,7 @@ import org.bson.codecs.pojo.entities.conventions.CollectionDiscriminatorAbstract
 import org.bson.codecs.pojo.entities.conventions.CollectionDiscriminatorInterfacesModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorAllFinalFieldsModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorConstructorIdModel;
+import org.bson.codecs.pojo.entities.conventions.CreatorConstructorLegacyBsonPropertyModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorConstructorModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorConstructorRenameModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInSuperClassModel;
@@ -276,6 +277,11 @@ public final class PojoRoundTripTest extends PojoTestCase {
 
         data.add(new TestData("Creator constructor", new CreatorConstructorModel(asList(10, 11), "twelve", 13),
                 getPojoCodecProviderBuilder(CreatorConstructorModel.class),
+                "{'integersField': [10, 11], 'stringField': 'twelve', 'longField': {$numberLong: '13'}}"));
+
+        data.add(new TestData("Creator constructor with legacy BsonProperty using name",
+                new CreatorConstructorLegacyBsonPropertyModel(asList(10, 11), "twelve", 13),
+                getPojoCodecProviderBuilder(CreatorConstructorLegacyBsonPropertyModel.class),
                 "{'integersField': [10, 11], 'stringField': 'twelve', 'longField': {$numberLong: '13'}}"));
 
         data.add(new TestData("Creator constructor with rename", new CreatorConstructorRenameModel(asList(10, 11), "twelve", 13),
