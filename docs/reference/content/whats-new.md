@@ -40,6 +40,18 @@ The 3.6 release adds support for [causally consistency](http://dochub.mongodb.or
 The 3.6 release adds support for application-configured control over server selection, using the `serverSelector` option in
 [`MongoClientOptions`]({{<apiref "com/mongodb/MongoClientOptions">}}).
 
+### PojoCodec improvements
+
+The 3.6 release brings new improvements to the `PojoCodec`:
+
+  * Improved sub-class and discriminator support.
+  * Support for custom Collection and Map implementations.
+  * Improvements to the `BsonCreator` annotation, which now supports `@BsonId` and `@BsonProperty` with values that represent the read name of the property.
+  * A new [`PropertyCodecProvider`]({{<apiref "org/bson/codecs/pojo/PropertyCodecProvider">}}) API, allowing for easy and type-safe handling of container types.
+
+The MongoDB Java drivers team would like to thank both [Joseph Florencio](https://github.com/jflorencio) and [Qi Liu](https://github.com/visualage)
+for their excellent contributions to the PojoCodec.
+
 ## What's New in 3.5
 
 Key new features of the 3.5 Java driver release:
