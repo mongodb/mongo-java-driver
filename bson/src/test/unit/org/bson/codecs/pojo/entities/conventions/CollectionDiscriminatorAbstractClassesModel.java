@@ -19,7 +19,7 @@ package org.bson.codecs.pojo.entities.conventions;
 import java.util.List;
 import java.util.Map;
 
-public class CollectionDiscriminatorModel {
+public class CollectionDiscriminatorAbstractClassesModel {
     private List<SuperClassModel> list;
     private Map<String, SuperClassModel> map;
 
@@ -27,7 +27,7 @@ public class CollectionDiscriminatorModel {
         return list;
     }
 
-    public CollectionDiscriminatorModel setList(final List<SuperClassModel> list) {
+    public CollectionDiscriminatorAbstractClassesModel setList(final List<SuperClassModel> list) {
         this.list = list;
         return this;
     }
@@ -36,7 +36,7 @@ public class CollectionDiscriminatorModel {
         return map;
     }
 
-    public CollectionDiscriminatorModel setMap(final Map<String, SuperClassModel> map) {
+    public CollectionDiscriminatorAbstractClassesModel setMap(final Map<String, SuperClassModel> map) {
         this.map = map;
         return this;
     }
@@ -50,7 +50,7 @@ public class CollectionDiscriminatorModel {
             return false;
         }
 
-        CollectionDiscriminatorModel that = (CollectionDiscriminatorModel) o;
+        CollectionDiscriminatorAbstractClassesModel that = (CollectionDiscriminatorAbstractClassesModel) o;
 
         if (getList() != null ? !getList().equals(that.getList()) : that.getList() != null) {
             return false;

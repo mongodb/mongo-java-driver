@@ -24,7 +24,7 @@ import org.bson.codecs.pojo.PropertyCodecProvider;
 import org.bson.codecs.pojo.PropertyCodecRegistry;
 import org.bson.codecs.pojo.TypeWithTypeParameters;
 
-public class OptionalPropertyCodecProviderForTest implements PropertyCodecProvider {
+public class OptionalPropertyCodecProvider implements PropertyCodecProvider {
     @Override
     @SuppressWarnings({"rawtypes", "unchecked"})
     public <T> Codec<T> get(final TypeWithTypeParameters<T> type, final PropertyCodecRegistry registry) {

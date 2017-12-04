@@ -42,13 +42,10 @@ final class InstanceCreatorImpl<T> implements InstanceCreator<T> {
             this.cachedValues = new HashMap<PropertyModel<?>, Object>();
             this.properties = new HashMap<String, Integer>();
 
-            if (creatorExecutable.getIdPropertyIndex() != null) {
-              this.properties.put(ClassModelBuilder.ID_PROPERTY_NAME, creatorExecutable.getIdPropertyIndex());
-            }
-
             for (int i = 0; i < creatorExecutable.getProperties().size(); i++) {
-                if (creatorExecutable.getIdPropertyIndex() == null || !creatorExecutable.getIdPropertyIndex().equals(i)) {
-                    // Skip the ID property
+                if (creatorExecutable.getIdPropertyIndex() != null && creatorExecutable.getIdPropertyIndex() == i) {
+                    this.properties.put(ClassModelBuilder.ID_PROPERTY_NAME, creatorExecutable.getIdPropertyIndex());
+                } else {
                     this.properties.put(creatorExecutable.getProperties().get(i).value(), i);
                 }
             }

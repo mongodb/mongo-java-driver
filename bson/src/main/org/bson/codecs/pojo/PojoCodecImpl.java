@@ -49,26 +49,30 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
     private final ConcurrentMap<ClassModel<?>, Codec<?>> codecCache;
     private final boolean specialized;
 
-    PojoCodecImpl(final ClassModel<T> classModel, final CodecRegistry registry, final List<PropertyCodecProvider> propertyCodecProviders,
-                  final DiscriminatorLookup discriminatorLookup) {
-        this(classModel, registry, propertyCodecProviders, null, discriminatorLookup,
-                new ConcurrentHashMap<ClassModel<?>, Codec<?>>(), shouldSpecialize(classModel));
+    PojoCodecImpl(final ClassModel<T> classModel, final CodecRegistry codecRegistry,
+                  final List<PropertyCodecProvider> propertyCodecProviders, final DiscriminatorLookup discriminatorLookup) {
+        this.classModel = classModel;
+        this.registry = fromRegistries(fromCodecs(this), codecRegistry);
+        this.discriminatorLookup = discriminatorLookup;
+        this.codecCache = new ConcurrentHashMap<ClassModel<?>, Codec<?>>();
+        this.propertyCodecRegistry = new PropertyCodecRegistryImpl(this, registry, propertyCodecProviders);
+        this.specialized = shouldSpecialize(classModel);
+        specialize();
     }
 
-    PojoCodecImpl(final ClassModel<T> classModel, final CodecRegistry registry, final List<PropertyCodecProvider> propertyCodecProviders,
-                  final PropertyCodecRegistry propertyCodecRegistry, final DiscriminatorLookup discriminatorLookup,
-                  final ConcurrentMap<ClassModel<?>, Codec<?>> codecCache, final boolean specialized) {
+    PojoCodecImpl(final ClassModel<T> classModel, final CodecRegistry registry, final PropertyCodecRegistry propertyCodecRegistry,
+                  final DiscriminatorLookup discriminatorLookup, final ConcurrentMap<ClassModel<?>, Codec<?>> codecCache,
+                  final boolean specialized) {
         this.classModel = classModel;
         this.registry = fromRegistries(fromCodecs(this), registry);
         this.discriminatorLookup = discriminatorLookup;
         this.codecCache = codecCache;
-        if (propertyCodecRegistry == null) {
-            this.propertyCodecRegistry = new PropertyCodecRegistryImpl(propertyCodecProviders);
-        } else {
-            this.propertyCodecRegistry = propertyCodecRegistry;
-        }
+        this.propertyCodecRegistry = propertyCodecRegistry;
         this.specialized = specialized;
+        specialize();
+    }
 
+    private void specialize() {
         if (specialized) {
             codecCache.put(classModel, this);
             for (PropertyModel<?> propertyModel : classModel.getPropertyModels()) {
@@ -335,63 +339,5 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
             }
         }
         return true;
-    }
-
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private final class EnumPropertyCodecProvider implements PropertyCodecProvider {
-        @Override
-        public <S> Codec<S> get(final TypeWithTypeParameters<S> type, final PropertyCodecRegistry propertyCodecRegistry) {
-            Class<S> clazz = type.getType();
-            if (Enum.class.isAssignableFrom(clazz)) {
-                try {
-                    return registry.get(clazz);
-                } catch (CodecConfigurationException e) {
-                    return new EnumCodec(clazz);
-                }
-            }
-            return null;
-        }
-    }
-
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private final class FallbackPropertyCodecProvider implements PropertyCodecProvider {
-        @Override
-        public <S> Codec<S> get(final TypeWithTypeParameters<S> type, final PropertyCodecRegistry propertyCodecRegistry) {
-            Class<S> clazz = type.getType();
-            Codec<S> codec = null;
-            if (classModel.getType().equals(clazz)) {
-                codec = (Codec<S>) PojoCodecImpl.this;
-            }
-            if (codec == null) {
-                codec = registry.get(clazz);
-            }
-            return codec;
-        }
-    }
-
-    @SuppressWarnings({"rawtypes", "unchecked"})
-    private final class PropertyCodecRegistryImpl implements PropertyCodecRegistry {
-        private final List<PropertyCodecProvider> propertyCodecProviders;
-
-        private PropertyCodecRegistryImpl(final List<PropertyCodecProvider> propertyCodecProviders) {
-            List<PropertyCodecProvider> augmentedProviders = new ArrayList<PropertyCodecProvider>();
-            augmentedProviders.addAll(propertyCodecProviders);
-            augmentedProviders.add(new CollectionPropertyCodecProvider());
-            augmentedProviders.add(new MapPropertyCodecProvider());
-            augmentedProviders.add(new EnumPropertyCodecProvider());
-            augmentedProviders.add(new FallbackPropertyCodecProvider());
-            this.propertyCodecProviders = augmentedProviders;
-        }
-
-        @Override
-        public <S> Codec<S> get(final TypeWithTypeParameters<S> type) {
-            for (PropertyCodecProvider propertyCodecProvider : propertyCodecProviders) {
-                Codec<S> codec = propertyCodecProvider.get(type, this);
-                if (codec != null) {
-                    return codec;
-                }
-            }
-            return null;
-        }
     }
 }
