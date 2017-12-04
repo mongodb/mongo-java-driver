@@ -18,8 +18,6 @@ package org.bson.codecs.pojo;
 
 import org.bson.codecs.configuration.CodecConfigurationException;
 
-import java.lang.reflect.Field;
-
 import static java.lang.String.format;
 import static java.lang.reflect.Modifier.isPrivate;
 
@@ -68,9 +66,7 @@ final class ConventionSetPrivateFieldImpl implements Convention {
         @Override
         public <S> void set(final S instance, final T value) {
             try {
-                Field field = wrapped.getPropertyMetadata().getField();
-                field.setAccessible(true);
-                field.set(instance, value);
+                wrapped.getPropertyMetadata().getField().set(instance, value);
             } catch (Exception e) {
                 throw new CodecConfigurationException(format("Unable to set value for property '%s' in %s",
                         wrapped.getPropertyMetadata().getName(), wrapped.getPropertyMetadata().getDeclaringClassName()), e);
