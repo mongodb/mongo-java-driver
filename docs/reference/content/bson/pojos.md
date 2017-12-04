@@ -196,6 +196,79 @@ all serializable because they are bound to the concrete types `Integer`, `String
 On their own, instances of `GenericTree` or `GenericClass` are not serializable by the `PojoCodec`. This is because the runtime type parameter
 information is erased by the JVM, and the type parameters cannot be specialized accurately.
 
+The 3.6 release of the driver further improves generic support with the addition of PropertyCodecProviders. The `PropertyCodecProvider` API 
+allows type-safe support of container types by providing concrete type parameters for the generic types as declared in the POJO.
+
+A great use of the `PropertyCodecProvider` API could be to add support for Guava's `Optional` class. The following example creates a 
+`OptionalPropertyCodecProvider`:
+
+```java
+public class OptionalPropertyCodecProvider implements PropertyCodecProvider {
+
+    @Override
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public <T> Codec<T> get(final TypeWithTypeParameters<T> type, final PropertyCodecRegistry registry) {
+        // Check the main type and number of generic parameters
+        if (Optional.class.isAssignableFrom(type.getType()) && type.getTypeParameters().size() == 1) {
+            // Get the codec for the concrete type of the Optional, as its declared in the POJO.
+            Codec<?> valueCodec = registry.get(type.getTypeParameters().get(0));
+            return new OptionalCodec(type.getType(), valueCodec);
+        } else {
+            return null;
+        }
+    }
+
+    private static final class OptionalCodec<T> implements Codec<Optional<T>> {
+        private final Class<Optional<T>> encoderClass;
+        private final Codec<T> codec;
+
+        private OptionalCodec(final Class<Optional<T>> encoderClass, final Codec<T> codec) {
+            this.encoderClass = encoderClass;
+            this.codec = codec;
+        }
+
+        @Override
+        public void encode(final BsonWriter writer, final Optional<T> optionalValue, final EncoderContext encoderContext) {
+            if (optionalValue != null && optionalValue.isPresent()) {
+                codec.encode(writer, optionalValue.get(), encoderContext);
+            } else {
+                writer.writeNull();
+            }
+        }
+
+        @Override
+        public Optional<T> decode(final BsonReader reader, final DecoderContext context) {
+            return Optional.of(codec.decode(reader, context));
+        }
+
+        @Override
+        public Class<Optional<T>> getEncoderClass() {
+            return encoderClass;
+        }
+    }
+}
+```
+
+The `OptionalPropertyCodecProvider` can be registered via the `PojoCodecProvider.builder().register` method: 
+
+```java
+CodecProvider pojoCodecProvider = PojoCodecProvider.builder()
+        .register("org.example.pojos")
+        .register(new OptionalPropertyCodecProvider())
+        .build();
+```
+
+Then `Optional` classes are fully supported in the POJOs. In the following example a `Person` has an `Optional` address and an `Optional`
+membership id:
+
+```java
+public class Person {
+    ... 
+    private Optional<Address> optionalAddress;
+    private Optional<Integer>  optionalMembershipId;
+}
+```
+
 ### Enum support
 
 Enums are fully supported. The `PojoCodec` uses the name of the enum constant as the property value. This is then converted back into an Enum 
