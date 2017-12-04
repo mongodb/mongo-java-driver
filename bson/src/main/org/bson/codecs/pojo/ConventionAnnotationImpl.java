@@ -143,7 +143,8 @@ final class ConventionAnnotationImpl implements Convention {
             List<Type> parameterGenericTypes = creatorExecutable.getParameterGenericTypes();
 
             if (properties.size() != parameterTypes.size()) {
-                throw creatorExecutable.getError(clazz, "All parameters must be annotated with a @BsonProperty in %s");
+                throw creatorExecutable.getError(clazz, "All parameters in the @BsonCreator method / constructor must be annotated "
+                                + "with a @BsonProperty.");
             }
             for (int i = 0; i < properties.size(); i++) {
                 boolean isIdProperty = creatorExecutable.getIdPropertyIndex() != null && creatorExecutable.getIdPropertyIndex().equals(i);
