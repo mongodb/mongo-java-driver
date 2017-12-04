@@ -52,7 +52,7 @@ public final class Conventions {
     /**
      * A convention that enables private fields to be set using reflection.
      *
-     * <p>This convention, mimics how some other JSON libraries directly set a private field when there is no setter.</p>
+     * <p>This convention mimics how some other JSON libraries directly set a private field when there is no setter.</p>
      * <p>Note: This convention is not part of the {@code DEFAULT_CONVENTIONS} list and must explicitly be set.</p>
      *
      * @since 3.6

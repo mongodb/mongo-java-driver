@@ -28,12 +28,15 @@ final class ConventionSetPrivateFieldImpl implements Convention {
     @Override
     public void apply(final ClassModelBuilder<?> classModelBuilder) {
         for (PropertyModelBuilder<?> propertyModelBuilder : classModelBuilder.getPropertyModelBuilders()) {
-            if (propertyModelBuilder.getPropertyAccessor() instanceof PropertyAccessorImpl) {
-                PropertyAccessorImpl<?> defaultAccessor = (PropertyAccessorImpl<?>) propertyModelBuilder.getPropertyAccessor();
-                PropertyMetadata<?> propertyMetaData = defaultAccessor.getPropertyMetadata();
-                if (!propertyMetaData.isDeserializable() && isPrivate(propertyMetaData.getField().getModifiers())) {
-                    setPropertyAccessor(propertyModelBuilder);
-                }
+            if (!(propertyModelBuilder.getPropertyAccessor() instanceof PropertyAccessorImpl)) {
+                throw new CodecConfigurationException(format("The SET_PRIVATE_FIELDS_CONVENTION is not compatible with "
+                        + "propertyModelBuilder instance that have custom implementations of org.bson.codecs.pojo.PropertyAccessor: %s",
+                        propertyModelBuilder.getPropertyAccessor().getClass().getName()));
+            }
+            PropertyAccessorImpl<?> defaultAccessor = (PropertyAccessorImpl<?>) propertyModelBuilder.getPropertyAccessor();
+            PropertyMetadata<?> propertyMetaData = defaultAccessor.getPropertyMetadata();
+            if (!propertyMetaData.isDeserializable() && isPrivate(propertyMetaData.getField().getModifiers())) {
+                setPropertyAccessor(propertyModelBuilder);
             }
         }
     }
@@ -49,6 +52,12 @@ final class ConventionSetPrivateFieldImpl implements Convention {
 
         private PrivateProperyAccessor(final PropertyAccessorImpl<T> wrapped) {
             this.wrapped = wrapped;
+            try {
+                wrapped.getPropertyMetadata().getField().setAccessible(true);
+             } catch (Exception e) {
+                throw new CodecConfigurationException(format("Unable to make private field accessible '%s' in %s",
+                        wrapped.getPropertyMetadata().getName(), wrapped.getPropertyMetadata().getDeclaringClassName()), e);
+            }
         }
 
         @Override
@@ -64,8 +73,7 @@ final class ConventionSetPrivateFieldImpl implements Convention {
                 field.set(instance, value);
             } catch (Exception e) {
                 throw new CodecConfigurationException(format("Unable to set value for property '%s' in %s",
-                        wrapped.getPropertyMetadata().getName(),
-                        wrapped.getPropertyMetadata().getDeclaringClassName()), e);
+                        wrapped.getPropertyMetadata().getName(), wrapped.getPropertyMetadata().getDeclaringClassName()), e);
             }
         }
     }
