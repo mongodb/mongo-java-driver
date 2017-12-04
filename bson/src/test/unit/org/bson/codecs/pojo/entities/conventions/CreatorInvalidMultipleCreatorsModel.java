@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *    http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -19,28 +19,25 @@ package org.bson.codecs.pojo.entities.conventions;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
-public final class CreatorInvalidMultipleConstructorsModel {
+public final class CreatorInvalidMultipleCreatorsModel {
     private final Integer integerField;
     private String stringField;
     public long longField;
 
     @BsonCreator
-    public CreatorInvalidMultipleConstructorsModel(@BsonProperty("integerField") final Integer integerField) {
+    public CreatorInvalidMultipleCreatorsModel(@BsonProperty("integerField") final Integer integerField) {
         this.integerField = integerField;
     }
 
-    @BsonCreator
-    public CreatorInvalidMultipleConstructorsModel(@BsonProperty("integerField") final Integer integerField,
-                                                   @BsonProperty("stringField") final String string) {
-        this(integerField);
-        setStringField(stringField);
-    }
-
-
-    public CreatorInvalidMultipleConstructorsModel(final Integer integerField, final String stringField, final long longField) {
+    public CreatorInvalidMultipleCreatorsModel(final Integer integerField, final String stringField, final long longField) {
         this.integerField = integerField;
         this.stringField = stringField;
         this.longField = longField;
+    }
+
+    @BsonCreator
+    public static CreatorInvalidMultipleCreatorsModel create(@BsonProperty("integerField") final Integer integerField) {
+        return new CreatorInvalidMultipleCreatorsModel(integerField);
     }
 
     public Integer getIntegerField() {
@@ -64,7 +61,7 @@ public final class CreatorInvalidMultipleConstructorsModel {
             return false;
         }
 
-        CreatorInvalidMultipleConstructorsModel that = (CreatorInvalidMultipleConstructorsModel) o;
+        CreatorInvalidMultipleCreatorsModel that = (CreatorInvalidMultipleCreatorsModel) o;
 
         if (longField != that.longField) {
             return false;

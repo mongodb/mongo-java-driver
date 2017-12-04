@@ -102,11 +102,13 @@ final class ConventionAnnotationImpl implements Convention {
         Class<T> clazz = classModelBuilder.getType();
         CreatorExecutable<T> creatorExecutable = null;
         for (Constructor<?> constructor : clazz.getDeclaredConstructors()) {
-            if (isPublic(constructor.getModifiers())) {
+            if (isPublic(constructor.getModifiers()) && !constructor.isSynthetic()) {
                 for (Annotation annotation : constructor.getDeclaredAnnotations()) {
                     if (annotation.annotationType().equals(BsonCreator.class)) {
+                        if (creatorExecutable != null) {
+                            throw new CodecConfigurationException("Found multiple constructors annotated with @BsonCreator");
+                        }
                         creatorExecutable = new CreatorExecutable<T>(clazz, (Constructor<T>) constructor);
-                        break;
                     }
                 }
             }
@@ -116,7 +118,7 @@ final class ConventionAnnotationImpl implements Convention {
         boolean foundStaticBsonCreatorMethod = false;
         while (bsonCreatorClass != null && !foundStaticBsonCreatorMethod) {
             for (Method method : bsonCreatorClass.getDeclaredMethods()) {
-                if (isStatic(method.getModifiers())) {
+                if (isStatic(method.getModifiers()) && !method.isSynthetic() && !method.isBridge()) {
                     for (Annotation annotation : method.getDeclaredAnnotations()) {
                         if (annotation.annotationType().equals(BsonCreator.class)) {
                             if (creatorExecutable != null) {
@@ -128,7 +130,6 @@ final class ConventionAnnotationImpl implements Convention {
                             }
                             creatorExecutable = new CreatorExecutable<T>(clazz, method);
                             foundStaticBsonCreatorMethod = true;
-                            break;
                         }
                     }
                 }
