@@ -60,6 +60,16 @@ public final class Conventions {
     public static final Convention SET_PRIVATE_FIELDS_CONVENTION = new ConventionSetPrivateFieldImpl();
 
     /**
+     * A convention that uses getter methods as setters for collections and maps if there is no setter.
+     *
+     * <p>This convention mimics how JAXB mutate collections and maps.</p>
+     * <p>Note: This convention is not part of the {@code DEFAULT_CONVENTIONS} list and must explicitly be set.</p>
+     *
+     * @since 3.6
+     */
+    public static final Convention USE_GETTERS_FOR_SETTERS = new ConventionUseGettersAsSettersImpl();
+
+    /**
      * The default conventions list
      */
     public static final List<Convention> DEFAULT_CONVENTIONS =

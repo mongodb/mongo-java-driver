@@ -317,6 +317,8 @@ The following Conventions are available from the [`Conventions`]({{<apiref "org/
         the PropertyModels. If the `idProperty` isn't set and there is a property named `_id` or `id` then it will be marked as the `idProperty`.
   * The [`SET_PRIVATE_FIELDS_CONVENTION`]({{<apiref "org/bson/codecs/pojo/Conventions.html#SET_PRIVATE_FIELDS_CONVENTION">}}).  Enables 
         private fields to be set directly using reflection, without the need of a setter method. Note this convention is not enabled by default.
+  * The [`USE_GETTERS_FOR_SETTERS`]({{<apiref "org/bson/codecs/pojo/Conventions.html#USE_GETTERS_FOR_SETTERS">}}). Allows getters to be used
+        for Map and Collection properties without setters, the collection/map is then mutated. Note this convention is not enabled by default.
   * The [`DEFAULT_CONVENTIONS`]({{<apiref "org/bson/codecs/pojo/Conventions.html#DEFAULT_CONVENTIONS">}}), a list containing the 
     `ANNOTATION_CONVENTION` and the `CLASS_AND_PROPERTY_CONVENTION`.
   * The [`NO_CONVENTIONS`]({{<apiref "org/bson/codecs/pojo/Conventions.html#NO_CONVENTIONS">}}) an empty list.
