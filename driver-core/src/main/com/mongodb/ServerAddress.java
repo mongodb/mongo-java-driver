@@ -125,7 +125,7 @@ public class ServerAddress implements Serializable {
                 hostToUse = hostToUse.substring(0, idx).trim();
             }
         }
-        this.host = hostToUse.toLowerCase();
+        this.host = hostToUse;
         this.port = portToUse;
     }
 
