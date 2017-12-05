@@ -43,9 +43,17 @@ import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;
 import org.bson.codecs.pojo.entities.UpperBoundsModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationModel;
+import org.bson.codecs.pojo.entities.conventions.CollectionsGetterNonEmptyModel;
+import org.bson.codecs.pojo.entities.conventions.CollectionsGetterNullModel;
+import org.bson.codecs.pojo.entities.conventions.CollectionsGetterImmutableModel;
+import org.bson.codecs.pojo.entities.conventions.CollectionsGetterMutableModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorConstructorPrimitivesModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorConstructorThrowsExceptionModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorMethodThrowsExceptionModel;
+import org.bson.codecs.pojo.entities.conventions.MapGetterNonEmptyModel;
+import org.bson.codecs.pojo.entities.conventions.MapGetterNullModel;
+import org.bson.codecs.pojo.entities.conventions.MapGetterImmutableModel;
+import org.bson.codecs.pojo.entities.conventions.MapGetterMutableModel;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
@@ -63,6 +71,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 import static org.bson.codecs.pojo.Conventions.DEFAULT_CONVENTIONS;
 import static org.bson.codecs.pojo.Conventions.NO_CONVENTIONS;
 import static org.bson.codecs.pojo.Conventions.SET_PRIVATE_FIELDS_CONVENTION;
+import static org.bson.codecs.pojo.Conventions.USE_GETTERS_FOR_SETTERS;
 
 public final class PojoCustomTest extends PojoTestCase {
 
@@ -166,6 +175,79 @@ public final class PojoCustomTest extends PojoTestCase {
 
         roundTrip(builder, new PrivateSetterFieldModel(1, "2", asList("a", "b")),
                 "{'integerField': 1, 'stringField': '2', listField: ['a', 'b']}");
+    }
+
+    @Test
+    public void testUseGettersForSettersConvention() {
+        PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(CollectionsGetterMutableModel.class, MapGetterMutableModel.class)
+                .conventions(getDefaultAndUseGettersConvention());
+
+        roundTrip(builder, new CollectionsGetterMutableModel(asList(1, 2)), "{listField: [1, 2]}");
+        roundTrip(builder, new MapGetterMutableModel(Collections.singletonMap("a", 3)), "{mapField: {a: 3}}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testUseGettersForSettersConventionInvalidTypeForCollection() {
+        PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(CollectionsGetterMutableModel.class)
+                .conventions(getDefaultAndUseGettersConvention());
+
+        decodingShouldFail(getCodec(builder, CollectionsGetterMutableModel.class), "{listField: ['1', '2']}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testUseGettersForSettersConventionInvalidTypeForMap() {
+        PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(MapGetterMutableModel.class)
+                .conventions(getDefaultAndUseGettersConvention());
+
+        decodingShouldFail(getCodec(builder, MapGetterMutableModel.class), "{mapField: {a: '1'}}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testUseGettersForSettersConventionImmutableCollection() {
+        PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(CollectionsGetterImmutableModel.class)
+                .conventions(getDefaultAndUseGettersConvention());
+
+        roundTrip(builder, new CollectionsGetterImmutableModel(asList(1, 2)), "{listField: [1, 2]}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testUseGettersForSettersConventionImmutableMap() {
+        PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(MapGetterImmutableModel.class)
+                .conventions(getDefaultAndUseGettersConvention());
+
+        roundTrip(builder, new MapGetterImmutableModel(Collections.singletonMap("a", 3)), "{mapField: {a: 3}}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testUseGettersForSettersConventionNullCollection() {
+        PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(CollectionsGetterNullModel.class)
+                .conventions(getDefaultAndUseGettersConvention());
+
+        roundTrip(builder, new CollectionsGetterNullModel(asList(1, 2)), "{listField: [1, 2]}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testUseGettersForSettersConventionNullMap() {
+        PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(MapGetterNullModel.class)
+                .conventions(getDefaultAndUseGettersConvention());
+
+        roundTrip(builder, new MapGetterNullModel(Collections.singletonMap("a", 3)), "{mapField: {a: 3}}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testUseGettersForSettersConventionNotEmptyCollection() {
+        PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(CollectionsGetterNonEmptyModel.class)
+                .conventions(getDefaultAndUseGettersConvention());
+
+        roundTrip(builder, new CollectionsGetterNonEmptyModel(asList(1, 2)), "{listField: [1, 2]}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testUseGettersForSettersConventionNotEmptyMap() {
+        PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(MapGetterNonEmptyModel.class)
+                .conventions(getDefaultAndUseGettersConvention());
+
+        roundTrip(builder, new MapGetterNonEmptyModel(Collections.singletonMap("a", 3)), "{mapField: {a: 3}}");
     }
 
     @Test
@@ -402,4 +484,11 @@ public final class PojoCustomTest extends PojoTestCase {
     public void testInvalidGetterAndSetterModelDecoding() {
         decodingShouldFail(getCodec(InvalidGetterAndSetterModel.class), "{'integerField': 42, 'stringField': 'myString'}");
     }
+
+    private List<Convention> getDefaultAndUseGettersConvention() {
+        List<Convention> conventions = new ArrayList<Convention>(DEFAULT_CONVENTIONS);
+        conventions.add(USE_GETTERS_FOR_SETTERS);
+        return conventions;
+    }
+
 }
