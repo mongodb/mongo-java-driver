@@ -23,10 +23,12 @@ import com.mongodb.binding.AsyncClusterBinding;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.AsyncReadWriteBinding;
+import com.mongodb.binding.AsyncSessionBinding;
 import com.mongodb.binding.AsyncSingleConnectionBinding;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.ClusterBinding;
 import com.mongodb.binding.ReadWriteBinding;
+import com.mongodb.binding.SessionBinding;
 import com.mongodb.binding.SingleConnectionBinding;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
@@ -61,6 +63,7 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DocumentCodec;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -89,6 +92,8 @@ public final class ClusterFixture {
     private static ConnectionString connectionString;
     private static Cluster cluster;
     private static Cluster asyncCluster;
+    private static Map<ReadPreference, ReadWriteBinding> bindingMap = new HashMap<ReadPreference, ReadWriteBinding>();
+    private static Map<ReadPreference, AsyncReadWriteBinding> asyncBindingMap = new HashMap<ReadPreference, AsyncReadWriteBinding>();
 
     static {
         String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
@@ -184,20 +189,27 @@ public final class ClusterFixture {
         return connectionString;
     }
 
+    public static ReadWriteBinding getBinding(final Cluster cluster) {
+        return new ClusterBinding(cluster, ReadPreference.primary());
+    }
+
     public static ReadWriteBinding getBinding() {
-        return getBinding(getCluster());
+        return getBinding(getCluster(), ReadPreference.primary());
     }
 
     public static ReadWriteBinding getBinding(final ReadPreference readPreference) {
         return getBinding(getCluster(), readPreference);
     }
 
-    public static ReadWriteBinding getBinding(final Cluster cluster) {
-        return getBinding(cluster, ReadPreference.primary());
-    }
-
     private static ReadWriteBinding getBinding(final Cluster cluster, final ReadPreference readPreference) {
-        return new ClusterBinding(cluster, readPreference);
+        if (!bindingMap.containsKey(readPreference)) {
+            ReadWriteBinding binding = new ClusterBinding(cluster, readPreference);
+            if (serverVersionAtLeast(3, 6)) {
+                binding = new SessionBinding(binding);
+            }
+            bindingMap.put(readPreference, binding);
+        }
+        return bindingMap.get(readPreference);
     }
 
     public static SingleConnectionBinding getSingleConnectionBinding() {
@@ -212,20 +224,27 @@ public final class ClusterFixture {
         return new AsyncSingleConnectionBinding(cluster, 20, SECONDS);
     }
 
+    public static AsyncReadWriteBinding getAsyncBinding(final Cluster cluster) {
+        return new AsyncClusterBinding(cluster, ReadPreference.primary());
+    }
+
     public static AsyncReadWriteBinding getAsyncBinding() {
-        return getAsyncBinding(getAsyncCluster());
+        return getAsyncBinding(getAsyncCluster(), ReadPreference.primary());
     }
 
     public static AsyncReadWriteBinding getAsyncBinding(final ReadPreference readPreference) {
         return getAsyncBinding(getAsyncCluster(), readPreference);
     }
 
-    public static AsyncReadWriteBinding getAsyncBinding(final Cluster cluster) {
-        return getAsyncBinding(cluster, ReadPreference.primary());
-    }
-
     public static AsyncReadWriteBinding getAsyncBinding(final Cluster cluster, final ReadPreference readPreference) {
-        return new AsyncClusterBinding(cluster, readPreference);
+        if (!asyncBindingMap.containsKey(readPreference)) {
+            AsyncReadWriteBinding binding = new AsyncClusterBinding(cluster, readPreference);
+            if (serverVersionAtLeast(3, 6)) {
+                binding = new AsyncSessionBinding(binding);
+            }
+            asyncBindingMap.put(readPreference, binding);
+        }
+        return asyncBindingMap.get(readPreference);
     }
 
     public static synchronized Cluster getCluster() {

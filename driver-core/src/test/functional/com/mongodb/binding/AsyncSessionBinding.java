@@ -29,7 +29,7 @@ public final class AsyncSessionBinding implements AsyncReadWriteBinding {
     private final AsyncReadWriteBinding wrapped;
     private final SessionContext sessionContext;
 
-    AsyncSessionBinding(final AsyncReadWriteBinding wrapped) {
+    public AsyncSessionBinding(final AsyncReadWriteBinding wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
         this.sessionContext = new SimpleSessionContext();
     }

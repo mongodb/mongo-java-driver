@@ -365,10 +365,9 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
             }
 
             def futureResultCallback = new FutureResultCallback<BsonDocument>();
-            connection.commandAsync(getDatabaseName(), findCommand,
-                    NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.secondaryPreferred(),
-                    CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'), binding.sessionContext,
-                    futureResultCallback)
+            connection.commandAsync(getDatabaseName(), findCommand, NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(),
+                    CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'),
+                    connectionSource.sessionContext, futureResultCallback)
             def response = futureResultCallback.get(60, SECONDS)
             cursorDocumentToQueryResult(response.getDocument('cursor'), connection.getDescription().getServerAddress())
         } else {
