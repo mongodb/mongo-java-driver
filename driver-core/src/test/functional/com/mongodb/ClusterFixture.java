@@ -61,7 +61,6 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DocumentCodec;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -147,25 +146,9 @@ public final class ClusterFixture {
         return versionList;
     }
 
-    public static Document getBuildInfo() {
-        return new CommandWriteOperation<Document>("admin", new BsonDocument("buildInfo", new BsonInt32(1)), new DocumentCodec())
-                .execute(getBinding());
-    }
-
     public static Document getServerStatus() {
         return new CommandWriteOperation<Document>("admin", new BsonDocument("serverStatus", new BsonInt32(1)), new DocumentCodec())
                .execute(getBinding());
-    }
-
-    @SuppressWarnings("unchecked")
-    public static boolean isEnterpriseServer() {
-        Document buildInfo = getBuildInfo();
-        List<String> modules = Collections.emptyList();
-        if (buildInfo.containsKey("modules")) {
-            modules = (List<String>) buildInfo.get("modules");
-        }
-
-        return modules.contains("enterprise");
     }
 
     public static boolean supportsFsync() {
@@ -400,19 +383,19 @@ public final class ClusterFixture {
         }
     }
 
-    public static <T> T executeSync(final WriteOperation<T> op) throws Throwable {
+    public static <T> T executeSync(final WriteOperation<T> op) {
         return executeSync(op, getBinding());
     }
 
-    public static <T> T executeSync(final WriteOperation<T> op, final ReadWriteBinding binding) throws Throwable {
+    public static <T> T executeSync(final WriteOperation<T> op, final ReadWriteBinding binding) {
         return op.execute(binding);
     }
 
-    public static <T> T executeSync(final ReadOperation<T> op) throws Throwable {
+    public static <T> T executeSync(final ReadOperation<T> op) {
         return executeSync(op, getBinding());
     }
 
-    public static <T> T executeSync(final ReadOperation<T> op, final ReadWriteBinding binding) throws Throwable {
+    public static <T> T executeSync(final ReadOperation<T> op, final ReadWriteBinding binding) {
         return op.execute(binding);
     }
 
@@ -490,7 +473,7 @@ public final class ClusterFixture {
         return results;
     }
 
-    public static <T> List<T> collectCursorResults(final BatchCursor<T> batchCursor) throws Throwable {
+    public static <T> List<T> collectCursorResults(final BatchCursor<T> batchCursor) {
         List<T> results = new ArrayList<T>();
         while (batchCursor.hasNext()) {
             results.addAll(batchCursor.next());
