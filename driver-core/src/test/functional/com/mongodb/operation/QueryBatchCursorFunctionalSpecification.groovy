@@ -512,11 +512,11 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         given:
         connectionSource = getBinding(ReadPreference.secondary()).getReadConnectionSource()
 
-        def firstBatch = executeQuery(2, true)
+        def firstBatch = executeQuery(2, ReadPreference.secondary())
 
         // wait for replication
         while (firstBatch.cursor == null ) {
-            firstBatch = executeQuery(2, true)
+            firstBatch = executeQuery(2, ReadPreference.secondary())
         }
 
         when:
@@ -533,24 +533,24 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
     }
 
     private QueryResult<Document> executeQuery(int batchSize) {
-        executeQuery(new BsonDocument(), 0, batchSize, false, false, false)
+        executeQuery(new BsonDocument(), 0, batchSize, false, false, ReadPreference.primary())
     }
 
-    private QueryResult<Document> executeQuery(int batchSize, boolean slaveOk) {
-        executeQuery(new BsonDocument(), 0, batchSize, false, false, slaveOk)
+    private QueryResult<Document> executeQuery(int batchSize, ReadPreference readPreference) {
+        executeQuery(new BsonDocument(), 0, batchSize, false, false, readPreference)
     }
 
     private QueryResult<Document> executeQuery(int limit, int batchSize) {
-        executeQuery(new BsonDocument(), limit, batchSize, false, false, false)
+        executeQuery(new BsonDocument(), limit, batchSize, false, false, ReadPreference.primary())
     }
 
 
     private QueryResult<Document> executeQuery(BsonDocument filter, int limit, int batchSize, boolean tailable, boolean awaitData) {
-        executeQuery(filter, limit, batchSize, tailable, awaitData, false)
+        executeQuery(filter, limit, batchSize, tailable, awaitData, ReadPreference.primary())
     }
 
     private QueryResult<Document> executeQuery(BsonDocument filter, int limit, int batchSize, boolean tailable, boolean awaitData,
-                                               boolean slaveOk) {
+                                               ReadPreference readPreference) {
         def connection = connectionSource.getConnection()
         try {
             if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
@@ -570,8 +570,9 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
                 }
 
                 def response = connection.command(getDatabaseName(), findCommand,
-                                                  slaveOk, NO_OP_FIELD_NAME_VALIDATOR,
-                                                  CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'))
+                        NO_OP_FIELD_NAME_VALIDATOR, readPreference,
+                        CommandResultDocumentCodec.create(new DocumentCodec(), 'firstBatch'),
+                        connectionSource.sessionContext)
                 cursorDocumentToQueryResult(response.getDocument('cursor'), connection.getDescription().getServerAddress())
             } else {
                 connection.query(getNamespace(), filter, null, 0, limit, batchSize,

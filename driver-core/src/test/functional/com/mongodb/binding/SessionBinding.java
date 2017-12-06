@@ -23,11 +23,11 @@ import com.mongodb.session.SessionContext;
 
 import static org.bson.assertions.Assertions.notNull;
 
-class SessionBinding implements ReadWriteBinding {
+public class SessionBinding implements ReadWriteBinding {
     private final ReadWriteBinding wrapped;
     private final SessionContext sessionContext;
 
-    SessionBinding(final ReadWriteBinding wrapped) {
+    public SessionBinding(final ReadWriteBinding wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
         this.sessionContext = new SimpleSessionContext();
     }
