@@ -108,49 +108,8 @@ configure(subprojects.findAll { it.name != 'util' }) {
     javadoc {
         exclude "**/com/mongodb/**/internal/**"
         exclude "**/org/bson/**/internal/**"
-
         dependsOn project(':util').compileJava //We need taglets to be compiled
-
-        options.author = true
-        options.version = true
-        options.links 'http://docs.oracle.com/javase/7/docs/api/'
-        options.tagletPath single(project(':util').sourceSets.main.output.classesDirs)
-        options.taglets 'ManualTaglet'
-        options.taglets 'DochubTaglet'
-        options.taglets 'ServerReleaseTaglet'
-        options.encoding = 'UTF-8'
-        options.charSet 'UTF-8'
-        options.docEncoding 'UTF-8'
-        options.header = '''
-            <script type="text/javascript">
-            <!-- Set the location hash in the classFrame -->
-            try {
-              locationHash = top.location.hash;
-              if (window.name == "classFrame" && locationHash != "") {
-                window.location.hash = locationHash;
-              }
-            } catch (error) {}
-            <!-- GA Tracking code -->
-            if (window.name == "" || window.name == "classFrame") {
-                var _elqQ = _elqQ || [];
-                _elqQ.push(["elqSetSiteId", "413370795"]);
-                _elqQ.push(["elqTrackPageView"]);
-                (function () {
-                function async_load() { var s = document.createElement("script"); s.type = "text/javascript"; s.async = true; s.src = "//img03.en25.com/i/elqCfg.min.js"; var x = document.getElementsByTagName("script")[0]; x.parentNode.insertBefore(s, x); }
-                if (window.addEventListener) window.addEventListener("DOMContentLoaded", async_load, false);
-                else if (window.attachEvent) window.attachEvent("onload", async_load);
-                })();
-            }
-            </script>
-        '''
-
-        // Add --allow-script-in-comments if available (since 1.8.0_121)
-        try {
-            if (Class.forName('com.sun.tools.doclets.formats.html.ConfigurationImpl')
-                     .newInstance().optionLength('--allow-script-in-comments') > 0) {
-                options.addBooleanOption("-allow-script-in-comments", true)
-            }
-        } catch (ignored) {}
+        options { options -> setJavaDocOptions(options) }
     }
 }
 
@@ -303,12 +262,61 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
 }
 
 task docs(type: Javadoc) {
-    source subprojects.grep({ it.name != 'util' }).collect {project -> project.sourceSets.main.allJava }
-//    options = subprojects.first().javadoc.options
-    dependsOn = subprojects.first().javadoc.dependsOn
-    excludes =  subprojects.first().javadoc.excludes
-    classpath = files(subprojects.collect {project -> project.sourceSets.main.compileClasspath})
     destinationDir = new File(projectDir, 'build/docs')
+    options { options -> setJavaDocOptions(options) }
+    subprojects.grep({ it.name != 'util' }).each { proj ->
+        proj.tasks.withType(Javadoc).each { javadocTask ->
+            source += javadocTask.source
+            classpath += javadocTask.classpath
+            excludes += javadocTask.excludes
+            includes += javadocTask.includes
+            dependsOn +=javadocTask.dependsOn
+        }
+    }
+}
+
+def setJavaDocOptions(MinimalJavadocOptions options) {
+    options.author = true
+    options.version = true
+    options.links 'http://docs.oracle.com/javase/7/docs/api/'
+    options.tagletPath single(project(':util').sourceSets.main.output.classesDirs)
+    options.taglets 'ManualTaglet'
+    options.taglets 'DochubTaglet'
+    options.taglets 'ServerReleaseTaglet'
+    options.encoding = 'UTF-8'
+    options.charSet 'UTF-8'
+    options.docEncoding 'UTF-8'
+    options.header = '''
+            <script type="text/javascript">
+            <!-- Set the location hash in the classFrame -->
+            try {
+              locationHash = top.location.hash;
+              if (window.name == "classFrame" && locationHash != "") {
+                window.location.hash = locationHash;
+              }
+            } catch (error) {}
+            <!-- GA Tracking code -->
+            if (window.name == "" || window.name == "classFrame") {
+                var _elqQ = _elqQ || [];
+                _elqQ.push(["elqSetSiteId", "413370795"]);
+                _elqQ.push(["elqTrackPageView"]);
+                (function () {
+                function async_load() { var s = document.createElement("script"); s.type = "text/javascript"; s.async = true; s.src = "//img03.en25.com/i/elqCfg.min.js"; var x = document.getElementsByTagName("script")[0]; x.parentNode.insertBefore(s, x); }
+                if (window.addEventListener) window.addEventListener("DOMContentLoaded", async_load, false);
+                else if (window.attachEvent) window.attachEvent("onload", async_load);
+                })();
+            }
+            </script>
+        '''
+
+    // Add --allow-script-in-comments if available (since 1.8.0_121)
+    try {
+        if (Class.forName('com.sun.tools.doclets.formats.html.ConfigurationImpl')
+                .newInstance().optionLength('--allow-script-in-comments') > 0) {
+            options.addBooleanOption("-allow-script-in-comments", true)
+        }
+    } catch (ignored) {
+    }
 }
 
 //////////////////////////////////////////
