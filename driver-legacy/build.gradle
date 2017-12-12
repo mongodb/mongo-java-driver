@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,5 +14,20 @@
  * limitations under the License.
  */
 
-include 'util','bson', 'driver-core', 'driver', 'driver-async', 'driver-legacy', 'mongo-java-driver'
+sourceSets {
+    test.groovy.srcDirs += ['src/examples']
+}
 
+test {
+    exclude 'tour/**'
+}
+
+dependencies {
+    compile project(':bson')
+    compile project(':driver-core')
+    compile project(':driver')
+
+    testCompile project(':bson').sourceSets.test.output
+    testCompile project(':driver-core').sourceSets.test.output
+    testCompile project(':driver').sourceSets.test.output
+}

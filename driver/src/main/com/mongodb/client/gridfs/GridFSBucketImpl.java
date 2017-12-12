@@ -16,13 +16,13 @@
 
 package com.mongodb.client.gridfs;
 
-import com.mongodb.MongoClient;
 import com.mongodb.MongoGridFSException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.ListIndexesIterable;
+import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
@@ -480,12 +480,12 @@ final class GridFSBucketImpl implements GridFSBucket {
 
     private static MongoCollection<GridFSFile> getFilesCollection(final MongoDatabase database, final String bucketName) {
         return database.getCollection(bucketName + ".files", GridFSFile.class).withCodecRegistry(
-                fromRegistries(database.getCodecRegistry(), MongoClient.getDefaultCodecRegistry())
+                fromRegistries(database.getCodecRegistry(), MongoClients.getDefaultCodecRegistry())
         );
     }
 
     private static MongoCollection<Document> getChunksCollection(final MongoDatabase database, final String bucketName) {
-        return database.getCollection(bucketName + ".chunks").withCodecRegistry(MongoClient.getDefaultCodecRegistry());
+        return database.getCollection(bucketName + ".chunks").withCodecRegistry(MongoClients.getDefaultCodecRegistry());
     }
 
     private void checkCreateIndex(final ClientSession clientSession) {

@@ -16,20 +16,20 @@
 
 package com.mongodb.client.gridfs
 
-import com.mongodb.MongoClient
-import com.mongodb.MongoDatabaseImpl
 import com.mongodb.MongoGridFSException
 import com.mongodb.MongoNamespace
-import com.mongodb.OperationExecutor
 import com.mongodb.ReadConcern
-import com.mongodb.TestOperationExecutor
 import com.mongodb.WriteConcern
 import com.mongodb.client.FindIterable
 import com.mongodb.client.ListIndexesIterable
+import com.mongodb.client.MongoClients
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoCursor
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions
 import com.mongodb.client.gridfs.model.GridFSFile
+import com.mongodb.client.internal.MongoDatabaseImpl
+import com.mongodb.client.internal.OperationExecutor
+import com.mongodb.client.internal.TestOperationExecutor
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 import com.mongodb.operation.BatchCursor
@@ -55,7 +55,7 @@ import static spock.util.matcher.HamcrestSupport.expect
 class GridFSBucketSpecification extends Specification {
 
     def readConcern = ReadConcern.DEFAULT
-    def registry = MongoClient.getDefaultCodecRegistry()
+    def registry = MongoClients.getDefaultCodecRegistry()
     def database = databaseWithExecutor(Stub(OperationExecutor))
     def databaseWithExecutor(OperationExecutor executor) {
         new MongoDatabaseImpl('test', registry, primary(), WriteConcern.ACKNOWLEDGED, false, readConcern, executor)
