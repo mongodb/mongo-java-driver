@@ -970,7 +970,7 @@ public class ConnectionString {
     }
 
     /**
-     * Gets the credentials in an immutable list.  The list will be empty if no credentials were specified in the connection string.
+     * Gets the credential or null if no credentials were specified in the connection string.
      *
      * @return the credentials in an immutable list
      * @since 3.6
