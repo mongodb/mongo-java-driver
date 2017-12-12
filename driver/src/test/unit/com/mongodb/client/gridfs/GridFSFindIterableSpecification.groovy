@@ -18,14 +18,14 @@ package com.mongodb.client.gridfs
 
 import com.mongodb.Block
 import com.mongodb.CursorType
-import com.mongodb.FindIterableImpl
 import com.mongodb.Function
-import com.mongodb.MongoClient
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
-import com.mongodb.TestOperationExecutor
-import com.mongodb.client.gridfs.model.GridFSFile
+import com.mongodb.client.MongoClients
 import com.mongodb.client.gridfs.codecs.GridFSFileCodec
+import com.mongodb.client.gridfs.model.GridFSFile
+import com.mongodb.client.internal.FindIterableImpl
+import com.mongodb.client.internal.TestOperationExecutor
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.FindOptions
 import com.mongodb.operation.BatchCursor
@@ -44,7 +44,7 @@ import static spock.util.matcher.HamcrestSupport.expect
 
 class GridFSFindIterableSpecification extends Specification {
 
-    def codecRegistry = MongoClient.getDefaultCodecRegistry()
+    def codecRegistry = MongoClients.getDefaultCodecRegistry()
     def gridFSFileCodec = new GridFSFileCodec(codecRegistry)
     def readPreference = secondary()
     def readConcern = ReadConcern.DEFAULT

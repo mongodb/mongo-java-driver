@@ -19,12 +19,6 @@ apply plugin: 'osgi'
 
 archivesBaseName = 'mongo-java-driver'
 
-idea {
-    module {
-        sourceDirs = [] // Ignore in idea (prevents intellij crashing due to sources outside project dir)
-    }
-}
-
 // dependencies copied from driver-core
 dependencies {
     compile "io.netty:netty-buffer:$nettyVersion", optional
@@ -37,7 +31,10 @@ dependencies {
 sourceSets {
     main {
         java {
-            srcDirs = ["$rootDir/driver/src/main", "$rootDir/driver-core/src/main", "$rootDir/bson/src/main"]
+            srcDirs = ["$rootDir/driver-legacy/src/main",
+                       "$rootDir/driver/src/main",
+                       "$rootDir/driver-core/src/main",
+                       "$rootDir/bson/src/main"]
         }
     }
 }
@@ -66,7 +63,7 @@ jar {
 modifyPom {
     project {
         name 'MongoDB Java Driver'
-        description 'The MongoDB Java Driver uber-artifact, containing mongodb-driver, mongodb-driver-core, and bson'
+        description 'The MongoDB Java Driver uber-artifact, containing the legacy driver, the mongodb-driver, mongodb-driver-core, and bson'
         url 'http://www.mongodb.org'
     }
 }

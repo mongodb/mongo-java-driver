@@ -30,7 +30,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.util.Util.toHex;
+import static com.mongodb.internal.HexUtils.toHex;
 
 final class GridFSUploadStreamImpl extends GridFSUploadStream {
     private final ClientSession clientSession;
