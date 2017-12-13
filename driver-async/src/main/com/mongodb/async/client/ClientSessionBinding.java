@@ -26,7 +26,7 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.session.SessionContext;
 import com.mongodb.internal.session.ClientSessionContext;
 
-import static org.bson.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 class ClientSessionBinding implements AsyncReadWriteBinding {
     private final AsyncReadWriteBinding wrapped;

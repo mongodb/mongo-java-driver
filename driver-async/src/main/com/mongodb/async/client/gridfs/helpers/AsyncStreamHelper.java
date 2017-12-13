@@ -26,7 +26,7 @@ import java.io.OutputStream;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 
-import static org.bson.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * A general helper class that creates {@link AsyncInputStream} or {@link AsyncOutputStream} instances.
