@@ -26,7 +26,7 @@ import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.session.ClientSession;
 import org.bson.BsonDocument;
-import org.bson.assertions.Assertions;
+import com.mongodb.assertions.Assertions;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 

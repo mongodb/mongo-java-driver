@@ -23,7 +23,7 @@ import com.mongodb.async.AsyncBatchCursor;
 
 import java.util.Collection;
 
-import static org.bson.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 class MappingIterable<U, V> implements MongoIterable<V> {
     private final MongoIterable<U> iterable;

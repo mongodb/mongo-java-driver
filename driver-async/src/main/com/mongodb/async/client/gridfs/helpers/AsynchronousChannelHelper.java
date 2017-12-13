@@ -26,7 +26,7 @@ import java.nio.channels.AsynchronousByteChannel;
 import java.nio.channels.AsynchronousFileChannel;
 import java.nio.channels.CompletionHandler;
 
-import static org.bson.assertions.Assertions.notNull;
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * A helper class to convert to {@link AsynchronousByteChannel} or {@link AsynchronousFileChannel} instances into {@link AsyncInputStream}
