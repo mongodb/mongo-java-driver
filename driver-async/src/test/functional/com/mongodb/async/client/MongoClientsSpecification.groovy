@@ -22,7 +22,7 @@ import com.mongodb.MongoCredential
 import com.mongodb.ReadConcern
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcern
-import com.mongodb.client.MongoDriverInformation
+import com.mongodb.MongoDriverInformation
 import org.bson.Document
 import spock.lang.IgnoreIf
 import spock.lang.Unroll

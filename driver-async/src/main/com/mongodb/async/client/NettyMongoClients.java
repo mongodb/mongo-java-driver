@@ -17,7 +17,7 @@
 
 package com.mongodb.async.client;
 
-import com.mongodb.client.MongoDriverInformation;
+import com.mongodb.MongoDriverInformation;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.netty.NettyStreamFactory;
 import io.netty.channel.EventLoopGroup;

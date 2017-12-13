@@ -1,5 +1,5 @@
 /*
- * Copyright 2016 MongoDB, Inc.
+ * Copyright 2017 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,9 @@
  * limitations under the License.
  */
 
-package com.mongodb.client;
+package com.mongodb
 
-import spock.lang.Specification;
+import spock.lang.Specification
 
 class MongoDriverInformationSpecification extends Specification {
 

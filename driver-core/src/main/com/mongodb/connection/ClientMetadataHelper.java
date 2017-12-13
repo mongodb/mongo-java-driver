@@ -17,7 +17,7 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.client.MongoDriverInformation;
+import com.mongodb.MongoDriverInformation;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
 import org.bson.BsonString;

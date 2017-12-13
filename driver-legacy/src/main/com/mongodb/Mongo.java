@@ -23,7 +23,6 @@ import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.ReadWriteBinding;
 import com.mongodb.binding.SingleServerBinding;
 import com.mongodb.binding.WriteBinding;
-import com.mongodb.client.MongoDriverInformation;
 import com.mongodb.client.internal.MongoIterableImpl;
 import com.mongodb.client.internal.OperationExecutor;
 import com.mongodb.connection.BufferProvider;

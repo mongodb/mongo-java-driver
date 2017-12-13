@@ -18,7 +18,7 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoCompressor;
 import com.mongodb.MongoCredential;
-import com.mongodb.client.MongoDriverInformation;
+import com.mongodb.MongoDriverInformation;
 import com.mongodb.event.CommandListener;
 import org.bson.BsonDocument;
 

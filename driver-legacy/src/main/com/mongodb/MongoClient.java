@@ -18,7 +18,6 @@ package com.mongodb;
 
 import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.MongoDriverInformation;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider;
 import com.mongodb.client.internal.ListDatabasesIterableImpl;

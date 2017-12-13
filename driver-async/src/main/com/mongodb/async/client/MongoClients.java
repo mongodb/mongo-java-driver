@@ -19,7 +19,7 @@ package com.mongodb.async.client;
 import com.mongodb.ConnectionString;
 import com.mongodb.DBRefCodecProvider;
 import com.mongodb.DocumentToDBRefTransformer;
-import com.mongodb.client.MongoDriverInformation;
+import com.mongodb.MongoDriverInformation;
 import com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider;
 import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
