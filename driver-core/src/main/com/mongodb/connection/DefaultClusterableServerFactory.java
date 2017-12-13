@@ -19,7 +19,7 @@ package com.mongodb.connection;
 import com.mongodb.MongoCompressor;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
-import com.mongodb.client.MongoDriverInformation;
+import com.mongodb.MongoDriverInformation;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.ServerListener;
 

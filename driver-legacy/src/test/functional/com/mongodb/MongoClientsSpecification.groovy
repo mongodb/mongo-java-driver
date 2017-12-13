@@ -17,7 +17,6 @@
 
 package com.mongodb
 
-import com.mongodb.client.MongoDriverInformation
 import com.mongodb.connection.ClusterDescription
 import com.mongodb.connection.ServerDescription
 import com.mongodb.event.CommandFailedEvent
