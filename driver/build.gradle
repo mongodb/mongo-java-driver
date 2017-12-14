@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+apply plugin: 'osgi'
 apply plugin: 'org.kordamp.gradle.clirr'
 
 archivesBaseName = 'mongodb-driver'
@@ -44,6 +45,16 @@ clirr {
 tasks.withType(Checkstyle) {
     // needed so the Javadoc checks can find the code in other modules
     classpath = files(project(':driver-core').sourceSets.main.output, sourceSets.main.output)
+}
+
+jar {
+    manifest {
+        instruction 'Automatic-Module-Name', 'org.mongodb.driver.client'
+        instruction 'Build-Version', getGitVersion()
+        instruction 'Import-Package',
+                'org.bson.*',
+                'com.mongodb.*'
+    }
 }
 
 modifyPom {
