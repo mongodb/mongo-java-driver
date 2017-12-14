@@ -469,7 +469,7 @@ public final class Filters {
     }
 
     /**
-     * Creates a filter that matches all documents that validate against the given JSON schema document.
+     * Allows the use of aggregation expressions within the query language.
      *
      * @param expression the aggregation expression
      * @param <TExpression> the expression type
