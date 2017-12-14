@@ -29,6 +29,7 @@ clirr {
 
 jar {
     manifest {
+        instruction 'Automatic-Module-Name', 'org.mongodb.bson'
         instruction 'Build-Version', getGitVersion()
         instruction 'Import-Package',
                     'javax.xml.bind.*',

@@ -42,6 +42,7 @@ sourceSets {
 // copied from driver-core
 jar {
     manifest {
+        instruction 'Automatic-Module-Name', 'org.mongodb.driver.legacy.client'
         instruction 'Build-Version', getGitVersion()
         instruction 'Import-Package',
                     'javax.xml.bind.*',

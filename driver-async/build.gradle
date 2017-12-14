@@ -45,6 +45,7 @@ tasks.withType(Checkstyle) {
 
 jar {
     manifest {
+        instruction 'Automatic-Module-Name', 'org.mongodb.driver.async.client'
         instruction 'Build-Version', getGitVersion()
         instruction 'Import-Package',
                 'org.bson.*',
