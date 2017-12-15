@@ -172,7 +172,7 @@ class DBFunctionalSpecification extends FunctionalSpecification {
     @Test
     def 'should execute command with customer encoder'() {
         when:
-        CommandResult commandResult = database.command(new BasicDBObject("isMaster", 1), DefaultDBEncoder.FACTORY.create());
+        CommandResult commandResult = database.command(new BasicDBObject('isMaster', 1), DefaultDBEncoder.FACTORY.create());
 
         then:
         commandResult.ok()
