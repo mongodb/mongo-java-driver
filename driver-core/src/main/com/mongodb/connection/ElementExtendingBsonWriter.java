@@ -16,8 +16,9 @@
 
 package com.mongodb.connection;
 
+import org.bson.BsonBinaryWriter;
 import org.bson.BsonElement;
-import org.bson.BsonWriter;
+import org.bson.BsonReader;
 
 import java.util.List;
 
@@ -26,7 +27,7 @@ import static com.mongodb.connection.BsonWriterHelper.writeElements;
 class ElementExtendingBsonWriter extends LevelCountingBsonWriter {
     private final List<BsonElement> extraElements;
 
-    ElementExtendingBsonWriter(final BsonWriter writer, final List<BsonElement> extraElements) {
+    ElementExtendingBsonWriter(final BsonBinaryWriter writer, final List<BsonElement> extraElements) {
         super(writer);
         this.extraElements = extraElements;
     }
@@ -34,9 +35,17 @@ class ElementExtendingBsonWriter extends LevelCountingBsonWriter {
     @Override
     public void writeEndDocument() {
         if (getCurrentLevel() == 0) {
-            writeElements(getBsonWriter(), extraElements);
+            writeElements(getBsonBinaryWriter(), extraElements);
         }
         super.writeEndDocument();
     }
 
+    @Override
+    public void pipe(final BsonReader reader) {
+        if (getCurrentLevel() == -1) {
+            getBsonBinaryWriter().pipe(reader, extraElements);
+        } else {
+            getBsonBinaryWriter().pipe(reader);
+        }
+    }
 }

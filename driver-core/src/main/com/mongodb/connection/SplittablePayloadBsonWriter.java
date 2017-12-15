@@ -16,6 +16,7 @@
 
 package com.mongodb.connection;
 
+import org.bson.BsonBinaryWriter;
 import org.bson.BsonWriter;
 import org.bson.io.BsonOutput;
 
@@ -29,7 +30,7 @@ class SplittablePayloadBsonWriter extends LevelCountingBsonWriter {
     private final MessageSettings settings;
     private int commandStartPosition;
 
-    SplittablePayloadBsonWriter(final BsonWriter writer, final BsonOutput bsonOutput, final MessageSettings settings,
+    SplittablePayloadBsonWriter(final BsonBinaryWriter writer, final BsonOutput bsonOutput, final MessageSettings settings,
                                 final SplittablePayload payload) {
         super(writer);
         this.writer = writer;

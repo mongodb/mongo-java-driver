@@ -158,12 +158,12 @@ final class CommandMessage extends RequestMessage {
     }
 
     private void addDocumentWithPayload(final BsonOutput bsonOutput) {
-        BsonWriter writer = new BsonBinaryWriter(bsonOutput, getPayloadArrayFieldNameValidator());
-        if (payload != null) {
-            writer =  new SplittablePayloadBsonWriter(writer, bsonOutput, getSettings(), payload);
-        }
+        BsonBinaryWriter bsonBinaryWriter = new BsonBinaryWriter(bsonOutput, getPayloadArrayFieldNameValidator());
+        BsonWriter bsonWriter = payload == null
+                ? bsonBinaryWriter
+                : new SplittablePayloadBsonWriter(bsonBinaryWriter, bsonOutput, getSettings(), payload);
         BsonDocument commandToEncode = getCommandToEncode();
-        getCodec(commandToEncode).encode(writer, commandToEncode, EncoderContext.builder().build());
+        getCodec(commandToEncode).encode(bsonWriter, commandToEncode, EncoderContext.builder().build());
     }
 
     private int getFlagBits() {
