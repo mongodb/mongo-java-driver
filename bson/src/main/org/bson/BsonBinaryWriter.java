@@ -21,6 +21,7 @@ import org.bson.io.BsonOutput;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
+import java.util.List;
 import java.util.Stack;
 
 import static java.lang.String.format;
@@ -303,6 +304,17 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
     @Override
     public void pipe(final BsonReader reader) {
         notNull("reader", reader);
+        pipeDocument(reader, null);
+    }
+
+    @Override
+    public void pipe(final BsonReader reader, final List<BsonElement> extraElements) {
+        notNull("reader", reader);
+        notNull("extraElements", extraElements);
+        pipeDocument(reader, extraElements);
+    }
+
+    private void pipeDocument(final BsonReader reader, final List<BsonElement> extraElements) {
         if (reader instanceof BsonBinaryReader) {
             BsonBinaryReader binaryReader = (BsonBinaryReader) reader;
             if (getState() == State.VALUE) {
@@ -322,6 +334,16 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
 
             binaryReader.setState(AbstractBsonReader.State.TYPE);
 
+            if (extraElements != null) {
+                bsonOutput.truncateToPosition(bsonOutput.getPosition() - 1);
+                setContext(new Context(getContext(), BsonContextType.DOCUMENT, pipedDocumentStartPosition));
+                setState(State.NAME);
+                pipeExtraElements(extraElements);
+                bsonOutput.writeByte(0);
+                bsonOutput.writeInt32(pipedDocumentStartPosition, bsonOutput.getPosition() - pipedDocumentStartPosition);
+                setContext(getContext().getParentContext());
+            }
+
             if (getContext() == null) {
                 setState(State.DONE);
             } else {
@@ -333,6 +355,8 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
             }
 
             validateSize(bsonOutput.getPosition() - pipedDocumentStartPosition);
+        } else if (extraElements != null) {
+            super.pipe(reader, extraElements);
         } else {
             super.pipe(reader);
         }

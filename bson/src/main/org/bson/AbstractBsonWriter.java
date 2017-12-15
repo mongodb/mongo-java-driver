@@ -21,6 +21,7 @@ import org.bson.types.ObjectId;
 
 import java.io.Closeable;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 
@@ -752,17 +753,36 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     @Override
     public void pipe(final BsonReader reader) {
         notNull("reader", reader);
-        reader.readStartDocument();
-        writeStartDocument();
-        while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
-            writeName(reader.readName());
-            pipeValue(reader);
-        }
-        reader.readEndDocument();
-        writeEndDocument();
+        pipeDocument(reader, null);
     }
 
-    private void pipeDocument(final BsonReader reader) {
+    /**
+     * Reads a single document from the given BsonReader and writes it to this, appending the given extra elements to the document.
+     *
+     * @param reader the source of the document
+     * @param extraElements the extra elements to append to the document
+     * @since 3.6
+     */
+    public void pipe(final BsonReader reader, final List<BsonElement> extraElements) {
+        notNull("reader", reader);
+        notNull("extraElements", extraElements);
+        pipeDocument(reader, extraElements);
+    }
+
+    /**
+     * Pipe a list of extra element to this writer
+     *
+     * @param extraElements the extra elements
+     */
+    protected void pipeExtraElements(final List<BsonElement> extraElements) {
+        notNull("extraElements", extraElements);
+        for (BsonElement cur : extraElements) {
+            writeName(cur.getName());
+            pipeValue(cur.getValue());
+        }
+    }
+
+    private void pipeDocument(final BsonReader reader, final List<BsonElement> extraElements) {
         reader.readStartDocument();
         writeStartDocument();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
@@ -770,18 +790,21 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
             pipeValue(reader);
         }
         reader.readEndDocument();
+        if (extraElements != null) {
+            pipeExtraElements(extraElements);
+        }
         writeEndDocument();
     }
 
     private void pipeJavascriptWithScope(final BsonReader reader) {
         writeJavaScriptWithScope(reader.readJavaScriptWithScope());
-        pipeDocument(reader);
+        pipeDocument(reader, null);
     }
 
     private void pipeValue(final BsonReader reader) {
         switch (reader.getCurrentBsonType()) {
             case DOCUMENT:
-                pipeDocument(reader);
+                pipeDocument(reader, null);
                 break;
             case ARRAY:
                 pipeArray(reader);

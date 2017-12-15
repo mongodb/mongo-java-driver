@@ -237,11 +237,11 @@ abstract class RequestMessage {
     private <T> void addDocument(final T obj, final Encoder<T> encoder, final EncoderContext encoderContext,
                                  final BsonOutput bsonOutput, final FieldNameValidator validator, final int maxDocumentSize,
                                  final List<BsonElement> extraElements) {
-        BsonWriter writer = new BsonBinaryWriter(new BsonWriterSettings(), new BsonBinaryWriterSettings(maxDocumentSize), bsonOutput,
-                validator);
-        if (extraElements != null) {
-            writer = new ElementExtendingBsonWriter((BsonBinaryWriter) writer, extraElements);
-        }
-        encoder.encode(writer, obj, encoderContext);
+        BsonBinaryWriter bsonBinaryWriter = new BsonBinaryWriter(new BsonWriterSettings(), new BsonBinaryWriterSettings(maxDocumentSize),
+                bsonOutput, validator);
+        BsonWriter bsonWriter = extraElements == null
+                ? bsonBinaryWriter
+                : new ElementExtendingBsonWriter(bsonBinaryWriter, extraElements);
+        encoder.encode(bsonWriter, obj, encoderContext);
     }
 }

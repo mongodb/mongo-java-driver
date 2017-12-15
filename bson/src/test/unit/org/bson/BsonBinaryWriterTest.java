@@ -26,7 +26,9 @@ import org.junit.Test;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.List;
 
+import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -631,6 +633,98 @@ public class BsonBinaryWriterTest {
         assertEquals(0, reader2.readInt32("i"));
         reader2.readEndDocument();
         reader2.readEndDocument();
+    }
+
+    @Test
+    public void testPipeWithExtraElements() {
+        writer.writeStartDocument();
+        writer.writeBoolean("a", true);
+        writer.writeString("$db", "test");
+        writer.writeStartDocument("$readPreference");
+        writer.writeString("mode", "primary");
+        writer.writeEndDocument();
+        writer.writeEndDocument();
+
+        byte[] bytes = buffer.toByteArray();
+
+        BasicOutputBuffer pipedBuffer = new BasicOutputBuffer();
+        BsonBinaryWriter pipedWriter = new BsonBinaryWriter(new BsonWriterSettings(100),
+                new BsonBinaryWriterSettings(1024), pipedBuffer);
+
+        pipedWriter.writeStartDocument();
+        pipedWriter.writeBoolean("a", true);
+        pipedWriter.writeEndDocument();
+
+        List<BsonElement> extraElements = asList(
+                new BsonElement("$db", new BsonString("test")),
+                new BsonElement("$readPreference", new BsonDocument("mode", new BsonString("primary")))
+        );
+
+        BasicOutputBuffer newBuffer = new BasicOutputBuffer();
+        BsonBinaryWriter newWriter = new BsonBinaryWriter(newBuffer);
+        try {
+            BsonBinaryReader reader =
+                    new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(pipedBuffer.toByteArray()))));
+            try {
+                newWriter.pipe(reader, extraElements);
+            } finally {
+                reader.close();
+            }
+        } finally {
+            newWriter.close();
+        }
+        assertArrayEquals(bytes, newBuffer.toByteArray());
+    }
+
+    @Test
+    public void testPipeOfNestedDocumentWithExtraElements() {
+        writer.writeStartDocument();
+        writer.writeStartDocument("nested");
+
+        writer.writeBoolean("a", true);
+        writer.writeString("$db", "test");
+        writer.writeStartDocument("$readPreference");
+        writer.writeString("mode", "primary");
+        writer.writeEndDocument();
+        writer.writeEndDocument();
+
+        writer.writeBoolean("b", true);
+        writer.writeEndDocument();
+
+        byte[] bytes = buffer.toByteArray();
+
+        BasicOutputBuffer pipedBuffer = new BasicOutputBuffer();
+        BsonBinaryWriter pipedWriter = new BsonBinaryWriter(new BsonWriterSettings(100),
+                new BsonBinaryWriterSettings(1024), pipedBuffer);
+
+        pipedWriter.writeStartDocument();
+        pipedWriter.writeBoolean("a", true);
+        pipedWriter.writeEndDocument();
+
+        List<BsonElement> extraElements = asList(
+                new BsonElement("$db", new BsonString("test")),
+                new BsonElement("$readPreference", new BsonDocument("mode", new BsonString("primary")))
+        );
+
+        BasicOutputBuffer newBuffer = new BasicOutputBuffer();
+        BsonBinaryWriter newWriter = new BsonBinaryWriter(newBuffer);
+        try {
+            BsonBinaryReader reader =
+                    new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(pipedBuffer.toByteArray()))));
+            try {
+                newWriter.writeStartDocument();
+                newWriter.writeName("nested");
+                newWriter.pipe(reader, extraElements);
+                newWriter.writeBoolean("b", true);
+                newWriter.writeEndDocument();
+            } finally {
+                reader.close();
+            }
+        } finally {
+            newWriter.close();
+        }
+        byte[] actualBytes = newBuffer.toByteArray();
+        assertArrayEquals(bytes, actualBytes);
     }
 
     @Test
