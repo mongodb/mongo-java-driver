@@ -114,9 +114,14 @@ final class ClientMetadataHelper {
                 if (jarUrl != null) {
                     JarURLConnection jarURLConnection = (JarURLConnection) jarUrl.openConnection();
                     Manifest manifest = jarURLConnection.getManifest();
-                    String version = (String) manifest.getMainAttributes().get(new Attributes.Name("Build-Version"));
-                    if (version != null) {
-                        driverVersion = version;
+                    if (manifest != null) {
+                        Attributes mainAttributes = manifest.getMainAttributes();
+                        if (mainAttributes != null) {
+                            String version = (String) mainAttributes.get(new Attributes.Name("Build-Version"));
+                            if (version != null) {
+                                driverVersion = version;
+                            }
+                        }
                     }
                 }
             } catch (IOException e) {
