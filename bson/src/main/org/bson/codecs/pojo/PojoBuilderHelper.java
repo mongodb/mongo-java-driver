@@ -55,7 +55,7 @@ final class PojoBuilderHelper {
         TypeData<?> parentClassTypeData = null;
 
         Map<String, PropertyMetadata<?>> propertyNameMap = new HashMap<String, PropertyMetadata<?>>();
-        while (currentClass.getSuperclass() != null) {
+        while (!currentClass.isEnum() && currentClass.getSuperclass() != null) {
             annotations.addAll(asList(currentClass.getDeclaredAnnotations()));
             List<String> genericTypeNames = new ArrayList<String>();
             for (TypeVariable<? extends Class<? super T>> classTypeVariable : currentClass.getTypeParameters()) {

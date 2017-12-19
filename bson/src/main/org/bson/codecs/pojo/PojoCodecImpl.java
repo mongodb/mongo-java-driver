@@ -334,7 +334,8 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
 
         for (Map.Entry<String, TypeParameterMap> entry : classModel.getPropertyNameToTypeParameterMap().entrySet()) {
             TypeParameterMap typeParameterMap = entry.getValue();
-            if (typeParameterMap.hasTypeParameters() && classModel.getPropertyModel(entry.getKey()).getCodec() == null) {
+            PropertyModel<?> propertyModel = classModel.getPropertyModel(entry.getKey());
+            if (typeParameterMap.hasTypeParameters() && (propertyModel == null || propertyModel.getCodec() == null)) {
                 return false;
             }
         }
