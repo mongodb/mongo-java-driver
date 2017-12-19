@@ -28,6 +28,7 @@ import com.mongodb.async.SingleResultCallback
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.MapReduceAction
 import com.mongodb.operation.AsyncOperationExecutor
+import com.mongodb.operation.FindOperation
 import com.mongodb.operation.MapReduceStatistics
 import com.mongodb.operation.MapReduceToCollectionOperation
 import com.mongodb.operation.MapReduceWithInlineResultsOperation
@@ -137,7 +138,7 @@ class MapReduceIterableSpecification extends Specification {
                 .collation(collation)
         mapReduceIterable.into([]) { result, t -> }
 
-        def operation = executor.getReadOperation() as AggregateToCollectionThenFindOperation
+        def operation = executor.getReadOperation() as WriteOperationThenCursorReadOperation
         def expectedOperation = new MapReduceToCollectionOperation(namespace, new BsonJavaScript('map'),
                 new BsonJavaScript('reduce'), 'collName', writeConcern)
                 .databaseName(collectionNamespace.getDatabaseName())
@@ -162,7 +163,7 @@ class MapReduceIterableSpecification extends Specification {
         expect writeOperation, isTheSameAs(expectedOperation)
 
         when: 'the subsequent read should have the batchSize set'
-        def readOperation = operation.getFindOperation()
+        def readOperation = operation.getReadOperation() as FindOperation
 
         then: 'should use the correct settings'
         readOperation.getNamespace() == collectionNamespace

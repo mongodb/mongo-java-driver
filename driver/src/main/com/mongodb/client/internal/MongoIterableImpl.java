@@ -25,9 +25,6 @@ import com.mongodb.client.MongoIterable;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.session.ClientSession;
-import org.bson.BsonDocument;
-import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.conversions.Bson;
 
 import java.util.Collection;
 
@@ -36,8 +33,8 @@ import static com.mongodb.assertions.Assertions.notNull;
 public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResult> {
     private final ClientSession clientSession;
     private final ReadConcern readConcern;
-    private OperationExecutor executor;
-    private ReadPreference readPreference;
+    private final OperationExecutor executor;
+    private final ReadPreference readPreference;
     private Integer batchSize;
 
     public MongoIterableImpl(final ClientSession clientSession, final OperationExecutor executor, final ReadConcern readConcern,
@@ -120,14 +117,6 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
             }
         });
         return target;
-    }
-
-    BsonDocument toBsonDocumentOrNull(final Bson document, final CodecRegistry codecRegistry) {
-        return toBsonDocumentOrNull(document, BsonDocument.class, codecRegistry);
-    }
-
-    <T> BsonDocument toBsonDocumentOrNull(final Bson document, final Class<T> documentClass, final CodecRegistry codecRegistry) {
-        return document == null ? null : document.toBsonDocument(documentClass, codecRegistry);
     }
 
     private BatchCursor<TResult> execute() {

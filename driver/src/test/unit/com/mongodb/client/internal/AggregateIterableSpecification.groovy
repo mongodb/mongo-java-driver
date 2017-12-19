@@ -134,6 +134,8 @@ class AggregateIterableSpecification extends Specification {
         operation.getNamespace() == collectionNamespace
         operation.getBatchSize() == 99
         operation.getCollation() == collation
+        operation.getMaxAwaitTime(MILLISECONDS) == 0
+        operation.getMaxTime(MILLISECONDS) == 0
 
         when: 'toCollection should work as expected'
         new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,

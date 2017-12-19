@@ -28,16 +28,10 @@ import com.mongodb.WriteConcernResult;
 import com.mongodb.WriteError;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteResult;
-import com.mongodb.bulk.DeleteRequest;
-import com.mongodb.bulk.IndexRequest;
-import com.mongodb.bulk.InsertRequest;
-import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.bulk.WriteRequest;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.CreateIndexOptions;
-import com.mongodb.client.model.DeleteManyModel;
-import com.mongodb.client.model.DeleteOneModel;
 import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.DropIndexOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
@@ -47,53 +41,34 @@ import com.mongodb.client.model.FindOptions;
 import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertManyOptions;
-import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
-import com.mongodb.client.model.ReplaceOneModel;
-import com.mongodb.client.model.ReturnDocument;
-import com.mongodb.client.model.UpdateManyModel;
-import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
-import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.internal.operation.AsyncOperations;
+import com.mongodb.internal.operation.IndexHelper;
 import com.mongodb.operation.AsyncOperationExecutor;
-import com.mongodb.operation.CountOperation;
-import com.mongodb.operation.CreateIndexesOperation;
-import com.mongodb.operation.DropCollectionOperation;
-import com.mongodb.operation.DropIndexOperation;
-import com.mongodb.operation.FindAndDeleteOperation;
-import com.mongodb.operation.FindAndReplaceOperation;
-import com.mongodb.operation.FindAndUpdateOperation;
-import com.mongodb.operation.MixedBulkWriteOperation;
-import com.mongodb.operation.RenameCollectionOperation;
+import com.mongodb.operation.AsyncWriteOperation;
 import com.mongodb.session.ClientSession;
 import org.bson.BsonDocument;
-import org.bson.BsonDocumentWrapper;
-import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.Document;
-import org.bson.codecs.Codec;
-import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static java.lang.String.format;
+import static com.mongodb.bulk.WriteRequest.Type.DELETE;
+import static com.mongodb.bulk.WriteRequest.Type.INSERT;
+import static com.mongodb.bulk.WriteRequest.Type.REPLACE;
+import static com.mongodb.bulk.WriteRequest.Type.UPDATE;
 import static java.util.Collections.singletonList;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
-    private static final Logger LOGGER = Loggers.getLogger("client");
     private final MongoNamespace namespace;
     private final Class<TDocument> documentClass;
     private final ReadPreference readPreference;
@@ -102,6 +77,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private final boolean retryWrites;
     private final ReadConcern readConcern;
     private final AsyncOperationExecutor executor;
+    private final AsyncOperations<TDocument> operations;
 
     MongoCollectionImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final CodecRegistry codecRegistry,
                         final ReadPreference readPreference, final WriteConcern writeConcern, final boolean retryWrites,
@@ -114,6 +90,9 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         this.retryWrites = retryWrites;
         this.readConcern = notNull("readConcern", readConcern);
         this.executor = notNull("executor", executor);
+        this.operations = new AsyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry, writeConcern, retryWrites,
+                readConcern);
+
     }
 
     @Override
@@ -210,19 +189,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private void executeCount(final ClientSession clientSession, final Bson filter, final CountOptions options,
                               final SingleResultCallback<Long> callback) {
-        CountOperation operation = new CountOperation(namespace)
-                .filter(toBsonDocument(filter))
-                .skip(options.getSkip())
-                .limit(options.getLimit())
-                .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                .collation(options.getCollation())
-                .readConcern(readConcern);
-        if (options.getHint() != null) {
-            operation.hint(toBsonDocument(options.getHint()));
-        } else if (options.getHintString() != null) {
-            operation.hint(new BsonString(options.getHintString()));
-        }
-        executor.execute(operation, readPreference, clientSession, callback);
+        executor.execute(operations.count(filter, options), readPreference, clientSession, callback);
     }
 
     @Override
@@ -438,57 +405,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private void executeBulkWrite(final ClientSession clientSession, final List<? extends WriteModel<? extends TDocument>> requests,
                                   final BulkWriteOptions options, final SingleResultCallback<BulkWriteResult> callback) {
         notNull("requests", requests);
-        List<WriteRequest> writeRequests = new ArrayList<WriteRequest>(requests.size());
-        for (WriteModel<? extends TDocument> writeModel : requests) {
-            WriteRequest writeRequest;
-            if (writeModel == null) {
-                throw new IllegalArgumentException("requests can not contain a null value");
-            } else if (writeModel instanceof InsertOneModel) {
-                TDocument document = ((InsertOneModel<TDocument>) writeModel).getDocument();
-                if (getCodec() instanceof CollectibleCodec) {
-                    document = ((CollectibleCodec<TDocument>) getCodec()).generateIdIfAbsentFromDocument(document);
-                }
-                writeRequest = new InsertRequest(documentToBsonDocument(document));
-            } else if (writeModel instanceof ReplaceOneModel) {
-                ReplaceOneModel<TDocument> replaceOneModel = (ReplaceOneModel<TDocument>) writeModel;
-                writeRequest = new UpdateRequest(toBsonDocument(replaceOneModel.getFilter()),
-                        documentToBsonDocument(replaceOneModel.getReplacement()),
-                        WriteRequest.Type.REPLACE)
-                        .upsert(replaceOneModel.getOptions().isUpsert())
-                        .collation(replaceOneModel.getOptions().getCollation());
-            } else if (writeModel instanceof UpdateOneModel) {
-                UpdateOneModel<TDocument> updateOneModel = (UpdateOneModel<TDocument>) writeModel;
-                writeRequest = new UpdateRequest(toBsonDocument(updateOneModel.getFilter()), toBsonDocument(updateOneModel.getUpdate()),
-                        WriteRequest.Type.UPDATE)
-                        .multi(false)
-                        .upsert(updateOneModel.getOptions().isUpsert())
-                        .collation(updateOneModel.getOptions().getCollation())
-                        .arrayFilters(toBsonDocumentList(updateOneModel.getOptions().getArrayFilters()));
-            } else if (writeModel instanceof UpdateManyModel) {
-                UpdateManyModel<TDocument> updateManyModel = (UpdateManyModel<TDocument>) writeModel;
-                writeRequest = new UpdateRequest(toBsonDocument(updateManyModel.getFilter()), toBsonDocument(updateManyModel.getUpdate()),
-                        WriteRequest.Type.UPDATE)
-                        .multi(true)
-                        .upsert(updateManyModel.getOptions().isUpsert())
-                        .collation(updateManyModel.getOptions().getCollation())
-                        .arrayFilters(toBsonDocumentList(updateManyModel.getOptions().getArrayFilters()));
-            } else if (writeModel instanceof DeleteOneModel) {
-                DeleteOneModel<TDocument> deleteOneModel = (DeleteOneModel<TDocument>) writeModel;
-                writeRequest = new DeleteRequest(toBsonDocument(deleteOneModel.getFilter())).multi(false)
-                        .collation(deleteOneModel.getOptions().getCollation());
-            } else if (writeModel instanceof DeleteManyModel) {
-                DeleteManyModel<TDocument> deleteManyModel = (DeleteManyModel<TDocument>) writeModel;
-                writeRequest = new DeleteRequest(toBsonDocument(deleteManyModel.getFilter())).multi(true)
-                        .collation(deleteManyModel.getOptions().getCollation());
-            } else {
-                throw new UnsupportedOperationException(format("WriteModel of type %s is not supported", writeModel.getClass()));
-            }
-
-            writeRequests.add(writeRequest);
-        }
-
-        executor.execute(new MixedBulkWriteOperation(namespace, writeRequests, options.isOrdered(), writeConcern, retryWrites)
-                .bypassDocumentValidation(options.getBypassDocumentValidation()), clientSession, callback);
+        executor.execute(operations.bulkWrite(requests, options), clientSession, callback);
     }
 
     @Override
@@ -515,12 +432,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private void executeInsertOne(final ClientSession clientSession, final TDocument document, final InsertOneOptions options,
                                   final SingleResultCallback<Void> callback) {
-        TDocument insertDocument = document;
-        if (getCodec() instanceof CollectibleCodec) {
-            insertDocument = ((CollectibleCodec<TDocument>) getCodec()).generateIdIfAbsentFromDocument(insertDocument);
-        }
-        executeSingleWriteRequest(clientSession,
-                new InsertRequest(documentToBsonDocument(insertDocument)), options.getBypassDocumentValidation(),
+        executeSingleWriteRequest(clientSession, operations.insertOne(document, options), INSERT,
                 new SingleResultCallback<BulkWriteResult>() {
                     @Override
                     public void onResult(final BulkWriteResult result, final Throwable t) {
@@ -555,25 +467,13 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private void executeInsertMany(final ClientSession clientSession, final List<? extends TDocument> documents,
                                    final InsertManyOptions options, final SingleResultCallback<Void> callback) {
-        notNull("documents", documents);
-        List<InsertRequest> requests = new ArrayList<InsertRequest>(documents.size());
-        for (TDocument document : documents) {
-            if (document == null) {
-                throw new IllegalArgumentException("documents can not contain a null value");
-            }
-            if (getCodec() instanceof CollectibleCodec) {
-                document = ((CollectibleCodec<TDocument>) getCodec()).generateIdIfAbsentFromDocument(document);
-            }
-            requests.add(new InsertRequest(documentToBsonDocument(document)));
-        }
-        executor.execute(new MixedBulkWriteOperation(namespace, requests, options.isOrdered(), writeConcern, retryWrites)
-                .bypassDocumentValidation(options.getBypassDocumentValidation()), clientSession, errorHandlingCallback(
+        executor.execute(operations.insertMany(documents, options), clientSession,
                 new SingleResultCallback<BulkWriteResult>() {
                     @Override
                     public void onResult(final BulkWriteResult result, final Throwable t) {
                         callback.onResult(null, t);
                     }
-                }, LOGGER));
+                });
     }
 
     @Override
@@ -623,7 +523,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private void executeDelete(final ClientSession clientSession, final Bson filter, final DeleteOptions options, final boolean multi,
                                final SingleResultCallback<DeleteResult> callback) {
         executeSingleWriteRequest(clientSession,
-                new DeleteRequest(toBsonDocument(filter)).multi(multi).collation(options.getCollation()), null,
+                multi ? operations.deleteMany(filter, options) : operations.deleteOne(filter, options), DELETE,
                 new SingleResultCallback<BulkWriteResult>() {
                     @Override
                     public void onResult(final BulkWriteResult result, final Throwable t) {
@@ -667,9 +567,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private void executeReplaceOne(final ClientSession clientSession, final Bson filter, final TDocument replacement,
                                    final UpdateOptions options, final SingleResultCallback<UpdateResult> callback) {
-        executeSingleWriteRequest(clientSession, new UpdateRequest(toBsonDocument(filter), documentToBsonDocument(replacement),
-                        WriteRequest.Type.REPLACE).upsert(options.isUpsert()).collation(options.getCollation()),
-                options.getBypassDocumentValidation(), new SingleResultCallback<BulkWriteResult>() {
+        executeSingleWriteRequest(clientSession, operations.replaceOne(filter, replacement, options), REPLACE,
+                new SingleResultCallback<BulkWriteResult>() {
                     @Override
                     public void onResult(final BulkWriteResult result, final Throwable t) {
                         if (t != null) {
@@ -731,9 +630,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private void executeUpdate(final ClientSession clientSession, final Bson filter, final Bson update, final UpdateOptions options,
                                final boolean multi, final SingleResultCallback<UpdateResult> callback) {
-        executeSingleWriteRequest(clientSession, new UpdateRequest(toBsonDocument(filter), toBsonDocument(update), WriteRequest.Type.UPDATE)
-                        .upsert(options.isUpsert()).multi(multi).collation(options.getCollation())
-                        .arrayFilters(toBsonDocumentList(options.getArrayFilters())), options.getBypassDocumentValidation(),
+        executeSingleWriteRequest(clientSession,
+                multi ? operations.updateMany(filter, update, options) : operations.updateOne(filter, update, options), UPDATE,
                 new SingleResultCallback<BulkWriteResult>() {
                     @Override
                     public void onResult(final BulkWriteResult result, final Throwable t) {
@@ -770,12 +668,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private void executeFindOneAndDelete(final ClientSession clientSession, final Bson filter, final FindOneAndDeleteOptions options,
                                          final SingleResultCallback<TDocument> callback) {
-        executor.execute(new FindAndDeleteOperation<TDocument>(namespace, writeConcern, retryWrites, getCodec())
-                .filter(toBsonDocument(filter))
-                .projection(toBsonDocument(options.getProjection()))
-                .sort(toBsonDocument(options.getSort()))
-                .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                .collation(options.getCollation()), clientSession, callback);
+        executor.execute(operations.findOneAndDelete(filter, options), clientSession, callback);
     }
 
     @Override
@@ -804,16 +697,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private void executeFindOneAndReplace(final ClientSession clientSession, final Bson filter, final TDocument replacement,
                                           final FindOneAndReplaceOptions options, final SingleResultCallback<TDocument> callback) {
-        executor.execute(new FindAndReplaceOperation<TDocument>(namespace, writeConcern, retryWrites, getCodec(),
-                documentToBsonDocument(replacement))
-                .filter(toBsonDocument(filter))
-                .projection(toBsonDocument(options.getProjection()))
-                .sort(toBsonDocument(options.getSort()))
-                .returnOriginal(options.getReturnDocument() == ReturnDocument.BEFORE)
-                .upsert(options.isUpsert())
-                .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                .bypassDocumentValidation(options.getBypassDocumentValidation())
-                .collation(options.getCollation()), clientSession, callback);
+        executor.execute(operations.findOneAndReplace(filter, replacement, options), clientSession, callback);
     }
 
     @Override
@@ -842,16 +726,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private void executeFindOneAndUpdate(final ClientSession clientSession, final Bson filter, final Bson update,
                                          final FindOneAndUpdateOptions options, final SingleResultCallback<TDocument> callback) {
-        executor.execute(new FindAndUpdateOperation<TDocument>(namespace, writeConcern, retryWrites, getCodec(), toBsonDocument(update))
-                .filter(toBsonDocument(filter))
-                .projection(toBsonDocument(options.getProjection()))
-                .sort(toBsonDocument(options.getSort()))
-                .returnOriginal(options.getReturnDocument() == ReturnDocument.BEFORE)
-                .upsert(options.isUpsert())
-                .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                .bypassDocumentValidation(options.getBypassDocumentValidation())
-                .collation(options.getCollation())
-                .arrayFilters(toBsonDocumentList(options.getArrayFilters())), clientSession, callback);
+        executor.execute(operations.findOneAndUpdate(filter, update, options), clientSession, callback);
     }
 
     @Override
@@ -866,7 +741,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     private void executeDrop(final ClientSession clientSession, final SingleResultCallback<Void> callback) {
-        executor.execute(new DropCollectionOperation(namespace, writeConcern), clientSession, callback);
+        executor.execute(operations.dropCollection(), clientSession, callback);
     }
 
     @Override
@@ -934,43 +809,13 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private void executeCreateIndexes(final ClientSession clientSession, final List<IndexModel> indexes,
                                       final CreateIndexOptions createIndexOptions, final SingleResultCallback<List<String>> callback) {
-        notNull("indexes", indexes);
-        notNull("createIndexOptions", createIndexOptions);
-
-        List<IndexRequest> indexRequests = new ArrayList<IndexRequest>(indexes.size());
-        for (IndexModel model : indexes) {
-            if (model == null) {
-                throw new IllegalArgumentException("indexes can not contain a null value");
-            }
-            indexRequests.add(new IndexRequest(toBsonDocument(model.getKeys()))
-                    .name(model.getOptions().getName())
-                    .background(model.getOptions().isBackground())
-                    .unique(model.getOptions().isUnique())
-                    .sparse(model.getOptions().isSparse())
-                    .expireAfter(model.getOptions().getExpireAfter(TimeUnit.SECONDS), TimeUnit.SECONDS)
-                    .version(model.getOptions().getVersion())
-                    .weights(toBsonDocument(model.getOptions().getWeights()))
-                    .defaultLanguage(model.getOptions().getDefaultLanguage())
-                    .languageOverride(model.getOptions().getLanguageOverride())
-                    .textVersion(model.getOptions().getTextVersion())
-                    .sphereVersion(model.getOptions().getSphereVersion())
-                    .bits(model.getOptions().getBits())
-                    .min(model.getOptions().getMin())
-                    .max(model.getOptions().getMax())
-                    .bucketSize(model.getOptions().getBucketSize())
-                    .storageEngine(toBsonDocument(model.getOptions().getStorageEngine()))
-                    .partialFilterExpression(toBsonDocument(model.getOptions().getPartialFilterExpression()))
-                    .collation(model.getOptions().getCollation()));
-        }
-        final CreateIndexesOperation createIndexesOperation = new CreateIndexesOperation(getNamespace(), indexRequests, writeConcern)
-                .maxTime(createIndexOptions.getMaxTime(MILLISECONDS), MILLISECONDS);
-        executor.execute(createIndexesOperation, clientSession, new SingleResultCallback<Void>() {
+        executor.execute(operations.createIndexes(indexes, createIndexOptions), clientSession, new SingleResultCallback<Void>() {
             @Override
             public void onResult(final Void result, final Throwable t) {
                 if (t != null) {
                     callback.onResult(null, t);
                 } else {
-                    callback.onResult(createIndexesOperation.getIndexNames(), null);
+                    callback.onResult(IndexHelper.getIndexNames(indexes, codecRegistry), null);
                 }
             }
         });
@@ -1069,14 +914,12 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private void executeDropIndex(final ClientSession clientSession, final Bson keys,
                                   final DropIndexOptions dropIndexOptions, final SingleResultCallback<Void> callback) {
-        executor.execute(new DropIndexOperation(namespace, keys.toBsonDocument(BsonDocument.class, codecRegistry), writeConcern)
-                        .maxTime(dropIndexOptions.getMaxTime(MILLISECONDS), MILLISECONDS), clientSession, callback);
+        executor.execute(operations.dropIndex(keys, dropIndexOptions), clientSession, callback);
     }
 
     private void executeDropIndex(final ClientSession clientSession, final String indexName,
                                   final DropIndexOptions dropIndexOptions, final SingleResultCallback<Void> callback) {
-        executor.execute(new DropIndexOperation(namespace, indexName, writeConcern)
-                .maxTime(dropIndexOptions.getMaxTime(MILLISECONDS), MILLISECONDS), clientSession, callback);
+        executor.execute(operations.dropIndex(indexName, dropIndexOptions), clientSession, callback);
     }
 
     @Override
@@ -1105,15 +948,12 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private void executeRenameCollection(final ClientSession clientSession, final MongoNamespace newCollectionNamespace,
                                          final RenameCollectionOptions options, final SingleResultCallback<Void> callback) {
-        executor.execute(new RenameCollectionOperation(getNamespace(), newCollectionNamespace, writeConcern)
-                .dropTarget(options.isDropTarget()), clientSession, callback);
+        executor.execute(operations.renameCollection(newCollectionNamespace, options), clientSession, callback);
     }
 
-    private void executeSingleWriteRequest(final ClientSession clientSession, final WriteRequest request,
-                                           final Boolean bypassDocumentValidation, final SingleResultCallback<BulkWriteResult> callback) {
-        executor.execute(new MixedBulkWriteOperation(namespace, singletonList(request), true, writeConcern, retryWrites)
-                         .bypassDocumentValidation(bypassDocumentValidation), clientSession,
-                         new SingleResultCallback<BulkWriteResult>() {
+    private void executeSingleWriteRequest(final ClientSession clientSession, final AsyncWriteOperation<BulkWriteResult> writeOperation,
+                                           final WriteRequest.Type type, final SingleResultCallback<BulkWriteResult> callback) {
+        executor.execute(writeOperation, clientSession, new SingleResultCallback<BulkWriteResult>() {
                              @Override
                              public void onResult(final BulkWriteResult result, final Throwable t) {
                                  if (t instanceof MongoBulkWriteException) {
@@ -1121,7 +961,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                                      if (e.getWriteErrors().isEmpty()) {
                                          callback.onResult(null,
                                                            new MongoWriteConcernException(e.getWriteConcernError(),
-                                                                                          translateBulkWriteResult(request,
+                                                                                          translateBulkWriteResult(type,
                                                                                                                    e.getWriteResult()),
                                                                                           e.getServerAddress()));
                                      } else {
@@ -1135,8 +975,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                          });
     }
 
-    private WriteConcernResult translateBulkWriteResult(final WriteRequest request, final BulkWriteResult writeResult) {
-        switch (request.getType()) {
+    private WriteConcernResult translateBulkWriteResult(final WriteRequest.Type type, final BulkWriteResult writeResult) {
+        switch (type) {
             case INSERT:
                 return WriteConcernResult.acknowledged(writeResult.getInsertedCount(), false, null);
             case DELETE:
@@ -1148,7 +988,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                                                        writeResult.getUpserts().isEmpty()
                                                        ? null : writeResult.getUpserts().get(0).getId());
             default:
-                throw new MongoInternalException("Unhandled write request type: " + request.getType());
+                throw new MongoInternalException("Unhandled write request type: " + type);
         }
     }
 
@@ -1160,32 +1000,5 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         } else {
             return UpdateResult.unacknowledged();
         }
-    }
-
-    private Codec<TDocument> getCodec() {
-        return getCodec(documentClass);
-    }
-
-    private <TResult> Codec<TResult> getCodec(final Class<TResult> resultClass) {
-        return codecRegistry.get(resultClass);
-    }
-
-    private BsonDocument documentToBsonDocument(final TDocument document) {
-        return BsonDocumentWrapper.asBsonDocument(document, codecRegistry);
-    }
-
-    private BsonDocument toBsonDocument(final Bson document) {
-        return document == null ? null : document.toBsonDocument(documentClass, codecRegistry);
-    }
-
-    private List<BsonDocument> toBsonDocumentList(final List<? extends Bson> bsonList) {
-        if (bsonList == null) {
-            return null;
-        }
-        List<BsonDocument> bsonDocumentList = new ArrayList<BsonDocument>(bsonList.size());
-        for (Bson cur : bsonList) {
-            bsonDocumentList.add(toBsonDocument(cur));
-        }
-        return bsonDocumentList;
     }
 }

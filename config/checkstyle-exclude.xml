@@ -61,6 +61,7 @@
     <suppress checks="ParameterNumber" files="DefaultServer"/>
     <suppress checks="ParameterNumber" files="DefaultClusterFactory"/>
     <suppress checks="ParameterNumber" files="DefaultClusterableServerFactory"/>
+    <suppress checks="ParameterNumber" files="Operations"/>
 
     <!--Legacy code that has not yet been cleaned-->
     <suppress checks="FinalClass" files="AggregationOptions"/>
