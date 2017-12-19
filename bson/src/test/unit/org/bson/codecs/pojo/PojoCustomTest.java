@@ -251,11 +251,6 @@ public final class PojoCustomTest extends PojoTestCase {
     }
 
     @Test
-    public void testEnumSupport() {
-        roundTrip(getPojoCodecProviderBuilder(SimpleEnumModel.class), new SimpleEnumModel(SimpleEnum.BRAVO), "{ 'myEnum': 'BRAVO' }");
-    }
-
-    @Test
     public void testEnumSupportWithCustomCodec() {
         CodecRegistry registry = fromRegistries(getCodecRegistry(getPojoCodecProviderBuilder(SimpleEnumModel.class)),
                 fromCodecs(new SimpleEnumCodec()));
