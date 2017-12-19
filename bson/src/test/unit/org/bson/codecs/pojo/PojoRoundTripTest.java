@@ -55,6 +55,8 @@ import org.bson.codecs.pojo.entities.ShapeHolderModel;
 import org.bson.codecs.pojo.entities.ShapeModelAbstract;
 import org.bson.codecs.pojo.entities.ShapeModelCircle;
 import org.bson.codecs.pojo.entities.ShapeModelRectangle;
+import org.bson.codecs.pojo.entities.SimpleEnum;
+import org.bson.codecs.pojo.entities.SimpleEnumModel;
 import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;
@@ -351,6 +353,10 @@ public final class PojoRoundTripTest extends PojoTestCase {
                 getPojoCodecProviderBuilder(FieldAndPropertyTypeMismatchModel.class),
                 "{'stringField': 'foo'}"));
 
+        data.add(new TestData("Enums support",
+                new SimpleEnumModel(SimpleEnum.BRAVO),
+                getPojoCodecProviderBuilder(SimpleEnumModel.class),
+                "{ 'myEnum': 'BRAVO' }"));
         return data;
     }
 
