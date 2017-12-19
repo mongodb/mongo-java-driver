@@ -23,8 +23,8 @@ import com.mongodb.ReadPreference;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.FindOptions;
+import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.operation.BatchCursor;
-import com.mongodb.operation.FindOperation;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.session.ClientSession;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -33,14 +33,13 @@ import org.bson.conversions.Bson;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 @SuppressWarnings("deprecation")
 final class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements FindIterable<TResult> {
-    private final MongoNamespace namespace;
-    private final Class<TDocument> documentClass;
+
+    private final SyncOperations<TDocument> operations;
+
     private final Class<TResult> resultClass;
-    private final CodecRegistry codecRegistry;
     private final FindOptions findOptions;
 
     private Bson filter;
@@ -49,10 +48,8 @@ final class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResu
                      final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
                      final ReadConcern readConcern, final OperationExecutor executor, final Bson filter, final FindOptions findOptions) {
         super(clientSession, executor, readConcern, readPreference);
-        this.namespace = notNull("namespace", namespace);
-        this.documentClass = notNull("documentClass", documentClass);
+        this.operations = new SyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry, readConcern);
         this.resultClass = notNull("resultClass", resultClass);
-        this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.filter = notNull("filter", filter);
         this.findOptions = notNull("findOptions", findOptions);
     }
@@ -193,41 +190,12 @@ final class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResu
 
     @Override
     public TResult first() {
-        FindOperation<TResult> findFirstOperation = createQueryOperation().batchSize(0).limit(-1);
-        BatchCursor<TResult> batchCursor = getExecutor().execute(findFirstOperation, getReadPreference(), getClientSession());
+        BatchCursor<TResult> batchCursor = getExecutor().execute(operations.findFirst(filter, resultClass, findOptions),
+                getReadPreference(), getClientSession());
         return batchCursor.hasNext() ? batchCursor.next().iterator().next() : null;
     }
 
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
-        return createQueryOperation();
+        return operations.find(filter, resultClass, findOptions);
     }
-
-    private FindOperation<TResult> createQueryOperation() {
-        return new FindOperation<TResult>(namespace, codecRegistry.get(resultClass))
-                   .filter(filter.toBsonDocument(documentClass, codecRegistry))
-                   .batchSize(findOptions.getBatchSize())
-                   .skip(findOptions.getSkip())
-                   .limit(findOptions.getLimit())
-                   .maxTime(findOptions.getMaxTime(MILLISECONDS), MILLISECONDS)
-                   .maxAwaitTime(findOptions.getMaxAwaitTime(MILLISECONDS), MILLISECONDS)
-                   .modifiers(toBsonDocumentOrNull(findOptions.getModifiers(), documentClass, codecRegistry))
-                   .projection(toBsonDocumentOrNull(findOptions.getProjection(), documentClass, codecRegistry))
-                   .sort(toBsonDocumentOrNull(findOptions.getSort(), documentClass, codecRegistry))
-                   .cursorType(findOptions.getCursorType())
-                   .noCursorTimeout(findOptions.isNoCursorTimeout())
-                   .oplogReplay(findOptions.isOplogReplay())
-                   .partial(findOptions.isPartial())
-                   .slaveOk(getReadPreference().isSlaveOk())
-                   .readConcern(getReadConcern())
-                   .collation(findOptions.getCollation())
-                   .comment(findOptions.getComment())
-                   .hint(toBsonDocumentOrNull(findOptions.getHint(), documentClass, codecRegistry))
-                   .min(toBsonDocumentOrNull(findOptions.getMin(), documentClass, codecRegistry))
-                   .max(toBsonDocumentOrNull(findOptions.getMax(), documentClass, codecRegistry))
-                   .maxScan(findOptions.getMaxScan())
-                   .returnKey(findOptions.isReturnKey())
-                   .showRecordId(findOptions.isShowRecordId())
-                   .snapshot(findOptions.isSnapshot());
-    }
-
 }

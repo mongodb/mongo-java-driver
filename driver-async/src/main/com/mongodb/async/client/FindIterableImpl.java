@@ -24,9 +24,9 @@ import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.FindOptions;
+import com.mongodb.internal.operation.AsyncOperations;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
-import com.mongodb.operation.FindOperation;
 import com.mongodb.session.ClientSession;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -35,15 +35,12 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 
 @SuppressWarnings("deprecation")
 class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements FindIterable<TResult> {
-    private final MongoNamespace namespace;
-    private final Class<TDocument> documentClass;
+    private final AsyncOperations<TDocument> operations;
     private final Class<TResult> resultClass;
-    private final CodecRegistry codecRegistry;
     private final FindOptions findOptions;
 
     private Bson filter;
@@ -53,10 +50,8 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
                      final ReadConcern readConcern, final AsyncOperationExecutor executor, final Bson filter,
                      final FindOptions findOptions) {
         super(clientSession, executor, readConcern, readPreference);
-        this.namespace = notNull("namespace", namespace);
-        this.documentClass = notNull("documentClass", documentClass);
+        this.operations = new AsyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry, readConcern);
         this.resultClass = notNull("resultClass", resultClass);
-        this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.filter = notNull("filter", filter);
         this.findOptions = notNull("findOptions", findOptions);
     }
@@ -198,8 +193,7 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     @Override
     public void first(final SingleResultCallback<TResult> callback) {
         notNull("callback", callback);
-        FindOperation<TResult> findFirstOperation = createFindOperation().batchSize(0).limit(-1);
-        getExecutor().execute(findFirstOperation, getReadPreference(), getClientSession(),
+        getExecutor().execute(operations.findFirst(filter, resultClass, findOptions), getReadPreference(), getClientSession(),
                 new SingleResultCallback<AsyncBatchCursor<TResult>>() {
             @Override
             public void onResult(final AsyncBatchCursor<TResult> batchCursor, final Throwable t) {
@@ -229,31 +223,7 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
         return createFindOperation();
     }
 
-    private FindOperation<TResult> createFindOperation() {
-        return new FindOperation<TResult>(namespace, codecRegistry.get(resultClass))
-                .filter(filter.toBsonDocument(documentClass, codecRegistry))
-                .batchSize(findOptions.getBatchSize())
-                .skip(findOptions.getSkip())
-                .limit(findOptions.getLimit())
-                .maxTime(findOptions.getMaxTime(MILLISECONDS), MILLISECONDS)
-                .maxAwaitTime(findOptions.getMaxAwaitTime(MILLISECONDS), MILLISECONDS)
-                .modifiers(toBsonDocumentOrNull(findOptions.getModifiers(), documentClass, codecRegistry))
-                .projection(toBsonDocumentOrNull(findOptions.getProjection(), documentClass, codecRegistry))
-                .sort(toBsonDocumentOrNull(findOptions.getSort(), documentClass, codecRegistry))
-                .cursorType(findOptions.getCursorType())
-                .noCursorTimeout(findOptions.isNoCursorTimeout())
-                .oplogReplay(findOptions.isOplogReplay())
-                .partial(findOptions.isPartial())
-                .slaveOk(getReadPreference().isSlaveOk())
-                .readConcern(getReadConcern())
-                .collation(findOptions.getCollation())
-                .comment(findOptions.getComment())
-                .hint(toBsonDocumentOrNull(findOptions.getHint(), documentClass, codecRegistry))
-                .min(toBsonDocumentOrNull(findOptions.getMin(), documentClass, codecRegistry))
-                .max(toBsonDocumentOrNull(findOptions.getMax(), documentClass, codecRegistry))
-                .maxScan(findOptions.getMaxScan())
-                .returnKey(findOptions.isReturnKey())
-                .showRecordId(findOptions.isShowRecordId())
-                .snapshot(findOptions.isSnapshot());
+    private AsyncReadOperation<AsyncBatchCursor<TResult>> createFindOperation() {
+        return operations.find(filter, resultClass, findOptions);
     }
 }

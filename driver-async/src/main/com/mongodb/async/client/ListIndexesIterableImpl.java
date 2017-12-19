@@ -20,10 +20,11 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.AsyncBatchCursor;
+import com.mongodb.internal.operation.AsyncOperations;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
-import com.mongodb.operation.ListIndexesOperation;
 import com.mongodb.session.ClientSession;
+import org.bson.BsonDocument;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.concurrent.TimeUnit;
@@ -32,17 +33,16 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 final class ListIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> implements ListIndexesIterable<TResult> {
-    private final MongoNamespace namespace;
+    private AsyncOperations<BsonDocument> operations;
     private final Class<TResult> resultClass;
-    private final CodecRegistry codecRegistry;
     private long maxTimeMS;
 
     ListIndexesIterableImpl(final ClientSession clientSession, final MongoNamespace namespace, final Class<TResult> resultClass,
                             final CodecRegistry codecRegistry, final ReadPreference readPreference, final AsyncOperationExecutor executor) {
         super(clientSession, executor, ReadConcern.DEFAULT, readPreference);
-        this.namespace = notNull("namespace", namespace);
+        this.operations = new AsyncOperations<BsonDocument>(namespace, BsonDocument.class, readPreference, codecRegistry,
+                ReadConcern.DEFAULT);
         this.resultClass = notNull("resultClass", resultClass);
-        this.codecRegistry = notNull("codecRegistry", codecRegistry);
     }
 
     @Override
@@ -60,9 +60,7 @@ final class ListIndexesIterableImpl<TResult> extends MongoIterableImpl<TResult> 
 
     @Override
     AsyncReadOperation<AsyncBatchCursor<TResult>> asAsyncReadOperation() {
-        return new ListIndexesOperation<TResult>(namespace, codecRegistry.get(resultClass))
-            .batchSize(getBatchSize() == null ? 0 : getBatchSize())
-            .maxTime(maxTimeMS, MILLISECONDS);
+        return operations.listIndexes(resultClass, getBatchSize(), maxTimeMS);
     }
 
 }

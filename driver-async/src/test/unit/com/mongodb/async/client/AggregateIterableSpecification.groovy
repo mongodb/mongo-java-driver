@@ -29,6 +29,7 @@ import com.mongodb.client.model.Collation
 import com.mongodb.operation.AggregateOperation
 import com.mongodb.operation.AggregateToCollectionOperation
 import com.mongodb.operation.AsyncOperationExecutor
+import com.mongodb.operation.FindOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
@@ -127,7 +128,7 @@ class AggregateIterableSpecification extends Specification {
                 .comment('this is a comment')
                 .into([]) { result, t -> }
 
-        def operation = executor.getReadOperation() as AggregateToCollectionThenFindOperation
+        def operation = executor.getReadOperation() as WriteOperationThenCursorReadOperation
 
         then: 'should use the overrides'
         expect operation.getAggregateToCollectionOperation(), isTheSameAs(new AggregateToCollectionOperation(namespace,
@@ -139,12 +140,14 @@ class AggregateIterableSpecification extends Specification {
                 .comment('this is a comment'))
 
         when: 'the subsequent read should have the batchSize set'
-        operation = operation.getFindOperation()
+        operation = operation.getReadOperation() as FindOperation
 
         then: 'should use the correct settings'
         operation.getNamespace() == collectionNamespace
+        operation.getCollation() == collation
         operation.getBatchSize() == 99
-        operation.getMaxAwaitTime(MILLISECONDS) == 99
+        operation.getMaxAwaitTime(MILLISECONDS) == 0
+        operation.getMaxTime(MILLISECONDS) == 0
 
         when: 'toCollection should work as expected'
         def futureResultCallback = new FutureResultCallback()

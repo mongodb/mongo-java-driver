@@ -22,24 +22,23 @@ import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
-import com.mongodb.operation.FindOperation;
 
-class AggregateToCollectionThenFindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>> {
+class WriteOperationThenCursorReadOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>> {
     private final AsyncWriteOperation<Void> aggregateToCollectionOperation;
-    private final FindOperation<T> findOperation;
+    private final AsyncReadOperation<AsyncBatchCursor<T>> readOperation;
 
-    AggregateToCollectionThenFindOperation(final AsyncWriteOperation<Void> aggregateToCollectionOperation,
-                                           final FindOperation<T> findOperation) {
+    WriteOperationThenCursorReadOperation(final AsyncWriteOperation<Void> aggregateToCollectionOperation,
+                                          final AsyncReadOperation<AsyncBatchCursor<T>> readOperation) {
         this.aggregateToCollectionOperation = aggregateToCollectionOperation;
-        this.findOperation = findOperation;
+        this.readOperation = readOperation;
     }
 
     public AsyncWriteOperation<Void> getAggregateToCollectionOperation() {
         return aggregateToCollectionOperation;
     }
 
-    public FindOperation<T> getFindOperation() {
-        return findOperation;
+    public AsyncReadOperation<AsyncBatchCursor<T>> getReadOperation() {
+        return readOperation;
     }
 
     @Override
@@ -51,7 +50,7 @@ class AggregateToCollectionThenFindOperation<T> implements AsyncReadOperation<As
                 if (t != null) {
                     callback.onResult(null, t);
                 } else {
-                    findOperation.executeAsync(binding, callback);
+                    readOperation.executeAsync(binding, callback);
                 }
             }
         });

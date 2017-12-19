@@ -22,10 +22,9 @@ import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.model.Collation;
-import com.mongodb.operation.AggregateOperation;
-import com.mongodb.operation.AggregateToCollectionOperation;
+import com.mongodb.client.model.FindOptions;
+import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.operation.BatchCursor;
-import com.mongodb.operation.FindOperation;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.session.ClientSession;
 import org.bson.BsonDocument;
@@ -33,18 +32,16 @@ import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements AggregateIterable<TResult> {
+    private final SyncOperations<TDocument> operations;
     private final MongoNamespace namespace;
     private final Class<TDocument> documentClass;
     private final Class<TResult> resultClass;
-    private final WriteConcern writeConcern;
     private final CodecRegistry codecRegistry;
     private final List<? extends Bson> pipeline;
 
@@ -62,23 +59,24 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
                           final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
                           final List<? extends Bson> pipeline) {
         super(clientSession, executor, readConcern, readPreference);
+        this.operations = new SyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry, writeConcern, false,
+                readConcern);
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.resultClass = notNull("resultClass", resultClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
-        this.writeConcern = notNull("writeConcern", writeConcern);
         this.pipeline = notNull("pipeline", pipeline);
     }
 
     @Override
     public void toCollection() {
-        List<BsonDocument> aggregateList = createBsonDocumentList(pipeline);
 
-        if (getOutCollection(aggregateList) == null) {
+        if (getOutCollection() == null) {
             throw new IllegalStateException("The last stage of the aggregation pipeline must be $out");
         }
 
-        getExecutor().execute(createAggregateToCollectionOperation(aggregateList), getClientSession());
+        getExecutor().execute(operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint,
+                comment), getClientSession());
     }
 
     @Override
@@ -141,57 +139,30 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     @Override
     @SuppressWarnings("deprecation")
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
-        List<BsonDocument> aggregateList = createBsonDocumentList(pipeline);
-
-        BsonValue outCollection = getOutCollection(aggregateList);
+        BsonValue outCollection = getOutCollection();
 
         if (outCollection != null) {
-            getExecutor().execute(createAggregateToCollectionOperation(aggregateList), getClientSession());
-            FindOperation<TResult> findOperation =
-                    new FindOperation<TResult>(new MongoNamespace(namespace.getDatabaseName(), outCollection.asString().getValue()),
-                                                      codecRegistry.get(resultClass))
-                            .readConcern(getReadConcern())
-                            .collation(collation);
+            getExecutor().execute(operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation,
+                    hint, comment), getClientSession());
+
+            FindOptions findOptions = new FindOptions().collation(collation);
             if (getBatchSize() != null) {
-                findOperation.batchSize(getBatchSize());
+                findOptions.batchSize(getBatchSize());
             }
-            return findOperation;
+            return operations.find(new MongoNamespace(namespace.getDatabaseName(), outCollection.asString().getValue()), new BsonDocument(),
+                    resultClass, findOptions);
         } else {
-            return new AggregateOperation<TResult>(namespace, aggregateList, codecRegistry.get(resultClass))
-                    .maxTime(maxTimeMS, MILLISECONDS)
-                    .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
-                    .allowDiskUse(allowDiskUse)
-                    .batchSize(getBatchSize())
-                    .useCursor(useCursor)
-                    .readConcern(getReadConcern())
-                    .collation(collation)
-                    .hint(hint == null ? null : hint.toBsonDocument(documentClass, codecRegistry))
-                    .comment(comment);
+            return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, getBatchSize(), collation,
+                    hint, comment, allowDiskUse, useCursor);
         }
     }
 
-    private BsonValue getOutCollection(final List<BsonDocument> aggregateList) {
-        return aggregateList.size() == 0 ? null : aggregateList.get(aggregateList.size() - 1).get("$out");
-    }
-
-    private AggregateToCollectionOperation createAggregateToCollectionOperation(final List<BsonDocument> aggregateList) {
-        return new AggregateToCollectionOperation(namespace, aggregateList, writeConcern)
-                        .maxTime(maxTimeMS, MILLISECONDS)
-                        .allowDiskUse(allowDiskUse)
-                        .bypassDocumentValidation(bypassDocumentValidation)
-                        .collation(collation)
-                        .hint(hint == null ? null : hint.toBsonDocument(documentClass, codecRegistry))
-                        .comment(comment);
-    }
-
-    private List<BsonDocument> createBsonDocumentList(final List<? extends Bson> pipeline) {
-        List<BsonDocument> aggregateList = new ArrayList<BsonDocument>(pipeline.size());
-        for (Bson obj : pipeline) {
-            if (obj == null) {
-                throw new IllegalArgumentException("pipeline can not contain a null value");
-            }
-            aggregateList.add(obj.toBsonDocument(documentClass, codecRegistry));
+    private BsonValue getOutCollection() {
+        if (pipeline.size() == 0) {
+            return null;
         }
-        return aggregateList;
+
+        Bson lastStage = notNull("last stage", pipeline.get(pipeline.size() - 1));
+        return lastStage.toBsonDocument(documentClass, codecRegistry).get("$out");
     }
 }

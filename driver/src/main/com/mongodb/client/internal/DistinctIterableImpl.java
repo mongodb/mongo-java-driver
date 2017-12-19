@@ -21,8 +21,8 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.operation.BatchCursor;
-import com.mongodb.operation.DistinctOperation;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.session.ClientSession;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -31,13 +31,11 @@ import org.bson.conversions.Bson;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements DistinctIterable<TResult> {
-    private final MongoNamespace namespace;
-    private final Class<TDocument> documentClass;
+    private final SyncOperations<TDocument> operations;
+
     private final Class<TResult> resultClass;
-    private final CodecRegistry codecRegistry;
     private final String fieldName;
 
     private Bson filter;
@@ -49,10 +47,8 @@ class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult
                          final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
                          final ReadConcern readConcern, final OperationExecutor executor, final String fieldName, final Bson filter) {
         super(clientSession, executor, readConcern, readPreference);
-        this.namespace = notNull("namespace", namespace);
-        this.documentClass = notNull("documentClass", documentClass);
+        this.operations = new SyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry, readConcern);
         this.resultClass = notNull("resultClass", resultClass);
-        this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.fieldName = notNull("mapFunction", fieldName);
         this.filter = filter;
     }
@@ -84,10 +80,6 @@ class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult
 
     @Override
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
-        return new DistinctOperation<TResult>(namespace, fieldName, codecRegistry.get(resultClass))
-                       .filter(filter == null ? null : filter.toBsonDocument(documentClass, codecRegistry))
-                       .maxTime(maxTimeMS, MILLISECONDS)
-                       .readConcern(getReadConcern())
-                       .collation(collation);
+        return operations.distinct(fieldName, filter, resultClass, maxTimeMS, collation);
     }
 }
