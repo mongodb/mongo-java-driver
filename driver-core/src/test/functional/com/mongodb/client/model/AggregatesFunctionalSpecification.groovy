@@ -267,12 +267,12 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
                 Document.parse('{ "_id" : 2, "item" : "xyz", "price" : 10, "ordered" : 60 }')
         )
 
-        def let = asList(new Variable('order_item', "\$item"), new Variable('order_qty', "\$ordered"))
+        def let = asList(new Variable('order_item', '$item'), new Variable('order_qty', '$ordered'))
 
         def  pipeline = asList(
-                match(expr(new Document("\$and",
-                        asList( new Document("\$eq", asList("\$stock_item", "\$\$order_item")),
-                                new Document("\$gte", asList("\$instock", "\$\$order_qty")))))),
+                match(expr(new Document('$and',
+                        asList( new Document('$eq', asList('$stock_item', '$$order_item')),
+                                new Document('$gte', asList('$instock', '$$order_qty')))))),
                 project(fields(exclude('stock_item'), excludeId())))
 
         def lookupDoc = lookup(fromCollectionName, let, pipeline, 'stockdata')
