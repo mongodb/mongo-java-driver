@@ -52,8 +52,11 @@ import static com.mongodb.client.model.Aggregates.skip
 import static com.mongodb.client.model.Aggregates.sort
 import static com.mongodb.client.model.Aggregates.sortByCount
 import static com.mongodb.client.model.Aggregates.unwind
+import static com.mongodb.client.model.Filters.and
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Filters.exists
+import static com.mongodb.client.model.Filters.expr
+import static com.mongodb.client.model.Filters.gte
 import static com.mongodb.client.model.Projections.computed
 import static com.mongodb.client.model.Projections.exclude
 import static com.mongodb.client.model.Projections.excludeId
@@ -242,6 +245,52 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         cleanup:
         fromHelper?.drop()
     }
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    def '$lookup with pipeline'() {
+        given:
+        def fromCollectionName = 'warehouses'
+        def fromHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), fromCollectionName))
+        def collection = getCollectionHelper()
+
+        collection.drop()
+        fromHelper.drop()
+
+        fromHelper.insertDocuments(
+                Document.parse('{ "_id" : 1, "stock_item" : "abc", warehouse: "A", "instock" : 120 }'),
+                Document.parse('{ "_id" : 2, "stock_item" : "abc", warehouse: "B", "instock" : 60 }'),
+                Document.parse('{ "_id" : 3, "stock_item" : "xyz", warehouse: "B", "instock" : 40 }'),
+                Document.parse('{ "_id" : 4, "stock_item" : "xyz", warehouse: "A", "instock" : 80 }'))
+
+        collection.insertDocuments(
+                Document.parse('{ "_id" : 1, "item" : "abc", "price" : 12, "ordered" : 2 }'),
+                Document.parse('{ "_id" : 2, "item" : "xyz", "price" : 10, "ordered" : 60 }')
+        )
+
+        def let = asList(new Variable('order_item', "\$item"), new Variable('order_qty', "\$ordered"))
+
+        def  pipeline = asList(
+                match(expr(new Document("\$and",
+                        asList( new Document("\$eq", asList("\$stock_item", "\$\$order_item")),
+                                new Document("\$gte", asList("\$instock", "\$\$order_qty")))))),
+                project(fields(exclude('stock_item'), excludeId())))
+
+        def lookupDoc = lookup(fromCollectionName, let, pipeline, 'stockdata')
+
+        when:
+        def results = aggregate([lookupDoc])
+
+        then:
+        results == [
+                Document.parse('{ "_id" : 1.0, "item" : "abc", "price" : 12.0, "ordered" : 2.0, ' +
+                        '"stockdata" : [ { "warehouse" : "A", "instock" : 120.0 }, { "warehouse" : "B", "instock" : 60.0 } ] }'),
+                Document.parse('{ "_id" : 2.0, "item" : "xyz", "price" : 10.0, "ordered" : 60.0, ' +
+                        '"stockdata" : [ { "warehouse" : "A", "instock" : 80.0 } ] }') ]
+
+        cleanup:
+        fromHelper?.drop()
+    }
+
 
     @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def '$facet'() {
