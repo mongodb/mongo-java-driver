@@ -28,7 +28,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 public class Variable<TExpression> {
     private final String name;
-    private TExpression value;
+    private final TExpression value;
 
     /**
      * Creates a new variable definition for use in $lookup pipeline stages
