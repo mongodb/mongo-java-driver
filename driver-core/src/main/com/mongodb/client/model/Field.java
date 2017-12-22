@@ -43,7 +43,7 @@ public class Field<TExpression> {
     }
 
     /**
-     * @return the new of the new field
+     * @return the name of the new field
      */
     public String getName() {
         return name;
