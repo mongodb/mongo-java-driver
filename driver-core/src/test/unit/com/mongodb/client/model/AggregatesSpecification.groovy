@@ -202,9 +202,9 @@ class AggregatesSpecification extends Specification {
 
         List<Bson> pipeline = asList(match(expr(new Document('$eq', asList('x', '1')))))
         toBson(lookup('from', asList(new Variable('var1', 'expression1')), pipeline, 'as')) ==
-                parse('''{ $lookup : { from: "from", 
+                parse('''{ $lookup : { from: "from",
                                             let: { var1: "expression1" },
-                                            pipeline : [{ $match : { $expr: { $eq : [ "x" , "1" ]}}}], 
+                                            pipeline : [{ $match : { $expr: { $eq : [ "x" , "1" ]}}}],
                                             as: "as" }}''')
     }
 
