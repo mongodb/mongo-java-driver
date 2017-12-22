@@ -36,6 +36,7 @@ buildscript {
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:1.12.+'
         classpath 'com.bmuschko:gradle-nexus-plugin:2.2'
         classpath "gradle.plugin.com.github.spotbugs:gradlePlugin:1.6.0"
+        classpath 'tech.harmonysoft:traute-gradle:1.1.2'
     }
 }
 
@@ -46,6 +47,7 @@ buildscript {
 configure(subprojects.findAll { it.name != 'util' }) {
     apply plugin: 'java'
     apply plugin: 'optional-base'
+    apply plugin: 'tech.harmonysoft.oss.traute'
 
     evaluationDependsOn(':util')
 
@@ -61,6 +63,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
     }
 
     dependencies {
+        compile("com.google.code.findbugs:jsr305:3.0.2")
         compile 'org.slf4j:slf4j-api:1.7.6', optional
     }
 
@@ -72,6 +75,15 @@ configure(subprojects.findAll { it.name != 'util' }) {
         options.compilerArgs = ['-Xlint:all', '-Xlint:-options']
 
         onlyIf { JavaVersion.current().isJava7Compatible() }
+    }
+
+    traute {
+        exceptionsToThrow = [
+                // Throw a IllegalArgumentException when a null is given to a method parameter marked by @NotNull
+                'parameter': 'IllegalArgumentException'
+        ]
+        // Use exception message like 'myArg can not be null' for a method parameter named 'myArg'
+        exceptionTexts = [ 'parameter': '${PARAMETER_NAME} can not be null' ]
     }
 
     project.ext.buildingWith = { propertyName ->
