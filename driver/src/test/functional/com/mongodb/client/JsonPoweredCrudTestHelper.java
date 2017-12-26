@@ -297,9 +297,9 @@ public class JsonPoweredCrudTestHelper {
         }
         collection.insertMany(documents,
                               new InsertManyOptions().ordered(arguments.getBoolean("ordered", BsonBoolean.TRUE).getValue()));
-        BsonArray insertedIds = new BsonArray();
-        for (BsonDocument document : documents) {
-            insertedIds.add(document.get("_id"));
+        BsonDocument insertedIds = new BsonDocument();
+        for (int i = 0; i < documents.size(); i++) {
+            insertedIds.put(Integer.toString(i), documents.get(i).get("_id"));
         }
         return toResult(new BsonDocument("insertedIds", insertedIds));
     }
