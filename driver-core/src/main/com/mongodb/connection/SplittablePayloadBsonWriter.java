@@ -28,13 +28,14 @@ class SplittablePayloadBsonWriter extends LevelCountingBsonWriter {
     private final BsonOutput bsonOutput;
     private final SplittablePayload payload;
     private final MessageSettings settings;
-    private int commandStartPosition;
+    private final int messageStartPosition;
 
-    SplittablePayloadBsonWriter(final BsonBinaryWriter writer, final BsonOutput bsonOutput, final MessageSettings settings,
-                                final SplittablePayload payload) {
+    SplittablePayloadBsonWriter(final BsonBinaryWriter writer, final BsonOutput bsonOutput, final int messageStartPosition,
+                                final MessageSettings settings, final SplittablePayload payload) {
         super(writer);
         this.writer = writer;
         this.bsonOutput = bsonOutput;
+        this.messageStartPosition = messageStartPosition;
         this.settings = settings;
         this.payload = payload;
     }
@@ -42,15 +43,12 @@ class SplittablePayloadBsonWriter extends LevelCountingBsonWriter {
     @Override
     public void writeStartDocument() {
         super.writeStartDocument();
-        if (getCurrentLevel() == 0) {
-            commandStartPosition = bsonOutput.getPosition();
-        }
     }
 
     @Override
     public void writeEndDocument() {
         if (getCurrentLevel() == 0 && payload.getPayload().size() > 0) {
-            writePayloadArray(writer, bsonOutput, settings, commandStartPosition, payload);
+            writePayloadArray(writer, bsonOutput, settings, messageStartPosition, payload);
         }
         super.writeEndDocument();
     }

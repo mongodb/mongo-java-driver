@@ -490,6 +490,47 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         async << [true, false]
     }
 
+    @Category(Slow)
+    def 'when documents together are just below the max message size, the documents are still inserted'() {
+        given:
+        def bsonBinary = new BsonBinary(new byte[16 * 1000 * 1000 - (getCollectionName().length() + 33)])
+        def operation = new MixedBulkWriteOperation(getNamespace(),
+                [
+                        new InsertRequest(new BsonDocument('_id', new BsonObjectId()).append('b', bsonBinary)),
+                        new InsertRequest(new BsonDocument('_id', new BsonObjectId()).append('b', bsonBinary)),
+                        new InsertRequest(new BsonDocument('_id', new BsonObjectId()).append('b', bsonBinary))
+                ],
+                true, ACKNOWLEDGED, false)
+
+        when:
+        BulkWriteResult result = execute(operation, true)
+
+        then:
+        result == BulkWriteResult.acknowledged(INSERT, 3, [])
+        getCollectionHelper().count() == 3
+    }
+
+    @Category(Slow)
+    def 'when documents together are just above the max message size, the documents are still inserted'() {
+        given:
+        def bsonBinary = new BsonBinary(new byte[16 * 1000 * 1000 - (getCollectionName().length() + 32)])
+        def operation = new MixedBulkWriteOperation(getNamespace(),
+                [
+                        new InsertRequest(new BsonDocument('_id', new BsonObjectId()).append('b', bsonBinary)),
+                        new InsertRequest(new BsonDocument('_id', new BsonObjectId()).append('b', bsonBinary)),
+                        new InsertRequest(new BsonDocument('_id', new BsonObjectId()).append('b', bsonBinary))
+                ],
+                true, ACKNOWLEDGED, false)
+
+        when:
+        BulkWriteResult result = execute(operation, true)
+
+        then:
+        result == BulkWriteResult.acknowledged(INSERT, 3, [])
+        getCollectionHelper().count() == 3
+    }
+
+
     def 'should handle multi-length runs of ordered insert, update, replace, and remove'() {
         given:
         getCollectionHelper().insertDocuments(getTestInserts())

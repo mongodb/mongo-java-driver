@@ -44,6 +44,8 @@ abstract class RequestMessage {
 
     static final AtomicInteger REQUEST_ID = new AtomicInteger(1);
 
+    static final int MESSAGE_PROLOGUE_LENGTH = 16;
+
     // Allow an extra 16K to the maximum allowed size of a query or command document, so that, for example,
     // a 16M document can be upserted via findAndModify
     private static final int DOCUMENT_HEADROOM = 16 * 1024;
