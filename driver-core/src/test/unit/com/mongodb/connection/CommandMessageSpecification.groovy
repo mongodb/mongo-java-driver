@@ -152,8 +152,92 @@ class CommandMessageSpecification extends Specification {
         ]
     }
 
-    def 'should respect the message settings limits'() {
+    def 'should respect the max message size'() {
         given:
+        def maxMessageSize = 1024
+        def messageSettings = MessageSettings.builder().maxMessageSize(maxMessageSize).serverVersion(new ServerVersion(3, 6)).build()
+        def payload = new SplittablePayload(INSERT, [new BsonDocument('a', new BsonBinary(new byte[922])),
+                                                     new BsonDocument('b', new BsonBinary(new byte[450])),
+                                                     new BsonDocument('c', new BsonBinary(new byte[459])),
+                                                     new BsonDocument('b', new BsonBinary(new byte[450])),
+                                                     new BsonDocument('c', new BsonBinary(new byte[460]))])
+        def message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
+                false, payload, fieldNameValidator)
+        def output = new BasicOutputBuffer()
+        def sessionContext = Stub(SessionContext)
+
+        when:
+        message.encode(output, sessionContext)
+        def byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
+        def messageHeader = new MessageHeader(byteBuf, maxMessageSize)
+
+        then:
+        messageHeader.opCode == OpCode.OP_MSG.value
+        messageHeader.requestId < RequestMessage.currentGlobalId
+        messageHeader.responseTo == 0
+        messageHeader.messageLength == 1024
+        byteBuf.getInt() == 0
+        payload.getPosition() == 1
+        payload.hasAnotherSplit()
+
+        when:
+        payload = payload.getNextSplit()
+        message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
+                false, payload, fieldNameValidator)
+        output.truncateToPosition(0)
+        message.encode(output, sessionContext)
+        byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
+        messageHeader = new MessageHeader(byteBuf, maxMessageSize)
+
+        then:
+        messageHeader.opCode == OpCode.OP_MSG.value
+        messageHeader.requestId < RequestMessage.currentGlobalId
+        messageHeader.responseTo == 0
+        messageHeader.messageLength == 1024
+        byteBuf.getInt() == 0
+        payload.getPosition() == 2
+        payload.hasAnotherSplit()
+
+        when:
+        payload = payload.getNextSplit()
+        message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
+                false, payload, fieldNameValidator)
+        output.truncateToPosition(0)
+        message.encode(output, sessionContext)
+        byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
+        messageHeader = new MessageHeader(byteBuf, maxMessageSize)
+
+        then:
+        messageHeader.opCode == OpCode.OP_MSG.value
+        messageHeader.requestId < RequestMessage.currentGlobalId
+        messageHeader.responseTo == 0
+        messageHeader.messageLength == 552
+        byteBuf.getInt() == 0
+        payload.getPosition() == 1
+        payload.hasAnotherSplit()
+
+        when:
+        payload = payload.getNextSplit()
+        message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
+                false, payload, fieldNameValidator)
+        output.truncateToPosition(0)
+        message.encode(output, sessionContext)
+        byteBuf = new ByteBufNIO(ByteBuffer.wrap(output.toByteArray()))
+        messageHeader = new MessageHeader(byteBuf, maxMessageSize)
+
+        then:
+        messageHeader.opCode == OpCode.OP_MSG.value
+        messageHeader.requestId < RequestMessage.currentGlobalId
+        messageHeader.responseTo == 0
+        messageHeader.messageLength == 562
+        byteBuf.getInt() == 1 << 1
+        payload.getPosition() == 1
+        !payload.hasAnotherSplit()
+    }
+
+    def 'should respect the max batch count'() {
+        given:
+        def messageSettings = MessageSettings.builder().maxBatchCount(2).serverVersion(new ServerVersion(3, 6)).build()
         def payload = new SplittablePayload(INSERT, [new BsonDocument('a', new BsonBinary(new byte[900])),
                                                      new BsonDocument('b', new BsonBinary(new byte[450])),
                                                      new BsonDocument('c', new BsonBinary(new byte[450]))])
@@ -171,12 +255,12 @@ class CommandMessageSpecification extends Specification {
         messageHeader.opCode == OpCode.OP_MSG.value
         messageHeader.requestId < RequestMessage.currentGlobalId
         messageHeader.responseTo == 0
+        messageHeader.messageLength == 1465
         byteBuf.getInt() == 0
-        payload.getPosition() == pos1
+        payload.getPosition() == 2
         payload.hasAnotherSplit()
 
         when:
-        def initialRequestId = messageHeader.requestId
         payload = payload.getNextSplit()
         message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
                 false, payload, fieldNameValidator)
@@ -188,16 +272,10 @@ class CommandMessageSpecification extends Specification {
         then:
         messageHeader.opCode == OpCode.OP_MSG.value
         messageHeader.requestId < RequestMessage.currentGlobalId
-        messageHeader.requestId > initialRequestId
         messageHeader.responseTo == 0
         byteBuf.getInt() == 1 << 1
-        payload.getPosition() == pos2
+        payload.getPosition() == 1
         !payload.hasAnotherSplit()
-
-        where:
-        pos1 | pos2 | messageSettings
-        1    | 2    | MessageSettings.builder().maxMessageSize(1024).serverVersion(new ServerVersion(3, 6)).build()
-        2    | 1    | MessageSettings.builder().maxBatchCount(2).serverVersion(new ServerVersion(3, 6)).build()
     }
 
     def 'should throw if payload document bigger than max document size'() {

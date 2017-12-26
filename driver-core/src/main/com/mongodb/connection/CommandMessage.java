@@ -111,6 +111,7 @@ final class CommandMessage extends RequestMessage {
 
     @Override
     protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final SessionContext sessionContext) {
+        int messageStartPosition = bsonOutput.getPosition() - MESSAGE_PROLOGUE_LENGTH;
         int commandStartPosition;
         if (useOpMsg()) {
             int flagPosition = bsonOutput.getPosition();
@@ -126,7 +127,7 @@ final class CommandMessage extends RequestMessage {
                 bsonOutput.writeInt32(0);         // size
                 bsonOutput.writeCString(payload.getPayloadName());
                 writePayload(new BsonBinaryWriter(bsonOutput, payloadFieldNameValidator), bsonOutput, getSettings(),
-                        commandStartPosition, payload);
+                        messageStartPosition, payload);
 
                 int payloadLength = bsonOutput.getPosition() - payloadPosition;
                 bsonOutput.writeInt32(payloadPosition, payloadLength);
@@ -145,7 +146,7 @@ final class CommandMessage extends RequestMessage {
             if (payload == null) {
                 addDocument(getCommandToEncode(), bsonOutput, commandFieldNameValidator, null);
             } else {
-                addDocumentWithPayload(bsonOutput);
+                addDocumentWithPayload(bsonOutput, messageStartPosition);
             }
         }
         return new EncodingMetadata(commandStartPosition);
@@ -157,11 +158,11 @@ final class CommandMessage extends RequestMessage {
         return new MappedFieldNameValidator(commandFieldNameValidator, rootMap);
     }
 
-    private void addDocumentWithPayload(final BsonOutput bsonOutput) {
+    private void addDocumentWithPayload(final BsonOutput bsonOutput, final int messageStartPosition) {
         BsonBinaryWriter bsonBinaryWriter = new BsonBinaryWriter(bsonOutput, getPayloadArrayFieldNameValidator());
         BsonWriter bsonWriter = payload == null
                 ? bsonBinaryWriter
-                : new SplittablePayloadBsonWriter(bsonBinaryWriter, bsonOutput, getSettings(), payload);
+                : new SplittablePayloadBsonWriter(bsonBinaryWriter, bsonOutput, messageStartPosition, getSettings(), payload);
         BsonDocument commandToEncode = getCommandToEncode();
         getCodec(commandToEncode).encode(bsonWriter, commandToEncode, EncoderContext.builder().build());
     }

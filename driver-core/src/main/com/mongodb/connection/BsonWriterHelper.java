@@ -45,17 +45,17 @@ final class BsonWriterHelper {
     }
 
     static void writePayloadArray(final BsonWriter writer, final BsonOutput bsonOutput, final MessageSettings settings,
-                                  final int commandStartPosition, final SplittablePayload payload) {
+                                  final int messageStartPosition, final SplittablePayload payload) {
         writer.writeStartArray(payload.getPayloadName());
-        writePayload(writer, bsonOutput, getDocumentMessageSettings(settings), commandStartPosition, payload);
+        writePayload(writer, bsonOutput, getDocumentMessageSettings(settings), messageStartPosition, payload);
         writer.writeEndArray();
     }
 
     static void writePayload(final BsonWriter writer, final BsonOutput bsonOutput, final MessageSettings settings,
-                             final int commandStartPosition, final SplittablePayload payload) {
+                             final int messageStartPosition, final SplittablePayload payload) {
         MessageSettings payloadSettings = getPayloadMessageSettings(payload.getPayloadType(), settings);
         for (int i = 0; i < payload.getPayload().size(); i++) {
-            if (writeDocument(writer, bsonOutput, payloadSettings, payload.getPayload().get(i), commandStartPosition, i + 1)) {
+            if (writeDocument(writer, bsonOutput, payloadSettings, payload.getPayload().get(i), messageStartPosition, i + 1)) {
                 payload.setPosition(i + 1);
             } else {
                 break;
@@ -69,10 +69,10 @@ final class BsonWriterHelper {
     }
 
     private static boolean writeDocument(final BsonWriter writer, final BsonOutput bsonOutput, final MessageSettings settings,
-                                         final BsonDocument document, final int startPosition, final int batchItemCount) {
+                                         final BsonDocument document, final int messageStartPosition, final int batchItemCount) {
         int currentPosition = bsonOutput.getPosition();
         getCodec(document).encode(writer, document, ENCODER_CONTEXT);
-        int messageSize = bsonOutput.getPosition() - startPosition;
+        int messageSize = bsonOutput.getPosition() - messageStartPosition;
         int documentSize = bsonOutput.getPosition() - currentPosition;
         if (exceedsLimits(settings, messageSize, documentSize, batchItemCount)) {
             bsonOutput.truncateToPosition(currentPosition);
