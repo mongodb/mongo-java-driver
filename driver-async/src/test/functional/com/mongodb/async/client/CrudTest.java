@@ -268,7 +268,12 @@ public class CrudTest extends DatabaseTestCase {
 
     private BsonDocument toResult(final MongoOperationInsertManyResult operation) {
         InsertManyResult insertManyResult = operation.get();
-        return toResult(new BsonDocument("insertedIds", insertManyResult.ids));
+        BsonDocument insertedIds = new BsonDocument();
+        for (int i = 0; i < insertManyResult.ids.size(); i++) {
+            insertedIds.put(Integer.toString(i), insertManyResult.ids.get(i));
+        }
+
+        return toResult(new BsonDocument("insertedIds", insertedIds));
     }
 
     private BsonDocument toResult(final BsonValue results) {
