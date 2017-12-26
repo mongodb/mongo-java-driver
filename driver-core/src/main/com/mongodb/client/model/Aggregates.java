@@ -225,11 +225,12 @@ public final class Aggregates {
     }
 
     /**
-     * Creates a $lookup pipeline stage for the specified filter
+     * Creates a $lookup pipeline stage, joining the current collection with the one specified in from
+     * using equality match between the local field and the foreign field
      *
      * @param from         the name of the collection in the same database to perform the join with.
-     * @param localField   specifies the field from the local collection to match values against.
-     * @param foreignField specifies the field in the from collection to match values against.
+     * @param localField   the field from the local collection to match values against.
+     * @param foreignField the field in the from collection to match values against.
      * @param as           the name of the new array field to add to the input documents.
      * @return the $lookup pipeline stage
      * @mongodb.driver.manual reference/operator/aggregation/lookup/ $lookup
@@ -244,7 +245,7 @@ public final class Aggregates {
     }
 
     /**
-     * Creates a $lookup pipeline stage for the specified filter
+     * Creates a $lookup pipeline stage, joining the current collection with the one specified in from using the given pipeline
      *
      * @param from          the name of the collection in the same database to perform the join with.
      * @param pipeline      the pipeline to run on the joined collection.
@@ -260,10 +261,10 @@ public final class Aggregates {
     }
 
     /**
-     * Creates a $lookup pipeline stage for the specified filter
+     * Creates a $lookup pipeline stage, joining the current collection with the one specified in from using the given pipeline
      *
      * @param from          the name of the collection in the same database to perform the join with.
-     * @param let           specifies variables to use in the pipeline field stages.
+     * @param let           the variables to use in the pipeline field stages.
      * @param pipeline      the pipeline to run on the joined collection.
      * @param as            the name of the new array field to add to the input documents.
      * @return the $lookup pipeline stage
