@@ -60,9 +60,14 @@ final class AsynchronousSocketChannelStream implements Stream {
 
     @Override
     public void open() throws IOException {
-        FutureAsyncCompletionHandler<Void> handler = new FutureAsyncCompletionHandler<Void>();
-        openAsync(handler);
-        handler.getOpen();
+       try {
+           FutureAsyncCompletionHandler<Void> handler = new FutureAsyncCompletionHandler<Void>();
+           openAsync(handler);
+           handler.getOpen();
+       } catch (IOException e) {
+           close();
+           throw new MongoSocketOpenException("Exception opening socket", getAddress(), e);
+       }
     }
 
     @SuppressWarnings("deprecation")
