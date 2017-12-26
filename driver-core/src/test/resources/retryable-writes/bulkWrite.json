@@ -79,7 +79,7 @@
       "description": "All commands are retried",
       "failPoint": {
         "mode": {
-          "times": 3
+          "times": 7
         }
       },
       "operation": {
