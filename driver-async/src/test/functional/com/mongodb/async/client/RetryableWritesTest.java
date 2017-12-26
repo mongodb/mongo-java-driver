@@ -163,7 +163,7 @@ public class RetryableWritesTest extends DatabaseTestCase {
             assertEquals(outcome.containsKey("error"), wasException);
         } else {
             BsonDocument fixedExpectedResult = fixExpectedResult(outcome.getDocument("result", new BsonDocument()));
-            assertEquals(result.getDocument("result", new BsonDocument()), fixedExpectedResult);
+            assertEquals(fixedExpectedResult, result.getDocument("result", new BsonDocument()));
         }
     }
 
@@ -192,14 +192,9 @@ public class RetryableWritesTest extends DatabaseTestCase {
     }
 
     private BsonDocument fixExpectedResult(final BsonDocument result) {
-        if (result.containsKey("insertedIds") && result.get("insertedIds").isDocument()) {
-            BsonDocument insertedIds = result.getDocument("insertedIds");
-            result.put("insertedIds", new BsonArray(new ArrayList<BsonValue>(insertedIds.values())));
-
-            if (result.containsKey("modifiedCount") && !result.containsKey("insertedCount")) {
-                result.put("insertedCount", new BsonInt32(insertedIds.size()));
-                result.put("insertedIds", new BsonDocument());
-            }
+        if (result.containsKey("insertedIds") && result.containsKey("modifiedCount") && !result.containsKey("insertedCount")) {
+            result.put("insertedCount", new BsonInt32(result.getDocument("insertedIds").size()));
+            result.put("insertedIds", new BsonDocument());
         }
 
         return result;
