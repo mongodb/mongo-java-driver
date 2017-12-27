@@ -16,6 +16,7 @@
 
 package com.mongodb.client;
 
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
@@ -56,7 +57,7 @@ public interface ListDatabasesIterable<TResult> extends MongoIterable<TResult> {
      * @since 3.6
      * @mongodb.server.release 3.4.2
      */
-    ListDatabasesIterable<TResult> filter(Bson filter);
+    ListDatabasesIterable<TResult> filter(@Nullable Bson filter);
 
     /**
      * Sets the nameOnly flag that indicates whether the command should return just the database names or return the database names and
@@ -67,5 +68,5 @@ public interface ListDatabasesIterable<TResult> extends MongoIterable<TResult> {
      * @since 3.6
      * @mongodb.server.release 3.4.3
      */
-    ListDatabasesIterable<TResult> nameOnly(Boolean nameOnly);
+    ListDatabasesIterable<TResult> nameOnly(@Nullable Boolean nameOnly);
 }

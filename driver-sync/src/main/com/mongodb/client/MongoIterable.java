@@ -18,6 +18,7 @@ package com.mongodb.client;
 
 import com.mongodb.Block;
 import com.mongodb.Function;
+import com.mongodb.lang.Nullable;
 
 import java.util.Collection;
 
@@ -37,6 +38,7 @@ public interface MongoIterable<TResult> extends Iterable<TResult> {
      *
      * @return T the first item or null.
      */
+    @Nullable
     TResult first();
 
     /**
