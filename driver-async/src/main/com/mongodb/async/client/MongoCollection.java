@@ -41,11 +41,11 @@ import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.session.ClientSession;
+import java.util.Collection;
+import java.util.List;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
-
-import java.util.List;
 
 /**
  * The MongoCollection interface.
@@ -668,7 +668,7 @@ public interface MongoCollection<TDocument> {
      * @throws com.mongodb.MongoException          if the write failed due some other failure
      * @see com.mongodb.async.client.MongoCollection#bulkWrite
      */
-    void insertMany(List<? extends TDocument> documents, InsertManyOptions options, SingleResultCallback<Void> callback);
+    void insertMany(Collection<? extends TDocument> documents, InsertManyOptions options, SingleResultCallback<Void> callback);
 
     /**
      * Inserts one or more documents.  A call to this method is equivalent to a call to the {@code bulkWrite} method
@@ -697,7 +697,7 @@ public interface MongoCollection<TDocument> {
      * @since 3.6
      * @mongodb.server.release 3.6
      */
-    void insertMany(ClientSession clientSession, List<? extends TDocument> documents, InsertManyOptions options,
+    void insertMany(ClientSession clientSession, Collection<? extends TDocument> documents, InsertManyOptions options,
                     SingleResultCallback<Void> callback);
 
     /**

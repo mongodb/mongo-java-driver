@@ -16,6 +16,12 @@
 
 package com.mongodb;
 
+import static com.mongodb.assertions.Assertions.notNull;
+import static java.lang.String.format;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.DeleteRequest;
 import com.mongodb.bulk.IndexRequest;
@@ -64,6 +70,11 @@ import com.mongodb.operation.FindAndUpdateOperation;
 import com.mongodb.operation.MixedBulkWriteOperation;
 import com.mongodb.operation.RenameCollectionOperation;
 import com.mongodb.session.ClientSession;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonString;
@@ -73,17 +84,6 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import static com.mongodb.assertions.Assertions.notNull;
-import static java.lang.String.format;
-import static java.util.Arrays.asList;
-import static java.util.Collections.singletonList;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private final MongoNamespace namespace;
@@ -520,7 +520,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    public void insertMany(final List<? extends TDocument> documents, final InsertManyOptions options) {
+    public void insertMany(final Collection<? extends TDocument> documents, final InsertManyOptions options) {
         executeInsertMany(null, documents, options);
     }
 
@@ -530,12 +530,13 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    public void insertMany(final ClientSession clientSession, final List<? extends TDocument> documents, final InsertManyOptions options) {
+    public void insertMany(final ClientSession clientSession,
+        final Collection<? extends TDocument> documents, final InsertManyOptions options) {
         notNull("clientSession", clientSession);
         executeInsertMany(clientSession, documents, options);
     }
 
-    private void executeInsertMany(final ClientSession clientSession, final List<? extends TDocument> documents,
+    private void executeInsertMany(final ClientSession clientSession, final Collection<? extends TDocument> documents,
                                    final InsertManyOptions options) {
         notNull("documents", documents);
         List<InsertRequest> requests = new ArrayList<InsertRequest>(documents.size());

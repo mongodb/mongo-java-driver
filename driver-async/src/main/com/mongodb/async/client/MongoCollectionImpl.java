@@ -16,6 +16,12 @@
 
 package com.mongodb.async.client;
 
+import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static java.lang.String.format;
+import static java.util.Collections.singletonList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+
 import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
@@ -71,6 +77,11 @@ import com.mongodb.operation.FindAndUpdateOperation;
 import com.mongodb.operation.MixedBulkWriteOperation;
 import com.mongodb.operation.RenameCollectionOperation;
 import com.mongodb.session.ClientSession;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonString;
@@ -80,17 +91,6 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static java.lang.String.format;
-import static java.util.Collections.singletonList;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private static final Logger LOGGER = Loggers.getLogger("client");
@@ -535,7 +535,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    public void insertMany(final List<? extends TDocument> documents, final InsertManyOptions options,
+    public void insertMany(final Collection<? extends TDocument> documents, final InsertManyOptions options,
                            final SingleResultCallback<Void> callback) {
         executeInsertMany(null, documents, options, callback);
     }
@@ -547,13 +547,14 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    public void insertMany(final ClientSession clientSession, final List<? extends TDocument> documents, final InsertManyOptions options,
-                           final SingleResultCallback<Void> callback) {
+    public void insertMany(final ClientSession clientSession,
+        final Collection<? extends TDocument> documents, final InsertManyOptions options,
+        final SingleResultCallback<Void> callback) {
         notNull("clientSession", clientSession);
         executeInsertMany(clientSession, documents, options, callback);
     }
 
-    private void executeInsertMany(final ClientSession clientSession, final List<? extends TDocument> documents,
+    private void executeInsertMany(final ClientSession clientSession, final Collection<? extends TDocument> documents,
                                    final InsertManyOptions options, final SingleResultCallback<Void> callback) {
         notNull("documents", documents);
         List<InsertRequest> requests = new ArrayList<InsertRequest>(documents.size());

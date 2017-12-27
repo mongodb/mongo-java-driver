@@ -45,6 +45,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.List;
+import java.util.Collection;
 
 /**
  * The MongoCollection interface.
@@ -658,7 +659,7 @@ public interface MongoCollection<TDocument> {
      * @throws com.mongodb.WriteConcernException if the write failed due being unable to fulfil the write concern
      * @throws com.mongodb.MongoException        if the write failed due some other failure
      */
-    void insertMany(List<? extends TDocument> documents, InsertManyOptions options);
+    void insertMany(Collection<? extends TDocument> documents, InsertManyOptions options);
 
     /**
      * Inserts one or more documents.  A call to this method is equivalent to a call to the {@code bulkWrite} method
@@ -685,7 +686,7 @@ public interface MongoCollection<TDocument> {
      * @since 3.6
      * @mongodb.server.release 3.6
      */
-    void insertMany(ClientSession clientSession, List<? extends TDocument> documents, InsertManyOptions options);
+    void insertMany(ClientSession clientSession, Collection<? extends TDocument> documents, InsertManyOptions options);
 
     /**
      * Removes at most one document from the collection that matches the given filter.  If no documents match, the collection is not
