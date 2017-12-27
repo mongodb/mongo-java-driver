@@ -52,7 +52,7 @@ configure(subprojects - [project(':util'), project(':driver-legacy')]) {
 
     modifyPom { pom ->
         pom.dependencies.findAll {
-            dep -> dep.groupId == 'io.netty' || dep.groupId == 'org.slf4j' || dep.groupId == 'org.xerial.snappy'
+            dep -> dep.groupId == 'io.netty' || dep.groupId == 'org.slf4j' || dep.groupId == 'org.xerial.snappy' || dep.groupId == 'com.google.code.findbugs'
         }.each {
             it.optional = true
         }
