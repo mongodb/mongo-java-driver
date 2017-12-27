@@ -625,11 +625,11 @@ public final class Aggregates {
         @Override
         public String toString() {
             return "Stage{"
-                    + "name='lookup'"
-                    + "from='" + from + '\''
-                    + ", let='" + let + '\''
-                    + ", pipeline='" + pipeline + '\''
-                    + ", as='" + as
+                    + "name='$lookup'"
+                    + ", from='" + from + '\''
+                    + ", let=" + let
+                    + ", pipeline=" + pipeline
+                    + ", as='" + as + '\''
                     + '}';
         }
     }
