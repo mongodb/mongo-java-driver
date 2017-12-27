@@ -22,6 +22,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.client.DistinctIterable;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.operation.SyncOperations;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.session.ClientSession;
@@ -54,7 +55,7 @@ class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult
     }
 
     @Override
-    public DistinctIterable<TResult> filter(final Bson filter) {
+    public DistinctIterable<TResult> filter(@Nullable final Bson filter) {
         this.filter = filter;
         return this;
     }
@@ -73,7 +74,7 @@ class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult
     }
 
     @Override
-    public DistinctIterable<TResult> collation(final Collation collation) {
+    public DistinctIterable<TResult> collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }

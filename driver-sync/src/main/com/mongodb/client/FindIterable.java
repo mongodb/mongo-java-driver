@@ -18,6 +18,7 @@ package com.mongodb.client;
 
 import com.mongodb.CursorType;
 import com.mongodb.client.model.Collation;
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
@@ -37,12 +38,12 @@ public interface FindIterable<TResult> extends MongoIterable<TResult> {
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    FindIterable<TResult> filter(Bson filter);
+    FindIterable<TResult> filter(@Nullable Bson filter);
 
     /**
      * Sets the limit to apply.
      *
-     * @param limit the limit, which may be null
+     * @param limit the limit, which may be 0
      * @return this
      * @mongodb.driver.manual reference/method/cursor.limit/#cursor.limit Limit
      */
@@ -95,7 +96,7 @@ public interface FindIterable<TResult> extends MongoIterable<TResult> {
      * @deprecated use the individual setters instead
      */
     @Deprecated
-    FindIterable<TResult> modifiers(Bson modifiers);
+    FindIterable<TResult> modifiers(@Nullable Bson modifiers);
 
     /**
      * Sets a document describing the fields to return for all matching documents.
@@ -104,7 +105,8 @@ public interface FindIterable<TResult> extends MongoIterable<TResult> {
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Projection
      */
-    FindIterable<TResult> projection(Bson projection);
+    FindIterable<TResult> projection(@Nullable Bson projection);
+
     /**
      * Sets the sort criteria to apply to the query.
      *
@@ -112,7 +114,7 @@ public interface FindIterable<TResult> extends MongoIterable<TResult> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
-    FindIterable<TResult> sort(Bson sort);
+    FindIterable<TResult> sort(@Nullable Bson sort);
 
     /**
      * The server normally times out idle cursors after an inactivity period (10 minutes)
@@ -166,7 +168,7 @@ public interface FindIterable<TResult> extends MongoIterable<TResult> {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
-    FindIterable<TResult> collation(Collation collation);
+    FindIterable<TResult> collation(@Nullable Collation collation);
 
     /**
      * Sets the comment to the query. A null value means no comment is set.
@@ -175,7 +177,7 @@ public interface FindIterable<TResult> extends MongoIterable<TResult> {
      * @return this
      * @since 3.5
      */
-    FindIterable<TResult> comment(String comment);
+    FindIterable<TResult> comment(@Nullable String comment);
 
     /**
      * Sets the hint for which index to use. A null value means no hint is set.
@@ -184,7 +186,7 @@ public interface FindIterable<TResult> extends MongoIterable<TResult> {
      * @return this
      * @since 3.5
      */
-    FindIterable<TResult> hint(Bson hint);
+    FindIterable<TResult> hint(@Nullable Bson hint);
 
     /**
      * Sets the exclusive upper bound for a specific index. A null value means no max is set.
@@ -193,7 +195,7 @@ public interface FindIterable<TResult> extends MongoIterable<TResult> {
      * @return this
      * @since 3.5
      */
-    FindIterable<TResult> max(Bson max);
+    FindIterable<TResult> max(@Nullable Bson max);
 
     /**
      * Sets the minimum inclusive lower bound for a specific index. A null value means no max is set.
@@ -202,7 +204,7 @@ public interface FindIterable<TResult> extends MongoIterable<TResult> {
      * @return this
      * @since 3.5
      */
-    FindIterable<TResult> min(Bson min);
+    FindIterable<TResult> min(@Nullable Bson min);
 
     /**
      * Sets the maximum number of documents or index keys to scan when executing the query.

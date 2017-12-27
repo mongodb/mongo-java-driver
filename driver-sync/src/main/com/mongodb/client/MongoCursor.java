@@ -19,6 +19,7 @@ package com.mongodb.client;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.lang.Nullable;
 
 import java.io.Closeable;
 import java.util.Iterator;
@@ -60,6 +61,7 @@ public interface MongoCursor<TResult> extends Iterator<TResult>, Closeable {
      * @return the next element in the iteration if available or null.
      * @mongodb.driver.manual reference/glossary/#term-tailable-cursor Tailable Cursor
      */
+    @Nullable
     TResult tryNext();
 
     /**
@@ -67,6 +69,7 @@ public interface MongoCursor<TResult> extends Iterator<TResult>, Closeable {
      *
      * @return the ServerCursor, which can be null.
      */
+    @Nullable
     ServerCursor getServerCursor();
 
     /**

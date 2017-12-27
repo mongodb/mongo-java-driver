@@ -23,6 +23,7 @@ import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.model.Collation;
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 import java.util.Collection;
@@ -36,7 +37,7 @@ class GridFSFindIterableImpl implements GridFSFindIterable {
     }
 
     @Override
-    public GridFSFindIterable sort(final Bson sort) {
+    public GridFSFindIterable sort(@Nullable final Bson sort) {
         underlying.sort(sort);
         return this;
     }
@@ -54,7 +55,7 @@ class GridFSFindIterableImpl implements GridFSFindIterable {
     }
 
     @Override
-    public GridFSFindIterable filter(final Bson filter) {
+    public GridFSFindIterable filter(@Nullable final Bson filter) {
         underlying.filter(filter);
         return this;
     }
@@ -72,7 +73,7 @@ class GridFSFindIterableImpl implements GridFSFindIterable {
     }
 
     @Override
-    public GridFSFindIterable collation(final Collation collation) {
+    public GridFSFindIterable collation(@Nullable final Collation collation) {
         underlying.collation(collation);
         return this;
     }
@@ -88,6 +89,7 @@ class GridFSFindIterableImpl implements GridFSFindIterable {
         return underlying.iterator();
     }
 
+    @Nullable
     @Override
     public GridFSFile first() {
         return underlying.first();

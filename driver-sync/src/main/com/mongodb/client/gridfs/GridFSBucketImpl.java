@@ -31,6 +31,7 @@ import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
+import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.BsonObjectId;
@@ -172,8 +173,8 @@ final class GridFSBucketImpl implements GridFSBucket {
         return createGridFSUploadStream(clientSession, id, filename, options);
     }
 
-    private GridFSUploadStream createGridFSUploadStream(final ClientSession clientSession, final BsonValue id, final String filename,
-                                                        final GridFSUploadOptions options) {
+    private GridFSUploadStream createGridFSUploadStream(@Nullable final ClientSession clientSession, final BsonValue id,
+                                                        final String filename, final GridFSUploadOptions options) {
         notNull("options", options);
         int chunkSize = options.getChunkSizeBytes() == null ? chunkSizeBytes : options.getChunkSizeBytes();
         checkCreateIndex(clientSession);
@@ -228,7 +229,7 @@ final class GridFSBucketImpl implements GridFSBucket {
         executeUploadFromStream(clientSession, id, filename, source, options);
     }
 
-    private void executeUploadFromStream(final ClientSession clientSession, final BsonValue id, final String filename,
+    private void executeUploadFromStream(@Nullable final ClientSession clientSession, final BsonValue id, final String filename,
                                          final InputStream source, final GridFSUploadOptions options) {
         GridFSUploadStream uploadStream = createGridFSUploadStream(clientSession, id, filename, options);
         int chunkSize = options.getChunkSizeBytes() == null ? chunkSizeBytes : options.getChunkSizeBytes();
@@ -288,7 +289,7 @@ final class GridFSBucketImpl implements GridFSBucket {
         return createGridFSDownloadStream(clientSession, getFileByName(clientSession, filename, options));
     }
 
-    private GridFSDownloadStream createGridFSDownloadStream(final ClientSession clientSession, final GridFSFile gridFSFile) {
+    private GridFSDownloadStream createGridFSDownloadStream(@Nullable final ClientSession clientSession, final GridFSFile gridFSFile) {
         return new GridFSDownloadStreamImpl(clientSession, gridFSFile, chunksCollection);
     }
 
@@ -359,7 +360,7 @@ final class GridFSBucketImpl implements GridFSBucket {
         return createGridFSFindIterable(clientSession, filter);
     }
 
-    private GridFSFindIterable createGridFSFindIterable(final ClientSession clientSession, final Bson filter) {
+    private GridFSFindIterable createGridFSFindIterable(@Nullable final ClientSession clientSession, @Nullable final Bson filter) {
         return new GridFSFindIterableImpl(createFindIterable(clientSession, filter));
     }
 
@@ -384,7 +385,7 @@ final class GridFSBucketImpl implements GridFSBucket {
         executeDelete(clientSession, id);
     }
 
-    private void executeDelete(final ClientSession clientSession, final BsonValue id) {
+    private void executeDelete(@Nullable final ClientSession clientSession, final BsonValue id) {
         DeleteResult result;
         if (clientSession != null) {
             result = filesCollection.deleteOne(clientSession, new BsonDocument("_id", id));
@@ -420,7 +421,7 @@ final class GridFSBucketImpl implements GridFSBucket {
         executeRename(clientSession, id, newFilename);
     }
 
-    private void executeRename(final ClientSession clientSession, final BsonValue id, final String newFilename) {
+    private void executeRename(@Nullable final ClientSession clientSession, final BsonValue id, final String newFilename) {
         UpdateResult updateResult;
         if (clientSession != null) {
             updateResult = filesCollection.updateOne(clientSession, new BsonDocument("_id", id),
@@ -488,7 +489,7 @@ final class GridFSBucketImpl implements GridFSBucket {
         return database.getCollection(bucketName + ".chunks").withCodecRegistry(MongoClientSettings.getDefaultCodecRegistry());
     }
 
-    private void checkCreateIndex(final ClientSession clientSession) {
+    private void checkCreateIndex(@Nullable final ClientSession clientSession) {
         if (!checkedIndexes) {
             if (collectionIsEmpty(clientSession, filesCollection.withDocumentClass(Document.class).withReadPreference(primary()))) {
                 Document filesIndex = new Document("filename", 1).append("uploadDate", 1);
@@ -504,7 +505,7 @@ final class GridFSBucketImpl implements GridFSBucket {
         }
     }
 
-    private <T> boolean collectionIsEmpty(final ClientSession clientSession, final MongoCollection<T> collection) {
+    private <T> boolean collectionIsEmpty(@Nullable final ClientSession clientSession, final MongoCollection<T> collection) {
         if (clientSession != null) {
             return collection.find(clientSession).projection(new Document("_id", 1)).first() == null;
         } else {
@@ -512,7 +513,7 @@ final class GridFSBucketImpl implements GridFSBucket {
         }
     }
 
-    private <T> boolean hasIndex(final ClientSession clientSession, final MongoCollection<T> collection, final Document index) {
+    private <T> boolean hasIndex(@Nullable final ClientSession clientSession, final MongoCollection<T> collection, final Document index) {
         boolean hasIndex = false;
         ListIndexesIterable<Document> listIndexesIterable;
         if (clientSession != null) {
@@ -531,7 +532,7 @@ final class GridFSBucketImpl implements GridFSBucket {
         return hasIndex;
     }
 
-    private <T> void createIndex(final ClientSession clientSession, final MongoCollection<T> collection, final Document index,
+    private <T> void createIndex(@Nullable final ClientSession clientSession, final MongoCollection<T> collection, final Document index,
                                  final IndexOptions indexOptions) {
        if (clientSession != null) {
            collection.createIndex(clientSession, index, indexOptions);
@@ -540,7 +541,8 @@ final class GridFSBucketImpl implements GridFSBucket {
        }
     }
 
-    private GridFSFile getFileByName(final ClientSession clientSession, final String filename, final GridFSDownloadOptions options) {
+    private GridFSFile getFileByName(@Nullable final ClientSession clientSession, final String filename,
+                                     final GridFSDownloadOptions options) {
         int revision = options.getRevision();
         int skip;
         int sort;
@@ -560,7 +562,7 @@ final class GridFSBucketImpl implements GridFSBucket {
         return fileInfo;
     }
 
-    private GridFSFile getFileInfoById(final ClientSession clientSession, final BsonValue id) {
+    private GridFSFile getFileInfoById(@Nullable final ClientSession clientSession, final BsonValue id) {
         notNull("id", id);
         GridFSFile fileInfo = createFindIterable(clientSession, new Document("_id", id)).first();
         if (fileInfo == null) {
@@ -569,7 +571,7 @@ final class GridFSBucketImpl implements GridFSBucket {
         return fileInfo;
     }
 
-    private FindIterable<GridFSFile> createFindIterable(final ClientSession clientSession, final Bson filter) {
+    private FindIterable<GridFSFile> createFindIterable(@Nullable final ClientSession clientSession, @Nullable final Bson filter) {
         FindIterable<GridFSFile> findIterable;
         if (clientSession != null) {
             findIterable = filesCollection.find(clientSession);

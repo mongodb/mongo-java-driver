@@ -17,6 +17,7 @@
 package com.mongodb.client;
 
 import com.mongodb.client.model.Collation;
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
@@ -47,7 +48,7 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
      * @mongodb.driver.manual reference/command/aggregate/ Aggregation
      * @mongodb.server.release 2.6
      */
-    AggregateIterable<TResult> allowDiskUse(Boolean allowDiskUse);
+    AggregateIterable<TResult> allowDiskUse(@Nullable Boolean allowDiskUse);
 
     /**
      * Sets the number of documents to return per batch.
@@ -80,7 +81,7 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
      * command.
      */
     @Deprecated
-    AggregateIterable<TResult> useCursor(Boolean useCursor);
+    AggregateIterable<TResult> useCursor(@Nullable Boolean useCursor);
 
     /**
      * The maximum amount of time for the server to wait on new documents to satisfy a {@code $changeStream} aggregation.
@@ -106,7 +107,7 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
      * @mongodb.driver.manual reference/command/aggregate/ Aggregation
      * @mongodb.server.release 3.2
      */
-    AggregateIterable<TResult> bypassDocumentValidation(Boolean bypassDocumentValidation);
+    AggregateIterable<TResult> bypassDocumentValidation(@Nullable Boolean bypassDocumentValidation);
 
     /**
      * Sets the collation options
@@ -117,7 +118,7 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
-    AggregateIterable<TResult> collation(Collation collation);
+    AggregateIterable<TResult> collation(@Nullable Collation collation);
 
     /**
      * Sets the comment to the aggregation. A null value means no comment is set.
@@ -127,7 +128,7 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
      * @since 3.6
      * @mongodb.server.release 3.6
      */
-    AggregateIterable<TResult> comment(String comment);
+    AggregateIterable<TResult> comment(@Nullable String comment);
 
     /**
      * Sets the hint for which index to use. A null value means no hint is set.
@@ -137,5 +138,5 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
      * @since 3.6
      * @mongodb.server.release 3.6
      */
-    AggregateIterable<TResult> hint(Bson hint);
+    AggregateIterable<TResult> hint(@Nullable Bson hint);
 }

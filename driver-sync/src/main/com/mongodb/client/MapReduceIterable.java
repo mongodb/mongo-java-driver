@@ -18,6 +18,7 @@ package com.mongodb.client;
 
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.MapReduceAction;
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
@@ -60,7 +61,7 @@ public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
      * @return this
      * @mongodb.driver.manual reference/command/mapReduce/#mapreduce-finalize-cmd Requirements for the finalize Function
      */
-    MapReduceIterable<TResult> finalizeFunction(String finalizeFunction);
+    MapReduceIterable<TResult> finalizeFunction(@Nullable String finalizeFunction);
 
     /**
      * Sets the global variables that are accessible in the map, reduce and finalize functions.
@@ -69,7 +70,7 @@ public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
      * @return this
      * @mongodb.driver.manual reference/command/mapReduce mapReduce
      */
-    MapReduceIterable<TResult> scope(Bson scope);
+    MapReduceIterable<TResult> scope(@Nullable Bson scope);
 
     /**
      * Sets the sort criteria to apply to the query.
@@ -78,7 +79,7 @@ public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
-    MapReduceIterable<TResult> sort(Bson sort);
+    MapReduceIterable<TResult> sort(@Nullable Bson sort);
 
     /**
      * Sets the query filter to apply to the query.
@@ -87,7 +88,7 @@ public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    MapReduceIterable<TResult> filter(Bson filter);
+    MapReduceIterable<TResult> filter(@Nullable Bson filter);
 
     /**
      * Sets the limit to apply.
@@ -142,7 +143,8 @@ public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
      * @return this
      * @mongodb.driver.manual reference/command/mapReduce/#output-to-a-collection-with-an-action output with an action
      */
-    MapReduceIterable<TResult> databaseName(String databaseName);
+    MapReduceIterable<TResult> databaseName(@Nullable String databaseName);
+
     /**
      * Sets if the output database is sharded
      *
@@ -184,7 +186,7 @@ public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
      * @mongodb.driver.manual reference/command/mapReduce mapReduce
      * @mongodb.server.release 3.2
      */
-    MapReduceIterable<TResult> bypassDocumentValidation(Boolean bypassDocumentValidation);
+    MapReduceIterable<TResult> bypassDocumentValidation(@Nullable Boolean bypassDocumentValidation);
 
     /**
      * Sets the collation options
@@ -195,5 +197,5 @@ public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
-    MapReduceIterable<TResult> collation(Collation collation);
+    MapReduceIterable<TResult> collation(@Nullable Collation collation);
 }

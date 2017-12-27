@@ -24,6 +24,7 @@ import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.FindOptions;
 import com.mongodb.internal.operation.SyncOperations;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.session.ClientSession;
@@ -80,7 +81,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
-    public AggregateIterable<TResult> allowDiskUse(final Boolean allowDiskUse) {
+    public AggregateIterable<TResult> allowDiskUse(@Nullable final Boolean allowDiskUse) {
         this.allowDiskUse = allowDiskUse;
         return this;
     }
@@ -100,7 +101,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
     @Override
     @Deprecated
-    public AggregateIterable<TResult> useCursor(final Boolean useCursor) {
+    public AggregateIterable<TResult> useCursor(@Nullable final Boolean useCursor) {
         this.useCursor = useCursor;
         return this;
     }
@@ -125,13 +126,13 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
-    public AggregateIterable<TResult> comment(final String comment) {
+    public AggregateIterable<TResult> comment(@Nullable final String comment) {
         this.comment = comment;
         return this;
     }
 
     @Override
-    public AggregateIterable<TResult> hint(final Bson hint) {
+    public AggregateIterable<TResult> hint(@Nullable final Bson hint) {
         this.hint = hint;
         return this;
     }

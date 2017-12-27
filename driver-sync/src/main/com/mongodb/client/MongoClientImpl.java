@@ -31,6 +31,7 @@ import com.mongodb.connection.Cluster;
 import com.mongodb.connection.DefaultClusterFactory;
 import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.connection.StreamFactory;
+import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.Document;
@@ -46,11 +47,12 @@ final class MongoClientImpl implements MongoClient {
     private final MongoClientSettings settings;
     private final MongoClientDelegate delegate;
 
-    MongoClientImpl(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation) {
+    MongoClientImpl(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation) {
         this(createCluster(settings, mongoDriverInformation), settings, null);
     }
 
-    private MongoClientImpl(final Cluster cluster, final MongoClientSettings settings, final OperationExecutor operationExecutor) {
+    private MongoClientImpl(final Cluster cluster, final MongoClientSettings settings,
+                            @Nullable final OperationExecutor operationExecutor) {
         this.settings = notNull("settings", settings);
         this.delegate = new MongoClientDelegate(notNull("cluster", cluster),
                 Collections.singletonList(settings.getCredential()), this, operationExecutor);
@@ -112,7 +114,8 @@ final class MongoClientImpl implements MongoClient {
         return delegate.getCluster();
     }
 
-    private static Cluster createCluster(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation) {
+    private static Cluster createCluster(final MongoClientSettings settings,
+                                         @Nullable final MongoDriverInformation mongoDriverInformation) {
         notNull("settings", settings);
         List<MongoCredential> credentialList = settings.getCredential() != null ? Collections.singletonList(settings.getCredential())
                 : Collections.<MongoCredential>emptyList();
@@ -130,12 +133,12 @@ final class MongoClientImpl implements MongoClient {
         }
     }
 
-    private <T> ListDatabasesIterable<T> createListDatabasesIterable(final ClientSession clientSession, final Class<T> clazz) {
+    private <T> ListDatabasesIterable<T> createListDatabasesIterable(@Nullable final ClientSession clientSession, final Class<T> clazz) {
         return new ListDatabasesIterableImpl<T>(clientSession, clazz, settings.getCodecRegistry(),
                 ReadPreference.primary(), delegate.getOperationExecutor());
     }
 
-    private MongoIterable<String> createListDatabaseNamesIterable(final ClientSession clientSession) {
+    private MongoIterable<String> createListDatabaseNamesIterable(final @Nullable ClientSession clientSession) {
         return createListDatabasesIterable(clientSession, BsonDocument.class).nameOnly(true).map(new Function<BsonDocument, String>() {
             @Override
             public String apply(final BsonDocument result) {

@@ -26,6 +26,7 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.FindOptions;
 import com.mongodb.client.model.MapReduceAction;
 import com.mongodb.internal.operation.SyncOperations;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.MapReduceBatchCursor;
 import com.mongodb.operation.MapReduceStatistics;
@@ -95,25 +96,25 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
-    public MapReduceIterable<TResult> finalizeFunction(final String finalizeFunction) {
+    public MapReduceIterable<TResult> finalizeFunction(@Nullable final String finalizeFunction) {
         this.finalizeFunction = finalizeFunction;
         return this;
     }
 
     @Override
-    public MapReduceIterable<TResult> scope(final Bson scope) {
+    public MapReduceIterable<TResult> scope(@Nullable final Bson scope) {
         this.scope = scope;
         return this;
     }
 
     @Override
-    public MapReduceIterable<TResult> sort(final Bson sort) {
+    public MapReduceIterable<TResult> sort(@Nullable final Bson sort) {
         this.sort = sort;
         return this;
     }
 
     @Override
-    public MapReduceIterable<TResult> filter(final Bson filter) {
+    public MapReduceIterable<TResult> filter(@Nullable final Bson filter) {
         this.filter = filter;
         return this;
     }
@@ -150,7 +151,7 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
-    public MapReduceIterable<TResult> databaseName(final String databaseName) {
+    public MapReduceIterable<TResult> databaseName(@Nullable final String databaseName) {
         this.databaseName = databaseName;
         return this;
     }
@@ -174,13 +175,13 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
-    public MapReduceIterable<TResult> bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+    public MapReduceIterable<TResult> bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
 
     @Override
-    public MapReduceIterable<TResult> collation(final Collation collation) {
+    public MapReduceIterable<TResult> collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }

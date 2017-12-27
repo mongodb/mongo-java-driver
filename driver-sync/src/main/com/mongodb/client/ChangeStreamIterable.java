@@ -19,6 +19,7 @@ package com.mongodb.client;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
 import java.util.concurrent.TimeUnit;
@@ -77,7 +78,7 @@ public interface ChangeStreamIterable<TResult> extends MongoIterable<ChangeStrea
      * @param collation the collation options to use
      * @return this
      */
-    ChangeStreamIterable<TResult> collation(Collation collation);
+    ChangeStreamIterable<TResult> collation(@Nullable Collation collation);
 
     /**
      * Returns a {@code MongoIterable} containing the results of the change stream based on the document class provided.

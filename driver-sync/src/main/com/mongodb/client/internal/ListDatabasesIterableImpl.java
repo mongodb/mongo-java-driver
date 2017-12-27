@@ -19,6 +19,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.internal.operation.SyncOperations;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.session.ClientSession;
@@ -64,13 +65,13 @@ public final class ListDatabasesIterableImpl<TResult> extends MongoIterableImpl<
     }
 
     @Override
-    public ListDatabasesIterable<TResult> filter(final Bson filter) {
+    public ListDatabasesIterable<TResult> filter(@Nullable final Bson filter) {
         this.filter = filter;
         return this;
     }
 
     @Override
-    public ListDatabasesIterable<TResult> nameOnly(final Boolean nameOnly) {
+    public ListDatabasesIterable<TResult> nameOnly(@Nullable final Boolean nameOnly) {
         this.nameOnly = nameOnly;
         return this;
     }

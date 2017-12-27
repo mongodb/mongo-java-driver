@@ -20,6 +20,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ListCollectionsIterable;
 import com.mongodb.internal.operation.SyncOperations;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.session.ClientSession;
@@ -49,7 +50,7 @@ final class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResu
     }
 
     @Override
-    public ListCollectionsIterable<TResult> filter(final Bson filter) {
+    public ListCollectionsIterable<TResult> filter(@Nullable final Bson filter) {
         notNull("filter", filter);
         this.filter = filter;
         return this;

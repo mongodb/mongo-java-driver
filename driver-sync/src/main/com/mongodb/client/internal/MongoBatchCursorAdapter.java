@@ -19,6 +19,7 @@ package com.mongodb.client.internal;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.client.MongoCursor;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.BatchCursor;
 
 import java.util.List;
@@ -66,6 +67,7 @@ public class MongoBatchCursorAdapter<T> implements MongoCursor<T> {
         return getNextInBatch();
     }
 
+    @Nullable
     @Override
     public T tryNext() {
         if (curBatch == null) {
@@ -75,6 +77,7 @@ public class MongoBatchCursorAdapter<T> implements MongoCursor<T> {
         return curBatch == null ? null : getNextInBatch();
     }
 
+    @Nullable
     @Override
     public ServerCursor getServerCursor() {
         return batchCursor.getServerCursor();

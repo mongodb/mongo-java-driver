@@ -14,12 +14,7 @@
  * limitations under the License.
  */
 
-/**
- * This package contains the new GridFS implementation
- *
- * @since 3.1
- */
 @NonNullApi
-package com.mongodb.client.gridfs;
+package com.mongodb.client;
 
 import com.mongodb.lang.NonNullApi;

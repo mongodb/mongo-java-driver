@@ -20,6 +20,7 @@ import com.mongodb.Function;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.client.MongoCursor;
+import com.mongodb.lang.Nullable;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -47,6 +48,7 @@ class MongoMappingCursor<T, U> implements MongoCursor<U> {
         return mapper.apply(proxied.next());
     }
 
+    @Nullable
     @Override
     public U tryNext() {
         T proxiedNext = proxied.tryNext();
@@ -62,6 +64,7 @@ class MongoMappingCursor<T, U> implements MongoCursor<U> {
         proxied.remove();
     }
 
+    @Nullable
     @Override
     public ServerCursor getServerCursor() {
         return proxied.getServerCursor();
