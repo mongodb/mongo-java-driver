@@ -21,6 +21,7 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.gridfs.model.GridFSFile;
+import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
 import org.bson.BsonValue;
 import org.bson.Document;
@@ -50,7 +51,7 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     private final Object cursorLock = new Object();
     private boolean closed = false;
 
-    GridFSDownloadStreamImpl(final ClientSession clientSession, final GridFSFile fileInfo,
+    GridFSDownloadStreamImpl(@Nullable final ClientSession clientSession, final GridFSFile fileInfo,
                              final MongoCollection<Document> chunksCollection) {
         this.clientSession = clientSession;
         this.fileInfo = notNull("file information", fileInfo);
@@ -208,6 +209,7 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
         }
     }
 
+    @Nullable
     private Document getChunk(final int startChunkIndex) {
         if (cursor == null) {
             cursor = getCursor(startChunkIndex);
@@ -238,7 +240,7 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
         return findIterable.batchSize(batchSize).sort(new Document("n", 1)).iterator();
     }
 
-    private byte[] getBufferFromChunk(final Document chunk, final int expectedChunkIndex) {
+    private byte[] getBufferFromChunk(@Nullable final Document chunk, final int expectedChunkIndex) {
 
         if (chunk == null || chunk.getInteger("n") != expectedChunkIndex) {
             throw new MongoGridFSException(format("Could not find file chunk for file_id: %s at chunk index %s.",

@@ -20,6 +20,7 @@ import com.mongodb.Block;
 import com.mongodb.Function;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.lang.Nullable;
 
 import java.util.Collection;
 
@@ -42,6 +43,7 @@ class MappingIterable<U, V> implements MongoIterable<V> {
         return new MongoMappingCursor<U, V>(iterable.iterator(), mapper);
     }
 
+    @Nullable
     @Override
     public V first() {
         MongoCursor<V> iterator = iterator();

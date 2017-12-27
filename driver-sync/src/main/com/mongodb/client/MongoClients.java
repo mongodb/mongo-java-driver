@@ -19,6 +19,7 @@ package com.mongodb.client;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
+import com.mongodb.lang.Nullable;
 
 /**
  * A factory for {@link MongoClient} instances.  Use of this class is now the recommended way to connect to MongoDB via the Java driver.
@@ -91,7 +92,8 @@ public final class MongoClients {
      * @throws IllegalArgumentException if the connection string's stream type is not one of "netty" or "nio2"
      * @see MongoClients#create(ConnectionString)
      */
-    public static MongoClient create(final ConnectionString connectionString, final MongoDriverInformation mongoDriverInformation) {
+    public static MongoClient create(final ConnectionString connectionString,
+                                     @Nullable final MongoDriverInformation mongoDriverInformation) {
         return create(MongoClientSettings.builder().applyConnectionString(connectionString).build(), mongoDriverInformation);
     }
 
@@ -104,7 +106,7 @@ public final class MongoClients {
      * @param mongoDriverInformation any driver information to associate with the MongoClient
      * @return the client
      */
-    public static MongoClient create(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation) {
+    public static MongoClient create(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation) {
         return new MongoClientImpl(settings, mongoDriverInformation);
     }
 

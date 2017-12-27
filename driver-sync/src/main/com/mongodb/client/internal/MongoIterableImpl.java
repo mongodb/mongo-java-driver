@@ -22,6 +22,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.session.ClientSession;
@@ -83,6 +84,7 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
         return new MongoBatchCursorAdapter<TResult>(execute());
     }
 
+    @Nullable
     @Override
     public TResult first() {
         MongoCursor<TResult> cursor = iterator();

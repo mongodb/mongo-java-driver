@@ -24,6 +24,7 @@ import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.ChangeStreamOperation;
 import com.mongodb.operation.ReadOperation;
@@ -89,7 +90,7 @@ final class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeSt
     }
 
     @Override
-    public ChangeStreamIterable<TResult> collation(final Collation collation) {
+    public ChangeStreamIterable<TResult> collation(@Nullable final Collation collation) {
         this.collation = notNull("collation", collation);
         return this;
     }

@@ -19,6 +19,7 @@ package com.mongodb.client.gridfs;
 import com.mongodb.MongoGridFSException;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.gridfs.model.GridFSFile;
+import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
 import org.bson.BsonValue;
 import org.bson.Document;
@@ -49,7 +50,7 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
     private final Object closeLock = new Object();
     private boolean closed = false;
 
-    GridFSUploadStreamImpl(final ClientSession clientSession, final MongoCollection<GridFSFile> filesCollection,
+    GridFSUploadStreamImpl(@Nullable final ClientSession clientSession, final MongoCollection<GridFSFile> filesCollection,
                            final MongoCollection<Document> chunksCollection, final BsonValue fileId, final String filename,
                            final int chunkSizeBytes, final Document metadata) {
         this.clientSession = clientSession;

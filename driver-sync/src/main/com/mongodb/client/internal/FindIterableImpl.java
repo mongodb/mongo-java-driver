@@ -24,6 +24,7 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.FindOptions;
 import com.mongodb.internal.operation.SyncOperations;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.session.ClientSession;
@@ -55,7 +56,7 @@ final class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResu
     }
 
     @Override
-    public FindIterable<TResult> filter(final Bson filter) {
+    public FindIterable<TResult> filter(@Nullable final Bson filter) {
         this.filter = filter;
         return this;
     }
@@ -94,25 +95,25 @@ final class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResu
     }
 
     @Override
-    public FindIterable<TResult> collation(final Collation collation) {
+    public FindIterable<TResult> collation(@Nullable final Collation collation) {
         findOptions.collation(collation);
         return this;
     }
 
     @Override
-    public FindIterable<TResult> modifiers(final Bson modifiers) {
+    public FindIterable<TResult> modifiers(@Nullable final Bson modifiers) {
         findOptions.modifiers(modifiers);
         return this;
     }
 
     @Override
-    public FindIterable<TResult> projection(final Bson projection) {
+    public FindIterable<TResult> projection(@Nullable final Bson projection) {
         findOptions.projection(projection);
         return this;
     }
 
     @Override
-    public FindIterable<TResult> sort(final Bson sort) {
+    public FindIterable<TResult> sort(@Nullable final Bson sort) {
         findOptions.sort(sort);
         return this;
     }
@@ -142,25 +143,25 @@ final class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResu
     }
 
     @Override
-    public FindIterable<TResult> comment(final String comment) {
+    public FindIterable<TResult> comment(@Nullable final String comment) {
         findOptions.comment(comment);
         return this;
     }
 
     @Override
-    public FindIterable<TResult> hint(final Bson hint) {
+    public FindIterable<TResult> hint(@Nullable final Bson hint) {
         findOptions.hint(hint);
         return this;
     }
 
     @Override
-    public FindIterable<TResult> max(final Bson max) {
+    public FindIterable<TResult> max(@Nullable final Bson max) {
         findOptions.max(max);
         return this;
     }
 
     @Override
-    public FindIterable<TResult> min(final Bson min) {
+    public FindIterable<TResult> min(@Nullable final Bson min) {
         findOptions.min(min);
         return this;
     }
@@ -189,6 +190,7 @@ final class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResu
         return this;
     }
 
+    @Nullable
     @Override
     public TResult first() {
         BatchCursor<TResult> batchCursor = getExecutor().execute(operations.findFirst(filter, resultClass, findOptions),
