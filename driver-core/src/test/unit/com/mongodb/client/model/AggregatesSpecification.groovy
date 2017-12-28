@@ -206,6 +206,12 @@ class AggregatesSpecification extends Specification {
                                             let: { var1: "expression1" },
                                             pipeline : [{ $match : { $expr: { $eq : [ "x" , "1" ]}}}],
                                             as: "as" }}''')
+
+        // without variables
+        toBson(lookup('from', pipeline, 'as')) ==
+                parse('''{ $lookup : { from: "from",
+                                            pipeline : [{ $match : { $expr: { $eq : [ "x" , "1" ]}}}],
+                                            as: "as" }}''')
     }
 
     def 'should render $facet'() {

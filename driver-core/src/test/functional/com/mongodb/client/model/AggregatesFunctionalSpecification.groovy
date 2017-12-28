@@ -291,6 +291,60 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         fromHelper?.drop()
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    def '$lookup with pipeline without variables'() {
+        given:
+        def fromCollectionName = 'holidays'
+        def fromCollection = getCollectionHelper(new MongoNamespace(getDatabaseName(), fromCollectionName))
+        def collection = getCollectionHelper()
+
+        collection.drop()
+        fromCollection.drop()
+
+        fromCollection.insertDocuments(
+                Document.parse('{ "_id" : 1, year: 2018, name: "New Years", date: { $date : "2018-01-01T00:00:00Z"} }'),
+                Document.parse('{ "_id" : 2, year: 2018, name: "Pi Day", date: { $date : "2018-03-14T00:00:00Z" } }'),
+                Document.parse('{ "_id" : 3, year: 2018, name: "Ice Cream Day", date: { $date : "2018-07-15T00:00:00Z"} }'),
+                Document.parse('{ "_id" : 4, year: 2017, name: "New Years", date: { $date : "2017-01-01T00:00:00Z" } }'),
+                Document.parse('{ "_id" : 5, year: 2017, name: "Ice Cream Day", date: { $date : "2017-07-16T00:00:00Z" } }')
+        )
+
+        collection.insertDocuments(
+                Document.parse('''{ "_id" : 1, "student" : "Ann Aardvark", 
+                            sickdays: [ { $date : "2018-05-01T00:00:00Z" }, { $date : "2018-08-23T00:00:00Z" } ] }'''),
+                Document.parse('''{ "_id" : 2, "student" : "Zoe Zebra",
+                            sickdays: [ { $date : "2018-02-01T00:00:00Z" }, { $date : "2018-05-23T00:00:00Z" } ] }''')
+        )
+
+        def  pipeline = asList(
+                match(eq('year', 2018)),
+                project(fields(excludeId(), computed('date', fields(computed('name', '$name'), computed('date', '$date'))))),
+                replaceRoot('$date')
+        )
+
+        def lookupDoc = lookup(fromCollectionName, pipeline, 'holidays')
+
+        when:
+        def results = aggregate([lookupDoc])
+
+        then:
+        results == [
+                Document.parse(
+                        '''{ '_id' : 1, 'student' : "Ann Aardvark",
+                        'sickdays' : [ ISODate("2018-05-01T00:00:00Z"), ISODate("2018-08-23T00:00:00Z") ],
+                        'holidays' : [  { 'name' : "New Years", 'date' : ISODate ("2018-01-01T00:00:00Z") },
+                                        { 'name' : "Pi Day", 'date' : ISODate("2018-03-14T00:00:00Z") },
+                                        { 'name' : "Ice Cream Day", 'date' : ISODate("2018-07-15T00:00:00Z") } ] }'''),
+                Document.parse(
+                        '''{ '_id' : 2, 'student' : "Zoe Zebra",
+                        'sickdays' : [ ISODate("2018-02-01T00:00:00Z"), ISODate("2018-05-23T00:00:00Z") ],
+                        'holidays' : [  { 'name' : "New Years", 'date' : ISODate("2018-01-01T00:00:00Z") },
+                                        { 'name' : "Pi Day", 'date' : ISODate("2018-03-14T00:00:00Z") },
+                                        { 'name' : "Ice Cream Day", 'date' : ISODate("2018-07-15T00:00:00Z") } ] }''') ]
+
+        cleanup:
+        fromCollection?.drop()
+    }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def '$facet'() {
