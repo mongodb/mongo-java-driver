@@ -61,6 +61,7 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
     private final StrictCharacterStreamJsonWriterSettings settings;
     private StrictJsonContext context = new StrictJsonContext(null, JsonContextType.TOP_LEVEL, "");
     private State state = State.INITIAL;
+    private int curLength;
 
     /**
      * Construct an instance.
@@ -71,6 +72,15 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
     public StrictCharacterStreamJsonWriter(final Writer writer, final StrictCharacterStreamJsonWriterSettings settings) {
         this.writer = writer;
         this.settings = settings;
+    }
+
+    /**
+     * Gets the current length of the JSON text.
+     *
+     * @return the current length of the JSON text
+     */
+    public int getCurrentLength() {
+        return curLength;
     }
 
     @Override
@@ -333,7 +343,13 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
 
     private void write(final String str) {
         try {
-            writer.write(str);
+            if (settings.getMaxLength() == 0 || str.length() + curLength < settings.getMaxLength()) {
+                writer.write(str);
+                curLength += str.length();
+            } else {
+                writer.write(str.substring(0, settings.getMaxLength() - curLength));
+                curLength = settings.getMaxLength();
+            }
         } catch (IOException e) {
             throwBSONException(e);
         }
@@ -341,7 +357,10 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
 
     private void write(final char c) {
         try {
-            writer.write(c);
+            if (settings.getMaxLength() == 0 || curLength < settings.getMaxLength()) {
+                writer.write(c);
+                curLength++;
+            }
         } catch (IOException e) {
             throwBSONException(e);
         }

@@ -30,6 +30,7 @@ public final class StrictCharacterStreamJsonWriterSettings {
     private final boolean indent;
     private final String newLineCharacters;
     private final String indentCharacters;
+    private final int maxLength;
 
     /**
      * Create a builder for StrictCharacterStreamJsonWriterSettings, which are immutable.
@@ -44,6 +45,7 @@ public final class StrictCharacterStreamJsonWriterSettings {
         indent = builder.indent;
         newLineCharacters = builder.newLineCharacters != null ? builder.newLineCharacters : System.getProperty("line.separator");
         indentCharacters = builder.indentCharacters;
+        maxLength = builder.maxLength;
     }
 
     /**
@@ -75,6 +77,16 @@ public final class StrictCharacterStreamJsonWriterSettings {
     }
 
     /**
+     * The maximum length of the JSON string.  The string will be truncated at this length.
+     *
+     * @return the maximum length of the JSON string
+     * @since 3.7
+     */
+    public int getMaxLength() {
+        return maxLength;
+    }
+
+    /**
      * A builder for StrictCharacterStreamJsonWriterSettings
      *
      * @since 3.4
@@ -83,6 +95,7 @@ public final class StrictCharacterStreamJsonWriterSettings {
         private boolean indent;
         private String newLineCharacters = System.getProperty("line.separator");
         private String indentCharacters = "  ";
+        private int maxLength;
 
         /**
          * Build a JsonWriterSettings instance.
@@ -125,6 +138,18 @@ public final class StrictCharacterStreamJsonWriterSettings {
         public Builder indentCharacters(final String indentCharacters) {
             notNull("indentCharacters", indentCharacters);
             this.indentCharacters = indentCharacters;
+            return this;
+        }
+
+        /**
+         * Sets the maximum length of the JSON string.  The string will be truncated at this length.
+         *
+         * @param maxLength the maximum length, which must be &gt;= 0 where 0 indicate no maximum length
+         * @return the maximum length of the JSON string
+         * @since 3.7
+         */
+        public Builder maxLength(final int maxLength) {
+            this.maxLength = maxLength;
             return this;
         }
 

@@ -480,4 +480,23 @@ class StrictCharacterStreamJsonWriterSpecification extends Specification {
         thrown(IllegalArgumentException)
 
     }
+
+    def shouldStopAtMaxLength() {
+        given:
+        def fullJsonText = '{ "n" : null }'
+        writer = new StrictCharacterStreamJsonWriter(stringWriter,
+                StrictCharacterStreamJsonWriterSettings.builder().maxLength(maxLength).build())
+
+        when:
+        writer.writeStartObject()
+        writer.writeNull('n')
+        writer.writeEndObject()
+
+        then:
+        stringWriter.toString() == fullJsonText[0..Math.min(maxLength, fullJsonText.length()) - 1]
+        writer.getCurrentLength() == Math.min(maxLength, fullJsonText.length())
+
+        where:
+        maxLength << (1..20)
+    }
 }
