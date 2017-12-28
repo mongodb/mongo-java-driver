@@ -27,6 +27,7 @@ import org.bson.BsonWriterSettings;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
+import static org.bson.assertions.Assertions.isTrueArgument;
 import static org.bson.assertions.Assertions.notNull;
 
 /**
@@ -80,6 +81,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
     private final boolean indent;
     private final String newLineCharacters;
     private final String indentCharacters;
+    private final int maxLength;
     private final JsonMode outputMode;
     private final Converter<BsonNull> nullConverter;
     private final Converter<String> stringConverter;
@@ -191,6 +193,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
         newLineCharacters = builder.newLineCharacters != null ? builder.newLineCharacters : System.getProperty("line.separator");
         indentCharacters = builder.indentCharacters;
         outputMode = builder.outputMode;
+        maxLength = builder.maxLength;
 
         if (builder.nullConverter != null) {
             nullConverter = builder.nullConverter;
@@ -367,6 +370,16 @@ public class JsonWriterSettings extends BsonWriterSettings {
      */
     public JsonMode getOutputMode() {
         return outputMode;
+    }
+
+    /**
+     * The maximum length of the JSON string.  The string will be truncated at this length.
+     *
+     * @return the maximum length of the JSON string
+     * @since 3.7
+     */
+    public int getMaxLength() {
+        return maxLength;
     }
 
     /**
@@ -550,6 +563,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
         private String newLineCharacters = System.getProperty("line.separator");
         private String indentCharacters = "  ";
         private JsonMode outputMode = JsonMode.RELAXED;
+        private int maxLength;
         private Converter<BsonNull> nullConverter;
         private Converter<String> stringConverter;
         private Converter<Long> dateTimeConverter;
@@ -622,6 +636,19 @@ public class JsonWriterSettings extends BsonWriterSettings {
         public Builder outputMode(final JsonMode outputMode) {
             notNull("outputMode", outputMode);
             this.outputMode = outputMode;
+            return this;
+        }
+
+        /**
+         * Sets the maximum length of the JSON string.  The string will be truncated at this length.
+         *
+         * @param maxLength the maximum length, which must be &gt;= 0 where 0 indicate no maximum length
+         * @return the maximum length of the JSON string
+         * @since 3.7
+         */
+        public Builder maxLength(final int maxLength) {
+            isTrueArgument("maxLength >= 0", maxLength >= 0);
+            this.maxLength = maxLength;
             return this;
         }
 

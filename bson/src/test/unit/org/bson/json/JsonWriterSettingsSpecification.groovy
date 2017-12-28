@@ -35,6 +35,7 @@ class JsonWriterSettingsSpecification extends Specification {
         then:
         !settings.isIndent()
         settings.getOutputMode() == JsonMode.RELAXED
+        settings.getMaxLength() == 0
     }
 
 
@@ -66,6 +67,15 @@ class JsonWriterSettingsSpecification extends Specification {
         settings.getNewLineCharacters() == '\r\n'
     }
 
+    def 'test max length setting'() {
+        when:
+        def settings = JsonWriterSettings.builder()
+                .maxLength(100).build()
+
+        then:
+        settings.getMaxLength() == 100
+    }
+
     def 'test constructors'() {
         when:
         def settings = new JsonWriterSettings()
@@ -73,6 +83,7 @@ class JsonWriterSettingsSpecification extends Specification {
         then:
         !settings.isIndent()
         settings.getOutputMode() == JsonMode.STRICT
+        settings.getMaxLength() == 0
 
         when:
         settings = new JsonWriterSettings(JsonMode.SHELL)

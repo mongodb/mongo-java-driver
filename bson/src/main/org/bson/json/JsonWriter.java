@@ -59,7 +59,9 @@ public class JsonWriter extends AbstractBsonWriter {
         strictJsonWriter = new StrictCharacterStreamJsonWriter(writer, StrictCharacterStreamJsonWriterSettings.builder()
                                                                                .indent(settings.isIndent())
                                                                                .newLineCharacters(settings.getNewLineCharacters())
-                                                                               .indentCharacters(settings.getIndentCharacters()).build());
+                                                                               .indentCharacters(settings.getIndentCharacters())
+                                                                               .maxLength(settings.getMaxLength())
+                                                                               .build());
     }
 
     /**
