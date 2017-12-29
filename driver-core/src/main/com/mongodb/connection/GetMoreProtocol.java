@@ -96,7 +96,7 @@ class GetMoreProtocol<T> implements LegacyProtocol<QueryResult<T>> {
                 if (commandListener != null) {
                     sendCommandSucceededEvent(message, COMMAND_NAME,
                                               asGetMoreCommandResponseDocument(queryResult, responseBuffers), connection.getDescription(),
-                                              startTimeNanos, commandListener);
+                                              System.nanoTime() - startTimeNanos, commandListener);
                 }
             } finally {
                 responseBuffers.close();
@@ -105,7 +105,8 @@ class GetMoreProtocol<T> implements LegacyProtocol<QueryResult<T>> {
             return queryResult;
         } catch (RuntimeException e) {
             if (commandListener != null) {
-                sendCommandFailedEvent(message, COMMAND_NAME, connection.getDescription(), startTimeNanos, e, commandListener);
+                sendCommandFailedEvent(message, COMMAND_NAME, connection.getDescription(), System.nanoTime() - startTimeNanos, e,
+                        commandListener);
             }
             throw e;
         }
@@ -142,7 +143,7 @@ class GetMoreProtocol<T> implements LegacyProtocol<QueryResult<T>> {
                                                 startTimeNanos, commandListener, callback, receiveCallback));
         } catch (Throwable t) {
             if (sentStartedEvent) {
-                sendCommandFailedEvent(message, COMMAND_NAME, connection.getDescription(), startTimeNanos, t,
+                sendCommandFailedEvent(message, COMMAND_NAME, connection.getDescription(), System.nanoTime() - startTimeNanos, t,
                         commandListener);
             }
             callback.onResult(null, t);
@@ -230,7 +231,7 @@ class GetMoreProtocol<T> implements LegacyProtocol<QueryResult<T>> {
                     if (commandListener != null) {
                         sendCommandSucceededEvent(message, COMMAND_NAME,
                                 asGetMoreCommandResponseDocument(result, responseBuffers), connectionDescription,
-                                startTimeNanos, commandListener);
+                                System.nanoTime() - startTimeNanos, commandListener);
                     }
 
                     if (LOGGER.isDebugEnabled()) {
@@ -242,7 +243,7 @@ class GetMoreProtocol<T> implements LegacyProtocol<QueryResult<T>> {
                 }
             } catch (Throwable t) {
                 if (commandListener != null) {
-                    sendCommandFailedEvent(message, COMMAND_NAME, connectionDescription, startTimeNanos, t,
+                    sendCommandFailedEvent(message, COMMAND_NAME, connectionDescription, System.nanoTime() - startTimeNanos, t,
                             commandListener);
                 }
                 callback.onResult(null, t);

@@ -105,6 +105,10 @@ final class CommandMessage extends RequestMessage {
         return calculateIsResponseExpected();
     }
 
+    MongoNamespace getNamespace() {
+        return namespace;
+    }
+
     ReadPreference getReadPreference() {
         return readPreference;
     }

@@ -19,8 +19,6 @@ package com.mongodb.connection;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.diagnostics.logging.Logger;
-import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
@@ -29,10 +27,8 @@ import org.bson.codecs.Decoder;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ProtocolHelper.getMessageSettings;
-import static java.lang.String.format;
 
 class CommandProtocolImpl<T> implements CommandProtocol<T> {
-    public static final Logger LOGGER = Loggers.getLogger("protocol.command");
     private final MongoNamespace namespace;
     private final BsonDocument command;
     private final SplittablePayload payload;
@@ -67,27 +63,12 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
 
     @Override
     public T execute(final InternalConnection connection) {
-        if (LOGGER.isDebugEnabled()) {
-            LOGGER.debug(format("Sending command {%s : %s} to database %s on connection [%s] to server %s",
-                                getCommandName(), command.values().iterator().next(),
-                                namespace.getDatabaseName(), connection.getDescription().getConnectionId(),
-                                connection.getDescription().getServerAddress()));
-        }
-        T retval = connection.sendAndReceive(getCommandMessage(connection), commandResultDecoder, sessionContext);
-        LOGGER.debug("Command execution completed");
-        return retval;
+        return connection.sendAndReceive(getCommandMessage(connection), commandResultDecoder, sessionContext);
     }
 
     @Override
     public void executeAsync(final InternalConnection connection, final SingleResultCallback<T> callback) {
         try {
-            if (LOGGER.isDebugEnabled()) {
-                LOGGER.debug(format("Asynchronously sending command {%s : %s} to database %s on connection [%s] to server %s",
-                                    getCommandName(), command.values().iterator().next(),
-                                    namespace.getDatabaseName(), connection.getDescription().getConnectionId(),
-                                    connection.getDescription().getServerAddress()));
-            }
-
             connection.sendAndReceiveAsync(getCommandMessage(connection), commandResultDecoder, sessionContext,
                     new SingleResultCallback<T>() {
                         @Override
@@ -113,9 +94,5 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
     private CommandMessage getCommandMessage(final InternalConnection connection) {
         return new CommandMessage(namespace, command, commandFieldNameValidator, readPreference,
                     getMessageSettings(connection.getDescription()), responseExpected, payload, payloadFieldNameValidator);
-    }
-
-    private String getCommandName() {
-        return command.keySet().iterator().next();
     }
 }

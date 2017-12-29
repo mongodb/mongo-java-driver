@@ -54,7 +54,9 @@ class JsonWriterSpecification extends Specification {
         writer.pipe(reader)
 
         then:
-        stringWriter.toString() == jsonWithValuesOfEveryType[0..Math.min(maxLength, jsonWithValuesOfEveryType.length()) - 1]
+        stringWriter.toString() == ((maxLength == 0) ?
+                jsonWithValuesOfEveryType : jsonWithValuesOfEveryType[0..<Math.min(maxLength, jsonWithValuesOfEveryType.length())])
+        writer.isTruncated() || maxLength == 0 || jsonWithValuesOfEveryType.length() <= maxLength
 
         where:
         maxLength << (0..1000)

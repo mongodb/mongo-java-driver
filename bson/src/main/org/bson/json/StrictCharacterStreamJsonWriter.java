@@ -62,6 +62,7 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
     private StrictJsonContext context = new StrictJsonContext(null, JsonContextType.TOP_LEVEL, "");
     private State state = State.INITIAL;
     private int curLength;
+    private boolean isTruncated;
 
     /**
      * Construct an instance.
@@ -249,6 +250,18 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
         }
     }
 
+    /**
+     * Return true if the output has been truncated due to exceeding the length specified in
+     * {@link StrictCharacterStreamJsonWriterSettings#maxLength}.
+     *
+     * @return true if the output has been truncated
+     * @since 3.7
+     * @see StrictCharacterStreamJsonWriterSettings#maxLength
+     */
+    public boolean isTruncated() {
+        return isTruncated;
+    }
+
     void flush() {
         try {
             writer.flush();
@@ -349,6 +362,7 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
             } else {
                 writer.write(str.substring(0, settings.getMaxLength() - curLength));
                 curLength = settings.getMaxLength();
+                isTruncated = true;
             }
         } catch (IOException e) {
             throwBSONException(e);
@@ -360,6 +374,8 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
             if (settings.getMaxLength() == 0 || curLength < settings.getMaxLength()) {
                 writer.write(c);
                 curLength++;
+            } else {
+                isTruncated = true;
             }
         } catch (IOException e) {
             throwBSONException(e);

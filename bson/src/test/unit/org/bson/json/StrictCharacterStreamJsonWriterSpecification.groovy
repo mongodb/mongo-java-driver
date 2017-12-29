@@ -493,8 +493,9 @@ class StrictCharacterStreamJsonWriterSpecification extends Specification {
         writer.writeEndObject()
 
         then:
-        stringWriter.toString() == fullJsonText[0..Math.min(maxLength, fullJsonText.length()) - 1]
+        stringWriter.toString() == fullJsonText[0..<Math.min(maxLength, fullJsonText.length())]
         writer.getCurrentLength() == Math.min(maxLength, fullJsonText.length())
+        writer.isTruncated() || fullJsonText.length() <= maxLength
 
         where:
         maxLength << (1..20)

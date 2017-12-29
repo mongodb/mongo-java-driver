@@ -74,12 +74,13 @@ class KillCursorProtocol implements LegacyProtocol<Void> {
             if (commandListener != null && namespace != null) {
                 sendCommandSucceededEvent(message, COMMAND_NAME, asCommandResponseDocument(),
                                           connection.getDescription(),
-                                          startTimeNanos, commandListener);
+                                          System.nanoTime() - startTimeNanos, commandListener);
             }
             return null;
         } catch (RuntimeException e) {
             if (commandListener != null && namespace != null) {
-                sendCommandFailedEvent(message, COMMAND_NAME, connection.getDescription(), startTimeNanos, e, commandListener);
+                sendCommandFailedEvent(message, COMMAND_NAME, connection.getDescription(), System.nanoTime() - startTimeNanos, e,
+                        commandListener);
             }
             throw e;
         }
@@ -112,11 +113,12 @@ class KillCursorProtocol implements LegacyProtocol<Void> {
                 public void onResult(final Void result, final Throwable t) {
                     if (commandListener != null && namespace != null) {
                         if (t != null) {
-                            sendCommandFailedEvent(message, COMMAND_NAME, connection.getDescription(), startTimeNanos, t, commandListener);
+                            sendCommandFailedEvent(message, COMMAND_NAME, connection.getDescription(),
+                                    System.nanoTime() - startTimeNanos, t, commandListener);
                         } else {
                             sendCommandSucceededEvent(message, COMMAND_NAME, asCommandResponseDocument(),
                                     connection.getDescription(),
-                                    startTimeNanos, commandListener);
+                                    System.nanoTime() - startTimeNanos, commandListener);
                         }
                     }
 
@@ -126,7 +128,8 @@ class KillCursorProtocol implements LegacyProtocol<Void> {
             });
         } catch (Throwable t) {
             if (startEventSent) {
-                sendCommandFailedEvent(message, COMMAND_NAME, connection.getDescription(), startTimeNanos, t, commandListener);
+                sendCommandFailedEvent(message, COMMAND_NAME, connection.getDescription(), System.nanoTime() - startTimeNanos,
+                        t, commandListener);
             }
             callback.onResult(null, t);
         }

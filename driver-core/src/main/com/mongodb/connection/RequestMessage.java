@@ -117,15 +117,6 @@ abstract class RequestMessage {
     }
 
     /**
-     * Gets the collection namespace to send the message to.
-     *
-     * @return the namespace, which may be null for some message types
-     */
-    public String getNamespace() {
-        return getCollectionName();
-    }
-
-    /**
      * Gets the message settings.
      *
      * @return the message settings

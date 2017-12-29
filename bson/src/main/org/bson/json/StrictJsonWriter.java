@@ -174,4 +174,12 @@ public interface StrictJsonWriter {
      * @throws org.bson.BSONException if the underlying Writer throws an IOException
      */
     void writeEndObject();
+
+    /**
+     * Return true if the output has been truncated due to exceeding any maximum length specified in settings.
+     *
+     * @return true if the output has been truncated
+     * @since 3.7
+     */
+    boolean isTruncated();
 }

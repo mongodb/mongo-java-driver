@@ -148,15 +148,16 @@ abstract class WriteProtocol implements LegacyProtocol<WriteConcernResult> {
     private void sendSucceededEvent(final InternalConnection connection, final RequestMessage message,
                                     final BsonDocument responseDocument, final long startTimeNanos) {
         if (commandListener != null) {
-            sendCommandSucceededEvent(message, getCommandName(message), responseDocument, connection.getDescription(), startTimeNanos,
-                    commandListener);
+            sendCommandSucceededEvent(message, getCommandName(message), responseDocument, connection.getDescription(),
+                    System.nanoTime() - startTimeNanos, commandListener);
         }
     }
 
     private void sendFailedEvent(final InternalConnection connection, final RequestMessage message,
                                  final boolean sentCommandStartedEvent, final Throwable t, final long startTimeNanos) {
         if (commandListener != null && sentCommandStartedEvent) {
-            sendCommandFailedEvent(message, getCommandName(message), connection.getDescription(), startTimeNanos, t, commandListener);
+            sendCommandFailedEvent(message, getCommandName(message), connection.getDescription(), System.nanoTime() - startTimeNanos, t,
+                    commandListener);
         }
     }
 
