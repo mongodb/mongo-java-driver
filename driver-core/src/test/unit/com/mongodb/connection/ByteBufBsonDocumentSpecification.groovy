@@ -201,8 +201,15 @@ class ByteBufBsonDocumentSpecification extends Specification {
     def 'should get first key'() {
         expect:
         byteBufDocument.getFirstKey() == document.keySet().iterator().next()
-        emptyByteBufDocument.getFirstKey() == null
         documentByteBuf.referenceCount == 1
+    }
+
+    def 'getFirstKey should throw NoSuchElementException if the document is empty'() {
+        when:
+        emptyByteBufDocument.getFirstKey()
+
+        then:
+        thrown(NoSuchElementException)
         emptyDocumentByteBuf.referenceCount == 1
     }
 

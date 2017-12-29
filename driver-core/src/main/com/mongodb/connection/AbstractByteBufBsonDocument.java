@@ -25,6 +25,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Set;
 
 import static org.bson.codecs.BsonValueCodecProvider.getClassForBsonType;
@@ -190,7 +191,7 @@ abstract class AbstractByteBufBsonDocument extends BsonDocument {
 
             @Override
             public String notFound() {
-                return null;
+                throw new NoSuchElementException();
             }
         });
     }
