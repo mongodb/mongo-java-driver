@@ -19,8 +19,6 @@ package org.bson;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
-import java.io.Closeable;
-
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
@@ -29,7 +27,7 @@ import static java.util.Arrays.asList;
  *
  * @since 3.0
  */
-public abstract class AbstractBsonReader implements Closeable, BsonReader {
+public abstract class AbstractBsonReader implements BsonReader {
     private State state;
     private Context context;
     private BsonType currentBsonType;

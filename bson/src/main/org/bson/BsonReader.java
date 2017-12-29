@@ -19,12 +19,14 @@ package org.bson;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
 
+import java.io.Closeable;
+
 /**
  * An interface for reading a logical BSON document using a pull-oriented API.
  *
  * @since 3.0
  */
-public interface BsonReader {
+public interface BsonReader extends Closeable {
     /**
      * @return The current BsonType.
      */
@@ -403,4 +405,7 @@ public interface BsonReader {
      * @throws org.bson.BSONException if no mark has been set
      */
     void reset();
+
+    @Override
+    void close();
 }
