@@ -20,6 +20,7 @@ package com.mongodb.connection;
 
 import org.bson.BsonBinaryReader;
 import org.bson.BsonDocument;
+import org.bson.BsonReader;
 import org.bson.BsonType;
 import org.bson.ByteBuf;
 import org.bson.RawBsonDocument;
@@ -111,6 +112,11 @@ class ByteBufBsonDocument extends AbstractByteBufBsonDocument {
             duplicate.release();
             reader.close();
         }
+    }
+
+    @Override
+    public BsonReader asBsonReader() {
+        return new BsonBinaryReader(new ByteBufferBsonInput(byteBuf.duplicate()));
     }
 
     <T> T findInDocument(final Finder<T> finder) {

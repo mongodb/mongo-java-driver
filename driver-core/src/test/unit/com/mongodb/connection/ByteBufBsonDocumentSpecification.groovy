@@ -26,6 +26,7 @@ import org.bson.BsonValue
 import org.bson.ByteBuf
 import org.bson.ByteBufNIO
 import org.bson.codecs.BsonDocumentCodec
+import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.io.BasicOutputBuffer
 import org.bson.json.JsonMode
@@ -213,7 +214,18 @@ class ByteBufBsonDocumentSpecification extends Specification {
         emptyDocumentByteBuf.referenceCount == 1
     }
 
-    def 'hashCode should equal hash code of identical BsonDocument'() {
+    def 'should create BsonReader'() {
+        when:
+        def reader = document.asBsonReader()
+
+        then:
+        new BsonDocumentCodec().decode(reader, DecoderContext.builder().build()) == document
+
+        cleanup:
+        reader.close()
+    }
+
+   def 'hashCode should equal hash code of identical BsonDocument'() {
         expect:
         byteBufDocument.hashCode() == document.hashCode()
         documentByteBuf.referenceCount == 1
