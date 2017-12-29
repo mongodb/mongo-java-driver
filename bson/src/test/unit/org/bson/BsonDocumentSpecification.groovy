@@ -16,9 +16,13 @@
 
 package org.bson
 
+import org.bson.codecs.BsonDocumentCodec
+import org.bson.codecs.DecoderContext
 import org.bson.types.Decimal128
 import org.bson.types.ObjectId
 import spock.lang.Specification
+
+import static org.bson.BsonHelper.documentWithValuesOfEveryType
 
 class BsonDocumentSpecification extends Specification {
 
@@ -341,6 +345,20 @@ class BsonDocumentSpecification extends Specification {
 
         then:
         thrown(NoSuchElementException)
+    }
+
+    def 'should create BsonReader'() {
+        given:
+        def document = documentWithValuesOfEveryType()
+
+        when:
+        def reader = document.asBsonReader()
+
+        then:
+        new BsonDocumentCodec().decode(reader, DecoderContext.builder().build()) == document
+
+        cleanup:
+        reader.close()
     }
 
     def 'should serialize and deserialize'() {

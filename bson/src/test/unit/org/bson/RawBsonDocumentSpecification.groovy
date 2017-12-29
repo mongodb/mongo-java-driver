@@ -266,6 +266,17 @@ class RawBsonDocumentSpecification extends Specification {
         thrown(NoSuchElementException)
     }
 
+    def 'should create BsonReader'() {
+        when:
+        def reader = document.asBsonReader()
+
+        then:
+        new BsonDocumentCodec().decode(reader, DecoderContext.builder().build()) == document
+
+        cleanup:
+        reader.close()
+    }
+
     def 'toJson should return equivalent JSON'() {
         expect:
         new RawBsonDocumentCodec().decode(new JsonReader(rawDocument.toJson()), DecoderContext.builder().build()) == document
