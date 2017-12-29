@@ -782,12 +782,26 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
         }
     }
 
+    /**
+     * Return true if the current execution of the pipe method should be aborted.
+     *
+     * @return true if the current execution of the pipe method should be aborted.
+     *
+     * @since 3.7
+     */
+    protected boolean abortPipe() {
+        return false;
+    }
+
     private void pipeDocument(final BsonReader reader, final List<BsonElement> extraElements) {
         reader.readStartDocument();
         writeStartDocument();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             writeName(reader.readName());
             pipeValue(reader);
+            if (abortPipe()) {
+                return;
+            }
         }
         reader.readEndDocument();
         if (extraElements != null) {
@@ -889,6 +903,9 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
         writeStartArray();
         while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
             pipeValue(reader);
+            if (abortPipe()) {
+                return;
+            }
         }
         reader.readEndArray();
         writeEndArray();

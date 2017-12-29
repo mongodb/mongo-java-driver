@@ -32,6 +32,7 @@ class JsonWriterSpecification extends Specification {
 
     def stringWriter = new StringWriter();
     def writer = new JsonWriter(stringWriter)
+    def jsonWithValuesOfEveryType = documentWithValuesOfEveryType().toJson(JsonWriterSettings.builder().build())
 
     def 'should pipe all types'() {
         given:
@@ -42,6 +43,21 @@ class JsonWriterSpecification extends Specification {
 
         then:
         stringWriter.toString() == documentWithValuesOfEveryType().toJson()
+    }
+
+    def 'should pipe all types with capped length'() {
+        given:
+        def reader = new BsonDocumentReader(documentWithValuesOfEveryType())
+        def writer = new JsonWriter(stringWriter, JsonWriterSettings.builder().maxLength(maxLength).build())
+
+        when:
+        writer.pipe(reader)
+
+        then:
+        stringWriter.toString() == jsonWithValuesOfEveryType[0..Math.min(maxLength, jsonWithValuesOfEveryType.length()) - 1]
+
+        where:
+        maxLength << (0..1000)
     }
 
     def shouldThrowAnExceptionWhenWritingNullName() {

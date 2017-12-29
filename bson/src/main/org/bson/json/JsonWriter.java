@@ -241,6 +241,11 @@ public class JsonWriter extends AbstractBsonWriter {
         strictJsonWriter.flush();
     }
 
+    @Override
+    protected boolean abortPipe() {
+        return settings.getMaxLength() != 0 && strictJsonWriter.getCurrentLength() == settings.getMaxLength();
+    }
+
     /**
      * The context for the writer, inheriting all the values from {@link org.bson.AbstractBsonWriter.Context}, and additionally providing
      * settings for the indentation level and whether there are any child elements at this level.
