@@ -241,9 +241,20 @@ public class JsonWriter extends AbstractBsonWriter {
         strictJsonWriter.flush();
     }
 
+    /**
+     * Return true if the output has been truncated due to exceeding the length specified in {@link JsonWriterSettings#maxLength}.
+     *
+     * @return true if the output has been truncated
+     * @since 3.7
+     * @see JsonWriterSettings#maxLength
+     */
+    public boolean isTruncated() {
+        return strictJsonWriter.isTruncated();
+    }
+
     @Override
     protected boolean abortPipe() {
-        return settings.getMaxLength() != 0 && strictJsonWriter.getCurrentLength() == settings.getMaxLength();
+        return strictJsonWriter.isTruncated();
     }
 
     /**

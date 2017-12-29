@@ -17,12 +17,10 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoClientException;
-import com.mongodb.MongoCommandException;
 import com.mongodb.MongoCompressor;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
-import com.mongodb.MongoNamespace;
 import com.mongodb.MongoSocketClosedException;
 import com.mongodb.MongoSocketReadException;
 import com.mongodb.MongoSocketReadTimeoutException;
@@ -35,12 +33,9 @@ import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.CommandListener;
 import com.mongodb.session.SessionContext;
 import org.bson.BsonBinaryReader;
-import org.bson.BsonDocument;
-import org.bson.BsonInt32;
 import org.bson.ByteBuf;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
-import org.bson.codecs.RawBsonDocumentCodec;
 import org.bson.io.ByteBufferBsonInput;
 
 import java.io.IOException;
@@ -63,9 +58,6 @@ import static com.mongodb.connection.ProtocolHelper.getCommandFailureException;
 import static com.mongodb.connection.ProtocolHelper.getMessageSettings;
 import static com.mongodb.connection.ProtocolHelper.getOperationTime;
 import static com.mongodb.connection.ProtocolHelper.isCommandOk;
-import static com.mongodb.connection.ProtocolHelper.sendCommandFailedEvent;
-import static com.mongodb.connection.ProtocolHelper.sendCommandStartedEvent;
-import static com.mongodb.connection.ProtocolHelper.sendCommandSucceededEvent;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -238,11 +230,11 @@ class InternalStreamConnection implements InternalConnection {
     @Override
     public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
         ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this);
-        LazyCommandDocument lazyCommandDocument = new LazyCommandDocument(message, bsonOutput);
-        CommandEventSender commandEventSender = new CommandEventSender(message, lazyCommandDocument);
+        CommandEventSender commandEventSender;
 
         try {
             message.encode(bsonOutput, sessionContext);
+            commandEventSender = createCommandEventSender(message, bsonOutput);
             commandEventSender.sendStartedEvent();
         } catch (RuntimeException e) {
             bsonOutput.close();
@@ -250,7 +242,7 @@ class InternalStreamConnection implements InternalConnection {
         }
 
         try {
-            sendCommandMessage(message, lazyCommandDocument, bsonOutput, sessionContext);
+            sendCommandMessage(message, bsonOutput, sessionContext);
             if (message.isResponseExpected()) {
                 return receiveCommandMessageResponse(message, decoder, commandEventSender, sessionContext);
             } else {
@@ -262,16 +254,15 @@ class InternalStreamConnection implements InternalConnection {
             throw e;
         }
     }
-
-    private void sendCommandMessage(final CommandMessage message, final LazyCommandDocument lazyCommandDocument,
+    private void sendCommandMessage(final CommandMessage message,
                                     final ByteBufferBsonOutput bsonOutput, final SessionContext sessionContext) {
         try {
-            if (sendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(lazyCommandDocument.getName())) {
+            if (sendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandDocument(bsonOutput).getFirstKey())) {
                 sendMessage(bsonOutput.getByteBuffers(), message.getId());
             } else {
                 CompressedMessage compressedMessage = new CompressedMessage(message.getOpCode(), bsonOutput.getByteBuffers(),
-                                                                                   sendCompressor,
-                                                                                   getMessageSettings(description));
+                        sendCompressor,
+                        getMessageSettings(description));
                 ByteBufferBsonOutput compressedBsonOutput = new ByteBufferBsonOutput(this);
                 compressedMessage.encode(compressedBsonOutput, sessionContext);
                 try {
@@ -292,7 +283,7 @@ class InternalStreamConnection implements InternalConnection {
             updateSessionContext(sessionContext, responseBuffers);
 
             if (!isCommandOk(responseBuffers)) {
-                throw getCommandFailureException(getResponseDocument(responseBuffers, message.getId(), new BsonDocumentCodec()),
+                throw getCommandFailureException(responseBuffers.getResponseDocument(message.getId(), new BsonDocumentCodec()),
                         description.getServerAddress());
             }
 
@@ -319,17 +310,16 @@ class InternalStreamConnection implements InternalConnection {
 
         try {
             message.encode(bsonOutput, sessionContext);
-            LazyCommandDocument lazyCommandDocument = new LazyCommandDocument(message, bsonOutput);
-            CommandEventSender commandEventSender = new CommandEventSender(message, lazyCommandDocument);
+            CommandEventSender commandEventSender = createCommandEventSender(message, bsonOutput);
             commandEventSender.sendStartedEvent();
 
-            if (sendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(lazyCommandDocument.getName())) {
+            if (sendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandDocument(bsonOutput).getFirstKey())) {
                 sendCommandMessageAsync(message.getId(), decoder, sessionContext, callback, bsonOutput, commandEventSender,
                         message.isResponseExpected());
             } else {
                 CompressedMessage compressedMessage = new CompressedMessage(message.getOpCode(), bsonOutput.getByteBuffers(),
-                                                                                   sendCompressor,
-                                                                                   getMessageSettings(description));
+                        sendCompressor,
+                        getMessageSettings(description));
                 compressedMessage.encode(compressedBsonOutput, sessionContext);
                 bsonOutput.close();
                 sendCommandMessageAsync(message.getId(), decoder, sessionContext, callback, compressedBsonOutput, commandEventSender,
@@ -370,8 +360,9 @@ class InternalStreamConnection implements InternalConnection {
                                         isCommandOk(new BsonBinaryReader(new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer())));
                                 responseBuffers.reset();
                                 if (!commandOk) {
-                                    MongoException commandFailureException = getCommandFailureException(getResponseDocument(responseBuffers,
-                                            messageId, new BsonDocumentCodec()), description.getServerAddress());
+                                    MongoException commandFailureException = getCommandFailureException(
+                                            responseBuffers.getResponseDocument(messageId, new BsonDocumentCodec()),
+                                            description.getServerAddress());
                                     commandEventSender.sendFailedEvent(commandFailureException);
                                     throw commandFailureException;
                                 }
@@ -583,13 +574,6 @@ class InternalStreamConnection implements InternalConnection {
         return stream.getBuffer(size);
     }
 
-    private static <T extends BsonDocument> T getResponseDocument(final ResponseBuffers responseBuffers,
-                                                                  final int messageId, final Decoder<T> decoder) {
-        ReplyMessage<T> replyMessage = new ReplyMessage<T>(responseBuffers, decoder, messageId);
-        responseBuffers.reset();
-        return replyMessage.getDocuments().get(0);
-    }
-
     private class MessageHeaderCallback implements SingleResultCallback<ByteBuf> {
         private final SingleResultCallback<ResponseBuffers> callback;
 
@@ -656,82 +640,14 @@ class InternalStreamConnection implements InternalConnection {
         }
     }
 
-    private class CommandEventSender {
-        private final long startTimeNanos;
-        private final CommandMessage message;
-        private final LazyCommandDocument lazyCommandDocument;
+    private static final Logger COMMAND_PROTOCOL_LOGGER = Loggers.getLogger("protocol.command");
 
-        CommandEventSender(final CommandMessage message, final LazyCommandDocument lazyCommandDocument) {
-            this.startTimeNanos = System.nanoTime();
-            this.message = message;
-            this.lazyCommandDocument = lazyCommandDocument;
-        }
-
-        public void sendStartedEvent() {
-            if (commandListener != null && opened()) {
-                BsonDocument commandDocumentForEvent = (SECURITY_SENSITIVE_COMMANDS.contains(lazyCommandDocument.getName()))
-                        ? new BsonDocument() : lazyCommandDocument.getDocument();
-                sendCommandStartedEvent(message, new MongoNamespace(message.getCollectionName()).getDatabaseName(),
-                        lazyCommandDocument.getName(), commandDocumentForEvent, getDescription(), commandListener);
-            }
-        }
-
-        public void sendFailedEvent(final Throwable t) {
-            if (commandListener != null && opened()) {
-                Throwable commandEventException = t;
-                if (t instanceof MongoCommandException && (SECURITY_SENSITIVE_COMMANDS.contains(lazyCommandDocument.getName()))) {
-                    commandEventException = new MongoCommandException(new BsonDocument(), description.getServerAddress());
-                }
-                sendCommandFailedEvent(message, lazyCommandDocument.getName(), description, startTimeNanos, commandEventException,
-                        commandListener);
-            }
-        }
-
-        public void sendSucceededEvent(final ResponseBuffers responseBuffers) {
-            if (commandListener != null && opened()) {
-                BsonDocument responseDocumentForEvent = (SECURITY_SENSITIVE_COMMANDS.contains(lazyCommandDocument.getName()))
-                        ? new BsonDocument()
-                        : getResponseDocument(responseBuffers, message.getId(),
-                        new RawBsonDocumentCodec());
-                sendCommandSucceededEvent(message, lazyCommandDocument.getName(), responseDocumentForEvent, description,
-                        startTimeNanos, commandListener);
-            }
-        }
-
-        public void sendSucceededEventForOneWayCommand() {
-            if (commandListener != null && opened()) {
-                BsonDocument responseDocumentForEvent = new BsonDocument("ok", new BsonInt32(1));
-                sendCommandSucceededEvent(message, lazyCommandDocument.getName(), responseDocumentForEvent, description,
-                        startTimeNanos, commandListener);
-            }
-        }
-    }
-
-    // Lazily determine the command document and command name, since they're only needed if either a command listener or compression
-    // is enabled
-    private static final class LazyCommandDocument {
-        private final CommandMessage commandMessage;
-        private final ByteBufferBsonOutput bsonOutput;
-        private BsonDocument commandDocument;
-        private String commandName;
-
-        private LazyCommandDocument(final CommandMessage commandMessage, final ByteBufferBsonOutput bsonOutput) {
-            this.commandMessage = commandMessage;
-            this.bsonOutput = bsonOutput;
-        }
-
-        public String getName() {
-            if (commandName == null) {
-                commandName = getDocument().getFirstKey();
-            }
-            return commandName;
-        }
-
-        private BsonDocument getDocument() {
-            if (commandDocument == null) {
-                commandDocument = commandMessage.getCommandDocument(bsonOutput);
-            }
-            return commandDocument;
+    private CommandEventSender createCommandEventSender(final CommandMessage message, final ByteBufferBsonOutput bsonOutput) {
+        if (opened() && (commandListener != null || COMMAND_PROTOCOL_LOGGER.isDebugEnabled())) {
+            return new LoggingCommandEventSender(SECURITY_SENSITIVE_COMMANDS, description, commandListener, message, bsonOutput,
+                    COMMAND_PROTOCOL_LOGGER);
+        } else {
+            return new NoOpCommandEventSender();
         }
     }
 }

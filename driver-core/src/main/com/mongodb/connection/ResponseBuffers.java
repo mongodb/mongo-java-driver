@@ -16,7 +16,9 @@
 
 package com.mongodb.connection;
 
+import org.bson.BsonDocument;
 import org.bson.ByteBuf;
+import org.bson.codecs.Decoder;
 
 import java.io.Closeable;
 
@@ -39,6 +41,12 @@ class ResponseBuffers implements Closeable {
      */
     public ReplyHeader getReplyHeader() {
         return replyHeader;
+    }
+
+    <T extends BsonDocument> T getResponseDocument(final int messageId, final Decoder<T> decoder) {
+        ReplyMessage<T> replyMessage = new ReplyMessage<T>(this, decoder, messageId);
+        reset();
+        return replyMessage.getDocuments().get(0);
     }
 
     /**

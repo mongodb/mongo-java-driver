@@ -58,7 +58,8 @@ class SendMessageCallback<T> implements SingleResultCallback<Void> {
         buffer.close();
         if (t != null) {
             if (commandListener != null){
-                sendCommandFailedEvent(message, commandName, connection.getDescription(), startTimeNanos, t, commandListener);
+                sendCommandFailedEvent(message, commandName, connection.getDescription(), System.nanoTime() - startTimeNanos, t,
+                        commandListener);
             }
             callback.onResult(null, t);
         } else {
