@@ -2,7 +2,6 @@ package com.mongodb.connection
 
 import category.Async
 import com.mongodb.MongoCommandException
-import com.mongodb.MongoException
 import com.mongodb.ServerAddress
 import com.mongodb.connection.netty.NettyStreamFactory
 import org.bson.BsonDocument
@@ -52,8 +51,8 @@ class CommandHelperSpecification extends Specification {
     @Category(Async)
     def 'should execute command asynchronously'() {
         when:
-        BsonDocument receivedDocument
-        MongoException receivedException
+        BsonDocument receivedDocument = null
+        Throwable receivedException = null
         def latch1 = new CountDownLatch(1)
         executeCommandAsync('admin', new BsonDocument('ismaster', new BsonInt32(1)), connection)
                 { document, exception -> receivedDocument = document; receivedException = exception; latch1.countDown() }
