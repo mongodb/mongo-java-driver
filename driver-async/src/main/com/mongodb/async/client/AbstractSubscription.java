@@ -55,7 +55,7 @@ abstract class AbstractSubscription<TResult> implements Subscription {
     }
 
     @Override
-    public boolean isUnsubscribed() {
+    public synchronized boolean isUnsubscribed() {
         return isUnsubscribed;
     }
 
@@ -95,11 +95,11 @@ abstract class AbstractSubscription<TResult> implements Subscription {
 
     abstract boolean checkCompleted();
 
-    boolean isTerminated() {
+    synchronized boolean isTerminated() {
         return isTerminated;
     }
 
-    long getRequested() {
+    synchronized long getRequested() {
         return requested;
     }
 
@@ -125,7 +125,7 @@ abstract class AbstractSubscription<TResult> implements Subscription {
     }
 
     void onNext(final TResult next) {
-        boolean isTerminated = false;
+        boolean isTerminated;
         synchronized (this) {
             isTerminated = this.isTerminated;
         }
@@ -178,7 +178,7 @@ abstract class AbstractSubscription<TResult> implements Subscription {
             long processedCount = 0;
             boolean completed = false;
             while (true) {
-                long localWanted = 0;
+                long localWanted;
 
                 synchronized (this) {
                     requested -= processedCount;
