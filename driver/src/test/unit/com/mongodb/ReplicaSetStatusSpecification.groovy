@@ -83,6 +83,13 @@ class ReplicaSetStatusSpecification extends Specification {
         !replicaSetStatus.isMaster(new ServerAddress('localhost', 4000));
     }
 
+    def 'should test specific server for being master when there is no primary'() throws UnknownHostException {
+        given:
+        clusterDescription.getPrimaries() >> []
+
+        expect:
+        !replicaSetStatus.isMaster(new ServerAddress('localhost', 4000));
+    }
 
     def 'should return max bson object size'() {
         given:

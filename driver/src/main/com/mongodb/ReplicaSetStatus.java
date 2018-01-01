@@ -64,7 +64,8 @@ public class ReplicaSetStatus {
      * @return true if the given ServerAddress is the current Master/Primary
      */
     public boolean isMaster(final ServerAddress serverAddress) {
-        return getMaster().equals(serverAddress);
+        ServerAddress masterServerAddress = getMaster();
+        return masterServerAddress != null && masterServerAddress.equals(serverAddress);
     }
 
     /**
