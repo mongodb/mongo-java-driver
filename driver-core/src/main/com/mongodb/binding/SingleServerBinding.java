@@ -111,13 +111,15 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
         @Override
         public ConnectionSource retain() {
             super.retain();
-            SingleServerBinding.this.retain();
             return this;
         }
 
         @Override
         public void release() {
-            SingleServerBinding.this.release();
+            super.release();
+            if (super.getCount() == 0) {
+                SingleServerBinding.this.release();
+            }
         }
     }
 }
