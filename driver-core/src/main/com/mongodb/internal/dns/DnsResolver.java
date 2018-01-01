@@ -55,8 +55,8 @@ public final class DnsResolver {
         String srvHostDomain = srvHost.substring(srvHost.indexOf('.') + 1);
         List<String> srvHostDomainParts = asList(srvHostDomain.split("\\."));
         List<String> hosts = new ArrayList<String>();
+        InitialDirContext dirContext = createDnsDirContext();
         try {
-            InitialDirContext dirContext = createDnsDirContext();
             Attributes attributes = dirContext.getAttributes("_mongodb._tcp." + srvHost, new String[]{"SRV"});
             Attribute attribute = attributes.get("SRV");
             if (attribute == null) {
@@ -77,6 +77,12 @@ public final class DnsResolver {
             }
         } catch (NamingException e) {
             throw new MongoConfigurationException("Unable to look up SRV record for host " + srvHost, e);
+        } finally {
+            try {
+                dirContext.close();
+            } catch (NamingException e) {
+                // ignore
+            }
         }
         return hosts;
     }
@@ -95,8 +101,8 @@ public final class DnsResolver {
     // Here we concatenate TXT records together with a '&' separator as required by connection strings
     public static String resolveAdditionalQueryParametersFromTxtRecords(final String host) {
         String additionalQueryParameters = "";
+        InitialDirContext dirContext = createDnsDirContext();
         try {
-            InitialDirContext dirContext = createDnsDirContext();
             Attributes attributes = dirContext.getAttributes(host, new String[]{"TXT"});
             Attribute attribute = attributes.get("TXT");
             if (attribute != null) {
@@ -115,6 +121,12 @@ public final class DnsResolver {
             }
         } catch (NamingException e) {
             throw new MongoConfigurationException("Unable to look up TXT record for host " + host, e);
+        } finally {
+            try {
+                dirContext.close();
+            } catch (NamingException e) {
+                // ignore
+            }
         }
         return additionalQueryParameters;
     }
