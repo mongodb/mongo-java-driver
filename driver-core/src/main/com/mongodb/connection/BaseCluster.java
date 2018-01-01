@@ -382,7 +382,7 @@ abstract class BaseCluster implements Cluster {
             message = format("Server at %s requires wire version %d, but this version of the driver only supports up to %d.",
                     incompatibleServer.getAddress(), incompatibleServer.getMinWireVersion(), MAX_DRIVER_WIRE_VERSION);
         }
-        throw new MongoIncompatibleDriverException(message, curDescription);
+        return new MongoIncompatibleDriverException(message, curDescription);
     }
 
     private MongoTimeoutException createTimeoutException(final ServerSelector serverSelector, final ClusterDescription curDescription) {
