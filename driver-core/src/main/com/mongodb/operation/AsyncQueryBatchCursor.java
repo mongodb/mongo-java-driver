@@ -38,6 +38,7 @@ import org.bson.codecs.Decoder;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -65,7 +66,7 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
     private final Object lock = new Object();
     private volatile QueryResult<T> firstBatch;
     private volatile int batchSize;
-    private volatile int count;
+    private final AtomicInteger count = new AtomicInteger();
 
     AsyncQueryBatchCursor(final QueryResult<T> firstBatch, final int limit, final int batchSize, final long maxTimeMS,
                           final Decoder<T> decoder, final AsyncConnectionSource connectionSource, final AsyncConnection connection) {
@@ -78,7 +79,7 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
         this.decoder = decoder;
         this.cursor = new AtomicReference<ServerCursor>(firstBatch.getCursor());
         this.connectionSource = notNull("connectionSource", connectionSource);
-        this.count += firstBatch.getResults().size();
+        this.count.addAndGet(firstBatch.getResults().size());
 
         connectionSource.retain();
         if (firstBatch.getCursor() != null && limitReached()) {
@@ -144,7 +145,7 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
     }
 
     private boolean limitReached() {
-        return Math.abs(limit) != 0 && count >= Math.abs(limit);
+        return Math.abs(limit) != 0 && count.get() >= Math.abs(limit);
     }
 
     private void getMore(final ServerCursor cursor, final SingleResultCallback<List<T>> callback, final boolean tryNext) {
@@ -169,7 +170,7 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
                     connectionSource.getSessionContext(), new CommandResultSingleResultCallback(connection, cursor, callback, tryNext));
 
         } else {
-            connection.getMoreAsync(namespace, cursor.getId(), getNumberToReturn(limit, batchSize, count),
+            connection.getMoreAsync(namespace, cursor.getId(), getNumberToReturn(limit, batchSize, count.get()),
                                     decoder, new QueryResultSingleResultCallback(connection, callback, tryNext));
         }
     }
@@ -178,7 +179,7 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
         BsonDocument document = new BsonDocument("getMore", new BsonInt64(cursorId))
                                 .append("collection", new BsonString(namespace.getCollectionName()));
 
-        int batchSizeForGetMoreCommand = Math.abs(getNumberToReturn(limit, this.batchSize, count));
+        int batchSizeForGetMoreCommand = Math.abs(getNumberToReturn(limit, this.batchSize, count.get()));
         if (batchSizeForGetMoreCommand != 0) {
             document.append("batchSize", new BsonInt32(batchSizeForGetMoreCommand));
         }
@@ -255,9 +256,9 @@ class AsyncQueryBatchCursor<T> implements AsyncBatchCursor<T> {
 
         cursor.getAndSet(result.getCursor());
         if (!tryNext && result.getResults().isEmpty() && result.getCursor() != null) {
-            getMore(connection, result.getCursor(), callback, tryNext);
+            getMore(connection, result.getCursor(), callback, false);
         } else {
-            count += result.getResults().size();
+            count.addAndGet(result.getResults().size());
             if (limitReached()) {
                 killCursor(connection);
                 connection.release();
