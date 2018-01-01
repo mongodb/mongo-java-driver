@@ -47,6 +47,7 @@ abstract class SaslAuthenticator extends Authenticator {
             @Override
             public Void run() {
                 SaslClient saslClient = createSaslClient(connection.getDescription().getServerAddress());
+                throwIfSaslClientIsNull(saslClient);
                 try {
                     byte[] response = (saslClient.hasInitialResponse() ? saslClient.evaluateChallenge(new byte[0]) : null);
                     BsonDocument res = sendSaslStart(response, connection);
@@ -82,6 +83,7 @@ abstract class SaslAuthenticator extends Authenticator {
                 @Override
                 public Void run() {
                     final SaslClient saslClient = createSaslClient(connection.getDescription().getServerAddress());
+                    throwIfSaslClientIsNull(saslClient);
                     try {
                         byte[] response = (saslClient.hasInitialResponse() ? saslClient.evaluateChallenge(new byte[0]) : null);
                         sendSaslStartAsync(response, connection, new SingleResultCallback<BsonDocument>() {
@@ -111,8 +113,15 @@ abstract class SaslAuthenticator extends Authenticator {
 
     protected abstract SaslClient createSaslClient(ServerAddress serverAddress);
 
+    private void throwIfSaslClientIsNull(final SaslClient saslClient) {
+        if (saslClient == null) {
+            throw new MongoSecurityException(getCredential(),
+                    String.format("This JDK does not support the %s SASL mechanism", getMechanismName()));
+        }
+    }
+
     private Subject getSubject() {
-        return getCredential().<Subject>getMechanismProperty(JAVA_SUBJECT_KEY, null);
+        return getCredential().getMechanismProperty(JAVA_SUBJECT_KEY, null);
     }
 
     private BsonDocument sendSaslStart(final byte[] outToken, final InternalConnection connection) {
