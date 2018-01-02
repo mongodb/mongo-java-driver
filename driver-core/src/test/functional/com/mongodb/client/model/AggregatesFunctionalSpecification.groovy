@@ -310,7 +310,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         )
 
         collection.insertDocuments(
-                Document.parse('''{ "_id" : 1, "student" : "Ann Aardvark", 
+                Document.parse('''{ "_id" : 1, "student" : "Ann Aardvark",
                             sickdays: [ { $date : "2018-05-01T00:00:00Z" }, { $date : "2018-08-23T00:00:00Z" } ] }'''),
                 Document.parse('''{ "_id" : 2, "student" : "Zoe Zebra",
                             sickdays: [ { $date : "2018-02-01T00:00:00Z" }, { $date : "2018-05-23T00:00:00Z" } ] }''')
