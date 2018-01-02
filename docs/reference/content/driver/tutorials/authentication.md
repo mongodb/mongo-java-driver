@@ -23,17 +23,8 @@ An authentication credential is represented as an instance of the
 [`MongoCredential`]({{<apiref "com/mongodb/MongoCredential.html">}}) class. The [`MongoCredential`]({{<apiref "com/mongodb/MongoCredential.html">}}) class includes static
 factory methods for each of the supported authentication mechanisms.
 
-To specify a list of these instances, use one of
-several [`MongoClient()`]({{< apiref "com/mongodb/MongoClient.html">}}) constructors that take a parameter of type
-`List <MongoCredential>`.
-
-To specify a single `MongoCredential`, you can also use a [`MongoClientURI`]({{< apiref "/com/mongodb/MongoClientURI.html">}}) and pass it to a [`MongoClient()`]({{< apiref "com/mongodb/MongoClient.html">}}) constructor that takes a `MongoClientURI` parameter.
-
-{{% note %}}
-Given the flexibility of role-based access control in MongoDB, it is
-usually sufficient to authenticate with a single user, but, for
-completeness, the driver accepts a list of credentials.
-{{% /note %}}
+You can also use a [`MongoClientURI`]({{< apiref "/com/mongodb/MongoClientURI.html">}}) and pass it to a 
+[`MongoClient()`]({{< apiref "com/mongodb/MongoClient.html">}}) constructor that takes a `MongoClientURI` parameter.
 
 ## Default Authentication Mechanism
 
@@ -52,8 +43,7 @@ String database; // the name of the database in which the user is defined
 char[] password; // the password as a character array
 // ...
 MongoCredential credential = MongoCredential.createCredential(user, database, password);
-MongoClient mongoClient = new MongoClient(new ServerAddress("host1", 27017),
-                                         Arrays.asList(credential));
+MongoClient mongoClient = new MongoClient(new ServerAddress("host1", 27017), credential);
 ```
 Or use a connection string without explicitly specifying the
 authentication mechanism:
@@ -64,7 +54,7 @@ MongoClient mongoClient = new MongoClient(uri);
 ```
 
 For challenge and response mechanisms, using the default authentication
-mechanism is the recommended approach as the approach will make
+mechanism is the recommended approach as it will make
 upgrading from MongoDB 2.6 to MongoDB 3.0 seamless, even after
 [upgrading the authentication schema]({{<docsref "release-notes/3.0-scram/">}}).
 
@@ -81,8 +71,7 @@ char[] password; // the password as a character array
 MongoCredential credential = MongoCredential.createScramSha1Credential(user,
                                                                       database,
                                                                       password);
-MongoClient mongoClient = new MongoClient(new ServerAddress("host1", 27017),
-                                             Arrays.asList(credential));
+MongoClient mongoClient = new MongoClient(new ServerAddress("host1", 27017), credential);
 ```
 
 Or use a connection string  that explicitly specifies the
@@ -105,8 +94,7 @@ char[] password; // the password as a character array
 MongoCredential credential = MongoCredential.createMongoCRCredential(user,
                                                                     database,
                                                                     password);
-MongoClient mongoClient = new MongoClient(new ServerAddress("host1", 27017),
-                                         Arrays.asList(credential));
+MongoClient mongoClient = new MongoClient(new ServerAddress("host1", 27017), credential);
 ```
 Or use a connection string that explicitly specifies the
 `authMechanism=MONGODB-CR`:
@@ -140,8 +128,7 @@ MongoCredential credential = MongoCredential.createMongoX509Credential(user);
 MongoClientOptions options = MongoClientOptions.builder().sslEnabled(true).build();
 
 
-MongoClient mongoClient = new MongoClient(new ServerAddress("host1", 27017),
-                                         Arrays.asList(credential), options);
+MongoClient mongoClient = new MongoClient(new ServerAddress("host1", 27017), credential, options);
 ```
 
 Or use a connection string that explicitly specifies the
@@ -168,6 +155,7 @@ static factory method:
 String user;   // The Kerberos user name, including the realm, e.g. "user1@MYREALM.ME"
 // ...
 MongoCredential credential = MongoCredential.createGSSAPICredential(user);
+MongoClient mongoClient = new MongoClient(new ServerAddress("host1", 27017), credential);
 ```
 Or use a connection string that explicitly specifies the
 `authMechanism=GSSAPI`:
@@ -202,6 +190,7 @@ String user;          // The LDAP user name
 char[] password;      // The LDAP password
 // ...
 MongoCredential credential = MongoCredential.createPlainCredential(user, "$external", password);
+MongoClient mongoClient = new MongoClient(new ServerAddress("host1", 27017), credential);
 ```
 Or use a connection string that explicitly specifies the
 `authMechanism=PLAIN`:
