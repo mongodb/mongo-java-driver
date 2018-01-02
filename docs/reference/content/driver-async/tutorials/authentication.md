@@ -23,18 +23,8 @@ An authentication credential is represented as an instance of the
 [`MongoCredential`]({{< apiref "com/mongodb/MongoCredential" >}}) class. The [`MongoCredential`]({{<apiref "com/mongodb/MongoCredential.html">}}) class includes static
 factory methods for each of the supported authentication mechanisms.  
 
-To specify a list of these instances, use the [`MongoClientSettings`]({{< apiref "com/mongodb/async/client/MongoClientSettings" >}}) and pass as a parameter to the
-[`MongoClients.create()`]({{<apiref "com/mongodb/async/client/MongoClients.html#create-com.mongodb.async.client.MongoClientSettings-">}}) method.
-
-To specify a single `MongoCredential` instance, you can also use the [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString" >}}) and pass to a
+You can also use the [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString" >}}) and pass it to a
 [`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create-com.mongodb.ConnectionString-" >}}) method.
-
-{{% note %}}
-
-- You can also specify the credential with a string that specifies the connection URI and pass the string to the [`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create-java.lang.String-" >}}) method that takes the connection string as a parameter.  For brevity, the tutorial omits the examples using the string.
-
-- Given the flexibility of role-based access control in MongoDB, it is usually sufficient to authenticate with a single user, but, for completeness, the driver accepts a list of credentials.
-{{% /note %}}
 
 ## Default Authentication Mechanism
 
@@ -60,7 +50,7 @@ ClusterSettings clusterSettings = ClusterSettings.builder()
                                   .hosts(asList(new ServerAddress("localhost"))).build();
 MongoClientSettings settings = MongoClientSettings.builder()
                                   .clusterSettings(clusterSettings)
-                                  .credentialList(Arrays.asList(credential))
+                                  .credential(credential)
                                   .build();
 MongoClient mongoClient = MongoClients.create(settings);
 ```
@@ -74,7 +64,7 @@ MongoClient mongoClient = MongoClients.create(
 ```
 
 For challenge and response mechanisms, using the default authentication
-mechanism is the recommended approach as the approach will make
+mechanism is the recommended approach as it will make
 upgrading from MongoDB 2.6 to MongoDB 3.0 seamless, even after
 [upgrading the authentication schema]({{<docsref "release-notes/3.0-scram/">}}).
 
@@ -92,7 +82,7 @@ ClusterSettings clusterSettings = ClusterSettings.builder()
                                   .hosts(asList(new ServerAddress("localhost"))).build();
 MongoClientSettings settings = MongoClientSettings.builder()
                                   .clusterSettings(clusterSettings)
-                                  .credentialList(Arrays.asList(credential))
+                                  .credential(credential)
                                   .build();
 MongoClient mongoClient = MongoClients.create(settings);
 
@@ -121,7 +111,7 @@ ClusterSettings clusterSettings = ClusterSettings.builder()
                                   .hosts(asList(new ServerAddress("localhost"))).build();
 MongoClientSettings settings = MongoClientSettings.builder()
                                   .clusterSettings(clusterSettings)
-                                  .credentialList(Arrays.asList(credential))
+                                  .credential(credential)
                                   .build();
 MongoClient mongoClient = MongoClients.create(settings);
 ```
@@ -161,7 +151,7 @@ EventLoopGroup eventLoopGroup = new NioEventLoopGroup();  // make sure applicati
 
 MongoClientSettings settings = MongoClientSettings.builder()
                 .clusterSettings(clusterSettings)
-                .credentialList(Arrays.asList(credential))
+                .credential(credential)
                 .streamFactoryFactory(NettyStreamFactoryFactory.builder().eventLoopGroup(eventLoopGroup).build())
                 .sslSettings(SslSettings.builder().enabled(true).build())
                 .build();
@@ -196,7 +186,7 @@ ClusterSettings clusterSettings = ClusterSettings.builder()
                                   .hosts(asList(new ServerAddress("localhost"))).build();
 MongoClientSettings settings = MongoClientSettings.builder()
                                   .clusterSettings(clusterSettings)
-                                  .credentialList(Arrays.asList(credential))
+                                  .credential(credential)
                                   .build();
 MongoClient mongoClient = MongoClients.create(settings);
 
@@ -270,7 +260,7 @@ ClusterSettings clusterSettings = ClusterSettings.builder()
                                   .hosts(asList(new ServerAddress("localhost"))).build();
 MongoClientSettings settings = MongoClientSettings.builder()
                                   .clusterSettings(clusterSettings)
-                                  .credentialList(Arrays.asList(credential))
+                                  .credential(credential)
                                   .build();
 MongoClient mongoClient = MongoClients.create(settings);
 ```
