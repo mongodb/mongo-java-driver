@@ -203,12 +203,6 @@ MongoClient mongoClient = MongoClients.create(new ConnectionString(
 {{% note %}}
 The method refers to the `GSSAPI` authentication mechanism instead of `Kerberos` because technically the driver is authenticating via the
 [GSSAPI](https://tools.ietf.org/html/rfc4752) SASL mechanism.
-
-The `GSSAPI` authentication mechanism is supported only in the following environments:
-
-* Linux: Java 6 and above
-* Windows: Java 7 and above with [SSPI](https://msdn.microsoft.com/en-us/library/windows/desktop/aa380493)
-* OS X: Java 7 and above
 {{% /note %}}
 
 To successfully authenticate via Kerberos, the application typically
@@ -244,6 +238,16 @@ Or via the `ConnectionString`:
 ```
 mongodb://username%40MYREALM.com@myserver/?authMechanism=GSSAPI&authMechanismProperties=SERVICE_NAME:othername
 ```
+
+{{% note %}}
+On Windows, Oracle's JRE uses [LSA](https://msdn.microsoft.com/en-us/library/windows/desktop/aa378326.aspx) rather than 
+[SSPI](https://msdn.microsoft.com/en-us/library/windows/desktop/aa380493.aspx) in its implementation of GSSAPI, which limits
+interoperability with Windows Active Directory and in particular the ability to implement single sign-on. 
+
+- [JDK-8054026](https://bugs.openjdk.java.net/browse/JDK-8054026) 
+- [JDK-6722928](https://bugs.openjdk.java.net/browse/JDK-6722928) 
+- [SO 23427343](https://stackoverflow.com/questions/23427343/cannot-retrieve-tgt-despite-allowtgtsessionkey-registry-entry)    
+{{% /note %}}
 
 
 ## LDAP (PLAIN)
