@@ -27,6 +27,7 @@ import org.bson.types.ObjectId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -375,13 +376,15 @@ final class MultiServerCluster extends BaseCluster {
 
     private void removeExtraHosts(final ServerDescription serverDescription) {
         Set<ServerAddress> allServerAddresses = getAllServerAddresses(serverDescription);
-        for (final ServerTuple cur : addressToServerTupleMap.values()) {
+        for (Iterator<ServerTuple> iterator = addressToServerTupleMap.values().iterator(); iterator.hasNext();) {
+            ServerTuple cur = iterator.next();
             if (!allServerAddresses.contains(cur.description.getAddress())) {
                 if (LOGGER.isInfoEnabled()) {
                     LOGGER.info(format("Server %s is no longer a member of the replica set.  Removing from client view of cluster.",
                                        cur.description.getAddress()));
                 }
-                removeServer(cur.description.getAddress());
+                iterator.remove();
+                cur.server.close();
             }
         }
     }

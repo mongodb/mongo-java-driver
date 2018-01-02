@@ -181,6 +181,7 @@ class MultiServerClusterSpecification extends Specification {
 
         then:
         cluster.getDescription().all == factory.getDescriptions(firstServer, secondServer)
+        factory.getServer(thirdServer).isClosed()
     }
 
     def 'should remove a server of the wrong type when type is replica set'() {
