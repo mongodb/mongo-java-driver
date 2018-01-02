@@ -180,6 +180,42 @@ java.security.krb5.realm=MYREALM.ME
 java.security.krb5.kdc=mykdc.myrealm.me
 ```
 
+Depending on the Kerberos setup, additional property specifications may be required, either via the application code or, in some cases, the [withMechanismProperty()]({{<apiref "com/mongodb/MongoCredential.html#withMechanismProperty-java.lang.String-T-">}}) method of the `MongoCredential` instance:
+
+- **[`SERVICE_NAME`]({{< apiref "com/mongodb/MongoCredential.html#SERVICE_NAME_KEY" >}})**
+
+
+- **[`CANONICALIZE_HOST_NAME`]({{< apiref "com/mongodb/MongoCredential.html#CANONICALIZE_HOST_NAME_KEY" >}})**
+
+
+- **[`JAVA_SUBJECT`]({{< apiref "com/mongodb/MongoCredential.html#JAVA_SUBJECT_KEY" >}})**
+
+- **[`JAVA_SASL_CLIENT_PROPERTIES`]({{< apiref "com/mongodb/MongoCredential.html#JAVA_SASL_CLIENT_PROPERTIES_KEY" >}})**
+
+For example, to specify the `SERVICE_NAME` property via the `MongoCredential` object:
+
+
+```java
+credential = credential.withMechanismProperty(MongoCredential.SERVICE_NAME_KEY, "othername");
+```
+
+Or via the `ConnectionString`:
+
+```
+mongodb://username%40MYREALM.com@myserver/?authMechanism=GSSAPI&authMechanismProperties=SERVICE_NAME:othername
+```
+
+{{% note %}}
+On Windows, Oracle's JRE uses [LSA](https://msdn.microsoft.com/en-us/library/windows/desktop/aa378326.aspx) rather than 
+[SSPI](https://msdn.microsoft.com/en-us/library/windows/desktop/aa380493.aspx) in its implementation of GSSAPI, which limits
+interoperability with Windows Active Directory and in particular the ability to implement single sign-on. 
+
+- [JDK-8054026](https://bugs.openjdk.java.net/browse/JDK-8054026) 
+- [JDK-6722928](https://bugs.openjdk.java.net/browse/JDK-6722928) 
+- [SO 23427343](https://stackoverflow.com/questions/23427343/cannot-retrieve-tgt-despite-allowtgtsessionkey-registry-entry)    
+{{% /note %}}
+
+
 ## LDAP (PLAIN)
 
 [MongoDB Enterprise](http://www.mongodb.com/products/mongodb-enterprise) supports proxy authentication through a Lightweight Directory Access Protocol (LDAP) service. To create a credential of type [LDAP]({{<apiref "core/authentication/#ldap-proxy-authority-authentication">}}) use the
