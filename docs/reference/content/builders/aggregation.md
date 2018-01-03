@@ -114,6 +114,55 @@ the `joinedOutput` field:
 lookup("fromCollection", "local", "from", "joinedOutput")
 ```
 
+Starting in 3.6, the `$lookup` pipeline stage also supports uncorrelated subqueries between two collections as well as allows other join 
+conditions besides a single equality match.
+
+For example, given a collection `orders` with the following documents:
+
+```json
+  { "_id" : 1, "item" : "almonds", "price" : 12, "ordered" : 2 }
+  { "_id" : 2, "item" : "pecans",  "price" : 20, "ordered" : 1 }
+  { "_id" : 3, "item" : "cookies", "price" : 10, "ordered" : 60 }
+```
+
+and another collection `warehouses` with the following documents:
+
+```json
+  { "_id" : 1, "stock_item" : "almonds", "warehouse": "A", "instock" : 120 }
+  { "_id" : 2, "stock_item" : "pecans",  "warehouse": "A", "instock" : 80 }
+  { "_id" : 3, "stock_item" : "almonds", "warehouse": "B", "instock" : 60 }
+  { "_id" : 4, "stock_item" : "cookies", "warehouse": "B", "instock" : 40 }
+  { "_id" : 5, "stock_item" : "cookies", "warehouse": "A", "instock" : 80 }
+```
+
+The following `$lookup` stage, executed in an aggregation against the `orders` collection, joins with the `warehouses` collection by the 
+item and whether the quantity in stock is sufficient to cover the ordered quantity:
+
+```java
+        List<Variable<?>> variables = asList(
+                new Variable<>("order_item", "$item"),
+                new Variable<>("order_qty", "$ordered"));
+
+        List<Bson> pipeline = asList(
+                match(expr(new Document("$and",
+                        asList(new Document("$eq", asList("$stock_item", "$$order_item")),
+                                new Document("$gte", asList("$instock", "$$order_qty")))))),
+                project(fields(exclude("stock_item"), excludeId())));
+
+        lookup("warehouses", variables, pipeline, "stockdata");
+```
+
+The aggregation produces the following documents:
+
+```json
+{ "_id" : 1, "item" : "almonds", "price" : 12, "ordered" : 2,
+   "stockdata" : [ { "warehouse" : "A", "instock" : 120 }, { "warehouse" : "B", "instock" : 60 } ] }
+{ "_id" : 2, "item" : "pecans", "price" : 20, "ordered" : 1,
+   "stockdata" : [ { "warehouse" : "A", "instock" : 80 } ] }
+{ "_id" : 3, "item" : "cookies", "price" : 10, "ordered" : 60,
+   "stockdata" : [ { "warehouse" : "A", "instock" : 80 } ] }
+```
+
 ### Group
 
 The [`$group`]({{< docsref "reference/operator/aggregation/group/" >}}) pipeline stage groups documents by some specified
