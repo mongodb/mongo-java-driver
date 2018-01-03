@@ -81,6 +81,9 @@ class DefaultServer implements ClusterableServer {
         } catch (MongoSecurityException e) {
             invalidate();
             throw e;
+        } catch (MongoSocketException e) {
+            invalidate();
+            throw e;
         }
     }
 
@@ -90,7 +93,7 @@ class DefaultServer implements ClusterableServer {
         connectionPool.getAsync(new SingleResultCallback<InternalConnection>() {
             @Override
             public void onResult(final InternalConnection result, final Throwable t) {
-                if (t instanceof MongoSecurityException) {
+                if (t instanceof MongoSecurityException || t instanceof MongoSocketException) {
                     invalidate();
                 }
                 if (t != null) {
