@@ -225,11 +225,12 @@ public final class Aggregates {
     }
 
     /**
-     * Creates a $lookup pipeline stage for the specified filter
+     * Creates a $lookup pipeline stage, joining the current collection with the one specified in from
+     * using equality match between the local field and the foreign field
      *
      * @param from         the name of the collection in the same database to perform the join with.
-     * @param localField   specifies the field from the local collection to match values against.
-     * @param foreignField specifies the field in the from collection to match values against.
+     * @param localField   the field from the local collection to match values against.
+     * @param foreignField the field in the from collection to match values against.
      * @param as           the name of the new array field to add to the input documents.
      * @return the $lookup pipeline stage
      * @mongodb.driver.manual reference/operator/aggregation/lookup/ $lookup
@@ -241,6 +242,38 @@ public final class Aggregates {
                                                    .append("localField", new BsonString(localField))
                                                    .append("foreignField", new BsonString(foreignField))
                                                    .append("as", new BsonString(as)));
+    }
+
+    /**
+     * Creates a $lookup pipeline stage, joining the current collection with the one specified in from using the given pipeline
+     *
+     * @param from          the name of the collection in the same database to perform the join with.
+     * @param pipeline      the pipeline to run on the joined collection.
+     * @param as            the name of the new array field to add to the input documents.
+     * @return the $lookup pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/lookup/ $lookup
+     * @mongodb.server.release 3.6
+     * @since 3.7
+     *
+     */
+    public static Bson lookup(final String from, final List<? extends Bson> pipeline, final String as) {
+        return lookup(from, null, pipeline, as);
+    }
+
+    /**
+     * Creates a $lookup pipeline stage, joining the current collection with the one specified in from using the given pipeline
+     *
+     * @param from          the name of the collection in the same database to perform the join with.
+     * @param let           the variables to use in the pipeline field stages.
+     * @param pipeline      the pipeline to run on the joined collection.
+     * @param as            the name of the new array field to add to the input documents.
+     * @return the $lookup pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/lookup/ $lookup
+     * @mongodb.server.release 3.6
+     * @since 3.7
+     */
+    public static Bson lookup(final String from, final List<Variable<?>> let, final List<? extends Bson> pipeline, final String as) {
+       return new LookupStage(from, let, pipeline, as);
     }
 
     /**
@@ -540,6 +573,69 @@ public final class Aggregates {
                 + '}';
         }
     }
+
+    private static final class LookupStage implements Bson {
+        private final String from;
+        private final List<Variable<?>> let;
+        private final List<? extends Bson> pipeline;
+        private final String as;
+
+        private LookupStage(final String from, final List<Variable<?>> let, final List<? extends Bson> pipeline, final String as) {
+            this.from = from;
+            this.let = let;
+            this.pipeline = pipeline;
+            this.as = as;
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
+            BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+
+            writer.writeStartDocument();
+
+            writer.writeStartDocument("$lookup");
+
+            writer.writeString("from", from);
+
+            if (let != null) {
+                writer.writeStartDocument("let");
+
+                for (Variable<?> variable : let) {
+                    writer.writeName(variable.getName());
+                    BuildersHelper.encodeValue(writer, variable.getValue(), codecRegistry);
+                }
+
+                writer.writeEndDocument();
+            }
+
+            writer.writeName("pipeline");
+            writer.writeStartArray();
+            for (Bson stage : pipeline) {
+                BuildersHelper.encodeValue(writer, stage, codecRegistry);
+            }
+            writer.writeEndArray();
+
+            writer.writeString("as", as);
+
+            writer.writeEndDocument();
+
+            return writer.getDocument();
+        }
+
+        @Override
+        public String toString() {
+            return "Stage{"
+                    + "name='$lookup'"
+                    + ", from='" + from + '\''
+                    + ", let=" + let
+                    + ", pipeline=" + pipeline
+                    + ", as='" + as + '\''
+                    + '}';
+        }
+    }
+
+
+
 
     private static final class GraphLookupStage<TExpression> implements Bson {
         private final String from;

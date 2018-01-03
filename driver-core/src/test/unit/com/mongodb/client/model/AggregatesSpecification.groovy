@@ -56,6 +56,7 @@ import static com.mongodb.client.model.Aggregates.sort
 import static com.mongodb.client.model.Aggregates.sortByCount
 import static com.mongodb.client.model.Aggregates.unwind
 import static com.mongodb.client.model.Filters.eq
+import static com.mongodb.client.model.Filters.expr
 import static com.mongodb.client.model.Projections.computed
 import static com.mongodb.client.model.Projections.fields
 import static com.mongodb.client.model.Projections.include
@@ -198,6 +199,19 @@ class AggregatesSpecification extends Specification {
         expect:
         toBson(lookup('from', 'localField', 'foreignField', 'as')) == parse('''{ $lookup : { from: "from", localField: "localField",
             foreignField: "foreignField", as: "as" } }''')
+
+        List<Bson> pipeline = asList(match(expr(new Document('$eq', asList('x', '1')))))
+        toBson(lookup('from', asList(new Variable('var1', 'expression1')), pipeline, 'as')) ==
+                parse('''{ $lookup : { from: "from",
+                                            let: { var1: "expression1" },
+                                            pipeline : [{ $match : { $expr: { $eq : [ "x" , "1" ]}}}],
+                                            as: "as" }}''')
+
+        // without variables
+        toBson(lookup('from', pipeline, 'as')) ==
+                parse('''{ $lookup : { from: "from",
+                                            pipeline : [{ $match : { $expr: { $eq : [ "x" , "1" ]}}}],
+                                            as: "as" }}''')
     }
 
     def 'should render $facet'() {
