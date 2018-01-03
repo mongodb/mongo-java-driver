@@ -33,7 +33,7 @@ class MongoNamespaceSpecification extends Specification {
         thrown(IllegalArgumentException)
 
         where:
-        databaseName << [null, '', 'a ', 'a.b' ]
+        databaseName << [null, '', 'a\0b', 'a b', 'a.b', 'a/b', 'a\\b', 'a"b']
     }
 
     def 'invalid collection name should throw IllegalArgumentException'() {
