@@ -52,8 +52,11 @@ import static com.mongodb.client.model.Aggregates.skip
 import static com.mongodb.client.model.Aggregates.sort
 import static com.mongodb.client.model.Aggregates.sortByCount
 import static com.mongodb.client.model.Aggregates.unwind
+import static com.mongodb.client.model.Filters.and
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Filters.exists
+import static com.mongodb.client.model.Filters.expr
+import static com.mongodb.client.model.Filters.gte
 import static com.mongodb.client.model.Projections.computed
 import static com.mongodb.client.model.Projections.exclude
 import static com.mongodb.client.model.Projections.excludeId
@@ -241,6 +244,106 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
         cleanup:
         fromHelper?.drop()
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    def '$lookup with pipeline'() {
+        given:
+        def fromCollectionName = 'warehouses'
+        def fromHelper = getCollectionHelper(new MongoNamespace(getDatabaseName(), fromCollectionName))
+        def collection = getCollectionHelper()
+
+        collection.drop()
+        fromHelper.drop()
+
+        fromHelper.insertDocuments(
+                Document.parse('{ "_id" : 1, "stock_item" : "abc", warehouse: "A", "instock" : 120 }'),
+                Document.parse('{ "_id" : 2, "stock_item" : "abc", warehouse: "B", "instock" : 60 }'),
+                Document.parse('{ "_id" : 3, "stock_item" : "xyz", warehouse: "B", "instock" : 40 }'),
+                Document.parse('{ "_id" : 4, "stock_item" : "xyz", warehouse: "A", "instock" : 80 }'))
+
+        collection.insertDocuments(
+                Document.parse('{ "_id" : 1, "item" : "abc", "price" : 12, "ordered" : 2 }'),
+                Document.parse('{ "_id" : 2, "item" : "xyz", "price" : 10, "ordered" : 60 }')
+        )
+
+        def let = asList(new Variable('order_item', '$item'), new Variable('order_qty', '$ordered'))
+
+        def  pipeline = asList(
+                match(expr(new Document('$and',
+                        asList( new Document('$eq', asList('$stock_item', '$$order_item')),
+                                new Document('$gte', asList('$instock', '$$order_qty')))))),
+                project(fields(exclude('stock_item'), excludeId())))
+
+        def lookupDoc = lookup(fromCollectionName, let, pipeline, 'stockdata')
+
+        when:
+        def results = aggregate([lookupDoc])
+
+        then:
+        results == [
+                Document.parse('{ "_id" : 1.0, "item" : "abc", "price" : 12.0, "ordered" : 2.0, ' +
+                        '"stockdata" : [ { "warehouse" : "A", "instock" : 120.0 }, { "warehouse" : "B", "instock" : 60.0 } ] }'),
+                Document.parse('{ "_id" : 2.0, "item" : "xyz", "price" : 10.0, "ordered" : 60.0, ' +
+                        '"stockdata" : [ { "warehouse" : "A", "instock" : 80.0 } ] }') ]
+
+        cleanup:
+        fromHelper?.drop()
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    def '$lookup with pipeline without variables'() {
+        given:
+        def fromCollectionName = 'holidays'
+        def fromCollection = getCollectionHelper(new MongoNamespace(getDatabaseName(), fromCollectionName))
+        def collection = getCollectionHelper()
+
+        collection.drop()
+        fromCollection.drop()
+
+        fromCollection.insertDocuments(
+                Document.parse('{ "_id" : 1, year: 2018, name: "New Years", date: { $date : "2018-01-01T00:00:00Z"} }'),
+                Document.parse('{ "_id" : 2, year: 2018, name: "Pi Day", date: { $date : "2018-03-14T00:00:00Z" } }'),
+                Document.parse('{ "_id" : 3, year: 2018, name: "Ice Cream Day", date: { $date : "2018-07-15T00:00:00Z"} }'),
+                Document.parse('{ "_id" : 4, year: 2017, name: "New Years", date: { $date : "2017-01-01T00:00:00Z" } }'),
+                Document.parse('{ "_id" : 5, year: 2017, name: "Ice Cream Day", date: { $date : "2017-07-16T00:00:00Z" } }')
+        )
+
+        collection.insertDocuments(
+                Document.parse('''{ "_id" : 1, "student" : "Ann Aardvark",
+                            sickdays: [ { $date : "2018-05-01T00:00:00Z" }, { $date : "2018-08-23T00:00:00Z" } ] }'''),
+                Document.parse('''{ "_id" : 2, "student" : "Zoe Zebra",
+                            sickdays: [ { $date : "2018-02-01T00:00:00Z" }, { $date : "2018-05-23T00:00:00Z" } ] }''')
+        )
+
+        def  pipeline = asList(
+                match(eq('year', 2018)),
+                project(fields(excludeId(), computed('date', fields(computed('name', '$name'), computed('date', '$date'))))),
+                replaceRoot('$date')
+        )
+
+        def lookupDoc = lookup(fromCollectionName, pipeline, 'holidays')
+
+        when:
+        def results = aggregate([lookupDoc])
+
+        then:
+        results == [
+                Document.parse(
+                        '''{ '_id' : 1, 'student' : "Ann Aardvark",
+                        'sickdays' : [ ISODate("2018-05-01T00:00:00Z"), ISODate("2018-08-23T00:00:00Z") ],
+                        'holidays' : [  { 'name' : "New Years", 'date' : ISODate ("2018-01-01T00:00:00Z") },
+                                        { 'name' : "Pi Day", 'date' : ISODate("2018-03-14T00:00:00Z") },
+                                        { 'name' : "Ice Cream Day", 'date' : ISODate("2018-07-15T00:00:00Z") } ] }'''),
+                Document.parse(
+                        '''{ '_id' : 2, 'student' : "Zoe Zebra",
+                        'sickdays' : [ ISODate("2018-02-01T00:00:00Z"), ISODate("2018-05-23T00:00:00Z") ],
+                        'holidays' : [  { 'name' : "New Years", 'date' : ISODate("2018-01-01T00:00:00Z") },
+                                        { 'name' : "Pi Day", 'date' : ISODate("2018-03-14T00:00:00Z") },
+                                        { 'name' : "Ice Cream Day", 'date' : ISODate("2018-07-15T00:00:00Z") } ] }''') ]
+
+        cleanup:
+        fromCollection?.drop()
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 4) })
