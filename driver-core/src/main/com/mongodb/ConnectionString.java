@@ -379,7 +379,6 @@ public class ConnectionString {
         GENERAL_OPTIONS_KEYS.add("maxidletimems");
         GENERAL_OPTIONS_KEYS.add("maxlifetimems");
         GENERAL_OPTIONS_KEYS.add("sockettimeoutms");
-        GENERAL_OPTIONS_KEYS.add("sockettimeoutms");
         GENERAL_OPTIONS_KEYS.add("ssl");
         GENERAL_OPTIONS_KEYS.add("streamtype");
         GENERAL_OPTIONS_KEYS.add("sslinvalidhostnameallowed");
