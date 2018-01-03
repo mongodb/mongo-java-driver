@@ -22,7 +22,10 @@ import com.mongodb.MongoNodeIsRecoveringException
 import com.mongodb.MongoNotPrimaryException
 import com.mongodb.MongoSecurityException
 import com.mongodb.MongoSocketException
+import com.mongodb.MongoSocketOpenException
+import com.mongodb.MongoSocketReadException
 import com.mongodb.MongoSocketReadTimeoutException
+import com.mongodb.MongoSocketWriteException
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcernResult
@@ -97,8 +100,8 @@ class DefaultServerSpecification extends Specification {
 
         when:
         def latch = new CountDownLatch(1)
-        def receivedConnection
-        def receivedThrowable
+        def receivedConnection = null
+        def receivedThrowable = null
         server.getConnectionAsync { result, throwable -> receivedConnection = result; receivedThrowable = throwable; latch.countDown() }
         latch.await()
 
@@ -136,7 +139,7 @@ class DefaultServerSpecification extends Specification {
         def connectionFactory = Mock(ConnectionFactory)
         def serverMonitorFactory = Stub(ServerMonitorFactory)
         def serverMonitor = Mock(ServerMonitor)
-        connectionPool.get() >> { throw new MongoSecurityException(createCredential('jeff', 'admin', '123'.toCharArray()), 'Auth failed') }
+        connectionPool.get() >> { throw exceptionToThrow }
         serverMonitorFactory.create(_) >> { serverMonitor }
 
         def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
@@ -146,36 +149,55 @@ class DefaultServerSpecification extends Specification {
         server.getConnection()
 
         then:
-        thrown(MongoSecurityException)
+        def e = thrown(MongoException)
+        e.is(exceptionToThrow)
         1 * connectionPool.invalidate()
         1 * serverMonitor.connect()
+
+        where:
+        exceptionToThrow << [
+                new MongoSecurityException(createCredential('jeff', 'admin', '123'.toCharArray()), 'Auth failed'),
+                new MongoSocketOpenException('open failed', new ServerAddress(), new IOException()),
+                new MongoSocketWriteException('Write failed', new ServerAddress(), new IOException()),
+                new MongoSocketReadException('Read failed', new ServerAddress(), new IOException()),
+                new MongoSocketReadTimeoutException('Read timed out', new ServerAddress(), new IOException()),
+        ]
     }
 
-    def 'failed open should invalidate the server asychronously'() {
+    def 'failed open should invalidate the server asynchronously'() {
         given:
         def clusterTime = new ClusterClock()
+        def connectionPool = Mock(ConnectionPool)
         def connectionFactory = Mock(ConnectionFactory)
         def serverMonitorFactory = Stub(ServerMonitorFactory)
         def serverMonitor = Mock(ServerMonitor)
+        connectionPool.getAsync(_) >> { it[0].onResult(null, exceptionToThrow) }
         serverMonitorFactory.create(_) >> { serverMonitor }
-
-        def exceptionToThrow = new MongoSecurityException(createCredential('jeff', 'admin',
-                '123'.toCharArray()),
-                'Auth failed')
-        def server = new DefaultServer(serverId, SINGLE, new TestConnectionPool(exceptionToThrow), connectionFactory,
+        def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory,
                 serverMonitorFactory, NO_OP_SERVER_LISTENER, null, clusterTime)
 
         when:
         def latch = new CountDownLatch(1)
-        def receivedConnection
-        def receivedThrowable
+        def receivedConnection = null
+        def receivedThrowable = null
         server.getConnectionAsync { result, throwable -> receivedConnection = result; receivedThrowable = throwable; latch.countDown() }
         latch.await()
 
         then:
         !receivedConnection
         receivedThrowable.is(exceptionToThrow)
+        1 * connectionPool.invalidate()
         1 * serverMonitor.connect()
+
+
+        where:
+        exceptionToThrow << [
+                new MongoSecurityException(createCredential('jeff', 'admin', '123'.toCharArray()), 'Auth failed'),
+                new MongoSocketOpenException('open failed', new ServerAddress(), new IOException()),
+                new MongoSocketWriteException('Write failed', new ServerAddress(), new IOException()),
+                new MongoSocketReadException('Read failed', new ServerAddress(), new IOException()),
+                new MongoSocketReadTimeoutException('Read timed out', new ServerAddress(), new IOException()),
+        ]
     }
 
     def 'should invalidate on MongoNotPrimaryException'() {
