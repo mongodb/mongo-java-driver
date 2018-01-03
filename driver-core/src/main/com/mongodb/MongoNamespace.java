@@ -21,6 +21,9 @@ import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonIgnore;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Arrays.asList;
@@ -34,6 +37,9 @@ import static java.util.Arrays.asList;
 public final class MongoNamespace {
     public static final String COMMAND_COLLECTION_NAME = "$cmd";
 
+    private static final Set<Character> PROHIBITED_CHARACTERS_IN_DATABASE_NAME =
+            new HashSet<Character>(asList('\0', '/', '\\', ' ', '"', '.'));
+
     private final String databaseName;
     private final String collectionName;
     @BsonIgnore
@@ -41,7 +47,7 @@ public final class MongoNamespace {
 
     /**
      * Check the validity of the given database name. A valid database name is non-null, non-empty, and does not contain any of the
-     * following strings: {@code " ", "."}. The server may impose additional restrictions on database names.
+     * following characters: {@code '\0', '/', '\\', ' ', '"', '.'}. The server may impose additional restrictions on database names.
      *
      * @param databaseName the database name
      * @throws IllegalArgumentException if the database name is invalid
@@ -51,8 +57,9 @@ public final class MongoNamespace {
     public static void checkDatabaseNameValidity(final String databaseName) {
         notNull("databaseName", databaseName);
         isTrueArgument("databaseName is not empty", !databaseName.isEmpty());
-        for (String cur : asList(" ", ".")) {
-            isTrueArgument("databaseName does not contain '" + cur + "'", !databaseName.contains(cur));
+        for (int i = 0; i < databaseName.length(); i++) {
+            isTrueArgument("databaseName does not contain '" + databaseName.charAt(i) + "'",
+                    !PROHIBITED_CHARACTERS_IN_DATABASE_NAME.contains(databaseName.charAt(i)));
         }
     }
 
