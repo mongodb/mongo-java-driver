@@ -279,7 +279,7 @@ public class ConnectionString {
 
         // Split out the user and host information
         String userAndHostInformation;
-        int idx = unprocessedConnectionString.lastIndexOf("/");
+        int idx = unprocessedConnectionString.indexOf("/");
         if (idx == -1) {
             if (unprocessedConnectionString.contains("?")) {
                 throw new IllegalArgumentException("The connection string contains options without trailing slash");
@@ -340,6 +340,7 @@ public class ConnectionString {
                 database = nsPart.substring(0, idx);
                 collection = nsPart.substring(idx + 1);
             }
+            MongoNamespace.checkDatabaseNameValidity(database);
         } else {
             database = null;
             collection = null;

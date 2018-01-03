@@ -426,7 +426,7 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://ross:123@localhost/?'
                              + 'authMechanism=SCRAM-SHA-1')         | new ConnectionString('mongodb://ross:123@localhost/?'
                                                                                            + 'authMechanism=SCRAM-SHA-1')
-        new ConnectionString('mongodb://localhost/db/coll'
+        new ConnectionString('mongodb://localhost/db.coll'
                              + '?minPoolSize=5;'
                              + 'maxPoolSize=10;waitQueueMultiple=7;'
                              + 'waitQueueTimeoutMS=150;'
@@ -436,7 +436,7 @@ class ConnectionStringSpecification extends Specification {
                              + 'socketTimeoutMS=5500;'
                              + 'safe=false;w=1;wtimeout=2500;'
                              + 'fsync=true;readPreference=primary;'
-                             + 'ssl=true')                           |  new ConnectionString('mongodb://localhost/db/coll?minPoolSize=5;'
+                             + 'ssl=true')                           |  new ConnectionString('mongodb://localhost/db.coll?minPoolSize=5;'
                                                                                              + 'maxPoolSize=10&waitQueueMultiple=7;'
                                                                                              + 'waitQueueTimeoutMS=150;'
                                                                                              + 'maxIdleTimeMS=200&maxLifeTimeMS=300'
