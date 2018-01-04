@@ -19,7 +19,7 @@ branches:
 env:
   global:
     - MONGODB_FILE_NAME=mongodb-linux-x86_64-enterprise-ubuntu1404
-    - MONGODB=3.4.7
+    - MONGODB=3.6.1
 
 addons:
   apt:
