@@ -20,7 +20,11 @@ import com.mongodb.Block;
 import com.mongodb.DatabaseTestCase;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.changestream.ChangeStreamDocument;
+import com.mongodb.client.model.changestream.FullDocument;
+import org.bson.BsonDocument;
 import org.bson.BsonType;
 import org.bson.Document;
 import org.junit.After;
@@ -29,12 +33,12 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.Fixture.getDefaultDatabaseName;
 import static com.mongodb.Fixture.getMongoClient;
-
-// imports required for filters, projections and updates
 import static com.mongodb.client.model.Filters.all;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.elemMatch;
@@ -56,13 +60,16 @@ import static com.mongodb.client.model.Projections.slice;
 import static com.mongodb.client.model.Updates.combine;
 import static com.mongodb.client.model.Updates.currentDate;
 import static com.mongodb.client.model.Updates.set;
-// end required filters, projections and updates imports
-
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
+
+// imports required for change streams
+// end required change streams imports
+// imports required for filters, projections and updates
+// end required filters, projections and updates imports
 
 
 public final class DocumentationSamples extends DatabaseTestCase {
@@ -510,7 +517,6 @@ public final class DocumentationSamples extends DatabaseTestCase {
 
     @Test
     public void testUpdates() {
-        assumeTrue(serverVersionAtLeast(2, 6));
         //Start Example 51
         collection.insertMany(asList(
                 Document.parse("{ item: 'canvas', qty: 100, size: { h: 28, w: 35.5, uom: 'cm' }, status: 'A' }"),
@@ -606,6 +612,52 @@ public final class DocumentationSamples extends DatabaseTestCase {
         assertEquals(0, collection.count());
     }
 
+    @Test
+    public void testWatch() {
+        assumeTrue(isDiscoverableReplicaSet() && serverVersionAtLeast(3, 6));
+
+        final MongoCollection<Document> inventory = collection;
+        final AtomicBoolean stop = new AtomicBoolean(false);
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                while (!stop.get()) {
+                    collection.insertOne(new Document());
+                    try {
+                        Thread.sleep(10);
+                    } catch (InterruptedException e) {
+                        // ignore
+                    }
+                }
+            }
+        }).start();
+
+
+        // Start Changestream Example 1
+        MongoCursor<ChangeStreamDocument<Document>> cursor = inventory.watch().iterator();
+        ChangeStreamDocument<Document> next = cursor.next();
+        // End Changestream Example 1
+
+        cursor.close();
+
+        // Start Changestream Example 2
+        cursor = inventory.watch().fullDocument(FullDocument.UPDATE_LOOKUP).iterator();
+        next = cursor.next();
+        // End Changestream Example 2
+
+        cursor.close();
+
+        // Start Changestream Example 3
+        BsonDocument resumeToken = next.getResumeToken();
+        cursor = inventory.watch().resumeAfter(resumeToken).iterator();
+        next = cursor.next();
+        // End Changestream Example 3
+
+        cursor.close();
+
+        stop.set(true);
+    }
 
     @After
     public void tearDown() {

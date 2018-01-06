@@ -40,7 +40,7 @@ class FsyncUnlockOperationSpecification extends Specification {
         def result = new FsyncUnlockOperation().execute(getBinding() as ReadBinding)
 
         then:
-        result
+        !result.isEmpty()
         result.containsKey('ok')
         result.containsKey('info')
         !new CurrentOpOperation().execute(getBinding()).getBoolean('fsyncLock', BsonBoolean.FALSE).getValue()

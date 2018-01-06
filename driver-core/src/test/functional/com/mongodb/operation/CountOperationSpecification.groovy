@@ -24,12 +24,25 @@ import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
+import com.mongodb.ServerAddress
+import com.mongodb.binding.AsyncConnectionSource
+import com.mongodb.binding.AsyncReadBinding
+import com.mongodb.binding.ConnectionSource
+import com.mongodb.binding.ReadBinding
 import com.mongodb.bulk.IndexRequest
+import com.mongodb.connection.AsyncConnection
+import com.mongodb.connection.ClusterId
+import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
+import com.mongodb.connection.ConnectionId
+import com.mongodb.connection.ServerId
+import com.mongodb.connection.ServerVersion
+import com.mongodb.session.SessionContext
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonInt64
 import org.bson.BsonString
+import org.bson.BsonTimestamp
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import org.junit.experimental.categories.Category
@@ -41,6 +54,8 @@ import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.connection.ServerType.STANDALONE
+import static com.mongodb.operation.ReadConcernHelper.appendReadConcernToCommand
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 
@@ -54,7 +69,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
                 new Document('x', 2),
                 new Document('x', 3),
                 new Document('x', 4),
-                new Document('x', 5)
+                new Document('x', 5).append('y', 1)
         ]
         getCollectionHelper().insertDocuments(new DocumentCodec(), documents)
     }
@@ -107,7 +122,6 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         documents.size()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should throw execution timeout exception from execute'() {
         given:
         def countOperation = new CountOperation(getNamespace())
@@ -125,7 +139,6 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     }
 
     @Category(Async)
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should throw execution timeout exception from executeAsync'() {
         given:
         def countOperation = new CountOperation(getNamespace())
@@ -180,31 +193,32 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     def 'should use hint with the count'() {
         given:
         def createIndexOperation = new CreateIndexesOperation(getNamespace(),
-                                                              [new IndexRequest(new BsonDocument('x', new BsonInt32(1))).sparse(true)])
-        def countOperation = new CountOperation(getNamespace()).hint(new BsonString('x_1'))
-
-        when:
+                                                              [new IndexRequest(new BsonDocument('y', new BsonInt32(1))).sparse(true)])
+        def countOperation = new CountOperation(getNamespace()).hint(new BsonString('y_1'))
         createIndexOperation.execute(getBinding())
 
+        when:
+        def count = countOperation.execute(getBinding())
+
         then:
-        countOperation.execute(getBinding()) == serverVersionAtLeast(2, 6) ? 1 : documents.size()
+        count == (serverVersionAtLeast(3, 4) ? 1 : documents.size())
     }
 
     @Category(Async)
     def 'should use hint with the count asynchronously'() {
         given:
         def createIndexOperation = new CreateIndexesOperation(getNamespace(),
-                                                              [new IndexRequest(new BsonDocument('x', new BsonInt32(1))).sparse(true)])
-        def countOperation = new CountOperation(getNamespace()).hint(new BsonString('x_1'))
-
-        when:
+                                                              [new IndexRequest(new BsonDocument('y', new BsonInt32(1))).sparse(true)])
+        def countOperation = new CountOperation(getNamespace()).hint(new BsonString('y_1'))
         executeAsync(createIndexOperation)
 
+        when:
+        def count = executeAsync(countOperation)
+
         then:
-        executeAsync(countOperation) == serverVersionAtLeast(2, 6) ? 1 : documents.size()
+        count == (serverVersionAtLeast(3, 4) ? 1 : documents.size())
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should throw with bad hint with mongod 2.6+'() {
         given:
         def countOperation = new CountOperation(getNamespace())
@@ -219,7 +233,6 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
     }
 
     @Category(Async)
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should throw with bad hint with mongod 2.6+ asynchronously'() {
         given:
         def countOperation = new CountOperation(getNamespace())
@@ -231,35 +244,6 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         thrown(MongoException)
-    }
-
-    @IgnoreIf({ serverVersionAtLeast(2, 6) })
-    def 'should ignore with bad hint with mongod < 2.6'() {
-        given:
-        def countOperation = new CountOperation(getNamespace())
-                .filter(new BsonDocument('a', new BsonInt32(1)))
-                .hint(new BsonString('BAD HINT'))
-
-        when:
-        countOperation.execute(getBinding())
-
-        then:
-        notThrown(MongoException)
-    }
-
-    @Category(Async)
-    @IgnoreIf({ serverVersionAtLeast(2, 6) })
-    def 'should ignore with bad hint with mongod < 2.6 asynchronously'() {
-        given:
-        def countOperation = new CountOperation(getNamespace())
-                .filter(new BsonDocument('a', new BsonInt32(1)))
-                .hint(new BsonString('BAD HINT'))
-
-        when:
-        executeAsync(countOperation)
-
-        then:
-        notThrown(MongoException)
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 0) || isSharded() })
@@ -380,6 +364,76 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
+    def 'should add read concern to command'() {
+        given:
+        def binding = Stub(ReadBinding)
+        def source = Stub(ConnectionSource)
+        def connection = Mock(Connection)
+        binding.readPreference >> ReadPreference.primary()
+        binding.readConnectionSource >> source
+        binding.sessionContext >> sessionContext
+        source.connection >> connection
+        source.retain() >> source
+        def commandDocument = new BsonDocument('count', new BsonString(getCollectionName()))
+        appendReadConcernToCommand(ReadConcern.MAJORITY, sessionContext, commandDocument)
+
+        def operation = new CountOperation(getNamespace())
+                .readConcern(ReadConcern.MAJORITY)
+
+        when:
+        operation.execute(binding)
+
+        then:
+        _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
+                new ServerVersion(3, 6), STANDALONE, 1000, 100000, 100000, [])
+        1 * connection.command(_, commandDocument, _, _, _, sessionContext) >>
+                new BsonDocument('n', new BsonInt64(42))
+        1 * connection.release()
+
+        where:
+        sessionContext << [
+                Stub(SessionContext) {
+                    isCausallyConsistent() >> true
+                    getOperationTime() >> new BsonTimestamp(42, 0)
+                }
+        ]
+    }
+
+    def 'should add read concern to command asynchronously'() {
+        given:
+        def binding = Stub(AsyncReadBinding)
+        def source = Stub(AsyncConnectionSource)
+        def connection = Mock(AsyncConnection)
+        binding.readPreference >> ReadPreference.primary()
+        binding.getReadConnectionSource(_) >> { it[0].onResult(source, null) }
+        binding.sessionContext >> sessionContext
+        source.getConnection(_) >> { it[0].onResult(connection, null) }
+        source.retain() >> source
+        def commandDocument = new BsonDocument('count', new BsonString(getCollectionName()))
+        appendReadConcernToCommand(ReadConcern.MAJORITY, sessionContext, commandDocument)
+
+        def operation = new CountOperation(getNamespace())
+                .readConcern(ReadConcern.MAJORITY)
+
+        when:
+        executeAsync(operation, binding)
+
+        then:
+        _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
+                new ServerVersion(3, 6), STANDALONE, 1000, 100000, 100000, [])
+        1 * connection.commandAsync(_, commandDocument, _, _, _, sessionContext, _) >> {
+            it[6].onResult(new BsonDocument('n', new BsonInt64(42)), null)
+        }
+        1 * connection.release()
+
+        where:
+        sessionContext << [
+                Stub(SessionContext) {
+                    isCausallyConsistent() >> true
+                    getOperationTime() >> new BsonTimestamp(42, 0)
+                }
+        ]
+    }
     def helper = [
         dbName: 'db',
         namespace: new MongoNamespace('db', 'coll'),

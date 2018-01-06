@@ -23,7 +23,7 @@ import org.bson.io.BsonOutput;
  *
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-get-more OP_GET_MORE
  */
-class GetMoreMessage extends RequestMessage {
+class GetMoreMessage extends LegacyMessage {
     private final long cursorId;
     private final int numberToReturn;
 
@@ -43,14 +43,9 @@ class GetMoreMessage extends RequestMessage {
     }
 
     @Override
-    protected RequestMessage encodeMessageBody(final BsonOutput bsonOutput, final int messageStartPosition) {
-        return encodeMessageBodyWithMetadata(bsonOutput, messageStartPosition).getNextMessage();
-    }
-
-    @Override
-    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final int messageStartPosition) {
+    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput) {
         writeGetMore(bsonOutput);
-        return new EncodingMetadata(null, bsonOutput.getPosition());
+        return new EncodingMetadata(bsonOutput.getPosition());
     }
 
     private void writeGetMore(final BsonOutput buffer) {

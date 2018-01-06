@@ -17,12 +17,19 @@
 package com.mongodb.connection
 
 import category.Async
+import com.mongodb.MongoNamespace
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.internal.connection.NoOpSessionContext
+import com.mongodb.internal.validator.NoOpFieldNameValidator
+import org.bson.BsonDocument
+import org.bson.BsonInt32
+import org.bson.codecs.BsonDocumentCodec
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
+import static com.mongodb.ReadPreference.primary
 import static java.util.concurrent.TimeUnit.SECONDS
 
 class UsageTrackingConnectionSpecification extends Specification {
@@ -154,6 +161,42 @@ class UsageTrackingConnectionSpecification extends Specification {
 
         when:
         connection.receiveMessageAsync(1, futureResultCallback)
+        futureResultCallback.get(60, SECONDS)
+
+        then:
+        connection.lastUsedAt >= openedLastUsedAt
+        connection.lastUsedAt <= System.currentTimeMillis()
+    }
+
+    def 'lastUsedAt should be set on sendAndReceive'() {
+        given:
+        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);
+        connection.open()
+        def openedLastUsedAt = connection.lastUsedAt
+
+        when:
+        connection.sendAndReceive(new CommandMessage(new MongoNamespace('test.coll'),
+                new BsonDocument('ping', new BsonInt32(1)), new NoOpFieldNameValidator(), primary(),
+                MessageSettings.builder().serverVersion(new ServerVersion(0, 0)).build()),
+                new BsonDocumentCodec(), NoOpSessionContext.INSTANCE)
+
+        then:
+        connection.lastUsedAt >= openedLastUsedAt
+        connection.lastUsedAt <= System.currentTimeMillis()
+    }
+
+    def 'lastUsedAt should be set on sendAndReceive asynchronously'() {
+        given:
+        def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);
+        connection.open()
+        def openedLastUsedAt = connection.lastUsedAt
+        def futureResultCallback = new FutureResultCallback<Void>()
+
+        when:
+        connection.sendAndReceiveAsync(new CommandMessage(new MongoNamespace('test.coll'),
+                new BsonDocument('ping', new BsonInt32(1)), new NoOpFieldNameValidator(), primary(),
+                MessageSettings.builder().serverVersion(new ServerVersion(0, 0)).build()),
+                new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, futureResultCallback)
         futureResultCallback.get(60, SECONDS)
 
         then:

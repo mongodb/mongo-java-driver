@@ -34,6 +34,14 @@ public final class ServerHelper {
         checkPool(address, getAsyncCluster());
     }
 
+    public static void waitForLastRelease(final Cluster cluster) {
+        for (ServerDescription cur : cluster.getCurrentDescription().getServerDescriptions()) {
+            if (cur.isOk()) {
+                waitForLastRelease(cur.getAddress(), cluster);
+            }
+        }
+    }
+
     public static void waitForLastRelease(final ServerAddress address, final Cluster cluster) {
         DefaultServer server = (DefaultServer) cluster.selectServer(new ServerAddressSelector(address));
         DefaultConnectionPool connectionProvider = (DefaultConnectionPool) server.getConnectionPool();

@@ -17,7 +17,9 @@
 package com.mongodb.operation;
 
 import com.mongodb.MongoCommandException;
+import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.binding.ConnectionSource;
@@ -29,6 +31,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
+import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
 
@@ -44,6 +47,7 @@ import static com.mongodb.operation.QueryHelper.translateCommandException;
 import static java.util.Collections.singletonList;
 
 class QueryBatchCursor<T> implements BatchCursor<T> {
+    private static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator();
     private final MongoNamespace namespace;
     private final int limit;
     private final Decoder<T> decoder;
@@ -53,10 +57,10 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
     private ServerCursor serverCursor;
     private List<T> nextBatch;
     private int count;
-    private boolean closed;
+    private volatile boolean closed;
 
     QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize, final Decoder<T> decoder) {
-        this(firstQueryResult, limit, batchSize, decoder, (ConnectionSource) null);
+        this(firstQueryResult, limit, batchSize, decoder, null);
     }
 
     QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize,
@@ -103,6 +107,9 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
 
         while (serverCursor != null) {
             getMore();
+            if (closed) {
+                throw new IllegalStateException("Cursor has been closed");
+            }
             if (nextBatch != null) {
                 return true;
             }
@@ -208,16 +215,16 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
                 try {
                     initFromCommandResult(connection.command(namespace.getDatabaseName(),
                                                              asGetMoreCommandDocument(),
-                                                             false,
-                                                             new NoOpFieldNameValidator(),
-                                                             CommandResultDocumentCodec.create(decoder, "nextBatch")));
+                                                             NO_OP_FIELD_NAME_VALIDATOR,
+                                                             ReadPreference.primary(),
+                                                             CommandResultDocumentCodec.create(decoder, "nextBatch"),
+                                                             connectionSource.getSessionContext()));
                 } catch (MongoCommandException e) {
                     throw translateCommandException(e, serverCursor);
                 }
             } else {
                 initFromQueryResult(connection.getMore(namespace, serverCursor.getId(),
-                                                       getNumberToReturn(limit, batchSize, count),
-                                                       decoder));
+                        getNumberToReturn(limit, batchSize, count), decoder));
             }
             if (limitReached()) {
                 killCursor(connection);
@@ -263,6 +270,8 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
             Connection connection = connectionSource.getConnection();
             try {
                 killCursor(connection);
+            } catch (MongoException e) {
+                // Ignore exceptions from calling killCursor
             } finally {
                 connection.release();
             }
@@ -273,8 +282,8 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
         if (serverCursor != null) {
             notNull("connection", connection);
             if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
-                connection.command(namespace.getDatabaseName(), asKillCursorsCommandDocument(), false,
-                        new NoOpFieldNameValidator(), new BsonDocumentCodec());
+                connection.command(namespace.getDatabaseName(), asKillCursorsCommandDocument(), NO_OP_FIELD_NAME_VALIDATOR,
+                        ReadPreference.primary(), new BsonDocumentCodec(), connectionSource.getSessionContext());
             } else {
                 connection.killCursor(namespace, singletonList(serverCursor.getId()));
             }

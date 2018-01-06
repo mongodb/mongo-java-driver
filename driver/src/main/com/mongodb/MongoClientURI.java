@@ -42,6 +42,27 @@ import static com.mongodb.assertions.Assertions.notNull;
  * are separated by "&amp;". For backwards compatibility, ";" is accepted as a separator in addition to "&amp;",
  * but should be considered as deprecated.</li>
  * </ul>
+ * <p>An alternative format, using the mongodb+srv protocol, is:
+ * <pre>
+ *   mongodb+srv://[username:password@]host[/[database][?options]]
+ * </pre>
+ * <ul>
+ * <li>{@code mongodb+srv://} is a required prefix for this format.</li>
+ * <li>{@code username:password@} are optional.  If given, the driver will attempt to login to a database after
+ * connecting to a database server.  For some authentication mechanisms, only the username is specified and the password is not,
+ * in which case the ":" after the username is left off as well</li>
+ * <li>{@code host} is the only required part of the URI.  It identifies a single host name for which SRV records are looked up
+ * from a Domain Name Server after prefixing the host name with {@code "_mongodb._tcp"}.  The host/port for each SRV record becomes the
+ * seed list used to connect, as if each one were provided as host/port pair in a URI using the normal mongodb protocol.</li>
+ * <li>{@code /database} is the name of the database to login to and thus is only relevant if the
+ * {@code username:password@} syntax is used. If not specified the "admin" database will be used by default.</li>
+ * <li>{@code ?options} are connection options. Note that if {@code database} is absent there is still a {@code /}
+ * required between the last host and the {@code ?} introducing the options. Options are name=value pairs and the pairs
+ * are separated by "&amp;". For backwards compatibility, ";" is accepted as a separator in addition to "&amp;",
+ * but should be considered as deprecated. Additionally with the mongodb+srv protocol, TXT records are looked up from a Domain Name
+ * Server for the given host, and the text value of each one is prepended to any options on the URI itself.  Because the last specified
+ * value for any option wins, that means that options provided on the URI will override any that are provided via TXT records.</li>
+ * </ul>
  * <p>The following options are supported (case insensitive):</p>
  *
  * <p>Server Selection Configuration:</p>
@@ -68,6 +89,8 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <li>{@code sslInvalidHostNameAllowed=true|false}: Whether to allow invalid host names for SSL connections.</li>
  * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
  * <li>{@code socketTimeoutMS=ms}: How long a send or receive on a socket can take before timing out.</li>
+ * <li>{@code maxIdleTimeMS=ms}: Maximum idle time of a pooled connection. A connection that exceeds this limit will be closed</li>
+ * <li>{@code maxLifeTimeMS=ms}: Maximum life time of a pooled connection. A connection that exceeds this limit will be closed</li>
  * </ul>
  *
  * <p>Connection pool configuration:</p>
@@ -108,7 +131,10 @@ import static com.mongodb.assertions.Assertions.notNull;
  *          <li>Used in combination with {@code w}</li>
  *      </ul>
  *  </li>
+ *  <li>{@code retryWrites=true|false}. If true the driver will retry supported write operations if they fail due to a network error.
+ *  Defaults to false.</li>
  * </ul>
+ *
  *
  * <p>Read preference configuration:</p>
  * <ul>
@@ -162,6 +188,13 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <li>{@code appName=string}: Sets the logical name of the application.  The application name may be used by the client to identify
  * the application to the server, for use in server logs, slow query logs, and profile collection.</li>
  * </ul>
+ * <p>Compressor configuration:</p>
+ * <ul>
+ * <li>{@code compressors=string}: A comma-separated list of compressors to request from the server.  The supported compressors
+ * currently are 'zlib' and 'snappy'.</li>
+ * <li>{@code zlibCompressionLevel=integer}: Integer value from -1 to 9 representing the zlib compression level. Lower values will make
+ * compression faster, while higher values will make compression better.</li>
+ * </ul>
  *
  * <p>Note: This class is a replacement for {@code MongoURI}, to be used with {@code MongoClient}.  The main difference in
  * behavior is that the default write concern is {@code WriteConcern.ACKNOWLEDGED}.</p>
@@ -200,7 +233,6 @@ public class MongoClientURI {
         this.builder = notNull("builder", builder);
         proxied = new ConnectionString(uri);
     }
-
 
     // ---------------------------------
 
@@ -265,11 +297,7 @@ public class MongoClientURI {
      * @return the credentials
      */
     public MongoCredential getCredentials() {
-        if (proxied.getCredentialList().isEmpty()) {
-            return null;
-        } else {
-            return proxied.getCredentialList().get(0);
-        }
+        return proxied.getCredential();
     }
 
     /**
@@ -286,6 +314,9 @@ public class MongoClientURI {
         }
         if (proxied.getWriteConcern() != null) {
             builder.writeConcern(proxied.getWriteConcern());
+        }
+        if (proxied.getRetryWrites()) {
+            builder.retryWrites(proxied.getRetryWrites());
         }
         if (proxied.getMaxConnectionPoolSize() != null) {
             builder.connectionsPerHost(proxied.getMaxConnectionPoolSize());
@@ -332,6 +363,7 @@ public class MongoClientURI {
         if (proxied.getApplicationName() != null) {
             builder.applicationName(proxied.getApplicationName());
         }
+        builder.compressorList(proxied.getCompressorList());
 
         return builder.build();
     }

@@ -27,6 +27,7 @@ import org.bson.codecs.pojo.annotations.BsonProperty;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -101,59 +102,118 @@ final class ConventionAnnotationImpl implements Convention {
         Class<T> clazz = classModelBuilder.getType();
         CreatorExecutable<T> creatorExecutable = null;
         for (Constructor<?> constructor : clazz.getDeclaredConstructors()) {
-            if (isPublic(constructor.getModifiers())) {
+            if (isPublic(constructor.getModifiers()) && !constructor.isSynthetic()) {
                 for (Annotation annotation : constructor.getDeclaredAnnotations()) {
                     if (annotation.annotationType().equals(BsonCreator.class)) {
+                        if (creatorExecutable != null) {
+                            throw new CodecConfigurationException("Found multiple constructors annotated with @BsonCreator");
+                        }
                         creatorExecutable = new CreatorExecutable<T>(clazz, (Constructor<T>) constructor);
-                        break;
                     }
                 }
             }
         }
 
-        for (Method method : clazz.getDeclaredMethods()) {
-            if (isStatic(method.getModifiers())) {
-                for (Annotation annotation : method.getDeclaredAnnotations()) {
-                    if (annotation.annotationType().equals(BsonCreator.class)) {
-                        if (creatorExecutable != null) {
-                            throw new CodecConfigurationException("Found multiple constructors / methods annotated with @BsonCreator");
-                        } else if (!clazz.isAssignableFrom(method.getReturnType())) {
-                            throw new CodecConfigurationException(
-                                    format("Invalid method annotated with @BsonCreator. Returns '%s', expected %s", method.getReturnType(),
-                                            clazz));
+        Class<?> bsonCreatorClass = clazz;
+        boolean foundStaticBsonCreatorMethod = false;
+        while (bsonCreatorClass != null && !foundStaticBsonCreatorMethod) {
+            for (Method method : bsonCreatorClass.getDeclaredMethods()) {
+                if (isStatic(method.getModifiers()) && !method.isSynthetic() && !method.isBridge()) {
+                    for (Annotation annotation : method.getDeclaredAnnotations()) {
+                        if (annotation.annotationType().equals(BsonCreator.class)) {
+                            if (creatorExecutable != null) {
+                                throw new CodecConfigurationException("Found multiple constructors / methods annotated with @BsonCreator");
+                            } else if (!bsonCreatorClass.isAssignableFrom(method.getReturnType())) {
+                                throw new CodecConfigurationException(
+                                        format("Invalid method annotated with @BsonCreator. Returns '%s', expected %s",
+                                                method.getReturnType(), bsonCreatorClass));
+                            }
+                            creatorExecutable = new CreatorExecutable<T>(clazz, method);
+                            foundStaticBsonCreatorMethod = true;
                         }
-                        creatorExecutable = new CreatorExecutable<T>(clazz, method);
-                        break;
                     }
                 }
             }
+
+            bsonCreatorClass = bsonCreatorClass.getSuperclass();
         }
 
         if (creatorExecutable != null) {
             List<BsonProperty> properties = creatorExecutable.getProperties();
             List<Class<?>> parameterTypes = creatorExecutable.getParameterTypes();
+            List<Type> parameterGenericTypes = creatorExecutable.getParameterGenericTypes();
+
             if (properties.size() != parameterTypes.size()) {
-                throw creatorExecutable.getError("All parameters must be annotated with a @Property");
+                throw creatorExecutable.getError(clazz, "All parameters in the @BsonCreator method / constructor must be annotated "
+                                + "with a @BsonProperty.");
             }
             for (int i = 0; i < properties.size(); i++) {
-                BsonProperty bsonProperty = properties.get(i);
+                boolean isIdProperty = creatorExecutable.getIdPropertyIndex() != null && creatorExecutable.getIdPropertyIndex().equals(i);
                 Class<?> parameterType = parameterTypes.get(i);
-                PropertyModelBuilder<?> propertyModelBuilder = classModelBuilder.getProperty(bsonProperty.value());
-                if (propertyModelBuilder == null) {
-                    addCreatorPropertyToClassModelBuilder(classModelBuilder, bsonProperty.value(), parameterType);
-                } else if (propertyModelBuilder.getTypeData().getType() != parameterType) {
-                    throw creatorExecutable.getError(format("Invalid Property type for '%s'. Expected %s, found %s.", bsonProperty.value(),
-                            propertyModelBuilder.getTypeData().getType(), parameterType));
+                Type genericType = parameterGenericTypes.get(i);
+                PropertyModelBuilder<?> propertyModelBuilder = null;
+
+                if (isIdProperty) {
+                    propertyModelBuilder = classModelBuilder.getProperty(classModelBuilder.getIdPropertyName());
+                } else {
+                    BsonProperty bsonProperty = properties.get(i);
+
+                    // Find the property using write name and falls back to read name
+                    for (PropertyModelBuilder<?> builder : classModelBuilder.getPropertyModelBuilders()) {
+                        if (bsonProperty.value().equals(builder.getWriteName())) {
+                            propertyModelBuilder = builder;
+                            break;
+                        } else if (bsonProperty.value().equals(builder.getReadName())) {
+                            // When there is a property that matches the read name of the parameter, save it but continue to look
+                            // This is just in case there is another property that matches the write name.
+                            propertyModelBuilder = builder;
+                        }
+                    }
+
+                    // Support legacy options, when BsonProperty matches the actual POJO property name (e.g. method name or field name).
+                    if (propertyModelBuilder == null) {
+                        propertyModelBuilder = classModelBuilder.getProperty(bsonProperty.value());
+                    }
+
+                    if (propertyModelBuilder == null) {
+                        propertyModelBuilder = addCreatorPropertyToClassModelBuilder(classModelBuilder, bsonProperty.value(),
+                            parameterType);
+                    } else {
+                        // If not using a legacy BsonProperty reference to the property set the write name to be the annotated name.
+                        if (!bsonProperty.value().equals(propertyModelBuilder.getName())) {
+                            propertyModelBuilder.writeName(bsonProperty.value());
+                        }
+                        tryToExpandToGenericType(parameterType, propertyModelBuilder, genericType);
+                    }
+                }
+
+                if (!propertyModelBuilder.getTypeData().isAssignableFrom(parameterType)) {
+                    throw creatorExecutable.getError(clazz, format("Invalid Property type for '%s'. Expected %s, found %s.",
+                        propertyModelBuilder.getWriteName(), propertyModelBuilder.getTypeData().getType(), parameterType));
                 }
             }
             classModelBuilder.instanceCreatorFactory(new InstanceCreatorFactoryImpl<T>(creatorExecutable));
         }
     }
 
-    private <T, S> void addCreatorPropertyToClassModelBuilder(final ClassModelBuilder<T> classModelBuilder, final String name,
-                                                              final Class<S> clazz) {
-        classModelBuilder.addProperty(createPropertyModelBuilder(new PropertyMetadata<S>(name, classModelBuilder.getType().getSimpleName(),
-                TypeData.builder(clazz).build())).readName(null).writeName(name));
+    @SuppressWarnings("unchecked")
+    private static <T> void tryToExpandToGenericType(final Class<?> parameterType, final PropertyModelBuilder<T> propertyModelBuilder,
+                                                     final Type genericType) {
+        if (parameterType.isAssignableFrom(propertyModelBuilder.getTypeData().getType())) {
+            // The existing getter for this field returns a more specific type than what the constructor accepts
+            // This is typical when the getter returns a specific subtype, but the constructor accepts a more
+            // general one (e.g.: getter returns ImmutableList<T>, while constructor just accepts List<T>)
+            propertyModelBuilder.typeData(TypeData.newInstance(genericType, (Class<T>) parameterType));
+        }
+    }
+
+    private <T, S> PropertyModelBuilder<S> addCreatorPropertyToClassModelBuilder(final ClassModelBuilder<T> classModelBuilder,
+                                                                                 final String name,
+                                                                                 final Class<S> clazz) {
+        PropertyModelBuilder<S> propertyModelBuilder = createPropertyModelBuilder(new PropertyMetadata<S>(name,
+            classModelBuilder.getType().getSimpleName(), TypeData.builder(clazz).build())).readName(null).writeName(name);
+        classModelBuilder.addProperty(propertyModelBuilder);
+        return propertyModelBuilder;
     }
 
     private void cleanPropertyBuilders(final ClassModelBuilder<?> classModelBuilder) {

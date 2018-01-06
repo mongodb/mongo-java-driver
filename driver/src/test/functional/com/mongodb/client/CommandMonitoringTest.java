@@ -66,7 +66,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.Fixture.getMongoClientURI;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
@@ -143,7 +143,7 @@ public class CommandMonitoringTest {
                 } else if (typeString.equals("replica_set")) {
                     assumeFalse(isDiscoverableReplicaSet());
                 } else if (typeString.equals("standalone")) {
-                    assumeFalse(isSharded());
+                    assumeFalse(isStandalone());
                 }
             }
         }
@@ -175,9 +175,6 @@ public class CommandMonitoringTest {
 
     @Test
     public void shouldPassAllOutcomes() {
-        // On server <= 2.4, insertMany generates an insert command for every document, so the test fails
-        assumeFalse(filename.startsWith("insertMany") && !serverVersionAtLeast(2, 6));
-
         executeOperation();
 
         List<CommandEvent> expectedEvents = getExpectedEvents(definition.getArray("expectations"));
@@ -286,6 +283,8 @@ public class CommandMonitoringTest {
         } else if (actual.getCommandName().equals("killCursors")) {
             command.getArray("cursors").set(0, new BsonInt64(42));
         }
+        command.remove("$clusterTime");
+        command.remove("lsid");
 
         return new CommandStartedEvent(actual.getRequestId(), actual.getConnectionDescription(), actual.getDatabaseName(),
                 actual.getCommandName(), command);
@@ -306,17 +305,24 @@ public class CommandMonitoringTest {
             String eventType = curExpectedEventDocument.keySet().iterator().next();
             BsonDocument eventDescriptionDocument = curExpectedEventDocument.getDocument(eventType);
             CommandEvent commandEvent;
+            String commandName = eventDescriptionDocument.getString("command_name").getValue();
             if (eventType.equals("command_started_event")) {
-                commandEvent = new CommandStartedEvent(1, null, databaseName,
-                                                       eventDescriptionDocument.getString("command_name").getValue(),
-                                                       eventDescriptionDocument.getDocument("command"));
+                BsonDocument commandDocument = eventDescriptionDocument.getDocument("command");
+                // Not clear whether these global fields should be included, but also not clear how to efficiently exclude them
+                if (ClusterFixture.serverVersionAtLeast(3, 6)) {
+                    commandDocument.put("$db", new BsonString(databaseName));
+                    BsonDocument operation = definition.getDocument("operation");
+                    if (operation.containsKey("read_preference")) {
+                        commandDocument.put("$readPreference", operation.getDocument("read_preference"));
+                    }
+                }
+                commandEvent = new CommandStartedEvent(1, null, databaseName, commandName, commandDocument);
             } else if (eventType.equals("command_succeeded_event")) {
                 BsonDocument replyDocument = eventDescriptionDocument.get("reply").asDocument();
-                commandEvent = new CommandSucceededEvent(1, null, eventDescriptionDocument.getString("command_name").getValue(),
-                                                         replyDocument, 1);
+                commandEvent = new CommandSucceededEvent(1, null, commandName, replyDocument, 1);
 
             } else if (eventType.equals("command_failed_event")) {
-                commandEvent = new CommandFailedEvent(1, null, eventDescriptionDocument.getString("command_name").getValue(), 1, null);
+                commandEvent = new CommandFailedEvent(1, null, commandName, 1, null);
             } else {
                 throw new UnsupportedOperationException("Unsupported command event type: " + eventType);
             }
@@ -324,7 +330,6 @@ public class CommandMonitoringTest {
         }
         return expectedEvents;
     }
-
 
     private BsonDocument getWritableCloneOfCommand(final BsonDocument original) {
         BsonDocument clone = new BsonDocument();

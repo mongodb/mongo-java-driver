@@ -28,7 +28,7 @@ import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CreateCollectionOperation;
 import com.mongodb.operation.CreateViewOperation;
 import com.mongodb.operation.DropDatabaseOperation;
-import com.mongodb.operation.OperationExecutor;
+import com.mongodb.session.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -37,7 +37,6 @@ import org.bson.conversions.Bson;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.mongodb.MongoClient.getDefaultCodecRegistry;
 import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -46,16 +45,19 @@ class MongoDatabaseImpl implements MongoDatabase {
     private final ReadPreference readPreference;
     private final CodecRegistry codecRegistry;
     private final WriteConcern writeConcern;
+    private final boolean retryWrites;
     private final ReadConcern readConcern;
     private final OperationExecutor executor;
 
     MongoDatabaseImpl(final String name, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                      final WriteConcern writeConcern, final ReadConcern readConcern, final OperationExecutor executor) {
+                      final WriteConcern writeConcern, final boolean retryWrites, final ReadConcern readConcern,
+                      final OperationExecutor executor) {
         checkDatabaseNameValidity(name);
         this.name = notNull("name", name);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.readPreference = notNull("readPreference", readPreference);
         this.writeConcern = notNull("writeConcern", writeConcern);
+        this.retryWrites = retryWrites;
         this.readConcern = notNull("readConcern", readConcern);
         this.executor = notNull("executor", executor);
     }
@@ -87,22 +89,22 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public MongoDatabase withCodecRegistry(final CodecRegistry codecRegistry) {
-        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, executor);
+        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, readConcern, executor);
     }
 
     @Override
     public MongoDatabase withReadPreference(final ReadPreference readPreference) {
-        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, executor);
+        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, readConcern, executor);
     }
 
     @Override
     public MongoDatabase withWriteConcern(final WriteConcern writeConcern) {
-        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, executor);
+        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, readConcern, executor);
     }
 
     @Override
     public MongoDatabase withReadConcern(final ReadConcern readConcern) {
-        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, readConcern, executor);
+        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, readConcern, executor);
     }
 
     @Override
@@ -113,7 +115,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public <TDocument> MongoCollection<TDocument> getCollection(final String collectionName, final Class<TDocument> documentClass) {
         return new MongoCollectionImpl<TDocument>(new MongoNamespace(name, collectionName), documentClass, codecRegistry, readPreference,
-                                                  writeConcern, readConcern, executor);
+                                                  writeConcern, retryWrites, readConcern, executor);
     }
 
     @Override
@@ -133,25 +135,72 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public <TResult> TResult runCommand(final Bson command, final ReadPreference readPreference, final Class<TResult> resultClass) {
+        return executeCommand(null, command, readPreference, resultClass);
+    }
+
+    @Override
+    public Document runCommand(final ClientSession clientSession, final Bson command) {
+        return runCommand(clientSession, command, ReadPreference.primary(), Document.class);
+    }
+
+    @Override
+    public Document runCommand(final ClientSession clientSession, final Bson command, final ReadPreference readPreference) {
+        return runCommand(clientSession, command, readPreference, Document.class);
+    }
+
+    @Override
+    public <TResult> TResult runCommand(final ClientSession clientSession, final Bson command, final Class<TResult> resultClass) {
+        return runCommand(clientSession, command, ReadPreference.primary(), resultClass);
+    }
+
+    @Override
+    public <TResult> TResult runCommand(final ClientSession clientSession, final Bson command, final ReadPreference readPreference,
+                                        final Class<TResult> resultClass) {
+        notNull("clientSession", clientSession);
+        return executeCommand(clientSession, command, readPreference, resultClass);
+    }
+
+    private <TResult> TResult executeCommand(final ClientSession clientSession, final Bson command, final ReadPreference readPreference,
+                                             final Class<TResult> resultClass) {
         notNull("readPreference", readPreference);
         return executor.execute(new CommandReadOperation<TResult>(getName(), toBsonDocument(command), codecRegistry.get(resultClass)),
-                readPreference);
+                readPreference, clientSession);
     }
 
     @Override
     public void drop() {
-        executor.execute(new DropDatabaseOperation(name, getWriteConcern()));
+        executeDrop(null);
+    }
+
+    @Override
+    public void drop(final ClientSession clientSession) {
+        notNull("clientSession", clientSession);
+        executeDrop(clientSession);
+    }
+
+    private void executeDrop(final ClientSession clientSession) {
+        executor.execute(new DropDatabaseOperation(name, getWriteConcern()), clientSession);
     }
 
     @Override
     public MongoIterable<String> listCollectionNames() {
-        return new ListCollectionsIterableImpl<BsonDocument>(name, BsonDocument.class, getDefaultCodecRegistry(), ReadPreference.primary(),
-                executor).map(new Function<BsonDocument, String>() {
-            @Override
-            public String apply(final BsonDocument result) {
-                return result.getString("name").getValue();
-            }
-        });
+        return createListCollectionNamesIterable(null);
+    }
+
+    @Override
+    public MongoIterable<String> listCollectionNames(final ClientSession clientSession) {
+        notNull("clientSession", clientSession);
+        return createListCollectionNamesIterable(clientSession);
+    }
+
+    private MongoIterable<String> createListCollectionNamesIterable(final ClientSession clientSession) {
+        return createListCollectionsIterable(clientSession, BsonDocument.class)
+                       .map(new Function<BsonDocument, String>() {
+                           @Override
+                           public String apply(final BsonDocument result) {
+                               return result.getString("name").getValue();
+                           }
+                       });
     }
 
     @Override
@@ -161,7 +210,24 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public <TResult> ListCollectionsIterable<TResult> listCollections(final Class<TResult> resultClass) {
-        return new ListCollectionsIterableImpl<TResult>(name, resultClass, codecRegistry, ReadPreference.primary(), executor);
+        return createListCollectionsIterable(null, resultClass);
+    }
+
+    @Override
+    public ListCollectionsIterable<Document> listCollections(final ClientSession clientSession) {
+        return listCollections(clientSession, Document.class);
+    }
+
+    @Override
+    public <TResult> ListCollectionsIterable<TResult> listCollections(final ClientSession clientSession, final Class<TResult> resultClass) {
+        notNull("clientSession", clientSession);
+        return createListCollectionsIterable(clientSession, resultClass);
+    }
+
+    private <TResult> ListCollectionsIterable<TResult> createListCollectionsIterable(final ClientSession clientSession,
+                                                                                     final Class<TResult> resultClass) {
+        return new ListCollectionsIterableImpl<TResult>(clientSession, name, resultClass, codecRegistry, ReadPreference.primary(),
+                                                               executor);
     }
 
     @Override
@@ -170,8 +236,25 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public void createCollection(final String collectionName, final CreateCollectionOptions createCollectionOptions) {
+        executeCreateCollection(null, collectionName, createCollectionOptions);
+    }
+
+    @Override
+    public void createCollection(final ClientSession clientSession, final String collectionName) {
+        createCollection(clientSession, collectionName, new CreateCollectionOptions());
+    }
+
+    @Override
+    public void createCollection(final ClientSession clientSession, final String collectionName,
+                                 final CreateCollectionOptions createCollectionOptions) {
+        notNull("clientSession", clientSession);
+        executeCreateCollection(clientSession, collectionName, createCollectionOptions);
+    }
+
+    @SuppressWarnings("deprecation")
+    private void executeCreateCollection(final ClientSession clientSession, final String collectionName,
+                                         final CreateCollectionOptions createCollectionOptions) {
         CreateCollectionOperation operation = new CreateCollectionOperation(name, collectionName, writeConcern)
                 .collation(createCollectionOptions.getCollation())
                 .capped(createCollectionOptions.isCapped())
@@ -195,7 +278,7 @@ class MongoDatabaseImpl implements MongoDatabase {
         if (validationOptions.getValidationAction() != null) {
             operation.validationAction(validationOptions.getValidationAction());
         }
-        executor.execute(operation);
+        executor.execute(operation, clientSession);
     }
 
     @Override
@@ -206,9 +289,28 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public void createView(final String viewName, final String viewOn, final List<? extends Bson> pipeline,
                            final CreateViewOptions createViewOptions) {
+        executeCreateView(null, viewName, viewOn, pipeline, createViewOptions);
+    }
+
+    @Override
+    public void createView(final ClientSession clientSession, final String viewName, final String viewOn,
+                           final List<? extends Bson> pipeline) {
+        createView(clientSession, viewName, viewOn, pipeline, new CreateViewOptions());
+    }
+
+    @Override
+    public void createView(final ClientSession clientSession, final String viewName, final String viewOn,
+                           final List<? extends Bson> pipeline, final CreateViewOptions createViewOptions) {
+        notNull("clientSession", clientSession);
+        executeCreateView(clientSession, viewName, viewOn, pipeline, createViewOptions);
+    }
+
+    private void executeCreateView(final ClientSession clientSession, final String viewName, final String viewOn,
+                                   final List<? extends Bson> pipeline, final CreateViewOptions createViewOptions) {
         notNull("createViewOptions", createViewOptions);
         executor.execute(new CreateViewOperation(name, viewName, viewOn, createBsonDocumentList(pipeline), writeConcern)
-                .collation(createViewOptions.getCollation()));
+                                 .collation(createViewOptions.getCollation()),
+                clientSession);
     }
 
     private List<BsonDocument> createBsonDocumentList(final List<? extends Bson> pipeline) {

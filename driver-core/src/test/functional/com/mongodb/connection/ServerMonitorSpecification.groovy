@@ -200,13 +200,14 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
                 .hosts(new HashSet<String>(asList('localhost:27017', 'localhost:27018')))
                 .passives(new HashSet<String>(asList('localhost:27019')))
                 .arbiters(new HashSet<String>(asList('localhost:27020')))
-                .version(new ServerVersion(asList(2, 4, 1)))
+                .version(new ServerVersion(asList(3, 4, 1)))
                 .electionId(new ObjectId('abcdabcdabcdabcdabcdabcd'))
                 .setVersion(2)
     }
 
     def initializeServerMonitor(ServerAddress address) {
         serverMonitor = new DefaultServerMonitor(new ServerId(new ClusterId(), address), ServerSettings.builder().build(),
+                new ClusterClock(),
                 new ChangeListener<ServerDescription>() {
                     @Override
                     void stateChanged(final ChangeEvent<ServerDescription> event) {
@@ -215,7 +216,7 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
                     }
                 },
                 new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
-                        getSslSettings()), getCredentialList(), null, null),
+                        getSslSettings()), getCredentialList(), null, null, [], null),
                 new TestConnectionPool())
         serverMonitor.start()
         serverMonitor

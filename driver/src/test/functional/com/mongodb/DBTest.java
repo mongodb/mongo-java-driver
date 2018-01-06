@@ -283,7 +283,6 @@ public class DBTest extends DatabaseTestCase {
     @Test(expected = MongoExecutionTimeoutException.class)
     public void shouldTimeOutCommand() {
         assumeThat(isSharded(), is(false));
-        assumeTrue(serverVersionAtLeast(2, 6));
         enableMaxTimeFailPoint();
         try {
             database.command(new BasicDBObject("isMaster", 1).append("maxTimeMS", 1));
@@ -389,7 +388,7 @@ public class DBTest extends DatabaseTestCase {
 
     @Test
     public void shouldReturnFailureWithErrorMessageWhenExecutingInvalidCommand() {
-        assumeTrue(serverVersionAtLeast(2, 4) || !isSharded());
+        assumeTrue(!isSharded());
 
         // When
         CommandResult commandResult = database.command(new BasicDBObject("NotRealCommandName", 1));

@@ -20,7 +20,6 @@ import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 import org.bson.codecs.pojo.entities.ConcreteCollectionsModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
-import org.bson.codecs.pojo.entities.InvalidMapModel;
 import org.bson.codecs.pojo.entities.NestedGenericHolderModel;
 import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.UpperBoundsModel;
@@ -29,7 +28,7 @@ import org.junit.Test;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -107,10 +106,10 @@ public final class ClassModelBuilderTest {
         ClassModelBuilder<ConcreteCollectionsModel> builder =
                 ClassModel.builder(ConcreteCollectionsModel.class);
 
-        assertEquals(ArrayList.class, builder.getProperty("collection").getTypeData().getType());
-        assertEquals(ArrayList.class, builder.getProperty("list").getTypeData().getType());
+        assertEquals(Collection.class, builder.getProperty("collection").getTypeData().getType());
+        assertEquals(List.class, builder.getProperty("list").getTypeData().getType());
         assertEquals(LinkedList.class, builder.getProperty("linked").getTypeData().getType());
-        assertEquals(HashMap.class, builder.getProperty("map").getTypeData().getType());
+        assertEquals(Map.class, builder.getProperty("map").getTypeData().getType());
         assertEquals(ConcurrentHashMap.class, builder.getProperty("concurrent").getTypeData().getType());
     }
 
@@ -157,11 +156,6 @@ public final class ClassModelBuilderTest {
         ClassModelBuilder<SimpleGenericsModel> builder = ClassModel.builder(SimpleGenericsModel.class);
         builder.getProperty("myIntegerField").writeName("myGenericField");
         builder.build();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testIllegalMapKey() {
-        ClassModel.builder(InvalidMapModel.class).build();
     }
 
     private static final List<Annotation> TEST_ANNOTATIONS = Collections.<Annotation>singletonList(

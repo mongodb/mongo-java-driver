@@ -23,6 +23,7 @@ import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.session.ClientSession;
 import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.types.Binary;
@@ -39,6 +40,7 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 
 final class GridFSUploadStreamImpl implements GridFSUploadStream {
     private static final Logger LOGGER = Loggers.getLogger("client.gridfs");
+    private final ClientSession clientSession;
     private final MongoCollection<GridFSFile> filesCollection;
     private final MongoCollection<Document> chunksCollection;
     private final BsonValue fileId;
@@ -63,9 +65,10 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
     private int chunkIndex;
     /* accessed only when writing */
 
-    GridFSUploadStreamImpl(final MongoCollection<GridFSFile> filesCollection, final MongoCollection<Document> chunksCollection,
-                           final BsonValue fileId, final String filename, final int chunkSizeBytes, final Document metadata,
-                           final GridFSIndexCheck indexCheck) {
+    GridFSUploadStreamImpl(final ClientSession clientSession, final MongoCollection<GridFSFile> filesCollection,
+                           final MongoCollection<Document> chunksCollection, final BsonValue fileId, final String filename,
+                           final int chunkSizeBytes, final Document metadata, final GridFSIndexCheck indexCheck) {
+        this.clientSession = clientSession;
         this.filesCollection = notNull("files collection", filesCollection);
         this.chunksCollection = notNull("chunks collection", chunksCollection);
         this.fileId = notNull("File Id", fileId);
@@ -99,13 +102,20 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
         if (!takeWritingLock(errHandlingCallback)) {
             return;
         }
-        chunksCollection.deleteMany(new Document("files_id", fileId), new SingleResultCallback<DeleteResult>() {
+
+        SingleResultCallback<DeleteResult> deleteCallback = new SingleResultCallback<DeleteResult>() {
             @Override
             public void onResult(final DeleteResult result, final Throwable t) {
                 releaseWritingLock();
                 errHandlingCallback.onResult(null, t);
             }
-        });
+        };
+
+        if (clientSession != null) {
+            chunksCollection.deleteMany(clientSession, new Document("files_id", fileId), deleteCallback);
+        } else {
+            chunksCollection.deleteMany(new Document("files_id", fileId), deleteCallback);
+        }
     }
 
     @Override
@@ -167,21 +177,27 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
                     GridFSFile gridFSFile = new GridFSFile(fileId, filename, lengthInBytes, chunkSizeBytes, new Date(),
                             toHex(md5.digest()), metadata);
 
-                    filesCollection.insertOne(gridFSFile, new SingleResultCallback<Void>() {
+                    SingleResultCallback<Void> insertCallback = new SingleResultCallback<Void>() {
                         @Override
                         public void onResult(final Void result, final Throwable t) {
                             buffer = null;
                             releaseWritingLock();
                             errHandlingCallback.onResult(result, t);
                         }
-                    });
+                    };
+
+                    if (clientSession != null) {
+                        filesCollection.insertOne(clientSession, gridFSFile, insertCallback);
+                    } else {
+                        filesCollection.insertOne(gridFSFile, insertCallback);
+                    }
                 }
             }
         });
     }
 
     private void write(final int amount, final ByteBuffer src, final SingleResultCallback<Integer> callback) {
-        if (!takeWritingLock(callback)){
+        if (!takeWritingLock(callback)) {
             return;
         }
 
@@ -234,21 +250,25 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
         if (md5 == null) {
             callback.onResult(null, new MongoGridFSException("No MD5 message digest available, cannot upload file"));
         } else if (bufferOffset > 0) {
-            chunksCollection.insertOne(new Document("files_id", fileId).append("n", chunkIndex).append("data", getData()),
-                    new SingleResultCallback<Void>() {
-                        @Override
-                        public void onResult(final Void result, final Throwable t) {
-                            if (t != null) {
-                                callback.onResult(null, t);
-                            } else {
-                                md5.update(buffer);
-                                chunkIndex++;
-                                bufferOffset = 0;
-                                callback.onResult(null, null);
-                            }
-                        }
+            Document insertDocument = new Document("files_id", fileId).append("n", chunkIndex).append("data", getData());
+            SingleResultCallback<Void> insertCallback = new SingleResultCallback<Void>() {
+                @Override
+                public void onResult(final Void result, final Throwable t) {
+                    if (t != null) {
+                        callback.onResult(null, t);
+                    } else {
+                        md5.update(buffer);
+                        chunkIndex++;
+                        bufferOffset = 0;
+                        callback.onResult(null, null);
                     }
-            );
+                }
+            };
+            if (clientSession != null) {
+                chunksCollection.insertOne(clientSession, insertDocument, insertCallback);
+            } else {
+                chunksCollection.insertOne(insertDocument, insertCallback);
+            }
         } else {
             callback.onResult(null, null);
         }

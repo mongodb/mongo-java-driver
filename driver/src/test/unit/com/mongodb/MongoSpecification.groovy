@@ -20,11 +20,15 @@ import com.mongodb.connection.Cluster
 import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ClusterDescription
 import com.mongodb.connection.ClusterType
+import com.mongodb.operation.CurrentOpOperation
+import com.mongodb.operation.FsyncUnlockOperation
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import spock.lang.Specification
 import spock.lang.Subject
+
+import static com.mongodb.CustomMatchers.compare
 
 @SuppressWarnings('UnnecessaryParenthesesForMethodCallWithClosure')
 class MongoSpecification extends Specification {
@@ -94,16 +98,24 @@ class MongoSpecification extends Specification {
 
     def 'should lock and unlock as server'() {
         given:
-        DBCollection unlockCollection = Mock()
-        DBCollection inprogCollection = Mock()
-        DB db = Mock() {
-            getCollection('$cmd.sys.unlock') >> unlockCollection
-            getCollection('$cmd.sys.inprog') >> inprogCollection
-        }
+        DB db = Mock(DB)
         mongo = Spy(Mongo, constructorArgs: [cluster, MongoClientOptions.builder().build(), []]) {
-            getDB('admin') >> db
-            1 * execute(_, _) >> new BsonDocument('fsyncLock', BsonBoolean.TRUE)
-            1 * execute(_, _) >> new BsonDocument('ok', new BsonInt32(1))
+            1 * getDB('admin') >> db
+            1 * createOperationExecutor() >> {
+                Mock(OperationExecutor) {
+                    1 * execute({ compare(new CurrentOpOperation(), it) }, ReadPreference.primary()) >> {
+                        new BsonDocument('fsyncLock', BsonBoolean.TRUE)
+                    }
+                }
+            }
+            1 * createOperationExecutor() >> {
+                Mock(OperationExecutor) {
+                    1 * execute({ compare(new FsyncUnlockOperation(), it) }, ReadPreference.primary()) >> {
+                        new BsonDocument('ok', new BsonInt32(1))
+                    }
+                }
+
+            }
         }
 
         when:

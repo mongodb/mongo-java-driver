@@ -756,7 +756,13 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
         pipeDocument(reader, null);
     }
 
-    @Override
+    /**
+     * Reads a single document from the given BsonReader and writes it to this, appending the given extra elements to the document.
+     *
+     * @param reader the source of the document
+     * @param extraElements the extra elements to append to the document
+     * @since 3.6
+     */
     public void pipe(final BsonReader reader, final List<BsonElement> extraElements) {
         notNull("reader", reader);
         notNull("extraElements", extraElements);

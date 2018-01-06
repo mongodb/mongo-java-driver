@@ -16,6 +16,7 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
@@ -66,6 +67,8 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     private long maxTimeMS;
     private Boolean bypassDocumentValidation;
     private Collation collation;
+    private String comment;
+    private BsonDocument hint;
 
     /**
      * Construct a new instance.
@@ -94,8 +97,8 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
         this.pipeline = notNull("pipeline", pipeline);
         this.writeConcern = writeConcern;
 
-        isTrueArgument("pipeline is empty", !pipeline.isEmpty());
-        isTrueArgument("last stage of pipeline does not contain an output collection",
+        isTrueArgument("pipeline is not empty", !pipeline.isEmpty());
+        isTrueArgument("last stage of pipeline contains an output collection",
                 pipeline.get(pipeline.size() - 1).get("$out") != null);
     }
 
@@ -220,6 +223,67 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
         return this;
     }
 
+    /**
+     * Returns the comment to send with the aggregate. The default is not to include a comment with the aggregation.
+     *
+     * @return the comment
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public String getComment() {
+        return comment;
+    }
+
+    /**
+     * Sets the comment to the aggregation. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public AggregateToCollectionOperation comment(final String comment) {
+        this.comment = comment;
+        return this;
+    }
+
+    /**
+     * Returns the hint for which index to use. The default is not to set a hint.
+     *
+     * @return the hint
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public BsonDocument getHint() {
+        return hint;
+    }
+
+    /**
+     * Sets the hint for which index to use. A null value means no hint is set.
+     *
+     * @param hint the hint
+     * @return this
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public AggregateToCollectionOperation hint(final BsonDocument hint) {
+        this.hint = hint;
+        return this;
+    }
+
+    /**
+     * Gets an operation whose execution explains this operation.
+     *
+     * @param explainVerbosity the explain verbosity
+     * @return a read operation that when executed will explain this operation
+     */
+    public ReadOperation<BsonDocument> asExplainableOperation(final ExplainVerbosity explainVerbosity) {
+        return new AggregateExplainOperation(namespace, pipeline)
+                .allowDiskUse(allowDiskUse)
+                .maxTime(maxTimeMS, TimeUnit.MILLISECONDS)
+                .hint(hint);
+    }
+
     @Override
     public Void execute(final WriteBinding binding) {
         return withConnection(binding, new CallableWithConnection<Void>() {
@@ -279,6 +343,12 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
         appendWriteConcernToCommand(writeConcern, commandDocument, description);
         if (collation != null) {
             commandDocument.put("collation", collation.asDocument());
+        }
+        if (comment != null) {
+            commandDocument.put("comment", new BsonString(comment));
+        }
+        if (hint != null) {
+            commandDocument.put("hint", hint);
         }
         return commandDocument;
     }

@@ -16,6 +16,7 @@
 
 package com.mongodb.async.client
 
+import com.mongodb.MongoCompressor
 import com.mongodb.MongoCredential
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
@@ -42,6 +43,7 @@ class MongoClientSettingsSpecification extends Specification {
 
         expect:
         options.getWriteConcern() == WriteConcern.ACKNOWLEDGED
+        !options.getRetryWrites()
         options.getReadConcern() == ReadConcern.DEFAULT
         options.getReadPreference() == ReadPreference.primary()
         options.getCommandListeners().isEmpty()
@@ -51,6 +53,9 @@ class MongoClientSettingsSpecification extends Specification {
         options.heartbeatSocketSettings == SocketSettings.builder().build()
         options.serverSettings == ServerSettings.builder().build()
         options.streamFactoryFactory == null
+        options.compressorList == []
+        options.credentialList == []
+        options.credential == null
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')
@@ -99,6 +104,11 @@ class MongoClientSettingsSpecification extends Specification {
         thrown(IllegalArgumentException)
 
         when:
+        builder.credential(null)
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
         builder.credentialList(null)
         then:
         thrown(IllegalArgumentException)
@@ -117,6 +127,11 @@ class MongoClientSettingsSpecification extends Specification {
         builder.addCommandListener(null)
         then:
         thrown(IllegalArgumentException)
+
+        when:
+        builder.compressorList(null)
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'should build with set options'() {
@@ -132,9 +147,11 @@ class MongoClientSettingsSpecification extends Specification {
         def commandListener = Stub(CommandListener)
         def clusterSettings = ClusterSettings.builder().hosts([new ServerAddress('localhost')]).requiredReplicaSetName('test').build()
 
+        when:
         def options = MongoClientSettings.builder()
                 .readPreference(ReadPreference.secondary())
                 .writeConcern(WriteConcern.JOURNALED)
+                .retryWrites(true)
                 .readConcern(ReadConcern.LOCAL)
                 .applicationName('app1')
                 .addCommandListener(commandListener)
@@ -147,11 +164,13 @@ class MongoClientSettingsSpecification extends Specification {
                 .codecRegistry(codecRegistry)
                 .clusterSettings(clusterSettings)
                                          .streamFactoryFactory(streamFactoryFactory)
+                .compressorList([MongoCompressor.createZlibCompressor()])
                 .build()
 
-        expect:
+        then:
         options.getReadPreference() == ReadPreference.secondary()
         options.getWriteConcern() == WriteConcern.JOURNALED
+        options.getRetryWrites()
         options.getReadConcern() == ReadConcern.LOCAL
         options.getApplicationName() == 'app1'
         options.commandListeners.get(0) == commandListener
@@ -161,9 +180,20 @@ class MongoClientSettingsSpecification extends Specification {
         options.serverSettings == serverSettings
         options.codecRegistry == codecRegistry
         options.credentialList == credentialList
+        options.credential == credentialList.get(0)
         options.connectionPoolSettings == connectionPoolSettings
         options.clusterSettings == clusterSettings
         options.streamFactoryFactory == streamFactoryFactory
+        options.compressorList == [MongoCompressor.createZlibCompressor()]
+
+        when:
+        options = MongoClientSettings.builder()
+                .credential(credentialList.get(0))
+                .build()
+
+        then:
+        options.credentialList == credentialList
+        options.credential == credentialList.get(0)
     }
 
     def 'should be easy to create new options from existing'() {
@@ -177,10 +207,12 @@ class MongoClientSettingsSpecification extends Specification {
         def codecRegistry = Stub(CodecRegistry)
         def commandListener = Stub(CommandListener)
         def clusterSettings = ClusterSettings.builder().hosts([new ServerAddress('localhost')]).requiredReplicaSetName('test').build()
+        def compressorList = [MongoCompressor.createZlibCompressor()]
 
         def options = MongoClientSettings.builder()
                 .readPreference(ReadPreference.secondary())
                 .writeConcern(WriteConcern.JOURNALED)
+                .retryWrites(true)
                 .readConcern(ReadConcern.LOCAL)
                 .applicationName('app1')
                 .addCommandListener(commandListener)
@@ -192,6 +224,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .connectionPoolSettings(connectionPoolSettings)
                 .codecRegistry(codecRegistry)
                 .clusterSettings(clusterSettings)
+                .compressorList(compressorList)
                 .build()
 
         then:
@@ -272,9 +305,9 @@ class MongoClientSettingsSpecification extends Specification {
         when:
         // A regression test so that if anymore methods are added then the builder(final MongoClientSettings settings) should be updated
         def actual = MongoClientSettings.Builder.declaredFields.grep {  !it.synthetic } *.name.sort()
-        def expected = ['applicationName', 'clusterSettings', 'codecRegistry', 'commandListeners', 'connectionPoolSettings',
-                        'credentialList', 'heartbeatSocketSettings', 'readConcern', 'readPreference', 'serverSettings', 'socketSettings',
-                        'sslSettings', 'streamFactoryFactory', 'writeConcern']
+        def expected = ['applicationName', 'clusterSettings', 'codecRegistry', 'commandListeners', 'compressorList',
+                        'connectionPoolSettings', 'credentialList', 'heartbeatSocketSettings', 'readConcern', 'readPreference',
+                        'retryWrites', 'serverSettings', 'socketSettings', 'sslSettings', 'streamFactoryFactory', 'writeConcern']
 
         then:
         actual == expected

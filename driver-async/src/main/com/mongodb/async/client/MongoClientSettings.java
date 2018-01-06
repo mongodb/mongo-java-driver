@@ -16,6 +16,7 @@
 
 package com.mongodb.async.client;
 
+import com.mongodb.MongoCompressor;
 import com.mongodb.MongoCredential;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
@@ -36,8 +37,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.Collections.singletonList;
 
 
 /**
@@ -49,6 +52,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 public final class MongoClientSettings {
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;
+    private final boolean retryWrites;
     private final ReadConcern readConcern;
     private final List<MongoCredential> credentialList;
     private final StreamFactoryFactory streamFactoryFactory;
@@ -63,6 +67,7 @@ public final class MongoClientSettings {
     private final ServerSettings serverSettings;
     private final SslSettings sslSettings;
     private final String applicationName;
+    private final List<MongoCompressor> compressorList;
 
     /**
      * Convenience method to create a Builder.
@@ -91,6 +96,7 @@ public final class MongoClientSettings {
     public static final class Builder {
         private ReadPreference readPreference = ReadPreference.primary();
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
+        private boolean retryWrites;
         private ReadConcern readConcern = ReadConcern.DEFAULT;
         private CodecRegistry codecRegistry = MongoClients.getDefaultCodecRegistry();
         private StreamFactoryFactory streamFactoryFactory;
@@ -107,6 +113,7 @@ public final class MongoClientSettings {
         private SslSettings sslSettings = SslSettings.builder().build();
         private List<MongoCredential> credentialList = Collections.emptyList();
         private String applicationName;
+        private List<MongoCompressor> compressorList = Collections.emptyList();
 
         private Builder() {
         }
@@ -119,6 +126,7 @@ public final class MongoClientSettings {
         private Builder(final MongoClientSettings settings) {
             readPreference = settings.getReadPreference();
             writeConcern = settings.getWriteConcern();
+            retryWrites = settings.getRetryWrites();
             readConcern = settings.getReadConcern();
             credentialList = settings.getCredentialList();
             codecRegistry = settings.getCodecRegistry();
@@ -132,6 +140,7 @@ public final class MongoClientSettings {
             connectionPoolSettings = settings.getConnectionPoolSettings();
             sslSettings = settings.getSslSettings();
             applicationName = settings.getApplicationName();
+            compressorList = settings.getCompressorList();
         }
 
         /**
@@ -232,6 +241,20 @@ public final class MongoClientSettings {
         }
 
         /**
+         * Sets whether writes should be retried if they fail due to a network error.
+         *
+         * @param retryWrites sets if writes should be retried if they fail due to a network error.
+         * @return {@code this}
+         * @see #getRetryWrites()
+         * @since 3.6
+         * @mongodb.server.release 3.6
+         */
+        public Builder retryWrites(final boolean retryWrites) {
+            this.retryWrites = retryWrites;
+            return this;
+        }
+
+        /**
          * Sets the read concern.
          *
          * @param readConcern the read concern
@@ -251,9 +274,24 @@ public final class MongoClientSettings {
          * @param credentialList the credential list
          * @return {@code this}
          * @see MongoClientSettings#getCredentialList()
+         * @deprecated Prefer {@link #credential(MongoCredential)}
          */
+        @Deprecated
         public Builder credentialList(final List<MongoCredential> credentialList) {
             this.credentialList = Collections.unmodifiableList(notNull("credentialList", credentialList));
+            return this;
+        }
+
+        /**
+         * Sets the credential.
+         *
+         * @param credential the credential
+         * @return {@code this}
+         * @see MongoClientSettings#getCredentialList()
+         * @since 3.6
+         */
+        public Builder credential(final MongoCredential credential) {
+            this.credentialList = singletonList(notNull("credential", credential));
             return this;
         }
 
@@ -317,6 +355,22 @@ public final class MongoClientSettings {
         }
 
         /**
+         * Sets the compressors to use for compressing messages to the server. The driver will use the first compressor in the list
+         * that the server is configured to support.
+         *
+         * @param compressorList the list of compressors to request
+         * @return {@code this}
+         * @see #getCompressorList() ()
+         * @since 3.6
+         * @mongodb.server.release 3.4
+         */
+        public Builder compressorList(final List<MongoCompressor> compressorList) {
+            notNull("compressorList", compressorList);
+            this.compressorList = compressorList;
+            return this;
+        }
+
+        /**
          * Build an instance of {@code MongoClientSettings}.
          *
          * @return the settings from this builder
@@ -342,9 +396,22 @@ public final class MongoClientSettings {
      * Gets the credential list.
      *
      * @return the credential list
+     * @deprecated Prefer {@link #getCredential()}
      */
+    @Deprecated
     public List<MongoCredential> getCredentialList() {
         return credentialList;
+    }
+
+    /**
+     * Gets the credential list.
+     *
+     * @return the credential list
+     * @since 3.6
+     */
+    public MongoCredential getCredential() {
+        isTrue("Single or no credential", credentialList.size() <= 1);
+        return credentialList.isEmpty() ? null : credentialList.get(0);
     }
 
     /**
@@ -357,6 +424,17 @@ public final class MongoClientSettings {
      */
     public WriteConcern getWriteConcern() {
         return writeConcern;
+    }
+
+    /**
+     * Returns true if writes should be retried if they fail due to a network error.
+     *
+     * @return the retryWrites value
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public boolean getRetryWrites() {
+        return retryWrites;
     }
 
     /**
@@ -417,6 +495,19 @@ public final class MongoClientSettings {
         return applicationName;
     }
 
+    /**
+     * Gets the compressors to use for compressing messages to the server. The driver will use the first compressor in the list
+     * that the server is configured to support.
+     *
+     * <p>Default is the empty list.</p>
+     *
+     * @return the compressors
+     * @since 3.6
+     * @mongodb.server.release 3.4
+     */
+    public List<MongoCompressor> getCompressorList() {
+        return compressorList;
+    }
 
     /**
      * Gets the cluster settings.
@@ -485,6 +576,7 @@ public final class MongoClientSettings {
     private MongoClientSettings(final Builder builder) {
         readPreference = builder.readPreference;
         writeConcern = builder.writeConcern;
+        retryWrites = builder.retryWrites;
         readConcern = builder.readConcern;
         credentialList = builder.credentialList;
         streamFactoryFactory = builder.streamFactoryFactory;
@@ -497,5 +589,6 @@ public final class MongoClientSettings {
         heartbeatSocketSettings = builder.heartbeatSocketSettings;
         connectionPoolSettings = builder.connectionPoolSettings;
         sslSettings = builder.sslSettings;
+        compressorList = builder.compressorList;
     }
 }

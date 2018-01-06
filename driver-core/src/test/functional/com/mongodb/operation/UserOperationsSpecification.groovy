@@ -44,7 +44,6 @@ import com.mongodb.connection.ServerVersion
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SocketStreamFactory
 import com.mongodb.connection.StreamFactory
-import com.mongodb.internal.validator.NoOpFieldNameValidator
 import com.mongodb.selector.WritableServerSelector
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -222,7 +221,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         def cluster = getCluster()
 
         when:
-        def result = new InsertOperation(getNamespace(), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument())))
+        def result = new InsertOperation(getNamespace(), true, ACKNOWLEDGED, false, asList(new InsertRequest(new BsonDocument())))
                 .execute(getBinding(cluster))
         then:
         result.getCount() == 0
@@ -239,8 +238,8 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         def cluster = getAsyncCluster()
 
         when:
-        def result = executeAsync(new InsertOperation(getNamespace(), true, ACKNOWLEDGED, asList(new InsertRequest(new BsonDocument()))),
-                                  getAsyncBinding(cluster))
+        def result = executeAsync(new InsertOperation(getNamespace(), true, ACKNOWLEDGED, false,
+                asList(new InsertRequest(new BsonDocument()))), getAsyncBinding(cluster))
         then:
         result.getCount() == 0
 
@@ -256,8 +255,8 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         def cluster = getCluster(credential)
 
         when:
-        new InsertOperation(getNamespace(), true, ACKNOWLEDGED,
-                            asList(new InsertRequest(new BsonDocument()))).execute(getBinding(cluster))
+        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, false,
+                asList(new InsertRequest(new BsonDocument()))).execute(getBinding(cluster))
 
         then:
         thrown(MongoServerException)
@@ -275,8 +274,8 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         def cluster = getCluster(rwCredential)
 
         when:
-        new InsertOperation(getNamespace(), true, ACKNOWLEDGED,
-                            asList(new InsertRequest(new BsonDocument()))).execute(getBinding(cluster))
+        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, false,
+                asList(new InsertRequest(new BsonDocument()))).execute(getBinding(cluster))
 
         then:
         new CountOperation(getNamespace()).execute(getBinding(cluster)) == 1L
@@ -294,8 +293,8 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         def cluster = getCluster(roCredential)
 
         when:
-        new InsertOperation(getNamespace(), true, ACKNOWLEDGED,
-                            asList(new InsertRequest(new BsonDocument()))).execute(getBinding(cluster))
+        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, false,
+                asList(new InsertRequest(new BsonDocument()))).execute(getBinding(cluster))
 
         then:
         thrown(MongoServerException)
@@ -366,16 +365,8 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         operation.execute(readBinding)
 
         then:
-        _ * connection.getDescription() >> helper.twoFourConnectionDescription
-        1 * connection.query(_, _, _, _, _, _, readPreference.isSlaveOk(), _, _, _, _, _, _) >>  helper.queryResult
-        1 * connection.release()
-
-        when: '2.6.0'
-        operation.execute(readBinding)
-
-        then:
         _ * connection.getDescription() >> helper.twoSixConnectionDescription
-        1 * connection.command(helper.dbName, _, readPreference.isSlaveOk(), _, _) >> helper.cursorResult
+        1 * connection.command(helper.dbName, _, _, readPreference, _, _) >> helper.cursorResult
 
         where:
         readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
@@ -397,17 +388,9 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         operation.executeAsync(readBinding, Stub(SingleResultCallback))
 
         then:
-        _ * connection.getDescription() >> helper.twoFourConnectionDescription
-        1 * connection.queryAsync(_, _, _, _, _, _, readPreference.isSlaveOk(), _, _, _, _, _, _, _) >> {
-            it[13].onResult(helper.queryResult, null) }
-
-        when: '2.6.0'
-        operation.executeAsync(readBinding, Stub(SingleResultCallback))
-
-        then:
         _ * connection.getDescription() >> helper.twoSixConnectionDescription
-        1 * connection.commandAsync(helper.dbName, _, readPreference.isSlaveOk(), _, _, _) >> {
-            it[5].onResult(helper.cursorResult, null) }
+        1 * connection.commandAsync(helper.dbName, _, _, readPreference, _, _, _) >> {
+            it[6].onResult(helper.cursorResult, null) }
 
         where:
         readPreference << [ReadPreference.primary(), ReadPreference.secondary()]
@@ -416,9 +399,6 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
     def helper = [
             dbName: 'db',
             namespace: new MongoNamespace('db', 'coll'),
-            twoFourConnectionDescription: Stub(ConnectionDescription) {
-                getServerVersion() >> new ServerVersion([2, 4, 0])
-            },
             twoSixConnectionDescription : Stub(ConnectionDescription) {
                 getServerVersion() >> new ServerVersion([2, 6, 0])
             },
@@ -454,11 +434,11 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         new DefaultClusterFactory().createCluster(builder.hosts(asList(getPrimary())).build(),
                                            ServerSettings.builder().build(),
                                            ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build(),
-                                           streamFactory, streamFactory, asList(credential), null, null, null)
+                                           streamFactory, streamFactory, asList(credential), null, null, null, [])
     }
 
     def testConnection(Connection connection) {
-        connection.command('admin', new BsonDocument('ismaster', new BsonInt32(1)), false, new NoOpFieldNameValidator(),
+        connection.command('admin', new BsonDocument('ismaster', new BsonInt32(1)), false, NO_OP_FIELD_NAME_VALIDATOR,
                            new BsonDocumentCodec())
     }
 }

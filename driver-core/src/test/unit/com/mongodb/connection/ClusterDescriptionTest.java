@@ -31,11 +31,15 @@ import java.util.Iterator;
 import java.util.List;
 
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
+import static com.mongodb.connection.ClusterConnectionMode.SINGLE;
 import static com.mongodb.connection.ClusterType.REPLICA_SET;
+import static com.mongodb.connection.ClusterType.SHARDED;
+import static com.mongodb.connection.ClusterType.STANDALONE;
 import static com.mongodb.connection.ClusterType.UNKNOWN;
 import static com.mongodb.connection.ServerConnectionState.CONNECTED;
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.connection.ServerDescription.MAX_DRIVER_WIRE_VERSION;
+import static com.mongodb.connection.ServerDescription.MIN_DRIVER_WIRE_VERSION;
 import static com.mongodb.connection.ServerDescription.builder;
 import static com.mongodb.connection.ServerType.REPLICA_SET_OTHER;
 import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
@@ -189,7 +193,7 @@ public class ClusterDescriptionTest {
     }
 
     @Test
-    public void clusterDescriptionWithAnIncompatibleServerShouldBeIncompatible() throws UnknownHostException {
+    public void clusterDescriptionWithAnIncompatiblyNewServerShouldBeIncompatible() throws UnknownHostException {
         ClusterDescription description =
         new ClusterDescription(MULTIPLE, UNKNOWN, asList(
                                                         builder()
@@ -209,6 +213,33 @@ public class ClusterDescriptionTest {
                                                         .build())
         );
         assertFalse(description.isCompatibleWithDriver());
+        assertEquals(new ServerAddress("loc:27018"), description.findServerIncompatiblyNewerThanDriver().getAddress());
+        assertNull(description.findServerIncompatiblyOlderThanDriver());
+    }
+
+    @Test
+    public void clusterDescriptionWithAnIncompatiblyOlderServerShouldBeIncompatible() throws UnknownHostException {
+        ClusterDescription description =
+                new ClusterDescription(MULTIPLE, UNKNOWN, asList(
+                        builder()
+                                .state(CONNECTING)
+                                .address(new ServerAddress("loc:27019"))
+                                .build(),
+                        builder()
+                                .state(CONNECTED)
+                                .ok(true)
+                                .address(new ServerAddress("loc:27018"))
+                                .minWireVersion(0)
+                                .maxWireVersion(MIN_DRIVER_WIRE_VERSION - 1)
+                                .build(),
+                        builder()
+                                .state(CONNECTING)
+                                .address(new ServerAddress("loc:27017"))
+                                .build())
+                );
+        assertFalse(description.isCompatibleWithDriver());
+        assertEquals(new ServerAddress("loc:27018"), description.findServerIncompatiblyOlderThanDriver().getAddress());
+        assertNull(description.findServerIncompatiblyNewerThanDriver());
     }
 
     @Test
@@ -229,6 +260,132 @@ public class ClusterDescriptionTest {
                                                         .build())
         );
         assertTrue(description.isCompatibleWithDriver());
+        assertNull(description.findServerIncompatiblyNewerThanDriver());
+        assertNull(description.findServerIncompatiblyOlderThanDriver());
+    }
+
+    @Test
+    public void testLogicalSessionTimeoutMinutes() {
+        ClusterDescription description = new ClusterDescription(MULTIPLE, REPLICA_SET, asList(
+                builder().state(CONNECTING)
+                        .address(new ServerAddress("loc:27017")).build()
+        ));
+        assertEquals(null, description.getLogicalSessionTimeoutMinutes());
+
+        description = new ClusterDescription(MULTIPLE, REPLICA_SET, asList(
+                builder().state(CONNECTED)
+                        .address(new ServerAddress("loc:27017"))
+                        .build()
+        ));
+        assertEquals(null, description.getLogicalSessionTimeoutMinutes());
+
+        description = new ClusterDescription(MULTIPLE, REPLICA_SET, asList(
+                builder().state(CONNECTED)
+                        .ok(true)
+                        .address(new ServerAddress("loc:27017"))
+                        .build()
+        ));
+        assertEquals(null, description.getLogicalSessionTimeoutMinutes());
+
+        description = new ClusterDescription(SINGLE, STANDALONE, asList(
+                builder().state(CONNECTED)
+                        .ok(true)
+                        .address(new ServerAddress("loc:27017"))
+                        .type(ServerType.STANDALONE)
+                        .logicalSessionTimeoutMinutes(5)
+                        .build()
+        ));
+        assertEquals(Integer.valueOf(5), description.getLogicalSessionTimeoutMinutes());
+
+        description = new ClusterDescription(SINGLE, SHARDED, asList(
+                builder().state(CONNECTED)
+                        .ok(true)
+                        .address(new ServerAddress("loc:27017"))
+                        .type(ServerType.SHARD_ROUTER)
+                        .logicalSessionTimeoutMinutes(5)
+                        .build()
+        ));
+        assertEquals(Integer.valueOf(5), description.getLogicalSessionTimeoutMinutes());
+
+        description = new ClusterDescription(MULTIPLE, SHARDED, asList(
+                builder().state(CONNECTED)
+                        .ok(true)
+                        .address(new ServerAddress("loc:27017"))
+                        .type(ServerType.SHARD_ROUTER)
+                        .logicalSessionTimeoutMinutes(5)
+                        .build(),
+                builder().state(CONNECTING)
+                        .address(new ServerAddress("loc:27018"))
+                        .build()
+        ));
+        assertEquals(Integer.valueOf(5), description.getLogicalSessionTimeoutMinutes());
+
+        description = new ClusterDescription(MULTIPLE, SHARDED, asList(
+                builder().state(CONNECTED)
+                        .ok(true)
+                        .address(new ServerAddress("loc:27017"))
+                        .type(ServerType.SHARD_ROUTER)
+                        .logicalSessionTimeoutMinutes(5)
+                        .build(),
+                builder().state(CONNECTED)
+                        .ok(true)
+                        .address(new ServerAddress("loc:27018"))
+                        .type(ServerType.SHARD_ROUTER)
+                        .logicalSessionTimeoutMinutes(3)
+                        .build()
+        ));
+        assertEquals(Integer.valueOf(3), description.getLogicalSessionTimeoutMinutes());
+
+        description = new ClusterDescription(MULTIPLE, REPLICA_SET, asList(
+                builder().state(CONNECTED)
+                        .ok(true)
+                        .address(new ServerAddress("loc:27017"))
+                        .type(ServerType.REPLICA_SET_PRIMARY)
+                        .logicalSessionTimeoutMinutes(5)
+                        .build(),
+                builder().state(CONNECTING)
+                        .address(new ServerAddress("loc:27018"))
+                        .build()
+        ));
+        assertEquals(Integer.valueOf(5), description.getLogicalSessionTimeoutMinutes());
+
+        description = new ClusterDescription(MULTIPLE, REPLICA_SET, asList(
+                builder().state(CONNECTED)
+                        .ok(true)
+                        .address(new ServerAddress("loc:27017"))
+                        .type(REPLICA_SET_PRIMARY)
+                        .logicalSessionTimeoutMinutes(5)
+                        .build(),
+                builder().state(CONNECTED)
+                        .ok(true)
+                        .address(new ServerAddress("loc:27018"))
+                        .type(REPLICA_SET_SECONDARY)
+                        .logicalSessionTimeoutMinutes(3)
+                        .build(),
+                builder().state(CONNECTING)
+                        .address(new ServerAddress("loc:27019"))
+                        .build()
+        ));
+        assertEquals(Integer.valueOf(3), description.getLogicalSessionTimeoutMinutes());
+
+        description = new ClusterDescription(MULTIPLE, REPLICA_SET, asList(
+                builder().state(CONNECTED)
+                        .ok(true)
+                        .address(new ServerAddress("loc:27017"))
+                        .type(REPLICA_SET_PRIMARY)
+                        .logicalSessionTimeoutMinutes(3)
+                        .build(),
+                builder().state(CONNECTED)
+                        .ok(true)
+                        .address(new ServerAddress("loc:27018"))
+                        .type(REPLICA_SET_SECONDARY)
+                        .logicalSessionTimeoutMinutes(5)
+                        .build(),
+                builder().state(CONNECTING)
+                        .address(new ServerAddress("loc:27019"))
+                        .build()
+        ));
+        assertEquals(Integer.valueOf(3), description.getLogicalSessionTimeoutMinutes());
     }
 
     @Test

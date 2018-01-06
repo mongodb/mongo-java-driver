@@ -7,6 +7,53 @@ title = "What's New"
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
+## What's New in 3.6
+
+Key new features of the 3.6 Java driver release:
+
+### Change Stream support
+
+The 3.6 release adds support for [change streams](http://dochub.mongodb.org/core/changestreams).
+
+* [Change Stream Quick Start]({{<ref "driver/tutorials/change-streams.md">}}) 
+* [Change Stream Quick Start (Async)]({{<ref "driver-async/tutorials/change-streams.md">}})
+
+### Retryable writes
+
+The 3.6 release adds support for retryable writes using the `retryWrites` option in 
+[`MongoClientOptions`]({{<apiref "com/mongodb/MongoClientOptions">}}).
+
+### Compression
+
+The 3.6 release adds support for compression of messages to and from appropriately configured MongoDB servers:
+
+* [Compression Tutorial]({{<ref "driver/tutorials/compression.md">}})
+* [Compression Tutorial (Async)]({{<ref "driver-async/tutorials/compression.md">}})
+
+### Causal consistency
+              
+The 3.6 release adds support for [causally consistency](http://dochub.mongodb.org/core/causal-consistency) via the new
+[`ClientSession`]({{<apiref "com/mongodb/session/ClientSession">}}) API. 
+
+### Application-configured server selection
+
+The 3.6 release adds support for application-configured control over server selection, using the `serverSelector` option in
+[`MongoClientOptions`]({{<apiref "com/mongodb/MongoClientOptions">}}).
+
+### PojoCodec improvements
+
+The 3.6 release brings new improvements to the `PojoCodec`:
+
+  * Improved sub-class and discriminator support.
+  * Support for custom Collection and Map implementations.
+  * Improvements to the `BsonCreator` annotation, which now supports `@BsonId` and `@BsonProperty` with values that represent the read name of the property.
+  * A new [`PropertyCodecProvider`]({{<apiref "org/bson/codecs/pojo/PropertyCodecProvider">}}) API, allowing for easy and type-safe handling of container types.
+  * Added the [`SET_PRIVATE_FIELDS_CONVENTION`]({{<apiref "org/bson/codecs/pojo/Conventions.html#SET_PRIVATE_FIELDS_CONVENTION">}}) convention.
+  * Added the [`USE_GETTERS_FOR_SETTERS`]({{<apiref "org/bson/codecs/pojo/Conventions.html#USE_GETTERS_FOR_SETTERS">}}) convention.
+
+The MongoDB Java drivers team would like to thank both [Joseph Florencio](https://github.com/jflorencio) and [Qi Liu](https://github.com/visualage)
+for their excellent contributions to the PojoCodec.
+
 ## What's New in 3.5
 
 Key new features of the 3.5 Java driver release:

@@ -23,6 +23,7 @@ import com.mongodb.annotations.NotThreadSafe;
 import org.bson.types.ObjectId;
 
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -45,10 +46,13 @@ import static com.mongodb.connection.ServerType.UNKNOWN;
 @Immutable
 public class ServerDescription {
 
-    static final int MIN_DRIVER_WIRE_VERSION = 0;
-    static final int MAX_DRIVER_WIRE_VERSION = 3;
+    static final String MIN_DRIVER_SERVER_VERSION = "2.6";
+    static final int MIN_DRIVER_WIRE_VERSION = 1;
+    static final int MAX_DRIVER_WIRE_VERSION = 6;
 
     private static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
+
+    private static final DecimalFormatSymbols DECIMAL_FORMAT_SYMBOLS = initializeDecimalFormatSymbols();
 
     private final ServerAddress address;
 
@@ -74,7 +78,21 @@ public class ServerDescription {
     private final Date lastWriteDate;
     private final long lastUpdateTimeNanos;
 
+    private final Integer logicalSessionTimeoutMinutes;
+
     private final Throwable exception;
+
+    /**
+     * Initialize the character used for decimal separator
+     *
+     * @return the character used for decimal separator
+     * @since 3.6
+     */
+    private static DecimalFormatSymbols initializeDecimalFormatSymbols() {
+        DecimalFormatSymbols decimalFormatSymbols = new DecimalFormatSymbols();
+        decimalFormatSymbols.setDecimalSeparator('.');
+        return decimalFormatSymbols;
+    }
 
     /**
      * Gets a Builder for creating a new ServerDescription instance.
@@ -93,6 +111,17 @@ public class ServerDescription {
      */
     public String getCanonicalAddress() {
         return canonicalAddress;
+    }
+
+    /**
+     * Gets the session timeout in minutes.
+     *
+     * @return the session timeout in minutes, or null if sessions are not supported by this server
+     * @mongodb.server.release 3.6
+     * @since 3.6
+     */
+    public Integer getLogicalSessionTimeoutMinutes() {
+        return logicalSessionTimeoutMinutes;
     }
 
     /**
@@ -120,6 +149,7 @@ public class ServerDescription {
         private Integer setVersion;
         private Date lastWriteDate;
         private long lastUpdateTimeNanos = Time.nanoTime();
+        private Integer logicalSessionTimeoutMinutes;
 
         private Throwable exception;
 
@@ -359,6 +389,20 @@ public class ServerDescription {
         }
 
         /**
+         * Sets the session timeout in minutes.
+         *
+         * @param logicalSessionTimeoutMinutes the session timeout in minutes, or null if sessions are not supported by this server
+         * @return this
+         * @mongodb.server.release 3.6
+         * @since 3.6
+         */
+        public Builder logicalSessionTimeoutMinutes(final Integer logicalSessionTimeoutMinutes) {
+            this.logicalSessionTimeoutMinutes = logicalSessionTimeoutMinutes;
+            return this;
+        }
+
+
+        /**
          * Sets the exception thrown while attempting to determine the server description.
          *
          * @param exception the exception
@@ -386,19 +430,37 @@ public class ServerDescription {
      * @return true if the server is compatible with the driver.
      */
     public boolean isCompatibleWithDriver() {
-        if (!ok) {
-            return true;
-        }
-
-        if (minWireVersion > MAX_DRIVER_WIRE_VERSION) {
+        if (isIncompatiblyOlderThanDriver()) {
             return false;
         }
 
-        if (maxWireVersion < MIN_DRIVER_WIRE_VERSION) {
+        if (isIncompatiblyNewerThanDriver()) {
             return false;
         }
 
         return true;
+    }
+
+    /**
+     * Return whether the server is compatible with the driver. An incompatible server is one that has a min wire version greater that the
+     * driver's max wire version or a max wire version less than the driver's min wire version.
+     *
+     * @return true if the server is compatible with the driver.
+     * @since 3.6
+     */
+    public boolean isIncompatiblyNewerThanDriver() {
+        return ok && minWireVersion > MAX_DRIVER_WIRE_VERSION;
+    }
+
+    /**
+     * Return whether the server is compatible with the driver. An incompatible server is one that has a min wire version greater that the
+     * driver's max wire version or a max wire version less than the driver's min wire version.
+     *
+     * @return true if the server is compatible with the driver.
+     * @since 3.6
+     */
+    public boolean isIncompatiblyOlderThanDriver() {
+        return ok && maxWireVersion < MIN_DRIVER_WIRE_VERSION;
     }
 
     /**
@@ -766,6 +828,12 @@ public class ServerDescription {
             return false;
         }
 
+        if (logicalSessionTimeoutMinutes != null
+                    ? !logicalSessionTimeoutMinutes.equals(that.logicalSessionTimeoutMinutes)
+                    : that.logicalSessionTimeoutMinutes != null) {
+            return false;
+        }
+
         // Compare class equality and message as exceptions rarely override equals
         Class<?> thisExceptionClass = exception != null ? exception.getClass() : null;
         Class<?> thatExceptionClass = that.exception != null ? that.exception.getClass() : null;
@@ -803,6 +871,7 @@ public class ServerDescription {
         result = 31 * result + version.hashCode();
         result = 31 * result + minWireVersion;
         result = 31 * result + maxWireVersion;
+        result = 31 * result + (logicalSessionTimeoutMinutes != null ? logicalSessionTimeoutMinutes.hashCode() : 0);
         result = 31 * result + (exception == null ? 0 : exception.getClass().hashCode());
         result = 31 * result + (exception == null ? 0 : exception.getMessage().hashCode());
         return result;
@@ -821,6 +890,7 @@ public class ServerDescription {
                   + ", minWireVersion=" + minWireVersion
                   + ", maxWireVersion=" + maxWireVersion
                   + ", maxDocumentSize=" + maxDocumentSize
+                  + ", logicalSessionTimeoutMinutes=" + logicalSessionTimeoutMinutes
                   + ", roundTripTimeNanos=" + roundTripTimeNanos
                   : "")
                + (isReplicaSetMember()
@@ -876,7 +946,7 @@ public class ServerDescription {
 
 
     private String getRoundTripFormattedInMilliseconds() {
-        return new DecimalFormat("#0.0").format(roundTripTimeNanos / 1000.0 / 1000.0);
+        return new DecimalFormat("#0.0", DECIMAL_FORMAT_SYMBOLS).format(roundTripTimeNanos / 1000.0 / 1000.0);
     }
 
     ServerDescription(final Builder builder) {
@@ -900,6 +970,7 @@ public class ServerDescription {
         setVersion = builder.setVersion;
         lastWriteDate = builder.lastWriteDate;
         lastUpdateTimeNanos = builder.lastUpdateTimeNanos;
+        logicalSessionTimeoutMinutes = builder.logicalSessionTimeoutMinutes;
         exception = builder.exception;
     }
 }

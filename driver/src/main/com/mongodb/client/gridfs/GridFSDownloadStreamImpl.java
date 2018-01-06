@@ -17,9 +17,11 @@
 package com.mongodb.client.gridfs;
 
 import com.mongodb.MongoGridFSException;
+import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.gridfs.model.GridFSFile;
+import com.mongodb.session.ClientSession;
 import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.types.Binary;
@@ -29,6 +31,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static java.lang.String.format;
 
 class GridFSDownloadStreamImpl extends GridFSDownloadStream {
+    private final ClientSession clientSession;
     private final GridFSFile fileInfo;
     private final MongoCollection<Document> chunksCollection;
     private final BsonValue fileId;
@@ -47,7 +50,9 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
     private final Object cursorLock = new Object();
     private boolean closed = false;
 
-    GridFSDownloadStreamImpl(final GridFSFile fileInfo, final MongoCollection<Document> chunksCollection) {
+    GridFSDownloadStreamImpl(final ClientSession clientSession, final GridFSFile fileInfo,
+                             final MongoCollection<Document> chunksCollection) {
+        this.clientSession = clientSession;
         this.fileInfo = notNull("file information", fileInfo);
         this.chunksCollection = notNull("chunks collection", chunksCollection);
 
@@ -205,8 +210,7 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
 
     private Document getChunk(final int startChunkIndex) {
         if (cursor == null) {
-            cursor = chunksCollection.find(new Document("files_id", fileId).append("n", new Document("$gte", startChunkIndex)))
-                    .batchSize(batchSize).sort(new Document("n", 1)).iterator();
+            cursor = getCursor(startChunkIndex);
         }
         Document chunk = null;
         if (cursor.hasNext()) {
@@ -221,6 +225,17 @@ class GridFSDownloadStreamImpl extends GridFSDownloadStream {
         }
 
         return chunk;
+    }
+
+    private MongoCursor<Document> getCursor(final int startChunkIndex) {
+        FindIterable<Document> findIterable;
+        Document filter = new Document("files_id", fileId).append("n", new Document("$gte", startChunkIndex));
+        if (clientSession != null) {
+            findIterable = chunksCollection.find(clientSession, filter);
+        } else {
+            findIterable = chunksCollection.find(filter);
+        }
+        return findIterable.batchSize(batchSize).sort(new Document("n", 1)).iterator();
     }
 
     private byte[] getBufferFromChunk(final Document chunk, final int expectedChunkIndex) {

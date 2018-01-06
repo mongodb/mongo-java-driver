@@ -201,7 +201,7 @@ public final class FindOptions {
      * Gets the number of documents to return per batch.  Default to 0, which indicates that the server chooses an appropriate batch
      * size.
      *
-     * @return the batch size, which may be null
+     * @return the batch size
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     public int getBatchSize() {

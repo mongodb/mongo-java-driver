@@ -19,10 +19,12 @@ package com.mongodb.async.client.gridfs;
 import com.mongodb.MongoGridFSException;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.client.FindIterable;
 import com.mongodb.async.client.MongoCollection;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.session.ClientSession;
 import org.bson.Document;
 import org.bson.types.Binary;
 
@@ -37,6 +39,7 @@ import static java.lang.String.format;
 
 final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
     private static final Logger LOGGER = Loggers.getLogger("client.gridfs");
+    private final ClientSession clientSession;
     private final GridFSFindIterable fileInfoIterable;
     private final MongoCollection<Document> chunksCollection;
     private final ConcurrentLinkedQueue<Document> resultsQueue = new ConcurrentLinkedQueue<Document>();
@@ -59,7 +62,9 @@ final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
     private byte[] buffer = null;
 
 
-    GridFSDownloadStreamImpl(final GridFSFindIterable fileInfoIterable, final MongoCollection<Document> chunksCollection) {
+    GridFSDownloadStreamImpl(final ClientSession clientSession, final GridFSFindIterable fileInfoIterable,
+                             final MongoCollection<Document> chunksCollection) {
+        this.clientSession = clientSession;
         this.fileInfoIterable = notNull("file information", fileInfoIterable);
         this.chunksCollection = notNull("chunks collection", chunksCollection);
     }
@@ -144,10 +149,17 @@ final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
         } else if (hasResultsToProcess()) {
             processResults(amountRead, dst, callback);
         } else if (cursor == null) {
-            chunksCollection.find(new Document("files_id", fileInfo.getId())
-                    .append("n", new Document("$gte", chunkIndex)))
-                    .batchSize(batchSize).sort(new Document("n", 1))
-                    .batchCursor(new SingleResultCallback<AsyncBatchCursor<Document>>() {
+            Document filter = new Document("files_id", fileInfo.getId())
+                    .append("n", new Document("$gte", chunkIndex));
+
+            FindIterable<Document> findIterable;
+            if (clientSession != null) {
+                findIterable = chunksCollection.find(clientSession, filter);
+            } else {
+                findIterable = chunksCollection.find(filter);
+            }
+            findIterable.batchSize(batchSize).sort(new Document("n", 1)).batchCursor(
+                    new SingleResultCallback<AsyncBatchCursor<Document>>() {
                         @Override
                         public void onResult(final AsyncBatchCursor<Document> result, final Throwable t) {
                             if (t != null) {

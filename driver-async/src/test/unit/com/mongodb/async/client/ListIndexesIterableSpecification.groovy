@@ -50,8 +50,8 @@ class ListIndexesIterableSpecification extends Specification {
                 it[0].onResult(null, null)
             }
         }
-        def executor = new TestOperationExecutor([cursor, cursor]);
-        def listIndexesIterable = new ListIndexesIterableImpl<Document>(namespace, Document, codecRegistry, readPreference, executor)
+        def executor = new TestOperationExecutor([cursor, cursor])
+        def listIndexesIterable = new ListIndexesIterableImpl<Document>(null, namespace, Document, codecRegistry, readPreference, executor)
                 .batchSize(100).maxTime(1000, MILLISECONDS)
 
         when: 'default input should be as expected'
@@ -96,7 +96,7 @@ class ListIndexesIterableSpecification extends Specification {
             }
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor()]);
-        def mongoIterable = new ListIndexesIterableImpl<Document>(namespace, Document, codecRegistry, readPreference, executor)
+        def mongoIterable = new ListIndexesIterableImpl<Document>(null, namespace, Document, codecRegistry, readPreference, executor)
 
         when:
         def results = new FutureResultCallback()
@@ -158,7 +158,7 @@ class ListIndexesIterableSpecification extends Specification {
 
     def 'should check variables using notNull'() {
         given:
-        def mongoIterable = new ListIndexesIterableImpl<Document>(namespace, Document, codecRegistry, readPreference,
+        def mongoIterable = new ListIndexesIterableImpl<Document>(null, namespace, Document, codecRegistry, readPreference,
                 Stub(AsyncOperationExecutor))
         def callback = Stub(SingleResultCallback)
         def block = Stub(Block)

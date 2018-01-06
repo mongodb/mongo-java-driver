@@ -26,12 +26,14 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.BsonInput;
-import org.bson.io.ByteBufferBsonInput;
 import org.bson.io.OutputBuffer;
 import org.bson.json.JsonReader;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+
+import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize;
 
 final class MessageHelper {
 
@@ -74,10 +76,10 @@ final class MessageHelper {
         headerByteBuffer.putLong(0); // cursorId
         headerByteBuffer.putInt(0); // startingFrom
         headerByteBuffer.putInt(numDocuments); //numberReturned
-        headerByteBuffer.flip();
+        ((Buffer) headerByteBuffer).flip();
 
-        ByteBufferBsonInput headerInputBuffer = new ByteBufferBsonInput(new ByteBufNIO(headerByteBuffer));
-        return new ReplyHeader(headerInputBuffer, ConnectionDescription.getDefaultMaxMessageSize());
+        ByteBufNIO buffer = new ByteBufNIO(headerByteBuffer);
+        return new ReplyHeader(buffer, new MessageHeader(buffer, getDefaultMaxMessageSize()));
     }
 
     public static BsonDocument decodeCommand(final BsonInput bsonInput) {

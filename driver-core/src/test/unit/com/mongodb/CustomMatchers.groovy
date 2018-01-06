@@ -19,6 +19,9 @@ package com.mongodb
 import org.hamcrest.BaseMatcher
 import org.hamcrest.Description
 
+import java.lang.reflect.Field
+import java.lang.reflect.Modifier
+
 @SuppressWarnings('NoDef')
 class CustomMatchers {
 
@@ -55,24 +58,31 @@ class CustomMatchers {
         if (actual.class.name != expected.class.name) {
             return false
         }
-        getFieldNames(actual.class).findAll { !ignoreNames.contains(it) } .collect {
-            if (nominallyTheSame(it)) {
-                return actual."$it".class == expected."$it".class
-            } else if (actual."$it" != expected."$it") {
-                def (a1, e1) = [actual."$it", expected."$it"]
-                if ([a1, e1].contains(null) && [a1, e1] != nullList) {
+        getFields(actual.class).findAll { !ignoreNames.contains(it.name) } .collect {
+            it.setAccessible(true)
+            def actualPropertyValue = it.get(actual)
+            def expectedPropertyValue = it.get(expected)
+
+            if (nominallyTheSame(it.name)) {
+                return actualPropertyValue.class == expectedPropertyValue.class
+            } else if (actualPropertyValue != expectedPropertyValue) {
+                if ([actualPropertyValue, expectedPropertyValue].contains(null)
+                        && [actualPropertyValue, expectedPropertyValue] != nullList) {
                     return false
-                } else if (List.isCase(a1) && List.isCase(e1) && (a1.size() == e1.size())) {
+                } else if (List.isCase(actualPropertyValue) && List.isCase(expectedPropertyValue)
+                        && (actualPropertyValue.size() == expectedPropertyValue.size())) {
                     def i = -1
-                    return a1.collect { a -> i++; compare(a, e1[i]) }.every { it }
-                } else if (a1.class != null && a1.class.name.startsWith('com.mongodb') && a1.class == e1.class) {
-                    return compare(a1, e1)
+                    return actualPropertyValue.collect { a -> i++; compare(a, expectedPropertyValue[i]) }.every { it }
+                } else if (actualPropertyValue.class != null && actualPropertyValue.class.name.startsWith('com.mongodb')
+                        && actualPropertyValue.class == expectedPropertyValue.class) {
+                    return compare(actualPropertyValue, expectedPropertyValue)
                 }
                 return false
             }
             true
         }.every { it }
     }
+
 
     static describer(expected, actual, description) {
         describer(expected, actual, [], description)
@@ -91,48 +101,52 @@ class CustomMatchers {
             return false
         }
 
-        getFieldNames(actual.class).findAll { !ignoreNames.contains(it) } .collect {
+        getFields(actual.class).findAll { !ignoreNames.contains(it.name) } .collect {
+            it.setAccessible(true)
+            def actualPropertyValue = it.get(actual)
+            def expectedPropertyValue = it.get(expected)
             if (nominallyTheSame(it)) {
-                if (actual."$it".class != expected."$it".class) {
-                    description.appendText("different classes $it :" +
-                            " ${expected."$it".class.name} != ${actual."$it".class.name}, ")
+                if (actualPropertyValue.class != expectedPropertyValue.class) {
+                    description.appendText("different classes in $it.name :" +
+                            " ${expectedPropertyValue.class.name} != ${actualPropertyValue.class.name}, ")
                     return false
                 }
-            } else if (actual."$it" != expected."$it") {
-                def (a1, e1) = [actual."$it", expected."$it"]
-                if (([a1, e1].contains(null) || [a1.class, e1.class].contains(null)) && [a1, e1] != nullList) {
-                    description.appendText("different values in $it : $e1 != $a1\n")
+            } else if (actualPropertyValue != expectedPropertyValue) {
+                if (([actualPropertyValue, expectedPropertyValue].contains(null)
+                        || [actualPropertyValue.class, expectedPropertyValue.class].contains(null))
+                        && [actualPropertyValue, expectedPropertyValue] != nullList) {
+                    description.appendText("different values in $it.name : ${expectedPropertyValue} != ${actualPropertyValue}\n")
                     return false
-                } else if (List.isCase(a1) && List.isCase(e1) && (a1.size() == e1.size())) {
+                } else if (List.isCase(actualPropertyValue) && List.isCase(expectedPropertyValue)
+                        && (actualPropertyValue.size() == expectedPropertyValue.size())) {
                     def i = -1
-                    a1.each { a ->
-                        i++; if (!compare(a, e1[i])) {
-                            describer(a, e1[i], description)
+                    actualPropertyValue.each { a ->
+                        i++; if (!compare(a, expectedPropertyValue[i])) {
+                            describer(a, expectedPropertyValue[i], description)
                         }
                     }.every { it }
-                } else if (a1.class.name.startsWith('com.mongodb') && a1.class == e1.class) {
-                    return describer(a1, e1, description)
+                } else if (actualPropertyValue.class.name.startsWith('com.mongodb')
+                        && actualPropertyValue.class == expectedPropertyValue.class) {
+                    return describer(actualPropertyValue, expectedPropertyValue, description)
                 }
-                description.appendText("different values in $it : $e1 != $a1\n")
+                description.appendText("different values in $it.name : ${expectedPropertyValue} != ${actualPropertyValue}\n")
                 return false
             }
             true
         }
     }
 
-    static List<String> getFieldNames(Class curClass) {
-        getFieldNames(curClass, [])
-    }
-
-    static List<String> getFieldNames(Class curClass, names) {
-        if (curClass != Object) {
-            getFieldNames(curClass.getSuperclass(), names += curClass.declaredFields.findAll { !it.synthetic }*.name)
+    static List<Field> getFields(Class curClass) {
+        if (curClass == Object) {
+            return []
         }
-        names
+        def fields = getFields(curClass.getSuperclass())
+        fields.addAll(curClass.declaredFields.findAll { !it.synthetic && !Modifier.isStatic(it.modifiers) })
+        fields
     }
 
-    static nominallyTheSame(String className ) {
-        className in ['decoder', 'executor']
-    }
 
+    static nominallyTheSame(String propertyName ) {
+        propertyName in ['decoder', 'executor']
+    }
 }

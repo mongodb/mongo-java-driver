@@ -19,6 +19,8 @@ package com.mongodb
 import spock.lang.Specification
 import spock.lang.Unroll
 
+import static com.mongodb.MongoCompressor.LEVEL
+import static com.mongodb.MongoCompressor.createZlibCompressor
 import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.MongoCredential.createGSSAPICredential
 import static com.mongodb.MongoCredential.createMongoCRCredential
@@ -76,9 +78,25 @@ class ConnectionStringSpecification extends Specification {
                                                                 'host3:9']          | 'bar'    | null       | 'user'   | 'pass' as char[]
     }
 
+    def 'should throw exception if mongod+srv host contains a port'() {
+        when:
+        new ConnectionString('mongodb+srv://host1:27017')
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def 'should throw exception if mongod+srv contains multiple hosts'() {
+        when:
+        new ConnectionString('mongodb+srv://host1,host2')
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
     def 'should correctly parse different write concerns'() {
         expect:
-        uri.getWriteConcern() == writeConcern;
+        uri.getWriteConcern() == writeConcern
 
         where:
         uri                                                                                  | writeConcern
@@ -91,6 +109,18 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://localhost/?journal=true')                            | WriteConcern.ACKNOWLEDGED.withJournal(true)
         new ConnectionString('mongodb://localhost/?w=2&wtimeout=5&fsync=true&journal=true')  | new WriteConcern(2, 5, true, true)
         new ConnectionString('mongodb://localhost/?w=majority&wtimeout=5&fsync=true&j=true') | new WriteConcern('majority', 5, true, true)
+    }
+
+    @Unroll
+    def 'should correct parse retryWrites'() {
+        expect:
+        uri.getRetryWrites() == retryWrites
+
+        where:
+        uri                                                             | retryWrites
+        new ConnectionString('mongodb://localhost/')                    | false
+        new ConnectionString('mongodb://localhost/?retryWrites=false')  | false
+        new ConnectionString('mongodb://localhost/?retryWrites=true')   | true
     }
 
     @Unroll
@@ -189,7 +219,7 @@ class ConnectionStringSpecification extends Specification {
 
     def 'should have correct defaults for options'() {
         when:
-        def connectionString = new ConnectionString('mongodb://localhost');
+        def connectionString = new ConnectionString('mongodb://localhost')
 
         then:
         connectionString.getMaxConnectionPoolSize() == null;
@@ -204,59 +234,61 @@ class ConnectionStringSpecification extends Specification {
         connectionString.getSslEnabled() == null
         connectionString.getStreamType() == null
         connectionString.getApplicationName() == null
+        connectionString.getCompressorList() == []
     }
 
     @Unroll
     def 'should support all credential types'() {
         expect:
-        uri.credentialList == credentialList
+        uri.credential == credential
+        uri.credentialList == [credential]
 
         where:
-        uri                                                   | credentialList
-        new ConnectionString('mongodb://jeff:123@localhost')  | asList(createCredential('jeff', 'admin', '123'.toCharArray()))
+        uri                                                   | credential
+        new ConnectionString('mongodb://jeff:123@localhost')  | createCredential('jeff', 'admin', '123'.toCharArray())
         new ConnectionString('mongodb://jeff:123@localhost/?' +
-                           '&authSource=test')                | asList(createCredential('jeff', 'test', '123'.toCharArray()))
+                           '&authSource=test')                | createCredential('jeff', 'test', '123'.toCharArray())
         new ConnectionString('mongodb://jeff:123@localhost/?' +
-                           'authMechanism=MONGODB-CR')        | asList(createMongoCRCredential('jeff', 'admin', '123'.toCharArray()))
+                           'authMechanism=MONGODB-CR')        | createMongoCRCredential('jeff', 'admin', '123'.toCharArray())
         new ConnectionString('mongodb://jeff:123@localhost/?' +
                            'authMechanism=MONGODB-CR' +
-                           '&authSource=test')                | asList(createMongoCRCredential('jeff', 'test', '123'.toCharArray()))
+                           '&authSource=test')                | createMongoCRCredential('jeff', 'test', '123'.toCharArray())
         new ConnectionString('mongodb://jeff:123@localhost/?' +
-                             'authMechanism=SCRAM-SHA-1')     | asList(createScramSha1Credential('jeff', 'admin', '123'.toCharArray()))
+                             'authMechanism=SCRAM-SHA-1')     | createScramSha1Credential('jeff', 'admin', '123'.toCharArray())
         new ConnectionString('mongodb://jeff:123@localhost/?' +
                              'authMechanism=SCRAM-SHA-1' +
-                             '&authSource=test')              | asList(createScramSha1Credential('jeff', 'test', '123'.toCharArray()))
+                             '&authSource=test')              | createScramSha1Credential('jeff', 'test', '123'.toCharArray())
         new ConnectionString('mongodb://jeff@localhost/?' +
-                           'authMechanism=GSSAPI')            | asList(createGSSAPICredential('jeff'))
+                           'authMechanism=GSSAPI')            | createGSSAPICredential('jeff')
         new ConnectionString('mongodb://jeff:123@localhost/?' +
-                           'authMechanism=PLAIN')             | asList(createPlainCredential('jeff', 'admin', '123'.toCharArray()))
+                           'authMechanism=PLAIN')             | createPlainCredential('jeff', 'admin', '123'.toCharArray())
         new ConnectionString('mongodb://jeff@localhost/?' +
-                           'authMechanism=MONGODB-X509')      | asList(createMongoX509Credential('jeff'))
+                           'authMechanism=MONGODB-X509')      | createMongoX509Credential('jeff')
         new ConnectionString('mongodb://localhost/?' +
-                           'authMechanism=MONGODB-X509')      | asList(createMongoX509Credential())
+                           'authMechanism=MONGODB-X509')      | createMongoX509Credential()
         new ConnectionString('mongodb://jeff@localhost/?' +
                            'authMechanism=GSSAPI' +
-                           '&gssapiServiceName=foo')          | asList(createGSSAPICredential('jeff')
-                                                                            .withMechanismProperty('SERVICE_NAME', 'foo'))
+                           '&gssapiServiceName=foo')          | createGSSAPICredential('jeff')
+                                                                            .withMechanismProperty('SERVICE_NAME', 'foo')
         new ConnectionString('mongodb://jeff@localhost/?' +
                              'authMechanism=GSSAPI' +
                              '&authMechanismProperties=' +
-                             'SERVICE_NAME:foo')              | asList(createGSSAPICredential('jeff')
-                                                                            .withMechanismProperty('SERVICE_NAME', 'foo'))
+                             'SERVICE_NAME:foo')              | createGSSAPICredential('jeff')
+                                                                            .withMechanismProperty('SERVICE_NAME', 'foo')
         new ConnectionString('mongodb://jeff@localhost/?' +
                              'authMechanism=GSSAPI' +
                              '&authMechanismProperties=' +
-                             'SERVICE_NAME :foo')              | asList(createGSSAPICredential('jeff')
-                                                                            .withMechanismProperty('SERVICE_NAME', 'foo'))
+                             'SERVICE_NAME :foo')              | createGSSAPICredential('jeff')
+                                                                            .withMechanismProperty('SERVICE_NAME', 'foo')
         new ConnectionString('mongodb://jeff@localhost/?' +
                              'authMechanism=GSSAPI' +
                              '&authMechanismProperties=' +
                              'SERVICE_NAME:foo,' +
                              'CANONICALIZE_HOST_NAME:true,' +
-                             'SERVICE_REALM:AWESOME')        | asList(createGSSAPICredential('jeff')
+                             'SERVICE_REALM:AWESOME')        | createGSSAPICredential('jeff')
                                                                           .withMechanismProperty('SERVICE_NAME', 'foo')
                                                                           .withMechanismProperty('CANONICALIZE_HOST_NAME', true)
-                                                                          .withMechanismProperty('SERVICE_REALM', 'AWESOME'))
+                                                                          .withMechanismProperty('SERVICE_REALM', 'AWESOME')
     }
 
     def 'should ignore authSource if there is no credential'() {
@@ -355,6 +387,19 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://localhost/?readConcernLevel=majority')  | ReadConcern.MAJORITY
     }
 
+    @Unroll
+    def 'should parse compressors'() {
+        expect:
+        uri.getCompressorList() == [compressor]
+
+        where:
+        uri                                                                          | compressor
+        new ConnectionString('mongodb://localhost/?compressors=zlib') | createZlibCompressor()
+        new ConnectionString('mongodb://localhost/?compressors=zlib' +
+                '&zlibCompressionLevel=5')                                           | createZlibCompressor().withProperty(LEVEL, 5)
+
+    }
+
     def 'should be equal to another instance with the same string values'() {
         expect:
         uri1 == uri2
@@ -427,5 +472,26 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://ross:123@localhost/?'
                            + 'authMechanism=SCRAM-SHA-1')            | new ConnectionString('mongodb://ross:123@localhost/?'
                                                                                           + 'authMechanism=GSSAPI')
+    }
+
+    // these next two tests are functionally part of the initial-dns-seedlist-discovery specification tests, but since those
+    // tests require that the driver connects to an actual replica set, it isn't possible to create specification tests
+    // with URIs containing user names, since connection to a replica set that doesn't have that user defined would fail.
+    // So to ensure there is proper test coverage of an authSource property specified in a TXT record, adding those tests here.
+
+    def 'should use authSource from TXT record'() {
+        given:
+        def uri = new ConnectionString('mongodb+srv://bob:pwd@test5.test.build.10gen.cc/')
+
+        expect:
+        uri.credential == createCredential('bob', 'thisDB', 'pwd'.toCharArray())
+    }
+
+    def 'should override authSource from TXT record with authSource from connectionString'() {
+        given:
+        def uri = new ConnectionString('mongodb+srv://bob:pwd@test5.test.build.10gen.cc/?authSource=otherDB')
+
+        expect:
+        uri.credential == createCredential('bob', 'otherDB', 'pwd'.toCharArray())
     }
 }

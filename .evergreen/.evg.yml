@@ -135,12 +135,12 @@ functions:
       params:
         script: |
           ${PREPARE_SHELL}
-          find $MONGO_ORCHESTRATION_HOME -name \*.log | xargs tar czf ${PROJECT_DIRECTORY}/mongodb-logs.tar.gz
+          find $MONGO_ORCHESTRATION_HOME -name \*.log | xargs tar czf mongodb-logs.tar.gz
     - command: s3.put
       params:
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
-        local_file: ${PROJECT_DIRECTORY}/mongodb-logs.tar.gz
+        local_file: mongodb-logs.tar.gz
         remote_file: ${UPLOAD_BUCKET}/${build_variant}/${revision}/${version_id}/${build_id}/logs/${task_id}-${execution}-mongodb-logs.tar.gz
         bucket: mciuploads
         permissions: public-read
@@ -150,7 +150,7 @@ functions:
       params:
         aws_key: ${aws_key}
         aws_secret: ${aws_secret}
-        local_file: ${DRIVERS_TOOLS}/.evergreen/orchestration/server.log
+        local_file: drivers-tools/.evergreen/orchestration/server.log
         remote_file: ${UPLOAD_BUCKET}/${build_variant}/${revision}/${version_id}/${build_id}/logs/${task_id}-${execution}-orchestration.log
         bucket: mciuploads
         permissions: public-read
@@ -214,7 +214,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          AUTH=${AUTH} SSL=${SSL} MONGODB_URI="${MONGODB_URI}" TOPOLOGY=${TOPOLOGY} JDK="${JDK}" .evergreen/run-tests.sh
+          AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" .evergreen/run-tests.sh
 
   "run plain auth test":
     - command: shell.exec
@@ -306,6 +306,12 @@ functions:
         file="${PROJECT_DIRECTORY}/.evergreen/install-dependencies.sh"
         [ -f ${file} ] && sh ${file} || echo "${file} not available, skipping"
 
+# Anchors
+
+hosts: &hosts
+ - rhel62-small
+ - rhel70-small
+
 pre:
   - func: "fetch source"
   - func: "prepare resources"
@@ -373,6 +379,10 @@ axes:
         display_name: "latest"
         variables:
            VERSION: "latest"
+      - id: "3.6"
+        display_name: "3.6"
+        variables:
+           VERSION: "3.6"
       - id: "3.4"
         display_name: "3.4"
         variables:
@@ -389,16 +399,12 @@ axes:
         display_name: "2.6"
         variables:
            VERSION: "2.6"
-      - id: "2.4"
-        display_name: "2.4"
-        variables:
-           VERSION: "2.4"
   - id: os
     display_name: OS
     values:
-      - id: "rhel62"
-        display_name: "RHEL 6.2"
-        run_on: rhel62-test
+      - id: "linux"
+        display_name: "Linux"
+        run_on: *hosts
 
   - id: topology
     display_name: Topology
@@ -437,7 +443,18 @@ axes:
         display_name: NoSSL
         variables:
            SSL: "nossl"
-  - id: jdk 
+  - id: compressor
+    display_name: Compressor
+    values:
+      - id: "snappy"
+        display_name: Snappy
+        variables:
+           COMPRESSOR: "snappy"
+      - id: "zlib"
+        display_name: Zlib
+        variables:
+           COMPRESSOR: "zlib"
+  - id: jdk
     display_name: JDK
     values:
       - id: "jdk8"
@@ -458,21 +475,41 @@ buildvariants:
 # Test packaging and other release related routines
 - name: static-checks
   display_name: "Static Checks"
-  run_on:
-    - rhel62-test
+  run_on: *hosts
   tasks:
     - name: "static-analysis"
 
-- matrix_name: "tests-jdk6"
-  matrix_spec: { auth: "*", ssl: "*", jdk: "jdk6", version: "*", topology: "*", os: "*" }
-  exclude_spec: { version: "2.4", ssl: "ssl", jdk: "*", auth: "*", topology: "*", os: "*" }
+- matrix_name: "tests-zlib-compression"
+  matrix_spec: { compressor : "zlib", auth: "noauth", ssl: "nossl", jdk: "jdk6", version: ["3.6", "latest"], topology: "standalone", os:
+  "linux" }
+  display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
+  tags: ["tests-variant"]
+  tasks:
+     - name: "test"
+
+- matrix_name: "tests-snappy-compression"
+  matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: ["3.4", "3.6", "latest"], topology: "standalone", os: "linux" }
+  display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
+  tags: ["tests-variant"]
+  tasks:
+     - name: "test"
+
+- matrix_name: "tests-jdk6-unsecure"
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk6", version: "*", topology: "*", os: "*" }
+  display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
+  tags: ["tests-variant"]
+  tasks:
+     - name: "test"
+
+- matrix_name: "tests-jdk6-secure"
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: "jdk6", version: "*", topology: "*", os: "*" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
      - name: "test"
 
 - matrix_name: "tests-jdk-other"
-  matrix_spec: { auth: "*", ssl: "*", jdk: "*", version: "3.4", topology: "standalone", os: "rhel62" }
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: "*", version: "3.6", topology: "standalone", os: "linux" }
   exclude_spec: { jdk: "jdk6", auth: "*", ssl: "*", version: "*", topology: "*", os: "*" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
@@ -480,7 +517,7 @@ buildvariants:
      - name: "test"
 
 - matrix_name: "test-gssapi"
-  matrix_spec: { jdk: "*", os: "rhel62" }
+  matrix_spec: { jdk: "*", os: "linux" }
   display_name: "GSSAPI (Kerberos) Auth test ${jdk} ${os} "
   tags: ["test-gssapi-variant"]
   tasks:
@@ -488,14 +525,12 @@ buildvariants:
 
 - name: plain-auth-test
   display_name: "PLAIN (LDAP) Auth test"
-  run_on:
-    - rhel62-test
+  run_on: *hosts
   tasks:
     - name: "plain-auth-test"
 
 - name: publish-snapshot
   display_name: "Publish Snapshot"
-  run_on:
-    - rhel62-test
+  run_on: *hosts
   tasks:
     - name: "publish-snapshot"

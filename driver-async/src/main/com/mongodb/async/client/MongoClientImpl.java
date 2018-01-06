@@ -16,19 +16,17 @@
 
 package com.mongodb.async.client;
 
+import com.mongodb.ClientSessionOptions;
 import com.mongodb.Function;
+import com.mongodb.MongoClientException;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.binding.AsyncClusterBinding;
-import com.mongodb.binding.AsyncReadBinding;
-import com.mongodb.binding.AsyncReadWriteBinding;
-import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.connection.Cluster;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.operation.AsyncOperationExecutor;
-import com.mongodb.operation.AsyncReadOperation;
-import com.mongodb.operation.AsyncWriteOperation;
+import com.mongodb.session.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.Document;
 
@@ -44,31 +42,60 @@ class MongoClientImpl implements MongoClient {
     private final MongoClientSettings settings;
     private final AsyncOperationExecutor executor;
     private final Closeable externalResourceCloser;
+    private final ServerSessionPool serverSessionPool;
+    private final ClientSessionHelper clientSessionHelper;
+
 
     MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, final Closeable externalResourceCloser) {
-        this(settings, cluster, createOperationExecutor(settings, cluster), externalResourceCloser);
+        this(settings, cluster, null, externalResourceCloser);
     }
 
     MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, final AsyncOperationExecutor executor) {
         this(settings, cluster, executor, null);
     }
 
-    MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, final AsyncOperationExecutor executor,
-                    final Closeable externalResourceCloser) {
+    private MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, final AsyncOperationExecutor executor,
+                            final Closeable externalResourceCloser) {
         this.settings = notNull("settings", settings);
         this.cluster = notNull("cluster", cluster);
-        this.executor = notNull("executor", executor);
+        this.serverSessionPool = new ServerSessionPool(cluster);
+        this.clientSessionHelper = new ClientSessionHelper(this, serverSessionPool);
+        if (executor == null) {
+            this.executor = new AsyncOperationExecutorImpl(this, clientSessionHelper);
+        } else {
+            this.executor = executor;
+        }
         this.externalResourceCloser = externalResourceCloser;
+    }
+
+    @Override
+    public void startSession(final ClientSessionOptions options, final SingleResultCallback<ClientSession> callback) {
+        notNull("callback", callback);
+        clientSessionHelper.createClientSession(notNull("options", options), new SingleResultCallback<ClientSession>() {
+            @Override
+            public void onResult(final ClientSession clientSession, final Throwable t) {
+                SingleResultCallback<ClientSession> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
+                if (t != null) {
+                    errHandlingCallback.onResult(null, t);
+                } else if (clientSession == null) {
+                    errHandlingCallback.onResult(null, new MongoClientException("Sessions are not supported by the MongoDB cluster to"
+                            + " which this client is connected"));
+                } else {
+                    errHandlingCallback.onResult(clientSession, null);
+                }
+            }
+        });
     }
 
     @Override
     public MongoDatabase getDatabase(final String name) {
         return new MongoDatabaseImpl(name, settings.getCodecRegistry(), settings.getReadPreference(), settings.getWriteConcern(),
-                settings.getReadConcern(), executor);
+                settings.getRetryWrites(), settings.getReadConcern(), executor);
     }
 
     @Override
     public void close() {
+        serverSessionPool.close();
         cluster.close();
         if (externalResourceCloser != null) {
             try {
@@ -77,7 +104,6 @@ class MongoClientImpl implements MongoClient {
                 LOGGER.warn("Exception closing resource", e);
             }
         }
-
     }
 
     @Override
@@ -87,72 +113,52 @@ class MongoClientImpl implements MongoClient {
 
     @Override
     public MongoIterable<String> listDatabaseNames() {
-        return new ListDatabasesIterableImpl<BsonDocument>(BsonDocument.class, MongoClients.getDefaultCodecRegistry(),
-                                                           ReadPreference.primary(), executor).map(new Function<BsonDocument, String>() {
+        return createListDatabaseNamesIterable(null);
+    }
+
+    @Override
+    public MongoIterable<String> listDatabaseNames(final ClientSession clientSession) {
+        notNull("clientSession", clientSession);
+        return createListDatabaseNamesIterable(clientSession);
+    }
+
+    private MongoIterable<String> createListDatabaseNamesIterable(final ClientSession clientSession) {
+        return createListDatabasesIterable(clientSession, BsonDocument.class).nameOnly(true).map(new Function<BsonDocument, String>() {
             @Override
-            public String apply(final BsonDocument document) {
-                return document.getString("name").getValue();
+            public String apply(final BsonDocument result) {
+                return result.getString("name").getValue();
             }
         });
     }
 
     @Override
     public ListDatabasesIterable<Document> listDatabases() {
-        return listDatabases(Document.class);
+        return createListDatabasesIterable(null, Document.class);
+    }
+
+    @Override
+    public ListDatabasesIterable<Document> listDatabases(final ClientSession clientSession) {
+        return listDatabases(clientSession, Document.class);
     }
 
     @Override
     public <T> ListDatabasesIterable<T> listDatabases(final Class<T> resultClass) {
-        return new ListDatabasesIterableImpl<T>(resultClass, settings.getCodecRegistry(), ReadPreference.primary(), executor);
+        return createListDatabasesIterable(null, resultClass);
+    }
+
+    @Override
+    public <TResult> ListDatabasesIterable<TResult> listDatabases(final ClientSession clientSession, final Class<TResult> resultClass) {
+        notNull("clientSession", clientSession);
+        return createListDatabasesIterable(clientSession, resultClass);
+    }
+
+    private <T> ListDatabasesIterable<T> createListDatabasesIterable(final ClientSession clientSession, final Class<T> clazz) {
+        return new ListDatabasesIterableImpl<T>(clientSession, clazz, settings.getCodecRegistry(),
+                ReadPreference.primary(), executor);
     }
 
     Cluster getCluster() {
         return cluster;
     }
 
-    private static AsyncOperationExecutor createOperationExecutor(final MongoClientSettings settings, final Cluster cluster) {
-        return new AsyncOperationExecutor(){
-            @Override
-            public <T> void execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference,
-                                    final SingleResultCallback<T> callback) {
-                notNull("operation", operation);
-                notNull("readPreference", readPreference);
-                notNull("callback", callback);
-                final SingleResultCallback<T> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-                final AsyncReadBinding binding = getReadWriteBinding(readPreference, cluster);
-                operation.executeAsync(binding, new SingleResultCallback<T>() {
-                    @Override
-                    public void onResult(final T result, final Throwable t) {
-                        try {
-                            errHandlingCallback.onResult(result, t);
-                        } finally {
-                            binding.release();
-                        }
-                    }
-                });
-            }
-
-            @Override
-            public <T> void execute(final AsyncWriteOperation<T> operation, final SingleResultCallback<T> callback) {
-                notNull("operation", operation);
-                notNull("callback", callback);
-                final AsyncWriteBinding binding = getReadWriteBinding(ReadPreference.primary(), cluster);
-                operation.executeAsync(binding, new SingleResultCallback<T>() {
-                    @Override
-                    public void onResult(final T result, final Throwable t) {
-                        try {
-                            errorHandlingCallback(callback, LOGGER).onResult(result, t);
-                        } finally {
-                            binding.release();
-                        }
-                    }
-                });
-            }
-        };
-    }
-
-    private static AsyncReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, final Cluster cluster) {
-        notNull("readPreference", readPreference);
-        return new AsyncClusterBinding(cluster, readPreference);
-    }
 }

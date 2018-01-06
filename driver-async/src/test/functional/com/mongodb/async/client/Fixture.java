@@ -68,13 +68,16 @@ public final class Fixture {
         SocketSettings socketSettings = SocketSettings.builder()
                                                       .applyConnectionString(getConnectionString())
                                                       .build();
-        return MongoClientSettings.builder()
+        MongoClientSettings.Builder builder = MongoClientSettings.builder()
                 .clusterSettings(clusterSettings)
                 .connectionPoolSettings(connectionPoolSettings)
                 .serverSettings(ServerSettings.builder().build())
-                .credentialList(getConnectionString().getCredentialList())
                 .sslSettings(sslSettingsBuilder.build())
                 .socketSettings(socketSettings);
+        if (getConnectionString().getCredential() != null) {
+            builder.credential(getConnectionString().getCredential());
+        }
+        return builder;
     }
 
     public static synchronized ConnectionString getConnectionString() {

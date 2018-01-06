@@ -21,6 +21,7 @@ import org.bson.io.OutputBuffer;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -128,7 +129,7 @@ public class ByteBufferBsonOutput extends OutputBuffer {
 
         List<ByteBuf> buffers = new ArrayList<ByteBuf>(bufferList.size());
         for (final ByteBuf cur : bufferList) {
-            buffers.add(cur.duplicate().flip());
+            buffers.add(cur.duplicate().order(ByteOrder.LITTLE_ENDIAN).flip());
         }
         return buffers;
     }

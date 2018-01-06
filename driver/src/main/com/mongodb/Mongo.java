@@ -35,17 +35,23 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
+import com.mongodb.internal.session.ClientSessionImpl;
+import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.internal.thread.DaemonThreadFactory;
+import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.CurrentOpOperation;
 import com.mongodb.operation.FsyncUnlockOperation;
 import com.mongodb.operation.ListDatabasesOperation;
-import com.mongodb.operation.OperationExecutor;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
+import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.LatencyMinimizingServerSelector;
+import com.mongodb.selector.ServerSelector;
+import com.mongodb.session.ClientSession;
 import org.bson.BsonBoolean;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -57,6 +63,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import static com.mongodb.ReadPreference.primary;
+import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static com.mongodb.connection.ClusterType.REPLICA_SET;
 import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
@@ -96,6 +103,7 @@ public class Mongo {
 
     private final ConcurrentLinkedQueue<ServerCursorAndNamespace> orphanedCursors = new ConcurrentLinkedQueue<ServerCursorAndNamespace>();
     private final ExecutorService cursorCleaningService;
+    private final ServerSessionPool serverSessionPool;
 
     /**
      * Creates a Mongo instance based on a (single) mongodb node (localhost, default port)
@@ -310,6 +318,7 @@ public class Mongo {
 
     Mongo(final Cluster cluster, final MongoClientOptions options, final List<MongoCredential> credentialsList) {
         this.cluster = cluster;
+        this.serverSessionPool = new ServerSessionPool(cluster);
         this.options = options;
         this.readPreference = options.getReadPreference() != null ? options.getReadPreference() : primary();
         this.writeConcern = options.getWriteConcern() != null ? options.getWriteConcern() : WriteConcern.UNACKNOWLEDGED;
@@ -457,14 +466,17 @@ public class Mongo {
      */
     @Deprecated
     public List<String> getDatabaseNames() {
-      return new OperationIterable<DBObject>(new ListDatabasesOperation<DBObject>(MongoClient.getCommandCodec()),
-          primary(), createOperationExecutor())
-          .map(new Function<DBObject, String>() {
-              @Override
-              public String apply(final DBObject result) {
-                  return (String) result.get("name");
-              }
-          }).into(new ArrayList<String>());
+        return new MongoIterableImpl<DBObject>(null, createOperationExecutor(), ReadConcern.DEFAULT, primary()) {
+            @Override
+            ReadOperation<BatchCursor<DBObject>> asReadOperation() {
+                return new ListDatabasesOperation<DBObject>(MongoClient.getCommandCodec());
+            }
+        }.map(new Function<DBObject, String>() {
+            @Override
+            public String apply(final DBObject result) {
+                return (String) result.get("name");
+            }
+        }).into(new ArrayList<String>());
     }
 
     /**
@@ -524,6 +536,7 @@ public class Mongo {
      * databases obtained from it can no longer be used.
      */
     public void close() {
+        serverSessionPool.close();
         cluster.close();
         if (cursorCleaningService != null) {
             cursorCleaningService.shutdownNow();
@@ -638,7 +651,7 @@ public class Mongo {
      * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
     public DBObject unlock() {
-        return DBObjects.toDBObject(execute(new FsyncUnlockOperation(), readPreference));
+        return DBObjects.toDBObject(createOperationExecutor().execute(new FsyncUnlockOperation(), readPreference));
     }
 
     /**
@@ -649,8 +662,8 @@ public class Mongo {
      * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
     public boolean isLocked() {
-        return execute(new CurrentOpOperation(), ReadPreference.primary())
-               .getBoolean("fsyncLock", BsonBoolean.FALSE).getValue();
+        return createOperationExecutor().execute(new CurrentOpOperation(), ReadPreference.primary())
+                       .getBoolean("fsyncLock", BsonBoolean.FALSE).getValue();
     }
 
     @Override
@@ -690,7 +703,6 @@ public class Mongo {
     }
 
     private static Cluster createCluster(final MongoClientURI mongoURI, final MongoDriverInformation mongoDriverInformation) {
-
         List<MongoCredential> credentialList = mongoURI.getCredentials() != null
                                                ? singletonList(mongoURI.getCredentials())
                                                : Collections.<MongoCredential>emptyList();
@@ -735,7 +747,8 @@ public class Mongo {
                 credentialsList,
                 getCommandListener(options.getCommandListeners()),
                 options.getApplicationName(),
-                mongoDriverInformation);
+                mongoDriverInformation,
+                options.getCompressorList());
     }
 
     private static ClusterSettings getClusterSettings(final List<ServerAddress> seedList, final MongoClientOptions options,
@@ -745,13 +758,24 @@ public class Mongo {
                 .mode(clusterConnectionMode)
                 .requiredReplicaSetName(options.getRequiredReplicaSetName())
                 .serverSelectionTimeout(options.getServerSelectionTimeout(), MILLISECONDS)
-                .serverSelector(new LatencyMinimizingServerSelector(options.getLocalThreshold(), MILLISECONDS))
+                .serverSelector(getServerSelector(options))
                 .description(options.getDescription())
                 .maxWaitQueueSize(options.getConnectionPoolSettings().getMaxWaitQueueSize());
         for (ClusterListener clusterListener: options.getClusterListeners()) {
             builder.addClusterListener(clusterListener);
         }
         return builder.build();
+    }
+
+    private static ServerSelector getServerSelector(final MongoClientOptions options) {
+        LatencyMinimizingServerSelector latencyMinimizingServerSelector =
+                new LatencyMinimizingServerSelector(options.getLocalThreshold(), MILLISECONDS);
+
+        if (options.getServerSelector() == null) {
+            return latencyMinimizingServerSelector;
+        }
+
+        return new CompositeServerSelector(Arrays.asList(options.getServerSelector(), latencyMinimizingServerSelector));
     }
 
     Cluster getCluster() {
@@ -774,18 +798,6 @@ public class Mongo {
         return credentialsList;
     }
 
-    WriteBinding getWriteBinding() {
-        return getReadWriteBinding(primary());
-    }
-
-    ReadBinding getReadBinding(final ReadPreference readPreference) {
-        return getReadWriteBinding(readPreference);
-    }
-
-    private ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference) {
-        return new ClusterBinding(getCluster(), readPreference);
-    }
-
     void addOrphanedCursor(final ServerCursor serverCursor, final MongoNamespace namespace) {
         orphanedCursors.add(new ServerCursorAndNamespace(serverCursor, namespace));
     }
@@ -794,31 +806,97 @@ public class Mongo {
         return new OperationExecutor() {
             @Override
             public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
-                return Mongo.this.execute(operation, readPreference);
+                return execute(operation, readPreference, null);
             }
 
             @Override
             public <T> T execute(final WriteOperation<T> operation) {
-                return Mongo.this.execute(operation);
+                return execute(operation, null);
+            }
+
+            @Override
+            public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ClientSession session) {
+                ClientSession actualClientSession = getClientSession(session);
+                ReadBinding binding = getReadBinding(readPreference, actualClientSession, session == null && actualClientSession != null);
+                try {
+                    return operation.execute(binding);
+                } finally {
+                    binding.release();
+                }
+            }
+
+            @Override
+            public <T> T execute(final WriteOperation<T> operation, final ClientSession session) {
+                ClientSession actualClientSession = getClientSession(session);
+                WriteBinding binding = getWriteBinding(actualClientSession, session == null && actualClientSession != null);
+                try {
+                    return operation.execute(binding);
+                } finally {
+                    binding.release();
+                }
+            }
+
+            WriteBinding getWriteBinding(final ClientSession session, final boolean ownsSession) {
+                return getReadWriteBinding(primary(), session, ownsSession);
+            }
+
+            ReadBinding getReadBinding(final ReadPreference readPreference, final ClientSession session, final boolean ownsSession) {
+                return getReadWriteBinding(readPreference, session, ownsSession);
+            }
+
+            ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, final ClientSession session,
+                                                 final boolean ownsSession) {
+                ReadWriteBinding readWriteBinding = new ClusterBinding(getCluster(), readPreference);
+                if (session != null) {
+                    readWriteBinding = new ClientSessionBinding(session, ownsSession, readWriteBinding);
+                }
+                return readWriteBinding;
+            }
+
+            ClientSession getClientSession(final ClientSession clientSessionFromOperation) {
+                ClientSession session;
+                if (clientSessionFromOperation != null) {
+                    isTrue("ClientSession from same MongoClient", clientSessionFromOperation.getOriginator() == Mongo.this);
+                    session = clientSessionFromOperation;
+                } else {
+                    session = createClientSession(ClientSessionOptions.builder().causallyConsistent(false).build());
+                }
+                return session;
             }
         };
     }
 
-    <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
-        ReadBinding binding = getReadBinding(readPreference);
-        try {
-            return operation.execute(binding);
-        } finally {
-            binding.release();
+    ClientSession createClientSession(final ClientSessionOptions options) {
+        if (credentialsList.size() > 1) {
+            return null;
+        }
+        if (getConnectedClusterDescription().getLogicalSessionTimeoutMinutes() != null) {
+            return new ClientSessionImpl(serverSessionPool, this, options);
+        } else {
+            return null;
         }
     }
 
-    <T> T execute(final WriteOperation<T> operation) {
-        WriteBinding binding = getWriteBinding();
-        try {
-            return operation.execute(binding);
-        } finally {
-            binding.release();
+    private ClusterDescription getConnectedClusterDescription() {
+        ClusterDescription clusterDescription = cluster.getDescription();
+        if (getServerDescriptionListToConsiderForSessionSupport(clusterDescription).isEmpty()) {
+            cluster.selectServer(new ServerSelector() {
+                @Override
+                public List<ServerDescription> select(final ClusterDescription clusterDescription) {
+                    return getServerDescriptionListToConsiderForSessionSupport(clusterDescription);
+                }
+            });
+            clusterDescription = cluster.getDescription();
+        }
+        return clusterDescription;
+    }
+
+    @SuppressWarnings("deprecation")
+    private List<ServerDescription> getServerDescriptionListToConsiderForSessionSupport(final ClusterDescription clusterDescription) {
+        if (clusterDescription.getConnectionMode() == ClusterConnectionMode.SINGLE) {
+            return clusterDescription.getAny();
+        } else {
+            return clusterDescription.getAnyPrimaryOrSecondary();
         }
     }
 

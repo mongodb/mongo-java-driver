@@ -25,6 +25,7 @@ import com.mongodb.event.CommandListener
 import com.mongodb.event.ConnectionPoolListener
 import com.mongodb.event.ServerListener
 import com.mongodb.event.ServerMonitorListener
+import com.mongodb.selector.ServerSelector
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
@@ -51,10 +52,12 @@ class MongoClientOptionsSpecification extends Specification {
         options.getDescription() == null
         options.getApplicationName() == null
         options.getWriteConcern() == WriteConcern.ACKNOWLEDGED
+        !options.getRetryWrites()
         options.getMinConnectionsPerHost() == 0
         options.getConnectionsPerHost() == 100
         options.getConnectTimeout() == 10000
         options.getReadPreference() == ReadPreference.primary()
+        options.getServerSelector() == null;
         options.getThreadsAllowedToBlockForConnectionMultiplier() == 5
         options.isSocketKeepAlive()
         !options.isSslEnabled()
@@ -83,6 +86,7 @@ class MongoClientOptionsSpecification extends Specification {
                                                 .minHeartbeatFrequency(500, MILLISECONDS)
                                                 .build()
         options.sslSettings == SslSettings.builder().build();
+        options.compressorList == []
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')
@@ -145,21 +149,28 @@ class MongoClientOptionsSpecification extends Specification {
         then:
         thrown(IllegalArgumentException)
 
+        when:
+        builder.compressorList(null)
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'should build with set options'() {
         given:
         def encoderFactory = new MyDBEncoderFactory()
         def socketFactory = SSLSocketFactory.getDefault()
+        def serverSelector = Mock(ServerSelector)
         def options = MongoClientOptions.builder()
                                         .description('test')
                                         .applicationName('appName')
                                         .readPreference(ReadPreference.secondary())
+                                        .retryWrites(true)
                                         .writeConcern(WriteConcern.JOURNALED)
                                         .minConnectionsPerHost(30)
                                         .connectionsPerHost(500)
                                         .connectTimeout(100)
                                         .socketTimeout(700)
+                                        .serverSelector(serverSelector)
                                         .serverSelectionTimeout(150)
                                         .maxWaitTime(200)
                                         .maxConnectionIdleTime(300)
@@ -179,6 +190,7 @@ class MongoClientOptionsSpecification extends Specification {
                                         .requiredReplicaSetName('test')
                                         .cursorFinalizerEnabled(false)
                                         .dbEncoderFactory(encoderFactory)
+                                        .compressorList([MongoCompressor.createZlibCompressor()])
                                         .build()
 
         expect:
@@ -186,6 +198,8 @@ class MongoClientOptionsSpecification extends Specification {
         options.getApplicationName() == 'appName'
         options.getReadPreference() == ReadPreference.secondary()
         options.getWriteConcern() == WriteConcern.JOURNALED
+        options.getServerSelector() == serverSelector
+        options.getRetryWrites()
         options.getServerSelectionTimeout() == 150
         options.getMaxWaitTime() == 200
         options.getMaxConnectionIdleTime() == 300
@@ -223,6 +237,7 @@ class MongoClientOptionsSpecification extends Specification {
                                                 .build()
         options.sslSettings == SslSettings.builder().enabled(true).invalidHostNameAllowed(true)
                 .context(SSLContext.getDefault()).build()
+        options.compressorList == [MongoCompressor.createZlibCompressor()]
     }
 
     @IgnoreIf({ isNotAtLeastJava7() })
@@ -316,6 +331,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .addClusterListener(Mock(ClusterListener))
                 .addServerListener(Mock(ServerListener))
                 .addServerMonitorListener(Mock(ServerMonitorListener))
+                .compressorList([MongoCompressor.createZlibCompressor()])
                 .build()
 
         then:
@@ -597,6 +613,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .applicationName('appName')
                 .readPreference(ReadPreference.secondary())
                 .writeConcern(WriteConcern.JOURNALED)
+                .retryWrites(true)
                 .minConnectionsPerHost(30)
                 .connectionsPerHost(500)
                 .connectTimeout(100)
@@ -625,6 +642,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .addConnectionPoolListener(Mock(ConnectionPoolListener))
                 .addServerListener(Mock(ServerListener))
                 .addServerMonitorListener(Mock(ServerMonitorListener))
+                .compressorList([MongoCompressor.createZlibCompressor()])
                 .build()
 
         when:
@@ -638,14 +656,14 @@ class MongoClientOptionsSpecification extends Specification {
         when:
         // A regression test so that if any more methods are added then the builder(final MongoClientOptions options) should be updated
         def actual = MongoClientOptions.Builder.declaredFields.grep { !it.synthetic } *.name.sort()
-        def expected = ['alwaysUseMBeans', 'applicationName', 'clusterListeners', 'codecRegistry', 'commandListeners', 'connectTimeout',
-                        'connectionPoolListeners', 'cursorFinalizerEnabled', 'dbDecoderFactory', 'dbEncoderFactory', 'description',
-                        'heartbeatConnectTimeout', 'heartbeatFrequency', 'heartbeatSocketTimeout', 'localThreshold',
+        def expected = ['alwaysUseMBeans', 'applicationName', 'clusterListeners', 'codecRegistry', 'commandListeners', 'compressorList',
+                        'connectTimeout', 'connectionPoolListeners', 'cursorFinalizerEnabled', 'dbDecoderFactory', 'dbEncoderFactory',
+                        'description', 'heartbeatConnectTimeout', 'heartbeatFrequency', 'heartbeatSocketTimeout', 'localThreshold',
                         'maxConnectionIdleTime', 'maxConnectionLifeTime', 'maxConnectionsPerHost', 'maxWaitTime', 'minConnectionsPerHost',
-                        'minHeartbeatFrequency', 'readConcern', 'readPreference', 'requiredReplicaSetName', 'serverListeners',
-                        'serverMonitorListeners', 'serverSelectionTimeout', 'socketFactory', 'socketKeepAlive', 'socketTimeout',
-                        'sslContext', 'sslEnabled', 'sslInvalidHostNameAllowed', 'threadsAllowedToBlockForConnectionMultiplier',
-                        'writeConcern']
+                        'minHeartbeatFrequency', 'readConcern', 'readPreference', 'requiredReplicaSetName', 'retryWrites',
+                        'serverListeners', 'serverMonitorListeners', 'serverSelectionTimeout', 'serverSelector', 'socketFactory',
+                        'socketKeepAlive', 'socketTimeout', 'sslContext', 'sslEnabled', 'sslInvalidHostNameAllowed',
+                        'threadsAllowedToBlockForConnectionMultiplier', 'writeConcern']
 
         then:
         actual == expected

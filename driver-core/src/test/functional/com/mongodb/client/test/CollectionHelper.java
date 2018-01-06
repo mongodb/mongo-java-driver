@@ -18,10 +18,12 @@ package com.mongodb.client.test;
 
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.ServerCursor;
 import com.mongodb.WriteConcern;
 import com.mongodb.binding.AsyncReadWriteBinding;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.bulk.DeleteRequest;
 import com.mongodb.bulk.IndexRequest;
 import com.mongodb.bulk.InsertRequest;
 import com.mongodb.bulk.UpdateRequest;
@@ -32,6 +34,8 @@ import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
 import com.mongodb.operation.AggregateOperation;
 import com.mongodb.operation.BatchCursor;
+import com.mongodb.operation.CommandReadOperation;
+import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.CountOperation;
 import com.mongodb.operation.CreateCollectionOperation;
 import com.mongodb.operation.CreateIndexesOperation;
@@ -41,8 +45,11 @@ import com.mongodb.operation.FindOperation;
 import com.mongodb.operation.InsertOperation;
 import com.mongodb.operation.ListIndexesOperation;
 import com.mongodb.operation.MixedBulkWriteOperation;
+import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
+import org.bson.BsonInt64;
+import org.bson.BsonString;
 import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.BsonValueCodecProvider;
@@ -57,7 +64,6 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static com.mongodb.ClusterFixture.executeAsync;
@@ -80,6 +86,10 @@ public final class CollectionHelper<T> {
         this.namespace = namespace;
     }
 
+    public T isMaster() {
+        return new CommandReadOperation<T>("admin", BsonDocument.parse("{isMaster: 1}"), codec).execute(getBinding());
+    }
+
     public static void drop(final MongoNamespace namespace) {
         new DropCollectionOperation(namespace, WriteConcern.ACKNOWLEDGED).execute(getBinding());
     }
@@ -95,6 +105,10 @@ public final class CollectionHelper<T> {
                 throw e;
             }
         }
+    }
+
+    public MongoNamespace getNamespace() {
+        return namespace;
     }
 
     public void drop() {
@@ -127,29 +141,41 @@ public final class CollectionHelper<T> {
         operation.execute(getBinding());
     }
 
-    @SuppressWarnings("unchecked")
-    public void insertDocuments(final BsonDocument... documents) {
-        insertDocuments(Arrays.asList(documents));
+    public void killCursor(final MongoNamespace namespace, final ServerCursor serverCursor) {
+        if (serverCursor != null) {
+            BsonDocument command = new BsonDocument("killCursors", new BsonString(namespace.getCollectionName()))
+                    .append("cursors", new BsonArray(singletonList(new BsonInt64(serverCursor.getId()))));
+            try {
+                new CommandWriteOperation<BsonDocument>(namespace.getDatabaseName(), command, new BsonDocumentCodec())
+                        .execute(getBinding());
+            } catch (Exception e) {
+                // Ignore any exceptions killing old cursors
+            }
+        }
     }
 
-    @SuppressWarnings("unchecked")
+    public void insertDocuments(final BsonDocument... documents) {
+        insertDocuments(asList(documents));
+    }
+
     public void insertDocuments(final List<BsonDocument> documents) {
         insertDocuments(documents, getBinding());
     }
 
+    public void insertDocuments(final List<BsonDocument> documents, final WriteConcern writeConcern) {
+        insertDocuments(documents, writeConcern, getBinding());
+    }
 
-    @SuppressWarnings("unchecked")
     public void insertDocuments(final List<BsonDocument> documents, final WriteBinding binding) {
         insertDocuments(documents, WriteConcern.ACKNOWLEDGED, binding);
     }
 
-    @SuppressWarnings("unchecked")
     public void insertDocuments(final List<BsonDocument> documents, final WriteConcern writeConcern, final WriteBinding binding) {
         List<InsertRequest> insertRequests = new ArrayList<InsertRequest>(documents.size());
         for (BsonDocument document : documents) {
             insertRequests.add(new InsertRequest(document));
         }
-        new InsertOperation(namespace, true, writeConcern, insertRequests).execute(binding);
+        new InsertOperation(namespace, true, writeConcern, false, insertRequests).execute(binding);
     }
 
     public void insertDocuments(final Document... documents) {
@@ -199,8 +225,25 @@ public final class CollectionHelper<T> {
                                                                     update.toBsonDocument(Document.class, registry),
                                                                     WriteRequest.Type.UPDATE)
                                                   .upsert(isUpsert)),
-                                    true, WriteConcern.ACKNOWLEDGED)
+                                    true, WriteConcern.ACKNOWLEDGED, false)
         .execute(getBinding());
+    }
+
+    public void replaceOne(final Bson filter, final Bson update, final boolean isUpsert) {
+        new MixedBulkWriteOperation(namespace,
+                singletonList(new UpdateRequest(filter.toBsonDocument(Document.class, registry),
+                        update.toBsonDocument(Document.class, registry),
+                        WriteRequest.Type.REPLACE)
+                        .upsert(isUpsert)),
+                true, WriteConcern.ACKNOWLEDGED, false)
+                .execute(getBinding());
+    }
+
+    public void deleteOne(final Bson filter) {
+        new MixedBulkWriteOperation(namespace,
+                singletonList(new DeleteRequest(filter.toBsonDocument(Document.class, registry))),
+                true, WriteConcern.ACKNOWLEDGED, false)
+                .execute(getBinding());
     }
 
     public List<T> find(final Bson filter) {

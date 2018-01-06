@@ -17,6 +17,7 @@
 package com.mongodb.client.model
 
 import org.bson.BsonDocument
+import org.bson.BsonInt32
 import spock.lang.Specification
 
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -104,5 +105,14 @@ class FindOneAndUpdateOptionsSpecification extends Specification {
 
         where:
         returnDocument << [ReturnDocument.BEFORE, ReturnDocument.AFTER]
+    }
+
+
+    def 'should set array filters'() {
+        expect:
+        new UpdateOptions().arrayFilters(arrayFilters).getArrayFilters() == arrayFilters
+
+        where:
+        arrayFilters << [null, [], [new BsonDocument('a.b', new BsonInt32(1))]]
     }
 }

@@ -101,17 +101,47 @@ public class ClusterDescription {
     }
 
     /**
-     * Return whether the cluster is compatible with the driver.
+     * Return whether all servers in the cluster are compatible with the driver.
      *
-     * @return true if the cluster is compatible with the driver.
+     * @return true if all servers in the cluster are compatible with the driver
      */
     public boolean isCompatibleWithDriver() {
-        for (final ServerDescription cur : serverDescriptions) {
+        for (ServerDescription cur : serverDescriptions) {
             if (!cur.isCompatibleWithDriver()) {
                 return false;
             }
         }
         return true;
+    }
+
+    /**
+     * Return a server in the cluster that is incompatibly older than the driver.
+     *
+     * @return a server in the cluster that is incompatibly older than the driver, or null if there are none
+     * @since 3.6
+     */
+    public ServerDescription findServerIncompatiblyOlderThanDriver() {
+        for (ServerDescription cur : serverDescriptions) {
+            if (cur.isIncompatiblyOlderThanDriver()) {
+                return cur;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Return a server in the cluster that is incompatibly newer than the driver.
+     *
+     * @return a server in the cluster that is incompatibly newer than the driver, or null if there are none
+     * @since 3.6
+     */
+    public ServerDescription findServerIncompatiblyNewerThanDriver() {
+        for (ServerDescription cur : serverDescriptions) {
+            if (cur.isIncompatiblyNewerThanDriver()) {
+                return cur;
+            }
+        }
+        return null;
     }
 
     /**
@@ -164,6 +194,33 @@ public class ClusterDescription {
      */
     public List<ServerDescription> getServerDescriptions() {
         return Collections.unmodifiableList(serverDescriptions);
+    }
+
+    /**
+     * Gets the logical session timeout in minutes, or null if at least one of the known servers does not support logical sessions.
+     *
+     * @return the logical session timeout in minutes, which may be null
+     * @mongodb.server.release 3.6
+     * @since 3.6
+     */
+    public Integer getLogicalSessionTimeoutMinutes() {
+        Integer retVal = null;
+        for (ServerDescription cur : getServersByPredicate(new Predicate() {
+            @Override
+            public boolean apply(final ServerDescription serverDescription) {
+                return serverDescription.isPrimary() || serverDescription.isSecondary();
+            }
+        })) {
+            if (cur.getLogicalSessionTimeoutMinutes() == null) {
+                return null;
+            }
+            if (retVal == null) {
+                retVal = cur.getLogicalSessionTimeoutMinutes();
+            } else {
+                retVal = Math.min(retVal, cur.getLogicalSessionTimeoutMinutes());
+            }
+        }
+        return retVal;
     }
 
     /**

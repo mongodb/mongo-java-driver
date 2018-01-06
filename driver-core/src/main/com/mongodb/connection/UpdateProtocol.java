@@ -17,7 +17,6 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.UpdateRequest;
@@ -26,8 +25,6 @@ import com.mongodb.diagnostics.logging.Loggers;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
-import org.bson.BsonInt32;
-import org.bson.BsonValue;
 
 import java.util.List;
 
@@ -42,12 +39,11 @@ import static java.util.Collections.singletonList;
 class UpdateProtocol extends WriteProtocol {
     private static final com.mongodb.diagnostics.logging.Logger LOGGER = Loggers.getLogger("protocol.update");
 
-    private final List<UpdateRequest> updates;
+    private final UpdateRequest updateRequest;
 
-    UpdateProtocol(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                   final List<UpdateRequest> updates) {
-        super(namespace, ordered, writeConcern);
-        this.updates = updates;
+    UpdateProtocol(final MongoNamespace namespace, final boolean ordered, final UpdateRequest updateRequest) {
+        super(namespace, ordered);
+        this.updateRequest = updateRequest;
     }
 
     @Override
@@ -86,12 +82,12 @@ class UpdateProtocol extends WriteProtocol {
 
     @Override
     protected BsonDocument getAsWriteCommand(final ByteBufferBsonOutput bsonOutput, final int firstDocumentPosition) {
-        List<ByteBufBsonDocument> documents = ByteBufBsonDocument.create(bsonOutput, firstDocumentPosition);
+        List<ByteBufBsonDocument> documents = ByteBufBsonDocument.createList(bsonOutput, firstDocumentPosition);
         BsonDocument updateDocument = new BsonDocument("q", documents.get(0)).append("u", documents.get(1));
-        if (updates.get(0).isMulti()) {
+        if (updateRequest.isMulti()) {
             updateDocument.append("multi", BsonBoolean.TRUE);
         }
-        if (updates.get(0).isUpsert()) {
+        if (updateRequest.isUpsert()) {
             updateDocument.append("upsert", BsonBoolean.TRUE);
         }
         return getBaseCommandDocument("update").append("updates", new BsonArray(singletonList(updateDocument)));
@@ -100,30 +96,7 @@ class UpdateProtocol extends WriteProtocol {
 
     @Override
     protected RequestMessage createRequestMessage(final MessageSettings settings) {
-        return new UpdateMessage(getNamespace().getFullName(), updates, settings);
-    }
-
-    @Override
-    protected void appendToWriteCommandResponseDocument(final RequestMessage curMessage, final RequestMessage nextMessage,
-                                                        final WriteConcernResult writeConcernResult, final BsonDocument response) {
-        response.append("n", new BsonInt32(writeConcernResult.getCount()));
-
-        UpdateMessage updateMessage = (UpdateMessage) curMessage;
-        UpdateRequest updateRequest = updateMessage.getUpdateRequests().get(0);
-        BsonValue upsertedId = null;
-        if (writeConcernResult.getUpsertedId() != null) {
-            upsertedId = writeConcernResult.getUpsertedId();
-        } else if (!writeConcernResult.isUpdateOfExisting() && updateRequest.isUpsert()) {
-            if (updateRequest.getUpdate().containsKey("_id")) {
-                upsertedId = updateRequest.getUpdate().get("_id");
-            } else if (updateRequest.getFilter().containsKey("_id")) {
-                upsertedId = updateRequest.getFilter().get("_id");
-            }
-        }
-        if (upsertedId != null) {
-            response.append("upserted", new BsonArray(singletonList(new BsonDocument("index", new BsonInt32(0))
-                                                                    .append("_id", upsertedId))));
-        }
+        return new UpdateMessage(getNamespace().getFullName(), updateRequest, settings);
     }
 
     @Override

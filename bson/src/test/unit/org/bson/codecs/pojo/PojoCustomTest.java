@@ -16,6 +16,7 @@
 
 package org.bson.codecs.pojo;
 
+import org.bson.codecs.LongCodec;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.entities.AsymmetricalCreatorModel;
@@ -25,31 +26,52 @@ import org.bson.codecs.pojo.entities.ConcreteCollectionsModel;
 import org.bson.codecs.pojo.entities.ConstructorNotPublicModel;
 import org.bson.codecs.pojo.entities.ConventionModel;
 import org.bson.codecs.pojo.entities.ConverterModel;
+import org.bson.codecs.pojo.entities.CustomPropertyCodecOptionalModel;
 import org.bson.codecs.pojo.entities.GenericTreeModel;
+import org.bson.codecs.pojo.entities.InvalidCollectionModel;
 import org.bson.codecs.pojo.entities.InvalidGetterAndSetterModel;
+import org.bson.codecs.pojo.entities.InvalidMapModel;
+import org.bson.codecs.pojo.entities.InvalidMapPropertyCodecProvider;
 import org.bson.codecs.pojo.entities.InvalidSetterArgsModel;
+import org.bson.codecs.pojo.entities.Optional;
+import org.bson.codecs.pojo.entities.OptionalPropertyCodecProvider;
 import org.bson.codecs.pojo.entities.PrimitivesModel;
+import org.bson.codecs.pojo.entities.PrivateSetterFieldModel;
 import org.bson.codecs.pojo.entities.SimpleEnum;
 import org.bson.codecs.pojo.entities.SimpleEnumModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;
+import org.bson.codecs.pojo.entities.UpperBoundsModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationModel;
+import org.bson.codecs.pojo.entities.conventions.CollectionsGetterNonEmptyModel;
+import org.bson.codecs.pojo.entities.conventions.CollectionsGetterNullModel;
+import org.bson.codecs.pojo.entities.conventions.CollectionsGetterImmutableModel;
+import org.bson.codecs.pojo.entities.conventions.CollectionsGetterMutableModel;
+import org.bson.codecs.pojo.entities.conventions.CreatorConstructorPrimitivesModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorConstructorThrowsExceptionModel;
-import org.bson.codecs.pojo.entities.conventions.CreatorMethodModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorMethodThrowsExceptionModel;
+import org.bson.codecs.pojo.entities.conventions.MapGetterNonEmptyModel;
+import org.bson.codecs.pojo.entities.conventions.MapGetterNullModel;
+import org.bson.codecs.pojo.entities.conventions.MapGetterImmutableModel;
+import org.bson.codecs.pojo.entities.conventions.MapGetterMutableModel;
 import org.bson.types.ObjectId;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
+import static org.bson.codecs.pojo.Conventions.DEFAULT_CONVENTIONS;
 import static org.bson.codecs.pojo.Conventions.NO_CONVENTIONS;
+import static org.bson.codecs.pojo.Conventions.SET_PRIVATE_FIELDS_CONVENTION;
+import static org.bson.codecs.pojo.Conventions.USE_GETTERS_FOR_SETTERS;
 
 public final class PojoCustomTest extends PojoTestCase {
 
@@ -145,8 +167,87 @@ public final class PojoCustomTest extends PojoTestCase {
     }
 
     @Test
-    public void testEnumSupport() {
-        roundTrip(getPojoCodecProviderBuilder(SimpleEnumModel.class), new SimpleEnumModel(SimpleEnum.BRAVO), "{ 'myEnum': 'BRAVO' }");
+    public void testSetPrivateFieldConvention() {
+        PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(PrivateSetterFieldModel.class);
+        ArrayList<Convention> conventions = new ArrayList<Convention>(DEFAULT_CONVENTIONS);
+        conventions.add(SET_PRIVATE_FIELDS_CONVENTION);
+        builder.conventions(conventions);
+
+        roundTrip(builder, new PrivateSetterFieldModel(1, "2", asList("a", "b")),
+                "{'integerField': 1, 'stringField': '2', listField: ['a', 'b']}");
+    }
+
+    @Test
+    public void testUseGettersForSettersConvention() {
+        PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(CollectionsGetterMutableModel.class, MapGetterMutableModel.class)
+                .conventions(getDefaultAndUseGettersConvention());
+
+        roundTrip(builder, new CollectionsGetterMutableModel(asList(1, 2)), "{listField: [1, 2]}");
+        roundTrip(builder, new MapGetterMutableModel(Collections.singletonMap("a", 3)), "{mapField: {a: 3}}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testUseGettersForSettersConventionInvalidTypeForCollection() {
+        PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(CollectionsGetterMutableModel.class)
+                .conventions(getDefaultAndUseGettersConvention());
+
+        decodingShouldFail(getCodec(builder, CollectionsGetterMutableModel.class), "{listField: ['1', '2']}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testUseGettersForSettersConventionInvalidTypeForMap() {
+        PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(MapGetterMutableModel.class)
+                .conventions(getDefaultAndUseGettersConvention());
+
+        decodingShouldFail(getCodec(builder, MapGetterMutableModel.class), "{mapField: {a: '1'}}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testUseGettersForSettersConventionImmutableCollection() {
+        PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(CollectionsGetterImmutableModel.class)
+                .conventions(getDefaultAndUseGettersConvention());
+
+        roundTrip(builder, new CollectionsGetterImmutableModel(asList(1, 2)), "{listField: [1, 2]}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testUseGettersForSettersConventionImmutableMap() {
+        PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(MapGetterImmutableModel.class)
+                .conventions(getDefaultAndUseGettersConvention());
+
+        roundTrip(builder, new MapGetterImmutableModel(Collections.singletonMap("a", 3)), "{mapField: {a: 3}}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testUseGettersForSettersConventionNullCollection() {
+        PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(CollectionsGetterNullModel.class)
+                .conventions(getDefaultAndUseGettersConvention());
+
+        roundTrip(builder, new CollectionsGetterNullModel(asList(1, 2)), "{listField: [1, 2]}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testUseGettersForSettersConventionNullMap() {
+        PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(MapGetterNullModel.class)
+                .conventions(getDefaultAndUseGettersConvention());
+
+        roundTrip(builder, new MapGetterNullModel(Collections.singletonMap("a", 3)), "{mapField: {a: 3}}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testUseGettersForSettersConventionNotEmptyCollection() {
+        PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(CollectionsGetterNonEmptyModel.class)
+                .conventions(getDefaultAndUseGettersConvention());
+
+        roundTrip(builder, new CollectionsGetterNonEmptyModel(asList(1, 2)), "{listField: [1, 2]}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testUseGettersForSettersConventionNotEmptyMap() {
+        PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(MapGetterNonEmptyModel.class)
+                .conventions(getDefaultAndUseGettersConvention());
+
+        roundTrip(builder, new MapGetterNonEmptyModel(Collections.singletonMap("a", 3)), "{mapField: {a: 3}}");
     }
 
     @Test
@@ -248,6 +349,59 @@ public final class PojoCustomTest extends PojoTestCase {
         decodesTo(getCodec(SimpleModel.class), "{'_t': 'SimpleModel', 'stringField': 'myString'}", model);
     }
 
+    @Test
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public void testCanHandleTopLevelGenericIfHasCodec() {
+        UpperBoundsModel<Long> model = new UpperBoundsModel<Long>(5L);
+
+        ClassModelBuilder<UpperBoundsModel> classModelBuilder = ClassModel.builder(UpperBoundsModel.class);
+        ((PropertyModelBuilder<Long>) classModelBuilder.getProperty("myGenericField")).codec(new LongCodec());
+
+        roundTrip(getPojoCodecProviderBuilder(classModelBuilder), model,
+                "{'myGenericField': {'$numberLong': '5'}}");
+    }
+
+    @Test
+    public void testCustomRegisteredPropertyCodecWithValue() {
+        CustomPropertyCodecOptionalModel model = new CustomPropertyCodecOptionalModel(Optional.of("foo"));
+        roundTrip(getPojoCodecProviderBuilder(CustomPropertyCodecOptionalModel.class).register(new OptionalPropertyCodecProvider()),
+                model, "{'optionalField': 'foo'}");
+    }
+
+    @Test
+    public void testCustomRegisteredPropertyCodecOmittedValue() {
+        CustomPropertyCodecOptionalModel model = new CustomPropertyCodecOptionalModel(Optional.<String>empty());
+        roundTrip(getPojoCodecProviderBuilder(CustomPropertyCodecOptionalModel.class).register(new OptionalPropertyCodecProvider()),
+                model, "{'optionalField': null}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testEncodingInvalidMapModel() {
+        encodesTo(getPojoCodecProviderBuilder(InvalidMapModel.class), getInvalidMapModel(), "{'invalidMap': {'1': 1, '2': 2}}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testDecodingInvalidMapModel() {
+        decodingShouldFail(getCodec(InvalidMapModel.class), "{'invalidMap': {'1': 1, '2': 2}}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testEncodingInvalidCollectionModel() {
+        encodesTo(getPojoCodecProviderBuilder(InvalidCollectionModel.class), new InvalidCollectionModel(asList(1, 2, 3)),
+                "{collectionField: [1, 2, 3]}");
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testDecodingInvalidCollectionModel() {
+        decodingShouldFail(getCodec(InvalidCollectionModel.class), "{collectionField: [1, 2, 3]}");
+    }
+
+    @Test
+    public void testInvalidMapModelWithCustomPropertyCodecProvider() {
+        encodesTo(getPojoCodecProviderBuilder(InvalidMapModel.class).register(new InvalidMapPropertyCodecProvider()), getInvalidMapModel(),
+                "{'invalidMap': {'1': 1, '2': 2}}");
+    }
+
     @Test(expected = CodecConfigurationException.class)
     public void testConstructorNotPublicModel() {
         decodingShouldFail(getCodec(ConstructorNotPublicModel.class), "{'integerField': 99}");
@@ -295,8 +449,8 @@ public final class PojoCustomTest extends PojoTestCase {
     }
 
     @Test(expected = CodecConfigurationException.class)
-    public void testCreatorMethodModelWithMissingParameters() {
-        decodingShouldFail(getCodec(CreatorMethodModel.class), "{'stringField': 'eleven', 'longField': {$numberLong: '12'}}");
+    public void testBsonCreatorPrimitivesAndNullValues() {
+        decodingShouldFail(getCodec(CreatorConstructorPrimitivesModel.class), "{intField: 100,  stringField: 'test'}");
     }
 
     @Test(expected = CodecConfigurationException.class)
@@ -325,4 +479,11 @@ public final class PojoCustomTest extends PojoTestCase {
     public void testInvalidGetterAndSetterModelDecoding() {
         decodingShouldFail(getCodec(InvalidGetterAndSetterModel.class), "{'integerField': 42, 'stringField': 'myString'}");
     }
+
+    private List<Convention> getDefaultAndUseGettersConvention() {
+        List<Convention> conventions = new ArrayList<Convention>(DEFAULT_CONVENTIONS);
+        conventions.add(USE_GETTERS_FOR_SETTERS);
+        return conventions;
+    }
+
 }

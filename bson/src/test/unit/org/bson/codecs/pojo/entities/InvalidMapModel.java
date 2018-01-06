@@ -24,11 +24,34 @@ public final class InvalidMapModel {
     public InvalidMapModel() {
     }
 
+    public InvalidMapModel(final Map<Integer, Integer> invalidMap) {
+        this.invalidMap = invalidMap;
+    }
+
     public Map<Integer, Integer> getInvalidMap() {
         return invalidMap;
     }
 
     public void setInvalidMap(final Map<Integer, Integer> invalidMap) {
         this.invalidMap = invalidMap;
+    }
+
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        InvalidMapModel that = (InvalidMapModel) o;
+
+        return invalidMap != null ? invalidMap.equals(that.invalidMap) : that.invalidMap == null;
+    }
+
+    @Override
+    public int hashCode() {
+        return invalidMap != null ? invalidMap.hashCode() : 0;
     }
 }

@@ -30,8 +30,6 @@ import java.nio.ByteBuffer
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.connection.MessageHelper.buildSuccessfulReply
-
 @SuppressWarnings('BusyWait')
 class DefaultServerMonitorSpecification extends Specification {
 
@@ -54,7 +52,7 @@ class DefaultServerMonitorSpecification extends Specification {
             }
         }
         monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()), ServerSettings.builder().build(),
-                changeListener, internalConnectionFactory, new TestConnectionPool())
+                new ClusterClock(), changeListener, internalConnectionFactory, new TestConnectionPool())
         monitor.start()
 
         when:
@@ -125,15 +123,15 @@ class DefaultServerMonitorSpecification extends Specification {
 
                     sendMessage(_, _) >> { }
 
-                    receiveMessage(_) >> { int responseTo ->
-                        buildSuccessfulReply(responseTo, isMasterResponse)
+                    sendAndReceive(_, _, _) >> {
+                        BsonDocument.parse(isMasterResponse)
                     }
                 }
             }
         }
         monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()),
                 ServerSettings.builder().heartbeatFrequency(1, TimeUnit.HOURS).addServerMonitorListener(serverMonitorListener).build(),
-                changeListener, internalConnectionFactory, new TestConnectionPool())
+                new ClusterClock(), changeListener, internalConnectionFactory, new TestConnectionPool())
 
         when:
         monitor.start()
@@ -198,9 +196,7 @@ class DefaultServerMonitorSpecification extends Specification {
                         connectionDescription
                     }
 
-                    sendMessage(_, _) >> { }
-
-                    receiveMessage(_) >> {
+                    sendAndReceive(_, _, _) >> {
                         throw exception
                     }
                 }
@@ -208,7 +204,7 @@ class DefaultServerMonitorSpecification extends Specification {
         }
         monitor = new DefaultServerMonitor(new ServerId(new ClusterId(), new ServerAddress()),
                 ServerSettings.builder().heartbeatFrequency(1, TimeUnit.HOURS).addServerMonitorListener(serverMonitorListener).build(),
-                changeListener, internalConnectionFactory, new TestConnectionPool())
+                new ClusterClock(), changeListener, internalConnectionFactory, new TestConnectionPool())
 
         when:
         monitor.start()

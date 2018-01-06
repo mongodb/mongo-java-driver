@@ -29,15 +29,18 @@ public final class CreatorInvalidMultipleConstructorsModel {
         this.integerField = integerField;
     }
 
+    @BsonCreator
+    public CreatorInvalidMultipleConstructorsModel(@BsonProperty("integerField") final Integer integerField,
+                                                   @BsonProperty("stringField") final String string) {
+        this(integerField);
+        setStringField(stringField);
+    }
+
+
     public CreatorInvalidMultipleConstructorsModel(final Integer integerField, final String stringField, final long longField) {
         this.integerField = integerField;
         this.stringField = stringField;
         this.longField = longField;
-    }
-
-    @BsonCreator
-    public static CreatorInvalidMultipleConstructorsModel create(@BsonProperty("integerField") final Integer integerField) {
-        return new CreatorInvalidMultipleConstructorsModel(integerField);
     }
 
     public Integer getIntegerField() {

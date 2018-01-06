@@ -37,18 +37,13 @@ class QueryMessage extends BaseQueryMessage {
     }
 
     @Override
-    protected RequestMessage encodeMessageBody(final BsonOutput bsonOutput, final int messageStartPosition) {
-       return encodeMessageBodyWithMetadata(bsonOutput, messageStartPosition).getNextMessage();
-    }
-
-    @Override
-    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final int messageStartPosition) {
+    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput) {
         writeQueryPrologue(bsonOutput);
         int firstDocumentStartPosition = bsonOutput.getPosition();
         addDocument(queryDocument, bsonOutput, new NoOpFieldNameValidator());
         if (fields != null) {
             addDocument(fields, bsonOutput, new NoOpFieldNameValidator());
         }
-        return new EncodingMetadata(null, firstDocumentStartPosition);
+        return new EncodingMetadata(firstDocumentStartPosition);
     }
 }

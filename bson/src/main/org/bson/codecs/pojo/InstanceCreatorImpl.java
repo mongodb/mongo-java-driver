@@ -41,9 +41,15 @@ final class InstanceCreatorImpl<T> implements InstanceCreator<T> {
         } else {
             this.cachedValues = new HashMap<PropertyModel<?>, Object>();
             this.properties = new HashMap<String, Integer>();
+
             for (int i = 0; i < creatorExecutable.getProperties().size(); i++) {
-                this.properties.put(creatorExecutable.getProperties().get(i).value(), i);
+                if (creatorExecutable.getIdPropertyIndex() != null && creatorExecutable.getIdPropertyIndex() == i) {
+                    this.properties.put(ClassModelBuilder.ID_PROPERTY_NAME, creatorExecutable.getIdPropertyIndex());
+                } else {
+                    this.properties.put(creatorExecutable.getProperties().get(i).value(), i);
+                }
             }
+
             this.params = new Object[properties.size()];
         }
     }
@@ -54,11 +60,18 @@ final class InstanceCreatorImpl<T> implements InstanceCreator<T> {
             propertyModel.getPropertyAccessor().set(newInstance, value);
         } else {
             if (!properties.isEmpty()) {
-                Integer index = properties.get(propertyModel.getName());
+                String propertyName = propertyModel.getWriteName();
+
+                if (!properties.containsKey(propertyName)) {
+                    // Support legacy BsonProperty settings where the property name was used instead of the write name.
+                    propertyName = propertyModel.getName();
+                }
+
+                Integer index = properties.get(propertyName);
                 if (index != null) {
                     params[index] = value;
                 }
-                properties.remove(propertyModel.getName());
+                properties.remove(propertyName);
             }
 
             if (properties.isEmpty()) {
@@ -72,8 +85,16 @@ final class InstanceCreatorImpl<T> implements InstanceCreator<T> {
     @Override
     public T getInstance() {
         if (newInstance == null) {
-            throw new CodecConfigurationException(format("Could not construct new instance of: %s. Missing the following properties: %s",
-                    creatorExecutable.getType().getSimpleName(), properties.keySet()));
+            try {
+                for (Map.Entry<String, Integer> entry : properties.entrySet()) {
+                    params[entry.getValue()] = null;
+                }
+                constructInstanceAndProcessCachedValues();
+            } catch (CodecConfigurationException e) {
+                throw new CodecConfigurationException(format("Could not construct new instance of: %s. "
+                                + "Missing the following properties: %s",
+                        creatorExecutable.getType().getSimpleName(), properties.keySet()), e);
+            }
         }
         return newInstance;
     }

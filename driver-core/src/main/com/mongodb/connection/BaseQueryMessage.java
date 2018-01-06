@@ -23,7 +23,7 @@ import org.bson.io.BsonOutput;
  *
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
  */
-abstract class BaseQueryMessage extends RequestMessage {
+abstract class BaseQueryMessage extends LegacyMessage {
     private final int skip;
     private final int numberToReturn;
     private boolean tailableCursor;

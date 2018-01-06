@@ -18,20 +18,13 @@ package com.mongodb.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
-import com.mongodb.WriteConcernResult;
-import com.mongodb.async.SingleResultCallback;
-import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.bulk.WriteRequest;
-import com.mongodb.connection.AsyncConnection;
-import com.mongodb.connection.Connection;
 
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
-import static com.mongodb.operation.OperationHelper.validateWriteRequestCollations;
 
 /**
  * An operation that updates a document in a collection.
@@ -44,14 +37,31 @@ public class UpdateOperation extends BaseWriteOperation {
     /**
      * Construct an instance.
      *
+     * @param namespace     the database and collection namespace for the operation.
+     * @param ordered       whether the updates are ordered.
+     * @param writeConcern  the write concern for the operation.
+     * @param updates       the update requests.
+     * @deprecated          use {@link #UpdateOperation(MongoNamespace, boolean, WriteConcern, boolean, List)} instead
+     */
+    @Deprecated
+    public UpdateOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
+                           final List<UpdateRequest> updates) {
+        this(namespace, ordered, writeConcern, false, updates);
+    }
+
+    /**
+     * Construct an instance.
+     *
      * @param namespace the database and collection namespace for the operation.
      * @param ordered whether the updates are ordered.
      * @param writeConcern the write concern for the operation.
+     * @param retryWrites   if writes should be retried if they fail due to a network error.
      * @param updates the update requests.
+     * @since 3.6
      */
     public UpdateOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
-                           final List<UpdateRequest> updates) {
-        super(namespace, ordered, writeConcern);
+                           final boolean retryWrites, final List<UpdateRequest> updates) {
+        super(namespace, ordered, writeConcern, retryWrites);
         this.updates = notNull("update", updates);
         isTrueArgument("updateRequests not empty", !updates.isEmpty());
     }
@@ -66,44 +76,8 @@ public class UpdateOperation extends BaseWriteOperation {
     }
 
     @Override
-    protected WriteConcernResult executeProtocol(final Connection connection) {
-        validateWriteRequestCollations(connection, updates, getWriteConcern());
-        return connection.update(getNamespace(), isOrdered(), getWriteConcern(), updates);
-    }
-
-    @Override
-    protected void executeProtocolAsync(final AsyncConnection connection, final SingleResultCallback<WriteConcernResult> callback) {
-        validateWriteRequestCollations(connection, updates, getWriteConcern(), new AsyncCallableWithConnection(){
-            @Override
-            public void call(final AsyncConnection connection, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    connection.updateAsync(getNamespace(), isOrdered(), getWriteConcern(), updates, callback);
-                }
-            }
-        });
-    }
-
-    @Override
-    protected BulkWriteResult executeCommandProtocol(final Connection connection) {
-        validateWriteRequestCollations(connection, updates, getWriteConcern());
-        return connection.updateCommand(getNamespace(), isOrdered(), getWriteConcern(), getBypassDocumentValidation(), updates);
-    }
-
-    @Override
-    protected void executeCommandProtocolAsync(final AsyncConnection connection, final SingleResultCallback<BulkWriteResult> callback) {
-        validateWriteRequestCollations(connection, updates, getWriteConcern(), new AsyncCallableWithConnection(){
-            @Override
-            public void call(final AsyncConnection connection, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    connection.updateCommandAsync(getNamespace(), isOrdered(), getWriteConcern(), getBypassDocumentValidation(), updates,
-                            callback);
-                }
-            }
-        });
+    protected List<? extends WriteRequest> getWriteRequests() {
+        return getUpdateRequests();
     }
 
     @Override
@@ -111,13 +85,4 @@ public class UpdateOperation extends BaseWriteOperation {
         return WriteRequest.Type.UPDATE;
     }
 
-    @Override
-    protected int getCount(final BulkWriteResult bulkWriteResult) {
-        return bulkWriteResult.getMatchedCount() + bulkWriteResult.getUpserts().size();
-    }
-
-    @Override
-    protected boolean getUpdatedExisting(final BulkWriteResult bulkWriteResult) {
-        return bulkWriteResult.getMatchedCount() > 0;
-    }
 }

@@ -16,36 +16,33 @@
 
 package com.mongodb;
 
+import com.mongodb.binding.ReadBinding;
 import com.mongodb.client.MapReduceIterable;
-import com.mongodb.client.MongoCursor;
-import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.Collation;
-import com.mongodb.client.model.FindOptions;
 import com.mongodb.client.model.MapReduceAction;
+import com.mongodb.operation.BatchCursor;
+import com.mongodb.operation.FindOperation;
+import com.mongodb.operation.MapReduceBatchCursor;
 import com.mongodb.operation.MapReduceToCollectionOperation;
 import com.mongodb.operation.MapReduceWithInlineResultsOperation;
-import com.mongodb.operation.OperationExecutor;
-import org.bson.BsonDocument;
+import com.mongodb.operation.ReadOperation;
+import com.mongodb.session.ClientSession;
 import org.bson.BsonJavaScript;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TResult> {
+class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements MapReduceIterable<TResult> {
     private final MongoNamespace namespace;
     private final Class<TDocument> documentClass;
     private final Class<TResult> resultClass;
-    private final ReadPreference readPreference;
-    private final ReadConcern readConcern;
     private final CodecRegistry codecRegistry;
     private final WriteConcern writeConcern;
-    private final OperationExecutor executor;
     private final String mapFunction;
     private final String reduceFunction;
 
@@ -63,22 +60,19 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
     private String databaseName;
     private boolean sharded;
     private boolean nonAtomic;
-    private int batchSize;
     private Boolean bypassDocumentValidation;
     private Collation collation;
 
-    MapReduceIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
-                          final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
-                          final WriteConcern writeConcern, final OperationExecutor executor, final String mapFunction,
-                          final String reduceFunction) {
+    MapReduceIterableImpl(final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
+                          final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
+                          final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
+                          final String mapFunction, final String reduceFunction) {
+        super(clientSession, executor, readConcern, readPreference);
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.resultClass = notNull("resultClass", resultClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
-        this.readPreference = notNull("readPreference", readPreference);
-        this.readConcern = notNull("readConcern", readConcern);
         this.writeConcern = notNull("writeConcern", writeConcern);
-        this.executor = notNull("executor", executor);
         this.mapFunction = notNull("mapFunction", mapFunction);
         this.reduceFunction = notNull("reduceFunction", reduceFunction);
     }
@@ -89,7 +83,7 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
             throw new IllegalStateException("The options must specify a non-inline result");
         }
 
-        executor.execute(createMapReduceToCollectionOperation());
+        getExecutor().execute(createMapReduceToCollectionOperation(), getClientSession());
     }
 
     @Override
@@ -174,7 +168,7 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
 
     @Override
     public MapReduceIterable<TResult> batchSize(final int batchSize) {
-        this.batchSize = batchSize;
+        super.batchSize(batchSize);
         return this;
     }
 
@@ -191,77 +185,62 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
     }
 
     @Override
-    public MongoCursor<TResult> iterator() {
-        return execute().iterator();
-    }
-
-    @Override
-    public TResult first() {
-        return execute().first();
-    }
-
-    @Override
-    public <U> MongoIterable<U> map(final Function<TResult, U> mapper) {
-        return new MappingIterable<TResult, U>(this, mapper);
-    }
-
-    @Override
-    public void forEach(final Block<? super TResult> block) {
-        execute().forEach(block);
-    }
-
-    @Override
-    public <A extends Collection<? super TResult>> A into(final A target) {
-        return execute().into(target);
-    }
-
-    MongoIterable<TResult> execute() {
+    ReadPreference getReadPreference() {
         if (inline) {
-            MapReduceWithInlineResultsOperation<TResult> operation =
+            return super.getReadPreference();
+        } else {
+            return primary();
+        }
+    }
+
+    @Override
+    ReadOperation<BatchCursor<TResult>> asReadOperation() {
+        if (inline) {
+            final MapReduceWithInlineResultsOperation<TResult> operation =
                     new MapReduceWithInlineResultsOperation<TResult>(namespace,
-                            new BsonJavaScript(mapFunction),
-                            new BsonJavaScript(reduceFunction),
-                            codecRegistry.get(resultClass))
-                            .filter(toBsonDocument(filter))
+                                                                            new BsonJavaScript(mapFunction),
+                                                                            new BsonJavaScript(reduceFunction),
+                                                                            codecRegistry.get(resultClass))
+                            .filter(toBsonDocumentOrNull(filter, documentClass, codecRegistry))
                             .limit(limit)
                             .maxTime(maxTimeMS, MILLISECONDS)
                             .jsMode(jsMode)
-                            .scope(toBsonDocument(scope))
-                            .sort(toBsonDocument(sort))
+                            .scope(toBsonDocumentOrNull(scope, documentClass, codecRegistry))
+                            .sort(toBsonDocumentOrNull(sort, documentClass, codecRegistry))
                             .verbose(verbose)
-                            .readConcern(readConcern)
+                            .readConcern(getReadConcern())
                             .collation(collation);
             if (finalizeFunction != null) {
                 operation.finalizeFunction(new BsonJavaScript(finalizeFunction));
             }
-            return new OperationIterable<TResult>(operation, readPreference, executor);
+            return new WrappedMapReduceReadOperation<TResult>(operation);
         } else {
-            executor.execute(createMapReduceToCollectionOperation());
+            getExecutor().execute(createMapReduceToCollectionOperation(), getClientSession());
 
             String dbName = databaseName != null ? databaseName : namespace.getDatabaseName();
-            return new FindIterableImpl<TDocument, TResult>(new MongoNamespace(dbName, collectionName), documentClass, resultClass,
-                                                            codecRegistry, primary(), readConcern, executor, new BsonDocument(),
-                                                            new FindOptions().collation(collation).batchSize(batchSize));
+            return new FindOperation<TResult>(new MongoNamespace(dbName, collectionName), codecRegistry.get(resultClass))
+                    .collation(collation)
+                    .batchSize(getBatchSize() == null ? 0 : getBatchSize());
         }
+
     }
 
     private MapReduceToCollectionOperation createMapReduceToCollectionOperation() {
-        MapReduceToCollectionOperation operation =
-                new MapReduceToCollectionOperation(namespace, new BsonJavaScript(mapFunction), new BsonJavaScript(reduceFunction),
-                        collectionName, writeConcern)
-                        .filter(toBsonDocument(filter))
-                        .limit(limit)
-                        .maxTime(maxTimeMS, MILLISECONDS)
-                        .jsMode(jsMode)
-                        .scope(toBsonDocument(scope))
-                        .sort(toBsonDocument(sort))
-                        .verbose(verbose)
-                        .action(action.getValue())
-                        .nonAtomic(nonAtomic)
-                        .sharded(sharded)
-                        .databaseName(databaseName)
-                        .bypassDocumentValidation(bypassDocumentValidation)
-                        .collation(collation);
+        MapReduceToCollectionOperation operation = new MapReduceToCollectionOperation(namespace, new BsonJavaScript(mapFunction),
+                new BsonJavaScript(reduceFunction), collectionName, writeConcern)
+                .filter(toBsonDocumentOrNull(filter, documentClass, codecRegistry))
+                .limit(limit)
+                .maxTime(maxTimeMS, MILLISECONDS)
+                .jsMode(jsMode)
+                .scope(toBsonDocumentOrNull(scope, documentClass, codecRegistry))
+                .sort(toBsonDocumentOrNull(sort, documentClass, codecRegistry))
+                .verbose(verbose)
+                .action(action.getValue())
+                .nonAtomic(nonAtomic)
+                .sharded(sharded)
+                .databaseName(databaseName)
+                .bypassDocumentValidation(bypassDocumentValidation)
+                .collation(collation);
 
         if (finalizeFunction != null) {
             operation.finalizeFunction(new BsonJavaScript(finalizeFunction));
@@ -269,8 +248,21 @@ class MapReduceIterableImpl<TDocument, TResult> implements MapReduceIterable<TRe
         return operation;
     }
 
-    private BsonDocument toBsonDocument(final Bson document) {
-        return document == null ? null : document.toBsonDocument(documentClass, codecRegistry);
-    }
+    // this could be inlined, but giving it a name so that it's unit-testable
+    static class WrappedMapReduceReadOperation<TResult> implements ReadOperation<BatchCursor<TResult>> {
+        private final ReadOperation<MapReduceBatchCursor<TResult>> operation;
 
+        ReadOperation<MapReduceBatchCursor<TResult>> getOperation() {
+            return operation;
+        }
+
+        WrappedMapReduceReadOperation(final MapReduceWithInlineResultsOperation<TResult> operation) {
+            this.operation = operation;
+        }
+
+        @Override
+        public BatchCursor<TResult> execute(final ReadBinding binding) {
+            return operation.execute(binding);
+        }
+    }
 }

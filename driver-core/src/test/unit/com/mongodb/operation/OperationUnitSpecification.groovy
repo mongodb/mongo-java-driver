@@ -42,7 +42,7 @@ import java.util.concurrent.TimeUnit
 
 class OperationUnitSpecification extends Specification {
 
-    void testOperation(operation, List<Integer> serverVersion, BsonDocument expectedCommand, boolean async, result = null) {
+    void testOperation(operation, List<Integer> serverVersion, BsonDocument expectedCommand, boolean async, BsonDocument result) {
         def test = async ? this.&testAsyncOperation : this.&testSyncOperation
         test(operation, serverVersion, result, true, expectedCommand)
     }
@@ -58,8 +58,8 @@ class OperationUnitSpecification extends Specification {
     }
 
     def testSyncOperation(operation, List<Integer> serverVersion, result, Boolean checkCommand=true,
-                          BsonDocument expectedCommand=null, Boolean checkSlaveOk=false,
-                          ReadPreference readPreference=ReadPreference.primary()) {
+                          BsonDocument expectedCommand=null,
+                          Boolean checkSlaveOk=false, ReadPreference readPreference=ReadPreference.primary()) {
         def connection = Mock(Connection) {
             _ * getDescription() >> Stub(ConnectionDescription) {
                 getServerVersion() >> new ServerVersion(serverVersion)
@@ -78,12 +78,18 @@ class OperationUnitSpecification extends Specification {
         }
 
         if (checkCommand) {
-            1 * connection.command(_, expectedCommand, _, _, _) >> { result }
+            1 * connection.command(*_) >> {
+                it[1] == expectedCommand
+                result
+            }
         } else if (checkSlaveOk) {
-            1 * connection.command(_, _, readPreference.isSlaveOk(), _, _) >> { result }
+            1 * connection.command(*_) >> {
+                it[4] == readPreference
+                result
+            }
         }
 
-        0 * connection.command(_, _, _, _, _) >> {
+        0 * connection.command(_, _, _, _, _, _) >> {
             // Unexpected Command
             result
         }
@@ -98,8 +104,8 @@ class OperationUnitSpecification extends Specification {
     }
 
     def testAsyncOperation(operation, List<Integer> serverVersion, result = null,
-                           Boolean checkCommand=true, BsonDocument expectedCommand=null, Boolean checkSlaveOk=false,
-                           ReadPreference readPreference=ReadPreference.primary()) {
+                           Boolean checkCommand=true, BsonDocument expectedCommand=null,
+                           Boolean checkSlaveOk=false, ReadPreference readPreference=ReadPreference.primary()) {
         def connection = Mock(AsyncConnection) {
             _ * getDescription() >> Stub(ConnectionDescription) {
                 getServerVersion() >> new ServerVersion(serverVersion)
@@ -119,14 +125,20 @@ class OperationUnitSpecification extends Specification {
         def callback = new FutureResultCallback()
 
         if (checkCommand) {
-            1 * connection.commandAsync(_, expectedCommand, _, _, _, _) >> { it[5].onResult(result, null) }
+            1 * connection.commandAsync(*_) >> {
+                it[1] == expectedCommand
+                it.last().onResult(result, null)
+            }
         } else if (checkSlaveOk) {
-            1 * connection.commandAsync(_, _, readPreference.isSlaveOk(), _, _, _) >> { it[5].onResult(result, null) }
+            1 * connection.commandAsync(*_) >> {
+                it[4] == readPreference
+                it.last().onResult(result, null)
+            }
         }
 
-        0 * connection.commandAsync(_, _, _, _, _, _) >> {
+        0 * connection.commandAsync(_, _, _, _, _, _, _) >> {
             // Unexpected Command
-            it[5].onResult(result, null)
+            it[6].onResult(result, null)
         }
 
         1 * connection.release()

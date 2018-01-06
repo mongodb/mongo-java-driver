@@ -30,7 +30,6 @@ import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
@@ -418,7 +417,7 @@ public class DBCursorTest extends DatabaseTestCase {
             assertEquals(1, profileCollection.count());
 
             DBObject profileDocument = profileCollection.findOne();
-            if (serverVersionAtLeast(asList(3, 5, 8))) {
+            if (serverVersionAtLeast(3, 6)) {
                 assertEquals(expectedComment, ((DBObject) profileDocument.get("command")).get("comment"));
             } else if (serverVersionAtLeast(3, 2)) {
                 assertEquals(expectedComment, ((DBObject) profileDocument.get("query")).get("comment"));
@@ -454,7 +453,6 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testMaxTimeForIterator() {
-        assumeThat(serverVersionAtLeast(2, 6), is(true));
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
         cursor.maxTime(1, TimeUnit.SECONDS);
@@ -471,7 +469,6 @@ public class DBCursorTest extends DatabaseTestCase {
     @Test
     public void testMaxTimeForIterable() {
         assumeThat(isSharded(), is(false));
-        assumeThat(serverVersionAtLeast(2, 6), is(true));
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
         cursor.maxTime(1, TimeUnit.SECONDS);
@@ -488,7 +485,6 @@ public class DBCursorTest extends DatabaseTestCase {
     @Test
     public void testMaxTimeForOne() {
         assumeThat(isSharded(), is(false));
-        assumeThat(serverVersionAtLeast(2, 6), is(true));
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
         cursor.maxTime(1, TimeUnit.SECONDS);
@@ -505,7 +501,6 @@ public class DBCursorTest extends DatabaseTestCase {
     @Test
     public void testMaxTimeForCount() {
         assumeThat(isSharded(), is(false));
-        assumeThat(serverVersionAtLeast(2, 6), is(true));
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
         cursor.maxTime(1, TimeUnit.SECONDS);
@@ -522,7 +517,6 @@ public class DBCursorTest extends DatabaseTestCase {
     @Test
     public void testMaxTimeForSize() {
         assumeThat(isSharded(), is(false));
-        assumeThat(serverVersionAtLeast(2, 6), is(true));
         enableMaxTimeFailPoint();
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());
         cursor.maxTime(1, TimeUnit.SECONDS);

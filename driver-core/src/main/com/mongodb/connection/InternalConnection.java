@@ -16,13 +16,13 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.session.SessionContext;
 import org.bson.ByteBuf;
+import org.bson.codecs.Decoder;
 
 import java.util.List;
 
-@ThreadSafe
 interface InternalConnection extends BufferProvider {
 
     /**
@@ -62,6 +62,24 @@ interface InternalConnection extends BufferProvider {
      * @return true if connection is closed
      */
     boolean isClosed();
+
+    /**
+     * Send a command message to the server.
+     *
+     * @param message   the command message to send
+     * @param sessionContext the session context
+     */
+    <T> T sendAndReceive(CommandMessage message, Decoder<T> decoder, SessionContext sessionContext);
+
+    /**
+     * Send a command message to the server.
+     *
+     * @param message   the command message to send
+     * @param sessionContext the session context
+     * @param callback the callback
+     */
+    <T> void sendAndReceiveAsync(CommandMessage message, Decoder<T> decoder, SessionContext sessionContext,
+                                 SingleResultCallback<T> callback);
 
     /**
      * Send a message to the server. The connection may not make any attempt to validate the integrity of the message.

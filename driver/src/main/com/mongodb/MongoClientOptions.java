@@ -27,6 +27,7 @@ import com.mongodb.event.CommandListener;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerMonitorListener;
+import com.mongodb.selector.ServerSelector;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import javax.net.SocketFactory;
@@ -34,6 +35,7 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
@@ -58,10 +60,13 @@ public class MongoClientOptions {
 
     private final String description;
     private final String applicationName;
+    private final List<MongoCompressor> compressorList;
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;
+    private final boolean retryWrites;
     private final ReadConcern readConcern;
     private final CodecRegistry codecRegistry;
+    private final ServerSelector serverSelector;
 
     private final int minConnectionsPerHost;
     private final int maxConnectionsPerHost;
@@ -102,6 +107,7 @@ public class MongoClientOptions {
     private MongoClientOptions(final Builder builder) {
         description = builder.description;
         applicationName = builder.applicationName;
+        compressorList = builder.compressorList;
         minConnectionsPerHost = builder.minConnectionsPerHost;
         maxConnectionsPerHost = builder.maxConnectionsPerHost;
         threadsAllowedToBlockForConnectionMultiplier = builder.threadsAllowedToBlockForConnectionMultiplier;
@@ -114,8 +120,10 @@ public class MongoClientOptions {
         socketKeepAlive = builder.socketKeepAlive;
         readPreference = builder.readPreference;
         writeConcern = builder.writeConcern;
+        retryWrites = builder.retryWrites;
         readConcern = builder.readConcern;
         codecRegistry = builder.codecRegistry;
+        serverSelector = builder.serverSelector;
         sslEnabled = builder.sslEnabled;
         sslInvalidHostNameAllowed = builder.sslInvalidHostNameAllowed;
         sslContext = builder.sslContext;
@@ -231,6 +239,20 @@ public class MongoClientOptions {
      */
     public String getApplicationName() {
         return applicationName;
+    }
+
+    /**
+     * Gets the compressors to use for compressing messages to the server. The driver will use the first compressor in the list
+     * that the server is configured to support.
+     *
+     * <p>Default is the empty list.</p>
+     *
+     * @return the compressors
+     * @since 3.6
+     * @mongodb.server.release 3.4
+     */
+    public List<MongoCompressor> getCompressorList() {
+        return compressorList;
     }
 
     /**
@@ -508,6 +530,17 @@ public class MongoClientOptions {
     }
 
     /**
+     * Returns true if writes should be retried if they fail due to a network error.
+     *
+     * @return the retryWrites value
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public boolean getRetryWrites() {
+        return retryWrites;
+    }
+
+    /**
      * <p>The read concern to use.</p>
      *
      * @return the read concern
@@ -532,6 +565,34 @@ public class MongoClientOptions {
      */
     public CodecRegistry getCodecRegistry() {
         return codecRegistry;
+    }
+
+    /**
+     * Gets the server selector.
+     *
+     * <p>The server selector augments the normal server selection rules applied by the driver when determining
+     * which server to send an operation to.  At the point that it's called by the driver, the
+     * {@link com.mongodb.connection.ClusterDescription} which is passed to it contains a list of
+     * {@link com.mongodb.connection.ServerDescription} instances which satisfy either the configured {@link ReadPreference} for any
+     * read operation or ones that can take writes (e.g. a standalone, mongos, or replica set primary).</p>
+     * <p>The server selector can then filter the {@code ServerDescription} list using whatever criteria that is required by the
+     * application.</p>
+     * <p>After this selector executes, two additional selectors are applied by the driver:</p>
+     * <ul>
+     * <li>select from within the latency window</li>
+     * <li>select a random server from those remaining</li>
+     * </ul>
+     * <p>To skip the latency window selector, an application can:</p>
+     * <ul>
+     * <li>configure the local threshold to a sufficiently high value so that it doesn't exclude any servers</li>
+     * <li>return a list containing a single server from this selector (which will also make the random member selector a no-op)</li>
+     * </ul>
+     *
+     * @return the server selector, which may be null
+     * @since 3.6
+     */
+    public ServerSelector getServerSelector() {
+        return serverSelector;
     }
 
     /**
@@ -760,10 +821,16 @@ public class MongoClientOptions {
         if (!writeConcern.equals(that.writeConcern)) {
             return false;
         }
+        if (retryWrites != that.retryWrites) {
+            return false;
+        }
         if (!readConcern.equals(that.readConcern)) {
             return false;
         }
         if (!codecRegistry.equals(that.codecRegistry)) {
+            return false;
+        }
+        if (serverSelector != null ? !serverSelector.equals(that.serverSelector) : that.serverSelector != null) {
             return false;
         }
         if (!clusterListeners.equals(that.clusterListeners)) {
@@ -779,6 +846,9 @@ public class MongoClientOptions {
         if (socketFactory != null ? !socketFactory.equals(that.socketFactory) : that.socketFactory != null) {
             return false;
         }
+        if (!compressorList.equals(that.compressorList)) {
+            return false;
+        }
 
         return true;
     }
@@ -789,8 +859,10 @@ public class MongoClientOptions {
         result = 31 * result + (applicationName != null ? applicationName.hashCode() : 0);
         result = 31 * result + readPreference.hashCode();
         result = 31 * result + writeConcern.hashCode();
+        result = 31 * result + (retryWrites ? 1 : 0);
         result = 31 * result + (readConcern != null ? readConcern.hashCode() : 0);
         result = 31 * result + codecRegistry.hashCode();
+        result = 31 * result + (serverSelector != null ? serverSelector.hashCode() : 0);
         result = 31 * result + clusterListeners.hashCode();
         result = 31 * result + commandListeners.hashCode();
         result = 31 * result + minConnectionsPerHost;
@@ -817,6 +889,7 @@ public class MongoClientOptions {
         result = 31 * result + (dbEncoderFactory != null ? dbEncoderFactory.hashCode() : 0);
         result = 31 * result + (cursorFinalizerEnabled ? 1 : 0);
         result = 31 * result + (socketFactory != null ? socketFactory.hashCode() : 0);
+        result = 31 * result + compressorList.hashCode();
         return result;
     }
 
@@ -825,10 +898,13 @@ public class MongoClientOptions {
         return "MongoClientOptions{"
                + "description='" + description + '\''
                + ", applicationName='" + applicationName + '\''
+               + ", compressors='" + compressorList + '\''
                + ", readPreference=" + readPreference
                + ", writeConcern=" + writeConcern
+               + ", retryWrites=" + retryWrites
                + ", readConcern=" + readConcern
                + ", codecRegistry=" + codecRegistry
+               + ", serverSelector=" + serverSelector
                + ", clusterListeners=" + clusterListeners
                + ", commandListeners=" + commandListeners
                + ", minConnectionsPerHost=" + minConnectionsPerHost
@@ -877,11 +953,13 @@ public class MongoClientOptions {
 
         private String description;
         private String applicationName;
+        private List<MongoCompressor> compressorList = Collections.emptyList();
         private ReadPreference readPreference = ReadPreference.primary();
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
+        private boolean retryWrites = false;
         private ReadConcern readConcern = ReadConcern.DEFAULT;
         private CodecRegistry codecRegistry = MongoClient.getDefaultCodecRegistry();
-
+        private ServerSelector serverSelector;
         private int minConnectionsPerHost;
         private int maxConnectionsPerHost = 100;
         private int threadsAllowedToBlockForConnectionMultiplier = 5;
@@ -929,6 +1007,7 @@ public class MongoClientOptions {
         public Builder(final MongoClientOptions options) {
             description = options.getDescription();
             applicationName = options.getApplicationName();
+            compressorList = options.getCompressorList();
             minConnectionsPerHost = options.getMinConnectionsPerHost();
             maxConnectionsPerHost = options.getConnectionsPerHost();
             threadsAllowedToBlockForConnectionMultiplier = options.getThreadsAllowedToBlockForConnectionMultiplier();
@@ -941,8 +1020,10 @@ public class MongoClientOptions {
             socketKeepAlive = options.isSocketKeepAlive();
             readPreference = options.getReadPreference();
             writeConcern = options.getWriteConcern();
+            retryWrites = options.getRetryWrites();
             readConcern = options.getReadConcern();
             codecRegistry = options.getCodecRegistry();
+            serverSelector = options.getServerSelector();
             sslEnabled = options.isSslEnabled();
             sslInvalidHostNameAllowed = options.isSslInvalidHostNameAllowed();
             sslContext = options.getSslContext();
@@ -993,6 +1074,22 @@ public class MongoClientOptions {
                         applicationName.getBytes(Charset.forName("UTF-8")).length <= 128);
             }
             this.applicationName = applicationName;
+            return this;
+        }
+
+        /**
+         * Sets the compressors to use for compressing messages to the server. The driver will use the first compressor in the list
+         * that the server is configured to support.
+         *
+         * @param compressorList the list of compressors to request
+         * @return {@code this}
+         * @see #getCompressorList()
+         * @since 3.6
+         * @mongodb.server.release 3.4
+         */
+        public Builder compressorList(final List<MongoCompressor> compressorList) {
+            notNull("compressorList", compressorList);
+            this.compressorList = Collections.unmodifiableList(new ArrayList<MongoCompressor>(compressorList));
             return this;
         }
 
@@ -1209,6 +1306,19 @@ public class MongoClientOptions {
             return this;
         }
 
+        /**
+         * Sets whether writes should be retried if they fail due to a network error.
+         *
+         * @param retryWrites sets if writes should be retried if they fail due to a network error.
+         * @return {@code this}
+         * @see #getRetryWrites()
+         * @since 3.6
+         * @mongodb.server.release 3.6
+         */
+        public Builder retryWrites(final boolean retryWrites) {
+            this.retryWrites = retryWrites;
+            return this;
+        }
 
         /**
          * Sets the read concern.
@@ -1230,7 +1340,6 @@ public class MongoClientOptions {
          *
          * <p>Note that instances of {@code DB} and {@code DBCollection} do not use the registry, so it's not necessary to include a
          * codec for DBObject in the registry.</p>
-
          * @param codecRegistry the codec registry
          * @return {@code this}
          * @see MongoClientOptions#getCodecRegistry()
@@ -1241,6 +1350,19 @@ public class MongoClientOptions {
             return this;
         }
 
+        /**
+         * Sets a server selector that augments the normal server selection rules applied by the driver when determining
+         * which server to send an operation to.  See {@link #getServerSelector()} for further details.
+         *
+         * @param serverSelector the server selector
+         * @return this
+         * @since 3.6
+         * @see #getServerSelector()
+         */
+        public Builder serverSelector(final ServerSelector serverSelector) {
+            this.serverSelector = serverSelector;
+            return this;
+        }
         /**
          * Adds the given command listener.
          *

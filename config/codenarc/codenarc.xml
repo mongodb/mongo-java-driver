@@ -31,6 +31,9 @@
         <rule-config name='HashtableIsObsolete'>
             <property name='doNotApplyToFileNames' value='MongoClientFactorySpecification.groovy'/>
         </rule-config>
+        <exclude name="TrailingComma"/>
+        <exclude name="CouldBeSwitchStatement"/>
+        <exclude name="NoDef"/>
     </ruleset-ref>
     <ruleset-ref path='rulesets/design.xml'>
         <rule-config name='BuilderMethodWithSideEffects'>
@@ -96,6 +99,7 @@
         <!-- dangerous rule because if you use "with in a then clause of a Spock test, the assertions are not run -->
         <exclude name="UnnecessaryObjectReferences"/>
         <exclude name="UnnecessaryBigDecimalInstantiation"/>
+        <exclude name="UnnecessarySetter"/>
     </ruleset-ref>
     <ruleset-ref path='rulesets/unused.xml'>
         <rule-config name='UnusedObject'>

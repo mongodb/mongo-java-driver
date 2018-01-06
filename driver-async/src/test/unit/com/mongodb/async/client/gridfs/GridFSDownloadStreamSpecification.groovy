@@ -24,6 +24,7 @@ import com.mongodb.async.SingleResultCallback
 import com.mongodb.async.client.FindIterable
 import com.mongodb.async.client.MongoCollection
 import com.mongodb.client.gridfs.model.GridFSFile
+import com.mongodb.session.ClientSession
 import org.bson.BsonObjectId
 import org.bson.Document
 import org.bson.types.Binary
@@ -41,14 +42,14 @@ class GridFSDownloadStreamSpecification extends Specification {
     def 'should return the file info'() {
         given:
         def gridFSFindIterable = Mock(GridFSFindIterable)
-        def downloadStream = new GridFSDownloadStreamImpl(gridFSFindIterable, Stub(MongoCollection))
+        def downloadStream = new GridFSDownloadStreamImpl(clientSession, gridFSFindIterable, Stub(MongoCollection))
 
         when:
         def futureResult = new FutureResultCallback()
         downloadStream.getGridFSFile(futureResult)
 
         then:
-        1 * gridFSFindIterable.first(_) >> { it[0].onResult(FILE_INFO, null) }
+        1 * gridFSFindIterable.first(_) >> { it.last().onResult(FILE_INFO, null) }
         futureResult.get() == FILE_INFO
 
         when: 'Ensure that the fileInfo is cached'
@@ -58,20 +59,23 @@ class GridFSDownloadStreamSpecification extends Specification {
         then:
         0 * gridFSFindIterable.first(_)
         futureResult.get() == FILE_INFO
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     @Unroll
     def 'should return handle errors getting the file info when #description'() {
         given:
         def gridFSFindIterable = Mock(GridFSFindIterable)
-        def downloadStream = new GridFSDownloadStreamImpl(gridFSFindIterable, Stub(MongoCollection))
+        def downloadStream = new GridFSDownloadStreamImpl(clientSession, gridFSFindIterable, Stub(MongoCollection))
 
         when:
         def futureResult = new FutureResultCallback()
         downloadStream.getGridFSFile(futureResult)
 
         then:
-        1 * gridFSFindIterable.first(_) >> { it[0].onResult(result, error) }
+        1 * gridFSFindIterable.first(_) >> { it.last().onResult(result, error) }
 
         when:
         futureResult.get()
@@ -80,9 +84,11 @@ class GridFSDownloadStreamSpecification extends Specification {
         thrown(MongoException)
 
         where:
-        description                     | result    | error
-        'the file info was not found'   | null      | null
-        'there was an error'            | null      | new MongoException('failure')
+        description                                 | clientSession         | result    | error
+        'the file info was not found'               | null                  | null      | null
+        'there was an error'                        | null                  | null      | new MongoException('failure')
+        'the file info was not found with session'  | Stub(ClientSession)   | null      | null
+        'there was an error with session'           | Stub(ClientSession)   | null      | new MongoException('failure')
     }
 
     def 'should query the chunks collection as expected'() {
@@ -103,7 +109,7 @@ class GridFSDownloadStreamSpecification extends Specification {
         def batchCursor = Mock(AsyncBatchCursor)
         def findIterable = Mock(FindIterable)
         def chunksCollection = Mock(MongoCollection)
-        def downloadStream = new GridFSDownloadStreamImpl(gridFSFindIterable, chunksCollection)
+        def downloadStream = new GridFSDownloadStreamImpl(clientSession, gridFSFindIterable, chunksCollection)
 
         when:
         def firstByteBuffer = ByteBuffer.allocate(2)
@@ -111,12 +117,16 @@ class GridFSDownloadStreamSpecification extends Specification {
         downloadStream.read(firstByteBuffer, futureResult)
 
         then:
-        1 * gridFSFindIterable.first(_) >> { it[0].onResult(FILE_INFO, null) }
-        1 * chunksCollection.find(findQuery) >> findIterable
+        1 * gridFSFindIterable.first(_) >> { it.last().onResult(FILE_INFO, null) }
+        if (clientSession != null) {
+            1 * chunksCollection.find(clientSession, findQuery) >> findIterable
+        } else {
+            1 * chunksCollection.find(findQuery) >> findIterable
+        }
         1 * findIterable.sort(sort) >> findIterable
         1 * findIterable.batchSize(0) >> findIterable
-        1 * findIterable.batchCursor(_) >> { it[0].onResult(batchCursor, null) }
-        1 * batchCursor.next(_) >> { it[0].onResult([chunkDocument, secondChunkDocument], null) }
+        1 * findIterable.batchCursor(_) >> { it.last().onResult(batchCursor, null) }
+        1 * batchCursor.next(_) >> { it.last().onResult([chunkDocument, secondChunkDocument], null) }
 
         then:
         futureResult.get() == 2
@@ -141,6 +151,9 @@ class GridFSDownloadStreamSpecification extends Specification {
         futureResult.get() == -1
         0 * batchCursor.next(_)
         thirdByteBuffer == ByteBuffer.allocate(1)
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should create a new cursor each time when using batchSize 1'() {
@@ -161,7 +174,7 @@ class GridFSDownloadStreamSpecification extends Specification {
         def batchCursor = Mock(AsyncBatchCursor)
         def findIterable = Mock(FindIterable)
         def chunksCollection = Mock(MongoCollection)
-        def downloadStream = new GridFSDownloadStreamImpl(gridFSFindIterable, chunksCollection).batchSize(1)
+        def downloadStream = new GridFSDownloadStreamImpl(clientSession, gridFSFindIterable, chunksCollection).batchSize(1)
 
         when:
         def firstByteBuffer = ByteBuffer.allocate(2)
@@ -169,12 +182,16 @@ class GridFSDownloadStreamSpecification extends Specification {
         downloadStream.read(firstByteBuffer, futureResult)
 
         then:
-        1 * gridFSFindIterable.first(_) >> { it[0].onResult(FILE_INFO, null) }
-        1 * chunksCollection.find(findQuery) >> findIterable
+        1 * gridFSFindIterable.first(_) >> { it.last().onResult(FILE_INFO, null) }
+        if (clientSession != null) {
+            1 * chunksCollection.find(clientSession, findQuery) >> findIterable
+        } else {
+            1 * chunksCollection.find(findQuery) >> findIterable
+        }
         1 * findIterable.sort(sort) >> findIterable
         1 * findIterable.batchSize(1) >> findIterable
-        1 * findIterable.batchCursor(_) >> { it[0].onResult(batchCursor, null) }
-        1 * batchCursor.next(_) >> { it[0].onResult([chunkDocument], null) }
+        1 * findIterable.batchCursor(_) >> { it.last().onResult(batchCursor, null) }
+        1 * batchCursor.next(_) >> { it.last().onResult([chunkDocument], null) }
 
         then:
         futureResult.get() == 2
@@ -187,11 +204,15 @@ class GridFSDownloadStreamSpecification extends Specification {
         downloadStream.read(secondByteBuffer, futureResult)
 
         then:
-        1 * chunksCollection.find(findQuery) >> findIterable
+        if (clientSession != null) {
+            1 * chunksCollection.find(clientSession, findQuery) >> findIterable
+        } else {
+            1 * chunksCollection.find(findQuery) >> findIterable
+        }
         1 * findIterable.batchSize(1) >> findIterable
         1 * findIterable.sort(sort) >> findIterable
-        1 * findIterable.batchCursor(_) >> { it[0].onResult(batchCursor, null) }
-        1 * batchCursor.next(_) >> { it[0].onResult([secondChunkDocument], null) }
+        1 * findIterable.batchCursor(_) >> { it.last().onResult(batchCursor, null) }
+        1 * batchCursor.next(_) >> { it.last().onResult([secondChunkDocument], null) }
 
         then:
         futureResult.get() == 1
@@ -203,16 +224,19 @@ class GridFSDownloadStreamSpecification extends Specification {
         downloadStream.read(thirdByteBuffer, futureResult)
 
         then:
-        0 * chunksCollection.find(_) >> findIterable
+        0 * chunksCollection.find(*_) >> findIterable
 
         then:
         futureResult.get() == -1
         thirdByteBuffer == ByteBuffer.allocate(1)
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should throw if trying to pass negative batchSize'() {
         given:
-        def downloadStream = new GridFSDownloadStreamImpl(Stub(GridFSFindIterable), Stub(MongoCollection))
+        def downloadStream = new GridFSDownloadStreamImpl(clientSession, Stub(GridFSFindIterable), Stub(MongoCollection))
 
         when:
         downloadStream.batchSize(0)
@@ -226,6 +250,9 @@ class GridFSDownloadStreamSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should throw if no chunks found when data is expected'() {
@@ -234,7 +261,7 @@ class GridFSDownloadStreamSpecification extends Specification {
         def batchCursor = Mock(AsyncBatchCursor)
         def findIterable = Mock(FindIterable)
         def chunksCollection = Mock(MongoCollection)
-        def downloadStream = new GridFSDownloadStreamImpl(gridFSFindIterable, chunksCollection).batchSize(1)
+        def downloadStream = new GridFSDownloadStreamImpl(clientSession, gridFSFindIterable, chunksCollection).batchSize(1)
 
         when:
         def firstByteBuffer = ByteBuffer.allocate(2)
@@ -242,18 +269,25 @@ class GridFSDownloadStreamSpecification extends Specification {
         downloadStream.read(firstByteBuffer, futureResult)
 
         then:
-        1 * gridFSFindIterable.first(_) >> { it[0].onResult(FILE_INFO, null) }
-        1 * chunksCollection.find(_) >> findIterable
+        1 * gridFSFindIterable.first(_) >> { it.last().onResult(FILE_INFO, null) }
+        if (clientSession != null) {
+            1 * chunksCollection.find(clientSession, _) >> findIterable
+        } else {
+            1 * chunksCollection.find(_) >> findIterable
+        }
         1 * findIterable.sort(_) >> findIterable
         1 * findIterable.batchSize(1) >> findIterable
-        1 * findIterable.batchCursor(_) >> { it[0].onResult(batchCursor, null) }
-        1 * batchCursor.next(_) >> { it[0].onResult([], null) }
+        1 * findIterable.batchCursor(_) >> { it.last().onResult(batchCursor, null) }
+        1 * batchCursor.next(_) >> { it.last().onResult([], null) }
 
         when:
         futureResult.get()
 
         then:
         thrown(MongoGridFSException)
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     @Unroll
@@ -262,7 +296,7 @@ class GridFSDownloadStreamSpecification extends Specification {
         def gridFSFindIterable = Mock(GridFSFindIterable)
         def findIterable = Mock(FindIterable)
         def chunksCollection = Mock(MongoCollection)
-        def downloadStream = new GridFSDownloadStreamImpl(gridFSFindIterable, chunksCollection)
+        def downloadStream = new GridFSDownloadStreamImpl(clientSession, gridFSFindIterable, chunksCollection)
 
         when:
         def firstByteBuffer = ByteBuffer.allocate(2)
@@ -270,11 +304,15 @@ class GridFSDownloadStreamSpecification extends Specification {
         downloadStream.read(firstByteBuffer, futureResult)
 
         then:
-        1 * gridFSFindIterable.first(_) >> { it[0].onResult(FILE_INFO, null) }
-        1 * chunksCollection.find(_) >> findIterable
+        1 * gridFSFindIterable.first(_) >> { it.last().onResult(FILE_INFO, null) }
+        if (clientSession != null) {
+            1 * chunksCollection.find(clientSession, _) >> findIterable
+        } else {
+            1 * chunksCollection.find(_) >> findIterable
+        }
         1 * findIterable.sort(_) >> findIterable
         1 * findIterable.batchSize(0) >> findIterable
-        1 * findIterable.batchCursor(_) >> { it[0].onResult(result, error) }
+        1 * findIterable.batchCursor(_) >> { it.last().onResult(result, error) }
 
         when:
         futureResult.get()
@@ -283,8 +321,9 @@ class GridFSDownloadStreamSpecification extends Specification {
         thrown(MongoException)
 
         where:
-        description                 | result    | error
-        'when there is an error'    | null      | new MongoException('failure')
+        description                              | clientSession        | result    | error
+        'when there is an error'                 | null                 | null      | new MongoException('failure')
+        'when there is an error with session'    | Stub(ClientSession)  | null      | new MongoException('failure')
     }
 
     @Unroll
@@ -294,7 +333,7 @@ class GridFSDownloadStreamSpecification extends Specification {
         def batchCursor = Mock(AsyncBatchCursor)
         def findIterable = Mock(FindIterable)
         def chunksCollection = Mock(MongoCollection)
-        def downloadStream = new GridFSDownloadStreamImpl(gridFSFindIterable, chunksCollection)
+        def downloadStream = new GridFSDownloadStreamImpl(clientSession, gridFSFindIterable, chunksCollection)
 
         when:
         def firstByteBuffer = ByteBuffer.allocate(2)
@@ -302,12 +341,16 @@ class GridFSDownloadStreamSpecification extends Specification {
         downloadStream.read(firstByteBuffer, futureResult)
 
         then:
-        1 * gridFSFindIterable.first(_) >> { it[0].onResult(FILE_INFO, null) }
-        1 * chunksCollection.find(_) >> findIterable
+        1 * gridFSFindIterable.first(_) >> { it.last().onResult(FILE_INFO, null) }
+        if (clientSession != null) {
+            1 * chunksCollection.find(clientSession, _) >> findIterable
+        } else {
+            1 * chunksCollection.find(_) >> findIterable
+        }
         1 * findIterable.sort(_) >> findIterable
         1 * findIterable.batchSize(0) >> findIterable
-        1 * findIterable.batchCursor(_) >> { it[0].onResult(batchCursor, null) }
-        1 * batchCursor.next(_) >> { it[0].onResult(result, error) }
+        1 * findIterable.batchCursor(_) >> { it.last().onResult(batchCursor, null) }
+        1 * batchCursor.next(_) >> { it.last().onResult(result, error) }
 
         when:
         futureResult.get()
@@ -316,23 +359,34 @@ class GridFSDownloadStreamSpecification extends Specification {
         thrown(MongoException)
 
         where:
-        description                 | result                                                | error
-        'is smaller than expected'  | [Document.parse('{ files_id: 1, n: 0}')
-                                               .append('data', new Binary(new byte[1]))]    | null
-        'is bigger than expected'   | [Document.parse('{ files_id: 1, n: 0}')
-                                               .append('data', new Binary(new byte[100]))]  | null
-        'has the wrong n index'     | [Document.parse('{ files_id: 1, n: 1}')
-                                               .append('data', new Binary(new byte[3]))]    | null
-        'has the wrong data type'   | [Document.parse('{ files_id: 1, n: 0}')
-                                               .append('data', 'hello')]                    | null
-        'is empty'                  | []                                                    | null
-        'is null'                   | null                                                  | null
-        'has an error'              | null                                                  | new MongoException('failure')
+        description                             | clientSession       | result                                          | error
+        'is smaller than expected with session' | Stub(ClientSession) | [Document.parse('{ files_id: 1, n: 0}')
+                                                                         .append('data', new Binary(new byte[1]))]      | null
+        'is bigger than expected with session'  | Stub(ClientSession) | [Document.parse('{ files_id: 1, n: 0}')
+                                                                         .append('data', new Binary(new byte[100]))]    | null
+        'has the wrong n index with session'    | Stub(ClientSession) | [Document.parse('{ files_id: 1, n: 1}')
+                                                                         .append('data', new Binary(new byte[3]))]      | null
+        'has the wrong data type with session'  | Stub(ClientSession) | [Document.parse('{ files_id: 1, n: 0}')
+                                                                            .append('data', 'hello')]                   | null
+        'is empty with session'                 | Stub(ClientSession) | []      | null
+        'is null with session'                  | Stub(ClientSession) | null    | null
+        'has an error with session'             | Stub(ClientSession) | null    | new MongoException('failure')
+        'is smaller than expected'              | null                | [Document.parse('{ files_id: 1, n: 0}')
+                                                                         .append('data', new Binary(new byte[1]))]      | null
+        'is bigger than expected'               | null                | [Document.parse('{ files_id: 1, n: 0}')
+                                                                         .append('data', new Binary(new byte[100]))]    | null
+        'has the wrong n index'                 | null                | [Document.parse('{ files_id: 1, n: 1}')
+                                                                         .append('data', new Binary(new byte[3]))]      | null
+        'has the wrong data type'               | null                | [Document.parse('{ files_id: 1, n: 0}')
+                                                                         .append('data', 'hello')]                      | null
+        'is empty with session'                 | null                | []      | null
+        'is null with session'                  | null                | null    | null
+        'has an error with session'             | null                | null    | new MongoException('failure')
     }
 
     def 'should throw an exception when trying to action post close'() {
         given:
-        def downloadStream = new GridFSDownloadStreamImpl(Stub(GridFSFindIterable), Stub(MongoCollection))
+        def downloadStream = new GridFSDownloadStreamImpl(clientSession, Stub(GridFSFindIterable), Stub(MongoCollection))
         def futureResult = new FutureResultCallback()
         downloadStream.close(futureResult)
         futureResult.get()
@@ -360,6 +414,9 @@ class GridFSDownloadStreamSpecification extends Specification {
 
         then:
         notThrown(MongoGridFSException)
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should not allow concurrent reads'() {
@@ -370,10 +427,10 @@ class GridFSDownloadStreamSpecification extends Specification {
             1 * first(_) >> {
                 latchA.countDown()
                 latchB.await()
-                it[0].onResult(null, null)
+                it.last().onResult(null, null)
             }
         }
-        def downloadStream = new GridFSDownloadStreamImpl(gridFSFindIterable, Stub(MongoCollection))
+        def downloadStream = new GridFSDownloadStreamImpl(clientSession, gridFSFindIterable, Stub(MongoCollection))
         def futureResult = new FutureResultCallback()
 
         when:
@@ -393,6 +450,9 @@ class GridFSDownloadStreamSpecification extends Specification {
         then:
         def exception = thrown(MongoGridFSException)
         exception.getMessage() == 'The AsyncInputStream does not support concurrent reading.'
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should not allow a concurrent read and close'() {
@@ -403,10 +463,10 @@ class GridFSDownloadStreamSpecification extends Specification {
             1 * first(_) >> {
                 latchA.countDown()
                 latchB.await()
-                it[0].onResult(null, null)
+                it.last().onResult(null, null)
             }
         }
-        def downloadStream = new GridFSDownloadStreamImpl(gridFSFindIterable, Stub(MongoCollection))
+        def downloadStream = new GridFSDownloadStreamImpl(clientSession, gridFSFindIterable, Stub(MongoCollection))
         def futureResult = new FutureResultCallback()
 
         when:
@@ -426,5 +486,8 @@ class GridFSDownloadStreamSpecification extends Specification {
         then:
         def exception = thrown(MongoGridFSException)
         exception.getMessage() == 'The AsyncInputStream does not support concurrent reading.'
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 }

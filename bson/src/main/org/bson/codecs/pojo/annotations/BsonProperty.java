@@ -37,9 +37,17 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface BsonProperty {
     /**
-     * The value to use for the mapped property when storing the property in the database.
+     * The name of the property.
+     *
+     * <p>
+     *     For asymmetrical property names, the context of the {@code BsonProperty} can be important.
+     *     For example, when used with {@code @BsonCreator} the value will relate to the read name.
+     *     When used directly on a field it will set both the read name if unset and the write name if unset.
+     * </p>
+     *
      * @return the name to use for the property
      * @see PropertyModel#getWriteName()
+     * @see PropertyModel#getReadName()
      */
     String value() default "";
 

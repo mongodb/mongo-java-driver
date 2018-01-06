@@ -16,9 +16,9 @@
 
 package com.mongodb;
 
-import com.mongodb.operation.OperationExecutor;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
+import com.mongodb.session.ClientSession;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +27,7 @@ import java.util.List;
 class TestOperationExecutor implements OperationExecutor {
 
     private final List<Object> responses;
+    private List<ClientSession> clientSessions = new ArrayList<ClientSession>();
     private List<ReadPreference> readPreferences = new ArrayList<ReadPreference>();
     private List<ReadOperation> readOperations = new ArrayList<ReadOperation>();
     private List<WriteOperation> writeOperations = new ArrayList<WriteOperation>();
@@ -38,24 +39,41 @@ class TestOperationExecutor implements OperationExecutor {
     @Override
     @SuppressWarnings("unchecked")
     public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
-        readOperations.add(operation);
-        readPreferences.add(readPreference);
-        return (T) getResponse();
+        return execute(operation, readPreference, null);
     }
 
     @Override
     @SuppressWarnings("unchecked")
     public <T> T execute(final WriteOperation<T> operation) {
-        writeOperations.add(operation);
-        return (T) getResponse();
+        return execute(operation, null);
     }
 
-    private Object getResponse() {
+    @Override
+    public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ClientSession session) {
+        clientSessions.add(session);
+        readOperations.add(operation);
+        readPreferences.add(readPreference);
+        return getResponse();
+    }
+
+    @Override
+    public <T> T execute(final WriteOperation<T> operation, final ClientSession session) {
+        clientSessions.add(session);
+        writeOperations.add(operation);
+        return getResponse();
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> T getResponse() {
         Object response = responses.remove(0);
         if (response instanceof RuntimeException) {
             throw (RuntimeException) response;
         }
-        return response;
+        return (T) response;
+    }
+
+    ClientSession getClientSession() {
+        return clientSessions.remove(0);
     }
 
     ReadOperation getReadOperation() {

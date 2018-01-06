@@ -22,6 +22,7 @@ import com.mongodb.client.MongoDriverInformation;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider;
 import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
+import com.mongodb.session.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.BsonValueCodecProvider;
@@ -34,7 +35,9 @@ import org.bson.codecs.configuration.CodecRegistry;
 import java.io.Closeable;
 import java.util.List;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 /**
@@ -46,7 +49,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
  * MongoClient mongoClient1 = new MongoClient("localhost");
  * MongoClient mongoClient2 = new MongoClient("localhost", 27017);
  * MongoClient mongoClient4 = new MongoClient(new ServerAddress("localhost"));
- * MongoClient mongoClient5 = new MongoClient(new ServerAddress("localhost"), new MongoClientOptions.Builder().build());
+ * MongoClient mongoClient5 = new MongoClient(new ServerAddress("localhost"), MongoClientOptions.builder().build());
  * </pre>
  * <p>You can connect to a <a href="http://www.mongodb.org/display/DOCS/Replica+Sets">replica set</a> using the Java driver by passing a
  * ServerAddress list to the MongoClient constructor. For example:</p>
@@ -170,9 +173,11 @@ public class MongoClient extends Mongo implements Closeable {
      * @param credentialsList the list of credentials used to authenticate all connections
      * @see com.mongodb.ServerAddress
      * @since 2.11.0
+     * @deprecated Prefer {@link #MongoClient(ServerAddress, MongoCredential, MongoClientOptions)}
      */
+    @Deprecated
     public MongoClient(final ServerAddress addr, final List<MongoCredential> credentialsList) {
-        this(addr, credentialsList, new MongoClientOptions.Builder().build());
+        this(addr, credentialsList, MongoClientOptions.builder().build());
     }
 
     /**
@@ -194,9 +199,24 @@ public class MongoClient extends Mongo implements Closeable {
      * @param options         default options
      * @see com.mongodb.ServerAddress
      * @since 2.11.0
+     * @deprecated Prefer {@link #MongoClient(ServerAddress, MongoCredential, MongoClientOptions)}
      */
+    @Deprecated
     public MongoClient(final ServerAddress addr, final List<MongoCredential> credentialsList, final MongoClientOptions options) {
         super(addr, credentialsList, options);
+    }
+
+    /**
+     * Creates a Mongo instance based on a (single) mongo node using a given server address, credential, and options
+     *
+     * @param addr            the database address
+     * @param credential      the credential used to authenticate all connections
+     * @param options         default options
+     * @see com.mongodb.ServerAddress
+     * @since 3.6.0
+     */
+    public MongoClient(final ServerAddress addr, final MongoCredential credential, final MongoClientOptions options) {
+        super(addr, singletonList(credential), options);
     }
 
     /**
@@ -233,7 +253,9 @@ public class MongoClient extends Mongo implements Closeable {
      * @param credentialsList the list of credentials used to authenticate all connections
      * @see MongoClientOptions#getLocalThreshold()
      * @since 2.11.0
+     * @deprecated Prefer {@link #MongoClient(List, MongoCredential, MongoClientOptions)}
      */
+    @Deprecated
     public MongoClient(final List<ServerAddress> seeds, final List<MongoCredential> credentialsList) {
         this(seeds, credentialsList, new MongoClientOptions.Builder().build());
     }
@@ -275,9 +297,33 @@ public class MongoClient extends Mongo implements Closeable {
      * @param options         the options
      * @see MongoClientOptions#getLocalThreshold()
      * @since 2.11.0
+     * @deprecated Prefer {@link #MongoClient(List, MongoCredential, MongoClientOptions)}
      */
+    @Deprecated
     public MongoClient(final List<ServerAddress> seeds, final List<MongoCredential> credentialsList, final MongoClientOptions options) {
         super(seeds, credentialsList, options);
+    }
+
+    /**
+     * <p>Creates an instance based on a list of replica set members or mongos servers. For a replica set it will discover all members.
+     * For a list with a single seed, the driver will still discover all members of the replica set.  For a direct
+     * connection to a replica set member, with no discovery, use the {@link #MongoClient(ServerAddress, List, MongoClientOptions)}
+     * constructor instead.</p>
+     *
+     * <p>When there is more than one server to choose from based on the type of request (read or write) and the read preference (if it's a
+     * read request), the driver will randomly select a server to send a request. This applies to both replica sets and sharded clusters.
+     * The servers to randomly select from are further limited by the local threshold.  See
+     * {@link MongoClientOptions#getLocalThreshold()}</p>
+     *
+     * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of mongod
+     *              servers in the same replica set or a list of mongos servers in the same sharded cluster.
+     * @param credential the credential used to authenticate all connections
+     * @param options         the options
+     * @see MongoClientOptions#getLocalThreshold()
+     * @since 3.6.0
+     */
+    public MongoClient(final List<ServerAddress> seeds, final MongoCredential credential, final MongoClientOptions options) {
+        super(seeds, singletonList(credential), options);
     }
 
     /**
@@ -316,10 +362,29 @@ public class MongoClient extends Mongo implements Closeable {
      * @param mongoDriverInformation any driver information to associate with the MongoClient
      * @see com.mongodb.ServerAddress
      * @since 3.4
+     * @deprecated Prefer {@link #MongoClient(ServerAddress, MongoCredential, MongoClientOptions, MongoDriverInformation)}
      */
+    @Deprecated
     public MongoClient(final ServerAddress addr, final List<MongoCredential> credentialsList, final MongoClientOptions options,
                        final MongoDriverInformation mongoDriverInformation) {
         super(addr, credentialsList, options, mongoDriverInformation);
+    }
+
+    /**
+     * Creates a MongoClient to a single node using a given ServerAddress.
+     *
+     * <p>Note: Intended for driver and library authors to associate extra driver metadata with the connections.</p>
+     *
+     * @param addr            the database address
+     * @param credential      the credential used to authenticate all connections
+     * @param options         default options
+     * @param mongoDriverInformation any driver information to associate with the MongoClient
+     * @see com.mongodb.ServerAddress
+     * @since 3.6
+     */
+    public MongoClient(final ServerAddress addr, final MongoCredential credential, final MongoClientOptions options,
+                       final MongoDriverInformation mongoDriverInformation) {
+        super(addr, singletonList(credential), options, mongoDriverInformation);
     }
 
     /**
@@ -333,10 +398,29 @@ public class MongoClient extends Mongo implements Closeable {
      * @param options         the options
      * @param mongoDriverInformation any driver information to associate with the MongoClient
      * @since 3.4
+     * @deprecated Prefer {@link #MongoClient(List, MongoCredential, MongoClientOptions, MongoDriverInformation)}
      */
+    @Deprecated
     public MongoClient(final List<ServerAddress> seeds, final List<MongoCredential> credentialsList, final MongoClientOptions options,
                        final MongoDriverInformation mongoDriverInformation) {
         super(seeds, credentialsList, options, mongoDriverInformation);
+    }
+
+    /**
+     * Creates a MongoClient
+     *
+     * <p>Note: Intended for driver and library authors to associate extra driver metadata with the connections.</p>
+     *
+     * @param seeds Put as many servers as you can in the list and the system will figure out the rest.  This can either be a list of mongod
+     *              servers in the same replica set or a list of mongos servers in the same sharded cluster.
+     * @param credential      the credential used to authenticate all connections
+     * @param options         the options
+     * @param mongoDriverInformation any driver information to associate with the MongoClient
+     * @since 3.6
+     */
+    public MongoClient(final List<ServerAddress> seeds, final MongoCredential credential, final MongoClientOptions options,
+                       final MongoDriverInformation mongoDriverInformation) {
+        super(seeds, singletonList(credential), options, mongoDriverInformation);
     }
 
     /**
@@ -368,8 +452,25 @@ public class MongoClient extends Mongo implements Closeable {
      * @since 3.0
      */
     public MongoIterable<String> listDatabaseNames() {
-        return new ListDatabasesIterableImpl<BsonDocument>(BsonDocument.class, getDefaultCodecRegistry(),
-                ReadPreference.primary(), createOperationExecutor()).map(new Function<BsonDocument, String>() {
+        return createListDatabaseNamesIterable(null);
+    }
+
+    /**
+     * Get a list of the database names
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @return an iterable containing all the names of all the databases
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     * @mongodb.driver.manual reference/command/listDatabases List Databases
+     */
+    public MongoIterable<String> listDatabaseNames(final ClientSession clientSession) {
+        notNull("clientSession", clientSession);
+        return createListDatabaseNamesIterable(clientSession);
+    }
+
+    private MongoIterable<String> createListDatabaseNamesIterable(final ClientSession clientSession) {
+        return createListDatabasesIterable(clientSession, BsonDocument.class).nameOnly(true).map(new Function<BsonDocument, String>() {
             @Override
             public String apply(final BsonDocument result) {
                 return result.getString("name").getValue();
@@ -396,7 +497,38 @@ public class MongoClient extends Mongo implements Closeable {
      * @since 3.0
      */
     public <T> ListDatabasesIterable<T> listDatabases(final Class<T> clazz) {
-        return new ListDatabasesIterableImpl<T>(clazz, getMongoClientOptions().getCodecRegistry(),
+        return createListDatabasesIterable(null, clazz);
+    }
+
+    /**
+     * Gets the list of databases
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @return the list of databases
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public ListDatabasesIterable<Document> listDatabases(final ClientSession clientSession) {
+        return listDatabases(clientSession, Document.class);
+    }
+
+    /**
+     * Gets the list of databases
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param clazz the class to cast the database documents to
+     * @param <T>   the type of the class to use instead of {@code Document}.
+     * @return the list of databases
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    public <T> ListDatabasesIterable<T> listDatabases(final ClientSession clientSession, final Class<T> clazz) {
+        notNull("clientSession", clientSession);
+        return createListDatabasesIterable(clientSession, clazz);
+    }
+
+    private <T> ListDatabasesIterable<T> createListDatabasesIterable(final ClientSession clientSession, final Class<T> clazz) {
+        return new ListDatabasesIterableImpl<T>(clientSession, clazz, getMongoClientOptions().getCodecRegistry(),
                 ReadPreference.primary(), createOperationExecutor());
     }
 
@@ -409,7 +541,24 @@ public class MongoClient extends Mongo implements Closeable {
     public MongoDatabase getDatabase(final String databaseName) {
         MongoClientOptions clientOptions = getMongoClientOptions();
         return new MongoDatabaseImpl(databaseName, clientOptions.getCodecRegistry(), clientOptions.getReadPreference(),
-                clientOptions.getWriteConcern(), clientOptions.getReadConcern(), createOperationExecutor());
+                clientOptions.getWriteConcern(), clientOptions.getRetryWrites(), clientOptions.getReadConcern(), createOperationExecutor());
+    }
+
+    /**
+     * Creates a client session.
+     *
+     * @param options the options for the client session
+     * @return the client session
+     * @throws MongoClientException if the MongoDB cluster to which this client is connected does not support sessions
+     * @mongodb.server.release 3.6
+     * @since 3.6
+     */
+    public ClientSession startSession(final ClientSessionOptions options) {
+        ClientSession clientSession = createClientSession(notNull("options", options));
+        if (clientSession == null) {
+            throw new MongoClientException("Sessions are not supported by the MongoDB cluster to which this client is connected");
+        }
+        return clientSession;
     }
 
     static DBObjectCodec getCommandCodec() {

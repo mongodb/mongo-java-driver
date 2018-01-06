@@ -21,6 +21,7 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.connection.NoOpSessionContext;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -51,7 +52,7 @@ import static java.lang.String.format;
  * @param <T> the type of document to decode query results to
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
  */
-class QueryProtocol<T> implements Protocol<QueryResult<T>> {
+class QueryProtocol<T> implements LegacyProtocol<QueryResult<T>> {
 
     public static final Logger LOGGER = Loggers.getLogger("protocol.query");
     private static final String FIND_COMMAND_NAME = "find";
@@ -268,8 +269,8 @@ class QueryProtocol<T> implements Protocol<QueryResult<T>> {
             ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
             try {
                 message = createQueryMessage(connection.getDescription());
-                RequestMessage.EncodingMetadata metadata = message.encodeWithMetadata(bsonOutput);
-                isExplain = sendQueryStartedEvent(connection, message, bsonOutput, metadata);
+                message.encode(bsonOutput, NoOpSessionContext.INSTANCE);
+                isExplain = sendQueryStartedEvent(connection, message, bsonOutput, message.getEncodingMetadata());
                 connection.sendMessage(bsonOutput.getByteBuffers(), message.getId());
             } finally {
                 bsonOutput.close();
@@ -412,7 +413,7 @@ class QueryProtocol<T> implements Protocol<QueryResult<T>> {
 
         boolean isExplain = false;
 
-        List<ByteBufBsonDocument> documents = ByteBufBsonDocument.create(bsonOutput, firstDocumentPosition);
+        List<ByteBufBsonDocument> documents = ByteBufBsonDocument.createList(bsonOutput, firstDocumentPosition);
 
         ByteBufBsonDocument rawQueryDocument = documents.get(0);
         for (Map.Entry<String, BsonValue> cur : rawQueryDocument.entrySet()) {
@@ -472,8 +473,8 @@ class QueryProtocol<T> implements Protocol<QueryResult<T>> {
                                                        final boolean isExplain) {
         List<ByteBufBsonDocument> rawResultDocuments = Collections.emptyList();
         if (responseBuffers.getReplyHeader().getNumberReturned() > 0) {
-            responseBuffers.getBodyByteBuffer().position(0);
-            rawResultDocuments = ByteBufBsonDocument.create(responseBuffers);
+            responseBuffers.reset();
+            rawResultDocuments = ByteBufBsonDocument.createList(responseBuffers);
         }
 
         if (isExplain) {

@@ -30,7 +30,7 @@ public final class ByteCodecTest extends CodecTestCase {
 
     @Test
     public void shouldHandleAlternativeNumberValues() {
-        Document expected = new Document("a", new Byte("10"));
+        Document expected = new Document("a", (byte) 10);
         roundTrip(new Document("a", 10), expected);
         roundTrip(new Document("a", 10.00), expected);
         roundTrip(new Document("a", 9.9999999999999992), expected);

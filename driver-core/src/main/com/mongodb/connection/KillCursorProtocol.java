@@ -21,6 +21,7 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.CommandListener;
+import com.mongodb.internal.connection.NoOpSessionContext;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDouble;
@@ -40,7 +41,7 @@ import static java.lang.String.format;
  *
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-kill-cursors OP_KILL_CURSOR
  */
-class KillCursorProtocol implements Protocol<Void> {
+class KillCursorProtocol implements LegacyProtocol<Void> {
     public static final Logger LOGGER = Loggers.getLogger("protocol.killcursor");
     private static final String COMMAND_NAME = "killCursors";
 
@@ -68,7 +69,7 @@ class KillCursorProtocol implements Protocol<Void> {
                 sendCommandStartedEvent(message, namespace.getDatabaseName(), COMMAND_NAME, asCommandDocument(),
                                         connection.getDescription(), commandListener);
             }
-            message.encode(bsonOutput);
+            message.encode(bsonOutput, NoOpSessionContext.INSTANCE);
             connection.sendMessage(bsonOutput.getByteBuffers(), message.getId());
             if (commandListener != null && namespace != null) {
                 sendCommandSucceededEvent(message, COMMAND_NAME, asCommandResponseDocument(),
@@ -105,7 +106,7 @@ class KillCursorProtocol implements Protocol<Void> {
                 startEventSent = true;
             }
 
-            message.encode(bsonOutput);
+            message.encode(bsonOutput, NoOpSessionContext.INSTANCE);
             connection.sendMessageAsync(bsonOutput.getByteBuffers(), message.getId(), new SingleResultCallback<Void>() {
                 @Override
                 public void onResult(final Void result, final Throwable t) {

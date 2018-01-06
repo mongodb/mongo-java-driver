@@ -17,6 +17,9 @@
 package com.mongodb;
 
 import com.mongodb.annotations.Immutable;
+import org.bson.codecs.pojo.annotations.BsonCreator;
+import org.bson.codecs.pojo.annotations.BsonIgnore;
+import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -33,6 +36,7 @@ public final class MongoNamespace {
 
     private final String databaseName;
     private final String collectionName;
+    @BsonIgnore
     private final String fullName;  // cache to avoid repeated string building
 
     /**
@@ -90,7 +94,9 @@ public final class MongoNamespace {
      * @see #checkDatabaseNameValidity(String)
      * @see #checkCollectionNameValidity(String)
      */
-    public MongoNamespace(final String databaseName, final String collectionName) {
+    @BsonCreator
+    public MongoNamespace(@BsonProperty("db") final String databaseName,
+                          @BsonProperty("coll") final String collectionName) {
         checkDatabaseNameValidity(databaseName);
         checkCollectionNameValidity(collectionName);
         this.databaseName = databaseName;
@@ -103,6 +109,7 @@ public final class MongoNamespace {
      *
      * @return the database name
      */
+    @BsonProperty("db")
     public String getDatabaseName() {
         return databaseName;
     }
@@ -112,6 +119,7 @@ public final class MongoNamespace {
      *
      * @return the collection name
      */
+    @BsonProperty("coll")
     public String getCollectionName() {
         return collectionName;
     }

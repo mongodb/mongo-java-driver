@@ -145,13 +145,16 @@ public final class MongoClients {
                 .serverSettings(ServerSettings.builder()
                         .applyConnectionString(connectionString)
                         .build())
-                .credentialList(connectionString.getCredentialList())
                 .sslSettings(SslSettings.builder()
                         .applyConnectionString(connectionString)
                         .build())
                 .socketSettings(SocketSettings.builder()
                         .applyConnectionString(connectionString)
                         .build());
+
+        if (connectionString.getCredential() != null) {
+            builder.credential(connectionString.getCredential());
+        }
 
         if (connectionString.getReadPreference() != null) {
             builder.readPreference(connectionString.getReadPreference());
@@ -165,6 +168,7 @@ public final class MongoClients {
         if (connectionString.getApplicationName() != null) {
             builder.applicationName(connectionString.getApplicationName());
         }
+        builder.compressorList(connectionString.getCompressorList());
         return create(builder.build(), mongoDriverInformation, connectionString.getStreamType());
     }
 
@@ -182,13 +186,14 @@ public final class MongoClients {
         }
     }
 
+    @SuppressWarnings("deprecation")
     static MongoClient createMongoClient(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation,
                                          final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory,
                                          final Closeable externalResourceCloser) {
         return new MongoClientImpl(settings, new DefaultClusterFactory().createCluster(settings.getClusterSettings(),
                 settings.getServerSettings(), settings.getConnectionPoolSettings(), streamFactory, heartbeatStreamFactory,
                 settings.getCredentialList(), getCommandListener(settings.getCommandListeners()), settings.getApplicationName(),
-                mongoDriverInformation), externalResourceCloser);
+                mongoDriverInformation, settings.getCompressorList()), externalResourceCloser);
     }
 
     /**

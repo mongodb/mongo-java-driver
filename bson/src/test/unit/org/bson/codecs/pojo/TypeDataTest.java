@@ -19,9 +19,7 @@ package org.bson.codecs.pojo;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.junit.Test;
 
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -45,7 +43,7 @@ public final class TypeDataTest {
         TypeData<String> subTypeData = TypeData.builder(String.class).build();
         TypeData<List> typeData = TypeData.builder(List.class).addTypeParameter(subTypeData).build();
 
-        assertEquals(ArrayList.class, typeData.getType());
+        assertEquals(List.class, typeData.getType());
         assertEquals(singletonList(subTypeData), typeData.getTypeParameters());
     }
 
@@ -55,7 +53,7 @@ public final class TypeDataTest {
         TypeData<Integer> valueTypeData = TypeData.builder(Integer.class).build();
         TypeData<Map> typeData = TypeData.builder(Map.class).addTypeParameter(keyTypeData).addTypeParameter(valueTypeData).build();
 
-        assertEquals(HashMap.class, typeData.getType());
+        assertEquals(Map.class, typeData.getType());
         assertEquals(Arrays.<TypeData<?>>asList(keyTypeData, valueTypeData), typeData.getTypeParameters());
     }
 
@@ -68,7 +66,7 @@ public final class TypeDataTest {
                 .build();
 
         assertEquals("TypeData{type=String}", stringType.toString());
-        assertEquals("TypeData{type=HashMap, typeParameters=[String, HashMap<String, String>]}", mapTypeData.toString());
+        assertEquals("TypeData{type=Map, typeParameters=[String, Map<String, String>]}", mapTypeData.toString());
     }
 
     @Test
@@ -78,28 +76,5 @@ public final class TypeDataTest {
                         .addTypeParameter(TypeData.builder(GenericHolderModel.class).build()).build()).build();
 
         typeData.toString();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testListNoParamsValidation() {
-        TypeData.builder(List.class).build();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testListToManyParamsValidation() {
-        TypeData<String> stringTypeData = TypeData.builder(String.class).build();
-        TypeData.builder(List.class).addTypeParameter(stringTypeData).addTypeParameter(stringTypeData).build();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testMapKeyValidation() {
-        TypeData.builder(Map.class).addTypeParameter(TypeData.builder(Integer.class).build()).build();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testMapToManyParamsValidation() {
-        TypeData<String> stringTypeData = TypeData.builder(String.class).build();
-        TypeData.builder(Map.class).addTypeParameter(stringTypeData).addTypeParameter(stringTypeData)
-                .addTypeParameter(stringTypeData).build();
     }
 }

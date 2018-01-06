@@ -36,8 +36,11 @@ import com.mongodb.event.ConnectionPoolWaitQueueEnteredEvent;
 import com.mongodb.event.ConnectionPoolWaitQueueExitedEvent;
 import com.mongodb.event.ConnectionRemovedEvent;
 import com.mongodb.internal.connection.ConcurrentPool;
+import com.mongodb.internal.connection.ConcurrentPool.Prune;
 import com.mongodb.internal.thread.DaemonThreadFactory;
+import com.mongodb.session.SessionContext;
 import org.bson.ByteBuf;
+import org.bson.codecs.Decoder;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -432,6 +435,32 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
+        public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
+            isTrue("open", !isClosed.get());
+            try {
+                return wrapped.sendAndReceive(message, decoder, sessionContext);
+            } catch (MongoException e) {
+                incrementGenerationOnSocketException(this, e);
+                throw e;
+            }
+        }
+
+        @Override
+        public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
+                                            final SessionContext sessionContext, final SingleResultCallback<T> callback) {
+            isTrue("open", !isClosed.get());
+            wrapped.sendAndReceiveAsync(message, decoder, sessionContext, new SingleResultCallback<T>() {
+                @Override
+                public void onResult(final T result, final Throwable t) {
+                    if (t != null) {
+                        incrementGenerationOnSocketException(PooledConnection.this, t);
+                    }
+                    callback.onResult(result, t);
+                }
+            });
+        }
+
+        @Override
         public ResponseBuffers receiveMessage(final int responseTo) {
             isTrue("open", !isClosed.get());
             try {
@@ -524,8 +553,8 @@ class DefaultConnectionPool implements ConnectionPool {
         }
 
         @Override
-        public boolean shouldPrune(final UsageTrackingInternalConnection usageTrackingConnection) {
-            return DefaultConnectionPool.this.shouldPrune(usageTrackingConnection);
+        public Prune shouldPrune(final UsageTrackingInternalConnection usageTrackingConnection) {
+            return DefaultConnectionPool.this.shouldPrune(usageTrackingConnection) ? Prune.YES : Prune.NO;
         }
     }
 }

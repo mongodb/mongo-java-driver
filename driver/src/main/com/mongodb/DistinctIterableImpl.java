@@ -17,28 +17,24 @@
 package com.mongodb;
 
 import com.mongodb.client.DistinctIterable;
-import com.mongodb.client.MongoCursor;
-import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.Collation;
+import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.DistinctOperation;
-import com.mongodb.operation.OperationExecutor;
+import com.mongodb.operation.ReadOperation;
+import com.mongodb.session.ClientSession;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
-import java.util.Collection;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-class DistinctIterableImpl<TDocument, TResult> implements DistinctIterable<TResult> {
+class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements DistinctIterable<TResult> {
     private final MongoNamespace namespace;
     private final Class<TDocument> documentClass;
     private final Class<TResult> resultClass;
-    private final ReadPreference readPreference;
-    private final ReadConcern readConcern;
     private final CodecRegistry codecRegistry;
-    private final OperationExecutor executor;
     private final String fieldName;
 
     private Bson filter;
@@ -46,16 +42,14 @@ class DistinctIterableImpl<TDocument, TResult> implements DistinctIterable<TResu
     private Collation collation;
 
 
-    DistinctIterableImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final Class<TResult> resultClass,
-                         final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
-                         final OperationExecutor executor, final String fieldName, final Bson filter) {
+    DistinctIterableImpl(final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
+                         final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
+                         final ReadConcern readConcern, final OperationExecutor executor, final String fieldName, final Bson filter) {
+        super(clientSession, executor, readConcern, readPreference);
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.resultClass = notNull("resultClass", resultClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
-        this.readPreference = notNull("readPreference", readPreference);
-        this.readConcern = notNull("readConcern", readConcern);
-        this.executor = notNull("executor", executor);
         this.fieldName = notNull("mapFunction", fieldName);
         this.filter = filter;
     }
@@ -75,7 +69,7 @@ class DistinctIterableImpl<TDocument, TResult> implements DistinctIterable<TResu
 
     @Override
     public DistinctIterable<TResult> batchSize(final int batchSize) {
-        // Noop - not supported by DistinctIterable
+        super.batchSize(batchSize);
         return this;
     }
 
@@ -86,36 +80,11 @@ class DistinctIterableImpl<TDocument, TResult> implements DistinctIterable<TResu
     }
 
     @Override
-    public MongoCursor<TResult> iterator() {
-        return execute().iterator();
-    }
-
-    @Override
-    public TResult first() {
-        return execute().first();
-    }
-
-    @Override
-    public <U> MongoIterable<U> map(final Function<TResult, U> mapper) {
-        return new MappingIterable<TResult, U>(this, mapper);
-    }
-
-    @Override
-    public void forEach(final Block<? super TResult> block) {
-        execute().forEach(block);
-    }
-
-    @Override
-    public <A extends Collection<? super TResult>> A into(final A target) {
-        return execute().into(target);
-    }
-
-    private MongoIterable<TResult> execute() {
-        DistinctOperation<TResult> operation = new DistinctOperation<TResult>(namespace, fieldName, codecRegistry.get(resultClass))
-                .filter(filter == null ? null : filter.toBsonDocument(documentClass, codecRegistry))
-                .maxTime(maxTimeMS, MILLISECONDS)
-                .readConcern(readConcern)
-                .collation(collation);
-        return new OperationIterable<TResult>(operation, readPreference, executor);
+    ReadOperation<BatchCursor<TResult>> asReadOperation() {
+        return new DistinctOperation<TResult>(namespace, fieldName, codecRegistry.get(resultClass))
+                       .filter(filter == null ? null : filter.toBsonDocument(documentClass, codecRegistry))
+                       .maxTime(maxTimeMS, MILLISECONDS)
+                       .readConcern(getReadConcern())
+                       .collation(collation);
     }
 }

@@ -26,9 +26,9 @@ import org.bson.codecs.pojo.entities.conventions.AnnotationInheritedModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationModel;
 import org.junit.Test;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
@@ -58,18 +58,18 @@ public final class ClassModelTest {
     public void testCollectionNestedPojoModelPropertyTypes() {
         TypeData<String> string = TypeData.builder(String.class).build();
         TypeData<SimpleModel> simple = TypeData.builder(SimpleModel.class).build();
-        TypeData<ArrayList> list = TypeData.builder(ArrayList.class).addTypeParameter(simple).build();
-        TypeData<ArrayList> listList = TypeData.builder(ArrayList.class).addTypeParameter(list).build();
-        TypeData<HashSet> set = TypeData.builder(HashSet.class).addTypeParameter(simple).build();
-        TypeData<HashSet> setSet = TypeData.builder(HashSet.class).addTypeParameter(set).build();
-        TypeData<HashMap> map = TypeData.builder(HashMap.class).addTypeParameter(string).addTypeParameter(simple).build();
-        TypeData<ArrayList> listMap = TypeData.builder(ArrayList.class).addTypeParameter(map).build();
-        TypeData<HashMap> mapMap = TypeData.builder(HashMap.class).addTypeParameter(string).addTypeParameter(map).build();
-        TypeData<HashMap> mapList = TypeData.builder(HashMap.class).addTypeParameter(string).addTypeParameter(list).build();
-        TypeData<HashMap> mapListMap = TypeData.builder(HashMap.class).addTypeParameter(string).addTypeParameter(listMap).build();
-        TypeData<HashMap> mapSet = TypeData.builder(HashMap.class).addTypeParameter(string).addTypeParameter(set).build();
-        TypeData<ArrayList> listMapList = TypeData.builder(ArrayList.class).addTypeParameter(mapList).build();
-        TypeData<ArrayList> listMapSet = TypeData.builder(ArrayList.class).addTypeParameter(mapSet).build();
+        TypeData<List> list = TypeData.builder(List.class).addTypeParameter(simple).build();
+        TypeData<List> listList = TypeData.builder(List.class).addTypeParameter(list).build();
+        TypeData<Set> set = TypeData.builder(Set.class).addTypeParameter(simple).build();
+        TypeData<Set> setSet = TypeData.builder(Set.class).addTypeParameter(set).build();
+        TypeData<Map> map = TypeData.builder(Map.class).addTypeParameter(string).addTypeParameter(simple).build();
+        TypeData<List> listMap = TypeData.builder(List.class).addTypeParameter(map).build();
+        TypeData<Map> mapMap = TypeData.builder(Map.class).addTypeParameter(string).addTypeParameter(map).build();
+        TypeData<Map> mapList = TypeData.builder(Map.class).addTypeParameter(string).addTypeParameter(list).build();
+        TypeData<Map> mapListMap = TypeData.builder(Map.class).addTypeParameter(string).addTypeParameter(listMap).build();
+        TypeData<Map> mapSet = TypeData.builder(Map.class).addTypeParameter(string).addTypeParameter(set).build();
+        TypeData<List> listMapList = TypeData.builder(List.class).addTypeParameter(mapList).build();
+        TypeData<List> listMapSet = TypeData.builder(List.class).addTypeParameter(mapSet).build();
 
         ClassModel<?> classModel = ClassModel.builder(CollectionNestedPojoModel.class).build();
         assertEquals(list, classModel.getPropertyModel("listSimple").getTypeData());
@@ -104,7 +104,7 @@ public final class ClassModelTest {
     public void testMappingConcreteGenericTypes() {
         TypeData<String> string = TypeData.builder(String.class).build();
         TypeData<SimpleModel> simple = TypeData.builder(SimpleModel.class).build();
-        TypeData<HashMap> map = TypeData.builder(HashMap.class).addTypeParameter(string).addTypeParameter(simple).build();
+        TypeData<Map> map = TypeData.builder(Map.class).addTypeParameter(string).addTypeParameter(simple).build();
         TypeData<GenericHolderModel> genericHolder = TypeData.builder(GenericHolderModel.class).addTypeParameter(map).build();
 
         ClassModel<?> classModel = ClassModel.builder(NestedGenericHolderMapModel.class).build();
@@ -117,8 +117,8 @@ public final class ClassModelTest {
         TypeData<Object> object = TypeData.builder(Object.class).build();
         TypeData<Integer> integer = TypeData.builder(Integer.class).build();
         TypeData<String> string = TypeData.builder(String.class).build();
-        TypeData<ArrayList> list = TypeData.builder(ArrayList.class).addTypeParameter(object).build();
-        TypeData<HashMap> map = TypeData.builder(HashMap.class).addTypeParameter(string).addTypeParameter(object).build();
+        TypeData<List> list = TypeData.builder(List.class).addTypeParameter(object).build();
+        TypeData<Map> map = TypeData.builder(Map.class).addTypeParameter(string).addTypeParameter(object).build();
 
         ClassModel<?> classModel = ClassModel.builder(SimpleGenericsModel.class).build();
         assertEquals(integer, classModel.getPropertyModel("myIntegerField").getTypeData());

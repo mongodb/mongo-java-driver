@@ -18,16 +18,25 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoException;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.session.SessionContext;
+import org.bson.BsonBinaryReader;
+import org.bson.BsonDocument;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
+import org.bson.codecs.BsonDocumentCodec;
+import org.bson.codecs.Decoder;
 import org.bson.io.BsonInput;
 import org.bson.io.ByteBufferBsonInput;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.Deque;
 import java.util.LinkedList;
 import java.util.List;
+
+import static com.mongodb.connection.ProtocolHelper.getCommandFailureException;
+import static com.mongodb.connection.ProtocolHelper.isCommandOk;
 
 class TestInternalConnection implements InternalConnection {
 
@@ -117,7 +126,7 @@ class TestInternalConnection implements InternalConnection {
             combined.put(buf.array(), 0, buf.remaining());
         }
 
-        combined.flip();
+        ((Buffer) combined).flip();
 
         Interaction interaction = replies.getFirst();
         if (interaction.responseBuffers != null) {
@@ -128,6 +137,47 @@ class TestInternalConnection implements InternalConnection {
         } else if (interaction.sendException != null) {
             replies.removeFirst();
             throw interaction.sendException;
+        }
+    }
+
+    @Override
+    public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
+        ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(this);
+        try {
+            message.encode(bsonOutput, sessionContext);
+            sendMessage(bsonOutput.getByteBuffers(), message.getId());
+        } finally {
+            bsonOutput.close();
+        }
+        ResponseBuffers responseBuffers = receiveMessage(message.getId());
+        try {
+            boolean commandOk = isCommandOk(new BsonBinaryReader(new ByteBufferBsonInput(responseBuffers.getBodyByteBuffer())));
+            responseBuffers.reset();
+            if (!commandOk) {
+                throw getCommandFailureException(getResponseDocument(responseBuffers, message, new BsonDocumentCodec()),
+                        description.getServerAddress());
+            }
+            return new ReplyMessage<T>(responseBuffers, decoder, message.getId()).getDocuments().get(0);
+        } finally {
+            responseBuffers.close();
+        }
+    }
+
+    private <T extends BsonDocument> T getResponseDocument(final ResponseBuffers responseBuffers,
+                                                           final CommandMessage commandMessage, final Decoder<T> decoder) {
+        ReplyMessage<T> replyMessage = new ReplyMessage<T>(responseBuffers, decoder, commandMessage.getId());
+        responseBuffers.reset();
+        return replyMessage.getDocuments().get(0);
+    }
+
+    @Override
+    public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
+                                        final SessionContext sessionContext, final SingleResultCallback<T> callback) {
+        try {
+            T result = sendAndReceive(message, decoder, sessionContext);
+            callback.onResult(result, null);
+        } catch (MongoException ex) {
+            callback.onResult(null, ex);
         }
     }
 
@@ -142,11 +192,11 @@ class TestInternalConnection implements InternalConnection {
         headerByteBuffer.putLong(header.getCursorId());
         headerByteBuffer.putInt(header.getStartingFrom());
         headerByteBuffer.putInt(header.getNumberReturned());
-        headerByteBuffer.flip();
+        ((Buffer) headerByteBuffer).flip();
 
-        ByteBufferBsonInput headerInputBuffer = new ByteBufferBsonInput(new ByteBufNIO(headerByteBuffer));
-        return new ReplyHeader(headerInputBuffer, ConnectionDescription.getDefaultMaxMessageSize());
-    }
+        ByteBufNIO buffer = new ByteBufNIO(headerByteBuffer);
+        MessageHeader messageHeader = new MessageHeader(buffer, ConnectionDescription.getDefaultMaxMessageSize());
+        return new ReplyHeader(buffer, messageHeader);    }
 
     @Override
     public ResponseBuffers receiveMessage(final int responseTo) {

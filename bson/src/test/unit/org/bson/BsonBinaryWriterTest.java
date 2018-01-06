@@ -649,7 +649,7 @@ public class BsonBinaryWriterTest {
 
         BasicOutputBuffer pipedBuffer = new BasicOutputBuffer();
         BsonBinaryWriter pipedWriter = new BsonBinaryWriter(new BsonWriterSettings(100),
-                                                                   new BsonBinaryWriterSettings(1024), pipedBuffer);
+                new BsonBinaryWriterSettings(1024), pipedBuffer);
 
         pipedWriter.writeStartDocument();
         pipedWriter.writeBoolean("a", true);
@@ -695,7 +695,7 @@ public class BsonBinaryWriterTest {
 
         BasicOutputBuffer pipedBuffer = new BasicOutputBuffer();
         BsonBinaryWriter pipedWriter = new BsonBinaryWriter(new BsonWriterSettings(100),
-                                                                   new BsonBinaryWriterSettings(1024), pipedBuffer);
+                new BsonBinaryWriterSettings(1024), pipedBuffer);
 
         pipedWriter.writeStartDocument();
         pipedWriter.writeBoolean("a", true);

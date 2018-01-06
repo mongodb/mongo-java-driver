@@ -26,10 +26,13 @@ import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.binding.AsyncClusterBinding
+import com.mongodb.binding.AsyncConnectionSource
+import com.mongodb.binding.AsyncReadBinding
 import com.mongodb.binding.ClusterBinding
 import com.mongodb.binding.ConnectionSource
 import com.mongodb.binding.ReadBinding
 import com.mongodb.client.model.CreateCollectionOptions
+import com.mongodb.connection.AsyncConnection
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
@@ -37,10 +40,13 @@ import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.QueryResult
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerVersion
+import com.mongodb.session.SessionContext
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.BsonInt64
 import org.bson.BsonString
+import org.bson.BsonTimestamp
 import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
@@ -60,7 +66,7 @@ import static com.mongodb.CursorType.Tailable
 import static com.mongodb.CursorType.TailableAwait
 import static com.mongodb.ExplainVerbosity.QUERY_PLANNER
 import static com.mongodb.connection.ServerType.STANDALONE
-import static java.util.Arrays.asList
+import static com.mongodb.operation.ReadConcernHelper.appendReadConcernToCommand
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assert.assertEquals
@@ -323,7 +329,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ isSharded() || !serverVersionAtLeast(2, 6) })
+    @IgnoreIf({ isSharded() })
     def 'should throw execution timeout exception from execute'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document())
@@ -440,7 +446,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         if (serverVersionAtLeast(3, 0)) {
-            assertEquals(hint, getKeyPattern(explainPlan))
+            assertEquals(hint, QueryOperationHelper.getKeyPattern(explainPlan))
         } else {
             assertEquals(new BsonString('BtreeCursor a_1'), explainPlan.cursor)
         }
@@ -464,7 +470,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         Document profileDocument = profileCollectionHelper.find().get(0)
-        if (serverVersionAtLeast(asList(3, 5, 8))) {
+        if (serverVersionAtLeast(3, 6)) {
             assertEquals(expectedComment, ((Document) profileDocument.get('command')).get('comment'))
         } else if (serverVersionAtLeast(3, 2)) {
             assertEquals(expectedComment, ((Document) profileDocument.get('query')).get('comment'))
@@ -517,6 +523,81 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
+    def 'should add read concern to command'() {
+        given:
+        def binding = Stub(ReadBinding)
+        def source = Stub(ConnectionSource)
+        def connection = Mock(Connection)
+        binding.readPreference >> ReadPreference.primary()
+        binding.readConnectionSource >> source
+        binding.sessionContext >> sessionContext
+        source.connection >> connection
+        source.retain() >> source
+        def commandDocument = new BsonDocument('find', new BsonString(getCollectionName()))
+        appendReadConcernToCommand(ReadConcern.MAJORITY, sessionContext, commandDocument)
+
+        def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
+            .readConcern(ReadConcern.MAJORITY)
+
+        when:
+        operation.execute(binding)
+
+        then:
+        _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
+                new ServerVersion(3, 6), STANDALONE, 1000, 100000, 100000, [])
+        1 * connection.command(_, commandDocument, _, _, _, sessionContext) >>
+                new BsonDocument('cursor', new BsonDocument('id', new BsonInt64(1))
+                        .append('ns', new BsonString(getNamespace().getFullName()))
+                        .append('firstBatch', new BsonArrayWrapper([])))
+        1 * connection.release()
+
+        where:
+        sessionContext << [
+                Stub(SessionContext) {
+                    isCausallyConsistent() >> true
+                    getOperationTime() >> new BsonTimestamp(42, 0)
+                }
+        ]
+    }
+
+    def 'should add read concern to command asynchronously'() {
+        given:
+        def binding = Stub(AsyncReadBinding)
+        def source = Stub(AsyncConnectionSource)
+        def connection = Mock(AsyncConnection)
+        binding.readPreference >> ReadPreference.primary()
+        binding.getReadConnectionSource(_) >> { it[0].onResult(source, null) }
+        binding.sessionContext >> sessionContext
+        source.getConnection(_) >> { it[0].onResult(connection, null) }
+        source.retain() >> source
+        def commandDocument = new BsonDocument('find', new BsonString(getCollectionName()))
+        appendReadConcernToCommand(ReadConcern.MAJORITY, sessionContext, commandDocument)
+
+        def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
+                .readConcern(ReadConcern.MAJORITY)
+
+        when:
+        executeAsync(operation, binding)
+
+        then:
+        _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
+                new ServerVersion(3, 6), STANDALONE, 1000, 100000, 100000, [])
+        1 * connection.commandAsync(_, commandDocument, _, _, _, sessionContext, _) >> {
+            it[6].onResult(new BsonDocument('cursor', new BsonDocument('id', new BsonInt64(1))
+                    .append('ns', new BsonString(getNamespace().getFullName()))
+                    .append('firstBatch', new BsonArrayWrapper([]))), null)
+        }
+        1 * connection.release()
+
+        where:
+        sessionContext << [
+                Stub(SessionContext) {
+                    isCausallyConsistent() >> true
+                    getOperationTime() >> new BsonTimestamp(42, 0)
+                }
+        ]
+    }
+
     def 'should call query on Connection with no $query when there are no other meta operators'() {
         given:
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
@@ -535,7 +616,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                new ServerVersion(2, 6), STANDALONE, 1000, 100000, 100000)
+                new ServerVersion(2, 6), STANDALONE, 1000, 100000, 100000, [])
 
 
         1 * connection.query(getNamespace(), operation.filter, operation.projection, 0, 0, 0, false, false, false, false,
@@ -564,7 +645,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                new ServerVersion(2, 6), STANDALONE, 1000, 100000, 100000)
+                new ServerVersion(2, 6), STANDALONE, 1000, 100000, 100000, [])
 
         1 * connection.query(getNamespace(), new BsonDocument('$query', operation.filter)
                 .append('$explain', BsonBoolean.TRUE).append('$orderby', operation.sort),
@@ -586,7 +667,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         BsonDocument result = execute(operation, async)
 
         then:
-        result
+        !result.isEmpty()
 
         where:
         [async, modifiers] << [
@@ -609,7 +690,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def explainResult = execute(explainOperation, async)
 
         then:
-        sanitizeExplainResult(cursorResult) == sanitizeExplainResult(explainResult)
+        QueryOperationHelper.sanitizeExplainResult(cursorResult) == QueryOperationHelper.sanitizeExplainResult(explainResult)
 
         where:
         async << [true, false]
@@ -674,23 +755,5 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    static BsonDocument sanitizeExplainResult(BsonDocument document) {
-        document.remove('ok')
-        document.remove('millis')
-        document.remove('executionStats')
-        document.remove('serverInfo')
-        document.remove('executionTimeMillis')
-        document
-    }
-
-    static BsonDocument getKeyPattern(BsonDocument explainPlan) {
-        def winningPlan = explainPlan.getDocument('queryPlanner').getDocument('winningPlan')
-        if (winningPlan.containsKey('inputStage')) {
-            return winningPlan.getDocument('inputStage').getDocument('keyPattern')
-        } else if (winningPlan.containsKey('shards')) {
-            return winningPlan.getArray('shards')[0].asDocument().getDocument('winningPlan')
-                    .getDocument('inputStage').getDocument('keyPattern')
-        }
-    }
 
 }

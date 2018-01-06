@@ -31,36 +31,41 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
 public final class BsonHelper {
-    private static final List<BsonValue> BSON_VALUES = asList(
-            new BsonNull(),
-            new BsonInt32(42),
-            new BsonInt64(52L),
-            new BsonDecimal128(Decimal128.parse("4.00")),
-            new BsonBoolean(true),
-            new BsonDateTime(new Date().getTime()),
-            new BsonDouble(62.0),
-            new BsonString("the fox ..."),
-            new BsonMinKey(),
-            new BsonMaxKey(),
-            new BsonDbPointer("test.test", new ObjectId()),
-            new BsonJavaScript("int i = 0;"),
-            new BsonJavaScriptWithScope("x", new BsonDocument("x", new BsonInt32(1))),
-            new BsonObjectId(new ObjectId()),
-            new BsonRegularExpression("^test.*regex.*xyz$", "i"),
-            new BsonSymbol("ruby stuff"),
-            new BsonTimestamp(0x12345678, 5),
-            new BsonUndefined(),
-            new BsonBinary((byte) 80, new byte[]{5, 4, 3, 2, 1}),
-            new BsonArray(asList(new BsonInt32(1), new BsonInt64(2L), new BsonBoolean(true),
-                    new BsonArray(asList(new BsonInt32(1), new BsonInt32(2), new BsonInt32(3), new BsonDocument("a", new BsonInt64(2L)))))),
-            new BsonDocument("a", new BsonInt32(1)));
 
-    private static final BsonDocument BSON_DOCUMENT = new BsonDocument();
+    private static final Date DATE = new Date();
+    private static final ObjectId OBJECT_ID = new ObjectId();
 
-    static {
-        for (int i = 0; i < BSON_VALUES.size(); i++) {
-            BSON_DOCUMENT.append(Integer.toString(i), BSON_VALUES.get(i));
-        }
+    private static List<BsonValue> getBsonValues() {
+        return asList(
+                new BsonNull(),
+                new BsonInt32(42),
+                new BsonInt64(52L),
+                new BsonDecimal128(Decimal128.parse("4.00")),
+                new BsonBoolean(true),
+                new BsonDateTime(DATE.getTime()),
+                new BsonDouble(62.0),
+                new BsonString("the fox ..."),
+                new BsonMinKey(),
+                new BsonMaxKey(),
+                new BsonDbPointer("test.test", OBJECT_ID),
+                new BsonJavaScript("int i = 0;"),
+                new BsonJavaScriptWithScope("x", new BsonDocument("x", new BsonInt32(1))),
+                new BsonObjectId(OBJECT_ID),
+                new BsonRegularExpression("^test.*regex.*xyz$", "i"),
+                new BsonSymbol("ruby stuff"),
+                new BsonTimestamp(0x12345678, 5),
+                new BsonUndefined(),
+                new BsonBinary((byte) 80, new byte[]{5, 4, 3, 2, 1}),
+                new BsonArray(asList(
+                        new BsonInt32(1),
+                        new BsonInt64(2L),
+                        new BsonBoolean(true),
+                        new BsonArray(asList(
+                                new BsonInt32(1),
+                                new BsonInt32(2),
+                                new BsonInt32(3),
+                                new BsonDocument("a", new BsonInt64(2L)))))),
+                new BsonDocument("a", new BsonInt32(1)));
     }
 
     // fail class loading if any BSON types are not represented in BSON_VALUES.
@@ -71,7 +76,7 @@ public final class BsonHelper {
             }
 
             boolean found = false;
-            for (BsonValue curBsonValue : BSON_VALUES) {
+            for (BsonValue curBsonValue : getBsonValues()) {
                 if (curBsonValue.getBsonType() == curBsonType) {
                     found = true;
                     break;
@@ -85,11 +90,16 @@ public final class BsonHelper {
     }
 
     public static List<BsonValue> valuesOfEveryType() {
-        return BSON_VALUES;
+        return getBsonValues();
     }
 
     public static BsonDocument documentWithValuesOfEveryType() {
-        return BSON_DOCUMENT;
+        BsonDocument document = new BsonDocument();
+        List<BsonValue> bsonValues = getBsonValues();
+        for (int i = 0; i < bsonValues.size(); i++) {
+            document.append(Integer.toString(i), bsonValues.get(i));
+        }
+        return document;
     }
 
     public static ByteBuffer toBson(final BsonDocument document) {

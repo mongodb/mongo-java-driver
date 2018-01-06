@@ -21,10 +21,14 @@ import com.mongodb.async.FutureResultCallback;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncClusterBinding;
 import com.mongodb.binding.AsyncConnectionSource;
+import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.AsyncReadWriteBinding;
+import com.mongodb.binding.AsyncSessionBinding;
 import com.mongodb.binding.AsyncSingleConnectionBinding;
+import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.ClusterBinding;
 import com.mongodb.binding.ReadWriteBinding;
+import com.mongodb.binding.SessionBinding;
 import com.mongodb.binding.SingleConnectionBinding;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
@@ -49,16 +53,19 @@ import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.DropDatabaseOperation;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
+import com.mongodb.selector.ServerSelector;
 import org.bson.BsonDocument;
-import org.bson.BsonDocumentWrapper;
 import org.bson.BsonInt32;
+import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DocumentCodec;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static com.mongodb.connection.ClusterType.REPLICA_SET;
@@ -69,6 +76,7 @@ import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assume.assumeThat;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * Helper class for the acceptance tests.  Used primarily by DatabaseTestCase and FunctionalSpecification.  This fixture allows Test
@@ -78,11 +86,14 @@ public final class ClusterFixture {
     public static final String DEFAULT_URI = "mongodb://localhost:27017";
     public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
     private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
+    private static final int COMMAND_NOT_FOUND_ERROR_CODE = 59;
     public static final long TIMEOUT = 60L;
 
     private static ConnectionString connectionString;
     private static Cluster cluster;
     private static Cluster asyncCluster;
+    private static Map<ReadPreference, ReadWriteBinding> bindingMap = new HashMap<ReadPreference, ReadWriteBinding>();
+    private static Map<ReadPreference, AsyncReadWriteBinding> asyncBindingMap = new HashMap<ReadPreference, AsyncReadWriteBinding>();
 
     static {
         String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
@@ -103,13 +114,18 @@ public final class ClusterFixture {
         return getCluster().getDescription().getType() == clusterType;
     }
 
-    @SuppressWarnings("deprecation")
     public static ServerVersion getServerVersion() {
-        return getCluster().getDescription().getAny().get(0).getVersion();
+        return getCluster().selectServer(new ServerSelector() {
+            @Override
+            @SuppressWarnings("deprecation")
+            public List<ServerDescription> select(final ClusterDescription clusterDescription) {
+                return clusterDescription.getAny();
+            }
+        }).getDescription().getVersion();
     }
 
     public static boolean serverVersionAtLeast(final List<Integer> versionArray) {
-        return getConnectedServerVersion().compareTo(new ServerVersion(versionArray)) >= 0;
+        return getServerVersion().compareTo(new ServerVersion(versionArray)) >= 0;
     }
 
     public static boolean serverVersionAtLeast(final int majorVersion, final int minorVersion) {
@@ -117,11 +133,11 @@ public final class ClusterFixture {
     }
 
     public static boolean serverVersionLessThan(final String versionString) {
-        return getConnectedServerVersion().compareTo(new ServerVersion(getVersionList(versionString).subList(0, 3))) < 0;
+        return getServerVersion().compareTo(new ServerVersion(getVersionList(versionString).subList(0, 3))) < 0;
     }
 
     public static boolean serverVersionGreaterThan(final String versionString) {
-        return getConnectedServerVersion().compareTo(new ServerVersion(getVersionList(versionString).subList(0, 3))) > 0;
+        return getServerVersion().compareTo(new ServerVersion(getVersionList(versionString).subList(0, 3))) > 0;
     }
 
     private static List<Integer> getVersionList(final String versionString) {
@@ -135,25 +151,9 @@ public final class ClusterFixture {
         return versionList;
     }
 
-    public static Document getBuildInfo() {
-        return new CommandWriteOperation<Document>("admin", new BsonDocument("buildInfo", new BsonInt32(1)), new DocumentCodec())
-                .execute(getBinding());
-    }
-
     public static Document getServerStatus() {
         return new CommandWriteOperation<Document>("admin", new BsonDocument("serverStatus", new BsonInt32(1)), new DocumentCodec())
                .execute(getBinding());
-    }
-
-    @SuppressWarnings("unchecked")
-    public static boolean isEnterpriseServer() {
-        Document buildInfo = getBuildInfo();
-        List<String> modules = Collections.emptyList();
-        if (buildInfo.containsKey("modules")) {
-            modules = (List<String>) buildInfo.get("modules");
-        }
-
-        return modules.contains("enterprise");
     }
 
     public static boolean supportsFsync() {
@@ -161,25 +161,6 @@ public final class ClusterFixture {
         Document storageEngine = (Document) serverStatus.get("storageEngine");
 
         return storageEngine != null && !storageEngine.get("name").equals("inMemory");
-    }
-
-    @SuppressWarnings("deprecation")
-    public static ServerVersion getConnectedServerVersion() {
-        ClusterDescription clusterDescription = getCluster().getDescription();
-        int retries = 0;
-        while (clusterDescription.getAny().isEmpty() && retries <= 3) {
-            try {
-                Thread.sleep(1000);
-                retries++;
-            } catch (InterruptedException e) {
-                throw new RuntimeException("Interrupted", e);
-            }
-            clusterDescription = getCluster().getDescription();
-        }
-        if (clusterDescription.getAny().isEmpty()) {
-            throw new RuntimeException("There are no servers available in " + clusterDescription);
-        }
-        return clusterDescription.getAny().get(0).getVersion();
     }
 
     public static boolean isNotAtLeastJava7() {
@@ -208,20 +189,27 @@ public final class ClusterFixture {
         return connectionString;
     }
 
+    public static ReadWriteBinding getBinding(final Cluster cluster) {
+        return new ClusterBinding(cluster, ReadPreference.primary());
+    }
+
     public static ReadWriteBinding getBinding() {
-        return getBinding(getCluster());
+        return getBinding(getCluster(), ReadPreference.primary());
     }
 
     public static ReadWriteBinding getBinding(final ReadPreference readPreference) {
         return getBinding(getCluster(), readPreference);
     }
 
-    public static ReadWriteBinding getBinding(final Cluster cluster) {
-        return getBinding(cluster, ReadPreference.primary());
-    }
-
     private static ReadWriteBinding getBinding(final Cluster cluster, final ReadPreference readPreference) {
-        return new ClusterBinding(cluster, readPreference);
+        if (!bindingMap.containsKey(readPreference)) {
+            ReadWriteBinding binding = new ClusterBinding(cluster, readPreference);
+            if (serverVersionAtLeast(3, 6)) {
+                binding = new SessionBinding(binding);
+            }
+            bindingMap.put(readPreference, binding);
+        }
+        return bindingMap.get(readPreference);
     }
 
     public static SingleConnectionBinding getSingleConnectionBinding() {
@@ -236,20 +224,27 @@ public final class ClusterFixture {
         return new AsyncSingleConnectionBinding(cluster, 20, SECONDS);
     }
 
+    public static AsyncReadWriteBinding getAsyncBinding(final Cluster cluster) {
+        return new AsyncClusterBinding(cluster, ReadPreference.primary());
+    }
+
     public static AsyncReadWriteBinding getAsyncBinding() {
-        return getAsyncBinding(getAsyncCluster());
+        return getAsyncBinding(getAsyncCluster(), ReadPreference.primary());
     }
 
     public static AsyncReadWriteBinding getAsyncBinding(final ReadPreference readPreference) {
         return getAsyncBinding(getAsyncCluster(), readPreference);
     }
 
-    public static AsyncReadWriteBinding getAsyncBinding(final Cluster cluster) {
-        return getAsyncBinding(cluster, ReadPreference.primary());
-    }
-
     public static AsyncReadWriteBinding getAsyncBinding(final Cluster cluster, final ReadPreference readPreference) {
-        return new AsyncClusterBinding(cluster, readPreference);
+        if (!asyncBindingMap.containsKey(readPreference)) {
+            AsyncReadWriteBinding binding = new AsyncClusterBinding(cluster, readPreference);
+            if (serverVersionAtLeast(3, 6)) {
+                binding = new AsyncSessionBinding(binding);
+            }
+            asyncBindingMap.put(readPreference, binding);
+        }
+        return asyncBindingMap.get(readPreference);
     }
 
     public static synchronized Cluster getCluster() {
@@ -266,13 +261,15 @@ public final class ClusterFixture {
         return asyncCluster;
     }
 
+    @SuppressWarnings("deprecation")
     public static Cluster createCluster(final StreamFactory streamFactory) {
         return new DefaultClusterFactory().createCluster(ClusterSettings.builder().applyConnectionString(getConnectionString()).build(),
                                                   ServerSettings.builder().build(),
                                                   ConnectionPoolSettings.builder().applyConnectionString(getConnectionString()).build(),
                                                   streamFactory,
                                                   new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                                                  getConnectionString().getCredentialList(), null, null, null);
+                                                  getConnectionString().getCredentialList(), null, null, null,
+                                                  getConnectionString().getCompressorList());
     }
 
     public static StreamFactory getAsyncStreamFactory() {
@@ -292,7 +289,11 @@ public final class ClusterFixture {
     }
 
     public static SslSettings getSslSettings() {
-        SslSettings.Builder builder = SslSettings.builder().applyConnectionString(getConnectionString());
+        return getSslSettings(getConnectionString());
+    }
+
+    public static SslSettings getSslSettings(final ConnectionString connectionString) {
+        SslSettings.Builder builder = SslSettings.builder().applyConnectionString(connectionString);
         if (System.getProperty("java.version").startsWith("1.6.")) {
             builder.invalidHostNameAllowed(true);
         }
@@ -309,6 +310,7 @@ public final class ClusterFixture {
         return serverDescriptions.get(0).getAddress();
     }
 
+    @SuppressWarnings("deprecation")
     public static List<MongoCredential> getCredentialList() {
         return getConnectionString().getCredentialList();
     }
@@ -327,45 +329,92 @@ public final class ClusterFixture {
     }
 
     public static boolean isAuthenticated() {
-        return !getConnectionString().getCredentialList().isEmpty();
+        return getConnectionString().getCredential() != null;
     }
 
     public static void enableMaxTimeFailPoint() {
         assumeThat(isSharded(), is(false));
-        new CommandWriteOperation<BsonDocument>("admin",
-                                                new BsonDocumentWrapper<Document>(new Document("configureFailPoint", "maxTimeAlwaysTimeOut")
-                                                                                  .append("mode", "alwaysOn"),
-                                                                                  new DocumentCodec()),
-                                                new BsonDocumentCodec())
-        .execute(getBinding());
+        boolean failsPointsSupported = true;
+        try {
+            new CommandWriteOperation<BsonDocument>("admin",
+                    new BsonDocument("configureFailPoint", new BsonString("maxTimeAlwaysTimeOut"))
+                            .append("mode", new BsonString("alwaysOn")),
+                    new BsonDocumentCodec())
+                    .execute(getBinding());
+        } catch (MongoCommandException e) {
+            if (e.getErrorCode() == COMMAND_NOT_FOUND_ERROR_CODE) {
+                failsPointsSupported = false;
+            }
+        }
+        assumeTrue("configureFailPoint is not enabled", failsPointsSupported);
     }
 
     public static void disableMaxTimeFailPoint() {
         assumeThat(isSharded(), is(false));
-        if (serverVersionAtLeast(2, 6) && !isSharded()) {
-            new CommandWriteOperation<BsonDocument>("admin",
-                                                    new BsonDocumentWrapper<Document>(new Document("configureFailPoint",
-                                                                                                   "maxTimeAlwaysTimeOut")
-                                                                                      .append("mode", "off"),
-                                                                                      new DocumentCodec()),
-                                                    new BsonDocumentCodec())
-            .execute(getBinding());
+        if (!isSharded()) {
+            try {
+                new CommandWriteOperation<BsonDocument>("admin",
+                        new BsonDocument("configureFailPoint",
+                                new BsonString("maxTimeAlwaysTimeOut"))
+                                .append("mode", new BsonString("off")),
+                        new BsonDocumentCodec())
+                        .execute(getBinding());
+            } catch (MongoCommandException e) {
+                // ignore
+            }
         }
     }
 
-    public static <T> T executeSync(final WriteOperation<T> op) throws Throwable {
+    public static void enableOnPrimaryTransactionalWriteFailPoint(final BsonValue failPointData) {
+        BsonDocument command = BsonDocument.parse("{ configureFailPoint: 'onPrimaryTransactionalWrite'}");
+
+        if (failPointData.isDocument() && failPointData.asDocument().containsKey("mode")) {
+            for (Map.Entry<String, BsonValue> keyValue : failPointData.asDocument().entrySet()) {
+                command.append(keyValue.getKey(), keyValue.getValue());
+            }
+        } else {
+            command.append("mode", failPointData);
+        }
+        boolean failsPointsSupported = true;
+        try {
+            new CommandWriteOperation<BsonDocument>("admin", command, new BsonDocumentCodec()).execute(getBinding());
+        } catch (MongoCommandException e) {
+            if (e.getErrorCode() == COMMAND_NOT_FOUND_ERROR_CODE) {
+                failsPointsSupported = false;
+            }
+        }
+        assumeTrue("configureFailPoint is not enabled", failsPointsSupported);
+    }
+
+    public static void disableOnPrimaryTransactionalWriteFailPoint() {
+        assumeThat(isSharded(), is(false));
+        if (!isSharded()) {
+            try {
+                new CommandWriteOperation<BsonDocument>("admin",
+                        new BsonDocument("configureFailPoint",
+                                new BsonString("onPrimaryTransactionalWrite"))
+                                .append("mode", new BsonString("off")),
+                        new BsonDocumentCodec())
+                        .execute(getBinding());
+            } catch (MongoCommandException e) {
+                // ignore
+            }
+        }
+    }
+
+    public static <T> T executeSync(final WriteOperation<T> op) {
         return executeSync(op, getBinding());
     }
 
-    public static <T> T executeSync(final WriteOperation<T> op, final ReadWriteBinding binding) throws Throwable {
+    public static <T> T executeSync(final WriteOperation<T> op, final ReadWriteBinding binding) {
         return op.execute(binding);
     }
 
-    public static <T> T executeSync(final ReadOperation<T> op) throws Throwable {
+    public static <T> T executeSync(final ReadOperation<T> op) {
         return executeSync(op, getBinding());
     }
 
-    public static <T> T executeSync(final ReadOperation<T> op, final ReadWriteBinding binding) throws Throwable {
+    public static <T> T executeSync(final ReadOperation<T> op, final ReadWriteBinding binding) {
         return op.execute(binding);
     }
 
@@ -373,7 +422,7 @@ public final class ClusterFixture {
         return executeAsync(op, getAsyncBinding());
     }
 
-    public static <T> T executeAsync(final AsyncWriteOperation<T> op, final AsyncReadWriteBinding binding) throws Throwable {
+    public static <T> T executeAsync(final AsyncWriteOperation<T> op, final AsyncWriteBinding binding) throws Throwable {
         final FutureResultCallback<T> futureResultCallback = new FutureResultCallback<T>();
         op.executeAsync(binding, futureResultCallback);
         return futureResultCallback.get(TIMEOUT, SECONDS);
@@ -383,7 +432,7 @@ public final class ClusterFixture {
         return executeAsync(op, getAsyncBinding());
     }
 
-    public static <T> T executeAsync(final AsyncReadOperation<T> op, final AsyncReadWriteBinding binding) throws Throwable {
+    public static <T> T executeAsync(final AsyncReadOperation<T> op, final AsyncReadBinding binding) throws Throwable {
         final FutureResultCallback<T> futureResultCallback = new FutureResultCallback<T>();
         op.executeAsync(binding, futureResultCallback);
         return futureResultCallback.get(TIMEOUT, SECONDS);
@@ -443,7 +492,7 @@ public final class ClusterFixture {
         return results;
     }
 
-    public static <T> List<T> collectCursorResults(final BatchCursor<T> batchCursor) throws Throwable {
+    public static <T> List<T> collectCursorResults(final BatchCursor<T> batchCursor) {
         List<T> results = new ArrayList<T>();
         while (batchCursor.hasNext()) {
             results.addAll(batchCursor.next());

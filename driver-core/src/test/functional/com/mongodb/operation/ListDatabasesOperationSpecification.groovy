@@ -20,7 +20,6 @@ import category.Async
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
-import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.binding.AsyncConnectionSource
 import com.mongodb.binding.AsyncReadBinding
@@ -30,6 +29,7 @@ import com.mongodb.connection.AsyncConnection
 import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
 import org.bson.BsonDocument
+import org.bson.BsonRegularExpression
 import org.bson.Document
 import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
@@ -41,7 +41,6 @@ import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class ListDatabasesOperationSpecification extends OperationFunctionalSpecification {
@@ -53,30 +52,23 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
         def operation = new ListDatabasesOperation(codec)
 
         when:
-        def names = operation.execute(getBinding()).next()*.get('name')
-
+        def names = executeAndCollectBatchCursorResults(operation, async)*.get('name')
 
         then:
         names.contains(getDatabaseName())
-    }
-
-    @Category(Async)
-    def 'should return a list of database names asynchronously'() {
-        given:
-        getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('_id', 1))
-        def operation = new ListDatabasesOperation(codec)
 
         when:
-        def callback = new FutureResultCallback()
-        def cursor = executeAsync(operation)
-        cursor.next(callback)
-        def names = callback.get()*.get('name')
+        operation = operation.nameOnly(true).filter(new BsonDocument('name',  new BsonRegularExpression("^${getDatabaseName()}")))
+        names = executeAndCollectBatchCursorResults(operation, async)*.get('name')
 
         then:
         names.contains(getDatabaseName())
+
+        where:
+        async << [true, false]
     }
 
-    @IgnoreIf({ isSharded() || !serverVersionAtLeast(2, 6) })
+    @IgnoreIf({ isSharded() })
     def 'should throw execution timeout exception from execute'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document())
@@ -95,7 +87,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
     }
 
     @Category(Async)
-    @IgnoreIf({ isSharded() || !serverVersionAtLeast(2, 6) })
+    @IgnoreIf({ isSharded() })
     def 'should throw execution timeout exception from executeAsync'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document())
@@ -130,7 +122,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         _ * connection.getDescription() >> helper.connectionDescription
-        1 * connection.command(_, _, readPreference.isSlaveOk(), _, _) >> helper.commandResult
+        1 * connection.command(_, _, _, readPreference, _, _) >> helper.commandResult
         1 * connection.release()
 
         where:
@@ -154,7 +146,7 @@ class ListDatabasesOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         _ * connection.getDescription() >> helper.connectionDescription
-        1 * connection.commandAsync(_, _, readPreference.isSlaveOk(), _, _, _) >> { it[5].onResult(helper.commandResult, null) }
+        1 * connection.commandAsync(_, _, _, readPreference, _, _, _) >> { it[6].onResult(helper.commandResult, null) }
         1 * connection.release()
 
         where:

@@ -17,11 +17,13 @@
 package org.bson.codecs.pojo;
 
 import org.bson.codecs.configuration.CodecConfigurationException;
+import org.bson.codecs.pojo.annotations.BsonId;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -33,7 +35,9 @@ final class CreatorExecutable<T> {
     private final Constructor<T> constructor;
     private final Method method;
     private final List<BsonProperty> properties = new ArrayList<BsonProperty>();
+    private final Integer idPropertyIndex;
     private final List<Class<?>> parameterTypes = new ArrayList<Class<?>>();
+    private final List<Type> parameterGenericTypes = new ArrayList<Type>();
 
     CreatorExecutable(final Class<T> clazz, final Constructor<T> constructor) {
         this(clazz, constructor, null);
@@ -47,24 +51,38 @@ final class CreatorExecutable<T> {
         this.clazz = clazz;
         this.constructor = constructor;
         this.method = method;
+        Integer idPropertyIndex = null;
 
         if (constructor != null || method != null) {
-            parameterTypes.addAll(asList(constructor != null ? constructor.getParameterTypes() : method.getParameterTypes()));
+            Class<?>[] paramTypes = constructor != null ? constructor.getParameterTypes() : method.getParameterTypes();
+            Type[] genericParamTypes = constructor != null ? constructor.getGenericParameterTypes() : method.getGenericParameterTypes();
+            parameterTypes.addAll(asList(paramTypes));
+            parameterGenericTypes.addAll(asList(genericParamTypes));
             Annotation[][] parameterAnnotations = constructor != null ? constructor.getParameterAnnotations()
                     : method.getParameterAnnotations();
 
-            for (Annotation[] parameterAnnotation : parameterAnnotations) {
+            for (int i = 0; i < parameterAnnotations.length; ++i) {
+                Annotation[] parameterAnnotation = parameterAnnotations[i];
+
                 for (Annotation annotation : parameterAnnotation) {
                     if (annotation.annotationType().equals(BsonProperty.class)) {
                         properties.add((BsonProperty) annotation);
                         break;
                     }
+
+                    if (annotation.annotationType().equals(BsonId.class)) {
+                        properties.add(null);
+                        idPropertyIndex = i;
+                        break;
+                    }
                 }
             }
         }
+
+        this.idPropertyIndex = idPropertyIndex;
     }
 
-    public Class<T> getType() {
+    Class<T> getType() {
         return clazz;
     }
 
@@ -72,8 +90,16 @@ final class CreatorExecutable<T> {
         return properties;
     }
 
-    public List<Class<?>> getParameterTypes() {
+    Integer getIdPropertyIndex() {
+        return idPropertyIndex;
+    }
+
+    List<Class<?>> getParameterTypes() {
         return parameterTypes;
+    }
+
+    List<Type> getParameterGenericTypes() {
+        return parameterGenericTypes;
     }
 
     @SuppressWarnings("unchecked")
@@ -105,18 +131,19 @@ final class CreatorExecutable<T> {
     }
 
 
-    CodecConfigurationException getError(final String msg) {
-        return getError(constructor != null, msg);
+    CodecConfigurationException getError(final Class<?> clazz, final String msg) {
+        return getError(clazz, constructor != null, msg);
     }
 
-    void checkHasAnExecutable() {
+    private void checkHasAnExecutable() {
         if (constructor == null && method == null) {
             throw new CodecConfigurationException(format("Cannot find a public constructor for '%s'.", clazz.getSimpleName()));
         }
     }
 
-    private static CodecConfigurationException getError(final boolean isConstructor, final String msg) {
-        return new CodecConfigurationException(format("Invalid @Creator %s. %s", isConstructor ? "constructor" : "method", msg));
+    private static CodecConfigurationException getError(final Class<?> clazz, final boolean isConstructor, final String msg) {
+        return new CodecConfigurationException(format("Invalid @BsonCreator %s in %s. %s", isConstructor ? "constructor" : "method",
+                clazz.getSimpleName(), msg));
     }
 
 }

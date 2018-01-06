@@ -44,6 +44,7 @@
 
     <!--Do not check documentation tests classes -->
     <suppress checks="Javadoc*" files=".*documentation.*"/>
+    <suppress checks="Regexp" files=".*documentation.*"/>
 
     <!--Do not check test classes -->
     <suppress checks="Javadoc*" files=".*test.*"/>
@@ -108,6 +109,8 @@
     <suppress checks="HideUtilityClassConstructor" files="JSON"/>
     <suppress checks="HideUtilityClassConstructor" files="QuickTour"/>
     <suppress checks="HideUtilityClassConstructor" files="Util"/>
+
+    <suppress checks="ParameterNumber" files="BulkWriteBatch"/>
 
     <!-- Alternative copyrights -->
     <suppress checks="RegexpSingleline" files="Immutable"/>

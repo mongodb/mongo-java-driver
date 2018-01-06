@@ -196,6 +196,79 @@ all serializable because they are bound to the concrete types `Integer`, `String
 On their own, instances of `GenericTree` or `GenericClass` are not serializable by the `PojoCodec`. This is because the runtime type parameter
 information is erased by the JVM, and the type parameters cannot be specialized accurately.
 
+The 3.6 release of the driver further improves generic support with the addition of PropertyCodecProviders. The `PropertyCodecProvider` API 
+allows type-safe support of container types by providing concrete type parameters for the generic types as declared in the POJO.
+
+A great use of the `PropertyCodecProvider` API could be to add support for Guava's `Optional` class. The following example creates a 
+`OptionalPropertyCodecProvider`:
+
+```java
+public class OptionalPropertyCodecProvider implements PropertyCodecProvider {
+
+    @Override
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public <T> Codec<T> get(final TypeWithTypeParameters<T> type, final PropertyCodecRegistry registry) {
+        // Check the main type and number of generic parameters
+        if (Optional.class.isAssignableFrom(type.getType()) && type.getTypeParameters().size() == 1) {
+            // Get the codec for the concrete type of the Optional, as its declared in the POJO.
+            Codec<?> valueCodec = registry.get(type.getTypeParameters().get(0));
+            return new OptionalCodec(type.getType(), valueCodec);
+        } else {
+            return null;
+        }
+    }
+
+    private static final class OptionalCodec<T> implements Codec<Optional<T>> {
+        private final Class<Optional<T>> encoderClass;
+        private final Codec<T> codec;
+
+        private OptionalCodec(final Class<Optional<T>> encoderClass, final Codec<T> codec) {
+            this.encoderClass = encoderClass;
+            this.codec = codec;
+        }
+
+        @Override
+        public void encode(final BsonWriter writer, final Optional<T> optionalValue, final EncoderContext encoderContext) {
+            if (optionalValue != null && optionalValue.isPresent()) {
+                codec.encode(writer, optionalValue.get(), encoderContext);
+            } else {
+                writer.writeNull();
+            }
+        }
+
+        @Override
+        public Optional<T> decode(final BsonReader reader, final DecoderContext context) {
+            return Optional.of(codec.decode(reader, context));
+        }
+
+        @Override
+        public Class<Optional<T>> getEncoderClass() {
+            return encoderClass;
+        }
+    }
+}
+```
+
+The `OptionalPropertyCodecProvider` can be registered via the `PojoCodecProvider.builder().register` method: 
+
+```java
+CodecProvider pojoCodecProvider = PojoCodecProvider.builder()
+        .register("org.example.pojos")
+        .register(new OptionalPropertyCodecProvider())
+        .build();
+```
+
+Then `Optional` classes are fully supported in the POJOs. In the following example a `Person` has an `Optional` address and an `Optional`
+membership id:
+
+```java
+public class Person {
+    ... 
+    private Optional<Address> optionalAddress;
+    private Optional<Integer>  optionalMembershipId;
+}
+```
+
 ### Enum support
 
 Enums are fully supported. The `PojoCodec` uses the name of the enum constant as the property value. This is then converted back into an Enum 
@@ -242,6 +315,10 @@ The following Conventions are available from the [`Conventions`]({{<apiref "org/
   * The [`CLASS_AND_PROPERTY_CONVENTION`]({{<apiref "org/bson/codecs/pojo/Conventions.html#CLASS_AND_PROPERTY_CONVENTION">}}). Sets the 
         discriminator key if not set to `_t` and the discriminator value if not set to the ClassModels simple type name. Also, configures 
         the PropertyModels. If the `idProperty` isn't set and there is a property named `_id` or `id` then it will be marked as the `idProperty`.
+  * The [`SET_PRIVATE_FIELDS_CONVENTION`]({{<apiref "org/bson/codecs/pojo/Conventions.html#SET_PRIVATE_FIELDS_CONVENTION">}}).  Enables 
+        private fields to be set directly using reflection, without the need of a setter method. Note this convention is not enabled by default.
+  * The [`USE_GETTERS_FOR_SETTERS`]({{<apiref "org/bson/codecs/pojo/Conventions.html#USE_GETTERS_FOR_SETTERS">}}). Allows getters to be used
+        for Map and Collection properties without setters, the collection/map is then mutated. Note this convention is not enabled by default.
   * The [`DEFAULT_CONVENTIONS`]({{<apiref "org/bson/codecs/pojo/Conventions.html#DEFAULT_CONVENTIONS">}}), a list containing the 
     `ANNOTATION_CONVENTION` and the `CLASS_AND_PROPERTY_CONVENTION`.
   * The [`NO_CONVENTIONS`]({{<apiref "org/bson/codecs/pojo/Conventions.html#NO_CONVENTIONS">}}) an empty list.

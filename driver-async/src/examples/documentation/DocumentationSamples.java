@@ -17,19 +17,26 @@
 package documentation;
 
 import com.mongodb.Block;
+import com.mongodb.MongoCompressor;
 import com.mongodb.MongoNamespace;
+import com.mongodb.ServerAddress;
 import com.mongodb.async.FutureResultCallback;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.client.DatabaseTestCase;
 import com.mongodb.async.client.FindIterable;
+import com.mongodb.async.client.MongoClient;
+import com.mongodb.async.client.MongoClientSettings;
+import com.mongodb.async.client.MongoClients;
 import com.mongodb.async.client.MongoCollection;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
+import com.mongodb.connection.ClusterSettings;
 import org.bson.BsonType;
 import org.bson.Document;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -37,7 +44,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.async.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.async.client.Fixture.initializeCollection;
 
@@ -69,7 +75,6 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeTrue;
 
 
 public final class DocumentationSamples extends DatabaseTestCase {
@@ -78,6 +83,13 @@ public final class DocumentationSamples extends DatabaseTestCase {
 
     @Test
     public void testInsert() throws InterruptedException, ExecutionException, TimeoutException {
+
+        ClusterSettings clusterSettings = ClusterSettings.builder().hosts(Arrays.asList(new ServerAddress("localhost"))).build();
+        MongoClientSettings settings = MongoClientSettings.builder()
+                                               .clusterSettings(clusterSettings)
+                                               .compressorList(Arrays.asList(MongoCompressor.createSnappyCompressor()))
+                                               .build();
+        MongoClient client = MongoClients.create(settings);
 
         // Start Example 1
         Document canvas = new Document("item", "canvas")
@@ -846,7 +858,6 @@ public final class DocumentationSamples extends DatabaseTestCase {
 
     @Test
     public void testUpdates() throws InterruptedException, ExecutionException, TimeoutException {
-        assumeTrue(serverVersionAtLeast(2, 6));
         //Start Example 51
         final CountDownLatch insertLatch = new CountDownLatch(1);
         collection.insertMany(asList(

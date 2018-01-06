@@ -17,6 +17,7 @@
 package com.mongodb.client;
 
 import com.mongodb.client.model.Collation;
+import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
 
@@ -82,6 +83,19 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
     AggregateIterable<TResult> useCursor(Boolean useCursor);
 
     /**
+     * The maximum amount of time for the server to wait on new documents to satisfy a {@code $changeStream} aggregation.
+     *
+     * A zero value will be ignored.
+     *
+     * @param maxAwaitTime  the max await time
+     * @param timeUnit the time unit to return the result in
+     * @return the maximum await execution time in the given time unit
+     * @mongodb.server.release 3.6
+     * @since 3.6
+     */
+    AggregateIterable<TResult> maxAwaitTime(long maxAwaitTime, TimeUnit timeUnit);
+
+    /**
      * Sets the bypass document level validation flag.
      *
      * <p>Note: This only applies when an $out stage is specified</p>.
@@ -104,4 +118,24 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
      * @mongodb.server.release 3.4
      */
     AggregateIterable<TResult> collation(Collation collation);
+
+    /**
+     * Sets the comment to the aggregation. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    AggregateIterable<TResult> comment(String comment);
+
+    /**
+     * Sets the hint for which index to use. A null value means no hint is set.
+     *
+     * @param hint the hint
+     * @return this
+     * @since 3.6
+     * @mongodb.server.release 3.6
+     */
+    AggregateIterable<TResult> hint(Bson hint);
 }

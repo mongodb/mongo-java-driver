@@ -20,29 +20,21 @@ import com.mongodb.bulk.DeleteRequest;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.io.BsonOutput;
 
-import java.util.List;
-
 /**
  * An OP_DELETE message.
  *
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-delete OP_DELETE
  */
-class DeleteMessage extends RequestMessage {
-    private final List<DeleteRequest> deleteRequests;
+class DeleteMessage extends LegacyMessage {
+    private final DeleteRequest deleteRequest;
 
-    DeleteMessage(final String collectionName, final List<DeleteRequest> deletes, final MessageSettings settings) {
+    DeleteMessage(final String collectionName, final DeleteRequest deleteRequest, final MessageSettings settings) {
         super(collectionName, OpCode.OP_DELETE, settings);
-        this.deleteRequests = deletes;
+        this.deleteRequest = deleteRequest;
     }
 
     @Override
-    protected RequestMessage encodeMessageBody(final BsonOutput bsonOutput, final int messageStartPosition) {
-        return encodeMessageBodyWithMetadata(bsonOutput, messageStartPosition).getNextMessage();
-    }
-
-    @Override
-    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final int messageStartPosition) {
-        DeleteRequest deleteRequest = deleteRequests.get(0);
+    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput) {
         bsonOutput.writeInt32(0); // reserved
         bsonOutput.writeCString(getCollectionName());
 
@@ -55,14 +47,7 @@ class DeleteMessage extends RequestMessage {
         int firstDocumentStartPosition = bsonOutput.getPosition();
 
         addDocument(deleteRequest.getFilter(), bsonOutput, new NoOpFieldNameValidator());
-        if (deleteRequests.size() == 1) {
-            return new EncodingMetadata(null, firstDocumentStartPosition);
-        } else {
-            return new EncodingMetadata(new DeleteMessage(getCollectionName(), deleteRequests.subList(1, deleteRequests.size()),
-                                                          getSettings()),
-                                        firstDocumentStartPosition);
-        }
+        return new EncodingMetadata(firstDocumentStartPosition);
     }
-
 }
 

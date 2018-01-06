@@ -18,14 +18,22 @@
 package com.mongodb
 
 import com.mongodb.client.MongoDriverInformation
+import com.mongodb.connection.ClusterDescription
+import com.mongodb.connection.ServerDescription
+import com.mongodb.event.CommandFailedEvent
+import com.mongodb.event.CommandListener
+import com.mongodb.event.CommandStartedEvent
+import com.mongodb.event.CommandSucceededEvent
 import org.bson.Document
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.Fixture.getDefaultDatabaseName
 import static com.mongodb.Fixture.getMongoClientURI
 
-class MongoClientsSpecification extends FunctionalSpecification {
+class  MongoClientsSpecification extends FunctionalSpecification {
     @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isStandalone() })
     def 'application name should appear in the system.profile collection'() {
         given:
@@ -53,4 +61,51 @@ class MongoClientsSpecification extends FunctionalSpecification {
         client?.close()
     }
 
+    @IgnoreIf({ !isDiscoverableReplicaSet() })
+    def 'should use server selector from MongoClientOptions'() {
+        given:
+        def expectedWinningAddresses = [] as Set
+        def actualWinningAddresses = [] as Set
+        def optionsBuilder = MongoClientOptions.builder()
+        // select the suitable server with the highest port number
+                .serverSelector { ClusterDescription clusterDescription ->
+            def highestPortServer
+            for (ServerDescription cur : clusterDescription.getServerDescriptions()) {
+                if (highestPortServer == null || cur.address.port > highestPortServer.address.port) {
+                    highestPortServer = cur
+                }
+            }
+            if (highestPortServer == null) {
+                return []
+            }
+            expectedWinningAddresses.add(highestPortServer.address)
+            [highestPortServer]
+        }.addCommandListener(new CommandListener() {
+            // record each address actually used
+            @Override
+            void commandStarted(final CommandStartedEvent event) {
+                actualWinningAddresses.add(event.connectionDescription.connectionId.serverId.address)
+            }
+
+            @Override
+            void commandSucceeded(final CommandSucceededEvent event) {
+            }
+
+            @Override
+            void commandFailed(final CommandFailedEvent event) {
+            }
+        })
+
+        def client = new MongoClient(getMongoClientURI(optionsBuilder))
+        def collection = client.getDatabase(getDefaultDatabaseName()).getCollection(getCollectionName())
+                .withReadPreference(ReadPreference.nearest())
+
+        when:
+        for (int i = 0; i < 10; i++) {
+            collection.count()
+        }
+
+        then:
+        expectedWinningAddresses.containsAll(actualWinningAddresses)
+    }
 }

@@ -27,7 +27,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-kill-cursors OP_KILL_CURSOR
  */
-class KillCursorsMessage extends RequestMessage {
+class KillCursorsMessage extends LegacyMessage {
     private final List<Long> cursors;
 
     KillCursorsMessage(final List<Long> cursors) {
@@ -36,17 +36,12 @@ class KillCursorsMessage extends RequestMessage {
     }
 
     @Override
-    protected RequestMessage encodeMessageBody(final BsonOutput bsonOutput, final int messageStartPosition) {
-        return encodeMessageBodyWithMetadata(bsonOutput, messageStartPosition).getNextMessage();
-    }
-
-    @Override
-    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final int messageStartPosition) {
+    protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput) {
         writeKillCursorsPrologue(cursors.size(), bsonOutput);
         for (final Long cur : cursors) {
             bsonOutput.writeInt64(cur);
         }
-        return new EncodingMetadata(null, bsonOutput.getPosition());
+        return new EncodingMetadata(bsonOutput.getPosition());
     }
 
     private void writeKillCursorsPrologue(final int numCursors, final BsonOutput bsonOutput) {

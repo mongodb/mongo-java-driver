@@ -19,7 +19,9 @@ package com.mongodb.connection;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.session.SessionContext;
 import org.bson.ByteBuf;
+import org.bson.codecs.Decoder;
 
 import java.util.List;
 
@@ -89,6 +91,26 @@ class UsageTrackingInternalConnection implements InternalConnection {
     public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
         wrapped.sendMessage(byteBuffers, lastRequestId);
         lastUsedAt = System.currentTimeMillis();
+    }
+
+    @Override
+    public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
+        T result = wrapped.sendAndReceive(message, decoder, sessionContext);
+        lastUsedAt = System.currentTimeMillis();
+        return result;
+    }
+
+    @Override
+    public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
+                                        final SessionContext sessionContext, final SingleResultCallback<T> callback) {
+        SingleResultCallback<T> errHandlingCallback = errorHandlingCallback(new SingleResultCallback<T>() {
+            @Override
+            public void onResult(final T result, final Throwable t) {
+                lastUsedAt = System.currentTimeMillis();
+                callback.onResult(result, t);
+            }
+        }, LOGGER);
+        wrapped.sendAndReceiveAsync(message, decoder, sessionContext, errHandlingCallback);
     }
 
     @Override

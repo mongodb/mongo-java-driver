@@ -21,7 +21,7 @@ import com.mongodb.MongoGridFSException
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.async.client.MongoCollection
-import com.mongodb.client.gridfs.model.GridFSFile
+import com.mongodb.session.ClientSession
 import org.bson.BsonObjectId
 import org.bson.BsonString
 import org.bson.Document
@@ -40,11 +40,14 @@ class GridFSUploadStreamSpecification extends Specification {
 
     def 'should return the file id'() {
         when:
-        def uploadStream = new GridFSUploadStreamImpl(Stub(MongoCollection), Stub(MongoCollection), fileId, filename, 255, metadata,
-                NOOP_INDEXCHECK)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), Stub(MongoCollection), fileId, filename, 255,
+                metadata, NOOP_INDEXCHECK)
 
         then:
         uploadStream.getId() == fileId
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should write the buffer it reaches the chunk size'() {
@@ -52,19 +55,27 @@ class GridFSUploadStreamSpecification extends Specification {
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
         def callback = Stub(SingleResultCallback)
-        def uploadStream = new GridFSUploadStreamImpl(filesCollection, chunksCollection, fileId, filename, 2, metadata, NOOP_INDEXCHECK)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 2, metadata,
+                NOOP_INDEXCHECK)
 
         when:
         uploadStream.write(ByteBuffer.wrap(new byte[1]), callback)
 
         then:
-        0 * chunksCollection.insertOne(_, _)
+        0 * chunksCollection.insertOne(*_)
 
         when:
         uploadStream.write(ByteBuffer.wrap(new byte[1]), callback)
 
         then:
-        1 * chunksCollection.insertOne(_, _)
+        if (clientSession != null) {
+            1 * chunksCollection.insertOne(clientSession, _, _)
+        } else {
+            1 * chunksCollection.insertOne(_, _)
+        }
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should write to the files collection on close'() {
@@ -72,21 +83,30 @@ class GridFSUploadStreamSpecification extends Specification {
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
         def callback = Stub(SingleResultCallback)
-        def uploadStream = new GridFSUploadStreamImpl(filesCollection, chunksCollection, fileId, filename, 255, null, NOOP_INDEXCHECK)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255, null,
+                NOOP_INDEXCHECK)
         def byteBuffer = ByteBuffer.wrap(new byte[10])
 
         when:
         uploadStream.write(byteBuffer, callback)
 
         then:
-        0 * chunksCollection.insertOne(_, _)
+        0 * chunksCollection.insertOne(*_)
 
         when:
         uploadStream.close(callback)
 
         then:
-        1 * chunksCollection.insertOne(_, _) >> { it[1].onResult(null, null) }
-        1 * filesCollection.insertOne(_, _)
+        if (clientSession != null) {
+            1 * chunksCollection.insertOne(clientSession, _, _) >> { it.last().onResult(null, null) }
+            1 * filesCollection.insertOne(clientSession, _, _)
+        } else {
+            1 * chunksCollection.insertOne(_, _) >> { it.last().onResult(null, null) }
+            1 * filesCollection.insertOne(_, _)
+        }
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should write to the files and chunks collection as expected on close'() {
@@ -95,7 +115,8 @@ class GridFSUploadStreamSpecification extends Specification {
         def chunksCollection = Mock(MongoCollection)
         def callback = Stub(SingleResultCallback)
         def metadata = new Document('contentType', 'text/txt')
-        def uploadStream = new GridFSUploadStreamImpl(filesCollection, chunksCollection, fileId, filename, 255, metadata, NOOP_INDEXCHECK)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255, metadata,
+                NOOP_INDEXCHECK)
         def chunksData
         def fileData
 
@@ -104,13 +125,26 @@ class GridFSUploadStreamSpecification extends Specification {
         uploadStream.close(callback)
 
         then:
-        1 * chunksCollection.insertOne(_, _) >> { Document data, SingleResultCallback<Void> insertCallback ->
-            chunksData = data
-            insertCallback.onResult(null, null)
-        }
+        if (clientSession != null) {
+            1 * chunksCollection.insertOne(clientSession, _, _) >> {
+                chunksData = it[1]
+                it.last().onResult(null, null)
+            }
 
-        1 * filesCollection.insertOne(_, _) >> { GridFSFile data, SingleResultCallback<Void> insertCallback ->
-            fileData = data
+            1 * filesCollection.insertOne(clientSession, _, _) >> {
+                fileData = it[1]
+                it.last().onResult(null, null)
+            }
+        } else {
+            1 * chunksCollection.insertOne(_, _) >> {
+                chunksData = it[0]
+                it.last().onResult(null, null)
+            }
+
+            1 * filesCollection.insertOne(_, _) >> {
+                fileData = it[0]
+                it.last().onResult(null, null)
+            }
         }
 
         then:
@@ -124,6 +158,9 @@ class GridFSUploadStreamSpecification extends Specification {
         fileData.getChunkSize() == 255
         fileData.getMD5() == MessageDigest.getInstance('MD5').digest(content).encodeHex().toString()
         fileData.getMetadata() == metadata
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should not write an empty chunk'() {
@@ -131,36 +168,51 @@ class GridFSUploadStreamSpecification extends Specification {
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
         def callback = Stub(SingleResultCallback)
-        def uploadStream = new GridFSUploadStreamImpl(filesCollection, chunksCollection, fileId, filename, 255, metadata, NOOP_INDEXCHECK)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255, metadata,
+                NOOP_INDEXCHECK)
 
         when:
         uploadStream.close(callback)
 
         then:
-        0 * chunksCollection.insertOne(_, _)
-        1 * filesCollection.insertOne(_, _)
+        0 * chunksCollection.insertOne(*_)
+        if (clientSession != null) {
+            1 * filesCollection.insertOne(clientSession, _, _)
+        } else {
+            1 * filesCollection.insertOne(_, _)
+        }
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should delete any chunks when calling abort'() {
         given:
         def chunksCollection = Mock(MongoCollection)
         def callback = Stub(SingleResultCallback)
-        def uploadStream = new GridFSUploadStreamImpl(Stub(MongoCollection), chunksCollection, fileId, filename, 255, metadata,
-                NOOP_INDEXCHECK)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), chunksCollection, fileId, filename, 255,
+                metadata, NOOP_INDEXCHECK)
 
         when:
         uploadStream.write(ByteBuffer.wrap(content), callback)
         uploadStream.abort(callback)
 
         then:
-        1 * chunksCollection.deleteMany(new Document('files_id', fileId), _)
+        if (clientSession != null) {
+            1 * chunksCollection.deleteMany(clientSession, new Document('files_id', fileId), _)
+        } else {
+            1 * chunksCollection.deleteMany(new Document('files_id', fileId), _)
+        }
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should close the stream on abort'() {
         given:
         def callback = Stub(SingleResultCallback)
-        def uploadStream = new GridFSUploadStreamImpl(Stub(MongoCollection), Stub(MongoCollection), fileId, filename, 255, metadata,
-                NOOP_INDEXCHECK)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), Stub(MongoCollection), fileId, filename, 255,
+                metadata, NOOP_INDEXCHECK)
         uploadStream.write(ByteBuffer.wrap(content), callback)
         uploadStream.abort(callback)
 
@@ -171,13 +223,16 @@ class GridFSUploadStreamSpecification extends Specification {
 
         then:
         thrown(MongoGridFSException)
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should throw an exception when trying to action post close'() {
         given:
         def callback = Stub(SingleResultCallback)
-        def uploadStream = new GridFSUploadStreamImpl(Stub(MongoCollection), Stub(MongoCollection), fileId, filename, 255, metadata,
-                NOOP_INDEXCHECK)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), Stub(MongoCollection), fileId, filename, 255,
+                metadata, NOOP_INDEXCHECK)
         uploadStream.close(callback)
 
         when:
@@ -203,6 +258,9 @@ class GridFSUploadStreamSpecification extends Specification {
 
         then:
         notThrown(MongoGridFSException)
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should throw an exception when calling getObjectId and the fileId is not an ObjectId'() {
@@ -210,28 +268,26 @@ class GridFSUploadStreamSpecification extends Specification {
         def fileId = new BsonString('myFile')
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
-        def uploadStream = new GridFSUploadStreamImpl(filesCollection, chunksCollection, fileId, filename, 255, metadata, NOOP_INDEXCHECK)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255, metadata,
+                NOOP_INDEXCHECK)
 
         when:
         uploadStream.getObjectId()
 
         then:
         thrown(MongoGridFSException)
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should not allow concurrent writes'() {
         given:
         def latchA = new CountDownLatch(1)
         def latchB = new CountDownLatch(1)
-        def chunksCollection = Mock(MongoCollection) {
-            1 * insertOne(_, _) >> {
-                latchA.countDown()
-                latchB.await()
-                it[1].onResult(null, null)
-            }
-        }
-        def uploadStream = new GridFSUploadStreamImpl(Stub(MongoCollection), chunksCollection, fileId, filename, 255, metadata,
-                NOOP_INDEXCHECK)
+        def chunksCollection = Mock(MongoCollection)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), chunksCollection, fileId, filename, 255,
+                metadata, NOOP_INDEXCHECK)
 
         when:
         def futureResult = new FutureResultCallback()
@@ -250,23 +306,35 @@ class GridFSUploadStreamSpecification extends Specification {
         futureResult.get()
 
         then:
+        if (clientSession != null ) {
+            1 * chunksCollection.insertOne(clientSession, _, _) >> {
+                latchA.countDown()
+                latchB.await()
+                it.last().onResult(null, null)
+            }
+        } else {
+            1 * chunksCollection.insertOne(_, _) >> {
+                latchA.countDown()
+                latchB.await()
+                it.last().onResult(null, null)
+            }
+        }
+
+        then:
         def exception = thrown(MongoGridFSException)
         exception.getMessage() == 'The AsyncOutputStream does not support concurrent writing.'
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should not allow a concurrent write and close'() {
         given:
         def latchA = new CountDownLatch(1)
         def latchB = new CountDownLatch(1)
-        def chunksCollection = Mock(MongoCollection) {
-            1 * insertOne(_, _) >> {
-                latchA.countDown()
-                latchB.await()
-                it[1].onResult(null, null)
-            }
-        }
-        def uploadStream = new GridFSUploadStreamImpl(Stub(MongoCollection), chunksCollection, fileId, filename, 255, metadata,
-                NOOP_INDEXCHECK)
+        def chunksCollection = Mock(MongoCollection)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), chunksCollection, fileId, filename, 255,
+                metadata, NOOP_INDEXCHECK)
 
         when:
         def futureResult = new FutureResultCallback()
@@ -285,24 +353,35 @@ class GridFSUploadStreamSpecification extends Specification {
         futureResult.get()
 
         then:
+        if (clientSession != null ) {
+            1 * chunksCollection.insertOne(clientSession, _, _) >> {
+                latchA.countDown()
+                latchB.await()
+                it.last().onResult(null, null)
+            }
+        } else {
+            1 * chunksCollection.insertOne(_, _) >> {
+                latchA.countDown()
+                latchB.await()
+                it.last().onResult(null, null)
+            }
+        }
+
+        then:
         def exception = thrown(MongoGridFSException)
         exception.getMessage() == 'The AsyncOutputStream does not support concurrent writing.'
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should not allow concurrent write then abort'() {
         given:
-        def callback = Stub(SingleResultCallback)
         def latchA = new CountDownLatch(1)
         def latchB = new CountDownLatch(1)
-        def chunksCollection = Mock(MongoCollection) {
-            1 * insertOne(_, _) >> {
-                latchA.countDown()
-                latchB.await()
-                it[1].onResult(null, null)
-            }
-        }
-        def uploadStream = new GridFSUploadStreamImpl(Stub(MongoCollection), chunksCollection, fileId, filename, 255, metadata,
-                NOOP_INDEXCHECK)
+        def chunksCollection = Mock(MongoCollection)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), chunksCollection, fileId, filename, 255,
+                metadata, NOOP_INDEXCHECK)
 
         when:
         def futureResult = new FutureResultCallback()
@@ -321,23 +400,45 @@ class GridFSUploadStreamSpecification extends Specification {
         futureResult.get()
 
         then:
+        if (clientSession != null ) {
+            1 * chunksCollection.insertOne(clientSession, _, _) >> {
+                latchA.countDown()
+                latchB.await()
+                it.last().onResult(null, null)
+            }
+        } else {
+            1 * chunksCollection.insertOne(_, _) >> {
+                latchA.countDown()
+                latchB.await()
+                it.last().onResult(null, null)
+            }
+        }
+
+        then:
         def exception = thrown(MongoGridFSException)
         exception.getMessage() == 'The AsyncOutputStream does not support concurrent writing.'
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should propagate exceptions when writing'() {
         given:
         def chunksCollection = Mock(MongoCollection)
         def alternativeException = new MongoException('Alternative failure')
-        def uploadStream = new GridFSUploadStreamImpl(Stub(MongoCollection), chunksCollection, fileId, filename, 255, metadata,
-                NOOP_INDEXCHECK)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), chunksCollection, fileId, filename, 255,
+                metadata, NOOP_INDEXCHECK)
 
         when:
         def futureResult = new FutureResultCallback()
         uploadStream.write(ByteBuffer.allocate(255), futureResult)
 
         then:
-        1 * chunksCollection.insertOne(_, _) >> { it[1].onResult(null, alternativeException) }
+        if (clientSession != null) {
+            1 * chunksCollection.insertOne(clientSession, _, _) >> { it.last().onResult(null, alternativeException) }
+        } else {
+            1 * chunksCollection.insertOne(_, _) >> { it.last().onResult(null, alternativeException) }
+        }
 
         when:
         futureResult.get()
@@ -345,6 +446,9 @@ class GridFSUploadStreamSpecification extends Specification {
         then:
         def exception = thrown(MongoException)
         exception == alternativeException
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should propagate exceptions when closing'() {
@@ -355,12 +459,17 @@ class GridFSUploadStreamSpecification extends Specification {
 
         when: 'The insert to the chunks collection fails'
         def futureResult = new FutureResultCallback()
-        def uploadStream = new GridFSUploadStreamImpl(filesCollection, chunksCollection, fileId, filename, 255, metadata, NOOP_INDEXCHECK)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255, metadata,
+                NOOP_INDEXCHECK)
         uploadStream.write(ByteBuffer.wrap(content), Stub(SingleResultCallback))
         uploadStream.close(futureResult)
 
         then:
-        1 * chunksCollection.insertOne(_, _) >> { it[1].onResult(null, closeException) }
+        if (clientSession != null) {
+            1 * chunksCollection.insertOne(clientSession, _, _) >> { it.last().onResult(null, closeException) }
+        } else {
+            1 * chunksCollection.insertOne(_, _) >> { it.last().onResult(null, closeException) }
+        }
 
         when:
         futureResult.get()
@@ -371,13 +480,19 @@ class GridFSUploadStreamSpecification extends Specification {
 
         when: 'The insert to the files collection fails'
         futureResult = new FutureResultCallback()
-        uploadStream = new GridFSUploadStreamImpl(filesCollection, chunksCollection, fileId, filename, 255, metadata, NOOP_INDEXCHECK)
+        uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255, metadata,
+                NOOP_INDEXCHECK)
         uploadStream.write(ByteBuffer.wrap(content), Stub(SingleResultCallback))
         uploadStream.close(futureResult)
 
         then:
-        1 * chunksCollection.insertOne(_, _) >> { it[1].onResult(null, null) }
-        1 * filesCollection.insertOne(_, _) >> { it[1].onResult(null, closeException) }
+        if (clientSession != null) {
+            1 * chunksCollection.insertOne(clientSession, _, _) >> { it.last().onResult(null, null) }
+            1 * filesCollection.insertOne(clientSession, _, _) >> { it.last().onResult(null, closeException) }
+        } else {
+            1 * chunksCollection.insertOne(_, _) >> { it.last().onResult(null, null) }
+            1 * filesCollection.insertOne(_, _) >> { it.last().onResult(null, closeException) }
+        }
 
         when:
         futureResult.get()
@@ -385,6 +500,9 @@ class GridFSUploadStreamSpecification extends Specification {
         then:
         exception = thrown(MongoException)
         exception == closeException
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should propagate exceptions when aborting'() {
@@ -392,14 +510,19 @@ class GridFSUploadStreamSpecification extends Specification {
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
         def abortException = new MongoException('Alternative failure')
-        def uploadStream = new GridFSUploadStreamImpl(filesCollection, chunksCollection, fileId, filename, 255, metadata, NOOP_INDEXCHECK)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255, metadata,
+                NOOP_INDEXCHECK)
         def futureResult = new FutureResultCallback()
 
         when:
         uploadStream.abort(futureResult)
 
         then:
-        1 * chunksCollection.deleteMany(_, _) >> { it[1].onResult(null, abortException) }
+        if (clientSession != null) {
+            1 * chunksCollection.deleteMany(clientSession, _, _) >> { it.last().onResult(null, abortException) }
+        } else {
+            1 * chunksCollection.deleteMany(_, _) >> { it.last().onResult(null, abortException) }
+        }
 
         when:
         futureResult.get()
@@ -407,6 +530,9 @@ class GridFSUploadStreamSpecification extends Specification {
         then:
         def exception = thrown(MongoException)
         exception == abortException
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should propagate exceptions when creating indexes'() {
@@ -415,9 +541,10 @@ class GridFSUploadStreamSpecification extends Specification {
         def chunksCollection = Mock(MongoCollection)
         def indexException = new MongoException('Alternative failure')
         def indexCheck = Mock(GridFSIndexCheck) {
-            1 * checkAndCreateIndex(_) >> { it[0].onResult(null, indexException) }
+            1 * checkAndCreateIndex(_) >> { it.last().onResult(null, indexException) }
         }
-        def uploadStream = new GridFSUploadStreamImpl(filesCollection, chunksCollection, fileId, filename, 255, metadata, indexCheck)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255, metadata,
+                indexCheck)
         def futureResult = new FutureResultCallback()
 
         when:
@@ -427,6 +554,9 @@ class GridFSUploadStreamSpecification extends Specification {
         then:
         def exception = thrown(MongoException)
         exception == indexException
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
     }
 
     private final static GridFSIndexCheck NOOP_INDEXCHECK = new GridFSIndexCheck() {

@@ -17,7 +17,9 @@
 package com.mongodb.connection;
 
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.session.SessionContext;
 import org.bson.ByteBuf;
+import org.bson.codecs.Decoder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -81,6 +83,17 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
 
         @Override
         public void sendMessage(final List<ByteBuf> byteBuffers, final int lastRequestId) {
+        }
+
+        @Override
+        public <T> T sendAndReceive(final CommandMessage message, final Decoder<T> decoder, final SessionContext sessionContext) {
+            return null;
+        }
+
+        @Override
+        public <T> void sendAndReceiveAsync(final CommandMessage message, final Decoder<T> decoder,
+                                            final SessionContext sessionContext, final SingleResultCallback<T> callback) {
+            callback.onResult(null, null);
         }
 
         @Override

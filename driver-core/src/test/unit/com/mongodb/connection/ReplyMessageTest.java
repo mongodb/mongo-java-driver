@@ -19,11 +19,13 @@ package com.mongodb.connection;
 import com.mongodb.MongoInternalException;
 import org.bson.ByteBufNIO;
 import org.bson.Document;
-import org.bson.io.ByteBufferBsonInput;
 import org.junit.Test;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+
+import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize;
 
 public class ReplyMessageTest {
     @Test(expected = MongoInternalException.class)
@@ -41,10 +43,10 @@ public class ReplyMessageTest {
         headerByteBuffer.putLong(0);
         headerByteBuffer.putInt(0);
         headerByteBuffer.putInt(0);
-        headerByteBuffer.flip();
+        ((Buffer) headerByteBuffer).flip();
 
-        ByteBufferBsonInput headerInputBuffer = new ByteBufferBsonInput(new ByteBufNIO(headerByteBuffer));
-        ReplyHeader replyHeader = new ReplyHeader(headerInputBuffer, ConnectionDescription.getDefaultMaxMessageSize());
+        ByteBufNIO byteBuf = new ByteBufNIO(headerByteBuffer);
+        ReplyHeader replyHeader = new ReplyHeader(byteBuf, new MessageHeader(byteBuf, getDefaultMaxMessageSize()));
         new ReplyMessage<Document>(replyHeader, expectedResponseTo);
     }
 
@@ -62,10 +64,10 @@ public class ReplyMessageTest {
         headerByteBuffer.putLong(0);
         headerByteBuffer.putInt(0);
         headerByteBuffer.putInt(0);
-        headerByteBuffer.flip();
+        ((Buffer) headerByteBuffer).flip();
 
-        ByteBufferBsonInput headerInputBuffer = new ByteBufferBsonInput(new ByteBufNIO(headerByteBuffer));
-        ReplyHeader replyHeader = new ReplyHeader(headerInputBuffer, ConnectionDescription.getDefaultMaxMessageSize());
+        ByteBufNIO byteBuf = new ByteBufNIO(headerByteBuffer);
+        ReplyHeader replyHeader = new ReplyHeader(byteBuf, new MessageHeader(byteBuf, getDefaultMaxMessageSize()));
         new ReplyMessage<Document>(replyHeader, 5);
     }
 }

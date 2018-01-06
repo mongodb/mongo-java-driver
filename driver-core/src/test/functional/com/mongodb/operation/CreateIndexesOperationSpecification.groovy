@@ -18,7 +18,7 @@ package com.mongodb.operation
 
 import com.mongodb.DuplicateKeyException
 import com.mongodb.MongoCommandException
-import com.mongodb.MongoException
+import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
@@ -32,8 +32,11 @@ import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
+import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
+import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.concurrent.TimeUnit.SECONDS
 
@@ -73,6 +76,26 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
+    @IgnoreIf({ isSharded() })
+    def 'should throw execution timeout exception from execute'() {
+        given:
+        def keys = new BsonDocument('field', new BsonInt32(1))
+        def operation = new CreateIndexesOperation(getNamespace(), [new IndexRequest(keys)]).maxTime(30, SECONDS)
+
+        enableMaxTimeFailPoint()
+
+        when:
+        execute(operation, async)
+
+        then:
+        thrown(MongoExecutionTimeoutException)
+
+        cleanup:
+        disableMaxTimeFailPoint()
+
+        where:
+        async << [true, false]
+    }
 
     def 'should be able to create a single index with a BsonInt64'() {
         given:
@@ -89,7 +112,6 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should be able to create multiple indexes'() {
         given:
         def keysForFirstIndex = new BsonDocument('field', new BsonInt32(1))
@@ -102,24 +124,6 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         getUserCreatedIndexes('key') == [field1Index, field2Index]
-
-        where:
-        async << [true, false]
-    }
-
-    @IgnoreIf({ serverVersionAtLeast(2, 6) })
-    def 'should fail to create multiple indexes with server that does not support createIndexesCommand'() {
-        given:
-        def keysForFirstIndex = new BsonDocument('field', new BsonInt32(1))
-        def keysForSecondIndex = new BsonDocument('field2', new BsonInt32(1))
-        def operation = new CreateIndexesOperation(getNamespace(), [new IndexRequest(keysForFirstIndex),
-                                                                    new IndexRequest(keysForSecondIndex)])
-
-        when:
-        execute(operation, async)
-
-        then:
-        thrown(MongoException)
 
         where:
         async << [true, false]
@@ -173,7 +177,6 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should throw when trying to build an invalid index'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(), [new IndexRequest(new BsonDocument())])
@@ -304,7 +307,6 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 4) })
     def 'should be able to create a 2dSphereIndex'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(),
@@ -315,13 +317,11 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         getUserCreatedIndexes('key') == [['field' :'2dsphere']]
-        if (serverVersionAtLeast(2, 6)) { getUserCreatedIndexes('2dsphereIndexVersion') == [2] }
 
         where:
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should be able to create a 2dSphereIndex with version 1'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(),
@@ -338,7 +338,6 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should be able to create a textIndex'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(),
@@ -360,7 +359,6 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should be able to create a textIndexVersion'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(),
@@ -371,13 +369,11 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         getUserCreatedIndexes().size() == 1
-        if (serverVersionAtLeast(2, 6)) { getUserCreatedIndexes('textIndexVersion') == [2] }
 
         where:
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(2, 6) })
     def 'should be able to create a textIndexVersion with version 1'() {
         given:
         def operation = new CreateIndexesOperation(getNamespace(),
@@ -477,9 +473,10 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         when:
         execute(operation, async)
         def indexCollation = new BsonDocumentWrapper<Document>(getIndex('a_1').get('collation'), new DocumentCodec())
+        indexCollation.remove('version')
 
         then:
-        defaultCollation.asDocument().each { assert indexCollation.get(it.key) == it.value }
+        indexCollation == defaultCollation.asDocument()
 
         where:
         async << [true, false]
@@ -491,7 +488,7 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         }
     }
 
-    def List<Document> getIndexes() {
+    List<Document> getIndexes() {
         def indexes = []
         def cursor = new ListIndexesOperation(getNamespace(), new DocumentCodec()).execute(getBinding())
         while (cursor.hasNext()) {
