@@ -58,7 +58,7 @@ public final class Loggers {
 
     private static boolean shouldUseSLF4J() {
         try {
-            Class.forName("org.slf4j.LoggerFactory");
+            Class.forName("org.slf4j.Logger");
             return true;
         } catch (ClassNotFoundException e) {
             return false;
