@@ -23,7 +23,6 @@ import com.mongodb.ServerAddress;
 import org.bson.ByteBuf;
 
 import java.io.IOException;
-import java.net.ConnectException;
 import java.net.StandardSocketOptions;
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousChannelGroup;
@@ -265,7 +264,7 @@ final class AsynchronousSocketChannelStream implements Stream {
         @Override
         public void failed(final Throwable exc, final Object attachment) {
             AsyncCompletionHandler<Void> localHandler = getHandlerAndClear();
-            if (exc instanceof ConnectException) {
+            if (exc instanceof IOException) {
                 localHandler.failed(new MongoSocketOpenException("Exception opening socket", getAddress(), exc));
             } else {
                 localHandler.failed(exc);
