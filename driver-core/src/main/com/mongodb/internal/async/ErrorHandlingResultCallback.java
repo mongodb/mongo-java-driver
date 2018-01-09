@@ -48,7 +48,7 @@ public class ErrorHandlingResultCallback<T> implements SingleResultCallback<T> {
         try {
             wrapped.onResult(result, t);
         } catch (Throwable e) {
-            logger.warn("Callback onResult call produced an error", e);
+            logger.error("Callback onResult call produced an error", e);
         }
     }
 
