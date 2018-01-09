@@ -70,9 +70,10 @@ final class PojoBuilderHelper {
             for (Method method : propertyMethods.getSetterMethods()) {
                 String propertyName = toPropertyName(method);
                 propertyNames.add(propertyName);
-                PropertyMetadata<?> propertyMetadata = getOrCreateProperty(propertyName, declaringClassName, propertyNameMap,
+                PropertyMetadata<?> propertyMetadata = getOrCreateMethodPropertyMetadata(propertyName, declaringClassName, propertyNameMap,
                         TypeData.newInstance(method), propertyTypeParameterMap, parentClassTypeData, genericTypeNames,
-                        getGenericType(method), PropertyTypeCheck.THROW_ON_MISMATCH);
+                        getGenericType(method));
+
                 if (propertyMetadata.getSetter() == null) {
                     propertyMetadata.setSetter(method);
                     for (Annotation annotation : method.getDeclaredAnnotations()) {
@@ -90,10 +91,9 @@ final class PojoBuilderHelper {
                 if (propertyMetadata != null && propertyMetadata.getGetter() != null) {
                     continue;
                 }
-                propertyMetadata = getOrCreateProperty(propertyName, declaringClassName, propertyNameMap,
-                        TypeData.newInstance(method), propertyTypeParameterMap, parentClassTypeData, genericTypeNames,
-                        getGenericType(method), PropertyTypeCheck.THROW_ON_MISMATCH);
-
+                propertyMetadata = getOrCreateMethodPropertyMetadata(propertyName, declaringClassName, propertyNameMap,
+                                        TypeData.newInstance(method), propertyTypeParameterMap, parentClassTypeData, genericTypeNames,
+                                        getGenericType(method));
                 if (propertyMetadata.getGetter() == null) {
                     propertyMetadata.setGetter(method);
                     for (Annotation annotation : method.getDeclaredAnnotations()) {
@@ -104,12 +104,10 @@ final class PojoBuilderHelper {
 
             for (Field field : currentClass.getDeclaredFields()) {
                 propertyNames.add(field.getName());
-                // Note we do a PropertyTypeCheck.NULL_ON_MISMATCH type check here. If properties are present, the
-                // underlying field should be treated as an implementation detail, so we won't forcefully assert the
-                // type matches, and similarly, won't use it for populating the model.
-                PropertyMetadata<?> propertyMetadata = getOrCreateProperty(field.getName(), declaringClassName, propertyNameMap,
-                        TypeData.newInstance(field), propertyTypeParameterMap, parentClassTypeData,
-                        genericTypeNames, field.getGenericType(), PropertyTypeCheck.NULL_ON_MISMATCH);
+                // Note if properties are present and types don't match, the underlying field is treated as an implementation detail.
+                PropertyMetadata<?> propertyMetadata = getOrCreateFieldPropertyMetadata(field.getName(), declaringClassName,
+                        propertyNameMap, TypeData.newInstance(field), propertyTypeParameterMap, parentClassTypeData, genericTypeNames,
+                        field.getGenericType());
                 if (propertyMetadata != null && propertyMetadata.getField() == null) {
                     propertyMetadata.field(field);
                     for (Annotation annotation : field.getDeclaredAnnotations()) {
@@ -150,35 +148,61 @@ final class PojoBuilderHelper {
         classModelBuilder.instanceCreatorFactory(new InstanceCreatorFactoryImpl<T>(new CreatorExecutable<T>(clazz, noArgsConstructor)));
     }
 
-    @SuppressWarnings("unchecked")
-    private static <T, S> PropertyMetadata<T> getOrCreateProperty(final String propertyName,
+    private static <T, S> PropertyMetadata<T> getOrCreateMethodPropertyMetadata(final String propertyName,
                                                                   final String declaringClassName,
                                                                   final Map<String, PropertyMetadata<?>> propertyNameMap,
                                                                   final TypeData<T> typeData,
                                                                   final Map<String, TypeParameterMap> propertyTypeParameterMap,
                                                                   final TypeData<S> parentClassTypeData,
                                                                   final List<String> genericTypeNames,
-                                                                  final Type genericType,
-                                                                  final PropertyTypeCheck propertyTypeCheck) {
+                                                                  final Type genericType) {
+        PropertyMetadata<T> propertyMetadata = getOrCreatePropertyMetadata(propertyName, declaringClassName, propertyNameMap, typeData);
+        if (!propertyMetadata.getTypeData().getType().isAssignableFrom(typeData.getType())) {
+            throw new CodecConfigurationException(format("Property '%s' in %s, has differing data types: %s and %s", propertyName,
+                    declaringClassName, propertyMetadata.getTypeData(), typeData));
+        }
+        cachePropertyTypeData(propertyMetadata, propertyTypeParameterMap, parentClassTypeData, genericTypeNames,
+                genericType);
+        return propertyMetadata;
+    }
+
+    private static <T, S> PropertyMetadata<T> getOrCreateFieldPropertyMetadata(final String propertyName,
+                                                                               final String declaringClassName,
+                                                                               final Map<String, PropertyMetadata<?>> propertyNameMap,
+                                                                               final TypeData<T> typeData,
+                                                                               final Map<String, TypeParameterMap> propertyTypeParameterMap,
+                                                                               final TypeData<S> parentClassTypeData,
+                                                                               final List<String> genericTypeNames,
+                                                                               final Type genericType) {
+        PropertyMetadata<T> propertyMetadata = getOrCreatePropertyMetadata(propertyName, declaringClassName, propertyNameMap, typeData);
+        if (!propertyMetadata.getTypeData().getType().isAssignableFrom(typeData.getType())) {
+            return null;
+        }
+        cachePropertyTypeData(propertyMetadata, propertyTypeParameterMap, parentClassTypeData, genericTypeNames, genericType);
+        return propertyMetadata;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T> PropertyMetadata<T> getOrCreatePropertyMetadata(final String propertyName,
+                                                                       final String declaringClassName,
+                                                                       final Map<String, PropertyMetadata<?>> propertyNameMap,
+                                                                       final TypeData<T> typeData) {
         PropertyMetadata<T> propertyMetadata = (PropertyMetadata<T>) propertyNameMap.get(propertyName);
         if (propertyMetadata == null) {
             propertyMetadata = new PropertyMetadata<T>(propertyName, declaringClassName, typeData);
             propertyNameMap.put(propertyName, propertyMetadata);
-        } else if (!propertyMetadata.getTypeData().getType().isAssignableFrom(typeData.getType())) {
-            // This allows subsequent invocations for the same property to provide more specific types
-            // (Collection -> ImmutableList). The patterns this method is called in ensures that ordering by evaluating
-            // setters (often accept more general types) before getters (often returns more specific types)
-            if (propertyTypeCheck == PropertyTypeCheck.THROW_ON_MISMATCH) {
-                throw new CodecConfigurationException(format("Property '%s' in %s, has differing data types: %s and %s", propertyName,
-                        declaringClassName, propertyMetadata.getTypeData(), typeData));
-            } else {
-                return null;
-            }
         }
+        return propertyMetadata;
+    }
+
+    private static <T, S> void cachePropertyTypeData(final PropertyMetadata<T> propertyMetadata,
+                                                     final Map<String, TypeParameterMap> propertyTypeParameterMap,
+                                                     final TypeData<S> parentClassTypeData,
+                                                     final List<String> genericTypeNames,
+                                                     final Type genericType) {
         TypeParameterMap typeParameterMap = getTypeParameterMap(genericTypeNames, genericType);
         propertyTypeParameterMap.put(propertyMetadata.getName(), typeParameterMap);
         propertyMetadata.typeParameterInfo(typeParameterMap, parentClassTypeData);
-        return propertyMetadata;
     }
 
     private static Type getGenericType(final Method method) {
@@ -253,17 +277,6 @@ final class PojoBuilderHelper {
             throw new IllegalStateException(format("%s cannot be null", property));
         }
         return value;
-    }
-
-    private enum PropertyTypeCheck {
-        /**
-         * Throw an exception if the existing property type and incoming type don't match
-         */
-        THROW_ON_MISMATCH,
-        /**
-         * If the existing and incoming types don't match, don't throw and instead return null
-         */
-        NULL_ON_MISMATCH
     }
 
     private PojoBuilderHelper() {
