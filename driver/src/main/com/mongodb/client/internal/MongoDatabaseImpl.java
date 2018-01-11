@@ -45,6 +45,9 @@ import java.util.List;
 import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
 import static com.mongodb.assertions.Assertions.notNull;
 
+/**
+ * This class is not part of the public API and may be removed or changed at any time.
+ */
 public class MongoDatabaseImpl implements MongoDatabase {
     private final String name;
     private final ReadPreference readPreference;

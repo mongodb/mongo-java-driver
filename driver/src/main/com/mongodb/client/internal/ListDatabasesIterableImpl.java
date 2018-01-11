@@ -32,6 +32,9 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 
+/**
+ * This class is not part of the public API and may be removed or changed at any time.
+ */
 public final class ListDatabasesIterableImpl<TResult> extends MongoIterableImpl<TResult> implements ListDatabasesIterable<TResult> {
     private final SyncOperations<BsonDocument> operations;
     private final Class<TResult> resultClass;

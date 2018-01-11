@@ -24,6 +24,11 @@ import com.mongodb.operation.BatchCursor;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+/**
+ * This class is not part of the public API and may be removed or changed at any time.
+ *
+ * @param <T> the result type
+ */
 public class MongoBatchCursorAdapter<T> implements MongoCursor<T> {
     private final BatchCursor<T> batchCursor;
     private List<T> curBatch;
