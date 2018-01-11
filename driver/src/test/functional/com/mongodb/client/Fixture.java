@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2008-2015 MongoDB, Inc.
+ * Copyright 2018 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,11 +14,9 @@
  * limitations under the License.
  */
 
-package com.mongodb;
+package com.mongodb.client;
 
-import com.mongodb.connection.ServerDescription;
-
-import java.util.List;
+import com.mongodb.ConnectionString;
 
 /**
  * Helper class for the acceptance tests.
@@ -29,25 +27,25 @@ public final class Fixture {
     private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
 
     private static MongoClient mongoClient;
-    private static MongoClientURI mongoClientURI;
-    private static DB defaultDatabase;
+    private static ConnectionString connectionString;
+    private static MongoDatabase defaultDatabase;
 
     private Fixture() {
     }
 
     public static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
-            MongoClientURI mongoURI = getMongoClientURI();
-            mongoClient = new MongoClient(mongoURI);
+            ConnectionString connectionString = getConnectionString();
+            mongoClient = MongoClients.create(connectionString);
             Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         }
         return mongoClient;
     }
 
     @SuppressWarnings("deprecation") // This is for access to the old API, so it will use deprecated methods
-    public static synchronized DB getDefaultDatabase() {
+    public static synchronized MongoDatabase getDefaultDatabase() {
         if (defaultDatabase == null) {
-            defaultDatabase = getMongoClient().getDB(getDefaultDatabaseName());
+            defaultDatabase = getMongoClient().getDatabase(getDefaultDatabaseName());
         }
         return defaultDatabase;
     }
@@ -62,7 +60,7 @@ public final class Fixture {
             synchronized (Fixture.class) {
                 if (mongoClient != null) {
                     if (defaultDatabase != null) {
-                        defaultDatabase.dropDatabase();
+                        defaultDatabase.drop();
                     }
                     mongoClient.close();
                     mongoClient = null;
@@ -71,42 +69,17 @@ public final class Fixture {
         }
     }
 
-    public static synchronized String getMongoClientURIString() {
+    public static synchronized String getConnectionStringProperty() {
         String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
         return mongoURIProperty == null || mongoURIProperty.isEmpty()
                ? DEFAULT_URI : mongoURIProperty;
     }
 
-    public static synchronized MongoClientURI getMongoClientURI() {
-        if (mongoClientURI == null) {
-            mongoClientURI = getMongoClientURI(MongoClientOptions.builder());
+    public static synchronized ConnectionString getConnectionString() {
+        if (connectionString == null) {
+            // TODO: add support for sslInvalidHostNameAllowed on Java 6
+            connectionString = new ConnectionString(getConnectionStringProperty());
         }
-        return mongoClientURI;
-    }
-
-    public static synchronized MongoClientURI getMongoClientURI(final MongoClientOptions.Builder builder) {
-        MongoClientURI mongoClientURI = null;
-        String mongoURIString = getMongoClientURIString();
-        if (System.getProperty("java.version").startsWith("1.6.")) {
-            builder.sslInvalidHostNameAllowed(true);
-        }
-
-        mongoClientURI = new MongoClientURI(mongoURIString, builder);
-        return mongoClientURI;
-    }
-
-    public static MongoClientOptions getOptions() {
-        return getMongoClientURI().getOptions();
-    }
-
-    @SuppressWarnings("deprecation")
-    public static ServerAddress getPrimary() throws InterruptedException {
-        getMongoClient();
-        List<ServerDescription> serverDescriptions = mongoClient.getCluster().getDescription().getPrimaries();
-        while (serverDescriptions.isEmpty()) {
-            Thread.sleep(100);
-            serverDescriptions = mongoClient.getCluster().getDescription().getPrimaries();
-        }
-        return serverDescriptions.get(0).getAddress();
+        return connectionString;
     }
 }

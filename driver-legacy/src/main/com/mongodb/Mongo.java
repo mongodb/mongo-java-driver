@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2015 MongoDB, Inc.
+ * Copyright 2008-2018 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,10 @@
 package com.mongodb;
 
 import com.mongodb.annotations.ThreadSafe;
-import com.mongodb.binding.ClusterBinding;
 import com.mongodb.binding.ConnectionSource;
-import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.ReadWriteBinding;
 import com.mongodb.binding.SingleServerBinding;
-import com.mongodb.binding.WriteBinding;
+import com.mongodb.client.internal.MongoClientDelegate;
 import com.mongodb.client.internal.MongoIterableImpl;
 import com.mongodb.client.internal.OperationExecutor;
 import com.mongodb.connection.BufferProvider;
@@ -36,7 +34,6 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
-import com.mongodb.internal.session.ClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.internal.thread.DaemonThreadFactory;
 import com.mongodb.operation.BatchCursor;
@@ -44,7 +41,6 @@ import com.mongodb.operation.CurrentOpOperation;
 import com.mongodb.operation.FsyncUnlockOperation;
 import com.mongodb.operation.ListDatabasesOperation;
 import com.mongodb.operation.ReadOperation;
-import com.mongodb.operation.WriteOperation;
 import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.LatencyMinimizingServerSelector;
 import com.mongodb.selector.ServerSelector;
@@ -64,7 +60,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import static com.mongodb.ReadPreference.primary;
-import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static com.mongodb.connection.ClusterType.REPLICA_SET;
 import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
@@ -104,6 +99,7 @@ public class Mongo {
 
     private final ConcurrentLinkedQueue<ServerCursorAndNamespace> orphanedCursors = new ConcurrentLinkedQueue<ServerCursorAndNamespace>();
     private final ExecutorService cursorCleaningService;
+    private final MongoClientDelegate delegate;
     private final ServerSessionPool serverSessionPool;
 
     /**
@@ -326,6 +322,7 @@ public class Mongo {
         this.readConcern = options.getReadConcern() != null ? options.getReadConcern() : ReadConcern.DEFAULT;
         this.optionHolder = new Bytes.OptionHolder(null);
         this.credentialsList = unmodifiableList(credentialsList);
+        this.delegate = new MongoClientDelegate(cluster, credentialsList, this);
         cursorCleaningService = options.isCursorFinalizerEnabled() ? createCursorCleaningService() : null;
     }
 
@@ -804,101 +801,11 @@ public class Mongo {
     }
 
     OperationExecutor createOperationExecutor() {
-        return new OperationExecutor() {
-            @Override
-            public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
-                return execute(operation, readPreference, null);
-            }
-
-            @Override
-            public <T> T execute(final WriteOperation<T> operation) {
-                return execute(operation, null);
-            }
-
-            @Override
-            public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ClientSession session) {
-                ClientSession actualClientSession = getClientSession(session);
-                ReadBinding binding = getReadBinding(readPreference, actualClientSession, session == null && actualClientSession != null);
-                try {
-                    return operation.execute(binding);
-                } finally {
-                    binding.release();
-                }
-            }
-
-            @Override
-            public <T> T execute(final WriteOperation<T> operation, final ClientSession session) {
-                ClientSession actualClientSession = getClientSession(session);
-                WriteBinding binding = getWriteBinding(actualClientSession, session == null && actualClientSession != null);
-                try {
-                    return operation.execute(binding);
-                } finally {
-                    binding.release();
-                }
-            }
-
-            WriteBinding getWriteBinding(final ClientSession session, final boolean ownsSession) {
-                return getReadWriteBinding(primary(), session, ownsSession);
-            }
-
-            ReadBinding getReadBinding(final ReadPreference readPreference, final ClientSession session, final boolean ownsSession) {
-                return getReadWriteBinding(readPreference, session, ownsSession);
-            }
-
-            ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, final ClientSession session,
-                                                 final boolean ownsSession) {
-                ReadWriteBinding readWriteBinding = new ClusterBinding(getCluster(), readPreference);
-                if (session != null) {
-                    readWriteBinding = new ClientSessionBinding(session, ownsSession, readWriteBinding);
-                }
-                return readWriteBinding;
-            }
-
-            ClientSession getClientSession(final ClientSession clientSessionFromOperation) {
-                ClientSession session;
-                if (clientSessionFromOperation != null) {
-                    isTrue("ClientSession from same MongoClient", clientSessionFromOperation.getOriginator() == Mongo.this);
-                    session = clientSessionFromOperation;
-                } else {
-                    session = createClientSession(ClientSessionOptions.builder().causallyConsistent(false).build());
-                }
-                return session;
-            }
-        };
+        return delegate.getOperationExecutor();
     }
 
     ClientSession createClientSession(final ClientSessionOptions options) {
-        if (credentialsList.size() > 1) {
-            return null;
-        }
-        if (getConnectedClusterDescription().getLogicalSessionTimeoutMinutes() != null) {
-            return new ClientSessionImpl(serverSessionPool, this, options);
-        } else {
-            return null;
-        }
-    }
-
-    private ClusterDescription getConnectedClusterDescription() {
-        ClusterDescription clusterDescription = cluster.getDescription();
-        if (getServerDescriptionListToConsiderForSessionSupport(clusterDescription).isEmpty()) {
-            cluster.selectServer(new ServerSelector() {
-                @Override
-                public List<ServerDescription> select(final ClusterDescription clusterDescription) {
-                    return getServerDescriptionListToConsiderForSessionSupport(clusterDescription);
-                }
-            });
-            clusterDescription = cluster.getDescription();
-        }
-        return clusterDescription;
-    }
-
-    @SuppressWarnings("deprecation")
-    private List<ServerDescription> getServerDescriptionListToConsiderForSessionSupport(final ClusterDescription clusterDescription) {
-        if (clusterDescription.getConnectionMode() == ClusterConnectionMode.SINGLE) {
-            return clusterDescription.getAny();
-        } else {
-            return clusterDescription.getAnyPrimaryOrSecondary();
-        }
+        return delegate.createClientSession(options);
     }
 
     private ExecutorService createCursorCleaningService() {
