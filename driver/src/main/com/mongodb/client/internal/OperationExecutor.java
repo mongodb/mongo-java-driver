@@ -23,6 +23,8 @@ import com.mongodb.session.ClientSession;
 
 /**
  * An interface describing the execution of a read or a write operation.
+ *
+ * This class is not part of the public API and may be removed or changed at any time.
  */
 public interface OperationExecutor {
     /**
