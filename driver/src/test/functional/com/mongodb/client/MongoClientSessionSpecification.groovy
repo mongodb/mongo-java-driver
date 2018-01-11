@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 MongoDB, Inc.
+ * Copyright 2018 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,9 +14,14 @@
  * limitations under the License.
  */
 
-package com.mongodb
+package com.mongodb.client
 
 import category.Slow
+import com.mongodb.ClientSessionOptions
+import com.mongodb.MongoClientException
+import com.mongodb.ReadConcern
+import com.mongodb.ReadPreference
+import com.mongodb.WriteConcern
 import com.mongodb.connection.TestCommandListener
 import com.mongodb.event.CommandStartedEvent
 import org.bson.BsonBinarySubType
@@ -30,18 +35,17 @@ import spock.lang.IgnoreIf
 
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.ClusterFixture.isAuthenticated
 import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static com.mongodb.Fixture.getDefaultDatabaseName
-import static com.mongodb.Fixture.getMongoClientURI
-import static com.mongodb.MongoCredential.createCredential
+import static com.mongodb.client.Fixture.getDefaultDatabaseName
+import static com.mongodb.client.Fixture.getConnectionString
+import static com.mongodb.client.Fixture.getMongoClient
 
 class MongoClientSessionSpecification extends FunctionalSpecification {
 
     def 'should throw IllegalArgumentException if options are null'() {
         when:
-        Fixture.getMongoClient().startSession(null)
+        getMongoClient().startSession(null)
 
         then:
         thrown(IllegalArgumentException)
@@ -50,7 +54,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
     @IgnoreIf({ serverVersionAtLeast(3, 6) })
     def 'should throw MongoClientException starting a session when sessions are not supported'() {
         when:
-        Fixture.getMongoClient().startSession(ClientSessionOptions.builder().build())
+        getMongoClient().startSession(ClientSessionOptions.builder().build())
 
         then:
         thrown(MongoClientException)
@@ -60,11 +64,11 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
     def 'should create session with correct defaults'() {
         when:
         def options = ClientSessionOptions.builder().build()
-        def clientSession = Fixture.getMongoClient().startSession(options)
+        def clientSession = getMongoClient().startSession(options)
 
         then:
         clientSession != null
-        clientSession.getOriginator() == Fixture.getMongoClient()
+        clientSession.getOriginator() == getMongoClient()
         clientSession.isCausallyConsistent()
         clientSession.getOptions() == options
         clientSession.getClusterTime() == null
@@ -83,7 +87,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         def olderClusterTime = new BsonDocument('clusterTime', thirdOperationTime)
 
         when:
-        def clientSession = Fixture.getMongoClient().startSession(ClientSessionOptions.builder().build())
+        def clientSession = getMongoClient().startSession(ClientSessionOptions.builder().build())
 
         then:
         clientSession.getClusterTime() == null
@@ -121,7 +125,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         def olderOperationTime = new BsonTimestamp(22, 1)
 
         when:
-        def clientSession = Fixture.getMongoClient().startSession(ClientSessionOptions.builder().build())
+        def clientSession = getMongoClient().startSession(ClientSessionOptions.builder().build())
 
         then:
         clientSession.getOperationTime() == null
@@ -155,7 +159,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
     def 'methods that use the session should throw if the session is closed'() {
         given:
         def options = ClientSessionOptions.builder().build()
-        def clientSession = Fixture.getMongoClient().startSession(options)
+        def clientSession = getMongoClient().startSession(options)
         clientSession.close()
 
         when:
@@ -181,7 +185,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
     def 'informational methods should not throw if the session is closed'() {
         given:
         def options = ClientSessionOptions.builder().build()
-        def clientSession = Fixture.getMongoClient().startSession(options)
+        def clientSession = getMongoClient().startSession(options)
         clientSession.close()
 
         when:
@@ -197,7 +201,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
     @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'should apply causally consistent session option to client session'() {
         when:
-        def clientSession = Fixture.getMongoClient().startSession(ClientSessionOptions.builder()
+        def clientSession = getMongoClient().startSession(ClientSessionOptions.builder()
                 .causallyConsistent(causallyConsistent)
                 .build())
 
@@ -212,7 +216,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
     @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'client session should have server session with valid identifier'() {
         given:
-        def clientSession = Fixture.getMongoClient().startSession(ClientSessionOptions.builder().build())
+        def clientSession = getMongoClient().startSession(ClientSessionOptions.builder().build())
 
         when:
         def identifier = clientSession.getServerSession().identifier
@@ -229,9 +233,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
     def 'should use a default session'() {
         given:
         def commandListener = new TestCommandListener()
-        def optionsBuilder = MongoClientOptions.builder()
-                .addCommandListener(commandListener)
-        def client = new MongoClient(Fixture.getMongoClientURI(optionsBuilder))
+        def client = MongoClients.create(getConnectionString(), [commandListener])
 
         when:
         client.getDatabase('admin').runCommand(new BsonDocument('ping', new BsonInt32(1)))
@@ -249,9 +251,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
     def 'should not use a default session when sessions are not supported'() {
         given:
         def commandListener = new TestCommandListener()
-        def optionsBuilder = MongoClientOptions.builder()
-                .addCommandListener(commandListener)
-        def client = new MongoClient(getMongoClientURI(optionsBuilder))
+        def client = MongoClients.create(getConnectionString(), [commandListener])
 
         when:
         client.getDatabase('admin').runCommand(new BsonDocument('ping', new BsonInt32(1)))
@@ -259,6 +259,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         then:
         def pingCommandStartedEvent = commandListener.events.get(0)
         !(pingCommandStartedEvent as CommandStartedEvent).command.containsKey('lsid')
+
         cleanup:
         client?.close()
     }
@@ -274,10 +275,10 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
     @Category(Slow)
     def 'should find inserted document on a secondary when causal consistency is enabled'() {
         given:
-        def collection = Fixture.getMongoClient().getDatabase(getDefaultDatabaseName()).getCollection(getCollectionName())
+        def collection = getMongoClient().getDatabase(getDefaultDatabaseName()).getCollection(getCollectionName())
 
         expect:
-        def clientSession = Fixture.getMongoClient().startSession(ClientSessionOptions.builder()
+        def clientSession = getMongoClient().startSession(ClientSessionOptions.builder()
                 .causallyConsistent(true)
                 .build())
         try {
@@ -302,43 +303,11 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         readConcern << [ReadConcern.DEFAULT, ReadConcern.LOCAL, ReadConcern.MAJORITY]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) || !isAuthenticated() })
-    @SuppressWarnings('deprecation')
-    def 'should not use a default session when there is more than one authenticated user'() {
-        given:
-        def sessionTestUserName = 'sessionTestUser'
-        def sessionTestPassword = 'sessionTestPassword'
-        Fixture.getMongoClient().getDB('admin').addUser(sessionTestUserName, sessionTestPassword.toCharArray())
-
-        def commandListener = new TestCommandListener()
-        def optionsBuilder = MongoClientOptions.builder()
-                .addCommandListener(commandListener)
-        def mongoClientURI = getMongoClientURI(optionsBuilder)
-        def credentials = [mongoClientURI.getCredentials(),
-                           createCredential(sessionTestUserName, 'admin', sessionTestPassword.toCharArray())]
-        def client = new MongoClient(mongoClientURI.getHosts().collect { new ServerAddress(it) },
-                credentials, mongoClientURI.getOptions())
-
-        when:
-        client.getDatabase('admin').runCommand(new BsonDocument('ping', new BsonInt32(1)))
-
-        then:
-        def pingCommandStartedEvent = commandListener.events.get(0) as CommandStartedEvent
-        !pingCommandStartedEvent.command.containsKey('lsid')
-
-        cleanup:
-        Fixture.getMongoClient().getDB('admin').removeUser(sessionTestUserName)
-        client?.close()
-    }
-
     @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'should not use a session for an unacknowledged write'() {
         given:
         def commandListener = new TestCommandListener()
-        def optionsBuilder = MongoClientOptions.builder()
-                .addCommandListener(commandListener)
-        def mongoClientURI = getMongoClientURI(optionsBuilder)
-        def client = new MongoClient(mongoClientURI)
+        def client = MongoClients.create(getConnectionString(), [commandListener])
 
         when:
         client.getDatabase(getDatabaseName()).getCollection(getCollectionName())
