@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 MongoDB, Inc.
+ * Copyright 2012-2018 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -221,7 +221,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private <TResult> DistinctIterable<TResult> createDistinctIterable(final ClientSession clientSession, final String fieldName,
                                                                        final Bson filter, final Class<TResult> resultClass) {
         return new DistinctIterableImpl<TDocument, TResult>(clientSession, namespace, documentClass, resultClass, codecRegistry,
-                                                                   readPreference, readConcern, executor, fieldName, filter);
+                readPreference, readConcern, executor, fieldName, filter);
     }
 
     @Override
@@ -301,7 +301,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                                                                          final List<? extends Bson> pipeline,
                                                                          final Class<TResult> resultClass) {
         return new AggregateIterableImpl<TDocument, TResult>(clientSession, namespace, documentClass, resultClass, codecRegistry,
-                                                                    readPreference, readConcern, writeConcern, executor, pipeline);
+                readPreference, readConcern, writeConcern, executor, pipeline);
     }
 
     @Override
@@ -659,6 +659,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                                               final FindOneAndUpdateOptions options) {
         return executor.execute(operations.findOneAndUpdate(filter, update, options), clientSession);
     }
+
     @Override
     public void drop() {
         executeDrop(null);
@@ -846,7 +847,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private void executeRenameCollection(final ClientSession clientSession, final MongoNamespace newCollectionNamespace,
                                          final RenameCollectionOptions renameCollectionOptions) {
         executor.execute(new RenameCollectionOperation(getNamespace(), newCollectionNamespace, writeConcern)
-                                 .dropTarget(renameCollectionOptions.isDropTarget()),
+                        .dropTarget(renameCollectionOptions.isDropTarget()),
                 clientSession);
     }
 
@@ -876,8 +877,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         } catch (MongoBulkWriteException e) {
             if (e.getWriteErrors().isEmpty()) {
                 throw new MongoWriteConcernException(e.getWriteConcernError(),
-                                                     translateBulkWriteResult(type, e.getWriteResult()),
-                                                     e.getServerAddress());
+                        translateBulkWriteResult(type, e.getWriteResult()),
+                        e.getServerAddress());
             } else {
                 throw new MongoWriteException(new WriteError(e.getWriteErrors().get(0)), e.getServerAddress());
             }
@@ -893,9 +894,9 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
             case UPDATE:
             case REPLACE:
                 return WriteConcernResult.acknowledged(writeResult.getMatchedCount() + writeResult.getUpserts().size(),
-                                                       writeResult.getMatchedCount() > 0,
-                                                       writeResult.getUpserts().isEmpty()
-                                                       ? null : writeResult.getUpserts().get(0).getId());
+                        writeResult.getMatchedCount() > 0,
+                        writeResult.getUpserts().isEmpty()
+                                ? null : writeResult.getUpserts().get(0).getId());
             default:
                 throw new MongoInternalException("Unhandled write request type: " + type);
         }
