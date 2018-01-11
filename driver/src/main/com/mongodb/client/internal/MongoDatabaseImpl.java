@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 MongoDB, Inc.
+ * Copyright 2012-2018 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,8 +58,8 @@ public class MongoDatabaseImpl implements MongoDatabase {
     private final OperationExecutor executor;
 
     public MongoDatabaseImpl(final String name, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                      final WriteConcern writeConcern, final boolean retryWrites, final ReadConcern readConcern,
-                      final OperationExecutor executor) {
+                             final WriteConcern writeConcern, final boolean retryWrites, final ReadConcern readConcern,
+                             final OperationExecutor executor) {
         checkDatabaseNameValidity(name);
         this.name = notNull("name", name);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
@@ -123,7 +123,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public <TDocument> MongoCollection<TDocument> getCollection(final String collectionName, final Class<TDocument> documentClass) {
         return new MongoCollectionImpl<TDocument>(new MongoNamespace(name, collectionName), documentClass, codecRegistry, readPreference,
-                                                  writeConcern, retryWrites, readConcern, executor);
+                writeConcern, retryWrites, readConcern, executor);
     }
 
     @Override
@@ -203,12 +203,12 @@ public class MongoDatabaseImpl implements MongoDatabase {
 
     private MongoIterable<String> createListCollectionNamesIterable(final ClientSession clientSession) {
         return createListCollectionsIterable(clientSession, BsonDocument.class)
-                       .map(new Function<BsonDocument, String>() {
-                           @Override
-                           public String apply(final BsonDocument result) {
-                               return result.getString("name").getValue();
-                           }
-                       });
+                .map(new Function<BsonDocument, String>() {
+                    @Override
+                    public String apply(final BsonDocument result) {
+                        return result.getString("name").getValue();
+                    }
+                });
     }
 
     @Override
@@ -235,7 +235,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
     private <TResult> ListCollectionsIterable<TResult> createListCollectionsIterable(final ClientSession clientSession,
                                                                                      final Class<TResult> resultClass) {
         return new ListCollectionsIterableImpl<TResult>(clientSession, name, resultClass, codecRegistry, ReadPreference.primary(),
-                                                               executor);
+                executor);
     }
 
     @Override
@@ -317,7 +317,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
                                    final List<? extends Bson> pipeline, final CreateViewOptions createViewOptions) {
         notNull("createViewOptions", createViewOptions);
         executor.execute(new CreateViewOperation(name, viewName, viewOn, createBsonDocumentList(pipeline), writeConcern)
-                                 .collation(createViewOptions.getCollation()),
+                        .collation(createViewOptions.getCollation()),
                 clientSession);
     }
 

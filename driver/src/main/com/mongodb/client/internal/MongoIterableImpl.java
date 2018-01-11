@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 MongoDB, Inc.
+ * Copyright 2017-2018 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
     private Integer batchSize;
 
     public MongoIterableImpl(final ClientSession clientSession, final OperationExecutor executor, final ReadConcern readConcern,
-                      final ReadPreference readPreference) {
+                             final ReadPreference readPreference) {
         this.clientSession = clientSession;
         this.executor = notNull("executor", executor);
         this.readConcern = notNull("readConcern", readConcern);
@@ -87,7 +87,7 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
     public TResult first() {
         MongoCursor<TResult> cursor = iterator();
         try {
-            if (!cursor.hasNext())  {
+            if (!cursor.hasNext()) {
                 return null;
             }
             return cursor.next();
