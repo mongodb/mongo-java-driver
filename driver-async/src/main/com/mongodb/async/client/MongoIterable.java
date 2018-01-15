@@ -75,6 +75,15 @@ public interface MongoIterable<TResult> {
     MongoIterable<TResult> batchSize(int batchSize);
 
     /**
+     * Gets the number of documents to return per batch or null if not set.
+     *
+     * @return the batch size, which may be null
+     * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
+     * @since 3.7
+     */
+    Integer getBatchSize();
+
+    /**
      * Provide the underlying {@link com.mongodb.async.AsyncBatchCursor} allowing fine grained control of the cursor.
      *
      * @param callback a callback that will be passed the AsyncBatchCursor

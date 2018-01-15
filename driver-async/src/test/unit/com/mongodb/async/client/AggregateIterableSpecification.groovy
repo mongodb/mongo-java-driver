@@ -340,4 +340,20 @@ class AggregateIterableSpecification extends Specification {
         thrown(IllegalArgumentException)
     }
 
+    def 'should get and set batchSize as expected'() {
+        when:
+        def batchSize = 5
+        def mongoIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
+                readConcern, writeConcern, Stub(AsyncOperationExecutor), [null])
+
+        then:
+        mongoIterable.getBatchSize() == null
+
+        when:
+        mongoIterable.batchSize(batchSize)
+
+        then:
+        mongoIterable.getBatchSize() == batchSize
+    }
+
 }

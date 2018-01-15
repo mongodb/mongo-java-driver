@@ -95,6 +95,11 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     }
 
     @Override
+    public Integer getBatchSize() {
+        return findOptions.getBatchSize();
+    }
+
+    @Override
     public FindIterable<TResult> collation(final Collation collation) {
         findOptions.collation(collation);
         return this;

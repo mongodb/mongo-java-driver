@@ -317,6 +317,34 @@ class ChangeStreamIterableSpecification extends Specification {
         thrown(IllegalArgumentException)
     }
 
+    def 'should get and set batchSize as expected'() {
+        when:
+        def batchSize = 5
+        def mongoIterable = new ChangeStreamIterableImpl(null, namespace, codecRegistry, readPreference, readConcern,
+                Stub(AsyncOperationExecutor), [BsonDocument.parse('{$match: 1}')], BsonDocument)
+
+        then:
+        mongoIterable.getBatchSize() == null
+
+        when:
+        mongoIterable.batchSize(batchSize)
+
+        then:
+        mongoIterable.getBatchSize() == batchSize
+
+        when:
+        def adaptedMongoIterable = mongoIterable.withDocumentClass(Document)
+
+        then:
+        adaptedMongoIterable.getBatchSize() == null
+
+        when:
+        adaptedMongoIterable.batchSize(batchSize)
+
+        then:
+        adaptedMongoIterable.getBatchSize() == batchSize
+    }
+
     def cursor(List<?> cannedResults) {
         Stub(AsyncBatchCursor) {
             def count = 0
