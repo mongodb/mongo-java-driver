@@ -99,6 +99,11 @@ final class GridFSFindIterableImpl implements GridFSFindIterable {
     }
 
     @Override
+    public Integer getBatchSize() {
+        return underlying.getBatchSize();
+    }
+
+    @Override
     public GridFSFindIterable collation(final Collation collation) {
         underlying.collation(collation);
         return this;

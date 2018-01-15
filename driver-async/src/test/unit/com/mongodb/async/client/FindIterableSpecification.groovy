@@ -83,7 +83,7 @@ class FindIterableSpecification extends Specification {
                 .showRecordId(false)
                 .snapshot(false)
         def findIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, executor,
-                                                new Document('filter', 1), findOptions)
+                new Document('filter', 1), findOptions)
 
         when: 'default input should be as expected'
         findIterable.into([]) { result, t -> }
@@ -180,7 +180,7 @@ class FindIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([cursor]);
         def findOptions = new FindOptions()
         def findIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, executor,
-                                                new Document('filter', 1), findOptions)
+                new Document('filter', 1), findOptions)
 
         when:
         findIterable.filter(new Document('filter', 1))
@@ -223,7 +223,7 @@ class FindIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor()]);
         def findOptions = new FindOptions()
         def mongoIterable = new FindIterableImpl(null, new MongoNamespace('db', 'coll'), Document, Document, codecRegistry,
-                                                 readPreference, readConcern, executor, new Document(), findOptions)
+                readPreference, readConcern, executor, new Document(), findOptions)
 
         when:
         def results = new FutureResultCallback()
@@ -326,5 +326,21 @@ class FindIterableSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+    }
+
+    def 'should get and set batchSize as expected'() {
+        when:
+        def batchSize = 5
+        def mongoIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
+                readConcern, Stub(AsyncOperationExecutor), new Document(), new FindOptions())
+
+        then:
+        mongoIterable.getBatchSize() == 0
+
+        when:
+        mongoIterable.batchSize(batchSize)
+
+        then:
+        mongoIterable.getBatchSize() == batchSize
     }
 }

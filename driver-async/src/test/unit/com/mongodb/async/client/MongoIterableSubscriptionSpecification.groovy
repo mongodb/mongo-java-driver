@@ -202,6 +202,58 @@ class MongoIterableSubscriptionSpecification extends Specification {
         observer.assertTerminalEvent()
     }
 
+    def 'should use the set batchSize when configured on the mongoIterable'() {
+        given:
+        def observer = new TestObserver()
+        def cursor = Mock(AsyncBatchCursor) {
+            def cursorResults = [(1..3), (1..3), (1..3)]
+            next(_) >> {
+                it[0].onResult(cursorResults.isEmpty() ? null : cursorResults.remove(0), null)
+            }
+        }
+        def mockIterable = getMongoIterable(cursor)
+        _ * mockIterable.getBatchSize() >> { 3 }
+        observe(mockIterable).subscribe(observer)
+
+        when:
+        observer.getSubscription()
+        observer.requestMore(4)
+
+        then:
+        1 * mockIterable.batchSize(3)
+        2 * cursor.setBatchSize(3)
+
+        when:
+        observer.requestMore(Long.MAX_VALUE)
+
+        then:
+        2 * cursor.setBatchSize(3)
+        observer.assertTerminalEvent()
+    }
+
+    def 'should use negative batchSize values when configured on the mongoIterable'() {
+        given:
+        def observer = new TestObserver()
+        def cursor = Mock(AsyncBatchCursor) {
+            def cursorResults = [(1..3)]
+            next(_) >> {
+                it[0].onResult(cursorResults.isEmpty() ? null : cursorResults.remove(0), null)
+            }
+        }
+        def mockIterable = getMongoIterable(cursor)
+        _ * mockIterable.getBatchSize() >> { -3 }
+        observe(mockIterable).subscribe(observer)
+
+        when:
+        observer.getSubscription()
+        observer.requestMore(4)
+
+        then:
+        1 * mockIterable.batchSize(-3)
+        2 * cursor.setBatchSize(-3)
+        observer.assertTerminalEvent()
+    }
+
     def 'should throw an error if request is less than 1'() {
         given:
         def observer = new TestObserver()

@@ -40,11 +40,9 @@ final class MongoIterableSubscription<TResult> extends AbstractSubscription<TRes
         observer.onSubscribe(this);
     }
 
-
-
     @Override
     void requestInitialData() {
-        mongoIterable.batchSize(getBatchSize());
+        mongoIterable.batchSize(calculateBatchSize());
         mongoIterable.batchCursor(new SingleResultCallback<AsyncBatchCursor<TResult>>() {
             @Override
             public void onResult(final AsyncBatchCursor<TResult> result, final Throwable t) {
@@ -83,7 +81,7 @@ final class MongoIterableSubscription<TResult> extends AbstractSubscription<TRes
         }
 
         if (mustRead) {
-            batchCursor.setBatchSize(getBatchSize());
+            batchCursor.setBatchSize(calculateBatchSize());
             batchCursor.next(new SingleResultCallback<List<TResult>>() {
                 @Override
                 public void onResult(final List<TResult> result, final Throwable t) {
@@ -108,12 +106,15 @@ final class MongoIterableSubscription<TResult> extends AbstractSubscription<TRes
     /**
      * Returns the batchSize to be used with the cursor.
      *
-     * <p>Anything less than 2 would close the cursor so that is the minimum batchSize and `Integer.MAX_VALUE` is the maximum
-     * batchSize.</p>
+     * <p>If the batch size has been set on the MongoIterable that is used, otherwise the requested demand is used. When using requested
+     * demand, values less than 2 would close the cursor so that is the minimum batchSize and `Integer.MAX_VALUE` is the maximum.</p>
      *
      * @return the batchSize to use
      */
-    private int getBatchSize() {
+    private int calculateBatchSize() {
+        if (mongoIterable.getBatchSize() != null) {
+            return mongoIterable.getBatchSize();
+        }
         long requested = getRequested();
         if (requested <= 1) {
             return 2;

@@ -65,6 +65,7 @@ abstract class MongoIterableImpl<TResult> implements MongoIterable<TResult> {
         return readConcern;
     }
 
+    @Override
     public Integer getBatchSize() {
         return batchSize;
     }

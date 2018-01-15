@@ -237,4 +237,20 @@ class DistinctIterableSpecification extends Specification {
         thrown(IllegalArgumentException)
     }
 
+    def 'should get and set batchSize as expected'() {
+        when:
+        def batchSize = 5
+        def mongoIterable = new DistinctIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
+                Stub(AsyncOperationExecutor), 'field', new BsonDocument())
+
+        then:
+        mongoIterable.getBatchSize() == null
+
+        when:
+        mongoIterable.batchSize(batchSize)
+
+        then:
+        mongoIterable.getBatchSize() == batchSize
+    }
+
 }
