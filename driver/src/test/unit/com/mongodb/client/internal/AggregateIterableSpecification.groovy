@@ -314,4 +314,20 @@ class AggregateIterableSpecification extends Specification {
         target == [1, 2, 3]
     }
 
+    def 'should get and set batchSize as expected'() {
+        when:
+        def batchSize = 5
+        def mongoIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
+                readConcern, writeConcern, Stub(OperationExecutor), [new Document('$match', 1)])
+
+        then:
+        mongoIterable.getBatchSize() == null
+
+        when:
+        mongoIterable.batchSize(batchSize)
+
+        then:
+        mongoIterable.getBatchSize() == batchSize
+    }
+
 }

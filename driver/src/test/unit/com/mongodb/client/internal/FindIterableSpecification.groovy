@@ -22,7 +22,6 @@ import com.mongodb.Function
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.client.model.Collation
-import com.mongodb.client.model.FindOptions
 import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.FindOperation
 import com.mongodb.session.ClientSession
@@ -54,8 +53,10 @@ class FindIterableSpecification extends Specification {
     @SuppressWarnings('deprecation')
     def 'should build the expected findOperation'() {
         given:
-        def executor = new TestOperationExecutor([null, null]);
-        def findOptions = new FindOptions().sort(new Document('sort', 1))
+        def executor = new TestOperationExecutor([null, null])
+        def findIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
+                executor, new Document('filter', 1))
+                .sort(new Document('sort', 1))
                 .modifiers(new Document('modifier', 1))
                 .projection(new Document('projection', 1))
                 .maxTime(10, SECONDS)
@@ -76,8 +77,6 @@ class FindIterableSpecification extends Specification {
                 .returnKey(false)
                 .showRecordId(false)
                 .snapshot(false)
-        def findIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                executor, new Document('filter', 1), findOptions)
 
         when: 'default input should be as expected'
         findIterable.iterator()
@@ -173,7 +172,7 @@ class FindIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([batchCursor, batchCursor]);
         def findIterable = new FindIterableImpl(clientSession, namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                executor, new Document('filter', 1), new FindOptions())
+                executor, new Document('filter', 1))
 
         when:
         findIterable.first()
@@ -193,10 +192,9 @@ class FindIterableSpecification extends Specification {
 
     def 'should handle mixed types'() {
         given:
-        def executor = new TestOperationExecutor([null, null]);
-        def findOptions = new FindOptions()
+        def executor = new TestOperationExecutor([null, null])
         def findIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                executor, new Document('filter', 1), findOptions)
+                executor, new Document('filter', 1))
 
         when:
         findIterable.filter(new Document('filter', 1))
@@ -238,10 +236,9 @@ class FindIterableSpecification extends Specification {
 
             }
         }
-        def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
-        def findOptions = new FindOptions()
+        def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()])
         def mongoIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                executor, new Document(), findOptions)
+                executor, new Document())
 
         when:
         def results = mongoIterable.first()
@@ -281,4 +278,19 @@ class FindIterableSpecification extends Specification {
         target == [1, 2, 3]
     }
 
+    def 'should get and set batchSize as expected'() {
+        when:
+        def batchSize = 5
+        def mongoIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
+                readConcern, Stub(OperationExecutor), new Document())
+
+        then:
+        mongoIterable.getBatchSize() == null
+
+        when:
+        mongoIterable.batchSize(batchSize)
+
+        then:
+        mongoIterable.getBatchSize() == batchSize
+    }
 }

@@ -127,4 +127,20 @@ class ListDatabasesIterableSpecification extends Specification {
         then:
         target == [1, 2, 3]
     }
+
+    def 'should get and set batchSize as expected'() {
+        when:
+        def batchSize = 5
+        def mongoIterable = new ListDatabasesIterableImpl<Document>(null, Document, codecRegistry, readPreference,
+                Stub(OperationExecutor))
+
+        then:
+        mongoIterable.getBatchSize() == null
+
+        when:
+        mongoIterable.batchSize(batchSize)
+
+        then:
+        mongoIterable.getBatchSize() == batchSize
+    }
 }

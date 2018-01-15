@@ -237,6 +237,23 @@ class ChangeStreamIterableSpecification extends Specification {
         target == [1, 2, 3]
     }
 
+
+    def 'should get and set batchSize as expected'() {
+        when:
+        def batchSize = 5
+        def mongoIterable = new ChangeStreamIterableImpl(null, namespace, codecRegistry, readPreference, readConcern,
+                Stub(OperationExecutor), [BsonDocument.parse('{$match: 1}')], BsonDocument)
+
+        then:
+        mongoIterable.getBatchSize() == null
+
+        when:
+        mongoIterable.batchSize(batchSize)
+
+        then:
+        mongoIterable.getBatchSize() == batchSize
+    }
+
     def cursor(List<?> cannedResults) {
         Stub(BatchCursor) {
             def counter = 0

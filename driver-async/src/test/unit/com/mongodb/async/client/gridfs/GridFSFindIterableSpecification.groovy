@@ -27,10 +27,9 @@ import com.mongodb.async.SingleResultCallback
 import com.mongodb.async.client.FindIterableImpl
 import com.mongodb.async.client.MongoClients
 import com.mongodb.async.client.TestOperationExecutor
-import com.mongodb.client.gridfs.model.GridFSFile
 import com.mongodb.client.gridfs.codecs.GridFSFileCodec
+import com.mongodb.client.gridfs.model.GridFSFile
 import com.mongodb.client.model.Collation
-import com.mongodb.client.model.FindOptions
 import com.mongodb.operation.FindOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -57,7 +56,7 @@ class GridFSFindIterableSpecification extends Specification {
         def batchCursor = Stub(AsyncBatchCursor)
         def executor = new TestOperationExecutor([batchCursor, batchCursor]);
         def underlying = new FindIterableImpl(null, namespace, GridFSFile, GridFSFile, codecRegistry, readPreference, readConcern, executor,
-                new Document(), new FindOptions())
+                new Document())
         def findIterable = new GridFSFindIterableImpl(underlying)
 
         when: 'default input should be as expected'
@@ -100,10 +99,9 @@ class GridFSFindIterableSpecification extends Specification {
     def 'should handle mixed types'() {
         given:
         def batchCursor = Stub(AsyncBatchCursor)
-        def executor = new TestOperationExecutor([batchCursor]);
-        def findOptions = new FindOptions()
+        def executor = new TestOperationExecutor([batchCursor])
         def findIterable = new FindIterableImpl(null, namespace, GridFSFile, GridFSFile, codecRegistry, readPreference, readConcern,
-                executor, new Document('filter', 1), findOptions)
+                executor, new Document('filter', 1))
 
         when:
         findIterable.filter(new Document('filter', 1))
@@ -143,9 +141,9 @@ class GridFSFindIterableSpecification extends Specification {
                 next(_) >> { it.last().onResult(getResult(), null) }
             }
         }
-        def executor = new TestOperationExecutor([batchCursor(), batchCursor(), batchCursor(), batchCursor()]);
+        def executor = new TestOperationExecutor([batchCursor(), batchCursor(), batchCursor(), batchCursor()])
         def underlying = new FindIterableImpl(null, namespace, GridFSFile, GridFSFile, codecRegistry, readPreference, readConcern, executor,
-                new Document(), new FindOptions())
+                new Document())
         def mongoIterable = new GridFSFindIterableImpl(underlying)
 
         when:

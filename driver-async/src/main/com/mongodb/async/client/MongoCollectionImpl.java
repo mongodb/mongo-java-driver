@@ -37,7 +37,6 @@ import com.mongodb.client.model.DropIndexOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
-import com.mongodb.client.model.FindOptions;
 import com.mongodb.client.model.IndexModel;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertManyOptions;
@@ -265,7 +264,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private <TResult> FindIterable<TResult> createFindIterable(final ClientSession clientSession, final Bson filter,
                                                                final Class<TResult> resultClass) {
         return new FindIterableImpl<TDocument, TResult>(clientSession, namespace, documentClass, resultClass, codecRegistry,
-                readPreference, readConcern, executor, filter, new FindOptions());
+                readPreference, readConcern, executor, filter);
     }
 
     @Override

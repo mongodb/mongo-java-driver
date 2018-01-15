@@ -46,12 +46,12 @@ final class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResu
 
     FindIterableImpl(final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
                      final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                     final ReadConcern readConcern, final OperationExecutor executor, final Bson filter, final FindOptions findOptions) {
+                     final ReadConcern readConcern, final OperationExecutor executor, final Bson filter) {
         super(clientSession, executor, readConcern, readPreference);
         this.operations = new SyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry, readConcern);
         this.resultClass = notNull("resultClass", resultClass);
         this.filter = notNull("filter", filter);
-        this.findOptions = notNull("findOptions", findOptions);
+        this.findOptions = new FindOptions();
     }
 
     @Override
@@ -88,6 +88,7 @@ final class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResu
 
     @Override
     public FindIterable<TResult> batchSize(final int batchSize) {
+        super.batchSize(batchSize);
         findOptions.batchSize(batchSize);
         return this;
     }
