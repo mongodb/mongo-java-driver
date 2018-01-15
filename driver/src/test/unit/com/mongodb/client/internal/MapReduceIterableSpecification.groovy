@@ -318,4 +318,20 @@ class MapReduceIterableSpecification extends Specification {
         target == [1, 2, 3]
     }
 
+    def 'should get and set batchSize as expected'() {
+        when:
+        def batchSize = 5
+        def mongoIterable = new MapReduceIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
+                readConcern, writeConcern, Stub(OperationExecutor), 'map', 'reduce')
+
+        then:
+        mongoIterable.getBatchSize() == null
+
+        when:
+        mongoIterable.batchSize(batchSize)
+
+        then:
+        mongoIterable.getBatchSize() == batchSize
+    }
+
 }

@@ -44,7 +44,6 @@ import com.mongodb.client.model.DropIndexOptions
 import com.mongodb.client.model.FindOneAndDeleteOptions
 import com.mongodb.client.model.FindOneAndReplaceOptions
 import com.mongodb.client.model.FindOneAndUpdateOptions
-import com.mongodb.client.model.FindOptions
 import com.mongodb.client.model.IndexModel
 import com.mongodb.client.model.IndexOptions
 import com.mongodb.client.model.InsertManyOptions
@@ -275,28 +274,28 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         expect findIterable, isTheSameAs(new FindIterableImpl(session, namespace, Document, Document, codecRegistry,
-                readPreference, readConcern, executor, new BsonDocument(), new FindOptions()))
+                readPreference, readConcern, executor, new BsonDocument()))
 
         when:
         findIterable = execute(findMethod, session, BsonDocument)
 
         then:
         expect findIterable, isTheSameAs(new FindIterableImpl(session, namespace, Document, BsonDocument, codecRegistry,
-                readPreference, readConcern, executor, new BsonDocument(), new FindOptions()))
+                readPreference, readConcern, executor, new BsonDocument()))
 
         when:
         findIterable = execute(findMethod, session, new Document())
 
         then:
         expect findIterable, isTheSameAs(new FindIterableImpl(session, namespace, Document, Document, codecRegistry,
-                readPreference, readConcern, executor, new Document(), new FindOptions()))
+                readPreference, readConcern, executor, new Document()))
 
         when:
         findIterable = execute(findMethod, session, new Document(), BsonDocument)
 
         then:
         expect findIterable, isTheSameAs(new FindIterableImpl(session, namespace, Document, BsonDocument, codecRegistry,
-                readPreference, readConcern, executor, new Document(), new FindOptions()))
+                readPreference, readConcern, executor, new Document()))
 
         where:
         session << [null, Stub(ClientSession)]

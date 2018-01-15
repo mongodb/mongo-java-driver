@@ -27,7 +27,6 @@ import com.mongodb.client.gridfs.model.GridFSFile
 import com.mongodb.client.internal.FindIterableImpl
 import com.mongodb.client.internal.TestOperationExecutor
 import com.mongodb.client.model.Collation
-import com.mongodb.client.model.FindOptions
 import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.FindOperation
 import org.bson.BsonDocument
@@ -55,7 +54,7 @@ class GridFSFindIterableSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([null, null]);
         def underlying = new FindIterableImpl(null, namespace, GridFSFile, GridFSFile, codecRegistry, readPreference, readConcern, executor,
-                new Document(), new FindOptions())
+                new Document())
         def findIterable = new GridFSFindIterableImpl(underlying)
 
         when: 'default input should be as expected'
@@ -98,10 +97,9 @@ class GridFSFindIterableSpecification extends Specification {
 
     def 'should handle mixed types'() {
         given:
-        def executor = new TestOperationExecutor([null, null]);
-        def findOptions = new FindOptions()
+        def executor = new TestOperationExecutor([null, null])
         def findIterable = new FindIterableImpl(null, namespace, GridFSFile, GridFSFile, codecRegistry, readPreference, readConcern,
-                executor, new Document('filter', 1), findOptions)
+                executor, new Document('filter', 1))
 
         when:
         findIterable.filter(new Document('filter', 1))
@@ -151,7 +149,7 @@ class GridFSFindIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
         def underlying = new FindIterableImpl(null, namespace, GridFSFile, GridFSFile, codecRegistry, readPreference, readConcern, executor,
-                new Document(), new FindOptions())
+                new Document())
         def mongoIterable = new GridFSFindIterableImpl(underlying)
 
         when:
