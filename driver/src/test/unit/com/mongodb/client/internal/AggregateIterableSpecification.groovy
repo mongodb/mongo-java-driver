@@ -269,7 +269,6 @@ class AggregateIterableSpecification extends Specification {
                 hasNext() >> {
                     count == 0
                 }
-
             }
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()])

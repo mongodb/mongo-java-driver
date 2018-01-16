@@ -43,7 +43,6 @@ class UuidCodecSpecification extends Specification {
     }
 
     def 'should decode different types of UUID'(UuidCodec codec, byte[] list) throws IOException {
-
         given:
 
         ByteBufferBsonInput inputBuffer = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(list)))
@@ -104,7 +103,6 @@ class UuidCodecSpecification extends Specification {
                  5, 6, 7, 8, 3, 4, 1, 2,
                  16, 15, 14, 13, 12, 11, 10, 9], //8 bytes for long, 2 longs for UUID, Big Endian
         ]
-
     }
 
     def 'should encode different types of UUIDs'(Byte bsonSubType,

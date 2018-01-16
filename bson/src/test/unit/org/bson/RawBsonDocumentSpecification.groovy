@@ -408,7 +408,6 @@ class RawBsonDocumentSpecification extends Specification {
 
         where:
         localRawDocument << createRawDocumentVariants()
-
     }
 
     private static List<RawBsonDocument> createRawDocumentVariants() {

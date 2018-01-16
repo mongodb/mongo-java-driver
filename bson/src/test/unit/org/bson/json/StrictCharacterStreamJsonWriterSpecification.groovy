@@ -383,7 +383,6 @@ class StrictCharacterStreamJsonWriterSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
-
     }
 
     def shouldThrowAnExceptionWhenWritingNullValue() {
@@ -478,7 +477,6 @@ class StrictCharacterStreamJsonWriterSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
-
     }
 
     def shouldStopAtMaxLength() {

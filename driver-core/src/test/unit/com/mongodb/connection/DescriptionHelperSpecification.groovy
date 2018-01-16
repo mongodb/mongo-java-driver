@@ -130,7 +130,6 @@ class DescriptionHelperSpecification extends Specification {
         expect:
         createServerDescription(serverAddress,
                 parse('{ ok : 1 }'), serverVersion, roundTripTime).getLastUpdateTime(TimeUnit.NANOSECONDS) == Time.CONSTANT_TIME
-
     }
 
     def 'server description should reflect roundTripNanos'() {

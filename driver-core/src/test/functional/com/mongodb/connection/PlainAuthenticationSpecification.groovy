@@ -110,7 +110,6 @@ class PlainAuthenticationSpecification extends Specification {
             FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<Void>();
             connection.openAsync(futureResultCallback)
             futureResultCallback.get(ClusterFixture.TIMEOUT, SECONDS);
-
         } else {
             connection.open()
         }

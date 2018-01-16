@@ -94,6 +94,5 @@ class SingleServerBindingSpecification extends Specification {
 
         then:
         binding.count == 0
-
     }
 }

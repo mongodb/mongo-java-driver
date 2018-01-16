@@ -120,7 +120,6 @@ class JsonWriterSettingsSpecification extends Specification {
         settings.isIndent()
         settings.getIndentCharacters() == '\t'
         settings.getNewLineCharacters() == '\r'
-
     }
 
     def 'should use legacy extended json converters for strict mode'() {

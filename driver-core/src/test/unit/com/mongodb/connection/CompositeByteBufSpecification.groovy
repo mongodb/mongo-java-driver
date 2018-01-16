@@ -76,7 +76,6 @@ class CompositeByteBufSpecification extends Specification {
 
         then:
         thrown(IllegalStateException)
-
     }
 
     def 'order should throw if not little endian'() {
@@ -500,7 +499,6 @@ class CompositeByteBufSpecification extends Specification {
         def bytes = new byte[5]
         nio.get(bytes)
         bytes == [2, 3, 4, 5, 6] as byte[]
-
     }
 
     def 'should throw IndexOutOfBoundsException if reading out of bounds'() {

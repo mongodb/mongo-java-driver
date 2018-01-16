@@ -381,7 +381,6 @@ class DefaultServerSpecification extends Specification {
                 BsonDocument result, Throwable t -> latch.countDown()
             }
             latch.await()
-
         } else {
             testConnection.killCursor(new MongoNamespace('test.test'), [])
         }

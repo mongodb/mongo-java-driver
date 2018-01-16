@@ -34,6 +34,11 @@
         <exclude name="TrailingComma"/>
         <exclude name="CouldBeSwitchStatement"/>
         <exclude name="NoDef"/>
+        <exclude name='InvertedCondition'/>
+        <exclude name='MethodReturnTypeRequired'/>
+        <exclude name='MethodParameterTypeRequired'/>
+        <exclude name='FieldTypeRequired '/>
+        <exclude name="VariableTypeRequired"/>
     </ruleset-ref>
     <ruleset-ref path='rulesets/design.xml'>
         <rule-config name='BuilderMethodWithSideEffects'>
@@ -64,6 +69,7 @@
         <exclude name='BlankLineBeforePackage'/>
         <exclude name='ConsecutiveBlankLines'/>
         <exclude name='FileEndsWithoutNewline'/>
+        <exclude name='Indentation'/>
     </ruleset-ref>
     <ruleset-ref path='rulesets/generic.xml'/>
     <ruleset-ref path='rulesets/groovyism.xml'>

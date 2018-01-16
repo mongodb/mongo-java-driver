@@ -60,7 +60,6 @@ class ByteBufferBsonInputSpecification extends Specification {
         expect:
         bytesRead == bytes
         stream.position == 3
-
     }
 
     def 'should read into a byte array at offset until length'() {

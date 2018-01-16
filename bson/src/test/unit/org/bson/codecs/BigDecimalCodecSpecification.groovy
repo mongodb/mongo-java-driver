@@ -63,6 +63,5 @@ class BigDecimalCodecSpecification extends Specification {
                 new BigDecimal(Long.MIN_VALUE),
                 new BigDecimal(0),
         ]
-
     }
 }

@@ -90,7 +90,6 @@ class MultiServerClusterSpecification extends Specification {
         then:
         cluster.getDescription().type == REPLICA_SET
         cluster.getDescription().connectionMode == MULTIPLE
-
     }
 
     def 'should not get server when closed'() {

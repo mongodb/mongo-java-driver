@@ -170,7 +170,6 @@ class ClusterSettingsSpecification extends Specification {
         ClusterSettings.builder().hosts([new ServerAddress(), new ServerAddress('other')]).mode(ClusterConnectionMode.SINGLE).build();
         then:
         thrown(IllegalArgumentException)
-
     }
 
     def 'when cluster type is Standalone and multiple hosts are specified, should throw'() {

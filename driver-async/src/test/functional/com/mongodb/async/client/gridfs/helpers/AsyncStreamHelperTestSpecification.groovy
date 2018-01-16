@@ -87,7 +87,6 @@ class AsyncStreamHelperTestSpecification extends FunctionalSpecification {
         content                             | new byte[content.length]
         ByteBuffer.wrap(content)            | ByteBuffer.allocate(content.length)
         new ByteArrayInputStream(content)   | new ByteArrayOutputStream(content.length)
-
     }
 
     def 'should accept data bigger than the chunkSize'() {

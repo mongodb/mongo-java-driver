@@ -35,7 +35,6 @@ class CommandListenerMulticasterSpecification extends Specification {
 
         expect:
         multicaster.commandListeners == [first, second]
-
     }
 
     def 'should multicast command started event'() {

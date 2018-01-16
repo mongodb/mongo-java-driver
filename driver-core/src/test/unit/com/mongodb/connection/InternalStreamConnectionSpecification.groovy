@@ -103,7 +103,6 @@ class InternalStreamConnectionSpecification extends Specification {
         connection.opened()
         connection.getDescription().getServerType() == ServerType.STANDALONE
         connection.getDescription().getConnectionId().getServerValue() == 1
-
     }
 
     @Category(Async)
@@ -125,7 +124,6 @@ class InternalStreamConnectionSpecification extends Specification {
         connection.opened()
         connection.getDescription().getServerType() == ServerType.STANDALONE
         connection.getDescription().getConnectionId().getServerValue() == 1
-
     }
 
     def 'should close the stream when initialization throws an exception'() {

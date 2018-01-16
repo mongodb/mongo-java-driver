@@ -31,7 +31,6 @@ class OperationTypeSpecification extends Specification {
         OperationType.INVALIDATE | 'invalidate'
         OperationType.REPLACE    | 'replace'
         OperationType.UPDATE     | 'update'
-
     }
 
     def 'should support valid string representations'() {

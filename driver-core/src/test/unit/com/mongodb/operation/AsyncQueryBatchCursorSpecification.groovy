@@ -426,7 +426,6 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         serverVersion                | commandAsync         | response
         new ServerVersion([3, 2, 0]) | true                 | documentResponse(SECOND_BATCH)
         new ServerVersion([3, 0, 0]) | false                | queryResult(SECOND_BATCH)
-
     }
 
     def 'should kill the cursor in the getMore callback if it was closed before getMore returned'() {
@@ -480,7 +479,6 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         serverVersion                | commandAsync         | response
         new ServerVersion([3, 2, 0]) | true                 | documentResponse([])
         new ServerVersion([3, 0, 0]) | false                | new QueryResult(NAMESPACE, [], 42, SERVER_ADDRESS)
-
     }
 
     def 'should handle errors when calling close'() {

@@ -65,7 +65,6 @@ class ByteBufBsonDocumentSpecification extends Specification {
         byteBufDocument.get('z') == null
         byteBufDocument.get('a') == new BsonInt32(1)
         byteBufDocument.get('b') == new BsonInt32(2)
-
     }
 
     def 'get should throw if the key is null'() {

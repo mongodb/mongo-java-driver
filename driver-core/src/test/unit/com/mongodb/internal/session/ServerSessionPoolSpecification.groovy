@@ -91,7 +91,6 @@ class ServerSessionPoolSpecification extends Specification {
 
         then:
         thrown(IllegalStateException)
-
     }
 
     def 'should pool session'() {
@@ -201,7 +200,6 @@ class ServerSessionPoolSpecification extends Specification {
 
         then:
         session == newSession
-
     }
 
     def 'should initialize session'() {

@@ -119,7 +119,6 @@ class SslSettingsSpecification extends Specification {
                 .context(SSLContext.getDefault()).build().hashCode() ==
                 builder().enabled(true).invalidHostNameAllowed(true)
                         .context(SSLContext.getDefault()).build().hashCode()
-
     }
 
     @IgnoreIf({ isNotAtLeastJava7() })

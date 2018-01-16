@@ -50,7 +50,6 @@ class IndexMapSpecification extends Specification {
     }
 
     def 'should throw on unmapped index'() {
-
         when:
         indexMap.map(-1)
 

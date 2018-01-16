@@ -55,7 +55,6 @@ class PolygonCodecSpecification extends Specification {
 
         then:
         polygon == decodedPolygon
-
     }
 
     def 'should round trip with coordinate reference system'() {

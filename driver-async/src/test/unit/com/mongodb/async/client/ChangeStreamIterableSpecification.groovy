@@ -132,7 +132,6 @@ class ChangeStreamIterableSpecification extends Specification {
         def count = 0
         def cannedResults = ['{_id: 1}', '{_id: 2}', '{_id: 3}'].collect {
             new ChangeStreamDocument(RawBsonDocument.parse(it), null, Document.parse(it), BsonDocument.parse(it), null, null)
-
         }
         def executor = new TestOperationExecutor([cursor(cannedResults), cursor(cannedResults), cursor(cannedResults),
                                                   cursor(cannedResults), cursor(cannedResults)])

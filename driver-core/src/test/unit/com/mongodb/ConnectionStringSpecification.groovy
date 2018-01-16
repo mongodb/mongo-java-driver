@@ -294,13 +294,11 @@ class ConnectionStringSpecification extends Specification {
     def 'should ignore authSource if there is no credential'() {
         expect:
         new ConnectionString('mongodb://localhost/?authSource=test').credentialList == []
-
     }
 
     def 'should ignore authMechanismProperties if there is no credential'() {
         expect:
         new ConnectionString('mongodb://localhost/?&authMechanismProperties=SERVICE_REALM:AWESOME').credentialList == []
-
     }
 
     @Unroll
@@ -397,7 +395,6 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://localhost/?compressors=zlib') | createZlibCompressor()
         new ConnectionString('mongodb://localhost/?compressors=zlib' +
                 '&zlibCompressionLevel=5')                                           | createZlibCompressor().withProperty(LEVEL, 5)
-
     }
 
     def 'should be equal to another instance with the same string values'() {
