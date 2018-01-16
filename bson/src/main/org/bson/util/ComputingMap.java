@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
 
-import static com.mongodb.assertions.Assertions.notNull;
+import static org.bson.assertions.Assertions.notNull;
 
 final class ComputingMap<K, V> implements Map<K, V>, Function<K, V> {
 

@@ -16,7 +16,6 @@
 
 package org.bson
 
-import com.mongodb.BasicDBObject
 import org.bson.io.BasicOutputBuffer
 import org.bson.io.OutputBuffer
 import org.bson.types.BSONTimestamp
@@ -39,7 +38,7 @@ import java.util.regex.Pattern
 class BasicBSONEncoderSpecification extends Specification {
 
     def setupSpec() {
-        Map.metaClass.bitwiseNegate = { new BasicDBObject(delegate) }
+        Map.metaClass.bitwiseNegate = { new BasicBSONObject(delegate) }
         Pattern.metaClass.equals = { Pattern other ->
             delegate.pattern() == other.pattern() && delegate.flags() == other.flags()
         }

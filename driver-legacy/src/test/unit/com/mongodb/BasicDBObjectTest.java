@@ -192,6 +192,11 @@ public class BasicDBObjectTest {
         assertEquality(new BasicDBObject("a", first), new BasicDBObject("a", second));
     }
 
+    @Test
+    public void testGetEncoder() {
+        assertEquals(DefaultDBEncoder.class, new BasicDBObject().getEncoder().getClass());
+    }
+
     void assertEquality(final BasicBSONObject x, final BasicBSONObject y) {
         assertEquals(x, y);
         assertEquals(y, x);

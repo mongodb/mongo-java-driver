@@ -17,7 +17,6 @@
 
 package org.bson.util;
 
-import com.mongodb.annotations.ThreadSafe;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -28,9 +27,9 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Collections.unmodifiableCollection;
 import static java.util.Collections.unmodifiableSet;
+import static org.bson.assertions.Assertions.notNull;
 
 /**
  * Abstract base class for COW {@link java.util.Map} implementations that delegate to an internal map.
@@ -39,7 +38,6 @@ import static java.util.Collections.unmodifiableSet;
  * @param <V> The value type
  * @param <M> the internal {@link java.util.Map} or extension for things like sorted and navigable maps.
  */
-@ThreadSafe
 abstract class AbstractCopyOnWriteMap<K, V, M extends Map<K, V>> implements ConcurrentMap<K, V> {
 
     // @GuardedBy("lock")
