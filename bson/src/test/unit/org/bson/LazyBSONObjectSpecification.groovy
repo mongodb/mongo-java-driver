@@ -16,11 +16,6 @@
 
 package org.bson
 
-import com.mongodb.BasicDBObject
-import com.mongodb.DBObjectCodec
-import com.mongodb.LazyDBCallback
-import com.mongodb.MongoClient
-import org.bson.codecs.DecoderContext
 import org.bson.types.BSONTimestamp
 import org.bson.types.Binary
 import org.bson.types.Code
@@ -44,7 +39,7 @@ import static org.bson.BsonType.UNDEFINED
 class LazyBSONObjectSpecification extends Specification {
 
     def setupSpec() {
-        Map.metaClass.bitwiseNegate = { new BasicDBObject(delegate) }
+        Map.metaClass.bitwiseNegate = { new BasicBSONObject(delegate) }
         Pattern.metaClass.equals = { Pattern other ->
             delegate.pattern() == other.pattern() && delegate.flags() == other.flags()
         }
@@ -106,9 +101,10 @@ class LazyBSONObjectSpecification extends Specification {
     def 'should read value of #value'() {
         given:
         def bsonDocument = new BsonDocument('name', value)
-        def dbObject = new DBObjectCodec(MongoClient.defaultCodecRegistry)
-                .decode(new BsonDocumentReader(bsonDocument), DecoderContext.builder().build())
-        def lazyBSONObject = new LazyBSONObject(toBson(bsonDocument).array(), new LazyDBCallback())
+        def callback = new BasicBSONCallback()
+        new BasicBSONDecoder().decode(toBson(bsonDocument).array(), callback)
+        def dbObject = callback.get() as BasicBSONObject
+        def lazyBSONObject = new LazyBSONObject(toBson(bsonDocument).array(), new LazyBSONCallback())
 
         expect:
         lazyBSONObject.keySet().contains('name')

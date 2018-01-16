@@ -21,7 +21,8 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 import java.util.Set;
 
-import static com.mongodb.assertions.Assertions.isTrue;
+import static org.bson.assertions.Assertions.isTrue;
+
 
 class StringRangeSet implements Set<String> {
 

@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import org.bson.BSONEncoder;
 import org.bson.BasicBSONObject;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
@@ -120,6 +121,11 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
     public BasicDBObject append(final String key, final Object val) {
         put(key, val);
         return this;
+    }
+
+    @Override
+    protected BSONEncoder getEncoder() {
+        return new DefaultDBEncoder();
     }
 
     /**

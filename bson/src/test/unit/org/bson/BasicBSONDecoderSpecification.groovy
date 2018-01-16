@@ -16,7 +16,6 @@
 
 package org.bson
 
-import com.mongodb.BasicDBObject
 import org.bson.types.BSONTimestamp
 import org.bson.types.Binary
 import org.bson.types.Code
@@ -38,7 +37,7 @@ class BasicBSONDecoderSpecification extends Specification {
     private final BSONDecoder bsonDecoder = new BasicBSONDecoder();
 
     def setupSpec() {
-        Map.metaClass.bitwiseNegate = { new BasicDBObject(delegate) }
+        Map.metaClass.bitwiseNegate = { new BasicBSONObject(delegate) }
         Pattern.metaClass.equals = { Pattern other ->
             delegate.pattern() == other.pattern() && delegate.flags() == other.flags()
         }

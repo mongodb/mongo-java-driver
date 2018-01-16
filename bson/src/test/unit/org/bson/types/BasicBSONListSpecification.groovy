@@ -16,7 +16,6 @@
 
 package org.bson.types
 
-import com.mongodb.BasicDBList
 import org.bson.BSONObject
 import spock.lang.Specification
 
@@ -30,7 +29,7 @@ class BasicBSONListSpecification extends Specification {
         obj.put(2, 'c')
 
         then:
-        obj == ['a', 'b', 'c'] as BasicDBList
+        obj == ['a', 'b', 'c'] as BasicBSONList
     }
 
     def 'should support keys that are strings which be converted to ints'() {
@@ -41,7 +40,7 @@ class BasicBSONListSpecification extends Specification {
         obj.put('2', 'c')
 
         then:
-        obj == ['a', 'b', 'c'] as BasicDBList
+        obj == ['a', 'b', 'c'] as BasicBSONList
     }
 
     def 'should throw IllegalArgumentException if passed invalid string key'() {
@@ -61,7 +60,7 @@ class BasicBSONListSpecification extends Specification {
         obj.put(5, 'c')
 
         then:
-        obj == ['a', 'b', null, null, null, 'c'] as BasicDBList
+        obj == ['a', 'b', null, null, null, 'c'] as BasicBSONList
     }
 
     def 'should provide an iterable keySet'() {

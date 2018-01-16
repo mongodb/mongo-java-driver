@@ -336,17 +336,6 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
     }
 
     /**
-     * Returns a JSON serialization of this object
-     *
-     * @return JSON serialization
-     */
-    @Override
-    @SuppressWarnings("deprecation")
-    public String toString() {
-        return com.mongodb.util.JSONSerializers.getStrict().serialize(this);
-    }
-
-    /**
      * Compares two documents according to their serialized form, ignoring the order of keys.
      *
      * @param o the document to compare to, which must be an instance of {@link org.bson.BSONObject}.
@@ -368,7 +357,7 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
             return false;
         }
 
-        return Arrays.equals(canonicalizeBSONObject(this).encode(), canonicalizeBSONObject(other).encode());
+        return Arrays.equals(getEncoder().encode(canonicalizeBSONObject(this)), getEncoder().encode(canonicalizeBSONObject(other)));
     }
 
     @Override
@@ -377,7 +366,16 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
     }
 
     private byte[] encode() {
-        return new BasicBSONEncoder().encode(this);
+        return getEncoder().encode(this);
+    }
+
+    /**
+     * Creates a {@code BSONEncoder} to use for encoding instances of this class.
+     *
+     * @return the BSONEncoder to use to encode instances of this class
+     */
+    protected BSONEncoder getEncoder() {
+        return new BasicBSONEncoder();
     }
 
     // create a copy of "from", but with keys ordered alphabetically

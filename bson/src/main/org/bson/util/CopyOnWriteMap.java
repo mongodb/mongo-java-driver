@@ -17,8 +17,6 @@
 
 package org.bson.util;
 
-import com.mongodb.annotations.ThreadSafe;
-
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -58,7 +56,6 @@ import java.util.Map;
  * @param <V> the value type
  * @author Jed Wesley-Smith
  */
-@ThreadSafe
 abstract class CopyOnWriteMap<K, V> extends AbstractCopyOnWriteMap<K, V, Map<K, V>> {
     private static final long serialVersionUID = 7935514534647505917L;
 

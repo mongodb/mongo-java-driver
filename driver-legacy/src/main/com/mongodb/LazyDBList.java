@@ -56,4 +56,14 @@ public class LazyDBList extends LazyBSONList implements DBObject {
     public boolean isPartialObject() {
         return isPartial;
     }
+
+    /**
+     * Returns a JSON serialization of this object
+     *
+     * @return JSON serialization
+     */
+    @SuppressWarnings("deprecation")
+    public String toString() {
+        return com.mongodb.util.JSON.serialize(this);
+    }
 }

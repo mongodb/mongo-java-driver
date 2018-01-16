@@ -16,7 +16,6 @@
 
 package org.bson;
 
-import com.mongodb.BasicDBObject;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.OutputBuffer;
 import org.bson.types.CodeWScope;
@@ -31,7 +30,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import static com.mongodb.util.Util.hexMD5;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
@@ -55,27 +53,34 @@ public class BSONTest {
 
     @Test
     public void testSimpleDocuments() throws IOException {
-        checkEncodingAndDecoding(new BasicBSONObject("x", true), 9, "6fe24623e4efc5cf07f027f9c66b5456");
-        checkEncodingAndDecoding(new BasicBSONObject("x", null), 8, "12d43430ff6729af501faf0638e68888");
-        checkEncodingAndDecoding(new BasicBSONObject("x", 5.2), 16, "aaeeac4a58e9c30eec6b0b0319d0dff2");
-        checkEncodingAndDecoding(new BasicBSONObject("x", "eliot"), 18, "331a3b8b7cbbe0706c80acdb45d4ebbe");
+        checkEncodingAndDecoding(new BasicBSONObject("x", true), 9, "090000000878000100");
+        checkEncodingAndDecoding(new BasicBSONObject("x", null), 8, "080000000a780000");
+        checkEncodingAndDecoding(new BasicBSONObject("x", 5.2), 16, "10000000017800cdcccccccccc144000");
+        checkEncodingAndDecoding(new BasicBSONObject("x", "eliot"), 18,
+                "1200000002780006000000656c696f740000");
         checkEncodingAndDecoding(new BasicBSONObject("x", 5.2).append("y", "truth")
                                                               .append("z", 1.1),
-                                 40, "7c77b3a6e63e2f988ede92624409da58");
+                                 40,
+                "28000000017800cdcccccccccc144002790006000000747275746800017a009a9999999999f13f00");
 
-        checkEncodingAndDecoding(new BasicBSONObject("a", new BasicBSONObject("b", 1.1)), 24, "31887a4b9d55cd9f17752d6a8a45d51f");
+        checkEncodingAndDecoding(new BasicBSONObject("a", new BasicBSONObject("b", 1.1)), 24,
+                "18000000036100100000000162009a9999999999f13f0000");
         checkEncodingAndDecoding(new BasicBSONObject("x", 5.2).append("y", new BasicBSONObject("a", "eliot").append("b", true))
                                                               .append("z", null),
-                                 44, "b3de8a0739ab329e7aea138d87235205");
+                                 44,
+                "2c000000017800cdcccccccccc14400379001600000002610006000000656c696f740008620001000a7a0000");
         checkEncodingAndDecoding(new BasicBSONObject("x", 5.2).append("y", new Object[]{"a", "eliot", "b", true})
                                                               .append("z", null),
-                                 62, "cb7bad5697714ba0cbf51d113b6a0ee8");
-        checkEncodingAndDecoding(new BasicBSONObject("x", 4), 12, "d1ed8dbf79b78fa215e2ded74548d89d");
+                                 62,
+                "3e000000017800cdcccccccccc14400479002800000002300002000000610002310006000000656c696f740002"
+                        + "320002000000620008330001000a7a0000");
+        checkEncodingAndDecoding(new BasicBSONObject("x", 4), 12, "0c0000001078000400000000");
     }
 
     @Test
     public void testArray() throws IOException {
-        checkEncodingAndDecoding(new BasicBSONObject("x", new int[]{1, 2, 3, 4}), 41, "e63397fe37de1349c50e1e4377a45e2d");
+        checkEncodingAndDecoding(new BasicBSONObject("x", new int[]{1, 2, 3, 4}), 41,
+                "2900000004780021000000103000010000001031000200000010320003000000103300040000000000");
     }
 
     @Test
@@ -83,29 +88,33 @@ public class BSONTest {
         BSONObject scope = new BasicBSONObject("x", 1);
         CodeWScope c = new CodeWScope("function() { x += 1; }", scope);
         BSONObject document = new BasicBSONObject("map", c);
-        checkEncodingAndDecoding(document, 53, "52918d2367533165bfc617df50335cbb");
+        checkEncodingAndDecoding(document, 53,
+                "350000000f6d6170002b0000001700000066756e6374696f6e2829207b2078202b3d20313b207d000c000000107800010000000000");
     }
 
     @Test
     public void testBinary() throws IOException {
-        byte[] data = new byte[10000];
-        for (int i = 0; i < 10000; i++) {
+        byte[] data = new byte[100];
+        for (int i = 0; i < 100; i++) {
             data[i] = 1;
         }
         BSONObject document = new BasicBSONObject("bin", data);
-        checkEncodingAndDecoding(document, 10015, "1d439ba5b959ecfe297a7862bf95bc10");
+        checkEncodingAndDecoding(document, 115,
+                "730000000562696e006400000000010101010101010101010101010101010101010101010101010101010101010101010101010101"
+                        + "01010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101010101"
+                        + "01010101010100");
     }
 
     private void checkEncodingAndDecoding(final BSONObject toEncodeAndDecode,
                                           final int expectedEncodedSize,
-                                          final String expectedHash) throws IOException {
+                                          final String expectedHex) throws IOException {
         // check encoding
         BSONEncoder bsonEncoder = new BasicBSONEncoder();
         OutputBuffer buf = new BasicOutputBuffer();
         bsonEncoder.set(buf);
         bsonEncoder.putObject(toEncodeAndDecode);
         assertEquals(expectedEncodedSize, buf.size());
-        assertEquals(expectedHash, hexMD5(buf.toByteArray()));
+        assertEquals(expectedHex, toHex(buf.toByteArray()));
         bsonEncoder.done();
 
         // check decoding
@@ -120,7 +129,7 @@ public class BSONTest {
         bsonEncoder.set(buf2);
         bsonEncoder.putObject((BSONObject) callback.get());
         assertEquals(expectedEncodedSize, buf2.size());
-        assertEquals(expectedHash, hexMD5(buf2.toByteArray()));
+        assertEquals(expectedHex, toHex(buf2.toByteArray()));
     }
 
     @Test
@@ -307,9 +316,14 @@ public class BSONTest {
 
     @Test
     public void testEncodingDecode() {
-        BasicDBObject inputDoc = new BasicDBObject("_id", 1);
+        BasicBSONObject inputDoc = new BasicBSONObject("_id", 1);
         byte[] encoded = BSON.encode(inputDoc);
         assertEquals(inputDoc, BSON.decode(encoded));
+    }
+
+    @Test
+    public void testGetEncoder() {
+        assertEquals(BasicBSONEncoder.class, new BasicBSONObject().getEncoder().getClass());
     }
 
     @Test
@@ -320,6 +334,20 @@ public class BSONTest {
         assertEquals(21, BSON.toInt(21.32d));
         assertEquals(13, BSON.toInt(13));
     }
+
+    public static String toHex(final byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (final byte b : bytes) {
+            String s = Integer.toHexString(0xff & b);
+
+            if (s.length() < 2) {
+                sb.append("0");
+            }
+            sb.append(s);
+        }
+        return sb.toString();
+    }
+
 
     private static class StubTransformer implements Transformer {
 

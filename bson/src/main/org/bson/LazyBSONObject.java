@@ -429,16 +429,6 @@ public class LazyBSONObject implements BSONObject {
         return true;
     }
 
-    /**
-     * Returns a JSON serialization of this object
-     *
-     * @return JSON serialization
-     */
-    @SuppressWarnings("deprecation")
-    public String toString() {
-        return com.mongodb.util.JSON.serialize(this);
-    }
-
 
     /* ----------------- Unsupported operations --------------------- */
 
