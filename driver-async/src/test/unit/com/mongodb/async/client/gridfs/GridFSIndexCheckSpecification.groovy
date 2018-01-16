@@ -155,7 +155,6 @@ class GridFSIndexCheckSpecification extends Specification {
         if (clientSession != null) {
             1 * chunksCollection.createIndex(clientSession, { index -> index == Document.parse('{"files_id": 1, "n": 1}') },
                     { indexOptions -> indexOptions.isUnique() }, _) >> { it.last().onResult('files_id_1', null) }
-
         } else {
             1 * chunksCollection.createIndex({ index -> index == Document.parse('{"files_id": 1, "n": 1}') },
                     { indexOptions -> indexOptions.isUnique() }, _) >> { it.last().onResult('files_id_1', null) }
@@ -270,7 +269,6 @@ class GridFSIndexCheckSpecification extends Specification {
         if (clientSession != null) {
             1 * chunksCollection.createIndex(clientSession, { index -> index == Document.parse('{"files_id": 1, "n": 1}') },
                     { indexOptions -> indexOptions.isUnique() }, _) >> { it.last().onResult('files_id_1', null) }
-
         } else {
             1 * chunksCollection.createIndex({ index -> index == Document.parse('{"files_id": 1, "n": 1}') },
                     { indexOptions -> indexOptions.isUnique() }, _) >> { it.last().onResult('files_id_1', null) }

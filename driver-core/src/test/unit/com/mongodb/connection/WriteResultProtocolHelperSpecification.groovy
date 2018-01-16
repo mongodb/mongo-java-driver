@@ -41,7 +41,6 @@ class WriteResultProtocolHelperSpecification extends Specification {
 
         then:
         writeResult == WriteConcernResult.acknowledged(0, false, null)
-
     }
 
     def 'should return a write result for an upsert'() {
@@ -55,7 +54,6 @@ class WriteResultProtocolHelperSpecification extends Specification {
 
         then:
         writeResult == WriteConcernResult.acknowledged(1, false, new BsonObjectId(id))
-
     }
 
     def 'should throw command failure if result is not ok'() {

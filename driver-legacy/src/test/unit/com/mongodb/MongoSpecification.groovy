@@ -115,7 +115,6 @@ class MongoSpecification extends Specification {
                         new BsonDocument('ok', new BsonInt32(1))
                     }
                 }
-
             }
         }
 

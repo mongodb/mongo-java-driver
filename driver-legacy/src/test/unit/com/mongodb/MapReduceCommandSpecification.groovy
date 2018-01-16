@@ -44,7 +44,6 @@ class MapReduceCommandSpecification extends Specification {
 
     @Unroll
     def 'should have the correct default for #field'() throws Exception {
-
         expect:
         value == expected
 
@@ -69,7 +68,6 @@ class MapReduceCommandSpecification extends Specification {
 
     @Unroll
     def 'should be able to change the default for #field'() throws Exception {
-
         expect:
         value == expected
 

@@ -122,7 +122,6 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
         then:
         document instanceof ClassA
-
     }
 
     def 'should use internal classes for findAndModify'() {
@@ -578,7 +577,6 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         new BasicDBObject()                       | [x: -1] as BasicDBObject      | 2
         [x: 1] as BasicDBObject                   | [x: 1, y: 1] as BasicDBObject | 3
         QueryBuilder.start('x').lessThan(2).get() | [y: -1] as BasicDBObject      | 5
-
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })

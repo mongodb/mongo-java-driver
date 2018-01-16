@@ -86,7 +86,6 @@ class ArrayUpdatesFunctionalSpecification extends OperationFunctionalSpecificati
 
         then:
         find() == [new Document('_id', 1).append('x', [1, 2, 3, 4, 4])]
-
     }
 
     def 'push with each'() {

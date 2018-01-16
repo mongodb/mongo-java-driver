@@ -38,7 +38,6 @@ class DBCollectionCountOptionsSpecification extends Specification {
         options.getReadConcern() == null
         options.getReadPreference() == null
         options.getSkip() == 0
-
     }
 
     def 'should set and return the expected values'() {

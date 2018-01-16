@@ -526,7 +526,6 @@ class DBCollectionSpecification extends Specification {
                 new BsonDocument(), collection.getDefaultDBObjectCodec()).key(BsonDocument.parse('{name: 1}')).collation(collation)
                 .filter(new BsonDocument())
         )
-
     }
 
     def 'mapReduce should create the correct MapReduceInlineResultsOperation'() {

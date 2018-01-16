@@ -233,6 +233,5 @@ class ByteBufSpecification extends Specification {
 
         where:
         provider << [new NettyBufferProvider(), new SimpleBufferProvider()]
-
     }
 }

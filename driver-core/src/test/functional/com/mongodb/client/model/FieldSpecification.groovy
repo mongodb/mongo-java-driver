@@ -25,7 +25,6 @@ class FieldSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
-
     }
 
     def 'should accept null values'() {

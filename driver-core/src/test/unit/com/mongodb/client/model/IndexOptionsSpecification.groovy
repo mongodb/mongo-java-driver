@@ -116,6 +116,5 @@ class IndexOptionsSpecification extends Specification {
 
         then:
         options.getExpireAfter(TimeUnit.SECONDS) == 1
-
     }
 }
