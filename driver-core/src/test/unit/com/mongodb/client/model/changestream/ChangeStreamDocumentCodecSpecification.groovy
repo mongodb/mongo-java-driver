@@ -35,7 +35,6 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 class ChangeStreamDocumentCodecSpecification extends Specification {
 
     def 'should round trip ChangeStreamDocument successfully'() {
-
         given:
         def codecRegistry = fromProviders([new DocumentCodecProvider(), new BsonValueCodecProvider(), new ValueCodecProvider()])
         def codec = new ChangeStreamDocumentCodec(clazz, codecRegistry)

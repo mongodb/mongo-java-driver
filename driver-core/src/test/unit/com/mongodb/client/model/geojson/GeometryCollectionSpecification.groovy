@@ -57,6 +57,5 @@ class GeometryCollectionSpecification extends Specification {
         new GeometryCollection(geometries).hashCode() == new GeometryCollection(geometries).hashCode()
         new GeometryCollection(geometries).toString() ==
         'GeometryCollection{geometries=[Point{coordinate=Position{values=[1.0, 2.0]}}, Point{coordinate=Position{values=[2.0, 2.0]}}]}'
-
     }
 }

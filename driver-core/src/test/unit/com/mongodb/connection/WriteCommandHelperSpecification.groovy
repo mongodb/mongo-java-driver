@@ -127,7 +127,6 @@ class WriteCommandHelperSpecification extends Specification {
                                                   new BsonString('id1')))])),
                               new ServerAddress())
                 .writeErrors
-
     }
 
     def 'should get write concern error from writeConcernError field'() {

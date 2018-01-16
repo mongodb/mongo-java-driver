@@ -183,7 +183,6 @@ class BulkWriteBatchSpecification extends Specification {
         !bulkWriteBatch.hasAnotherBatch()
         bulkWriteBatch.getCommand() == toBsonDocument('''{"delete": "coll", "ordered": false,
                 "writeConcern": {"w" : "majority"}, "bypassDocumentValidation" : true }''')
-
     }
 
     def 'should split payloads if only payload partially processed'() {

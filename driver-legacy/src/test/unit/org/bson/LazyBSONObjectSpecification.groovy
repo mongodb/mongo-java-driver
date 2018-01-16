@@ -159,7 +159,6 @@ class LazyBSONObjectSpecification extends Specification {
         then:
         document.get('f') instanceof LazyBSONObject
         document.get('f').keySet() == ['$ref', '$id'] as Set
-
     }
 
     def 'should retain fields order'() {
@@ -362,8 +361,5 @@ class LazyBSONObjectSpecification extends Specification {
 
         then:
         bytes == baos.toByteArray()
-
     }
-
-
 }

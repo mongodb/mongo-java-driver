@@ -27,7 +27,6 @@ import spock.lang.Specification
 class OperationTypeCodecSpecification extends Specification {
 
     def 'should round trip OperationType successfully'() {
-
         when:
         def codec = new OperationTypeCodec()
 
@@ -61,6 +60,5 @@ class OperationTypeCodecSpecification extends Specification {
                 OperationType.REPLACE,
                 OperationType.UPDATE
         ]
-
     }
 }

@@ -763,7 +763,6 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
     }
 
     def 'should throw IllegalArgumentException when passed an empty bulk operation'() {
-
         when:
         new MixedBulkWriteOperation(getNamespace(), [], ordered, UNACKNOWLEDGED, false)
 

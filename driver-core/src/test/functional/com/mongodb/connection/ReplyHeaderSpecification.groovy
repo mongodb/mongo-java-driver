@@ -60,7 +60,6 @@ class ReplyHeaderSpecification extends Specification {
     }
 
     def 'should parse reply header with compressed header'() {
-
         def outputBuffer = new BasicOutputBuffer();
         outputBuffer.with {
             writeInt(186)
@@ -187,7 +186,6 @@ class ReplyHeaderSpecification extends Specification {
     }
 
     def 'should throw MongoInternalException on num documents < 0 with compressed header'() {
-
         def outputBuffer = new BasicOutputBuffer();
         outputBuffer.with {
             writeInt(186)

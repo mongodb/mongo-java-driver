@@ -50,7 +50,6 @@ class NettyStreamFactoryFactorySmokeTestSpecification extends FunctionalSpecific
 
         cleanup:
         mongoClient?.close()
-
     }
 
     def run(operation, ... args) {

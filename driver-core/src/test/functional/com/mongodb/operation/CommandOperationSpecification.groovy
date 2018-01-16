@@ -59,7 +59,6 @@ class CommandOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         result.getNumber('n').intValue() == 0
-
     }
 
     def 'should execute write command'() {

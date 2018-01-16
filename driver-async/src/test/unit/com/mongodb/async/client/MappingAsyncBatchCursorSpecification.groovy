@@ -66,7 +66,6 @@ class MappingAsyncBatchCursorSpecification extends Specification {
         then:
         results.get() == null
         mappingAsyncBatchCursor.isClosed()
-
     }
 
     def 'should capture mapping errors'() {

@@ -59,7 +59,6 @@ class DeleteOperationSpecification extends OperationFunctionalSpecification {
 
         where:
         async << [true, false]
-
     }
 
     @Category(Slow)

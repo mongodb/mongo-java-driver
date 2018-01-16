@@ -68,7 +68,6 @@ class GridFSFileCodecSpecification extends Specification {
             new GridFSFile(ID, FILENAME, LENGTH, CHUNKSIZE, UPLOADDATE, MD5, null, EXTRAELEMENTS),
             new GridFSFile(ID, FILENAME, LENGTH, CHUNKSIZE, UPLOADDATE, MD5, METADATA, EXTRAELEMENTS)
         ]
-
     }
 
     def 'it should decode extra elements'() {
