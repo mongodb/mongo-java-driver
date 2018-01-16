@@ -28,6 +28,7 @@ import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
 
 import java.io.StringWriter;
+import java.util.Locale;
 import java.util.Set;
 
 import static com.mongodb.connection.ProtocolHelper.sendCommandFailedEvent;
@@ -111,8 +112,8 @@ class LoggingCommandEventSender implements CommandEventSender {
 
         if (loggingRequired()) {
             logger.debug(
-                    format("Execution of command with request id %d failed to complete successfully in %.2f ms on connection [%s] "
-                                    + "to server %s",
+                    format(Locale.US, "Execution of command with request id %d failed to complete successfully in %.2f ms on connection "
+                                    + "[%s] to server %s",
                             message.getId(), nanosToMillis(elapsedTimeNanos), description.getConnectionId(),
                             description.getServerAddress()),
                     commandEventException);
@@ -129,7 +130,8 @@ class LoggingCommandEventSender implements CommandEventSender {
 
         if (loggingRequired()) {
             logger.debug(
-                    format("Execution of command with request id %d completed successfully in %.2f ms on connection [%s] to server %s",
+                    format(Locale.US, "Execution of command with request id %d completed successfully in %.2f ms on connection [%s] to "
+                                    + "server %s",
                             message.getId(), nanosToMillis(elapsedTimeNanos), description.getConnectionId(),
                             description.getServerAddress()));
         }
@@ -149,8 +151,8 @@ class LoggingCommandEventSender implements CommandEventSender {
 
         if (loggingRequired()) {
             logger.debug(
-                    format("Execution of one-way command with request id %d completed successfully in %.2f ms on connection [%s] "
-                                    + "to server %s",
+                    format(Locale.US, "Execution of one-way command with request id %d completed successfully in %.2f ms on connection "
+                                    + "[%s] to server %s",
                             message.getId(), nanosToMillis(elapsedTimeNanos), description.getConnectionId(),
                             description.getServerAddress()));
         }
