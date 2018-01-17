@@ -69,7 +69,7 @@ public final class MongoClients {
 
     /**
      * Gets the default codec registry.  It includes the following providers:
-     * 
+     *
      * <ul>
      * <li>{@link org.bson.codecs.ValueCodecProvider}</li>
      * <li>{@link org.bson.codecs.BsonValueCodecProvider}</li>
