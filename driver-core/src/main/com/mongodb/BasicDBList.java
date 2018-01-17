@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2018 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -26,17 +26,6 @@ import org.bson.types.BasicBSONList;
 public class BasicDBList extends BasicBSONList implements DBObject {
 
     private static final long serialVersionUID = -4415279469780082174L;
-
-    /**
-     * Returns a JSON serialization of this object
-     *
-     * @return JSON serialization
-     */
-    @Override
-    @SuppressWarnings("deprecation")
-    public String toString() {
-        return com.mongodb.util.JSON.serialize(this);
-    }
 
     @Override
     public boolean isPartialObject() {

@@ -23,12 +23,15 @@ import org.bson.BsonBinarySubType
 import org.bson.BsonDocument
 import org.bson.BsonDocumentReader
 import org.bson.BsonDocumentWriter
+import org.bson.BsonInt32
 import org.bson.BsonSymbol
+import org.bson.BsonTimestamp
 import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.UuidCodec
 import org.bson.codecs.ValueCodecProvider
+import org.bson.types.BSONTimestamp
 import org.bson.types.Binary
 import org.bson.types.Symbol
 import spock.lang.Specification
@@ -45,6 +48,29 @@ class DBObjectCodecSpecification extends Specification {
     def bsonDoc = new BsonDocument()
     def codecRegistry = fromProviders([new ValueCodecProvider(), new DBObjectCodecProvider(), new BsonValueCodecProvider()])
     def dbObjectCodec = new DBObjectCodec(codecRegistry)
+
+    def 'default registry should include necessary providers'() {
+        when:
+        def registry = DBObjectCodec.getDefaultRegistry()
+
+        then:
+        registry.get(Integer) != null
+        registry.get(BsonInt32) != null
+        registry.get(BSONTimestamp) != null
+        registry.get(BasicDBObject) != null
+    }
+
+    def 'should encode with default registry'() {
+        given:
+        def document = new BsonDocument()
+        def dBObject = new BasicDBObject('a', 0).append('b', new BsonInt32(1)).append('c', new BSONTimestamp())
+
+        when:
+         new DBObjectCodec().encode(new BsonDocumentWriter(document), dBObject, EncoderContext.builder().build())
+
+        then:
+        document == new BsonDocument('a', new BsonInt32(0)).append('b', new BsonInt32(1)).append('c', new BsonTimestamp())
+    }
 
     def 'should encode and decode UUID as UUID'() {
         given:

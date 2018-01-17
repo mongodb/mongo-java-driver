@@ -297,7 +297,7 @@ public class JSONTest {
         assertEquals(serializedPattern, JSON.serialize(pattern));
 
         BasicDBObject a = new BasicDBObject("x", pattern);
-        assertEquals("{ \"x\" : " + serializedPattern + "}", a.toString());
+        assertEquals("{ \"x\" : " + serializedPattern + "}", JSON.serialize(a));
 
         DBObject b = (DBObject) JSON.parse(a.toString());
         assertEquals(Pattern.class, b.get("x").getClass());
@@ -314,7 +314,7 @@ public class JSONTest {
         assertEquals(JSON.serialize(pattern), serializedPattern);
 
         BasicDBObject a = new BasicDBObject("x", pattern);
-        assertEquals(a.toString(), "{ \"x\" : " + serializedPattern + "}");
+        assertEquals("{ \"x\" : " + serializedPattern + "}", JSON.serialize(a));
 
         DBObject b = (DBObject) JSON.parse(a.toString());
         assertEquals(Pattern.class, b.get("x").getClass());

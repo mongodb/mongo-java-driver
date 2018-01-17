@@ -1,11 +1,11 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2018 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,10 +16,11 @@
 
 package com.mongodb;
 
-import org.bson.BasicBSONObject;
+import org.bson.codecs.Codec;
 import org.bson.json.JsonMode;
 import org.bson.json.JsonWriterSettings;
 import org.bson.types.ObjectId;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.Date;
@@ -27,7 +28,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 
-import static com.mongodb.MongoClient.getDefaultCodecRegistry;
 import static java.util.Arrays.asList;
 import static org.hamcrest.CoreMatchers.not;
 import static org.junit.Assert.assertEquals;
@@ -35,14 +35,17 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
+@SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
 public class BasicDBObjectTest {
+
+    private static final Codec<BasicDBObject> DECODER = DBObjectCodec.getDefaultRegistry().get(BasicDBObject.class);
 
     @Test
     public void testParse() {
         BasicDBObject document = BasicDBObject.parse("{ 'int' : 1, 'string' : 'abc' }");
         assertEquals(new BasicDBObject("int", 1).append("string", "abc"), document);
 
-        document = BasicDBObject.parse("{ 'int' : 1, 'string' : 'abc' }", getDefaultCodecRegistry().get(BasicDBObject.class));
+        document = BasicDBObject.parse("{ 'int' : 1, 'string' : 'abc' }", DECODER);
         assertEquals(new BasicDBObject("int", 1).append("string", "abc"), document);
 
         document = BasicDBObject.parse("{_id : ObjectId('5524094c2cf8fb61dede210c')}");
@@ -57,12 +60,10 @@ public class BasicDBObjectTest {
         assertEquals("{ \"_id\" : ObjectId(\"5522d5d12cf8fb556a991f45\"), \"int\" : 1, \"string\" : \"abc\" }",
                      doc.toJson(JsonWriterSettings.builder().outputMode(JsonMode.SHELL).build()));
 
-        assertEquals("{ \"_id\" : { \"$oid\" : \"5522d5d12cf8fb556a991f45\" }, \"int\" : 1, \"string\" : \"abc\" }",
-                     doc.toJson(getDefaultCodecRegistry().get(BasicDBObject.class)));
+        assertEquals("{ \"_id\" : { \"$oid\" : \"5522d5d12cf8fb556a991f45\" }, \"int\" : 1, \"string\" : \"abc\" }", doc.toJson(DECODER));
 
         assertEquals("{ \"_id\" : ObjectId(\"5522d5d12cf8fb556a991f45\"), \"int\" : 1, \"string\" : \"abc\" }",
-                     doc.toJson(JsonWriterSettings.builder().outputMode(JsonMode.SHELL).build(),
-                             getDefaultCodecRegistry().get(BasicDBObject.class)));
+                     doc.toJson(JsonWriterSettings.builder().outputMode(JsonMode.SHELL).build(), DECODER));
     }
 
     @Test
@@ -123,7 +124,7 @@ public class BasicDBObjectTest {
         assertTrue(b.isEmpty());
         b.append("a", 1);
         assertFalse(b.isEmpty());
-        assertEquals(b.get(), new BasicDBObject("a", 1));
+        Assert.assertEquals(b.get(), new BasicDBObject("a", 1));
     }
 
     @Test
@@ -133,7 +134,7 @@ public class BasicDBObjectTest {
         b.add("a", 1);
         b.push("b").append("c", 2).pop();
         DBObject a = b.get();
-        assertEquals(a, com.mongodb.util.JSON.parse("{ 'a' : 1, 'b' : { 'c' : 2 } }"));
+        Assert.assertEquals(a, new BasicDBObject("a", 1).append("b", new BasicDBObject("c", 2)));
     }
 
     @Test
@@ -147,7 +148,8 @@ public class BasicDBObjectTest {
         b.push("z");
         b.append("b", 3);
 
-        assertEquals(b.get(), com.mongodb.util.JSON.parse("{ 'x' : 1 , 'y' : { 'a' : 2 } , 'z' : { 'b' : 3 } }"));
+        Assert.assertEquals(b.get(),
+                new BasicDBObject("x", 1).append("y", new BasicDBObject("a", 2)).append("z", new BasicDBObject("b", 3)));
     }
 
     @Test
@@ -155,8 +157,6 @@ public class BasicDBObjectTest {
         assertEquality(new BasicDBObject(), new BasicDBObject());
 
         assertEquality(new BasicDBObject("x", 1), new BasicDBObject("x", 1));
-
-        assertEquality(new BasicBSONObject("x", 1), new BasicDBObject("x", 1));
 
         assertInequality(new BasicDBObject("x", 1), new BasicDBObject("x", 2));
 
@@ -192,18 +192,13 @@ public class BasicDBObjectTest {
         assertEquality(new BasicDBObject("a", first), new BasicDBObject("a", second));
     }
 
-    @Test
-    public void testGetEncoder() {
-        assertEquals(DefaultDBEncoder.class, new BasicDBObject().getEncoder().getClass());
-    }
-
-    void assertEquality(final BasicBSONObject x, final BasicBSONObject y) {
+    void assertEquality(final BasicDBObject x, final BasicDBObject y) {
         assertEquals(x, y);
         assertEquals(y, x);
         assertEquals(x.hashCode(), y.hashCode());
     }
 
-    void assertInequality(final BasicBSONObject x, final BasicBSONObject y) {
+    void assertInequality(final BasicDBObject x, final BasicDBObject y) {
         assertThat(x, not(y));
         assertThat(y, not(x));
         assertThat(x.hashCode(), not(y.hashCode()));
