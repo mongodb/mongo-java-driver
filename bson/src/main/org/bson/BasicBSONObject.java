@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2018 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -369,12 +369,7 @@ public class BasicBSONObject extends LinkedHashMap<String, Object> implements BS
         return getEncoder().encode(this);
     }
 
-    /**
-     * Creates a {@code BSONEncoder} to use for encoding instances of this class.
-     *
-     * @return the BSONEncoder to use to encode instances of this class
-     */
-    protected BSONEncoder getEncoder() {
+    private BSONEncoder getEncoder() {
         return new BasicBSONEncoder();
     }
 

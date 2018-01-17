@@ -541,7 +541,8 @@ public class DBCollectionTest extends DatabaseTestCase {
         DBObject doc = new TopLevelDBObject().append("a", new NestedOneDBObject().append("b", asList(new NestedTwoDBObject()))
                                                           .append("c", new BasicDBObject()));
         collection.save(doc);
-        assertEquals(doc, collection.findOne());
+        DBObject found = collection.findOne();
+        assertEquals(doc, found);
     }
 
 

@@ -1,11 +1,11 @@
 /*
- * Copyright 2008-2015 MongoDB, Inc.
+ * Copyright 2008-2018 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -29,12 +29,14 @@ import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.bson.codecs.BsonTypeClassMap;
 import org.bson.codecs.BsonTypeCodecMap;
+import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.IdGenerator;
 import org.bson.codecs.ObjectIdGenerator;
+import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Binary;
@@ -50,8 +52,10 @@ import java.util.UUID;
 import java.util.regex.Pattern;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.Arrays.asList;
 import static org.bson.BsonBinarySubType.BINARY;
 import static org.bson.BsonBinarySubType.OLD_BINARY;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 /**
  * A collectible codec for a DBObject.
@@ -60,8 +64,10 @@ import static org.bson.BsonBinarySubType.OLD_BINARY;
  */
 @SuppressWarnings("rawtypes")
 public class DBObjectCodec implements CollectibleCodec<DBObject> {
-
     private static final BsonTypeClassMap DEFAULT_BSON_TYPE_CLASS_MAP = createDefaultBsonTypeClassMap();
+    private static final CodecRegistry DEFAULT_REGISTRY =
+            fromProviders(asList(new ValueCodecProvider(), new BsonValueCodecProvider(), new DBObjectCodecProvider()));
+
     private static final String ID_FIELD_NAME = "_id";
 
     private final CodecRegistry codecRegistry;
@@ -82,6 +88,19 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
 
     static BsonTypeClassMap getDefaultBsonTypeClassMap() {
         return DEFAULT_BSON_TYPE_CLASS_MAP;
+    }
+
+    static CodecRegistry getDefaultRegistry() {
+        return DEFAULT_REGISTRY;
+    }
+
+    /**
+     * Construct an instance with the default codec registry
+     *
+     * @since 3.7
+     */
+    public DBObjectCodec() {
+        this(DEFAULT_REGISTRY);
     }
 
     /**

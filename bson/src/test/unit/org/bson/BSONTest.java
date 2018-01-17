@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2008-2014 MongoDB, Inc.
+ * Copyright 2008-2018 MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -319,11 +319,6 @@ public class BSONTest {
         BasicBSONObject inputDoc = new BasicBSONObject("_id", 1);
         byte[] encoded = BSON.encode(inputDoc);
         assertEquals(inputDoc, BSON.decode(encoded));
-    }
-
-    @Test
-    public void testGetEncoder() {
-        assertEquals(BasicBSONEncoder.class, new BasicBSONObject().getEncoder().getClass());
     }
 
     @Test
