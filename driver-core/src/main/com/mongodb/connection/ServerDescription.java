@@ -930,7 +930,7 @@ public class ServerDescription {
 
 
     private String getRoundTripFormattedInMilliseconds() {
-        return  DecimalFormatHelper.format("#0.0", roundTripTimeNanos / 1000.0 / 1000.0);
+        return DecimalFormatHelper.format("#0.0", roundTripTimeNanos / 1000.0 / 1000.0);
     }
 
     ServerDescription(final Builder builder) {
