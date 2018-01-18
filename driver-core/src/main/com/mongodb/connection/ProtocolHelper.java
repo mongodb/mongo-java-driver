@@ -182,11 +182,12 @@ final class ProtocolHelper {
 
     static MessageSettings getMessageSettings(final ConnectionDescription connectionDescription) {
         return MessageSettings.builder()
-                              .maxDocumentSize(connectionDescription.getMaxDocumentSize())
-                              .maxMessageSize(connectionDescription.getMaxMessageSize())
-                              .maxBatchCount(connectionDescription.getMaxBatchCount())
-                              .serverVersion(connectionDescription.getServerVersion())
-                              .build();
+                .maxDocumentSize(connectionDescription.getMaxDocumentSize())
+                .maxMessageSize(connectionDescription.getMaxMessageSize())
+                .maxBatchCount(connectionDescription.getMaxBatchCount())
+                .serverVersion(connectionDescription.getServerVersion())
+                .serverType(connectionDescription.getServerType())
+                .build();
     }
 
     static void encodeMessage(final RequestMessage message, final BsonOutput bsonOutput) {

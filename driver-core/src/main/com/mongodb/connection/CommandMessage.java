@@ -38,8 +38,12 @@ import java.util.List;
 import java.util.Map;
 
 import static com.mongodb.ReadPreference.primary;
+import static com.mongodb.ReadPreference.primaryPreferred;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.connection.BsonWriterHelper.writePayload;
+import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
+import static com.mongodb.connection.ClusterConnectionMode.SINGLE;
+import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 
 /**
  * A command message that uses OP_MSG or OP_QUERY to send the command.
@@ -52,15 +56,18 @@ final class CommandMessage extends RequestMessage {
     private final SplittablePayload payload;
     private final FieldNameValidator payloadFieldNameValidator;
     private final boolean responseExpected;
+    private final ClusterConnectionMode clusterConnectionMode;
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings) {
-        this(namespace, command, commandFieldNameValidator, readPreference, settings, true, null, null);
+        this(namespace, command, commandFieldNameValidator, readPreference, settings, true, null, null,
+                MULTIPLE);
     }
 
     CommandMessage(final MongoNamespace namespace, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                    final ReadPreference readPreference, final MessageSettings settings, final boolean responseExpected,
-                   final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator) {
+                   final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
+                   final ClusterConnectionMode clusterConnectionMode) {
         super(namespace.getFullName(), getOpCode(settings), settings);
         this.namespace = namespace;
         this.command = command;
@@ -69,6 +76,7 @@ final class CommandMessage extends RequestMessage {
         this.responseExpected = responseExpected;
         this.payload = payload;
         this.payloadFieldNameValidator = payloadFieldNameValidator;
+        this.clusterConnectionMode = clusterConnectionMode;
     }
 
     BsonDocument getCommandDocument(final ByteBufferBsonOutput bsonOutput) {
@@ -102,7 +110,7 @@ final class CommandMessage extends RequestMessage {
 
     boolean isResponseExpected() {
         isTrue("The message must be encoded before determining if a response is expected", getEncodingMetadata() != null);
-        return calculateIsResponseExpected();
+        return !useOpMsg() || requireOpMsgResponse();
     }
 
     MongoNamespace getNamespace() {
@@ -138,9 +146,9 @@ final class CommandMessage extends RequestMessage {
             }
 
             // Write the flag bits
-            bsonOutput.writeInt32(flagPosition, getFlagBits());
+            bsonOutput.writeInt32(flagPosition, getOpMsgFlagBits());
         } else {
-            bsonOutput.writeInt32(0);
+            bsonOutput.writeInt32(getOpQueryFlagBits());
             bsonOutput.writeCString(namespace.getFullName());
             bsonOutput.writeInt32(0);
             bsonOutput.writeInt32(-1);
@@ -169,20 +177,44 @@ final class CommandMessage extends RequestMessage {
         getCodec(commandToEncode).encode(bsonWriter, commandToEncode, EncoderContext.builder().build());
     }
 
-    private int getFlagBits() {
-        if (calculateIsResponseExpected()) {
+    private int getOpMsgFlagBits() {
+        return getOpMsgResponseExpectedFlagBit();
+    }
+
+    private int getOpMsgResponseExpectedFlagBit() {
+        if (requireOpMsgResponse()) {
             return 0;
         } else {
             return 1 << 1;
         }
     }
 
-    private boolean calculateIsResponseExpected() {
-        // If there is another message in the payload require that the response is acknowledged
-        if (!responseExpected && useOpMsg() && payload != null && payload.hasAnotherSplit()) {
+    private boolean requireOpMsgResponse() {
+        if (responseExpected) {
             return true;
+        } else {
+            return payload != null && payload.hasAnotherSplit();
         }
-        return responseExpected;
+    }
+
+    private int getOpQueryFlagBits() {
+        return getOpQuerySlaveOkFlagBit();
+    }
+
+    private int getOpQuerySlaveOkFlagBit() {
+        if (isSlaveOk()) {
+            return 1 << 2;
+        } else {
+            return 0;
+        }
+    }
+
+    private boolean isSlaveOk() {
+        return readPreference.isSlaveOk() || isDirectConnectionToNonShardRouter();
+    }
+
+    private boolean isDirectConnectionToNonShardRouter() {
+        return clusterConnectionMode == SINGLE && getSettings().getServerType() != SHARD_ROUTER;
     }
 
     private boolean useOpMsg() {
@@ -208,10 +240,13 @@ final class CommandMessage extends RequestMessage {
         }
         if (!isDefaultReadPreference(getReadPreference())) {
             extraElements.add(new BsonElement("$readPreference", getReadPreference().toDocument()));
+        } else if (isDirectConnectionToNonShardRouter()) {
+                extraElements.add(new BsonElement("$readPreference", primaryPreferred().toDocument()));
         }
         return extraElements;
     }
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
     private boolean isDefaultReadPreference(final ReadPreference readPreference) {
         return readPreference.equals(primary());
     }
