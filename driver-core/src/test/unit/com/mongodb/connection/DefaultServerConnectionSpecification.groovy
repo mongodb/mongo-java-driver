@@ -135,7 +135,8 @@ class DefaultServerConnectionSpecification extends Specification {
         def codec = new BsonDocumentCodec()
         def executor = Mock(ProtocolExecutor) {
             1 * execute({
-                compare(new CommandProtocolImpl('test', command, validator, expectedReadPreference, codec), it) },
+                compare(new CommandProtocolImpl('test', command, validator, expectedReadPreference, codec, true, null, null,
+                        ClusterConnectionMode.SINGLE), it) },
                     internalConnection, NoOpSessionContext.INSTANCE) >> {
                 new BsonDocument()
             }
@@ -332,7 +333,8 @@ class DefaultServerConnectionSpecification extends Specification {
 
         then:
         1 * executor.executeAsync({
-            compare(new CommandProtocolImpl('test', command, validator, expectedReadPreference, codec), it)
+            compare(new CommandProtocolImpl('test', command, validator, expectedReadPreference, codec, true, null, null,
+                    ClusterConnectionMode.SINGLE), it)
         }, internalConnection, NoOpSessionContext.INSTANCE, callback)
 
         where:

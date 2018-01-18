@@ -124,7 +124,7 @@ class DefaultServerConnection extends AbstractReferenceCounted implements Connec
                          final boolean responseExpected, final SplittablePayload payload,
                          final FieldNameValidator payloadFieldNameValidator) {
         return executeProtocol(new CommandProtocolImpl<T>(database, command, commandFieldNameValidator, readPreference,
-                commandResultDecoder, responseExpected, payload, payloadFieldNameValidator), sessionContext);
+                commandResultDecoder, responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode), sessionContext);
     }
 
     @Override
@@ -149,7 +149,8 @@ class DefaultServerConnection extends AbstractReferenceCounted implements Connec
                                  final SessionContext sessionContext, final boolean responseExpected, final SplittablePayload payload,
                                  final FieldNameValidator payloadFieldNameValidator, final SingleResultCallback<T> callback) {
         executeProtocolAsync(new CommandProtocolImpl<T>(database, command, commandFieldNameValidator, readPreference,
-                commandResultDecoder, responseExpected, payload,  payloadFieldNameValidator), sessionContext, callback);
+                commandResultDecoder, responseExpected, payload,  payloadFieldNameValidator, clusterConnectionMode),
+                sessionContext, callback);
     }
 
     @Override
