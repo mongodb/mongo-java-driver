@@ -113,7 +113,7 @@ class LoggingCommandEventSender implements CommandEventSender {
             logger.debug(
                     format("Execution of command with request id %d failed to complete successfully in %s ms on connection [%s] "
                                     + "to server %s",
-                            message.getId(), getElapsedTimepFormattedInMilliseconds(elapsedTimeNanos), description.getConnectionId(),
+                            message.getId(), getElapsedTimeFormattedInMilliseconds(elapsedTimeNanos), description.getConnectionId(),
                             description.getServerAddress()),
                     commandEventException);
         }
@@ -130,7 +130,7 @@ class LoggingCommandEventSender implements CommandEventSender {
         if (loggingRequired()) {
             logger.debug(
                     format("Execution of command with request id %d completed successfully in %s ms on connection [%s] to server %s",
-                            message.getId(), getElapsedTimepFormattedInMilliseconds(elapsedTimeNanos), description.getConnectionId(),
+                            message.getId(), getElapsedTimeFormattedInMilliseconds(elapsedTimeNanos), description.getConnectionId(),
                             description.getServerAddress()));
         }
 
@@ -151,7 +151,7 @@ class LoggingCommandEventSender implements CommandEventSender {
             logger.debug(
                     format("Execution of one-way command with request id %d completed successfully in %s ms on connection [%s] "
                                     + "to server %s",
-                            message.getId(), getElapsedTimepFormattedInMilliseconds(elapsedTimeNanos), description.getConnectionId(),
+                            message.getId(), getElapsedTimeFormattedInMilliseconds(elapsedTimeNanos), description.getConnectionId(),
                             description.getServerAddress()));
         }
 
@@ -170,7 +170,7 @@ class LoggingCommandEventSender implements CommandEventSender {
         return commandListener != null;
     }
 
-    private String getElapsedTimepFormattedInMilliseconds(final long elapsedTimeNanos) {
+    private String getElapsedTimeFormattedInMilliseconds(final long elapsedTimeNanos) {
         return DecimalFormatHelper.format("#0.00", elapsedTimeNanos / 1000000.0);
     }
 
