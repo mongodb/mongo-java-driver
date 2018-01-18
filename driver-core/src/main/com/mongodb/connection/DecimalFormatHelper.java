@@ -25,33 +25,13 @@ final class DecimalFormatHelper {
     private DecimalFormatHelper(){
     }
 
-    /**
-     * Initialize the character used for decimal separator
-     *
-     * @return the character used for decimal separator
-     * @since 3.6
-     */
     private static DecimalFormatSymbols initializeDecimalFormatSymbols() {
         DecimalFormatSymbols decimalFormatSymbols = new DecimalFormatSymbols();
         decimalFormatSymbols.setDecimalSeparator('.');
         return decimalFormatSymbols;
     }
 
-    /**
-     * Format a decimal number.
-     *
-     * @param pattern a non-localized pattern string
-     * @param number the double number to format
-     * @return the formatted String
-     * @exception        ArithmeticException if rounding is needed with rounding
-     *                   mode being set to RoundingMode.UNNECESSARY
-     * @see java.text.DecimalFormat
-     * @see java.text.NumberFormat#format
-     *
-     * @since 3.7
-     */
-    public static String format(final String pattern, final double number){
+    static String format(final String pattern, final double number) {
         return new DecimalFormat(pattern, DECIMAL_FORMAT_SYMBOLS).format(number);
     }
-
 }
