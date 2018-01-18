@@ -22,11 +22,13 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
 import org.bson.BsonDocument;
 import org.bson.BsonType;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.junit.After;
 import org.junit.Test;
 
@@ -653,6 +655,15 @@ public final class DocumentationSamples extends DatabaseTestCase {
         cursor = inventory.watch().resumeAfter(resumeToken).iterator();
         next = cursor.next();
         // End Changestream Example 3
+
+        cursor.close();
+
+        // Start Changestream Example 4
+        List<Bson> pipeline = singletonList(Aggregates.match(
+                or(Document.parse("{'fullDocument.username': 'alice'}"), in("operationType", singletonList("delete")))));
+        cursor = inventory.watch(pipeline).iterator();
+        next = cursor.next();
+        // End Changestream Example 4
 
         cursor.close();
 
