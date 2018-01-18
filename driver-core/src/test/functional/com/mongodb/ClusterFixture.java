@@ -301,11 +301,29 @@ public final class ClusterFixture {
     }
 
     @SuppressWarnings("deprecation")
-    public static ServerAddress getPrimary() throws InterruptedException {
+    public static ServerAddress getPrimary() {
         List<ServerDescription> serverDescriptions = getCluster().getDescription().getPrimaries();
         while (serverDescriptions.isEmpty()) {
-            sleep(100);
+            try {
+                sleep(100);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
             serverDescriptions = getCluster().getDescription().getPrimaries();
+        }
+        return serverDescriptions.get(0).getAddress();
+    }
+
+    @SuppressWarnings("deprecation")
+    public static ServerAddress getSecondary() {
+        List<ServerDescription> serverDescriptions = getCluster().getDescription().getSecondaries();
+        while (serverDescriptions.isEmpty()) {
+            try {
+                sleep(100);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+            serverDescriptions = getCluster().getDescription().getSecondaries();
         }
         return serverDescriptions.get(0).getAddress();
     }
