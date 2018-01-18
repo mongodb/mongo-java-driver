@@ -50,6 +50,7 @@ final class ReplyHeader {
     private final long cursorId;
     private final int startingFrom;
     private final int numberReturned;
+    private final int opMsgFlagBits;
 
     ReplyHeader(final ByteBuf header, final MessageHeader messageHeader) {
         this(messageHeader.getMessageLength(), messageHeader.getOpCode(), messageHeader, header);
@@ -70,8 +71,8 @@ final class ReplyHeader {
             startingFrom = 0;
             numberReturned = 1;
 
-            header.getInt();  // ignore flag bits
-            header.get();     // ignore payload type
+            opMsgFlagBits = header.getInt();
+            header.get();  // ignore payload type
         } else if (opCode == OP_REPLY.getValue()) {
             if (messageLength < TOTAL_REPLY_HEADER_LENGTH) {
                 throw new MongoInternalException(format("The reply message length %d is less than the mimimum message length %d",
@@ -82,6 +83,7 @@ final class ReplyHeader {
             cursorId = header.getLong();
             startingFrom = header.getInt();
             numberReturned = header.getInt();
+            opMsgFlagBits = 0;
 
             if (numberReturned < 0) {
                 throw new MongoInternalException(format("The reply message number of returned documents, %d, is less than 0",
@@ -186,5 +188,10 @@ final class ReplyHeader {
      */
     public boolean isQueryFailure() {
         return (responseFlags & QUERY_FAILURE_RESPONSE_FLAG) == QUERY_FAILURE_RESPONSE_FLAG;
+    }
+
+    // for unit testing
+    int getOpMsgFlagBits() {
+        return opMsgFlagBits;
     }
 }

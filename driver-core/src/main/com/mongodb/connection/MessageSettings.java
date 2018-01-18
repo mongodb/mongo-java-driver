@@ -34,6 +34,7 @@ final class MessageSettings {
     private final int maxMessageSize;
     private final int maxBatchCount;
     private final ServerVersion serverVersion;
+    private final ServerType serverType;
 
     /**
      * Gets the builder
@@ -53,6 +54,7 @@ final class MessageSettings {
         private int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
         private int maxBatchCount = DEFAULT_MAX_BATCH_COUNT;
         private ServerVersion serverVersion;
+        private ServerType serverType;
 
         /**
          * Build it.
@@ -100,6 +102,11 @@ final class MessageSettings {
             this.serverVersion = serverVersion;
             return this;
         }
+
+        public Builder serverType(final ServerType serverType) {
+            this.serverType = serverType;
+            return this;
+        }
     }
 
     /**
@@ -133,10 +140,15 @@ final class MessageSettings {
         return serverVersion;
     }
 
+    public ServerType getServerType() {
+        return serverType;
+    }
+
     private MessageSettings(final Builder builder) {
         this.maxDocumentSize = builder.maxDocumentSize;
         this.maxMessageSize = builder.maxMessageSize;
         this.maxBatchCount = builder.maxBatchCount;
         this.serverVersion = builder.serverVersion;
+        this.serverType = builder.serverType;
     }
 }

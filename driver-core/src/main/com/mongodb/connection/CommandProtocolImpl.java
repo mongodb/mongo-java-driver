@@ -37,16 +37,19 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
     private final FieldNameValidator payloadFieldNameValidator;
     private final Decoder<T> commandResultDecoder;
     private final boolean responseExpected;
+    private final ClusterConnectionMode clusterConnectionMode;
     private SessionContext sessionContext;
 
     CommandProtocolImpl(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                         final ReadPreference readPreference, final Decoder<T> commandResultDecoder) {
-        this(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, true, null, null);
+        this(database, command, commandFieldNameValidator, readPreference, commandResultDecoder, true, null, null,
+                ClusterConnectionMode.MULTIPLE);
     }
 
     CommandProtocolImpl(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                         final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final boolean responseExpected,
-                        final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator) {
+                        final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
+                        final ClusterConnectionMode clusterConnectionMode) {
         notNull("database", database);
         this.namespace = new MongoNamespace(notNull("database", database), MongoNamespace.COMMAND_COLLECTION_NAME);
         this.command = notNull("command", command);
@@ -56,6 +59,7 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
         this.responseExpected = responseExpected;
         this.payload = payload;
         this.payloadFieldNameValidator = payloadFieldNameValidator;
+        this.clusterConnectionMode = notNull("clusterConnectionMode", clusterConnectionMode);
 
         isTrueArgument("payloadFieldNameValidator cannot be null if there is a payload.",
                 payload == null || payloadFieldNameValidator != null);
@@ -93,6 +97,7 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
 
     private CommandMessage getCommandMessage(final InternalConnection connection) {
         return new CommandMessage(namespace, command, commandFieldNameValidator, readPreference,
-                    getMessageSettings(connection.getDescription()), responseExpected, payload, payloadFieldNameValidator);
+                    getMessageSettings(connection.getDescription()), responseExpected, payload,
+                payloadFieldNameValidator, clusterConnectionMode);
     }
 }
