@@ -111,9 +111,9 @@ class LoggingCommandEventSender implements CommandEventSender {
 
         if (loggingRequired()) {
             logger.debug(
-                    format("Execution of command with request id %d failed to complete successfully in %.2f ms on connection [%s] "
+                    format("Execution of command with request id %d failed to complete successfully in %s ms on connection [%s] "
                                     + "to server %s",
-                            message.getId(), nanosToMillis(elapsedTimeNanos), description.getConnectionId(),
+                            message.getId(), getElapsedTimeFormattedInMilliseconds(elapsedTimeNanos), description.getConnectionId(),
                             description.getServerAddress()),
                     commandEventException);
         }
@@ -129,8 +129,8 @@ class LoggingCommandEventSender implements CommandEventSender {
 
         if (loggingRequired()) {
             logger.debug(
-                    format("Execution of command with request id %d completed successfully in %.2f ms on connection [%s] to server %s",
-                            message.getId(), nanosToMillis(elapsedTimeNanos), description.getConnectionId(),
+                    format("Execution of command with request id %d completed successfully in %s ms on connection [%s] to server %s",
+                            message.getId(), getElapsedTimeFormattedInMilliseconds(elapsedTimeNanos), description.getConnectionId(),
                             description.getServerAddress()));
         }
 
@@ -149,9 +149,9 @@ class LoggingCommandEventSender implements CommandEventSender {
 
         if (loggingRequired()) {
             logger.debug(
-                    format("Execution of one-way command with request id %d completed successfully in %.2f ms on connection [%s] "
+                    format("Execution of one-way command with request id %d completed successfully in %s ms on connection [%s] "
                                     + "to server %s",
-                            message.getId(), nanosToMillis(elapsedTimeNanos), description.getConnectionId(),
+                            message.getId(), getElapsedTimeFormattedInMilliseconds(elapsedTimeNanos), description.getConnectionId(),
                             description.getServerAddress()));
         }
 
@@ -170,7 +170,8 @@ class LoggingCommandEventSender implements CommandEventSender {
         return commandListener != null;
     }
 
-    private double nanosToMillis(final long elapsedTimeNanos) {
-        return elapsedTimeNanos / 1000000.0;
+    private String getElapsedTimeFormattedInMilliseconds(final long elapsedTimeNanos) {
+        return DecimalFormatHelper.format("#0.00", elapsedTimeNanos / 1000000.0);
     }
+
 }
