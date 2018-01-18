@@ -314,6 +314,8 @@ public class CommandMonitoringTest {
                     BsonDocument operation = definition.getDocument("operation");
                     if (operation.containsKey("read_preference")) {
                         commandDocument.put("$readPreference", operation.getDocument("read_preference"));
+                    } else if (!isDiscoverableReplicaSet() && !isSharded()) {
+                        commandDocument.put("$readPreference", ReadPreference.primaryPreferred().toDocument());
                     }
                 }
                 commandEvent = new CommandStartedEvent(1, null, databaseName, commandName, commandDocument);
