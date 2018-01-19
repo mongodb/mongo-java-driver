@@ -457,6 +457,10 @@ axes:
   - id: jdk
     display_name: JDK
     values:
+      - id: "jdk9"
+        display_name: JDK9
+        variables:
+           JDK: "jdk9"
       - id: "jdk8"
         display_name: JDK8 
         variables:
