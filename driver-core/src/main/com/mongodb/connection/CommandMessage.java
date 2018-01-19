@@ -117,10 +117,6 @@ final class CommandMessage extends RequestMessage {
         return namespace;
     }
 
-    ReadPreference getReadPreference() {
-        return readPreference;
-    }
-
     @Override
     protected EncodingMetadata encodeMessageBodyWithMetadata(final BsonOutput bsonOutput, final SessionContext sessionContext) {
         int messageStartPosition = bsonOutput.getPosition() - MESSAGE_PROLOGUE_LENGTH;
@@ -210,7 +206,7 @@ final class CommandMessage extends RequestMessage {
     }
 
     private boolean isSlaveOk() {
-        return readPreference.isSlaveOk() || isDirectConnectionToNonShardRouter();
+        return (readPreference != null && readPreference.isSlaveOk()) || isDirectConnectionToNonShardRouter();
     }
 
     private boolean isDirectConnectionToNonShardRouter() {
@@ -223,8 +219,8 @@ final class CommandMessage extends RequestMessage {
 
     private BsonDocument getCommandToEncode() {
         BsonDocument commandToEncode = command;
-        if (!useOpMsg() && !isDefaultReadPreference(getReadPreference())) {
-            commandToEncode = new BsonDocument("$query", command).append("$readPreference", getReadPreference().toDocument());
+        if (!useOpMsg() && readPreference != null && !readPreference.equals(primary())) {
+            commandToEncode = new BsonDocument("$query", command).append("$readPreference", readPreference.toDocument());
         }
         return commandToEncode;
     }
@@ -238,17 +234,14 @@ final class CommandMessage extends RequestMessage {
         if (sessionContext.hasSession() && responseExpected) {
             extraElements.add(new BsonElement("lsid", sessionContext.getSessionId()));
         }
-        if (!isDefaultReadPreference(getReadPreference())) {
-            extraElements.add(new BsonElement("$readPreference", getReadPreference().toDocument()));
-        } else if (isDirectConnectionToNonShardRouter()) {
+        if (readPreference != null) {
+            if (!readPreference.equals(primary())) {
+                extraElements.add(new BsonElement("$readPreference", readPreference.toDocument()));
+            } else if (isDirectConnectionToNonShardRouter()) {
                 extraElements.add(new BsonElement("$readPreference", primaryPreferred().toDocument()));
+            }
         }
         return extraElements;
-    }
-
-    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    private boolean isDefaultReadPreference(final ReadPreference readPreference) {
-        return readPreference.equals(primary());
     }
 
     private static OpCode getOpCode(final MessageSettings settings) {

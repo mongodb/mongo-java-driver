@@ -54,7 +54,7 @@ class CommandProtocolImpl<T> implements CommandProtocol<T> {
         this.namespace = new MongoNamespace(notNull("database", database), MongoNamespace.COMMAND_COLLECTION_NAME);
         this.command = notNull("command", command);
         this.commandFieldNameValidator = notNull("commandFieldNameValidator", commandFieldNameValidator);
-        this.readPreference = notNull("readPreference", readPreference);
+        this.readPreference = readPreference;
         this.commandResultDecoder = notNull("commandResultDecoder", commandResultDecoder);
         this.responseExpected = responseExpected;
         this.payload = payload;
