@@ -19,7 +19,6 @@ package com.mongodb.operation;
 import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
-import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.async.SingleResultCallback;
@@ -371,7 +370,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
     private BsonDocument executeCommand(final Connection connection, final BulkWriteBatch batch, final WriteBinding binding) {
         return connection.command(namespace.getDatabaseName(), batch.getCommand(), NO_OP_FIELD_NAME_VALIDATOR,
-                ReadPreference.primary(), batch.getDecoder(), binding.getSessionContext(), shouldAcknowledge(batch, writeConcern),
+                null, batch.getDecoder(), binding.getSessionContext(), shouldAcknowledge(batch, writeConcern),
                 batch.getPayload(), batch.getFieldNameValidator());
     }
 
@@ -380,7 +379,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                                      final SingleResultCallback<BsonDocument> commandCallback) {
         try {
             connection.commandAsync(namespace.getDatabaseName(), batch.getCommand(), NO_OP_FIELD_NAME_VALIDATOR,
-                    ReadPreference.primary(), batch.getDecoder(), binding.getSessionContext(), shouldAcknowledge(batch, writeConcern),
+                    null, batch.getDecoder(), binding.getSessionContext(), shouldAcknowledge(batch, writeConcern),
                     batch.getPayload(), batch.getFieldNameValidator(), commandCallback);
         } catch (Throwable t) {
             callback.onResult(null, t);

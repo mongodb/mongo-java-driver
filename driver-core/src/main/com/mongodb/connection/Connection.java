@@ -107,7 +107,7 @@ public interface Connection extends ReferenceCounted {
      * @param database             the database to execute the command in
      * @param command              the command document
      * @param fieldNameValidator   the field name validator for the command document
-     * @param readPreference       the read preference that was applied to get this connection
+     * @param readPreference       the read preference that was applied to get this connection, or null if this is a write operation
      * @param commandResultDecoder the decoder for the result
      * @param sessionContext       the session context
      * @return the command result
@@ -123,7 +123,7 @@ public interface Connection extends ReferenceCounted {
      * @param database                  the database to execute the command in
      * @param command                   the command document
      * @param commandFieldNameValidator the field name validator for the command document
-     * @param readPreference            the read preference that was applied to get this connection
+     * @param readPreference            the read preference that was applied to get this connection, or null if this is a write operation
      * @param commandResultDecoder      the decoder for the result
      * @param sessionContext            the session context
      * @param responseExpected          true if a response from the server is expected
