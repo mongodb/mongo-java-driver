@@ -251,6 +251,7 @@ public class CommandMonitoringTest {
                     BsonDocument cur = iter.next().asDocument();
                     cur.put("code", new BsonInt32(42));
                     cur.put("errmsg", new BsonString(""));
+                    cur.remove("codeName");
                 }
             }
             if (actual.getCommandName().equals("update")) {
