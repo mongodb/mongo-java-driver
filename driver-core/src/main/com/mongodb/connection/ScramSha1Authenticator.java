@@ -18,7 +18,6 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
-import com.mongodb.internal.authentication.NativeAuthenticationHelper;
 import org.bson.internal.Base64;
 
 import javax.crypto.Mac;
@@ -37,6 +36,7 @@ import java.util.HashMap;
 import java.util.Random;
 
 import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_1;
+import static com.mongodb.internal.authentication.NativeAuthenticationHelper.createAuthenticationHash;
 
 class ScramSha1Authenticator extends SaslAuthenticator {
 
@@ -119,11 +119,11 @@ class ScramSha1Authenticator extends SaslAuthenticator {
             return this.step > 2;
         }
 
-        public byte[] unwrap(final byte[] incoming, final int offset, final int len) throws SaslException {
+        public byte[] unwrap(final byte[] incoming, final int offset, final int len) {
             throw new UnsupportedOperationException("Not implemented yet!");
         }
 
-        public byte[] wrap(final byte[] outgoing, final int offset, final int len) throws SaslException {
+        public byte[] wrap(final byte[] outgoing, final int offset, final int len) {
             throw new UnsupportedOperationException("Not implemented yet!");
         }
 
@@ -131,7 +131,7 @@ class ScramSha1Authenticator extends SaslAuthenticator {
             throw new UnsupportedOperationException("Not implemented yet!");
         }
 
-        public void dispose() throws SaslException {
+        public void dispose() {
             // nothing to do
         }
 
@@ -163,12 +163,11 @@ class ScramSha1Authenticator extends SaslAuthenticator {
             String nonce = "r=" + r;
             String clientFinalMessageWithoutProof = channelBinding + "," + nonce;
 
-            byte[] saltedPassword = hi(
-                    NativeAuthenticationHelper.createAuthenticationHash(this.credential.getUserName(),
-                                                                        this.credential.getPassword()),
-                    decodeBase64(s),
-                    Integer.parseInt(i)
-            );
+            // Suppress warning of MongoCredential#getPassword possibly returning null
+            @SuppressWarnings("ConstantConditions")
+            String authenticationHash = createAuthenticationHash(this.credential.getUserName(), this.credential.getPassword());
+
+            byte[] saltedPassword = hi(authenticationHash, decodeBase64(s), Integer.parseInt(i));
             byte[] clientKey = hmac(saltedPassword, "Client Key");
             byte[] storedKey = h(clientKey);
             String authMessage = this.clientFirstMessageBare + "," + serverFirstMessage + "," + clientFinalMessageWithoutProof;
