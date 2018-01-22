@@ -17,7 +17,7 @@
 apply plugin: 'osgi'
 apply plugin: 'org.kordamp.gradle.clirr'
 
-archivesBaseName = 'mongodb-driver'
+archivesBaseName = 'mongodb-driver-sync'
 def configDir = new File(rootDir, 'config')
 
 sourceSets {
@@ -38,7 +38,7 @@ dependencies {
 
 clirr {
     excludeFilter = new File("$configDir/clirr-exclude.yml")
-    baseline 'org.mongodb:mongodb-driver:3.4.0'
+    baseline 'org.mongodb:mongodb-driver:3.6.0'
     failOnErrors = false
 }
 
@@ -49,7 +49,7 @@ tasks.withType(Checkstyle) {
 
 jar {
     manifest {
-        instruction 'Automatic-Module-Name', 'org.mongodb.driver.client'
+        instruction 'Automatic-Module-Name', 'org.mongodb.driver.sync.client'
         instruction 'Build-Version', getGitVersion()
         instruction 'Import-Package',
                 'org.bson.*',
@@ -60,7 +60,7 @@ jar {
 modifyPom {
     project {
         name 'MongoDB Driver'
-        description 'The MongoDB Driver'
+        description 'The MongoDB Synchronous Driver'
         url 'http://www.mongodb.org'
     }
 }

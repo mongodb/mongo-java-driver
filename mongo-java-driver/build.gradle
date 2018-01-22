@@ -32,7 +32,7 @@ sourceSets {
     main {
         java {
             srcDirs = ["$rootDir/driver-legacy/src/main",
-                       "$rootDir/driver/src/main",
+                       "$rootDir/driver-sync/src/main",
                        "$rootDir/driver-core/src/main",
                        "$rootDir/bson/src/main"]
         }
