@@ -625,12 +625,13 @@ public final class DocumentationSamples extends DatabaseTestCase {
             @Override
             public void run() {
                 while (!stop.get()) {
-                    collection.insertOne(new Document());
+                    collection.insertMany(asList(new Document("_id", 1), new Document()));
                     try {
                         Thread.sleep(10);
                     } catch (InterruptedException e) {
                         // ignore
                     }
+                    collection.deleteOne(new Document("_id", 1));
                 }
             }
         }).start();
