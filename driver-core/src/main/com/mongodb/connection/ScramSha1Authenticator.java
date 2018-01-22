@@ -22,6 +22,7 @@ import com.mongodb.internal.authentication.NativeAuthenticationHelper;
 import org.bson.internal.Base64;
 
 import javax.crypto.Mac;
+import javax.crypto.SecretKey;
 import javax.crypto.SecretKeyFactory;
 import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
@@ -230,7 +231,13 @@ class ScramSha1Authenticator extends SaslAuthenticator {
             }
 
             try {
-                return keyFactory.generateSecret(spec).getEncoded();
+                SecretKey secretKey = keyFactory.generateSecret(spec);
+                // Workaround for https://bugs.openjdk.java.net/browse/JDK-8191177, as suggested in
+                // https://bugs.openjdk.java.net/browse/JDK-8055183
+                //noinspection SynchronizationOnLocalVariableOrMethodParameter
+                synchronized (secretKey) {
+                    return secretKey.getEncoded();
+                }
             }
             catch (InvalidKeySpecException e) {
                 throw new SaslException("Invalid key spec for PBKDC2WithHmacSHA1.", e);
