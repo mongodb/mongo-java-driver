@@ -115,7 +115,7 @@ public class SingleServerClusterTest {
         Connection connection = cluster.getServer(secondary).getConnection();
 
         // when
-        BsonDocument result = connection.command(getDefaultDatabaseName(), new BsonDocument("find", new BsonString(collectionName)),
+        BsonDocument result = connection.command(getDefaultDatabaseName(), new BsonDocument("count", new BsonString(collectionName)),
                 new NoOpFieldNameValidator(), ReadPreference.primary(), new BsonDocumentCodec(), NoOpSessionContext.INSTANCE);
 
         // then
