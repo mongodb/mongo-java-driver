@@ -42,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.getSslSettings;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -118,7 +119,8 @@ public class InitialDnsSeedlistDiscoveryTest {
 
         MongoClientURI uri = new MongoClientURI(this.uri, optionsBuilder);
 
-        assumeTrue(isDiscoverableReplicaSet() && getSslSettings().isEnabled() == uri.getOptions().isSslEnabled());
+        assumeTrue(isDiscoverableReplicaSet() && !serverVersionAtLeast(3, 7)
+                && getSslSettings().isEnabled() == uri.getOptions().isSslEnabled());
 
         MongoClient client = new MongoClient(uri);
         try {
