@@ -50,6 +50,15 @@ public class ServerAddress implements Serializable {
     }
 
     /**
+     * Creates a ServerAddress with default host
+     *
+     * @param port mongod port
+     */
+    public ServerAddress(final int port) {
+        this(defaultHost(), port);
+    }
+
+    /**
      * Creates a ServerAddress with default port
      *
      * @param inetAddress host address
