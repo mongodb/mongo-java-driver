@@ -33,6 +33,7 @@ class ServerAddressSpecification extends Specification {
         new ServerAddress()                                     | ServerAddress.defaultHost()    | ServerAddress.defaultPort()
         new ServerAddress('10.0.0.1:1000')                      | '10.0.0.1'                     | 1000
         new ServerAddress('10.0.0.1')                           | '10.0.0.1'                     | ServerAddress.defaultPort()
+        new ServerAddress(1000)                                 | ServerAddress.defaultHost()    | 1000
         new ServerAddress('10.0.0.1', 1000)                     | '10.0.0.1'                     | 1000
         new ServerAddress('somewhere')                          | 'somewhere'                    | ServerAddress.defaultPort()
         new ServerAddress('SOMEWHERE')                          | 'somewhere'                    | ServerAddress.defaultPort()
