@@ -55,7 +55,7 @@ public class DBRef implements Serializable {
      */
     public DBRef(final String databaseName, final String collectionName, final Object id) {
         this.id = notNull("id", id);
-        this.collectionName = notNull("ns", collectionName);
+        this.collectionName = notNull("collectionName", collectionName);
         this.databaseName = databaseName;
     }
 

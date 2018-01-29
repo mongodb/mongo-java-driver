@@ -274,7 +274,9 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
         bsonWriter.writeString("$ref", dbRef.getCollectionName());
         bsonWriter.writeName("$id");
         writeValue(bsonWriter, null, dbRef.getId());
-
+        if (dbRef.getDatabaseName() != null) {
+            bsonWriter.writeString("$db", dbRef.getDatabaseName());
+        }
         bsonWriter.writeEndDocument();
     }
 
@@ -376,7 +378,7 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
 
     private Object verifyForDBRef(final DBObject document) {
         if (document.containsField("$ref") && document.containsField("$id")) {
-            return new DBRef((String) document.get("$ref"), document.get("$id"));
+            return new DBRef((String) document.get("$db"), (String) document.get("$ref"), document.get("$id"));
         } else {
             return document;
         }
