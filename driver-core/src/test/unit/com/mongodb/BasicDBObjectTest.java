@@ -50,20 +50,28 @@ public class BasicDBObjectTest {
 
         document = BasicDBObject.parse("{_id : ObjectId('5524094c2cf8fb61dede210c')}");
         assertEquals(new BasicDBObject("_id", new ObjectId("5524094c2cf8fb61dede210c")), document);
+
+        document = BasicDBObject.parse("{dbRef : {$ref: 'collection', $id: {$oid: '01234567890123456789abcd'}, $db: 'db'}}");
+        assertEquals(new BasicDBObject("dbRef", new DBRef("db", "collection", new ObjectId("01234567890123456789abcd"))), document);
     }
 
     @Test
     public void testToJson() {
-        BasicDBObject doc = new BasicDBObject("_id", new ObjectId("5522d5d12cf8fb556a991f45")).append("int", 1).append("string", "abc");
+        BasicDBObject document = BasicDBObject.parse("{ '_id' : { '$oid' : '000000000000000000000000' }, 'int' : 1, 'string' : 'abc', "
+                + "'dbRef' : { $ref: 'collection', $id: { $oid: '01234567890123456789abcd' }, $db: 'db' } }");
 
-        assertEquals("{ \"_id\" : { \"$oid\" : \"5522d5d12cf8fb556a991f45\" }, \"int\" : 1, \"string\" : \"abc\" }", doc.toJson());
-        assertEquals("{ \"_id\" : ObjectId(\"5522d5d12cf8fb556a991f45\"), \"int\" : 1, \"string\" : \"abc\" }",
-                     doc.toJson(JsonWriterSettings.builder().outputMode(JsonMode.SHELL).build()));
-
-        assertEquals("{ \"_id\" : { \"$oid\" : \"5522d5d12cf8fb556a991f45\" }, \"int\" : 1, \"string\" : \"abc\" }", doc.toJson(DECODER));
-
-        assertEquals("{ \"_id\" : ObjectId(\"5522d5d12cf8fb556a991f45\"), \"int\" : 1, \"string\" : \"abc\" }",
-                     doc.toJson(JsonWriterSettings.builder().outputMode(JsonMode.SHELL).build(), DECODER));
+        assertEquals("{ \"_id\" : { \"$oid\" : \"000000000000000000000000\" }, \"int\" : 1, \"string\" : \"abc\", "
+                + "\"dbRef\" : { \"$ref\" : \"collection\", \"$id\" : { \"$oid\" : \"01234567890123456789abcd\" }, \"$db\" : \"db\" } }",
+                document.toJson());
+        assertEquals("{ \"_id\" : ObjectId(\"000000000000000000000000\"), \"int\" : 1, \"string\" : \"abc\", "
+                + "\"dbRef\" : { \"$ref\" : \"collection\", \"$id\" : ObjectId(\"01234567890123456789abcd\"), \"$db\" : \"db\" } }",
+                document.toJson(JsonWriterSettings.builder().outputMode(JsonMode.SHELL).build()));
+        assertEquals("{ \"_id\" : { \"$oid\" : \"000000000000000000000000\" }, \"int\" : 1, \"string\" : \"abc\", "
+                + "\"dbRef\" : { \"$ref\" : \"collection\", \"$id\" : { \"$oid\" : \"01234567890123456789abcd\" }, \"$db\" : \"db\" } }",
+                document.toJson(DECODER));
+        assertEquals("{ \"_id\" : ObjectId(\"000000000000000000000000\"), \"int\" : 1, \"string\" : \"abc\", "
+                + "\"dbRef\" : { \"$ref\" : \"collection\", \"$id\" : ObjectId(\"01234567890123456789abcd\"), \"$db\" : \"db\" } }",
+                document.toJson(JsonWriterSettings.builder().outputMode(JsonMode.SHELL).build(), DECODER));
     }
 
     @Test
