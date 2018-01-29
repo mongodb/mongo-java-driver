@@ -53,7 +53,11 @@ final class CollectionPropertyCodecProvider implements PropertyCodecProvider {
         public void encode(final BsonWriter writer, final Collection<T> collection, final EncoderContext encoderContext) {
             writer.writeStartArray();
             for (final T value : collection) {
-                codec.encode(writer, value, encoderContext);
+                if (value == null) {
+                    writer.writeNull();
+                } else {
+                    codec.encode(writer, value, encoderContext);
+                }
             }
             writer.writeEndArray();
         }
