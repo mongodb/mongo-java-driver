@@ -59,7 +59,11 @@ final class MapPropertyCodecProvider implements PropertyCodecProvider {
             writer.writeStartDocument();
             for (final Entry<String, T> entry : map.entrySet()) {
                 writer.writeName(entry.getKey());
-                codec.encode(writer, entry.getValue(), encoderContext);
+                if (entry.getValue() == null) {
+                    writer.writeNull();
+                } else {
+                    codec.encode(writer, entry.getValue(), encoderContext);
+                }
             }
             writer.writeEndDocument();
         }
@@ -69,7 +73,12 @@ final class MapPropertyCodecProvider implements PropertyCodecProvider {
             reader.readStartDocument();
             Map<String, T> map = getInstance();
             while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
-                map.put(reader.readName(), codec.decode(reader, context));
+                if (reader.getCurrentBsonType() == BsonType.NULL) {
+                    map.put(reader.readName(), null);
+                    reader.readNull();
+                } else {
+                    map.put(reader.readName(), codec.decode(reader, context));
+                }
             }
             reader.readEndDocument();
             return map;

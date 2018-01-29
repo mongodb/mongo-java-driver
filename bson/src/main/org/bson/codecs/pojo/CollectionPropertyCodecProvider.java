@@ -67,7 +67,12 @@ final class CollectionPropertyCodecProvider implements PropertyCodecProvider {
             Collection<T> collection = getInstance();
             reader.readStartArray();
             while (reader.readBsonType() != BsonType.END_OF_DOCUMENT) {
-                collection.add(codec.decode(reader, context));
+                if (reader.getCurrentBsonType() == BsonType.NULL) {
+                    collection.add(null);
+                    reader.readNull();
+                } else {
+                    collection.add(codec.decode(reader, context));
+                }
             }
             reader.readEndArray();
             return collection;
