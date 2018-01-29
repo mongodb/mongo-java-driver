@@ -297,6 +297,8 @@ class LimitedLookaheadMarkSpecification extends Specification {
         reader.readInt64() == 52L
 
         when:
+        // make sure it's possible to reset to a mark after getting a new mark
+        reader.getMark()
         // reset to beginning of document * 3
         mark.reset()
         // mark beginning of document * 3

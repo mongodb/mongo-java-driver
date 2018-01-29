@@ -19,6 +19,8 @@ members:
   - peekBinarySize()
   - getMark()
   - close()
+  org.bson.io.BsonInput:
+  - getMark(int)
   org.bson.BsonWriter:
   - writeDecimal128(org.bson.types.Decimal128)
   - writeDecimal128(java.lang.String,org.bson.types.Decimal128)

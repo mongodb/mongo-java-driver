@@ -181,10 +181,23 @@ public class ByteBufferBsonInput implements BsonInput {
         buffer.position(buffer.position() + numBytes);
     }
 
+    @Deprecated
     @Override
     public void mark(final int readLimit) {
         ensureOpen();
         mark = buffer.position();
+    }
+
+    @Override
+    public BsonInputMark getMark(final int readLimit) {
+        return new BsonInputMark() {
+            private int mark = buffer.position();
+            @Override
+            public void reset() {
+                ensureOpen();
+                buffer.position(mark);
+            }
+        };
     }
 
     @Override
