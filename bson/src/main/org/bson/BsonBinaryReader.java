@@ -17,6 +17,7 @@
 package org.bson;
 
 import org.bson.io.BsonInput;
+import org.bson.io.BsonInputMark;
 import org.bson.io.ByteBufferBsonInput;
 import org.bson.types.Decimal128;
 import org.bson.types.ObjectId;
@@ -415,17 +416,18 @@ public class BsonBinaryReader extends AbstractBsonReader {
     protected class Mark extends AbstractBsonReader.Mark {
         private final int startPosition;
         private final int size;
+        private final BsonInputMark bsonInputMark;
 
         protected Mark() {
             super();
             startPosition = BsonBinaryReader.this.getContext().startPosition;
             size = BsonBinaryReader.this.getContext().size;
-            BsonBinaryReader.this.bsonInput.mark(Integer.MAX_VALUE);
+            bsonInputMark = BsonBinaryReader.this.bsonInput.getMark(Integer.MAX_VALUE);
         }
 
         public void reset() {
             super.reset();
-            BsonBinaryReader.this.bsonInput.reset();
+            bsonInputMark.reset();
             BsonBinaryReader.this.setContext(new Context((Context) getParentContext(), getContextType(), startPosition, size));
         }
     }

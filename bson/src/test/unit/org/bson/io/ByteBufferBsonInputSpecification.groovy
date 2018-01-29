@@ -269,6 +269,35 @@ class ByteBufferBsonInputSpecification extends Specification {
         stream.position == 2
     }
 
+    def 'should reset to the BsonInputMark'() {
+        given:
+        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([0x4a, 0x61, 0x76, 0x61, 0] as byte[])))
+
+        when:
+        BsonInputMark markOne = null
+        BsonInputMark markTwo = null
+
+        stream.with {
+            readByte()
+            readByte()
+            markOne = getMark(1024)
+            readByte()
+            readByte()
+            markTwo = getMark(1025)
+            readByte()
+        }
+        markOne.reset()
+
+        then:
+        stream.position == 2
+
+        when:
+        markTwo.reset()
+
+        then:
+        stream.position == 4
+    }
+
     def 'should have remaining when there are more bytes'() {
         given:
         def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([0x4a, 0x61, 0x76, 0x61, 0] as byte[])))

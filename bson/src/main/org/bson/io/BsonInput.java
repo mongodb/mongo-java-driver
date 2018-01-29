@@ -115,8 +115,19 @@ public interface BsonInput extends Closeable {
      * Marks the current position in the stream. This method obeys the contract as specified in the same method in {@code InputStream}.
      *
      * @param readLimit the maximum limit of bytes that can be read before the mark position becomes invalid
+     * @deprecated Use {@link #getMark(int)} instead
      */
+    @Deprecated
     void mark(int readLimit);
+
+    /**
+     * Gets a mark for the current position in the stream.
+     *
+     * @param readLimit the maximum limit of bytes that can be read before the mark position becomes invalid
+     * @return the mark
+     * @since 3.7
+     */
+    BsonInputMark getMark(int readLimit);
 
     /**
      * Resets the stream to the current mark. This method obeys the contract as specified in the same method in {@code InputStream}.
