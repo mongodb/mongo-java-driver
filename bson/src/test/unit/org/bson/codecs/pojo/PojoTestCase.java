@@ -217,6 +217,19 @@ abstract class PojoTestCase {
         return new ConcreteCollectionsModel(collection, list, linked, map, concurrent);
     }
 
+
+    static ConcreteCollectionsModel getConcreteCollectionsModelWithNulls() {
+        Collection<Integer> collection = asList(1, null, 3);
+        List<Integer> list = asList(4, null, 6);
+        LinkedList<Integer> linked = new LinkedList<Integer>(asList(null, 8, 9));
+        Map<String, Double> map = new HashMap<String, Double>();
+        map.put("A", 1.1);
+        map.put("B", null);
+        map.put("C", 3.3);
+
+        return new ConcreteCollectionsModel(collection, list, linked, map, null);
+    }
+
     static SimpleNestedPojoModel getSimpleNestedPojoModel() {
         SimpleModel simpleModel = getSimpleModel();
         return new SimpleNestedPojoModel(simpleModel);

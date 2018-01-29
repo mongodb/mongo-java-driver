@@ -163,6 +163,10 @@ public final class PojoRoundTripTest extends PojoTestCase {
                 "{'collection': [1, 2, 3], 'list': [4, 5, 6], 'linked': [7, 8, 9], 'map': {'A': 1.1, 'B': 2.2, 'C': 3.3},"
                         + "'concurrent': {'D': 4.4, 'E': 5.5, 'F': 6.6}}"));
 
+        data.add(new TestData("Handling of nulls inside collections", getConcreteCollectionsModelWithNulls(),
+                getPojoCodecProviderBuilder(ConcreteCollectionsModel.class),
+                "{'collection': [1, null, 3], 'list': [4, null, 6], 'linked': [null, 8, 9], 'map': {'A': 1.1, 'B': null, 'C': 3.3}}"));
+
         data.add(new TestData("Concrete specific return collection type model through BsonCreator",
                 new CollectionSpecificReturnTypeCreatorModel(Arrays.asList("foo", "bar")),
                 getPojoCodecProviderBuilder(CollectionSpecificReturnTypeCreatorModel.class),
