@@ -33,12 +33,12 @@
         <!-- Requires a Mongodb copyright notice in each file.
           <pre>
             /*
-             * Copyright 2008-2014 MongoDB, Inc.
+             * Copyright 2008-present MongoDB, Inc.
              *
           </pre>
         -->
         <property name="format"
-                  value="^(//| \*) Copyright (\([cC]\) )?[\d]{4}(\-[\d]{4})? (MongoDB, Inc\.).*$" />
+                  value="^(//| \*) Copyright 2008-present MongoDB, Inc\.$" />
         <property name="minimum" value="1" />
         <property name="maximum" value="10" />
         <property name="message" value="MongoDB copyright is missing or malformed." />
