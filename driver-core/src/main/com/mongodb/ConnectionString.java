@@ -611,30 +611,7 @@ public class ConnectionString {
 
         MongoCredential credential = null;
         if (mechanism != null) {
-            switch (mechanism) {
-                case GSSAPI:
-                    credential = MongoCredential.createGSSAPICredential(userName);
-                    if (gssapiServiceName != null) {
-                        credential = credential.withMechanismProperty("SERVICE_NAME", gssapiServiceName);
-                    }
-                    break;
-                case PLAIN:
-                    credential = MongoCredential.createPlainCredential(userName, authSource, password);
-                    break;
-                case MONGODB_CR:
-                    credential = MongoCredential.createMongoCRCredential(userName, authSource, password);
-                    break;
-                case MONGODB_X509:
-                    credential = MongoCredential.createMongoX509Credential(userName);
-                    break;
-                case SCRAM_SHA_1:
-                    credential = MongoCredential.createScramSha1Credential(userName, authSource, password);
-                    break;
-                default:
-                    throw new UnsupportedOperationException(format("The connection string contains an invalid authentication mechanism'. "
-                                                                           + "'%s' is not a supported authentication mechanism",
-                            mechanism));
-            }
+            credential = createMongoCredentialWithMechanism(mechanism, userName, password, authSource, gssapiServiceName);
         } else if (userName != null) {
             credential = MongoCredential.createCredential(userName, authSource, password);
         }
@@ -654,6 +631,38 @@ public class ConnectionString {
                     credential = credential.withMechanismProperty(key, value);
                 }
             }
+        }
+        return credential;
+    }
+
+    @SuppressWarnings("deprecation")
+    private MongoCredential createMongoCredentialWithMechanism(final AuthenticationMechanism mechanism, final String userName,
+                                                               final char[] password, final String authSource,
+                                                               final String gssapiServiceName) {
+        MongoCredential credential;
+        switch (mechanism) {
+            case GSSAPI:
+                credential = MongoCredential.createGSSAPICredential(userName);
+                if (gssapiServiceName != null) {
+                    credential = credential.withMechanismProperty("SERVICE_NAME", gssapiServiceName);
+                }
+                break;
+            case PLAIN:
+                credential = MongoCredential.createPlainCredential(userName, authSource, password);
+                break;
+            case MONGODB_CR:
+                credential = MongoCredential.createMongoCRCredential(userName, authSource, password);
+                break;
+            case MONGODB_X509:
+                credential = MongoCredential.createMongoX509Credential(userName);
+                break;
+            case SCRAM_SHA_1:
+                credential = MongoCredential.createScramSha1Credential(userName, authSource, password);
+                break;
+            default:
+                throw new UnsupportedOperationException(format("The connection string contains an invalid authentication mechanism'. "
+                                                                       + "'%s' is not a supported authentication mechanism",
+                        mechanism));
         }
         return credential;
     }

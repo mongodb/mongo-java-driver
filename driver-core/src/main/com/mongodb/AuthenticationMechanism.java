@@ -42,7 +42,10 @@ public enum AuthenticationMechanism {
 
     /**
      * The MongoDB Challenge Response mechanism.
+     *
+     * @deprecated This mechanism was replaced by {@link #SCRAM_SHA_1} in MongoDB 3.0, and is now deprecated
      */
+    @Deprecated
     MONGODB_CR("MONGODB-CR"),
 
     /**

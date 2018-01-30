@@ -48,7 +48,9 @@ public final class MongoCredential {
     /**
      * The MongoDB Challenge Response mechanism.
      * @mongodb.driver.manual core/authentication/#mongodb-cr-authentication MONGODB-CR
+     * @deprecated This mechanism was replaced by {@link #SCRAM_SHA_1_MECHANISM} in MongoDB 3.0, and is now deprecated
      */
+    @Deprecated
     public static final String MONGODB_CR_MECHANISM = AuthenticationMechanism.MONGODB_CR.getMechanismName();
 
     /**
@@ -187,7 +189,10 @@ public final class MongoCredential {
      * @return the credential
      * @see #createCredential(String, String, char[])
      * @mongodb.driver.manual core/authentication/#mongodb-cr-authentication MONGODB-CR
+     * @deprecated MONGODB-CR was replaced by SCRAM-SHA-1 in MongoDB 3.0, and is now deprecated. Use
+     * the {@link #createCredential(String, String, char[])} factory method instead.
      */
+    @Deprecated
     public static MongoCredential createMongoCRCredential(final String userName, final String database, final char[] password) {
         return new MongoCredential(MONGODB_CR, userName, database, password);
     }
@@ -298,7 +303,7 @@ public final class MongoCredential {
             throw new IllegalArgumentException("Password can not be null when the authentication mechanism is unspecified");
         }
 
-        if ((mechanism == PLAIN || mechanism == MONGODB_CR || mechanism == SCRAM_SHA_1) && password == null) {
+        if (mechanismRequiresPassword(mechanism) && password == null) {
             throw new IllegalArgumentException("Password can not be null for " + mechanism + " mechanism");
         }
 
@@ -312,6 +317,11 @@ public final class MongoCredential {
 
         this.password = password != null ? password.clone() : null;
         this.mechanismProperties = Collections.emptyMap();
+    }
+
+    @SuppressWarnings("deprecation")
+    private boolean mechanismRequiresPassword(final AuthenticationMechanism mechanism) {
+        return mechanism == PLAIN || mechanism == MONGODB_CR || mechanism == SCRAM_SHA_1;
     }
 
     /**
