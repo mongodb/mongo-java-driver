@@ -33,7 +33,6 @@ import static org.junit.Assert.fail;
 
 public class NativeAuthenticatorUnitTest {
     private TestInternalConnection connection;
-    private MongoCredential credential;
     private NativeAuthenticator subject;
     private ConnectionDescription connectionDescription;
 
@@ -41,8 +40,9 @@ public class NativeAuthenticatorUnitTest {
     public void before() {
         connection = new TestInternalConnection(new ServerId(new ClusterId(), new ServerAddress("localhost", 27017)));
         connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()));
-        credential = MongoCredential.createMongoCRCredential("\u53f0\u5317", "database", "Ta\u0301ibe\u030Ci".toCharArray());
-        subject = new NativeAuthenticator(this.credential);
+        MongoCredential credential = MongoCredential.createMongoCRCredential("\u53f0\u5317", "database",
+                "Ta\u0301ibe\u030Ci".toCharArray());
+        subject = new NativeAuthenticator(credential);
     }
 
     @Test
@@ -58,7 +58,7 @@ public class NativeAuthenticatorUnitTest {
     }
 
     @Test
-    public void testFailedAuthenticationAsync() throws InterruptedException {
+    public void testFailedAuthenticationAsync() {
         enqueueUnsuccessfulReplies();
 
         FutureResultCallback<Void> futureCallback = new FutureResultCallback<Void>();

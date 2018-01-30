@@ -39,7 +39,7 @@ public class AuthenticatingConnectionTest {
     private ServerAddress serverAddress;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         userName = System.getProperty("org.mongodb.test.userName", "bob");
         password = System.getProperty("org.mongodb.test.password", "pwd123");
         source = System.getProperty("org.mongodb.test.source", "admin");
@@ -53,13 +53,13 @@ public class AuthenticatingConnectionTest {
     }
 
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() {
         internalConnection.close();
     }
 
     @Test
     @Ignore
-    public void testMongoCRAuthentication() throws InterruptedException {
+    public void testMongoCRAuthentication() {
         InternalConnectionFactory internalConnectionFactory =
             new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()),
                                                 singletonList(MongoCredential.createMongoCRCredential(userName, source,
@@ -71,7 +71,7 @@ public class AuthenticatingConnectionTest {
 
     @Test
     @Ignore
-    public void testPlainAuthentication() throws InterruptedException {
+    public void testPlainAuthentication() {
         InternalConnectionFactory internalConnectionFactory =
             new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()),
                                                 singletonList(MongoCredential.createPlainCredential(userName, source,
@@ -83,7 +83,7 @@ public class AuthenticatingConnectionTest {
 
     @Test
     @Ignore
-    public void testGSSAPIAuthentication() throws InterruptedException {
+    public void testGSSAPIAuthentication() {
         InternalConnectionFactory internalConnectionFactory =
             new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()),
                                                 singletonList(MongoCredential.createGSSAPICredential(userName)),
@@ -94,7 +94,7 @@ public class AuthenticatingConnectionTest {
 
     @Test
     @Ignore
-    public void testMongoX509Authentication() throws InterruptedException {
+    public void testMongoX509Authentication() {
         InternalConnectionFactory internalConnectionFactory =
             new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
                                                                         getSslSettings()),
