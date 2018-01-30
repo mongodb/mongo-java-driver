@@ -57,6 +57,7 @@ public class AuthenticatingConnectionTest {
         internalConnection.close();
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     @Ignore
     public void testMongoCRAuthentication() {
