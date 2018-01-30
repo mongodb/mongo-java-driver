@@ -236,16 +236,32 @@ abstract class PojoTestCase {
     }
 
     static CollectionNestedPojoModel getCollectionNestedPojoModel() {
-        SimpleModel simpleModel = getSimpleModel();
+        return getCollectionNestedPojoModel(false);
+    }
 
-        List<SimpleModel> listSimple = singletonList(simpleModel);
+    static CollectionNestedPojoModel getCollectionNestedPojoModelWithNulls() {
+        return getCollectionNestedPojoModel(true);
+    }
+
+    private static CollectionNestedPojoModel getCollectionNestedPojoModel(final boolean useNulls) {
+        List<SimpleModel> listSimple;
+        Set<SimpleModel> setSimple;
+        Map<String, SimpleModel> mapSimple;
+
+        if (useNulls) {
+            listSimple = null;
+            setSimple = null;
+            mapSimple = null;
+        } else {
+            SimpleModel simpleModel = getSimpleModel();
+            listSimple = singletonList(simpleModel);
+            setSimple = new HashSet<SimpleModel>(listSimple);
+            mapSimple = new HashMap<String, SimpleModel>();
+            mapSimple.put("s", simpleModel);
+        }
+
         List<List<SimpleModel>> listListSimple = singletonList(listSimple);
-
-        Set<SimpleModel> setSimple = new HashSet<SimpleModel>(listSimple);
         Set<Set<SimpleModel>> setSetSimple = new HashSet<Set<SimpleModel>>(singletonList(setSimple));
-
-        Map<String, SimpleModel> mapSimple = new HashMap<String, SimpleModel>();
-        mapSimple.put("s", simpleModel);
 
         Map<String, Map<String, SimpleModel>> mapMapSimple = new HashMap<String, Map<String, SimpleModel>>();
         mapMapSimple.put("ms", mapSimple);

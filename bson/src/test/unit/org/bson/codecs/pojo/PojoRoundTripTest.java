@@ -202,6 +202,19 @@ public final class PojoRoundTripTest extends PojoTestCase {
                         + "'listMapSetSimple': [{'s': [" + SIMPLE_MODEL_JSON + "]}],"
                         + "}"));
 
+        data.add(new TestData("Nested collection", getCollectionNestedPojoModelWithNulls(),
+                getPojoCodecProviderBuilder(CollectionNestedPojoModel.class, SimpleModel.class),
+                "{ 'listListSimple': [ null ],"
+                        + "'setSetSimple': [ null ],"
+                        + "'mapMapSimple': {'ms': null},"
+                        + "'mapListSimple': {'ls': null},"
+                        + "'mapListMapSimple': {'lm': [null]},"
+                        + "'mapSetSimple': {'s': null},"
+                        + "'listMapSimple': [null],"
+                        + "'listMapListSimple': [{'ls': null}],"
+                        + "'listMapSetSimple': [{'s': null}],"
+                        + "}"));
+
         data.add(new TestData("Nested generic holder", getNestedGenericHolderModel(),
                 getPojoCodecProviderBuilder(NestedGenericHolderModel.class, GenericHolderModel.class),
                 "{'nested': {'myGenericField': 'generic', 'myLongField': {'$numberLong': '1'}}}"));
