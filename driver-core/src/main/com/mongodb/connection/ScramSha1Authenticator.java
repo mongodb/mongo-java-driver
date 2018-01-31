@@ -282,7 +282,7 @@ class ScramSha1Authenticator extends SaslAuthenticator {
         }
 
         private String prepUserName(final String userName) {
-            return userName.replace("=", "=3D").replace(",", "=2D");
+            return userName.replace("=", "=3D").replace(",", "=2C");
         }
 
         private byte[] xor(final byte[] a, final byte[] b) {
