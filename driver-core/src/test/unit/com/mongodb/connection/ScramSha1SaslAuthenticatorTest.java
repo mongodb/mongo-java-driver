@@ -41,7 +41,8 @@ public class ScramSha1SaslAuthenticatorTest {
     public void before() {
         this.connection = new TestInternalConnection(new ServerId(new ClusterId(), new ServerAddress("localhost", 27017)));
         connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()));
-        this.credential = MongoCredential.createScramSha1Credential("user", "database", "pencil".toCharArray());
+        // User name contains ",' and '=" to test user name prepping required by the RFC
+        this.credential = MongoCredential.createScramSha1Credential("u,ser=", "database", "pencil".toCharArray());
         ScramSha1Authenticator.RandomStringGenerator randomStringGenerator = new ScramSha1Authenticator.RandomStringGenerator() {
             @Override
             public String generate(final int length) {
@@ -159,19 +160,20 @@ public class ScramSha1SaslAuthenticatorTest {
         String firstCommand = MessageHelper.decodeCommandAsJson(sent.get(0));
         String expectedFirstCommand = "{ \"saslStart\" : 1, "
                 + "\"mechanism\" : \"SCRAM-SHA-1\", "
-                + "\"payload\" : { \"$binary\" : \"biwsbj11c2VyLHI9ZnlrbytkMmxiYkZnT05Sdjlxa3hkYXdM\", "
+                + "\"payload\" : { \"$binary\" : \"biwsbj11PTJDc2VyPTNELHI9ZnlrbytkMmxiYkZnT05Sdjlxa3hkYXdM\", "
                 + "\"$type\" : \"00\" } }";
 
         String secondCommand = MessageHelper.decodeCommandAsJson(sent.get(1));
         String expectedSecondCommand = "{ \"saslContinue\" : 1, "
                 + "\"conversationId\" : 1, "
-                + "\"payload\" : { \"$binary\" : \"Yz1iaXdzLHI9ZnlrbytkMmxiYkZnT05Sdjlxa3hkYXdMSG8rVmdrN3F2VU9LVXd"
-                + "1V0xJV2c0bC85U3JhR01IRUUscD1NQzJUOEJ2Ym1XUmNrRHc4b1dsNUlWZ2h3Q1k9\", \"$type\" : \"00\" } }";
+                + "\"payload\" : { \"$binary\" : \"Yz1iaXdzLHI9ZnlrbytkMmxiYkZnT05Sdjlxa3hkYXdMSG8rVmdrN3F2VU9LVXd1V0xJV2c0bC85U3JhR01IRUU"
+                + "scD04Z2RlTXVJL1dXbXVaOWFpQ0FOYk5wYTdrN009\""
+                + ", \"$type\" : \"00\" } }";
 
         String thirdCommand = MessageHelper.decodeCommandAsJson(sent.get(2));
         String expectedThirdCommand = "{ \"saslContinue\" : 1, "
                 + "\"conversationId\" : 1, "
-                + "\"payload\" : { \"$binary\" : \"dj1VTVdlSTI1SkQxeU5ZWlJNcFo0Vkh2aFo5ZTA9\", \"$type\" : \"00\" } }";
+                + "\"payload\" : { \"$binary\" : \"dj1ZaVNJZWJNNHJ4MG5kTEdqS1JZY1ZqMnBZTEE9\", \"$type\" : \"00\" } }";
 
         assertEquals(expectedFirstCommand, firstCommand);
         assertEquals(expectedSecondCommand, secondCommand);
@@ -188,7 +190,7 @@ public class ScramSha1SaslAuthenticatorTest {
                              + "ok: 1}");
         ResponseBuffers secondReply =
         buildSuccessfulReply("{conversationId: 1, "
-                             + "payload: BinData(0,dj1VTVdlSTI1SkQxeU5ZWlJNcFo0Vkh2aFo5ZTA9), "
+                             + "payload: BinData(0,dj1ZaVNJZWJNNHJ4MG5kTEdqS1JZY1ZqMnBZTEE9), "
                              + "done: false, "
                              + "ok: 1}");
         ResponseBuffers thirdReply =
