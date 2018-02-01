@@ -33,7 +33,6 @@ import static org.junit.Assert.fail;
 
 public class ScramSha1SaslAuthenticatorTest {
     private TestInternalConnection connection;
-    private MongoCredential credential;
     private ScramSha1Authenticator subject;
     private ConnectionDescription connectionDescription;
 
@@ -42,14 +41,15 @@ public class ScramSha1SaslAuthenticatorTest {
         this.connection = new TestInternalConnection(new ServerId(new ClusterId(), new ServerAddress("localhost", 27017)));
         connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()));
         // User name contains ",' and '=" to test user name prepping required by the RFC
-        this.credential = MongoCredential.createScramSha1Credential("u,ser=", "database", "pencil".toCharArray());
+        MongoCredential credential = MongoCredential.createScramSha1Credential("u,ser=", "database",
+                "pencil".toCharArray());
         ScramSha1Authenticator.RandomStringGenerator randomStringGenerator = new ScramSha1Authenticator.RandomStringGenerator() {
             @Override
             public String generate(final int length) {
                 return "fyko+d2lbbFgONRv9qkxdawL";
             }
         };
-        this.subject = new ScramSha1Authenticator(this.credential, randomStringGenerator);
+        this.subject = new ScramSha1Authenticator(credential, randomStringGenerator);
     }
 
     @Test
@@ -65,7 +65,7 @@ public class ScramSha1SaslAuthenticatorTest {
     }
 
     @Test
-    public void testAuthenticateThrowsWhenServerProvidesAnInvalidRValueAsync() throws InterruptedException {
+    public void testAuthenticateThrowsWhenServerProvidesAnInvalidRValueAsync() {
         enqueueInvalidRValueReply();
 
         try {
@@ -103,7 +103,7 @@ public class ScramSha1SaslAuthenticatorTest {
     }
 
     @Test
-    public void testAuthenticateThrowsWhenServerProvidesInvalidServerSignatureAsync() throws InterruptedException {
+    public void testAuthenticateThrowsWhenServerProvidesInvalidServerSignatureAsync() {
         enqueueInvalidServerSignature();
 
         try {
