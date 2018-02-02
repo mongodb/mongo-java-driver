@@ -81,6 +81,7 @@ import static org.bson.codecs.pojo.Conventions.DEFAULT_CONVENTIONS;
 import static org.bson.codecs.pojo.Conventions.NO_CONVENTIONS;
 import static org.bson.codecs.pojo.Conventions.SET_PRIVATE_FIELDS_CONVENTION;
 import static org.bson.codecs.pojo.Conventions.USE_GETTERS_FOR_SETTERS;
+import static org.junit.Assert.assertTrue;
 
 public final class PojoCustomTest extends PojoTestCase {
 
@@ -407,18 +408,25 @@ public final class PojoCustomTest extends PojoTestCase {
 
     @Test(expected = CodecConfigurationException.class)
     public void testDecodingInvalidMapModel() {
-        decodingShouldFail(getCodec(InvalidMapModel.class), "{'invalidMap': {'1': 1, '2': 2}}");
+        try {
+            decodingShouldFail(getCodec(InvalidMapModel.class), "{'invalidMap': {'1': 1, '2': 2}}");
+        } catch (CodecConfigurationException e) {
+            assertTrue(e.getMessage().startsWith("Could not create a PojoCodec for 'InvalidMapModel'."
+                    + " Property 'invalidMap' errored with:"));
+            throw e;
+        }
     }
 
     @Test(expected = CodecConfigurationException.class)
     public void testEncodingInvalidCollectionModel() {
-        encodesTo(getPojoCodecProviderBuilder(InvalidCollectionModel.class), new InvalidCollectionModel(asList(1, 2, 3)),
+        try {
+            encodesTo(getPojoCodecProviderBuilder(InvalidCollectionModel.class), new InvalidCollectionModel(asList(1, 2, 3)),
                 "{collectionField: [1, 2, 3]}");
-    }
-
-    @Test(expected = CodecConfigurationException.class)
-    public void testDecodingInvalidCollectionModel() {
-        decodingShouldFail(getCodec(InvalidCollectionModel.class), "{collectionField: [1, 2, 3]}");
+        } catch (CodecConfigurationException e) {
+            assertTrue(e.getMessage().startsWith("Could not create a PojoCodec for 'InvalidCollectionModel'."
+                    + " Property 'collectionField' errored with:"));
+            throw e;
+        }
     }
 
     @Test
@@ -435,7 +443,12 @@ public final class PojoCustomTest extends PojoTestCase {
     @Test(expected = CodecConfigurationException.class)
     public void testDataUnknownClass() {
         ClassModel<SimpleModel> classModel = ClassModel.builder(SimpleModel.class).enableDiscriminator(true).build();
-        decodingShouldFail(getCodec(PojoCodecProvider.builder().register(classModel), SimpleModel.class), "{'_t': 'FakeModel'}");
+        try {
+            decodingShouldFail(getCodec(PojoCodecProvider.builder().register(classModel), SimpleModel.class), "{'_t': 'FakeModel'}");
+        } catch (CodecConfigurationException e) {
+            assertTrue(e.getMessage().startsWith("Failed to decode 'SimpleModel'. Decoding errored with:"));
+            throw e;
+        }
     }
 
     @Test(expected = CodecConfigurationException.class)

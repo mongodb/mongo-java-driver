@@ -22,6 +22,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static java.lang.String.format;
+
 final class DiscriminatorLookup {
     private final Map<String, Class<?>> discriminatorClassMap = new ConcurrentHashMap<String, Class<?>>();
     private final Set<String> packages;
@@ -46,7 +48,7 @@ final class DiscriminatorLookup {
         }
 
         if (clazz == null) {
-            throw new CodecConfigurationException("A class could not be found for: " + discriminator);
+            throw new CodecConfigurationException(format("A class could not be found for the discriminator: '%s'.",  discriminator));
         } else {
             discriminatorClassMap.put(discriminator, clazz);
         }
