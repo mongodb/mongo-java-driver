@@ -39,8 +39,10 @@ JMX connection pool monitoring is disabled by default. To enable it add a `com.m
 ```java
 MongoClientSettings settings =
         MongoClientSettings.builder()
-        .applyToConnectionPoolSettings(builder -> builder.addConnectionPoolListener(new JMXConnectionPoolListener()))
-        .build();
+                .connectionPoolSettings(ConnectionPoolSettings.builder()
+                        .addConnectionPoolListener(new JMXConnectionPoolListener())
+                        .build())
+                .build();
 ```
 
 # Command Monitoring
