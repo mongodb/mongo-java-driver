@@ -79,7 +79,6 @@ public interface MongoClient {
      * @param clientSession the client session with which to associate this operation
      * @return an iterable containing all the names of all the databases
      * @mongodb.driver.manual reference/command/listDatabases List Databases
-     * @since 3.6
      * @mongodb.server.release 3.6
      */
     MongoIterable<String> listDatabaseNames(ClientSession clientSession);
@@ -97,7 +96,6 @@ public interface MongoClient {
      * @param clientSession the client session with which to associate this operation
      * @return the list databases iterable interface
      * @mongodb.driver.manual reference/command/listDatabases List Databases
-     * @since 3.6
      * @mongodb.server.release 3.6
      */
     ListDatabasesIterable<Document> listDatabases(ClientSession clientSession);
@@ -119,9 +117,7 @@ public interface MongoClient {
      * @param <TResult>   the type of the class to use instead of {@code Document}.
      * @return the list databases iterable interface
      * @mongodb.driver.manual reference/command/listDatabases List Databases
-     * @since 3.6
      * @mongodb.server.release 3.6
      */
     <TResult> ListDatabasesIterable<TResult> listDatabases(ClientSession clientSession, Class<TResult> resultClass);
-
 }

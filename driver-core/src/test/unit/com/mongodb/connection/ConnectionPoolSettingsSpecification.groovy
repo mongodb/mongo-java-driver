@@ -155,6 +155,26 @@ class ConnectionPoolSettingsSpecification extends Specification {
         settings.getMaxWaitQueueSize() == 70
     }
 
+    def 'should apply settings'() {
+        given:
+        def defaultSettings = ConnectionPoolSettings.builder().build()
+        def customSettings = ConnectionPoolSettings
+                .builder()
+                .maxWaitTime(5, SECONDS)
+                .maxSize(75)
+                .maxWaitQueueSize(11)
+                .maxConnectionLifeTime(101, SECONDS)
+                .maxConnectionIdleTime(51, SECONDS)
+                .minSize(1)
+                .maintenanceInitialDelay(5, SECONDS)
+                .maintenanceFrequency(1000, SECONDS)
+                .build()
+
+        expect:
+        ConnectionPoolSettings.builder().applySettings(customSettings).build() == customSettings
+        ConnectionPoolSettings.builder(customSettings).applySettings(defaultSettings).build() == defaultSettings
+    }
+
     def 'toString should be overridden'() {
         when:
         def settings = ConnectionPoolSettings.builder().maxSize(1).build()

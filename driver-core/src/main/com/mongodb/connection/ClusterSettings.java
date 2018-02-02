@@ -29,7 +29,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
@@ -68,7 +67,7 @@ public final class ClusterSettings {
      * @since 3.5
      */
     public static Builder builder(final ClusterSettings clusterSettings) {
-        return new Builder(clusterSettings);
+        return builder().applySettings(clusterSettings);
     }
 
     /**
@@ -76,21 +75,30 @@ public final class ClusterSettings {
      */
     @NotThreadSafe
     public static final class Builder {
-        private List<ServerAddress> hosts;
-        private ClusterConnectionMode mode = ClusterConnectionMode.MULTIPLE;
+        private List<ServerAddress> hosts = singletonList(new ServerAddress());
+        private ClusterConnectionMode mode;
         private ClusterType requiredClusterType = ClusterType.UNKNOWN;
         private String requiredReplicaSetName;
         private ServerSelector serverSelector;
         private String description;
         private long serverSelectionTimeoutMS = TimeUnit.MILLISECONDS.convert(30, TimeUnit.SECONDS);
         private int maxWaitQueueSize = 500;
-        private final List<ClusterListener> clusterListeners = new ArrayList<ClusterListener>();
+        private List<ClusterListener> clusterListeners = new ArrayList<ClusterListener>();
 
         private Builder() {
         }
 
-        private Builder(final ClusterSettings clusterSettings) {
-            notNull("builder", clusterSettings);
+        /**
+         * Applies the clusterSettings to the builder
+         *
+         * <p>Note: Overwrites all existing settings</p>
+         *
+         * @param clusterSettings the clusterSettings
+         * @return this
+         * @since 3.7
+         */
+        public Builder applySettings(final ClusterSettings clusterSettings) {
+            notNull("clusterSettings", clusterSettings);
             description = clusterSettings.description;
             hosts = clusterSettings.hosts;
             mode = clusterSettings.mode;
@@ -99,7 +107,8 @@ public final class ClusterSettings {
             serverSelector = clusterSettings.serverSelector;
             serverSelectionTimeoutMS = clusterSettings.serverSelectionTimeoutMS;
             maxWaitQueueSize = clusterSettings.maxWaitQueueSize;
-            clusterListeners.addAll(clusterSettings.clusterListeners);
+            clusterListeners = new ArrayList<ClusterListener>(clusterSettings.clusterListeners);
+            return this;
         }
 
         /**
@@ -221,9 +230,9 @@ public final class ClusterSettings {
         }
 
         /**
-         * Take the settings from the given ConnectionString and add them to the builder
+         * Takes the settings from the given {@code ConnectionString} and applies them to the builder
          *
-         * @param connectionString a URI containing details of how to connect to MongoDB
+         * @param connectionString the connection string containing details of how to connect to MongoDB
          * @return this
          */
         public Builder applyConnectionString(final ConnectionString connectionString) {
@@ -443,14 +452,11 @@ public final class ClusterSettings {
     }
 
     private ClusterSettings(final Builder builder) {
-        notNull("hosts", builder.hosts);
-        isTrueArgument("hosts size > 0", builder.hosts.size() > 0);
-
         if (builder.hosts.size() > 1 && builder.requiredClusterType == ClusterType.STANDALONE) {
             throw new IllegalArgumentException("Multiple hosts cannot be specified when using ClusterType.STANDALONE.");
         }
 
-        if (builder.mode == ClusterConnectionMode.SINGLE && builder.hosts.size() > 1) {
+        if (builder.mode != null && builder.mode == ClusterConnectionMode.SINGLE && builder.hosts.size() > 1) {
             throw new IllegalArgumentException("Can not directly connect to more than one server");
         }
 
@@ -465,7 +471,7 @@ public final class ClusterSettings {
 
         description = builder.description;
         hosts = builder.hosts;
-        mode = builder.mode;
+        mode = builder.mode != null ? builder.mode : hosts.size() == 1 ? ClusterConnectionMode.SINGLE : ClusterConnectionMode.MULTIPLE;
         requiredReplicaSetName = builder.requiredReplicaSetName;
         requiredClusterType = builder.requiredClusterType;
         serverSelector = builder.serverSelector;

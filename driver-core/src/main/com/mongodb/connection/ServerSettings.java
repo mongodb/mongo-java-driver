@@ -58,7 +58,7 @@ public class ServerSettings {
      * @since 3.5
      */
     public static Builder builder(final ServerSettings serverSettings) {
-        return new Builder(serverSettings);
+        return builder().applySettings(serverSettings);
     }
 
     /**
@@ -68,18 +68,28 @@ public class ServerSettings {
     public static final class Builder {
         private long heartbeatFrequencyMS = 10000;
         private long minHeartbeatFrequencyMS = 500;
-        private final List<ServerListener> serverListeners = new ArrayList<ServerListener>();
-        private final List<ServerMonitorListener> serverMonitorListeners = new ArrayList<ServerMonitorListener>();
+        private List<ServerListener> serverListeners = new ArrayList<ServerListener>();
+        private List<ServerMonitorListener> serverMonitorListeners = new ArrayList<ServerMonitorListener>();
 
         private Builder() {
         }
 
-        private Builder(final ServerSettings serverSettings) {
+        /**
+         * Applies the serverSettings to the builder
+         *
+         * <p>Note: Overwrites all existing settings</p>
+         *
+         * @param serverSettings the serverSettings
+         * @return this
+         * @since 3.7
+         */
+        public Builder applySettings(final ServerSettings serverSettings) {
             notNull("serverSettings", serverSettings);
             heartbeatFrequencyMS = serverSettings.heartbeatFrequencyMS;
             minHeartbeatFrequencyMS = serverSettings.minHeartbeatFrequencyMS;
-            serverListeners.addAll(serverSettings.serverListeners);
-            serverMonitorListeners.addAll(serverSettings.serverMonitorListeners);
+            serverListeners = new ArrayList<ServerListener>(serverSettings.serverListeners);
+            serverMonitorListeners = new ArrayList<ServerMonitorListener>(serverSettings.serverMonitorListeners);
+            return this;
         }
 
         /**
@@ -134,9 +144,9 @@ public class ServerSettings {
         }
 
         /**
-         * Take the settings from the given ConnectionString and add them to the builder
+         * Takes the settings from the given {@code ConnectionString} and applies them to the builder
          *
-         * @param connectionString a URI containing details of how to connect to MongoDB
+         * @param connectionString the connection string containing details of how to connect to MongoDB
          * @return this
          * @since 3.3
          */

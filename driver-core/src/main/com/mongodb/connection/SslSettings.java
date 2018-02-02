@@ -23,6 +23,8 @@ import com.mongodb.annotations.NotThreadSafe;
 
 import javax.net.ssl.SSLContext;
 
+import static com.mongodb.assertions.Assertions.notNull;
+
 /**
  * Settings for connecting to MongoDB via SSL.
  *
@@ -44,13 +46,44 @@ public class SslSettings {
     }
 
     /**
+     * Creates a builder instance.
+     *
+     * @param sslSettings existing SslSettings to default the builder settings on.
+     * @return a builder
+     * @since 3.7
+     */
+    public static Builder builder(final SslSettings sslSettings) {
+        return builder().applySettings(sslSettings);
+    }
+
+    /**
      * A builder for creating SSLSettings.
      */
     @NotThreadSafe
-    public static class Builder {
+    public static final class Builder {
         private boolean enabled;
         private boolean invalidHostNameAllowed;
         private SSLContext context;
+
+        private Builder(){
+        }
+
+        /**
+         * Applies the sslSettings to the builder
+         *
+         * <p>Note: Overwrites all existing settings</p>
+         *
+         * @param sslSettings the sslSettings
+         * @return this
+         * @since 3.7
+         */
+        public Builder applySettings(final SslSettings sslSettings) {
+            notNull("sslSettings", sslSettings);
+            enabled = sslSettings.enabled;
+            invalidHostNameAllowed = sslSettings.invalidHostNameAllowed;
+            context = sslSettings.context;
+            return this;
+        }
 
         /**
          * Define whether SSL should be enabled.
@@ -88,9 +121,9 @@ public class SslSettings {
         }
 
         /**
-         * Take the settings from the given ConnectionString and set them in this builder.
+         * Takes the settings from the given {@code ConnectionString} and applies them to the builder
          *
-         * @param connectionString a URI with details on how to connect to MongoDB.
+         * @param connectionString the connection string containing details of how to connect to MongoDB
          * @return this
          */
         public Builder applyConnectionString(final ConnectionString connectionString) {

@@ -26,7 +26,7 @@ import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static com.mongodb.Fixture.getMongoClient
+import static Fixture.getMongoClient
 
 class DBFunctionalSpecification extends FunctionalSpecification {
 

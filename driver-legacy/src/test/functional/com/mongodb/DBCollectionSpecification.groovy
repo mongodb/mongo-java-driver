@@ -64,7 +64,7 @@ import spock.lang.Specification
 import java.util.concurrent.TimeUnit
 
 import static com.mongodb.CustomMatchers.isTheSameAs
-import static com.mongodb.Fixture.getMongoClient
+import static Fixture.getMongoClient
 import static java.util.Arrays.asList
 import static spock.util.matcher.HamcrestSupport.expect
 

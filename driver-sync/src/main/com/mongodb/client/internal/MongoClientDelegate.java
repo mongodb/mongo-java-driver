@@ -19,6 +19,7 @@ package com.mongodb.client.internal;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoCredential;
 import com.mongodb.ReadPreference;
+import com.mongodb.ServerAddress;
 import com.mongodb.binding.ClusterBinding;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.ReadWriteBinding;
@@ -34,6 +35,7 @@ import com.mongodb.operation.WriteOperation;
 import com.mongodb.selector.ServerSelector;
 import com.mongodb.session.ClientSession;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.ReadPreference.primary;
@@ -66,7 +68,6 @@ public class MongoClientDelegate {
         }
     }
 
-
     public OperationExecutor getOperationExecutor() {
         return operationExecutor;
     }
@@ -80,6 +81,23 @@ public class MongoClientDelegate {
         } else {
             return null;
         }
+    }
+
+    public List<ServerAddress> getServerAddressList() {
+        List<ServerAddress> serverAddresses = new ArrayList<ServerAddress>();
+        for (final ServerDescription cur : cluster.getDescription().getServerDescriptions()) {
+            serverAddresses.add(cur.getAddress());
+        }
+        return serverAddresses;
+    }
+
+    public void close() {
+        serverSessionPool.close();
+        cluster.close();
+    }
+
+    public Cluster getCluster() {
+        return cluster;
     }
 
     private ClusterDescription getConnectedClusterDescription() {
@@ -103,11 +121,6 @@ public class MongoClientDelegate {
         } else {
             return clusterDescription.getAnyPrimaryOrSecondary();
         }
-    }
-
-    public void close() {
-        serverSessionPool.close();
-        cluster.close();
     }
 
     private class DelegateOperationExecutor implements OperationExecutor {

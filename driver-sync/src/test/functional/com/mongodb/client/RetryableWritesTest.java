@@ -17,8 +17,6 @@
 package com.mongodb.client;
 
 import com.mongodb.ClusterFixture;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.connection.ServerVersion;
@@ -51,8 +49,8 @@ import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static com.mongodb.Fixture.getDefaultDatabaseName;
-import static com.mongodb.Fixture.getMongoClientURI;
+import static com.mongodb.client.Fixture.getDefaultDatabaseName;
+import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
@@ -81,7 +79,7 @@ public class RetryableWritesTest {
 
     @BeforeClass
     public static void beforeClass() {
-        mongoClient = new MongoClient(getMongoClientURI(MongoClientOptions.builder().retryWrites(true)));
+        mongoClient = MongoClients.create(getMongoClientSettingsBuilder().retryWrites(true).build());
     }
 
     @AfterClass

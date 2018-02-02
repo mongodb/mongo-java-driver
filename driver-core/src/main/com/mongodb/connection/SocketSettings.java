@@ -21,6 +21,7 @@ import com.mongodb.annotations.Immutable;
 
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -45,14 +46,47 @@ public class SocketSettings {
     }
 
     /**
+     * Creates a builder instance.
+     *
+     * @param socketSettings existing SocketSettings to default the builder settings on.
+     * @return a builder
+     * @since 3.7
+     */
+    public static Builder builder(final SocketSettings socketSettings) {
+        return builder().applySettings(socketSettings);
+    }
+
+    /**
      * A builder for an instance of {@code SocketSettings}.
      */
-    public static class Builder {
+    public static final class Builder {
         private long connectTimeoutMS = 10000;
         private long readTimeoutMS;
         private boolean keepAlive = true;
         private int receiveBufferSize;
         private int sendBufferSize;
+
+        private Builder() {
+        }
+
+        /**
+         * Applies the socketSettings to the builder
+         *
+         * <p>Note: Overwrites all existing settings</p>
+         *
+         * @param socketSettings the socketSettings
+         * @return this
+         * @since 3.7
+         */
+        public Builder applySettings(final SocketSettings socketSettings) {
+            notNull("socketSettings", socketSettings);
+            connectTimeoutMS = socketSettings.connectTimeoutMS;
+            readTimeoutMS = socketSettings.readTimeoutMS;
+            keepAlive = socketSettings.keepAlive;
+            receiveBufferSize = socketSettings.receiveBufferSize;
+            sendBufferSize = socketSettings.sendBufferSize;
+            return this;
+        }
 
         /**
          * Sets the socket connect timeout.
@@ -116,9 +150,9 @@ public class SocketSettings {
         }
 
         /**
-         * Apply any socket settings specified in the connection string to this builder.
+         * Takes the settings from the given {@code ConnectionString} and applies them to the builder
          *
-         * @param connectionString the connection string
+         * @param connectionString the connection string containing details of how to connect to MongoDB
          * @return this
          * @see com.mongodb.ConnectionString#getConnectTimeout()
          * @see com.mongodb.ConnectionString#getSocketTimeout()

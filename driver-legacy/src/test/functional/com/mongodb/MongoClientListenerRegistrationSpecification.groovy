@@ -26,8 +26,7 @@ import org.bson.Document
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.Fixture.getMongoClientURI
-import static com.mongodb.Fixture.mongoClientURI
+import static Fixture.mongoClientURI
 
 class MongoClientListenerRegistrationSpecification extends FunctionalSpecification {
 

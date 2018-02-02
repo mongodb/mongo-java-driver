@@ -94,7 +94,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should not get server when closed'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts(Arrays.asList(firstServer)).build(),
+        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts(Arrays.asList(firstServer)).mode(MULTIPLE).build(),
                 factory)
         cluster.close()
 
@@ -144,7 +144,7 @@ class MultiServerClusterSpecification extends Specification {
     def 'should remove a secondary server whose reported host name does not match the address connected to'() {
         given:
         def seedListAddress = new ServerAddress('127.0.0.1:27017')
-        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts([seedListAddress]).build(),
+        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts([seedListAddress]).mode(MULTIPLE).build(),
                 factory)
 
         when:
@@ -158,7 +158,7 @@ class MultiServerClusterSpecification extends Specification {
         given:
         def seedListAddress = new ServerAddress('127.0.0.1:27017')
         def cluster = new MultiServerCluster(CLUSTER_ID,
-                ClusterSettings.builder().hosts([seedListAddress]).build(), factory)
+                ClusterSettings.builder().hosts([seedListAddress]).mode(MULTIPLE).build(), factory)
 
         when:
         factory.sendNotification(seedListAddress, REPLICA_SET_PRIMARY, [firstServer, secondServer], firstServer)
@@ -370,7 +370,7 @@ class MultiServerClusterSpecification extends Specification {
     def 'should remove a member whose replica set name does not match the required one'() {
         given:
         def cluster = new MultiServerCluster(
-                CLUSTER_ID, ClusterSettings.builder().hosts([secondServer]).requiredReplicaSetName('test1').build(),
+                CLUSTER_ID, ClusterSettings.builder().hosts([secondServer]).mode(MULTIPLE).requiredReplicaSetName('test1').build(),
                 factory)
         when:
         factory.sendNotification(secondServer, REPLICA_SET_PRIMARY, [firstServer, secondServer, thirdServer], 'test2')
@@ -383,7 +383,7 @@ class MultiServerClusterSpecification extends Specification {
     def 'should throw from getServer if cluster is closed'() {
         given:
         def cluster = new MultiServerCluster(CLUSTER_ID,
-                ClusterSettings.builder().serverSelectionTimeout(100, MILLISECONDS).hosts([firstServer]).build(),
+                ClusterSettings.builder().serverSelectionTimeout(100, MILLISECONDS).hosts([firstServer]).mode(MULTIPLE).build(),
                 factory)
         cluster.close()
 

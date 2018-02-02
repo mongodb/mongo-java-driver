@@ -16,18 +16,25 @@
 
 package com.mongodb.client;
 
+import com.mongodb.Block;
 import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.ServerAddress;
+import com.mongodb.connection.ServerDescription;
+import com.mongodb.connection.SslSettings;
+
+import java.util.List;
 
 /**
  * Helper class for the acceptance tests.
  */
 public final class Fixture {
-    public static final String DEFAULT_URI = "mongodb://localhost:27017";
-    public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
+    private static final String DEFAULT_URI = "mongodb://localhost:27017";
+    private static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
     private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
 
     private static MongoClient mongoClient;
-    private static ConnectionString connectionString;
+    private static MongoClientSettings mongoClientSettings;
     private static MongoDatabase defaultDatabase;
 
     private Fixture() {
@@ -35,14 +42,12 @@ public final class Fixture {
 
     public static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
-            ConnectionString connectionString = getConnectionString();
-            mongoClient = MongoClients.create(connectionString);
+            mongoClient = MongoClients.create(getMongoClientSettings());
             Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         }
         return mongoClient;
     }
 
-    @SuppressWarnings("deprecation") // This is for access to the old API, so it will use deprecated methods
     public static synchronized MongoDatabase getDefaultDatabase() {
         if (defaultDatabase == null) {
             defaultDatabase = getMongoClient().getDatabase(getDefaultDatabaseName());
@@ -69,17 +74,40 @@ public final class Fixture {
         }
     }
 
-    public static synchronized String getConnectionStringProperty() {
+    private static synchronized String getConnectionStringProperty() {
         String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
-        return mongoURIProperty == null || mongoURIProperty.isEmpty()
-               ? DEFAULT_URI : mongoURIProperty;
+        return mongoURIProperty == null || mongoURIProperty.isEmpty() ? DEFAULT_URI : mongoURIProperty;
     }
 
-    public static synchronized ConnectionString getConnectionString() {
-        if (connectionString == null) {
-            // TODO: add support for sslInvalidHostNameAllowed on Java 6
-            connectionString = new ConnectionString(getConnectionStringProperty());
+    public static synchronized MongoClientSettings getMongoClientSettings() {
+        if (mongoClientSettings == null) {
+            MongoClientSettings.Builder builder = MongoClientSettings.builder()
+                    .applyConnectionString(new ConnectionString(getConnectionStringProperty()));
+            if (System.getProperty("java.version").startsWith("1.6.")) {
+                builder.applyToSslSettings(new Block<SslSettings.Builder>() {
+                    @Override
+                    public void apply(final SslSettings.Builder builder) {
+                        builder.invalidHostNameAllowed(true);
+                    }
+                });
+            }
+            mongoClientSettings = builder.build();
         }
-        return connectionString;
+        return mongoClientSettings;
+    }
+
+    public static MongoClientSettings.Builder getMongoClientSettingsBuilder() {
+        return MongoClientSettings.builder(getMongoClientSettings());
+    }
+
+    @SuppressWarnings("deprecation")
+    public static ServerAddress getPrimary() throws InterruptedException {
+        getMongoClient();
+        List<ServerDescription> serverDescriptions = ((MongoClientImpl) mongoClient).getCluster().getDescription().getPrimaries();
+        while (serverDescriptions.isEmpty()) {
+            Thread.sleep(100);
+            serverDescriptions = ((MongoClientImpl) mongoClient).getCluster().getDescription().getPrimaries();
+        }
+        return serverDescriptions.get(0).getAddress();
     }
 }

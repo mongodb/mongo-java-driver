@@ -96,7 +96,7 @@ public class CrudTest extends DatabaseTestCase {
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<Object[]>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/crud")) {
-            BsonDocument testDocument = util.JsonPoweredTestHelper.getTestDocument(file);
+            BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             if (testDocument.containsKey("minServerVersion")
                     && serverVersionLessThan(testDocument.getString("minServerVersion").getValue())) {
                 continue;

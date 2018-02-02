@@ -16,7 +16,6 @@
 
 package com.mongodb.client;
 
-import com.mongodb.MongoClient;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.connection.ServerHelper;
@@ -27,9 +26,9 @@ import org.bson.codecs.DocumentCodec;
 import org.junit.After;
 import org.junit.Before;
 
-import static com.mongodb.Fixture.getDefaultDatabaseName;
-import static com.mongodb.Fixture.getMongoClient;
-import static com.mongodb.Fixture.getPrimary;
+import static com.mongodb.client.Fixture.getDefaultDatabaseName;
+import static com.mongodb.client.Fixture.getMongoClient;
+import static com.mongodb.client.Fixture.getPrimary;
 
 public class DatabaseTestCase {
     //For ease of use and readability, in this specific case we'll allow protected variables

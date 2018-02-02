@@ -19,27 +19,18 @@ package com.mongodb;
 import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
-import com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider;
 import com.mongodb.client.internal.ListDatabasesIterableImpl;
 import com.mongodb.client.internal.MongoDatabaseImpl;
-import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
 import com.mongodb.session.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.Document;
-import org.bson.codecs.BsonValueCodecProvider;
-import org.bson.codecs.DocumentCodecProvider;
-import org.bson.codecs.IterableCodecProvider;
-import org.bson.codecs.MapCodecProvider;
-import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.io.Closeable;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 /**
  * <p>A MongoDB client with internal connection pooling. For most applications, you should have one MongoClient instance for the entire
@@ -87,17 +78,6 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
  */
 public class MongoClient extends Mongo implements Closeable {
 
-    private static final CodecRegistry DEFAULT_CODEC_REGISTRY =
-            fromProviders(asList(new ValueCodecProvider(),
-                    new BsonValueCodecProvider(),
-                    new DBRefCodecProvider(),
-                    new DBObjectCodecProvider(),
-                    new DocumentCodecProvider(new DocumentToDBRefTransformer()),
-                    new IterableCodecProvider(new DocumentToDBRefTransformer()),
-                    new MapCodecProvider(new DocumentToDBRefTransformer()),
-                    new GeoJsonCodecProvider(),
-                    new GridFSFileCodecProvider()));
-
     /**
      * Gets the default codec registry.  It includes the following providers:
      *
@@ -118,7 +98,7 @@ public class MongoClient extends Mongo implements Closeable {
      * @since 3.0
      */
     public static CodecRegistry getDefaultCodecRegistry() {
-        return DEFAULT_CODEC_REGISTRY;
+        return com.mongodb.MongoClientSettings.getDefaultCodecRegistry();
     }
 
     /**

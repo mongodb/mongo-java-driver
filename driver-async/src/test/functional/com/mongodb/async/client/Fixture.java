@@ -16,14 +16,11 @@
 
 package com.mongodb.async.client;
 
+import com.mongodb.Block;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.async.FutureResultCallback;
-import com.mongodb.connection.ClusterSettings;
-import com.mongodb.connection.ConnectionPoolSettings;
-import com.mongodb.connection.ServerSettings;
-import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import org.bson.Document;
 
@@ -55,27 +52,14 @@ public final class Fixture {
     }
 
     public static MongoClientSettings.Builder getMongoClientBuilderFromConnectionString() {
-        SslSettings.Builder sslSettingsBuilder = SslSettings.builder().applyConnectionString(getConnectionString());
+        MongoClientSettings.Builder builder = MongoClientSettings.builder().applyConnectionString(getConnectionString());
         if (System.getProperty("java.version").startsWith("1.6.")) {
-            sslSettingsBuilder.invalidHostNameAllowed(true);
-        }
-        ClusterSettings clusterSettings = ClusterSettings.builder()
-                                                         .applyConnectionString(getConnectionString())
-                                                         .build();
-        ConnectionPoolSettings connectionPoolSettings = ConnectionPoolSettings.builder()
-                                                                              .applyConnectionString(getConnectionString())
-                                                                              .build();
-        SocketSettings socketSettings = SocketSettings.builder()
-                                                      .applyConnectionString(getConnectionString())
-                                                      .build();
-        MongoClientSettings.Builder builder = MongoClientSettings.builder()
-                .clusterSettings(clusterSettings)
-                .connectionPoolSettings(connectionPoolSettings)
-                .serverSettings(ServerSettings.builder().build())
-                .sslSettings(sslSettingsBuilder.build())
-                .socketSettings(socketSettings);
-        if (getConnectionString().getCredential() != null) {
-            builder.credential(getConnectionString().getCredential());
+            builder.applyToSslSettings(new Block<SslSettings.Builder>() {
+                @Override
+                public void apply(final SslSettings.Builder builder) {
+                    builder.invalidHostNameAllowed(true);
+                }
+            });
         }
         return builder;
     }

@@ -16,6 +16,7 @@
 
 package com.mongodb.client
 
+import com.mongodb.MongoClientSettings
 import com.mongodb.ReadConcern
 import com.mongodb.WriteConcern
 import com.mongodb.client.internal.ListDatabasesIterableImpl
@@ -28,9 +29,9 @@ import org.bson.Document
 import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.isTheSameAs
+import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.secondary
-import static com.mongodb.client.MongoClients.getDefaultCodecRegistry
 import static com.mongodb.client.internal.TestHelper.execute
 import static spock.util.matcher.HamcrestSupport.expect
 
@@ -38,8 +39,13 @@ class MongoClientSpecification extends Specification {
 
     def 'should pass the correct settings to getDatabase'() {
         given:
-        def client = new MongoClientImpl(Stub(Cluster), [], secondary(), WriteConcern.MAJORITY, true, ReadConcern.MAJORITY,
-                new TestOperationExecutor([]))
+        def settings = MongoClientSettings.builder()
+                .readPreference(secondary())
+                .writeConcern(WriteConcern.MAJORITY)
+                .readConcern(ReadConcern.MAJORITY)
+                .retryWrites(true)
+                .build()
+        def client = new MongoClientImpl(Stub(Cluster), settings, new TestOperationExecutor([]))
 
         when:
         def database = client.getDatabase('name')
@@ -55,8 +61,7 @@ class MongoClientSpecification extends Specification {
     def 'should use ListDatabasesIterableImpl correctly'() {
         given:
         def executor = new TestOperationExecutor([null, null])
-        def client = new MongoClientImpl(Stub(Cluster), [], primary(), WriteConcern.ACKNOWLEDGED, false, ReadConcern.DEFAULT,
-                executor)
+        def client = new MongoClientImpl(Stub(Cluster), MongoClientSettings.builder().build(), executor)
         def listDatabasesMethod = client.&listDatabases
         def listDatabasesNamesMethod = client.&listDatabaseNames
 

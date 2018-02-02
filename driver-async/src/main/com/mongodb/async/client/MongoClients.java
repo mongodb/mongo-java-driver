@@ -17,32 +17,18 @@
 package com.mongodb.async.client;
 
 import com.mongodb.ConnectionString;
-import com.mongodb.DBRefCodecProvider;
-import com.mongodb.DocumentToDBRefTransformer;
 import com.mongodb.MongoDriverInformation;
-import com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider;
-import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
-import com.mongodb.connection.ClusterSettings;
-import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.DefaultClusterFactory;
-import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.StreamFactoryFactory;
-import org.bson.codecs.BsonValueCodecProvider;
-import org.bson.codecs.DocumentCodecProvider;
-import org.bson.codecs.IterableCodecProvider;
-import org.bson.codecs.MapCodecProvider;
-import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.io.Closeable;
 
 import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
-import static java.util.Arrays.asList;
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 /**
  * A factory for MongoClient instances.
@@ -135,41 +121,9 @@ public final class MongoClients {
      * @see MongoClients#create(ConnectionString)
      */
     public static MongoClient create(final ConnectionString connectionString, final MongoDriverInformation mongoDriverInformation) {
-        MongoClientSettings.Builder builder = MongoClientSettings.builder()
-                .clusterSettings(ClusterSettings.builder()
-                        .applyConnectionString(connectionString)
-                        .build())
-                .connectionPoolSettings(ConnectionPoolSettings.builder()
-                        .applyConnectionString(connectionString)
-                        .build())
-                .serverSettings(ServerSettings.builder()
-                        .applyConnectionString(connectionString)
-                        .build())
-                .sslSettings(SslSettings.builder()
-                        .applyConnectionString(connectionString)
-                        .build())
-                .socketSettings(SocketSettings.builder()
-                        .applyConnectionString(connectionString)
-                        .build());
 
-        if (connectionString.getCredential() != null) {
-            builder.credential(connectionString.getCredential());
-        }
-
-        if (connectionString.getReadPreference() != null) {
-            builder.readPreference(connectionString.getReadPreference());
-        }
-        if (connectionString.getReadConcern() != null) {
-            builder.readConcern(connectionString.getReadConcern());
-        }
-        if (connectionString.getWriteConcern() != null) {
-            builder.writeConcern(connectionString.getWriteConcern());
-        }
-        if (connectionString.getApplicationName() != null) {
-            builder.applicationName(connectionString.getApplicationName());
-        }
-        builder.compressorList(connectionString.getCompressorList());
-        return create(builder.build(), mongoDriverInformation, connectionString.getStreamType());
+        return create(MongoClientSettings.builder().applyConnectionString(connectionString).build(),
+                mongoDriverInformation, connectionString.getStreamType());
     }
 
     private static MongoClient create(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation,
@@ -215,18 +169,8 @@ public final class MongoClients {
      * @since 3.1
      */
     public static CodecRegistry getDefaultCodecRegistry() {
-        return MongoClients.DEFAULT_CODEC_REGISTRY;
+        return com.mongodb.MongoClientSettings.getDefaultCodecRegistry();
     }
-
-    private static final CodecRegistry DEFAULT_CODEC_REGISTRY =
-            fromProviders(asList(new ValueCodecProvider(),
-                    new BsonValueCodecProvider(),
-                    new DBRefCodecProvider(),
-                    new DocumentCodecProvider(new DocumentToDBRefTransformer()),
-                    new IterableCodecProvider(new DocumentToDBRefTransformer()),
-                    new MapCodecProvider(new DocumentToDBRefTransformer()),
-                    new GeoJsonCodecProvider(),
-                    new GridFSFileCodecProvider()));
 
     private static StreamFactory getStreamFactory(final StreamFactoryFactory streamFactoryFactory,
                                                   final SocketSettings socketSettings, final SslSettings sslSettings,

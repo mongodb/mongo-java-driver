@@ -16,11 +16,18 @@
 
 package com.mongodb.client;
 
-import com.mongodb.MongoClient;
+import com.mongodb.Block;
+import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientException;
-import com.mongodb.MongoClientOptions;
-import com.mongodb.MongoClientURI;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
+import com.mongodb.connection.ClusterSettings;
+import com.mongodb.connection.ServerDescription;
+import com.mongodb.connection.SslSettings;
+import com.mongodb.event.ClusterClosedEvent;
+import com.mongodb.event.ClusterDescriptionChangedEvent;
+import com.mongodb.event.ClusterListener;
+import com.mongodb.event.ClusterOpeningEvent;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -38,6 +45,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.getSslSettings;
@@ -71,14 +79,10 @@ public class InitialDnsSeedlistDiscoveryTest {
 
     @Test
     public void shouldResolve() {
-        MongoClientOptions.Builder builder = MongoClientOptions.builder();
-        if (System.getProperty("java.version").startsWith("1.6.")) {
-            builder.sslInvalidHostNameAllowed(true);
-        }
 
         if (isError) {
             try {
-                new MongoClientURI(this.uri, builder);
+                MongoClientSettings.builder().applyConnectionString(new ConnectionString(uri)).build();
                 fail();
             } catch (IllegalArgumentException e) {
                // all good
@@ -86,17 +90,16 @@ public class InitialDnsSeedlistDiscoveryTest {
                 // all good
             }
         } else {
-            MongoClientURI uri = new MongoClientURI(this.uri, builder);
+            ConnectionString connectionString = new ConnectionString(this.uri);
 
-            assertEquals(seeds.size(), uri.getHosts().size());
-            assertTrue(uri.getHosts().containsAll(seeds));
+            assertEquals(seeds.size(), connectionString.getHosts().size());
+            assertTrue(connectionString.getHosts().containsAll(seeds));
 
-            MongoClientOptions mongoClientOptions = uri.getOptions();
             for (Map.Entry<String, BsonValue> entry : options.entrySet()) {
                 if (entry.getKey().equals("replicaSet")) {
-                    assertEquals(entry.getValue().asString().getValue(), mongoClientOptions.getRequiredReplicaSetName());
+                    assertEquals(entry.getValue().asString().getValue(), connectionString.getRequiredReplicaSetName());
                 } else if (entry.getKey().equals("ssl")) {
-                    assertEquals(entry.getValue().asBoolean().getValue(), mongoClientOptions.isSslEnabled());
+                    assertEquals(entry.getValue().asBoolean().getValue(), connectionString.getSslEnabled());
                 } else if (entry.getKey().equals("authSource")) {
                     // ignoring authSource for now, because without at least a userName also in the connection string,
                     // the authSource is ignored.  If the test gets this far, at least we know that a TXT record
@@ -114,33 +117,55 @@ public class InitialDnsSeedlistDiscoveryTest {
         if (seeds.isEmpty()) {
             return;
         }
-        MongoClientOptions.Builder optionsBuilder = MongoClientOptions.builder()
-                .sslInvalidHostNameAllowed(getSslSettings().isInvalidHostNameAllowed());
-
-        MongoClientURI uri = new MongoClientURI(this.uri, optionsBuilder);
+        final CountDownLatch latch = new CountDownLatch(1);
+        final ConnectionString connectionString = new ConnectionString(uri);
+        final SslSettings sslSettings = getSslSettings(connectionString);
 
         assumeTrue(isDiscoverableReplicaSet() && !serverVersionAtLeast(3, 7)
-                && getSslSettings().isEnabled() == uri.getOptions().isSslEnabled());
+                && getSslSettings().isEnabled() == sslSettings.isEnabled());
 
-        MongoClient client = new MongoClient(uri);
+        MongoClientSettings settings = MongoClientSettings.builder()
+                .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
+                    @Override
+                    public void apply(final ClusterSettings.Builder builder) {
+                        builder.applyConnectionString(connectionString)
+                                .addClusterListener(new ClusterListener() {
+                                    @Override
+                                    public void clusterOpening(final ClusterOpeningEvent event) {
+                                    }
+
+                                    @Override
+                                    public void clusterClosed(final ClusterClosedEvent event) {
+                                    }
+
+                                    @Override
+                                    public void clusterDescriptionChanged(final ClusterDescriptionChangedEvent event) {
+                                        List<ServerAddress> curHostList = new ArrayList<ServerAddress>();
+                                        for (ServerDescription cur : event.getNewDescription().getServerDescriptions()) {
+                                            if (cur.isOk()) {
+                                                curHostList.add(cur.getAddress());
+                                            }
+                                        }
+                                        if (hosts.size() == curHostList.size() && curHostList.containsAll(hosts)) {
+                                            latch.countDown();
+                                        }
+
+                                    }
+                                });
+                    }
+                })
+                .applyToSslSettings(new Block<SslSettings.Builder>() {
+                    @Override
+                    public void apply(final SslSettings.Builder builder) {
+                        builder.applySettings(sslSettings);
+                    }
+                })
+                .build();
+
+        MongoClient client = MongoClients.create(settings);
+
         try {
-            long startTime = System.currentTimeMillis();
-            long currentTime = startTime;
-            boolean hostsMatch = false;
-            while (currentTime < startTime + TimeUnit.SECONDS.toMillis(5)) {
-
-                List<ServerAddress> currentAddresses = client.getServerAddressList();
-                if (currentAddresses.size() == hosts.size() && currentAddresses.containsAll(hosts)) {
-                    hostsMatch = true;
-                    break;
-                }
-
-                Thread.sleep(100);
-                currentTime = System.currentTimeMillis();
-            }
-
-            assertTrue(hostsMatch);
-
+            assertTrue(latch.await(5, TimeUnit.SECONDS));
             assertTrue(client.getDatabase("admin").runCommand(new Document("ping", 1)).containsKey("ok"));
         } finally {
             client.close();
@@ -151,7 +176,7 @@ public class InitialDnsSeedlistDiscoveryTest {
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<Object[]>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/initial-dns-seedlist-discovery")) {
-            BsonDocument testDocument = util.JsonPoweredTestHelper.getTestDocument(file);
+            BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             data.add(new Object[]{
                     file.getName(),
                     testDocument.getString("uri").getValue(),

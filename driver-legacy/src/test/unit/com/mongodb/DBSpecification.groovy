@@ -33,7 +33,7 @@ import org.bson.BsonDouble
 import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.isTheSameAs
-import static com.mongodb.Fixture.getMongoClient
+import static Fixture.getMongoClient
 import static spock.util.matcher.HamcrestSupport.expect
 
 class DBSpecification extends Specification {
