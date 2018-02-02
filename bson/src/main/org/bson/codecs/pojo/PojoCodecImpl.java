@@ -75,9 +75,14 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
     private void specialize() {
         if (specialized) {
             codecCache.put(classModel, this);
-            for (PropertyModel<?> propertyModel : classModel.getPropertyModels()) {
-                addToCache(propertyModel);
-            }
+                for (PropertyModel<?> propertyModel : classModel.getPropertyModels()) {
+                    try {
+                        addToCache(propertyModel);
+                    } catch (Exception e) {
+                        throw new CodecConfigurationException(format("Could not create a PojoCodec for '%s'."
+                                + " Property '%s' errored with: %s", classModel.getName(), propertyModel.getName(), e.getMessage()), e);
+                    }
+                }
         }
     }
 
@@ -187,9 +192,11 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
                     instanceCreator.set(value, propertyModel);
                 }
             } catch (BsonInvalidOperationException e) {
-                throw new CodecConfigurationException(format("Failed to decode '%s'. %s", name, e.getMessage()), e);
+                throw new CodecConfigurationException(format("Failed to decode '%s'. Decoding '%s' errored with: %s",
+                        classModel.getName(), name, e.getMessage()), e);
             } catch (CodecConfigurationException e) {
-                throw new CodecConfigurationException(format("Failed to decode '%s'. %s", name, e.getMessage()), e);
+                throw new CodecConfigurationException(format("Failed to decode '%s'. Decoding '%s' errored with: %s",
+                        classModel.getName(), name, e.getMessage()), e);
             }
         } else {
             if (LOGGER.isTraceEnabled()) {
@@ -308,7 +315,12 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
                 String name = reader.readName();
                 if (discriminatorKey.equals(name)) {
                     discriminatorKeyFound = true;
-                    codec = (Codec<T>) registry.get(discriminatorLookup.lookup(reader.readString()));
+                    try {
+                        codec = (Codec<T>) registry.get(discriminatorLookup.lookup(reader.readString()));
+                    } catch (Exception e) {
+                        throw new CodecConfigurationException(format("Failed to decode '%s'. Decoding errored with: %s",
+                                classModel.getName(), e.getMessage()), e);
+                    }
                 } else {
                     reader.skipValue();
                 }
