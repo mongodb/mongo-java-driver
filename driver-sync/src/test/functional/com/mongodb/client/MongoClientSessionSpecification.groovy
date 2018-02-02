@@ -38,8 +38,8 @@ import java.util.concurrent.TimeUnit
 import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.Fixture.getDefaultDatabaseName
-import static com.mongodb.client.Fixture.getConnectionString
 import static com.mongodb.client.Fixture.getMongoClient
+import static com.mongodb.client.Fixture.getMongoClientSettings
 
 class MongoClientSessionSpecification extends FunctionalSpecification {
 
@@ -233,7 +233,8 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
     def 'should use a default session'() {
         given:
         def commandListener = new TestCommandListener()
-        def client = MongoClients.create(getConnectionString(), [commandListener])
+        def settings = MongoClientSettings.builder(getMongoClientSettings()).commandListenerList([commandListener]).build()
+        def client = MongoClients.create(settings)
 
         when:
         client.getDatabase('admin').runCommand(new BsonDocument('ping', new BsonInt32(1)))
@@ -251,7 +252,8 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
     def 'should not use a default session when sessions are not supported'() {
         given:
         def commandListener = new TestCommandListener()
-        def client = MongoClients.create(getConnectionString(), [commandListener])
+        def settings = MongoClientSettings.builder(getMongoClientSettings()).commandListenerList([commandListener]).build()
+        def client = MongoClients.create(settings)
 
         when:
         client.getDatabase('admin').runCommand(new BsonDocument('ping', new BsonInt32(1)))
@@ -307,7 +309,8 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
     def 'should not use a session for an unacknowledged write'() {
         given:
         def commandListener = new TestCommandListener()
-        def client = MongoClients.create(getConnectionString(), [commandListener])
+        def settings = MongoClientSettings.builder(getMongoClientSettings()).commandListenerList([commandListener]).build()
+        def client = MongoClients.create(settings)
 
         when:
         client.getDatabase(getDatabaseName()).getCollection(getCollectionName())

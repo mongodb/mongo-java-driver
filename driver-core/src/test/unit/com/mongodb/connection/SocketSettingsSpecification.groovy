@@ -36,7 +36,7 @@ class SocketSettingsSpecification extends Specification {
         settings.sendBufferSize == 0
     }
 
-    def 'should apply builder settings'() {
+    def 'should set settings'() {
         when:
         def settings = SocketSettings.builder()
                                      .connectTimeout(5000, MILLISECONDS)
@@ -46,6 +46,26 @@ class SocketSettingsSpecification extends Specification {
                                      .receiveBufferSize(1500)
                                      .build()
 
+
+        then:
+        settings.getConnectTimeout(MILLISECONDS) == 5000
+        settings.getReadTimeout(MILLISECONDS) == 2000
+        !settings.keepAlive
+        settings.sendBufferSize == 1000
+        settings.receiveBufferSize == 1500
+    }
+
+    def 'should apply builder settings'() {
+        when:
+        def original = SocketSettings.builder()
+                .connectTimeout(5000, MILLISECONDS)
+                .readTimeout(2000, MILLISECONDS)
+                .keepAlive(false)
+                .sendBufferSize(1000)
+                .receiveBufferSize(1500)
+                .build()
+
+        def settings = SocketSettings.builder(original).build()
 
         then:
         settings.getConnectTimeout(MILLISECONDS) == 5000
@@ -69,6 +89,22 @@ class SocketSettingsSpecification extends Specification {
         settings.keepAlive
         settings.sendBufferSize == 0
         settings.receiveBufferSize == 0
+    }
+
+    def 'should apply settings'() {
+        given:
+        def defaultSettings = SocketSettings.builder().build()
+        def customSettings = SocketSettings.builder()
+                .connectTimeout(5000, MILLISECONDS)
+                .readTimeout(2000, MILLISECONDS)
+                .keepAlive(false)
+                .sendBufferSize(1000)
+                .receiveBufferSize(1500)
+                .build()
+
+        expect:
+        SocketSettings.builder().applySettings(customSettings).build() == customSettings
+        SocketSettings.builder(customSettings).applySettings(defaultSettings).build() == defaultSettings
     }
 
     def 'identical settings should be equal'() {

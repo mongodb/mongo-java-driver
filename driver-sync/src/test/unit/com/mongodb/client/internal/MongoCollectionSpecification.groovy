@@ -17,6 +17,7 @@
 package com.mongodb.client.internal
 
 import com.mongodb.MongoBulkWriteException
+import com.mongodb.MongoClientSettings
 import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoWriteConcernException
@@ -32,7 +33,6 @@ import com.mongodb.bulk.InsertRequest
 import com.mongodb.bulk.UpdateRequest
 import com.mongodb.client.ImmutableDocument
 import com.mongodb.client.ImmutableDocumentCodecProvider
-import com.mongodb.client.MongoClients
 import com.mongodb.client.model.BulkWriteOptions
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CountOptions
@@ -103,7 +103,7 @@ import static spock.util.matcher.HamcrestSupport.expect
 class MongoCollectionSpecification extends Specification {
 
     def namespace = new MongoNamespace('databaseName', 'collectionName')
-    def codecRegistry = MongoClients.getDefaultCodecRegistry()
+    def codecRegistry = MongoClientSettings.getDefaultCodecRegistry()
     def readPreference = secondary()
     def readConcern = ReadConcern.MAJORITY
     def collation = Collation.builder().locale('en').build()

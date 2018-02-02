@@ -16,8 +16,9 @@
 
 package com.mongodb.client.gridfs
 
-import com.mongodb.FunctionalSpecification
+import com.mongodb.MongoClientSettings
 import com.mongodb.MongoGridFSException
+import com.mongodb.client.FunctionalSpecification
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.MongoDatabase
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions
@@ -33,8 +34,7 @@ import spock.lang.Unroll
 
 import java.security.MessageDigest
 
-import static com.mongodb.Fixture.getDefaultDatabaseName
-import static com.mongodb.Fixture.getMongoClient
+import static com.mongodb.client.Fixture.getDefaultDatabase
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Updates.unset
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs
@@ -49,7 +49,7 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
     def multiChunkString = singleChunkString.padLeft(1024 * 255 * 5)
 
     def setup() {
-        mongoDatabase = getMongoClient().getDatabase(getDefaultDatabaseName())
+        mongoDatabase = getDefaultDatabase()
         filesCollection = mongoDatabase.getCollection('fs.files', GridFSFile)
         chunksCollection = mongoDatabase.getCollection('fs.chunks')
         filesCollection.drop()
@@ -516,8 +516,9 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
 
     def 'should use the user provided codec registries for encoding / decoding data'() {
         given:
-        def codecRegistry = fromRegistries(fromCodecs(new UuidCodec(UuidRepresentation.STANDARD)), MongoClient.getDefaultCodecRegistry())
-        def database = getMongoClient().getDatabase(getDefaultDatabaseName()).withCodecRegistry(codecRegistry)
+        def codecRegistry = fromRegistries(fromCodecs(new UuidCodec(UuidRepresentation.STANDARD)),
+                MongoClientSettings.getDefaultCodecRegistry())
+        def database = getDefaultDatabase().withCodecRegistry(codecRegistry)
         def uuid = UUID.randomUUID()
         def fileMeta = new Document('uuid', uuid)
         def gridFSBucket = GridFSBuckets.create(database)

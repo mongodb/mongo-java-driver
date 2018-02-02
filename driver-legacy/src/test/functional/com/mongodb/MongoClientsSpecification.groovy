@@ -28,8 +28,8 @@ import spock.lang.IgnoreIf
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static com.mongodb.Fixture.getDefaultDatabaseName
-import static com.mongodb.Fixture.getMongoClientURI
+import static Fixture.getDefaultDatabaseName
+import static Fixture.getMongoClientURI
 
 class  MongoClientsSpecification extends FunctionalSpecification {
     @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isStandalone() })

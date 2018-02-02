@@ -16,10 +16,10 @@
 
 package com.mongodb.client.internal
 
+import com.mongodb.MongoClientSettings
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.WriteConcern
-import com.mongodb.client.MongoClients
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.CreateViewOptions
@@ -52,7 +52,7 @@ import static spock.util.matcher.HamcrestSupport.expect
 class MongoDatabaseSpecification extends Specification {
 
     def name = 'databaseName'
-    def codecRegistry = MongoClients.getDefaultCodecRegistry()
+    def codecRegistry = MongoClientSettings.getDefaultCodecRegistry()
     def readPreference = secondary()
     def writeConcern = WriteConcern.ACKNOWLEDGED
     def readConcern = ReadConcern.DEFAULT

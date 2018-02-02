@@ -404,11 +404,7 @@ public class Mongo {
      * @throws MongoException if there's a failure
      */
     public List<ServerAddress> getServerAddressList() {
-        List<ServerAddress> serverAddresses = new ArrayList<ServerAddress>();
-        for (final ServerDescription cur : getClusterDescription().getServerDescriptions()) {
-            serverAddresses.add(cur.getAddress());
-        }
-        return serverAddresses;
+        return delegate.getServerAddressList();
     }
 
     private ClusterDescription getClusterDescription() {

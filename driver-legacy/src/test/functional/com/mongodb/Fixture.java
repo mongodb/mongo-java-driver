@@ -24,8 +24,8 @@ import java.util.List;
  * Helper class for the acceptance tests.
  */
 public final class Fixture {
-    public static final String DEFAULT_URI = "mongodb://localhost:27017";
-    public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
+    private static final String DEFAULT_URI = "mongodb://localhost:27017";
+    private static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
     private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
 
     private static MongoClient mongoClient;
@@ -35,7 +35,16 @@ public final class Fixture {
     private Fixture() {
     }
 
-    public static synchronized MongoClient getMongoClient() {
+    public static synchronized com.mongodb.MongoClient getMongoClient() {
+        if (mongoClient == null) {
+            MongoClientURI mongoURI = getMongoClientURI();
+            mongoClient = new MongoClient(mongoURI);
+            Runtime.getRuntime().addShutdownHook(new ShutdownHook());
+        }
+        return mongoClient;
+    }
+
+    public static synchronized com.mongodb.MongoClient getLegacyMongoClient() {
         if (mongoClient == null) {
             MongoClientURI mongoURI = getMongoClientURI();
             mongoClient = new MongoClient(mongoURI);

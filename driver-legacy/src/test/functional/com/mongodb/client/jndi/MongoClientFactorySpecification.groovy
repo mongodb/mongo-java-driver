@@ -16,6 +16,7 @@
 
 package com.mongodb.client.jndi
 
+import com.mongodb.Fixture
 import com.mongodb.FunctionalSpecification
 import com.mongodb.MongoClient
 import com.mongodb.MongoException
@@ -23,15 +24,13 @@ import com.mongodb.MongoException
 import javax.naming.Reference
 import javax.naming.StringRefAddr
 
-import static com.mongodb.Fixture.mongoClientURIString
-
 class MongoClientFactorySpecification extends FunctionalSpecification {
     def mongoClientFactory = new MongoClientFactory()
 
     def 'should create MongoClient from environment'() {
         given:
         def environment = new Hashtable<String, String>()
-        environment.put('connectionString', mongoClientURIString)
+        environment.put('connectionString', Fixture.getMongoClientURIString())
 
         when:
         MongoClient client = mongoClientFactory.getObjectInstance(null, null, null, environment)
@@ -46,7 +45,7 @@ class MongoClientFactorySpecification extends FunctionalSpecification {
     def 'should create MongoClient from obj that is of type Reference'() {
         given:
         def environment = new Hashtable<String, String>()
-        def reference = new Reference(null, new StringRefAddr('connectionString', getMongoClientURIString()))
+        def reference = new Reference(null, new StringRefAddr('connectionString', Fixture.getMongoClientURIString()))
 
         when:
         MongoClient client = mongoClientFactory.getObjectInstance(reference, null, null, environment)

@@ -17,8 +17,6 @@
 package com.mongodb.client;
 
 import com.mongodb.ClusterFixture;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientOptions;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
@@ -67,7 +65,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.isStandalone;
-import static com.mongodb.Fixture.getMongoClientURI;
+import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
@@ -114,7 +112,7 @@ public class CommandMonitoringTest {
     @BeforeClass
     public static void beforeClass() {
         commandListener = new TestCommandListener();
-        mongoClient = new MongoClient(getMongoClientURI(MongoClientOptions.builder().addCommandListener(commandListener)));
+        mongoClient = MongoClients.create(getMongoClientSettingsBuilder().addCommandListener(commandListener).build());
     }
 
     @AfterClass

@@ -72,6 +72,23 @@ class ServerSettingsSpecification extends Specification {
         settings.getHeartbeatFrequency(MILLISECONDS) == 20000
     }
 
+    def 'should apply settings'() {
+        given:
+        def serverListenerOne = new ServerListenerAdapter() { }
+        def serverMonitorListenerOne = new ServerMonitorListenerAdapter() { }
+        def defaultSettings = ServerSettings.builder().build()
+        def customSettings = ServerSettings.builder()
+                .heartbeatFrequency(4, SECONDS)
+                .minHeartbeatFrequency(1, SECONDS)
+                .addServerListener(serverListenerOne)
+                .addServerMonitorListener(serverMonitorListenerOne)
+                .build()
+
+        expect:
+        ServerSettings.builder().applySettings(customSettings).build() == customSettings
+        ServerSettings.builder(customSettings).applySettings(defaultSettings).build() == defaultSettings
+    }
+
     def 'lists of listeners should be unmodifiable'() {
         given:
         def settings = ServerSettings.builder().build()

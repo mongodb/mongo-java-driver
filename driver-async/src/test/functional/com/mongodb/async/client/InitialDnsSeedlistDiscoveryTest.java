@@ -16,6 +16,7 @@
 
 package com.mongodb.async.client;
 
+import com.mongodb.Block;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientException;
 import com.mongodb.ServerAddress;
@@ -117,18 +118,17 @@ public class InitialDnsSeedlistDiscoveryTest {
             return;
         }
         final CountDownLatch latch = new CountDownLatch(1);
-
-        ConnectionString connectionString = new ConnectionString(uri);
-
-        SslSettings sslSettings = getSslSettings(connectionString);
+        final ConnectionString connectionString = new ConnectionString(uri);
+        final SslSettings sslSettings = getSslSettings(connectionString);
 
         assumeTrue(isDiscoverableReplicaSet() && !serverVersionAtLeast(3, 7)
                 && getSslSettings().isEnabled() == sslSettings.isEnabled());
 
-        MongoClientSettings settings = MongoClientSettings
-                .builder()
-                .clusterSettings(ClusterSettings.builder()
-                        .applyConnectionString(connectionString)
+        MongoClientSettings settings = MongoClientSettings.builder()
+                .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
+            @Override
+            public void apply(final ClusterSettings.Builder builder) {
+                builder.applyConnectionString(connectionString)
                         .addClusterListener(new ClusterListener() {
                             @Override
                             public void clusterOpening(final ClusterOpeningEvent event) {
@@ -151,8 +151,15 @@ public class InitialDnsSeedlistDiscoveryTest {
                                 }
 
                             }
-                        }).build())
-                .sslSettings(sslSettings)
+                        });
+                    }
+                })
+                .applyToSslSettings(new Block<SslSettings.Builder>() {
+                    @Override
+                    public void apply(final SslSettings.Builder builder) {
+                        builder.applySettings(sslSettings);
+                    }
+                })
                 .build();
 
         MongoClient client = MongoClients.create(settings);

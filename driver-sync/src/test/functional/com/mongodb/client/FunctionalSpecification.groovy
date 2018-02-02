@@ -26,7 +26,7 @@ class FunctionalSpecification extends Specification {
     def setup() {
         database = Fixture.getMongoClient().getDatabase(Fixture.getDefaultDatabaseName())
         collection = database.getCollection(getClass().getName())
-        collection.drop();
+        collection.drop()
     }
 
     def cleanup() {

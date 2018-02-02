@@ -17,9 +17,6 @@
 package com.mongodb.async.client
 
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.connection.ClusterSettings
-import com.mongodb.connection.ConnectionPoolSettings
-import com.mongodb.connection.ServerSettings
 import com.mongodb.event.ClusterListener
 import com.mongodb.event.CommandListener
 import com.mongodb.event.ConnectionPoolListener
@@ -50,24 +47,12 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
         }
 
         when:
-        def defaultSettings = Fixture.mongoClientBuilderFromConnectionString.build()
-
-        def clusterSettings = ClusterSettings.builder(defaultSettings.getClusterSettings()).addClusterListener(clusterListener).build()
-        def connectionPoolSettings = ConnectionPoolSettings.builder(defaultSettings.getConnectionPoolSettings())
-                .addConnectionPoolListener(connectionPoolListener).build()
-        def serverSettings = ServerSettings.builder(defaultSettings.getServerSettings()).addServerListener(serverListener)
-                .addServerMonitorListener(serverMonitorListener).build()
-        def clientSettings = MongoClientSettings.builder()
-                .clusterSettings(clusterSettings)
-                .connectionPoolSettings(connectionPoolSettings)
-                .serverSettings(serverSettings)
-                .credentialList(defaultSettings.getCredentialList())
-                .sslSettings(defaultSettings.getSslSettings())
-                .socketSettings(defaultSettings.getSocketSettings())
+        def builder = Fixture.mongoClientBuilderFromConnectionString
+        builder.applyToClusterSettings { it.addClusterListener(clusterListener) }
+                .applyToConnectionPoolSettings { it.addConnectionPoolListener(connectionPoolListener) }
+                .applyToServerSettings { it.addServerListener(serverListener).addServerMonitorListener(serverMonitorListener) }
                 .addCommandListener(commandListener)
-                .build()
-
-        def client = MongoClients.create(clientSettings)
+        def client = MongoClients.create(builder.build())
 
         then:
         run(client.getDatabase('admin').&runCommand, new Document('ping', 1))

@@ -65,7 +65,7 @@ public class ConnectionPoolSettings {
      * @since 3.5
      */
     public static Builder builder(final ConnectionPoolSettings connectionPoolSettings) {
-        return new Builder(connectionPoolSettings);
+        return builder().applySettings(connectionPoolSettings);
     }
 
     /**
@@ -86,7 +86,17 @@ public class ConnectionPoolSettings {
         Builder() {
         }
 
-        Builder(final ConnectionPoolSettings connectionPoolSettings) {
+        /**
+         * Applies the connectionPoolSettings to the builder
+         *
+         * <p>Note: Overwrites all existing settings</p>
+         *
+         * @param connectionPoolSettings the connectionPoolSettings
+         * @return this
+         * @since 3.7
+         */
+        public Builder applySettings(final ConnectionPoolSettings connectionPoolSettings) {
+            notNull("connectionPoolSettings", connectionPoolSettings);
             maxSize = connectionPoolSettings.maxSize;
             minSize = connectionPoolSettings.minSize;
             maxWaitQueueSize = connectionPoolSettings.maxWaitQueueSize;
@@ -95,6 +105,7 @@ public class ConnectionPoolSettings {
             maxConnectionIdleTimeMS = connectionPoolSettings.maxConnectionIdleTimeMS;
             maintenanceInitialDelayMS = connectionPoolSettings.maintenanceInitialDelayMS;
             maintenanceFrequencyMS = connectionPoolSettings.maintenanceFrequencyMS;
+            return this;
         }
 
         /**
@@ -225,9 +236,9 @@ public class ConnectionPoolSettings {
         }
 
         /**
-         * Takes connection pool settings from the given connection string and applies them to this builder.
+         * Takes the settings from the given {@code ConnectionString} and applies them to the builder
          *
-         * @param connectionString a URL with details of how to connect to MongoDB
+         * @param connectionString the connection string containing details of how to connect to MongoDB
          * @return this
          */
         public Builder applyConnectionString(final ConnectionString connectionString) {

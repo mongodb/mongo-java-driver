@@ -105,7 +105,7 @@ class CustomMatchers {
             it.setAccessible(true)
             def actualPropertyValue = it.get(actual)
             def expectedPropertyValue = it.get(expected)
-            if (nominallyTheSame(it)) {
+            if (nominallyTheSame(it.name)) {
                 if (actualPropertyValue.class != expectedPropertyValue.class) {
                     description.appendText("different classes in $it.name :" +
                             " ${expectedPropertyValue.class.name} != ${actualPropertyValue.class.name}, ")

@@ -18,8 +18,8 @@ package com.mongodb
 
 import spock.lang.Specification
 
-import static com.mongodb.Fixture.getDefaultDatabaseName
-import static com.mongodb.Fixture.getMongoClient
+import static Fixture.getDefaultDatabaseName
+import static Fixture.getMongoClient
 
 class FunctionalSpecification extends Specification {
     protected DB database;
