@@ -79,4 +79,11 @@ public class BucketOptions {
         return this;
     }
 
+    @Override
+    public String toString() {
+        return "BucketOptions{"
+                + "defaultBucket=" + defaultBucket
+                + ", output=" + output
+                + '}';
+    }
 }

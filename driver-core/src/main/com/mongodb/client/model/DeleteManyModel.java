@@ -72,4 +72,12 @@ public final class DeleteManyModel<T> extends WriteModel<T> {
     public DeleteOptions getOptions() {
         return options;
     }
+
+    @Override
+    public String toString() {
+        return "DeleteManyModel{"
+                + "filter=" + filter
+                + ", options=" + options
+                + '}';
+    }
 }

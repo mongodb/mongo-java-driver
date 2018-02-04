@@ -45,4 +45,10 @@ public class RenameCollectionOptions {
         return this;
     }
 
+    @Override
+    public String toString() {
+        return "RenameCollectionOptions{"
+                + "dropTarget=" + dropTarget
+                + '}';
+    }
 }

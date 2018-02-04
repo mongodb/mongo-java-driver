@@ -48,4 +48,11 @@ public final class IndexOptionDefaults {
         this.storageEngine = storageEngine;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "IndexOptionDefaults{"
+                + "storageEngine=" + storageEngine
+                + '}';
+    }
 }

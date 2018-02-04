@@ -85,7 +85,7 @@ public class Variable<TExpression> {
     public String toString() {
         return "Variable{"
                 + "name='" + name + '\''
-                + ", value='" + value + '\''
+                + ", value=" + value
                 + '}';
     }
 }

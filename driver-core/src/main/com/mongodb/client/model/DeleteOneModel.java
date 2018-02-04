@@ -72,4 +72,12 @@ public class DeleteOneModel<T> extends WriteModel<T> {
     public DeleteOptions getOptions() {
         return options;
     }
+
+    @Override
+    public String toString() {
+        return "DeleteOneModel{"
+                + "filter=" + filter
+                + ", options=" + options
+                + '}';
+    }
 }

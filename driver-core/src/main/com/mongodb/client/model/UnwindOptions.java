@@ -67,4 +67,12 @@ public final class UnwindOptions {
         this.includeArrayIndex = arrayIndexFieldName;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "UnwindOptions{"
+                + "preserveNullAndEmptyArrays=" + preserveNullAndEmptyArrays
+                + ", includeArrayIndex='" + includeArrayIndex + '\''
+                + '}';
+    }
 }
