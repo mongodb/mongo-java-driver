@@ -240,4 +240,19 @@ public class CreateCollectionOptions {
         this.collation = collation;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "CreateCollectionOptions{"
+                + "autoIndex=" + autoIndex
+                + ", maxDocuments=" + maxDocuments
+                + ", capped=" + capped
+                + ", sizeInBytes=" + sizeInBytes
+                + ", usePowerOf2Sizes=" + usePowerOf2Sizes
+                + ", storageEngineOptions=" + storageEngineOptions
+                + ", indexOptionDefaults=" + indexOptionDefaults
+                + ", validationOptions=" + validationOptions
+                + ", collation=" + collation
+                + '}';
+    }
 }

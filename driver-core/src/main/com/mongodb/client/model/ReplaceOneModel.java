@@ -81,4 +81,13 @@ public final class ReplaceOneModel<T> extends WriteModel<T> {
     public UpdateOptions getOptions() {
         return options;
     }
+
+    @Override
+    public String toString() {
+        return "ReplaceOneModel{"
+                + "filter=" + filter
+                + ", replacement=" + replacement
+                + ", options=" + options
+                + '}';
+    }
 }

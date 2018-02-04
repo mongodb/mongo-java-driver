@@ -522,7 +522,7 @@ public final class Aggregates {
         public String toString() {
             return "Stage{"
                 + "name='$bucket'"
-                + "boundaries=" + boundaries
+                + ", boundaries=" + boundaries
                 + ", groupBy=" + groupBy
                 + ", options=" + options
                 + '}';
@@ -569,7 +569,7 @@ public final class Aggregates {
         public String toString() {
             return "Stage{"
                 + "name='$bucketAuto'"
-                + "buckets=" + buckets
+                + ", buckets=" + buckets
                 + ", groupBy=" + groupBy
                 + ", options=" + options
                 + '}';
@@ -692,7 +692,7 @@ public final class Aggregates {
         public String toString() {
             return "Stage{"
                 + "name='$graphLookup'"
-                + "as='" + as + '\''
+                + ", as='" + as + '\''
                 + ", connectFromField='" + connectFromField + '\''
                 + ", connectToField='" + connectToField + '\''
                 + ", from='" + from + '\''

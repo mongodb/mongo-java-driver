@@ -194,5 +194,18 @@ public class FindOneAndReplaceOptions {
         this.collation = collation;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "FindOneAndReplaceOptions{"
+                + "projection=" + projection
+                + ", sort=" + sort
+                + ", upsert=" + upsert
+                + ", returnDocument=" + returnDocument
+                + ", maxTimeMS=" + maxTimeMS
+                + ", bypassDocumentValidation=" + bypassDocumentValidation
+                + ", collation=" + collation
+                + '}';
+    }
 }
 

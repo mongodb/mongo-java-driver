@@ -45,4 +45,11 @@ public final class InsertOneModel<T> extends WriteModel<T> {
     public T getDocument() {
         return document;
     }
+
+    @Override
+    public String toString() {
+        return "InsertOneModel{"
+                + "document=" + document
+                + '}';
+    }
 }

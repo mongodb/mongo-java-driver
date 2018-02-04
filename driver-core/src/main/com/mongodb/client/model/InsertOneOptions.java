@@ -46,4 +46,11 @@ public final class InsertOneOptions {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "InsertOneOptions{"
+                + "bypassDocumentValidation=" + bypassDocumentValidation
+                + '}';
+    }
 }

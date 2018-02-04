@@ -92,4 +92,13 @@ public final class ValidationOptions {
         this.validationAction = validationAction;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "ValidationOptions{"
+                + "validator=" + validator
+                + ", validationLevel=" + validationLevel
+                + ", validationAction=" + validationAction
+                + '}';
+    }
 }

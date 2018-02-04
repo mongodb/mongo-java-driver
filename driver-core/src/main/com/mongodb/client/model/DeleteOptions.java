@@ -48,5 +48,12 @@ public class DeleteOptions {
         this.collation = collation;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "DeleteOptions{"
+                + "collation=" + collation
+                + '}';
+    }
 }
 

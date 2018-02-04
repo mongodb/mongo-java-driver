@@ -46,4 +46,11 @@ public class CreateViewOptions {
         this.collation = collation;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "CreateViewOptions{"
+                + "collation=" + collation
+                + '}';
+    }
 }

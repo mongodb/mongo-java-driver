@@ -81,4 +81,11 @@ public class BucketAutoOptions {
         return this;
     }
 
+    @Override
+    public String toString() {
+        return "BucketAutoOptions{"
+                + "output=" + output
+                + ", granularity=" + granularity
+                + '}';
+    }
 }

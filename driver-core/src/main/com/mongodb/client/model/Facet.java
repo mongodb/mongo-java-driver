@@ -63,4 +63,12 @@ public class Facet {
     public List<? extends Bson> getPipeline() {
         return pipeline;
     }
+
+    @Override
+    public String toString() {
+        return "Facet{"
+                + "name='" + name + '\''
+                + ", pipeline=" + pipeline
+                + '}';
+    }
 }

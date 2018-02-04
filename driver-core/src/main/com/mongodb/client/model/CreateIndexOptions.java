@@ -53,4 +53,11 @@ public class CreateIndexOptions {
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "CreateIndexOptions{"
+                + "maxTimeMS=" + maxTimeMS
+                + '}';
+    }
 }

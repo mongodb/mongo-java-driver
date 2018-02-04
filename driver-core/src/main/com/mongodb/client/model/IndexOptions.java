@@ -449,4 +449,28 @@ public class IndexOptions {
         this.collation = collation;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "IndexOptions{"
+                + "background=" + background
+                + ", unique=" + unique
+                + ", name='" + name + '\''
+                + ", sparse=" + sparse
+                + ", expireAfterSeconds=" + expireAfterSeconds
+                + ", version=" + version
+                + ", weights=" + weights
+                + ", defaultLanguage='" + defaultLanguage + '\''
+                + ", languageOverride='" + languageOverride + '\''
+                + ", textVersion=" + textVersion
+                + ", sphereVersion=" + sphereVersion
+                + ", bits=" + bits
+                + ", min=" + min
+                + ", max=" + max
+                + ", bucketSize=" + bucketSize
+                + ", storageEngine=" + storageEngine
+                + ", partialFilterExpression=" + partialFilterExpression
+                + ", collation=" + collation
+                + '}';
+    }
 }

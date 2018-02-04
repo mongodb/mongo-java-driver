@@ -67,4 +67,12 @@ public class IndexModel {
     public IndexOptions getOptions() {
         return options;
     }
+
+    @Override
+    public String toString() {
+        return "IndexModel{"
+                + "keys=" + keys
+                + ", options=" + options
+                + '}';
+    }
 }

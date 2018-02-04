@@ -72,4 +72,12 @@ public final class BulkWriteOptions {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "BulkWriteOptions{"
+                + "ordered=" + ordered
+                + ", bypassDocumentValidation=" + bypassDocumentValidation
+                + '}';
+    }
 }

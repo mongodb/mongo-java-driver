@@ -356,11 +356,11 @@ class AggregatesSpecification extends Specification {
         group('_id', avg('avg', '$quantity')).toString() ==
                 'Stage{name=\'$group\', id=_id, ' +
                 'fieldAccumulators=[' +
-                'Field{name=\'avg\', value=Expression{name=\'$avg\', expression=$quantity}}]}'
+                'BsonField{name=\'avg\', value=Expression{name=\'$avg\', expression=$quantity}}]}'
         group(null, avg('avg', '$quantity')).toString() ==
                 'Stage{name=\'$group\', id=null, ' +
                 'fieldAccumulators=[' +
-                'Field{name=\'avg\', value=Expression{name=\'$avg\', expression=$quantity}}]}'
+                'BsonField{name=\'avg\', value=Expression{name=\'$avg\', expression=$quantity}}]}'
     }
 
     def 'should render $sample'() {
