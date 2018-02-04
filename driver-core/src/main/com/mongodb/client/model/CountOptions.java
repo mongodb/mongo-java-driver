@@ -168,4 +168,16 @@ public class CountOptions {
         this.collation = collation;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "CountOptions{"
+                + "hint=" + hint
+                + ", hintString='" + hintString + '\''
+                + ", limit=" + limit
+                + ", skip=" + skip
+                + ", maxTimeMS=" + maxTimeMS
+                + ", collation=" + collation
+                + '}';
+    }
 }

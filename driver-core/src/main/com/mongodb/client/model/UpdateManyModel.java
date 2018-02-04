@@ -87,4 +87,13 @@ public final class UpdateManyModel<T> extends WriteModel<T> {
     public UpdateOptions getOptions() {
         return options;
     }
+
+    @Override
+    public String toString() {
+        return "UpdateManyModel{"
+                + "filter=" + filter
+                + ", update=" + update
+                + ", options=" + options
+                + '}';
+    }
 }

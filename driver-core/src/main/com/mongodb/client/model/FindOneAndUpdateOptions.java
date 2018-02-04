@@ -220,4 +220,18 @@ public class FindOneAndUpdateOptions {
     public List<? extends Bson> getArrayFilters() {
         return arrayFilters;
     }
+
+    @Override
+    public String toString() {
+        return "FindOneAndUpdateOptions{"
+                + "projection=" + projection
+                + ", sort=" + sort
+                + ", upsert=" + upsert
+                + ", returnDocument=" + returnDocument
+                + ", maxTimeMS=" + maxTimeMS
+                + ", bypassDocumentValidation=" + bypassDocumentValidation
+                + ", collation=" + collation
+                + ", arrayFilters=" + arrayFilters
+                + '}';
+    }
 }

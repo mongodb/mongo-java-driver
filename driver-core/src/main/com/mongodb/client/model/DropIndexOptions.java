@@ -53,4 +53,11 @@ public class DropIndexOptions {
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "DropIndexOptions{"
+                + "maxTimeMS=" + maxTimeMS
+                + '}';
+    }
 }

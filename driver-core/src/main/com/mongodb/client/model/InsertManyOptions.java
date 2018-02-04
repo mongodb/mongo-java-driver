@@ -71,4 +71,12 @@ public final class InsertManyOptions {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "InsertManyOptions{"
+                + "ordered=" + ordered
+                + ", bypassDocumentValidation=" + bypassDocumentValidation
+                + '}';
+    }
 }

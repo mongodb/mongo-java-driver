@@ -126,4 +126,14 @@ public class UpdateOptions {
     public List<? extends Bson> getArrayFilters() {
         return arrayFilters;
     }
+
+    @Override
+    public String toString() {
+        return "UpdateOptions{"
+                + "upsert=" + upsert
+                + ", bypassDocumentValidation=" + bypassDocumentValidation
+                + ", collation=" + collation
+                + ", arrayFilters=" + arrayFilters
+                + '}';
+    }
 }

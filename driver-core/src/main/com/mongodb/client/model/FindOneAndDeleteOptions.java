@@ -128,4 +128,13 @@ public class FindOneAndDeleteOptions {
         return this;
     }
 
+    @Override
+    public String toString() {
+        return "FindOneAndDeleteOptions{"
+                + "projection=" + projection
+                + ", sort=" + sort
+                + ", maxTimeMS=" + maxTimeMS
+                + ", collation=" + collation
+                + '}';
+    }
 }
