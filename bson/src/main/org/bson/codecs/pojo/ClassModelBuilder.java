@@ -189,12 +189,12 @@ public class ClassModelBuilder<T> {
      * Designates a property as the {@code _id} property for this type.  If another property is currently marked as the  {@code _id}
      * property, that setting is cleared in favor of the named property.
      *
-     * @param idPropertyName the property name to use for the {@code _id} property
+     * @param idPropertyName the property name to use for the {@code _id} property, a null value removes the set idPropertyName.
      *
      * @return this
      */
     public ClassModelBuilder<T> idPropertyName(final String idPropertyName) {
-        this.idPropertyName = notNull("idPropertyName", idPropertyName);
+        this.idPropertyName = idPropertyName;
         return this;
     }
 

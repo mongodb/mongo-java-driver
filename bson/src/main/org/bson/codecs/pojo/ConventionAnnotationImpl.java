@@ -78,6 +78,9 @@ final class ConventionAnnotationImpl implements Convention {
                     propertyModelBuilder.readName(bsonProperty.value());
                 }
                 propertyModelBuilder.discriminatorEnabled(bsonProperty.useDiscriminator());
+                if (propertyModelBuilder.getName().equals(classModelBuilder.getIdPropertyName())) {
+                    classModelBuilder.idPropertyName(null);
+                }
             } else if (annotation instanceof BsonId) {
                 classModelBuilder.idPropertyName(propertyModelBuilder.getName());
             } else if (annotation instanceof BsonIgnore) {

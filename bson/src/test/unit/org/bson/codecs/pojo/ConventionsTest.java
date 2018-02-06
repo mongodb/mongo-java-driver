@@ -18,6 +18,7 @@ package org.bson.codecs.pojo;
 
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.pojo.entities.SimpleModel;
+import org.bson.codecs.pojo.entities.conventions.AnnotationBsonPropertyIdModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationDefaultsModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationNameCollision;
@@ -85,6 +86,16 @@ public final class ConventionsTest {
         PropertyModel<?> childPropertyModel = classModel.getPropertyModel("child");
         assertNotNull(childPropertyModel);
         assertFalse(childPropertyModel.useDiscriminator());
+    }
+
+    @Test
+    public void testBsonPropertyIdModelModel() {
+        ClassModel<AnnotationBsonPropertyIdModel> classModel = ClassModel.builder(AnnotationBsonPropertyIdModel.class)
+                .conventions(DEFAULT_CONVENTIONS).build();
+
+        assertFalse(classModel.useDiscriminator());
+        assertEquals(1, classModel.getPropertyModels().size());
+        assertNull(classModel.getIdPropertyModel());
     }
 
     @Test
