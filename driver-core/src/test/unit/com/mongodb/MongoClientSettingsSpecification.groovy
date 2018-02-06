@@ -50,7 +50,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.clusterSettings == ClusterSettings.builder().build()
         settings.connectionPoolSettings == ConnectionPoolSettings.builder().build()
         settings.socketSettings == SocketSettings.builder().build()
-        settings.heartbeatSocketSettings == SocketSettings.builder().build()
+        settings.heartbeatSocketSettings == SocketSettings.builder().readTimeout(10000, TimeUnit.MILLISECONDS).build()
         settings.serverSettings == ServerSettings.builder().build()
         settings.streamFactoryFactory == null
         settings.compressorList == []
@@ -284,13 +284,6 @@ class MongoClientSettingsSpecification extends Specification {
                         .localThreshold(30, TimeUnit.MILLISECONDS)
             }
         })
-            .applyToHeartbeatSocketSettings(new Block<SocketSettings.Builder>() {
-            @Override
-            void apply(final SocketSettings.Builder builder) {
-                builder.connectTimeout(2500, TimeUnit.MILLISECONDS)
-                        .readTimeout(5500, TimeUnit.MILLISECONDS)
-            }
-        })
             .applyToConnectionPoolSettings(new Block<ConnectionPoolSettings.Builder>() {
             @Override
             void apply(final ConnectionPoolSettings.Builder builder) {
@@ -335,14 +328,27 @@ class MongoClientSettingsSpecification extends Specification {
         expect expected, isTheSameAs(settings)
     }
 
+    def 'should use the socket settings connectionTime out for the heartbeat settings'() {
+        when:
+        def settings = MongoClientSettings.builder().applyToSocketSettings(new Block<SocketSettings.Builder>() {
+            @Override
+            void apply(final SocketSettings.Builder builder) {
+                builder.connectTimeout(42, TimeUnit.SECONDS).readTimeout(60, TimeUnit.SECONDS).receiveBufferSize(22).sendBufferSize(10)
+            }
+        }).build()
+        def expected = SocketSettings.builder().connectTimeout(42, TimeUnit.SECONDS).readTimeout(42, TimeUnit.SECONDS).build()
+
+        then:
+        settings.getHeartbeatSocketSettings() == expected
+    }
+
     def 'should only have the following methods in the builder'() {
         when:
         // A regression test so that if anymore methods are added then the builder(final MongoClientSettings settings) should be updated
         def actual = MongoClientSettings.Builder.declaredFields.grep {  !it.synthetic } *.name.sort()
         def expected = ['applicationName', 'clusterSettingsBuilder', 'codecRegistry', 'commandListeners', 'compressorList',
-                        'connectionPoolSettingsBuilder', 'credential', 'heartbeatSocketSettingsBuilder', 'readConcern', 'readPreference',
-                        'retryWrites', 'serverSettingsBuilder', 'socketSettingsBuilder', 'sslSettingsBuilder', 'streamFactoryFactory',
-                        'writeConcern']
+                        'connectionPoolSettingsBuilder', 'credential', 'readConcern', 'readPreference', 'retryWrites',
+                        'serverSettingsBuilder', 'socketSettingsBuilder', 'sslSettingsBuilder', 'streamFactoryFactory', 'writeConcern']
 
         then:
         actual == expected
