@@ -57,7 +57,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.getApplicationName() == null
         settings.getConnectionPoolSettings() == ConnectionPoolSettings.builder().build()
         settings.getSocketSettings() == SocketSettings.builder().build()
-        settings.getHeartbeatSocketSettings() == SocketSettings.builder().build()
+        settings.getHeartbeatSocketSettings() == SocketSettings.builder().readTimeout(10000, TimeUnit.MILLISECONDS).build()
         settings.getServerSettings() == ServerSettings.builder().build()
         settings.getStreamFactoryFactory() == null
         settings.getCompressorList() == []
@@ -351,7 +351,9 @@ class MongoClientSettingsSpecification extends Specification {
         MongoClientSettings settings = MongoClientSettings.builder().applyConnectionString(connectionString).build()
         MongoClientSettings expected = MongoClientSettings.builder()
                 .clusterSettings(ClusterSettings.builder().applyConnectionString(connectionString).build())
-                .heartbeatSocketSettings(SocketSettings.builder().applyConnectionString(connectionString).build())
+                .heartbeatSocketSettings(SocketSettings.builder()
+                    .connectTimeout(connectionString.getConnectTimeout(), TimeUnit.MILLISECONDS)
+                    .readTimeout(connectionString.getConnectTimeout(), TimeUnit.MILLISECONDS).build())
                 .connectionPoolSettings(ConnectionPoolSettings.builder().applyConnectionString(connectionString).build())
                 .serverSettings(ServerSettings.builder().applyConnectionString(connectionString).build())
                 .socketSettings(SocketSettings.builder().applyConnectionString(connectionString).build())
@@ -366,7 +368,8 @@ class MongoClientSettingsSpecification extends Specification {
                 .build()
 
         then:
-        expect expected, isTheSameAs(settings)
+        expect expected, isTheSameAs(settings, ['heartbeatSocketSettings'])
+        settings.getHeartbeatSocketSettings() == expected.getHeartbeatSocketSettings()
     }
 
     @IgnoreIf({ isNotAtLeastJava7() })
@@ -383,12 +386,6 @@ class MongoClientSettingsSpecification extends Specification {
             @Override
             void apply(final ConnectionPoolSettings.Builder builder) {
                 builder.maxWaitQueueSize(22)
-            }
-        })
-                .applyToHeartbeatSocketSettings(new Block<SocketSettings.Builder>() {
-            @Override
-            void apply(final SocketSettings.Builder builder) {
-                builder.receiveBufferSize(99)
             }
         })
                 .applyToServerSettings(new Block<ServerSettings.Builder>() {
@@ -408,12 +405,14 @@ class MongoClientSettingsSpecification extends Specification {
             void apply(final SslSettings.Builder builder) {
                 builder.enabled(true).invalidHostNameAllowed(true)
             }
-        }).build()
+        })
+                .heartbeatSocketSettings(SocketSettings.builder().receiveBufferSize(99).readTimeout(1, TimeUnit.SECONDS).build())
+        .build()
 
         MongoClientSettings expected = MongoClientSettings.builder()
                 .clusterSettings(ClusterSettings.builder().description('My Cluster').hosts(singletonList(new ServerAddress())).build())
                 .connectionPoolSettings(ConnectionPoolSettings.builder().maxWaitQueueSize(22).build())
-                .heartbeatSocketSettings(SocketSettings.builder().receiveBufferSize(99).build())
+                .heartbeatSocketSettings(SocketSettings.builder().readTimeout(1, TimeUnit.SECONDS).receiveBufferSize(99).build())
                 .serverSettings(ServerSettings.builder().heartbeatFrequency(10, TimeUnit.SECONDS).build())
                 .socketSettings(SocketSettings.builder().sendBufferSize(99).build())
                 .sslSettings(SslSettings.builder().enabled(true).invalidHostNameAllowed(true).build())
@@ -421,6 +420,20 @@ class MongoClientSettingsSpecification extends Specification {
 
         then:
         expect expected, isTheSameAs(settings)
+    }
+
+    def 'should use the socket settings connectionTime out for the heartbeat settings'() {
+        when:
+        def settings = MongoClientSettings.builder().applyToSocketSettings(new Block<SocketSettings.Builder>() {
+            @Override
+            void apply(final SocketSettings.Builder builder) {
+                builder.connectTimeout(42, TimeUnit.SECONDS).readTimeout(60, TimeUnit.SECONDS).receiveBufferSize(22).sendBufferSize(10)
+            }
+        }).build()
+        def expected = SocketSettings.builder().connectTimeout(42, TimeUnit.SECONDS).readTimeout(42, TimeUnit.SECONDS).build()
+
+        then:
+        settings.getHeartbeatSocketSettings() == expected
     }
 
     def 'should only have the following methods in the builder'() {

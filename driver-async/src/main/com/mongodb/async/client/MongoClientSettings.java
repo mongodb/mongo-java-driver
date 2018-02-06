@@ -51,6 +51,7 @@ import static java.util.Collections.singletonList;
 @Immutable
 public final class MongoClientSettings {
     private final com.mongodb.MongoClientSettings wrapped;
+    private final SocketSettings heartbeatSocketSettings;
     private final List<MongoCredential> credentialList;
 
     /**
@@ -80,6 +81,7 @@ public final class MongoClientSettings {
     public static final class Builder {
         private List<MongoCredential> credentialList = Collections.emptyList();
         private final com.mongodb.MongoClientSettings.Builder wrappedBuilder = com.mongodb.MongoClientSettings.builder();
+        private SocketSettings.Builder heartbeatSocketSettingsBuilder = null;
 
         private Builder() {
         }
@@ -118,8 +120,8 @@ public final class MongoClientSettings {
             if (settings.getSocketSettings() != null) {
                 socketSettings(settings.getSocketSettings());
             }
-            if (settings.getHeartbeatSocketSettings() != null) {
-                heartbeatSocketSettings(settings.getHeartbeatSocketSettings());
+            if (settings.heartbeatSocketSettings != null) {
+                heartbeatSocketSettings(settings.heartbeatSocketSettings);
             }
             if (settings.getConnectionPoolSettings() != null) {
                 connectionPoolSettings(settings.getConnectionPoolSettings());
@@ -168,19 +170,6 @@ public final class MongoClientSettings {
          */
         public Builder applyToSocketSettings(final Block<SocketSettings.Builder> block) {
             wrappedBuilder.applyToSocketSettings(block);
-            return this;
-        }
-
-        /**
-         * Applies the {@link SocketSettings.Builder} block and then sets the heartbeatSocketSettings.
-         *
-         * @param block the block to apply to the heartbeatSocketSettings.
-         * @return this
-         * @since 3.7
-         * @see MongoClientSettings#getHeartbeatSocketSettings()
-         */
-        public Builder applyToHeartbeatSocketSettings(final Block<SocketSettings.Builder> block) {
-            wrappedBuilder.applyToHeartbeatSocketSettings(block);
             return this;
         }
 
@@ -267,16 +256,14 @@ public final class MongoClientSettings {
          * @param heartbeatSocketSettings the socket settings
          * @return this
          * @see MongoClientSettings#getHeartbeatSocketSettings()
-         * @deprecated Prefer {@link Builder#applyToHeartbeatSocketSettings(Block)}
+         * @deprecated configuring heartbeatSocketSettings will be removed in the future.
          */
         @Deprecated
         public Builder heartbeatSocketSettings(final SocketSettings heartbeatSocketSettings) {
-            wrappedBuilder.applyToHeartbeatSocketSettings(new Block<SocketSettings.Builder>() {
-                @Override
-                public void apply(final SocketSettings.Builder builder) {
-                    builder.applySettings(heartbeatSocketSettings);
-                }
-            });
+            if (heartbeatSocketSettingsBuilder == null) {
+                heartbeatSocketSettingsBuilder = SocketSettings.builder();
+            }
+            heartbeatSocketSettingsBuilder.applySettings(heartbeatSocketSettings);
             return this;
         }
 
@@ -456,7 +443,6 @@ public final class MongoClientSettings {
             wrappedBuilder.addCommandListener(commandListener);
             return this;
         }
-
 
         /**
          * Sets the logical name of the application using this MongoClient.  The application name may be used by the client to identify
@@ -665,7 +651,7 @@ public final class MongoClientSettings {
      * @see com.mongodb.connection.SocketSettings
      */
     public SocketSettings getHeartbeatSocketSettings() {
-        return wrapped.getHeartbeatSocketSettings();
+        return heartbeatSocketSettings != null ? heartbeatSocketSettings : wrapped.getHeartbeatSocketSettings();
     }
 
     /**
@@ -695,5 +681,6 @@ public final class MongoClientSettings {
     private MongoClientSettings(final Builder builder) {
         wrapped = builder.wrappedBuilder.build();
         credentialList = builder.credentialList;
+        heartbeatSocketSettings = builder.heartbeatSocketSettingsBuilder != null ?  builder.heartbeatSocketSettingsBuilder.build() : null;
     }
 }
