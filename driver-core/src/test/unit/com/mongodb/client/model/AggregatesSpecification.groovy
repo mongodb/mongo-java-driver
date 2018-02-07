@@ -266,7 +266,7 @@ class AggregatesSpecification extends Specification {
 
         // with restrictSearchWithMatch
         toBson(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
-                .restrictSearchWithMatch(Filters.eq('hobbies', 'golf')))) ==
+                .restrictSearchWithMatch(eq('hobbies', 'golf')))) ==
                 parse('''{ $graphLookup: { from: "contacts", startWith: "$friends", connectFromField: "friends", connectToField: "name",
             as: "socialNetwork", restrictSearchWithMatch : { "hobbies" : "golf" } } }''')
 
@@ -278,7 +278,7 @@ class AggregatesSpecification extends Specification {
 
         // with all options
         toBson(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
-                .maxDepth(1).depthField('master').restrictSearchWithMatch(Filters.eq('hobbies', 'golf')))) ==
+                .maxDepth(1).depthField('master').restrictSearchWithMatch(eq('hobbies', 'golf')))) ==
                 parse('''{ $graphLookup: { from: "contacts", startWith: "$friends", connectFromField: "friends", connectToField: "name",
             as: "socialNetwork", maxDepth: 1, depthField: "master", restrictSearchWithMatch : { "hobbies" : "golf" } } }''')
     }
