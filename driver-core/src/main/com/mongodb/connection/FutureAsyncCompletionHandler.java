@@ -24,7 +24,7 @@ import java.io.IOException;
 import java.util.concurrent.CountDownLatch;
 
 class FutureAsyncCompletionHandler<T> implements AsyncCompletionHandler<T> {
-    private final CountDownLatch latch = new CountDownLatch(1);;
+    private final CountDownLatch latch = new CountDownLatch(1);
     private volatile T result;
     private volatile Throwable error;
 
