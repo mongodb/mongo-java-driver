@@ -676,7 +676,11 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      */
     public DBObject one() {
         DBCursor findOneCursor = copy().limit(-1);
-        return findOneCursor.hasNext() ? findOneCursor.next() : null;
+        try {
+            return findOneCursor.hasNext() ? findOneCursor.next() : null;
+        } finally {
+            findOneCursor.close();
+        }
     }
 
     /**
