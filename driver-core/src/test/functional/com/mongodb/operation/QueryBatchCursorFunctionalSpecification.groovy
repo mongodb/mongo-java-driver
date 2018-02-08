@@ -40,6 +40,7 @@ import spock.lang.IgnoreIf
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
+import static com.mongodb.ClusterFixture.checkReferenceCountReachesTarget
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
@@ -378,6 +379,35 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
 
         then:
         thrown(MongoCursorNotFoundException)
+    }
+
+    def 'should release connection source if limit is reached on initial query'() throws InterruptedException {
+        given:
+        def firstBatch = executeQuery(5)
+        def connection = connectionSource.getConnection()
+
+        when:
+        cursor = new QueryBatchCursor<Document>(firstBatch, 5, 0, 0, new DocumentCodec(), connectionSource, connection)
+
+        then:
+        checkReferenceCountReachesTarget(connectionSource, 1)
+
+        cleanup:
+        connection?.release()
+    }
+
+    def 'should release connection source if limit is reached on get more'() throws InterruptedException {
+        given:
+        def firstBatch = executeQuery(3)
+
+        cursor = new QueryBatchCursor<Document>(firstBatch, 5, 3, new DocumentCodec(), connectionSource)
+
+        when:
+        cursor.next()
+        cursor.next()
+
+        then:
+        checkReferenceCountReachesTarget(connectionSource, 1)
     }
 
     def 'test limit with get more'() {
