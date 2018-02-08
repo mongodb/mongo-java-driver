@@ -49,11 +49,12 @@ import static java.util.Collections.singletonList;
 class QueryBatchCursor<T> implements BatchCursor<T> {
     private static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator();
     private final MongoNamespace namespace;
+    private final ServerAddress serverAddress;
     private final int limit;
     private final Decoder<T> decoder;
-    private final ConnectionSource connectionSource;
     private final long maxTimeMS;
     private int batchSize;
+    private ConnectionSource connectionSource;
     private ServerCursor serverCursor;
     private List<T> nextBatch;
     private int count;
@@ -73,6 +74,7 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
         isTrueArgument("maxTimeMS >= 0", maxTimeMS >= 0);
         this.maxTimeMS = maxTimeMS;
         this.namespace = firstQueryResult.getNamespace();
+        this.serverAddress = firstQueryResult.getAddress();
         this.limit = limit;
         this.batchSize = batchSize;
         this.decoder = notNull("decoder", decoder);
@@ -88,6 +90,10 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
         initFromQueryResult(firstQueryResult);
         if (limitReached()) {
             killCursor(connection);
+        }
+        if (serverCursor == null && this.connectionSource != null) {
+            this.connectionSource.release();
+            this.connectionSource = null;
         }
     }
 
@@ -205,7 +211,7 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
             throw new IllegalStateException("Iterator has been closed");
         }
 
-        return connectionSource.getServerDescription().getAddress();
+        return serverAddress;
     }
 
     private void getMore() {
@@ -228,6 +234,10 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
             }
             if (limitReached()) {
                 killCursor(connection);
+            }
+            if (serverCursor == null) {
+                this.connectionSource.release();
+                this.connectionSource = null;
             }
         } finally {
             connection.release();

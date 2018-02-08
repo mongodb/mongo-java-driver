@@ -193,7 +193,11 @@ final class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResu
     public TResult first() {
         BatchCursor<TResult> batchCursor = getExecutor().execute(operations.findFirst(filter, resultClass, findOptions),
                 getReadPreference(), getClientSession());
-        return batchCursor.hasNext() ? batchCursor.next().iterator().next() : null;
+        try {
+            return batchCursor.hasNext() ? batchCursor.next().iterator().next() : null;
+        } finally {
+            batchCursor.close();
+        }
     }
 
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
