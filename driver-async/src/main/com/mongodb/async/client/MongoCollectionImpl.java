@@ -1087,7 +1087,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     @Override
     public void renameCollection(final MongoNamespace newCollectionNamespace, final RenameCollectionOptions options,
                                  final SingleResultCallback<Void> callback) {
-        executeRenameCollection(null, newCollectionNamespace, new RenameCollectionOptions(), callback);
+        executeRenameCollection(null, newCollectionNamespace, options, callback);
     }
 
     @Override
@@ -1100,7 +1100,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     public void renameCollection(final ClientSession clientSession, final MongoNamespace newCollectionNamespace,
                                  final RenameCollectionOptions options, final SingleResultCallback<Void> callback) {
         notNull("clientSession", clientSession);
-        executeRenameCollection(clientSession, newCollectionNamespace, new RenameCollectionOptions(), callback);
+        executeRenameCollection(clientSession, newCollectionNamespace, options, callback);
     }
 
     private void executeRenameCollection(final ClientSession clientSession, final MongoNamespace newCollectionNamespace,
