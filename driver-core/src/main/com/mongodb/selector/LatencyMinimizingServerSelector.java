@@ -74,6 +74,24 @@ public class LatencyMinimizingServerSelector implements ServerSelector {
                + '}';
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        LatencyMinimizingServerSelector that = (LatencyMinimizingServerSelector) o;
+        return acceptableLatencyDifferenceNanos == that.acceptableLatencyDifferenceNanos;
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) (acceptableLatencyDifferenceNanos ^ (acceptableLatencyDifferenceNanos >>> 32));
+    }
+
     private long getFastestRoundTripTimeNanos(final List<ServerDescription> members) {
         long fastestRoundTripTime = Long.MAX_VALUE;
         for (final ServerDescription cur : members) {

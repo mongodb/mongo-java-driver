@@ -281,6 +281,7 @@ class MongoClientSettingsSpecification extends Specification {
                         .requiredReplicaSetName('test')
                         .serverSelectionTimeout(25000, TimeUnit.MILLISECONDS)
                         .maxWaitQueueSize(10 * 7) // maxPoolSize * waitQueueMultiple
+                        .localThreshold(30, TimeUnit.MILLISECONDS)
             }
         })
             .applyToHeartbeatSocketSettings(new Block<SocketSettings.Builder>() {

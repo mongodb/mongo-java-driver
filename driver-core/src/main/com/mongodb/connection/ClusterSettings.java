@@ -21,6 +21,8 @@ import com.mongodb.ServerAddress;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.event.ClusterListener;
+import com.mongodb.selector.CompositeServerSelector;
+import com.mongodb.selector.LatencyMinimizingServerSelector;
 import com.mongodb.selector.ServerSelector;
 
 import java.util.ArrayList;
@@ -29,9 +31,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * Settings for the cluster.
@@ -46,6 +51,7 @@ public final class ClusterSettings {
     private final String requiredReplicaSetName;
     private final ServerSelector serverSelector;
     private final String description;
+    private final long localThresholdMS;
     private final long serverSelectionTimeoutMS;
     private final int maxWaitQueueSize;
     private final List<ClusterListener> clusterListeners;
@@ -81,7 +87,8 @@ public final class ClusterSettings {
         private String requiredReplicaSetName;
         private ServerSelector serverSelector;
         private String description;
-        private long serverSelectionTimeoutMS = TimeUnit.MILLISECONDS.convert(30, TimeUnit.SECONDS);
+        private long serverSelectionTimeoutMS = MILLISECONDS.convert(30, TimeUnit.SECONDS);
+        private long localThresholdMS = MILLISECONDS.convert(15, MILLISECONDS);
         private int maxWaitQueueSize = 500;
         private List<ClusterListener> clusterListeners = new ArrayList<ClusterListener>();
 
@@ -104,10 +111,11 @@ public final class ClusterSettings {
             mode = clusterSettings.mode;
             requiredReplicaSetName = clusterSettings.requiredReplicaSetName;
             requiredClusterType = clusterSettings.requiredClusterType;
-            serverSelector = clusterSettings.serverSelector;
+            localThresholdMS = clusterSettings.localThresholdMS;
             serverSelectionTimeoutMS = clusterSettings.serverSelectionTimeoutMS;
             maxWaitQueueSize = clusterSettings.maxWaitQueueSize;
             clusterListeners = new ArrayList<ClusterListener>(clusterSettings.clusterListeners);
+            serverSelector = unpackServerSelector(clusterSettings.serverSelector);
             return this;
         }
 
@@ -176,10 +184,26 @@ public final class ClusterSettings {
         }
 
         /**
-         * Sets the final server selector for the cluster to apply before selecting a server
+         * Sets the local threshold.
          *
-         * @param serverSelector the server selector to apply as the final selector.
+         * @param localThreshold the acceptable latency difference, in milliseconds, which must be &gt;= 0
+         * @param timeUnit the time unit
+         * @throws IllegalArgumentException if {@code localThreshold < 0}
          * @return this
+         * @since 3.7
+         */
+        public Builder localThreshold(final long localThreshold, final TimeUnit timeUnit) {
+            isTrueArgument("localThreshold must be >= 0", localThreshold >= 0);
+            this.localThresholdMS = MILLISECONDS.convert(localThreshold, timeUnit);
+            return this;
+        }
+
+        /**
+         * Adds a server selector for the cluster to apply before selecting a server.
+         *
+         * @param serverSelector the server selector to apply as selector.
+         * @return this
+         * @see #getServerSelector()
          */
         public Builder serverSelector(final ServerSelector serverSelector) {
             this.serverSelector = serverSelector;
@@ -198,7 +222,7 @@ public final class ClusterSettings {
          * @return this
          */
         public Builder serverSelectionTimeout(final long serverSelectionTimeout, final TimeUnit timeUnit) {
-            this.serverSelectionTimeoutMS = TimeUnit.MILLISECONDS.convert(serverSelectionTimeout, timeUnit);
+            this.serverSelectionTimeoutMS = MILLISECONDS.convert(serverSelectionTimeout, timeUnit);
             return this;
         }
 
@@ -254,10 +278,27 @@ public final class ClusterSettings {
             maxWaitQueueSize(waitQueueMultiple * maxSize);
 
             if (connectionString.getServerSelectionTimeout() != null) {
-                serverSelectionTimeout(connectionString.getServerSelectionTimeout(), TimeUnit.MILLISECONDS);
+                serverSelectionTimeout(connectionString.getServerSelectionTimeout(), MILLISECONDS);
             }
-
+            if (connectionString.getLocalThreshold() != null) {
+                localThreshold(connectionString.getLocalThreshold(), MILLISECONDS);
+            }
             return this;
+        }
+
+        private ServerSelector unpackServerSelector(final ServerSelector serverSelector) {
+            if (serverSelector instanceof CompositeServerSelector) {
+                return ((CompositeServerSelector) serverSelector).getServerSelectors().get(0);
+            }
+            return null;
+        }
+
+        private ServerSelector packServerSelector() {
+            ServerSelector latencyMinimizingServerSelector = new LatencyMinimizingServerSelector(localThresholdMS, MILLISECONDS);
+            if (serverSelector == null) {
+                return latencyMinimizingServerSelector;
+            }
+            return new CompositeServerSelector(asList(serverSelector, latencyMinimizingServerSelector));
         }
 
         /**
@@ -298,9 +339,9 @@ public final class ClusterSettings {
     }
 
     /**
-     * Get
+     * Gets the required cluster type
      *
-     * @return the cluster type
+     * @return the required cluster type
      */
     public ClusterType getRequiredClusterType() {
         return requiredClusterType;
@@ -316,8 +357,26 @@ public final class ClusterSettings {
     }
 
     /**
-     * Gets the {@code ServerSelector} that will be uses as the final server selector that is applied in calls to {@code
-     * Cluster.selectServer}.
+     * Gets the server selector.
+     *
+     * <p>The server selector augments the normal server selection rules applied by the driver when determining
+     * which server to send an operation to.  At the point that it's called by the driver, the
+     * {@link com.mongodb.connection.ClusterDescription} which is passed to it contains a list of
+     * {@link com.mongodb.connection.ServerDescription} instances which satisfy either the configured {@link com.mongodb.ReadPreference}
+     * for any read operation or ones that can take writes (e.g. a standalone, mongos, or replica set primary).
+     * </p>
+     * <p>The server selector can then filter the {@code ServerDescription} list using whatever criteria that is required by the
+     * application.</p>
+     * <p>After this selector executes, two additional selectors are applied by the driver:</p>
+     * <ul>
+     * <li>select from within the latency window</li>
+     * <li>select a random server from those remaining</li>
+     * </ul>
+     * <p>To skip the latency window selector, an application can:</p>
+     * <ul>
+     * <li>configure the local threshold to a sufficiently high value so that it doesn't exclude any servers</li>
+     * <li>return a list containing a single server from this selector (which will also make the random member selector a no-op)</li>
+     * </ul>
      *
      * @return the server selector, which may be null
      * @see Cluster#selectServer(com.mongodb.selector.ServerSelector)
@@ -337,7 +396,29 @@ public final class ClusterSettings {
      * @return the timeout in the given time unit
      */
     public long getServerSelectionTimeout(final TimeUnit timeUnit) {
-        return timeUnit.convert(serverSelectionTimeoutMS, TimeUnit.MILLISECONDS);
+        return timeUnit.convert(serverSelectionTimeoutMS, MILLISECONDS);
+    }
+
+    /**
+     * Gets the local threshold.  When choosing among multiple MongoDB servers to send a request, the MongoClient will only
+     * send that request to a server whose ping time is less than or equal to the server with the fastest ping time plus the local
+     * threshold.
+     *
+     * <p>For example, let's say that the client is choosing a server to send a query when the read preference is {@code
+     * ReadPreference.secondary()}, and that there are three secondaries, server1, server2, and server3, whose ping times are 10, 15, and 16
+     * milliseconds, respectively.  With a local threshold of 5 milliseconds, the client will send the query to either
+     * server1 or server2 (randomly selecting between the two).
+     * </p>
+     *
+     * <p>Default is 15 milliseconds.</p>
+     *
+     * @param timeUnit the time unit
+     * @return the local threshold in the given timeunit.
+     * @since 3.7
+     * @mongodb.driver.manual reference/program/mongos/#cmdoption--localThreshold Local Threshold
+     */
+    public long getLocalThreshold(final TimeUnit timeUnit) {
+        return timeUnit.convert(localThresholdMS, MILLISECONDS);
     }
 
     /**
@@ -379,6 +460,9 @@ public final class ClusterSettings {
         if (serverSelectionTimeoutMS != that.serverSelectionTimeoutMS) {
             return false;
         }
+        if (localThresholdMS != that.localThresholdMS) {
+            return false;
+        }
         if (description != null ? !description.equals(that.description) : that.description != null) {
             return false;
         }
@@ -414,6 +498,7 @@ public final class ClusterSettings {
         result = 31 * result + (serverSelector != null ? serverSelector.hashCode() : 0);
         result = 31 * result + (description != null ? description.hashCode() : 0);
         result = 31 * result + (int) (serverSelectionTimeoutMS ^ (serverSelectionTimeoutMS >>> 32));
+        result = 31 * result + (int) (localThresholdMS ^ (localThresholdMS >>> 32));
         result = 31 * result + maxWaitQueueSize;
         result = 31 * result + clusterListeners.hashCode();
         return result;
@@ -429,6 +514,7 @@ public final class ClusterSettings {
                + ", serverSelector='" + serverSelector + '\''
                + ", clusterListeners='" + clusterListeners + '\''
                + ", serverSelectionTimeout='" + serverSelectionTimeoutMS + " ms" + '\''
+               + ", localThreshold='" + serverSelectionTimeoutMS + " ms" + '\''
                + ", maxWaitQueueSize=" + maxWaitQueueSize
                + ", description='" + description + '\''
                + '}';
@@ -474,7 +560,8 @@ public final class ClusterSettings {
         mode = builder.mode != null ? builder.mode : hosts.size() == 1 ? ClusterConnectionMode.SINGLE : ClusterConnectionMode.MULTIPLE;
         requiredReplicaSetName = builder.requiredReplicaSetName;
         requiredClusterType = builder.requiredClusterType;
-        serverSelector = builder.serverSelector;
+        localThresholdMS = builder.localThresholdMS;
+        serverSelector = builder.packServerSelector();
         serverSelectionTimeoutMS = builder.serverSelectionTimeoutMS;
         maxWaitQueueSize = builder.maxWaitQueueSize;
         clusterListeners = unmodifiableList(builder.clusterListeners);
