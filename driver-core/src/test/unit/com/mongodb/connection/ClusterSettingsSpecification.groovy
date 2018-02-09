@@ -19,6 +19,8 @@ package com.mongodb.connection
 import com.mongodb.ConnectionString
 import com.mongodb.ServerAddress
 import com.mongodb.event.ClusterListener
+import com.mongodb.selector.CompositeServerSelector
+import com.mongodb.selector.LatencyMinimizingServerSelector
 import com.mongodb.selector.WritableServerSelector
 import spock.lang.Specification
 
@@ -27,6 +29,7 @@ import java.util.concurrent.TimeUnit
 class ClusterSettingsSpecification extends Specification {
     def hosts = [new ServerAddress('localhost'), new ServerAddress('localhost', 30000)]
     def serverSelector = new WritableServerSelector()
+    def defaultServerSelector = new LatencyMinimizingServerSelector(15, TimeUnit.MILLISECONDS)
 
     def 'should set all default values'() {
         when:
@@ -37,13 +40,15 @@ class ClusterSettingsSpecification extends Specification {
         settings.mode == ClusterConnectionMode.SINGLE
         settings.requiredClusterType == ClusterType.UNKNOWN
         settings.requiredReplicaSetName == null
-        settings.serverSelector == null
+        settings.serverSelector == defaultServerSelector
         settings.getServerSelectionTimeout(TimeUnit.SECONDS) == 30
         settings.maxWaitQueueSize == 500
         settings.clusterListeners == []
     }
 
     def 'should set all properties'() {
+        given:
+        def oneSecondLatencySelector = new LatencyMinimizingServerSelector(1, TimeUnit.SECONDS)
         when:
         def listenerOne = Mock(ClusterListener)
         def listenerTwo = Mock(ClusterListener)
@@ -53,6 +58,7 @@ class ClusterSettingsSpecification extends Specification {
                                       .description('my cluster')
                                       .requiredClusterType(ClusterType.REPLICA_SET)
                                       .requiredReplicaSetName('foo')
+                                      .localThreshold(1, TimeUnit.SECONDS)
                                       .serverSelector(serverSelector)
                                       .serverSelectionTimeout(1, TimeUnit.SECONDS)
                                       .addClusterListener(listenerOne)
@@ -66,7 +72,7 @@ class ClusterSettingsSpecification extends Specification {
         settings.mode == ClusterConnectionMode.MULTIPLE
         settings.requiredClusterType == ClusterType.REPLICA_SET
         settings.requiredReplicaSetName == 'foo'
-        settings.serverSelector == serverSelector
+        settings.serverSelector == new CompositeServerSelector([serverSelector, oneSecondLatencySelector])
         settings.getServerSelectionTimeout(TimeUnit.MILLISECONDS) == 1000
         settings.maxWaitQueueSize == 100
         settings.clusterListeners == [listenerOne, listenerTwo]
@@ -84,6 +90,7 @@ class ClusterSettingsSpecification extends Specification {
                 .requiredClusterType(ClusterType.REPLICA_SET)
                 .requiredReplicaSetName('foo')
                 .serverSelector(serverSelector)
+                .localThreshold(10, TimeUnit.MILLISECONDS)
                 .serverSelectionTimeout(1, TimeUnit.SECONDS)
                 .addClusterListener(listenerOne)
                 .addClusterListener(listenerTwo)
@@ -93,6 +100,29 @@ class ClusterSettingsSpecification extends Specification {
         expect:
         ClusterSettings.builder().applySettings(customSettings).build() == customSettings
         ClusterSettings.builder(customSettings).applySettings(defaultSettings).build() == defaultSettings
+    }
+
+    def 'should allow configure serverSelectors correctly'() {
+        given:
+        def latMinServerSelector = new LatencyMinimizingServerSelector(10, TimeUnit.MILLISECONDS)
+
+        when:
+        def settings = ClusterSettings.builder().build()
+
+        then:
+        settings.serverSelector == defaultServerSelector
+
+        when:
+        settings = ClusterSettings.builder().serverSelector(serverSelector).build()
+
+        then:
+        settings.serverSelector == new CompositeServerSelector([serverSelector, defaultServerSelector])
+
+        when:
+        settings = ClusterSettings.builder().localThreshold(10, TimeUnit.MILLISECONDS).serverSelector(serverSelector).build()
+
+        then:
+        settings.serverSelector == new CompositeServerSelector([serverSelector, latMinServerSelector])
     }
 
     def 'when connection string is applied to builder, all properties should be set'() {
@@ -168,6 +198,12 @@ class ClusterSettingsSpecification extends Specification {
 
         then:
         settings.getServerSelectionTimeout(TimeUnit.MILLISECONDS) == 50000
+
+        when:
+        settings = ClusterSettings.builder().applyConnectionString(new ConnectionString('mongodb://localhost/?localThresholdMS=99')).build()
+
+        then:
+        settings.serverSelector == new LatencyMinimizingServerSelector(99, TimeUnit.MILLISECONDS)
     }
 
     def 'when cluster type is unknown and replica set name is specified, should set cluster type to ReplicaSet'() {
