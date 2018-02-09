@@ -49,6 +49,7 @@ import com.mongodb.client.model.IndexOptions
 import com.mongodb.client.model.InsertManyOptions
 import com.mongodb.client.model.InsertOneModel
 import com.mongodb.client.model.InsertOneOptions
+import com.mongodb.client.model.RenameCollectionOptions
 import com.mongodb.client.model.ReplaceOneModel
 import com.mongodb.client.model.UpdateManyModel
 import com.mongodb.client.model.UpdateOneModel
@@ -1295,10 +1296,11 @@ class MongoCollectionSpecification extends Specification {
 
     def 'should use RenameCollectionOperation correctly'() {
         given:
-        def executor = new TestOperationExecutor([null])
+        def executor = new TestOperationExecutor([null, null])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED,
                 true, readConcern, executor)
         def newNamespace = new MongoNamespace(namespace.getDatabaseName(), 'newName')
+        def renameCollectionOptions = new RenameCollectionOptions().dropTarget(dropTarget)
         def expectedOperation = new RenameCollectionOperation(namespace, newNamespace, ACKNOWLEDGED)
         def renameCollection = collection.&renameCollection
 
@@ -1310,8 +1312,16 @@ class MongoCollectionSpecification extends Specification {
         expect operation, isTheSameAs(expectedOperation)
         executor.getClientSession() == session
 
+        when:
+        execute(renameCollection, session, newNamespace, renameCollectionOptions)
+        operation = executor.getWriteOperation() as RenameCollectionOperation
+
+        then:
+        expect operation, isTheSameAs(expectedOperation.dropTarget(dropTarget))
+        executor.getClientSession() == session
+
         where:
-        session << [null, Stub(ClientSession)]
+        [session, dropTarget] << [[null, Stub(ClientSession)], [true, false]].combinations()
     }
 
     def 'should not expect to mutate the document when inserting'() {
