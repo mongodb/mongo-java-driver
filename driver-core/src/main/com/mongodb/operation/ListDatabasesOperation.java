@@ -172,7 +172,7 @@ public class ListDatabasesOperation<T> implements AsyncReadOperation<AsyncBatchC
                 } else {
                     executeWrappedCommandProtocolAsync(binding,  "admin", getCommand(),
                             CommandResultDocumentCodec.create(decoder, "databases"), connection, asyncTransformer(source, connection),
-                            releasingCallback(errHandlingCallback, connection));
+                            releasingCallback(errHandlingCallback, source, connection));
                 }
             }
         });
