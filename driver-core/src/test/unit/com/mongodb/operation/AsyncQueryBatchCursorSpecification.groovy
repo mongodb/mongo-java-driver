@@ -134,7 +134,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         nextBatch(cursor) == FIRST_BATCH
 
         then:
-        connectionSource.getCount() == 1
+        connectionSource.getCount() == 0
 
         then:
         nextBatch(cursor) == null
@@ -203,7 +203,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         then:
         batch == thirdBatch
         connectionB.getCount() == 0
-        connectionSource.getCount() == 1
+        connectionSource.getCount() == 0
 
         when:
         batch = tryNextBatch(cursor)
@@ -272,7 +272,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
         then:
         batch == thirdBatch
         connectionB.getCount() == 0
-        connectionSource.getCount() == 1
+        connectionSource.getCount() == 0
 
         when:
         batch = nextBatch(cursor)
@@ -364,7 +364,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
 
         then:
         connection.getCount() == 0
-        connectionSource.getCount() == 1
+        connectionSource.getCount() == 0
 
         when:
         cursor.close()
@@ -412,7 +412,7 @@ class AsyncQueryBatchCursorSpecification extends Specification {
 
         then:
         connection.getCount() == 0
-        connectionSource.getCount() == 1
+        connectionSource.getCount() == 0
 
         when:
         cursor.close()

@@ -102,6 +102,40 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         !nextBatch()
     }
 
+    def 'should not retain connection and source after cursor is exhausted on first batch'() {
+        given:
+        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(), 0, 0, 0, new DocumentCodec(), connectionSource, connection)
+
+        when:
+        nextBatch()
+
+        then:
+        connection.count == 1
+        connectionSource.count == 1
+    }
+
+    def 'should not retain connection and source after cursor is exhausted on getMore'() {
+        given:
+        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(1, 0), 1, 1, 0, new DocumentCodec(), connectionSource, connection)
+
+        when:
+        nextBatch()
+
+        then:
+        connection.count == 1
+        connectionSource.count == 1
+    }
+
+    def 'should not retain connection and source after cursor is exhausted after first batch'() {
+        when:
+        cursor = new AsyncQueryBatchCursor<Document>(executeQuery(10, 10), 10, 10, 0, new DocumentCodec(), connectionSource,
+                connection)
+
+        then:
+        connection.count == 1
+        connectionSource.count == 1
+    }
+
     def 'should exhaust single batch with limit'() {
         given:
         cursor = new AsyncQueryBatchCursor<Document>(executeQuery(1, 0), 1, 0, 0, new DocumentCodec(), connectionSource, connection)
