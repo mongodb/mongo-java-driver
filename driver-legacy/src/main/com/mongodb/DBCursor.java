@@ -38,13 +38,16 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
- * <p>An iterator over database results. Doing a {@code find()} query on a collection returns a {@code DBCursor} thus</p>
- * <pre>
- *    DBCursor cursor = collection.find(query);
- *    if(cursor.hasNext()) {
- *       DBObject obj = cursor.next();
+ * <p>An iterator over database results. Doing a {@code find()} query on a collection returns a {@code DBCursor}.</p>
+ * <p> An application should ensure that a cursor is closed in all circumstances, e.g. using a try-with-resources statement:</p>
+ * <blockquote><pre>
+ *    try (DBCursor cursor = collection.find(query)) {
+ *        while (cursor.hasNext()) {
+ *            System.out.println(cursor.next();
+ *        }
  *    }
- * </pre>
+ * </pre></blockquote>
+ *
  * <p><b>Warning:</b> Calling {@code toArray} or {@code length} on a DBCursor will irrevocably turn it into an array.  This means that, if
  * the cursor was iterating over ten million results (which it was lazily fetching from the database), suddenly there will be a ten-million
  * element array in memory.  Before converting to an array, make sure that there are a reasonable number of results using {@code skip()} and
