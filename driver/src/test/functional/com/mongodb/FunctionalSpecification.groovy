@@ -20,6 +20,7 @@ import spock.lang.Specification
 
 import static com.mongodb.Fixture.getDefaultDatabaseName
 import static com.mongodb.Fixture.getMongoClient
+import static com.mongodb.Fixture.getServerSessionPoolInUseCount
 
 class FunctionalSpecification extends Specification {
     protected DB database;
@@ -34,6 +35,9 @@ class FunctionalSpecification extends Specification {
     def cleanup() {
         if (collection != null) {
             collection.drop()
+        }
+        if (getServerSessionPoolInUseCount() != 0) {
+            throw new IllegalStateException('Server session in use count is ' + getServerSessionPoolInUseCount());
         }
     }
 

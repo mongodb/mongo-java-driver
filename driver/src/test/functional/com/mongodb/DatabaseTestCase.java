@@ -21,6 +21,7 @@ import org.junit.Before;
 
 import static com.mongodb.Fixture.getDefaultDatabaseName;
 import static com.mongodb.Fixture.getMongoClient;
+import static com.mongodb.Fixture.getServerSessionPoolInUseCount;
 
 public class DatabaseTestCase {
     //For ease of use and readability, in this specific case we'll allow protected variables
@@ -43,6 +44,10 @@ public class DatabaseTestCase {
     @After
     public void tearDown() {
         collection.drop();
+
+        if (getServerSessionPoolInUseCount() != 0) {
+            throw new IllegalStateException("Server session in use count is " + getServerSessionPoolInUseCount());
+        }
     }
 
     public MongoClient getClient() {
