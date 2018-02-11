@@ -30,6 +30,7 @@ import org.junit.Before;
 import static com.mongodb.Fixture.getDefaultDatabaseName;
 import static com.mongodb.Fixture.getMongoClient;
 import static com.mongodb.Fixture.getPrimary;
+import static com.mongodb.Fixture.getServerSessionPoolInUseCount;
 
 public class LegacyDatabaseTestCase {
     //For ease of use and readability, in this specific case we'll allow protected variables
@@ -56,6 +57,10 @@ public class LegacyDatabaseTestCase {
             ServerHelper.checkPool(getPrimary());
         } catch (InterruptedException e) {
             // ignore
+        }
+
+        if (getServerSessionPoolInUseCount() != 0) {
+            throw new IllegalStateException("Server session in use count is " + getServerSessionPoolInUseCount());
         }
     }
 

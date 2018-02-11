@@ -70,6 +70,9 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         clientSession.getClusterTime() == null
         clientSession.getOperationTime() == null
         clientSession.getServerSession() != null
+
+        cleanup:
+        clientSession?.close()
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 6) })
@@ -111,6 +114,9 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
 
         then:
         clientSession.getClusterTime() == secondClusterTime
+
+        cleanup:
+        clientSession?.close()
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 6) })
@@ -149,6 +155,9 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
 
         then:
         clientSession.getOperationTime() == secondOperationTime
+
+        cleanup:
+        clientSession?.close()
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 6) })
@@ -175,6 +184,9 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
 
         then:
         thrown(IllegalStateException)
+
+        cleanup:
+        clientSession?.close()
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 6) })
@@ -192,6 +204,9 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
 
         then:
         noExceptionThrown()
+
+        cleanup:
+        clientSession?.close()
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 6) })
@@ -204,6 +219,9 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         then:
         clientSession != null
         clientSession.isCausallyConsistent() == causallyConsistent
+
+        cleanup:
+        clientSession?.close()
 
         where:
         causallyConsistent << [true, false]
@@ -223,6 +241,9 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         identifier.get('id').isBinary()
         identifier.getBinary('id').getType() == BsonBinarySubType.UUID_STANDARD.value
         identifier.getBinary('id').data.length == 16
+
+        cleanup:
+        clientSession?.close()
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 6) })
