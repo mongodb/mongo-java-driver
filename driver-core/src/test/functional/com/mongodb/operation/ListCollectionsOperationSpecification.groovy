@@ -312,6 +312,9 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         collections.size() <= 2 // pre 3.0 items may be filtered out the batch by the driver
         cursor.hasNext()
         cursor.getBatchSize() == 2
+
+        cleanup:
+        cursor?.close()
     }
 
     @Category(Async)
@@ -341,6 +344,9 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         then:
         callback.get().size() <= 2 // pre 3.0 items may be filtered out the batch by the driver
         cursor.getBatchSize() == 2
+
+        cleanup:
+        consumeAsyncResults(cursor)
     }
 
     @IgnoreIf({ isSharded() })

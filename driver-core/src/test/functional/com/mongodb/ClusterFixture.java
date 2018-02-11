@@ -28,6 +28,7 @@ import com.mongodb.binding.AsyncSingleConnectionBinding;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.ClusterBinding;
 import com.mongodb.binding.ReadWriteBinding;
+import com.mongodb.binding.ReferenceCounted;
 import com.mongodb.binding.SessionBinding;
 import com.mongodb.binding.SingleConnectionBinding;
 import com.mongodb.connection.AsyncConnection;
@@ -71,6 +72,7 @@ import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static com.mongodb.connection.ClusterType.REPLICA_SET;
 import static com.mongodb.connection.ClusterType.SHARDED;
 import static com.mongodb.connection.ClusterType.STANDALONE;
+import static java.lang.String.format;
 import static java.lang.Thread.sleep;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -98,7 +100,7 @@ public final class ClusterFixture {
     static {
         String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
         String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty()
-                                ? DEFAULT_URI : mongoURIProperty;
+                ? DEFAULT_URI : mongoURIProperty;
         connectionString = new ConnectionString(mongoURIString);
         Runtime.getRuntime().addShutdownHook(new ShutdownHook());
     }
@@ -153,7 +155,7 @@ public final class ClusterFixture {
 
     public static Document getServerStatus() {
         return new CommandWriteOperation<Document>("admin", new BsonDocument("serverStatus", new BsonInt32(1)), new DocumentCodec())
-               .execute(getBinding());
+                .execute(getBinding());
     }
 
     public static boolean supportsFsync() {
@@ -264,12 +266,12 @@ public final class ClusterFixture {
     @SuppressWarnings("deprecation")
     public static Cluster createCluster(final StreamFactory streamFactory) {
         return new DefaultClusterFactory().createCluster(ClusterSettings.builder().applyConnectionString(getConnectionString()).build(),
-                                                  ServerSettings.builder().build(),
-                                                  ConnectionPoolSettings.builder().applyConnectionString(getConnectionString()).build(),
-                                                  streamFactory,
-                                                  new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                                                  getConnectionString().getCredentialList(), null, null, null,
-                                                  getConnectionString().getCompressorList());
+                ServerSettings.builder().build(),
+                ConnectionPoolSettings.builder().applyConnectionString(getConnectionString()).build(),
+                streamFactory,
+                new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()),
+                getConnectionString().getCredentialList(), null, null, null,
+                getConnectionString().getCompressorList());
     }
 
     public static StreamFactory getAsyncStreamFactory() {
@@ -335,7 +337,7 @@ public final class ClusterFixture {
 
     public static boolean isDiscoverableReplicaSet() {
         return getCluster().getDescription().getType() == REPLICA_SET
-               && getCluster().getDescription().getConnectionMode() == MULTIPLE;
+                && getCluster().getDescription().getConnectionMode() == MULTIPLE;
     }
 
     public static boolean isSharded() {
@@ -479,20 +481,20 @@ public final class ClusterFixture {
         batchCursor.next(new SingleResultCallback<List<T>>() {
             @Override
             public void onResult(final List<T> results, final Throwable t) {
-                    if (t != null || results == null) {
-                        batchCursor.close();
-                        callback.onResult(null, t);
-                    } else {
-                        try {
-                            for (T result : results) {
-                                block.apply(result);
-                            }
-                            loopCursor(batchCursor, block, callback);
-                        } catch (Throwable tr) {
-                            batchCursor.close();
-                            callback.onResult(null, tr);
+                if (t != null || results == null) {
+                    batchCursor.close();
+                    callback.onResult(null, t);
+                } else {
+                    try {
+                        for (T result : results) {
+                            block.apply(result);
                         }
+                        loopCursor(batchCursor, block, callback);
+                    } catch (Throwable tr) {
+                        batchCursor.close();
+                        callback.onResult(null, tr);
                     }
+                }
             }
         });
     }
@@ -534,5 +536,31 @@ public final class ClusterFixture {
         final FutureResultCallback<AsyncConnection> futureResultCallback = new FutureResultCallback<AsyncConnection>();
         source.getConnection(futureResultCallback);
         return futureResultCallback.get(TIMEOUT, SECONDS);
+    }
+
+    public static synchronized void checkReferenceCountReachesTarget(final ReferenceCounted referenceCounted, final int target) {
+        int count = getReferenceCountAfterTimeout(referenceCounted, target);
+        if (count != target) {
+            throw new MongoTimeoutException(
+                    format("Timed out waiting for reference count to drop to %d.  Now at %d for %s", target, count,
+                            referenceCounted));
+        }
+    }
+
+    public static int getReferenceCountAfterTimeout(final ReferenceCounted referenceCounted, final int target) {
+        long startTime = System.currentTimeMillis();
+        int count = referenceCounted.getCount();
+        while (count > target) {
+            try {
+                if (System.currentTimeMillis() > startTime + 5000) {
+                    return count;
+                }
+                sleep(10);
+                count = referenceCounted.getCount();
+            } catch (InterruptedException e) {
+                throw new MongoInterruptedException("Interrupted", e);
+            }
+        }
+        return count;
     }
 }
