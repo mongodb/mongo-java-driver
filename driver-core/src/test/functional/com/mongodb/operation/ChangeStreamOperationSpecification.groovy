@@ -163,6 +163,9 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         next.getNamespace() == helper.getNamespace()
         next.getOperationType() == OperationType.INSERT
         next.getUpdateDescription() == null
+
+        cleanup:
+        cursor?.close()
     }
 
     def 'should decode update to ChangeStreamDocument '() {
@@ -186,6 +189,9 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         next.getNamespace() == helper.getNamespace()
         next.getOperationType() == OperationType.UPDATE
         next.getUpdateDescription() == new UpdateDescription(['y'], BsonDocument.parse('{x : 3}'))
+
+        cleanup:
+        cursor?.close()
     }
 
     def 'should decode replace to ChangeStreamDocument '() {
@@ -209,6 +215,9 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         next.getNamespace() == helper.getNamespace()
         next.getOperationType() == OperationType.REPLACE
         next.getUpdateDescription() == null
+
+        cleanup:
+        cursor?.close()
     }
 
     def 'should decode delete to ChangeStreamDocument '() {
@@ -232,6 +241,9 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         next.getNamespace() == helper.getNamespace()
         next.getOperationType() == OperationType.DELETE
         next.getUpdateDescription() == null
+
+        cleanup:
+        cursor?.close()
     }
 
     def 'should decode invalidate to ChangeStreamDocument '() {
@@ -255,6 +267,9 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         next.getNamespace() == null
         next.getOperationType() == OperationType.INVALIDATE
         next.getUpdateDescription() == null
+
+        cleanup:
+        cursor?.close()
     }
 
     def 'should throw if the _id field is projected out'() {
@@ -270,6 +285,9 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
         then:
         thrown(MongoChangeStreamException)
+
+        cleanup:
+        cursor?.close()
 
         where:
         async << [true, false]

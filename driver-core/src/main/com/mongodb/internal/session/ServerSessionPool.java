@@ -96,6 +96,10 @@ public class ServerSessionPool {
         }
     }
 
+    public int getInUseCount() {
+        return serverSessionPool.getInUseCount();
+    }
+
     private void closeSession(final ServerSessionImpl serverSession) {
         serverSession.close();
         // only track closed sessions when pool is in the process of closing
