@@ -22,6 +22,7 @@ import spock.lang.Specification
 
 import static Fixture.getDefaultDatabase
 import static Fixture.initializeCollection
+import static com.mongodb.async.client.Fixture.waitForLastServerSessionPoolRelease
 
 class FunctionalSpecification extends Specification {
     protected MongoDatabase database;
@@ -30,6 +31,10 @@ class FunctionalSpecification extends Specification {
     def setup() {
         database = getDefaultDatabase()
         collection = initializeCollection(new MongoNamespace(database.getName(), getClass().getName()))
+    }
+
+    def cleanup() {
+        waitForLastServerSessionPoolRelease();
     }
 
     String getDatabaseName() {

@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.async.client.Fixture.drop;
 import static com.mongodb.async.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.async.client.Fixture.getMongoClient;
+import static com.mongodb.async.client.Fixture.waitForLastServerSessionPoolRelease;
 
 public class DatabaseTestCase {
     //For ease of use and readability, in this specific case we'll allow protected variables
@@ -49,6 +50,8 @@ public class DatabaseTestCase {
         if (collection != null) {
             drop(collection.getNamespace());
         }
+
+        waitForLastServerSessionPoolRelease();
     }
 
     public abstract class MongoOperation<TResult> {

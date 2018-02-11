@@ -16,9 +16,12 @@
 
 package com.mongodb.async.client;
 
+import com.mongodb.ClusterFixture;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoCommandException;
+import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.MongoTimeoutException;
 import com.mongodb.async.FutureResultCallback;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
@@ -28,6 +31,7 @@ import com.mongodb.connection.SslSettings;
 import org.bson.Document;
 
 import static com.mongodb.connection.ClusterType.SHARDED;
+import static java.lang.Thread.sleep;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
@@ -150,6 +154,29 @@ public final class Fixture {
         } catch (Throwable t) {
             throw new RuntimeException(t);
         }
+    }
+
+    public static synchronized void waitForLastServerSessionPoolRelease() {
+        if (mongoClient != null) {
+            long startTime = System.currentTimeMillis();
+            int sessionInUseCount = getSessionInUseCount();
+            while (sessionInUseCount > 0) {
+                try {
+                    if (System.currentTimeMillis() > startTime + ClusterFixture.TIMEOUT * 1000) {
+                        throw new MongoTimeoutException("Timed out waiting for server session pool in use count to drop to 0.  Now at: "
+                                + sessionInUseCount);
+                    }
+                    sleep(10);
+                    sessionInUseCount = getSessionInUseCount();
+                } catch (InterruptedException e) {
+                    throw new MongoInterruptedException("Interrupted", e);
+                }
+            }
+        }
+    }
+
+    private static int getSessionInUseCount() {
+        return mongoClient.getServerSessionPool().getInUseCount();
     }
 
     static class ShutdownHook extends Thread {
