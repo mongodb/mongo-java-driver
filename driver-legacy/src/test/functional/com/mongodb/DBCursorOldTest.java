@@ -135,6 +135,8 @@ public class DBCursorOldTest extends DatabaseTestCase {
         assertEquals(null, cur.tryNext());
         assertEquals(secondDBObject, cur.curr());
         assertEquals(2, cur.numSeen());
+
+        cur.close();
     }
 
     @Test
@@ -178,6 +180,8 @@ public class DBCursorOldTest extends DatabaseTestCase {
         // this doc should unblock thread
         c.save(new BasicDBObject("x", 10), WriteConcern.ACKNOWLEDGED);
         assertEquals(10, (long) future.get(5, SECONDS));
+
+        cur.close();
     }
 
     @Test
@@ -220,6 +224,8 @@ public class DBCursorOldTest extends DatabaseTestCase {
         // this doc should unblock thread
         c.save(new BasicDBObject("x", 10), WriteConcern.ACKNOWLEDGED);
         assertEquals(10, (long) future.get(5, SECONDS));
+
+        cur.close();
     }
 
     @Test
@@ -237,6 +243,8 @@ public class DBCursorOldTest extends DatabaseTestCase {
             cur.tryNext();
         } catch (IllegalArgumentException e) {
             fail();
+        } finally {
+            cur.close();
         }
     }
 
@@ -256,6 +264,8 @@ public class DBCursorOldTest extends DatabaseTestCase {
             cur.tryNext();
         } catch (IllegalArgumentException e) {
             fail();
+        } finally {
+            cur.close();
         }
     }
 

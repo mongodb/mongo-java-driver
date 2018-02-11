@@ -762,6 +762,10 @@ public class Mongo {
         return cluster;
     }
 
+    ServerSessionPool getServerSessionPool() {
+        return serverSessionPool;
+    }
+
     Bytes.OptionHolder getOptionHolder() {
         return optionHolder;
     }

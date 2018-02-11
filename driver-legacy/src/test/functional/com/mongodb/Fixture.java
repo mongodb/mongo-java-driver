@@ -53,6 +53,10 @@ public final class Fixture {
         return mongoClient;
     }
 
+    public static int getServerSessionPoolInUseCount() {
+        return getMongoClient().getServerSessionPool().getInUseCount();
+    }
+
     @SuppressWarnings("deprecation") // This is for access to the old API, so it will use deprecated methods
     public static synchronized DB getDefaultDatabase() {
         if (defaultDatabase == null) {

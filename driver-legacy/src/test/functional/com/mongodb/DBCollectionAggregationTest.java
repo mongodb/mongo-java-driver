@@ -145,10 +145,10 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
         AggregationOptions options = AggregationOptions.builder()
             .outputMode(AggregationOptions.OutputMode.CURSOR)
             .build();
-        Cursor cursor = verify(pipeline, options, ReadPreference.secondary(), collection);
+        ServerAddress serverAddress = verify(pipeline, options, ReadPreference.secondary(), collection);
         assertEquals(2, database.getCollection("aggCollection")
             .count());
-        assertEquals(Fixture.getPrimary(), cursor.getServerAddress());
+        assertEquals(Fixture.getPrimary(), serverAddress);
     }
 
     public List<DBObject> prepareData() {
@@ -248,14 +248,20 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
         verify(pipeline, options, readPreference, collection);
     }
 
-    private Cursor verify(final List<DBObject> pipeline, final AggregationOptions options, final ReadPreference readPreference,
+    private ServerAddress verify(final List<DBObject> pipeline, final AggregationOptions options, final ReadPreference readPreference,
         final DBCollection collection) {
         Cursor cursor = collection.aggregate(pipeline, options, readPreference);
-
-        Map<String, DBObject> results = new HashMap<String, DBObject>();
-        while (cursor.hasNext()) {
-            DBObject next = cursor.next();
-            results.put((String) next.get("_id"), next);
+        ServerAddress serverAddress = null;
+        Map<String, DBObject> results;
+        try {
+            results = new HashMap<String, DBObject>();
+            while (cursor.hasNext()) {
+                DBObject next = cursor.next();
+                results.put((String) next.get("_id"), next);
+            }
+        } finally {
+            serverAddress = cursor.getServerAddress();
+            cursor.close();
         }
 
 
@@ -269,6 +275,6 @@ public class DBCollectionAggregationTest extends DatabaseTestCase {
         assertEquals(1, barResult.get("docsPerName"));
         assertEquals(2, barResult.get("countPerName"));
 
-        return cursor;
+        return serverAddress;
     }
 }
