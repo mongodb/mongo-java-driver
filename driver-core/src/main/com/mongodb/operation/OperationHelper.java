@@ -375,6 +375,7 @@ final class OperationHelper {
 
         public SingleResultCallback<T> releaseConnectionAndGetWrapped() {
             connection.release();
+            source.release();
             return wrapped;
         }
     }
