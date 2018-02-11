@@ -24,13 +24,24 @@ import java.io.Closeable;
 import java.util.Iterator;
 
 /**
- * The Mongo Cursor interface implementing the iterator protocol
+ * The Mongo Cursor interface implementing the iterator protocol.
+ * <p>
+ * An application should ensure that a cursor is closed in all circumstances, e.g. using a try-with-resources statement:
+ *
+ * <blockquote><pre>
+ * try (MongoCursor&lt;Document&gt; cursor = collection.find().iterator()) {
+ *     while (cursor.hasNext()) {
+ *         System.out.println(cursor.next());
+ *     }
+ * }
+ * </pre></blockquote>
  *
  * @since 3.0
  * @param <TResult> The type of documents the cursor contains
  */
 @NotThreadSafe
 public interface MongoCursor<TResult> extends Iterator<TResult>, Closeable {
+
     @Override
     void close();
 
