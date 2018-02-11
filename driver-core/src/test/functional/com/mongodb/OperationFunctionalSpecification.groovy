@@ -68,6 +68,7 @@ import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.loopCursor
+import static com.mongodb.ClusterFixture.checkReferenceCountReachesTarget
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 
 class OperationFunctionalSpecification extends Specification {
@@ -78,6 +79,8 @@ class OperationFunctionalSpecification extends Specification {
 
     def cleanup() {
         CollectionHelper.drop(getNamespace())
+        checkReferenceCountReachesTarget(getBinding(), 1)
+        checkReferenceCountReachesTarget(getAsyncBinding(), 1)
         ServerHelper.checkPool(getPrimary())
     }
 
@@ -171,6 +174,13 @@ class OperationFunctionalSpecification extends Specification {
             next = cursor.tryNext()
         }
         next
+    }
+
+    def consumeAsyncResults(cursor) {
+        def batch = next(cursor, true)
+        while (batch != null) {
+            batch = next(cursor, true)
+        }
     }
 
     void testOperation(Map params) {

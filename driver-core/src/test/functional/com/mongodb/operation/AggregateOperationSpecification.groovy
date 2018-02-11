@@ -440,6 +440,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         thrown(MongoExecutionTimeoutException)
 
         cleanup:
+        cursor.close()
         disableMaxTimeFailPoint()
 
         where:

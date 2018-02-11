@@ -49,6 +49,7 @@ import static com.mongodb.ClusterFixture.getAsyncCluster
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getConnection
 import static com.mongodb.ClusterFixture.getReadConnectionSource
+import static com.mongodb.ClusterFixture.getReferenceCountAfterTimeout
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.connection.ServerHelper.waitForLastRelease
@@ -122,8 +123,8 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
         nextBatch()
 
         then:
-        connection.count == 1
-        connectionSource.count == 1
+        getReferenceCountAfterTimeout(connection, 1) == 1
+        getReferenceCountAfterTimeout(connectionSource, 1) == 1
     }
 
     def 'should not retain connection and source after cursor is exhausted after first batch'() {
@@ -132,8 +133,8 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
                 connection)
 
         then:
-        connection.count == 1
-        connectionSource.count == 1
+        getReferenceCountAfterTimeout(connection, 1) == 1
+        getReferenceCountAfterTimeout(connectionSource, 1) == 1
     }
 
     def 'should exhaust single batch with limit'() {

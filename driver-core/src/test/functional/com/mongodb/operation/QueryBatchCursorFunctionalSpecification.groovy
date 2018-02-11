@@ -68,6 +68,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
 
     def cleanup() {
         cursor?.close()
+        connectionSource?.release()
     }
 
     def 'server cursor should not be null'() {
@@ -540,6 +541,7 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
     @IgnoreIf({ !isDiscoverableReplicaSet() })
     def 'should get more from a secondary'() {
         given:
+        connectionSource.release() // release the connection source established in setup, since we're substituting our own here
         connectionSource = getBinding(ReadPreference.secondary()).getReadConnectionSource()
 
         def firstBatch = executeQuery(2, ReadPreference.secondary())
