@@ -114,6 +114,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
 
         then:
         batchCursor.getBatchSize() == 0
+        batchCursor.close()
 
         when: 'The collection name should be in the collections list'
         def collectionNames = run(database.listCollections().&into, [])
