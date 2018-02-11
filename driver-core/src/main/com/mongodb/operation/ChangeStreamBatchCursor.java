@@ -138,6 +138,7 @@ final class ChangeStreamBatchCursor<T> implements BatchCursor<T> {
         }
         wrapped.close();
         wrapped = ((ChangeStreamBatchCursor<T>) changeStreamOperation.resumeAfter(resumeToken).execute(binding)).getWrapped();
+        binding.release(); // release the new change stream batch cursor's reference to the binding
         return function.apply(wrapped);
     }
 

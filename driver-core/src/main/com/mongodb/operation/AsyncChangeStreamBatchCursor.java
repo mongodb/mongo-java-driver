@@ -124,6 +124,7 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncBatchCursor<T> {
                     callback.onResult(null, t);
                 } else {
                     wrapped = ((AsyncChangeStreamBatchCursor<T>) result).getWrapped();
+                    binding.release(); // release the new change stream batch cursor's reference to the binding
                     asyncBlock.apply(wrapped, callback);
                 }
             }
