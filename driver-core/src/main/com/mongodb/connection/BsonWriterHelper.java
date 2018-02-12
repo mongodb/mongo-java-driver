@@ -18,7 +18,7 @@ package com.mongodb.connection;
 
 import org.bson.BsonDocument;
 import org.bson.BsonElement;
-import org.bson.BsonSerializationException;
+import org.bson.BsonMaximumSizeExceededException;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.bson.codecs.BsonValueCodecProvider;
@@ -63,7 +63,7 @@ final class BsonWriterHelper {
         }
 
         if (payload.getPosition() == 0) {
-            throw new BsonSerializationException(format("Payload document size of is larger than maximum of %d.",
+            throw new BsonMaximumSizeExceededException(format("Payload document size is larger than maximum of %d.",
                     payloadSettings.getMaxDocumentSize()));
         }
     }
