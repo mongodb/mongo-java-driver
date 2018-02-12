@@ -35,6 +35,7 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
+import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
@@ -820,8 +821,25 @@ public interface MongoCollection<TDocument> {
      * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
+     * @deprecated use {@link #replaceOne(Bson, Object, ReplaceOptions)} instead
      */
+    @Deprecated
     UpdateResult replaceOne(Bson filter, TDocument replacement, UpdateOptions updateOptions);
+
+    /**
+     * Replace a document in the collection according to the specified arguments.
+     *
+     * @param filter        the query filter to apply the the replace operation
+     * @param replacement   the replacement document
+     * @param replaceOptions the options to apply to the replace operation
+     * @return the result of the replace one operation
+     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the replace command
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoException             if the write failed due some other failure
+     * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
+     * @since 3.7
+     */
+    UpdateResult replaceOne(Bson filter, TDocument replacement, ReplaceOptions replaceOptions);
 
     /**
      * Replace a document in the collection according to the specified arguments.
@@ -853,8 +871,27 @@ public interface MongoCollection<TDocument> {
      * @since 3.6
      * @mongodb.server.release 3.6
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
+     * @deprecated use {@link #replaceOne(ClientSession, Bson, Object, ReplaceOptions)} instead
      */
+    @Deprecated
     UpdateResult replaceOne(ClientSession clientSession, Bson filter, TDocument replacement, UpdateOptions updateOptions);
+
+    /**
+     * Replace a document in the collection according to the specified arguments.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param filter        the query filter to apply the the replace operation
+     * @param replacement   the replacement document
+     * @param replaceOptions the options to apply to the replace operation
+     * @return the result of the replace one operation
+     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the replace command
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoException             if the write failed due some other failure
+     * @since 3.7
+     * @mongodb.server.release 3.6
+     * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
+     */
+    UpdateResult replaceOne(ClientSession clientSession, Bson filter, TDocument replacement, ReplaceOptions replaceOptions);
 
     /**
      * Update a single document in the collection according to the specified arguments.
