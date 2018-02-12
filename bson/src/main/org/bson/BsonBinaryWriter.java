@@ -415,7 +415,7 @@ public class BsonBinaryWriter extends AbstractBsonWriter {
 
     private void validateSize(final int size) {
         if (size > maxDocumentSizeStack.peek()) {
-            throw new BsonSerializationException(format("Document size of %d is larger than maximum of %d.", size,
+            throw new BsonMaximumSizeExceededException(format("Document size of %d is larger than maximum of %d.", size,
                     maxDocumentSizeStack.peek()));
         }
     }

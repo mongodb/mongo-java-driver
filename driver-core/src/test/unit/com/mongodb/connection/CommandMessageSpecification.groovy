@@ -26,6 +26,7 @@ import org.bson.BsonBinary
 import org.bson.BsonBinaryReader
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.BsonMaximumSizeExceededException
 import org.bson.BsonSerializationException
 import org.bson.BsonString
 import org.bson.BsonTimestamp
@@ -367,7 +368,7 @@ class CommandMessageSpecification extends Specification {
         message.encode(output, sessionContext)
 
         then:
-        thrown(BsonSerializationException)
+        thrown(BsonMaximumSizeExceededException)
     }
 
     private static BsonDocument getCommandDocument(ByteBufNIO byteBuf, ReplyHeader replyHeader) {

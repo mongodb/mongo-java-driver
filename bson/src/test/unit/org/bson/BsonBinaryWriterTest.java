@@ -58,7 +58,7 @@ public class BsonBinaryWriterTest {
             writer.writeBinaryData("b", new BsonBinary(new byte[1024]));
             writer.writeEndDocument();
             fail();
-        } catch (BsonSerializationException e) {
+        } catch (BsonMaximumSizeExceededException e) {
             assertEquals("Document size of 1037 is larger than maximum of 1024.", e.getMessage());
         }
     }
@@ -71,7 +71,7 @@ public class BsonBinaryWriterTest {
             writer.writeStartDocument("doc");
             writer.writeString("s", "123456789");
             writer.writeEndDocument();
-        } catch (BsonSerializationException e) {
+        } catch (BsonMaximumSizeExceededException e) {
             assertEquals("Document size of 22 is larger than maximum of 10.", e.getMessage());
         }
     }
