@@ -35,6 +35,7 @@ import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.ReplaceOneModel;
+import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
@@ -305,15 +306,14 @@ public class JsonPoweredCrudTestHelper {
     }
 
     BsonDocument getReplaceOneResult(final BsonDocument arguments) {
-        UpdateOptions options = new UpdateOptions();
+        ReplaceOptions options = new ReplaceOptions();
         if (arguments.containsKey("upsert")) {
             options.upsert(arguments.getBoolean("upsert").getValue());
         }
         if (arguments.containsKey("collation")) {
             options.collation(getCollation(arguments.getDocument("collation")));
         }
-        return toResult(collection
-                                .replaceOne(arguments.getDocument("filter"), arguments.getDocument("replacement"), options));
+        return toResult(collection.replaceOne(arguments.getDocument("filter"), arguments.getDocument("replacement"), options));
     }
 
     BsonDocument getUpdateManyResult(final BsonDocument arguments) {

@@ -36,6 +36,7 @@ import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.MapReduceAction;
 import com.mongodb.client.model.RenameCollectionOptions;
+import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.operation.BatchCursor;
@@ -149,7 +150,7 @@ public final class SyncOperations<TDocument> {
     }
 
 
-    public WriteOperation<BulkWriteResult> replaceOne(final Bson filter, final TDocument replacement, final UpdateOptions options) {
+    public WriteOperation<BulkWriteResult> replaceOne(final Bson filter, final TDocument replacement, final ReplaceOptions options) {
         return operations.replaceOne(filter, replacement, options);
     }
 

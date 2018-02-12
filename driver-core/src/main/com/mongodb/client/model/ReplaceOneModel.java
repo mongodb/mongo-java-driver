@@ -19,6 +19,7 @@ package com.mongodb.client.model;
 import org.bson.conversions.Bson;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.client.model.ReplaceOptions.createReplaceOptions;
 
 /**
  * A model describing the replacement of at most one document that matches the query filter.
@@ -30,7 +31,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 public final class ReplaceOneModel<T> extends WriteModel<T> {
     private final Bson filter;
     private final T replacement;
-    private final UpdateOptions options;
+    private final ReplaceOptions options;
 
     /**
      * Construct a new instance.
@@ -39,7 +40,7 @@ public final class ReplaceOneModel<T> extends WriteModel<T> {
      * @param replacement the replacement document
      */
     public ReplaceOneModel(final Bson filter, final T replacement) {
-        this(filter, replacement, new UpdateOptions());
+        this(filter, replacement, new ReplaceOptions());
     }
 
     /**
@@ -48,8 +49,22 @@ public final class ReplaceOneModel<T> extends WriteModel<T> {
      * @param filter    a document describing the query filter, which may not be null.
      * @param replacement the replacement document
      * @param options     the options to apply
+     * @deprecated use {@link #ReplaceOneModel(Bson, Object, ReplaceOptions)} instead
      */
+    @Deprecated
     public ReplaceOneModel(final Bson filter, final T replacement, final UpdateOptions options) {
+        this(filter, replacement, createReplaceOptions(options));
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param filter    a document describing the query filter, which may not be null.
+     * @param replacement the replacement document
+     * @param options     the options to apply
+     * @since 3.7
+     */
+    public ReplaceOneModel(final Bson filter, final T replacement, final ReplaceOptions options) {
         this.filter = notNull("filter", filter);
         this.options = notNull("options", options);
         this.replacement = notNull("replacement", replacement);
@@ -76,9 +91,24 @@ public final class ReplaceOneModel<T> extends WriteModel<T> {
     /**
      * Gets the options to apply.
      *
-     * @return the options
+     * @return the update options
+     * @deprecated use {@link #getReplaceOptions()} instead
      */
+    @Deprecated
     public UpdateOptions getOptions() {
+        return new UpdateOptions()
+                .bypassDocumentValidation(options.getBypassDocumentValidation())
+                .collation(options.getCollation())
+                .upsert(options.isUpsert());
+    }
+
+    /**
+     * Gets the ReplaceOptions to apply.
+     *
+     * @return the replace options
+     * @since 3.7
+     */
+    public ReplaceOptions getReplaceOptions() {
         return options;
     }
 

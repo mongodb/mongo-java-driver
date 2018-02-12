@@ -42,6 +42,7 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
+import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
@@ -65,6 +66,7 @@ import static com.mongodb.bulk.WriteRequest.Type.DELETE;
 import static com.mongodb.bulk.WriteRequest.Type.INSERT;
 import static com.mongodb.bulk.WriteRequest.Type.REPLACE;
 import static com.mongodb.bulk.WriteRequest.Type.UPDATE;
+import static com.mongodb.client.model.ReplaceOptions.createReplaceOptions;
 import static java.util.Collections.singletonList;
 
 class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
@@ -542,11 +544,18 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public void replaceOne(final Bson filter, final TDocument replacement, final SingleResultCallback<UpdateResult> callback) {
-        replaceOne(filter, replacement, new UpdateOptions(), callback);
+        replaceOne(filter, replacement, new ReplaceOptions(), callback);
     }
 
     @Override
+    @Deprecated
     public void replaceOne(final Bson filter, final TDocument replacement, final UpdateOptions options,
+                           final SingleResultCallback<UpdateResult> callback) {
+        replaceOne(filter, replacement, createReplaceOptions(options), callback);
+    }
+
+    @Override
+    public void replaceOne(final Bson filter, final TDocument replacement, final ReplaceOptions options,
                            final SingleResultCallback<UpdateResult> callback) {
         executeReplaceOne(null, filter, replacement, options, callback);
     }
@@ -554,18 +563,25 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     @Override
     public void replaceOne(final ClientSession clientSession, final Bson filter, final TDocument replacement,
                            final SingleResultCallback<UpdateResult> callback) {
-        replaceOne(clientSession, filter, replacement, new UpdateOptions(), callback);
+        replaceOne(clientSession, filter, replacement, new ReplaceOptions(), callback);
     }
 
     @Override
+    @Deprecated
     public void replaceOne(final ClientSession clientSession, final Bson filter, final TDocument replacement, final UpdateOptions options,
+                           final SingleResultCallback<UpdateResult> callback) {
+        replaceOne(clientSession, filter, replacement, createReplaceOptions(options), callback);
+    }
+
+    @Override
+    public void replaceOne(final ClientSession clientSession, final Bson filter, final TDocument replacement, final ReplaceOptions options,
                            final SingleResultCallback<UpdateResult> callback) {
         notNull("clientSession", clientSession);
         executeReplaceOne(clientSession, filter, replacement, options, callback);
     }
 
     private void executeReplaceOne(final ClientSession clientSession, final Bson filter, final TDocument replacement,
-                                   final UpdateOptions options, final SingleResultCallback<UpdateResult> callback) {
+                                   final ReplaceOptions options, final SingleResultCallback<UpdateResult> callback) {
         executeSingleWriteRequest(clientSession, operations.replaceOne(filter, replacement, options), REPLACE,
                 new SingleResultCallback<BulkWriteResult>() {
                     @Override

@@ -44,6 +44,7 @@ import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.MapReduceAction;
 import com.mongodb.client.model.RenameCollectionOptions;
 import com.mongodb.client.model.ReplaceOneModel;
+import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
@@ -308,7 +309,7 @@ final class Operations<TDocument> {
     }
 
 
-    MixedBulkWriteOperation replaceOne(final Bson filter, final TDocument replacement, final UpdateOptions options) {
+    MixedBulkWriteOperation replaceOne(final Bson filter, final TDocument replacement, final ReplaceOptions options) {
         return bulkWrite(singletonList(new ReplaceOneModel<TDocument>(filter, replacement, options)),
                 new BulkWriteOptions().bypassDocumentValidation(options.getBypassDocumentValidation()));
     }
@@ -369,8 +370,8 @@ final class Operations<TDocument> {
                 writeRequest = new UpdateRequest(toBsonDocument(replaceOneModel.getFilter()), documentToBsonDocument(replaceOneModel
                         .getReplacement()),
                         WriteRequest.Type.REPLACE)
-                        .upsert(replaceOneModel.getOptions().isUpsert())
-                        .collation(replaceOneModel.getOptions().getCollation());
+                        .upsert(replaceOneModel.getReplaceOptions().isUpsert())
+                        .collation(replaceOneModel.getReplaceOptions().getCollation());
             } else if (writeModel instanceof UpdateOneModel) {
                 UpdateOneModel<TDocument> updateOneModel = (UpdateOneModel<TDocument>) writeModel;
                 writeRequest = new UpdateRequest(toBsonDocument(updateOneModel.getFilter()), toBsonDocument(updateOneModel.getUpdate()),

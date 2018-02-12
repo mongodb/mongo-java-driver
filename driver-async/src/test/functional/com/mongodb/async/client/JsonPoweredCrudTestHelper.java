@@ -37,6 +37,7 @@ import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneModel;
 import com.mongodb.client.model.ReplaceOneModel;
+import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
@@ -343,7 +344,7 @@ public class JsonPoweredCrudTestHelper {
     }
 
     BsonDocument getReplaceOneResult(final BsonDocument arguments) {
-        UpdateOptions options = new UpdateOptions();
+        ReplaceOptions options = new ReplaceOptions();
         if (arguments.containsKey("upsert")) {
             options.upsert(arguments.getBoolean("upsert").getValue());
         }

@@ -48,6 +48,7 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.InsertManyOptions;
 import com.mongodb.client.model.InsertOneOptions;
 import com.mongodb.client.model.RenameCollectionOptions;
+import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
@@ -71,6 +72,7 @@ import static com.mongodb.bulk.WriteRequest.Type.DELETE;
 import static com.mongodb.bulk.WriteRequest.Type.INSERT;
 import static com.mongodb.bulk.WriteRequest.Type.REPLACE;
 import static com.mongodb.bulk.WriteRequest.Type.UPDATE;
+import static com.mongodb.client.model.ReplaceOptions.createReplaceOptions;
 import static java.util.Collections.singletonList;
 
 class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
@@ -509,29 +511,42 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     @Override
     public UpdateResult replaceOne(final Bson filter, final TDocument replacement) {
-        return replaceOne(filter, replacement, new UpdateOptions());
+        return replaceOne(filter, replacement, new ReplaceOptions());
     }
 
     @Override
+    @Deprecated
     public UpdateResult replaceOne(final Bson filter, final TDocument replacement, final UpdateOptions updateOptions) {
-        return executeReplaceOne(null, filter, replacement, updateOptions);
+        return replaceOne(filter, replacement, createReplaceOptions(updateOptions));
+    }
+
+    @Override
+    public UpdateResult replaceOne(final Bson filter, final TDocument replacement, final ReplaceOptions replaceOptions) {
+        return executeReplaceOne(null, filter, replacement, replaceOptions);
     }
 
     @Override
     public UpdateResult replaceOne(final ClientSession clientSession, final Bson filter, final TDocument replacement) {
-        return replaceOne(clientSession, filter, replacement, new UpdateOptions());
+        return replaceOne(clientSession, filter, replacement, new ReplaceOptions());
+    }
+
+    @Override
+    @Deprecated
+    public UpdateResult replaceOne(final ClientSession clientSession, final Bson filter, final TDocument replacement,
+                                   final UpdateOptions updateOptions) {
+        return replaceOne(clientSession, filter, replacement, createReplaceOptions(updateOptions));
     }
 
     @Override
     public UpdateResult replaceOne(final ClientSession clientSession, final Bson filter, final TDocument replacement,
-                                   final UpdateOptions updateOptions) {
+                                   final ReplaceOptions replaceOptions) {
         notNull("clientSession", clientSession);
-        return executeReplaceOne(clientSession, filter, replacement, updateOptions);
+        return executeReplaceOne(clientSession, filter, replacement, replaceOptions);
     }
 
     private UpdateResult executeReplaceOne(final ClientSession clientSession, final Bson filter, final TDocument replacement,
-                                           final UpdateOptions updateOptions) {
-        return toUpdateResult(executeSingleWriteRequest(clientSession, operations.replaceOne(filter, replacement, updateOptions),
+                                           final ReplaceOptions replaceOptions) {
+        return toUpdateResult(executeSingleWriteRequest(clientSession, operations.replaceOne(filter, replacement, replaceOptions),
                 REPLACE));
     }
 

@@ -30,6 +30,7 @@ import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
 import com.mongodb.client.model.InsertOneModel;
+import com.mongodb.client.model.ReplaceOptions;
 import com.mongodb.client.model.ReturnDocument;
 import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
@@ -494,7 +495,7 @@ public class CrudTest extends DatabaseTestCase {
         return new MongoOperationUpdateResult() {
             @Override
             public void execute() {
-                UpdateOptions options = new UpdateOptions();
+                ReplaceOptions options = new ReplaceOptions();
                 if (arguments.containsKey("upsert")) {
                     options.upsert(arguments.getBoolean("upsert").getValue());
                 }
