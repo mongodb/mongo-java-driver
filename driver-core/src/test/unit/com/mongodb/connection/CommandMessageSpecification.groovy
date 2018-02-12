@@ -27,7 +27,6 @@ import org.bson.BsonBinaryReader
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonMaximumSizeExceededException
-import org.bson.BsonSerializationException
 import org.bson.BsonString
 import org.bson.BsonTimestamp
 import org.bson.ByteBuf
