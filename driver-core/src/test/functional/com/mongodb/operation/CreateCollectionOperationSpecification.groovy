@@ -16,7 +16,6 @@
 
 package com.mongodb.operation
 
-import com.mongodb.MongoServerException
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
