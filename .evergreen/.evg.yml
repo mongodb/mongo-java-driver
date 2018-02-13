@@ -364,8 +364,6 @@ tasks:
       depends_on:
         - variant: ".tests-variant"
           name: "test"
-        - variant: ".test-gssapi-variant"
-          name: "gssapi-auth-test"
         - variant: "plain-auth-test"
           name: "plain-auth-test"
       commands:
@@ -511,13 +509,6 @@ buildvariants:
   tags: ["tests-variant"]
   tasks:
      - name: "test"
-
-- matrix_name: "test-gssapi"
-  matrix_spec: { jdk: "*", os: "linux" }
-  display_name: "GSSAPI (Kerberos) Auth test ${jdk} ${os} "
-  tags: ["test-gssapi-variant"]
-  tasks:
-     - name: "gssapi-auth-test"
 
 - name: plain-auth-test
   display_name: "PLAIN (LDAP) Auth test"
