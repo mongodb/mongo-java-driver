@@ -103,22 +103,6 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         async << [true, false]
     }
 
-    def 'should error when creating a collection that already exists'() {
-        given:
-        assert !collectionNameExists(getCollectionName())
-        def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
-        execute(operation, async)
-
-        when:
-        execute(operation, async)
-
-        then:
-        thrown(MongoServerException)
-
-        where:
-        async << [true, false]
-    }
-
     @IgnoreIf({ !serverVersionAtLeast(3, 0) })
     def 'should pass through storage engine options'() {
         given:
