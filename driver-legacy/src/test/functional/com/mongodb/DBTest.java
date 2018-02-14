@@ -54,7 +54,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
@@ -122,11 +121,6 @@ public class DBTest extends DatabaseTestCase {
         assertEquals("foo.bar.zoo.dork", collection.getName());
     }
 
-    @Test(expected = MongoException.class)
-    public void shouldReceiveAnErrorIfCreatingCappedCollectionWithoutSize() {
-        database.createCollection("someName", new BasicDBObject("capped", true));
-    }
-
     @Test
     public void shouldDeferCollectionCreationIfOptionsIsNull() {
         collection.drop();
@@ -141,7 +135,7 @@ public class DBTest extends DatabaseTestCase {
                                                   .append("size", 242880));
         assertTrue(database.getCollection(collectionName).isCapped());
     }
-    
+
     @Test
     public void shouldCreateCappedCollectionWithMaxNumberOfDocuments() {
         collection.drop();
