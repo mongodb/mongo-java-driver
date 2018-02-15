@@ -36,12 +36,12 @@ import static util.GroovyHelpers.areEqual
 class RawBsonDocumentSpecification extends Specification {
 
     static emptyDocument = new BsonDocument()
-    static emptyRawDocument = new RawBsonDocument(emptyDocument, new BsonDocumentCodec());
+    static emptyRawDocument = new RawBsonDocument(emptyDocument, new BsonDocumentCodec())
     static document = new BsonDocument()
             .append('a', new BsonInt32(1))
             .append('b', new BsonInt32(2))
             .append('c', new BsonDocument('x', BsonBoolean.TRUE))
-            .append('d', new BsonArray(asList(new BsonDocument('y', BsonBoolean.FALSE), new BsonInt32(1))))
+            .append('d', new BsonArray(asList(new BsonDocument('y', BsonBoolean.FALSE), new BsonArray(asList(new BsonInt32(1))))))
 
     def 'constructors should throw if parameters are invalid'() {
         when:
@@ -100,10 +100,10 @@ class RawBsonDocumentSpecification extends Specification {
         then:
         rawDocument == document
         byteBuf.asNIO().order() == ByteOrder.LITTLE_ENDIAN
-        byteBuf.remaining() == 58
+        byteBuf.remaining() == 66
 
         when:
-        def actualBytes = new byte[58]
+        def actualBytes = new byte[66]
         byteBuf.get(actualBytes)
 
         then:
@@ -156,6 +156,24 @@ class RawBsonDocumentSpecification extends Specification {
         rawDocument.get('e') == null
         rawDocument.get('x') == null
         rawDocument.get('y') == null
+
+        where:
+        rawDocument << createRawDocumentVariants()
+    }
+
+    def 'should return RawBsonDocument for sub documents and RawBsonArray for arrays'() {
+        expect:
+        rawDocument.get('a') instanceof BsonInt32
+        rawDocument.get('b') instanceof BsonInt32
+        rawDocument.get('c') instanceof RawBsonDocument
+        rawDocument.get('d') instanceof RawBsonArray
+        rawDocument.get('d').asArray().get(0) instanceof RawBsonDocument
+        rawDocument.get('d').asArray().get(1) instanceof RawBsonArray
+
+        and:
+        rawDocument.getDocument('c').getBoolean('x').value
+        !rawDocument.get('d').asArray().get(0).asDocument().getBoolean('y').value
+        rawDocument.get('d').asArray().get(1).asArray().get(0).asInt32().value == 1
 
         where:
         rawDocument << createRawDocumentVariants()
@@ -287,10 +305,10 @@ class RawBsonDocumentSpecification extends Specification {
 
     def 'toJson should respect default JsonWriterSettings'() {
         given:
-        def writer = new StringWriter();
+        def writer = new StringWriter()
 
         when:
-        new BsonDocumentCodec().encode(new JsonWriter(writer), document, EncoderContext.builder().build());
+        new BsonDocumentCodec().encode(new JsonWriter(writer), document, EncoderContext.builder().build())
 
         then:
         writer.toString() == rawDocument.toJson()
@@ -302,10 +320,10 @@ class RawBsonDocumentSpecification extends Specification {
     def 'toJson should respect JsonWriterSettings'() {
         given:
         def jsonWriterSettings = new JsonWriterSettings(JsonMode.SHELL)
-        def writer = new StringWriter();
+        def writer = new StringWriter()
 
         when:
-        new RawBsonDocumentCodec().encode(new JsonWriter(writer, jsonWriterSettings), rawDocument, EncoderContext.builder().build());
+        new RawBsonDocumentCodec().encode(new JsonWriter(writer, jsonWriterSettings), rawDocument, EncoderContext.builder().build())
 
         then:
         writer.toString() == rawDocument.toJson(jsonWriterSettings)
@@ -450,7 +468,7 @@ class RawBsonDocumentSpecification extends Specification {
 
     class TestEntry implements Map.Entry<String, BsonValue> {
 
-        private final String key;
+        private final String key
         private BsonValue value
 
         TestEntry(String key, BsonValue value) {

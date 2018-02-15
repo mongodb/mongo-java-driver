@@ -42,14 +42,23 @@ public class BsonArray extends BsonValue implements List<BsonValue>, Cloneable {
      * @param values the list of values, none of whose members may be null.
      */
     public BsonArray(final List<? extends BsonValue> values) {
-        this.values = new ArrayList<BsonValue>(values);
+        this(values, true);
     }
 
     /**
-     * Construct an empty B
+     * Construct an empty BsonArray
      */
     public BsonArray() {
-        values = new ArrayList<BsonValue>();
+        this(new ArrayList<BsonValue>(), false);
+    }
+
+    @SuppressWarnings("unchecked")
+    BsonArray(final List<? extends BsonValue> values, final boolean copy) {
+        if (copy) {
+            this.values = new ArrayList<BsonValue>(values);
+        } else {
+            this.values = (List<BsonValue>) values;
+        }
     }
 
     /**
@@ -200,17 +209,12 @@ public class BsonArray extends BsonValue implements List<BsonValue>, Cloneable {
         if (this == o) {
             return true;
         }
-        if (o == null || getClass() != o.getClass()) {
+        if (!(o instanceof BsonArray)) {
             return false;
         }
 
         BsonArray that = (BsonArray) o;
-
-        if (!values.equals(that.values)) {
-            return false;
-        }
-
-        return true;
+        return getValues().equals(that.getValues());
     }
 
     @Override

@@ -46,6 +46,12 @@ class BsonArraySpecification extends Specification {
         !array.isEmpty()
         array.size() == 2
         array.getValues() == list
+
+        when:
+        list.remove(BsonBoolean.TRUE)
+
+        then:
+        array.getValues() != list
     }
 
     def 'should parse json'() {

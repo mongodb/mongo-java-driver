@@ -88,6 +88,12 @@
         <Bug pattern="CN_IDIOM_NO_SUPER_CALL"/>
     </Match>
 
+    <Match>
+        <Class name="org.bson.RawBsonArray"/>
+        <Method name="clone"/>
+        <Bug pattern="CN_IDIOM_NO_SUPER_CALL"/>
+    </Match>
+
     <!-- Test exclusions -->
     <!-- All bugs in test classes, except for JUnit-specific bugs -->
     <Match>
