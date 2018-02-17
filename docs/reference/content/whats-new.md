@@ -7,6 +7,12 @@ title = "What's New"
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
+## What's New in 3.7
+
+Key new features of the 3.7 Java driver release:
+
+...
+
 ## What's New in 3.6
 
 Key new features of the 3.6 Java driver release:
