@@ -16,7 +16,8 @@ MongoDB stores documents in collections; the collections in databases.
 - Include following import statements:
 
     ```java
-    import com.mongodb.MongoClient;
+    import com.mongodb.client.MongoClients;
+    import com.mongodb.client.MongoClient;
     import com.mongodb.client.MongoCollection;
     import com.mongodb.client.MongoDatabase;
     import static com.mongodb.client.model.Filters.*;
@@ -31,7 +32,7 @@ Connect to a running MongoDB deployment.
 For example, include the following code to connect to a standalone MongoDB deployment running on localhost on port `27017`.
 
 ```java
-MongoClient mongoClient = new MongoClient();
+MongoClient mongoClient = MongoClients.create();
 ```
 
 For more information on connecting to running MongoDB deployments, see
@@ -185,12 +186,12 @@ that with a `CodecRegistry`.
 // Replaces the default UuidCodec with one that uses the new standard UUID representation
 CodecRegistry codecRegistry =
 CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new UuidCodec(UuidRepresentation.STANDARD)),
-                               MongoClient.getDefaultCodecRegistry());
+                               MongoClientSettings.getDefaultCodecRegistry());
 
 // globally
-MongoClientOptions options = MongoClientOptions.builder()
-                                                .codecRegistry(codecRegistry).build();
-MongoClient client = new MongoClient(new ServerAddress(), options);  
+MongoClientSettings settings = MongoClientSettings.builder()
+        .codecRegistry(codecRegistry).build();
+MongoClient client = MongoClients.create(settings);
 
 // or per database
 MongoDatabase database = client.getDatabase("mydb")

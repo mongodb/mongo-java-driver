@@ -25,8 +25,9 @@ to resume if it encounters a potentially recoverable error.
 
 ```java
 import com.mongodb.Block;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientURI;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoClient;
+import com.mongodb.ConnectionString;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.changestream.FullDocument;
@@ -53,7 +54,7 @@ For example, include the following code to connect to a replicaSet MongoDB deplo
 It also defines `database` to refer to the `test` database and `collection` to refer to the `restaurants` collection.
 
 ```java
-MongoClient mongoClient = new MongoClient(new MongoClientURI("mongodb://localhost:27017,localhost:27018,localhost:27019"));
+MongoClient mongoClient = MongoClients.create(new ConnectionString("mongodb://localhost:27017,localhost:27018,localhost:27019"));
 MongoDatabase database = mongoClient.getDatabase("test");
 MongoCollection<Document> collection = database.getCollection("restaurants");
 ```

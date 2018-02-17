@@ -20,7 +20,8 @@ Find operations retrieve documents from a collection. You can specify a filter t
 
      ```java
      import com.mongodb.*;
-     import com.mongodb.MongoClient;
+     import com.mongodb.client.MongoClients;
+     import com.mongodb.client.MongoClient;
      import com.mongodb.client.MongoCollection;
      import com.mongodb.client.MongoDatabase;
      import com.mongodb.client.model.Projections;
@@ -50,7 +51,7 @@ Connect to a MongoDB deployment and declare and define a `MongoDatabase` instanc
 For example, include the following code to connect to a standalone MongoDB deployment running on localhost on port `27017` and define `database` to refer to the `test` database and `collection` to refer to the `restaurants` collection:
 
 ```java
-MongoClient mongoClient = new MongoClient();
+MongoClient mongoClient = MongoClients.create();
 MongoDatabase database = mongoClient.getDatabase("test");
 MongoCollection<Document> collection = database.getCollection("restaurants");
 ```
@@ -195,23 +196,21 @@ The [`MongoIterable`]({{< apiref "com/mongodb/client/MongoIterable.html" >}}) in
 
 For read operations on [replica sets]({{<docsref "replication/">}}) or [sharded clusters]({{<docsref "sharding/">}}), applications can configure the [read preference]({{<docsref "reference/read-preference">}}) at three levels:
 
-- In a [`MongoClient()`]({{< apiref "com/mongodb/MongoClient.html">}})
+- In a [`MongoClient()`]({{< apiref "com/mongodb/client/MongoClient.html">}})
 
-  - Via [`MongoClientOptions`]({{<apiref "com/mongodb/MongoClientOptions.html">}}):
+  - Via [`MongoClientSettings`]({{<apiref "com/mongodb/MongoClientSettings.html">}}):
 
       ```java
-      MongoClientOptions options = MongoClientOptions.builder().readPreference(
-                                      ReadPreference.secondary()).build();
-      MongoClient mongoClient = new MongoClient(Arrays.asList(
-                                      new ServerAddress("host1", 27017),
-                                      new ServerAddress("host2", 27017)), options);
+      MongoClient mongoClient = MongoClients.create(MongoClientSettings.builder()
+                                                    .applyConnectionString(new ConnectionString("mongodb://host1,host2"))
+                                                    .readPreference(ReadPreference.secondary())
+                                                    .build());
       ```
 
-  - Via [`MongoClientURI`]({{< apiref "/com/mongodb/MongoClientURI.html">}}), as in the following example:
+  - Via [`ConnectionString`]({{< apiref "/com/mongodb/ConnectionString.html">}}), as in the following example:
 
       ```java
-      MongoClient mongoClient = new MongoClient(
-        new MongoClientURI("mongodb://host1:27017,host2:27017/?readPreference=secondary"));
+      MongoClient mongoClient = MongoClients.create("mongodb://host1:27017,host2:27017/?readPreference=secondary");
       ```
 
 - In a [`MongoDatabase`]({{<apiref "com/mongodb/client/MongoDatabase.html">}}) via its [`withReadPreference`]({{<apiref "com/mongodb/client/MongoDatabase.html#withReadPreference-com.mongodb.ReadPreference-">}}) method.
@@ -233,7 +232,7 @@ For read operations on [replica sets]({{<docsref "replication/">}}) or [sharded 
 For example, in the following, the `collectionWithReadPref` instance has the read preference of primaryPreferred whereas the read preference of the `collection` is unaffected.
 
 ```java
-  MongoCollection<Document> collectionWithReadPref =  collection.withReadPreference(ReadPreference.primaryPreferred());
+  MongoCollection<Document> collectionWithReadPref = collection.withReadPreference(ReadPreference.primaryPreferred());
 ```
 
 ## Read Concern

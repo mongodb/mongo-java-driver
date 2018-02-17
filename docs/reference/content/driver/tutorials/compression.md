@@ -23,31 +23,32 @@ the [ismaster]({{<docsref "reference/command/isMaster/">}}) command response.
 ### Specify compression via `MongoClientURI`
 
 ```java
-import com.mongodb.MongoClientURI;
-import com.mongodb.MongoClient;
+import com.mongodb.ConnectionString;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoClient;
 ```
 
 To specify compression with [`MongoClientURI`]({{<apiref "com/mongodb/MongoClientURI">}}), specify `compressors` as part of the connection
 string, as in:
 
 ```java
-MongoClientURI uri = new MongoClientURI("mongodb://localhost/?compressors=snappy");
-MongoClient mongoClient = new MongoClient(uri);
+ConnectionString connectionString = new ConnectionString("mongodb://localhost/?compressors=snappy");
+MongoClient mongoClient = MongoClients.create(connectionString);
 ```
 
 for Snappy compression, or
 
 ```java
-MongoClientURI uri = new MongoClientURI("mongodb://localhost/?compressors=zlib");
-MongoClient mongoClient = new MongoClient(uri);
+ConnectionString connectionString = new ConnectionString("mongodb://localhost/?compressors=zlib");
+MongoClient mongoClient = MongoClients.create(connectionString);
 ```
 
 for zlib compression, or 
 
 
 ```java
-MongoClientURI uri = new MongoClientURI("mongodb://localhost/?compressors=snappy,zlib");
-MongoClient mongoClient = new MongoClient(uri);
+ConnectionString connectionString = new ConnectionString("mongodb://localhost/?compressors=snappy,zlib");
+MongoClient mongoClient = MongoClients.create(connectionString);
 ```
 
 to configure multiple compressors. 
@@ -62,33 +63,33 @@ import com.mongodb.MongoCompressor;
 import java.util.Arrays;
 ```
 
-To specify compression with [`MongoClientOptions`]({{<apiref "com/mongodb/MongoClientOptions">}}), set the `compressors` property 
+To specify compression with [`MongoClientSettings`]({{<apiref "com/mongodb/MongoClientSettings">}}), set the `compressors` property 
 to a list of `MongoCompressor` instances:
 
 ```java
- MongoClientOptions options = MongoClientOptions.builder()
-                                                .compressorList(Arrays.asList(MongoCompressor.createSnappyCompressor()))
-                                                .build();
- MongoClient client = new MongoClient("localhost", options);
+MongoClientSettings settings = MongoClientSettings.builder()
+        .compressorList(Arrays.asList(MongoCompressor.createSnappyCompressor()))
+        .build();
+MongoClient client = MongoClients.create(settings);
 ```
 
 for Snappy compression, or
 
 ```java
- MongoClientOptions options = MongoClientOptions.builder()
-                                                .compressorList(Arrays.asList(MongoCompressor.createZlibCompressor()))
-                                                .build();
- MongoClient client = new MongoClient("localhost", options);
+MongoClientSettings settings = MongoClientSettings.builder()
+        .compressorList(Arrays.asList(MongoCompressor.createZlibCompressor()))
+        .build();
+MongoClient client = MongoClients.create(settings);
 ```
 
 for zlib compression, or
 
 ```java
- MongoClientOptions options = MongoClientOptions.builder()
-                                                .compressorList(Arrays.asList(MongoCompressor.createSnappyCompressor(), 
-                                                                              MongoCompressor.createZlibCompressor()))
-                                                .build();
- MongoClient client = new MongoClient("localhost", options);
+MongoClientSettings settings = MongoClientSettings.builder()
+        .compressorList(Arrays.asList(MongoCompressor.createSnappyCompressor(),
+                                      MongoCompressor.createZlibCompressor()))
+        .build();
+MongoClient client = MongoClients.create(settings);
 ```
 
 to configure multiple compressors. 

@@ -20,7 +20,8 @@ To support geospatial queries, MongoDB provides various geospatial indexes as we
 
      ```java
      import com.mongodb.Block;
-     import com.mongodb.MongoClient;
+     import com.mongodb.client.MongoClients;
+     import com.mongodb.client.MongoClient;
      import com.mongodb.client.MongoCollection;
      import com.mongodb.client.MongoDatabase;
      import com.mongodb.client.MongoCursor;
@@ -48,7 +49,7 @@ Connect to a MongoDB deployment and declare and define a `MongoDatabase` instanc
 For example, include the following code to connect to a standalone MongoDB deployment running on localhost on port `27017` and define `database` to refer to the `test` database:
 
 ```java
-MongoClient mongoClient = new MongoClient();
+MongoClient mongoClient = MongoClients.create();
 MongoDatabase database = mongoClient.getDatabase("test");
 ```
 

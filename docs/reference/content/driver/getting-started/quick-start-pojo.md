@@ -149,7 +149,10 @@ There are multiple ways to set the `pojoCodecRegistry` for use:
  - You can set it when instantiating a MongoClient object:
  
  ```java
- MongoClient mongoClient = new MongoClient("localhost", MongoClientOptions.builder().codecRegistry(pojoCodecRegistry).build());
+MongoClientSettings settings = MongoClientSettings.builder()
+        .codecRegistry(pojoCodecRegistry)
+        .build();
+MongoClient mongoClient = MongoClients.create(settings);
 ```
 
 - You can use an alternative `CodecRegistry` with a `MongoDatabase`:

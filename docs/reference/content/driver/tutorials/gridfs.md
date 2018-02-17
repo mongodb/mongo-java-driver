@@ -24,7 +24,8 @@ Include the following import statements:
 
 ```java
 import com.mongodb.Block;
-import com.mongodb.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.*;
 import com.mongodb.client.gridfs.model.*;
@@ -43,7 +44,7 @@ Connect to a MongoDB deployment and declare and define a `MongoDatabase` instanc
 For example, include the following code to connect to a standalone MongoDB deployment running on localhost on port `27017`:
 
 ```java
-MongoClient mongoClient = new MongoClient();
+MongoClient mongoClient = MongoClients.create();
 ```
 
 For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md">}}).

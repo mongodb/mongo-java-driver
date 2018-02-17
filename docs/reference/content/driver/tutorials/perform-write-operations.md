@@ -20,7 +20,8 @@ Perform write operations to insert new documents into a collection, update exist
 
      ```java
      import com.mongodb.*;
-     import com.mongodb.MongoClient;
+     import com.mongodb.client.MongoClients;
+     import com.mongodb.clientMongoClient;
      import com.mongodb.client.MongoCollection;
      import com.mongodb.client.MongoDatabase;
      import com.mongodb.client.model.Filters;
@@ -43,7 +44,7 @@ Connect to a MongoDB deployment and declare and define a `MongoDatabase` instanc
 For example, include the following code to connect to a standalone MongoDB deployment running on localhost on port `27017` and define `database` to refer to the `test` database and `collection` to refer to the `restaurants` collection:
 
 ```java
-MongoClient mongoClient = new MongoClient();
+MongoClient mongoClient = MongoClients.create();
 MongoDatabase database = mongoClient.getDatabase("test");
 MongoCollection<Document> collection = database.getCollection("restaurants");
 ```

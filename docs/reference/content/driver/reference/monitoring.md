@@ -100,10 +100,11 @@ public class TestCommandListener implements CommandListener {
 and an instance of `MongoClientOptions` configured with an instance of `TestCommandListener`:
 
 ```java
-MongoClientOptions options = MongoClientOptions.builder()
-                                       .addCommandListener(new TestCommandListener())
-                                       .build();
-MongoClient client = new MongoClient(new ServerAddress(), options);
+MongoClientSettings settings = MongoClientSettings.builder()
+        .addCommandListener(new TestCommandListener())
+        .build();
+MongoClient client = MongoClients.create(settings);
+
 ```
 
 A `MongoClient` configured with these options will print a message to `System.out` before sending each command to a MongoDB server, and
@@ -177,10 +178,11 @@ and an instance of `MongoClientOptions` configured with an instance of `TestClus
 
 ```java
 List<ServerAddress> seedList = ...
-MongoClientOptions options = MongoClientOptions.builder()
-                                       .addClusterListener(new TestClusterListener(ReadPreference.secondary()))
-                                       .build();
-MongoClient client = new MongoClient(seedList, options);
+MongoClientSettings settings = MongoClientSettings.builder()
+        .applyToClusterSettings(builder -> 
+                builder.addClusterListener(new TestClusterListener(ReadPreference.secondary())))
+        .build();
+MongoClient client = MongoClients.create(settings);
 ```
 
 A `MongoClient` configured with these options will print a message to `System.out` when the MongoClient is created with these options,
@@ -248,10 +250,11 @@ and an instance of `MongoClientOptions` configured with an instance of `TestConn
 
 ```java
 List<ServerAddress> seedList = ...
-MongoClientOptions options = MongoClientOptions.builder()
-                                      .addConnectionPoolListener(new TestConnectionPoolListener())
-                                      .build();
-MongoClient client = new MongoClient(new ServerAddress(), options);
+MongoClientSettings settings = MongoClientSettings.builder()
+        .applyToConnectionPoolSettings(builder -> 
+                builder.addConnectionPoolListener(new TestConnectionPoolListener()))
+        .build();
+MongoClient client = MongoClients.create(settings);
 ```
 
 A `MongoClient` configured with these options will print a message to `System.out` for each connection pool-related event for each MongoDB
