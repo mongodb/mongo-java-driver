@@ -7,12 +7,12 @@ title = "MongoDB Driver"
   pre = "<i class='fa fa-arrows-h'></i>"
 +++
 
-## MongoDB Driver 3.6 Documentation
+## MongoDB Driver 3.7 Documentation
 
 The following guide provides information on using the synchronous
-MongoDB Java Driver 3.6.
+MongoDB Java Driver 3.7.
 
-### What's New in 3.6
+### What's New in 3.7
 
 The [What's New]({{< relref "whats-new.md" >}}) guide explains
 the major new features of the driver.

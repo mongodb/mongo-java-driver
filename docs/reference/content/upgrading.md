@@ -2,14 +2,14 @@
 date = "2015-03-19T12:53:39-04:00"
 title = "Upgrade Considerations"
 [menu.main]
-  identifier = "Upgrading to 3.6"
+  identifier = "Upgrading to 3.7"
   weight = 80
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
-## Upgrading from 3.5.x
+## Upgrading from 3.6.x
 
-The 3.6 release is binary and source compatible with the 3.5 release, except for methods that have been added to interfaces that
+The 3.7 release is binary and source compatible with the 3.5 release, except for methods that have been added to interfaces that
 have been marked as unstable, and changes to classes or interfaces that have been marked as internal or annotated as Beta.
 
 ## Upgrading from 2.x
@@ -32,6 +32,7 @@ The following table specifies the compatibility of the MongoDB Java driver for u
 
 |Java Driver Version|MongoDB 2.6|MongoDB 3.0 |MongoDB 3.2|MongoDB 3.4|MongoDB 3.6|
 |-------------------|-----------|------------|-----------|-----------|-----------|
+|Version 3.7        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |
 |Version 3.6        |  ✓  |  ✓  |  ✓  |  ✓  |  ✓  |
 |Version 3.5        |  ✓  |  ✓  |  ✓  |  ✓  |     |
 |Version 3.4        |  ✓  |  ✓  |  ✓  |  ✓  |     |
@@ -44,6 +45,7 @@ The following table specifies the compatibility of the MongoDB Java driver for u
 
 |Java Driver Version|Java 5 | Java 6 | Java 7 | Java 8 |
 |-------------------|-------|--------|--------|--------|
+|Version 3.7        |     | ✓ | ✓ | ✓ |
 |Version 3.6        |     | ✓ | ✓ | ✓ |
 |Version 3.5        |     | ✓ | ✓ | ✓ |
 |Version 3.4        |     | ✓ | ✓ | ✓ |
