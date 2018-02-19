@@ -106,7 +106,7 @@ final class MapPropertyCodecProvider implements PropertyCodecProvider {
                 return new HashMap<String, T>();
             }
             try {
-                return encoderClass.newInstance();
+                return encoderClass.getDeclaredConstructor().newInstance();
             } catch (final Exception e) {
                 throw new CodecConfigurationException(e.getMessage(), e);
             }
