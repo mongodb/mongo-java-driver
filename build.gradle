@@ -323,7 +323,7 @@ def setJavaDocOptions(MinimalJavadocOptions options) {
 // Root project configuration           //
 //////////////////////////////////////////
 task wrapper(type: Wrapper) {
-    gradleVersion = '4.0.1'
+    gradleVersion = '4.5.1'
 }
 
 gradle.buildFinished { BuildResult result ->
