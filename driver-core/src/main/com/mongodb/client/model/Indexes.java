@@ -159,6 +159,16 @@ public final class Indexes {
     }
 
     /**
+     * Create an index key for a text index on every field that contains string data.
+     *
+     * @return the index specification
+     * @mongodb.driver.manual core/text text index
+     */
+    public static Bson text() {
+        return text("$**");
+    }
+
+    /**
      * Create an index key for a hashed index on the given field.
      *
      * @param fieldName the field to create a hashed index on
