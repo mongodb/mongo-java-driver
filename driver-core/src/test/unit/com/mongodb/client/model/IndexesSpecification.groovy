@@ -69,7 +69,8 @@ class IndexesSpecification extends Specification {
 
     def 'text'() {
         expect:
-        toBson(text('x',)) == parse('{x : "text"}')
+        toBson(text('x')) == parse('{x : "text"}')
+        toBson(text()) == parse('{ "$**" : "text"}')
     }
 
     def 'hashed'() {

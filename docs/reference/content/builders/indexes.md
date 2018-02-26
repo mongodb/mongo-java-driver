@@ -77,6 +77,12 @@ This example specifies a text index key for the `description` field:
 text("description")
 ```
 
+This example specifies a text index key for every field that contains string data:
+
+```java
+text()
+```
+
 ### Hashed Index
 
 To specify a [hashed]({{< docsref "core/index-hashed" >}}) index key, use the `hashed` method.

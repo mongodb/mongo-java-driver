@@ -114,6 +114,14 @@ class IndexesFunctionalSpecification extends OperationFunctionalSpecification {
         getCollectionHelper().listIndexes()*.get('key').contains(parse('{_fts: "text", _ftsx: 1}'))
     }
 
+    def 'text wildcard'() {
+        when:
+        getCollectionHelper().createIndex(text())
+
+        then:
+        getCollectionHelper().listIndexes()*.get('key').contains(parse('{_fts: "text", _ftsx: 1}'))
+    }
+
     def 'hashed'() {
         when:
         getCollectionHelper().createIndex(hashed('x'))
