@@ -165,7 +165,7 @@ public final class Indexes {
      * @mongodb.driver.manual core/text text index
      */
     public static Bson text() {
-        return new BsonDocument("$**", new BsonString("text"));
+        return text("$**");
     }
 
     /**
