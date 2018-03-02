@@ -82,11 +82,7 @@ public final class Position {
 
         Position that = (Position) o;
 
-        if (!values.equals(that.values)) {
-            return false;
-        }
-
-        return true;
+        return values.equals(that.values);
     }
 
     @Override

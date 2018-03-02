@@ -106,11 +106,7 @@ public final class Polygon extends Geometry {
 
         Polygon polygon = (Polygon) o;
 
-        if (!coordinates.equals(polygon.coordinates)) {
-            return false;
-        }
-
-        return true;
+        return coordinates.equals(polygon.coordinates);
     }
 
     @Override

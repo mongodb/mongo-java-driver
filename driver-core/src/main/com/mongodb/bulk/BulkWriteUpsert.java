@@ -67,14 +67,7 @@ public class BulkWriteUpsert {
 
         final BulkWriteUpsert that = (BulkWriteUpsert) o;
 
-        if (index != that.index) {
-            return false;
-        }
-        if (!id.equals(that.id)) {
-            return false;
-        }
-
-        return true;
+        return index == that.index && id.equals(that.id);
     }
 
     @Override

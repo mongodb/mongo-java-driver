@@ -101,17 +101,7 @@ public class WriteError {
 
         WriteError that = (WriteError) o;
 
-        if (code != that.code) {
-            return false;
-        }
-        if (!details.equals(that.details)) {
-            return false;
-        }
-        if (!message.equals(that.message)) {
-            return false;
-        }
-
-        return true;
+        return code == that.code && details.equals(that.details) && message.equals(that.message);
     }
 
     @Override

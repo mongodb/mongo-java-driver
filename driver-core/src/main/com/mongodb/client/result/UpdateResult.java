@@ -136,17 +136,9 @@ public abstract class UpdateResult {
 
             AcknowledgedUpdateResult that = (AcknowledgedUpdateResult) o;
 
-            if (matchedCount != that.matchedCount) {
-                return false;
-            }
-            if (modifiedCount != null ? !modifiedCount.equals(that.modifiedCount) : that.modifiedCount != null) {
-                return false;
-            }
-            if (upsertedId != null ? !upsertedId.equals(that.upsertedId) : that.upsertedId != null) {
-                return false;
-            }
-
-            return true;
+            return matchedCount == that.matchedCount &&
+                    (modifiedCount != null ? modifiedCount.equals(that.modifiedCount) : that.modifiedCount == null) &&
+                    (upsertedId != null ? upsertedId.equals(that.upsertedId) : that.upsertedId == null);
         }
 
         @Override
@@ -199,14 +191,7 @@ public abstract class UpdateResult {
 
         @Override
         public boolean equals(final Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-
-            return true;
+            return this == o || o != null && getClass() == o.getClass();
         }
 
         @Override

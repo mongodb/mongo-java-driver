@@ -67,10 +67,7 @@ public class Variable<TExpression> {
 
         Variable<?> variable = (Variable<?>) o;
 
-        if (!name.equals(variable.name)) {
-            return false;
-        }
-        return value != null ? value.equals(variable.value) : variable.value == null;
+        return name.equals(variable.name) && (value != null ? value.equals(variable.value) : variable.value == null);
 
     }
 

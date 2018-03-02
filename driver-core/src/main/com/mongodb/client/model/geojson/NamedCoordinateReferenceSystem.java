@@ -85,11 +85,7 @@ public final class NamedCoordinateReferenceSystem extends CoordinateReferenceSys
 
         NamedCoordinateReferenceSystem that = (NamedCoordinateReferenceSystem) o;
 
-        if (!name.equals(that.name)) {
-            return false;
-        }
-
-        return true;
+        return name.equals(that.name);
     }
 
     @Override

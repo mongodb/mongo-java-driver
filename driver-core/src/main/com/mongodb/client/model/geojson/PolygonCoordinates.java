@@ -87,14 +87,7 @@ public final class PolygonCoordinates {
 
         PolygonCoordinates that = (PolygonCoordinates) o;
 
-        if (!exterior.equals(that.exterior)) {
-            return false;
-        }
-        if (!holes.equals(that.holes)) {
-            return false;
-        }
-
-        return true;
+        return exterior.equals(that.exterior) && holes.equals(that.holes);
     }
 
     @Override

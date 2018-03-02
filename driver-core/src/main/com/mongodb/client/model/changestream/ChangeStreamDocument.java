@@ -153,26 +153,12 @@ public final class ChangeStreamDocument<TDocument> {
 
         ChangeStreamDocument<?> that = (ChangeStreamDocument<?>) o;
 
-        if (resumeToken != null ? !resumeToken.equals(that.resumeToken) : that.resumeToken != null) {
-            return false;
-        }
-        if (namespace != null ? !namespace.equals(that.namespace) : that.namespace != null) {
-            return false;
-        }
-        if (fullDocument != null ? !fullDocument.equals(that.fullDocument) : that.fullDocument != null) {
-            return false;
-        }
-        if (documentKey != null ? !documentKey.equals(that.documentKey) : that.documentKey != null) {
-            return false;
-        }
-        if (operationType != that.operationType) {
-            return false;
-        }
-        if (updateDescription != null ? !updateDescription.equals(that.updateDescription) : that.updateDescription != null) {
-            return false;
-        }
-
-        return true;
+        return (resumeToken != null ? resumeToken.equals(that.resumeToken) : that.resumeToken == null) &&
+                (namespace != null ? namespace.equals(that.namespace) : that.namespace == null) &&
+                (fullDocument != null ? fullDocument.equals(that.fullDocument) : that.fullDocument == null) &&
+                (documentKey != null ? documentKey.equals(that.documentKey) : that.documentKey == null) &&
+                operationType == that.operationType && (updateDescription != null ?
+                updateDescription.equals(that.updateDescription) : that.updateDescription == null);
     }
 
     @Override

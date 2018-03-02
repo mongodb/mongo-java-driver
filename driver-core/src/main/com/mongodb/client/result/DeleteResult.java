@@ -87,11 +87,7 @@ public abstract class DeleteResult {
 
             AcknowledgedDeleteResult that = (AcknowledgedDeleteResult) o;
 
-            if (deletedCount != that.deletedCount) {
-                return false;
-            }
-
-            return true;
+            return deletedCount == that.deletedCount;
         }
 
         @Override
@@ -120,14 +116,7 @@ public abstract class DeleteResult {
 
         @Override
         public boolean equals(final Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-
-            return true;
+            return this == o || o != null && getClass() == o.getClass();
         }
 
         @Override

@@ -83,11 +83,7 @@ public final class MultiPoint extends Geometry {
 
         MultiPoint multiPoint = (MultiPoint) o;
 
-        if (!coordinates.equals(multiPoint.coordinates)) {
-            return false;
-        }
-
-        return true;
+        return coordinates.equals(multiPoint.coordinates);
     }
 
     @Override
