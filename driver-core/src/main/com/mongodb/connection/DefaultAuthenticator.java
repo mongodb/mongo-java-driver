@@ -32,13 +32,14 @@ import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.connection.CommandHelper.executeCommand;
 import static com.mongodb.connection.CommandHelper.executeCommandAsync;
 import static java.lang.String.format;
-import static java.util.Collections.singletonList;
 
 class DefaultAuthenticator extends Authenticator {
+    static final int USER_NOT_FOUND_CODE = 11;
     private static final ServerVersion FOUR_ZERO = new ServerVersion(3, 7);
     private static final ServerVersion THREE_ZERO = new ServerVersion(3, 0);
     private static final BsonString DEFAULT_MECHANISM_NAME = new BsonString(SCRAM_SHA_256.getMechanismName());
-    private static final BsonArray DEFAULT_SUPPORTED_MECHANISMS = new BsonArray(singletonList(DEFAULT_MECHANISM_NAME));
+
+    private Authenticator authenticator;
 
     DefaultAuthenticator(final MongoCredential credential) {
         super(credential);
@@ -47,25 +48,30 @@ class DefaultAuthenticator extends Authenticator {
 
     @Override
     void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription) {
-        Authenticator authenticator;
-        if (connectionDescription.getServerVersion().compareTo(FOUR_ZERO) < 0) {
-            authenticator = getLegacyDefaultAuthenticator(connectionDescription);
+        if (authenticator != null) {
+            authenticator.authenticate(connection, connectionDescription);
+        } else if (connectionDescription.getServerVersion().compareTo(FOUR_ZERO) < 0) {
+            getLegacyDefaultAuthenticator(connectionDescription.getServerVersion())
+                    .authenticate(connection, connectionDescription);
         } else {
             try {
                 BsonDocument isMasterResult = executeCommand("admin", createIsMasterCommand(), connection);
-                authenticator = getAuthenticatorFromIsMasterResult(isMasterResult);
+                getAuthenticatorFromIsMasterResult(isMasterResult, connectionDescription.getServerVersion())
+                        .authenticate(connection, connectionDescription);
             } catch (Exception e) {
                 throw wrapException(e);
             }
         }
-        authenticator.authenticate(connection, connectionDescription);
     }
 
     @Override
     void authenticateAsync(final InternalConnection connection, final ConnectionDescription connectionDescription,
                            final SingleResultCallback<Void> callback) {
-        if (connectionDescription.getServerVersion().compareTo(FOUR_ZERO) < 0) {
-            getLegacyDefaultAuthenticator(connectionDescription).authenticateAsync(connection, connectionDescription, callback);
+        if (authenticator != null) {
+            authenticator.authenticateAsync(connection, connectionDescription, callback);
+        } else if (connectionDescription.getServerVersion().compareTo(FOUR_ZERO) < 0) {
+            getLegacyDefaultAuthenticator(connectionDescription.getServerVersion())
+                    .authenticateAsync(connection, connectionDescription, callback);
         } else {
             executeCommandAsync("admin", createIsMasterCommand(), connection, new SingleResultCallback<BsonDocument>() {
                 @Override
@@ -73,21 +79,30 @@ class DefaultAuthenticator extends Authenticator {
                     if (t != null) {
                         callback.onResult(null, wrapException(t));
                     } else {
-                        getAuthenticatorFromIsMasterResult(result).authenticateAsync(connection, connectionDescription, callback);
+                        getAuthenticatorFromIsMasterResult(result, connectionDescription.getServerVersion())
+                                .authenticateAsync(connection, connectionDescription, callback);
                     }
                 }
             });
         }
     }
 
-    private Authenticator getAuthenticatorFromIsMasterResult(final BsonDocument isMasterResult) {
-        BsonArray saslSupportedMechs = isMasterResult.getArray("saslSupportedMechs", DEFAULT_SUPPORTED_MECHANISMS);
-        AuthenticationMechanism mechanism = saslSupportedMechs.contains(DEFAULT_MECHANISM_NAME) ? SCRAM_SHA_256 : SCRAM_SHA_1;
-        return new ScramShaAuthenticator(getCredential().withMechanism(mechanism));
+    void setAuthenticatorFromIsMasterResult(final BsonDocument isMasterResult, final ServerVersion serverVersion) {
+        authenticator = getAuthenticatorFromIsMasterResult(isMasterResult, serverVersion);
     }
 
-    private Authenticator getLegacyDefaultAuthenticator(final ConnectionDescription connectionDescription) {
-        if (connectionDescription.getServerVersion().compareTo(THREE_ZERO) >= 0) {
+    private Authenticator getAuthenticatorFromIsMasterResult(final BsonDocument isMasterResult, final ServerVersion serverVersion) {
+        if (isMasterResult.containsKey("saslSupportedMechs")) {
+            BsonArray saslSupportedMechs = isMasterResult.getArray("saslSupportedMechs");
+            AuthenticationMechanism mechanism = saslSupportedMechs.contains(DEFAULT_MECHANISM_NAME) ? SCRAM_SHA_256 : SCRAM_SHA_1;
+            return new ScramShaAuthenticator(getCredential().withMechanism(mechanism));
+        } else {
+            return getLegacyDefaultAuthenticator(serverVersion);
+        }
+    }
+
+    private Authenticator getLegacyDefaultAuthenticator(final ServerVersion serverVersion) {
+        if (serverVersion.compareTo(THREE_ZERO) >= 0) {
             return new ScramShaAuthenticator(getCredential().withMechanism(SCRAM_SHA_1));
         } else {
             return new NativeAuthenticator(getCredential());
@@ -104,7 +119,7 @@ class DefaultAuthenticator extends Authenticator {
     private MongoException wrapException(final Throwable t) {
         if (t instanceof MongoSecurityException) {
             return (MongoSecurityException) t;
-        } else if (t instanceof MongoException && ((MongoException) t).getCode() == 11) {
+        } else if (t instanceof MongoException && ((MongoException) t).getCode() == USER_NOT_FOUND_CODE) {
             return new MongoSecurityException(getCredential(), format("Exception authenticating %s", getCredential()), t);
         } else {
             return MongoException.fromThrowable(t);
