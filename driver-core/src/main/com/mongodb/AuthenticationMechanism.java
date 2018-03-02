@@ -51,7 +51,13 @@ public enum AuthenticationMechanism {
     /**
      * The SCRAM-SHA-1 mechanism.  See the <a href="http://tools.ietf.org/html/rfc5802">RFC</a>.
      */
-    SCRAM_SHA_1("SCRAM-SHA-1");
+    SCRAM_SHA_1("SCRAM-SHA-1"),
+
+    /**
+     * The SCRAM-SHA-256 mechanism.  See the <a href="http://tools.ietf.org/html/rfc7677">RFC</a>.
+     * @since 3.8
+     */
+    SCRAM_SHA_256("SCRAM-SHA-256");
 
     private static final Map<String, AuthenticationMechanism> AUTH_MAP = new HashMap<String, AuthenticationMechanism>();
     private final String mechanismName;

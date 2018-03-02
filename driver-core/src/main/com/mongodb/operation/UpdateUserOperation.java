@@ -46,7 +46,9 @@ import static com.mongodb.operation.WriteConcernHelper.writeConcernErrorTransfor
  * An operation that updates a user.
  *
  * @since 3.0
+ * @deprecated use {@link CommandWriteOperation} directly or the mongod shell helpers.
  */
+@Deprecated
 public class UpdateUserOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final MongoCredential credential;
     private final boolean readOnly;
@@ -57,9 +59,7 @@ public class UpdateUserOperation implements AsyncWriteOperation<Void>, WriteOper
      *
      * @param credential the users credentials.
      * @param readOnly   true if the user is a readOnly user.
-     * @deprecated Prefer {@link #UpdateUserOperation(MongoCredential, boolean, WriteConcern)}
      */
-    @Deprecated
     public UpdateUserOperation(final MongoCredential credential, final boolean readOnly) {
         this(credential, readOnly, null);
     }
@@ -131,7 +131,7 @@ public class UpdateUserOperation implements AsyncWriteOperation<Void>, WriteOper
     }
 
     private BsonDocument getCommand(final ConnectionDescription description) {
-        BsonDocument commandDocument = asCommandDocument(credential, readOnly, "updateUser");
+        BsonDocument commandDocument = asCommandDocument(credential, description, readOnly, "updateUser");
         appendWriteConcernToCommand(writeConcern, commandDocument, description);
         return commandDocument;
     }

@@ -17,6 +17,9 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoCompressor;
+import com.mongodb.MongoCredential;
+import com.mongodb.MongoException;
+import com.mongodb.MongoSecurityException;
 import com.mongodb.async.SingleResultCallback;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -30,7 +33,10 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.CommandHelper.executeCommand;
 import static com.mongodb.connection.CommandHelper.executeCommandAsync;
 import static com.mongodb.connection.CommandHelper.executeCommandWithoutCheckingForFailure;
+import static com.mongodb.connection.DefaultAuthenticator.USER_NOT_FOUND_CODE;
 import static com.mongodb.connection.DescriptionHelper.createConnectionDescription;
+import static com.mongodb.connection.DescriptionHelper.getVersion;
+import static java.lang.String.format;
 
 class InternalStreamConnectionInitializer implements InternalConnectionInitializer {
     private final List<Authenticator> authenticators;
@@ -88,8 +94,28 @@ class InternalStreamConnectionInitializer implements InternalConnectionInitializ
     }
 
     private ConnectionDescription initializeConnectionDescription(final InternalConnection internalConnection) {
-        BsonDocument isMasterResult = executeCommand("admin", createIsMasterCommand(), internalConnection);
+        BsonDocument isMasterResult;
+        MongoCredential credential = null;
+        BsonDocument isMasterCommandDocument = createIsMasterCommand();
+        boolean checkSaslMechanism = authenticators.size() == 1 && authenticators.get(0) instanceof DefaultAuthenticator;
+
+        if (checkSaslMechanism) {
+            credential = authenticators.get(0).getCredential();
+            isMasterCommandDocument.append("saslSupportedMechs",
+                    new BsonString(format("%s.%s", credential.getSource(), credential.getUserName())));
+        }
+
+        try {
+            isMasterResult = executeCommand("admin", isMasterCommandDocument, internalConnection);
+        } catch (MongoException e) {
+            if (credential != null && e.getCode() == USER_NOT_FOUND_CODE) {
+                throw new MongoSecurityException(credential, format("Exception authenticating %s", credential), e);
+            }
+            throw e;
+        }
         BsonDocument buildInfoResult = executeCommand("admin", new BsonDocument("buildinfo", new BsonInt32(1)), internalConnection);
+
+        setDefaultAuthenticator(checkSaslMechanism, isMasterResult, buildInfoResult);
         return createConnectionDescription(internalConnection.getDescription().getConnectionId(), isMasterResult, buildInfoResult);
     }
 
@@ -126,12 +152,27 @@ class InternalStreamConnectionInitializer implements InternalConnectionInitializ
 
     private void initializeConnectionDescriptionAsync(final InternalConnection internalConnection,
                                                       final SingleResultCallback<ConnectionDescription> callback) {
+        BsonDocument isMasterCommandDocument = createIsMasterCommand();
+        final boolean checkSaslMechanism = authenticators.size() == 1 && authenticators.get(0) instanceof DefaultAuthenticator;
+        if (checkSaslMechanism) {
+            MongoCredential credential = authenticators.get(0).getCredential();
+            isMasterCommandDocument.append("saslSupportedMechs",
+                    new BsonString(format("%s.%s", credential.getSource(), credential.getUserName())));
+        }
+
         executeCommandAsync("admin", createIsMasterCommand(), internalConnection,
                             new SingleResultCallback<BsonDocument>() {
                                 @Override
                                 public void onResult(final BsonDocument isMasterResult, final Throwable t) {
                                     if (t != null) {
-                                        callback.onResult(null, t);
+                                        if (checkSaslMechanism && t instanceof MongoException
+                                                && ((MongoException) t).getCode() == USER_NOT_FOUND_CODE) {
+                                            MongoCredential credential = authenticators.get(0).getCredential();
+                                            callback.onResult(null,  new MongoSecurityException(credential,
+                                                    format("Exception authenticating %s", credential), t));
+                                        } else {
+                                            callback.onResult(null, t);
+                                        }
                                     } else {
                                         executeCommandAsync("admin", new BsonDocument("buildinfo", new BsonInt32(1)), internalConnection,
                                                             new SingleResultCallback<BsonDocument>() {
@@ -143,6 +184,8 @@ class InternalStreamConnectionInitializer implements InternalConnectionInitializ
                                                                     } else {
                                                                         ConnectionId connectionId = internalConnection.getDescription()
                                                                                                                       .getConnectionId();
+                                                                        setDefaultAuthenticator(checkSaslMechanism, isMasterResult,
+                                                                                buildInfoResult);
                                                                         callback.onResult(createConnectionDescription(connectionId,
                                                                                                                       isMasterResult,
                                                                                                                       buildInfoResult),
@@ -153,6 +196,14 @@ class InternalStreamConnectionInitializer implements InternalConnectionInitializ
                                     }
                                 }
                             });
+    }
+
+    @SuppressWarnings("unchecked")
+    private void setDefaultAuthenticator(final boolean checkSaslMechanism, final BsonDocument isMasterResult,
+                                         final BsonDocument buildInfoResult) {
+        if (checkSaslMechanism) {
+            ((DefaultAuthenticator) authenticators.get(0)).setAuthenticatorFromIsMasterResult(isMasterResult, getVersion(buildInfoResult));
+        }
     }
 
     private void completeConnectionDescriptionInitializationAsync(final InternalConnection internalConnection,
