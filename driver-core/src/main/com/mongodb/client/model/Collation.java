@@ -338,13 +338,14 @@ public final class Collation {
         }
         Collation that = (Collation) o;
 
-        return (getLocale() != null ? getLocale().equals(that.getLocale()) : that.getLocale() == null) &&
-               (getCaseLevel() != null ? getCaseLevel().equals(that.getCaseLevel()) : that.getCaseLevel() == null) &&
-                getCaseFirst() == that.getCaseFirst() && getStrength() == that.getStrength() &&
-               (getNumericOrdering() != null ? getNumericOrdering().equals(that.getNumericOrdering()) : that.getNumericOrdering() == null) &&
-                getAlternate() == that.getAlternate() && getMaxVariable() == that.getMaxVariable() &&
-               (getNormalization() != null ? getNormalization().equals(that.getNormalization()) : that.getNormalization() == null) &&
-               (getBackwards() != null ? getBackwards().equals(that.getBackwards()) : that.getBackwards() == null);
+        return (getLocale() != null ? getLocale().equals(that.getLocale()) : that.getLocale() == null)
+                && (getCaseLevel() != null ? getCaseLevel().equals(that.getCaseLevel()) : that.getCaseLevel() == null)
+                && (getCaseFirst() == that.getCaseFirst() && getStrength() == that.getStrength())
+                && (getNumericOrdering() != null
+                ? getNumericOrdering().equals(that.getNumericOrdering()) : that.getNumericOrdering() == null)
+                && (getAlternate() == that.getAlternate() && getMaxVariable() == that.getMaxVariable())
+                && (getNormalization() != null ? getNormalization().equals(that.getNormalization()) : that.getNormalization() == null)
+                && (getBackwards() != null ? getBackwards().equals(that.getBackwards()) : that.getBackwards() == null);
     }
 
     @Override

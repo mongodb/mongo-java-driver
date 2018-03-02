@@ -99,7 +99,8 @@ public abstract class Geometry {
 
         Geometry geometry = (Geometry) o;
 
-        return coordinateReferenceSystem != null ? coordinateReferenceSystem.equals(geometry.coordinateReferenceSystem) : geometry.coordinateReferenceSystem == null;
+        return coordinateReferenceSystem != null
+                ? coordinateReferenceSystem.equals(geometry.coordinateReferenceSystem) : geometry.coordinateReferenceSystem == null;
     }
 
     @Override

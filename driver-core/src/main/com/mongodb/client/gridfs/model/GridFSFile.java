@@ -217,10 +217,10 @@ public final class GridFSFile {
 
         GridFSFile that = (GridFSFile) o;
 
-        return (id != null ? id.equals(that.id) : that.id == null) && filename.equals(that.filename) &&
-                length == that.length && chunkSize == that.chunkSize && uploadDate.equals(that.uploadDate) &&
-                md5.equals(that.md5) && (metadata != null ? metadata.equals(that.metadata) : that.metadata == null) &&
-                (extraElements != null ? extraElements.equals(that.extraElements) : that.extraElements == null);
+        return (id != null ? id.equals(that.id) : that.id == null) && filename.equals(that.filename)
+                && ((length == that.length) && (chunkSize == that.chunkSize) && uploadDate.equals(that.uploadDate))
+                && (md5.equals(that.md5) && (metadata != null ? metadata.equals(that.metadata) : that.metadata == null))
+                && (extraElements != null ? extraElements.equals(that.extraElements) : that.extraElements == null);
     }
 
     @Override

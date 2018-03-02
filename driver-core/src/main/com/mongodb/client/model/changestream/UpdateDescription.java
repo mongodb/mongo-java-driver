@@ -73,8 +73,8 @@ public final class UpdateDescription {
 
         UpdateDescription that = (UpdateDescription) o;
 
-        return (getRemovedFields() != null ? getRemovedFields().equals(that.getRemovedFields()) : that.getRemovedFields() == null) &&
-               (getUpdatedFields() != null ? getUpdatedFields().equals(that.getUpdatedFields()) : that.getUpdatedFields() == null);
+        return (getRemovedFields() != null ? getRemovedFields().equals(that.getRemovedFields()) : that.getRemovedFields() == null)
+                && (getUpdatedFields() != null ? getUpdatedFields().equals(that.getUpdatedFields()) : that.getUpdatedFields() == null);
     }
 
     @Override

@@ -136,9 +136,9 @@ public abstract class UpdateResult {
 
             AcknowledgedUpdateResult that = (AcknowledgedUpdateResult) o;
 
-            return matchedCount == that.matchedCount &&
-                    (modifiedCount != null ? modifiedCount.equals(that.modifiedCount) : that.modifiedCount == null) &&
-                    (upsertedId != null ? upsertedId.equals(that.upsertedId) : that.upsertedId == null);
+            return (matchedCount == that.matchedCount)
+                    && (modifiedCount != null ? modifiedCount.equals(that.modifiedCount) : that.modifiedCount == null)
+                    && (upsertedId != null ? upsertedId.equals(that.upsertedId) : that.upsertedId == null);
         }
 
         @Override
