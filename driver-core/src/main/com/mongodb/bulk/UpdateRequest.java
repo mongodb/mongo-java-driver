@@ -32,7 +32,7 @@ public final class UpdateRequest extends WriteRequest {
     private final BsonDocument update;
     private final Type updateType;
     private final BsonDocument filter;
-    private boolean isMulti = true;
+    private boolean isMulti;
     private boolean isUpsert = false;
     private Collation collation;
     private List<BsonDocument> arrayFilters;
