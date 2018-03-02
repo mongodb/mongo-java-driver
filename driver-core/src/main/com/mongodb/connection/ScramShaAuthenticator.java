@@ -48,6 +48,9 @@ class ScramShaAuthenticator extends SaslAuthenticator {
 
     private static final int MINIMUM_ITERATION_COUNT = 4096;
 
+    private static final int KEY_CACHE_SIZE = 25;
+    private static final Map<CacheKey, CacheValue> KEY_CACHE = createKeyCache();
+
     ScramShaAuthenticator(final MongoCredential credential) {
         this(credential, new DefaultRandomStringGenerator(), getAuthenicationHashGenerator(credential.getAuthenticationMechanism()));
     }
@@ -196,14 +199,22 @@ class ScramShaAuthenticator extends SaslAuthenticator {
          */
         String getClientProof(final String password, final String salt, final int iterationCount, final String authMessage)
                 throws SaslException {
-            byte[] saltedPassword = hi(decodeUTF8(password), decodeBase64(salt), iterationCount);
-            byte[] clientKey = hmac(saltedPassword, "Client Key");
-            byte[] serverKey = hmac(saltedPassword, "Server Key");
-            serverSignature = hmac(serverKey, authMessage);
+            String hashedPassword = encodeUTF8(h(decodeUTF8(password + salt)));
 
-            byte[] storedKey = h(clientKey);
+            CacheKey cacheKey = new CacheKey(hashedPassword, salt, iterationCount);
+            CacheValue cachedKeys = KEY_CACHE.get(cacheKey);
+            if (cachedKeys == null) {
+                byte[] saltedPassword = hi(decodeUTF8(password), decodeBase64(salt), iterationCount);
+                byte[] clientKey = hmac(saltedPassword, "Client Key");
+                byte[] serverKey = hmac(saltedPassword, "Server Key");
+                cachedKeys = new CacheValue(clientKey, serverKey);
+                KEY_CACHE.put(cacheKey, new CacheValue(clientKey, serverKey));
+            }
+            serverSignature = hmac(cachedKeys.serverKey, authMessage);
+
+            byte[] storedKey = h(cachedKeys.clientKey);
             byte[] clientSignature = hmac(storedKey, authMessage);
-            byte[] clientProof = xor(clientKey, clientSignature);
+            byte[] clientProof = xor(cachedKeys.clientKey, clientSignature);
             return encodeBase64(clientProof);
         }
 
@@ -372,5 +383,65 @@ class ScramShaAuthenticator extends SaslAuthenticator {
 
     private static AuthenticationHashGenerator getAuthenicationHashGenerator(final AuthenticationMechanism authenticationMechanism) {
         return authenticationMechanism == SCRAM_SHA_1 ? LEGACY_AUTHENTICATION_HASH_GENERATOR : DEFAULT_AUTHENTICATION_HASH_GENERATOR;
+    }
+
+    private static Map<CacheKey, CacheValue> createKeyCache() {
+        return Collections.synchronizedMap(new LinkedHashMap<CacheKey, CacheValue>() {
+            private static final long serialVersionUID = 1L;
+            @Override
+            protected boolean removeEldestEntry(final Map.Entry<CacheKey, CacheValue> eldest) {
+                return size() >= KEY_CACHE_SIZE;
+            }
+        });
+    }
+
+    private static class CacheKey {
+        private final String password;
+        private final String salt;
+        private final int iterationCount;
+
+        CacheKey(final String password, final String salt, final int iterationCount) {
+            this.password = password;
+            this.salt = salt;
+            this.iterationCount = iterationCount;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            CacheKey that = (CacheKey) o;
+
+            if (iterationCount != that.iterationCount) {
+                return false;
+            }
+            if (!password.equals(that.password)) {
+                return false;
+            }
+            return salt.equals(that.salt);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = password.hashCode();
+            result = 31 * result + salt.hashCode();
+            result = 31 * result + iterationCount;
+            return result;
+        }
+    }
+
+    private static class CacheValue {
+        private byte[] clientKey;
+        private byte[] serverKey;
+
+        CacheValue(final byte[] clientKey, final byte[] serverKey) {
+            this.clientKey = clientKey;
+            this.serverKey = serverKey;
+        }
     }
 }
