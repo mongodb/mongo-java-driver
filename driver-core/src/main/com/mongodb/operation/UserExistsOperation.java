@@ -41,7 +41,9 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * An operation that determines if a user exists.
  *
  * @since 3.0
+ * @deprecated use {@link CommandWriteOperation} directly or the mongod shell helpers.
  */
+@Deprecated
 public class UserExistsOperation implements AsyncReadOperation<Boolean>, ReadOperation<Boolean> {
     private final String databaseName;
     private final String userName;
