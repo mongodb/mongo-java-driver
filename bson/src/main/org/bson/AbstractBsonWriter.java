@@ -529,7 +529,17 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
             throwInvalidState("WriteName", State.NAME);
         }
         if (!fieldNameValidatorStack.peek().validate(name)) {
-            throw new IllegalArgumentException(format("Invalid BSON field name %s", name));
+            String failedValidatorName = fieldNameValidatorStack.peek().getClass().getName();
+            String errorMessage;
+
+            if (failedValidatorName.contains("UpdateFieldNameValidator")) {
+                errorMessage = "updates should contain a $ at toplevel. like {$set:{value:10}}";
+            } else if (failedValidatorName.contains("CollectibleDocumentFieldNameValidator")) {
+                errorMessage = "field name cannot contain . or $ unless it is $db, $ref or $id";
+            } else {
+                errorMessage = format("failled to meet the requirements of %s", failedValidatorName);
+            }
+            throw new IllegalArgumentException(format("Invalid BSON field name %s. %s", name, errorMessage));
         }
         doWriteName(name);
         context.name = name;
