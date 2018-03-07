@@ -56,7 +56,7 @@ final class ChangeStreamDocumentCodec<TResult> implements Codec<ChangeStreamDocu
                 .register(changeStreamDocumentClassModel)
                 .build();
 
-        CodecRegistry registry = fromRegistries(codecRegistry, fromProviders(provider));
+        CodecRegistry registry = fromRegistries(fromProviders(provider), codecRegistry);
         this.codec = (Codec<ChangeStreamDocument<TResult>>) (Codec<? extends ChangeStreamDocument>)
                 registry.get(ChangeStreamDocument.class);
     }
