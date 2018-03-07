@@ -330,7 +330,7 @@ public final class Collation {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o){
+        if (this == o) {
             return true;
         }
         if (o == null || getClass() != o.getClass()) {
@@ -338,34 +338,14 @@ public final class Collation {
         }
         Collation that = (Collation) o;
 
-        if (getLocale() != null ? !getLocale().equals(that.getLocale()) : that.getLocale() != null) {
-            return false;
-        }
-        if (getCaseLevel() != null ? !getCaseLevel().equals(that.getCaseLevel()) : that.getCaseLevel() != null) {
-            return false;
-        }
-        if (getCaseFirst() != that.getCaseFirst()) {
-            return false;
-        }
-        if (getStrength() != that.getStrength()) {
-            return false;
-        }
-        if (getNumericOrdering() != null ? !getNumericOrdering().equals(that.getNumericOrdering()) : that.getNumericOrdering() != null) {
-            return false;
-        }
-        if (getAlternate() != that.getAlternate()) {
-            return false;
-        }
-        if (getMaxVariable() != that.getMaxVariable()) {
-            return false;
-        }
-        if (getNormalization() != null ? !getNormalization().equals(that.getNormalization()) : that.getNormalization() != null) {
-            return false;
-        }
-        if (getBackwards() != null ? !getBackwards().equals(that.getBackwards()) : that.getBackwards() != null) {
-            return false;
-        }
-        return true;
+        return (getLocale() != null ? getLocale().equals(that.getLocale()) : that.getLocale() == null)
+                && (getCaseLevel() != null ? getCaseLevel().equals(that.getCaseLevel()) : that.getCaseLevel() == null)
+                && (getCaseFirst() == that.getCaseFirst() && getStrength() == that.getStrength())
+                && (getNumericOrdering() != null
+                ? getNumericOrdering().equals(that.getNumericOrdering()) : that.getNumericOrdering() == null)
+                && (getAlternate() == that.getAlternate() && getMaxVariable() == that.getMaxVariable())
+                && (getNormalization() != null ? getNormalization().equals(that.getNormalization()) : that.getNormalization() == null)
+                && (getBackwards() != null ? getBackwards().equals(that.getBackwards()) : that.getBackwards() == null);
     }
 
     @Override

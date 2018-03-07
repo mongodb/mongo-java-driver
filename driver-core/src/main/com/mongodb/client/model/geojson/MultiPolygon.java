@@ -81,11 +81,7 @@ public final class MultiPolygon extends Geometry {
 
         MultiPolygon that = (MultiPolygon) o;
 
-        if (!coordinates.equals(that.coordinates)) {
-            return false;
-        }
-
-        return true;
+        return coordinates.equals(that.coordinates);
     }
 
     @Override

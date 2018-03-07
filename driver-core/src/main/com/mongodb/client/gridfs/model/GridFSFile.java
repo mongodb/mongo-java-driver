@@ -208,7 +208,7 @@ public final class GridFSFile {
 
     @Override
     public boolean equals(final Object o) {
-        if (this == o)  {
+        if (this == o) {
             return true;
         }
         if (o == null || getClass() != o.getClass()) {
@@ -217,31 +217,10 @@ public final class GridFSFile {
 
         GridFSFile that = (GridFSFile) o;
 
-        if (id != null ? !id.equals(that.id) : that.id != null) {
-            return false;
-        }
-        if (!filename.equals(that.filename)) {
-            return false;
-        }
-        if (length != that.length) {
-            return false;
-        }
-        if (chunkSize != that.chunkSize) {
-            return false;
-        }
-        if (!uploadDate.equals(that.uploadDate)) {
-            return false;
-        }
-        if (!md5.equals(that.md5)) {
-            return false;
-        }
-        if (metadata != null ? !metadata.equals(that.metadata) : that.metadata != null) {
-            return false;
-        }
-        if (extraElements != null ? !extraElements.equals(that.extraElements) : that.extraElements != null) {
-            return false;
-        }
-        return true;
+        return (id != null ? id.equals(that.id) : that.id == null) && filename.equals(that.filename)
+                && ((length == that.length) && (chunkSize == that.chunkSize) && uploadDate.equals(that.uploadDate))
+                && (md5.equals(that.md5) && (metadata != null ? metadata.equals(that.metadata) : that.metadata == null))
+                && (extraElements != null ? extraElements.equals(that.extraElements) : that.extraElements == null);
     }
 
     @Override

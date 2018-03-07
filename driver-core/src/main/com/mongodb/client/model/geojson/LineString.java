@@ -85,11 +85,7 @@ public final class LineString extends Geometry {
 
         LineString lineString = (LineString) o;
 
-        if (!coordinates.equals(lineString.coordinates)) {
-            return false;
-        }
-
-        return true;
+        return coordinates.equals(lineString.coordinates);
     }
 
     @Override

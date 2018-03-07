@@ -60,11 +60,7 @@ public class BulkWriteError extends WriteError {
 
         BulkWriteError that = (BulkWriteError) o;
 
-        if (index != that.index) {
-            return false;
-        }
-
-        return super.equals(that);
+        return index == that.index && super.equals(that);
     }
 
     @Override

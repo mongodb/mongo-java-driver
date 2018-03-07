@@ -67,10 +67,7 @@ public class Field<TExpression> {
 
         Field<?> field = (Field<?>) o;
 
-        if (!name.equals(field.name)) {
-            return false;
-        }
-        return value != null ? value.equals(field.value) : field.value == null;
+        return name.equals(field.name) && (value != null ? value.equals(field.value) : field.value == null);
 
     }
 

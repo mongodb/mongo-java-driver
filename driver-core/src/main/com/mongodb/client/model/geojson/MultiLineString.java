@@ -88,11 +88,7 @@ public final class MultiLineString extends Geometry {
 
         MultiLineString polygon = (MultiLineString) o;
 
-        if (!coordinates.equals(polygon.coordinates)) {
-            return false;
-        }
-
-        return true;
+        return coordinates.equals(polygon.coordinates);
     }
 
     @Override

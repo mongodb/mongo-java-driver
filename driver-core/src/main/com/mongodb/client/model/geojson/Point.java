@@ -84,11 +84,7 @@ public final class Point extends Geometry {
 
         Point point = (Point) o;
 
-        if (!coordinate.equals(point.coordinate)) {
-            return false;
-        }
-
-        return true;
+        return coordinate.equals(point.coordinate);
     }
 
     @Override

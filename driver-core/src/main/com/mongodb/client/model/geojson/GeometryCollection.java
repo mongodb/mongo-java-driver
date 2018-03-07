@@ -81,11 +81,7 @@ public final class GeometryCollection extends Geometry {
 
         GeometryCollection that = (GeometryCollection) o;
 
-        if (!geometries.equals(that.geometries)) {
-            return false;
-        }
-
-        return true;
+        return geometries.equals(that.geometries);
     }
 
     @Override
