@@ -18,6 +18,7 @@ package com.mongodb.async.client;
 
 
 import com.mongodb.client.model.Collation;
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
@@ -37,7 +38,7 @@ public interface DistinctIterable<TResult> extends MongoIterable<TResult> {
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    DistinctIterable<TResult> filter(Bson filter);
+    DistinctIterable<TResult> filter(@Nullable Bson filter);
 
     /**
      * Sets the maximum execution time on the server for this operation.
@@ -66,6 +67,6 @@ public interface DistinctIterable<TResult> extends MongoIterable<TResult> {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
-    DistinctIterable<TResult> collation(Collation collation);
+    DistinctIterable<TResult> collation(@Nullable Collation collation);
 
 }

@@ -20,6 +20,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.internal.operation.AsyncOperations;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.session.ClientSession;
@@ -40,7 +41,7 @@ final class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResu
     private Bson filter;
     private long maxTimeMS;
 
-    ListCollectionsIterableImpl(final ClientSession clientSession, final String databaseName, final Class<TResult> resultClass,
+    ListCollectionsIterableImpl(@Nullable final ClientSession clientSession, final String databaseName, final Class<TResult> resultClass,
                                 final CodecRegistry codecRegistry,
                                 final ReadPreference readPreference, final AsyncOperationExecutor executor) {
         super(clientSession, executor, ReadConcern.DEFAULT, readPreference); // TODO: read concern?
@@ -50,7 +51,7 @@ final class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResu
     }
 
     @Override
-    public ListCollectionsIterable<TResult> filter(final Bson filter) {
+    public ListCollectionsIterable<TResult> filter(@Nullable final Bson filter) {
         notNull("filter", filter);
         this.filter = filter;
         return this;

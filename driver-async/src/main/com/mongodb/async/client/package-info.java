@@ -17,4 +17,7 @@
 /**
  * This packages contains classes for the new async client
  */
+@NonNullApi
 package com.mongodb.async.client;
+
+import com.mongodb.lang.NonNullApi;

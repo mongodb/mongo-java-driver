@@ -32,6 +32,7 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.event.CommandListener;
+import com.mongodb.lang.Nullable;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
@@ -572,6 +573,7 @@ public final class MongoClientSettings {
      * @return the stream factory factory
      * @since 3.1
      */
+    @Nullable
     public StreamFactoryFactory getStreamFactoryFactory() {
         return wrapped.getStreamFactoryFactory();
     }

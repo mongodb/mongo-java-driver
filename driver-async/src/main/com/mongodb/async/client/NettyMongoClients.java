@@ -19,15 +19,15 @@ package com.mongodb.async.client;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.netty.NettyStreamFactory;
+import com.mongodb.lang.Nullable;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 
 import java.io.Closeable;
-import java.io.IOException;
 
 // Creation of MongoClient using NettyStreamFactory is segregated here to avoid a runtime dependency on Netty in MongoClients
 final class NettyMongoClients {
-    static MongoClient create(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation) {
+    static MongoClient create(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation) {
         final EventLoopGroup eventLoopGroup = new NioEventLoopGroup();
         StreamFactory streamFactory = new NettyStreamFactory(settings.getSocketSettings(), settings.getSslSettings(), eventLoopGroup);
         StreamFactory heartbeatStreamFactory = new NettyStreamFactory(settings.getHeartbeatSocketSettings(), settings.getSslSettings(),
@@ -35,7 +35,7 @@ final class NettyMongoClients {
         return MongoClients.createMongoClient(settings, mongoDriverInformation, streamFactory, heartbeatStreamFactory,
                 new Closeable() {
                     @Override
-                    public void close() throws IOException {
+                    public void close() {
                         eventLoopGroup.shutdownGracefully().awaitUninterruptibly();
                     }
                 });
