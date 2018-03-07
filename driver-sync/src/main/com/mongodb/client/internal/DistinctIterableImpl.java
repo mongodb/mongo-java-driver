@@ -44,7 +44,7 @@ class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult
     private Collation collation;
 
 
-    DistinctIterableImpl(final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
+    DistinctIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
                          final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
                          final ReadConcern readConcern, final OperationExecutor executor, final String fieldName, final Bson filter) {
         super(clientSession, executor, readConcern, readPreference);

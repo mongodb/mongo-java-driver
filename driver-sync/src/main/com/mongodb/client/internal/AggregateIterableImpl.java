@@ -55,7 +55,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     private String comment;
     private Bson hint;
 
-    AggregateIterableImpl(final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
+    AggregateIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
                           final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
                           final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
                           final List<? extends Bson> pipeline) {
@@ -114,13 +114,13 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
-    public AggregateIterable<TResult> bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+    public AggregateIterable<TResult> bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
 
     @Override
-    public AggregateIterable<TResult> collation(final Collation collation) {
+    public AggregateIterable<TResult> collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }
@@ -147,8 +147,9 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
                     hint, comment), getClientSession());
 
             FindOptions findOptions = new FindOptions().collation(collation);
-            if (getBatchSize() != null) {
-                findOptions.batchSize(getBatchSize());
+            Integer batchSize = getBatchSize();
+            if (batchSize != null) {
+                findOptions.batchSize(batchSize);
             }
             return operations.find(new MongoNamespace(namespace.getDatabaseName(), outCollection.asString().getValue()), new BsonDocument(),
                     resultClass, findOptions);
@@ -158,6 +159,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         }
     }
 
+    @Nullable
     private BsonValue getOutCollection() {
         if (pipeline.size() == 0) {
             return null;

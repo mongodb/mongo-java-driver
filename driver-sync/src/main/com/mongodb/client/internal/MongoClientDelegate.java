@@ -30,6 +30,7 @@ import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.session.ClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
 import com.mongodb.selector.ServerSelector;
@@ -56,22 +57,19 @@ public class MongoClientDelegate {
     }
 
     public MongoClientDelegate(final Cluster cluster, final List<MongoCredential> credentialList, final Object originator,
-                               final OperationExecutor operationExecutor) {
+                               @Nullable final OperationExecutor operationExecutor) {
         this.cluster = cluster;
         this.serverSessionPool = new ServerSessionPool(cluster);
         this.credentialList = credentialList;
         this.originator = originator;
-        if (operationExecutor == null) {
-            this.operationExecutor = new DelegateOperationExecutor();
-        } else {
-            this.operationExecutor = operationExecutor;
-        }
+        this.operationExecutor = operationExecutor == null ? new DelegateOperationExecutor() : operationExecutor;
     }
 
     public OperationExecutor getOperationExecutor() {
         return operationExecutor;
     }
 
+    @Nullable
     public ClientSession createClientSession(final ClientSessionOptions options) {
         if (credentialList.size() > 1) {
             return null;
@@ -135,7 +133,7 @@ public class MongoClientDelegate {
         }
 
         @Override
-        public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ClientSession session) {
+        public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, @Nullable final ClientSession session) {
             ClientSession actualClientSession = getClientSession(session);
             ReadBinding binding = getReadBinding(readPreference, actualClientSession, session == null && actualClientSession != null);
             try {
@@ -146,7 +144,7 @@ public class MongoClientDelegate {
         }
 
         @Override
-        public <T> T execute(final WriteOperation<T> operation, final ClientSession session) {
+        public <T> T execute(final WriteOperation<T> operation, @Nullable final ClientSession session) {
             ClientSession actualClientSession = getClientSession(session);
             WriteBinding binding = getWriteBinding(actualClientSession, session == null && actualClientSession != null);
             try {
@@ -156,15 +154,15 @@ public class MongoClientDelegate {
             }
         }
 
-        WriteBinding getWriteBinding(final ClientSession session, final boolean ownsSession) {
+        WriteBinding getWriteBinding(@Nullable final ClientSession session, final boolean ownsSession) {
             return getReadWriteBinding(primary(), session, ownsSession);
         }
 
-        ReadBinding getReadBinding(final ReadPreference readPreference, final ClientSession session, final boolean ownsSession) {
+        ReadBinding getReadBinding(final ReadPreference readPreference, @Nullable final ClientSession session, final boolean ownsSession) {
             return getReadWriteBinding(readPreference, session, ownsSession);
         }
 
-        ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, final ClientSession session,
+        ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, @Nullable final ClientSession session,
                                              final boolean ownsSession) {
             ReadWriteBinding readWriteBinding = new ClusterBinding(cluster, readPreference);
             if (session != null) {
@@ -173,7 +171,8 @@ public class MongoClientDelegate {
             return readWriteBinding;
         }
 
-        ClientSession getClientSession(final ClientSession clientSessionFromOperation) {
+        @Nullable
+        ClientSession getClientSession(@Nullable final ClientSession clientSessionFromOperation) {
             ClientSession session;
             if (clientSessionFromOperation != null) {
                 isTrue("ClientSession from same MongoClient", clientSessionFromOperation.getOriginator() == originator);

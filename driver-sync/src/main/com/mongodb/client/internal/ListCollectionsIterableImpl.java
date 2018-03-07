@@ -41,7 +41,7 @@ final class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResu
     private Bson filter;
     private long maxTimeMS;
 
-    ListCollectionsIterableImpl(final ClientSession clientSession, final String databaseName, final Class<TResult> resultClass,
+    ListCollectionsIterableImpl(@Nullable final ClientSession clientSession, final String databaseName, final Class<TResult> resultClass,
                                 final CodecRegistry codecRegistry, final ReadPreference readPreference, final OperationExecutor executor) {
         super(clientSession, executor, ReadConcern.DEFAULT, readPreference); // TODO: read concern?
         this.operations = new SyncOperations<BsonDocument>(BsonDocument.class, readPreference, codecRegistry, ReadConcern.DEFAULT);
