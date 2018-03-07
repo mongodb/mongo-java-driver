@@ -389,11 +389,14 @@ public final class PojoRoundTripTest extends PojoTestCase {
         for (TestData testData : testCases()) {
             data.add(new Object[]{format("%s", testData.getName()), testData.getModel(), testData.getJson(), testData.getBuilder()});
             data.add(new Object[]{format("%s [Auto]", testData.getName()), testData.getModel(), testData.getJson(), AUTOMATIC_BUILDER});
+            data.add(new Object[]{format("%s [Package]", testData.getName()), testData.getModel(), testData.getJson(), PACKAGE_BUILDER});
         }
         return data;
     }
 
     private static final PojoCodecProvider.Builder AUTOMATIC_BUILDER = PojoCodecProvider.builder().automatic(true);
+    private static final PojoCodecProvider.Builder PACKAGE_BUILDER = PojoCodecProvider.builder().register("org.bson.codecs.pojo.entities",
+            "org.bson.codecs.pojo.entities.conventions");
 
     private static class TestData {
         private final String name;

@@ -71,13 +71,9 @@ public final class PojoCodecProvider implements CodecProvider {
     @SuppressWarnings("unchecked")
     private <T> PojoCodec<T> getPojoCodec(final Class<T> clazz, final CodecRegistry registry) {
         ClassModel<T> classModel = (ClassModel<T>) classModels.get(clazz);
-        if (classModel != null || (clazz.getPackage() != null && packages.contains(clazz.getPackage().getName()))) {
-            if (classModel == null) {
-                classModel = createClassModel(clazz, conventions);
-                discriminatorLookup.addClassModel(classModel);
-            }
+        if (classModel != null) {
             return new PojoCodecImpl<T>(classModel, registry, propertyCodecProviders, discriminatorLookup);
-        } else if (automatic) {
+        } else if (automatic || (clazz.getPackage() != null && packages.contains(clazz.getPackage().getName()))) {
             try {
                 classModel = createClassModel(clazz, conventions);
             } catch (IllegalStateException e) {
