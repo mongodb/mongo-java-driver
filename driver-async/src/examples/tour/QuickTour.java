@@ -251,7 +251,7 @@ public class QuickTour {
                 dropLatch3.countDown();
             }
         });
-        dropLatch2.await();
+        dropLatch3.await();
 
         collection.bulkWrite(writes, new BulkWriteOptions().ordered(false), printBatchResult);
         collection.find().forEach(printDocumentBlock, callbackWhenFinished);
