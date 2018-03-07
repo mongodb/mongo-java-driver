@@ -28,6 +28,7 @@ import org.bson.codecs.DecoderContext
 import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.ValueCodecProvider
+import org.bson.codecs.pojo.PojoCodecProvider
 import spock.lang.Specification
 
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
@@ -36,7 +37,8 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
 
     def 'should round trip ChangeStreamDocument successfully'() {
         given:
-        def codecRegistry = fromProviders([new DocumentCodecProvider(), new BsonValueCodecProvider(), new ValueCodecProvider()])
+        def codecRegistry = fromProviders([new DocumentCodecProvider(), new BsonValueCodecProvider(), new ValueCodecProvider(),
+                                           PojoCodecProvider.builder().automatic(true).build()])
         def codec = new ChangeStreamDocumentCodec(clazz, codecRegistry)
 
         when:
