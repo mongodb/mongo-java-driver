@@ -24,6 +24,7 @@ import com.mongodb.binding.AsyncReadWriteBinding;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
@@ -84,7 +85,7 @@ class AsyncOperationExecutorImpl implements AsyncOperationExecutor {
     }
 
     @Override
-    public <T> void execute(final AsyncWriteOperation<T> operation, final ClientSession session,
+    public <T> void execute(final AsyncWriteOperation<T> operation, @Nullable final ClientSession session,
                             final SingleResultCallback<T> callback) {
         notNull("operation", operation);
         notNull("callback", callback);
@@ -112,7 +113,7 @@ class AsyncOperationExecutorImpl implements AsyncOperationExecutor {
         });
     }
 
-    private AsyncReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, final ClientSession session,
+    private AsyncReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, @Nullable final ClientSession session,
                                                       final boolean ownsSession) {
         notNull("readPreference", readPreference);
         AsyncReadWriteBinding readWriteBinding = new AsyncClusterBinding(mongoClient.getCluster(), readPreference);

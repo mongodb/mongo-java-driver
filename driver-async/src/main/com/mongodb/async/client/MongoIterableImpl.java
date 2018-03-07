@@ -22,6 +22,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.session.ClientSession;
@@ -39,7 +40,7 @@ abstract class MongoIterableImpl<TResult> implements MongoIterable<TResult> {
     private final ReadPreference readPreference;
     private Integer batchSize;
 
-    MongoIterableImpl(final ClientSession clientSession, final AsyncOperationExecutor executor, final ReadConcern readConcern,
+    MongoIterableImpl(@Nullable final ClientSession clientSession, final AsyncOperationExecutor executor, final ReadConcern readConcern,
                       final ReadPreference readPreference) {
         this.clientSession = clientSession;
         this.executor = notNull("executor", executor);
@@ -66,6 +67,7 @@ abstract class MongoIterableImpl<TResult> implements MongoIterable<TResult> {
     }
 
     @Override
+    @Nullable
     public Integer getBatchSize() {
         return batchSize;
     }

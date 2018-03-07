@@ -25,6 +25,7 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.FindOptions;
 import com.mongodb.internal.operation.AsyncOperations;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
@@ -57,7 +58,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     private String comment;
     private Bson hint;
 
-    AggregateIterableImpl(final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
+    AggregateIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
                           final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
                           final ReadConcern readConcern, final WriteConcern writeConcern, final AsyncOperationExecutor executor,
                           final List<? extends Bson> pipeline) {
@@ -83,7 +84,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
-    public AggregateIterable<TResult> allowDiskUse(final Boolean allowDiskUse) {
+    public AggregateIterable<TResult> allowDiskUse(@Nullable final Boolean allowDiskUse) {
         this.allowDiskUse = allowDiskUse;
         return this;
     }
@@ -103,7 +104,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
     @Override
     @Deprecated
-    public AggregateIterable<TResult> useCursor(final Boolean useCursor) {
+    public AggregateIterable<TResult> useCursor(@Nullable final Boolean useCursor) {
         this.useCursor = useCursor;
         return this;
     }
@@ -116,25 +117,25 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
-    public AggregateIterable<TResult> bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+    public AggregateIterable<TResult> bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
 
     @Override
-    public AggregateIterable<TResult> collation(final Collation collation) {
+    public AggregateIterable<TResult> collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }
 
     @Override
-    public AggregateIterable<TResult> comment(final String comment) {
+    public AggregateIterable<TResult> comment(@Nullable final String comment) {
         this.comment = comment;
         return this;
     }
 
     @Override
-    public AggregateIterable<TResult> hint(final Bson hint) {
+    public AggregateIterable<TResult> hint(@Nullable final Bson hint) {
         this.hint = hint;
         return this;
     }
@@ -149,8 +150,9 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
                     operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint, comment);
 
             FindOptions findOptions = new FindOptions().collation(collation);
-            if (getBatchSize() != null) {
-                findOptions.batchSize(getBatchSize());
+            Integer batchSize = getBatchSize();
+            if (batchSize != null) {
+                findOptions.batchSize(batchSize);
             }
             AsyncReadOperation<AsyncBatchCursor<TResult>> findOperation =
                     operations.find(new MongoNamespace(namespace.getDatabaseName(), outCollection.asString().getValue()),
@@ -164,6 +166,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
     }
 
+    @Nullable
     private BsonValue getOutCollection() {
         if (pipeline.size() == 0) {
             return null;

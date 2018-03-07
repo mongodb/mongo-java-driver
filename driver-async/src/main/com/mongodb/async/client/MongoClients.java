@@ -24,6 +24,7 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.StreamFactoryFactory;
+import com.mongodb.lang.Nullable;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.io.Closeable;
@@ -105,7 +106,7 @@ public final class MongoClients {
      * @return the client
      * @since 3.4
      */
-    public static MongoClient create(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation) {
+    public static MongoClient create(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation) {
         return create(settings, mongoDriverInformation, null);
     }
 
@@ -120,14 +121,15 @@ public final class MongoClients {
      * @throws IllegalArgumentException if the connection string's stream type is not one of "netty" or "nio2"
      * @see MongoClients#create(ConnectionString)
      */
-    public static MongoClient create(final ConnectionString connectionString, final MongoDriverInformation mongoDriverInformation) {
+    public static MongoClient create(final ConnectionString connectionString,
+                                     @Nullable final MongoDriverInformation mongoDriverInformation) {
 
         return create(MongoClientSettings.builder().applyConnectionString(connectionString).build(),
                 mongoDriverInformation, connectionString.getStreamType());
     }
 
-    private static MongoClient create(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation,
-                                      final String requestedStreamType) {
+    private static MongoClient create(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation,
+                                      @Nullable final String requestedStreamType) {
         String streamType = getStreamType(requestedStreamType);
         if (isNetty(streamType) && settings.getStreamFactoryFactory() == null) {
             return NettyMongoClients.create(settings, mongoDriverInformation);
@@ -141,9 +143,9 @@ public final class MongoClients {
     }
 
     @SuppressWarnings("deprecation")
-    static MongoClient createMongoClient(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation,
+    static MongoClient createMongoClient(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation,
                                          final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory,
-                                         final Closeable externalResourceCloser) {
+                                         @Nullable final Closeable externalResourceCloser) {
         return new MongoClientImpl(settings, new DefaultClusterFactory().createCluster(settings.getClusterSettings(),
                 settings.getServerSettings(), settings.getConnectionPoolSettings(), streamFactory, heartbeatStreamFactory,
                 settings.getCredentialList(), getCommandListener(settings.getCommandListeners()), settings.getApplicationName(),
@@ -173,7 +175,7 @@ public final class MongoClients {
         return com.mongodb.MongoClientSettings.getDefaultCodecRegistry();
     }
 
-    private static StreamFactory getStreamFactory(final StreamFactoryFactory streamFactoryFactory,
+    private static StreamFactory getStreamFactory(@Nullable final StreamFactoryFactory streamFactoryFactory,
                                                   final SocketSettings socketSettings, final SslSettings sslSettings,
                                                   final String streamType) {
         if (streamFactoryFactory != null) {
@@ -193,7 +195,7 @@ public final class MongoClients {
         return streamType.toLowerCase().equals("nio2");
     }
 
-    private static String getStreamType(final String requestedStreamType) {
+    private static String getStreamType(@Nullable final String requestedStreamType) {
         if (requestedStreamType != null) {
             return requestedStreamType;
         } else {

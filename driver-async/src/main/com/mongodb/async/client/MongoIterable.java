@@ -20,6 +20,7 @@ import com.mongodb.Block;
 import com.mongodb.Function;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.lang.Nullable;
 
 import java.util.Collection;
 
@@ -81,6 +82,7 @@ public interface MongoIterable<TResult> {
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      * @since 3.7
      */
+    @Nullable
     Integer getBatchSize();
 
     /**

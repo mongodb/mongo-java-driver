@@ -23,6 +23,7 @@ import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
 import org.bson.BsonValue;
 import org.bson.Document;
@@ -65,7 +66,7 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
     private int chunkIndex;
     /* accessed only when writing */
 
-    GridFSUploadStreamImpl(final ClientSession clientSession, final MongoCollection<GridFSFile> filesCollection,
+    GridFSUploadStreamImpl(@Nullable final ClientSession clientSession, final MongoCollection<GridFSFile> filesCollection,
                            final MongoCollection<Document> chunksCollection, final BsonValue fileId, final String filename,
                            final int chunkSizeBytes, final Document metadata, final GridFSIndexCheck indexCheck) {
         this.clientSession = clientSession;
@@ -314,6 +315,7 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
         callback.onResult(null, new MongoGridFSException("The AsyncOutputStream does not support concurrent writing."));
     }
 
+    @Nullable
     private static MessageDigest getDigest() {
         try {
             return MessageDigest.getInstance("MD5");

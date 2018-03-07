@@ -25,6 +25,7 @@ import com.mongodb.connection.Cluster;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.ServerSessionPool;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.session.ClientSession;
 import org.bson.BsonDocument;
@@ -46,16 +47,16 @@ class MongoClientImpl implements MongoClient {
     private final ClientSessionHelper clientSessionHelper;
 
 
-    MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, final Closeable externalResourceCloser) {
+    MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, @Nullable final Closeable externalResourceCloser) {
         this(settings, cluster, null, externalResourceCloser);
     }
 
-    MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, final AsyncOperationExecutor executor) {
+    MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, @Nullable final AsyncOperationExecutor executor) {
         this(settings, cluster, executor, null);
     }
 
-    private MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, final AsyncOperationExecutor executor,
-                            final Closeable externalResourceCloser) {
+    private MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, @Nullable final AsyncOperationExecutor executor,
+                            @Nullable final Closeable externalResourceCloser) {
         this.settings = notNull("settings", settings);
         this.cluster = notNull("cluster", cluster);
         this.serverSessionPool = new ServerSessionPool(cluster);
@@ -122,7 +123,7 @@ class MongoClientImpl implements MongoClient {
         return createListDatabaseNamesIterable(clientSession);
     }
 
-    private MongoIterable<String> createListDatabaseNamesIterable(final ClientSession clientSession) {
+    private MongoIterable<String> createListDatabaseNamesIterable(@Nullable final ClientSession clientSession) {
         return createListDatabasesIterable(clientSession, BsonDocument.class).nameOnly(true).map(new Function<BsonDocument, String>() {
             @Override
             public String apply(final BsonDocument result) {
@@ -152,7 +153,7 @@ class MongoClientImpl implements MongoClient {
         return createListDatabasesIterable(clientSession, resultClass);
     }
 
-    private <T> ListDatabasesIterable<T> createListDatabasesIterable(final ClientSession clientSession, final Class<T> clazz) {
+    private <T> ListDatabasesIterable<T> createListDatabasesIterable(@Nullable final ClientSession clientSession, final Class<T> clazz) {
         return new ListDatabasesIterableImpl<T>(clientSession, clazz, settings.getCodecRegistry(),
                 ReadPreference.primary(), executor);
     }

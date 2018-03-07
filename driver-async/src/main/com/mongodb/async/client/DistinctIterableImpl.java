@@ -22,6 +22,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.operation.AsyncOperations;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.session.ClientSession;
@@ -42,7 +43,7 @@ class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult
     private Collation collation;
 
 
-    DistinctIterableImpl(final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
+    DistinctIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
                          final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
                          final ReadConcern readConcern, final AsyncOperationExecutor executor, final String fieldName, final Bson filter) {
         super(clientSession, executor, readConcern, readPreference);
@@ -53,7 +54,7 @@ class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult
     }
 
     @Override
-    public DistinctIterable<TResult> filter(final Bson filter) {
+    public DistinctIterable<TResult> filter(@Nullable final Bson filter) {
         this.filter = filter;
         return this;
     }
@@ -72,7 +73,7 @@ class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult
     }
 
     @Override
-    public DistinctIterable<TResult> collation(final Collation collation) {
+    public DistinctIterable<TResult> collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }

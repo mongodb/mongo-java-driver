@@ -28,6 +28,7 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.FindOptions;
 import com.mongodb.client.model.MapReduceAction;
 import com.mongodb.internal.operation.AsyncOperations;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
@@ -67,7 +68,7 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     private Boolean bypassDocumentValidation;
     private Collation collation;
 
-    MapReduceIterableImpl(final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
+    MapReduceIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
                           final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
                           final ReadConcern readConcern, final WriteConcern writeConcern, final AsyncOperationExecutor executor,
                           final String mapFunction, final String reduceFunction) {
@@ -88,25 +89,25 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
-    public MapReduceIterable<TResult> finalizeFunction(final String finalizeFunction) {
+    public MapReduceIterable<TResult> finalizeFunction(@Nullable final String finalizeFunction) {
         this.finalizeFunction = finalizeFunction;
         return this;
     }
 
     @Override
-    public MapReduceIterable<TResult> scope(final Bson scope) {
+    public MapReduceIterable<TResult> scope(@Nullable final Bson scope) {
         this.scope = scope;
         return this;
     }
 
     @Override
-    public MapReduceIterable<TResult> sort(final Bson sort) {
+    public MapReduceIterable<TResult> sort(@Nullable final Bson sort) {
         this.sort = sort;
         return this;
     }
 
     @Override
-    public MapReduceIterable<TResult> filter(final Bson filter) {
+    public MapReduceIterable<TResult> filter(@Nullable final Bson filter) {
         this.filter = filter;
         return this;
     }
@@ -143,7 +144,7 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
-    public MapReduceIterable<TResult> databaseName(final String databaseName) {
+    public MapReduceIterable<TResult> databaseName(@Nullable final String databaseName) {
         this.databaseName = databaseName;
         return this;
     }
@@ -167,13 +168,13 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
-    public MapReduceIterable<TResult> bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+    public MapReduceIterable<TResult> bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
 
     @Override
-    public MapReduceIterable<TResult> collation(final Collation collation) {
+    public MapReduceIterable<TResult> collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }
@@ -219,8 +220,9 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     private AsyncReadOperation<AsyncBatchCursor<TResult>> createFindOperation() {
         String dbName = databaseName != null ? databaseName : namespace.getDatabaseName();
         FindOptions findOptions = new FindOptions().collation(collation);
-        if (getBatchSize() != null) {
-            findOptions.batchSize(getBatchSize());
+        Integer batchSize = getBatchSize();
+        if (batchSize != null) {
+            findOptions.batchSize(batchSize);
         }
         return operations.find(new MongoNamespace(dbName, collectionName), new BsonDocument(), resultClass, findOptions);
     }

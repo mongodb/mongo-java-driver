@@ -112,8 +112,9 @@ final class MongoIterableSubscription<TResult> extends AbstractSubscription<TRes
      * @return the batchSize to use
      */
     private int calculateBatchSize() {
-        if (mongoIterable.getBatchSize() != null) {
-            return mongoIterable.getBatchSize();
+        Integer batchSize = mongoIterable.getBatchSize();
+        if (batchSize != null) {
+            return batchSize;
         }
         long requested = getRequested();
         if (requested <= 1) {

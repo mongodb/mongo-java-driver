@@ -32,6 +32,7 @@ import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.BsonObjectId;
@@ -172,8 +173,8 @@ final class GridFSBucketImpl implements GridFSBucket {
         return createGridFSUploadStream(clientSession, id, filename, options);
     }
 
-    private GridFSUploadStream createGridFSUploadStream(final ClientSession clientSession, final BsonValue id, final String filename,
-                                                final GridFSUploadOptions options) {
+    private GridFSUploadStream createGridFSUploadStream(@Nullable final ClientSession clientSession, final BsonValue id,
+                                                        final String filename, final GridFSUploadOptions options) {
         notNull("options", options);
         int chunkSize = options.getChunkSizeBytes() == null ? chunkSizeBytes : options.getChunkSizeBytes();
         return new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, id, filename, chunkSize, options.getMetadata(),
@@ -249,7 +250,7 @@ final class GridFSBucketImpl implements GridFSBucket {
         executeUploadFromStream(clientSession, id, filename, source, options, callback);
     }
 
-    private void executeUploadFromStream(final ClientSession clientSession, final BsonValue id, final String filename,
+    private void executeUploadFromStream(@Nullable final ClientSession clientSession, final BsonValue id, final String filename,
                                  final AsyncInputStream source, final GridFSUploadOptions options,
                                  final SingleResultCallback<Void> callback) {
         notNull("filename", filename);
@@ -311,7 +312,7 @@ final class GridFSBucketImpl implements GridFSBucket {
         return createGridFSDownloadStream(clientSession, createGridFSFindIterable(clientSession, filename, options));
     }
 
-    private GridFSDownloadStream createGridFSDownloadStream(final ClientSession clientSession,
+    private GridFSDownloadStream createGridFSDownloadStream(@Nullable final ClientSession clientSession,
                                                             final GridFSFindIterable gridFSFindIterable) {
         return new GridFSDownloadStreamImpl(clientSession, gridFSFindIterable, chunksCollection);
     }
@@ -409,7 +410,7 @@ final class GridFSBucketImpl implements GridFSBucket {
         executeDelete(clientSession, id, callback);
     }
 
-   private void executeDelete(final ClientSession clientSession, final BsonValue id, final SingleResultCallback<Void> callback) {
+   private void executeDelete(@Nullable final ClientSession clientSession, final BsonValue id, final SingleResultCallback<Void> callback) {
        notNull("id", id);
        notNull("callback", callback);
        final SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
@@ -471,7 +472,7 @@ final class GridFSBucketImpl implements GridFSBucket {
         executeRename(clientSession, id, newFilename, callback);
     }
 
-    private void executeRename(final ClientSession clientSession, final BsonValue id, final String newFilename,
+    private void executeRename(@Nullable final ClientSession clientSession, final BsonValue id, final String newFilename,
                        final SingleResultCallback<Void> callback) {
         notNull("id", id);
         notNull("newFilename", newFilename);
@@ -511,7 +512,7 @@ final class GridFSBucketImpl implements GridFSBucket {
         executeDrop(clientSession, callback);
     }
 
-    private void executeDrop(final ClientSession clientSession, final SingleResultCallback<Void> callback) {
+    private void executeDrop(@Nullable final ClientSession clientSession, final SingleResultCallback<Void> callback) {
         notNull("callback", callback);
         final SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
         SingleResultCallback<Void> dropFileCallback = new SingleResultCallback<Void>() {
@@ -535,11 +536,11 @@ final class GridFSBucketImpl implements GridFSBucket {
         }
     }
 
-    private GridFSFindIterable createGridFSFindIterable(final ClientSession clientSession, final Bson filter) {
+    private GridFSFindIterable createGridFSFindIterable(@Nullable final ClientSession clientSession, @Nullable final Bson filter) {
         return new GridFSFindIterableImpl(createFindIterable(clientSession, filter));
     }
 
-    private GridFSFindIterable createGridFSFindIterable(final ClientSession clientSession, final String filename,
+    private GridFSFindIterable createGridFSFindIterable(@Nullable final ClientSession clientSession, final String filename,
                                                         final GridFSDownloadOptions options) {
         int revision = options.getRevision();
         int skip;
@@ -556,7 +557,7 @@ final class GridFSBucketImpl implements GridFSBucket {
                 .sort(new Document("uploadDate", sort));
     }
 
-    private FindIterable<GridFSFile> createFindIterable(final ClientSession clientSession, final Bson filter) {
+    private FindIterable<GridFSFile> createFindIterable(@Nullable final ClientSession clientSession, @Nullable final Bson filter) {
         FindIterable<GridFSFile> findIterable;
         if (clientSession != null) {
             findIterable = filesCollection.find(clientSession);

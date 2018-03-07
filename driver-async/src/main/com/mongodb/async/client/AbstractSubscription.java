@@ -16,6 +16,8 @@
 
 package com.mongodb.async.client;
 
+import com.mongodb.lang.Nullable;
+
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -103,14 +105,14 @@ abstract class AbstractSubscription<TResult> implements Subscription {
         return requested;
     }
 
-    void addToQueue(final TResult result) {
+    void addToQueue(@Nullable final TResult result) {
         if (result != null) {
             resultsQueue.add(result);
         }
         tryProcessResultsQueue();
     }
 
-    void addToQueue(final List<TResult> results) {
+    void addToQueue(@Nullable final List<TResult> results) {
         if (results != null) {
             resultsQueue.addAll(results);
         }

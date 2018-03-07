@@ -23,6 +23,7 @@ import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.ChangeStreamOperation;
@@ -52,7 +53,7 @@ final class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeSt
     private Collation collation;
 
 
-    ChangeStreamIterableImpl(final ClientSession clientSession, final MongoNamespace namespace, final CodecRegistry codecRegistry,
+    ChangeStreamIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final CodecRegistry codecRegistry,
                              final ReadPreference readPreference, final ReadConcern readConcern, final AsyncOperationExecutor executor,
                              final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
         super(clientSession, executor, readConcern, readPreference);
@@ -88,7 +89,7 @@ final class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeSt
     }
 
     @Override
-    public ChangeStreamIterable<TResult> collation(final Collation collation) {
+    public ChangeStreamIterable<TResult> collation(@Nullable final Collation collation) {
         this.collation = notNull("collation", collation);
         return this;
     }

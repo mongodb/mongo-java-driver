@@ -24,6 +24,7 @@ import com.mongodb.async.client.MongoCollection;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
 import org.bson.Document;
 import org.bson.types.Binary;
@@ -62,7 +63,7 @@ final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
     private byte[] buffer = null;
 
 
-    GridFSDownloadStreamImpl(final ClientSession clientSession, final GridFSFindIterable fileInfoIterable,
+    GridFSDownloadStreamImpl(@Nullable final ClientSession clientSession, final GridFSFindIterable fileInfoIterable,
                              final MongoCollection<Document> chunksCollection) {
         this.clientSession = clientSession;
         this.fileInfoIterable = notNull("file information", fileInfoIterable);

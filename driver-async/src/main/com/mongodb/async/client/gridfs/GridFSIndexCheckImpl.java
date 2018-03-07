@@ -22,6 +22,7 @@ import com.mongodb.async.client.ListIndexesIterable;
 import com.mongodb.async.client.MongoCollection;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.model.IndexOptions;
+import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
 import org.bson.Document;
 
@@ -36,7 +37,7 @@ final class GridFSIndexCheckImpl implements GridFSIndexCheck {
     private final MongoCollection<GridFSFile> filesCollection;
     private final MongoCollection<Document> chunksCollection;
 
-    GridFSIndexCheckImpl(final ClientSession clientSession, final MongoCollection<GridFSFile> filesCollection,
+    GridFSIndexCheckImpl(@Nullable final ClientSession clientSession, final MongoCollection<GridFSFile> filesCollection,
                          final MongoCollection<Document> chunksCollection) {
         this.clientSession = clientSession;
         this.filesCollection = notNull("files collection", filesCollection);

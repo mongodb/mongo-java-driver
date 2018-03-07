@@ -26,6 +26,7 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateViewOptions;
 import com.mongodb.client.model.IndexOptionDefaults;
 import com.mongodb.client.model.ValidationOptions;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CreateCollectionOperation;
@@ -121,7 +122,7 @@ class MongoDatabaseImpl implements MongoDatabase {
         return createListCollectionNamesIterable(clientSession);
     }
 
-    private MongoIterable<String> createListCollectionNamesIterable(final ClientSession clientSession) {
+    private MongoIterable<String> createListCollectionNamesIterable(@Nullable final ClientSession clientSession) {
         return createListCollectionsIterable(clientSession, BsonDocument.class)
                 .map(new Function<BsonDocument, String>() {
                     @Override
@@ -152,7 +153,7 @@ class MongoDatabaseImpl implements MongoDatabase {
         return createListCollectionsIterable(clientSession, resultClass);
     }
 
-    private <TResult> ListCollectionsIterable<TResult> createListCollectionsIterable(final ClientSession clientSession,
+    private <TResult> ListCollectionsIterable<TResult> createListCollectionsIterable(@Nullable final ClientSession clientSession,
                                                                                      final Class<TResult> resultClass) {
         return new ListCollectionsIterableImpl<TResult>(clientSession, name, resultClass, codecRegistry, ReadPreference.primary(),
                 executor);
@@ -215,8 +216,9 @@ class MongoDatabaseImpl implements MongoDatabase {
         executeCommand(clientSession, command, readPreference, resultClass, callback);
     }
 
-    private <TResult> void executeCommand(final ClientSession clientSession, final Bson command, final ReadPreference readPreference,
-                                          final Class<TResult> resultClass, final SingleResultCallback<TResult> callback) {
+    private <TResult> void executeCommand(@Nullable final ClientSession clientSession, final Bson command,
+                                          final ReadPreference readPreference, final Class<TResult> resultClass,
+                                          final SingleResultCallback<TResult> callback) {
         notNull("command", command);
         notNull("readPreference", readPreference);
         executor.execute(new CommandReadOperation<TResult>(getName(), toBsonDocument(command), codecRegistry.get(resultClass)),
@@ -234,7 +236,7 @@ class MongoDatabaseImpl implements MongoDatabase {
         executeDrop(clientSession, callback);
     }
 
-    private void executeDrop(final ClientSession clientSession, final SingleResultCallback<Void> callback) {
+    private void executeDrop(@Nullable final ClientSession clientSession, final SingleResultCallback<Void> callback) {
         executor.execute(new DropDatabaseOperation(name, writeConcern), clientSession, callback);
     }
 
@@ -263,7 +265,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     @SuppressWarnings("deprecation")
-    private void executeCreateCollection(final ClientSession clientSession, final String collectionName,
+    private void executeCreateCollection(@Nullable final ClientSession clientSession, final String collectionName,
                                          final CreateCollectionOptions options, final SingleResultCallback<Void> callback) {
         CreateCollectionOperation operation = new CreateCollectionOperation(name, collectionName, writeConcern)
                 .capped(options.isCapped())
@@ -317,7 +319,7 @@ class MongoDatabaseImpl implements MongoDatabase {
         executeCreateView(clientSession, viewName, viewOn, pipeline, createViewOptions, callback);
     }
 
-    private void executeCreateView(final ClientSession clientSession, final String viewName, final String viewOn,
+    private void executeCreateView(@Nullable final ClientSession clientSession, final String viewName, final String viewOn,
                                    final List<? extends Bson> pipeline, final CreateViewOptions createViewOptions,
                                    final SingleResultCallback<Void> callback) {
         notNull("createViewOptions", createViewOptions);
@@ -337,7 +339,8 @@ class MongoDatabaseImpl implements MongoDatabase {
         return bsonDocumentPipeline;
     }
 
-    private BsonDocument toBsonDocument(final Bson document) {
+    @Nullable
+    private BsonDocument toBsonDocument(@Nullable final Bson document) {
         return document == null ? null : document.toBsonDocument(BsonDocument.class, codecRegistry);
     }
 }

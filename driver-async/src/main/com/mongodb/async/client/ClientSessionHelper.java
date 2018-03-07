@@ -24,6 +24,7 @@ import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.session.ClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
+import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
 import com.mongodb.session.ClientSession;
 
@@ -40,7 +41,7 @@ class ClientSessionHelper {
         this.serverSessionPool = serverSessionPool;
     }
 
-    void withClientSession(final ClientSession clientSessionFromOperation, final SingleResultCallback<ClientSession> callback) {
+    void withClientSession(@Nullable final ClientSession clientSessionFromOperation, final SingleResultCallback<ClientSession> callback) {
         if (clientSessionFromOperation != null) {
             isTrue("ClientSession from same MongoClient", clientSessionFromOperation.getOriginator() == mongoClient);
             callback.onResult(clientSessionFromOperation, null);

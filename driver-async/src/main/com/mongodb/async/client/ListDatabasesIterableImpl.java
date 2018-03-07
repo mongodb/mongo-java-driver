@@ -20,6 +20,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.internal.operation.AsyncOperations;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.session.ClientSession;
@@ -40,8 +41,9 @@ final class ListDatabasesIterableImpl<TResult> extends MongoIterableImpl<TResult
     private Bson filter;
     private Boolean nameOnly;
 
-    ListDatabasesIterableImpl(final ClientSession clientSession, final Class<TResult> resultClass, final CodecRegistry codecRegistry,
-                              final ReadPreference readPreference, final AsyncOperationExecutor executor) {
+    ListDatabasesIterableImpl(@Nullable final ClientSession clientSession, final Class<TResult> resultClass,
+                              final CodecRegistry codecRegistry, final ReadPreference readPreference,
+                              final AsyncOperationExecutor executor) {
         super(clientSession, executor, ReadConcern.DEFAULT, readPreference); // TODO: read concern?
         this.operations = new AsyncOperations<BsonDocument>(BsonDocument.class, readPreference, codecRegistry, ReadConcern.DEFAULT);
         this.resultClass = notNull("clazz", resultClass);
@@ -62,13 +64,13 @@ final class ListDatabasesIterableImpl<TResult> extends MongoIterableImpl<TResult
     }
 
     @Override
-    public ListDatabasesIterable<TResult> filter(final Bson filter) {
+    public ListDatabasesIterable<TResult> filter(@Nullable final Bson filter) {
         this.filter = filter;
         return this;
     }
 
     @Override
-    public ListDatabasesIterable<TResult> nameOnly(final Boolean nameOnly) {
+    public ListDatabasesIterable<TResult> nameOnly(@Nullable final Boolean nameOnly) {
         this.nameOnly = nameOnly;
         return this;
     }

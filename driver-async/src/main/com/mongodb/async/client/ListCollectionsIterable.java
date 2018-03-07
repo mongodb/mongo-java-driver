@@ -16,6 +16,7 @@
 
 package com.mongodb.async.client;
 
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
@@ -35,7 +36,7 @@ public interface ListCollectionsIterable<TResult> extends MongoIterable<TResult>
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Filter
      */
-    ListCollectionsIterable<TResult> filter(Bson filter);
+    ListCollectionsIterable<TResult> filter(@Nullable Bson filter);
 
     /**
      * Sets the maximum execution time on the server for this operation.
