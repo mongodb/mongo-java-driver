@@ -54,7 +54,7 @@ final class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeSt
     private Collation collation;
 
 
-    ChangeStreamIterableImpl(final ClientSession clientSession, final MongoNamespace namespace, final CodecRegistry codecRegistry,
+    ChangeStreamIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final CodecRegistry codecRegistry,
                              final ReadPreference readPreference, final ReadConcern readConcern, final OperationExecutor executor,
                              final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
         super(clientSession, executor, readConcern, readPreference);

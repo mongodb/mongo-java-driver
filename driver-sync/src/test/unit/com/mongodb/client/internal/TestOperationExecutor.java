@@ -17,6 +17,7 @@
 package com.mongodb.client.internal;
 
 import com.mongodb.ReadPreference;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
 import com.mongodb.session.ClientSession;
@@ -50,7 +51,7 @@ public class TestOperationExecutor implements OperationExecutor {
     }
 
     @Override
-    public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ClientSession session) {
+    public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, @Nullable final ClientSession session) {
         clientSessions.add(session);
         readOperations.add(operation);
         readPreferences.add(readPreference);
@@ -58,7 +59,7 @@ public class TestOperationExecutor implements OperationExecutor {
     }
 
     @Override
-    public <T> T execute(final WriteOperation<T> operation, final ClientSession session) {
+    public <T> T execute(final WriteOperation<T> operation, @Nullable final ClientSession session) {
         clientSessions.add(session);
         writeOperations.add(operation);
         return getResponse();
@@ -77,14 +78,17 @@ public class TestOperationExecutor implements OperationExecutor {
         return clientSessions.remove(0);
     }
 
+    @Nullable
     public ReadOperation getReadOperation() {
         return readOperations.isEmpty() ? null : readOperations.remove(0);
     }
 
+    @Nullable
     public ReadPreference getReadPreference() {
         return readPreferences.isEmpty() ? null : readPreferences.remove(0);
     }
 
+    @Nullable
     public WriteOperation getWriteOperation() {
        return writeOperations.isEmpty() ? null : writeOperations.remove(0);
     }

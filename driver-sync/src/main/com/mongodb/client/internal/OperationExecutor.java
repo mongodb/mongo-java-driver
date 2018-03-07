@@ -17,6 +17,7 @@
 package com.mongodb.client.internal;
 
 import com.mongodb.ReadPreference;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
 import com.mongodb.session.ClientSession;
@@ -55,7 +56,7 @@ public interface OperationExecutor {
      * @param session the session to associate this operation with
      * @return the result of executing the operation.
      */
-    <T> T execute(ReadOperation<T> operation, ReadPreference readPreference, ClientSession session);
+    <T> T execute(ReadOperation<T> operation, ReadPreference readPreference, @Nullable ClientSession session);
 
     /**
      * Execute the write operation.
@@ -65,5 +66,5 @@ public interface OperationExecutor {
      * @param <T> the operations result type.
      * @return the result of executing the operation.
      */
-    <T> T execute(WriteOperation<T> operation, ClientSession session);
+    <T> T execute(WriteOperation<T> operation, @Nullable ClientSession session);
 }

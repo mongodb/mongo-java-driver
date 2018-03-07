@@ -66,7 +66,7 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     private Boolean bypassDocumentValidation;
     private Collation collation;
 
-    MapReduceIterableImpl(final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
+    MapReduceIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
                           final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
                           final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
                           final String mapFunction, final String reduceFunction) {
@@ -207,8 +207,9 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
             String dbName = databaseName != null ? databaseName : namespace.getDatabaseName();
 
             FindOptions findOptions = new FindOptions().collation(collation);
-            if (getBatchSize() != null) {
-                findOptions.batchSize(getBatchSize());
+            Integer batchSize = getBatchSize();
+            if (batchSize != null) {
+                findOptions.batchSize(batchSize);
             }
             return operations.find(new MongoNamespace(dbName, collectionName), new BsonDocument(), resultClass, findOptions);
         }
