@@ -94,6 +94,12 @@
         <Bug pattern="CN_IDIOM_NO_SUPER_CALL"/>
     </Match>
 
+    <Match>
+        <Class name="org.bson.codecs.jsr310.Jsr310CodecProvider"/>
+        <Bug pattern="DE_MIGHT_IGNORE"/>
+    </Match>
+
+
     <!-- Test exclusions -->
     <!-- All bugs in test classes, except for JUnit-specific bugs -->
     <Match>

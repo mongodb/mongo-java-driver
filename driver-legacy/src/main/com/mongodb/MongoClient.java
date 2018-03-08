@@ -91,6 +91,7 @@ public class MongoClient extends Mongo implements Closeable {
      *     <li>{@link org.bson.codecs.MapCodecProvider}</li>
      *     <li>{@link com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider}</li>
      *     <li>{@link com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider}</li>
+     *     <li>{@link org.bson.codecs.jsr310.Jsr310CodecProvider}</li>
      * </ul>
      *
      * @return the default codec registry
