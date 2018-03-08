@@ -67,6 +67,7 @@ import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static java.util.Arrays.asList
 
+@IgnoreIf({ serverVersionAtLeast(3, 7) })
 class UserOperationsSpecification extends OperationFunctionalSpecification {
     def credential = createCredential('\u53f0\u5317', databaseName, 'Ta\u0301ibe\u030Ci'.toCharArray())
 

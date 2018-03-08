@@ -28,7 +28,9 @@ import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.MongoCredential.createMongoCRCredential
 
+@IgnoreIf({ serverVersionAtLeast(3, 7) })
 class DropUserOperationSpecification extends OperationFunctionalSpecification {
+
     def 'should delete user without error'() {
         given:
         def credential = createMongoCRCredential('userToDrop', databaseName, '123'.toCharArray())
