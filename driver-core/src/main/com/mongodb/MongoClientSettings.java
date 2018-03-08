@@ -33,6 +33,7 @@ import org.bson.codecs.IterableCodecProvider;
 import org.bson.codecs.MapCodecProvider;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.jsr310.Jsr310CodecProvider;
 
 import java.nio.charset.Charset;
 import java.util.ArrayList;
@@ -62,7 +63,8 @@ public final class MongoClientSettings {
                     new IterableCodecProvider(new DocumentToDBRefTransformer()),
                     new MapCodecProvider(new DocumentToDBRefTransformer()),
                     new GeoJsonCodecProvider(),
-                    new GridFSFileCodecProvider()));
+                    new GridFSFileCodecProvider(),
+                    new Jsr310CodecProvider()));
 
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;
@@ -95,6 +97,7 @@ public final class MongoClientSettings {
      * <li>{@link org.bson.codecs.MapCodecProvider}</li>
      * <li>{@link com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider}</li>
      * <li>{@link com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider}</li>
+     * <li>{@link org.bson.codecs.jsr310.Jsr310CodecProvider}</li>
      * </ul>
      *
      * @return the default codec registry
