@@ -323,7 +323,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         readConcern << [ReadConcern.DEFAULT, ReadConcern.LOCAL, ReadConcern.MAJORITY]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) || !isAuthenticated() })
+    @IgnoreIf({ serverVersionAtLeast(3, 7) || !serverVersionAtLeast(3, 6) || !isAuthenticated() })
     @SuppressWarnings('deprecation')
     def 'should not use a default session when there is more than one authenticated user'() {
         given:
