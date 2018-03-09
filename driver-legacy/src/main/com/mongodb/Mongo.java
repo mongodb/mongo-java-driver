@@ -36,6 +36,7 @@ import com.mongodb.event.ClusterListener;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.internal.thread.DaemonThreadFactory;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.CurrentOpOperation;
 import com.mongodb.operation.FsyncUnlockOperation;
@@ -287,7 +288,7 @@ public class Mongo {
     }
 
     Mongo(final ServerAddress serverAddress, final List<MongoCredential> credentialsList, final MongoClientOptions options,
-          final MongoDriverInformation mongoDriverInformation) {
+          @Nullable final MongoDriverInformation mongoDriverInformation) {
         this(createCluster(serverAddress, credentialsList, options, mongoDriverInformation), options, credentialsList);
     }
 
@@ -296,7 +297,7 @@ public class Mongo {
     }
 
     Mongo(final List<ServerAddress> seedList, final List<MongoCredential> credentialsList, final MongoClientOptions options,
-          final MongoDriverInformation mongoDriverInformation) {
+          @Nullable final MongoDriverInformation mongoDriverInformation) {
         this(createCluster(seedList, credentialsList, options, mongoDriverInformation), options, credentialsList);
     }
 
@@ -304,7 +305,7 @@ public class Mongo {
         this(mongoURI, null);
     }
 
-    Mongo(final MongoClientURI mongoURI, final MongoDriverInformation mongoDriverInformation) {
+    Mongo(final MongoClientURI mongoURI, @Nullable final MongoDriverInformation mongoDriverInformation) {
         this(createCluster(mongoURI, mongoDriverInformation), mongoURI.getOptions(),
                 mongoURI.getCredentials() != null ? asList(mongoURI.getCredentials()) : Collections.<MongoCredential>emptyList());
     }
@@ -313,9 +314,9 @@ public class Mongo {
         this.cluster = cluster;
         this.serverSessionPool = new ServerSessionPool(cluster);
         this.options = options;
-        this.readPreference = options.getReadPreference() != null ? options.getReadPreference() : primary();
-        this.writeConcern = options.getWriteConcern() != null ? options.getWriteConcern() : WriteConcern.UNACKNOWLEDGED;
-        this.readConcern = options.getReadConcern() != null ? options.getReadConcern() : ReadConcern.DEFAULT;
+        this.readPreference = options.getReadPreference();
+        this.writeConcern = options.getWriteConcern();
+        this.readConcern = options.getReadConcern();
         this.optionHolder = new Bytes.OptionHolder(null);
         this.credentialsList = unmodifiableList(credentialsList);
         this.delegate = new MongoClientDelegate(cluster, credentialsList, this);
@@ -413,6 +414,7 @@ public class Mongo {
      * @return the address
      */
     @SuppressWarnings("deprecation")
+    @Nullable
     public ServerAddress getAddress() {
         ClusterDescription description = getClusterDescription();
         if (description.getPrimaries().isEmpty()) {
@@ -440,6 +442,7 @@ public class Mongo {
      *
      * @return replica set status information
      */
+    @Nullable
     public ReplicaSetStatus getReplicaSetStatus() {
         ClusterDescription clusterDescription = getClusterDescription();
         return clusterDescription.getType() == REPLICA_SET && clusterDescription.getConnectionMode() == MULTIPLE
@@ -681,6 +684,7 @@ public class Mongo {
      *
      * @return server address in a host:port form
      */
+    @Nullable
     public String getConnectPoint() {
         ServerAddress master = getAddress();
         return master != null ? String.format("%s:%d", master.getHost(), master.getPort()) : null;
@@ -692,7 +696,7 @@ public class Mongo {
                                  .build();
     }
 
-    private static Cluster createCluster(final MongoClientURI mongoURI, final MongoDriverInformation mongoDriverInformation) {
+    private static Cluster createCluster(final MongoClientURI mongoURI, @Nullable final MongoDriverInformation mongoDriverInformation) {
         List<MongoCredential> credentialList = mongoURI.getCredentials() != null
                                                ? singletonList(mongoURI.getCredentials())
                                                : Collections.<MongoCredential>emptyList();
@@ -712,19 +716,19 @@ public class Mongo {
 
     private static Cluster createCluster(final List<ServerAddress> seedList,
                                          final List<MongoCredential> credentialsList, final MongoClientOptions options,
-                                         final MongoDriverInformation mongoDriverInformation) {
+                                         @Nullable final MongoDriverInformation mongoDriverInformation) {
         return createCluster(getClusterSettings(seedList, options, ClusterConnectionMode.MULTIPLE), credentialsList, options,
                 mongoDriverInformation);
     }
 
     private static Cluster createCluster(final ServerAddress serverAddress, final List<MongoCredential> credentialsList,
-                                         final MongoClientOptions options, final MongoDriverInformation mongoDriverInformation) {
+                                         final MongoClientOptions options, @Nullable final MongoDriverInformation mongoDriverInformation) {
         return createCluster(getClusterSettings(singletonList(serverAddress), options, getSingleServerClusterMode(options)),
                 credentialsList, options, mongoDriverInformation);
     }
 
     private static Cluster createCluster(final ClusterSettings clusterSettings, final List<MongoCredential> credentialsList,
-                                         final MongoClientOptions options, final MongoDriverInformation mongoDriverInformation) {
+                                         final MongoClientOptions options, @Nullable final MongoDriverInformation mongoDriverInformation) {
         return new DefaultClusterFactory().createCluster(clusterSettings,
                 options.getServerSettings(),
                 options.getConnectionPoolSettings(),
@@ -790,6 +794,7 @@ public class Mongo {
         return delegate.getOperationExecutor();
     }
 
+    @Nullable
     ClientSession createClientSession(final ClientSessionOptions options) {
         return delegate.createClientSession(options);
     }

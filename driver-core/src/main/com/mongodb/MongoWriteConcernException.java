@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.bulk.WriteConcernError;
+import com.mongodb.lang.Nullable;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -51,7 +52,7 @@ public class MongoWriteConcernException extends MongoServerException {
      * @param serverAddress     the non-null server address
      * @since 3.2
      */
-    public MongoWriteConcernException(final WriteConcernError writeConcernError, final WriteConcernResult writeConcernResult,
+    public MongoWriteConcernException(final WriteConcernError writeConcernError, @Nullable final WriteConcernResult writeConcernResult,
                                       final ServerAddress serverAddress) {
         super(writeConcernError.getCode(), writeConcernError.getMessage(), serverAddress);
         this.writeConcernResult = writeConcernResult;

@@ -23,6 +23,7 @@ import com.mongodb.client.internal.OperationExecutor;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.DBCollectionCountOptions;
 import com.mongodb.client.model.DBCollectionFindOptions;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.FindOperation;
 import org.bson.codecs.Decoder;
 
@@ -90,7 +91,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @param fields         keys to return from the query
      * @param readPreference the read preference for this query
      */
-    public DBCursor(final DBCollection collection, final DBObject query, final DBObject fields, final ReadPreference readPreference) {
+    public DBCursor(final DBCollection collection, final DBObject query, @Nullable final DBObject fields,
+                    final ReadPreference readPreference) {
         this(collection, query, new DBCollectionFindOptions().projection(fields).readPreference(readPreference));
 
         addOption(collection.getOptions());
@@ -100,11 +102,11 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         }
     }
 
-    DBCursor(final DBCollection collection, final DBObject filter, final DBCollectionFindOptions findOptions) {
+    DBCursor(final DBCollection collection, @Nullable final DBObject filter, final DBCollectionFindOptions findOptions) {
         this(collection, filter, findOptions, collection.getExecutor(), collection.getDBDecoderFactory(), collection.getObjectCodec());
     }
 
-    private DBCursor(final DBCollection collection, final DBObject filter, final DBCollectionFindOptions findOptions,
+    private DBCursor(final DBCollection collection, @Nullable final DBObject filter, final DBCollectionFindOptions findOptions,
                      final OperationExecutor executor, final DBDecoderFactory decoderFactory, final Decoder<DBObject> decoder) {
         this.collection = notNull("collection", collection);
         this.filter = filter;
@@ -181,6 +183,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @throws IllegalArgumentException if the cursor is not tailable
      * @mongodb.driver.manual /core/cursors/#cursor-batches Cursor Batches
      */
+    @Nullable
     public DBObject tryNext() {
         if (cursor == null) {
             FindOperation<DBObject> operation = getQueryOperation(decoder);
@@ -289,7 +292,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return {@code this} so calls can be chained
      * @mongodb.driver.manual reference/operator Special Operators
      */
-    public DBCursor addSpecial(final String name, final Object value) {
+    public DBCursor addSpecial(@Nullable final String name, @Nullable final Object value) {
         if (name == null || value == null) {
             return this;
         }
@@ -683,6 +686,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return the first matching document
      * @since 2.12
      */
+    @Nullable
     public DBObject one() {
         DBCursor findOneCursor = copy().limit(-1);
         try {
@@ -762,6 +766,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     @Override
+    @Nullable
     public ServerAddress getServerAddress() {
         if (cursor != null) {
             return cursor.getServerAddress();
@@ -890,7 +895,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         return collection.getDB().getMongo().getMongoClientOptions().isCursorFinalizerEnabled();
     }
 
-    private void setServerCursorOnFinalizer(final ServerCursor serverCursor) {
+    private void setServerCursorOnFinalizer(@Nullable final ServerCursor serverCursor) {
         if (optionalFinalizer != null) {
             optionalFinalizer.setServerCursor(serverCursor);
         }
@@ -931,10 +936,11 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
 
         DBObject next = cursor.next();
         setServerCursorOnFinalizer(cursor.getServerCursor());
-        return currentObject(next);
+        return currentObjectNonNull(next);
     }
 
-    private DBObject currentObject(final DBObject newCurrentObject){
+    @Nullable
+    private DBObject currentObject(@Nullable final DBObject newCurrentObject){
         if (newCurrentObject != null) {
             currentObject = newCurrentObject;
             numSeen++;
@@ -946,7 +952,18 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         return newCurrentObject;
     }
 
-    private static DBObject lookupSuitableHints(final DBObject query, final List<DBObject> hints) {
+    private DBObject currentObjectNonNull(final DBObject newCurrentObject){
+        currentObject = newCurrentObject;
+        numSeen++;
+
+        if (findOptions.getProjection() != null && !(findOptions.getProjection().keySet().isEmpty())) {
+            currentObject.markAsPartialObject();
+        }
+        return newCurrentObject;
+    }
+
+    @Nullable
+    private static DBObject lookupSuitableHints(final DBObject query, @Nullable final List<DBObject> hints) {
         if (hints == null) {
             return null;
         }
@@ -976,7 +993,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
             this.mongo = notNull("mongo", mongo);
         }
 
-        private void setServerCursor(final ServerCursor serverCursor) {
+        private void setServerCursor(@Nullable final ServerCursor serverCursor) {
             this.serverCursor = serverCursor;
         }
 

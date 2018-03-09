@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.annotations.Immutable;
+import com.mongodb.lang.Nullable;
 
 import java.io.Serializable;
 import java.net.InetAddress;
@@ -45,7 +46,7 @@ public class ServerAddress implements Serializable {
      *
      * @param host hostname
      */
-    public ServerAddress(final String host) {
+    public ServerAddress(@Nullable final String host) {
         this(host, defaultPort());
     }
 
@@ -83,11 +84,8 @@ public class ServerAddress implements Serializable {
      * @param host hostname
      * @param port mongod port
      */
-    public ServerAddress(final String host, final int port) {
-        String hostToUse = host;
-        if (hostToUse == null) {
-            hostToUse = defaultHost();
-        }
+    public ServerAddress(@Nullable final String host, final int port) {
+        String hostToUse = host == null ? defaultHost() : host;
         hostToUse = hostToUse.trim();
         if (hostToUse.length() == 0) {
             hostToUse = defaultHost();
@@ -96,20 +94,20 @@ public class ServerAddress implements Serializable {
         int portToUse = port;
 
         if (hostToUse.startsWith("[")) {
-            int idx = host.indexOf("]");
+            int idx = hostToUse.indexOf("]");
             if (idx == -1) {
                 throw new IllegalArgumentException("an IPV6 address must be encosed with '[' and ']'"
                                                    + " according to RFC 2732.");
             }
 
-            int portIdx = host.indexOf("]:");
+            int portIdx = hostToUse.indexOf("]:");
             if (portIdx != -1) {
                 if (port != defaultPort()) {
                     throw new IllegalArgumentException("can't specify port in construct and via host");
                 }
-                portToUse = Integer.parseInt(host.substring(portIdx + 2));
+                portToUse = Integer.parseInt(hostToUse.substring(portIdx + 2));
             }
-            hostToUse = host.substring(1, idx);
+            hostToUse = hostToUse.substring(1, idx);
         } else {
             int idx = hostToUse.indexOf(":");
             int lastIdx = hostToUse.lastIndexOf(":");

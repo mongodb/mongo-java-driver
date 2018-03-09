@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.MapReduceBatchCursor;
 import com.mongodb.operation.MapReduceStatistics;
 
@@ -123,6 +124,7 @@ public class MapReduceOutput {
      *
      * @return the name of the collection that the map reduce results are stored in
      */
+    @Nullable
     public final String getCollectionName() {
         return collection == null ? null : collection.getName();
     }

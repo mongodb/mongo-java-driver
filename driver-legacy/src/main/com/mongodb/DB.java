@@ -24,6 +24,7 @@ import com.mongodb.client.model.DBCreateViewOptions;
 import com.mongodb.client.model.ValidationAction;
 import com.mongodb.client.model.ValidationLevel;
 import com.mongodb.connection.BufferProvider;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
@@ -299,7 +300,7 @@ public class DB {
      * @throws MongoException for all other failures
      * @mongodb.driver.manual reference/method/db.createCollection/ createCollection()
      */
-    public DBCollection createCollection(final String collectionName, final DBObject options) {
+    public DBCollection createCollection(final String collectionName, @Nullable final DBObject options) {
         if (options != null) {
             try {
                 executor.execute(getCreateCollectionOperation(collectionName, options));
@@ -493,7 +494,7 @@ public class DB {
      * @mongodb.driver.manual tutorial/use-database-commands Commands
      * @since 2.12
      */
-    public CommandResult command(final DBObject command, final ReadPreference readPreference, final DBEncoder encoder) {
+    public CommandResult command(final DBObject command, final ReadPreference readPreference, @Nullable final DBEncoder encoder) {
         try {
             return executeCommand(wrap(command, encoder), getCommandReadPreference(command, readPreference));
         } catch (MongoCommandException ex) {
@@ -754,7 +755,7 @@ public class DB {
         return new BsonDocumentWrapper<DBObject>(document, commandCodec);
     }
 
-    private BsonDocument wrap(final DBObject document, final DBEncoder encoder) {
+    private BsonDocument wrap(final DBObject document, @Nullable final DBEncoder encoder) {
         if (encoder == null) {
             return wrap(document);
         } else {
@@ -770,7 +771,7 @@ public class DB {
      * @return the read preference to use for the given command.  It will never return {@code null}.
      * @see com.mongodb.ReadPreference
      */
-    ReadPreference getCommandReadPreference(final DBObject command, final ReadPreference requestedPreference) {
+    ReadPreference getCommandReadPreference(final DBObject command, @Nullable final ReadPreference requestedPreference) {
         String comString = command.keySet().iterator().next().toLowerCase();
         boolean primaryRequired = !OBEDIENT_COMMANDS.contains(comString);
 

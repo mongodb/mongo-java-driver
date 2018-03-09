@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
+
 import java.util.List;
 
 
@@ -73,6 +75,7 @@ public class MongoURI {
      *
      * @return the username
      */
+    @Nullable
     public String getUsername() {
         return proxied.getUsername();
     }
@@ -82,6 +85,7 @@ public class MongoURI {
      *
      * @return the password
      */
+    @Nullable
     public char[] getPassword() {
         return proxied.getPassword();
     }
@@ -100,6 +104,7 @@ public class MongoURI {
      *
      * @return the database name
      */
+    @Nullable
     public String getDatabase() {
         return proxied.getDatabase();
     }
@@ -109,6 +114,7 @@ public class MongoURI {
      *
      * @return the collection name
      */
+    @Nullable
     public String getCollection() {
         return proxied.getCollection();
     }
@@ -119,6 +125,7 @@ public class MongoURI {
      * @since 2.11.0
      * @return the MongoCredential for conneting to MongoDB servers.
      */
+    @Nullable
     public MongoCredential getCredentials() {
         return proxied.getCredentials();
     }
@@ -153,7 +160,7 @@ public class MongoURI {
      * @throws MongoException if there's a failure
      */
     public DB connectDB() {
-        return connect().getDB(getDatabase());
+        return connect().getDB(getDatabaseNonNull());
     }
 
     /**
@@ -163,7 +170,7 @@ public class MongoURI {
      * @return the database specified in this URI
      */
     public DB connectDB(final Mongo mongo) {
-        return mongo.getDB(getDatabase());
+        return mongo.getDB(getDatabaseNonNull());
     }
 
     /**
@@ -173,7 +180,7 @@ public class MongoURI {
      * @return the collection specified in this URI
      */
     public DBCollection connectCollection(final DB db) {
-        return db.getCollection(getCollection());
+        return db.getCollection(getCollectionNonNull());
     }
 
     /**
@@ -183,7 +190,7 @@ public class MongoURI {
      * @return the collection specified in this URI
      */
     public DBCollection connectCollection(final Mongo mongo) {
-        return connectDB(mongo).getCollection(getCollection());
+        return connectDB(mongo).getCollection(getCollectionNonNull());
     }
 
     @Override
@@ -194,4 +201,21 @@ public class MongoURI {
     MongoClientURI toClientURI() {
         return proxied;
     }
+
+    private String getDatabaseNonNull() {
+        String database = getDatabase();
+        if (database == null) {
+            throw new MongoClientException("Database name can not be null in this context");
+        }
+        return database;
+    }
+
+    private String getCollectionNonNull() {
+        String collection = getCollection();
+        if (collection == null) {
+            throw new MongoClientException("Collection name can not be null in this context");
+        }
+        return collection;
+    }
+
 }

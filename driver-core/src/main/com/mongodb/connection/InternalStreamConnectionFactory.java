@@ -16,6 +16,7 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.AuthenticationMechanism;
 import com.mongodb.MongoCompressor;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoDriverInformation;
@@ -58,11 +59,12 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
     }
 
     private Authenticator createAuthenticator(final MongoCredential credential) {
-        if (credential.getAuthenticationMechanism() == null) {
+        AuthenticationMechanism authenticationMechanism = credential.getAuthenticationMechanism();
+        if (authenticationMechanism == null) {
             return new DefaultAuthenticator(credential);
         }
 
-        switch (credential.getAuthenticationMechanism()) {
+        switch (authenticationMechanism) {
             case GSSAPI:
                 return new GSSAPIAuthenticator(credential);
             case PLAIN:
@@ -74,7 +76,7 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
             case MONGODB_CR:
                 return new NativeAuthenticator(credential);
             default:
-                throw new IllegalArgumentException("Unsupported authentication mechanism " + credential.getAuthenticationMechanism());
+                throw new IllegalArgumentException("Unsupported authentication mechanism " + authenticationMechanism);
         }
     }
 }

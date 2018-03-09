@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
+
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -241,6 +243,7 @@ public class MongoClientURI {
      *
      * @return the username
      */
+    @Nullable
     public String getUsername() {
         return proxied.getUsername();
     }
@@ -250,6 +253,7 @@ public class MongoClientURI {
      *
      * @return the password
      */
+    @Nullable
     public char[] getPassword() {
         return proxied.getPassword();
     }
@@ -268,6 +272,7 @@ public class MongoClientURI {
      *
      * @return the database name
      */
+    @Nullable
     public String getDatabase() {
         return proxied.getDatabase();
     }
@@ -278,6 +283,7 @@ public class MongoClientURI {
      *
      * @return the collection name
      */
+    @Nullable
     public String getCollection() {
         return proxied.getCollection();
     }
@@ -296,6 +302,7 @@ public class MongoClientURI {
      *
      * @return the credentials
      */
+    @Nullable
     public MongoCredential getCredentials() {
         return proxied.getCredential();
     }
@@ -306,62 +313,80 @@ public class MongoClientURI {
      * @return the MongoClientOptions based on this URI.
      */
     public MongoClientOptions getOptions() {
-        if (proxied.getReadPreference() != null) {
-            builder.readPreference(proxied.getReadPreference());
+        ReadPreference readPreference = proxied.getReadPreference();
+        if (readPreference != null) {
+            builder.readPreference(readPreference);
         }
-        if (proxied.getReadConcern() != null) {
-            builder.readConcern(proxied.getReadConcern());
+        ReadConcern readConcern = proxied.getReadConcern();
+        if (readConcern != null) {
+            builder.readConcern(readConcern);
         }
-        if (proxied.getWriteConcern() != null) {
-            builder.writeConcern(proxied.getWriteConcern());
+        WriteConcern writeConcern = proxied.getWriteConcern();
+        if (writeConcern != null) {
+            builder.writeConcern(writeConcern);
         }
         if (proxied.getRetryWrites()) {
             builder.retryWrites(proxied.getRetryWrites());
         }
-        if (proxied.getMaxConnectionPoolSize() != null) {
-            builder.connectionsPerHost(proxied.getMaxConnectionPoolSize());
+        Integer maxConnectionPoolSize = proxied.getMaxConnectionPoolSize();
+        if (maxConnectionPoolSize != null) {
+            builder.connectionsPerHost(maxConnectionPoolSize);
         }
-        if (proxied.getMinConnectionPoolSize() != null) {
-            builder.minConnectionsPerHost(proxied.getMinConnectionPoolSize());
+        Integer integer = proxied.getMinConnectionPoolSize();
+        if (integer != null) {
+            builder.minConnectionsPerHost(integer);
         }
-        if (proxied.getMaxWaitTime() != null) {
-            builder.maxWaitTime(proxied.getMaxWaitTime());
+        Integer maxWaitTime = proxied.getMaxWaitTime();
+        if (maxWaitTime != null) {
+            builder.maxWaitTime(maxWaitTime);
         }
-        if (proxied.getThreadsAllowedToBlockForConnectionMultiplier() != null) {
-            builder.threadsAllowedToBlockForConnectionMultiplier(proxied.getThreadsAllowedToBlockForConnectionMultiplier());
+        Integer threadsAllowedToBlockForConnectionMultiplier = proxied.getThreadsAllowedToBlockForConnectionMultiplier();
+        if (threadsAllowedToBlockForConnectionMultiplier != null) {
+            builder.threadsAllowedToBlockForConnectionMultiplier(threadsAllowedToBlockForConnectionMultiplier);
         }
-        if (proxied.getMaxConnectionIdleTime() != null) {
-            builder.maxConnectionIdleTime(proxied.getMaxConnectionIdleTime());
+        Integer maxConnectionIdleTime = proxied.getMaxConnectionIdleTime();
+        if (maxConnectionIdleTime != null) {
+            builder.maxConnectionIdleTime(maxConnectionIdleTime);
         }
-        if (proxied.getMaxConnectionLifeTime() != null) {
-            builder.maxConnectionLifeTime(proxied.getMaxConnectionLifeTime());
+        Integer maxConnectionLifeTime = proxied.getMaxConnectionLifeTime();
+        if (maxConnectionLifeTime != null) {
+            builder.maxConnectionLifeTime(maxConnectionLifeTime);
         }
-        if (proxied.getSocketTimeout() != null) {
-            builder.socketTimeout(proxied.getSocketTimeout());
+        Integer socketTimeout = proxied.getSocketTimeout();
+        if (socketTimeout != null) {
+            builder.socketTimeout(socketTimeout);
         }
-        if (proxied.getConnectTimeout() != null) {
-            builder.connectTimeout(proxied.getConnectTimeout());
+        Integer connectTimeout = proxied.getConnectTimeout();
+        if (connectTimeout != null) {
+            builder.connectTimeout(connectTimeout);
         }
-        if (proxied.getRequiredReplicaSetName() != null) {
-            builder.requiredReplicaSetName(proxied.getRequiredReplicaSetName());
+        String requiredReplicaSetName = proxied.getRequiredReplicaSetName();
+        if (requiredReplicaSetName != null) {
+            builder.requiredReplicaSetName(requiredReplicaSetName);
         }
-        if (proxied.getSslEnabled() != null) {
-            builder.sslEnabled(proxied.getSslEnabled());
+        Boolean sslEnabled = proxied.getSslEnabled();
+        if (sslEnabled != null) {
+            builder.sslEnabled(sslEnabled);
         }
-        if (proxied.getSslInvalidHostnameAllowed() != null) {
-            builder.sslInvalidHostNameAllowed(proxied.getSslInvalidHostnameAllowed());
+        Boolean sslInvalidHostnameAllowed = proxied.getSslInvalidHostnameAllowed();
+        if (sslInvalidHostnameAllowed != null) {
+            builder.sslInvalidHostNameAllowed(sslInvalidHostnameAllowed);
         }
-        if (proxied.getServerSelectionTimeout() != null) {
-            builder.serverSelectionTimeout(proxied.getServerSelectionTimeout());
+        Integer serverSelectionTimeout = proxied.getServerSelectionTimeout();
+        if (serverSelectionTimeout != null) {
+            builder.serverSelectionTimeout(serverSelectionTimeout);
         }
-        if (proxied.getLocalThreshold() != null) {
-            builder.localThreshold(proxied.getLocalThreshold());
+        Integer localThreshold = proxied.getLocalThreshold();
+        if (localThreshold != null) {
+            builder.localThreshold(localThreshold);
         }
-        if (proxied.getHeartbeatFrequency() != null) {
-            builder.heartbeatFrequency(proxied.getHeartbeatFrequency());
+        Integer heartbeatFrequency = proxied.getHeartbeatFrequency();
+        if (heartbeatFrequency != null) {
+            builder.heartbeatFrequency(heartbeatFrequency);
         }
-        if (proxied.getApplicationName() != null) {
-            builder.applicationName(proxied.getApplicationName());
+        String applicationName = proxied.getApplicationName();
+        if (applicationName != null) {
+            builder.applicationName(applicationName);
         }
         builder.compressorList(proxied.getCompressorList());
 
@@ -382,13 +407,16 @@ public class MongoClientURI {
         if (!getHosts().equals(that.getHosts())) {
             return false;
         }
-        if (getDatabase() != null ? !getDatabase().equals(that.getDatabase()) : that.getDatabase() != null) {
+        String database = getDatabase();
+        if (database != null ? !database.equals(that.getDatabase()) : that.getDatabase() != null) {
             return false;
         }
-        if (getCollection() != null ? !getCollection().equals(that.getCollection()) : that.getCollection() != null) {
+        String collection = getCollection();
+        if (collection != null ? !collection.equals(that.getCollection()) : that.getCollection() != null) {
             return false;
         }
-        if (getCredentials() != null ? !getCredentials().equals(that.getCredentials()) : that.getCredentials() != null) {
+        MongoCredential credentials = getCredentials();
+        if (credentials != null ? !credentials.equals(that.getCredentials()) : that.getCredentials() != null) {
             return false;
         }
         if (!getOptions().equals(that.getOptions())) {
@@ -401,10 +429,17 @@ public class MongoClientURI {
     @Override
     public int hashCode() {
         int result = getOptions().hashCode();
-        result = 31 * result + (getCredentials() != null ? getCredentials().hashCode() : 0);
         result = 31 * result + getHosts().hashCode();
-        result = 31 * result + (getDatabase() != null ? getDatabase().hashCode() : 0);
-        result = 31 * result + (getCollection() != null ? getCollection().hashCode() : 0);
+
+        MongoCredential credentials = getCredentials();
+        result = 31 * result + (credentials != null ? credentials.hashCode() : 0);
+
+        String database = getDatabase();
+        result = 31 * result + (database != null ? database.hashCode() : 0);
+
+        String collection = getCollection();
+        result = 31 * result + (collection != null ? collection.hashCode() : 0);
+
         return result;
     }
 

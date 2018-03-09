@@ -41,10 +41,6 @@ public final class ServerCursor implements Serializable {
         if (id == 0) {
             throw new IllegalArgumentException();
         }
-        if (address == null) {
-            throw new IllegalArgumentException();
-        }
-
         this.id = id;
         this.address = address;
     }

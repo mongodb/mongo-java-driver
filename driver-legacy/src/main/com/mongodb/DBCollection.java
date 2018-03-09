@@ -31,6 +31,7 @@ import com.mongodb.client.model.DBCollectionFindOptions;
 import com.mongodb.client.model.DBCollectionRemoveOptions;
 import com.mongodb.client.model.DBCollectionUpdateOptions;
 import com.mongodb.connection.BufferProvider;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.AggregateOperation;
 import com.mongodb.operation.AggregateToCollectionOperation;
 import com.mongodb.operation.BaseWriteOperation;
@@ -74,6 +75,7 @@ import org.bson.types.ObjectId;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.BulkWriteHelper.translateBulkWriteResult;
@@ -296,7 +298,8 @@ public class DBCollection {
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
-    public WriteResult insert(final List<? extends DBObject> documents, final WriteConcern aWriteConcern, final DBEncoder dbEncoder) {
+    public WriteResult insert(final List<? extends DBObject> documents, final WriteConcern aWriteConcern,
+                              @Nullable final DBEncoder dbEncoder) {
         return insert(documents, new InsertOptions().writeConcern(aWriteConcern).dbEncoder(dbEncoder));
     }
 
@@ -330,12 +333,12 @@ public class DBCollection {
         return insert(insertRequestList, writeConcern, insertOptions.isContinueOnError(), insertOptions.getBypassDocumentValidation());
     }
 
-    private Encoder<DBObject> toEncoder(final DBEncoder dbEncoder) {
+    private Encoder<DBObject> toEncoder(@Nullable final DBEncoder dbEncoder) {
         return dbEncoder != null ? new DBEncoderAdapter(dbEncoder) : objectCodec;
     }
 
     private WriteResult insert(final List<InsertRequest> insertRequestList, final WriteConcern writeConcern,
-                               final boolean continueOnError, final Boolean bypassDocumentValidation) {
+                               final boolean continueOnError, @Nullable final Boolean bypassDocumentValidation) {
         return executeWriteOperation(new InsertOperation(getNamespace(), !continueOnError, writeConcern, retryWrites, insertRequestList)
                                      .bypassDocumentValidation(bypassDocumentValidation));
     }
@@ -353,7 +356,7 @@ public class DBCollection {
                                     writeConcernResult.getUpsertedId());
     }
 
-    private WriteResult translateWriteResult(final int count, final boolean isUpdateOfExisting, final BsonValue upsertedId) {
+    private WriteResult translateWriteResult(final int count, final boolean isUpdateOfExisting, @Nullable final BsonValue upsertedId) {
         Object newUpsertedId = upsertedId == null
                                ? null
                                : getObjectCodec().decode(new BsonDocumentReader(new BsonDocument("_id", upsertedId)),
@@ -462,7 +465,7 @@ public class DBCollection {
      * @mongodb.driver.manual tutorial/modify-documents/ Modify Documents
      */
     public WriteResult update(final DBObject query, final DBObject update, final boolean upsert, final boolean multi,
-                              final WriteConcern concern, final DBEncoder encoder) {
+                              final WriteConcern concern, @Nullable final DBEncoder encoder) {
         return update(query, update, upsert, multi, concern, null, encoder);
     }
 
@@ -485,7 +488,8 @@ public class DBCollection {
      * @since 2.14
      */
     public WriteResult update(final DBObject query, final DBObject update, final boolean upsert, final boolean multi,
-                              final WriteConcern concern, final Boolean bypassDocumentValidation, final DBEncoder encoder) {
+                              final WriteConcern concern, @Nullable final Boolean bypassDocumentValidation,
+                              @Nullable final DBEncoder encoder) {
         return update(query, update, new DBCollectionUpdateOptions().upsert(upsert).multi(multi)
                 .writeConcern(concern).bypassDocumentValidation(bypassDocumentValidation).encoder(encoder));
     }
@@ -717,7 +721,7 @@ public class DBCollection {
      * @mongodb.driver.manual tutorial/query-documents/ Querying
      * @since 3.4
      */
-    public DBCursor find(final DBObject query, final DBCollectionFindOptions options) {
+    public DBCursor find(@Nullable final DBObject query, final DBCollectionFindOptions options) {
         return new DBCursor(this, query, options);
     }
 
@@ -727,6 +731,7 @@ public class DBCollection {
      * @return A document that satisfies the query specified as the argument to this method.
      * @mongodb.driver.manual tutorial/query-documents/ Querying
      */
+    @Nullable
     public DBObject findOne() {
         return findOne(new BasicDBObject());
     }
@@ -738,6 +743,7 @@ public class DBCollection {
      * @return A document that satisfies the query specified as the argument to this method.
      * @mongodb.driver.manual tutorial/query-documents/ Querying
      */
+    @Nullable
     public DBObject findOne(final DBObject query) {
         return findOne(query, null, null, getReadPreference());
     }
@@ -750,6 +756,7 @@ public class DBCollection {
      * @return A document that satisfies the query specified as the argument to this method.
      * @mongodb.driver.manual tutorial/query-documents/ Querying
      */
+    @Nullable
     public DBObject findOne(final DBObject query, final DBObject projection) {
         return findOne(query, projection, null, getReadPreference());
     }
@@ -763,6 +770,7 @@ public class DBCollection {
      * @return A document that satisfies the query specified as the argument to this method.
      * @mongodb.driver.manual tutorial/query-documents/ Querying
      */
+    @Nullable
     public DBObject findOne(final DBObject query, final DBObject projection, final DBObject sort) {
         return findOne(query, projection, sort, getReadPreference());
     }
@@ -776,6 +784,7 @@ public class DBCollection {
      * @return A document that satisfies the query specified as the argument to this method.
      * @mongodb.driver.manual tutorial/query-documents/ Querying
      */
+    @Nullable
     public DBObject findOne(final DBObject query, final DBObject projection, final ReadPreference readPreference) {
         return findOne(query, projection, null, readPreference);
     }
@@ -790,7 +799,8 @@ public class DBCollection {
      * @return A document that satisfies the query specified as the argument to this method.
      * @mongodb.driver.manual tutorial/query-documents/ Querying
      */
-    public DBObject findOne(final DBObject query, final DBObject projection, final DBObject sort,
+    @Nullable
+    public DBObject findOne(@Nullable final DBObject query, @Nullable final DBObject projection, @Nullable final DBObject sort,
                             final ReadPreference readPreference) {
         return findOne(query != null ? query : new BasicDBObject(),
                 new DBCollectionFindOptions().projection(projection).sort(sort).readPreference(readPreference));
@@ -803,6 +813,7 @@ public class DBCollection {
      * @return A document with '_id' provided as the argument to this method.
      * @mongodb.driver.manual tutorial/query-documents/ Querying
      */
+    @Nullable
     public DBObject findOne(final Object id) {
         return findOne(new BasicDBObject("_id", id), new DBCollectionFindOptions());
     }
@@ -815,6 +826,7 @@ public class DBCollection {
      * @return A document that satisfies the query specified as the argument to this method.
      * @mongodb.driver.manual tutorial/query-documents/ Querying
      */
+    @Nullable
     public DBObject findOne(final Object id, final DBObject projection) {
         return findOne(new BasicDBObject("_id", id), new DBCollectionFindOptions().projection(projection));
     }
@@ -828,7 +840,8 @@ public class DBCollection {
      * @mongodb.driver.manual tutorial/query-documents/ Querying
      * @since 3.4
      */
-    public DBObject findOne(final DBObject query, final DBCollectionFindOptions findOptions) {
+    @Nullable
+    public DBObject findOne(@Nullable final DBObject query, final DBCollectionFindOptions findOptions) {
         return find(query, findOptions).one();
     }
 
@@ -851,7 +864,7 @@ public class DBCollection {
      * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/count/ Count
      */
-    public long count(final DBObject query) {
+    public long count(@Nullable final DBObject query) {
         return getCount(query, new DBCollectionCountOptions());
     }
 
@@ -864,7 +877,7 @@ public class DBCollection {
      * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/count/ Count
      */
-    public long count(final DBObject query, final ReadPreference readPreference) {
+    public long count(@Nullable final DBObject query, final ReadPreference readPreference) {
         return getCount(query, null, readPreference);
     }
 
@@ -878,7 +891,7 @@ public class DBCollection {
      * @mongodb.driver.manual reference/command/count/ Count
      * @since 3.4
      */
-    public long count(final DBObject query, final DBCollectionCountOptions options) {
+    public long count(@Nullable final DBObject query, final DBCollectionCountOptions options) {
         return getCount(query, options);
     }
 
@@ -913,7 +926,7 @@ public class DBCollection {
      * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/count/ Count
      */
-    public long getCount(final DBObject query) {
+    public long getCount(@Nullable final DBObject query) {
         return getCount(query, new DBCollectionCountOptions());
     }
 
@@ -926,7 +939,7 @@ public class DBCollection {
      * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/count/ Count
      */
-    public long getCount(final DBObject query, final DBObject projection) {
+    public long getCount(@Nullable final DBObject query, final DBObject projection) {
         return getCount(query, projection, 0, 0);
     }
 
@@ -940,7 +953,7 @@ public class DBCollection {
      * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/count/ Count
      */
-    public long getCount(final DBObject query, final DBObject projection, final ReadPreference readPreference) {
+    public long getCount(@Nullable final DBObject query, @Nullable final DBObject projection, final ReadPreference readPreference) {
         return getCount(query, projection, 0, 0, readPreference);
     }
 
@@ -955,7 +968,7 @@ public class DBCollection {
      * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/count/ Count
      */
-    public long getCount(final DBObject query, final DBObject projection, final long limit, final long skip) {
+    public long getCount(@Nullable final DBObject query, @Nullable final DBObject projection, final long limit, final long skip) {
         return getCount(query, projection, limit, skip, getReadPreference());
     }
 
@@ -971,7 +984,7 @@ public class DBCollection {
      * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/count/ Count
      */
-    public long getCount(final DBObject query, final DBObject projection, final long limit, final long skip,
+    public long getCount(@Nullable final DBObject query, @Nullable final DBObject projection, final long limit, final long skip,
                          final ReadPreference readPreference) {
         return getCount(query, new DBCollectionCountOptions().limit(limit).skip(skip).readPreference(readPreference));
     }
@@ -986,7 +999,7 @@ public class DBCollection {
      * @mongodb.driver.manual reference/command/count/ Count
      * @since 3.4
      */
-    public long getCount(final DBObject query, final DBCollectionCountOptions options) {
+    public long getCount(@Nullable final DBObject query, final DBCollectionCountOptions options) {
         notNull("countOptions", options);
         CountOperation operation = new CountOperation(getNamespace())
                                        .readConcern(options.getReadConcern() != null ? options.getReadConcern() : getReadConcern())
@@ -1065,7 +1078,7 @@ public class DBCollection {
      * @mongodb.driver.manual reference/command/group/ Group Command
      */
     public DBObject group(final DBObject key, final DBObject cond, final DBObject initial, final String reduce,
-                          final String finalize) {
+                          @Nullable final String finalize) {
         return group(key, cond, initial, reduce, finalize, getReadPreference());
     }
 
@@ -1083,7 +1096,7 @@ public class DBCollection {
      * @mongodb.driver.manual reference/command/group/ Group Command
      */
     public DBObject group(final DBObject key, final DBObject cond, final DBObject initial, final String reduce,
-                          final String finalize, final ReadPreference readPreference) {
+                          @Nullable final String finalize, final ReadPreference readPreference) {
         return group(new GroupCommand(this, key, cond, initial, reduce, finalize), readPreference);
     }
 
@@ -1258,6 +1271,8 @@ public class DBCollection {
      */
     public MapReduceOutput mapReduce(final MapReduceCommand command) {
         ReadPreference readPreference = command.getReadPreference() == null ? getReadPreference() : command.getReadPreference();
+        Map<String, Object> scope = command.getScope();
+        Boolean jsMode = command.getJsMode();
         if (command.getOutputType() == MapReduceCommand.OutputType.INLINE) {
 
             MapReduceWithInlineResultsOperation<DBObject> operation =
@@ -1267,13 +1282,13 @@ public class DBCollection {
                             .filter(wrapAllowNull(command.getQuery()))
                             .limit(command.getLimit())
                             .maxTime(command.getMaxTime(MILLISECONDS), MILLISECONDS)
-                            .jsMode(command.getJsMode() == null ? false : command.getJsMode())
+                            .jsMode(jsMode == null ? false : jsMode)
                             .sort(wrapAllowNull(command.getSort()))
                             .verbose(command.isVerbose())
                             .collation(command.getCollation());
 
-            if (command.getScope() != null) {
-                operation.scope(wrap(new BasicDBObject(command.getScope())));
+            if (scope != null) {
+                operation.scope(wrap(new BasicDBObject(scope)));
             }
             if (command.getFinalize() != null) {
                 operation.finalizeFunction(new BsonJavaScript(command.getFinalize()));
@@ -1305,7 +1320,7 @@ public class DBCollection {
                     .filter(wrapAllowNull(command.getQuery()))
                     .limit(command.getLimit())
                     .maxTime(command.getMaxTime(MILLISECONDS), MILLISECONDS)
-                    .jsMode(command.getJsMode() == null ? false : command.getJsMode())
+                    .jsMode(jsMode == null ? false : jsMode)
                     .sort(wrapAllowNull(command.getSort()))
                     .verbose(command.isVerbose())
                     .action(action)
@@ -1313,8 +1328,8 @@ public class DBCollection {
                     .bypassDocumentValidation(command.getBypassDocumentValidation())
                     .collation(command.getCollation());
 
-            if (command.getScope() != null) {
-                operation.scope(wrap(new BasicDBObject(command.getScope())));
+            if (scope != null) {
+                operation.scope(wrap(new BasicDBObject(scope)));
             }
             if (command.getFinalize() != null) {
                 operation.finalizeFunction(new BsonJavaScript(command.getFinalize()));
@@ -1335,7 +1350,7 @@ public class DBCollection {
         DB database = requestedDatabaseName != null
                       ? getDB().getSisterDB(requestedDatabaseName)
                       : getDB();
-        return database.getCollection(command.getOutputTarget());
+        return database.getCollection(command.getOutputTargetNonNull());
     }
 
     /**
@@ -1422,15 +1437,18 @@ public class DBCollection {
      */
     public Cursor aggregate(final List<? extends DBObject> pipeline, final AggregationOptions options,
                             final ReadPreference readPreference) {
-        return aggregate(pipeline, options, readPreference, true);
+        Cursor cursor = aggregate(pipeline, options, readPreference, true);
+        if (cursor == null) {
+            throw new MongoInternalException("cursor can not be null in this context");
+        }
+        return cursor;
     }
 
     @SuppressWarnings("deprecation")
+    @Nullable
     private Cursor aggregate(final List<? extends DBObject> pipeline, final AggregationOptions options, final ReadPreference readPreference,
                              final boolean returnCursorForOutCollection) {
-        if (options == null) {
-            throw new IllegalArgumentException("options can not be null");
-        }
+        notNull("options", options);
         List<BsonDocument> stages = preparePipeline(pipeline);
 
         BsonValue outCollection = stages.get(stages.size() - 1).get("$out");
@@ -1512,8 +1530,9 @@ public class DBCollection {
                                                                                                             objectCodec)
                                                                   .readConcern(getReadConcern())
                                                                   .batchSize(options.getBatchSize());
+        ReadPreference readPreferenceFromOptions = options.getReadPreference();
         List<BatchCursor<DBObject>> mongoCursors = executor.execute(operation,
-                                                                    options.getReadPreference() != null ? options.getReadPreference()
+                                                                    readPreferenceFromOptions != null ? readPreferenceFromOptions
                                                                                                         : getReadPreference());
 
         for (BatchCursor<DBObject> mongoCursor : mongoCursors) {
@@ -1590,7 +1609,7 @@ public class DBCollection {
      * @throws MongoException if the operation failed
      * @mongodb.driver.manual /administration/indexes-creation/ Index Creation Tutorials
      */
-    public void createIndex(final DBObject keys, final String name, final boolean unique) {
+    public void createIndex(final DBObject keys, @Nullable final String name, final boolean unique) {
         DBObject options = new BasicDBObject();
         if (name != null && name.length() > 0) {
             options.put("name", name);
@@ -1635,6 +1654,7 @@ public class DBCollection {
      * @return a list of {@code DBObject} to be used as hints.
      * @mongodb.driver.manual reference/operator/meta/hint/ $hint
      */
+    @Nullable
     public List<DBObject> getHintFields() {
         return hintFields;
     }
@@ -1661,7 +1681,8 @@ public class DBCollection {
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      */
-    public DBObject findAndModify(final DBObject query, final DBObject sort, final DBObject update) {
+    @Nullable
+    public DBObject findAndModify(@Nullable final DBObject query, @Nullable final DBObject sort, final DBObject update) {
         return findAndModify(query, null, sort, false, update, false, false);
     }
 
@@ -1676,7 +1697,8 @@ public class DBCollection {
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      */
-    public DBObject findAndModify(final DBObject query, final DBObject update) {
+    @Nullable
+    public DBObject findAndModify(@Nullable final DBObject query, final DBObject update) {
         return findAndModify(query, null, null, false, update, false, false);
     }
 
@@ -1689,7 +1711,8 @@ public class DBCollection {
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      */
-    public DBObject findAndRemove(final DBObject query) {
+    @Nullable
+    public DBObject findAndRemove(@Nullable final DBObject query) {
         return findAndModify(query, null, null, true, null, false, false);
     }
 
@@ -1710,8 +1733,9 @@ public class DBCollection {
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      */
-    public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort,
-                                  final boolean remove, final DBObject update,
+    @Nullable
+    public DBObject findAndModify(@Nullable final DBObject query, @Nullable final DBObject fields, @Nullable final DBObject sort,
+                                  final boolean remove, @Nullable final DBObject update,
                                   final boolean returnNew, final boolean upsert) {
         return findAndModify(query, fields, sort, remove, update, returnNew, upsert, 0L, MILLISECONDS);
     }
@@ -1735,8 +1759,9 @@ public class DBCollection {
      * @since 2.14
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      */
-    public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort, final boolean remove,
-                                  final DBObject update, final boolean returnNew,
+    @Nullable
+    public DBObject findAndModify(@Nullable final DBObject query, @Nullable final DBObject fields, @Nullable final DBObject sort,
+                                  final boolean remove, final DBObject update, final boolean returnNew,
                                   final boolean upsert, final WriteConcern writeConcern){
         return findAndModify(query, fields, sort, remove, update, returnNew, upsert, 0L, MILLISECONDS, writeConcern);
     }
@@ -1762,8 +1787,9 @@ public class DBCollection {
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      * @since 2.12.0
      */
-    public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort,
-                                  final boolean remove, final DBObject update,
+    @Nullable
+    public DBObject findAndModify(@Nullable final DBObject query, @Nullable final DBObject fields, @Nullable final DBObject sort,
+                                  final boolean remove, @Nullable final DBObject update,
                                   final boolean returnNew, final boolean upsert,
                                   final long maxTime, final TimeUnit maxTimeUnit) {
         return findAndModify(query, fields, sort, remove, update, returnNew, upsert, maxTime, maxTimeUnit, getWriteConcern());
@@ -1792,8 +1818,9 @@ public class DBCollection {
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      * @since 2.14.0
      */
-    public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort,
-                                  final boolean remove, final DBObject update,
+    @Nullable
+    public DBObject findAndModify(@Nullable final DBObject query, @Nullable final DBObject fields, @Nullable final DBObject sort,
+                                  final boolean remove, @Nullable final DBObject update,
                                   final boolean returnNew, final boolean upsert,
                                   final long maxTime, final TimeUnit maxTimeUnit,
                                   final WriteConcern writeConcern) {
@@ -1830,8 +1857,9 @@ public class DBCollection {
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      * @since 2.14.0
      */
+    @Nullable
     public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort,
-                                  final boolean remove, final DBObject update,
+                                  final boolean remove, @Nullable final DBObject update,
                                   final boolean returnNew, final boolean upsert,
                                   final boolean bypassDocumentValidation,
                                   final long maxTime, final TimeUnit maxTimeUnit) {
@@ -1862,8 +1890,8 @@ public class DBCollection {
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      * @since 2.14.0
      */
-    public DBObject findAndModify(final DBObject query, final DBObject fields, final DBObject sort,
-                                  final boolean remove, final DBObject update,
+    public DBObject findAndModify(@Nullable final DBObject query, @Nullable final DBObject fields, @Nullable final DBObject sort,
+                                  final boolean remove, @Nullable final DBObject update,
                                   final boolean returnNew, final boolean upsert,
                                   final boolean bypassDocumentValidation,
                                   final long maxTime, final TimeUnit maxTimeUnit,
@@ -2102,7 +2130,7 @@ public class DBCollection {
      *
      * @param factory the factory to set.
      */
-    public synchronized void setDBDecoderFactory(final DBDecoderFactory factory) {
+    public synchronized void setDBDecoderFactory(@Nullable final DBDecoderFactory factory) {
         this.decoderFactory = factory;
 
         //Are we are using default factory?
@@ -2127,7 +2155,7 @@ public class DBCollection {
      *
      * @param factory the factory to set.
      */
-    public synchronized void setDBEncoderFactory(final DBEncoderFactory factory) {
+    public synchronized void setDBEncoderFactory(@Nullable final DBEncoderFactory factory) {
         this.encoderFactory = factory;
 
         //Are we are using default factory?
@@ -2478,18 +2506,21 @@ public class DBCollection {
         return getDB().getBufferPool();
     }
 
-    BsonDocument wrapAllowNull(final DBObject document) {
+    @Nullable
+    BsonDocument wrapAllowNull(@Nullable final DBObject document) {
         if (document == null) {
             return null;
         }
         return wrap(document);
     }
 
-    List<BsonDocument> wrapAllowNull(final List<? extends DBObject> documentList, final DBEncoder encoder) {
+    @Nullable
+    List<BsonDocument> wrapAllowNull(final List<? extends DBObject> documentList, @Nullable final DBEncoder encoder) {
         return wrapAllowNull(documentList, encoder == null ? null : new DBEncoderAdapter(encoder));
     }
 
-    List<BsonDocument> wrapAllowNull(final List<? extends DBObject> documentList, final Encoder<DBObject> encoder) {
+    @Nullable
+    List<BsonDocument> wrapAllowNull(@Nullable final List<? extends DBObject> documentList, @Nullable final Encoder<DBObject> encoder) {
         if (documentList == null) {
             return null;
         }
@@ -2505,7 +2536,7 @@ public class DBCollection {
         return new BsonDocumentWrapper<DBObject>(document, getDefaultDBObjectCodec());
     }
 
-    BsonDocument wrap(final DBObject document, final DBEncoder encoder) {
+    BsonDocument wrap(final DBObject document, @Nullable final DBEncoder encoder) {
         if (encoder == null) {
             return wrap(document);
         } else {
@@ -2513,7 +2544,7 @@ public class DBCollection {
         }
     }
 
-    BsonDocument wrap(final DBObject document, final Encoder<DBObject> encoder) {
+    BsonDocument wrap(final DBObject document, @Nullable final Encoder<DBObject> encoder) {
         if (encoder == null) {
             return wrap(document);
         } else {

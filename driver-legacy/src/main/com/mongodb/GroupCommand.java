@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.client.model.Collation;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.GroupOperation;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonJavaScript;
@@ -49,7 +50,7 @@ public class GroupCommand {
      * @param finalize   optional - a JavaScript function that runs each item in the result set before group returns the final value.
      */
     public GroupCommand(final DBCollection collection, final DBObject keys, final DBObject condition,
-                        final DBObject initial, final String reduce, final String finalize) {
+                        final DBObject initial, final String reduce, @Nullable final String finalize) {
         this(collection, keys, condition, initial, reduce, finalize, null);
     }
 
@@ -67,7 +68,7 @@ public class GroupCommand {
      * @since 3.4
      */
     public GroupCommand(final DBCollection collection, final DBObject keys, final DBObject condition,
-                        final DBObject initial, final String reduce, final String finalize, final Collation collation) {
+                        final DBObject initial, final String reduce, @Nullable final String finalize, @Nullable final Collation collation) {
         notNull("collection", collection);
         this.collectionName = collection.getName();
         this.keys = keys;
@@ -110,7 +111,7 @@ public class GroupCommand {
      * @since 3.4
      */
     public GroupCommand(final DBCollection collection, final String keyf, final DBObject condition,
-                        final DBObject initial, final String reduce, final String finalize, final Collation collation) {
+                        final DBObject initial, final String reduce, @Nullable final String finalize, @Nullable final Collation collation) {
         notNull("collection", collection);
         this.collectionName = collection.getName();
         this.keyf = notNull("keyf", keyf);

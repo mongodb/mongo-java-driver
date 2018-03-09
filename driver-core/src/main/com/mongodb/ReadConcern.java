@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
@@ -73,6 +74,7 @@ public final class ReadConcern {
      * @return the read concern level, which may be null (which indicates to use the server's default level)
      * @since 3.6
      */
+    @Nullable
     public ReadConcernLevel getLevel() {
         return level;
     }

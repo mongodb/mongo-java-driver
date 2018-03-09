@@ -18,6 +18,8 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
+
 import java.io.Serializable;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -53,7 +55,7 @@ public class DBRef implements Serializable {
      * @param id             the object id
      * @since 3.3
      */
-    public DBRef(final String databaseName, final String collectionName, final Object id) {
+    public DBRef(@Nullable final String databaseName, final String collectionName, final Object id) {
         this.id = notNull("id", id);
         this.collectionName = notNull("collectionName", collectionName);
         this.databaseName = databaseName;
@@ -84,6 +86,7 @@ public class DBRef implements Serializable {
      * @return the possibly-null database name
      * @since 3.3
      */
+    @Nullable
     public String getDatabaseName() {
         return databaseName;
     }

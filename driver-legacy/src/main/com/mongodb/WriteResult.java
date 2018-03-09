@@ -17,6 +17,8 @@
 package com.mongodb;
 
 
+import com.mongodb.lang.Nullable;
+
 /**
  * This class lets you access the results of the previous acknowledged write. If the write was unacknowledged, all property access
  * methods will throw {@link UnsupportedOperationException}.
@@ -45,9 +47,9 @@ public class WriteResult {
      *
      * @param n the number of existing documents affected by this operation
      * @param updateOfExisting true if the operation was an update and an existing document was updated
-     * @param upsertedId the _id of a document that was upserted by this operation
+     * @param upsertedId the _id of a document that was upserted by this operation, which may be null
      */
-    public WriteResult(final int n, final boolean updateOfExisting, final Object upsertedId) {
+    public WriteResult(final int n, final boolean updateOfExisting, @Nullable final Object upsertedId) {
         this.acknowledged = true;
         this.n = n;
         this.updateOfExisting = updateOfExisting;
@@ -88,10 +90,11 @@ public class WriteResult {
      * Gets the _id value of an upserted document that resulted from this write.  Note that for MongoDB servers prior to version 2.6,
      * this method will return null unless the _id of the upserted document was of type ObjectId.
      *
-     * @return the value of the _id of an upserted document
+     * @return the value of the _id of an upserted document, which may be null
      * @throws UnsupportedOperationException if the write was unacknowledged
      * @since 2.12
      */
+    @Nullable
     public Object getUpsertedId() {
         throwIfUnacknowledged("upsertedId");
         return upsertedId;

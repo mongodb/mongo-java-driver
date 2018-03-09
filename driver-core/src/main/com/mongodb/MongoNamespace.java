@@ -179,9 +179,6 @@ public final class MongoNamespace {
     }
 
     private static String getCollectionNameFullName(final String namespace) {
-        if (namespace == null) {
-            return null;
-        }
         int firstDot = namespace.indexOf('.');
         if (firstDot == -1) {
             return namespace;
@@ -190,9 +187,6 @@ public final class MongoNamespace {
     }
 
     private static String getDatatabaseNameFromFullName(final String namespace) {
-        if (namespace == null) {
-            return null;
-        }
         int firstDot = namespace.indexOf('.');
         if (firstDot == -1) {
             return "";

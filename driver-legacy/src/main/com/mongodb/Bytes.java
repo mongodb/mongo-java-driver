@@ -18,6 +18,7 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BSON;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Code;
@@ -100,7 +101,7 @@ public class Bytes extends BSON {
 
 
     static class OptionHolder {
-        OptionHolder(final OptionHolder parent) {
+        OptionHolder(@Nullable final OptionHolder parent) {
             _parent = parent;
         }
 

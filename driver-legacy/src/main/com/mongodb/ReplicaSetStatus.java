@@ -20,6 +20,7 @@ package com.mongodb;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.lang.Nullable;
 
 import java.util.List;
 
@@ -40,6 +41,7 @@ public class ReplicaSetStatus {
      * @return the name of the replica set.
      */
     @SuppressWarnings("deprecation")
+    @Nullable
     public String getName() {
         List<ServerDescription> any = getClusterDescription().getAnyPrimaryOrSecondary();
         return any.isEmpty() ? null : any.get(0).getSetName();
@@ -52,6 +54,7 @@ public class ReplicaSetStatus {
      * @throws MongoException if there's a failure
      */
     @SuppressWarnings("deprecation")
+    @Nullable
     public ServerAddress getMaster() {
         List<ServerDescription> primaries = getClusterDescription().getPrimaries();
         return primaries.isEmpty() ? null : primaries.get(0).getAddress();

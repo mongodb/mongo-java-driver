@@ -93,45 +93,27 @@ public final class MongoClientSettings {
             credentialList = new ArrayList<MongoCredential>(settings.credentialList);
 
             wrappedBuilder.commandListenerList(new ArrayList<CommandListener>(settings.getCommandListeners()));
-            if (settings.getCodecRegistry() != null) {
-                wrappedBuilder.codecRegistry(settings.getCodecRegistry());
-            }
-            if (settings.getReadPreference() != null) {
-                wrappedBuilder.readPreference(settings.getReadPreference());
-            }
-            if (settings.getWriteConcern() != null) {
-                wrappedBuilder.writeConcern(settings.getWriteConcern());
-            }
+            wrappedBuilder.codecRegistry(settings.getCodecRegistry());
+            wrappedBuilder.readPreference(settings.getReadPreference());
+            wrappedBuilder.writeConcern(settings.getWriteConcern());
             wrappedBuilder.retryWrites(settings.getRetryWrites());
-            if (settings.getReadConcern() != null) {
-                wrappedBuilder.readConcern(settings.getReadConcern());
+            wrappedBuilder.readConcern(settings.getReadConcern());
+            wrappedBuilder.applicationName(settings.getApplicationName());
+            wrappedBuilder.compressorList(new ArrayList<MongoCompressor>(settings.getCompressorList()));
+
+            MongoCredential credential = settings.getCredential();
+            if (credential != null) {
+                wrappedBuilder.credential(credential);
             }
-            if (settings.getCredential() != null) {
-                wrappedBuilder.credential(settings.getCredential());
-            }
-            if (settings.getStreamFactoryFactory() != null) {
-                wrappedBuilder.streamFactoryFactory(settings.getStreamFactoryFactory());
-            }
-            if (settings.getClusterSettings() != null) {
-                clusterSettings(settings.getClusterSettings());
-            }
-            if (settings.getServerSettings() != null) {
-                serverSettings(settings.getServerSettings());
-            }
-            if (settings.getSocketSettings() != null) {
-                socketSettings(settings.getSocketSettings());
-            }
+
+            clusterSettings(settings.getClusterSettings());
+            serverSettings(settings.getServerSettings());
+            socketSettings(settings.getSocketSettings());
             if (settings.heartbeatSocketSettings != null) {
                 heartbeatSocketSettings(settings.heartbeatSocketSettings);
             }
-            if (settings.getConnectionPoolSettings() != null) {
-                connectionPoolSettings(settings.getConnectionPoolSettings());
-            }
-            if (settings.getSslSettings() != null) {
-                sslSettings(settings.getSslSettings());
-            }
-            wrappedBuilder.applicationName(settings.getApplicationName());
-            wrappedBuilder.compressorList(new ArrayList<MongoCompressor>(settings.getCompressorList()));
+            connectionPoolSettings(settings.getConnectionPoolSettings());
+            sslSettings(settings.getSslSettings());
         }
 
         /**
@@ -510,11 +492,12 @@ public final class MongoClientSettings {
     }
 
     /**
-     * Gets the credential list.
+     * Gets the credential.
      *
-     * @return the credential list
+     * @return the credentia, which may be null
      * @since 3.6
      */
+    @Nullable
     public MongoCredential getCredential() {
         isTrue("Single or no credential", credentialList.size() <= 1);
         return wrapped.getCredential();
@@ -598,6 +581,7 @@ public final class MongoClientSettings {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
+    @Nullable
     public String getApplicationName() {
         return wrapped.getApplicationName();
     }

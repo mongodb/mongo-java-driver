@@ -18,14 +18,14 @@ package com.mongodb.operation;
 
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoCredential;
+import com.mongodb.MongoInternalException;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.lang.NonNull;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
-import org.bson.BsonObjectId;
 import org.bson.BsonString;
 import org.bson.BsonValue;
-import org.bson.types.ObjectId;
 
 import java.util.Arrays;
 
@@ -38,8 +38,7 @@ final class UserOperationHelper {
     static BsonDocument asCommandDocument(final MongoCredential credential, final boolean readOnly, final String commandName) {
         BsonDocument document = new BsonDocument();
         document.put(commandName, new BsonString(credential.getUserName()));
-        document.put("pwd", new BsonString(createAuthenticationHash(credential.getUserName(),
-                                                                    credential.getPassword())));
+        document.put("pwd", new BsonString(createAuthenticationHash(getUserNameNonNull(credential), getPasswordNonNull(credential))));
         document.put("digestPassword", BsonBoolean.FALSE);
         document.put("roles", new BsonArray(Arrays.<BsonValue>asList(new BsonString(getRoleName(credential, readOnly)))));
         return document;
@@ -49,22 +48,6 @@ final class UserOperationHelper {
         return credential.getSource().equals("admin")
                ? (readOnly ? "readAnyDatabase" : "root") : (readOnly ? "read" : "dbOwner");
     }
-
-    static BsonDocument asCollectionQueryDocument(final MongoCredential credential) {
-        return new BsonDocument("user", new BsonString(credential.getUserName()));
-    }
-
-    static BsonDocument asCollectionUpdateDocument(final MongoCredential credential, final boolean readOnly) {
-        return asCollectionQueryDocument(credential)
-               .append("pwd", new BsonString(createAuthenticationHash(credential.getUserName(), credential.getPassword())))
-               .append("readOnly", BsonBoolean.valueOf(readOnly));
-    }
-
-    static BsonDocument asCollectionInsertDocument(final MongoCredential credential, final boolean readOnly) {
-        return asCollectionUpdateDocument(credential, readOnly)
-               .append("_id", new BsonObjectId(new ObjectId()));
-    }
-
 
     static void translateUserCommandException(final MongoCommandException e) {
         if (e.getErrorCode() == 100 && hasWriteConcernError(e.getResponse())) {
@@ -92,6 +75,24 @@ final class UserOperationHelper {
                 }
             }
         };
+    }
+
+    @NonNull
+    private static String getUserNameNonNull(final MongoCredential credential) {
+        String userName = credential.getUserName();
+        if (userName == null) {
+            throw new MongoInternalException("User name can not be null");
+        }
+        return userName;
+    }
+
+    @NonNull
+    private static char[] getPasswordNonNull(final MongoCredential credential) {
+        char[] password = credential.getPassword();
+        if (password == null) {
+            throw new MongoInternalException("Password can not be null");
+        }
+        return password;
     }
 
     private UserOperationHelper() {

@@ -242,24 +242,36 @@ public class ConnectionPoolSettings {
          * @return this
          */
         public Builder applyConnectionString(final ConnectionString connectionString) {
-            if (connectionString.getMaxConnectionPoolSize() != null) {
-                maxSize(connectionString.getMaxConnectionPoolSize());
+            Integer maxConnectionPoolSize = connectionString.getMaxConnectionPoolSize();
+            if (maxConnectionPoolSize != null) {
+                maxSize(maxConnectionPoolSize);
             }
-            if (connectionString.getMinConnectionPoolSize() != null) {
-                minSize(connectionString.getMinConnectionPoolSize());
+
+            Integer minConnectionPoolSize = connectionString.getMinConnectionPoolSize();
+            if (minConnectionPoolSize != null) {
+                minSize(minConnectionPoolSize);
             }
-            if (connectionString.getMaxWaitTime() != null) {
-                maxWaitTime(connectionString.getMaxWaitTime(), MILLISECONDS);
+
+            Integer maxWaitTime = connectionString.getMaxWaitTime();
+            if (maxWaitTime != null) {
+                maxWaitTime(maxWaitTime, MILLISECONDS);
             }
-            if (connectionString.getMaxConnectionIdleTime() != null) {
-                maxConnectionIdleTime(connectionString.getMaxConnectionIdleTime(), MILLISECONDS);
+
+            Integer maxConnectionIdleTime = connectionString.getMaxConnectionIdleTime();
+            if (maxConnectionIdleTime != null) {
+                maxConnectionIdleTime(maxConnectionIdleTime, MILLISECONDS);
             }
-            if (connectionString.getMaxConnectionLifeTime() != null) {
-                maxConnectionLifeTime(connectionString.getMaxConnectionLifeTime(), MILLISECONDS);
+
+            Integer maxConnectionLifeTime = connectionString.getMaxConnectionLifeTime();
+            if (maxConnectionLifeTime != null) {
+                maxConnectionLifeTime(maxConnectionLifeTime, MILLISECONDS);
             }
-            if (connectionString.getThreadsAllowedToBlockForConnectionMultiplier() != null) {
-                maxWaitQueueSize(connectionString.getThreadsAllowedToBlockForConnectionMultiplier() * maxSize);
+
+            Integer threadsAllowedToBlockForConnectionMultiplier = connectionString.getThreadsAllowedToBlockForConnectionMultiplier();
+            if (threadsAllowedToBlockForConnectionMultiplier != null) {
+                maxWaitQueueSize(threadsAllowedToBlockForConnectionMultiplier * maxSize);
             }
+
             return this;
         }
     }

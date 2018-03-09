@@ -18,6 +18,7 @@ package com.mongodb;
 
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.lang.Nullable;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -510,7 +511,7 @@ public class ConnectionString {
         return buildCompressors(compressors, zlibCompressionLevel);
     }
 
-    private List<MongoCompressor> buildCompressors(final String compressors, final Integer zlibCompressionLevel) {
+    private List<MongoCompressor> buildCompressors(final String compressors, @Nullable final Integer zlibCompressionLevel) {
         List<MongoCompressor> compressorsList = new ArrayList<MongoCompressor>();
 
         for (String cur : compressors.split(",")) {
@@ -530,6 +531,7 @@ public class ConnectionString {
         return unmodifiableList(compressorsList);
     }
 
+    @Nullable
     private WriteConcern createWriteConcern(final Map<String, List<String>> optionsMap) {
         Boolean safe = null;
         String w = null;
@@ -558,6 +560,7 @@ public class ConnectionString {
         return buildWriteConcern(safe, w, wTimeout, fsync, journal);
     }
 
+    @Nullable
     private ReadPreference createReadPreference(final Map<String, List<String>> optionsMap) {
         String readPreferenceType = null;
         List<TagSet> tagSetList = new ArrayList<TagSet>();
@@ -583,8 +586,9 @@ public class ConnectionString {
         return buildReadPreference(readPreferenceType, tagSetList, maxStalenessSeconds);
     }
 
-    private MongoCredential createCredentials(final Map<String, List<String>> optionsMap, final String userName,
-                                              final char[] password) {
+    @Nullable
+    private MongoCredential createCredentials(final Map<String, List<String>> optionsMap, @Nullable final String userName,
+                                              @Nullable final char[] password) {
         AuthenticationMechanism mechanism = null;
         String authSource = (database == null) ? "admin" : database;
         String gssapiServiceName = null;
@@ -637,8 +641,8 @@ public class ConnectionString {
 
     @SuppressWarnings("deprecation")
     private MongoCredential createMongoCredentialWithMechanism(final AuthenticationMechanism mechanism, final String userName,
-                                                               final char[] password, final String authSource,
-                                                               final String gssapiServiceName) {
+                                                               @Nullable final char[] password, final String authSource,
+                                                               @Nullable final String gssapiServiceName) {
         MongoCredential credential;
         switch (mechanism) {
             case GSSAPI:
@@ -667,6 +671,7 @@ public class ConnectionString {
         return credential;
     }
 
+    @Nullable
     private String getLastValue(final Map<String, List<String>> optionsMap, final String key) {
         List<String> valueList = optionsMap.get(key);
         if (valueList == null) {
@@ -709,8 +714,9 @@ public class ConnectionString {
             }
         }
         // handle legacy slaveok settings
-        if (optionsMap.containsKey("slaveok") && !optionsMap.containsKey("readpreference")) {
-            String readPreference = parseBoolean(getLastValue(optionsMap, "slaveok"), "slaveok")
+        String slaveok = getLastValue(optionsMap, "slaveok");
+        if (slaveok != null && !optionsMap.containsKey("readpreference")) {
+            String readPreference = parseBoolean(slaveok, "slaveok")
                                     ? "secondaryPreferred" : "primary";
             optionsMap.put("readpreference", singletonList(readPreference));
             if (LOGGER.isWarnEnabled()) {
@@ -728,7 +734,8 @@ public class ConnectionString {
         return optionsMap;
     }
 
-    private ReadPreference buildReadPreference(final String readPreferenceType,
+    @Nullable
+    private ReadPreference buildReadPreference(@Nullable final String readPreferenceType,
                                                final List<TagSet> tagSetList, final long maxStalenessSeconds) {
         if (readPreferenceType != null) {
             if (tagSetList.isEmpty() && maxStalenessSeconds == -1) {
@@ -746,8 +753,10 @@ public class ConnectionString {
     }
 
     @SuppressWarnings("deprecation")
-    private WriteConcern buildWriteConcern(final Boolean safe, final String w,
-                                           final Integer wTimeout, final Boolean fsync, final Boolean journal) {
+    @Nullable
+    private WriteConcern buildWriteConcern(@Nullable final Boolean safe, @Nullable final String w,
+                                           @Nullable final Integer wTimeout, @Nullable final Boolean fsync,
+                                           @Nullable final Boolean journal) {
         WriteConcern retVal = null;
         if (w != null || wTimeout != null || fsync != null || journal != null) {
             if (w == null) {
@@ -904,6 +913,7 @@ public class ConnectionString {
      *
      * @return the username
      */
+    @Nullable
     public String getUsername() {
         return credential != null ? credential.getUserName() : null;
     }
@@ -913,6 +923,7 @@ public class ConnectionString {
      *
      * @return the password
      */
+    @Nullable
     public char[] getPassword() {
         return credential != null ? credential.getPassword() : null;
     }
@@ -931,6 +942,7 @@ public class ConnectionString {
      *
      * @return the database name
      */
+    @Nullable
     public String getDatabase() {
         return database;
     }
@@ -941,6 +953,7 @@ public class ConnectionString {
      *
      * @return the collection name
      */
+    @Nullable
     public String getCollection() {
         return collection;
     }
@@ -984,6 +997,7 @@ public class ConnectionString {
      * @return the credentials in an immutable list
      * @since 3.6
      */
+    @Nullable
     public MongoCredential getCredential() {
         return credential;
     }
@@ -992,6 +1006,7 @@ public class ConnectionString {
      * Gets the read preference specified in the connection string.
      * @return the read preference
      */
+    @Nullable
     public ReadPreference getReadPreference() {
         return readPreference;
     }
@@ -1000,6 +1015,7 @@ public class ConnectionString {
      * Gets the read concern specified in the connection string.
      * @return the read concern
      */
+    @Nullable
     public ReadConcern getReadConcern() {
         return readConcern;
     }
@@ -1008,6 +1024,7 @@ public class ConnectionString {
      * Gets the write concern specified in the connection string.
      * @return the write concern
      */
+    @Nullable
     public WriteConcern getWriteConcern() {
         return writeConcern;
     }
@@ -1027,6 +1044,7 @@ public class ConnectionString {
      * Gets the minimum connection pool size specified in the connection string.
      * @return the minimum connection pool size
      */
+    @Nullable
     public Integer getMinConnectionPoolSize() {
         return minConnectionPoolSize;
     }
@@ -1035,6 +1053,7 @@ public class ConnectionString {
      * Gets the maximum connection pool size specified in the connection string.
      * @return the maximum connection pool size
      */
+    @Nullable
     public Integer getMaxConnectionPoolSize() {
         return maxConnectionPoolSize;
     }
@@ -1043,6 +1062,7 @@ public class ConnectionString {
      * Gets the multiplier for the number of threads allowed to block waiting for a connection specified in the connection string.
      * @return the multiplier for the number of threads allowed to block waiting for a connection
      */
+    @Nullable
     public Integer getThreadsAllowedToBlockForConnectionMultiplier() {
         return threadsAllowedToBlockForConnectionMultiplier;
     }
@@ -1051,6 +1071,7 @@ public class ConnectionString {
      * Gets the maximum wait time of a thread waiting for a connection specified in the connection string.
      * @return the maximum wait time of a thread waiting for a connection
      */
+    @Nullable
     public Integer getMaxWaitTime() {
         return maxWaitTime;
     }
@@ -1059,6 +1080,7 @@ public class ConnectionString {
      * Gets the maximum connection idle time specified in the connection string.
      * @return the maximum connection idle time
      */
+    @Nullable
     public Integer getMaxConnectionIdleTime() {
         return maxConnectionIdleTime;
     }
@@ -1067,6 +1089,7 @@ public class ConnectionString {
      * Gets the maximum connection life time specified in the connection string.
      * @return the maximum connection life time
      */
+    @Nullable
     public Integer getMaxConnectionLifeTime() {
         return maxConnectionLifeTime;
     }
@@ -1075,6 +1098,7 @@ public class ConnectionString {
      * Gets the socket connect timeout specified in the connection string.
      * @return the socket connect timeout
      */
+    @Nullable
     public Integer getConnectTimeout() {
         return connectTimeout;
     }
@@ -1083,6 +1107,7 @@ public class ConnectionString {
      * Gets the socket timeout specified in the connection string.
      * @return the socket timeout
      */
+    @Nullable
     public Integer getSocketTimeout() {
         return socketTimeout;
     }
@@ -1091,6 +1116,7 @@ public class ConnectionString {
      * Gets the SSL enabled value specified in the connection string.
      * @return the SSL enabled value
      */
+    @Nullable
     public Boolean getSslEnabled() {
         return sslEnabled;
     }
@@ -1100,6 +1126,7 @@ public class ConnectionString {
      * @return the stream type value
      * @since 3.3
      */
+    @Nullable
     public String getStreamType() {
         return streamType;
     }
@@ -1110,6 +1137,7 @@ public class ConnectionString {
      * @return the SSL invalidHostnameAllowed value
      * @since 3.3
      */
+    @Nullable
     public Boolean getSslInvalidHostnameAllowed() {
         return sslInvalidHostnameAllowed;
     }
@@ -1118,6 +1146,7 @@ public class ConnectionString {
      * Gets the required replica set name specified in the connection string.
      * @return the required replica set name
      */
+    @Nullable
     public String getRequiredReplicaSetName() {
         return requiredReplicaSetName;
     }
@@ -1127,6 +1156,7 @@ public class ConnectionString {
      * @return the server selection timeout (in milliseconds), or null if unset
      * @since 3.3
      */
+    @Nullable
     public Integer getServerSelectionTimeout() {
         return serverSelectionTimeout;
     }
@@ -1136,6 +1166,7 @@ public class ConnectionString {
      * @return the local threshold (in milliseconds), or null if unset
      * since 3.3
      */
+    @Nullable
     public Integer getLocalThreshold() {
         return localThreshold;
     }
@@ -1145,6 +1176,7 @@ public class ConnectionString {
      * @return the heartbeat frequency (in milliseconds), or null if unset
      * since 3.3
      */
+    @Nullable
     public Integer getHeartbeatFrequency() {
         return heartbeatFrequency;
     }
@@ -1159,6 +1191,7 @@ public class ConnectionString {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
+    @Nullable
     public String getApplicationName() {
         return applicationName;
     }

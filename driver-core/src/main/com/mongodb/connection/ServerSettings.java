@@ -151,8 +151,9 @@ public class ServerSettings {
          * @since 3.3
          */
         public Builder applyConnectionString(final ConnectionString connectionString) {
-            if (connectionString.getHeartbeatFrequency() != null) {
-                heartbeatFrequencyMS = connectionString.getHeartbeatFrequency();
+            Integer heartbeatFrequency = connectionString.getHeartbeatFrequency();
+            if (heartbeatFrequency != null) {
+                heartbeatFrequencyMS = heartbeatFrequency;
             }
             return this;
         }

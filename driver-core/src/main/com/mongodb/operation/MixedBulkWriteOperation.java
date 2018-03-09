@@ -283,7 +283,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                         retryBatch.addResult(executeCommand(connection, retryBatch, binding));
                     } catch (Throwable t) {
                         connection.release();
-                        throw MongoException.fromThrowable(t);
+                        throw MongoException.fromThrowableNonNull(t);
                     }
                     return executeBulkWriteBatch(binding, connection, retryBatch.getNextBatch());
                 }
@@ -431,7 +431,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             throw e;
         } catch (Throwable t) {
             connection.release();
-            throw MongoException.fromThrowable(t);
+            throw MongoException.fromThrowableNonNull(t);
         }
     }
 }

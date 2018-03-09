@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 
 import static com.mongodb.DBObjects.toDBObject;
@@ -35,7 +36,7 @@ public class CommandResult extends BasicDBObject {
         this(response, null);
     }
 
-    CommandResult(final BsonDocument response, final ServerAddress address) {
+    CommandResult(final BsonDocument response, @Nullable final ServerAddress address) {
         this.address = address;
         this.response = notNull("response", response);
         putAll(toDBObject(response));
@@ -62,6 +63,7 @@ public class CommandResult extends BasicDBObject {
      *
      * @return The error message or null
      */
+    @Nullable
     public String getErrorMessage() {
         Object foo = get("errmsg");
         if (foo == null) {
@@ -75,9 +77,10 @@ public class CommandResult extends BasicDBObject {
      *
      * @return The mongo exception, or null if the command was successful.
      */
+    @Nullable
     public MongoException getException() {
         if (!ok()) {
-            return new MongoCommandException(response, address);
+            return createException();
         }
 
         return null;
@@ -91,7 +94,11 @@ public class CommandResult extends BasicDBObject {
      */
     public void throwOnError() {
         if (!ok()) {
-            throw getException();
+            throw createException();
         }
+    }
+
+    private MongoException createException() {
+        return new MongoCommandException(response, address);
     }
 }

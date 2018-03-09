@@ -20,6 +20,7 @@ import com.mongodb.ServerAddress;
 import com.mongodb.TagSet;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.lang.Nullable;
 import org.bson.types.ObjectId;
 
 import java.util.Collections;
@@ -627,6 +628,7 @@ public class ServerDescription {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
+    @Nullable
     public Date getLastWriteDate() {
         return lastWriteDate;
     }

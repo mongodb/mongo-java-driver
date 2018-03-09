@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -77,12 +79,30 @@ public final class MongoCompressor {
      * @return the property value, or the default value if the property is not defined
      */
     @SuppressWarnings("unchecked")
+    @Nullable
     public <T> T getProperty(final String key, final T defaultValue) {
         notNull("key", key);
 
         T value = (T) properties.get(key.toLowerCase());
         return (value == null && !properties.containsKey(key)) ? defaultValue : value;
+    }
 
+    /**
+     * Gets the property with the given key.
+     *
+     * @param key the key
+     * @param defaultValue the default value
+     * @param <T> the property value type
+     * @return the property value, or the default value if the property is not defined
+     * @throws IllegalArgumentException if the value and default value are null
+     * @since 3.7
+     */
+    public <T> T getPropertyNonNull(final String key, final T defaultValue) {
+        T value = getProperty(key, defaultValue);
+        if (value == null) {
+            throw new IllegalArgumentException();
+        }
+        return value;
     }
 
     /**

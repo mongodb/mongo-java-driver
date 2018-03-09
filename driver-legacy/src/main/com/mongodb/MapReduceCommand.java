@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.client.model.Collation;
+import com.mongodb.lang.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -60,8 +61,8 @@ public class MapReduceCommand {
      *                         function.
      * @mongodb.driver.manual reference/command/mapReduce/ Map Reduce Command
      */
-    public MapReduceCommand(final DBCollection inputCollection, final String map, final String reduce, final String outputCollection,
-                            final OutputType type, final DBObject query) {
+    public MapReduceCommand(final DBCollection inputCollection, final String map, final String reduce,
+                            @Nullable final String outputCollection, final OutputType type, final DBObject query) {
         this.mapReduce = inputCollection.getName();
         this.map = map;
         this.reduce = reduce;
@@ -123,6 +124,7 @@ public class MapReduceCommand {
      *
      * @return The outputCollection
      */
+    @Nullable
     public String getOutputTarget() {
         return outputCollection;
     }
@@ -143,6 +145,7 @@ public class MapReduceCommand {
      *
      * @return The finalize function (as a JS String).
      */
+    @Nullable
     public String getFinalize() {
         return finalize;
     }
@@ -152,7 +155,7 @@ public class MapReduceCommand {
      *
      * @param finalize The finalize function (as a JS String)
      */
-    public void setFinalize(final String finalize) {
+    public void setFinalize(@Nullable final String finalize) {
         this.finalize = finalize;
     }
 
@@ -161,6 +164,7 @@ public class MapReduceCommand {
      *
      * @return The query object
      */
+    @Nullable
     public DBObject getQuery() {
         return query;
     }
@@ -170,6 +174,7 @@ public class MapReduceCommand {
      *
      * @return the Sort DBObject
      */
+    @Nullable
     public DBObject getSort() {
         return sort;
     }
@@ -179,7 +184,7 @@ public class MapReduceCommand {
      *
      * @param sort The sort specification object
      */
-    public void setSort(final DBObject sort) {
+    public void setSort(@Nullable final DBObject sort) {
         this.sort = sort;
     }
 
@@ -230,6 +235,7 @@ public class MapReduceCommand {
      *
      * @return The JavaScript scope
      */
+    @Nullable
     public Map<String, Object> getScope() {
         return scope;
     }
@@ -239,7 +245,7 @@ public class MapReduceCommand {
      *
      * @param scope The JavaScript scope
      */
-    public void setScope(final Map<String, Object> scope) {
+    public void setScope(@Nullable final Map<String, Object> scope) {
         this.scope = scope;
     }
 
@@ -249,6 +255,7 @@ public class MapReduceCommand {
      * @return The JavaScript mode
      * @since 2.13
      */
+    @Nullable
     public Boolean getJsMode() {
         return jsMode;
     }
@@ -259,7 +266,7 @@ public class MapReduceCommand {
      * @param jsMode Specifies whether to convert intermediate data into BSON format between the execution of the map and reduce functions
      * @since 2.13
      */
-    public void setJsMode(final Boolean jsMode) {
+    public void setJsMode(final @Nullable Boolean jsMode) {
         this.jsMode = jsMode;
     }
 
@@ -268,6 +275,7 @@ public class MapReduceCommand {
      *
      * @return the name of the database the result is stored in, or null.
      */
+    @Nullable
     public String getOutputDB() {
         return this.outputDB;
     }
@@ -277,7 +285,7 @@ public class MapReduceCommand {
      *
      * @param outputDB the name of the database to send the Map Reduce output to
      */
-    public void setOutputDB(final String outputDB) {
+    public void setOutputDB(@Nullable final String outputDB) {
         this.outputDB = outputDB;
     }
 
@@ -288,6 +296,7 @@ public class MapReduceCommand {
      * @since 2.14
      * @mongodb.server.release 3.2
      */
+    @Nullable
     public Boolean getBypassDocumentValidation() {
         return bypassDocumentValidation;
     }
@@ -299,7 +308,7 @@ public class MapReduceCommand {
      * @since 2.14
      * @mongodb.server.release 3.2
      */
-    public void setBypassDocumentValidation(final Boolean bypassDocumentValidation) {
+    public void setBypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
     }
 
@@ -377,7 +386,7 @@ public class MapReduceCommand {
      *
      * @param preference Read Preference to use
      */
-    public void setReadPreference(final ReadPreference preference) {
+    public void setReadPreference(@Nullable final ReadPreference preference) {
         this.readPreference = preference;
     }
 
@@ -386,6 +395,7 @@ public class MapReduceCommand {
      *
      * @return the readPreference
      */
+    @Nullable
     public ReadPreference getReadPreference() {
         return readPreference;
     }
@@ -397,6 +407,7 @@ public class MapReduceCommand {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
+    @Nullable
     public Collation getCollation() {
         return collation;
     }
@@ -408,6 +419,7 @@ public class MapReduceCommand {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
+    @Nullable
     public void setCollation(final Collation collation) {
         this.collation = collation;
     }
@@ -415,6 +427,13 @@ public class MapReduceCommand {
     @Override
     public String toString() {
         return toDBObject().toString();
+    }
+
+    String getOutputTargetNonNull() {
+        if (outputCollection == null) {
+            throw new MongoInternalException("outputCollection can not be null in this context");
+        }
+        return outputCollection;
     }
 
     /**

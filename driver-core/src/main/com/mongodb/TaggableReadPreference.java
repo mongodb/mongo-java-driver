@@ -20,6 +20,7 @@ import com.mongodb.annotations.Immutable;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt64;
@@ -27,6 +28,7 @@ import org.bson.BsonString;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -51,14 +53,12 @@ public abstract class TaggableReadPreference extends ReadPreference {
         this.maxStalenessMS = null;
     }
 
-    TaggableReadPreference(final List<TagSet> tagSetList, final Long maxStaleness, final TimeUnit timeUnit) {
+    TaggableReadPreference(final List<TagSet> tagSetList, @Nullable final Long maxStaleness, final TimeUnit timeUnit) {
         notNull("tagSetList", tagSetList);
         isTrueArgument("maxStaleness is null or >= 0", maxStaleness == null || maxStaleness >= 0);
         this.maxStalenessMS = maxStaleness == null ? null : MILLISECONDS.convert(maxStaleness, timeUnit);
 
-        for (final TagSet tagSet : tagSetList) {
-            this.tagSetList.add(tagSet);
-        }
+        this.tagSetList.addAll(tagSetList);
     }
 
     @Override
@@ -105,6 +105,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
      * @mongodb.server.release 3.4
      * @since 3.4
      */
+    @Nullable
     public Long getMaxStaleness(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         if (maxStalenessMS == null) {
@@ -168,7 +169,8 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
     protected List<ServerDescription> selectFreshServers(final ClusterDescription clusterDescription,
                                                          final List<ServerDescription> servers) {
-        if (getMaxStaleness(MILLISECONDS) == null) {
+        Long maxStaleness = getMaxStaleness(MILLISECONDS);
+        if (maxStaleness == null) {
             return servers;
         }
 
@@ -186,14 +188,14 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
         long heartbeatFrequencyMS = clusterDescription.getServerSettings().getHeartbeatFrequency(MILLISECONDS);
 
-        if (getMaxStaleness(MILLISECONDS) < Math.max(SMALLEST_MAX_STALENESS_MS, heartbeatFrequencyMS + IDLE_WRITE_PERIOD_MS)) {
+        if (maxStaleness < Math.max(SMALLEST_MAX_STALENESS_MS, heartbeatFrequencyMS + IDLE_WRITE_PERIOD_MS)) {
             if (SMALLEST_MAX_STALENESS_MS > heartbeatFrequencyMS + IDLE_WRITE_PERIOD_MS){
                 throw new MongoConfigurationException(format("Max staleness (%d sec) must be at least 90 seconds",
                         getMaxStaleness(SECONDS)));
             } else {
                 throw new MongoConfigurationException(format("Max staleness (%d ms) must be at least the heartbeat period (%d ms) "
                                                                      + "plus the idle write period (%d ms)",
-                        getMaxStaleness(MILLISECONDS), heartbeatFrequencyMS, IDLE_WRITE_PERIOD_MS));
+                        maxStaleness, heartbeatFrequencyMS, IDLE_WRITE_PERIOD_MS));
             }
         }
         List<ServerDescription> freshServers = new ArrayList<ServerDescription>(servers.size());
@@ -205,16 +207,16 @@ public abstract class TaggableReadPreference extends ReadPreference {
                 if (cur.isPrimary()) {
                     freshServers.add(cur);
                 } else {
-                    if (getStalenessOfSecondaryRelativeToPrimary(primary, cur, heartbeatFrequencyMS) <= getMaxStaleness(MILLISECONDS)) {
+                    if (getStalenessOfSecondaryRelativeToPrimary(primary, cur, heartbeatFrequencyMS) <= maxStaleness) {
                         freshServers.add(cur);
                     }
                 }
             }
         } else {
-            ServerDescription mostUpdateToDateSecondary = findMostUpToDateSecondary(clusterDescription);
+            ServerDescription mostUpToDateSecondary = findMostUpToDateSecondary(clusterDescription);
             for (ServerDescription cur : servers) {
-                if (mostUpdateToDateSecondary.getLastWriteDate().getTime() - cur.getLastWriteDate().getTime() + heartbeatFrequencyMS
-                            <= getMaxStaleness(MILLISECONDS)) {
+                if (getLastWriteDateNonNull(mostUpToDateSecondary).getTime() - getLastWriteDateNonNull(cur).getTime()
+                        + heartbeatFrequencyMS <= maxStaleness) {
                     freshServers.add(cur);
                 }
             }
@@ -225,11 +227,12 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
     private long getStalenessOfSecondaryRelativeToPrimary(final ServerDescription primary, final ServerDescription serverDescription,
                                                           final long heartbeatFrequencyMS) {
-        return primary.getLastWriteDate().getTime()
+        return getLastWriteDateNonNull(primary).getTime()
                        + (serverDescription.getLastUpdateTime(MILLISECONDS) - primary.getLastUpdateTime(MILLISECONDS))
-                       - serverDescription.getLastWriteDate().getTime() + heartbeatFrequencyMS;
+                       - getLastWriteDateNonNull(serverDescription).getTime() + heartbeatFrequencyMS;
     }
 
+    @Nullable
     private ServerDescription findPrimary(final ClusterDescription clusterDescription) {
         for (ServerDescription cur : clusterDescription.getServerDescriptions()) {
             if (cur.isPrimary()) {
@@ -244,12 +247,23 @@ public abstract class TaggableReadPreference extends ReadPreference {
         for (ServerDescription cur : clusterDescription.getServerDescriptions()) {
             if (cur.isSecondary()) {
                 if (mostUpdateToDateSecondary == null
-                            || cur.getLastWriteDate().getTime() > mostUpdateToDateSecondary.getLastWriteDate().getTime()) {
+                            || getLastWriteDateNonNull(cur).getTime() > getLastWriteDateNonNull(mostUpdateToDateSecondary).getTime()) {
                     mostUpdateToDateSecondary = cur;
                 }
             }
         }
+        if (mostUpdateToDateSecondary == null) {
+            throw new MongoInternalException("Expected at least one secondary in cluster description: " + clusterDescription);
+        }
         return mostUpdateToDateSecondary;
+    }
+
+    private Date getLastWriteDateNonNull(final ServerDescription serverDescription) {
+        Date lastWriteDate = serverDescription.getLastWriteDate();
+        if (lastWriteDate == null) {
+            throw new MongoClientException("lastWriteDate should not be null in " + serverDescription);
+        }
+        return lastWriteDate;
     }
 
     private boolean serversAreAllThreeDotFour(final ClusterDescription clusterDescription) {
@@ -268,7 +282,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         SecondaryReadPreference() {
         }
 
-        SecondaryReadPreference(final List<TagSet> tagSetList, final Long maxStaleness, final TimeUnit timeUnit) {
+        SecondaryReadPreference(final List<TagSet> tagSetList, @Nullable final Long maxStaleness, final TimeUnit timeUnit) {
             super(tagSetList, maxStaleness, timeUnit);
         }
 
@@ -303,7 +317,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         SecondaryPreferredReadPreference() {
         }
 
-        SecondaryPreferredReadPreference(final List<TagSet> tagSetList, final Long maxStaleness, final TimeUnit timeUnit) {
+        SecondaryPreferredReadPreference(final List<TagSet> tagSetList, @Nullable final Long maxStaleness, final TimeUnit timeUnit) {
             super(tagSetList, maxStaleness, timeUnit);
         }
 
@@ -330,7 +344,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         NearestReadPreference() {
         }
 
-        NearestReadPreference(final List<TagSet> tagSetList, final Long maxStaleness, final TimeUnit timeUnit) {
+        NearestReadPreference(final List<TagSet> tagSetList, @Nullable final Long maxStaleness, final TimeUnit timeUnit) {
             super(tagSetList, maxStaleness, timeUnit);
         }
 
@@ -367,7 +381,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         PrimaryPreferredReadPreference() {
         }
 
-        PrimaryPreferredReadPreference(final List<TagSet> tagSetList, final Long maxStaleness, final TimeUnit timeUnit) {
+        PrimaryPreferredReadPreference(final List<TagSet> tagSetList, @Nullable final Long maxStaleness, final TimeUnit timeUnit) {
             super(tagSetList, maxStaleness, timeUnit);
         }
 

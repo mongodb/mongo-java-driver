@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
 import org.bson.LazyBSONDecoder;
 
 import java.io.IOException;
@@ -27,7 +28,7 @@ import java.io.InputStream;
 public class LazyDBDecoder extends LazyBSONDecoder implements DBDecoder {
 
     @Override
-    public DBCallback getDBCallback(final DBCollection collection) {
+    public DBCallback getDBCallback(@Nullable final DBCollection collection) {
         // callback doesn't do anything special, could be unique per decoder
         // but have to create per collection due to DBRef, at least
         return new LazyDBCallback(collection);

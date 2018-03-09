@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonValue;
@@ -56,19 +57,21 @@ public class WriteConcernException extends MongoServerException {
      */
     public static int extractErrorCode(final BsonDocument response) {
         // mongos may set an err field containing duplicate key error information
-        if (response.containsKey("err")) {
-            String errorMessage = extractErrorMessage(response);
-            if (errorMessage.contains("E11000 duplicate key error")) {
-                return 11000;
+        String errorMessage = extractErrorMessage(response);
+        if (errorMessage != null) {
+            if (response.containsKey("err")) {
+                if (errorMessage.contains("E11000 duplicate key error")) {
+                    return 11000;
+                }
             }
-        }
 
-        // mongos may return a list of documents representing write command responses from each shard.  Return the one with a matching
-        // "err" field, so that it can be used to get the error code
-        if (!response.containsKey("code") && response.containsKey("errObjects")) {
-            for (BsonValue curErrorDocument : response.getArray("errObjects")) {
-                if (extractErrorMessage(response).equals(extractErrorMessage(curErrorDocument.asDocument()))) {
-                    return curErrorDocument.asDocument().getNumber("code").intValue();
+            // mongos may return a list of documents representing write command responses from each shard.  Return the one with a matching
+            // "err" field, so that it can be used to get the error code
+            if (!response.containsKey("code") && response.containsKey("errObjects")) {
+                for (BsonValue curErrorDocument : response.getArray("errObjects")) {
+                    if (errorMessage.equals(extractErrorMessage(curErrorDocument.asDocument()))) {
+                        return curErrorDocument.asDocument().getNumber("code").intValue();
+                    }
                 }
             }
         }
@@ -81,6 +84,7 @@ public class WriteConcernException extends MongoServerException {
      * @param response the response
      * @return the error message
      */
+    @Nullable
     public static String extractErrorMessage(final BsonDocument response) {
         if (response.isString("err")) {
             return response.getString("err").getValue();
@@ -114,6 +118,7 @@ public class WriteConcernException extends MongoServerException {
      *
      * @return the error message
      */
+    @Nullable
     public String getErrorMessage() {
         return extractErrorMessage(response);
     }

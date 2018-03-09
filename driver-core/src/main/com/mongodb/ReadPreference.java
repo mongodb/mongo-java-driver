@@ -23,6 +23,7 @@ import com.mongodb.TaggableReadPreference.SecondaryReadPreference;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
@@ -504,9 +505,7 @@ public abstract class ReadPreference {
      * @return the read preference
      */
     public static ReadPreference valueOf(final String name) {
-        if (name == null) {
-            throw new IllegalArgumentException();
-        }
+        notNull("name", name);
 
         String nameToCheck = name.toLowerCase();
 
@@ -563,7 +562,7 @@ public abstract class ReadPreference {
         return valueOf(name, tagSetList, (Long) maxStaleness, timeUnit);
     }
 
-    private static TaggableReadPreference valueOf(final String name, final List<TagSet> tagSetList, final Long maxStaleness,
+    private static TaggableReadPreference valueOf(final String name, final List<TagSet> tagSetList, @Nullable final Long maxStaleness,
                                                   final TimeUnit timeUnit) {
         notNull("name", name);
         notNull("tagSetList", tagSetList);

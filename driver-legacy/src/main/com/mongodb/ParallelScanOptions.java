@@ -18,6 +18,7 @@ package com.mongodb;
 
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.lang.Nullable;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -121,6 +122,7 @@ public final class ParallelScanOptions {
      *
      * @return read preference
      */
+    @Nullable
     public ReadPreference getReadPreference() {
         return readPreference;
     }

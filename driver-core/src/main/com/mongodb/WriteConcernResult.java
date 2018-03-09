@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
 
 /**
@@ -56,6 +57,7 @@ public abstract class WriteConcernResult {
      * @return the value of _id if this write resulted in an upsert.
      * @throws UnsupportedOperationException if the write was unacknowledged.
      */
+    @Nullable
     public abstract BsonValue getUpsertedId();
 
     /**
@@ -66,7 +68,7 @@ public abstract class WriteConcernResult {
      * @param upsertedId if an upsert resulted in an inserted document, this is the _id of that document.  This may be null
      * @return an acknowledged WriteConcernResult
      */
-    public static WriteConcernResult acknowledged(final int count, final boolean isUpdateOfExisting, final BsonValue upsertedId) {
+    public static WriteConcernResult acknowledged(final int count, final boolean isUpdateOfExisting, @Nullable final BsonValue upsertedId) {
         return new WriteConcernResult() {
             @Override
             public boolean wasAcknowledged() {
@@ -84,6 +86,7 @@ public abstract class WriteConcernResult {
             }
 
             @Override
+            @Nullable
             public BsonValue getUpsertedId() {
                 return upsertedId;
             }

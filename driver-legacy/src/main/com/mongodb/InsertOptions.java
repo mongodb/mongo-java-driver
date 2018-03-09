@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
+
 /**
  * Options related to insertion of documents into MongoDB.  The setter methods return {@code this} so that a chaining style can be used.
  *
@@ -34,7 +36,7 @@ public final class InsertOptions {
      * @param writeConcern the write concern
      * @return this
      */
-    public InsertOptions writeConcern(final WriteConcern writeConcern) {
+    public InsertOptions writeConcern(@Nullable final WriteConcern writeConcern) {
         this.writeConcern = writeConcern;
         return this;
     }
@@ -56,7 +58,7 @@ public final class InsertOptions {
      * @param dbEncoder the encoder
      * @return this
      */
-    public InsertOptions dbEncoder(final DBEncoder dbEncoder) {
+    public InsertOptions dbEncoder(@Nullable final DBEncoder dbEncoder) {
         this.dbEncoder = dbEncoder;
         return this;
     }
@@ -66,6 +68,7 @@ public final class InsertOptions {
      *
      * @return the write concern, or null if the default will be used.
      */
+    @Nullable
     public WriteConcern getWriteConcern() {
         return writeConcern;
     }
@@ -85,6 +88,7 @@ public final class InsertOptions {
      *
      * @return the encoder, or null if the default will be used
      */
+    @Nullable
     public DBEncoder getDbEncoder() {
         return dbEncoder;
     }
@@ -97,6 +101,7 @@ public final class InsertOptions {
      * @since 2.14
      * @mongodb.server.release 3.2
      */
+    @Nullable
     public Boolean getBypassDocumentValidation() {
         return bypassDocumentValidation;
     }
@@ -109,7 +114,7 @@ public final class InsertOptions {
      * @since 2.14
      * @mongodb.server.release 3.2
      */
-    public InsertOptions bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+    public InsertOptions bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
