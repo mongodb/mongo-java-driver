@@ -39,6 +39,7 @@ import static com.mongodb.ClusterFixture.isAuthenticated;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.DBObjectMatchers.hasFields;
 import static com.mongodb.DBObjectMatchers.hasSubdocument;
 import static com.mongodb.Fixture.getDefaultDatabaseName;
@@ -293,6 +294,7 @@ public class DBTest extends DatabaseTestCase {
 
     @Test
     public void shouldAddUser() {
+        assumeTrue(serverVersionLessThan("3.7"));
         String userName = "jeff";
         char[] password = "123".toCharArray();
         boolean readOnly = true;
@@ -310,6 +312,7 @@ public class DBTest extends DatabaseTestCase {
 
     @Test
     public void shouldUpdateUser() {
+        assumeTrue(serverVersionLessThan("3.7"));
         String userName = "jeff";
         char[] password = "123".toCharArray();
         boolean readOnly = true;
@@ -333,6 +336,7 @@ public class DBTest extends DatabaseTestCase {
 
     @Test
     public void shouldRemoveUser() {
+        assumeTrue(serverVersionLessThan("3.7"));
         String userName = "jeff";
 
         char[] password = "123".toCharArray();
