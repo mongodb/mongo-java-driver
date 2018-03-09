@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.client.model.Collation;
+import com.mongodb.lang.Nullable;
 import org.bson.codecs.Encoder;
 
 import java.util.List;
@@ -52,6 +53,7 @@ public class BulkWriteRequestBuilder {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
+    @Nullable
     public Collation getCollation() {
         return collation;
     }
@@ -64,6 +66,7 @@ public class BulkWriteRequestBuilder {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
+    @Nullable
     public BulkWriteRequestBuilder collation(final Collation collation) {
         this.collation = collation;
         return this;

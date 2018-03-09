@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.client.model.Collation;
+import com.mongodb.lang.Nullable;
 import org.bson.codecs.Encoder;
 
 import java.util.List;
@@ -39,7 +40,7 @@ public class BulkUpdateRequestBuilder {
 
     BulkUpdateRequestBuilder(final BulkWriteOperation bulkWriteOperation, final DBObject query, final boolean upsert,
                              final Encoder<DBObject> queryCodec, final Encoder<DBObject> replacementCodec,
-                             final Collation collation, final List<? extends DBObject> arrayFilters) {
+                             @Nullable final Collation collation, @Nullable final List<? extends DBObject> arrayFilters) {
         this.bulkWriteOperation = bulkWriteOperation;
         this.query = query;
         this.upsert = upsert;
@@ -56,6 +57,7 @@ public class BulkUpdateRequestBuilder {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
+    @Nullable
     public Collation getCollation() {
         return collation;
     }
@@ -68,6 +70,7 @@ public class BulkUpdateRequestBuilder {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
+    @Nullable
     public BulkUpdateRequestBuilder collation(final Collation collation) {
         this.collation = collation;
         return this;
@@ -79,6 +82,7 @@ public class BulkUpdateRequestBuilder {
      * @since 3.6
      * @mongodb.server.release 3.6
      */
+    @Nullable
     public List<? extends DBObject> getArrayFilters() {
         return arrayFilters;
     }

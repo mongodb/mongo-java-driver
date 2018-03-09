@@ -31,6 +31,7 @@ import com.mongodb.connection.Cluster;
 import com.mongodb.connection.DefaultClusterFactory;
 import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.connection.StreamFactory;
+import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
 import org.bson.BsonDocument;
@@ -126,10 +127,11 @@ final class MongoClientImpl implements MongoClient {
     }
 
     private static StreamFactory getStreamFactory(final MongoClientSettings settings) {
-        if (settings.getStreamFactoryFactory() == null) {
+        StreamFactoryFactory streamFactoryFactory = settings.getStreamFactoryFactory();
+        if (streamFactoryFactory == null) {
             return new SocketStreamFactory(settings.getSocketSettings(), settings.getSslSettings());
         } else {
-            return settings.getStreamFactoryFactory().create(settings.getSocketSettings(), settings.getSslSettings());
+            return streamFactoryFactory.create(settings.getSocketSettings(), settings.getSslSettings());
         }
     }
 

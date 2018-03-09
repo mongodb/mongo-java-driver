@@ -27,6 +27,7 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.event.CommandListener;
+import com.mongodb.lang.Nullable;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.IterableCodecProvider;
@@ -382,7 +383,7 @@ public final class MongoClientSettings {
          * @see #getApplicationName()
          * @mongodb.server.release 3.4
          */
-        public Builder applicationName(final String applicationName) {
+        public Builder applicationName(@Nullable final String applicationName) {
             if (applicationName != null) {
                 isTrueArgument("applicationName UTF-8 encoding length <= 128",
                         applicationName.getBytes(Charset.forName("UTF-8")).length <= 128);
@@ -429,10 +430,11 @@ public final class MongoClientSettings {
     }
 
     /**
-     * Gets the credential list.
+     * Gets the credential.
      *
-     * @return the credential list
+     * @return the credential, which may be null
      */
+    @Nullable
     public MongoCredential getCredential() {
         return credential;
     }
@@ -484,6 +486,7 @@ public final class MongoClientSettings {
      *
      * @return the stream factory factory
      */
+    @Nullable
     public StreamFactoryFactory getStreamFactoryFactory() {
         return streamFactoryFactory;
     }
@@ -508,6 +511,7 @@ public final class MongoClientSettings {
      * @return the application name, which may be null
      * @mongodb.server.release 3.4
      */
+    @Nullable
     public String getApplicationName() {
         return applicationName;
     }

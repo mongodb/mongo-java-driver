@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -29,7 +31,7 @@ class AcknowledgedBulkWriteResult extends BulkWriteResult {
     private final List<BulkWriteUpsert> upserts;
 
     AcknowledgedBulkWriteResult(final int insertedCount, final int matchedCount, final int removedCount,
-                                final Integer modifiedCount, final List<BulkWriteUpsert> upserts) {
+                                @Nullable final Integer modifiedCount, final List<BulkWriteUpsert> upserts) {
         this.insertedCount = insertedCount;
         this.matchedCount = matchedCount;
         this.removedCount = removedCount;

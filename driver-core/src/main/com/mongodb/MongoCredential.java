@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.annotations.Immutable;
+import com.mongodb.lang.Nullable;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -294,7 +295,8 @@ public final class MongoCredential {
      * @param source    the source of the user name, typically a database name
      * @param password  the password
      */
-    MongoCredential(final AuthenticationMechanism mechanism, final String userName, final String source, final char[] password) {
+    MongoCredential(@Nullable final AuthenticationMechanism mechanism, @Nullable final String userName, final String source,
+                    @Nullable final char[] password) {
         if (mechanism != MONGODB_X509 && userName == null) {
             throw new IllegalArgumentException("username can not be null");
         }
@@ -320,7 +322,7 @@ public final class MongoCredential {
     }
 
     @SuppressWarnings("deprecation")
-    private boolean mechanismRequiresPassword(final AuthenticationMechanism mechanism) {
+    private boolean mechanismRequiresPassword(@Nullable final AuthenticationMechanism mechanism) {
         return mechanism == PLAIN || mechanism == MONGODB_CR || mechanism == SCRAM_SHA_1;
     }
 
@@ -348,6 +350,7 @@ public final class MongoCredential {
      *
      * @return the mechanism.
      */
+    @Nullable
     public String getMechanism() {
         return mechanism == null ? null : mechanism.getMechanismName();
     }
@@ -358,6 +361,7 @@ public final class MongoCredential {
      * @return the mechanism.
      * @since 3.0
      */
+    @Nullable
     public AuthenticationMechanism getAuthenticationMechanism() {
         return mechanism;
     }
@@ -367,6 +371,7 @@ public final class MongoCredential {
      *
      * @return the user name.  Can never be null.
      */
+    @Nullable
     public String getUserName() {
         return userName;
     }
@@ -385,6 +390,7 @@ public final class MongoCredential {
      *
      * @return the password.  Can be null for some mechanisms.
      */
+    @Nullable
     public char[] getPassword() {
         if (password == null) {
             return null;
@@ -402,7 +408,8 @@ public final class MongoCredential {
      * @since 2.12
      */
     @SuppressWarnings("unchecked")
-    public <T> T getMechanismProperty(final String key, final T defaultValue) {
+    @Nullable
+    public <T> T getMechanismProperty(final String key, @Nullable final T defaultValue) {
         notNull("key", key);
 
         T value = (T) mechanismProperties.get(key.toLowerCase());

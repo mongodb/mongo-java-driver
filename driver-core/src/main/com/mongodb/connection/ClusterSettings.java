@@ -272,16 +272,22 @@ public final class ClusterSettings {
             }
             requiredReplicaSetName(connectionString.getRequiredReplicaSetName());
 
-            int maxSize = connectionString.getMaxConnectionPoolSize() != null ? connectionString.getMaxConnectionPoolSize() : 100;
-            int waitQueueMultiple = connectionString.getThreadsAllowedToBlockForConnectionMultiplier() != null
-                                    ? connectionString.getThreadsAllowedToBlockForConnectionMultiplier() : 5;
+            Integer maxConnectionPoolSize = connectionString.getMaxConnectionPoolSize();
+            int maxSize = maxConnectionPoolSize != null ? maxConnectionPoolSize : 100;
+
+            Integer threadsAllowedToBlockForConnectionMultiplier = connectionString.getThreadsAllowedToBlockForConnectionMultiplier();
+            int waitQueueMultiple = threadsAllowedToBlockForConnectionMultiplier != null
+                                    ? threadsAllowedToBlockForConnectionMultiplier : 5;
             maxWaitQueueSize(waitQueueMultiple * maxSize);
 
-            if (connectionString.getServerSelectionTimeout() != null) {
-                serverSelectionTimeout(connectionString.getServerSelectionTimeout(), MILLISECONDS);
+            Integer serverSelectionTimeout = connectionString.getServerSelectionTimeout();
+            if (serverSelectionTimeout != null) {
+                serverSelectionTimeout(serverSelectionTimeout, MILLISECONDS);
             }
-            if (connectionString.getLocalThreshold() != null) {
-                localThreshold(connectionString.getLocalThreshold(), MILLISECONDS);
+
+            Integer localThreshold = connectionString.getLocalThreshold();
+            if (localThreshold != null) {
+                localThreshold(localThreshold, MILLISECONDS);
             }
             return this;
         }

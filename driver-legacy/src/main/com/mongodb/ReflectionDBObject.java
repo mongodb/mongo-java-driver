@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BSONObject;
 
 import java.lang.reflect.Method;
@@ -37,6 +38,7 @@ import static java.util.Collections.synchronizedMap;
 public abstract class ReflectionDBObject implements DBObject {
 
     @Override
+    @Nullable
     public Object get(final String key) {
         return getWrapper().get(this, key);
     }
@@ -220,6 +222,7 @@ public abstract class ReflectionDBObject implements DBObject {
          * @param fieldName the name of the field to get the value for
          * @return the value for the given field name
          */
+        @Nullable
         public Object get(final ReflectionDBObject document, final String fieldName) {
             FieldInfo i = fields.get(fieldName);
             if (i == null) {
@@ -252,6 +255,7 @@ public abstract class ReflectionDBObject implements DBObject {
             }
         }
 
+        @Nullable
         Class<? extends DBObject> getInternalClass(final List<String> path) {
             String cur = path.get(0);
 
@@ -303,6 +307,7 @@ public abstract class ReflectionDBObject implements DBObject {
      * @param c the class to be wrapped
      * @return the wrapper
      */
+    @Nullable
     public static JavaWrapper getWrapperIfReflectionObject(final Class c) {
         if (ReflectionDBObject.class.isAssignableFrom(c)) {
             return getWrapper(c);

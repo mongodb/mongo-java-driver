@@ -41,6 +41,16 @@ public class MongoQueryException extends MongoServerException {
     }
 
     /**
+     * Construct an instance from a command exception.
+     *
+     * @param commandException the command exception
+     * @since 3.7
+     */
+    public MongoQueryException(final MongoCommandException commandException) {
+        this(commandException.getServerAddress(), commandException.getErrorCode(), commandException.getErrorMessage());
+    }
+
+    /**
      * Gets the error code for this query failure.
      *
      * @return the error code

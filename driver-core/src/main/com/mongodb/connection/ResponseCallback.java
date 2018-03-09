@@ -41,7 +41,7 @@ abstract class ResponseCallback implements SingleResultCallback<ResponseBuffers>
     @Override
     public void onResult(final ResponseBuffers responseBuffers, final Throwable t) {
         if (closed) {
-            throw new MongoInternalException("Callback should not be invoked more than once", null);
+            throw new MongoInternalException("Callback should not be invoked more than once");
         }
         closed = true;
         if (responseBuffers != null) {

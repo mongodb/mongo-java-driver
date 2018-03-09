@@ -127,12 +127,16 @@ public class SslSettings {
          * @return this
          */
         public Builder applyConnectionString(final ConnectionString connectionString) {
-            if (connectionString.getSslEnabled() != null) {
-                this.enabled = connectionString.getSslEnabled();
+            Boolean sslEnabled = connectionString.getSslEnabled();
+            if (sslEnabled != null) {
+                this.enabled = sslEnabled;
             }
-            if (connectionString.getSslInvalidHostnameAllowed() != null) {
-                this.invalidHostNameAllowed = connectionString.getSslInvalidHostnameAllowed();
+
+            Boolean sslInvalidHostnameAllowed = connectionString.getSslInvalidHostnameAllowed();
+            if (sslInvalidHostnameAllowed != null) {
+                this.invalidHostNameAllowed = sslInvalidHostnameAllowed;
             }
+
             return this;
         }
 

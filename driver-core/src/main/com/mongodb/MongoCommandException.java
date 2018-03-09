@@ -89,6 +89,11 @@ public class MongoCommandException extends MongoServerException {
     }
 
     private static String extractErrorMessage(final BsonDocument response) {
-        return response.getString("errmsg", new BsonString("")).getValue();
+        String errorMessage = response.getString("errmsg", new BsonString("")).getValue();
+        // Satisfy nullability checker
+        if (errorMessage == null) {
+            throw new MongoInternalException("This value should not be null");
+        }
+        return errorMessage;
     }
 }

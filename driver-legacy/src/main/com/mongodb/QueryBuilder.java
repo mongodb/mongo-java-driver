@@ -16,11 +16,14 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Arrays.asList;
 
 /**
@@ -347,7 +350,8 @@ public class QueryBuilder {
      * @return {@code this}
      */
     public QueryBuilder withinPolygon(final List<Double[]> points) {
-        if (points == null || points.isEmpty() || points.size() < 3) {
+        notNull("points", points);
+        if (points.isEmpty() || points.size() < 3) {
             throw new IllegalArgumentException("Polygon insufficient number of vertices defined");
         }
         addOperand(QueryOperators.WITHIN,
@@ -384,7 +388,7 @@ public class QueryBuilder {
      * @return {@code this}
      * @mongodb.server.release 2.6
      */
-    public QueryBuilder text(final String search, final String language) {
+    public QueryBuilder text(final String search, @Nullable final String language) {
         if (_currentKey != null) {
             throw new QueryBuilderException("The text operand may only occur at the top-level of a query. It does"
                                             + " not apply to a specific element, but rather to a document as a whole.");
@@ -459,7 +463,7 @@ public class QueryBuilder {
         return _query;
     }
 
-    private void addOperand(final String op, final Object value) {
+    private void addOperand(@Nullable final String op, final Object value) {
         Object valueToPut = value;
         if (op == null) {
             if (_hasNot) {

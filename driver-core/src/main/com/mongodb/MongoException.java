@@ -16,6 +16,8 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
+
 /**
  * Top level Exception for all Exceptions, server-side or client-side, that come from the driver.
  */
@@ -27,13 +29,27 @@ public class MongoException extends RuntimeException {
     /**
      * Static helper to create or cast a MongoException from a throwable
      *
-     * @param t a throwable
-     * @return and MongoException
+     * @param t a throwable, which may be null
+     * @return a MongoException
      */
-    public static MongoException fromThrowable(final Throwable t) {
+    @Nullable
+    public static MongoException fromThrowable(@Nullable final Throwable t) {
         if (t == null) {
             return null;
-        } else if (t instanceof MongoException) {
+        } else {
+            return fromThrowableNonNull(t);
+        }
+    }
+
+    /**
+     * Static helper to create or cast a MongoException from a throwable
+     *
+     * @param t a throwable, which may not be null
+     * @return a MongoException
+     * @since 3.7
+     */
+    public static MongoException fromThrowableNonNull(final Throwable t) {
+      if (t instanceof MongoException) {
             return (MongoException) t;
         } else {
             return new MongoException(t.getMessage(), t);

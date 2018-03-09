@@ -27,6 +27,7 @@ import com.mongodb.event.CommandListener;
 import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerMonitorListener;
+import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
 import org.bson.codecs.configuration.CodecRegistry;
 
@@ -466,6 +467,7 @@ public class MongoClientOptions {
      * @return the required replica set name
      * @since 2.12
      */
+    @Nullable
     public String getRequiredReplicaSetName() {
         return requiredReplicaSetName;
     }

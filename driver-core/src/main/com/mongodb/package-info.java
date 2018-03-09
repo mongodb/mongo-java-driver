@@ -17,4 +17,7 @@
 /**
  * The core mongodb package
  */
+@NonNullApi
 package com.mongodb;
+
+import com.mongodb.lang.NonNullApi;

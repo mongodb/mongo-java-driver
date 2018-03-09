@@ -19,6 +19,7 @@
 package com.mongodb;
 
 import com.mongodb.annotations.Immutable;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -237,7 +238,7 @@ public class WriteConcern implements Serializable {
      */
     public WriteConcern(final String w) {
         this(w, null, null, null);
-        isTrueArgument("w != null", w != null);
+        notNull("w", w);
     }
 
     /**
@@ -292,7 +293,7 @@ public class WriteConcern implements Serializable {
      */
     @Deprecated
     public WriteConcern(final int w, final int wTimeoutMS, final boolean fsync, final boolean journal) {
-        this((Object) Integer.valueOf(w), wTimeoutMS, fsync, journal);
+        this((Object) w, wTimeoutMS, fsync, journal);
     }
 
     /**
@@ -311,7 +312,8 @@ public class WriteConcern implements Serializable {
 
     // Private constructor for creating the "default" unacknowledged write concern.  Necessary because there already a no-args
     // constructor that means something else.
-    private WriteConcern(final Object w, final Integer wTimeoutMS, final Boolean fsync, final Boolean journal) {
+    private WriteConcern(@Nullable final Object w, @Nullable final Integer wTimeoutMS, @Nullable final Boolean fsync,
+                         @Nullable final Boolean journal) {
         if (w instanceof Integer) {
             isTrueArgument("w >= 0", ((Integer) w) >= 0);
         } else if (w != null) {
@@ -363,6 +365,7 @@ public class WriteConcern implements Serializable {
      * @since 3.2
      * @mongodb.driver.manual core/write-concern/#timeouts wTimeout
      */
+    @Nullable
     public Integer getWTimeout(final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         return wTimeoutMS == null ? null : (int) timeUnit.convert(wTimeoutMS, TimeUnit.MILLISECONDS);
@@ -537,7 +540,7 @@ public class WriteConcern implements Serializable {
      * @mongodb.driver.manual core/write-concern/#replica-acknowledged Replica Acknowledged
      */
     public WriteConcern withW(final int w) {
-        return new WriteConcern((Object) Integer.valueOf(w), wTimeoutMS, fsync, journal);
+        return new WriteConcern(Integer.valueOf(w), wTimeoutMS, fsync, journal);
     }
 
     /**

@@ -60,25 +60,18 @@ class ScramSha1Authenticator extends SaslAuthenticator {
 
     @Override
     protected SaslClient createSaslClient(final ServerAddress serverAddress) {
-        return new ScramSha1SaslClient(getCredential(), randomStringGenerator);
+        return new ScramSha1SaslClient();
     }
 
-    private static class ScramSha1SaslClient implements SaslClient {
+    private class ScramSha1SaslClient implements SaslClient {
 
         private static final String GS2_HEADER = "n,,";
         private static final int RANDOM_LENGTH = 24;
 
-        private final MongoCredential credential;
         private String clientFirstMessageBare;
-        private final RandomStringGenerator randomStringGenerator;
         private String rPrefix;
         private byte[] serverSignature;
         private int step;
-
-        ScramSha1SaslClient(final MongoCredential credential, final RandomStringGenerator randomStringGenerator) {
-            this.credential = credential;
-            this.randomStringGenerator = randomStringGenerator;
-        }
 
         public String getMechanismName() {
             return SCRAM_SHA_1.getMechanismName();
@@ -137,7 +130,7 @@ class ScramSha1Authenticator extends SaslAuthenticator {
         }
 
         private byte[] computeClientFirstMessage() throws SaslException {
-            String userName = "n=" + prepUserName(this.credential.getUserName());
+            String userName = "n=" + prepUserName(getUserNameNonNull());
             this.rPrefix = randomStringGenerator.generate(RANDOM_LENGTH);
 
             String nonce = "r=" + this.rPrefix;
@@ -166,7 +159,7 @@ class ScramSha1Authenticator extends SaslAuthenticator {
 
             // Suppress warning of MongoCredential#getPassword possibly returning null
             @SuppressWarnings("ConstantConditions")
-            String authenticationHash = createAuthenticationHash(this.credential.getUserName(), this.credential.getPassword());
+            String authenticationHash = createAuthenticationHash(getUserNameNonNull(), getPasswordNonNull());
 
             byte[] saltedPassword = hi(authenticationHash, decodeBase64(s), Integer.parseInt(i));
             byte[] clientKey = hmac(saltedPassword, "Client Key");

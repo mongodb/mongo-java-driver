@@ -21,9 +21,11 @@ import com.mongodb.client.model.CollationAlternate;
 import com.mongodb.client.model.CollationCaseFirst;
 import com.mongodb.client.model.CollationMaxVariable;
 import com.mongodb.client.model.CollationStrength;
+import com.mongodb.lang.Nullable;
 
 final class DBObjectCollationHelper {
 
+    @Nullable
     static Collation createCollationFromOptions(final DBObject options) {
         if (options.get("collation") == null) {
             return null;

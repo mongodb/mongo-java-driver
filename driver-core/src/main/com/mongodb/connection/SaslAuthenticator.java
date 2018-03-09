@@ -22,6 +22,7 @@ import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -120,6 +121,7 @@ abstract class SaslAuthenticator extends Authenticator {
         }
     }
 
+    @Nullable
     private Subject getSubject() {
         return getCredential().getMechanismProperty(JAVA_SUBJECT_KEY, null);
     }

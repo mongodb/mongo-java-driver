@@ -17,17 +17,49 @@
 package com.mongodb.connection;
 
 import com.mongodb.MongoCredential;
+import com.mongodb.MongoInternalException;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.lang.NonNull;
+import com.mongodb.lang.Nullable;
 
 abstract class Authenticator {
     private final MongoCredential credential;
 
-    Authenticator(final MongoCredential credential) {
+    Authenticator(@NonNull final MongoCredential credential) {
         this.credential = credential;
     }
 
+    @NonNull
     MongoCredential getCredential() {
         return credential;
+    }
+
+    @NonNull
+    String getUserNameNonNull() {
+        String userName = credential.getUserName();
+        if (userName == null) {
+            throw new MongoInternalException("User name can not be null");
+        }
+        return userName;
+    }
+
+    @NonNull
+    char[] getPasswordNonNull() {
+        char[] password = credential.getPassword();
+        if (password == null) {
+            throw new MongoInternalException("Password can not be null");
+        }
+        return password;
+    }
+
+    @NonNull
+    public <T> T getNonNullMechanismProperty(final String key, @Nullable final T defaultValue) {
+        T mechanismProperty = credential.getMechanismProperty(key, defaultValue);
+        if (mechanismProperty == null) {
+            throw new MongoInternalException("Mechanism property can not be null");
+        }
+        return mechanismProperty;
+
     }
 
     abstract void authenticate(InternalConnection connection, ConnectionDescription connectionDescription);

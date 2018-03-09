@@ -21,6 +21,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.internal.ListDatabasesIterableImpl;
 import com.mongodb.client.internal.MongoDatabaseImpl;
+import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.Document;
@@ -451,7 +452,7 @@ public class MongoClient extends Mongo implements Closeable {
         return createListDatabaseNamesIterable(clientSession);
     }
 
-    private MongoIterable<String> createListDatabaseNamesIterable(final ClientSession clientSession) {
+    private MongoIterable<String> createListDatabaseNamesIterable(@Nullable final ClientSession clientSession) {
         return createListDatabasesIterable(clientSession, BsonDocument.class).nameOnly(true).map(new Function<BsonDocument, String>() {
             @Override
             public String apply(final BsonDocument result) {
@@ -509,7 +510,7 @@ public class MongoClient extends Mongo implements Closeable {
         return createListDatabasesIterable(clientSession, clazz);
     }
 
-    private <T> ListDatabasesIterable<T> createListDatabasesIterable(final ClientSession clientSession, final Class<T> clazz) {
+    private <T> ListDatabasesIterable<T> createListDatabasesIterable(@Nullable final ClientSession clientSession, final Class<T> clazz) {
         return new ListDatabasesIterableImpl<T>(clientSession, clazz, getMongoClientOptions().getCodecRegistry(),
                 ReadPreference.primary(), createOperationExecutor());
     }

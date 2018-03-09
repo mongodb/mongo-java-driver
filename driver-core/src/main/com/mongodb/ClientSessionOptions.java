@@ -18,6 +18,7 @@ package com.mongodb;
 
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
+import com.mongodb.lang.Nullable;
 import com.mongodb.session.ClientSession;
 
 /**
@@ -40,6 +41,7 @@ public final class ClientSessionOptions {
      * which is currently true.
      * @mongodb.driver.dochub core/causal-consistency Causal Consistency
      */
+    @Nullable
     public Boolean isCausallyConsistent() {
         return causallyConsistent;
     }

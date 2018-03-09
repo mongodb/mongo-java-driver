@@ -94,7 +94,7 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
     }
 
     private String getHostName(final ServerAddress serverAddress) throws UnknownHostException {
-        return getCredential().getMechanismProperty(CANONICALIZE_HOST_NAME_KEY, CANONICALIZE_HOST_NAME_DEFAULT_VALUE)
+        return getNonNullMechanismProperty(CANONICALIZE_HOST_NAME_KEY, CANONICALIZE_HOST_NAME_DEFAULT_VALUE)
                ? InetAddress.getByName(serverAddress.getHost()).getCanonicalHostName()
                : serverAddress.getHost();
     }

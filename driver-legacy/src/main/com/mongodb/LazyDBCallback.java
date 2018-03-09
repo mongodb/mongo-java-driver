@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
 import org.bson.LazyBSONCallback;
 import org.bson.types.ObjectId;
 
@@ -32,7 +33,7 @@ public class LazyDBCallback extends LazyBSONCallback implements DBCallback {
      *
      * @param collection the {@code DBCollection} containing the document.  This parameter is no longer used.
      */
-    public LazyDBCallback(final DBCollection collection) {
+    public LazyDBCallback(@Nullable final DBCollection collection) {
     }
 
     @Override

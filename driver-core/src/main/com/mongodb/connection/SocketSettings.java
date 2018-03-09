@@ -158,12 +158,16 @@ public class SocketSettings {
          * @see com.mongodb.ConnectionString#getSocketTimeout()
          */
         public Builder applyConnectionString(final ConnectionString connectionString) {
-            if (connectionString.getConnectTimeout() != null) {
-                this.connectTimeout(connectionString.getConnectTimeout(), MILLISECONDS);
+            Integer connectTimeout = connectionString.getConnectTimeout();
+            if (connectTimeout != null) {
+                this.connectTimeout(connectTimeout, MILLISECONDS);
             }
-            if (connectionString.getSocketTimeout() != null) {
-                this.readTimeout(connectionString.getSocketTimeout(), MILLISECONDS);
+
+            Integer socketTimeout = connectionString.getSocketTimeout();
+            if (socketTimeout != null) {
+                this.readTimeout(socketTimeout, MILLISECONDS);
             }
+
             return this;
         }
 

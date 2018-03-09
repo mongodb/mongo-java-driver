@@ -38,8 +38,8 @@ import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.QueryResult;
-import com.mongodb.session.SessionContext;
 import com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
+import com.mongodb.session.SessionContext;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
@@ -719,7 +719,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                                                              CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
                                                              connection, transformer(source, connection));
                     } catch (MongoCommandException e) {
-                        throw new MongoQueryException(e.getServerAddress(), e.getErrorCode(), e.getErrorMessage());
+                        throw new MongoQueryException(e);
                     }
                 } else {
                     validateReadConcernAndCollation(connection, readConcern, collation);
@@ -814,7 +814,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                         MongoCommandException commandException = (MongoCommandException) t;
                         callback.onResult(result, new MongoQueryException(commandException.getServerAddress(),
                                                                           commandException.getErrorCode(),
-                                                                          commandException.getErrorMessage()));
+                                commandException.getErrorMessage()));
                     } else {
                         callback.onResult(result, t);
                     }
@@ -851,7 +851,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                                                                                                    getCommand(binding.getSessionContext())),
                                                                                   new BsonDocumentCodec()).execute(singleConnectionBinding);
                                 } catch (MongoCommandException e) {
-                                    throw new MongoQueryException(e.getServerAddress(), e.getErrorCode(), e.getErrorMessage());
+                                    throw new MongoQueryException(e);
                                 }
                             } else {
                                 BatchCursor<BsonDocument> cursor = createExplainableQueryOperation().execute(singleConnectionBinding);

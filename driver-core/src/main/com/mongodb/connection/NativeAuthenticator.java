@@ -40,8 +40,8 @@ class NativeAuthenticator extends Authenticator {
                                                          getNonceCommand(),
                                                          connection);
 
-            BsonDocument authCommand = getAuthCommand(getCredential().getUserName(),
-                                                      getCredential().getPassword(),
+            BsonDocument authCommand = getAuthCommand(getUserNameNonNull(),
+                                                      getPasswordNonNull(),
                                                       ((BsonString) nonceResponse.get("nonce")).getValue());
             executeCommand(getCredential().getSource(), authCommand, connection);
         } catch (MongoCommandException e) {
@@ -60,7 +60,7 @@ class NativeAuthenticator extends Authenticator {
                                         callback.onResult(null, translateThrowable(t));
                                     } else {
                                         executeCommandAsync(getCredential().getSource(),
-                                                            getAuthCommand(getCredential().getUserName(), getCredential().getPassword(),
+                                                            getAuthCommand(getUserNameNonNull(), getPasswordNonNull(),
                                                                            ((BsonString) nonceResult.get("nonce")).getValue()),
                                                             connection,
                                                             new SingleResultCallback<BsonDocument>() {

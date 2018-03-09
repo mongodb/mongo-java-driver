@@ -18,7 +18,6 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoCompressor;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.zip.Deflater;
@@ -29,7 +28,7 @@ class ZlibCompressor extends Compressor {
     private final int level;
 
     ZlibCompressor(final MongoCompressor mongoCompressor) {
-        this.level = mongoCompressor.getProperty(MongoCompressor.LEVEL, Deflater.DEFAULT_COMPRESSION);
+        this.level = mongoCompressor.getPropertyNonNull(MongoCompressor.LEVEL, Deflater.DEFAULT_COMPRESSION);
     }
 
     @Override
@@ -43,12 +42,12 @@ class ZlibCompressor extends Compressor {
     }
 
     @Override
-    InputStream getInputStream(final InputStream source) throws IOException {
+    InputStream getInputStream(final InputStream source) {
         return new InflaterInputStream(source);
     }
 
     @Override
-    OutputStream getOutputStream(final OutputStream source) throws IOException {
+    OutputStream getOutputStream(final OutputStream source) {
         return new DeflaterOutputStream(source, new Deflater(level));
     }
 }

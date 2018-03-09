@@ -16,7 +16,11 @@
 
 package com.mongodb;
 
+import com.mongodb.lang.Nullable;
+
 import java.net.InetAddress;
+
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * Represents a database address, which includes the properties of ServerAddress (host and port) and adds a database name.
@@ -53,10 +57,9 @@ public class DBAddress extends ServerAddress {
         _check(_db, "db");
     }
 
+    @Nullable
     static String _getHostSection(final String urlFormat) {
-        if (urlFormat == null) {
-            throw new NullPointerException("urlFormat can't be null");
-        }
+        notNull("urlFormat", urlFormat);
 
         int idx = urlFormat.indexOf("/");
         if (idx >= 0) {
@@ -66,9 +69,7 @@ public class DBAddress extends ServerAddress {
     }
 
     static String _getDBSection(final String urlFormat) {
-        if (urlFormat == null) {
-            throw new NullPointerException("urlFormat can't be null");
-        }
+        notNull("urlFormat", urlFormat);
 
         int idx = urlFormat.indexOf("/");
         if (idx >= 0) {
@@ -125,9 +126,7 @@ public class DBAddress extends ServerAddress {
     }
 
     static void _check(final String thing, final String name) {
-        if (thing == null) {
-            throw new NullPointerException(name + " can't be null ");
-        }
+        notNull("thing", thing);
 
         String trimmedThing = thing.trim();
         if (trimmedThing.length() == 0) {

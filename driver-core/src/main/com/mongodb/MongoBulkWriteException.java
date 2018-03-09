@@ -19,6 +19,7 @@ package com.mongodb;
 import com.mongodb.bulk.BulkWriteError;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.WriteConcernError;
+import com.mongodb.lang.Nullable;
 
 import java.util.List;
 
@@ -45,7 +46,7 @@ public class MongoBulkWriteException extends MongoServerException {
      * @param serverAddress            the server address.
      */
     public MongoBulkWriteException(final BulkWriteResult writeResult, final List<BulkWriteError> writeErrors,
-                                   final WriteConcernError writeConcernError, final ServerAddress serverAddress) {
+                                   @Nullable final WriteConcernError writeConcernError, final ServerAddress serverAddress) {
         super("Bulk write operation error on server " + serverAddress + ". "
               + (writeErrors.isEmpty() ? "" : "Write errors: " + writeErrors + ". ")
               + (writeConcernError == null ? "" : "Write concern error: " + writeConcernError + ". "), serverAddress);
