@@ -136,7 +136,7 @@ class DBFunctionalSpecification extends FunctionalSpecification {
         database.setWriteConcern(null)
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ serverVersionAtLeast(3, 7) || !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
     def 'should throw WriteConcernException on write concern error for add user'() {
         given:
         database.setWriteConcern(new WriteConcern(5))
@@ -153,7 +153,7 @@ class DBFunctionalSpecification extends FunctionalSpecification {
         database.removeUser('writeConcernUser')
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ serverVersionAtLeast(3, 7) || !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
     def 'should throw WriteConcernException on write concern error for remove user'() {
         given:
         database.addUser('writeConcernUser', 'foo'.toCharArray())
