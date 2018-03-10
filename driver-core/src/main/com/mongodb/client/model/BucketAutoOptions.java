@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.lang.Nullable;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -35,6 +37,7 @@ public class BucketAutoOptions {
     /**
      * @return the granularity of the bucket definitions
      */
+    @Nullable
     public BucketGranularity getGranularity() {
         return granularity;
     }
@@ -42,6 +45,7 @@ public class BucketAutoOptions {
     /**
      * @return the output document definition
      */
+    @Nullable
     public List<BsonField> getOutput() {
         return output == null ? null : new ArrayList<BsonField>(output);
     }
@@ -54,7 +58,7 @@ public class BucketAutoOptions {
      * @see <a href="https://en.wikipedia.org/wiki/Preferred_number">Preferred numbers</a>
      * @see BucketGranularity
      */
-    public BucketAutoOptions granularity(final BucketGranularity granularity) {
+    public BucketAutoOptions granularity(@Nullable final BucketGranularity granularity) {
         this.granularity = granularity;
         return this;
     }
@@ -76,7 +80,7 @@ public class BucketAutoOptions {
      * @param output the output document definition
      * @return this
      */
-    public BucketAutoOptions output(final List<BsonField> output) {
+    public BucketAutoOptions output(@Nullable final List<BsonField> output) {
         this.output = output;
         return this;
     }

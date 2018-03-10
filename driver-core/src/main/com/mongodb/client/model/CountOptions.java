@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
@@ -41,6 +42,7 @@ public class CountOptions {
      *
      * @return the hint, which should describe an existing
      */
+    @Nullable
     public Bson getHint() {
         return hint;
     }
@@ -50,6 +52,7 @@ public class CountOptions {
      *
      * @return the hint string, which should be the name of an existing index
      */
+    @Nullable
     public String getHintString() {
         return hintString;
     }
@@ -60,7 +63,7 @@ public class CountOptions {
      * @param hint a document describing the index which should be used for this operation.
      * @return this
      */
-    public CountOptions hint(final Bson hint) {
+    public CountOptions hint(@Nullable final Bson hint) {
         this.hint = hint;
         return this;
     }
@@ -71,7 +74,7 @@ public class CountOptions {
      * @param hint the name of the index which should be used for the operation
      * @return this
      */
-    public CountOptions hintString(final String hint) {
+    public CountOptions hintString(@Nullable final String hint) {
         this.hintString = hint;
         return this;
     }
@@ -151,6 +154,7 @@ public class CountOptions {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
+    @Nullable
     public Collation getCollation() {
         return collation;
     }
@@ -164,7 +168,7 @@ public class CountOptions {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
-    public CountOptions collation(final Collation collation) {
+    public CountOptions collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }

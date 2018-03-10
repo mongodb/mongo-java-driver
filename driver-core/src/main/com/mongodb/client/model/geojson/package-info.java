@@ -17,4 +17,7 @@
 /**
  * This package contains classes that represent GeoJSON objects.
  */
+@NonNullApi
 package com.mongodb.client.model.geojson;
+
+import com.mongodb.lang.NonNullApi;

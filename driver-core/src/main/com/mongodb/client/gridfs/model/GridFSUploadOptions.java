@@ -16,6 +16,7 @@
 
 package com.mongodb.client.gridfs.model;
 
+import com.mongodb.lang.Nullable;
 import org.bson.Document;
 
 /**
@@ -42,6 +43,7 @@ public final class GridFSUploadOptions {
      *
      * @return number of bytes per chunk if set or null
      */
+    @Nullable
     public Integer getChunkSizeBytes() {
         return chunkSizeBytes;
     }
@@ -52,7 +54,7 @@ public final class GridFSUploadOptions {
      * @param chunkSizeBytes the number of bytes per chunk for the uploaded file
      * @return this
      */
-    public GridFSUploadOptions chunkSizeBytes(final Integer chunkSizeBytes) {
+    public GridFSUploadOptions chunkSizeBytes(@Nullable final Integer chunkSizeBytes) {
         this.chunkSizeBytes = chunkSizeBytes;
         return this;
     }
@@ -62,6 +64,7 @@ public final class GridFSUploadOptions {
      *
      * @return the user provided metadata for the file if set or null
      */
+    @Nullable
     public Document getMetadata() {
         return metadata;
     }
@@ -72,7 +75,7 @@ public final class GridFSUploadOptions {
      * @param metadata the metadata to be stored
      * @return this
      */
-    public GridFSUploadOptions metadata(final Document metadata) {
+    public GridFSUploadOptions metadata(@Nullable final Document metadata) {
         this.metadata = metadata;
         return this;
     }

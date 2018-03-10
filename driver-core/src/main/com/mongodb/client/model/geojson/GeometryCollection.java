@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model.geojson;
 
+import com.mongodb.lang.Nullable;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -45,7 +47,7 @@ public final class GeometryCollection extends Geometry {
      * @param coordinateReferenceSystem the coordinate reference system
      * @param geometries  the list of Geometry objects
      */
-    public GeometryCollection(final CoordinateReferenceSystem coordinateReferenceSystem,
+    public GeometryCollection(@Nullable final CoordinateReferenceSystem coordinateReferenceSystem,
                               final List<? extends Geometry> geometries) {
         super(coordinateReferenceSystem);
         notNull("geometries", geometries);
@@ -97,9 +99,10 @@ public final class GeometryCollection extends Geometry {
 
     @Override
     public String toString() {
+        CoordinateReferenceSystem coordinateReferenceSystem = getCoordinateReferenceSystem();
         return "GeometryCollection{"
                + "geometries=" + geometries
-               + ((getCoordinateReferenceSystem() == null) ? "" : ", coordinateReferenceSystem=" + getCoordinateReferenceSystem())
+               + ((coordinateReferenceSystem == null) ? "" : ", coordinateReferenceSystem=" + coordinateReferenceSystem)
                + '}';
     }
 }

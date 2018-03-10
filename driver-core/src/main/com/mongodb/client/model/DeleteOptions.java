@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.lang.Nullable;
+
 /**
  * The options to apply when deleting documents.
  *
@@ -32,6 +34,7 @@ public class DeleteOptions {
      * @return the collation options
      * @mongodb.server.release 3.4
      */
+    @Nullable
     public Collation getCollation() {
         return collation;
     }
@@ -44,7 +47,7 @@ public class DeleteOptions {
      * @return this
      * @mongodb.server.release 3.4
      */
-    public DeleteOptions collation(final Collation collation) {
+    public DeleteOptions collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }

@@ -16,6 +16,11 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.lang.Nullable;
+import org.bson.conversions.Bson;
+
+import java.util.List;
+
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -40,7 +45,10 @@ public class ReplaceOptions {
      */
     public static ReplaceOptions createReplaceOptions(final UpdateOptions updateOptions) {
         notNull("updateOptions", updateOptions);
-        isTrue("ArrayFilters should be empty.",  updateOptions.getArrayFilters() == null || updateOptions.getArrayFilters().isEmpty());
+
+        List<? extends Bson> arrayFilters = updateOptions.getArrayFilters();
+        isTrue("ArrayFilters should be empty.",  arrayFilters == null || arrayFilters.isEmpty());
+
         return new ReplaceOptions()
                 .bypassDocumentValidation(updateOptions.getBypassDocumentValidation())
                 .collation(updateOptions.getCollation())
@@ -73,6 +81,7 @@ public class ReplaceOptions {
      * @return the bypass document level validation flag
      * @mongodb.server.release 3.2
      */
+    @Nullable
     public Boolean getBypassDocumentValidation() {
         return bypassDocumentValidation;
     }
@@ -84,7 +93,7 @@ public class ReplaceOptions {
      * @return this
      * @mongodb.server.release 3.2
      */
-    public ReplaceOptions bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+    public ReplaceOptions bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
@@ -95,6 +104,7 @@ public class ReplaceOptions {
      * @return the collation options
      * @mongodb.server.release 3.4
      */
+    @Nullable
     public Collation getCollation() {
         return collation;
     }
@@ -107,7 +117,7 @@ public class ReplaceOptions {
      * @return this
      * @mongodb.server.release 3.4
      */
-    public ReplaceOptions collation(final Collation collation) {
+    public ReplaceOptions collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }

@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.lang.Nullable;
+
 /**
  * Options for creating a view
  *
@@ -31,6 +33,7 @@ public class CreateViewOptions {
      *
      * @return the collation options
      */
+    @Nullable
     public Collation getCollation() {
         return collation;
     }
@@ -42,7 +45,7 @@ public class CreateViewOptions {
      * @param collation the collation options to use
      * @return this
      */
-    public CreateViewOptions collation(final Collation collation) {
+    public CreateViewOptions collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }

@@ -17,6 +17,7 @@
 package com.mongodb.client.gridfs.model;
 
 import com.mongodb.MongoGridFSException;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.types.ObjectId;
@@ -76,7 +77,7 @@ public final class GridFSFile {
      * @param extraElements any extra data stored in the document
      */
     public GridFSFile(final BsonValue id, final String filename, final long length, final int chunkSize, final Date uploadDate,
-                      final String md5, final Document metadata, final Document extraElements) {
+                      final String md5, @Nullable final Document metadata, @Nullable final Document extraElements) {
         this.id = notNull("id", id);
         this.filename = notNull("filename", filename);
         this.length = notNull("length", length);
@@ -160,6 +161,7 @@ public final class GridFSFile {
      *
      * @return the metadata document or null
      */
+    @Nullable
     public Document getMetadata() {
         return metadata;
     }
@@ -171,6 +173,7 @@ public final class GridFSFile {
      * @deprecated any extra information should be stored in the metadata document instead.
      */
     @Deprecated
+    @Nullable
     public Document getExtraElements() {
         return extraElements;
     }

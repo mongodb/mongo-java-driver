@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model.geojson.codecs;
 
+import com.mongodb.client.model.geojson.CoordinateReferenceSystem;
 import com.mongodb.client.model.geojson.Geometry;
 import com.mongodb.client.model.geojson.GeometryCollection;
 import com.mongodb.client.model.geojson.LineString;
@@ -128,10 +129,11 @@ final class GeometryEncoderHelper {
     @SuppressWarnings({"unchecked", "rawtypes"})
     static void encodeCoordinateReferenceSystem(final BsonWriter writer, final Geometry geometry,
                                                 final EncoderContext encoderContext, final CodecRegistry registry) {
-        if (geometry.getCoordinateReferenceSystem() != null) {
+        CoordinateReferenceSystem coordinateReferenceSystem = geometry.getCoordinateReferenceSystem();
+        if (coordinateReferenceSystem != null) {
             writer.writeName("crs");
-            Codec codec = registry.get(geometry.getCoordinateReferenceSystem().getClass());
-            encoderContext.encodeWithChildContext(codec, writer, geometry.getCoordinateReferenceSystem());
+            Codec codec = registry.get(coordinateReferenceSystem.getClass());
+            encoderContext.encodeWithChildContext(codec, writer, coordinateReferenceSystem);
         }
     }
 

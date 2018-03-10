@@ -28,6 +28,7 @@ import com.mongodb.client.model.geojson.Point;
 import com.mongodb.client.model.geojson.Polygon;
 import com.mongodb.client.model.geojson.PolygonCoordinates;
 import com.mongodb.client.model.geojson.Position;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonReader;
 import org.bson.BsonReaderMark;
 import org.bson.BsonType;
@@ -405,6 +406,7 @@ final class GeometryDecoderHelper {
         }
     }
 
+    @Nullable
     static CoordinateReferenceSystem decodeCoordinateReferenceSystem(final BsonReader reader) {
         String crsName = null;
         validateIsDocument(reader);

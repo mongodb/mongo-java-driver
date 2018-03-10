@@ -18,6 +18,7 @@ package com.mongodb.client.model;
 
 import com.mongodb.client.model.geojson.Geometry;
 import com.mongodb.client.model.geojson.Point;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -395,7 +396,7 @@ public final class Filters {
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/regex $regex
      */
-    public static Bson regex(final String fieldName, final String pattern, final String options) {
+    public static Bson regex(final String fieldName, final String pattern, @Nullable final String options) {
         notNull("pattern", pattern);
         return new SimpleFilter(fieldName, new BsonRegularExpression(pattern, options));
     }
@@ -855,8 +856,8 @@ public final class Filters {
         return new SimpleEncodingFilter<Bson>("$jsonSchema", schema);
     }
 
-    private static Bson createNearFilterDocument(final String fieldName, final double x, final double y, final Double maxDistance,
-                                                 final Double minDistance, final String operator) {
+    private static Bson createNearFilterDocument(final String fieldName, final double x, final double y, @Nullable final Double maxDistance,
+                                                 @Nullable final Double minDistance, final String operator) {
         BsonDocument nearFilter = new BsonDocument(operator, new BsonArray(Arrays.asList(new BsonDouble(x), new BsonDouble(y))));
         if (maxDistance != null) {
             nearFilter.append("$maxDistance", new BsonDouble(maxDistance));
@@ -1168,7 +1169,7 @@ public final class Filters {
         }
 
         GeometryOperatorFilter(final String operatorName, final String fieldName, final TItem geometry,
-                               final Double maxDistance, final Double minDistance) {
+                               @Nullable final Double maxDistance, @Nullable final Double minDistance) {
             this.operatorName = operatorName;
             this.fieldName = notNull("fieldName", fieldName);
             this.geometry = notNull("geometry", geometry);
@@ -1223,14 +1224,20 @@ public final class Filters {
         @Override
         public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
             BsonDocument searchDocument = new BsonDocument("$search", new BsonString(search));
-            if (textSearchOptions.getLanguage() != null) {
-                searchDocument.put("$language", new BsonString(textSearchOptions.getLanguage()));
+
+            String language = textSearchOptions.getLanguage();
+            if (language != null) {
+                searchDocument.put("$language", new BsonString(language));
             }
-            if (textSearchOptions.getCaseSensitive() != null) {
-                searchDocument.put("$caseSensitive", BsonBoolean.valueOf(textSearchOptions.getCaseSensitive()));
+
+            Boolean caseSensitive = textSearchOptions.getCaseSensitive();
+            if (caseSensitive != null) {
+                searchDocument.put("$caseSensitive", BsonBoolean.valueOf(caseSensitive));
             }
-            if (textSearchOptions.getDiacriticSensitive() != null) {
-                searchDocument.put("$diacriticSensitive", BsonBoolean.valueOf(textSearchOptions.getDiacriticSensitive()));
+
+            Boolean diacriticSensitive = textSearchOptions.getDiacriticSensitive();
+            if (diacriticSensitive != null) {
+                searchDocument.put("$diacriticSensitive", BsonBoolean.valueOf(diacriticSensitive));
             }
             return new BsonDocument("$text", searchDocument);
         }

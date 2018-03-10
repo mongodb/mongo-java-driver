@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model.geojson;
 
+import com.mongodb.lang.Nullable;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -46,7 +48,7 @@ public final class MultiPoint extends Geometry {
      * @param coordinateReferenceSystem the coordinate reference system
      * @param coordinates               the coordinates
      */
-    public MultiPoint(final CoordinateReferenceSystem coordinateReferenceSystem, final List<Position> coordinates) {
+    public MultiPoint(@Nullable final CoordinateReferenceSystem coordinateReferenceSystem, final List<Position> coordinates) {
         super(coordinateReferenceSystem);
         notNull("coordinates", coordinates);
         isTrueArgument("coordinates contains only non-null positions", !coordinates.contains(null));

@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model.changestream;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonProperty;
@@ -38,8 +39,8 @@ public final class UpdateDescription {
      * @param updatedFields the updated fields
      */
     @BsonCreator
-    public UpdateDescription(@BsonProperty("removedFields") final List<String> removedFields,
-                             @BsonProperty("updatedFields") final BsonDocument updatedFields) {
+    public UpdateDescription(@Nullable @BsonProperty("removedFields") final List<String> removedFields,
+                             @Nullable @BsonProperty("updatedFields") final BsonDocument updatedFields) {
         this.removedFields = removedFields;
         this.updatedFields = updatedFields;
     }
@@ -49,6 +50,7 @@ public final class UpdateDescription {
      *
      * @return the removedFields
      */
+    @Nullable
     public List<String> getRemovedFields() {
         return removedFields;
     }
@@ -58,6 +60,7 @@ public final class UpdateDescription {
      *
      * @return the updatedFields
      */
+    @Nullable
     public BsonDocument getUpdatedFields() {
         return updatedFields;
     }
@@ -73,10 +76,10 @@ public final class UpdateDescription {
 
         UpdateDescription that = (UpdateDescription) o;
 
-        if (getRemovedFields() != null ? !getRemovedFields().equals(that.getRemovedFields()) : that.getRemovedFields() != null) {
+        if (removedFields != null ? !removedFields.equals(that.getRemovedFields()) : that.getRemovedFields() != null) {
             return false;
         }
-        if (getUpdatedFields() != null ? !getUpdatedFields().equals(that.getUpdatedFields()) : that.getUpdatedFields() != null) {
+        if (updatedFields != null ? !updatedFields.equals(that.getUpdatedFields()) : that.getUpdatedFields() != null) {
             return false;
         }
 
@@ -85,8 +88,8 @@ public final class UpdateDescription {
 
     @Override
     public int hashCode() {
-        int result = getRemovedFields() != null ? getRemovedFields().hashCode() : 0;
-        result = 31 * result + (getUpdatedFields() != null ? getUpdatedFields().hashCode() : 0);
+        int result = removedFields != null ? removedFields.hashCode() : 0;
+        result = 31 * result + (updatedFields != null ? updatedFields.hashCode() : 0);
         return result;
     }
 

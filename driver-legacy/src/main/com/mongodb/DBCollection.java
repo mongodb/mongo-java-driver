@@ -1010,12 +1010,17 @@ public class DBCollection {
         if (query != null) {
             operation.filter(wrap(query));
         }
-        if (options.getHint() != null) {
-            operation.hint(wrap(options.getHint()));
-        } else if (options.getHintString() != null) {
-            operation.hint(new BsonString(options.getHintString()));
+        DBObject hint = options.getHint();
+        if (hint != null) {
+            operation.hint(wrap(hint));
+        } else {
+            String hintString = options.getHintString();
+            if (hintString != null) {
+                operation.hint(new BsonString(hintString));
+            }
         }
-        return executor.execute(operation, options.getReadPreference() != null ? options.getReadPreference() : getReadPreference());
+        ReadPreference optionsReadPreference = options.getReadPreference();
+        return executor.execute(operation, optionsReadPreference != null ? optionsReadPreference : getReadPreference());
     }
 
     /**
@@ -1924,7 +1929,8 @@ public class DBCollection {
     public DBObject findAndModify(final DBObject query, final DBCollectionFindAndModifyOptions options) {
         notNull("query", query);
         notNull("options", options);
-        WriteConcern writeConcern = options.getWriteConcern() != null ? options.getWriteConcern() : getWriteConcern();
+        WriteConcern optionsWriteConcern = options.getWriteConcern();
+        WriteConcern writeConcern = optionsWriteConcern != null ? optionsWriteConcern : getWriteConcern();
         WriteOperation<DBObject> operation;
         if (options.isRemove()) {
             operation = new FindAndDeleteOperation<DBObject>(getNamespace(), writeConcern, retryWrites, objectCodec)
@@ -1934,10 +1940,13 @@ public class DBCollection {
                         .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                         .collation(options.getCollation());
         } else {
-            notNull("options#getUpdate", options.getUpdate());
-            if (!options.getUpdate().keySet().isEmpty() && options.getUpdate().keySet().iterator().next().charAt(0) == '$') {
+            DBObject update = options.getUpdate();
+            if (update == null) {
+                throw new IllegalArgumentException("update can not be null unless it's a remove");
+            }
+            if (!update.keySet().isEmpty() && update.keySet().iterator().next().charAt(0) == '$') {
                 operation = new FindAndUpdateOperation<DBObject>(getNamespace(), writeConcern, retryWrites, objectCodec,
-                        wrap(options.getUpdate()))
+                        wrap(update))
                         .filter(wrap(query))
                         .projection(wrapAllowNull(options.getProjection()))
                         .sort(wrapAllowNull(options.getSort()))
@@ -1949,7 +1958,7 @@ public class DBCollection {
                         .arrayFilters(wrapAllowNull(options.getArrayFilters(), (Encoder<DBObject>) null));
             } else {
                 operation = new FindAndReplaceOperation<DBObject>(getNamespace(), writeConcern, retryWrites, objectCodec,
-                        wrap(options.getUpdate()))
+                        wrap(update))
                         .filter(wrap(query))
                         .projection(wrapAllowNull(options.getProjection()))
                         .sort(wrapAllowNull(options.getSort()))
@@ -2515,7 +2524,7 @@ public class DBCollection {
     }
 
     @Nullable
-    List<BsonDocument> wrapAllowNull(final List<? extends DBObject> documentList, @Nullable final DBEncoder encoder) {
+    List<BsonDocument> wrapAllowNull(@Nullable final List<? extends DBObject> documentList, @Nullable final DBEncoder encoder) {
         return wrapAllowNull(documentList, encoder == null ? null : new DBEncoderAdapter(encoder));
     }
 

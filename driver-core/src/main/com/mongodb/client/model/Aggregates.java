@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
@@ -274,7 +275,8 @@ public final class Aggregates {
      * @mongodb.server.release 3.6
      * @since 3.7
      */
-    public static Bson lookup(final String from, final List<Variable<?>> let, final List<? extends Bson> pipeline, final String as) {
+    public static Bson lookup(final String from, @Nullable final List<Variable<?>> let, final List<? extends Bson> pipeline,
+                              final String as) {
        return new LookupStage(from, let, pipeline, as);
     }
 
@@ -396,11 +398,13 @@ public final class Aggregates {
     public static Bson unwind(final String fieldName, final UnwindOptions unwindOptions) {
         notNull("unwindOptions", unwindOptions);
         BsonDocument options = new BsonDocument("path", new BsonString(fieldName));
-        if (unwindOptions.isPreserveNullAndEmptyArrays() != null) {
-            options.append("preserveNullAndEmptyArrays", BsonBoolean.valueOf(unwindOptions.isPreserveNullAndEmptyArrays()));
+        Boolean preserveNullAndEmptyArrays = unwindOptions.isPreserveNullAndEmptyArrays();
+        if (preserveNullAndEmptyArrays != null) {
+            options.append("preserveNullAndEmptyArrays", BsonBoolean.valueOf(preserveNullAndEmptyArrays));
         }
-        if (unwindOptions.getIncludeArrayIndex() != null) {
-            options.append("includeArrayIndex", new BsonString(unwindOptions.getIncludeArrayIndex()));
+        String includeArrayIndex = unwindOptions.getIncludeArrayIndex();
+        if (includeArrayIndex != null) {
+            options.append("includeArrayIndex", new BsonString(includeArrayIndex));
         }
         return new BsonDocument("$unwind", options);
     }
@@ -444,7 +448,8 @@ public final class Aggregates {
         return new BsonDocument("$sample", new BsonDocument("size", new BsonInt32(size)));
     }
 
-    static void writeBucketOutput(final CodecRegistry codecRegistry, final BsonDocumentWriter writer, final List<BsonField> output) {
+    static void writeBucketOutput(final CodecRegistry codecRegistry, final BsonDocumentWriter writer,
+                                  @Nullable final List<BsonField> output) {
         if (output != null) {
             writer.writeName("output");
             writer.writeStartDocument();
@@ -508,9 +513,10 @@ public final class Aggregates {
                 BuildersHelper.encodeValue(writer, boundary, codecRegistry);
             }
             writer.writeEndArray();
-            if (options.getDefaultBucket() != null) {
+            Object defaultBucket = options.getDefaultBucket();
+            if (defaultBucket != null) {
                 writer.writeName("default");
-                BuildersHelper.encodeValue(writer, options.getDefaultBucket(), codecRegistry);
+                BuildersHelper.encodeValue(writer, defaultBucket, codecRegistry);
             }
             writeBucketOutput(codecRegistry, writer, options.getOutput());
             writer.writeEndDocument();
@@ -557,8 +563,9 @@ public final class Aggregates {
 
             writeBucketOutput(codecRegistry, writer, options.getOutput());
 
-            if (options.getGranularity() != null) {
-                writer.writeString("granularity", options.getGranularity().getValue());
+            BucketGranularity granularity = options.getGranularity();
+            if (granularity != null) {
+                writer.writeString("granularity", granularity.getValue());
             }
             writer.writeEndDocument();
 
@@ -582,7 +589,8 @@ public final class Aggregates {
         private final List<? extends Bson> pipeline;
         private final String as;
 
-        private LookupStage(final String from, final List<Variable<?>> let, final List<? extends Bson> pipeline, final String as) {
+        private LookupStage(final String from, @Nullable final List<Variable<?>> let, final List<? extends Bson> pipeline,
+                            final String as) {
             this.from = from;
             this.let = let;
             this.pipeline = pipeline;
@@ -672,15 +680,18 @@ public final class Aggregates {
             writer.writeString("connectFromField", connectFromField);
             writer.writeString("connectToField", connectToField);
             writer.writeString("as", as);
-            if (options.getMaxDepth() != null) {
-                writer.writeInt32("maxDepth", options.getMaxDepth());
+            Integer maxDepth = options.getMaxDepth();
+            if (maxDepth != null) {
+                writer.writeInt32("maxDepth", maxDepth);
             }
-            if (options.getDepthField() != null) {
-                writer.writeString("depthField", options.getDepthField());
+            String depthField = options.getDepthField();
+            if (depthField != null) {
+                writer.writeString("depthField", depthField);
             }
-            if (options.getRestrictSearchWithMatch() != null) {
+            Bson restrictSearchWithMatch = options.getRestrictSearchWithMatch();
+            if (restrictSearchWithMatch != null) {
                 writer.writeName("restrictSearchWithMatch");
-                BuildersHelper.encodeValue(writer, options.getRestrictSearchWithMatch(), codecRegistry);
+                BuildersHelper.encodeValue(writer, restrictSearchWithMatch, codecRegistry);
             }
 
             writer.writeEndDocument();

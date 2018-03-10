@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 /**
@@ -36,7 +37,7 @@ public final class GraphLookupOptions {
      * @param field the field name
      * @return this
      */
-    public GraphLookupOptions depthField(final String field) {
+    public GraphLookupOptions depthField(@Nullable final String field) {
         depthField = field;
         return this;
     }
@@ -44,6 +45,7 @@ public final class GraphLookupOptions {
     /**
      * @return the field name
      */
+    @Nullable
     public String getDepthField() {
         return depthField;
     }
@@ -54,7 +56,7 @@ public final class GraphLookupOptions {
      * @param max the maximum depth
      * @return this
      */
-    public GraphLookupOptions maxDepth(final Integer max) {
+    public GraphLookupOptions maxDepth(@Nullable final Integer max) {
         maxDepth = max;
         return this;
     }
@@ -62,6 +64,7 @@ public final class GraphLookupOptions {
     /**
      * @return the maximum depth
      */
+    @Nullable
     public Integer getMaxDepth() {
         return maxDepth;
     }
@@ -73,7 +76,7 @@ public final class GraphLookupOptions {
      * @return this
      * @since 3.6
      */
-    public GraphLookupOptions restrictSearchWithMatch(final Bson filter) {
+    public GraphLookupOptions restrictSearchWithMatch(@Nullable final Bson filter) {
         restrictSearchWithMatch = filter;
         return this;
     }
@@ -82,6 +85,7 @@ public final class GraphLookupOptions {
      * @return the filter expression
      * @since 3.6
      */
+    @Nullable
     public Bson getRestrictSearchWithMatch() {
         return restrictSearchWithMatch;
     }

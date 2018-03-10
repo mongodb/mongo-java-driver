@@ -19,6 +19,7 @@ package com.mongodb.client.model;
 import com.mongodb.DBEncoder;
 import com.mongodb.DBObject;
 import com.mongodb.WriteConcern;
+import com.mongodb.lang.Nullable;
 
 import java.util.List;
 
@@ -71,6 +72,7 @@ public class DBCollectionUpdateOptions {
      * @return the bypass document level validation flag
      * @mongodb.server.release 3.2
      */
+    @Nullable
     public Boolean getBypassDocumentValidation() {
         return bypassDocumentValidation;
     }
@@ -82,7 +84,7 @@ public class DBCollectionUpdateOptions {
      * @return this
      * @mongodb.server.release 3.2
      */
-    public DBCollectionUpdateOptions bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+    public DBCollectionUpdateOptions bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
@@ -113,6 +115,7 @@ public class DBCollectionUpdateOptions {
      * @return the collation options
      * @mongodb.server.release 3.4
      */
+    @Nullable
     public Collation getCollation() {
         return collation;
     }
@@ -124,7 +127,7 @@ public class DBCollectionUpdateOptions {
      * @return this
      * @mongodb.server.release 3.4
      */
-    public DBCollectionUpdateOptions collation(final Collation collation) {
+    public DBCollectionUpdateOptions collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }
@@ -137,7 +140,7 @@ public class DBCollectionUpdateOptions {
      * @since 3.6
      * @mongodb.server.release 3.6
      */
-    public DBCollectionUpdateOptions arrayFilters(final List<? extends DBObject> arrayFilters) {
+    public DBCollectionUpdateOptions arrayFilters(@Nullable final List<? extends DBObject> arrayFilters) {
         this.arrayFilters = arrayFilters;
         return this;
     }
@@ -149,6 +152,7 @@ public class DBCollectionUpdateOptions {
      * @since 3.6
      * @mongodb.server.release 3.6
      */
+    @Nullable
     public List<? extends DBObject> getArrayFilters() {
         return arrayFilters;
     }
@@ -158,6 +162,7 @@ public class DBCollectionUpdateOptions {
      *
      * @return the write concern, or null if the default will be used.
      */
+    @Nullable
     public WriteConcern getWriteConcern() {
         return writeConcern;
     }
@@ -168,7 +173,7 @@ public class DBCollectionUpdateOptions {
      * @param writeConcern the write concern
      * @return this
      */
-    public DBCollectionUpdateOptions writeConcern(final WriteConcern writeConcern) {
+    public DBCollectionUpdateOptions writeConcern(@Nullable final WriteConcern writeConcern) {
         this.writeConcern = writeConcern;
         return this;
     }
@@ -178,6 +183,7 @@ public class DBCollectionUpdateOptions {
      *
      * @return the encoder
      */
+    @Nullable
     public DBEncoder getEncoder() {
         return encoder;
     }
@@ -188,7 +194,7 @@ public class DBCollectionUpdateOptions {
      * @param encoder the encoder
      * @return this
      */
-    public DBCollectionUpdateOptions encoder(final DBEncoder encoder) {
+    public DBCollectionUpdateOptions encoder(@Nullable final DBEncoder encoder) {
         this.encoder = encoder;
         return this;
     }

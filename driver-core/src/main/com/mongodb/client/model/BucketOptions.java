@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.lang.Nullable;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -38,7 +40,7 @@ public class BucketOptions {
      * @param name the bucket value
      * @return this
      */
-    public BucketOptions defaultBucket(final Object name) {
+    public BucketOptions defaultBucket(@Nullable final Object name) {
         defaultBucket = name;
         return this;
     }
@@ -46,6 +48,7 @@ public class BucketOptions {
     /**
      * @return the default bucket value
      */
+    @Nullable
     public Object getDefaultBucket() {
         return defaultBucket;
     }
@@ -53,6 +56,7 @@ public class BucketOptions {
     /**
      * @return the output document definition
      */
+    @Nullable
     public List<BsonField> getOutput() {
         return output == null ? null : new ArrayList<BsonField>(output);
     }

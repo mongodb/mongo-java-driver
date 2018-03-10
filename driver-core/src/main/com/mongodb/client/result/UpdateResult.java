@@ -16,6 +16,7 @@
 
 package com.mongodb.client.result;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonValue;
 
 /**
@@ -72,7 +73,8 @@ public abstract class UpdateResult {
      * @param upsertedId    if the replace resulted in an inserted document, the id of the inserted document
      * @return an acknowledged UpdateResult
      */
-    public static UpdateResult acknowledged(final long matchedCount, final Long modifiedCount, final BsonValue upsertedId) {
+    public static UpdateResult acknowledged(final long matchedCount, @Nullable final Long modifiedCount,
+                                            @Nullable final BsonValue upsertedId) {
         return new AcknowledgedUpdateResult(matchedCount, modifiedCount, upsertedId);
     }
 
@@ -90,7 +92,7 @@ public abstract class UpdateResult {
         private final Long modifiedCount;
         private final BsonValue upsertedId;
 
-        AcknowledgedUpdateResult(final long matchedCount, final Long modifiedCount, final BsonValue upsertedId) {
+        AcknowledgedUpdateResult(final long matchedCount, @Nullable final Long modifiedCount, @Nullable final BsonValue upsertedId) {
             this.matchedCount = matchedCount;
             this.modifiedCount = modifiedCount;
             this.upsertedId = upsertedId;
@@ -121,6 +123,7 @@ public abstract class UpdateResult {
         }
 
         @Override
+        @Nullable
         public BsonValue getUpsertedId() {
             return upsertedId;
         }

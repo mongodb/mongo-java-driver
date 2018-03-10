@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
@@ -44,6 +45,7 @@ public class FindOneAndReplaceOptions {
      * @return the project document, which may be null
      * @mongodb.driver.manual tutorial/project-fields-from-query-results Projection
      */
+    @Nullable
     public Bson getProjection() {
         return projection;
     }
@@ -55,7 +57,7 @@ public class FindOneAndReplaceOptions {
      * @return this
      * @mongodb.driver.manual tutorial/project-fields-from-query-results Projection
      */
-    public FindOneAndReplaceOptions projection(final Bson projection) {
+    public FindOneAndReplaceOptions projection(@Nullable final Bson projection) {
         this.projection = projection;
         return this;
     }
@@ -67,6 +69,7 @@ public class FindOneAndReplaceOptions {
      * @return a document describing the sort criteria
      * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
+    @Nullable
     public Bson getSort() {
         return sort;
     }
@@ -78,7 +81,7 @@ public class FindOneAndReplaceOptions {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
-    public FindOneAndReplaceOptions sort(final Bson sort) {
+    public FindOneAndReplaceOptions sort(@Nullable final Bson sort) {
         this.sort = sort;
         return this;
     }
@@ -119,7 +122,7 @@ public class FindOneAndReplaceOptions {
      * @return this
      */
     public FindOneAndReplaceOptions returnDocument(final ReturnDocument returnDocument) {
-        this.returnDocument = returnDocument;
+        this.returnDocument = notNull("returnDocument", returnDocument);
         return this;
     }
 
@@ -153,6 +156,7 @@ public class FindOneAndReplaceOptions {
      * @since 3.2
      * @mongodb.server.release 3.2
      */
+    @Nullable
     public Boolean getBypassDocumentValidation() {
         return bypassDocumentValidation;
     }
@@ -165,7 +169,7 @@ public class FindOneAndReplaceOptions {
      * @since 3.2
      * @mongodb.server.release 3.2
      */
-    public FindOneAndReplaceOptions bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+    public FindOneAndReplaceOptions bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
@@ -177,6 +181,7 @@ public class FindOneAndReplaceOptions {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
+    @Nullable
     public Collation getCollation() {
         return collation;
     }
@@ -190,7 +195,7 @@ public class FindOneAndReplaceOptions {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
-    public FindOneAndReplaceOptions collation(final Collation collation) {
+    public FindOneAndReplaceOptions collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }

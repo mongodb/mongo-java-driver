@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.lang.Nullable;
+
 /**
  * The options to apply to a bulk write.
  *
@@ -56,6 +58,7 @@ public final class BulkWriteOptions {
      * @since 3.2
      * @mongodb.server.release 3.2
      */
+    @Nullable
     public Boolean getBypassDocumentValidation() {
         return bypassDocumentValidation;
     }
@@ -68,7 +71,7 @@ public final class BulkWriteOptions {
      * @since 3.2
      * @mongodb.server.release 3.2
      */
-    public BulkWriteOptions bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+    public BulkWriteOptions bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
