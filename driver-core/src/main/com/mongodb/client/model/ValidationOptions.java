@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 /**
@@ -35,6 +36,7 @@ public final class ValidationOptions {
      *
      * @return the validation rules if set or null
      */
+    @Nullable
     public Bson getValidator() {
         return validator;
     }
@@ -45,7 +47,7 @@ public final class ValidationOptions {
      * @param validator the validation rules
      * @return this
      */
-    public ValidationOptions validator(final Bson validator) {
+    public ValidationOptions validator(@Nullable final Bson validator) {
         this.validator = validator;
         return this;
     }
@@ -56,6 +58,7 @@ public final class ValidationOptions {
      *
      * @return the ValidationLevel.
      */
+    @Nullable
     public ValidationLevel getValidationLevel() {
         return validationLevel;
     }
@@ -67,7 +70,7 @@ public final class ValidationOptions {
      * @param validationLevel the validation level
      * @return this
      */
-    public ValidationOptions validationLevel(final ValidationLevel validationLevel) {
+    public ValidationOptions validationLevel(@Nullable final ValidationLevel validationLevel) {
         this.validationLevel = validationLevel;
         return this;
     }
@@ -77,6 +80,7 @@ public final class ValidationOptions {
      *
      * @return the ValidationAction.
      */
+    @Nullable
     public ValidationAction getValidationAction() {
         return validationAction;
     }
@@ -88,7 +92,7 @@ public final class ValidationOptions {
      * @param validationAction the validation action
      * @return this
      */
-    public ValidationOptions validationAction(final ValidationAction validationAction) {
+    public ValidationOptions validationAction(@Nullable final ValidationAction validationAction) {
         this.validationAction = validationAction;
         return this;
     }

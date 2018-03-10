@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model.geojson;
 
+import com.mongodb.lang.Nullable;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -46,7 +48,7 @@ public final class MultiLineString extends Geometry {
      * @param coordinateReferenceSystem the coordinate reference system
      * @param coordinates the coordinates of each line
      */
-    public MultiLineString(final CoordinateReferenceSystem coordinateReferenceSystem, final List<List<Position>> coordinates) {
+    public MultiLineString(@Nullable final CoordinateReferenceSystem coordinateReferenceSystem, final List<List<Position>> coordinates) {
         super(coordinateReferenceSystem);
 
         notNull("coordinates", coordinates);

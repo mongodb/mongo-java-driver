@@ -19,4 +19,7 @@
  *
  * @since 3.3
  */
+@NonNullApi
 package com.mongodb.client.gridfs.codecs;
+
+import com.mongodb.lang.NonNullApi;

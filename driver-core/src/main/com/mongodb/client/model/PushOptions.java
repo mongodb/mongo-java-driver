@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 /**
@@ -37,6 +38,7 @@ public class PushOptions {
      * @return the position, which may be null
      * @mongodb.driver.manual reference/operator/update/position/ $position
      */
+    @Nullable
     public Integer getPosition() {
         return position;
     }
@@ -48,7 +50,7 @@ public class PushOptions {
      * @return this
      * @mongodb.driver.manual reference/operator/update/position/ $position
      */
-    public PushOptions position(final Integer position) {
+    public PushOptions position(@Nullable final Integer position) {
         this.position = position;
         return this;
     }
@@ -59,6 +61,7 @@ public class PushOptions {
      * @return the slice value representing the limit on the number of array elements allowed
      * @mongodb.driver.manual reference/operator/update/slice/ $slice
      */
+    @Nullable
     public Integer getSlice() {
         return slice;
     }
@@ -70,7 +73,7 @@ public class PushOptions {
      * @return this
      * @mongodb.driver.manual reference/operator/update/slice/ $slice
      */
-    public PushOptions slice(final Integer slice) {
+    public PushOptions slice(@Nullable final Integer slice) {
         this.slice = slice;
         return this;
     }
@@ -82,6 +85,7 @@ public class PushOptions {
      * @mongodb.driver.manual reference/operator/update/sort/ $sort
      * @mongodb.driver.manual reference/operator/update/sort/#sort-array-elements-that-are-not-documents
      */
+    @Nullable
     public Integer getSort() {
         return sort;
     }
@@ -95,7 +99,7 @@ public class PushOptions {
      * @mongodb.driver.manual reference/operator/update/sort/ $sort
      * @mongodb.driver.manual reference/operator/update/sort/#sort-array-elements-that-are-not-documents
      */
-    public PushOptions sort(final Integer sort) {
+    public PushOptions sort(@Nullable final Integer sort) {
         if (sortDocument != null) {
             throw new IllegalStateException("sort can not be set if sortDocument already is");
         }
@@ -109,6 +113,7 @@ public class PushOptions {
      * @return the sort document
      * @mongodb.driver.manual reference/operator/update/sort/ $sort
      */
+    @Nullable
     public Bson getSortDocument() {
         return sortDocument;
     }
@@ -121,7 +126,7 @@ public class PushOptions {
      * @throws IllegalStateException if sort property is already set
      * @mongodb.driver.manual reference/operator/update/sort/ $sort
      */
-    public PushOptions sortDocument(final Bson sortDocument) {
+    public PushOptions sortDocument(@Nullable final Bson sortDocument) {
         if (sort != null) {
             throw new IllegalStateException("sortDocument can not be set if sort already is");
         }

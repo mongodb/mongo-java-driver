@@ -17,6 +17,7 @@
 package com.mongodb.client.gridfs.codecs;
 
 import com.mongodb.client.gridfs.model.GridFSFile;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDateTime;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
@@ -111,6 +112,7 @@ public final class GridFSFileCodec implements Codec<GridFSFile> {
         return GridFSFile.class;
     }
 
+    @Nullable
     private Document asDocumentOrNull(final BsonDocument bsonDocument) {
         if (bsonDocument.isEmpty()) {
             return null;

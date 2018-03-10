@@ -17,6 +17,7 @@
 package com.mongodb.client.model.geojson;
 
 import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider;
+import com.mongodb.lang.Nullable;
 import org.bson.codecs.Codec;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistries;
@@ -50,7 +51,7 @@ public abstract class Geometry {
      *
      * @param coordinateReferenceSystem the coordinate reference system
      */
-    protected Geometry(final CoordinateReferenceSystem coordinateReferenceSystem) {
+    protected Geometry(@Nullable final CoordinateReferenceSystem coordinateReferenceSystem) {
         this.coordinateReferenceSystem = coordinateReferenceSystem;
     }
 
@@ -84,6 +85,7 @@ public abstract class Geometry {
      *
      * @return the possibly-null coordinate reference system
      */
+    @Nullable
     public CoordinateReferenceSystem getCoordinateReferenceSystem() {
         return coordinateReferenceSystem;
     }

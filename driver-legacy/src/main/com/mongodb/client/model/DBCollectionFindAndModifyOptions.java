@@ -18,6 +18,7 @@ package com.mongodb.client.model;
 
 import com.mongodb.DBObject;
 import com.mongodb.WriteConcern;
+import com.mongodb.lang.Nullable;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -54,6 +55,7 @@ public final class DBCollectionFindAndModifyOptions {
      *
      * @return the projection
      */
+    @Nullable
     public DBObject getProjection() {
         return projection;
     }
@@ -64,7 +66,7 @@ public final class DBCollectionFindAndModifyOptions {
      * @param projection the projection
      * @return this
      */
-    public DBCollectionFindAndModifyOptions projection(final DBObject projection) {
+    public DBCollectionFindAndModifyOptions projection(@Nullable final DBObject projection) {
         this.projection = projection;
         return this;
     }
@@ -74,6 +76,7 @@ public final class DBCollectionFindAndModifyOptions {
      *
      * @return the sort
      */
+    @Nullable
     public DBObject getSort() {
         return sort;
     }
@@ -84,7 +87,7 @@ public final class DBCollectionFindAndModifyOptions {
      * @param sort the sort
      * @return this
      */
-    public DBCollectionFindAndModifyOptions sort(final DBObject sort) {
+    public DBCollectionFindAndModifyOptions sort(@Nullable final DBObject sort) {
         this.sort = sort;
         return this;
     }
@@ -114,6 +117,7 @@ public final class DBCollectionFindAndModifyOptions {
      *
      * @return the update
      */
+    @Nullable
     public DBObject getUpdate() {
         return update;
     }
@@ -124,7 +128,7 @@ public final class DBCollectionFindAndModifyOptions {
      * @param update the update
      * @return this
      */
-    public DBCollectionFindAndModifyOptions update(final DBObject update) {
+    public DBCollectionFindAndModifyOptions update(@Nullable final DBObject update) {
         this.update = update;
         return this;
     }
@@ -222,6 +226,7 @@ public final class DBCollectionFindAndModifyOptions {
      * @return the writeConcern
      * @mongodb.server.release 3.2
      */
+    @Nullable
     public WriteConcern getWriteConcern() {
         return writeConcern;
     }
@@ -233,7 +238,7 @@ public final class DBCollectionFindAndModifyOptions {
      * @return this
      * @mongodb.server.release 3.2
      */
-    public DBCollectionFindAndModifyOptions writeConcern(final WriteConcern writeConcern) {
+    public DBCollectionFindAndModifyOptions writeConcern(@Nullable final WriteConcern writeConcern) {
         this.writeConcern = writeConcern;
         return this;
     }

@@ -52,7 +52,7 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
 
     GridFSUploadStreamImpl(@Nullable final ClientSession clientSession, final MongoCollection<GridFSFile> filesCollection,
                            final MongoCollection<Document> chunksCollection, final BsonValue fileId, final String filename,
-                           final int chunkSizeBytes, final Document metadata) {
+                           final int chunkSizeBytes, @Nullable final Document metadata) {
         this.clientSession = clientSession;
         this.filesCollection = notNull("files collection", filesCollection);
         this.chunksCollection = notNull("chunks collection", chunksCollection);
@@ -117,9 +117,9 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
     @Override
     public void write(final byte[] b, final int off, final int len) {
         checkClosed();
-        if (b == null) {
-            throw new NullPointerException();
-        } else if ((off < 0) || (off > b.length) || (len < 0)
+        notNull("b", b);
+
+        if ((off < 0) || (off > b.length) || (len < 0)
                 || ((off + len) > b.length) || ((off + len) < 0)) {
             throw new IndexOutOfBoundsException();
         } else if (len == 0) {

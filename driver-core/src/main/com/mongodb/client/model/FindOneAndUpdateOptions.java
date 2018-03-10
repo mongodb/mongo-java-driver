@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 import java.util.List;
@@ -46,6 +47,7 @@ public class FindOneAndUpdateOptions {
      * @return the project document, which may be null
      * @mongodb.driver.manual tutorial/project-fields-from-query-results Projection
      */
+    @Nullable
     public Bson getProjection() {
         return projection;
     }
@@ -57,7 +59,7 @@ public class FindOneAndUpdateOptions {
      * @return this
      * @mongodb.driver.manual tutorial/project-fields-from-query-results Projection
      */
-    public FindOneAndUpdateOptions projection(final Bson projection) {
+    public FindOneAndUpdateOptions projection(@Nullable final Bson projection) {
         this.projection = projection;
         return this;
     }
@@ -69,6 +71,7 @@ public class FindOneAndUpdateOptions {
      * @return a document describing the sort criteria
      * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
+    @Nullable
     public Bson getSort() {
         return sort;
     }
@@ -80,7 +83,7 @@ public class FindOneAndUpdateOptions {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
-    public FindOneAndUpdateOptions sort(final Bson sort) {
+    public FindOneAndUpdateOptions sort(@Nullable final Bson sort) {
         this.sort = sort;
         return this;
     }
@@ -122,7 +125,7 @@ public class FindOneAndUpdateOptions {
      * @return this
      */
     public FindOneAndUpdateOptions returnDocument(final ReturnDocument returnDocument) {
-        this.returnDocument = returnDocument;
+        this.returnDocument = notNull("returnDocument", returnDocument);
         return this;
     }
 
@@ -156,6 +159,7 @@ public class FindOneAndUpdateOptions {
      * @since 3.2
      * @mongodb.server.release 3.2
      */
+    @Nullable
     public Boolean getBypassDocumentValidation() {
         return bypassDocumentValidation;
     }
@@ -168,7 +172,7 @@ public class FindOneAndUpdateOptions {
      * @since 3.2
      * @mongodb.server.release 3.2
      */
-    public FindOneAndUpdateOptions bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+    public FindOneAndUpdateOptions bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
@@ -180,6 +184,7 @@ public class FindOneAndUpdateOptions {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
+    @Nullable
     public Collation getCollation() {
         return collation;
     }
@@ -193,7 +198,7 @@ public class FindOneAndUpdateOptions {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
-    public FindOneAndUpdateOptions collation(final Collation collation) {
+    public FindOneAndUpdateOptions collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }
@@ -205,7 +210,7 @@ public class FindOneAndUpdateOptions {
      * @since 3.6
      * @mongodb.server.release 3.6
      */
-    public FindOneAndUpdateOptions arrayFilters(final List<? extends Bson> arrayFilters) {
+    public FindOneAndUpdateOptions arrayFilters(@Nullable final List<? extends Bson> arrayFilters) {
         this.arrayFilters = arrayFilters;
         return this;
     }
@@ -217,6 +222,7 @@ public class FindOneAndUpdateOptions {
      * @since 3.6
      * @mongodb.server.release 3.6
      */
+    @Nullable
     public List<? extends Bson> getArrayFilters() {
         return arrayFilters;
     }

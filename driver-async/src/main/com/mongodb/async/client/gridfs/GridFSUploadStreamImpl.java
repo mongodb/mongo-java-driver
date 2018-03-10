@@ -68,7 +68,7 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
 
     GridFSUploadStreamImpl(@Nullable final ClientSession clientSession, final MongoCollection<GridFSFile> filesCollection,
                            final MongoCollection<Document> chunksCollection, final BsonValue fileId, final String filename,
-                           final int chunkSizeBytes, final Document metadata, final GridFSIndexCheck indexCheck) {
+                           final int chunkSizeBytes, @Nullable final Document metadata, final GridFSIndexCheck indexCheck) {
         this.clientSession = clientSession;
         this.filesCollection = notNull("files collection", filesCollection);
         this.chunksCollection = notNull("chunks collection", chunksCollection);

@@ -18,6 +18,7 @@ package com.mongodb.client.model;
 
 import com.mongodb.DBEncoder;
 import com.mongodb.WriteConcern;
+import com.mongodb.lang.Nullable;
 
 /**
  * The options to apply when removing documents from the DBCollection
@@ -42,6 +43,7 @@ public final class DBCollectionRemoveOptions {
      * @return the collation options
      * @mongodb.server.release 3.4
      */
+    @Nullable
     public Collation getCollation() {
         return collation;
     }
@@ -53,7 +55,7 @@ public final class DBCollectionRemoveOptions {
      * @return this
      * @mongodb.server.release 3.4
      */
-    public DBCollectionRemoveOptions collation(final Collation collation) {
+    public DBCollectionRemoveOptions collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }
@@ -63,6 +65,7 @@ public final class DBCollectionRemoveOptions {
      *
      * @return the write concern, or null if the default will be used.
      */
+    @Nullable
     public WriteConcern getWriteConcern() {
         return writeConcern;
     }
@@ -73,7 +76,7 @@ public final class DBCollectionRemoveOptions {
      * @param writeConcern the write concern
      * @return this
      */
-    public DBCollectionRemoveOptions writeConcern(final WriteConcern writeConcern) {
+    public DBCollectionRemoveOptions writeConcern(@Nullable final WriteConcern writeConcern) {
         this.writeConcern = writeConcern;
         return this;
     }
@@ -83,6 +86,7 @@ public final class DBCollectionRemoveOptions {
      *
      * @return the encoder
      */
+    @Nullable
     public DBEncoder getEncoder() {
         return encoder;
     }
@@ -93,7 +97,7 @@ public final class DBCollectionRemoveOptions {
      * @param encoder the encoder
      * @return this
      */
-    public DBCollectionRemoveOptions encoder(final DBEncoder encoder) {
+    public DBCollectionRemoveOptions encoder(@Nullable final DBEncoder encoder) {
         this.encoder = encoder;
         return this;
     }

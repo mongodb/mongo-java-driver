@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
@@ -41,6 +42,7 @@ public class FindOneAndDeleteOptions {
      * @return the project document, which may be null
      * @mongodb.driver.manual tutorial/project-fields-from-query-results Projection
      */
+    @Nullable
     public Bson getProjection() {
         return projection;
     }
@@ -52,7 +54,7 @@ public class FindOneAndDeleteOptions {
      * @return this
      * @mongodb.driver.manual tutorial/project-fields-from-query-results Projection
      */
-    public FindOneAndDeleteOptions projection(final Bson projection) {
+    public FindOneAndDeleteOptions projection(@Nullable final Bson projection) {
         this.projection = projection;
         return this;
     }
@@ -64,6 +66,7 @@ public class FindOneAndDeleteOptions {
      * @return a document describing the sort criteria
      * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
+    @Nullable
     public Bson getSort() {
         return sort;
     }
@@ -75,7 +78,7 @@ public class FindOneAndDeleteOptions {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
-    public FindOneAndDeleteOptions sort(final Bson sort) {
+    public FindOneAndDeleteOptions sort(@Nullable final Bson sort) {
         this.sort = sort;
         return this;
     }
@@ -110,6 +113,7 @@ public class FindOneAndDeleteOptions {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
+    @Nullable
     public Collation getCollation() {
         return collation;
     }
@@ -123,7 +127,7 @@ public class FindOneAndDeleteOptions {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
-    public FindOneAndDeleteOptions collation(final Collation collation) {
+    public FindOneAndDeleteOptions collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }

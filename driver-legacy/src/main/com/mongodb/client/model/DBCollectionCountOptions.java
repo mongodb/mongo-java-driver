@@ -19,6 +19,7 @@ package com.mongodb.client.model;
 import com.mongodb.DBObject;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
@@ -52,6 +53,7 @@ public class DBCollectionCountOptions {
      *
      * @return the hint, which should describe an existing
      */
+    @Nullable
     public DBObject getHint() {
         return hint;
     }
@@ -61,6 +63,7 @@ public class DBCollectionCountOptions {
      *
      * @return the hint string, which should be the name of an existing index
      */
+    @Nullable
     public String getHintString() {
         return hintString;
     }
@@ -71,7 +74,7 @@ public class DBCollectionCountOptions {
      * @param hint a document describing the index which should be used for this operation.
      * @return this
      */
-    public DBCollectionCountOptions hint(final DBObject hint) {
+    public DBCollectionCountOptions hint(@Nullable final DBObject hint) {
         this.hint = hint;
         return this;
     }
@@ -82,7 +85,7 @@ public class DBCollectionCountOptions {
      * @param hint the name of the index which should be used for the operation
      * @return this
      */
-    public DBCollectionCountOptions hintString(final String hint) {
+    public DBCollectionCountOptions hintString(@Nullable final String hint) {
         this.hintString = hint;
         return this;
     }
@@ -186,6 +189,7 @@ public class DBCollectionCountOptions {
      *
      * @return the readPreference
      */
+    @Nullable
     public ReadPreference getReadPreference() {
         return readPreference;
     }
@@ -196,7 +200,7 @@ public class DBCollectionCountOptions {
      * @param readPreference the readPreference
      * @return this
      */
-    public DBCollectionCountOptions readPreference(final ReadPreference readPreference) {
+    public DBCollectionCountOptions readPreference(@Nullable final ReadPreference readPreference) {
         this.readPreference = readPreference;
         return this;
     }
@@ -207,6 +211,7 @@ public class DBCollectionCountOptions {
      * @return the readConcern
      * @mongodb.server.release 3.2
      */
+    @Nullable
     public ReadConcern getReadConcern() {
         return readConcern;
     }
@@ -218,7 +223,7 @@ public class DBCollectionCountOptions {
      * @return this
      * @mongodb.server.release 3.2
      */
-    public DBCollectionCountOptions readConcern(final ReadConcern readConcern) {
+    public DBCollectionCountOptions readConcern(@Nullable final ReadConcern readConcern) {
         this.readConcern = readConcern;
         return this;
     }
@@ -229,6 +234,7 @@ public class DBCollectionCountOptions {
      * @return the collation options
      * @mongodb.server.release 3.4
      */
+    @Nullable
     public Collation getCollation() {
         return collation;
     }
@@ -240,7 +246,7 @@ public class DBCollectionCountOptions {
      * @return this
      * @mongodb.server.release 3.4
      */
-    public DBCollectionCountOptions collation(final Collation collation) {
+    public DBCollectionCountOptions collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }

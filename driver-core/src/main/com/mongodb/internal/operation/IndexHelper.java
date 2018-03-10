@@ -41,8 +41,9 @@ public final class IndexHelper {
     public static List<String> getIndexNames(final List<IndexModel> indexes, final CodecRegistry codecRegistry) {
         List<String> indexNames = new ArrayList<String>(indexes.size());
         for (IndexModel index : indexes) {
-            if (index.getOptions().getName() != null) {
-                indexNames.add(index.getOptions().getName());
+            String name = index.getOptions().getName();
+            if (name != null) {
+                indexNames.add(name);
             } else {
                 indexNames.add(IndexHelper.generateIndexName(index.getKeys().toBsonDocument(BsonDocument.class, codecRegistry)));
             }

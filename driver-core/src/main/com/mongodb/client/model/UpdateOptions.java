@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 import java.util.List;
@@ -61,6 +62,7 @@ public class UpdateOptions {
      * @since 3.2
      * @mongodb.server.release 3.2
      */
+    @Nullable
     public Boolean getBypassDocumentValidation() {
         return bypassDocumentValidation;
     }
@@ -73,7 +75,7 @@ public class UpdateOptions {
      * @since 3.2
      * @mongodb.server.release 3.2
      */
-    public UpdateOptions bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+    public UpdateOptions bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }
@@ -85,6 +87,7 @@ public class UpdateOptions {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
+    @Nullable
     public Collation getCollation() {
         return collation;
     }
@@ -98,7 +101,7 @@ public class UpdateOptions {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
-    public UpdateOptions collation(final Collation collation) {
+    public UpdateOptions collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }
@@ -111,7 +114,7 @@ public class UpdateOptions {
      * @since 3.6
      * @mongodb.server.release 3.6
      */
-    public UpdateOptions arrayFilters(final List<? extends Bson> arrayFilters) {
+    public UpdateOptions arrayFilters(@Nullable final List<? extends Bson> arrayFilters) {
         this.arrayFilters = arrayFilters;
         return this;
     }
@@ -123,6 +126,7 @@ public class UpdateOptions {
      * @since 3.6
      * @mongodb.server.release 3.6
      */
+    @Nullable
     public List<? extends Bson> getArrayFilters() {
         return arrayFilters;
     }

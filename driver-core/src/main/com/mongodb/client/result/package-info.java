@@ -17,4 +17,7 @@
 /**
  * This package contains classes representing operation results
  */
+@NonNullApi
 package com.mongodb.client.result;
+
+import com.mongodb.lang.NonNullApi;

@@ -176,7 +176,8 @@ final class GridFSBucketImpl implements GridFSBucket {
     private GridFSUploadStream createGridFSUploadStream(@Nullable final ClientSession clientSession, final BsonValue id,
                                                         final String filename, final GridFSUploadOptions options) {
         notNull("options", options);
-        int chunkSize = options.getChunkSizeBytes() == null ? chunkSizeBytes : options.getChunkSizeBytes();
+        Integer chunkSizeBytes = options.getChunkSizeBytes();
+        int chunkSize = chunkSizeBytes == null ? this.chunkSizeBytes : chunkSizeBytes;
         checkCreateIndex(clientSession);
         return new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, id, filename, chunkSize, options.getMetadata());
     }
@@ -232,7 +233,8 @@ final class GridFSBucketImpl implements GridFSBucket {
     private void executeUploadFromStream(@Nullable final ClientSession clientSession, final BsonValue id, final String filename,
                                          final InputStream source, final GridFSUploadOptions options) {
         GridFSUploadStream uploadStream = createGridFSUploadStream(clientSession, id, filename, options);
-        int chunkSize = options.getChunkSizeBytes() == null ? chunkSizeBytes : options.getChunkSizeBytes();
+        Integer chunkSizeBytes = options.getChunkSizeBytes();
+        int chunkSize = chunkSizeBytes == null ? this.chunkSizeBytes : chunkSizeBytes;
         byte[] buffer = new byte[chunkSize];
         int len;
         try {

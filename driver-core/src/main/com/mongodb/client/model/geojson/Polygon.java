@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model.geojson;
 
+import com.mongodb.lang.Nullable;
+
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -54,7 +56,7 @@ public final class Polygon extends Geometry {
      * @param coordinateReferenceSystem the coordinate reference system
      * @param coordinates               the coordinates
      */
-    public Polygon(final CoordinateReferenceSystem coordinateReferenceSystem, final PolygonCoordinates coordinates) {
+    public Polygon(@Nullable final CoordinateReferenceSystem coordinateReferenceSystem, final PolygonCoordinates coordinates) {
         super(coordinateReferenceSystem);
         this.coordinates = notNull("coordinates", coordinates);
     }

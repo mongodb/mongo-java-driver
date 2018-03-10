@@ -19,4 +19,7 @@
  *
  * @since 3.1
  */
+@NonNullApi
 package com.mongodb.client.gridfs.model;
+
+import com.mongodb.lang.NonNullApi;

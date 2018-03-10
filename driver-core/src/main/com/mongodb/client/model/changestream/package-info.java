@@ -17,4 +17,7 @@
 /**
  * This package contains classes for the change stream api
  */
+@NonNullApi
 package com.mongodb.client.model.changestream;
+
+import com.mongodb.lang.NonNullApi;

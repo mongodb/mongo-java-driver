@@ -21,6 +21,7 @@ import com.mongodb.CursorType;
 import com.mongodb.DBObject;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.lang.Nullable;
 
 import java.util.concurrent.TimeUnit;
 
@@ -230,7 +231,7 @@ public final class DBCollectionFindOptions {
      * @return this
      * @mongodb.driver.manual reference/operator/query-modifier/ Query Modifiers
      */
-    public DBCollectionFindOptions modifiers(final DBObject modifiers) {
+    public DBCollectionFindOptions modifiers(@Nullable final DBObject modifiers) {
         this.modifiers = notNull("modifiers", modifiers);
         return this;
     }
@@ -241,6 +242,7 @@ public final class DBCollectionFindOptions {
      * @return the project document, which may be null
      * @mongodb.driver.manual reference/method/db.collection.find/ Projection
      */
+    @Nullable
     public DBObject getProjection() {
         return projection;
     }
@@ -252,7 +254,7 @@ public final class DBCollectionFindOptions {
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Projection
      */
-    public DBCollectionFindOptions projection(final DBObject projection) {
+    public DBCollectionFindOptions projection(@Nullable final DBObject projection) {
         this.projection = projection;
         return this;
     }
@@ -264,6 +266,7 @@ public final class DBCollectionFindOptions {
      * @return a document describing the sort criteria
      * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
+    @Nullable
     public DBObject getSort() {
         return sort;
     }
@@ -275,7 +278,7 @@ public final class DBCollectionFindOptions {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
-    public DBCollectionFindOptions sort(final DBObject sort) {
+    public DBCollectionFindOptions sort(@Nullable final DBObject sort) {
         this.sort = sort;
         return this;
     }
@@ -367,6 +370,7 @@ public final class DBCollectionFindOptions {
      *
      * @return the readPreference
      */
+    @Nullable
     public ReadPreference getReadPreference() {
         return readPreference;
     }
@@ -377,7 +381,7 @@ public final class DBCollectionFindOptions {
      * @param readPreference the readPreference
      * @return this
      */
-    public DBCollectionFindOptions readPreference(final ReadPreference readPreference) {
+    public DBCollectionFindOptions readPreference(@Nullable final ReadPreference readPreference) {
         this.readPreference = readPreference;
         return this;
     }
@@ -388,6 +392,7 @@ public final class DBCollectionFindOptions {
      * @return the readConcern
      * @mongodb.server.release 3.2
      */
+    @Nullable
     public ReadConcern getReadConcern() {
         return readConcern;
     }
@@ -399,7 +404,7 @@ public final class DBCollectionFindOptions {
      * @return this
      * @mongodb.server.release 3.2
      */
-    public DBCollectionFindOptions readConcern(final ReadConcern readConcern) {
+    public DBCollectionFindOptions readConcern(@Nullable final ReadConcern readConcern) {
         this.readConcern = readConcern;
         return this;
     }
@@ -410,6 +415,7 @@ public final class DBCollectionFindOptions {
      * @return the collation options
      * @mongodb.server.release 3.4
      */
+    @Nullable
     public Collation getCollation() {
         return collation;
     }
@@ -421,7 +427,7 @@ public final class DBCollectionFindOptions {
      * @return this
      * @mongodb.server.release 3.4
      */
-    public DBCollectionFindOptions collation(final Collation collation) {
+    public DBCollectionFindOptions collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }

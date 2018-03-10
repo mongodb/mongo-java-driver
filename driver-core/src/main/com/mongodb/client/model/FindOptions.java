@@ -17,6 +17,7 @@
 package com.mongodb.client.model;
 
 import com.mongodb.CursorType;
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
@@ -228,6 +229,7 @@ public final class FindOptions {
      * @deprecated use the individual modifier methods instead.
      */
     @Deprecated
+    @Nullable
     public Bson getModifiers() {
         return modifiers;
     }
@@ -241,7 +243,7 @@ public final class FindOptions {
      * @deprecated use the individual modifier methods instead.
      */
     @Deprecated
-    public FindOptions modifiers(final Bson modifiers) {
+    public FindOptions modifiers(@Nullable final Bson modifiers) {
         this.modifiers = modifiers;
         return this;
     }
@@ -252,6 +254,7 @@ public final class FindOptions {
      * @return the project document, which may be null
      * @mongodb.driver.manual reference/method/db.collection.find/ Projection
      */
+    @Nullable
     public Bson getProjection() {
         return projection;
     }
@@ -263,7 +266,7 @@ public final class FindOptions {
      * @return this
      * @mongodb.driver.manual reference/method/db.collection.find/ Projection
      */
-    public FindOptions projection(final Bson projection) {
+    public FindOptions projection(@Nullable final Bson projection) {
         this.projection = projection;
         return this;
     }
@@ -275,6 +278,7 @@ public final class FindOptions {
      * @return a document describing the sort criteria
      * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
+    @Nullable
     public Bson getSort() {
         return sort;
     }
@@ -286,7 +290,7 @@ public final class FindOptions {
      * @return this
      * @mongodb.driver.manual reference/method/cursor.sort/ Sort
      */
-    public FindOptions sort(final Bson sort) {
+    public FindOptions sort(@Nullable final Bson sort) {
         this.sort = sort;
         return this;
     }
@@ -380,6 +384,7 @@ public final class FindOptions {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
+    @Nullable
     public Collation getCollation() {
         return collation;
     }
@@ -393,7 +398,7 @@ public final class FindOptions {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
-    public FindOptions collation(final Collation collation) {
+    public FindOptions collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }
@@ -404,6 +409,7 @@ public final class FindOptions {
      * @return the comment
      * @since 3.5
      */
+    @Nullable
     public String getComment() {
         return comment;
     }
@@ -415,7 +421,7 @@ public final class FindOptions {
      * @return this
      * @since 3.5
      */
-    public FindOptions comment(final String comment) {
+    public FindOptions comment(@Nullable final String comment) {
         this.comment = comment;
         return this;
     }
@@ -426,6 +432,7 @@ public final class FindOptions {
      * @return the hint
      * @since 3.5
      */
+    @Nullable
     public Bson getHint() {
         return hint;
     }
@@ -437,7 +444,7 @@ public final class FindOptions {
      * @return this
      * @since 3.5
      */
-    public FindOptions hint(final Bson hint) {
+    public FindOptions hint(@Nullable final Bson hint) {
         this.hint = hint;
         return this;
     }
@@ -448,6 +455,7 @@ public final class FindOptions {
      * @return the max
      * @since 3.5
      */
+    @Nullable
     public Bson getMax() {
         return max;
     }
@@ -459,7 +467,7 @@ public final class FindOptions {
      * @return this
      * @since 3.5
      */
-    public FindOptions max(final Bson max) {
+    public FindOptions max(@Nullable final Bson max) {
         this.max = max;
         return this;
     }
@@ -470,6 +478,7 @@ public final class FindOptions {
      * @return the min
      * @since 3.5
      */
+    @Nullable
     public Bson getMin() {
         return min;
     }
@@ -481,7 +490,7 @@ public final class FindOptions {
      * @return this
      * @since 3.5
      */
-    public FindOptions min(final Bson min) {
+    public FindOptions min(@Nullable final Bson min) {
         this.min = min;
         return this;
     }

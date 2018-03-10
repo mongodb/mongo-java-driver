@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.lang.Nullable;
+
 /**
  * The options for an unwind aggregation pipeline stage
  *
@@ -33,6 +35,7 @@ public final class UnwindOptions {
      *
      * @return the preserve null values and empty arrays value or null
      */
+    @Nullable
     public Boolean isPreserveNullAndEmptyArrays() {
         return preserveNullAndEmptyArrays;
     }
@@ -43,7 +46,7 @@ public final class UnwindOptions {
      * @param preserveNullAndEmptyArrays flag depicting if the unwind stage should include documents that have null values or empty arrays
      * @return this
      */
-    public UnwindOptions preserveNullAndEmptyArrays(final Boolean preserveNullAndEmptyArrays) {
+    public UnwindOptions preserveNullAndEmptyArrays(@Nullable final Boolean preserveNullAndEmptyArrays) {
         this.preserveNullAndEmptyArrays = preserveNullAndEmptyArrays;
         return this;
     }
@@ -53,6 +56,7 @@ public final class UnwindOptions {
      *
      * @return the includeArrayIndex field if set or null
      */
+    @Nullable
     public String getIncludeArrayIndex() {
         return includeArrayIndex;
     }
@@ -63,7 +67,7 @@ public final class UnwindOptions {
      * @param arrayIndexFieldName the field to be used to store the array index of the unwound item
      * @return this
      */
-    public UnwindOptions includeArrayIndex(final String arrayIndexFieldName) {
+    public UnwindOptions includeArrayIndex(@Nullable final String arrayIndexFieldName) {
         this.includeArrayIndex = arrayIndexFieldName;
         return this;
     }

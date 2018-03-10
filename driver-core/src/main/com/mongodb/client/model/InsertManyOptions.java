@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.lang.Nullable;
+
 /**
  * The options to apply to an operation that inserts multiple documents into a collection.
  *
@@ -55,6 +57,7 @@ public final class InsertManyOptions {
      * @since 3.2
      * @mongodb.server.release 3.2
      */
+    @Nullable
     public Boolean getBypassDocumentValidation() {
         return bypassDocumentValidation;
     }
@@ -67,7 +70,7 @@ public final class InsertManyOptions {
      * @since 3.2
      * @mongodb.server.release 3.2
      */
-    public InsertManyOptions bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+    public InsertManyOptions bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }

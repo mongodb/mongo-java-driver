@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.lang.Nullable;
+
 /**
  * The options to apply to an operation that inserts a single document into a collection.
  *
@@ -32,6 +34,7 @@ public final class InsertOneOptions {
      *
      * @return the bypass document level validation flag
      */
+    @Nullable
     public Boolean getBypassDocumentValidation() {
         return bypassDocumentValidation;
     }
@@ -42,7 +45,7 @@ public final class InsertOneOptions {
      * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
      * @return this
      */
-    public InsertOneOptions bypassDocumentValidation(final Boolean bypassDocumentValidation) {
+    public InsertOneOptions bypassDocumentValidation(@Nullable final Boolean bypassDocumentValidation) {
         this.bypassDocumentValidation = bypassDocumentValidation;
         return this;
     }

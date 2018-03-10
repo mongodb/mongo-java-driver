@@ -50,7 +50,7 @@ class CreateCollectionOptionsSpecification extends Specification {
         new CreateCollectionOptions().indexOptionDefaults(indexOptionDefaults).getIndexOptionDefaults() == indexOptionDefaults
 
         where:
-        indexOptionDefaults << [null, new IndexOptionDefaults().storageEngine(BsonDocument.parse('{ storageEngine: { mmapv1 : {} }}'))]
+        indexOptionDefaults << [new IndexOptionDefaults().storageEngine(BsonDocument.parse('{ storageEngine: { mmapv1 : {} }}'))]
     }
 
     def 'should set maxDocuments'() {

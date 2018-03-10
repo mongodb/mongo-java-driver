@@ -19,6 +19,7 @@ package com.mongodb.client.model;
 import com.mongodb.DBObject;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.lang.Nullable;
 
 /**
  * The options for a distinct operation.
@@ -43,6 +44,7 @@ public class DBCollectionDistinctOptions {
      *
      * @return the query
      */
+    @Nullable
     public DBObject getFilter() {
         return filter;
     }
@@ -53,7 +55,7 @@ public class DBCollectionDistinctOptions {
      * @param filter the selection query to determine the subset of documents from which to retrieve the distinct values
      * @return this
      */
-    public DBCollectionDistinctOptions filter(final DBObject filter) {
+    public DBCollectionDistinctOptions filter(@Nullable final DBObject filter) {
         this.filter = filter;
         return this;
     }
@@ -63,6 +65,7 @@ public class DBCollectionDistinctOptions {
      *
      * @return the readPreference
      */
+    @Nullable
     public ReadPreference getReadPreference() {
         return readPreference;
     }
@@ -73,7 +76,7 @@ public class DBCollectionDistinctOptions {
      * @param readPreference the readPreference
      * @return this
      */
-    public DBCollectionDistinctOptions readPreference(final ReadPreference readPreference) {
+    public DBCollectionDistinctOptions readPreference(@Nullable final ReadPreference readPreference) {
         this.readPreference = readPreference;
         return this;
     }
@@ -84,6 +87,7 @@ public class DBCollectionDistinctOptions {
      * @return the readConcern
      * @mongodb.server.release 3.2
      */
+    @Nullable
     public ReadConcern getReadConcern() {
         return readConcern;
     }
@@ -95,7 +99,7 @@ public class DBCollectionDistinctOptions {
      * @return this
      * @mongodb.server.release 3.2
      */
-    public DBCollectionDistinctOptions readConcern(final ReadConcern readConcern) {
+    public DBCollectionDistinctOptions readConcern(@Nullable final ReadConcern readConcern) {
         this.readConcern = readConcern;
         return this;
     }
@@ -106,6 +110,7 @@ public class DBCollectionDistinctOptions {
      * @return the collation options
      * @mongodb.server.release 3.4
      */
+    @Nullable
     public Collation getCollation() {
         return collation;
     }
@@ -117,7 +122,7 @@ public class DBCollectionDistinctOptions {
      * @return this
      * @mongodb.server.release 3.4
      */
-    public DBCollectionDistinctOptions collation(final Collation collation) {
+    public DBCollectionDistinctOptions collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }

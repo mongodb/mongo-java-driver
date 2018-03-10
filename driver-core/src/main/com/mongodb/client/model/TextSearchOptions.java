@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.lang.Nullable;
+
 /**
  * Text search options for the {@link Filters#text(String, TextSearchOptions)} helper
  *
@@ -33,6 +35,7 @@ public final class TextSearchOptions {
      *
      * @return the language to use for the text search if set or null
      */
+    @Nullable
     public String getLanguage() {
         return language;
     }
@@ -43,7 +46,7 @@ public final class TextSearchOptions {
      * @param language the language to use for the text search
      * @return this
      */
-    public TextSearchOptions language(final String language) {
+    public TextSearchOptions language(@Nullable final String language) {
         this.language = language;
         return this;
     }
@@ -54,6 +57,7 @@ public final class TextSearchOptions {
      * @return the case-sensitive flag if set or null
      * @mongodb.server.release 3.2
      */
+    @Nullable
     public Boolean getCaseSensitive() {
         return caseSensitive;
     }
@@ -65,7 +69,7 @@ public final class TextSearchOptions {
      * @return this
      * @mongodb.server.release 3.2
      */
-    public TextSearchOptions caseSensitive(final Boolean caseSensitive) {
+    public TextSearchOptions caseSensitive(@Nullable final Boolean caseSensitive) {
         this.caseSensitive = caseSensitive;
         return this;
     }
@@ -76,6 +80,7 @@ public final class TextSearchOptions {
      * @return the diacritic-sensitive flag if set or null
      * @mongodb.server.release 3.2
      */
+    @Nullable
     public Boolean getDiacriticSensitive() {
         return diacriticSensitive;
     }
@@ -87,7 +92,7 @@ public final class TextSearchOptions {
      * @return this
      * @mongodb.server.release 3.2
      */
-    public TextSearchOptions diacriticSensitive(final Boolean diacriticSensitive) {
+    public TextSearchOptions diacriticSensitive(@Nullable final Boolean diacriticSensitive) {
         this.diacriticSensitive = diacriticSensitive;
         return this;
     }

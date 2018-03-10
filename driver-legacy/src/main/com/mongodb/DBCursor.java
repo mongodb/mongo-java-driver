@@ -92,7 +92,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @param readPreference the read preference for this query
      */
     public DBCursor(final DBCollection collection, final DBObject query, @Nullable final DBObject fields,
-                    final ReadPreference readPreference) {
+                    @Nullable final ReadPreference readPreference) {
         this(collection, query, new DBCollectionFindOptions().projection(fields).readPreference(readPreference));
 
         addOption(collection.getOptions());
@@ -743,6 +743,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      *
      * @return the field selector that cursor used
      */
+    @Nullable
     public DBObject getKeysWanted() {
         return findOptions.getProjection();
     }
@@ -792,8 +793,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return the readPreference used by this cursor
      */
     public ReadPreference getReadPreference() {
-        if (findOptions.getReadPreference() != null) {
-            return findOptions.getReadPreference();
+        ReadPreference readPreference = findOptions.getReadPreference();
+        if (readPreference != null) {
+            return readPreference;
         }
         return collection.getReadPreference();
     }
@@ -807,7 +809,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @mongodb.server.release 3.2
      * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
-    DBCursor setReadConcern(final ReadConcern readConcern) {
+    DBCursor setReadConcern(@Nullable final ReadConcern readConcern) {
         findOptions.readConcern(readConcern);
         return this;
     }
@@ -821,8 +823,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     ReadConcern getReadConcern() {
-        if (findOptions.getReadConcern() != null) {
-            return findOptions.getReadConcern();
+        ReadConcern readConcern = findOptions.getReadConcern();
+        if (readConcern != null) {
+            return readConcern;
         }
         return collection.getReadConcern();
     }
@@ -834,6 +837,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
+    @Nullable
     public Collation getCollation() {
         return findOptions.getCollation();
     }
@@ -847,7 +851,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
-    public DBCursor setCollation(final Collation collation) {
+    public DBCursor setCollation(@Nullable final Collation collation) {
         findOptions.collation(collation);
         return this;
     }
@@ -945,7 +949,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
             currentObject = newCurrentObject;
             numSeen++;
 
-            if (findOptions.getProjection() != null && !(findOptions.getProjection().keySet().isEmpty())) {
+            DBObject projection = findOptions.getProjection();
+            if (projection != null && !(projection.keySet().isEmpty())) {
                 currentObject.markAsPartialObject();
             }
         }
@@ -956,7 +961,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         currentObject = newCurrentObject;
         numSeen++;
 
-        if (findOptions.getProjection() != null && !(findOptions.getProjection().keySet().isEmpty())) {
+        DBObject projection = findOptions.getProjection();
+        if (projection != null && !(projection.keySet().isEmpty())) {
             currentObject.markAsPartialObject();
         }
         return newCurrentObject;

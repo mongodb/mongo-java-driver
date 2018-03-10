@@ -274,12 +274,14 @@ public class MongoDatabaseImpl implements MongoDatabase {
                 .storageEngineOptions(toBsonDocument(createCollectionOptions.getStorageEngineOptions()));
 
         IndexOptionDefaults indexOptionDefaults = createCollectionOptions.getIndexOptionDefaults();
-        if (indexOptionDefaults.getStorageEngine() != null) {
-            operation.indexOptionDefaults(new BsonDocument("storageEngine", toBsonDocument(indexOptionDefaults.getStorageEngine())));
+        Bson storageEngine = indexOptionDefaults.getStorageEngine();
+        if (storageEngine != null) {
+            operation.indexOptionDefaults(new BsonDocument("storageEngine", toBsonDocument(storageEngine)));
         }
         ValidationOptions validationOptions = createCollectionOptions.getValidationOptions();
-        if (validationOptions.getValidator() != null) {
-            operation.validator(toBsonDocument(validationOptions.getValidator()));
+        Bson validator = validationOptions.getValidator();
+        if (validator != null) {
+            operation.validator(toBsonDocument(validator));
         }
         if (validationOptions.getValidationLevel() != null) {
             operation.validationLevel(validationOptions.getValidationLevel());

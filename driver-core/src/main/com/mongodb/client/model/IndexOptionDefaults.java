@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 /**
@@ -34,6 +35,7 @@ public final class IndexOptionDefaults {
      *
      * @return the storage engine options
      */
+    @Nullable
     public Bson getStorageEngine() {
         return storageEngine;
     }
@@ -44,7 +46,7 @@ public final class IndexOptionDefaults {
      * @param storageEngine the storage engine options
      * @return this
      */
-    public IndexOptionDefaults storageEngine(final Bson storageEngine) {
+    public IndexOptionDefaults storageEngine(@Nullable final Bson storageEngine) {
         this.storageEngine = storageEngine;
         return this;
     }

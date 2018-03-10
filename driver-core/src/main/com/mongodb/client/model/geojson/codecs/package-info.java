@@ -17,4 +17,7 @@
 /**
  * This package contains classes that encode and decode GeoJSON objects.
  */
+@NonNullApi
 package com.mongodb.client.model.geojson.codecs;
+
+import com.mongodb.lang.NonNullApi;

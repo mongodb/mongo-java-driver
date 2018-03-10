@@ -16,6 +16,8 @@
 
 package com.mongodb.client.model.geojson;
 
+import com.mongodb.lang.Nullable;
+
 import java.util.Collections;
 import java.util.List;
 
@@ -46,7 +48,7 @@ public final class MultiPolygon extends Geometry {
      * @param coordinateReferenceSystem the coordinate reference system
      * @param coordinates the coordinates
      */
-    public MultiPolygon(final CoordinateReferenceSystem coordinateReferenceSystem, final List<PolygonCoordinates> coordinates) {
+    public MultiPolygon(@Nullable final CoordinateReferenceSystem coordinateReferenceSystem, final List<PolygonCoordinates> coordinates) {
         super(coordinateReferenceSystem);
         notNull("coordinates", coordinates);
         isTrueArgument("coordinates has no null elements", !coordinates.contains(null));

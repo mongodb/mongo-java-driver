@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -127,6 +128,7 @@ public class CreateCollectionOptions {
      * @deprecated As of MongoDB 3.0, power of 2 sizes is ignored by the MongoDB server
      */
     @Deprecated
+    @Nullable
     public Boolean isUsePowerOf2Sizes() {
         return usePowerOf2Sizes;
     }
@@ -141,7 +143,7 @@ public class CreateCollectionOptions {
      * @deprecated As of MongoDB 3.0, power of 2 sizes is ignored by the MongoDB server
      */
     @Deprecated
-    public CreateCollectionOptions usePowerOf2Sizes(final Boolean usePowerOf2Sizes) {
+    public CreateCollectionOptions usePowerOf2Sizes(@Nullable final Boolean usePowerOf2Sizes) {
         this.usePowerOf2Sizes = usePowerOf2Sizes;
         return this;
     }
@@ -152,6 +154,7 @@ public class CreateCollectionOptions {
      * @return the storage engine options
      * @mongodb.server.release 3.0
      */
+    @Nullable
     public Bson getStorageEngineOptions() {
         return storageEngineOptions;
     }
@@ -163,7 +166,7 @@ public class CreateCollectionOptions {
      * @return this
      * @mongodb.server.release 3.0
      */
-    public CreateCollectionOptions storageEngineOptions(final Bson storageEngineOptions) {
+    public CreateCollectionOptions storageEngineOptions(@Nullable final Bson storageEngineOptions) {
         this.storageEngineOptions = storageEngineOptions;
         return this;
     }
@@ -188,7 +191,7 @@ public class CreateCollectionOptions {
      * @mongodb.server.release 3.2
      */
     public CreateCollectionOptions indexOptionDefaults(final IndexOptionDefaults indexOptionDefaults) {
-        this.indexOptionDefaults = indexOptionDefaults;
+        this.indexOptionDefaults = notNull("indexOptionDefaults", indexOptionDefaults);
         return this;
     }
 
@@ -223,6 +226,7 @@ public class CreateCollectionOptions {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
+    @Nullable
     public Collation getCollation() {
         return collation;
     }
@@ -236,7 +240,7 @@ public class CreateCollectionOptions {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
-    public CreateCollectionOptions collation(final Collation collation) {
+    public CreateCollectionOptions collation(@Nullable final Collation collation) {
         this.collation = collation;
         return this;
     }

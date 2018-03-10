@@ -17,4 +17,7 @@
 /**
  * This package contains models and options that help describe MongoCollection operations
  */
+@NonNullApi
 package com.mongodb.client.model;
+
+import com.mongodb.lang.NonNullApi;

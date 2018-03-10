@@ -530,17 +530,23 @@ public final class Updates {
         @Override
         protected <TDocument> void writeAdditionalFields(final BsonDocumentWriter writer, final Class<TDocument> tDocumentClass,
                                                          final CodecRegistry codecRegistry) {
-            if (options.getPosition() != null) {
-                writer.writeInt32("$position", options.getPosition());
+            Integer position = options.getPosition();
+            if (position != null) {
+                writer.writeInt32("$position", position);
             }
-            if (options.getSlice() != null) {
-                writer.writeInt32("$slice", options.getSlice());
+            Integer slice = options.getSlice();
+            if (slice != null) {
+                writer.writeInt32("$slice", slice);
             }
-            if (options.getSort() != null) {
-                writer.writeInt32("$sort", options.getSort());
-            } else if (options.getSortDocument() != null) {
-                writer.writeName("$sort");
-                encodeValue(writer, options.getSortDocument(), codecRegistry);
+            Integer sort = options.getSort();
+            if (sort != null) {
+                writer.writeInt32("$sort", sort);
+            } else {
+                Bson sortDocument = options.getSortDocument();
+                if (sortDocument != null) {
+                    writer.writeName("$sort");
+                    encodeValue(writer, sortDocument, codecRegistry);
+                }
             }
         }
 
