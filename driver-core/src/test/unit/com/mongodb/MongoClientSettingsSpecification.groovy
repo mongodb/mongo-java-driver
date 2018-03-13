@@ -342,14 +342,26 @@ class MongoClientSettingsSpecification extends Specification {
         settings.getHeartbeatSocketSettings() == expected
     }
 
-    def 'should only have the following methods in the builder'() {
+    def 'should only have the following fields in the builder'() {
         when:
-        // A regression test so that if anymore methods are added then the builder(final MongoClientSettings settings) should be updated
+        // A regression test so that if anymore fields are added then the builder(final MongoClientSettings settings) should be updated
         def actual = MongoClientSettings.Builder.declaredFields.grep {  !it.synthetic } *.name.sort()
         def expected = ['applicationName', 'clusterSettingsBuilder', 'codecRegistry', 'commandListeners', 'compressorList',
                         'connectionPoolSettingsBuilder', 'credential', 'readConcern', 'readPreference', 'retryWrites',
                         'serverSettingsBuilder', 'socketSettingsBuilder', 'sslSettingsBuilder', 'streamFactoryFactory', 'writeConcern']
 
+        then:
+        actual == expected
+    }
+
+    def 'should only have the following methods in the builder'() {
+        when:
+        // A regression test so that if anymore methods are added then the builder(final MongoClientSettings settings) should be updated
+        def actual = MongoClientSettings.Builder.declaredMethods.grep {  !it.synthetic } *.name.sort()
+        def expected = ['addCommandListener', 'applicationName', 'applyConnectionString', 'applyToClusterSettings',
+                        'applyToConnectionPoolSettings', 'applyToServerSettings', 'applyToSocketSettings', 'applyToSslSettings',
+                        'build', 'codecRegistry', 'commandListenerList', 'compressorList', 'credential', 'readConcern', 'readPreference',
+                        'retryWrites', 'streamFactoryFactory', 'writeConcern']
         then:
         actual == expected
     }
