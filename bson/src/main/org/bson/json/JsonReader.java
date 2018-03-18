@@ -1087,8 +1087,7 @@ public class JsonReader extends AbstractBsonReader {
 
         String pattern;
         String options = "";
-
-        String firstKey = readStringFromExtendedJson();
+        String firstKey = readStringKeyFromExtendedJson();
         if (firstKey.equals("pattern")) {
             verifyToken(JsonTokenType.COLON);
             pattern = readStringFromExtendedJson();
@@ -1104,7 +1103,7 @@ public class JsonReader extends AbstractBsonReader {
             verifyToken(JsonTokenType.COLON);
             pattern = readStringFromExtendedJson();
         } else {
-            throw new JsonParseException("Expected 't' and 'i' fields in $timestamp document but found " + firstKey);
+            throw new JsonParseException("Expected 'pattern' and 'options' fields in $regularExpression document but found " + firstKey);
         }
 
         verifyToken(JsonTokenType.END_OBJECT);
@@ -1166,7 +1165,7 @@ public class JsonReader extends AbstractBsonReader {
         int time;
         int increment;
 
-        String firstKey = readStringFromExtendedJson();
+        String firstKey = readStringKeyFromExtendedJson();
         if (firstKey.equals("t")) {
             verifyToken(JsonTokenType.COLON);
             time = readIntFromExtendedJson();
@@ -1428,6 +1427,19 @@ public class JsonReader extends AbstractBsonReader {
         }
 
         return out;
+    }
+
+    /**
+     * Read an extended json key and verify its type.
+     * Throws a org.bson.json.JsonParseException if the key is not an unquoted string or a simple string.
+     * @return the key string value
+     */
+    private String readStringKeyFromExtendedJson() {
+        JsonToken patternToken = popToken();
+        if (patternToken.getType() != JsonTokenType.STRING && patternToken.getType() != JsonTokenType.UNQUOTED_STRING) {
+            throw new JsonParseException("JSON reader expected a string but found '%s'.", patternToken.getValue());
+        }
+        return patternToken.getValue(String.class);
     }
 }
 
