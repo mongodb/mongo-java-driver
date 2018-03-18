@@ -600,6 +600,33 @@ public class JsonReaderTest {
         assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
     }
 
+    /**
+     * Test a $regularExpression extended json with unquoted keys
+     */
+    @Test
+    public void testRegularExpressionCanonicalWithUnquotedKeys() {
+        String json = "{$regularExpression: {pattern: \"[a-z]\", options: \"imxs\"}}";
+        bsonReader = new JsonReader(json);
+        assertEquals(BsonType.REGULAR_EXPRESSION, bsonReader.readBsonType());
+        assertEquals(new BsonRegularExpression("[a-z]", "imxs"), bsonReader.readRegularExpression());
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+    }
+
+    /**
+     * Test a $regex extended json query version with unquoted keys
+     */
+    @Test
+    public void testRegularExpressionQueryWithUnquotedKeys() {
+        String json = "{$regex : { $regularExpression : { pattern : \"[a-z]\", options : \"imxs\" }}}";
+        bsonReader = new JsonReader(json);
+        bsonReader.readStartDocument();
+        BsonRegularExpression regex = bsonReader.readRegularExpression("$regex");
+        assertEquals("[a-z]", regex.getPattern());
+        assertEquals("imsx", regex.getOptions());
+        bsonReader.readEndDocument();
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+    }
+
     @Test
     public void testString() {
         String str = "abc";
@@ -672,6 +699,18 @@ public class JsonReaderTest {
         String json = "Timestamp(1234, 1)";
         bsonReader = new JsonReader(json);
 
+        assertEquals(BsonType.TIMESTAMP, bsonReader.readBsonType());
+        assertEquals(new BsonTimestamp(1234, 1), bsonReader.readTimestamp());
+        assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
+    }
+
+    /**
+     * Test a $timestamp extended json with unquoted keys
+     */
+    @Test
+    public void testTimestampStrictWithUnquotedKeys() {
+        String json = "{$timestamp : { t : 1234, i : 1 }}";
+        bsonReader = new JsonReader(json);
         assertEquals(BsonType.TIMESTAMP, bsonReader.readBsonType());
         assertEquals(new BsonTimestamp(1234, 1), bsonReader.readTimestamp());
         assertEquals(AbstractBsonReader.State.DONE, bsonReader.getState());
