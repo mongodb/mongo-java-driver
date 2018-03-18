@@ -35,6 +35,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -86,6 +87,15 @@ public class DocumentTest {
         }
 
         assertEquals("{ \"database\" : { \"name\" : \"MongoDB\" } }", customDocument.toJson(customDocumentCodec));
+    }
+    
+    /*
+     * Unquoted key within extended JSON should not throws org.bson.json.JsonParseException
+     */
+    @Test
+    public void extendedJsonWithUnquotedKeysShouldNotThrowsJsonParseException() {
+        String json = "{operationTime : {$timestamp : { t : 1234, i : 1 }}}";
+        assertNotNull(Document.parse(json));
     }
 
     public class Name {
