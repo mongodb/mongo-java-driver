@@ -23,9 +23,24 @@ that can be found with the driver source on github.
 
 - The following import statements:
 
+New MongoClient API (since 3.7):
+
+```java
+import com.mongodb.ConnectionString;
+import com.mongodb.clients.MongoClients;
+import com.mongodb.clients.MongoClient;
+```
+
+Legacy MongoClient API:
+
 ```java
 import com.mongodb.MongoClient;
 import com.mongodb.MongoClientURI;
+```
+
+And the common elements between the legacy and new APIs:
+
+```java
 import com.mongodb.ServerAddress;
 
 import com.mongodb.client.MongoDatabase;
@@ -45,7 +60,9 @@ import java.util.List;
 ```
 ## Make a Connection
 
-Use [`MongoClient()`]({{< apiref "com/mongodb/MongoClient.html">}}) to make a connection to a running MongoDB instance.
+Use [`MongoClients.create()`]({{< apiref "com/mongodb/client/MongoClients.html">}}), 
+or [`MongoClient()`]({{< apiref "com/mongodb/MongoClient.html">}}) for the legacy MongoClient API, 
+to make a connection to a running MongoDB instance.
 
 The `MongoClient` instance represents a pool of connections to the database; you will only need one instance of class `MongoClient` even with multiple threads.
 
@@ -61,9 +78,46 @@ The `MongoClient` instance represents a pool of connections to the database; you
 
 ### Connect to a Single MongoDB instance
 
-The following example shows five ways to connect to the
-database `mydb` on the local machine. If the database does not exist, MongoDB
-will create it for you.
+The following example shows several ways to connect to a single MongoDB server.
+
+##### New MongoClient API (since 3.7)
+
+To connect to a single MongoDB instance:
+
+- You can instantiate a MongoClient object without any parameters to connect to a MongoDB instance running on localhost on port ``27017``:
+
+```java
+MongoClient mongoClient = MongoClients.create();
+```
+
+- You can explicitly specify the hostname to connect to a MongoDB instance running on the specified host on port ``27017``:
+
+```java
+MongoClient mongoClient = MongoClients.create(
+        MongoClientSettings.builder()
+                .applyToClusterSettings(builder ->
+                        builder.hosts(Arrays.asList(new ServerAddress("hostOne"))))
+                .build());
+```
+
+- You can explicitly specify the hostname and the port:
+
+```java
+MongoClient mongoClient = MongoClients.create(
+        MongoClientSettings.builder()
+                .applyToClusterSettings(builder ->
+                        builder.hosts(Arrays.asList(new ServerAddress("hostOne", 27018))))
+                .build());
+```
+
+- You can specify the [`ConnectionString`]({{< apiref "/com/mongodb/ConnectionString.html">}}):
+
+```java
+MongoClient mongoClient = MongoClients.create("mongodb://hostOne:27017,hostTwo:27018");
+```
+
+
+##### Legacy MongoClient API
 
 To connect to a single MongoDB instance:
 
@@ -76,24 +130,26 @@ MongoClient mongoClient = new MongoClient();
 - You can explicitly specify the hostname to connect to a MongoDB instance running on the specified host on port ``27017``:
 
 ```java
-MongoClient mongoClient = new MongoClient( "localhost" );
+MongoClient mongoClient = new MongoClient( "hostOne" );
 ```
 
 - You can explicitly specify the hostname and the port:
 
 ```java
-MongoClient mongoClient = new MongoClient( "localhost" , 27017 );
+MongoClient mongoClient = new MongoClient( "hostOne" , 27018 );
 ```
 
 - You can specify the
 [`MongoClientURI`]({{< apiref "/com/mongodb/MongoClientURI.html">}}) connection string:
 
 ```java
- MongoClientURI connectionString = new MongoClientURI("mongodb://localhost:27017");
+ MongoClientURI connectionString = new MongoClientURI("mongodb://hostOne:27017,hostTwo:27017");
  MongoClient mongoClient = new MongoClient(connectionString);
 ```
 
-The connection string mostly follows [RFC 3986](http://tools.ietf.org/html/rfc3986), with the exception of the domain name. For MongoDB, it is possible to list multiple domain names separated by a comma. For more information on the connection string, see [connection string]({{< docsref "reference/connection-string" >}}).
+The connection string mostly follows [RFC 3986](http://tools.ietf.org/html/rfc3986), with the exception of the domain name. For MongoDB, 
+it is possible to list multiple domain names separated by a comma. For more information on the connection string, see 
+[connection string]({{< docsref "reference/connection-string" >}}).
 
 ## Access a Database
 
