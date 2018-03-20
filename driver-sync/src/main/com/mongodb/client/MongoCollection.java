@@ -542,6 +542,9 @@ public interface MongoCollection<TDocument> {
     /**
      * Executes a mix of inserts, updates, replaces, and deletes.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.
+     * The eligibility for retryable write support for bulk operations is determined on the whole bulk write. If the {@code requests}
+     * contain any {@code UpdateManyModels} or {@code DeleteManyModels} then the bulk operation will not support retryable writes.</p>
      * @param requests the writes to execute
      * @return the result of the bulk write
      * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
@@ -552,6 +555,9 @@ public interface MongoCollection<TDocument> {
     /**
      * Executes a mix of inserts, updates, replaces, and deletes.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.
+     * The eligibility for retryable write support for bulk operations is determined on the whole bulk write. If the {@code requests}
+     * contain any {@code UpdateManyModels} or {@code DeleteManyModels} then the bulk operation will not support retryable writes.</p>
      * @param requests the writes to execute
      * @param options  the options to apply to the bulk write operation
      * @return the result of the bulk write
@@ -563,6 +569,9 @@ public interface MongoCollection<TDocument> {
     /**
      * Executes a mix of inserts, updates, replaces, and deletes.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.
+     * The eligibility for retryable write support for bulk operations is determined on the whole bulk write. If the {@code requests}
+     * contain any {@code UpdateManyModels} or {@code DeleteManyModels} then the bulk operation will not support retryable writes.</p>
      * @param clientSession the client session with which to associate this operation
      * @param requests the writes to execute
      * @return the result of the bulk write
@@ -576,6 +585,9 @@ public interface MongoCollection<TDocument> {
     /**
      * Executes a mix of inserts, updates, replaces, and deletes.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.
+     * The eligibility for retryable write support for bulk operations is determined on the whole bulk write. If the {@code requests}
+     * contain any {@code UpdateManyModels} or {@code DeleteManyModels} then the bulk operation will not support retryable writes.</p>
      * @param clientSession the client session with which to associate this operation
      * @param requests the writes to execute
      * @param options  the options to apply to the bulk write operation
@@ -591,6 +603,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param document the document to insert
      * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the insert command
      * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
@@ -601,6 +614,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param document the document to insert
      * @param options  the options to apply to the operation
      * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the insert command
@@ -614,6 +628,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param document      the document to insert
      * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the insert command
@@ -627,6 +642,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param document      the document to insert
      * @param options       the options to apply to the operation
@@ -642,6 +658,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Inserts one or more documents.  A call to this method is equivalent to a call to the {@code bulkWrite} method
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param documents the documents to insert
      * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
      * @throws com.mongodb.MongoException          if the write failed due some other failure
@@ -652,6 +669,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Inserts one or more documents.  A call to this method is equivalent to a call to the {@code bulkWrite} method
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param documents the documents to insert
      * @param options   the options to apply to the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
@@ -663,6 +681,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Inserts one or more documents.  A call to this method is equivalent to a call to the {@code bulkWrite} method
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param documents the documents to insert
      * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
@@ -676,6 +695,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Inserts one or more documents.  A call to this method is equivalent to a call to the {@code bulkWrite} method
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param documents the documents to insert
      * @param options   the options to apply to the operation
@@ -691,6 +711,7 @@ public interface MongoCollection<TDocument> {
      * Removes at most one document from the collection that matches the given filter.  If no documents match, the collection is not
      * modified.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param filter the query filter to apply the the delete operation
      * @return the result of the remove one operation
      * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the delete command
@@ -703,6 +724,7 @@ public interface MongoCollection<TDocument> {
      * Removes at most one document from the collection that matches the given filter.  If no documents match, the collection is not
      * modified.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param filter the query filter to apply the the delete operation
      * @param options  the options to apply to the delete operation
      * @return the result of the remove one operation
@@ -717,6 +739,7 @@ public interface MongoCollection<TDocument> {
      * Removes at most one document from the collection that matches the given filter.  If no documents match, the collection is not
      * modified.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param filter the query filter to apply the the delete operation
      * @return the result of the remove one operation
@@ -732,6 +755,7 @@ public interface MongoCollection<TDocument> {
      * Removes at most one document from the collection that matches the given filter.  If no documents match, the collection is not
      * modified.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param filter the query filter to apply the the delete operation
      * @param options  the options to apply to the delete operation
@@ -800,6 +824,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Replace a document in the collection according to the specified arguments.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param filter      the query filter to apply the the replace operation
      * @param replacement the replacement document
      * @return the result of the replace one operation
@@ -813,6 +838,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Replace a document in the collection according to the specified arguments.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param filter        the query filter to apply the the replace operation
      * @param replacement   the replacement document
      * @param updateOptions the options to apply to the replace operation
@@ -829,6 +855,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Replace a document in the collection according to the specified arguments.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param filter        the query filter to apply the the replace operation
      * @param replacement   the replacement document
      * @param replaceOptions the options to apply to the replace operation
@@ -844,6 +871,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Replace a document in the collection according to the specified arguments.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param filter      the query filter to apply the the replace operation
      * @param replacement the replacement document
@@ -860,6 +888,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Replace a document in the collection according to the specified arguments.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param filter        the query filter to apply the the replace operation
      * @param replacement   the replacement document
@@ -879,6 +908,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Replace a document in the collection according to the specified arguments.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param filter        the query filter to apply the the replace operation
      * @param replacement   the replacement document
@@ -896,6 +926,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Update a single document in the collection according to the specified arguments.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param filter a document describing the query filter, which may not be null.
      * @param update a document describing the update, which may not be null. The update to apply must include only update operators.
      * @return the result of the update one operation
@@ -910,6 +941,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Update a single document in the collection according to the specified arguments.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param filter        a document describing the query filter, which may not be null.
      * @param update        a document describing the update, which may not be null. The update to apply must include only update operators.
      * @param updateOptions the options to apply to the update operation
@@ -925,6 +957,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Update a single document in the collection according to the specified arguments.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param filter a document describing the query filter, which may not be null.
      * @param update a document describing the update, which may not be null. The update to apply must include only update operators.
@@ -942,6 +975,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Update a single document in the collection according to the specified arguments.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param filter        a document describing the query filter, which may not be null.
      * @param update        a document describing the update, which may not be null. The update to apply must include only update operators.
@@ -1024,6 +1058,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Atomically find a document and remove it.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param filter the query filter to find the document with
      * @return the document that was removed.  If no documents matched the query filter, then null will be returned
      */
@@ -1032,6 +1067,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Atomically find a document and remove it.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param filter  the query filter to find the document with
      * @param options the options to apply to the operation
      * @return the document that was removed.  If no documents matched the query filter, then null will be returned
@@ -1041,6 +1077,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Atomically find a document and remove it.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param filter the query filter to find the document with
      * @return the document that was removed.  If no documents matched the query filter, then null will be returned
@@ -1052,6 +1089,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Atomically find a document and remove it.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param filter  the query filter to find the document with
      * @param options the options to apply to the operation
@@ -1064,6 +1102,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Atomically find a document and replace it.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param filter      the query filter to apply the the replace operation
      * @param replacement the replacement document
      * @return the document that was replaced.  Depending on the value of the {@code returnOriginal} property, this will either be the
@@ -1075,6 +1114,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Atomically find a document and replace it.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param filter      the query filter to apply the the replace operation
      * @param replacement the replacement document
      * @param options     the options to apply to the operation
@@ -1087,6 +1127,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Atomically find a document and replace it.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param filter      the query filter to apply the the replace operation
      * @param replacement the replacement document
@@ -1101,6 +1142,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Atomically find a document and replace it.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param filter      the query filter to apply the the replace operation
      * @param replacement the replacement document
@@ -1116,6 +1158,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Atomically find a document and update it.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param filter a document describing the query filter, which may not be null.
      * @param update a document describing the update, which may not be null. The update to apply must include only update operators.
      * @return the document that was updated before the update was applied.  If no documents matched the query filter, then null will be
@@ -1126,6 +1169,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Atomically find a document and update it.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param filter  a document describing the query filter, which may not be null.
      * @param update  a document describing the update, which may not be null. The update to apply must include only update operators.
      * @param options the options to apply to the operation
@@ -1138,6 +1182,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Atomically find a document and update it.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param filter a document describing the query filter, which may not be null.
      * @param update a document describing the update, which may not be null. The update to apply must include only update operators.
@@ -1151,6 +1196,7 @@ public interface MongoCollection<TDocument> {
     /**
      * Atomically find a document and update it.
      *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param filter  a document describing the query filter, which may not be null.
      * @param update  a document describing the update, which may not be null. The update to apply must include only update operators.
