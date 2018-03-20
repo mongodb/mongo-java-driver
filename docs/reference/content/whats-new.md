@@ -11,6 +11,41 @@ title = "What's New"
 
 Key new features of the 3.7 Java driver release:
 
+### Java 9 support
+
+#### Modules
+
+The Java driver now provides a set of JAR files that are compliant with the Java 9 
+[module specification](http://cr.openjdk.java.net/~mr/jigsaw/spec/), and `Automatic-Module-Name` declarations have been added 
+to the manifests of those JAR files. See the [Installation Guide]({{<ref "driver/getting-started/installation.md">}}) 
+for information on which JAR files are now Java 9-compliant modules as well as what each of their module names is.  
+
+Note that it was not possible to modularize all the existing JAR files due to the fact that, for some of them, packages are split amongst 
+multiple JAR files, and this violates a core rule of the Java 9 module system which states that at most one module contains classes for any 
+given package. For instance, the `mongodb-driver` and `mongodb-driver-core` JAR files both contain classes in the `com.mongodb` package, 
+and thus it's not possible to make both `mongodb-driver` and `mongodb-driver-core` Java 9 modules. Also so-called 
+"uber jars" like `mongo-java-driver` are not appropriate for Java 9 modularization, as they can conflict with their non-uber brethren, and 
+thus have not been given module names. 
+
+Note that none of the modular JAR files contain `module-info` class files yet.  Addition of these classes will be considered in a future 
+release.
+
+#### New Entry Point
+
+So that the driver can offer a modular option, a new entry point has been added to the `com.mongodb.client` package. 
+Static methods in this entry point, `com.mongodb.client.MongoClients`, returns instances of a new `com.mongodb.client.MongoClient` 
+interface.  This interface, while similar to the existing `com.mongodb.MongoClient` class in that it is a factory for 
+`com.mongodb.client.MongoDatabase` instances, does not support the legacy `com.mongodb.DBCollection`-based API, and thus does not suffer 
+from the aforementioned package-splitting issue that prevents Java 9 modularization. This new entry point is encapsulated in the new 
+`mongodb-driver-sync` JAR file, which is also a Java 9-compliant module.
+
+The new entry point also moves the driver further in the direction of effective deprecation of the legacy API, which is now only available
+only via the `mongo-java-driver` and `mongodb-driver` uber-jars, which are not Java 9 modules. At this point there are no plans to offer 
+the legacy API as a Java 9 module.
+
+See [Connect To MongoDB]({{<ref "driver/tutorials/connect-to-mongodb.md">}}) for details on the new `com.mongodb.client.MongoClients`
+and how it compares to the existing `com.mongodb.MongoClient` class.   
+
 ### Unix domain socket support
 
 The 3.7 driver adds support for Unix domain sockets via the [`jnr.unixsocket`](http://https://github.com/jnr/jnr-unixsocket) library.
