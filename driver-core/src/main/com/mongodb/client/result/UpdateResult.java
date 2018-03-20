@@ -63,6 +63,7 @@ public abstract class UpdateResult {
      *
      * @return if the replace resulted in an inserted document, the _id of the inserted document, otherwise null
      */
+    @Nullable
     public abstract BsonValue getUpsertedId();
 
     /**
@@ -192,6 +193,7 @@ public abstract class UpdateResult {
         }
 
         @Override
+        @Nullable
         public BsonValue getUpsertedId() {
            throw getUnacknowledgedWriteException();
         }
