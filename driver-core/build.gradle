@@ -29,6 +29,7 @@ clirr {
 dependencies {
     compile project(':bson')
 
+    compile "com.github.jnr:jnr-unixsocket:$jnrUnixsocketVersion", optional
     compile "io.netty:netty-buffer:$nettyVersion", optional
     compile "io.netty:netty-transport:$nettyVersion", optional
     compile "io.netty:netty-handler:$nettyVersion", optional

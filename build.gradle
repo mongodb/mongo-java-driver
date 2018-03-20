@@ -20,6 +20,7 @@ apply plugin: 'eclipse'
 apply plugin: 'idea'
 
 def configDir = new File(rootDir, 'config')
+ext.jnrUnixsocketVersion = '0.18'
 ext.nettyVersion = '4.1.17.Final'
 ext.snappyVersion = '1.1.4'
 
