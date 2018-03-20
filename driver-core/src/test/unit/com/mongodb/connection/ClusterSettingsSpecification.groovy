@@ -23,6 +23,7 @@ import com.mongodb.event.ClusterListener
 import com.mongodb.selector.CompositeServerSelector
 import com.mongodb.selector.LatencyMinimizingServerSelector
 import com.mongodb.selector.WritableServerSelector
+import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
@@ -367,6 +368,7 @@ class ClusterSettingsSpecification extends Specification {
                        .build().hashCode() != ClusterSettings.builder().hosts(hosts).build().hashCode()
     }
 
+    @IgnoreIf({ javaVersion < 1.7 })
     def 'should replace unknown ServerAddress subclass instances with ServerAddress'() {
         when:
         def settings = ClusterSettings.builder().hosts([new ServerAddress('server1'),
