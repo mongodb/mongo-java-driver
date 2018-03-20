@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -55,14 +56,17 @@ public class ConnectionStringTest extends TestCase {
             testInvalidUris();
         } else if (filename.equals("valid-auth.json")) {
             testValidAuth();
+        } else if (filename.equals("valid-db-with-dotted-name.json")) {
+            testValidHostIdentifiers();
+            testValidAuth();
         } else if (filename.equals("valid-host_identifiers.json")) {
             testValidHostIdentifiers();
         } else if (filename.equals("valid-options.json")) {
             testValidOptions();
         } else if (filename.equals("valid-unix_socket-absolute.json")) {
-            testInvalidUris();  // Sockets aren't supported
+            testValidHostIdentifiers();
         } else if (filename.equals("valid-unix_socket-relative.json")) {
-            testInvalidUris();  // Sockets aren't supported
+            testValidHostIdentifiers();
         } else if (filename.equals("valid-warnings.json")) {
             testValidHostIdentifiers();
             if (!definition.get("options").isNull()) {
@@ -221,6 +225,7 @@ public class ConnectionStringTest extends TestCase {
             }
             expectedHosts.add(host + port);
         }
+        Collections.sort(expectedHosts);
         assertEquals(expectedHosts, cleanedHosts);
     }
 

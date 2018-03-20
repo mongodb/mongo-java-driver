@@ -52,7 +52,10 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code username:password@} are optional.  If given, the driver will attempt to login to a database after
  * connecting to a database server.  For some authentication mechanisms, only the username is specified and the password is not,
  * in which case the ":" after the username is left off as well</li>
- * <li>{@code host1} is the only required part of the connection string.  It identifies a server address to connect to.</li>
+ * <li>{@code host1} is the only required part of the connection string. It identifies a server address to connect to.
+ * Support for Unix domain sockets was added in 3.7. Note: The path must be urlencoded eg: {@code mongodb://%2Ftmp%2Fmongodb-27017.sock}
+ * and the {@code jnr.unixsocket} library installed.
+ * </li>
  * <li>{@code :portX} is optional and defaults to :27017 if not provided.</li>
  * <li>{@code /database} is the name of the database to login to and thus is only relevant if the
  * {@code username:password@} syntax is used. If not specified the "admin" database will be used by default.</li>
@@ -833,8 +836,7 @@ public class ConnectionString {
             if (host.length() == 0) {
                 throw new IllegalArgumentException(format("The connection string contains an empty host '%s'. ", rawHosts));
             } else if (host.endsWith(".sock")) {
-                throw new IllegalArgumentException(format("The connection string contains an invalid host '%s'. "
-                        + "Unix Domain Socket which is not supported by the Java driver", host));
+                host = urldecode(host);
             } else if (host.startsWith("[")) {
                 if (!host.contains("]")) {
                     throw new IllegalArgumentException(format("The connection string contains an invalid host '%s'. "

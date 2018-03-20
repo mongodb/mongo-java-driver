@@ -52,7 +52,7 @@ configure(subprojects - [project(':util'), project(':driver-legacy')]) {
 
     modifyPom { pom ->
         pom.dependencies.findAll {
-            dep -> dep.groupId == 'io.netty' || dep.groupId == 'org.slf4j' || dep.groupId == 'org.xerial.snappy'
+            dep -> ['io.netty', 'org.slf4j', 'org.xerial.snappy', 'com.github.jnr'].contains(dep.groupId)
         }.each {
             it.optional = true
         }

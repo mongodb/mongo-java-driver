@@ -79,6 +79,12 @@ To connect to a standalone MongoDB instance:
     MongoClient mongoClient = new MongoClient( "host1" );
     ```
 
+- You can connect to the Unix domain socket (requires the `jnr.unixsocket` library):
+
+    ```java
+    MongoClient mongoClient = new MongoClient( "/tmp/mongodb-27017.sock" );
+    ```
+
 - You can explicitly specify the hostname and the port:
 
     ```java
@@ -91,6 +97,12 @@ To connect to a standalone MongoDB instance:
     ```java
     MongoClient mongoClient = new MongoClient(new MongoClientURI("mongodb://host1:27017"));
     ```
+
+  Unix domain socket connections via the connection string (requires the `jnr.unixsocket` library and the path to be urlencoded):
+
+  ```java
+  MongoClient mongoClient = new MongoClient(new MongoClientURI("mongodb://%2Ftmp%2Fmongodb-27107.sock"));
+  ```
 
 ## Connect to a Replica Set
 

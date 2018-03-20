@@ -33,6 +33,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.connection.ServerAddressHelper.createServerAddress;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
@@ -142,9 +143,9 @@ public final class ClusterSettings {
                 throw new IllegalArgumentException("hosts list may not be empty");
             }
             Set<ServerAddress> hostsSet = new LinkedHashSet<ServerAddress>(hosts.size());
-            for (ServerAddress host : hosts) {
-                notNull("host", host);
-                hostsSet.add(new ServerAddress(host));
+            for (ServerAddress serverAddress : hosts) {
+                notNull("serverAddress", serverAddress);
+                hostsSet.add(createServerAddress(serverAddress.getHost(), serverAddress.getPort()));
             }
             this.hosts = unmodifiableList(new ArrayList<ServerAddress>(hostsSet));
             return this;
@@ -262,11 +263,11 @@ public final class ClusterSettings {
         public Builder applyConnectionString(final ConnectionString connectionString) {
             if (connectionString.getHosts().size() == 1 && connectionString.getRequiredReplicaSetName() == null) {
                 mode(ClusterConnectionMode.SINGLE)
-                .hosts(singletonList(new ServerAddress(connectionString.getHosts().get(0))));
+                .hosts(singletonList(createServerAddress(connectionString.getHosts().get(0))));
             } else {
                 List<ServerAddress> seedList = new ArrayList<ServerAddress>();
                 for (final String cur : connectionString.getHosts()) {
-                    seedList.add(new ServerAddress(cur));
+                    seedList.add(createServerAddress(cur));
                 }
                 mode(ClusterConnectionMode.MULTIPLE).hosts(seedList);
             }

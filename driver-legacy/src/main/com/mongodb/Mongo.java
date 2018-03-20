@@ -59,6 +59,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static com.mongodb.connection.ClusterType.REPLICA_SET;
+import static com.mongodb.internal.connection.ServerAddressHelper.createServerAddress;
 import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -702,13 +703,13 @@ public class Mongo {
                                                : Collections.<MongoCredential>emptyList();
 
         if (mongoURI.getHosts().size() == 1) {
-            return createCluster(new ServerAddress(mongoURI.getHosts().get(0)),
+            return createCluster(createServerAddress(mongoURI.getHosts().get(0)),
                                  credentialList,
                                  mongoURI.getOptions(), null);
         } else {
             List<ServerAddress> seedList = new ArrayList<ServerAddress>(mongoURI.getHosts().size());
             for (final String host : mongoURI.getHosts()) {
-                seedList.add(new ServerAddress(host));
+                seedList.add(createServerAddress(host));
             }
             return createCluster(seedList, credentialList, mongoURI.getOptions(), mongoDriverInformation);
         }

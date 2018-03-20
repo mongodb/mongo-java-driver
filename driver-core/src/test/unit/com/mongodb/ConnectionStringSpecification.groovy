@@ -38,21 +38,27 @@ class ConnectionStringSpecification extends Specification {
     @Unroll
     def 'should parse #connectionString into correct components'() {
         expect:
-        connectionString.getHosts().size() == num;
-        connectionString.getHosts() == hosts;
-        connectionString.getDatabase() == database;
-        connectionString.getCollection() == collection;
-        connectionString.getUsername() == username;
-        connectionString.getPassword() == password;
+        connectionString.getHosts().size() == num
+        connectionString.getHosts() == hosts
+        connectionString.getDatabase() == database
+        connectionString.getCollection() == collection
+        connectionString.getUsername() == username
+        connectionString.getPassword() == password
 
         where:
         connectionString                                 | num | hosts              | database | collection | username | password
         new ConnectionString('mongodb://db.example.com') | 1   | ['db.example.com'] | null     | null       | null     | null
         new ConnectionString('mongodb://10.0.0.1')       | 1   | ['10.0.0.1']       | null     | null       | null     | null
         new ConnectionString('mongodb://[::1]')          | 1   | ['[::1]']          | null     | null       | null     | null
+        new ConnectionString('mongodb://%2Ftmp%2Fmongo'
+                + 'db-27017.sock')                       | 1   | ['/tmp/mongodb'
+                                                                  + '-27017.sock']  | null     | null       | null     | null
         new ConnectionString('mongodb://foo/bar')        | 1   | ['foo']            | 'bar'    | null       | null     | null
         new ConnectionString('mongodb://10.0.0.1/bar')   | 1   | ['10.0.0.1']       | 'bar'    | null       | null     | null
         new ConnectionString('mongodb://[::1]/bar')      | 1   | ['[::1]']          | 'bar'    | null       | null     | null
+        new ConnectionString('mongodb://%2Ftmp%2Fmongo'
+                + 'db-27017.sock/bar')                   | 1   | ['/tmp/mongodb'
+                                                                  + '-27017.sock']  | 'bar'    | null       | null     | null
         new ConnectionString('mongodb://localhost/' +
                                    'test.my.coll')       | 1   | ['localhost']      | 'test'   | 'my.coll'  | null     | null
         new ConnectionString('mongodb://foo/bar.goo')    | 1   | ['foo']            | 'bar'    | 'goo'      | null     | null
@@ -71,11 +77,18 @@ class ConnectionStringSpecification extends Specification {
                                                                 'host3:9',
                                                                 'host:7']          | 'bar'    | null       | 'user'   | 'pass' as char[]
         new ConnectionString('mongodb://user:pass@' +
-                           '10.0.0.1:7,' +
-                           '[::1]:8,' +
-                           'host3:9/bar')                | 3   | ['10.0.0.1:7',
+                '10.0.0.1:7,' +
+                '[::1]:8,' +
+                'host3:9/bar')                          | 3   | ['10.0.0.1:7',
                                                                 '[::1]:8',
                                                                 'host3:9']          | 'bar'    | null       | 'user'   | 'pass' as char[]
+        new ConnectionString('mongodb://user:pass@'
+                + '%2Ftmp%2Fmongodb-27017.sock,'
+                + '%2Ftmp%2Fmongodb-27018.sock,'
+                + '%2Ftmp%2Fmongodb-27019.sock/bar')    | 3   | ['/tmp/mongodb-27017.sock',
+                                                                 '/tmp/mongodb-27018.sock',
+                                                                 '/tmp/mongodb-27019.sock'
+                                                                ]                   | 'bar'    | null       | 'user'   | 'pass' as char[]
     }
 
     def 'should throw exception if mongod+srv host contains a port'() {
@@ -191,7 +204,6 @@ class ConnectionStringSpecification extends Specification {
 
         cause                                       | connectionString
         'is not a connection string'                | 'hello world'
-        'is a unix socket'                          | 'mongodb://%2Ftmp%2Fmongodb-27017.sock'
         'is missing a host'                         | 'mongodb://'
         'has an empty host'                         | 'mongodb://localhost:27017,,localhost:27019'
         'has an malformed IPv6 host'                | 'mongodb://[::1'
