@@ -63,6 +63,8 @@ configure(subprojects.findAll { it.name != 'util' }) {
     dependencies {
         compileOnly 'com.google.code.findbugs:jsr305:1.3.9'
         compile 'org.slf4j:slf4j-api:1.7.6', optional
+
+        testCompile 'com.google.code.findbugs:jsr305:1.3.9'
     }
 
     /* Compiling */
