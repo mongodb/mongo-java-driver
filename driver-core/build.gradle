@@ -54,7 +54,8 @@ jar {
                     'org.ietf.jgss.*',
                     'io.netty.*;resolution:=optional',
                     'org.xerial.snappy.*;resolution:=optional',
-                    'org.slf4j;resolution:=optional'
+                    'org.slf4j;resolution:=optional',
+                    'jnr.unixsocket;resolution:=optional'
     }
 }
 

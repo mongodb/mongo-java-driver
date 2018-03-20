@@ -19,8 +19,6 @@ package com.mongodb.connection;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoSocketReadException;
 import com.mongodb.ServerAddress;
-import jnr.unixsocket.UnixSocketAddress;
-import jnr.unixsocket.UnixSocketChannel;
 import org.bson.ByteBuf;
 
 import java.io.IOException;
@@ -50,12 +48,8 @@ class SocketChannelStream implements Stream {
     @Override
     public void open() throws IOException {
         try {
-            if (address.getSocketAddress() instanceof UnixSocketAddress) {
-                socketChannel = UnixSocketChannel.open((UnixSocketAddress) address.getSocketAddress());
-            } else {
-                socketChannel = SocketChannel.open();
-                SocketStreamHelper.initialize(socketChannel.socket(), address, settings, sslSettings);
-            }
+            socketChannel = SocketChannel.open();
+            SocketStreamHelper.initialize(socketChannel.socket(), address, settings, sslSettings);
         } catch (IOException e) {
             close();
             throw new MongoSocketOpenException("Exception opening socket", getAddress(), e);
@@ -121,13 +115,12 @@ class SocketChannelStream implements Stream {
         return address;
     }
 
-    /**
-     * Get the settings for this socket.
-     *
-     * @return the settings
-     */
     SocketSettings getSettings() {
         return settings;
+    }
+
+    void setSocketChannel(final SocketChannel socketChannel) {
+        this.socketChannel = socketChannel;
     }
 
     @Override

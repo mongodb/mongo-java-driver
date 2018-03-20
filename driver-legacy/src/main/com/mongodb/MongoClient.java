@@ -31,6 +31,7 @@ import java.io.Closeable;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.connection.ServerAddressHelper.createServerAddress;
 import static java.util.Collections.singletonList;
 
 /**
@@ -116,7 +117,7 @@ public class MongoClient extends Mongo implements Closeable {
      * @param host server to connect to in format host[:port]
      */
     public MongoClient(final String host) {
-        this(new ServerAddress(host));
+        this(createServerAddress(host));
     }
 
     /**
@@ -126,7 +127,7 @@ public class MongoClient extends Mongo implements Closeable {
      * @param options default query options
      */
     public MongoClient(final String host, final MongoClientOptions options) {
-        this(new ServerAddress(host), options);
+        this(createServerAddress(host), options);
     }
 
     /**
@@ -136,7 +137,7 @@ public class MongoClient extends Mongo implements Closeable {
      * @param port the port on which the database is running
      */
     public MongoClient(final String host, final int port) {
-        this(new ServerAddress(host, port));
+        this(createServerAddress(host, port));
     }
 
     /**

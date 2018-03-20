@@ -216,6 +216,15 @@ functions:
           ${PREPARE_SHELL}
           AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" .evergreen/run-tests.sh
 
+  "run socket tests":
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          AUTH="${AUTH}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" .evergreen/run-socket-tests.sh
+
   "run plain auth test":
     - command: shell.exec
       type: test
@@ -359,6 +368,14 @@ tasks:
           name: "static-analysis"
       commands:
         - func: "run gssapi auth test"
+
+    - name: "socket-test"
+      depends_on:
+        - variant: "static-checks"
+          name: "static-analysis"
+      commands:
+        - func: "bootstrap mongo-orchestration"
+        - func: "run socket tests"
 
     - name: publish-snapshot
       depends_on:
@@ -519,6 +536,20 @@ buildvariants:
   tags: ["tests-variant"]
   tasks:
      - name: "test"
+
+- matrix_name: "tests-socket"
+  matrix_spec: { auth: "*", ssl: "nossl", jdk: "jdk8", version: "3.6", topology: "*", os: "linux" }
+  display_name: "Socket: ${version} ${topology} ${auth} ${jdk} ${os} "
+  tags: ["tests-socket-variant"]
+  tasks:
+     - name: "socket-test"
+
+- matrix_name: "tests-socket-snappy-compression"
+  matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: "3.6", topology: "standalone", os: "linux" }
+  display_name: "Socket: ${version} ${compressor} ${topology} ${auth} ${jdk} ${os} "
+  tags: ["tests-socket-variant"]
+  tasks:
+     - name: "socket-test"
 
 - matrix_name: "test-gssapi"
   matrix_spec: { jdk: "*", os: "linux" }

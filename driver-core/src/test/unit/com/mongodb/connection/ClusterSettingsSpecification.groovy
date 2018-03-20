@@ -18,6 +18,7 @@ package com.mongodb.connection
 
 import com.mongodb.ConnectionString
 import com.mongodb.ServerAddress
+import com.mongodb.UnixServerAddress
 import com.mongodb.event.ClusterListener
 import com.mongodb.selector.CompositeServerSelector
 import com.mongodb.selector.LatencyMinimizingServerSelector
@@ -366,13 +367,14 @@ class ClusterSettingsSpecification extends Specification {
                        .build().hashCode() != ClusterSettings.builder().hosts(hosts).build().hashCode()
     }
 
-    def 'should replace ServerAddress subclass instances with ServerAddress'() {
+    def 'should replace unknown ServerAddress subclass instances with ServerAddress'() {
         when:
-        def settings = ClusterSettings.builder().hosts([new ServerAddressSubclass('server1'),
-                                                        new ServerAddressSubclass('server2')]).build()
+        def settings = ClusterSettings.builder().hosts([new ServerAddress('server1'),
+                                                        new ServerAddressSubclass('server2'),
+                                                        new UnixServerAddress('mongodb.sock')]).build()
 
         then:
-        settings.getHosts() == [new ServerAddress('server1'), new ServerAddress('server2')]
+        settings.getHosts() == [new ServerAddress('server1'), new ServerAddress('server2'), new UnixServerAddress('mongodb.sock')]
     }
 
     def 'list of cluster listeners should be unmodifiable'() {
