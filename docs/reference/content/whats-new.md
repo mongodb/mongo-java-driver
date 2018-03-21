@@ -52,6 +52,17 @@ The 3.7 driver adds support for Unix domain sockets via the [`jnr.unixsocket`](h
 Connecting to Unix domain sockets is done via the [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString" >}}) or via
 [`UnixServerAddress`]({{<apiref "com/mongodb/UnixServerAddress.html">}}).
 
+### PojoCodec improvements
+
+The 3.7 release brings support for `Map<String, Object>` to the `PojoCodec`.
+
+### JSR-310 Instant, LocalDate & LocalDateTime support
+
+Support for `Instant`, `LocalDate` and `LocalDateTime` has been added to the driver. The MongoDB Java drivers team would like to thank
+[Cezary Bartosiak](https://github.com/cbartosiak) for their excellent contribution to the driver. Users needing alternative data structures
+and / or more flexibility regarding JSR-310 dates should check out the alternative JSR-310 codecs provider by Cezary:
+[bson-codecs-jsr310](https://github.com/cbartosiak/bson-codecs-jsr310).
+
 ## What's New in 3.6
 
 Key new features of the 3.6 Java driver release:
