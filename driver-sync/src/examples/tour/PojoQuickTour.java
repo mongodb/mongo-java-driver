@@ -17,8 +17,9 @@
 package tour;
 
 import com.mongodb.Block;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientURI;
+import com.mongodb.MongoClientSettings;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.result.DeleteResult;
@@ -51,13 +52,13 @@ public class PojoQuickTour {
 
         if (args.length == 0) {
             // connect to the local database server
-            mongoClient = new MongoClient();
+            mongoClient = MongoClients.create();
         } else {
-            mongoClient = new MongoClient(new MongoClientURI(args[0]));
+            mongoClient = MongoClients.create(args[0]);
         }
 
         // create codec registry for POJOs
-        CodecRegistry pojoCodecRegistry = fromRegistries(MongoClient.getDefaultCodecRegistry(),
+        CodecRegistry pojoCodecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
                 fromProviders(PojoCodecProvider.builder().automatic(true).build()));
 
         // get handle to "mydb" database

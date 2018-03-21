@@ -16,7 +16,6 @@
 
 package primer;
 
-
 import org.junit.Test;
 
 // @imports: start

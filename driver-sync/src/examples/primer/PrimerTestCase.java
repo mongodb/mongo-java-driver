@@ -16,10 +16,10 @@
 
 package primer;
 
-import com.mongodb.DatabaseTestCase;
+import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.MongoDatabase;
 
-import static com.mongodb.Fixture.getMongoClient;
+import static com.mongodb.client.Fixture.getMongoClient;
 
 public class PrimerTestCase extends DatabaseTestCase {
     MongoDatabase db = getDatabase();
