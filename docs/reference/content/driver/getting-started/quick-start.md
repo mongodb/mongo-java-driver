@@ -11,7 +11,7 @@ title = "Quick Start"
 # MongoDB Driver Quick Start
 
 {{% note %}}
-The following code snippets come from the [`QuickTour.java`]({{< srcref "driver/src/examples/tour/QuickTour.java">}}) example code
+The following code snippets come from the [`QuickTour.java`]({{< srcref "driver-sync/src/examples/tour/QuickTour.java">}}) example code
 that can be found with the driver source on github.
 {{% /note %}}
 

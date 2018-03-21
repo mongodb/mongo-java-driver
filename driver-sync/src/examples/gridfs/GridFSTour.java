@@ -17,8 +17,8 @@
 package gridfs;
 
 import com.mongodb.Block;
-import com.mongodb.MongoClient;
-import com.mongodb.MongoClientURI;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.gridfs.GridFSBucket;
 import com.mongodb.client.gridfs.GridFSBuckets;
@@ -56,9 +56,9 @@ public final class GridFSTour {
 
         if (args.length == 0) {
             // connect to the local database server
-            mongoClient = new MongoClient();
+            mongoClient = MongoClients.create();
         } else {
-            mongoClient = new MongoClient(new MongoClientURI(args[0]));
+            mongoClient = MongoClients.create(args[0]);
         }
 
         // get handle to "mydb" database

@@ -17,7 +17,7 @@
 package documentation;
 
 import com.mongodb.Block;
-import com.mongodb.DatabaseTestCase;
+import com.mongodb.client.DatabaseTestCase;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
@@ -39,8 +39,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static com.mongodb.Fixture.getDefaultDatabaseName;
-import static com.mongodb.Fixture.getMongoClient;
+import static com.mongodb.client.Fixture.getDefaultDatabaseName;
+import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.model.Filters.all;
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.elemMatch;
