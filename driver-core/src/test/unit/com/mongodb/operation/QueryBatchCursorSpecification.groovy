@@ -18,6 +18,7 @@ package com.mongodb.operation
 
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoSocketException
+import com.mongodb.MongoSocketOpenException
 import com.mongodb.ServerAddress
 import com.mongodb.binding.ConnectionSource
 import com.mongodb.connection.Connection
@@ -96,6 +97,32 @@ class QueryBatchCursorSpecification extends Specification {
         }
         def connectionSource = Stub(ConnectionSource) {
             getConnection() >> { connection }
+        }
+        connectionSource.retain() >> connectionSource
+
+        def namespace = new MongoNamespace('test', 'QueryBatchCursorSpecification')
+        def firstBatch = new QueryResult(namespace, [], 42, serverAddress)
+        def cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, 100, new BsonDocumentCodec(), connectionSource, connection)
+
+        when:
+        cursor.close()
+
+        then:
+        notThrown(MongoSocketException)
+
+        when:
+        cursor.close()
+
+        then:
+        notThrown(Exception)
+    }
+
+    def 'should handle exceptions when killing cursor and a connection can not be obtained'() {
+        given:
+        def serverAddress = new ServerAddress()
+        def connection = Mock(Connection)
+        def connectionSource = Stub(ConnectionSource) {
+            getConnection() >> { throw new MongoSocketOpenException("can't open socket", serverAddress, new IOException()) }
         }
         connectionSource.retain() >> connectionSource
 

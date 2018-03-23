@@ -277,13 +277,15 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
 
     private void killCursor() {
         if (serverCursor != null) {
-            Connection connection = connectionSource.getConnection();
             try {
-                killCursor(connection);
+                Connection connection = connectionSource.getConnection();
+                try {
+                    killCursor(connection);
+                } finally {
+                    connection.release();
+                }
             } catch (MongoException e) {
                 // Ignore exceptions from calling killCursor
-            } finally {
-                connection.release();
             }
         }
     }
