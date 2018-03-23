@@ -63,6 +63,48 @@ Support for `Instant`, `LocalDate` and `LocalDateTime` has been added to the dri
 and / or more flexibility regarding JSR-310 dates should check out the alternative JSR-310 codecs provider by Cezary:
 [bson-codecs-jsr310](https://github.com/cbartosiak/bson-codecs-jsr310).
 
+### JSR-305 NonNull annotations
+
+The public API is now annotated with JSR-305 compatible `@NonNull` and `@Nullable` annotations.  This will allow programmers
+to rely on tools like FindBugs/SpotBugs, IDEs like IntelliJ IDEA, and compilers like the Kotlin compiler to find errors in the use of the 
+driver via static analysis rather than via runtime failures.
+
+### Improved logging of commands
+
+When the log level is set to DEBUG for the `org.mongodb.driver.protocol.command` logger, the driver now logs additional information to aid
+in debugging:
+
+* Before sending the command, it logs the full command (up to 1000 characters), and the request id.
+* After receive a response to the command, it logs the request id and elapsed time in milliseconds.
+
+Here's an example
+
+```
+10:37:29.099 [cluster-ClusterId {value='5a466138741fc252712a6d71', description='null'}-127.0.0.1:27017] DEBUG org.mongodb.driver.protocol.command - 
+Sending command '{ "ismaster" : 1, "$db" : "admin" } ...' with request id 4 to database admin on connection [connectionId{localValue:1, serverValue:1958}] to server 127.0.0.1:27017
+10:37:29.104 [cluster-ClusterId{value='5a466138741fc252712a6d71', description='null'}-127.0.0.1:27017] DEBUG org.mongodb.driver.protocol.command - 
+Execution of command with request id 4 completed successfully in 22.44 ms on connection [connectionId {localValue:1, serverValue:1958}] to server 127.0.0.1:27017
+```
+ 
+### Improved support for "raw" documents
+
+When working with "raw" BSON for improved performance via the [`RawBsonDocument`]({{<apiref "org/bson/RawBsonDocument">}}), the efficiency
+of accessing embedded documents and arrays has been drastically improved by returning raw slices of the containing document or array.  For
+instance
+
+```java
+RawBsonDocument doc = new RawBsonDocument(bytes);
+
+// returns a RawBsonDocument that is a slice of the bytes from the containing doc
+BsonDocument embeddedDoc = doc.getDocument("embeddedDoc");
+
+// returns a RawBsonArray that is a slice of the bytes from the containing doc
+BsonArray embeddedArray = doc.getArray("embeddedArray");
+
+// returns a RawBsonDocument that is a slice of the bytes from the containing array 
+BsonDocument embeddedDoc2 = (BsonDocument) embeddedArray.get(0); 
+``` 
+
 ## What's New in 3.6
 
 Key new features of the 3.6 Java driver release:
