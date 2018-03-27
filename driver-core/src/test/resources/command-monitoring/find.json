@@ -95,14 +95,12 @@
             "$max": {
               "_id": 6
             },
-            "$maxScan": 5000,
             "$maxTimeMS": 6000,
             "$min": {
               "_id": 0
             },
             "$returnKey": false,
             "$showDiskLoc": false,
-            "$snapshot": false
           }
         }
       },
@@ -127,14 +125,12 @@
               "max": {
                 "_id": 6
               },
-              "maxScan": 5000,
               "maxTimeMS": 6000,
               "min": {
                 "_id": 0
               },
               "returnKey": false,
               "showRecordId": false,
-              "snapshot": false
             },
             "command_name": "find",
             "database_name": "command-monitoring-tests"
