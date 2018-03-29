@@ -156,14 +156,15 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         collectionNameExists(getCollectionName())
 
         when:
-        def stats = new CommandWriteOperation<Document>(getDatabaseName(),
-                                                        new BsonDocument('collStats', new BsonString(getCollectionName())),
-                                                        new DocumentCodec()).execute(getBinding())
+        def stats = new CommandWriteOperation<BsonDocument>(getDatabaseName(),
+                new BsonDocument('collStats', new BsonString(getCollectionName())),
+                new BsonDocumentCodec()).execute(getBinding())
+
         then:
-        stats.getBoolean('capped')
-        stats.getInteger('max') == 100
+        stats.getBoolean('capped').getValue()
+        stats.getNumber('max').intValue() == 100
         // Starting in 3.0, the size in bytes moved from storageSize to maxSize
-        stats.getInteger('maxSize') == 40 * 1024 || stats.getInteger('storageSize') == 40 * 1024
+        stats.getNumber('maxSize').intValue() == 40 * 1024 || stats.getNumber('storageSize').intValue() == 40 * 1024
 
         where:
         async << [true, false]
