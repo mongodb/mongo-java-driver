@@ -30,6 +30,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
@@ -37,6 +38,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
+import static org.junit.Assume.assumeTrue;
 
 public class DBCursorOldTest extends DatabaseTestCase {
 
@@ -82,6 +84,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
 
     @Test
     public void testSnapshot() {
+        assumeTrue(serverVersionLessThan("3.7"));
         insertTestData(collection, 100);
         assertEquals(100, collection.find().count());
         assertEquals(100, collection.find().toArray().size());
