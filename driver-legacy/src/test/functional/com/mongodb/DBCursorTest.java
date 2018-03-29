@@ -30,6 +30,7 @@ import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertEquals;
@@ -39,6 +40,7 @@ import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
+import static org.junit.Assume.assumeTrue;
 
 public class DBCursorTest extends DatabaseTestCase {
     private static final int NUMBER_OF_DOCUMENTS = 10;
@@ -380,6 +382,7 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testSnapshot() {
+        assumeTrue(serverVersionLessThan("3.7"));
         DBCursor cursor = new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
                           .addSpecial("$snapshot", true);
         try {
