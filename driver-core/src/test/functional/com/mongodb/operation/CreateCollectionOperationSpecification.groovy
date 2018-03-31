@@ -23,6 +23,7 @@ import com.mongodb.WriteConcernException
 import com.mongodb.client.model.ValidationAction
 import com.mongodb.client.model.ValidationLevel
 import org.bson.BsonDocument
+import org.bson.BsonInt32
 import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
@@ -164,7 +165,8 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         stats.getBoolean('capped').getValue()
         stats.getNumber('max').intValue() == 100
         // Starting in 3.0, the size in bytes moved from storageSize to maxSize
-        stats.getNumber('maxSize').intValue() == 40 * 1024 || stats.getNumber('storageSize').intValue() == 40 * 1024
+        stats.getNumber('maxSize', new BsonInt32(0)).intValue() == 40 * 1024 ||
+                stats.getNumber('storageSize', new BsonInt32(0)).intValue() == 40 * 1024
 
         where:
         async << [true, false]
