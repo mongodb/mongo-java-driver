@@ -16,13 +16,9 @@
 
 package com.mongodb.async.client;
 
-import com.mongodb.MongoException;
-import com.mongodb.async.FutureResultCallback;
 import org.bson.Document;
 import org.junit.After;
 import org.junit.Before;
-
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.async.client.Fixture.drop;
 import static com.mongodb.async.client.Fixture.getDefaultDatabaseName;
@@ -54,24 +50,4 @@ public class DatabaseTestCase {
         waitForLastServerSessionPoolRelease();
     }
 
-    public abstract class MongoOperation<TResult> {
-        private FutureResultCallback<TResult> callback = new FutureResultCallback<TResult>();
-
-        public FutureResultCallback<TResult> getCallback() {
-            return callback;
-        }
-
-        public TResult get() {
-            execute();
-            try {
-                return callback.get(60, TimeUnit.SECONDS);
-            } catch (MongoException e) {
-                throw e;
-            } catch (Throwable t) {
-                throw new RuntimeException(t);
-            }
-        }
-
-        public abstract void execute();
-    }
 }

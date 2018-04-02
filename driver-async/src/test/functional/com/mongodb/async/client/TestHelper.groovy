@@ -19,7 +19,6 @@ package com.mongodb.async.client
 import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
-import com.mongodb.session.ClientSession
 
 import java.util.concurrent.TimeUnit
 

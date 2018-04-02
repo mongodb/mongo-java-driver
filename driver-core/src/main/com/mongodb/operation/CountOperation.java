@@ -18,7 +18,6 @@ package com.mongodb.operation;
 
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
-import com.mongodb.ReadConcern;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncReadBinding;
@@ -63,7 +62,6 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
     private long skip;
     private long limit;
     private long maxTimeMS;
-    private ReadConcern readConcern = ReadConcern.DEFAULT;
     private Collation collation;
 
     /**
@@ -182,29 +180,6 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
     public CountOperation maxTime(final long maxTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
-        return this;
-    }
-
-    /**
-     * Gets the read concern
-     *
-     * @return the read concern
-     * @since 3.2
-     * @mongodb.driver.manual reference/readConcern/ Read Concern
-     */
-    public ReadConcern getReadConcern() {
-        return readConcern;
-    }
-
-    /**
-     * Sets the read concern
-     * @param readConcern the read concern
-     * @return this
-     * @since 3.2
-     * @mongodb.driver.manual reference/readConcern/ Read Concern
-     */
-    public CountOperation readConcern(final ReadConcern readConcern) {
-        this.readConcern = notNull("readConcern", readConcern);
         return this;
     }
 

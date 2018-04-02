@@ -81,7 +81,6 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         then:
         operation.getFilter() == null
         operation.getMaxTime(MILLISECONDS) == 0
-        operation.getReadConcern() == ReadConcern.DEFAULT
         operation.getCollation() == null
     }
 
@@ -93,13 +92,11 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         DistinctOperation operation = new DistinctOperation(getNamespace(), 'name', stringDecoder)
                 .maxTime(10, MILLISECONDS)
                 .filter(filter)
-                .readConcern(ReadConcern.MAJORITY)
                 .collation(defaultCollation)
 
         then:
         operation.getFilter() == filter
         operation.getMaxTime(MILLISECONDS) == 10
-        operation.getReadConcern() == ReadConcern.MAJORITY
         operation.getCollation() == defaultCollation
     }
 

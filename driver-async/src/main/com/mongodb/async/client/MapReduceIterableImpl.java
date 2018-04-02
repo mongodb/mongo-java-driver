@@ -29,12 +29,10 @@ import com.mongodb.client.model.FindOptions;
 import com.mongodb.client.model.MapReduceAction;
 import com.mongodb.internal.operation.AsyncOperations;
 import com.mongodb.lang.Nullable;
-import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
 import com.mongodb.operation.MapReduceAsyncBatchCursor;
 import com.mongodb.operation.MapReduceStatistics;
-import com.mongodb.session.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -70,11 +68,10 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
     MapReduceIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
                           final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                          final ReadConcern readConcern, final WriteConcern writeConcern, final AsyncOperationExecutor executor,
+                          final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
                           final String mapFunction, final String reduceFunction) {
         super(clientSession, executor, readConcern, readPreference);
-        this.operations = new AsyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry, writeConcern, false,
-                readConcern);
+        this.operations = new AsyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry, writeConcern, false);
         this.namespace = notNull("namespace", namespace);
         this.resultClass = notNull("resultClass", resultClass);
         this.mapFunction = notNull("mapFunction", mapFunction);
@@ -185,7 +182,7 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         if (inline) {
             throw new IllegalStateException("The options must specify a non-inline result");
         }
-        getExecutor().execute(createMapReduceToCollectionOperation(), callback);
+        getExecutor().execute(createMapReduceToCollectionOperation(), getReadConcern(), callback);
     }
 
     @Override

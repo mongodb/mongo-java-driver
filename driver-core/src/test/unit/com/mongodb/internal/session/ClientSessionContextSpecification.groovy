@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.session
 
+import com.mongodb.ReadConcern
 import com.mongodb.session.ClientSession
 import com.mongodb.session.ServerSession
 import org.bson.BsonBoolean
@@ -26,10 +27,27 @@ import spock.lang.Specification
 
 class ClientSessionContextSpecification extends Specification {
 
+    class TestClientSessionContext extends ClientSessionContext {
+
+        TestClientSessionContext(final ClientSession clientSession) {
+            super(clientSession)
+        }
+
+        @Override
+        boolean hasActiveTransaction() {
+            false;
+        }
+
+        @Override
+        ReadConcern getReadConcern() {
+            ReadConcern.DEFAULT;
+        }
+    }
+
     def 'should have session'() {
         given:
         def clientSession = Mock(ClientSession)
-        def context = new ClientSessionContext(clientSession)
+        def context = new TestClientSessionContext(clientSession)
 
         expect:
         context.hasSession()
@@ -48,7 +66,7 @@ class ClientSessionContextSpecification extends Specification {
                 serverSession
             }
         }
-        def context = new ClientSessionContext(clientSession)
+        def context = new TestClientSessionContext(clientSession)
 
         when:
         def sessionId = context.getSessionId()

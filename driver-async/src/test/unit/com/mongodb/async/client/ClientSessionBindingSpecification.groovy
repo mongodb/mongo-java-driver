@@ -16,7 +16,6 @@
 
 package com.mongodb.async.client
 
-import com.mongodb.session.ClientSession
 import com.mongodb.ReadPreference
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.binding.AsyncClusterBinding

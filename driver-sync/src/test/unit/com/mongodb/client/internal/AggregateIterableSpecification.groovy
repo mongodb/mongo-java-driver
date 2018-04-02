@@ -69,8 +69,7 @@ class AggregateIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new AggregateOperation<Document>(namespace,
-                [new BsonDocument('$match', new BsonInt32(1))], new DocumentCodec())
-                .readConcern(readConcern));
+                [new BsonDocument('$match', new BsonInt32(1))], new DocumentCodec()))
         readPreference == secondary()
 
         when: 'overriding initial options'
@@ -93,7 +92,6 @@ class AggregateIterableSpecification extends Specification {
                 .comment('this is a comment')
                 .maxAwaitTime(99, MILLISECONDS)
                 .maxTime(999, MILLISECONDS)
-                .readConcern(readConcern)
                 .useCursor(true))
     }
 

@@ -14,60 +14,63 @@
  * limitations under the License.
  */
 
-package com.mongodb.operation;
+package com.mongodb.async.client;
 
-import com.mongodb.session.ClientSession;
+import com.mongodb.ReadConcern;
+import com.mongodb.lang.Nullable;
+import com.mongodb.operation.AsyncReadOperation;
+import com.mongodb.operation.AsyncWriteOperation;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
 
 /**
  * An interface describing the execution of a read or a write operation.
- *
- * @since 3.0
- * @deprecated there is no replacement for this interface
  */
-@Deprecated
-public interface AsyncOperationExecutor {
+interface OperationExecutor {
     /**
      * Execute the read operation with the given read preference.
      *
      * @param operation the read operation.
      * @param readPreference the read preference.
+     * @param readConcern the read concern
      * @param callback the callback to be called when the operation has been executed
      * @param <T> the operations result type.
      */
-    <T> void execute(AsyncReadOperation<T> operation, ReadPreference readPreference, SingleResultCallback<T> callback);
-
-    /**
-     * Execute the read operation with the given read preference.
-     *
-     * @param operation the read operation.
-     * @param readPreference the read preference.
-     * @param session the session to associate this operation with
-     * @param callback the callback to be called when the operation has been executed
-     * @param <T> the operations result type.
-     * @since 3.6
-     */
-    <T> void execute(AsyncReadOperation<T> operation, ReadPreference readPreference, ClientSession session,
+    <T> void execute(AsyncReadOperation<T> operation, ReadPreference readPreference, ReadConcern readConcern,
                      SingleResultCallback<T> callback);
 
     /**
-     * Execute the write operation.
+     * Execute the read operation with the given read preference.
      *
-     * @param operation the write operation.
+     * @param operation the read operation.
+     * @param readPreference the read preference.
+     * @param readConcern the read concern
+     * @param session the session to associate this operation with
      * @param callback the callback to be called when the operation has been executed
      * @param <T> the operations result type.
      */
-    <T> void execute(AsyncWriteOperation<T> operation, SingleResultCallback<T> callback);
+    <T> void execute(AsyncReadOperation<T> operation, ReadPreference readPreference, ReadConcern readConcern,
+                     @Nullable ClientSession session, SingleResultCallback<T> callback);
+
+    /**
+     * Execute the write operation.
+     *
+     * @param operation the write operation.
+     * @param readConcern the read concern
+     * @param callback the callback to be called when the operation has been executed
+     * @param <T> the operations result type.
+     */
+    <T> void execute(AsyncWriteOperation<T> operation, ReadConcern readConcern, SingleResultCallback<T> callback);
 
     /**
      * Execute the write operation.
      *
      * @param operation the write operation.
      * @param session the session to associate this operation with
+     * @param readConcern the read concern
      * @param callback the callback to be called when the operation has been executed
      * @param <T> the operations result type.
-     * @since 3.6
      */
-    <T> void execute(AsyncWriteOperation<T> operation, ClientSession session, SingleResultCallback<T> callback);
+    <T> void execute(AsyncWriteOperation<T> operation, ReadConcern readConcern, @Nullable ClientSession session,
+                     SingleResultCallback<T> callback);
 }

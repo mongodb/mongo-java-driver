@@ -21,6 +21,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.async.client.DatabaseTestCase;
 import com.mongodb.async.client.Fixture;
 import com.mongodb.async.client.MongoCollection;
+import com.mongodb.async.client.MongoOperation;
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import com.mongodb.client.result.DeleteResult;

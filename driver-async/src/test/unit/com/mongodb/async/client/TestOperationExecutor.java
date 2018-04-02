@@ -16,10 +16,10 @@
 
 package com.mongodb.async.client;
 
-import com.mongodb.session.ClientSession;
+import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.operation.AsyncOperationExecutor;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
 
@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 @SuppressWarnings({ "rawtypes", "unchecked" })
-public class TestOperationExecutor implements AsyncOperationExecutor {
+public class TestOperationExecutor implements OperationExecutor {
 
     private final List<Object> responses;
     private final boolean queueExecution;
@@ -50,14 +50,14 @@ public class TestOperationExecutor implements AsyncOperationExecutor {
     }
 
     @Override
-    public <T> void execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference,
+    public <T> void execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
                             final SingleResultCallback<T> callback) {
-        execute(operation, readPreference, null, callback);
+        execute(operation, readPreference, readConcern, null, callback);
     }
 
     @Override
-    public <T> void execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference, final ClientSession session,
-                            final SingleResultCallback<T> callback) {
+    public <T> void execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
+                            final ClientSession session, final SingleResultCallback<T> callback) {
         readPreferences.add(readPreference);
         clientSessions.add(session);
         if (queueExecution) {
@@ -71,12 +71,13 @@ public class TestOperationExecutor implements AsyncOperationExecutor {
 
 
     @Override
-    public <T> void execute(final AsyncWriteOperation<T> operation, final SingleResultCallback<T> callback) {
-        execute(operation, null, callback);
+    public <T> void execute(final AsyncWriteOperation<T> operation, final ReadConcern readConcern, final SingleResultCallback<T> callback) {
+        execute(operation, readConcern, null, callback);
     }
 
     @Override
-    public <T> void execute(final AsyncWriteOperation<T> operation, final ClientSession session, final SingleResultCallback<T> callback) {
+    public <T> void execute(final AsyncWriteOperation<T> operation, final ReadConcern readConcern, final ClientSession session,
+                            final SingleResultCallback<T> callback) {
         clientSessions.add(session);
         if (queueExecution) {
             queuedWriteOperations.add(operation);
@@ -106,20 +107,23 @@ public class TestOperationExecutor implements AsyncOperationExecutor {
         }
     }
 
+    @Nullable
     ClientSession getClientSession() {
         return clientSessions.isEmpty() ? null : clientSessions.remove(0);
     }
 
+    @Nullable
     AsyncReadOperation getReadOperation() {
         return readOperations.isEmpty() ? null : readOperations.remove(0);
     }
 
+    @Nullable
     ReadPreference getReadPreference() {
         return readPreferences.isEmpty() ? null : readPreferences.remove(0);
     }
 
+    @Nullable
     AsyncWriteOperation getWriteOperation() {
         return writeOperations.isEmpty() ? null : writeOperations.remove(0);
     }
-
 }

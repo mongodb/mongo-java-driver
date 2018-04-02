@@ -23,9 +23,7 @@ import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.operation.AsyncOperations;
 import com.mongodb.lang.Nullable;
-import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
-import com.mongodb.session.ClientSession;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -45,9 +43,9 @@ class DistinctIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult
 
     DistinctIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
                          final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                         final ReadConcern readConcern, final AsyncOperationExecutor executor, final String fieldName, final Bson filter) {
+                         final ReadConcern readConcern, final OperationExecutor executor, final String fieldName, final Bson filter) {
         super(clientSession, executor, readConcern, readPreference);
-        this.operations = new AsyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry, readConcern);
+        this.operations = new AsyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry);
         this.resultClass = notNull("resultClass", resultClass);
         this.fieldName = notNull("mapFunction", fieldName);
         this.filter = filter;

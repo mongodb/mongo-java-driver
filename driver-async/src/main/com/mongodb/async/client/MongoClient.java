@@ -19,7 +19,6 @@ package com.mongodb.async.client;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.session.ClientSession;
 import org.bson.Document;
 
 import java.io.Closeable;
@@ -35,6 +34,18 @@ import java.io.Closeable;
  */
 @Immutable
 public interface MongoClient extends Closeable {
+
+    /**
+     * Creates a client session with default options.
+     *
+     * <p>Note: A ClientSession instance can not be used concurrently in multiple asynchronous operations.</p>
+     *
+     * @param callback the callback that is passed the clientSession or a {@code MongoClientException} if the MongoDB cluster to which
+     *                 this client is connected does not support sessions
+     * @mongodb.server.release 3.6
+     * @since 3.8
+     */
+    void startSession(SingleResultCallback<ClientSession> callback);
 
     /**
      * Creates a client session.

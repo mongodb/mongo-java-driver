@@ -22,7 +22,6 @@ import com.mongodb.MongoNamespace
 import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
-import com.mongodb.operation.AsyncOperationExecutor
 import com.mongodb.operation.ListIndexesOperation
 import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider
@@ -159,7 +158,7 @@ class ListIndexesIterableSpecification extends Specification {
     def 'should check variables using notNull'() {
         given:
         def mongoIterable = new ListIndexesIterableImpl<Document>(null, namespace, Document, codecRegistry, readPreference,
-                Stub(AsyncOperationExecutor))
+                Stub(OperationExecutor))
         def callback = Stub(SingleResultCallback)
         def block = Stub(Block)
         def target = Stub(List)
@@ -205,7 +204,7 @@ class ListIndexesIterableSpecification extends Specification {
         when:
         def batchSize = 5
         def mongoIterable = new ListIndexesIterableImpl<Document>(null, namespace, Document, codecRegistry, readPreference,
-                Stub(AsyncOperationExecutor))
+                Stub(OperationExecutor))
 
         then:
         mongoIterable.getBatchSize() == null

@@ -24,18 +24,18 @@ import com.mongodb.WriteConcern
 import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
+import com.mongodb.async.client.ClientSession
 import com.mongodb.async.client.FindIterable
 import com.mongodb.async.client.MongoClients
 import com.mongodb.async.client.MongoCollection
 import com.mongodb.async.client.MongoDatabaseImpl
+import com.mongodb.async.client.OperationExecutor
 import com.mongodb.async.client.TestOperationExecutor
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions
 import com.mongodb.client.gridfs.model.GridFSFile
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
-import com.mongodb.operation.AsyncOperationExecutor
 import com.mongodb.operation.FindOperation
-import com.mongodb.session.ClientSession
 import org.bson.BsonDocument
 import org.bson.BsonObjectId
 import org.bson.BsonString
@@ -61,8 +61,8 @@ class GridFSBucketSpecification extends Specification {
 
     def readConcern = ReadConcern.DEFAULT
     def registry = MongoClients.defaultCodecRegistry
-    def database = databaseWithExecutor(Stub(AsyncOperationExecutor))
-    def databaseWithExecutor(AsyncOperationExecutor executor) {
+    def database = databaseWithExecutor(Stub(OperationExecutor))
+    def databaseWithExecutor(OperationExecutor executor) {
         new MongoDatabaseImpl('test', registry, primary(), WriteConcern.ACKNOWLEDGED, false, readConcern, executor)
     }
 
@@ -749,7 +749,7 @@ class GridFSBucketSpecification extends Specification {
         then:
         executor.getReadPreference() == secondary()
         expect executor.getReadOperation(), isTheSameAs(new FindOperation<GridFSFile>(new MongoNamespace('test.fs.files'), decoder)
-                .readConcern(readConcern).filter(filter).slaveOk(true))
+                .filter(filter).slaveOk(true))
 
         where:
         clientSession << [null, Stub(ClientSession)]

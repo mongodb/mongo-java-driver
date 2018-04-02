@@ -26,8 +26,6 @@ import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
-import com.mongodb.operation.AsyncOperationExecutor;
-import com.mongodb.session.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.Document;
 
@@ -41,7 +39,7 @@ class MongoClientImpl implements MongoClient {
     private static final Logger LOGGER = Loggers.getLogger("client");
     private final Cluster cluster;
     private final MongoClientSettings settings;
-    private final AsyncOperationExecutor executor;
+    private final OperationExecutor executor;
     private final Closeable externalResourceCloser;
     private final ServerSessionPool serverSessionPool;
     private final ClientSessionHelper clientSessionHelper;
@@ -51,18 +49,18 @@ class MongoClientImpl implements MongoClient {
         this(settings, cluster, null, externalResourceCloser);
     }
 
-    MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, @Nullable final AsyncOperationExecutor executor) {
+    MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, @Nullable final OperationExecutor executor) {
         this(settings, cluster, executor, null);
     }
 
-    private MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, @Nullable final AsyncOperationExecutor executor,
+    private MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, @Nullable final OperationExecutor executor,
                             @Nullable final Closeable externalResourceCloser) {
         this.settings = notNull("settings", settings);
         this.cluster = notNull("cluster", cluster);
         this.serverSessionPool = new ServerSessionPool(cluster);
         this.clientSessionHelper = new ClientSessionHelper(this, serverSessionPool);
         if (executor == null) {
-            this.executor = new AsyncOperationExecutorImpl(this, clientSessionHelper);
+            this.executor = new OperationExecutorImpl(this, clientSessionHelper);
         } else {
             this.executor = executor;
         }
@@ -70,9 +68,14 @@ class MongoClientImpl implements MongoClient {
     }
 
     @Override
+    public void startSession(final SingleResultCallback<ClientSession> callback) {
+        startSession(ClientSessionOptions.builder().build(), callback);
+    }
+
+    @Override
     public void startSession(final ClientSessionOptions options, final SingleResultCallback<ClientSession> callback) {
         notNull("callback", callback);
-        clientSessionHelper.createClientSession(notNull("options", options), new SingleResultCallback<ClientSession>() {
+        clientSessionHelper.createClientSession(notNull("options", options), executor, new SingleResultCallback<ClientSession>() {
             @Override
             public void onResult(final ClientSession clientSession, final Throwable t) {
                 SingleResultCallback<ClientSession> errHandlingCallback = errorHandlingCallback(callback, LOGGER);

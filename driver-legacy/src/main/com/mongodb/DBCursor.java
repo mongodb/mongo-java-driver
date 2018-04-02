@@ -488,7 +488,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     @SuppressWarnings("deprecation")
     private FindOperation<DBObject> getQueryOperation(final Decoder<DBObject> decoder) {
         FindOperation<DBObject> operation = new FindOperation<DBObject>(collection.getNamespace(), decoder)
-                                                .readConcern(getReadConcern())
                                                 .filter(collection.wrapAllowNull(filter))
                                                 .batchSize(findOptions.getBatchSize())
                                                 .skip(findOptions.getSkip())

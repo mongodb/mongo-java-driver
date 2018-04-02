@@ -72,19 +72,16 @@ class ParallelCollectionScanOperationSpecification extends OperationFunctionalSp
         then:
         operation.getBatchSize() == 0
         operation.getNumCursors() == 3
-        operation.getReadConcern() == ReadConcern.DEFAULT
     }
 
     def 'should set optional values correctly'(){
         when:
         def operation = new ParallelCollectionScanOperation<Document>(getNamespace(), 3, new DocumentCodec())
             .batchSize(10)
-            .readConcern(ReadConcern.MAJORITY)
 
         then:
         operation.getBatchSize() == 10
         operation.getNumCursors() == 3
-        operation.getReadConcern() == ReadConcern.MAJORITY
     }
 
     def 'should visit all documents'() {
@@ -300,7 +297,7 @@ class ParallelCollectionScanOperationSpecification extends OperationFunctionalSp
             }
         }
         def operation = new MapReduceWithInlineResultsOperation<Document>(helper.namespace, new BsonJavaScript('function(){ }'),
-                new BsonJavaScript('function(key, values){ }'), helper.decoder).readConcern(readConcern)
+                new BsonJavaScript('function(key, values){ }'), helper.decoder)
         def callback = Mock(SingleResultCallback)
 
         when:

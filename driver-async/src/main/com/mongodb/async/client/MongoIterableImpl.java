@@ -23,9 +23,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.lang.Nullable;
-import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
-import com.mongodb.session.ClientSession;
 
 import java.util.Collection;
 import java.util.List;
@@ -36,11 +34,11 @@ import static com.mongodb.assertions.Assertions.notNull;
 abstract class MongoIterableImpl<TResult> implements MongoIterable<TResult> {
     private final ClientSession clientSession;
     private final ReadConcern readConcern;
-    private final AsyncOperationExecutor executor;
+    private final OperationExecutor executor;
     private final ReadPreference readPreference;
     private Integer batchSize;
 
-    MongoIterableImpl(@Nullable final ClientSession clientSession, final AsyncOperationExecutor executor, final ReadConcern readConcern,
+    MongoIterableImpl(@Nullable final ClientSession clientSession, final OperationExecutor executor, final ReadConcern readConcern,
                       final ReadPreference readPreference) {
         this.clientSession = clientSession;
         this.executor = notNull("executor", executor);
@@ -54,7 +52,7 @@ abstract class MongoIterableImpl<TResult> implements MongoIterable<TResult> {
         return clientSession;
     }
 
-    AsyncOperationExecutor getExecutor() {
+    OperationExecutor getExecutor() {
         return executor;
     }
 
@@ -160,7 +158,7 @@ abstract class MongoIterableImpl<TResult> implements MongoIterable<TResult> {
     @Override
     public void batchCursor(final SingleResultCallback<AsyncBatchCursor<TResult>> callback) {
         notNull("callback", callback);
-        executor.execute(asAsyncReadOperation(), readPreference, clientSession, callback);
+        executor.execute(asAsyncReadOperation(), readPreference, readConcern, clientSession, callback);
     }
 
     private void loopCursor(final AsyncBatchCursor<TResult> batchCursor, final Block<? super TResult> block,

@@ -21,11 +21,12 @@ import com.mongodb.ClientSessionOptions
 import com.mongodb.MongoClientException
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
+import com.mongodb.TransactionOptions
+import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.connection.TestCommandListener
 import com.mongodb.event.CommandStartedEvent
-import com.mongodb.session.ClientSession
 import org.bson.BsonBinarySubType
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -70,7 +71,12 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         clientSession != null
         clientSession.getOriginator() == Fixture.getMongoClient()
         clientSession.isCausallyConsistent()
-        clientSession.getOptions() == options
+        clientSession.getOptions() == ClientSessionOptions.builder()
+                .defaultTransactionOptions(TransactionOptions.builder()
+                .readConcern(ReadConcern.DEFAULT)
+                .writeConcern(WriteConcern.ACKNOWLEDGED)
+                .build())
+                .build()
         clientSession.getClusterTime() == null
         clientSession.getOperationTime() == null
         clientSession.getServerSession() != null

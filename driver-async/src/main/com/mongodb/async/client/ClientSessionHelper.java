@@ -17,16 +17,15 @@
 package com.mongodb.async.client;
 
 import com.mongodb.ClientSessionOptions;
+import com.mongodb.TransactionOptions;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
-import com.mongodb.session.ClientSession;
 
 import java.util.List;
 
@@ -41,24 +40,27 @@ class ClientSessionHelper {
         this.serverSessionPool = serverSessionPool;
     }
 
-    void withClientSession(@Nullable final ClientSession clientSessionFromOperation, final SingleResultCallback<ClientSession> callback) {
+    void withClientSession(@Nullable final ClientSession clientSessionFromOperation, final OperationExecutor executor,
+                           final SingleResultCallback<ClientSession> callback) {
         if (clientSessionFromOperation != null) {
             isTrue("ClientSession from same MongoClient", clientSessionFromOperation.getOriginator() == mongoClient);
             callback.onResult(clientSessionFromOperation, null);
         } else {
-            createClientSession(ClientSessionOptions.builder().causallyConsistent(false).build(), callback);
+            createClientSession(ClientSessionOptions.builder().causallyConsistent(false).build(), executor, callback);
         }
     }
 
     @SuppressWarnings("deprecation")
-    void createClientSession(final ClientSessionOptions options, final SingleResultCallback<ClientSession> callback) {
+    void createClientSession(final ClientSessionOptions options, final OperationExecutor executor,
+                             final SingleResultCallback<ClientSession>
+            callback) {
         if (mongoClient.getSettings().getCredentialList().size() > 1) {
             callback.onResult(null, null);
         } else {
             ClusterDescription clusterDescription = mongoClient.getCluster().getCurrentDescription();
             if (!getServerDescriptionListToConsiderForSessionSupport(clusterDescription).isEmpty()
                     && clusterDescription.getLogicalSessionTimeoutMinutes() != null) {
-                callback.onResult(createClientSession(options), null);
+                callback.onResult(createClientSession(options, executor), null);
             } else {
                 mongoClient.getCluster().selectServerAsync(new ServerSelector() {
                     @Override
@@ -73,7 +75,7 @@ class ClientSessionHelper {
                         } else if (server.getDescription().getLogicalSessionTimeoutMinutes() == null) {
                             callback.onResult(null, null);
                         } else {
-                            callback.onResult(createClientSession(options), null);
+                            callback.onResult(createClientSession(options, executor), null);
                         }
                     }
                 });
@@ -81,8 +83,17 @@ class ClientSessionHelper {
         }
     }
 
-    private ClientSession createClientSession(final ClientSessionOptions options) {
-        return new BaseClientSessionImpl(serverSessionPool, mongoClient, options);
+    private ClientSession createClientSession(final ClientSessionOptions options, final OperationExecutor executor) {
+        ClientSessionOptions mergedOptions = ClientSessionOptions.builder(options)
+                .defaultTransactionOptions(
+                        TransactionOptions.merge(
+                                options.getDefaultTransactionOptions(),
+                                TransactionOptions.builder()
+                                        .readConcern(mongoClient.getSettings().getReadConcern())
+                                        .writeConcern(mongoClient.getSettings().getWriteConcern())
+                                        .build()))
+                .build();
+        return new ClientSessionImpl(serverSessionPool, mongoClient, mergedOptions, executor);
     }
 
     @SuppressWarnings("deprecation")

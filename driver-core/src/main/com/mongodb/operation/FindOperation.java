@@ -22,7 +22,6 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoQueryException;
-import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.AsyncBatchCursor;
@@ -100,7 +99,6 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
     private boolean oplogReplay;
     private boolean noCursorTimeout;
     private boolean partial;
-    private ReadConcern readConcern = ReadConcern.DEFAULT;
     private Collation collation;
     private String comment;
     private BsonDocument hint;
@@ -467,29 +465,6 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
      */
     public FindOperation<T> partial(final boolean partial) {
         this.partial = partial;
-        return this;
-    }
-
-    /**
-     * Gets the read concern
-     *
-     * @return the read concern
-     * @since 3.2
-     * @mongodb.driver.manual reference/readConcern/ Read Concern
-     */
-    public ReadConcern getReadConcern() {
-        return readConcern;
-    }
-
-    /**
-     * Sets the read concern
-     * @param readConcern the read concern
-     * @return this
-     * @since 3.2
-     * @mongodb.driver.manual reference/readConcern/ Read Concern
-     */
-    public FindOperation<T> readConcern(final ReadConcern readConcern) {
-        this.readConcern = notNull("readConcern", readConcern);
         return this;
     }
 

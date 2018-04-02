@@ -202,7 +202,6 @@ class MongoCollectionSpecification extends Specification {
                 readConcern, executor)
         def expectedOperation = new CountOperation(namespace)
                 .filter(filter)
-                .readConcern(readConcern)
 
         def countMethod = collection.&count
 

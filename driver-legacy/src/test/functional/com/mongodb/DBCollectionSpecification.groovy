@@ -278,8 +278,7 @@ class DBCollectionSpecification extends Specification {
         then:
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
                 .filter(new BsonDocument())
-                .modifiers(new BsonDocument())
-                .readConcern(ReadConcern.MAJORITY))
+                .modifiers(new BsonDocument()))
 
         when:
         collection.setReadConcern(ReadConcern.LOCAL)
@@ -289,8 +288,7 @@ class DBCollectionSpecification extends Specification {
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
                 .filter(new BsonDocument())
                 .modifiers(new BsonDocument())
-                .collation(collation)
-                .readConcern(ReadConcern.LOCAL))
+                .collation(collation))
     }
 
     def 'findOne should create the correct FindOperation'() {
@@ -322,8 +320,7 @@ class DBCollectionSpecification extends Specification {
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
                 .filter(new BsonDocument())
                 .modifiers(new BsonDocument())
-                .limit(-1)
-                .readConcern(ReadConcern.MAJORITY))
+                .limit(-1))
 
         when:
         collection.setReadConcern(ReadConcern.LOCAL)
@@ -334,7 +331,6 @@ class DBCollectionSpecification extends Specification {
                 .filter(new BsonDocument())
                 .modifiers(new BsonDocument())
                 .limit(-1)
-                .readConcern(ReadConcern.LOCAL)
                 .collation(collation))
     }
 
@@ -717,7 +713,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
-                collection.getDefaultDBObjectCodec()).readConcern(ReadConcern.MAJORITY).collation(collation)
+                collection.getDefaultDBObjectCodec()).collation(collation)
                 .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER))
 
         when:
@@ -726,7 +722,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
-                collection.getDefaultDBObjectCodec()).useCursor(false).readConcern(ReadConcern.LOCAL).collation(collation)
+                collection.getDefaultDBObjectCodec()).useCursor(false).collation(collation)
                 .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER))
     }
 

@@ -70,8 +70,7 @@ class ChangeStreamIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new ChangeStreamOperation<Document>(namespace, FullDocument.DEFAULT,
-                [BsonDocument.parse('{$match: 1}')], codec)
-                .readConcern(readConcern))
+                [BsonDocument.parse('{$match: 1}')], codec))
         readPreference == secondary()
 
         when: 'overriding initial options'
@@ -85,8 +84,7 @@ class ChangeStreamIterableSpecification extends Specification {
         expect operation, isTheSameAs(new ChangeStreamOperation<Document>(namespace, FullDocument.UPDATE_LOOKUP,
                 [BsonDocument.parse('{$match: 1}')], codec)
                 .collation(collation).maxAwaitTime(99, MILLISECONDS)
-                .resumeAfter(resumeToken)
-                .readConcern(readConcern))
+                .resumeAfter(resumeToken))
     }
 
     def 'should use ClientSession'() {

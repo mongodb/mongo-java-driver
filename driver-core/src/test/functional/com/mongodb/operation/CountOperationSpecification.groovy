@@ -84,7 +84,6 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         operation.getHint() == null
         operation.getLimit() == 0
         operation.getSkip() == 0
-        operation.getReadConcern() == ReadConcern.DEFAULT
     }
 
     def 'should set optional values correctly'(){
@@ -99,7 +98,6 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
                 .hint(hint)
                 .limit(20)
                 .skip(30)
-                .readConcern(ReadConcern.MAJORITY)
 
         then:
         operation.getFilter() == filter
@@ -107,7 +105,6 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         operation.getHint() == hint
         operation.getLimit() == 20
         operation.getSkip() == 30
-        operation.getReadConcern() == ReadConcern.MAJORITY
     }
 
     def 'should get the count'() {
