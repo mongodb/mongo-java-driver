@@ -86,7 +86,6 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         operation.getSort() == null
         operation.getMaxTime(MILLISECONDS) == 0
         operation.getLimit() == 0
-        operation.getReadConcern() == ReadConcern.DEFAULT
         operation.getCollation() == null
         !operation.isJsMode()
         !operation.isVerbose()
@@ -109,7 +108,6 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
                 .verbose(true)
                 .limit(20)
                 .maxTime(10, MILLISECONDS)
-                .readConcern(ReadConcern.MAJORITY)
                 .collation(defaultCollation)
 
         then:
@@ -121,7 +119,6 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         operation.getSort() == sort
         operation.getMaxTime(MILLISECONDS) == 10
         operation.getLimit() == 20
-        operation.getReadConcern() == ReadConcern.MAJORITY
         operation.getCollation() == defaultCollation
         operation.isJsMode()
         operation.isVerbose()

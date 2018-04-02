@@ -123,7 +123,6 @@ class DBCursorSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
-                                                                .readConcern(ReadConcern.MAJORITY)
                                                                 .filter(new BsonDocument())
                                                                 .projection(new BsonDocument())
                                                                 .modifiers(new BsonDocument()))
@@ -142,7 +141,6 @@ class DBCursorSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
-                                                                .readConcern(ReadConcern.MAJORITY)
                                                                 .limit(-1)
                                                                 .filter(new BsonDocument())
                                                                 .projection(new BsonDocument())
@@ -200,7 +198,6 @@ class DBCursorSpecification extends Specification {
                 .oplogReplay(true)
                 .partial(true)
                 .projection(bsonProjection)
-                .readConcern(readConcern)
                 .skip(1)
                 .sort(bsonSort)
         )

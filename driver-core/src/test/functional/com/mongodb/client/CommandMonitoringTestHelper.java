@@ -65,8 +65,8 @@ public final class CommandMonitoringTestHelper {
                 }
             });
 
-    static List<CommandEvent> getExpectedEvents(final BsonArray expectedEventDocuments, final String databaseName,
-                                                final BsonDocument operation) {
+    public static List<CommandEvent> getExpectedEvents(final BsonArray expectedEventDocuments, final String databaseName,
+                                                       final BsonDocument operation) {
         List<CommandEvent> expectedEvents = new ArrayList<CommandEvent>(expectedEventDocuments.size());
         for (BsonValue expectedEventDocument : expectedEventDocuments) {
             BsonDocument curExpectedEventDocument = expectedEventDocument.asDocument();
@@ -109,12 +109,12 @@ public final class CommandMonitoringTestHelper {
         return asList("insert", "update", "delete").contains(commandName);
     }
 
-    static void assertEventsEquality(final List<CommandEvent> expectedEvents, final List<CommandEvent> events) {
+    public static void assertEventsEquality(final List<CommandEvent> expectedEvents, final List<CommandEvent> events) {
         assertEventsEquality(expectedEvents, events, null);
     }
 
-    static void assertEventsEquality(final List<CommandEvent> expectedEvents, final List<CommandEvent> events,
-                                     @Nullable final List<BsonDocument> expectedSessionIdentifiers) {
+    public static void assertEventsEquality(final List<CommandEvent> expectedEvents, final List<CommandEvent> events,
+                                            @Nullable final List<BsonDocument> expectedSessionIdentifiers) {
         assertEquals(expectedEvents.size(), events.size());
         if (expectedSessionIdentifiers != null) {
             assertEquals(events.size(), expectedSessionIdentifiers.size());

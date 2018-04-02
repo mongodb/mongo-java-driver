@@ -17,7 +17,6 @@
 package com.mongodb.operation;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.ReadConcern;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncReadBinding;
@@ -57,7 +56,6 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
     private Integer batchSize;
     private Collation collation;
     private long maxAwaitTimeMS;
-    private ReadConcern readConcern = ReadConcern.DEFAULT;
 
     /**
      * Construct a new instance.
@@ -184,28 +182,6 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
     }
 
     /**
-     * Gets the read concern
-     *
-     * @return the read concern
-     * @mongodb.driver.manual reference/readConcern/ Read Concern
-     */
-    public ReadConcern getReadConcern() {
-        return readConcern;
-    }
-
-    /**
-     * Sets the read concern
-     *
-     * @param readConcern the read concern
-     * @return this
-     * @mongodb.driver.manual reference/readConcern/ Read Concern
-     */
-    public ChangeStreamOperation<T> readConcern(final ReadConcern readConcern) {
-        this.readConcern = notNull("readConcern", readConcern);
-        return this;
-    }
-
-    /**
      * Returns the collation options
      *
      * @return the collation options
@@ -259,7 +235,6 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
         changeStreamPipeline.addAll(pipeline);
         return new AggregateOperation<RawBsonDocument>(namespace, changeStreamPipeline, RAW_BSON_DOCUMENT_CODEC)
                 .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
-                .readConcern(readConcern)
                 .batchSize(batchSize)
                 .collation(collation);
     }

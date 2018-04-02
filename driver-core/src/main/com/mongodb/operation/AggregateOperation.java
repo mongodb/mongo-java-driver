@@ -18,7 +18,6 @@ package com.mongodb.operation;
 
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
-import com.mongodb.ReadConcern;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
@@ -31,8 +30,8 @@ import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.QueryResult;
-import com.mongodb.session.SessionContext;
 import com.mongodb.operation.CommandOperationHelper.CommandTransformer;
+import com.mongodb.session.SessionContext;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -85,7 +84,6 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
     private long maxAwaitTimeMS;
     private long maxTimeMS;
     private Boolean useCursor;
-    private ReadConcern readConcern = ReadConcern.DEFAULT;
 
     /**
      * Construct a new instance.
@@ -246,29 +244,6 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
     @Deprecated
     public AggregateOperation<T> useCursor(final Boolean useCursor) {
         this.useCursor = useCursor;
-        return this;
-    }
-
-    /**
-     * Gets the read concern
-     *
-     * @return the read concern
-     * @since 3.2
-     * @mongodb.driver.manual reference/readConcern/ Read Concern
-     */
-    public ReadConcern getReadConcern() {
-        return readConcern;
-    }
-
-    /**
-     * Sets the read concern
-     * @param readConcern the read concern
-     * @return this
-     * @since 3.2
-     * @mongodb.driver.manual reference/readConcern/ Read Concern
-     */
-    public AggregateOperation<T> readConcern(final ReadConcern readConcern) {
-        this.readConcern = notNull("readConcern", readConcern);
         return this;
     }
 
@@ -496,7 +471,6 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
                 + ", maxAwaitTimeMS=" + maxAwaitTimeMS
                 + ", maxTimeMS=" + maxTimeMS
                 + ", useCursor=" + useCursor
-                + ", readConcern=" + readConcern
                 + "}";
     }
 }

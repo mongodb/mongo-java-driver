@@ -28,7 +28,6 @@ import com.mongodb.client.model.Collation
 import com.mongodb.client.model.changestream.ChangeStreamDocument
 import com.mongodb.client.model.changestream.ChangeStreamDocumentCodec
 import com.mongodb.client.model.changestream.FullDocument
-import com.mongodb.operation.AsyncOperationExecutor
 import com.mongodb.operation.ChangeStreamOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -264,7 +263,7 @@ class ChangeStreamIterableSpecification extends Specification {
     def 'should check variables using notNull'() {
         given:
         def mongoIterable = new ChangeStreamIterableImpl(null, namespace, codecRegistry, readPreference, readConcern,
-                Stub(AsyncOperationExecutor), [new BsonDocument('$match', new BsonInt32(1))], BsonDocument)
+                Stub(OperationExecutor), [new BsonDocument('$match', new BsonInt32(1))], BsonDocument)
         def callback = Stub(SingleResultCallback)
         def block = Stub(Block)
         def target = Stub(List)
@@ -308,7 +307,7 @@ class ChangeStreamIterableSpecification extends Specification {
         when:
         def results = new FutureResultCallback()
         mongoIterable = new ChangeStreamIterableImpl(null, namespace, codecRegistry, readPreference, readConcern,
-                Stub(AsyncOperationExecutor), [null], BsonDocument)
+                Stub(OperationExecutor), [null], BsonDocument)
         mongoIterable.into(target, results)
         results.get()
 
@@ -320,7 +319,7 @@ class ChangeStreamIterableSpecification extends Specification {
         when:
         def batchSize = 5
         def mongoIterable = new ChangeStreamIterableImpl(null, namespace, codecRegistry, readPreference, readConcern,
-                Stub(AsyncOperationExecutor), [BsonDocument.parse('{$match: 1}')], BsonDocument)
+                Stub(OperationExecutor), [BsonDocument.parse('{$match: 1}')], BsonDocument)
 
         then:
         mongoIterable.getBatchSize() == null

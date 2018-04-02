@@ -17,15 +17,23 @@
 package com.mongodb.operation;
 
 import com.mongodb.WriteConcern;
+import com.mongodb.async.SingleResultCallback;
+import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
+import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
+import com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import com.mongodb.operation.OperationHelper.CallableWithConnection;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
+import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static com.mongodb.operation.OperationHelper.LOGGER;
+import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static com.mongodb.operation.WriteConcernHelper.writeConcernErrorTransformer;
 
@@ -34,7 +42,7 @@ import static com.mongodb.operation.WriteConcernHelper.writeConcernErrorTransfor
  *
  * @since 3.8
  */
-public abstract class TransactionOperation implements ReadOperation<Void> {
+public abstract class TransactionOperation implements ReadOperation<Void>, AsyncReadOperation<Void> {
     private final WriteConcern writeConcern;
 
     /**
@@ -61,13 +69,31 @@ public abstract class TransactionOperation implements ReadOperation<Void> {
         return withConnection(binding, new CallableWithConnection<Void>() {
             @Override
             public Void call(final Connection connection) {
-                executeWrappedCommandProtocol(binding, "admin", getCommand(binding), connection, writeConcernErrorTransformer());
+                executeWrappedCommandProtocol(binding, "admin", getCommand(), connection, writeConcernErrorTransformer());
                 return null;
             }
         });
     }
 
-    private BsonDocument getCommand(final ReadBinding binding) {
+    @Override
+    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Void> callback) {
+        isTrue("in transaction", binding.getSessionContext().hasActiveTransaction());
+        withConnection(binding, new AsyncCallableWithConnection() {
+            @Override
+            public void call(final AsyncConnection connection, final Throwable t) {
+                SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
+                if (t != null) {
+                    errHandlingCallback.onResult(null, t);
+                } else {
+                    executeWrappedCommandProtocolAsync(binding, "admin", getCommand(), connection,
+                            writeConcernErrorTransformer(), releasingCallback(errHandlingCallback, connection));
+
+                }
+            }
+        });
+    }
+
+    private BsonDocument getCommand() {
         BsonDocument command = new BsonDocument(getCommandName(), new BsonInt32(1));
         if (!getWriteConcern().isServerDefault()) {
             command.put("writeConcern", getWriteConcern().asDocument());

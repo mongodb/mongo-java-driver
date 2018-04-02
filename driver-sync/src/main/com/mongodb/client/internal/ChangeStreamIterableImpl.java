@@ -119,7 +119,6 @@ final class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeSt
                 new ChangeStreamOperation<S>(namespace, fullDocument, aggregateList, codec)
                         .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
                         .batchSize(getBatchSize())
-                        .readConcern(getReadConcern())
                         .collation(collation);
 
         if (resumeToken != null) {

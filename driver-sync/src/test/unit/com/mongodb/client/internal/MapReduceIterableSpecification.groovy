@@ -70,8 +70,7 @@ class MapReduceIterableSpecification extends Specification {
         then:
         expect operation, isTheSameAs(new MapReduceWithInlineResultsOperation<Document>(namespace, new BsonJavaScript('map'),
                 new BsonJavaScript('reduce'), new DocumentCodec())
-                .verbose(true)
-                .readConcern(readConcern))
+                .verbose(true))
         readPreference == secondary()
 
         when: 'overriding initial options'
@@ -98,7 +97,6 @@ class MapReduceIterableSpecification extends Specification {
                 .sort(new BsonDocument('sort', new BsonInt32(1)))
                 .verbose(false)
                 .collation(collation)
-                .readConcern(readConcern)
         )
     }
 

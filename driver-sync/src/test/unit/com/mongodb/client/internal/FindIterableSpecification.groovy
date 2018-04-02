@@ -102,7 +102,6 @@ class FindIterableSpecification extends Specification {
                 .min(new BsonDocument('min', new BsonInt32(1)))
                 .max(new BsonDocument('max', new BsonInt32(1)))
                 .maxScan(42L)
-                .readConcern(readConcern)
                 .returnKey(false)
                 .showRecordId(false)
                 .snapshot(false)
@@ -158,7 +157,6 @@ class FindIterableSpecification extends Specification {
                 .min(new BsonDocument('min', new BsonInt32(2)))
                 .max(new BsonDocument('max', new BsonInt32(2)))
                 .maxScan(88L)
-                .readConcern(readConcern)
                 .returnKey(true)
                 .showRecordId(true)
                 .snapshot(true)
@@ -210,7 +208,6 @@ class FindIterableSpecification extends Specification {
                 .sort(new BsonDocument('sort', new BsonInt32(1)))
                 .modifiers(new BsonDocument('modifier', new BsonInt32(1)))
                 .cursorType(CursorType.NonTailable)
-                .readConcern(readConcern)
                 .slaveOk(true)
         )
     }

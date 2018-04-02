@@ -24,10 +24,8 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.lang.Nullable;
-import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.ChangeStreamOperation;
-import com.mongodb.session.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -54,7 +52,7 @@ final class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeSt
 
 
     ChangeStreamIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final CodecRegistry codecRegistry,
-                             final ReadPreference readPreference, final ReadConcern readConcern, final AsyncOperationExecutor executor,
+                             final ReadPreference readPreference, final ReadConcern readConcern, final OperationExecutor executor,
                              final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
         super(clientSession, executor, readConcern, readPreference);
         this.namespace = notNull("namespace", namespace);
@@ -117,7 +115,6 @@ final class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeSt
         ChangeStreamOperation<S> changeStreamOperation = new ChangeStreamOperation<S>(namespace, fullDocument, aggregateList, codec)
                 .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
                 .batchSize(getBatchSize())
-                .readConcern(getReadConcern())
                 .collation(collation);
 
         if (resumeToken != null) {

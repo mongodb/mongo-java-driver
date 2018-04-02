@@ -21,7 +21,7 @@ import com.mongodb.MongoGridFSException
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.async.client.MongoCollection
-import com.mongodb.session.ClientSession
+import com.mongodb.async.client.ClientSession
 import org.bson.BsonObjectId
 import org.bson.BsonString
 import org.bson.Document

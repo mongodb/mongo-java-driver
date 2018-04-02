@@ -16,15 +16,15 @@
 
 package com.mongodb.async.client;
 
-import com.mongodb.session.ClientSession;
+import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadWriteBinding;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.session.SessionContext;
 import com.mongodb.internal.session.ClientSessionContext;
+import com.mongodb.session.SessionContext;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -38,7 +38,7 @@ class ClientSessionBinding implements AsyncReadWriteBinding {
         this.wrapped = notNull("wrapped", wrapped);
         this.ownsSession = ownsSession;
         this.session = notNull("session", session);
-        this.sessionContext = new ClientSessionContext(session);
+        this.sessionContext = new AsyncClientSessionContext(session);
     }
 
     @Override
@@ -139,6 +139,31 @@ class ClientSessionBinding implements AsyncReadWriteBinding {
         public void release() {
             wrapped.release();
             closeSessionIfCountIsZero();
+        }
+    }
+
+    private final class AsyncClientSessionContext extends ClientSessionContext implements SessionContext {
+
+        private final ClientSession clientSession;
+
+        AsyncClientSessionContext(final ClientSession clientSession) {
+            super(clientSession);
+            this.clientSession = clientSession;
+        }
+
+
+        @Override
+        public boolean hasActiveTransaction() {
+            return clientSession.hasActiveTransaction();
+        }
+
+        @Override
+        public ReadConcern getReadConcern() {
+            if (clientSession.hasActiveTransaction()) {
+                return clientSession.getTransactionOptions().getReadConcern();
+            } else {
+                return wrapped.getSessionContext().getReadConcern();
+            }
         }
     }
 }

@@ -27,12 +27,10 @@ import com.mongodb.client.model.CreateViewOptions;
 import com.mongodb.client.model.IndexOptionDefaults;
 import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.lang.Nullable;
-import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CreateCollectionOperation;
 import com.mongodb.operation.CreateViewOperation;
 import com.mongodb.operation.DropDatabaseOperation;
-import com.mongodb.session.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -51,11 +49,11 @@ class MongoDatabaseImpl implements MongoDatabase {
     private final WriteConcern writeConcern;
     private final boolean retryWrites;
     private final ReadConcern readConcern;
-    private final AsyncOperationExecutor executor;
+    private final OperationExecutor executor;
 
     MongoDatabaseImpl(final String name, final CodecRegistry codecRegistry, final ReadPreference readPreference,
                       final WriteConcern writeConcern, final boolean retryWrites, final ReadConcern readConcern,
-                      final AsyncOperationExecutor executor) {
+                      final OperationExecutor executor) {
         checkDatabaseNameValidity(name);
         this.name = notNull("name", name);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
@@ -222,7 +220,7 @@ class MongoDatabaseImpl implements MongoDatabase {
         notNull("command", command);
         notNull("readPreference", readPreference);
         executor.execute(new CommandReadOperation<TResult>(getName(), toBsonDocument(command), codecRegistry.get(resultClass)),
-                readPreference, clientSession, callback);
+                readPreference, readConcern, clientSession, callback);
     }
 
     @Override
@@ -237,7 +235,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     private void executeDrop(@Nullable final ClientSession clientSession, final SingleResultCallback<Void> callback) {
-        executor.execute(new DropDatabaseOperation(name, writeConcern), clientSession, callback);
+        executor.execute(new DropDatabaseOperation(name, writeConcern), readConcern, clientSession, callback);
     }
 
     @Override
@@ -292,7 +290,7 @@ class MongoDatabaseImpl implements MongoDatabase {
         if (validationOptions.getValidationAction() != null) {
             operation.validationAction(validationOptions.getValidationAction());
         }
-        executor.execute(operation, clientSession, callback);
+        executor.execute(operation, readConcern, clientSession, callback);
     }
 
     @Override
@@ -326,7 +324,7 @@ class MongoDatabaseImpl implements MongoDatabase {
                                    final SingleResultCallback<Void> callback) {
         notNull("createViewOptions", createViewOptions);
         executor.execute(new CreateViewOperation(name, viewName, viewOn, createBsonDocumentList(pipeline), writeConcern)
-                .collation(createViewOptions.getCollation()), clientSession, callback);
+                .collation(createViewOptions.getCollation()), readConcern, clientSession, callback);
     }
 
     private List<BsonDocument> createBsonDocumentList(final List<? extends Bson> pipeline) {

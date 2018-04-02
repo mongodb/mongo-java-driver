@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.session;
 
-import com.mongodb.ReadConcern;
 import com.mongodb.session.ClientSession;
 import com.mongodb.session.SessionContext;
 import org.bson.BsonDocument;
@@ -24,7 +23,7 @@ import org.bson.BsonTimestamp;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-public class ClientSessionContext implements SessionContext {
+public abstract class ClientSessionContext implements SessionContext {
 
     private ClientSession clientSession;
 
@@ -84,17 +83,5 @@ public class ClientSessionContext implements SessionContext {
     @Override
     public void advanceClusterTime(final BsonDocument clusterTime) {
         clientSession.advanceClusterTime(clusterTime);
-    }
-
-    @Override
-    public boolean hasActiveTransaction() {
-        // TODO: move this to async ClientSession implementation of this method
-        return false;
-    }
-
-    @Override
-    public ReadConcern getReadConcern() {
-        // TODO: move this to async ClientSession implementation of this method
-        return ReadConcern.DEFAULT;
     }
 }

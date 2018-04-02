@@ -50,9 +50,7 @@ import com.mongodb.client.result.UpdateResult;
 import com.mongodb.internal.operation.AsyncOperations;
 import com.mongodb.internal.operation.IndexHelper;
 import com.mongodb.lang.Nullable;
-import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncWriteOperation;
-import com.mongodb.session.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.Document;
@@ -78,12 +76,12 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private final WriteConcern writeConcern;
     private final boolean retryWrites;
     private final ReadConcern readConcern;
-    private final AsyncOperationExecutor executor;
+    private final OperationExecutor executor;
     private final AsyncOperations<TDocument> operations;
 
     MongoCollectionImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final CodecRegistry codecRegistry,
                         final ReadPreference readPreference, final WriteConcern writeConcern, final boolean retryWrites,
-                        final ReadConcern readConcern, final AsyncOperationExecutor executor) {
+                        final ReadConcern readConcern, final OperationExecutor executor) {
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
@@ -92,8 +90,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         this.retryWrites = retryWrites;
         this.readConcern = notNull("readConcern", readConcern);
         this.executor = notNull("executor", executor);
-        this.operations = new AsyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry, writeConcern, retryWrites,
-                readConcern);
+        this.operations = new AsyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry, writeConcern,
+                retryWrites);
 
     }
 
@@ -191,7 +189,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private void executeCount(@Nullable final ClientSession clientSession, final Bson filter, final CountOptions options,
                               final SingleResultCallback<Long> callback) {
-        executor.execute(operations.count(filter, options), readPreference, clientSession, callback);
+        executor.execute(operations.count(filter, options), readPreference, readConcern, clientSession, callback);
     }
 
     @Override
@@ -409,7 +407,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                                   final List<? extends WriteModel<? extends TDocument>> requests,
                                   final BulkWriteOptions options, final SingleResultCallback<BulkWriteResult> callback) {
         notNull("requests", requests);
-        executor.execute(operations.bulkWrite(requests, options), clientSession, callback);
+        executor.execute(operations.bulkWrite(requests, options), readConcern, clientSession, callback);
     }
 
     @Override
@@ -471,7 +469,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private void executeInsertMany(@Nullable final ClientSession clientSession, final List<? extends TDocument> documents,
                                    final InsertManyOptions options, final SingleResultCallback<Void> callback) {
-        executor.execute(operations.insertMany(documents, options), clientSession,
+        executor.execute(operations.insertMany(documents, options), readConcern, clientSession,
                 new SingleResultCallback<BulkWriteResult>() {
                     @Override
                     public void onResult(final BulkWriteResult result, final Throwable t) {
@@ -686,7 +684,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private void executeFindOneAndDelete(@Nullable final ClientSession clientSession, final Bson filter,
                                          final FindOneAndDeleteOptions options, final SingleResultCallback<TDocument> callback) {
-        executor.execute(operations.findOneAndDelete(filter, options), clientSession, callback);
+        executor.execute(operations.findOneAndDelete(filter, options), readConcern, clientSession, callback);
     }
 
     @Override
@@ -715,7 +713,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private void executeFindOneAndReplace(@Nullable final ClientSession clientSession, final Bson filter, final TDocument replacement,
                                           final FindOneAndReplaceOptions options, final SingleResultCallback<TDocument> callback) {
-        executor.execute(operations.findOneAndReplace(filter, replacement, options), clientSession, callback);
+        executor.execute(operations.findOneAndReplace(filter, replacement, options), readConcern, clientSession, callback);
     }
 
     @Override
@@ -744,7 +742,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private void executeFindOneAndUpdate(@Nullable final ClientSession clientSession, final Bson filter, final Bson update,
                                          final FindOneAndUpdateOptions options, final SingleResultCallback<TDocument> callback) {
-        executor.execute(operations.findOneAndUpdate(filter, update, options), clientSession, callback);
+        executor.execute(operations.findOneAndUpdate(filter, update, options), readConcern, clientSession, callback);
     }
 
     @Override
@@ -759,7 +757,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     private void executeDrop(@Nullable final ClientSession clientSession, final SingleResultCallback<Void> callback) {
-        executor.execute(operations.dropCollection(), clientSession, callback);
+        executor.execute(operations.dropCollection(), readConcern, clientSession, callback);
     }
 
     @Override
@@ -827,16 +825,17 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private void executeCreateIndexes(@Nullable final ClientSession clientSession, final List<IndexModel> indexes,
                                       final CreateIndexOptions createIndexOptions, final SingleResultCallback<List<String>> callback) {
-        executor.execute(operations.createIndexes(indexes, createIndexOptions), clientSession, new SingleResultCallback<Void>() {
-            @Override
-            public void onResult(final Void result, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    callback.onResult(IndexHelper.getIndexNames(indexes, codecRegistry), null);
-                }
-            }
-        });
+        executor.execute(operations.createIndexes(indexes, createIndexOptions), readConcern, clientSession,
+                new SingleResultCallback<Void>() {
+                    @Override
+                    public void onResult(final Void result, final Throwable t) {
+                        if (t != null) {
+                            callback.onResult(null, t);
+                        } else {
+                            callback.onResult(IndexHelper.getIndexNames(indexes, codecRegistry), null);
+                        }
+                    }
+                });
     }
 
     @Override
@@ -932,12 +931,12 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private void executeDropIndex(@Nullable final ClientSession clientSession, final Bson keys,
                                   final DropIndexOptions dropIndexOptions, final SingleResultCallback<Void> callback) {
-        executor.execute(operations.dropIndex(keys, dropIndexOptions), clientSession, callback);
+        executor.execute(operations.dropIndex(keys, dropIndexOptions), readConcern, clientSession, callback);
     }
 
     private void executeDropIndex(@Nullable final ClientSession clientSession, final String indexName,
                                   final DropIndexOptions dropIndexOptions, final SingleResultCallback<Void> callback) {
-        executor.execute(operations.dropIndex(indexName, dropIndexOptions), clientSession, callback);
+        executor.execute(operations.dropIndex(indexName, dropIndexOptions), readConcern, clientSession, callback);
     }
 
     @Override
@@ -966,13 +965,13 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private void executeRenameCollection(@Nullable final ClientSession clientSession, final MongoNamespace newCollectionNamespace,
                                          final RenameCollectionOptions options, final SingleResultCallback<Void> callback) {
-        executor.execute(operations.renameCollection(newCollectionNamespace, options), clientSession, callback);
+        executor.execute(operations.renameCollection(newCollectionNamespace, options), readConcern, clientSession, callback);
     }
 
     private void executeSingleWriteRequest(@Nullable final ClientSession clientSession,
                                            final AsyncWriteOperation<BulkWriteResult> writeOperation,
                                            final WriteRequest.Type type, final SingleResultCallback<BulkWriteResult> callback) {
-        executor.execute(writeOperation, clientSession, new SingleResultCallback<BulkWriteResult>() {
+        executor.execute(writeOperation, readConcern, clientSession, new SingleResultCallback<BulkWriteResult>() {
                              @Override
                              public void onResult(final BulkWriteResult result, final Throwable t) {
                                  if (t instanceof MongoBulkWriteException) {

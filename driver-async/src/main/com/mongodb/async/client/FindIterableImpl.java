@@ -26,9 +26,7 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.FindOptions;
 import com.mongodb.internal.operation.AsyncOperations;
 import com.mongodb.lang.Nullable;
-import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
-import com.mongodb.session.ClientSession;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -48,9 +46,9 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
 
     FindIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
                      final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                     final ReadConcern readConcern, final AsyncOperationExecutor executor, final Bson filter) {
+                     final ReadConcern readConcern, final OperationExecutor executor, final Bson filter) {
         super(clientSession, executor, readConcern, readPreference);
-        this.operations = new AsyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry, readConcern);
+        this.operations = new AsyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry);
         this.resultClass = notNull("resultClass", resultClass);
         this.filter = notNull("filter", filter);
         this.findOptions = new FindOptions();
@@ -194,29 +192,29 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     @Override
     public void first(final SingleResultCallback<TResult> callback) {
         notNull("callback", callback);
-        getExecutor().execute(operations.findFirst(filter, resultClass, findOptions), getReadPreference(), getClientSession(),
-                new SingleResultCallback<AsyncBatchCursor<TResult>>() {
-            @Override
-            public void onResult(final AsyncBatchCursor<TResult> batchCursor, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    batchCursor.next(new SingleResultCallback<List<TResult>>() {
-                        @Override
-                        public void onResult(final List<TResult> result, final Throwable t) {
-                            batchCursor.close();
-                            if (t != null) {
-                                callback.onResult(null, t);
-                            } else if (result == null || result.isEmpty()) {
-                                callback.onResult(null, null);
-                            } else {
-                                callback.onResult(result.get(0), null);
-                            }
+        getExecutor().execute(operations.findFirst(filter, resultClass, findOptions), getReadPreference(), getReadConcern(),
+                getClientSession(), new SingleResultCallback<AsyncBatchCursor<TResult>>() {
+                    @Override
+                    public void onResult(final AsyncBatchCursor<TResult> batchCursor, final Throwable t) {
+                        if (t != null) {
+                            callback.onResult(null, t);
+                        } else {
+                            batchCursor.next(new SingleResultCallback<List<TResult>>() {
+                                @Override
+                                public void onResult(final List<TResult> result, final Throwable t) {
+                                    batchCursor.close();
+                                    if (t != null) {
+                                        callback.onResult(null, t);
+                                    } else if (result == null || result.isEmpty()) {
+                                        callback.onResult(null, null);
+                                    } else {
+                                        callback.onResult(result.get(0), null);
+                                    }
+                                }
+                            });
                         }
-                    });
-                }
-            }
-        });
+                    }
+                });
     }
 
     @Override

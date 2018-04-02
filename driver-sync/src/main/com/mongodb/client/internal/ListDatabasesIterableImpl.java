@@ -48,7 +48,7 @@ public final class ListDatabasesIterableImpl<TResult> extends MongoIterableImpl<
                                      final CodecRegistry codecRegistry, final ReadPreference readPreference,
                                      final OperationExecutor executor) {
         super(clientSession, executor, ReadConcern.DEFAULT, readPreference); // TODO: read concern?
-        this.operations = new SyncOperations<BsonDocument>(BsonDocument.class, readPreference, codecRegistry, ReadConcern.DEFAULT);
+        this.operations = new SyncOperations<BsonDocument>(BsonDocument.class, readPreference, codecRegistry);
         this.resultClass = notNull("clazz", resultClass);
     }
 

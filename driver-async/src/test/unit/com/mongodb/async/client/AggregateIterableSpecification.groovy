@@ -28,7 +28,6 @@ import com.mongodb.async.SingleResultCallback
 import com.mongodb.client.model.Collation
 import com.mongodb.operation.AggregateOperation
 import com.mongodb.operation.AggregateToCollectionOperation
-import com.mongodb.operation.AsyncOperationExecutor
 import com.mongodb.operation.FindOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -288,7 +287,7 @@ class AggregateIterableSpecification extends Specification {
     def 'should check variables using notNull'() {
         given:
         def mongoIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, Stub(AsyncOperationExecutor), [Document.parse('{$match: 1}')])
+                readConcern, writeConcern, Stub(OperationExecutor), [Document.parse('{$match: 1}')])
         def callback = Stub(SingleResultCallback)
         def block = Stub(Block)
         def target = Stub(List)
@@ -332,7 +331,7 @@ class AggregateIterableSpecification extends Specification {
         when:
         def results = new FutureResultCallback()
         mongoIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, Stub(AsyncOperationExecutor), [null])
+                readConcern, writeConcern, Stub(OperationExecutor), [null])
         mongoIterable.into(target, results)
         results.get()
 
@@ -344,7 +343,7 @@ class AggregateIterableSpecification extends Specification {
         when:
         def batchSize = 5
         def mongoIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, Stub(AsyncOperationExecutor), [null])
+                readConcern, writeConcern, Stub(OperationExecutor), [null])
 
         then:
         mongoIterable.getBatchSize() == null

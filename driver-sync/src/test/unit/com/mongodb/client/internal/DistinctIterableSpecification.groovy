@@ -63,8 +63,7 @@ class DistinctIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new DistinctOperation<Document>(namespace, 'field', new DocumentCodec())
-                .filter(new BsonDocument())
-                .readConcern(readConcern))
+                .filter(new BsonDocument()))
         readPreference == secondary()
 
         when: 'overriding initial options'
@@ -75,8 +74,7 @@ class DistinctIterableSpecification extends Specification {
         then: 'should use the overrides'
         expect operation, isTheSameAs(new DistinctOperation<Document>(namespace, 'field', new DocumentCodec())
                 .filter(new BsonDocument('field', new BsonInt32(1)))
-                .maxTime(999, MILLISECONDS).collation(collation)
-                .readConcern(readConcern))
+                .maxTime(999, MILLISECONDS).collation(collation))
     }
 
     def 'should use ClientSession'() {

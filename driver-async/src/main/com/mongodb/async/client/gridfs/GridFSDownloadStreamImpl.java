@@ -19,13 +19,13 @@ package com.mongodb.async.client.gridfs;
 import com.mongodb.MongoGridFSException;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.client.ClientSession;
 import com.mongodb.async.client.FindIterable;
 import com.mongodb.async.client.MongoCollection;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.lang.Nullable;
-import com.mongodb.session.ClientSession;
 import org.bson.Document;
 import org.bson.types.Binary;
 

@@ -21,9 +21,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.internal.operation.AsyncOperations;
 import com.mongodb.lang.Nullable;
-import com.mongodb.operation.AsyncOperationExecutor;
 import com.mongodb.operation.AsyncReadOperation;
-import com.mongodb.session.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -43,9 +41,9 @@ final class ListDatabasesIterableImpl<TResult> extends MongoIterableImpl<TResult
 
     ListDatabasesIterableImpl(@Nullable final ClientSession clientSession, final Class<TResult> resultClass,
                               final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                              final AsyncOperationExecutor executor) {
+                              final OperationExecutor executor) {
         super(clientSession, executor, ReadConcern.DEFAULT, readPreference); // TODO: read concern?
-        this.operations = new AsyncOperations<BsonDocument>(BsonDocument.class, readPreference, codecRegistry, ReadConcern.DEFAULT);
+        this.operations = new AsyncOperations<BsonDocument>(BsonDocument.class, readPreference, codecRegistry);
         this.resultClass = notNull("clazz", resultClass);
     }
 

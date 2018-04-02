@@ -17,7 +17,6 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.bulk.DeleteRequest;
@@ -93,18 +92,15 @@ final class Operations<TDocument> {
     private final CodecRegistry codecRegistry;
     private final WriteConcern writeConcern;
     private final boolean retryWrites;
-    private final ReadConcern readConcern;
 
     Operations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
-               final CodecRegistry codecRegistry, final WriteConcern writeConcern, final boolean retryWrites,
-               final ReadConcern readConcern) {
+               final CodecRegistry codecRegistry, final WriteConcern writeConcern, final boolean retryWrites) {
         this.namespace = namespace;
         this.documentClass = documentClass;
         this.readPreference = readPreference;
         this.codecRegistry = codecRegistry;
         this.writeConcern = writeConcern;
         this.retryWrites = retryWrites;
-        this.readConcern = readConcern;
     }
 
     CountOperation count(final Bson filter, final CountOptions options) {
@@ -113,8 +109,7 @@ final class Operations<TDocument> {
                 .skip(options.getSkip())
                 .limit(options.getLimit())
                 .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                .collation(options.getCollation())
-                .readConcern(readConcern);
+                .collation(options.getCollation());
         if (options.getHint() != null) {
             operation.hint(toBsonDocument(options.getHint()));
         } else if (options.getHintString() != null) {
@@ -156,7 +151,6 @@ final class Operations<TDocument> {
                 .oplogReplay(options.isOplogReplay())
                 .partial(options.isPartial())
                 .slaveOk(readPreference.isSlaveOk())
-                .readConcern(readConcern)
                 .collation(options.getCollation())
                 .comment(options.getComment())
                 .hint(toBsonDocumentOrNull(options.getHint()))
@@ -174,7 +168,6 @@ final class Operations<TDocument> {
         return new DistinctOperation<TResult>(namespace, fieldName, codecRegistry.get(resultClass))
                 .filter(filter == null ? null : filter.toBsonDocument(documentClass, codecRegistry))
                 .maxTime(maxTimeMS, MILLISECONDS)
-                .readConcern(readConcern)
                 .collation(collation);
 
     }
@@ -191,7 +184,6 @@ final class Operations<TDocument> {
                 .allowDiskUse(allowDiskUse)
                 .batchSize(batchSize)
                 .useCursor(useCursor)
-                .readConcern(readConcern)
                 .collation(collation)
                 .hint(hint == null ? null : hint.toBsonDocument(documentClass, codecRegistry))
                 .comment(comment);
@@ -257,7 +249,6 @@ final class Operations<TDocument> {
                         .scope(toBsonDocumentOrNull(scope))
                         .sort(toBsonDocumentOrNull(sort))
                         .verbose(verbose)
-                        .readConcern(readConcern)
                         .collation(collation);
         if (finalizeFunction != null) {
             operation.finalizeFunction(new BsonJavaScript(finalizeFunction));

@@ -21,7 +21,6 @@ import com.mongodb.Function
 import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
-import com.mongodb.operation.AsyncOperationExecutor
 import com.mongodb.operation.ListDatabasesOperation
 import org.bson.BsonDocument
 import org.bson.Document
@@ -156,7 +155,7 @@ class ListDatabasesIterableSpecification extends Specification {
     def 'should check variables using notNull'() {
         given:
         def mongoIterable = new ListDatabasesIterableImpl<Document>(null, Document, codecRegistry, readPreference,
-                Stub(AsyncOperationExecutor))
+                Stub(OperationExecutor))
         def callback = Stub(SingleResultCallback)
         def block = Stub(Block)
         def target = Stub(List)
@@ -202,7 +201,7 @@ class ListDatabasesIterableSpecification extends Specification {
         when:
         def batchSize = 5
         def mongoIterable = new ListDatabasesIterableImpl<Document>(null, Document, codecRegistry, readPreference,
-                Stub(AsyncOperationExecutor))
+                Stub(OperationExecutor))
 
         then:
         mongoIterable.getBatchSize() == null

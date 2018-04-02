@@ -22,7 +22,7 @@ import com.mongodb.async.SingleResultCallback
 import com.mongodb.async.client.FindIterable
 import com.mongodb.async.client.ListIndexesIterable
 import com.mongodb.async.client.MongoCollection
-import com.mongodb.session.ClientSession
+import com.mongodb.async.client.ClientSession
 import org.bson.Document
 import spock.lang.Specification
 

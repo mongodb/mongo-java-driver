@@ -169,7 +169,6 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
                 .partial(true)
                 .oplogReplay(true)
                 .maxTime(10, MILLISECONDS)
-                .readConcern(ReadConcern.MAJORITY)
                 .comment('my comment')
                 .hint(BsonDocument.parse('{ hint : 1}'))
                 .min(BsonDocument.parse('{ abc: 99 }'))

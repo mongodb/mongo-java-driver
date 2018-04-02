@@ -91,7 +91,6 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         operation.getBatchSize() == 0
         operation.getModifiers() == null
         operation.getProjection() == null
-        operation.getReadConcern() == ReadConcern.DEFAULT
         operation.getCollation() == null
         !operation.isNoCursorTimeout()
         !operation.isOplogReplay()
@@ -116,7 +115,6 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                 .projection(projection)
                 .modifiers(modifiers)
                 .cursorType(Tailable)
-                .readConcern(ReadConcern.MAJORITY)
                 .collation(defaultCollation)
                 .partial(true)
                 .slaveOk(true)
@@ -132,7 +130,6 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         operation.getBatchSize() == 40
         operation.getProjection() == projection
         operation.getModifiers() == modifiers
-        operation.getReadConcern() == ReadConcern.MAJORITY
         operation.getCollation() == defaultCollation
         operation.isNoCursorTimeout()
         operation.isOplogReplay()

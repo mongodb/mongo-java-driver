@@ -27,12 +27,10 @@ import com.mongodb.client.model.IndexOptionDefaults
 import com.mongodb.client.model.ValidationAction
 import com.mongodb.client.model.ValidationLevel
 import com.mongodb.client.model.ValidationOptions
-import com.mongodb.operation.AsyncOperationExecutor
 import com.mongodb.operation.CommandReadOperation
 import com.mongodb.operation.CreateCollectionOperation
 import com.mongodb.operation.CreateViewOperation
 import com.mongodb.operation.DropDatabaseOperation
-import com.mongodb.session.ClientSession
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -334,7 +332,7 @@ class MongoDatabaseSpecification extends Specification {
         def viewName = 'view1'
         def viewOn = 'col1'
         def database = new MongoDatabaseImpl(name, codecRegistry, readPreference,  writeConcern,
-                false, readConcern, Stub(AsyncOperationExecutor))
+                false, readConcern, Stub(OperationExecutor))
         def callback = Stub(SingleResultCallback)
 
         when:
@@ -369,7 +367,7 @@ class MongoDatabaseSpecification extends Specification {
     def 'should validate the client session correctly'() {
         given:
         def database = new MongoDatabaseImpl(name, codecRegistry, readPreference,  writeConcern,
-                false, readConcern, Stub(AsyncOperationExecutor))
+                false, readConcern, Stub(OperationExecutor))
         def callback = Stub(SingleResultCallback)
 
         when:

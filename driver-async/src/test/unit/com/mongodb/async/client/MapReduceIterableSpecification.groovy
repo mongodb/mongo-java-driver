@@ -27,7 +27,6 @@ import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.MapReduceAction
-import com.mongodb.operation.AsyncOperationExecutor
 import com.mongodb.operation.FindOperation
 import com.mongodb.operation.MapReduceStatistics
 import com.mongodb.operation.MapReduceToCollectionOperation
@@ -295,7 +294,7 @@ class MapReduceIterableSpecification extends Specification {
     def 'should check variables using notNull'() {
         given:
         def mongoIterable = new MapReduceIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, Stub(AsyncOperationExecutor), 'map', 'reduce')
+                readConcern, writeConcern, Stub(OperationExecutor), 'map', 'reduce')
         def callback = Stub(SingleResultCallback)
         def block = Stub(Block)
         def target = Stub(List)
@@ -347,7 +346,7 @@ class MapReduceIterableSpecification extends Specification {
         when:
         def batchSize = 5
         def mongoIterable = new MapReduceIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, Stub(AsyncOperationExecutor), 'map', 'reduce')
+                readConcern, writeConcern, Stub(OperationExecutor), 'map', 'reduce')
 
         then:
         mongoIterable.getBatchSize() == null

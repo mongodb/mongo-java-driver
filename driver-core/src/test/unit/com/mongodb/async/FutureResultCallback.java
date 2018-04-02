@@ -59,7 +59,7 @@ public class FutureResultCallback<T> implements SingleResultCallback<T>, Future<
     }
 
     @Override
-    public T get() throws InterruptedException, ExecutionException {
+    public T get() throws InterruptedException {
         latch.await();
         if (result.hasError()) {
             throw MongoException.fromThrowable(result.getError());
