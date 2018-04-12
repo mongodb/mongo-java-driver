@@ -27,6 +27,7 @@ import static com.mongodb.MongoCredential.createMongoCRCredential
 import static com.mongodb.MongoCredential.createMongoX509Credential
 import static com.mongodb.MongoCredential.createPlainCredential
 import static com.mongodb.MongoCredential.createScramSha1Credential
+import static com.mongodb.MongoCredential.createScramSha256Credential
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.secondary
 import static com.mongodb.ReadPreference.secondaryPreferred
@@ -270,6 +271,11 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://jeff:123@localhost/?' +
                              'authMechanism=SCRAM-SHA-1' +
                              '&authSource=test')              | createScramSha1Credential('jeff', 'test', '123'.toCharArray())
+        new ConnectionString('mongodb://jeff:123@localhost/?' +
+                'authMechanism=SCRAM-SHA-256')                | createScramSha256Credential('jeff', 'admin', '123'.toCharArray())
+        new ConnectionString('mongodb://jeff:123@localhost/?' +
+                'authMechanism=SCRAM-SHA-256' +
+                '&authSource=test')                           | createScramSha256Credential('jeff', 'test', '123'.toCharArray())
         new ConnectionString('mongodb://jeff@localhost/?' +
                            'authMechanism=GSSAPI')            | createGSSAPICredential('jeff')
         new ConnectionString('mongodb://jeff:123@localhost/?' +

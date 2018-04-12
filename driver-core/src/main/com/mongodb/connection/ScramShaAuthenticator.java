@@ -16,8 +16,10 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.AuthenticationMechanism;
 import com.mongodb.MongoCredential;
 import com.mongodb.ServerAddress;
+import com.mongodb.internal.authentication.SaslPrep;
 import org.bson.internal.Base64;
 
 import javax.crypto.Mac;
@@ -29,23 +31,29 @@ import java.security.InvalidKeyException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Random;
 
+import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_1;
+import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_256;
 import static com.mongodb.internal.authentication.NativeAuthenticationHelper.createAuthenticationHash;
 import static java.lang.String.format;
 
 class ScramShaAuthenticator extends SaslAuthenticator {
     private final RandomStringGenerator randomStringGenerator;
     private final AuthenticationHashGenerator authenticationHashGenerator;
+
     private static final int MINIMUM_ITERATION_COUNT = 4096;
 
     ScramShaAuthenticator(final MongoCredential credential) {
-        this(credential, new DefaultRandomStringGenerator(), AUTHENTICATION_HASH_GENERATOR);
+        this(credential, new DefaultRandomStringGenerator(), getAuthenicationHashGenerator(credential.getAuthenticationMechanism()));
     }
 
     ScramShaAuthenticator(final MongoCredential credential, final RandomStringGenerator randomStringGenerator) {
-        this(credential, randomStringGenerator, AUTHENTICATION_HASH_GENERATOR);
+        this(credential, randomStringGenerator, getAuthenicationHashGenerator(credential.getAuthenticationMechanism()));
     }
 
     ScramShaAuthenticator(final MongoCredential credential, final RandomStringGenerator randomStringGenerator,
@@ -87,8 +95,13 @@ class ScramShaAuthenticator extends SaslAuthenticator {
             this.credential = credential;
             this.randomStringGenerator = randomStringGenerator;
             this.authenticationHashGenerator = authenticationHashGenerator;
-            hAlgorithm = "SHA-1";
-            hmacAlgorithm = "HmacSHA1";
+            if (credential.getAuthenticationMechanism().equals(SCRAM_SHA_1)) {
+                hAlgorithm = "SHA-1";
+                hmacAlgorithm = "HmacSHA1";
+            } else {
+                hAlgorithm = "SHA-256";
+                hmacAlgorithm = "HmacSHA256";
+            }
         }
 
         public String getMechanismName() {
@@ -122,7 +135,7 @@ class ScramShaAuthenticator extends SaslAuthenticator {
         }
 
         public boolean isComplete() {
-            return step == 3;
+            return step == 2;
         }
 
         public byte[] unwrap(final byte[] incoming, final int offset, final int len) {
@@ -280,11 +293,19 @@ class ScramShaAuthenticator extends SaslAuthenticator {
         }
 
         private String getUserName() {
-            return credential.getUserName().replace("=", "=3D").replace(",", "=2C");
+            String userName = credential.getUserName().replace("=", "=3D").replace(",", "=2C");
+            if (credential.getAuthenticationMechanism() == SCRAM_SHA_256) {
+                userName = SaslPrep.saslPrepStored(userName);
+            }
+            return userName;
         }
 
         private String getAuthenicationHash() {
-            return authenticationHashGenerator.generate(credential);
+            String password = authenticationHashGenerator.generate(credential);
+            if (credential.getAuthenticationMechanism() == SCRAM_SHA_256) {
+                password = SaslPrep.saslPrepStored(password);
+            }
+            return password;
         }
 
         private byte[] xorInPlace(final byte[] a, final byte[] b) {
@@ -330,7 +351,16 @@ class ScramShaAuthenticator extends SaslAuthenticator {
         }
     }
 
-    private static final AuthenticationHashGenerator AUTHENTICATION_HASH_GENERATOR =  new AuthenticationHashGenerator() {
+    private static final AuthenticationHashGenerator DEFAULT_AUTHENTICATION_HASH_GENERATOR =  new AuthenticationHashGenerator() {
+        // Suppress warning of MongoCredential#getAuthenicationHash possibly returning null
+        @SuppressWarnings("ConstantConditions")
+        @Override
+        public String generate(final MongoCredential credential) {
+            return new String(credential.getPassword());
+        }
+    };
+
+    private static final AuthenticationHashGenerator LEGACY_AUTHENTICATION_HASH_GENERATOR =  new AuthenticationHashGenerator() {
         // Suppress warning of MongoCredential#getAuthenicationHash possibly returning null
         @SuppressWarnings("ConstantConditions")
         @Override
@@ -339,4 +369,8 @@ class ScramShaAuthenticator extends SaslAuthenticator {
             return createAuthenticationHash(credential.getUserName(), credential.getPassword());
         }
     };
+
+    private static AuthenticationHashGenerator getAuthenicationHashGenerator(final AuthenticationMechanism authenticationMechanism) {
+        return authenticationMechanism == SCRAM_SHA_1 ? LEGACY_AUTHENTICATION_HASH_GENERATOR : DEFAULT_AUTHENTICATION_HASH_GENERATOR;
+    }
 }

@@ -171,6 +171,7 @@ public class ConnectionStringTest extends TestCase {
                     case PLAIN:
                     case MONGODB_CR:
                     case SCRAM_SHA_1:
+                    case SCRAM_SHA_256:
                         assertString("auth.password", password);
                         break;
                     default:
