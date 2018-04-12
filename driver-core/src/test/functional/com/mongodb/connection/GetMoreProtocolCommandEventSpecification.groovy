@@ -32,9 +32,9 @@ import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
 import spock.lang.Shared
 
-import static com.mongodb.ClusterFixture.getCredentialList
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
+import static com.mongodb.connection.ConnectionFixture.getCredentialListWithCache
 import static com.mongodb.connection.ProtocolTestHelper.execute
 
 class GetMoreProtocolCommandEventSpecification extends OperationFunctionalSpecification {
@@ -43,7 +43,7 @@ class GetMoreProtocolCommandEventSpecification extends OperationFunctionalSpecif
 
     def setupSpec() {
         connection = new InternalStreamConnectionFactory(new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                getCredentialList(), null, null, [], null)
+                getCredentialListWithCache(), null, null, [], null)
                 .create(new ServerId(new ClusterId(), getPrimary()))
         connection.open();
     }

@@ -16,7 +16,6 @@
 
 package com.mongodb.connection
 
-import com.mongodb.MongoCredential
 import com.mongodb.MongoSecurityException
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
@@ -34,8 +33,10 @@ import static com.mongodb.connection.MessageHelper.buildSuccessfulReply
 class ScramShaAuthenticatorSpecification extends Specification {
     def serverId = new ServerId(new ClusterId(), new ServerAddress('localhost', 27017))
     def connectionDescription = new ConnectionDescription(serverId)
-    private final static MongoCredential SHA1_CREDENTIAL = createScramSha1Credential('user', 'database', 'pencil' as char[])
-    private final static MongoCredential SHA256_CREDENTIAL = createScramSha256Credential('user', 'database', 'pencil' as char[])
+    private final static MongoCredentialWithCache SHA1_CREDENTIAL =
+            new MongoCredentialWithCache(createScramSha1Credential('user', 'database', 'pencil' as char[]))
+    private final static MongoCredentialWithCache SHA256_CREDENTIAL =
+            new MongoCredentialWithCache(createScramSha256Credential('user', 'database', 'pencil' as char[]))
 
     def 'should successfully authenticate with sha1 to RFC spec'() {
         when:
@@ -115,7 +116,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
             S: v=+cMTpXM1VzX5fEjtLXuNji5DeyA=
         '''
 
-        def credential = createScramSha1Credential('ramo\u0312n', 'database', 'p\u212Bssword' as char[])
+        def credential = new MongoCredentialWithCache(createScramSha1Credential('ramo\u0312n', 'database', 'p\u212Bssword' as char[]))
         def authenticator = new ScramShaAuthenticator(credential, { 'R815pGP84+H0OFRk+U/48qC+kwjw5TYS' })
 
         then:
@@ -133,7 +134,8 @@ class ScramShaAuthenticatorSpecification extends Specification {
             C: c=biws,r=rOfhDB+wEbeRWgbNEkq9%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,p=+435koC4wp2/T9ORQmy75R13f1QGv9phV9LYQwssJZE=
             S: v=DKoN/Dii8S1ozDCVVJ7eAPHAe0KczTtxn2BsQtUeUgI=
         '''
-        def credential = createScramSha256Credential('u,s\u00BDe\u00B4r\u2168=', 'database', '\u2168pen\u00AAcil' as char[])
+        def credential = new MongoCredentialWithCache(
+                createScramSha256Credential('u,s\u00BDe\u00B4r\u2168=', 'database', '\u2168pen\u00AAcil' as char[]))
         def authenticator = new ScramShaAuthenticator(credential, { 'rOfhDB+wEbeRWgbNEkq9' })
 
         then:
@@ -233,8 +235,8 @@ class ScramShaAuthenticatorSpecification extends Specification {
         TestInternalConnection connection = new TestInternalConnection(serverId)
         serverResponses.each {
             connection.enqueueReply(
-                buildSuccessfulReply("{conversationId: 1, payload: BinData(0, '${encode64(it)}'), done: false, ok: 1}")
-        ) }
+                    buildSuccessfulReply("{conversationId: 1, payload: BinData(0, '${encode64(it)}'), done: false, ok: 1}")
+            ) }
         connection.enqueueReply(buildSuccessfulReply('{conversationId: 1, done: true, ok: 1}'))
         connection
     }

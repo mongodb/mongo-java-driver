@@ -18,8 +18,8 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoCompressor;
 import com.mongodb.MongoCredential;
-import com.mongodb.ServerAddress;
 import com.mongodb.MongoDriverInformation;
+import com.mongodb.ServerAddress;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.ServerListener;
 
@@ -32,7 +32,7 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
     private final ServerSettings serverSettings;
     private final ConnectionPoolSettings connectionPoolSettings;
     private final StreamFactory streamFactory;
-    private final List<MongoCredential> credentialList;
+    private final List<MongoCredentialWithCache> credentialList;
     private final StreamFactory heartbeatStreamFactory;
     private final CommandListener commandListener;
     private final String applicationName;
@@ -50,7 +50,7 @@ class DefaultClusterableServerFactory implements ClusterableServerFactory {
         this.serverSettings = serverSettings;
         this.connectionPoolSettings = connectionPoolSettings;
         this.streamFactory = streamFactory;
-        this.credentialList = credentialList;
+        this.credentialList = MongoCredentialWithCache.wrapCredentialList(credentialList);
         this.heartbeatStreamFactory = heartbeatStreamFactory;
         this.commandListener = commandListener;
         this.applicationName = applicationName;

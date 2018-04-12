@@ -18,7 +18,6 @@ package com.mongodb.connection;
 
 import com.mongodb.AuthenticationMechanism;
 import com.mongodb.MongoCommandException;
-import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.async.SingleResultCallback;
 import org.bson.BsonDocument;
@@ -29,7 +28,7 @@ import static com.mongodb.connection.CommandHelper.executeCommand;
 import static com.mongodb.connection.CommandHelper.executeCommandAsync;
 
 class X509Authenticator extends Authenticator {
-    X509Authenticator(final MongoCredential credential) {
+    X509Authenticator(final MongoCredentialWithCache credential) {
         super(credential);
     }
 
@@ -37,10 +36,10 @@ class X509Authenticator extends Authenticator {
     void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription) {
         try {
             validateUserName(connectionDescription);
-            BsonDocument authCommand = getAuthCommand(getCredential().getUserName());
-            executeCommand(getCredential().getSource(), authCommand, connection);
+            BsonDocument authCommand = getAuthCommand(getMongoCredential().getUserName());
+            executeCommand(getMongoCredential().getSource(), authCommand, connection);
         } catch (MongoCommandException e) {
-            throw new MongoSecurityException(getCredential(), "Exception authenticating", e);
+            throw new MongoSecurityException(getMongoCredential(), "Exception authenticating", e);
         }
     }
 
@@ -49,7 +48,7 @@ class X509Authenticator extends Authenticator {
                            final SingleResultCallback<Void> callback) {
         try {
             validateUserName(connectionDescription);
-            executeCommandAsync(getCredential().getSource(), getAuthCommand(getCredential().getUserName()), connection,
+            executeCommandAsync(getMongoCredential().getSource(), getAuthCommand(getMongoCredential().getUserName()), connection,
                                 new SingleResultCallback<BsonDocument>() {
                                     @Override
                                     public void onResult(final BsonDocument nonceResult, final Throwable t) {
@@ -79,15 +78,15 @@ class X509Authenticator extends Authenticator {
 
     private Throwable translateThrowable(final Throwable t) {
         if (t instanceof MongoCommandException) {
-            return new MongoSecurityException(getCredential(), "Exception authenticating", t);
+            return new MongoSecurityException(getMongoCredential(), "Exception authenticating", t);
         } else {
             return t;
         }
     }
 
     private void validateUserName(final ConnectionDescription connectionDescription) {
-        if (getCredential().getUserName() == null && connectionDescription.getServerVersion().compareTo(new ServerVersion(3, 4)) < 0) {
-            throw new MongoSecurityException(getCredential(), "User name is required for the MONGODB-X509 authentication mechanism "
+        if (getMongoCredential().getUserName() == null && connectionDescription.getServerVersion().compareTo(new ServerVersion(3, 4)) < 0) {
+            throw new MongoSecurityException(getMongoCredential(), "User name is required for the MONGODB-X509 authentication mechanism "
                                                                       + "on server versions less than 3.4");
         }
     }

@@ -36,7 +36,7 @@ import static com.mongodb.assertions.Assertions.isTrue;
 class PlainAuthenticator extends SaslAuthenticator {
     private static final String DEFAULT_PROTOCOL = "mongodb";
 
-    PlainAuthenticator(final MongoCredential credential) {
+    PlainAuthenticator(final MongoCredentialWithCache credential) {
         super(credential);
     }
 
@@ -47,7 +47,7 @@ class PlainAuthenticator extends SaslAuthenticator {
 
     @Override
     protected SaslClient createSaslClient(final ServerAddress serverAddress) {
-        final MongoCredential credential = getCredential();
+        final MongoCredential credential = getMongoCredential();
         isTrue("mechanism is PLAIN", credential.getAuthenticationMechanism() == PLAIN);
         try {
             return Sasl.createSaslClient(new String[]{PLAIN.getMechanismName()},

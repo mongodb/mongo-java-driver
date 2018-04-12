@@ -41,13 +41,12 @@ public class X509AuthenticatorUnitTest {
     public void before() {
         connection = new TestInternalConnection(new ServerId(new ClusterId(), new ServerAddress("localhost", 27017)));
         connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()));
-        credential = MongoCredential.createMongoX509Credential(
-                "CN=client,OU=kerneluser,O=10Gen,L=New York City,ST=New York,C=US");
-        subject = new X509Authenticator(this.credential);
+        credential = MongoCredential.createMongoX509Credential("CN=client,OU=kerneluser,O=10Gen,L=New York City,ST=New York,C=US");
+        subject = new X509Authenticator(new MongoCredentialWithCache(credential));
     }
 
     @Test
-    public void testFailedAuthentication() throws InterruptedException {
+    public void testFailedAuthentication() {
         enqueueFailedAuthenticationReply();
 
         try {
@@ -59,7 +58,7 @@ public class X509AuthenticatorUnitTest {
     }
 
     @Test
-    public void testFailedAuthenticationAsync() throws InterruptedException {
+    public void testFailedAuthenticationAsync() {
         enqueueFailedAuthenticationReply();
 
         FutureResultCallback<Void> futureCallback = new FutureResultCallback<Void>();

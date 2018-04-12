@@ -16,7 +16,6 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.MongoCredential;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoSecurityException;
@@ -39,7 +38,7 @@ import static com.mongodb.connection.CommandHelper.executeCommandAsync;
 
 abstract class SaslAuthenticator extends Authenticator {
 
-    SaslAuthenticator(final MongoCredential credential) {
+    SaslAuthenticator(final MongoCredentialWithCache credential) {
         super(credential);
     }
 
@@ -59,9 +58,9 @@ abstract class SaslAuthenticator extends Authenticator {
                         response = saslClient.evaluateChallenge((res.getBinary("payload")).getData());
 
                         if (response == null) {
-                            throw new MongoSecurityException(getCredential(),
+                            throw new MongoSecurityException(getMongoCredential(),
                                     "SASL protocol error: no client response to challenge for credential "
-                                            + getCredential());
+                                            + getMongoCredential());
                         }
 
                         res = sendSaslContinue(conversationId, response, connection);
@@ -116,33 +115,33 @@ abstract class SaslAuthenticator extends Authenticator {
 
     private void throwIfSaslClientIsNull(final SaslClient saslClient) {
         if (saslClient == null) {
-            throw new MongoSecurityException(getCredential(),
+            throw new MongoSecurityException(getMongoCredential(),
                     String.format("This JDK does not support the %s SASL mechanism", getMechanismName()));
         }
     }
 
     @Nullable
     private Subject getSubject() {
-        return getCredential().getMechanismProperty(JAVA_SUBJECT_KEY, null);
+        return getMongoCredential().getMechanismProperty(JAVA_SUBJECT_KEY, null);
     }
 
     private BsonDocument sendSaslStart(final byte[] outToken, final InternalConnection connection) {
-        return executeCommand(getCredential().getSource(), createSaslStartCommandDocument(outToken), connection);
+        return executeCommand(getMongoCredential().getSource(), createSaslStartCommandDocument(outToken), connection);
     }
 
     private BsonDocument sendSaslContinue(final BsonInt32 conversationId, final byte[] outToken, final InternalConnection connection) {
-        return executeCommand(getCredential().getSource(), createSaslContinueDocument(conversationId, outToken), connection);
+        return executeCommand(getMongoCredential().getSource(), createSaslContinueDocument(conversationId, outToken), connection);
     }
 
     private void sendSaslStartAsync(final byte[] outToken, final InternalConnection connection,
                                     final SingleResultCallback<BsonDocument> callback) {
-        executeCommandAsync(getCredential().getSource(), createSaslStartCommandDocument(outToken), connection,
+        executeCommandAsync(getMongoCredential().getSource(), createSaslStartCommandDocument(outToken), connection,
                 callback);
     }
 
     private void sendSaslContinueAsync(final BsonInt32 conversationId, final byte[] outToken, final InternalConnection connection,
                                        final SingleResultCallback<BsonDocument> callback) {
-        executeCommandAsync(getCredential().getSource(), createSaslContinueDocument(conversationId, outToken), connection,
+        executeCommandAsync(getMongoCredential().getSource(), createSaslContinueDocument(conversationId, outToken), connection,
                 callback);
     }
 
@@ -170,7 +169,7 @@ abstract class SaslAuthenticator extends Authenticator {
         } else if (t instanceof MongoSecurityException) {
             return (MongoSecurityException) t;
         } else {
-            return new MongoSecurityException(getCredential(), "Exception authenticating " + getCredential(), t);
+            return new MongoSecurityException(getMongoCredential(), "Exception authenticating " + getMongoCredential(), t);
         }
     }
 
