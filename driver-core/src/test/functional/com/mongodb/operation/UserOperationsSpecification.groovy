@@ -139,6 +139,24 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         executeAsync(new DropUserOperation(databaseName, credential.userName))
     }
 
+    def 'should handle user not found'() {
+        given:
+        def credential = createCredential('user', databaseName, 'pencil' as char[])
+        def cluster = getCluster(credential, ClusterSettings.builder().serverSelectionTimeout(1, TimeUnit.SECONDS))
+
+        when:
+        cluster.selectServer(new WritableServerSelector())
+
+        then:
+        thrown(MongoTimeoutException)
+
+        cleanup:
+        cluster?.close()
+
+        where:
+        async << [true, false]
+    }
+
     @Category(Slow)
     def 'a removed user should not authenticate'() {
         given:
