@@ -29,14 +29,10 @@ import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.CreateCollectionOperation;
-import com.mongodb.operation.CreateUserOperation;
 import com.mongodb.operation.CreateViewOperation;
 import com.mongodb.operation.DropDatabaseOperation;
-import com.mongodb.operation.DropUserOperation;
 import com.mongodb.operation.ListCollectionsOperation;
 import com.mongodb.operation.ReadOperation;
-import com.mongodb.operation.UpdateUserOperation;
-import com.mongodb.operation.UserExistsOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonInt32;
@@ -52,7 +48,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static com.mongodb.DBCollection.createWriteConcernException;
-import static com.mongodb.MongoCredential.createMongoCRCredential;
+import static com.mongodb.MongoCredential.createCredential;
 import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -604,6 +600,7 @@ public class DB {
     /**
      * Adds or updates a user for this database
      *
+     * <p>Never create or modify users over an insecure network without the use of TLS.</p>
      * @param userName the user name
      * @param password the password
      * @return the result of executing this operation
@@ -621,6 +618,7 @@ public class DB {
     /**
      * Adds or updates a user for this database
      *
+     * <p>Never create or modify users over an insecure network without the use of TLS.</p>
      * @param userName the user name
      * @param password the password
      * @param readOnly if true, user will only be able to read
@@ -633,10 +631,10 @@ public class DB {
      */
     @Deprecated
     public WriteResult addUser(final String userName, final char[] password, final boolean readOnly) {
-        MongoCredential credential = createMongoCRCredential(userName, getName(), password);
+        MongoCredential credential = createCredential(userName, getName(), password);
         boolean userExists = false;
         try {
-            userExists = executor.execute(new UserExistsOperation(getName(), userName), primary());
+            userExists = executor.execute(new com.mongodb.operation.UserExistsOperation(getName(), userName), primary());
         } catch (MongoCommandException e) {
             if (e.getCode() != 13) {
                 throw e;
@@ -644,10 +642,10 @@ public class DB {
         }
         try {
             if (userExists) {
-                executor.execute(new UpdateUserOperation(credential, readOnly, getWriteConcern()));
+                executor.execute(new com.mongodb.operation.UpdateUserOperation(credential, readOnly, getWriteConcern()));
                 return new WriteResult(1, true, null);
             } else {
-                executor.execute(new CreateUserOperation(credential, readOnly, getWriteConcern()));
+                executor.execute(new com.mongodb.operation.CreateUserOperation(credential, readOnly, getWriteConcern()));
                 return new WriteResult(1, false, null);
             }
         } catch (MongoWriteConcernException e) {
@@ -667,7 +665,7 @@ public class DB {
     @Deprecated
     public WriteResult removeUser(final String userName) {
         try {
-            executor.execute(new DropUserOperation(getName(), userName, getWriteConcern()));
+            executor.execute(new com.mongodb.operation.DropUserOperation(getName(), userName, getWriteConcern()));
             return new WriteResult(1, true, null);
         } catch (MongoWriteConcernException e) {
             throw createWriteConcernException(e);
