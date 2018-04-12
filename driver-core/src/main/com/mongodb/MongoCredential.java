@@ -29,6 +29,7 @@ import static com.mongodb.AuthenticationMechanism.MONGODB_CR;
 import static com.mongodb.AuthenticationMechanism.MONGODB_X509;
 import static com.mongodb.AuthenticationMechanism.PLAIN;
 import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_1;
+import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_256;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -148,10 +149,10 @@ public final class MongoCredential {
 
     /**
      * Creates a MongoCredential instance with an unspecified mechanism.  The client will negotiate the best mechanism based on the
-     * version of the server that the client is authenticating to.  If the server version is 3.0 or higher,
-     * the driver will authenticate using the SCRAM-SHA-1 mechanism.  Otherwise, the driver will authenticate using the MONGODB_CR
-     * mechanism.
+     * version of the server that the client is authenticating to.
      *
+     * <p>If the server version is 4.0 or higher, the driver will negotiate with the server preferring the SCRAM-SHA-256 mechanism. 3.x
+     * servers will authenticate using SCRAM-SHA-1, older servers will authenticate using the MONGODB_CR mechanism.</p>
      *
      * @param userName the user name
      * @param database the database where the user is defined
@@ -159,8 +160,9 @@ public final class MongoCredential {
      * @return the credential
      *
      * @since 2.13
-     * @mongodb.driver.manual core/authentication/#mongodb-cr-authentication MONGODB-CR
+     * @mongodb.driver.manual core/authentication/#authentication-scram-sha-256 SCRAM-SHA-256
      * @mongodb.driver.manual core/authentication/#authentication-scram-sha-1 SCRAM-SHA-1
+     * @mongodb.driver.manual core/authentication/#mongodb-cr-authentication MONGODB-CR
      */
     public static MongoCredential createCredential(final String userName, final String database, final char[] password) {
         return new MongoCredential(null, userName, database, password);
@@ -185,6 +187,23 @@ public final class MongoCredential {
      */
     public static MongoCredential createScramSha1Credential(final String userName, final String source, final char[] password) {
         return new MongoCredential(SCRAM_SHA_1, userName, source, password);
+    }
+
+    /**
+     * Creates a MongoCredential instance for the SCRAM-SHA-256 SASL mechanism.
+     *
+     * @param userName the non-null user name
+     * @param source the source where the user is defined.
+     * @param password the non-null user password
+     * @return the credential
+     * @see #createCredential(String, String, char[])
+     *
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     * @mongodb.driver.manual core/authentication/#authentication-scram-sha-256 SCRAM-SHA-256
+     */
+    public static MongoCredential createScramSha256Credential(final String userName, final String source, final char[] password) {
+        return new MongoCredential(SCRAM_SHA_256, userName, source, password);
     }
 
     /**
@@ -297,6 +316,20 @@ public final class MongoCredential {
     }
 
     /**
+     * Creates a new MongoCredential with the set mechanism. The existing mechanism must be null.
+     *
+     * @param mechanism the mechanism to set
+     * @return the credential
+     * @since 3.8
+     */
+    public MongoCredential withMechanism(final AuthenticationMechanism mechanism) {
+        if (this.mechanism != null) {
+            throw new IllegalArgumentException("Mechanism already set");
+        }
+        return new MongoCredential(mechanism, userName, source, password, mechanismProperties);
+    }
+
+    /**
      * Constructs a new instance using the given mechanism, userName, source, and password
      *
      * @param mechanism the authentication mechanism
@@ -306,6 +339,11 @@ public final class MongoCredential {
      */
     MongoCredential(@Nullable final AuthenticationMechanism mechanism, @Nullable final String userName, final String source,
                     @Nullable final char[] password) {
+        this(mechanism, userName, source, password, Collections.<String, Object>emptyMap());
+    }
+
+    MongoCredential(@Nullable final AuthenticationMechanism mechanism, @Nullable final String userName, final String source,
+                    @Nullable final char[] password, final Map<String, Object> mechanismProperties) {
         if (mechanism != MONGODB_X509 && userName == null) {
             throw new IllegalArgumentException("username can not be null");
         }
@@ -327,12 +365,13 @@ public final class MongoCredential {
         this.source = notNull("source", source);
 
         this.password = password != null ? password.clone() : null;
-        this.mechanismProperties = Collections.emptyMap();
+        this.mechanismProperties = new HashMap<String, Object>(mechanismProperties);
     }
 
     @SuppressWarnings("deprecation")
     private boolean mechanismRequiresPassword(@Nullable final AuthenticationMechanism mechanism) {
-        return mechanism == PLAIN || mechanism == MONGODB_CR || mechanism == SCRAM_SHA_1;
+        return mechanism == PLAIN || mechanism == MONGODB_CR || mechanism == SCRAM_SHA_1 || mechanism == SCRAM_SHA_256;
+
     }
 
     /**
@@ -469,12 +508,12 @@ public final class MongoCredential {
     @Override
     public String toString() {
         return "MongoCredential{"
-               + "mechanism=" + mechanism
-               + ", userName='" + userName + '\''
-               + ", source='" + source + '\''
-               + ", password=<hidden>"
-               + ", mechanismProperties=" + mechanismProperties
-               + '}';
+                + "mechanism=" + mechanism
+                + ", userName='" + userName + '\''
+                + ", source='" + source + '\''
+                + ", password=<hidden>"
+                + ", mechanismProperties=" + mechanismProperties
+                + '}';
     }
 }
 
