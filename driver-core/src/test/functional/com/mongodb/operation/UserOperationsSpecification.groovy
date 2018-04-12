@@ -16,7 +16,6 @@
 
 package com.mongodb.operation
 
-import category.Async
 import category.Slow
 import com.mongodb.MongoCredential
 import com.mongodb.MongoNamespace
@@ -44,6 +43,7 @@ import com.mongodb.connection.ServerVersion
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SocketStreamFactory
 import com.mongodb.connection.StreamFactory
+import com.mongodb.internal.connection.NoOpSessionContext
 import com.mongodb.selector.WritableServerSelector
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -53,7 +53,6 @@ import spock.lang.IgnoreIf
 
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getAsyncStreamFactory
 import static com.mongodb.ClusterFixture.getBinding
@@ -64,79 +63,69 @@ import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.MongoCredential.createCredential
+import static com.mongodb.MongoCredential.createScramSha256Credential
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static java.util.Arrays.asList
 
-@IgnoreIf({ serverVersionAtLeast(3, 7) })
+
 class UserOperationsSpecification extends OperationFunctionalSpecification {
     def credential = createCredential('\u53f0\u5317', databaseName, 'Ta\u0301ibe\u030Ci'.toCharArray())
 
     def 'an added user should be found'() {
-        given:
-        new CreateUserOperation(credential, true).execute(getBinding())
-
         when:
-        def found = new UserExistsOperation(databaseName, credential.userName).execute(getBinding())
+        execute(new CreateUserOperation(credential, true), async)
 
         then:
-        found
+        execute(new UserExistsOperation(databaseName, credential.userName), async)
 
         cleanup:
-        new DropUserOperation(databaseName, credential.userName).execute(getBinding())
-    }
+        execute(new DropUserOperation(databaseName, credential.userName), async)
 
-    @Category(Async)
-    def 'an added user should be found asynchronously'() {
-        given:
-        executeAsync(new CreateUserOperation(credential, true))
-
-        when:
-        def found = executeAsync(new UserExistsOperation(databaseName, credential.userName))
-
-        then:
-        found
-
-        cleanup:
-        executeAsync(new DropUserOperation(databaseName, credential.userName))
+        where:
+        async << [true, false]
     }
 
     def 'an added user should authenticate'() {
-        given:
-        new CreateUserOperation(credential, true).execute(getBinding())
-        def cluster = getCluster()
-
         when:
+        execute(new CreateUserOperation(credential, true), async)
+        def cluster = getCluster()
         def server = cluster.selectServer(new WritableServerSelector())
         def connection = server.getConnection()
-        testConnection(connection)
 
         then:
-        connection
+        !testConnection(connection).isEmpty()
 
         cleanup:
         connection?.release()
-        new DropUserOperation(databaseName, credential.userName).execute(getBinding())
+        execute(new DropUserOperation(databaseName, credential.userName), async)
         cluster?.close()
+
+        where:
+        async << [true, false]
     }
 
-    @Category(Async)
-    def 'an added user should authenticate asynchronously'() {
-        given:
-        executeAsync(new CreateUserOperation(credential, true))
-        def cluster = getCluster()
-
+    @IgnoreIf({ !serverVersionAtLeast(3, 7) })
+    def 'should correctly, prep username and be able to authenticate users with unicode in their name'() {
         when:
+        def user = createScramSha256Credential('IX', databaseName, authCredential.getPassword())
+        execute(new CreateUserOperation(user, true), async)
+        def cluster = getCluster(authCredential)
         def server = cluster.selectServer(new WritableServerSelector())
         def connection = server.getConnection()
-        testConnection(connection)
 
         then:
-        connection
+        !testConnection(connection).isEmpty()
 
         cleanup:
         connection?.release()
+        execute(new DropUserOperation(databaseName, user.userName), async)
         cluster?.close()
-        executeAsync(new DropUserOperation(databaseName, credential.userName))
+
+        where:
+        [async, authCredential] << [[true, false],
+                [createCredential('I\u00ADX', databaseName, 'pass\u2010word' as char[]),
+                 createScramSha256Credential('I\u00ADX', databaseName, 'pass\u2010word' as char[]),
+                 createScramSha256Credential('\u2168', databaseName, 'pass\u2010word' as char[])]].combinations()
     }
 
     def 'should handle user not found'() {
@@ -160,8 +149,8 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
     @Category(Slow)
     def 'a removed user should not authenticate'() {
         given:
-        new CreateUserOperation(credential, true).execute(getBinding())
-        new DropUserOperation(databaseName, credential.userName).execute(getBinding())
+        execute(new CreateUserOperation(credential, true), async)
+        execute(new DropUserOperation(databaseName, credential.userName), async)
         def cluster = getCluster(ClusterSettings.builder().serverSelectionTimeout(1, TimeUnit.SECONDS))
 
         when:
@@ -172,30 +161,16 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
 
         cleanup:
         cluster?.close()
-    }
 
-    @Category([Async, Slow])
-    def 'a removed user should not authenticate asynchronously'() {
-        given:
-        executeAsync(new CreateUserOperation(credential, true))
-        executeAsync(new DropUserOperation(databaseName, credential.userName))
-        def cluster = getCluster(ClusterSettings.builder().serverSelectionTimeout(1, TimeUnit.SECONDS))
-
-        when:
-        cluster.selectServer(new WritableServerSelector())
-
-        then:
-        thrown(MongoTimeoutException)
-
-        cleanup:
-        cluster?.close()
+        where:
+        async << [true, false]
     }
 
     def 'a replaced user should authenticate with its new password'() {
         given:
-        new CreateUserOperation(credential, true).execute(getBinding())
+        execute(new CreateUserOperation(credential, true), async)
         def newCredentials = createCredential(credential.userName, credential.source, '234'.toCharArray())
-        new UpdateUserOperation(newCredentials, true).execute(getBinding())
+                execute(new UpdateUserOperation(newCredentials, true), async)
         def cluster = getCluster(newCredentials)
 
         when:
@@ -209,68 +184,34 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         cleanup:
         connection?.release()
         cluster?.close()
-        new DropUserOperation(databaseName, credential.userName).execute(getBinding())
-    }
+        execute(new DropUserOperation(databaseName, credential.userName), async)
 
-    @Category(Async)
-    def 'a replaced user should authenticate with its new password asynchronously'() {
-        given:
-        executeAsync(new CreateUserOperation(credential, true))
-        def newCredentials = createCredential(credential.userName, credential.source, '234'.toCharArray())
-        executeAsync(new UpdateUserOperation(newCredentials, true))
-        def cluster = getAsyncCluster(newCredentials)
-
-        when:
-        def server = cluster.selectServer(new WritableServerSelector())
-        def connection = server.getConnection()
-        testConnection(connection)
-
-        then:
-        connection
-
-        cleanup:
-        connection?.release()
-        cluster?.close()
-        executeAsync(new DropUserOperation(databaseName, credential.userName))
+        where:
+        async << [true, false]
     }
 
     def 'a read write user should be able to write'() {
-        given:
-        new CreateUserOperation(credential, false).execute(getBinding())
-        def cluster = getCluster()
-
         when:
-        def result = new InsertOperation(getNamespace(), true, ACKNOWLEDGED, false, asList(new InsertRequest(new BsonDocument())))
-                .execute(getBinding(cluster))
+        execute(new CreateUserOperation(credential, false), async)
+        def cluster = async ? getAsyncCluster() : getCluster()
+        def binding = async ? getAsyncBinding(cluster) : getBinding(cluster)
+
         then:
-        result.getCount() == 0
+        execute(new InsertOperation(getNamespace(), true, ACKNOWLEDGED, false, asList(new InsertRequest(new BsonDocument()))),
+                binding).getCount() == 0
 
         cleanup:
-        new DropUserOperation(databaseName, credential.userName).execute(getBinding(cluster))
+        execute(new DropUserOperation(databaseName, credential.userName), async)
         cluster?.close()
-    }
 
-    @Category(Async)
-    def 'a read write user should be able to write asynchronously'() {
-        given:
-        executeAsync(new CreateUserOperation(credential, false))
-        def cluster = getAsyncCluster()
-
-        when:
-        def result = executeAsync(new InsertOperation(getNamespace(), true, ACKNOWLEDGED, false,
-                asList(new InsertRequest(new BsonDocument()))), getAsyncBinding(cluster))
-        then:
-        result.getCount() == 0
-
-        cleanup:
-        executeAsync(new DropUserOperation(databaseName, credential.userName))
-        cluster?.close()
+        where:
+        async << [true, false]
     }
 
     @IgnoreIf({ !isAuthenticated() || isSharded()  })
     def 'a read only user should not be able to write'() {
         given:
-        new CreateUserOperation(credential, true).execute(getBinding())
+        execute(new CreateUserOperation(credential, true), async)
         def cluster = getCluster(credential)
 
         when:
@@ -281,64 +222,74 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         thrown(MongoServerException)
 
         cleanup:
-        new DropUserOperation(databaseName, credential.userName).execute(getBinding())
+        execute(new DropUserOperation(databaseName, credential.userName), async)
         cluster?.close()
+
+        where:
+        async << [true, false]
     }
 
     @IgnoreIf({ !isAuthenticated() })
     def 'a read write admin user should be able to write to a different database'() {
         given:
-        def rwCredential = createCredential('jeff-rw-admin', 'admin', '123'.toCharArray());
-        new CreateUserOperation(rwCredential, false).execute(getBinding())
-        def cluster = getCluster(rwCredential)
+        def rwCredential = createCredential('jeff-rw-admin', 'admin', '123'.toCharArray())
+        execute(new CreateUserOperation(rwCredential, false), async)
+        def cluster = async ? getAsyncCluster(rwCredential) : getCluster(rwCredential)
+        def binding = async ? getAsyncBinding(cluster) : getBinding(cluster)
 
         when:
-        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, false,
-                asList(new InsertRequest(new BsonDocument()))).execute(getBinding(cluster))
+        execute(new InsertOperation(getNamespace(), true, ACKNOWLEDGED, false, asList(new InsertRequest(new BsonDocument()))), binding)
 
         then:
-        new CountOperation(getNamespace()).execute(getBinding(cluster)) == 1L
+        execute(new CountOperation(getNamespace()), binding) == 1L
 
         cleanup:
-        new DropUserOperation('admin', rwCredential.userName).execute(getBinding())
+        execute(new DropUserOperation('admin', rwCredential.userName), async)
         cluster?.close()
+
+        where:
+        async << [true, false]
     }
 
     @IgnoreIf({ !isAuthenticated() || isSharded() })
     def 'a read only admin user should not be able to write to a different database'() {
         given:
-        def roCredential = createCredential('jeff-ro-admin', 'admin', '123'.toCharArray());
-        new CreateUserOperation(roCredential, true).execute(getBinding())
-        def cluster = getCluster(roCredential)
+        def roCredential = createCredential('jeff-ro-admin', 'admin', '123'.toCharArray())
+        execute(new CreateUserOperation(roCredential, true), async)
+        def cluster = async ? getAsyncCluster(roCredential) : getCluster(roCredential)
+        def binding = async ? getAsyncBinding(cluster) : getBinding(cluster)
 
         when:
-        new InsertOperation(getNamespace(), true, ACKNOWLEDGED, false,
-                asList(new InsertRequest(new BsonDocument()))).execute(getBinding(cluster))
+        execute(new InsertOperation(getNamespace(), true, ACKNOWLEDGED, false, asList(new InsertRequest(new BsonDocument()))), binding)
 
         then:
         thrown(MongoServerException)
 
         cleanup:
-        new DropUserOperation('admin', roCredential.userName).execute(getBinding())
+        execute(new DropUserOperation('admin', roCredential.userName), async)
         cluster?.close()
+
+        where:
+        async << [true, false]
     }
 
     @IgnoreIf({ !isAuthenticated() })
     def 'a read only admin user should be able to read from a different database'() {
-        given:
-        def roCredential = createCredential('jeff-ro-admin', 'admin', '123'.toCharArray());
-        new CreateUserOperation(roCredential, true).execute(getBinding())
-        def cluster = getCluster(roCredential)
-
         when:
-        def count = new CountOperation(getNamespace()).execute(getBinding())
+        def roCredential = createCredential('jeff-ro-admin', 'admin', '123'.toCharArray())
+        execute(new CreateUserOperation(roCredential, true), async)
+        def cluster = async ? getAsyncCluster(roCredential) : getCluster(roCredential)
+        def binding = async ? getAsyncBinding(cluster) : getBinding(cluster)
 
         then:
-        count == 0L
+        execute(new CountOperation(getNamespace()), binding) == 0L
 
         cleanup:
-        new DropUserOperation('admin', roCredential.userName).execute(getBinding())
+        execute(new DropUserOperation('admin', roCredential.userName), async)
         cluster?.close()
+
+        where:
+        async << [true, false]
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
@@ -347,7 +298,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         def operation = new CreateUserOperation(credential, false, new WriteConcern(5))
 
         when:
-        async ? executeAsync(operation) : operation.execute(getBinding())
+        execute(operation, async)
 
         then:
         def ex = thrown(MongoWriteConcernException)
@@ -355,14 +306,14 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
 
         when:
         operation = new UpdateUserOperation(credential, true, new WriteConcern(5))
-        async ? executeAsync(operation) : operation.execute(getBinding())
+        execute(operation, async)
 
         then:
         ex = thrown(MongoWriteConcernException)
         ex.code == 100
 
         cleanup:
-        new DropUserOperation(databaseName, credential.userName).execute(getBinding())
+        execute(new DropUserOperation(databaseName, credential.userName), async)
 
         where:
         async << [true, false]
@@ -457,7 +408,7 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
     }
 
     def testConnection(Connection connection) {
-        connection.command('admin', new BsonDocument('ismaster', new BsonInt32(1)), false, NO_OP_FIELD_NAME_VALIDATOR,
-                           new BsonDocumentCodec())
+        connection.command('admin', new BsonDocument('ismaster', new BsonInt32(1)), NO_OP_FIELD_NAME_VALIDATOR,
+                ReadPreference.primaryPreferred(), new BsonDocumentCodec(), NoOpSessionContext.INSTANCE)
     }
 }

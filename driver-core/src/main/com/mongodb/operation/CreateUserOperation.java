@@ -46,7 +46,9 @@ import static com.mongodb.operation.WriteConcernHelper.writeConcernErrorTransfor
  * An operation to create a user.
  *
  * @since 3.0
+ * @deprecated use {@link CommandWriteOperation} directly or the mongod shell helpers.
  */
+@Deprecated
 public class CreateUserOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final MongoCredential credential;
     private final boolean readOnly;
@@ -57,9 +59,7 @@ public class CreateUserOperation implements AsyncWriteOperation<Void>, WriteOper
      *
      * @param credential the users credentials.
      * @param readOnly   true if the user is a readOnly user.
-     * @deprecated Prefer {@link #CreateUserOperation(MongoCredential, boolean, WriteConcern)}
      */
-    @Deprecated
     public CreateUserOperation(final MongoCredential credential, final boolean readOnly) {
         this(credential, readOnly, null);
     }
@@ -131,7 +131,7 @@ public class CreateUserOperation implements AsyncWriteOperation<Void>, WriteOper
     }
 
     private BsonDocument getCommand(final ConnectionDescription description) {
-        BsonDocument commandDocument = asCommandDocument(credential, readOnly, "createUser");
+        BsonDocument commandDocument = asCommandDocument(credential, description, readOnly, "createUser");
         appendWriteConcernToCommand(writeConcern, commandDocument, description);
         return commandDocument;
     }

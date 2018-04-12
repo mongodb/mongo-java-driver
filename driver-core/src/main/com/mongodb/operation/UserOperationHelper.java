@@ -21,26 +21,35 @@ import com.mongodb.MongoCredential;
 import com.mongodb.MongoInternalException;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.lang.NonNull;
+import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.connection.ServerVersion;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 
-import java.util.Arrays;
+import java.util.Collections;
 
 import static com.mongodb.internal.authentication.NativeAuthenticationHelper.createAuthenticationHash;
 import static com.mongodb.operation.WriteConcernHelper.createWriteConcernError;
 import static com.mongodb.operation.WriteConcernHelper.hasWriteConcernError;
 
 final class UserOperationHelper {
+    private static final ServerVersion FOUR_ZERO = new ServerVersion(3, 7);
 
-    static BsonDocument asCommandDocument(final MongoCredential credential, final boolean readOnly, final String commandName) {
+    static BsonDocument asCommandDocument(final MongoCredential credential, final ConnectionDescription connectionDescription,
+                                          final boolean readOnly, final String commandName) {
+        boolean serverDigestPassword = connectionDescription.getServerVersion().compareTo(FOUR_ZERO) >= 0;
         BsonDocument document = new BsonDocument();
-        document.put(commandName, new BsonString(credential.getUserName()));
-        document.put("pwd", new BsonString(createAuthenticationHash(getUserNameNonNull(credential), getPasswordNonNull(credential))));
-        document.put("digestPassword", BsonBoolean.FALSE);
-        document.put("roles", new BsonArray(Arrays.<BsonValue>asList(new BsonString(getRoleName(credential, readOnly)))));
+        document.put(commandName, new BsonString(getUserNameNonNull(credential)));
+        if (serverDigestPassword) {
+            document.put("pwd", new BsonString(new String(getPasswordNonNull(credential))));
+        } else {
+            document.put("pwd", new BsonString(createAuthenticationHash(getUserNameNonNull(credential), getPasswordNonNull(credential))));
+        }
+        document.put("digestPassword", BsonBoolean.valueOf(serverDigestPassword));
+        document.put("roles", new BsonArray(Collections.<BsonValue>singletonList(new BsonString(getRoleName(credential, readOnly)))));
         return document;
     }
 

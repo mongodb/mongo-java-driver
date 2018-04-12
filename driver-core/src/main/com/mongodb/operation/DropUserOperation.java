@@ -45,7 +45,9 @@ import static com.mongodb.operation.WriteConcernHelper.writeConcernErrorTransfor
  * An operation to remove a user.
  *
  * @since 3.0
+ * @deprecated use {@link CommandWriteOperation} directly or the mongod shell helpers.
  */
+@Deprecated
 public class DropUserOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final String databaseName;
     private final String userName;
@@ -56,9 +58,7 @@ public class DropUserOperation implements AsyncWriteOperation<Void>, WriteOperat
      *
      * @param databaseName the name of the database for the operation.
      * @param userName     the name of the user to be dropped.
-     * @deprecated Prefer {@link #DropUserOperation(String, String, WriteConcern)}
      */
-    @Deprecated
     public DropUserOperation(final String databaseName, final String userName) {
         this(databaseName, userName, null);
     }
