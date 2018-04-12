@@ -40,7 +40,7 @@ class DefaultAuthenticator extends Authenticator {
 
     Authenticator createAuthenticator(final ConnectionDescription connectionDescription) {
         if (connectionDescription.getServerVersion().compareTo(new ServerVersion(2, 7)) >= 0) {
-            return new ScramSha1Authenticator(getCredential());
+            return new ScramShaAuthenticator(getCredential());
         } else {
             return new NativeAuthenticator(getCredential());
         }

@@ -72,7 +72,7 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
             case MONGODB_X509:
                 return new X509Authenticator(credential);
             case SCRAM_SHA_1:
-                return new ScramSha1Authenticator(credential);
+                return new ScramShaAuthenticator(credential);
             case MONGODB_CR:
                 return new NativeAuthenticator(credential);
             default:
