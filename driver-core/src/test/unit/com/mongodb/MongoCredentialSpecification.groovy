@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-
-
 package com.mongodb
 
 import spock.lang.Specification
@@ -23,16 +21,17 @@ import spock.lang.Specification
 import static com.mongodb.AuthenticationMechanism.MONGODB_CR
 import static com.mongodb.AuthenticationMechanism.PLAIN
 import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_1
+import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_256
 
 class MongoCredentialSpecification extends Specification {
     def 'creating a credential with an unspecified mechanism should populate correct fields'() {
         given:
-        String userName = 'user';
-        String database = 'test';
-        char[] password = 'pwd'.toCharArray();
+        String userName = 'user'
+        String database = 'test'
+        char[] password = 'pwd'.toCharArray()
 
         when:
-        MongoCredential credential = MongoCredential.createCredential(userName, database, password);
+        MongoCredential credential = MongoCredential.createCredential(userName, database, password)
 
         then:
         userName == credential.getUserName()
@@ -44,13 +43,13 @@ class MongoCredentialSpecification extends Specification {
 
     def 'creating a challenge-response credential should populate correct fields'() {
         given:
-        AuthenticationMechanism mechanism = MONGODB_CR;
-        String userName = 'user';
-        String database = 'test';
-        char[] password = 'pwd'.toCharArray();
+        AuthenticationMechanism mechanism = MONGODB_CR
+        String userName = 'user'
+        String database = 'test'
+        char[] password = 'pwd'.toCharArray()
 
         when:
-        MongoCredential credential = MongoCredential.createMongoCRCredential(userName, database, password);
+        MongoCredential credential = MongoCredential.createMongoCRCredential(userName, database, password)
 
         then:
         userName == credential.getUserName()
@@ -62,30 +61,30 @@ class MongoCredentialSpecification extends Specification {
 
     def 'should throw IllegalArgumentException when required parameter is not supplied for challenge-response'() {
         when:
-        MongoCredential.createMongoCRCredential(null, 'test', 'pwd'.toCharArray());
+        MongoCredential.createMongoCRCredential(null, 'test', 'pwd'.toCharArray())
         then:
         thrown(IllegalArgumentException)
 
         when:
-        MongoCredential.createMongoCRCredential('user', null, 'pwd'.toCharArray());
+        MongoCredential.createMongoCRCredential('user', null, 'pwd'.toCharArray())
         then:
         thrown(IllegalArgumentException)
 
         when:
-        MongoCredential.createMongoCRCredential('user', 'test', null);
+        MongoCredential.createMongoCRCredential('user', 'test', null)
         then:
         thrown(IllegalArgumentException)
     }
 
     def 'creating a Plain credential should populate all required fields'() {
         given:
-        AuthenticationMechanism mechanism = PLAIN;
-        String userName = 'user';
-        String source = '$external';
-        char[] password = 'pwd'.toCharArray();
+        AuthenticationMechanism mechanism = PLAIN
+        String userName = 'user'
+        String source = '$external'
+        char[] password = 'pwd'.toCharArray()
 
         when:
-        MongoCredential credential = MongoCredential.createPlainCredential(userName, source, password);
+        MongoCredential credential = MongoCredential.createPlainCredential(userName, source, password)
 
         then:
         userName == credential.getUserName()
@@ -97,30 +96,30 @@ class MongoCredentialSpecification extends Specification {
 
     def 'should throw IllegalArgumentException when a required field is not passed in'() {
         when:
-        MongoCredential.createPlainCredential(null, '$external', 'pwd'.toCharArray());
+        MongoCredential.createPlainCredential(null, '$external', 'pwd'.toCharArray())
         then:
         thrown(IllegalArgumentException)
 
         when:
-        MongoCredential.createPlainCredential('user', '$external', null);
+        MongoCredential.createPlainCredential('user', '$external', null)
         then:
         thrown(IllegalArgumentException)
 
         when:
-        MongoCredential.createPlainCredential('user', null, 'pwd'.toCharArray());
+        MongoCredential.createPlainCredential('user', null, 'pwd'.toCharArray())
         then:
         thrown(IllegalArgumentException)
     }
 
     def 'creating a SCRAM_SHA_1 credential should populate all required fields'() {
         given:
-        AuthenticationMechanism mechanism = SCRAM_SHA_1;
-        String userName = 'user';
-        String source = 'admin';
-        char[] password = 'pwd'.toCharArray();
+        AuthenticationMechanism mechanism = SCRAM_SHA_1
+        String userName = 'user'
+        String source = 'admin'
+        char[] password = 'pwd'.toCharArray()
 
         when:
-        MongoCredential credential = MongoCredential.createScramSha1Credential(userName, source, password);
+        MongoCredential credential = MongoCredential.createScramSha1Credential(userName, source, password)
 
         then:
         userName == credential.getUserName()
@@ -130,30 +129,48 @@ class MongoCredentialSpecification extends Specification {
         MongoCredential.SCRAM_SHA_1_MECHANISM == credential.getMechanism()
     }
 
+    def 'creating a SCRAM_SHA_256 credential should populate all required fields'() {
+        given:
+        AuthenticationMechanism mechanism = SCRAM_SHA_256
+        String userName = 'user'
+        String source = 'admin'
+        char[] password = 'pwd'.toCharArray()
+
+        when:
+        MongoCredential credential = MongoCredential.createScramSha256Credential(userName, source, password)
+
+        then:
+        userName == credential.getUserName()
+        source == credential.getSource()
+        password == credential.getPassword()
+        mechanism == credential.getAuthenticationMechanism()
+        MongoCredential.SCRAM_SHA_256_MECHANISM == credential.getMechanism()
+    }
+
     def 'should throw IllegalArgumentException when a required field is not passed in for the SCRAM_SHA_1 mechanism'() {
         when:
-        MongoCredential.createScramSha1Credential(null, 'admin', 'pwd'.toCharArray());
+        MongoCredential.createScramSha1Credential(null, 'admin', 'pwd'.toCharArray())
         then:
         thrown(IllegalArgumentException)
 
         when:
-        MongoCredential.createScramSha1Credential('user', 'admin', null);
+        MongoCredential.createScramSha1Credential('user', 'admin', null)
         then:
         thrown(IllegalArgumentException)
 
         when:
-        MongoCredential.createScramSha1Credential('user', null, 'pwd'.toCharArray());
+        MongoCredential.createScramSha1Credential('user', null, 'pwd'.toCharArray())
         then:
         thrown(IllegalArgumentException)
     }
 
     def 'creating a GSSAPI Credential should populate the correct fields'() {
         given:
-        AuthenticationMechanism mechanism = AuthenticationMechanism.GSSAPI;
-        String userName = 'user';
+        AuthenticationMechanism mechanism = AuthenticationMechanism.GSSAPI
+        String userName = 'user'
 
         when:
-        MongoCredential credential = MongoCredential.createGSSAPICredential(userName);
+        MongoCredential credential = MongoCredential.createGSSAPICredential(userName)
 
         then:
         userName == credential.getUserName()
@@ -240,7 +257,7 @@ class MongoCredentialSpecification extends Specification {
 
     def 'should throw IllegalArgumentException if username is not provided to a GSSAPI credential'() {
         when:
-        MongoCredential.createGSSAPICredential(null);
+        MongoCredential.createGSSAPICredential(null)
 
         then:
         thrown(IllegalArgumentException)
