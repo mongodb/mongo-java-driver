@@ -36,8 +36,6 @@ public class X509AuthenticatorNoUserNameTest {
     private TestInternalConnection connection;
     private ConnectionDescription connectionDescriptionThreeTwo;
     private ConnectionDescription connectionDescriptionThreeFour;
-    private MongoCredential credential;
-    private X509Authenticator subject;
 
     @Before
     public void before() {
@@ -48,16 +46,13 @@ public class X509AuthenticatorNoUserNameTest {
         connectionDescriptionThreeFour = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
                                                                           new ServerVersion(3, 4), ServerType.STANDALONE, 1000, 16000,
                                                                           48000, Collections.<String>emptyList());
-        credential = MongoCredential.createMongoX509Credential(
-                "CN=client,OU=kerneluser,O=10Gen,L=New York City,ST=New York,C=US");
-        subject = new X509Authenticator(this.credential);
     }
 
     @Test
     public void testSuccessfulAuthentication() {
         enqueueSuccessfulAuthenticationReply();
 
-        new X509Authenticator(MongoCredential.createMongoX509Credential()).authenticate(connection, connectionDescriptionThreeFour);
+        new X509Authenticator(getCredentialWithCache()).authenticate(connection, connectionDescriptionThreeFour);
 
         validateMessages();
     }
@@ -65,8 +60,7 @@ public class X509AuthenticatorNoUserNameTest {
     @Test
     public void testUnsuccessfulAuthenticationWhenServerVersionLessThanThreeFour() {
         try {
-            new X509Authenticator(MongoCredential.createMongoX509Credential()).authenticate(connection,
-                    connectionDescriptionThreeTwo);
+            new X509Authenticator(getCredentialWithCache()).authenticate(connection, connectionDescriptionThreeTwo);
             fail();
         } catch (MongoSecurityException e) {
             assertEquals("User name is required for the MONGODB-X509 authentication mechanism on server versions less than 3.4",
@@ -79,8 +73,7 @@ public class X509AuthenticatorNoUserNameTest {
         enqueueSuccessfulAuthenticationReply();
 
         FutureResultCallback<Void> futureCallback = new FutureResultCallback<Void>();
-        new X509Authenticator(MongoCredential.createMongoX509Credential())
-                .authenticateAsync(connection, connectionDescriptionThreeFour, futureCallback);
+        new X509Authenticator(getCredentialWithCache()).authenticateAsync(connection, connectionDescriptionThreeFour, futureCallback);
 
         futureCallback.get();
 
@@ -90,8 +83,7 @@ public class X509AuthenticatorNoUserNameTest {
     @Test
     public void testUnsuccessfulAuthenticationWhenServerVersionLessThanThreeFourAsync() throws ExecutionException, InterruptedException {
         FutureResultCallback<Void> futureCallback = new FutureResultCallback<Void>();
-        new X509Authenticator(MongoCredential.createMongoX509Credential()).authenticateAsync(connection,
-                connectionDescriptionThreeTwo, futureCallback);
+        new X509Authenticator(getCredentialWithCache()).authenticateAsync(connection, connectionDescriptionThreeTwo, futureCallback);
 
         try {
             futureCallback.get();
@@ -111,4 +103,7 @@ public class X509AuthenticatorNoUserNameTest {
         assertEquals("{ \"authenticate\" : 1, \"mechanism\" : \"MONGODB-X509\" }", command);
     }
 
+    private MongoCredentialWithCache getCredentialWithCache() {
+        return new MongoCredentialWithCache(MongoCredential.createMongoX509Credential());
+    }
 }

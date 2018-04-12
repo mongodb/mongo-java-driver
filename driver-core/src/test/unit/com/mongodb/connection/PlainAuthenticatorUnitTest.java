@@ -39,7 +39,7 @@ public class PlainAuthenticatorUnitTest {
         connection = new TestInternalConnection(new ServerId(new ClusterId(), new ServerAddress("localhost", 27017)));
         connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()));
         credential = MongoCredential.createPlainCredential("user", "$external", "pencil".toCharArray());
-        subject = new PlainAuthenticator(this.credential);
+        subject = new PlainAuthenticator(new MongoCredentialWithCache(credential));
     }
 
     @Test

@@ -34,9 +34,9 @@ import org.bson.BsonTimestamp
 import org.bson.codecs.BsonDocumentCodec
 import spock.lang.Shared
 
-import static com.mongodb.ClusterFixture.getCredentialList
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
+import static com.mongodb.connection.ConnectionFixture.getCredentialListWithCache
 import static com.mongodb.connection.ProtocolTestHelper.execute
 import static org.bson.BsonDocument.parse
 
@@ -46,7 +46,7 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
 
     def setupSpec() {
         connection = new InternalStreamConnectionFactory(new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                getCredentialList(), null, null, [], null)
+                getCredentialListWithCache(), null, null, [], null)
                 .create(new ServerId(new ClusterId(), getPrimary()))
         connection.open();
     }

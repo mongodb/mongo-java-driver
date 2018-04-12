@@ -42,14 +42,14 @@ import static com.mongodb.MongoCredential.SERVICE_NAME_KEY;
 class GSSAPIAuthenticator extends SaslAuthenticator {
     private static final String GSSAPI_MECHANISM_NAME = "GSSAPI";
     private static final String GSSAPI_OID = "1.2.840.113554.1.2.2";
-    public static final String SERVICE_NAME_DEFAULT_VALUE = "mongodb";
-    public static final Boolean CANONICALIZE_HOST_NAME_DEFAULT_VALUE = false;
+    private static final String SERVICE_NAME_DEFAULT_VALUE = "mongodb";
+    private static final Boolean CANONICALIZE_HOST_NAME_DEFAULT_VALUE = false;
 
-    GSSAPIAuthenticator(final MongoCredential credential) {
+    GSSAPIAuthenticator(final MongoCredentialWithCache credential) {
         super(credential);
 
-        if (getCredential().getAuthenticationMechanism() != GSSAPI) {
-            throw new MongoException("Incorrect mechanism: " + this.getCredential().getMechanism());
+        if (getMongoCredential().getAuthenticationMechanism() != GSSAPI) {
+            throw new MongoException("Incorrect mechanism: " + getMongoCredential().getMechanism());
         }
     }
 
@@ -60,9 +60,9 @@ class GSSAPIAuthenticator extends SaslAuthenticator {
 
     @Override
     protected SaslClient createSaslClient(final ServerAddress serverAddress) {
-        MongoCredential credential = getCredential();
+        MongoCredential credential = getMongoCredential();
         try {
-            Map<String, Object> saslClientProperties = getCredential().getMechanismProperty(JAVA_SASL_CLIENT_PROPERTIES_KEY, null);
+            Map<String, Object> saslClientProperties = credential.getMechanismProperty(JAVA_SASL_CLIENT_PROPERTIES_KEY, null);
             if (saslClientProperties == null) {
                 saslClientProperties = new HashMap<String, Object>();
                 saslClientProperties.put(Sasl.MAX_BUFFER, "0");

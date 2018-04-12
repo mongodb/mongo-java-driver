@@ -39,35 +39,34 @@ public class PlainAuthenticatorTest {
     private StreamFactory streamFactory = new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings());
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         String host = System.getProperty("org.mongodb.test.host");
         userName = System.getProperty("org.mongodb.test.userName");
         source = System.getProperty("org.mongod.test.source");
         password = System.getProperty("org.mongodb.test.password");
-        internalConnection = new InternalStreamConnectionFactory(streamFactory, Collections.<MongoCredential>emptyList(), null, null,
-                                                                        Collections.<MongoCompressor>emptyList(), null)
-                             .create(new ServerId(new ClusterId(), new ServerAddress(host)));
+        internalConnection = new InternalStreamConnectionFactory(streamFactory, Collections.<MongoCredentialWithCache>emptyList(), null,
+                null, Collections.<MongoCompressor>emptyList(), null).create(new ServerId(new ClusterId(), new ServerAddress(host)));
         connectionDescription = new ConnectionDescription(new ServerId(new ClusterId(), new ServerAddress()));
     }
 
     @After
-    public void tearDown() throws Exception {
+    public void tearDown() {
         internalConnection.close();
     }
 
     @Test
     public void testSuccessfulAuthentication() {
-        PlainAuthenticator authenticator = new PlainAuthenticator(MongoCredential.createPlainCredential(userName, source,
-                                                                                                        password.toCharArray())
-        );
+        PlainAuthenticator authenticator = new PlainAuthenticator(getCredentialWithCache(userName, source, password.toCharArray()));
         authenticator.authenticate(internalConnection, connectionDescription);
     }
 
     @Test(expected = MongoSecurityException.class)
     public void testUnsuccessfulAuthentication() {
-        PlainAuthenticator authenticator = new PlainAuthenticator(MongoCredential.createPlainCredential(userName, source,
-                                                                                                        "wrong".toCharArray())
-        );
+        PlainAuthenticator authenticator = new PlainAuthenticator(getCredentialWithCache(userName, source, "wrong".toCharArray()));
         authenticator.authenticate(internalConnection, connectionDescription);
+    }
+
+    private static MongoCredentialWithCache getCredentialWithCache(final String userName, final String source, final char[] password) {
+        return new MongoCredentialWithCache(MongoCredential.createPlainCredential(userName, source, password));
     }
 }

@@ -173,6 +173,8 @@ public final class DefaultClusterFactory implements ClusterFactory {
                                  final List<MongoCompressor> compressorList) {
 
         ClusterId clusterId = new ClusterId(clusterSettings.getDescription());
+
+
         ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(clusterId, clusterSettings, serverSettings,
                 connectionPoolSettings, streamFactory, heartbeatStreamFactory, credentialList, commandListener, applicationName,
                 mongoDriverInformation != null ? mongoDriverInformation : MongoDriverInformation.builder().build(), compressorList);

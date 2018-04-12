@@ -30,25 +30,25 @@ import spock.lang.IgnoreIf
 
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.ClusterFixture.getCredentialList
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.ClusterFixture.isNotAtLeastJava7
 import static com.mongodb.connection.CommandHelper.executeCommand
+import static com.mongodb.connection.ConnectionFixture.getCredentialListWithCache
 
 @IgnoreIf({ System.getProperty('ignoreSlowUnitTests') == 'true' })
 @Category(SlowUnit)
 class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification {
 
-    static SocketSettings openSocketSettings = SocketSettings.builder().connectTimeout(1, TimeUnit.MILLISECONDS).build();
-    static SocketSettings readSocketSettings = SocketSettings.builder().readTimeout(5, TimeUnit.SECONDS).build();
+    static SocketSettings openSocketSettings = SocketSettings.builder().connectTimeout(1, TimeUnit.MILLISECONDS).build()
+    static SocketSettings readSocketSettings = SocketSettings.builder().readTimeout(5, TimeUnit.SECONDS).build()
 
     @IgnoreIf({ isNotAtLeastJava7() || getSslSettings().isEnabled() })
     def 'should throw a MongoSocketOpenException when the AsynchronousSocket Stream fails to open'() {
         given:
         def connection = new InternalStreamConnectionFactory(
-                new AsynchronousSocketChannelStreamFactory(openSocketSettings, getSslSettings()), getCredentialList(), null, null, [], null
-        ).create(new ServerId(new ClusterId(), new ServerAddress(new InetSocketAddress('192.168.255.255', 27017))));
+                new AsynchronousSocketChannelStreamFactory(openSocketSettings, getSslSettings()), getCredentialListWithCache(), null, null,
+                [], null).create(new ServerId(new ClusterId(), new ServerAddress(new InetSocketAddress('192.168.255.255', 27017))))
 
         when:
         connection.open()
@@ -61,8 +61,8 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
     def 'should throw a MongoSocketReadTimeoutException with the AsynchronousSocket stream'() {
         given:
         def connection = new InternalStreamConnectionFactory(
-                new AsynchronousSocketChannelStreamFactory(readSocketSettings, getSslSettings()), getCredentialList(), null, null, [], null
-        ).create(new ServerId(new ClusterId(), getPrimary()))
+                new AsynchronousSocketChannelStreamFactory(readSocketSettings, getSslSettings()), getCredentialListWithCache(), null, null,
+                [], null).create(new ServerId(new ClusterId(), getPrimary()))
         connection.open()
 
         getCollectionHelper().insertDocuments(new BsonDocument('_id', new BsonInt32(1)));
@@ -82,8 +82,8 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
     def 'should throw a MongoSocketOpenException when the Netty Stream fails to open'() {
         given:
         def connection = new InternalStreamConnectionFactory(
-                new NettyStreamFactory(openSocketSettings, getSslSettings()), getCredentialList(), null, null, [], null
-        ).create(new ServerId(new ClusterId(), new ServerAddress(new InetSocketAddress('192.168.255.255', 27017))));
+                new NettyStreamFactory(openSocketSettings, getSslSettings()), getCredentialListWithCache(), null, null, [], null
+        ).create(new ServerId(new ClusterId(), new ServerAddress(new InetSocketAddress('192.168.255.255', 27017))))
 
         when:
         connection.open()
@@ -96,7 +96,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
     def 'should throw a MongoSocketReadTimeoutException with the Netty stream'() {
         given:
         def connection = new InternalStreamConnectionFactory(
-                new NettyStreamFactory(readSocketSettings, getSslSettings()), getCredentialList(), null, null, [], null
+                new NettyStreamFactory(readSocketSettings, getSslSettings()), getCredentialListWithCache(), null, null, [], null
         ).create(new ServerId(new ClusterId(), getPrimary()))
         connection.open()
 

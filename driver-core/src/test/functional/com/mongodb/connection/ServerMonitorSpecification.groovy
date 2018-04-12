@@ -30,9 +30,9 @@ import org.bson.types.ObjectId
 import java.util.concurrent.CountDownLatch
 
 import static com.mongodb.ClusterFixture.getBinding
-import static com.mongodb.ClusterFixture.getCredentialList
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
+import static com.mongodb.connection.ConnectionFixture.getCredentialListWithCache
 import static com.mongodb.connection.DefaultServerMonitor.shouldLogStageChange
 import static com.mongodb.connection.ServerConnectionState.CONNECTED
 import static com.mongodb.connection.ServerConnectionState.CONNECTING
@@ -216,7 +216,7 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
                     }
                 },
                 new InternalStreamConnectionFactory(new SocketStreamFactory(SocketSettings.builder().build(),
-                        getSslSettings()), getCredentialList(), null, null, [], null),
+                        getSslSettings()), getCredentialListWithCache(), null, null, [], null),
                 new TestConnectionPool())
         serverMonitor.start()
         serverMonitor

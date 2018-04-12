@@ -22,7 +22,7 @@ import com.mongodb.async.SingleResultCallback;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 
 class DefaultAuthenticator extends Authenticator {
-    DefaultAuthenticator(final MongoCredential credential) {
+    DefaultAuthenticator(final MongoCredentialWithCache credential) {
         super(credential);
         isTrueArgument("unspecified authentication mechanism", credential.getAuthenticationMechanism() == null);
     }
@@ -40,9 +40,9 @@ class DefaultAuthenticator extends Authenticator {
 
     Authenticator createAuthenticator(final ConnectionDescription connectionDescription) {
         if (connectionDescription.getServerVersion().compareTo(new ServerVersion(2, 7)) >= 0) {
-            return new ScramSha1Authenticator(getCredential());
+            return new ScramShaAuthenticator(getMongoCredentialWithCache());
         } else {
-            return new NativeAuthenticator(getCredential());
+            return new NativeAuthenticator(getMongoCredentialWithCache());
         }
     }
 }

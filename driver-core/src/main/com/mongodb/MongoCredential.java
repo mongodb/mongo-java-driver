@@ -378,7 +378,7 @@ public final class MongoCredential {
     /**
      * Gets the user name
      *
-     * @return the user name.  Can never be null.
+     * @return the user name.
      */
     @Nullable
     public String getUserName() {

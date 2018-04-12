@@ -1,0 +1,85 @@
+/*
+ * Copyright 2008-present MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.mongodb.connection;
+
+import com.mongodb.AuthenticationMechanism;
+import com.mongodb.MongoCredential;
+
+import java.util.ArrayList;
+import java.util.List;
+
+class MongoCredentialWithCache {
+    private final MongoCredential credential;
+    private final Cache cache;
+
+    static List<MongoCredentialWithCache> wrapCredentialList(final List<MongoCredential> credentialList) {
+        ArrayList<MongoCredentialWithCache> credentialListWithCache = new ArrayList<MongoCredentialWithCache>();
+        for (MongoCredential credential : credentialList) {
+            credentialListWithCache.add(new MongoCredentialWithCache(credential));
+        }
+        return credentialListWithCache;
+    }
+
+    MongoCredentialWithCache(final MongoCredential credential) {
+        this(credential, null);
+    }
+
+    MongoCredentialWithCache(final MongoCredential credential, final Cache cache) {
+        this.credential = credential;
+        this.cache = cache != null ? cache : new Cache();
+    }
+
+    MongoCredentialWithCache withMechanism(final AuthenticationMechanism mechanism) {
+        return new MongoCredentialWithCache(credential.withMechanism(mechanism), cache);
+    }
+
+    AuthenticationMechanism getAuthenticationMechanism() {
+        return credential.getAuthenticationMechanism();
+    }
+
+    public MongoCredential getCredential() {
+        return credential;
+    }
+
+    @SuppressWarnings("unchecked")
+    <T> T getFromCache(final Object key, final Class<T> clazz) {
+        return clazz.cast(cache.get(key));
+    }
+
+    void putInCache(final Object key, final Object value) {
+        cache.set(key, value);
+    }
+
+
+    static class Cache {
+        private Object cacheKey;
+        private Object cacheValue;
+
+        synchronized Object get(final Object key) {
+            if (cacheKey != null && cacheKey.equals(key)) {
+                return cacheValue;
+            }
+            return null;
+        }
+
+        synchronized void set(final Object key, final Object value) {
+            cacheKey = key;
+            cacheValue = value;
+        }
+    }
+}
+

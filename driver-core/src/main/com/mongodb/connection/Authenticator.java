@@ -23,20 +23,25 @@ import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 
 abstract class Authenticator {
-    private final MongoCredential credential;
+    private final MongoCredentialWithCache credential;
 
-    Authenticator(@NonNull final MongoCredential credential) {
+    Authenticator(@NonNull final MongoCredentialWithCache credential) {
         this.credential = credential;
     }
 
     @NonNull
-    MongoCredential getCredential() {
+    MongoCredentialWithCache getMongoCredentialWithCache() {
         return credential;
     }
 
     @NonNull
+    MongoCredential getMongoCredential() {
+        return credential.getCredential();
+    }
+
+    @NonNull
     String getUserNameNonNull() {
-        String userName = credential.getUserName();
+        String userName = credential.getCredential().getUserName();
         if (userName == null) {
             throw new MongoInternalException("User name can not be null");
         }
@@ -45,7 +50,7 @@ abstract class Authenticator {
 
     @NonNull
     char[] getPasswordNonNull() {
-        char[] password = credential.getPassword();
+        char[] password = credential.getCredential().getPassword();
         if (password == null) {
             throw new MongoInternalException("Password can not be null");
         }
@@ -53,8 +58,8 @@ abstract class Authenticator {
     }
 
     @NonNull
-    public <T> T getNonNullMechanismProperty(final String key, @Nullable final T defaultValue) {
-        T mechanismProperty = credential.getMechanismProperty(key, defaultValue);
+    <T> T getNonNullMechanismProperty(final String key, @Nullable final T defaultValue) {
+        T mechanismProperty = credential.getCredential().getMechanismProperty(key, defaultValue);
         if (mechanismProperty == null) {
             throw new MongoInternalException("Mechanism property can not be null");
         }
