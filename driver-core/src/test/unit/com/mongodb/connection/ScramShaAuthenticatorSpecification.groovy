@@ -38,15 +38,21 @@ class ScramShaAuthenticatorSpecification extends Specification {
     private final static MongoCredentialWithCache SHA256_CREDENTIAL =
             new MongoCredentialWithCache(createScramSha256Credential('user', 'database', 'pencil' as char[]))
 
-    def 'should successfully authenticate with sha1 to RFC spec'() {
-        when:
+    def 'should successfully authenticate with sha1 as per RFC spec'() {
+        given:
+        def user = 'user'
+        def password = 'pencil'
+        def preppedPassword = 'pencil'
         def payloads = '''
             C: n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL
             S: r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,s=QSXCR+Q6sek8bf92,i=4096
             C: c=biws,r=fyko+d2lbbFgONRv9qkxdawL3rfcNHYJY1ZVvWVs7j,p=v0X8v3Bz2T0CJGbJQyF0X+HI4Ts=
             S: v=rmF9pqV8S7suAoZWja4dJRkFsKQ=
         '''
-        def authenticator = new ScramShaAuthenticator(SHA1_CREDENTIAL, { 'fyko+d2lbbFgONRv9qkxdawL' }, { 'pencil' })
+
+        when:
+        def credential = new MongoCredentialWithCache(createScramSha1Credential(user, 'database', password as char[]))
+        def authenticator = new ScramShaAuthenticator(credential, { 'fyko+d2lbbFgONRv9qkxdawL' }, { preppedPassword })
 
         then:
         validateAuthentication(payloads, authenticator, async)
@@ -55,15 +61,21 @@ class ScramShaAuthenticatorSpecification extends Specification {
         async << [true, false]
     }
 
-    def 'should successfully authenticate with sha256 to RFC spec'() {
-        when:
+    def 'should successfully authenticate with sha256 as per RFC spec'() {
+        given:
+        def user = 'user'
+        def password = 'pencil'
+        def preppedPassword = 'pencil'
         def payloads = '''
             C: n,,n=user,r=rOprNGfwEbeRWgbNEkqO
             S: r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096
             C: c=biws,r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,p=dHzbZapWIk4jUhN+Ute9ytag9zjfMHgsqmmiz7AndVQ=
             S: v=6rriTRBi23WpRR/wtup+mMhUZUn/dB5nLTJRsjl95G4=
         '''
-        def authenticator = new ScramShaAuthenticator(SHA256_CREDENTIAL, { 'rOprNGfwEbeRWgbNEkqO' }, { 'pencil' })
+
+        when:
+        def credential = new MongoCredentialWithCache(createScramSha256Credential(user, 'database', password as char[]))
+        def authenticator = new ScramShaAuthenticator(credential, { 'rOprNGfwEbeRWgbNEkqO' }, { preppedPassword })
 
         then:
         validateAuthentication(payloads, authenticator, async)
@@ -72,16 +84,22 @@ class ScramShaAuthenticatorSpecification extends Specification {
         async << [true, false]
     }
 
-    def 'should successfully authenticate with sha1 to MongoDB spec'() {
-        when:
+
+    def 'should successfully authenticate with SHA-1 ASCII'() {
+        given:
+        def user = 'user'
+        def password = 'pencil'
+        def preppedPassword = 'pencil'
         def payloads = '''
-            C: n,,n=user,r=fyko+d2lbbFgONRv9qkxdawL
-            S: r=fyko+d2lbbFgONRv9qkxdawLHo+Vgk7qvUOKUwuWLIWg4l/9SraGMHEE,s=rQ9ZY3MntBeuP3E1TDVC4w==,i=10000
-            C: c=biws,r=fyko+d2lbbFgONRv9qkxdawLHo+Vgk7qvUOKUwuWLIWg4l/9SraGMHEE,p=MC2T8BvbmWRckDw8oWl5IVghwCY=
-            S: v=UMWeI25JD1yNYZRMpZ4VHvhZ9e0=
+            C: n,,n=user,r=clientNONCE
+            S: r=clientNONCEserverNONCE,s=c2FsdFNBTFRzYWx0,i=4096
+            C: c=biws,r=clientNONCEserverNONCE,p=I4oktcY7BOL0Agn0NlWRXlRP1mg=
+            S: v=oKPvB1bE/9ydptJ+kohMgL+NdM0=
         '''
 
-        def authenticator = new ScramShaAuthenticator(SHA1_CREDENTIAL, { 'fyko+d2lbbFgONRv9qkxdawL' })
+        when:
+        def credential = new MongoCredentialWithCache(createScramSha1Credential(user, 'database', password as char[]))
+        def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword })
 
         then:
         validateAuthentication(payloads, authenticator, async)
@@ -90,15 +108,21 @@ class ScramShaAuthenticatorSpecification extends Specification {
         async << [true, false]
     }
 
-    def 'should successfully authenticate with sha256 to MongoDB spec'() {
-        when:
+    def 'should successfully authenticate with SHA-1 ASCII user'() {
+        given:
+        def user = 'user'
+        def password = 'p\u00e8ncil'
+        def preppedPassword = 'p\u00e8ncil'
         def payloads = '''
-            C: n,,n=user,r=rOprNGfwEbeRWgbNEkqO
-            S: r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=W22ZaJ0SNY7soEsUEjb6gQ==,i=4096
-            C: c=biws,r=rOprNGfwEbeRWgbNEkqO%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,p=dHzbZapWIk4jUhN+Ute9ytag9zjfMHgsqmmiz7AndVQ=
-            S: v=6rriTRBi23WpRR/wtup+mMhUZUn/dB5nLTJRsjl95G4=
+            C: n,,n=user,r=clientNONCE
+            S: r=clientNONCEserverNONCE,s=c2FsdFNBTFRzYWx0,i=4096
+            C: c=biws,r=clientNONCEserverNONCE,p=yn797N2/XhIwZBB29LhEs6D6XVw=
+            S: v=a6QRQikpGygizEM4/rCOvkgdglI=
         '''
-        def authenticator = new ScramShaAuthenticator(SHA256_CREDENTIAL, { 'rOprNGfwEbeRWgbNEkqO' })
+
+        when:
+        def credential = new MongoCredentialWithCache(createScramSha1Credential(user, 'database', password as char[]))
+        def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword })
 
         then:
         validateAuthentication(payloads, authenticator, async)
@@ -107,17 +131,21 @@ class ScramShaAuthenticatorSpecification extends Specification {
         async << [true, false]
     }
 
-    def 'should prep username and password correctly for SHA1'() {
-        when:
+    def 'should successfully authenticate with SHA-1 ASCII pass'() {
+        given:
+        def user = 'ram\u00f5n'
+        def password = 'pencil'
+        def preppedPassword = 'pencil'
         def payloads = '''
-            C: n,,n=ramo̒n,r=R815pGP84+H0OFRk+U/48qC+kwjw5TYS
-            S: r=R815pGP84+H0OFRk+U/48qC+kwjw5TYSYjSeMWrU25u8Q73D9uM5aI4dxwOMaY3V,s=c2FsdA==,i=4096
-            C: c=biws,r=R815pGP84+H0OFRk+U/48qC+kwjw5TYSYjSeMWrU25u8Q73D9uM5aI4dxwOMaY3V,p=Ib+1kvxT12Bj2FhVE68qtijgNfo=
-            S: v=+cMTpXM1VzX5fEjtLXuNji5DeyA=
+            C: n,,n=ram\u00f5n,r=clientNONCE
+            S: r=clientNONCEserverNONCE,s=c2FsdFNBTFRzYWx0,i=4096
+            C: c=biws,r=clientNONCEserverNONCE,p=kvH02DJiH7oHwk+SKpN4plfpF04=
+            S: v=BoA2mAPlV/b9A5WPDbHmHZi3EGc=
         '''
 
-        def credential = new MongoCredentialWithCache(createScramSha1Credential('ramo\u0312n', 'database', 'p\u212Bssword' as char[]))
-        def authenticator = new ScramShaAuthenticator(credential, { 'R815pGP84+H0OFRk+U/48qC+kwjw5TYS' })
+        when:
+        def credential = new MongoCredentialWithCache(createScramSha1Credential(user, 'database', password as char[]))
+        def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword })
 
         then:
         validateAuthentication(payloads, authenticator, async)
@@ -126,17 +154,113 @@ class ScramShaAuthenticatorSpecification extends Specification {
         async << [true, false]
     }
 
-    def 'should prep username and password correctly for SHA256'() {
-        when:
+    def 'should successfully authenticate with SHA-256 ASCII'(){
+        given:
+        def user ='user'
+        def password ='pencil'
+        def preppedPassword ='pencil'
         def payloads = '''
-            C: n,,n=u=2Cs1⁄2e ́rIX=3D,r=rOfhDB+wEbeRWgbNEkq9
-            S: r=rOfhDB+wEbeRWgbNEkq9%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,s=QSXCR+Q6sek8bf92,i=4096
-            C: c=biws,r=rOfhDB+wEbeRWgbNEkq9%hvYDpWUa2RaTCAfuxFIlj)hNlF$k0,p=+435koC4wp2/T9ORQmy75R13f1QGv9phV9LYQwssJZE=
-            S: v=DKoN/Dii8S1ozDCVVJ7eAPHAe0KczTtxn2BsQtUeUgI=
+            C: n,,n=user,r=clientNONCE
+            S: r=clientNONCEserverNONCE,s=c2FsdFNBTFRzYWx0,i=4096
+            C: c=biws,r=clientNONCEserverNONCE,p=ItXnHvCDW7VGij6H+4rv2o93HvkLwrQaLkfVjeSMfrc=
+            S: v=P61v8wxOu6B9J7Uij+Sk4zewSK1e6en6f5rCFO4OUNE=
         '''
-        def credential = new MongoCredentialWithCache(
-                createScramSha256Credential('u,s\u00BDe\u00B4r\u2168=', 'database', '\u2168pen\u00AAcil' as char[]))
-        def authenticator = new ScramShaAuthenticator(credential, { 'rOfhDB+wEbeRWgbNEkq9' })
+
+        when:
+        def credential = new MongoCredentialWithCache(createScramSha256Credential(user, 'database', password as char[]))
+        def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword })
+
+        then:
+        validateAuthentication(payloads, authenticator, async)
+
+        where:
+        async << [true, false]
+    }
+
+    def 'should successfully authenticate with SHA-256 ASCII user'(){
+        given:
+        def user ='user'
+        def password ='p\u00e8ncil'
+        def preppedPassword ='p\u00e8ncil'
+        def payloads = '''
+            C: n,,n=user,r=clientNONCE
+            S: r=clientNONCEserverNONCE,s=c2FsdFNBTFRzYWx0,i=4096
+            C: c=biws,r=clientNONCEserverNONCE,p=o6rKPfQCKSGHClFxHjdSeiVCPA6K53++gpY3XlP8lI8=
+            S: v=rsyNAwnHfclZKxAKx1tKfInH3xPVAzCy237DQo5n/N8=
+        '''
+
+        when:
+        def credential = new MongoCredentialWithCache(createScramSha256Credential(user, 'database', password as char[]))
+        def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword })
+
+        then:
+        validateAuthentication(payloads, authenticator, async)
+
+        where:
+        async << [true, false]
+    }
+
+    def 'should successfully authenticate with SHA-256 ASCII pass'(){
+        given:
+        def user ='ram\u00f5n'
+        def password ='pencil'
+        def preppedPassword ='pencil'
+        def payloads = '''
+            C: n,,n=ram\u00f5n,r=clientNONCE
+            S: r=clientNONCEserverNONCE,s=c2FsdFNBTFRzYWx0,i=4096
+            C: c=biws,r=clientNONCEserverNONCE,p=vRdD7SqiY5kMyAFX2enPOJK9BL+3YIVyuzCt1H2qc4o=
+            S: v=sh7QPwVuquMatYobYpYOaPiNS+lqwTCmy3rdexRDDkE=
+        '''
+
+        when:
+        def credential = new MongoCredentialWithCache(createScramSha256Credential(user, 'database', password as char[]))
+        def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword })
+
+        then:
+        validateAuthentication(payloads, authenticator, async)
+
+        where:
+        async << [true, false]
+    }
+
+    def 'should successfully authenticate with SHA-256 SASLprep normal'(){
+        given:
+        def user ='ram\u00f5n'
+        def password ='p\u00c5assword'
+        def preppedPassword ='p\u00c5assword'
+        def payloads = '''
+            C: n,,n=ram\u00f5n,r=clientNONCE
+            S: r=clientNONCEserverNONCE,s=c2FsdFNBTFRzYWx0,i=4096
+            C: c=biws,r=clientNONCEserverNONCE,p=Km2zqmf/GbLdkItzscNI5D0c1f+GmLDi2fScTPm6d4k=
+            S: v=30soY0l2BiInoDyrHxIuamz2LBvci1lFKo/tOMpqo98=
+        '''
+
+        when:
+        def credential = new MongoCredentialWithCache(createScramSha256Credential(user, 'database', password as char[]))
+        def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword })
+
+        then:
+        validateAuthentication(payloads, authenticator, async)
+
+        where:
+        async << [true, false]
+    }
+
+    def 'should successfully authenticate with SHA-256 SASLprep non-normal'(){
+        given:
+        def user ='ramo\u0301n'
+        def password ='p\u212bssword'
+        def preppedPassword ='p\u00c5ssword'
+        def payloads = '''
+            C: n,,n=ram\u00f3n,r=clientNONCE
+            S: r=clientNONCEserverNONCE,s=c2FsdFNBTFRzYWx0,i=4096
+            C: c=biws,r=clientNONCEserverNONCE,p=KXgIc8B+d5k3zx1P4rfs4TiybIlv11O85Jl1TrzEsfI=
+            S: v=zG9u+MI5GPTROhnW/W1PUCKV4Uvp2SHzwFOZV9Hth/c=
+        '''
+
+        when:
+        def credential = new MongoCredentialWithCache(createScramSha256Credential(user, 'database', password as char[]))
+        def authenticator = new ScramShaAuthenticator(credential, { 'clientNONCE' }, { preppedPassword })
 
         then:
         validateAuthentication(payloads, authenticator, async)
