@@ -39,15 +39,15 @@ import java.util.Random;
 import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_1;
 import static com.mongodb.internal.authentication.NativeAuthenticationHelper.createAuthenticationHash;
 
-class ScramSha1Authenticator extends SaslAuthenticator {
+class ScramShaAuthenticator extends SaslAuthenticator {
 
     private final RandomStringGenerator randomStringGenerator;
 
-    ScramSha1Authenticator(final MongoCredential credential) {
+    ScramShaAuthenticator(final MongoCredential credential) {
         this(credential, new DefaultRandomStringGenerator());
     }
 
-    ScramSha1Authenticator(final MongoCredential credential, final RandomStringGenerator randomStringGenerator) {
+    ScramShaAuthenticator(final MongoCredential credential, final RandomStringGenerator randomStringGenerator) {
         super(credential);
 
         this.randomStringGenerator = randomStringGenerator;

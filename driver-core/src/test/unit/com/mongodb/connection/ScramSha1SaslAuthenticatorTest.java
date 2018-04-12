@@ -33,7 +33,7 @@ import static org.junit.Assert.fail;
 
 public class ScramSha1SaslAuthenticatorTest {
     private TestInternalConnection connection;
-    private ScramSha1Authenticator subject;
+    private ScramShaAuthenticator subject;
     private ConnectionDescription connectionDescription;
 
     @Before
@@ -43,13 +43,13 @@ public class ScramSha1SaslAuthenticatorTest {
         // User name contains ",' and '=" to test user name prepping required by the RFC
         MongoCredential credential = MongoCredential.createScramSha1Credential("u,ser=", "database",
                 "pencil".toCharArray());
-        ScramSha1Authenticator.RandomStringGenerator randomStringGenerator = new ScramSha1Authenticator.RandomStringGenerator() {
+        ScramShaAuthenticator.RandomStringGenerator randomStringGenerator = new ScramShaAuthenticator.RandomStringGenerator() {
             @Override
             public String generate(final int length) {
                 return "fyko+d2lbbFgONRv9qkxdawL";
             }
         };
-        this.subject = new ScramSha1Authenticator(credential, randomStringGenerator);
+        this.subject = new ScramShaAuthenticator(credential, randomStringGenerator);
     }
 
     @Test
