@@ -49,6 +49,7 @@ import org.bson.BsonTimestamp
 import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.DocumentCodec
+import spock.lang.Ignore
 import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.collectCursorResults
@@ -418,7 +419,8 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ isSharded() || !serverVersionAtLeast(3, 2) })
+//    @IgnoreIf({ isSharded() || !serverVersionAtLeast(3, 2) })
+    @Ignore
     def 'should be able to respect maxAwaitTime with pipeline'() {
         given:
         enableMaxTimeFailPoint()
