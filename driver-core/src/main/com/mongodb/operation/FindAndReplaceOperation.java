@@ -21,13 +21,12 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.session.SessionContext;
 import com.mongodb.internal.validator.CollectibleDocumentFieldNameValidator;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
+import com.mongodb.session.SessionContext;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
-import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
@@ -41,7 +40,6 @@ import static com.mongodb.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.operation.DocumentHelper.putIfTrue;
-import static com.mongodb.operation.OperationHelper.isRetryableWrite;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.operation.OperationHelper.validateCollation;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -54,11 +52,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * @mongodb.driver.manual reference/command/findAndModify/ findAndModify
  */
 public class FindAndReplaceOperation<T> extends BaseFindAndModifyOperation<T> {
-    private final MongoNamespace namespace;
-    private final Decoder<T> decoder;
     private final BsonDocument replacement;
-    private final WriteConcern writeConcern;
-    private final boolean retryWrites;
     private BsonDocument filter;
     private BsonDocument projection;
     private BsonDocument sort;
@@ -109,40 +103,8 @@ public class FindAndReplaceOperation<T> extends BaseFindAndModifyOperation<T> {
      */
     public FindAndReplaceOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final boolean retryWrites,
                                    final Decoder<T> decoder, final BsonDocument replacement) {
-        this.namespace = notNull("namespace", namespace);
-        this.writeConcern = notNull("writeConcern", writeConcern);
-        this.retryWrites = retryWrites;
-        this.decoder = notNull("decoder", decoder);
+        super(namespace, writeConcern, retryWrites, decoder);
         this.replacement = notNull("replacement", replacement);
-    }
-
-    /**
-     * Gets the namespace.
-     *
-     * @return the namespace
-     */
-    public MongoNamespace getNamespace() {
-        return namespace;
-    }
-
-    /**
-     * Get the write concern for this operation
-     *
-     * @return the {@link com.mongodb.WriteConcern}
-     * @since 3.2
-     * @mongodb.server.release 3.2
-     */
-    public WriteConcern getWriteConcern() {
-        return writeConcern;
-    }
-
-    /**
-     * Gets the decoder used to decode the result documents.
-     *
-     * @return the decoder
-     */
-    public Decoder<T> getDecoder() {
-        return decoder;
     }
 
     /**
@@ -338,7 +300,7 @@ public class FindAndReplaceOperation<T> extends BaseFindAndModifyOperation<T> {
 
     @Override
     protected String getDatabaseName() {
-        return namespace.getDatabaseName();
+        return getNamespace().getDatabaseName();
     }
 
     @Override
@@ -348,27 +310,22 @@ public class FindAndReplaceOperation<T> extends BaseFindAndModifyOperation<T> {
             public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
                 validateCollation(connectionDescription, collation);
 
-                BsonDocument commandDocument = new BsonDocument("findandmodify", new BsonString(namespace.getCollectionName()));
+                BsonDocument commandDocument = new BsonDocument("findAndModify", new BsonString(getNamespace().getCollectionName()));
                 putIfNotNull(commandDocument, "query", getFilter());
                 putIfNotNull(commandDocument, "fields", getProjection());
                 putIfNotNull(commandDocument, "sort", getSort());
-                putIfTrue(commandDocument, "new", !isReturnOriginal());
+                commandDocument.put("new", new BsonBoolean(!isReturnOriginal()));
                 putIfTrue(commandDocument, "upsert", isUpsert());
                 putIfNotZero(commandDocument, "maxTimeMS", getMaxTime(MILLISECONDS));
                 commandDocument.put("update", getReplacement());
                 if (bypassDocumentValidation != null && serverIsAtLeastVersionThreeDotTwo(connectionDescription)) {
                     commandDocument.put("bypassDocumentValidation", BsonBoolean.valueOf(bypassDocumentValidation));
                 }
-                if (writeConcern.isAcknowledged() && !writeConcern.isServerDefault()
-                        && serverIsAtLeastVersionThreeDotTwo(connectionDescription)) {
-                    commandDocument.put("writeConcern", writeConcern.asDocument());
-                }
+                addWriteConcernToCommand(connectionDescription, commandDocument, sessionContext);
                 if (collation != null) {
                     commandDocument.put("collation", collation.asDocument());
                 }
-                if (isRetryableWrite(retryWrites, writeConcern, serverDescription, connectionDescription)) {
-                    commandDocument.put("txnNumber", new BsonInt64(sessionContext.advanceTransactionNumber()));
-                }
+                addTxnNumberToCommand(serverDescription, connectionDescription, commandDocument, sessionContext);
                 return commandDocument;
             }
         };

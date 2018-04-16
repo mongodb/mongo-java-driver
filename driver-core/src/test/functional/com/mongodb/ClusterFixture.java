@@ -192,7 +192,7 @@ public final class ClusterFixture {
     }
 
     public static ReadWriteBinding getBinding(final Cluster cluster) {
-        return new ClusterBinding(cluster, ReadPreference.primary());
+        return new ClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT);
     }
 
     public static ReadWriteBinding getBinding() {
@@ -205,7 +205,7 @@ public final class ClusterFixture {
 
     private static ReadWriteBinding getBinding(final Cluster cluster, final ReadPreference readPreference) {
         if (!bindingMap.containsKey(readPreference)) {
-            ReadWriteBinding binding = new ClusterBinding(cluster, readPreference);
+            ReadWriteBinding binding = new ClusterBinding(cluster, readPreference, ReadConcern.DEFAULT);
             if (serverVersionAtLeast(3, 6)) {
                 binding = new SessionBinding(binding);
             }

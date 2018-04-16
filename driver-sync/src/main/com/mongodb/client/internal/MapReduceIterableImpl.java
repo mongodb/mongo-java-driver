@@ -32,7 +32,7 @@ import com.mongodb.operation.MapReduceBatchCursor;
 import com.mongodb.operation.MapReduceStatistics;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
-import com.mongodb.session.ClientSession;
+import com.mongodb.client.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -85,7 +85,7 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
             throw new IllegalStateException("The options must specify a non-inline result");
         }
 
-        getExecutor().execute(createMapReduceToCollectionOperation(), getClientSession());
+        getExecutor().execute(createMapReduceToCollectionOperation(), getReadConcern(), getClientSession());
     }
 
     @Override
@@ -202,7 +202,7 @@ class MapReduceIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
                     resultClass, filter, limit, maxTimeMS, jsMode, scope, sort, verbose, collation);
             return new WrappedMapReduceReadOperation<TResult>(operation);
         } else {
-            getExecutor().execute(createMapReduceToCollectionOperation(), getClientSession());
+            getExecutor().execute(createMapReduceToCollectionOperation(), getReadConcern(), getClientSession());
 
             String dbName = databaseName != null ? databaseName : namespace.getDatabaseName();
 

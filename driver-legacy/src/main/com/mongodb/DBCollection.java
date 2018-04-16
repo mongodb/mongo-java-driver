@@ -344,7 +344,7 @@ public class DBCollection {
     }
 
     WriteResult executeWriteOperation(final BaseWriteOperation operation) {
-        return translateWriteResult(executor.execute(operation));
+        return translateWriteResult(executor.execute(operation, getReadConcern()));
     }
 
     private WriteResult translateWriteResult(final WriteConcernResult writeConcernResult) {
@@ -1002,7 +1002,6 @@ public class DBCollection {
     public long getCount(@Nullable final DBObject query, final DBCollectionCountOptions options) {
         notNull("countOptions", options);
         CountOperation operation = new CountOperation(getNamespace())
-                                       .readConcern(options.getReadConcern() != null ? options.getReadConcern() : getReadConcern())
                                        .skip(options.getSkip())
                                        .limit(options.getLimit())
                                        .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
@@ -1020,7 +1019,9 @@ public class DBCollection {
             }
         }
         ReadPreference optionsReadPreference = options.getReadPreference();
-        return executor.execute(operation, optionsReadPreference != null ? optionsReadPreference : getReadPreference());
+        ReadConcern optionsReadConcern = options.getReadConcern();
+        return executor.execute(operation, optionsReadPreference != null ? optionsReadPreference : getReadPreference(),
+                optionsReadConcern != null ? optionsReadConcern : getReadConcern());
     }
 
     /**
@@ -1048,7 +1049,7 @@ public class DBCollection {
         try {
             executor.execute(new RenameCollectionOperation(getNamespace(),
                                                            new MongoNamespace(getNamespace().getDatabaseName(), newName), getWriteConcern())
-                                     .dropTarget(dropTarget));
+                                     .dropTarget(dropTarget), getReadConcern());
             return getDB().getCollection(newName);
         } catch (MongoWriteConcernException e) {
             throw createWriteConcernException(e);
@@ -1127,7 +1128,7 @@ public class DBCollection {
      * @mongodb.driver.manual reference/command/group/ Group Command
      */
     public DBObject group(final GroupCommand cmd, final ReadPreference readPreference) {
-        return toDBList(executor.execute(cmd.toOperation(getNamespace(), getDefaultDBObjectCodec()), readPreference));
+        return toDBList(executor.execute(cmd.toOperation(getNamespace(), getDefaultDBObjectCodec()), readPreference, getReadConcern()));
     }
 
     /**
@@ -1196,7 +1197,6 @@ public class DBCollection {
             @Override
             public ReadOperation<BatchCursor<BsonValue>> asReadOperation() {
                 return new DistinctOperation<BsonValue>(getNamespace(), fieldName, new BsonValueCodec())
-                               .readConcern(super.getReadConcern())
                                .filter(wrapAllowNull(options.getFilter()))
                                .collation(options.getCollation());
             }
@@ -1283,7 +1283,6 @@ public class DBCollection {
             MapReduceWithInlineResultsOperation<DBObject> operation =
                     new MapReduceWithInlineResultsOperation<DBObject>(getNamespace(), new BsonJavaScript(command.getMap()),
                             new BsonJavaScript(command.getReduce()), getDefaultDBObjectCodec())
-                            .readConcern(getReadConcern())
                             .filter(wrapAllowNull(command.getQuery()))
                             .limit(command.getLimit())
                             .maxTime(command.getMaxTime(MILLISECONDS), MILLISECONDS)
@@ -1298,7 +1297,7 @@ public class DBCollection {
             if (command.getFinalize() != null) {
                 operation.finalizeFunction(new BsonJavaScript(command.getFinalize()));
             }
-            MapReduceBatchCursor<DBObject> executionResult = executor.execute(operation, readPreference);
+            MapReduceBatchCursor<DBObject> executionResult = executor.execute(operation, readPreference, getReadConcern());
             return new MapReduceOutput(command.toDBObject(), executionResult);
         } else {
             String action;
@@ -1340,7 +1339,7 @@ public class DBCollection {
                 operation.finalizeFunction(new BsonJavaScript(command.getFinalize()));
             }
             try {
-                MapReduceStatistics mapReduceStatistics = executor.execute(operation);
+                MapReduceStatistics mapReduceStatistics = executor.execute(operation, getReadConcern());
                 DBCollection mapReduceOutputCollection = getMapReduceOutputCollection(command);
                 DBCursor executionResult = mapReduceOutputCollection.find();
                 return new MapReduceOutput(command.toDBObject(), executionResult, mapReduceStatistics, mapReduceOutputCollection);
@@ -1465,7 +1464,7 @@ public class DBCollection {
                                                        .bypassDocumentValidation(options.getBypassDocumentValidation())
                                                        .collation(options.getCollation());
             try {
-                executor.execute(operation);
+                executor.execute(operation, getReadConcern());
                 if (returnCursorForOutCollection) {
                     return new DBCursor(database.getCollection(outCollection.asString().getValue()), new BasicDBObject(),
                             new DBCollectionFindOptions().readPreference(primary()).collation(options.getCollation()));
@@ -1477,13 +1476,12 @@ public class DBCollection {
             }
         } else {
             AggregateOperation<DBObject> operation = new AggregateOperation<DBObject>(getNamespace(), stages, getDefaultDBObjectCodec())
-                    .readConcern(getReadConcern())
                     .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                     .allowDiskUse(options.getAllowDiskUse())
                     .batchSize(options.getBatchSize())
                     .useCursor(options.getOutputMode() == com.mongodb.AggregationOptions.OutputMode.CURSOR)
                     .collation(options.getCollation());
-            BatchCursor<DBObject> cursor = executor.execute(operation, readPreference);
+            BatchCursor<DBObject> cursor = executor.execute(operation, readPreference, getReadConcern());
             return new MongoCursorAdapter(new MongoBatchCursorAdapter<DBObject>(cursor));
         }
     }
@@ -1504,7 +1502,8 @@ public class DBCollection {
                                                          .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                                                          .allowDiskUse(options.getAllowDiskUse())
                                                          .collation(options.getCollation());
-        return new CommandResult(executor.execute(operation.asExplainableOperation(ExplainVerbosity.QUERY_PLANNER), primaryPreferred()));
+        return new CommandResult(executor.execute(operation.asExplainableOperation(ExplainVerbosity.QUERY_PLANNER), primaryPreferred(),
+                getReadConcern()));
     }
 
     @SuppressWarnings("unchecked")
@@ -1533,12 +1532,12 @@ public class DBCollection {
         ParallelCollectionScanOperation<DBObject> operation = new ParallelCollectionScanOperation<DBObject>(getNamespace(),
                                                                                                             options.getNumCursors(),
                                                                                                             objectCodec)
-                                                                  .readConcern(getReadConcern())
                                                                   .batchSize(options.getBatchSize());
         ReadPreference readPreferenceFromOptions = options.getReadPreference();
         List<BatchCursor<DBObject>> mongoCursors = executor.execute(operation,
                                                                     readPreferenceFromOptions != null ? readPreferenceFromOptions
-                                                                                                        : getReadPreference());
+                                                                                                        : getReadPreference(),
+                getReadConcern());
 
         for (BatchCursor<DBObject> mongoCursor : mongoCursors) {
             cursors.add(new MongoCursorAdapter(new MongoBatchCursorAdapter<DBObject>(mongoCursor)));
@@ -1647,7 +1646,7 @@ public class DBCollection {
      */
     public void createIndex(final DBObject keys, final DBObject options) {
         try {
-            executor.execute(createIndexOperation(keys, options));
+            executor.execute(createIndexOperation(keys, options), getReadConcern());
         } catch (MongoWriteConcernException e) {
             throw createWriteConcernException(e);
         }
@@ -1971,7 +1970,7 @@ public class DBCollection {
         }
 
         try {
-            return executor.execute(operation);
+            return executor.execute(operation, getReadConcern());
         } catch (MongoWriteConcernException e) {
             throw createWriteConcernException(e);
         }
@@ -2119,7 +2118,7 @@ public class DBCollection {
      */
     public void drop() {
         try {
-            executor.execute(new DropCollectionOperation(getNamespace(), getWriteConcern()));
+            executor.execute(new DropCollectionOperation(getNamespace(), getWriteConcern()), getReadConcern());
         } catch (MongoWriteConcernException e) {
             throw createWriteConcernException(e);
         }
@@ -2212,7 +2211,7 @@ public class DBCollection {
      */
     public void dropIndex(final String indexName) {
         try {
-            executor.execute(new DropIndexOperation(getNamespace(), indexName, getWriteConcern()));
+            executor.execute(new DropIndexOperation(getNamespace(), indexName, getWriteConcern()), getReadConcern());
         } catch (MongoWriteConcernException e) {
             throw createWriteConcernException(e);
         }
@@ -2358,7 +2357,7 @@ public class DBCollection {
         try {
             return translateBulkWriteResult(executor.execute(new MixedBulkWriteOperation(getNamespace(),
                             translateWriteRequestsToNew(writeRequests), ordered, writeConcern, false)
-                            .bypassDocumentValidation(bypassDocumentValidation)), getObjectCodec());
+                            .bypassDocumentValidation(bypassDocumentValidation), getReadConcern()), getObjectCodec());
         } catch (MongoBulkWriteException e) {
             throw BulkWriteHelper.translateBulkWriteException(e, MongoClient.getDefaultCodecRegistry().get(DBObject.class));
         }

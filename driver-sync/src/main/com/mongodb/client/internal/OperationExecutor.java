@@ -16,11 +16,12 @@
 
 package com.mongodb.client.internal;
 
+import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.lang.Nullable;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
-import com.mongodb.session.ClientSession;
+import com.mongodb.client.ClientSession;
 
 /**
  * An interface describing the execution of a read or a write operation.
@@ -34,18 +35,20 @@ public interface OperationExecutor {
      * @param <T> the operations result type.
      * @param operation the read operation.
      * @param readPreference the read preference.
+     * @param readConcern the read concern
      * @return the result of executing the operation.
      */
-    <T> T execute(ReadOperation<T> operation, ReadPreference readPreference);
+    <T> T execute(ReadOperation<T> operation, ReadPreference readPreference, ReadConcern readConcern);
 
     /**
      * Execute the write operation.
      *
      * @param operation the write operation.
+     * @param readConcern the read concern
      * @param <T> the operations result type.
      * @return the result of executing the operation.
      */
-    <T> T execute(WriteOperation<T> operation);
+    <T> T execute(WriteOperation<T> operation, ReadConcern readConcern);
 
     /**
      * Execute the read operation with the given read preference.
@@ -53,18 +56,20 @@ public interface OperationExecutor {
      * @param <T> the operations result type.
      * @param operation the read operation.
      * @param readPreference the read preference.
+     * @param readConcern the read concern
      * @param session the session to associate this operation with
      * @return the result of executing the operation.
      */
-    <T> T execute(ReadOperation<T> operation, ReadPreference readPreference, @Nullable ClientSession session);
+    <T> T execute(ReadOperation<T> operation, ReadPreference readPreference, ReadConcern readConcern, @Nullable ClientSession session);
 
     /**
      * Execute the write operation.
      *
      * @param operation the write operation.
+     * @param readConcern the read concern
      * @param session the session to associate this operation with
      * @param <T> the operations result type.
      * @return the result of executing the operation.
      */
-    <T> T execute(WriteOperation<T> operation, @Nullable ClientSession session);
+    <T> T execute(WriteOperation<T> operation, ReadConcern readConcern, @Nullable ClientSession session);
 }

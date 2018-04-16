@@ -49,7 +49,7 @@ import spock.lang.IgnoreIf
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.connection.ServerType.STANDALONE
-import static com.mongodb.operation.ReadConcernHelper.appendReadConcernToCommand
+import static com.mongodb.operation.OperationReadConcernHelper.appendReadConcernToCommand
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class MapReduceWithInlineResultsOperationSpecification extends OperationFunctionalSpecification {
@@ -190,10 +190,6 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
                 .append('maxTimeMS', new BsonInt64(10))
                 .append('limit', new BsonInt32(20))
 
-        if (includeReadConcern) {
-            operation.readConcern(ReadConcern.MAJORITY)
-            expectedCommand.append('readConcern', new BsonDocument('level', new BsonString('majority')))
-        }
         if (includeCollation) {
             operation.collation(defaultCollation)
             expectedCommand.append('collation', defaultCollation.asDocument())
@@ -203,20 +199,20 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
         testOperation(operation, serverVersion, expectedCommand, async, helper.commandResult)
 
         where:
-        serverVersion | includeReadConcern  | includeCollation | async
-        [3, 4, 0]     | true                | true             | true
-        [3, 4, 0]     | true                | true             | false
-        [3, 0, 0]     | false               | false            | true
-        [3, 0, 0]     | false               | false            | false
+        serverVersion | includeCollation | async
+        [3, 4, 0]     | true             | true
+        [3, 4, 0]     | true             | false
+        [3, 0, 0]     | false            | true
+        [3, 0, 0]     | false            | false
     }
 
     def 'should throw an exception when using an unsupported ReadConcern'() {
         given:
         def operation = new MapReduceWithInlineResultsOperation<Document>(helper.namespace, new BsonJavaScript('function(){ }'),
-                new BsonJavaScript('function(key, values){ }'), documentCodec).readConcern(readConcern)
+                new BsonJavaScript('function(key, values){ }'), documentCodec)
 
         when:
-        testOperationThrows(operation, [3, 0, 0], async)
+        testOperationThrows(operation, [3, 0, 0], readConcern, async)
 
         then:
         def exception = thrown(IllegalArgumentException)
@@ -286,11 +282,10 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
               "scope" : null,
               "verbose" : false,
               }''')
-        appendReadConcernToCommand(ReadConcern.MAJORITY, sessionContext, commandDocument)
+        appendReadConcernToCommand(sessionContext, commandDocument)
 
         def operation = new MapReduceWithInlineResultsOperation<Document>(helper.namespace, new BsonJavaScript('function(){ }'),
                 new BsonJavaScript('function(key, values){ }'), documentCodec)
-                .readConcern(ReadConcern.MAJORITY)
 
         when:
         operation.execute(binding)
@@ -312,6 +307,8 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
                 Stub(SessionContext) {
                     isCausallyConsistent() >> true
                     getOperationTime() >> new BsonTimestamp(42, 0)
+                    hasActiveTransaction() >> false
+                    getReadConcern() >> ReadConcern.MAJORITY
                 }
         ]
     }
@@ -337,11 +334,10 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
               "scope" : null,
               "verbose" : false,
               }''')
-        appendReadConcernToCommand(ReadConcern.MAJORITY, sessionContext, commandDocument)
+        appendReadConcernToCommand(sessionContext, commandDocument)
 
         def operation = new MapReduceWithInlineResultsOperation<Document>(helper.namespace, new BsonJavaScript('function(){ }'),
                 new BsonJavaScript('function(key, values){ }'), documentCodec)
-                .readConcern(ReadConcern.MAJORITY)
 
         when:
         executeAsync(operation, binding)
@@ -365,6 +361,8 @@ class MapReduceWithInlineResultsOperationSpecification extends OperationFunction
                 Stub(SessionContext) {
                     isCausallyConsistent() >> true
                     getOperationTime() >> new BsonTimestamp(42, 0)
+                    hasActiveTransaction() >> false
+                    getReadConcern() >> ReadConcern.MAJORITY
                 }
         ]
     }

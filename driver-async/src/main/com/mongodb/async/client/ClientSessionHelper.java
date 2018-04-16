@@ -22,7 +22,7 @@ import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.internal.session.ClientSessionImpl;
+import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
@@ -81,8 +81,8 @@ class ClientSessionHelper {
         }
     }
 
-    private ClientSessionImpl createClientSession(final ClientSessionOptions options) {
-        return new ClientSessionImpl(serverSessionPool, mongoClient, options);
+    private ClientSession createClientSession(final ClientSessionOptions options) {
+        return new BaseClientSessionImpl(serverSessionPool, mongoClient, options);
     }
 
     @SuppressWarnings("deprecation")

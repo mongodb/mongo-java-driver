@@ -23,23 +23,14 @@ import org.bson.BsonString
 import org.bson.BsonTimestamp
 import spock.lang.Specification
 
-import static com.mongodb.operation.ReadConcernHelper.appendReadConcernToCommand
+import static com.mongodb.operation.OperationReadConcernHelper.appendReadConcernToCommand
 
-class ReadConcernHelperSpecification extends Specification {
+
+class OperationReadConcernHelperSpecification extends Specification {
 
     def 'should throw IllegalArgumentException if command document is null'() {
         when:
-        appendReadConcernToCommand(ReadConcern.MAJORITY, Stub(SessionContext), null)
-
-        then:
-        thrown(IllegalArgumentException)
-    }
-
-    def 'should throw IllegalArgumentException if read concern is null'() {
-        def commandDocument = new BsonDocument()
-
-        when:
-        appendReadConcernToCommand(null, Stub(SessionContext), commandDocument)
+        appendReadConcernToCommand(Stub(SessionContext), null)
 
         then:
         thrown(IllegalArgumentException)
@@ -47,7 +38,7 @@ class ReadConcernHelperSpecification extends Specification {
 
     def 'should throw IllegalArgumentException if session context is null'() {
         when:
-        appendReadConcernToCommand(ReadConcern.MAJORITY, null, new BsonDocument())
+        appendReadConcernToCommand(null, new BsonDocument())
 
         then:
         thrown(IllegalArgumentException)
@@ -59,33 +50,34 @@ class ReadConcernHelperSpecification extends Specification {
         def sessionContext = Stub(SessionContext) {
             isCausallyConsistent() >> true
             getOperationTime() >> operationTime
+            getReadConcern() >> ReadConcern.MAJORITY
         }
         def commandDocument = new BsonDocument()
 
         when:
-        appendReadConcernToCommand(ReadConcern.MAJORITY, sessionContext, commandDocument)
+        appendReadConcernToCommand(sessionContext, commandDocument)
 
         then:
         commandDocument == new BsonDocument('readConcern',
                 new BsonDocument('level', new BsonString('majority')).append('afterClusterTime', operationTime))
     }
 
-    def 'should add afterClusterTime and local level to default read concern when session is causally consistent'() {
+    def 'should add afterClusterTime to default read concern when session is causally consistent'() {
         given:
         def operationTime = new BsonTimestamp(42, 1)
         def sessionContext = Stub(SessionContext) {
             isCausallyConsistent() >> true
             getOperationTime() >> operationTime
+            getReadConcern() >> ReadConcern.DEFAULT
         }
         def commandDocument = new BsonDocument()
 
         when:
-        appendReadConcernToCommand(ReadConcern.DEFAULT, sessionContext, commandDocument)
+        appendReadConcernToCommand(sessionContext, commandDocument)
 
         then:
         commandDocument == new BsonDocument('readConcern',
-                new BsonDocument(new BsonDocument('level', new BsonString('local')))
-                        .append('afterClusterTime', operationTime))
+                new BsonDocument(new BsonDocument('afterClusterTime', operationTime)))
     }
 
     def 'should not add afterClusterTime to ReadConcern when session is not causally consistent'() {
@@ -93,11 +85,12 @@ class ReadConcernHelperSpecification extends Specification {
         def sessionContext = Stub(SessionContext) {
             isCausallyConsistent() >> false
             getOperationTime() >> { throw new UnsupportedOperationException() }
+            getReadConcern() >> ReadConcern.MAJORITY
         }
         def commandDocument = new BsonDocument()
 
         when:
-        appendReadConcernToCommand(ReadConcern.MAJORITY, sessionContext, commandDocument)
+        appendReadConcernToCommand(sessionContext, commandDocument)
 
         then:
         commandDocument == new BsonDocument('readConcern',
@@ -108,11 +101,12 @@ class ReadConcernHelperSpecification extends Specification {
         def sessionContext = Stub(SessionContext) {
             isCausallyConsistent() >> false
             getOperationTime() >> { throw new UnsupportedOperationException() }
+            getReadConcern() >> ReadConcern.DEFAULT
         }
         def commandDocument = new BsonDocument()
 
         when:
-        appendReadConcernToCommand(ReadConcern.DEFAULT, sessionContext, commandDocument)
+        appendReadConcernToCommand(sessionContext, commandDocument)
 
         then:
         commandDocument == new BsonDocument()
@@ -123,11 +117,12 @@ class ReadConcernHelperSpecification extends Specification {
         def sessionContext = Stub(SessionContext) {
             isCausallyConsistent() >> true
             getOperationTime() >> null
+            getReadConcern() >> ReadConcern.MAJORITY
         }
         def commandDocument = new BsonDocument()
 
         when:
-        appendReadConcernToCommand(ReadConcern.MAJORITY, sessionContext, commandDocument)
+        appendReadConcernToCommand(sessionContext, commandDocument)
 
         then:
         commandDocument == new BsonDocument('readConcern',

@@ -16,6 +16,7 @@
 
 package com.mongodb.binding;
 
+import com.mongodb.ReadConcern;
 import com.mongodb.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
@@ -52,9 +53,19 @@ class SimpleSessionContext implements SessionContext {
     }
 
     @Override
+    public long getTransactionNumber() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public long advanceTransactionNumber() {
         counter++;
         return counter;
+    }
+
+    @Override
+    public int advanceStatementId(final int increment) {
+        throw new UnsupportedOperationException();
     }
 
     @Override
@@ -75,6 +86,16 @@ class SimpleSessionContext implements SessionContext {
     @Override
     public void advanceClusterTime(final BsonDocument clusterTime) {
         this.clusterTime = clusterTime;
+    }
+
+    @Override
+    public boolean hasActiveTransaction() {
+        return false;
+    }
+
+    @Override
+    public ReadConcern getReadConcern() {
+        return ReadConcern.DEFAULT;
     }
 
     private static BsonDocument createNewServerSessionIdentifier() {

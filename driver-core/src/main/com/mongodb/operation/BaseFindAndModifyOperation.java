@@ -16,17 +16,53 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.MongoNamespace;
+import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.connection.ServerDescription;
 import com.mongodb.session.SessionContext;
+import org.bson.BsonDocument;
+import org.bson.BsonInt64;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.operation.CommandOperationHelper.executeRetryableCommand;
+import static com.mongodb.operation.OperationHelper.isRetryableWrite;
+import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo;
 
-abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
+/**
+ * Abstract base class for findAndModify-based operations
+ *
+ * @param <T>
+ * @since 3.8
+ */
+public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
+
+    private final MongoNamespace namespace;
+    private final WriteConcern writeConcern;
+    private final boolean retryWrites;
+    private final Decoder<T> decoder;
+
+    /**
+     * Construct a new instance.
+     *
+     * @param namespace   the database and collection namespace for the operation.
+     * @param writeConcern the writeConcern for the operation
+     * @param retryWrites  if writes should be retried if they fail due to a network error.
+     * @param decoder     the decoder for the result documents.
+     */
+    protected BaseFindAndModifyOperation(final MongoNamespace namespace, final WriteConcern writeConcern,
+                                      final boolean retryWrites, final Decoder<T> decoder) {
+        this.namespace = notNull("namespace", namespace);
+        this.writeConcern = notNull("writeConcern", writeConcern);
+        this.retryWrites = retryWrites;
+        this.decoder = notNull("decoder", decoder);
+    }
 
     @Override
     public T execute(final WriteBinding binding) {
@@ -46,9 +82,61 @@ abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperation<T>, 
 
     protected abstract String getDatabaseName();
 
-    protected abstract Decoder<T> getDecoder();
+    /**
+     * Gets the namespace.
+     *
+     * @return the namespace
+     */
+    public MongoNamespace getNamespace() {
+        return namespace;
+    }
+
+    /**
+     * Get the write concern for this operation
+     *
+     * @return the {@link WriteConcern}
+     * @mongodb.server.release 3.2
+     * @since 3.2
+     */
+    public WriteConcern getWriteConcern() {
+        return writeConcern;
+    }
+
+    /**
+     * Gets the decoder used to decode the result documents.
+     *
+     * @return the decoder
+     */
+    public Decoder<T> getDecoder() {
+        return decoder;
+    }
+
+    /**
+     * Returns true if the operation should be retried.
+     *
+     * @return true if the operation should be retried
+     * @since 3.8
+     */
+    public boolean isRetryWrites() {
+        return retryWrites;
+    }
 
     protected abstract CommandCreator getCommandCreator(SessionContext sessionContext);
+
+    protected void addTxnNumberToCommand(final ServerDescription serverDescription, final ConnectionDescription connectionDescription,
+                                         final BsonDocument commandDocument, final SessionContext sessionContext) {
+        if (isRetryableWrite(isRetryWrites(), getWriteConcern(), serverDescription, connectionDescription, sessionContext)) {
+            commandDocument.put("txnNumber", new BsonInt64(sessionContext.advanceTransactionNumber()));
+        }
+    }
+
+    protected void addWriteConcernToCommand(final ConnectionDescription connectionDescription, final BsonDocument commandDocument,
+                                            final SessionContext sessionContext) {
+        if (getWriteConcern().isAcknowledged() && !getWriteConcern().isServerDefault()
+                && serverIsAtLeastVersionThreeDotTwo(connectionDescription) && !sessionContext.hasActiveTransaction()) {
+            commandDocument.put("writeConcern", getWriteConcern().asDocument());
+        }
+    }
 
     protected abstract FieldNameValidator getFieldNameValidator();
 }

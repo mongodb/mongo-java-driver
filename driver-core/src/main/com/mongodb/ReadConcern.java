@@ -69,6 +69,14 @@ public final class ReadConcern {
     public static final ReadConcern LINEARIZABLE = new ReadConcern(ReadConcernLevel.LINEARIZABLE);
 
     /**
+     * The snapshot read concern.
+     *
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     */
+    public static final ReadConcern SNAPSHOT = new ReadConcern(ReadConcernLevel.SNAPSHOT);
+
+    /**
      * Gets the read concern level.
      *
      * @return the read concern level, which may be null (which indicates to use the server's default level)

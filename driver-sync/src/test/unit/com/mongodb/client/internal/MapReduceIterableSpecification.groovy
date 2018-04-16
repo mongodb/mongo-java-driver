@@ -28,7 +28,7 @@ import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.FindOperation
 import com.mongodb.operation.MapReduceToCollectionOperation
 import com.mongodb.operation.MapReduceWithInlineResultsOperation
-import com.mongodb.session.ClientSession
+import com.mongodb.client.ClientSession
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonJavaScript

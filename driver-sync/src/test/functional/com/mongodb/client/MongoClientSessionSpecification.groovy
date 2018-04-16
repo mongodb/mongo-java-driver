@@ -21,6 +21,7 @@ import com.mongodb.ClientSessionOptions
 import com.mongodb.MongoClientException
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
+import com.mongodb.TransactionOptions
 import com.mongodb.WriteConcern
 import com.mongodb.connection.TestCommandListener
 import com.mongodb.event.CommandStartedEvent
@@ -54,6 +55,12 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
     @IgnoreIf({ serverVersionAtLeast(3, 6) })
     def 'should throw MongoClientException starting a session when sessions are not supported'() {
         when:
+        getMongoClient().startSession()
+
+        then:
+        thrown(MongoClientException)
+
+        when:
         getMongoClient().startSession(ClientSessionOptions.builder().build())
 
         then:
@@ -62,18 +69,25 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
 
     @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'should create session with correct defaults'() {
-        when:
-        def options = ClientSessionOptions.builder().build()
-        def clientSession = getMongoClient().startSession(options)
-
-        then:
-        clientSession != null
+        expect:
         clientSession.getOriginator() == getMongoClient()
         clientSession.isCausallyConsistent()
-        clientSession.getOptions() == options
+        clientSession.getOptions() == ClientSessionOptions.builder()
+                .defaultTransactionOptions(TransactionOptions.builder()
+                .readConcern(ReadConcern.DEFAULT)
+                .writeConcern(WriteConcern.ACKNOWLEDGED)
+                .build())
+                .build()
         clientSession.getClusterTime() == null
         clientSession.getOperationTime() == null
         clientSession.getServerSession() != null
+
+        cleanup:
+        clientSession?.close()
+
+        where:
+        clientSession << [getMongoClient().startSession(),
+                          getMongoClient().startSession(ClientSessionOptions.builder().build())]
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 6) })

@@ -66,7 +66,7 @@ import static com.mongodb.CursorType.Tailable
 import static com.mongodb.CursorType.TailableAwait
 import static com.mongodb.ExplainVerbosity.QUERY_PLANNER
 import static com.mongodb.connection.ServerType.STANDALONE
-import static com.mongodb.operation.ReadConcernHelper.appendReadConcernToCommand
+import static com.mongodb.operation.OperationReadConcernHelper.appendReadConcernToCommand
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assert.assertEquals
@@ -534,10 +534,9 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         source.connection >> connection
         source.retain() >> source
         def commandDocument = new BsonDocument('find', new BsonString(getCollectionName()))
-        appendReadConcernToCommand(ReadConcern.MAJORITY, sessionContext, commandDocument)
+        appendReadConcernToCommand(sessionContext, commandDocument)
 
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
-            .readConcern(ReadConcern.MAJORITY)
 
         when:
         operation.execute(binding)
@@ -556,6 +555,8 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                 Stub(SessionContext) {
                     isCausallyConsistent() >> true
                     getOperationTime() >> new BsonTimestamp(42, 0)
+                    hasActiveTransaction() >> false
+                    getReadConcern() >> ReadConcern.MAJORITY
                 }
         ]
     }
@@ -571,10 +572,9 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         source.getConnection(_) >> { it[0].onResult(connection, null) }
         source.retain() >> source
         def commandDocument = new BsonDocument('find', new BsonString(getCollectionName()))
-        appendReadConcernToCommand(ReadConcern.MAJORITY, sessionContext, commandDocument)
+        appendReadConcernToCommand(sessionContext, commandDocument)
 
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
-                .readConcern(ReadConcern.MAJORITY)
 
         when:
         executeAsync(operation, binding)
@@ -594,6 +594,8 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                 Stub(SessionContext) {
                     isCausallyConsistent() >> true
                     getOperationTime() >> new BsonTimestamp(42, 0)
+                    hasActiveTransaction() >> false
+                    getReadConcern() >> ReadConcern.MAJORITY
                 }
         ]
     }
@@ -603,7 +605,11 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
                 .projection(new BsonDocument('x', new BsonInt32(1)))
                 .filter(new BsonDocument('z', new BsonString('val')))
-        def binding = Stub(ReadBinding)
+        def binding = Stub(ReadBinding) {
+            getSessionContext() >> Stub(SessionContext) {
+                getReadConcern() >> ReadConcern.DEFAULT
+            }
+        }
         def source = Stub(ConnectionSource)
         def connection = Mock(Connection)
         binding.readPreference >> ReadPreference.primary()

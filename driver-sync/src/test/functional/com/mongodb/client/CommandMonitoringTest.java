@@ -24,27 +24,11 @@ import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.connection.ServerVersion;
 import com.mongodb.connection.TestCommandListener;
 import com.mongodb.event.CommandEvent;
-import com.mongodb.event.CommandFailedEvent;
-import com.mongodb.event.CommandStartedEvent;
-import com.mongodb.event.CommandSucceededEvent;
 import org.bson.BsonArray;
-import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
-import org.bson.BsonDocumentWriter;
-import org.bson.BsonDouble;
-import org.bson.BsonInt32;
-import org.bson.BsonInt64;
-import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.Document;
-import org.bson.codecs.BsonDocumentCodec;
-import org.bson.codecs.BsonValueCodecProvider;
-import org.bson.codecs.Codec;
 import org.bson.codecs.DocumentCodec;
-import org.bson.codecs.EncoderContext;
-import org.bson.codecs.configuration.CodecProvider;
-import org.bson.codecs.configuration.CodecRegistries;
-import org.bson.codecs.configuration.CodecRegistry;
 import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -58,35 +42,18 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.isStandalone;
+import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
-import static java.util.Arrays.asList;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 
 // See https://github.com/mongodb/specifications/tree/master/source/command-monitoring/tests
 @RunWith(Parameterized.class)
 public class CommandMonitoringTest {
-    private static final CodecRegistry CODEC_REGISTRY_HACK = CodecRegistries.fromProviders(new BsonValueCodecProvider(),
-            new CodecProvider() {
-                @Override
-                @SuppressWarnings("unchecked")
-                public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-                    // Use BsonDocumentCodec even for a private sub-class of BsonDocument
-                    if (BsonDocument.class.isAssignableFrom(clazz)) {
-                        return (Codec<T>) new BsonDocumentCodec(registry);
-                    }
-                    return null;
-                }
-            });
 
     private static MongoClient mongoClient;
     private static TestCommandListener commandListener;
@@ -175,118 +142,11 @@ public class CommandMonitoringTest {
     public void shouldPassAllOutcomes() {
         executeOperation();
 
-        List<CommandEvent> expectedEvents = getExpectedEvents(definition.getArray("expectations"));
+        List<CommandEvent> expectedEvents = getExpectedEvents(definition.getArray("expectations"), databaseName,
+                definition.getDocument("operation"));
         List<CommandEvent> events = commandListener.getEvents();
 
-        assertEquals(expectedEvents.size(), events.size());
-
-        for (int i = 0; i < events.size(); i++) {
-            CommandEvent actual = events.get(i);
-            CommandEvent expected = expectedEvents.get(i);
-
-            assertEquals(expected.getClass(), actual.getClass());
-            assertEquals(expected.getCommandName(), actual.getCommandName());
-
-            if (actual.getClass().equals(CommandStartedEvent.class)) {
-                CommandStartedEvent actualCommandStartedEvent = massageActualCommandStartedEvent((CommandStartedEvent) actual);
-                CommandStartedEvent expectedCommandStartedEvent = (CommandStartedEvent) expected;
-
-                assertEquals(expectedCommandStartedEvent.getDatabaseName(), actualCommandStartedEvent.getDatabaseName());
-                assertEquals(expectedCommandStartedEvent.getCommand(), actualCommandStartedEvent.getCommand());
-
-            } else if (actual.getClass().equals(CommandSucceededEvent.class)) {
-                CommandSucceededEvent actualCommandSucceededEvent = massageActualCommandSucceededEvent((CommandSucceededEvent) actual);
-                CommandSucceededEvent expectedCommandSucceededEvent = massageExpectedCommandSucceededEvent((CommandSucceededEvent)
-                                                                                                           expected);
-
-                assertEquals(expectedCommandSucceededEvent.getCommandName(), actualCommandSucceededEvent.getCommandName());
-                assertTrue(actualCommandSucceededEvent.getElapsedTime(TimeUnit.NANOSECONDS) > 0);
-
-                if (expectedCommandSucceededEvent.getResponse() == null) {
-                    assertNull(actualCommandSucceededEvent.getResponse());
-                } else {
-                    assertTrue(String.format("\nExpected: %s\nActual:   %s",
-                                             expectedCommandSucceededEvent.getResponse(),
-                                             actualCommandSucceededEvent.getResponse()),
-                              actualCommandSucceededEvent.getResponse().entrySet()
-                                                          .containsAll(expectedCommandSucceededEvent.getResponse().entrySet()));
-                }
-            } else if (actual.getClass().equals(CommandFailedEvent.class)) {
-                // nothing else to assert here
-            } else {
-                throw new UnsupportedOperationException("Unsupported event type: " + actual.getClass());
-            }
-        }
-    }
-
-    private CommandSucceededEvent massageExpectedCommandSucceededEvent(final CommandSucceededEvent expected) {
-        // massage numbers that are the wrong BSON type
-        expected.getResponse().put("ok", new BsonDouble(expected.getResponse().getNumber("ok").doubleValue()));
-        return expected;
-    }
-
-    private CommandSucceededEvent massageActualCommandSucceededEvent(final CommandSucceededEvent actual) {
-        BsonDocument response = getWritableCloneOfCommand(actual.getResponse());
-
-        // massage numbers that are the wrong BSON type
-        response.put("ok", new BsonDouble(response.getNumber("ok").doubleValue()));
-        if (response.containsKey("n")) {
-            response.put("n", new BsonInt32(response.getNumber("n").intValue()));
-        }
-
-        if (actual.getCommandName().equals("find") || actual.getCommandName().equals("getMore")) {
-            if (response.containsKey("cursor")) {
-                if (response.getDocument("cursor").containsKey("id")
-                    && !response.getDocument("cursor").getInt64("id").equals(new BsonInt64(0))) {
-                    response.getDocument("cursor").put("id", new BsonInt64(42));
-                }
-            }
-        } else if (actual.getCommandName().equals("killCursors")) {
-            response.getArray("cursorsUnknown").set(0, new BsonInt64(42));
-        } else if (isWriteCommand(actual.getCommandName())) {
-            if (response.containsKey("writeErrors")) {
-                for (Iterator<BsonValue> iter = response.getArray("writeErrors").iterator(); iter.hasNext();) {
-                    BsonDocument cur = iter.next().asDocument();
-                    cur.put("code", new BsonInt32(42));
-                    cur.put("errmsg", new BsonString(""));
-                    cur.remove("codeName");
-                }
-            }
-            if (actual.getCommandName().equals("update")) {
-                response.remove("nModified");
-            }
-        }
-        return new CommandSucceededEvent(actual.getRequestId(), actual.getConnectionDescription(), actual.getCommandName(), response,
-                actual.getElapsedTime(TimeUnit.NANOSECONDS));
-    }
-
-    private boolean isWriteCommand(final String commandName) {
-        return asList("insert", "update", "delete").contains(commandName);
-    }
-
-    private CommandStartedEvent massageActualCommandStartedEvent(final CommandStartedEvent actual) {
-        BsonDocument command = getWritableCloneOfCommand(actual.getCommand());
-
-        if (actual.getCommandName().equals("update")) {
-            for (Iterator<BsonValue> iter = command.getArray("updates").iterator(); iter.hasNext();) {
-                BsonDocument curUpdate = iter.next().asDocument();
-                if (!curUpdate.containsKey("multi")) {
-                    curUpdate.put("multi", BsonBoolean.FALSE);
-                }
-                if (!curUpdate.containsKey("upsert")) {
-                    curUpdate.put("upsert", BsonBoolean.FALSE);
-                }
-            }
-        } else if (actual.getCommandName().equals("getMore")) {
-            command.put("getMore", new BsonInt64(42));
-        } else if (actual.getCommandName().equals("killCursors")) {
-            command.getArray("cursors").set(0, new BsonInt64(42));
-        }
-        command.remove("$clusterTime");
-        command.remove("lsid");
-
-        return new CommandStartedEvent(actual.getRequestId(), actual.getConnectionDescription(), actual.getDatabaseName(),
-                actual.getCommandName(), command);
+        CommandMonitoringTestHelper.assertEventsEquality(expectedEvents, events);
     }
 
     private void executeOperation() {
@@ -295,48 +155,6 @@ public class CommandMonitoringTest {
         } catch (MongoException e) {
             // ignore, as some of these are expected to throw exceptions
         }
-    }
-
-    private List<CommandEvent> getExpectedEvents(final BsonArray expectedEventDocuments) {
-        List<CommandEvent> expectedEvents = new ArrayList<CommandEvent>(expectedEventDocuments.size());
-        for (Iterator<BsonValue> iterator = expectedEventDocuments.iterator(); iterator.hasNext();) {
-            BsonDocument curExpectedEventDocument = iterator.next().asDocument();
-            String eventType = curExpectedEventDocument.keySet().iterator().next();
-            BsonDocument eventDescriptionDocument = curExpectedEventDocument.getDocument(eventType);
-            CommandEvent commandEvent;
-            String commandName = eventDescriptionDocument.getString("command_name").getValue();
-            if (eventType.equals("command_started_event")) {
-                BsonDocument commandDocument = eventDescriptionDocument.getDocument("command");
-                // Not clear whether these global fields should be included, but also not clear how to efficiently exclude them
-                if (ClusterFixture.serverVersionAtLeast(3, 6)) {
-                    commandDocument.put("$db", new BsonString(databaseName));
-                    BsonDocument operation = definition.getDocument("operation");
-                    if (operation.containsKey("read_preference")) {
-                        commandDocument.put("$readPreference", operation.getDocument("read_preference"));
-                    } else if (!isDiscoverableReplicaSet() && !isSharded() && !isWriteCommand(commandName)) {
-                        commandDocument.put("$readPreference", ReadPreference.primaryPreferred().toDocument());
-                    }
-                }
-                commandEvent = new CommandStartedEvent(1, null, databaseName, commandName, commandDocument);
-            } else if (eventType.equals("command_succeeded_event")) {
-                BsonDocument replyDocument = eventDescriptionDocument.get("reply").asDocument();
-                commandEvent = new CommandSucceededEvent(1, null, commandName, replyDocument, 1);
-
-            } else if (eventType.equals("command_failed_event")) {
-                commandEvent = new CommandFailedEvent(1, null, commandName, 1, null);
-            } else {
-                throw new UnsupportedOperationException("Unsupported command event type: " + eventType);
-            }
-            expectedEvents.add(commandEvent);
-        }
-        return expectedEvents;
-    }
-
-    private BsonDocument getWritableCloneOfCommand(final BsonDocument original) {
-        BsonDocument clone = new BsonDocument();
-        BsonDocumentWriter writer = new BsonDocumentWriter(clone);
-        new BsonDocumentCodec(CODEC_REGISTRY_HACK).encode(writer, original, EncoderContext.builder().build());
-        return clone;
     }
 
 

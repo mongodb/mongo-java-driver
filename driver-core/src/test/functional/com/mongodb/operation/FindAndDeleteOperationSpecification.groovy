@@ -163,7 +163,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
                 && serverVersionIsGreaterThan(serverVersion, [3, 4, 0]))
         def cannedResult = new BsonDocument('value', new BsonDocumentWrapper(BsonDocument.parse('{}'), new BsonDocumentCodec()))
         def operation = new FindAndDeleteOperation<Document>(getNamespace(), writeConcern, retryWrites, documentCodec)
-        def expectedCommand = new BsonDocument('findandmodify', new BsonString(getNamespace().getCollectionName()))
+        def expectedCommand = new BsonDocument('findAndModify', new BsonString(getNamespace().getCollectionName()))
                 .append('remove', BsonBoolean.TRUE)
 
         if (includeWriteConcern) {
@@ -242,7 +242,7 @@ class FindAndDeleteOperationSpecification extends OperationFunctionalSpecificati
         when:
         def cannedResult = new BsonDocument('value', new BsonDocumentWrapper(BsonDocument.parse('{}'), new BsonDocumentCodec()))
         def operation = new FindAndDeleteOperation<Document>(getNamespace(), ACKNOWLEDGED, true, documentCodec)
-        def expectedCommand = new BsonDocument('findandmodify', new BsonString(getNamespace().getCollectionName()))
+        def expectedCommand = new BsonDocument('findAndModify', new BsonString(getNamespace().getCollectionName()))
                 .append('remove', BsonBoolean.TRUE)
                 .append('txnNumber', new BsonInt64(0))
 

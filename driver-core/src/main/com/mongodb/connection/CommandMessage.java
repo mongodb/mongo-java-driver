@@ -22,8 +22,11 @@ import com.mongodb.internal.validator.MappedFieldNameValidator;
 import com.mongodb.session.SessionContext;
 import org.bson.BsonArray;
 import org.bson.BsonBinaryWriter;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonElement;
+import org.bson.BsonInt32;
+import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonWriter;
 import org.bson.FieldNameValidator;
@@ -43,6 +46,7 @@ import static com.mongodb.connection.BsonWriterHelper.writePayload;
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
+import static com.mongodb.internal.connection.ReadConcernHelper.getReadConcernDocument;
 
 /**
  * A command message that uses OP_MSG or OP_QUERY to send the command.
@@ -129,15 +133,20 @@ final class CommandMessage extends RequestMessage {
             addDocument(getCommandToEncode(), bsonOutput, commandFieldNameValidator, getExtraElements(sessionContext));
 
             if (payload != null) {
+                int payloadStartPosition = payload.getPosition();
                 bsonOutput.writeByte(1);          // payload type
-                int payloadPosition = bsonOutput.getPosition();
+                int payloadBsonOutputStartPosition = bsonOutput.getPosition();
                 bsonOutput.writeInt32(0);         // size
                 bsonOutput.writeCString(payload.getPayloadName());
                 writePayload(new BsonBinaryWriter(bsonOutput, payloadFieldNameValidator), bsonOutput, getSettings(),
                         messageStartPosition, payload);
 
-                int payloadLength = bsonOutput.getPosition() - payloadPosition;
-                bsonOutput.writeInt32(payloadPosition, payloadLength);
+                int payloadBsonOutputLength = bsonOutput.getPosition() - payloadBsonOutputStartPosition;
+                bsonOutput.writeInt32(payloadBsonOutputStartPosition, payloadBsonOutputLength);
+
+                if (sessionContext.hasActiveTransaction()) {
+                    sessionContext.advanceStatementId(payload.getPosition() - payloadStartPosition - 1);
+                }
             }
 
             // Write the flag bits
@@ -233,6 +242,16 @@ final class CommandMessage extends RequestMessage {
         if (sessionContext.hasSession() && responseExpected) {
             extraElements.add(new BsonElement("lsid", sessionContext.getSessionId()));
         }
+        if (sessionContext.hasActiveTransaction()) {
+            extraElements.add(new BsonElement("txnNumber", new BsonInt64(sessionContext.getTransactionNumber())));
+            int statementId = sessionContext.advanceStatementId(1);
+            extraElements.add(new BsonElement("stmtId", new BsonInt32(statementId)));
+            if (statementId == 0) {
+                extraElements.add(new BsonElement("startTransaction", BsonBoolean.TRUE));
+                addReadConcernDocument(extraElements, sessionContext);
+            }
+            extraElements.add(new BsonElement("autocommit", BsonBoolean.FALSE));
+        }
         if (readPreference != null) {
             if (!readPreference.equals(primary())) {
                 extraElements.add(new BsonElement("$readPreference", readPreference.toDocument()));
@@ -241,6 +260,13 @@ final class CommandMessage extends RequestMessage {
             }
         }
         return extraElements;
+    }
+
+    private void addReadConcernDocument(final List<BsonElement> extraElements, final SessionContext sessionContext) {
+        BsonDocument readConcernDocument = getReadConcernDocument(sessionContext);
+        if (!readConcernDocument.isEmpty()) {
+            extraElements.add(new BsonElement("readConcern", readConcernDocument));
+        }
     }
 
     private static OpCode getOpCode(final MessageSettings settings) {

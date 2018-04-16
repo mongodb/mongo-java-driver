@@ -16,7 +16,7 @@
 
 package com.mongodb.client.internal
 
-import com.mongodb.session.ClientSession
+import com.mongodb.client.ClientSession
 
 class TestHelper {
     static <T> T execute(final Closure<T> method, final ClientSession session, ... restOfArgs) {

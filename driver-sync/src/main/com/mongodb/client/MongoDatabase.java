@@ -16,7 +16,6 @@
 
 package com.mongodb.client;
 
-import com.mongodb.session.ClientSession;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;

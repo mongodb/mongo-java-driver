@@ -29,10 +29,10 @@ import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.QueryResult;
-import com.mongodb.session.SessionContext;
 import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.operation.CommandOperationHelper.CommandTransformer;
 import com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
+import com.mongodb.session.SessionContext;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -54,10 +54,10 @@ import static com.mongodb.operation.DocumentHelper.putIfTrue;
 import static com.mongodb.operation.ExplainHelper.asExplainCommand;
 import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.LOGGER;
-import static com.mongodb.operation.OperationHelper.validateReadConcernAndCollation;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
+import static com.mongodb.operation.OperationHelper.validateReadConcernAndCollation;
 import static com.mongodb.operation.OperationHelper.withConnection;
-import static com.mongodb.operation.ReadConcernHelper.appendReadConcernToCommand;
+import static com.mongodb.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
@@ -385,7 +385,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
         return withConnection(binding, new CallableWithConnectionAndSource<MapReduceBatchCursor<T>>() {
             @Override
             public MapReduceBatchCursor<T> call(final ConnectionSource source, final Connection connection) {
-                validateReadConcernAndCollation(connection, readConcern, collation);
+                validateReadConcernAndCollation(connection, binding.getSessionContext().getReadConcern(), collation);
                 return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(binding.getSessionContext()),
                                                      CommandResultDocumentCodec.create(decoder, "results"),
                                                      connection, transformer(source, connection));
@@ -404,19 +404,20 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
                 } else {
                     final SingleResultCallback<MapReduceAsyncBatchCursor<T>> wrappedCallback = releasingCallback(
                             errHandlingCallback, connection);
-                    validateReadConcernAndCollation(connection, readConcern, collation, new AsyncCallableWithConnection() {
-                        @Override
-                        public void call(final AsyncConnection connection, final Throwable t) {
-                            if (t != null) {
-                                wrappedCallback.onResult(null, t);
-                            } else {
-                                executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
-                                        getCommand(binding.getSessionContext()),
-                                        CommandResultDocumentCodec.create(decoder, "results"), connection,
-                                        asyncTransformer(connection), wrappedCallback);
-                            }
-                        }
-                    });
+                    validateReadConcernAndCollation(connection, binding.getSessionContext().getReadConcern(), collation,
+                            new AsyncCallableWithConnection() {
+                                @Override
+                                public void call(final AsyncConnection connection, final Throwable t) {
+                                    if (t != null) {
+                                        wrappedCallback.onResult(null, t);
+                                    } else {
+                                        executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
+                                                getCommand(binding.getSessionContext()),
+                                                CommandResultDocumentCodec.create(decoder, "results"), connection,
+                                                asyncTransformer(connection), wrappedCallback);
+                                    }
+                                }
+                            });
                 }
             }
         });
@@ -480,7 +481,7 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
                                            .append("scope", asValueOrNull(getScope()))
                                            .append("verbose", BsonBoolean.valueOf(isVerbose()));
 
-        appendReadConcernToCommand(readConcern, sessionContext, commandDocument);
+        appendReadConcernToCommand(sessionContext, commandDocument);
         putIfNotZero(commandDocument, "limit", getLimit());
         putIfNotZero(commandDocument, "maxTimeMS", getMaxTime(MILLISECONDS));
         putIfTrue(commandDocument, "jsMode", isJsMode());

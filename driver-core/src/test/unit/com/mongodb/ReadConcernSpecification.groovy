@@ -32,6 +32,7 @@ class ReadConcernSpecification extends Specification {
         ReadConcern.LOCAL        | ReadConcernLevel.LOCAL        | new ReadConcern(ReadConcernLevel.LOCAL)
         ReadConcern.MAJORITY     | ReadConcernLevel.MAJORITY     | new ReadConcern(ReadConcernLevel.MAJORITY)
         ReadConcern.LINEARIZABLE | ReadConcernLevel.LINEARIZABLE | new ReadConcern(ReadConcernLevel.LINEARIZABLE)
+        ReadConcern.SNAPSHOT     | ReadConcernLevel.SNAPSHOT     | new ReadConcern(ReadConcernLevel.SNAPSHOT)
     }
 
     def 'should create the expected Documents'() {
@@ -44,6 +45,7 @@ class ReadConcernSpecification extends Specification {
         ReadConcern.LOCAL        | BsonDocument.parse('{level: "local"}')
         ReadConcern.MAJORITY     | BsonDocument.parse('{level: "majority"}')
         ReadConcern.LINEARIZABLE | BsonDocument.parse('{level: "linearizable"}')
+        ReadConcern.SNAPSHOT     | BsonDocument.parse('{level: "snapshot"}')
     }
 
     def 'should have the correct value for isServerDefault'() {
@@ -56,5 +58,6 @@ class ReadConcernSpecification extends Specification {
         ReadConcern.LOCAL        | false
         ReadConcern.MAJORITY     | false
         ReadConcern.LINEARIZABLE | false
+        ReadConcern.SNAPSHOT     | false
     }
 }

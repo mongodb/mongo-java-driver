@@ -22,7 +22,7 @@ import com.mongodb.client.MongoIterable;
 import com.mongodb.client.internal.ListDatabasesIterableImpl;
 import com.mongodb.client.internal.MongoDatabaseImpl;
 import com.mongodb.lang.Nullable;
-import com.mongodb.session.ClientSession;
+import com.mongodb.client.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -526,6 +526,18 @@ public class MongoClient extends Mongo implements Closeable {
         MongoClientOptions clientOptions = getMongoClientOptions();
         return new MongoDatabaseImpl(databaseName, clientOptions.getCodecRegistry(), clientOptions.getReadPreference(),
                 clientOptions.getWriteConcern(), clientOptions.getRetryWrites(), clientOptions.getReadConcern(), createOperationExecutor());
+    }
+
+    /**
+     * Creates a client session with default session options.
+     *
+     * @return the client session
+     * @throws MongoClientException if the MongoDB cluster to which this client is connected does not support sessions
+     * @mongodb.server.release 3.6
+     * @since 3.8
+     */
+    public ClientSession startSession() {
+        return startSession(ClientSessionOptions.builder().build());
     }
 
     /**

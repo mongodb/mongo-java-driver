@@ -17,30 +17,34 @@
 package com.mongodb.client.internal;
 
 import com.mongodb.ClientSessionOptions;
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoCredential;
+import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
+import com.mongodb.TransactionOptions;
+import com.mongodb.WriteConcern;
 import com.mongodb.binding.ClusterBinding;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.ReadWriteBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.client.ClientSession;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.internal.session.ClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
 import com.mongodb.selector.ServerSelector;
-import com.mongodb.session.ClientSession;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * This class is not part of the public API and may be removed or changed at any time.
@@ -70,12 +74,26 @@ public class MongoClientDelegate {
     }
 
     @Nullable
-    public ClientSession createClientSession(final ClientSessionOptions options) {
+    public ClientSession createClientSession(final ClientSessionOptions options, final ReadConcern readConcern,
+                                             final WriteConcern writeConcern) {
+        notNull("readConcern", readConcern);
+        notNull("writeConcern", writeConcern);
+
         if (credentialList.size() > 1) {
             return null;
         }
+
         if (getConnectedClusterDescription().getLogicalSessionTimeoutMinutes() != null) {
-            return new ClientSessionImpl(serverSessionPool, originator, options);
+            ClientSessionOptions mergedOptions = ClientSessionOptions.builder(options)
+                    .defaultTransactionOptions(
+                            TransactionOptions.merge(
+                                    options.getDefaultTransactionOptions(),
+                                    TransactionOptions.builder()
+                                            .readConcern(readConcern)
+                                            .writeConcern(writeConcern)
+                                            .build()))
+                    .build();
+            return new ClientSessionImpl(serverSessionPool, originator, mergedOptions, this);
         } else {
             return null;
         }
@@ -123,19 +141,21 @@ public class MongoClientDelegate {
 
     private class DelegateOperationExecutor implements OperationExecutor {
         @Override
-        public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
-            return execute(operation, readPreference, null);
+        public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern) {
+            return execute(operation, readPreference, readConcern, null);
         }
 
         @Override
-        public <T> T execute(final WriteOperation<T> operation) {
-            return execute(operation, null);
+        public <T> T execute(final WriteOperation<T> operation, final ReadConcern readConcern) {
+            return execute(operation, readConcern, null);
         }
 
         @Override
-        public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, @Nullable final ClientSession session) {
+        public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
+                             @Nullable final ClientSession session) {
             ClientSession actualClientSession = getClientSession(session);
-            ReadBinding binding = getReadBinding(readPreference, actualClientSession, session == null && actualClientSession != null);
+            ReadBinding binding = getReadBinding(readPreference, readConcern, actualClientSession,
+                    session == null && actualClientSession != null);
             try {
                 return operation.execute(binding);
             } finally {
@@ -144,9 +164,9 @@ public class MongoClientDelegate {
         }
 
         @Override
-        public <T> T execute(final WriteOperation<T> operation, @Nullable final ClientSession session) {
+        public <T> T execute(final WriteOperation<T> operation, final ReadConcern readConcern, @Nullable final ClientSession session) {
             ClientSession actualClientSession = getClientSession(session);
-            WriteBinding binding = getWriteBinding(actualClientSession, session == null && actualClientSession != null);
+            WriteBinding binding = getWriteBinding(readConcern, actualClientSession, session == null && actualClientSession != null);
             try {
                 return operation.execute(binding);
             } finally {
@@ -154,18 +174,22 @@ public class MongoClientDelegate {
             }
         }
 
-        WriteBinding getWriteBinding(@Nullable final ClientSession session, final boolean ownsSession) {
-            return getReadWriteBinding(primary(), session, ownsSession);
+        WriteBinding getWriteBinding(final ReadConcern readConcern, @Nullable final ClientSession session, final boolean ownsSession) {
+            return getReadWriteBinding(primary(), readConcern, session, ownsSession);
         }
 
-        ReadBinding getReadBinding(final ReadPreference readPreference, @Nullable final ClientSession session, final boolean ownsSession) {
-            return getReadWriteBinding(readPreference, session, ownsSession);
+        ReadBinding getReadBinding(final ReadPreference readPreference, final ReadConcern readConcern,
+                                   @Nullable final ClientSession session, final boolean ownsSession) {
+            return getReadWriteBinding(readPreference, readConcern, session, ownsSession);
         }
 
-        ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, @Nullable final ClientSession session,
-                                             final boolean ownsSession) {
-            ReadWriteBinding readWriteBinding = new ClusterBinding(cluster, readPreference);
+        ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, final ReadConcern readConcern,
+                                             @Nullable final ClientSession session, final boolean ownsSession) {
+            ReadWriteBinding readWriteBinding = new ClusterBinding(cluster, readPreference, readConcern);
             if (session != null) {
+                if (session.hasActiveTransaction() && !readPreference.equals(primary())) {
+                    throw new MongoClientException("Read preference in a transaction must be primary");
+                }
                 readWriteBinding = new ClientSessionBinding(session, ownsSession, readWriteBinding);
             }
             return readWriteBinding;
@@ -178,7 +202,8 @@ public class MongoClientDelegate {
                 isTrue("ClientSession from same MongoClient", clientSessionFromOperation.getOriginator() == originator);
                 session = clientSessionFromOperation;
             } else {
-                session = createClientSession(ClientSessionOptions.builder().causallyConsistent(false).build());
+                session = createClientSession(ClientSessionOptions.builder().causallyConsistent(false).build(), ReadConcern.DEFAULT,
+                        WriteConcern.ACKNOWLEDGED);
             }
             return session;
         }

@@ -132,4 +132,9 @@
         <Bug pattern="NP_BOOLEAN_RETURN_NULL"/>
     </Match>
 
+    <Match>
+        <Class name="~com.mongodb.client.ClientSession.*"/>
+        <Bug pattern="NM_SAME_SIMPLE_NAME_AS_INTERFACE"/>
+    </Match>
+
 </FindBugsFilter>

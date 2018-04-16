@@ -65,6 +65,7 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 import static com.mongodb.operation.CommandOperationHelper.CommandTransformer;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static com.mongodb.operation.DocumentHelper.putIfNotNullOrEmpty;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult;
@@ -72,7 +73,7 @@ import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.operation.OperationHelper.validateReadConcernAndCollation;
 import static com.mongodb.operation.OperationHelper.withConnection;
-import static com.mongodb.operation.ReadConcernHelper.appendReadConcernToCommand;
+import static com.mongodb.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 
 /**
  * An operation that queries a collection using the provided criteria.
@@ -713,7 +714,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
             public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
                 if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
                     try {
-                        validateReadConcernAndCollation(connection, readConcern, collation);
+                        validateReadConcernAndCollation(connection, binding.getSessionContext().getReadConcern(), collation);
                         return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(),
                                                              wrapInExplainIfNecessary(getCommand(binding.getSessionContext())),
                                                              CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
@@ -722,7 +723,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                         throw new MongoQueryException(e);
                     }
                 } else {
-                    validateReadConcernAndCollation(connection, readConcern, collation);
+                    validateReadConcernAndCollation(connection, binding.getSessionContext().getReadConcern(), collation);
                     QueryResult<T> queryResult = connection.query(namespace,
                                                                   asDocument(connection.getDescription(), binding.getReadPreference()),
                                                                   projection,
@@ -754,7 +755,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                     if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
                         final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback =
                                 releasingCallback(exceptionTransformingCallback(errHandlingCallback), source, connection);
-                        validateReadConcernAndCollation(source, connection, readConcern, collation,
+                        validateReadConcernAndCollation(source, connection, binding.getSessionContext().getReadConcern(), collation,
                                 new AsyncCallableWithConnectionAndSource() {
                                     @Override
                                     public void call(final AsyncConnectionSource source, final AsyncConnection connection,
@@ -772,7 +773,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                     } else {
                         final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback =
                                 releasingCallback(errHandlingCallback, source, connection);
-                        validateReadConcernAndCollation(source, connection, readConcern, collation,
+                        validateReadConcernAndCollation(source, connection, binding.getSessionContext().getReadConcern(), collation,
                                 new AsyncCallableWithConnectionAndSource() {
                                     @Override
                                     public void call(final AsyncConnectionSource source, final AsyncConnection connection, final
@@ -1000,7 +1001,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
     private BsonDocument getCommand(final SessionContext sessionContext) {
         BsonDocument commandDocument = new BsonDocument("find", new BsonString(namespace.getCollectionName()));
 
-        appendReadConcernToCommand(readConcern, sessionContext, commandDocument);
+        appendReadConcernToCommand(sessionContext, commandDocument);
 
         if (modifiers != null) {
             for (Map.Entry<String, BsonValue> cur : modifiers.entrySet()) {
@@ -1010,15 +1011,9 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                 }
             }
         }
-        if (filter != null) {
-            commandDocument.put("filter", filter);
-        }
-        if (sort != null) {
-            commandDocument.put("sort", sort);
-        }
-        if (projection != null) {
-            commandDocument.put("projection", projection);
-        }
+        putIfNotNullOrEmpty(commandDocument, "filter", filter);
+        putIfNotNullOrEmpty(commandDocument, "sort", sort);
+        putIfNotNullOrEmpty(commandDocument, "projection", projection);
         if (skip > 0) {
             commandDocument.put("skip", new BsonInt32(skip));
         }

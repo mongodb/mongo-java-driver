@@ -43,6 +43,9 @@ import static org.junit.Assert.assertTrue;
 
 public class TestCommandListener implements CommandListener {
     private final List<CommandEvent> events = new ArrayList<CommandEvent>();
+    private final List<BsonDocument> sessions = new ArrayList<BsonDocument>();
+    private BsonDocument expectedSessionIdentifierForNextStartedEvent;
+
     private static final CodecRegistry CODEC_REGISTRY_HACK;
 
     static {
@@ -73,6 +76,7 @@ public class TestCommandListener implements CommandListener {
         events.add(new CommandStartedEvent(event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),
                                            event.getCommandName(),
                                            event.getCommand() == null ? null : getWritableClone(event.getCommand())));
+        sessions.add(expectedSessionIdentifierForNextStartedEvent);
     }
 
     private BsonDocument getWritableClone(final BsonDocument original) {
@@ -165,5 +169,13 @@ public class TestCommandListener implements CommandListener {
     private void assertEquivalence(final CommandStartedEvent actual, final CommandStartedEvent expected) {
         assertEquals(expected.getDatabaseName(), actual.getDatabaseName());
         assertEquals(expected.getCommand(), actual.getCommand());
+    }
+
+    public void addExpectedSessionNextStartedEvent(final BsonDocument sessionIdentifier) {
+        expectedSessionIdentifierForNextStartedEvent = sessionIdentifier;
+    }
+
+    public List<BsonDocument> getSessions() {
+        return sessions;
     }
 }

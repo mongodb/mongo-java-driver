@@ -482,7 +482,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     public DBObject explain() {
         return toDBObject(executor.execute(getQueryOperation(collection.getObjectCodec())
                                            .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER),
-                                           getReadPreference()));
+                                           getReadPreference(), getReadConcern()));
     }
 
     @SuppressWarnings("deprecation")
@@ -889,7 +889,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     private void initializeCursor(final FindOperation<DBObject> operation) {
-        cursor = new MongoBatchCursorAdapter<DBObject>(executor.execute(operation, getReadPreferenceForCursor()));
+        cursor = new MongoBatchCursorAdapter<DBObject>(executor.execute(operation, getReadPreferenceForCursor(), getReadConcern()));
         if (isCursorFinalizerEnabled() && cursor.getServerCursor() != null) {
             optionalFinalizer = new OptionalFinalizer(collection.getDB().getMongo(), collection.getNamespace());
         }

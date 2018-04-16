@@ -33,7 +33,7 @@ class DBFunctionalSpecification extends FunctionalSpecification {
     def 'DB addUser should work around localhost exception issues'() {
         given:
         def executor = Stub(OperationExecutor) {
-            execute(_, _) >> {
+            execute(_, _, _) >> {
                 throw new MongoCommandException(new BsonDocument('ok', new BsonDouble(0))
                                                           .append('code', new BsonInt32(13))
                                                           .append('errmsg', new BsonString('not authorized on admin to execute ' +
@@ -57,7 +57,7 @@ class DBFunctionalSpecification extends FunctionalSpecification {
     def 'DB addUser should throw non localhost exception issues'() {
         given:
         def executor = Stub(OperationExecutor) {
-            execute(_, _) >> { throw new MongoException('Some error') }
+            execute(_, _, _) >> { throw new MongoException('Some error') }
         }
         def database = new DB(getMongoClient(), 'admin', executor)
 
@@ -69,7 +69,7 @@ class DBFunctionalSpecification extends FunctionalSpecification {
 
         when:
         executor = Stub(OperationExecutor) {
-            execute(_, _) >> {
+            execute(_, _, _) >> {
                 throw new MongoCommandException(new BsonDocument('ok', new BsonDouble(0))
                                                           .append('code', new BsonInt32(13))
                                                           .append('errmsg', new BsonString('not authorized on admin to execute ' +
@@ -77,7 +77,7 @@ class DBFunctionalSpecification extends FunctionalSpecification {
                                                   new ServerAddress())
             }
 
-            execute(_) >> { throw new MongoException('Some error') }
+            execute(_, _) >> { throw new MongoException('Some error') }
         }
         database = new DB(getMongoClient(), 'admin', executor)
         database.addUser('ross', 'pwd'.toCharArray())

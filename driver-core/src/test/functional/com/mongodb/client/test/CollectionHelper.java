@@ -91,7 +91,11 @@ public final class CollectionHelper<T> {
     }
 
     public static void drop(final MongoNamespace namespace) {
-        new DropCollectionOperation(namespace, WriteConcern.ACKNOWLEDGED).execute(getBinding());
+        drop(namespace, WriteConcern.ACKNOWLEDGED);
+    }
+
+    public static void drop(final MongoNamespace namespace, final WriteConcern writeConcern) {
+        new DropCollectionOperation(namespace, writeConcern).execute(getBinding());
     }
 
     public static void dropDatabase(final String name) {
@@ -112,13 +116,20 @@ public final class CollectionHelper<T> {
     }
 
     public void drop() {
-        new DropCollectionOperation(namespace, WriteConcern.ACKNOWLEDGED).execute(getBinding());
+        drop(WriteConcern.ACKNOWLEDGED);
+    }
+
+    public void drop(final WriteConcern writeConcern) {
+        drop(namespace, writeConcern);
     }
 
     public void create(final String collectionName, final CreateCollectionOptions options) {
-        drop(namespace);
-        CreateCollectionOperation operation = new CreateCollectionOperation(namespace.getDatabaseName(), collectionName,
-                                                                                   WriteConcern.ACKNOWLEDGED)
+        create(collectionName, options, WriteConcern.ACKNOWLEDGED);
+    }
+
+    public void create(final String collectionName, final CreateCollectionOptions options, final WriteConcern writeConcern) {
+        drop(namespace, writeConcern);
+        CreateCollectionOperation operation = new CreateCollectionOperation(namespace.getDatabaseName(), collectionName, writeConcern)
                 .capped(options.isCapped())
                 .sizeInBytes(options.getSizeInBytes())
                 .autoIndex(options.isAutoIndex())
@@ -353,5 +364,10 @@ public final class CollectionHelper<T> {
             indexes.addAll(cursor.next());
         }
         return indexes;
+    }
+
+    public void killAllSessions() {
+        new CommandWriteOperation<BsonDocument>("admin", new BsonDocument("killAllSessions", new BsonArray()),
+                new BsonDocumentCodec());
     }
 }

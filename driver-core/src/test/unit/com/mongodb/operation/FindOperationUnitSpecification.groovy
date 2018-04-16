@@ -33,6 +33,7 @@ import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.QueryResult
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerVersion
+import com.mongodb.session.SessionContext
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -63,6 +64,9 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
         def readBinding = Stub(ReadBinding) {
             getReadPreference() >> readPreference
             getReadConnectionSource() >> connectionSource
+            getSessionContext() >> Stub(SessionContext) {
+                getReadConcern() >> ReadConcern.DEFAULT
+            }
         }
         def queryResult = new QueryResult(namespace, [], 0, new ServerAddress())
         def expectedQueryWithOverrides = BsonDocument.parse('''{
@@ -235,6 +239,9 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
             getReadPreference() >> Stub(ReadPreference) {
                 isSlaveOk() >> slaveOk
             }
+            getSessionContext() >> Stub(SessionContext) {
+                getReadConcern() >> ReadConcern.DEFAULT
+            }
         }
         def queryResult = Mock(QueryResult) {
             _ * getNamespace() >> namespace
@@ -272,6 +279,9 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
             getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
             getReadPreference() >> Stub(ReadPreference) {
                 isSlaveOk() >> slaveOk
+            }
+            getSessionContext() >> Stub(SessionContext) {
+                getReadConcern() >> ReadConcern.DEFAULT
             }
         }
         def queryResult = Mock(QueryResult) {

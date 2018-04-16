@@ -16,6 +16,7 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.ReadConcern;
 import com.mongodb.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
@@ -46,8 +47,18 @@ final class ClusterClockAdvancingSessionContext implements SessionContext {
     }
 
     @Override
+    public long getTransactionNumber() {
+        return wrapped.getTransactionNumber();
+    }
+
+    @Override
     public long advanceTransactionNumber() {
         return wrapped.advanceTransactionNumber();
+    }
+
+    @Override
+    public int advanceStatementId(final int increment) {
+        return wrapped.advanceStatementId(increment);
     }
 
     @Override
@@ -69,5 +80,15 @@ final class ClusterClockAdvancingSessionContext implements SessionContext {
     public void advanceClusterTime(final BsonDocument clusterTime) {
         wrapped.advanceClusterTime(clusterTime);
         clusterClock.advance(clusterTime);
+    }
+
+    @Override
+    public boolean hasActiveTransaction() {
+        return wrapped.hasActiveTransaction();
+    }
+
+    @Override
+    public ReadConcern getReadConcern() {
+        return wrapped.getReadConcern();
     }
 }

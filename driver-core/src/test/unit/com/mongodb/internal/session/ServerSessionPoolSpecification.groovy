@@ -217,13 +217,43 @@ class ServerSessionPoolSpecification extends Specification {
 
         then:
         session.lastUsedAtMillis == 42
-        session.transactionNumber == 0
+        session.transactionNumber == 1
         def uuid = session.identifier.getBinary('id')
         uuid != null
         uuid.type == BsonBinarySubType.UUID_STANDARD.value
         uuid.data.length == 16
-        session.advanceTransactionNumber() == 0
+    }
+
+    def 'should advance transaction and statement numbers'() {
+        given:
+        def cluster = Stub(Cluster) {
+            getDescription() >> connectedDescription
+        }
+        def clock = Stub(ServerSessionPool.Clock) {
+            millis() >> 42
+        }
+        def pool = new ServerSessionPool(cluster, clock)
+
+        when:
+        def session = pool.get() as ServerSessionPool.ServerSessionImpl
+
+        then:
+        session.transactionNumber == 1
+        session.statementId == 0
         session.advanceTransactionNumber() == 1
+        session.transactionNumber == 2
+        session.advanceTransactionNumber() == 2
+        session.transactionNumber == 3
+        session.statementId == 0
+        session.advanceStatementId(2) == 0
+        session.statementId == 2
+        session.advanceStatementId(3) == 2
+        session.statementId == 5
+        session.advanceTransactionNumber() == 3
+        session.transactionNumber == 4
+        session.statementId == 0
+        session.advanceStatementId(0) == 0
+        session.getStatementId() == 0
     }
 
     def 'should end pooled sessions when pool is closed'() {

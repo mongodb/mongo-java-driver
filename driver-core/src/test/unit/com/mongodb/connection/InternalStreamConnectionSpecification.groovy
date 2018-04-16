@@ -24,6 +24,7 @@ import com.mongodb.MongoSocketClosedException
 import com.mongodb.MongoSocketException
 import com.mongodb.MongoSocketReadException
 import com.mongodb.MongoSocketWriteException
+import com.mongodb.ReadConcern
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.event.CommandFailedEvent
@@ -488,6 +489,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def sessionContext = Mock(SessionContext) {
             1 * advanceOperationTime(BsonDocument.parse(response).getTimestamp('operationTime'))
             1 * advanceClusterTime(BsonDocument.parse(response).getDocument('$clusterTime'))
+            getReadConcern() >> ReadConcern.DEFAULT
         }
 
         when:
@@ -521,6 +523,7 @@ class InternalStreamConnectionSpecification extends Specification {
         def sessionContext = Mock(SessionContext) {
             1 * advanceOperationTime(BsonDocument.parse(response).getTimestamp('operationTime'))
             1 * advanceClusterTime(BsonDocument.parse(response).getDocument('$clusterTime'))
+            getReadConcern() >> ReadConcern.DEFAULT
         }
 
         when:

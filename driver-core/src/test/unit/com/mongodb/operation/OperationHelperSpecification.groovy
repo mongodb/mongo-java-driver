@@ -33,6 +33,7 @@ import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerVersion
+import com.mongodb.session.SessionContext
 import org.bson.BsonDocument
 import spock.lang.Specification
 
@@ -387,8 +388,17 @@ class OperationHelperSpecification extends Specification {
 
 
     def 'should check if a valid retryable write'() {
+        given:
+        def activeTransactionSessionContext = Stub(SessionContext) {
+            hasActiveTransaction() >> true
+        }
+        def noTransactionSessionContext = Stub(SessionContext) {
+            hasActiveTransaction() >> false
+        }
+
         expect:
-        isRetryableWrite(retryWrites, writeConcern, serverDescription, connectionDescription) == expected
+        isRetryableWrite(retryWrites, writeConcern, serverDescription, connectionDescription, noTransactionSessionContext) == expected
+        !isRetryableWrite(retryWrites, writeConcern, serverDescription, connectionDescription, activeTransactionSessionContext)
 
         where:
         retryWrites | writeConcern   | serverDescription             | connectionDescription                 | expected

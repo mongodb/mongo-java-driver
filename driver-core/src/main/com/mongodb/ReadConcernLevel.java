@@ -48,7 +48,15 @@ public enum ReadConcernLevel {
      * @since 3.4
      * @mongodb.server.release 3.4
      */
-    LINEARIZABLE("linearizable");
+    LINEARIZABLE("linearizable"),
+
+    /**
+     * The snapshot read concern level.
+     *
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     */
+    SNAPSHOT("snapshot");
 
     private final String value;
 

@@ -19,7 +19,7 @@ package com.mongodb
 import com.mongodb.client.internal.ListDatabasesIterableImpl
 import com.mongodb.client.internal.TestOperationExecutor
 import com.mongodb.client.model.geojson.MultiPolygon
-import com.mongodb.session.ClientSession
+import com.mongodb.client.ClientSession
 import org.bson.BsonDocument
 import org.bson.Document
 import spock.lang.Specification

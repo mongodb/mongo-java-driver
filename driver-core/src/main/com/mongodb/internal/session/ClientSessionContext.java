@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.session;
 
+import com.mongodb.ReadConcern;
 import com.mongodb.session.ClientSession;
 import com.mongodb.session.SessionContext;
 import org.bson.BsonDocument;
@@ -51,8 +52,18 @@ public class ClientSessionContext implements SessionContext {
     }
 
     @Override
+    public long getTransactionNumber() {
+        return clientSession.getServerSession().getTransactionNumber();
+    }
+
+    @Override
     public long advanceTransactionNumber() {
         return clientSession.getServerSession().advanceTransactionNumber();
+    }
+
+    @Override
+    public int advanceStatementId(final int increment) {
+        return clientSession.getServerSession().advanceStatementId(increment);
     }
 
     @Override
@@ -73,5 +84,17 @@ public class ClientSessionContext implements SessionContext {
     @Override
     public void advanceClusterTime(final BsonDocument clusterTime) {
         clientSession.advanceClusterTime(clusterTime);
+    }
+
+    @Override
+    public boolean hasActiveTransaction() {
+        // TODO: move this to async ClientSession implementation of this method
+        return false;
+    }
+
+    @Override
+    public ReadConcern getReadConcern() {
+        // TODO: move this to async ClientSession implementation of this method
+        return ReadConcern.DEFAULT;
     }
 }

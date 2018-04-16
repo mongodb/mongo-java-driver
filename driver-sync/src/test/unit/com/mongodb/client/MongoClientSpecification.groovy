@@ -23,7 +23,6 @@ import com.mongodb.client.internal.ListDatabasesIterableImpl
 import com.mongodb.client.internal.MongoDatabaseImpl
 import com.mongodb.client.internal.TestOperationExecutor
 import com.mongodb.connection.Cluster
-import com.mongodb.session.ClientSession
 import org.bson.BsonDocument
 import org.bson.Document
 import spock.lang.Specification

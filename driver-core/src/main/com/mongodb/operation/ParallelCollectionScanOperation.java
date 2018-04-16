@@ -52,7 +52,7 @@ import static com.mongodb.operation.OperationHelper.validateReadConcern;
 import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
-import static com.mongodb.operation.ReadConcernHelper.appendReadConcernToCommand;
+import static com.mongodb.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 
 /**
  * Return a list of cursors over the collection that can be used to scan it in parallel.
@@ -233,7 +233,7 @@ ParallelCollectionScanOperation<T> implements AsyncReadOperation<List<AsyncBatch
     private BsonDocument getCommand(final SessionContext sessionContext) {
         BsonDocument document = new BsonDocument("parallelCollectionScan", new BsonString(namespace.getCollectionName()))
                .append("numCursors", new BsonInt32(getNumCursors()));
-        appendReadConcernToCommand(readConcern, sessionContext, document);
+        appendReadConcernToCommand(sessionContext, document);
         return document;
     }
 }

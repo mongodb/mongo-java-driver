@@ -27,7 +27,7 @@ import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.lang.Nullable;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.ReadOperation;
-import com.mongodb.session.ClientSession;
+import com.mongodb.client.ClientSession;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -194,7 +194,7 @@ final class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResu
     @Override
     public TResult first() {
         BatchCursor<TResult> batchCursor = getExecutor().execute(operations.findFirst(filter, resultClass, findOptions),
-                getReadPreference(), getClientSession());
+                getReadPreference(), getReadConcern(), getClientSession());
         try {
             return batchCursor.hasNext() ? batchCursor.next().iterator().next() : null;
         } finally {

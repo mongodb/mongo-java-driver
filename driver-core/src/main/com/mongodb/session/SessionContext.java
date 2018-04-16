@@ -16,6 +16,7 @@
 
 package com.mongodb.session;
 
+import com.mongodb.ReadConcern;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 
@@ -48,11 +49,28 @@ public interface SessionContext {
     boolean isCausallyConsistent();
 
     /**
+     * Gets the current transaction number.
+     *
+     * @return the current transaction number
+     * @since 3.8
+     */
+    long getTransactionNumber();
+
+    /**
      * Advance the transaction number.
      *
      * @return the next transaction number for the session
      */
     long advanceTransactionNumber();
+
+    /**
+     * Advance the statement id by the given increment
+     *
+     * @param increment the increment, which much by &gt;= 1
+     * @return the statement id prior to advancement
+     * @since 3.8
+     */
+    int advanceStatementId(int increment);
 
     /**
      * Gets the current operation time for this session context
@@ -81,4 +99,21 @@ public interface SessionContext {
      * @param clusterTime the new cluster time
      */
     void advanceClusterTime(BsonDocument clusterTime);
+
+    /**
+     * Gets whether the session has an active transaction
+     *
+     * @return true if the session has an active transaction
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     */
+    boolean hasActiveTransaction();
+
+    /**
+     * Gets the read concern to apply to operations on this binding.
+     *
+     * @return the read concern to apply to operations on this binding
+     * @since 3.8
+     */
+    ReadConcern getReadConcern();
 }

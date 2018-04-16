@@ -34,7 +34,7 @@ import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CreateCollectionOperation;
 import com.mongodb.operation.CreateViewOperation;
 import com.mongodb.operation.DropDatabaseOperation;
-import com.mongodb.session.ClientSession;
+import com.mongodb.client.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -173,7 +173,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
                                              final ReadPreference readPreference, final Class<TResult> resultClass) {
         notNull("readPreference", readPreference);
         return executor.execute(new CommandReadOperation<TResult>(getName(), toBsonDocument(command), codecRegistry.get(resultClass)),
-                readPreference, clientSession);
+                readPreference, readConcern, clientSession);
     }
 
     @Override
@@ -188,7 +188,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
     }
 
     private void executeDrop(@Nullable final ClientSession clientSession) {
-        executor.execute(new DropDatabaseOperation(name, getWriteConcern()), clientSession);
+        executor.execute(new DropDatabaseOperation(name, getWriteConcern()), readConcern, clientSession);
     }
 
     @Override
@@ -289,7 +289,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
         if (validationOptions.getValidationAction() != null) {
             operation.validationAction(validationOptions.getValidationAction());
         }
-        executor.execute(operation, clientSession);
+        executor.execute(operation, readConcern, clientSession);
     }
 
     @Override
@@ -321,7 +321,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
         notNull("createViewOptions", createViewOptions);
         executor.execute(new CreateViewOperation(name, viewName, viewOn, createBsonDocumentList(pipeline), writeConcern)
                         .collation(createViewOptions.getCollation()),
-                clientSession);
+                readConcern, clientSession);
     }
 
     private List<BsonDocument> createBsonDocumentList(final List<? extends Bson> pipeline) {
