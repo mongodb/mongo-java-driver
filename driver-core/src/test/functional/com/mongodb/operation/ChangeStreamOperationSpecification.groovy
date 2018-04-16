@@ -439,16 +439,17 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
     }
 
     def tryNextAndClean(cursor, boolean async) {
-        removeId(tryNext(cursor, async))
+        removeExtra(tryNext(cursor, async))
     }
 
     def nextAndClean(cursor, boolean async) {
-        removeId(next(cursor, async))
+        removeExtra(next(cursor, async))
     }
 
-    def removeId(List<BsonDocument> next) {
+    def removeExtra(List<BsonDocument> next) {
         next?.collect { doc ->
             doc.remove('_id')
+            doc.remove('clusterTime')
             doc
         }
     }
