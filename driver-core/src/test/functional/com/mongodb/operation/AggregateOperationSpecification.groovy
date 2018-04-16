@@ -210,6 +210,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         then:
         def next = next(cursor, async).collect { doc ->
             doc.remove('_id')
+            doc.remove('clusterTime')
             doc
         }
         next == expected
