@@ -49,6 +49,7 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.codecs.BsonDocumentCodec
 import org.junit.experimental.categories.Category
+import spock.lang.Ignore
 import spock.lang.IgnoreIf
 
 import java.util.concurrent.TimeUnit
@@ -104,7 +105,9 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 7) })
+    // TODO: Waiting on final spec changes for SASL Prep
+//    @IgnoreIf({ !serverVersionAtLeast(3, 7) })
+    @Ignore
     def 'should correctly, prep username and be able to authenticate users with unicode in their name'() {
         when:
         def user = createScramSha256Credential('IX', databaseName, authCredential.getPassword())
