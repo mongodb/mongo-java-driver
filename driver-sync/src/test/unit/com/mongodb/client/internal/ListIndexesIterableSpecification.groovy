@@ -21,7 +21,7 @@ import com.mongodb.Function
 import com.mongodb.MongoNamespace
 import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.ListIndexesOperation
-import com.mongodb.session.ClientSession
+import com.mongodb.client.ClientSession
 import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodec

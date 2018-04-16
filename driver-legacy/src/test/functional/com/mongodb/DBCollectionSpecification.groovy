@@ -437,11 +437,12 @@ class DBCollectionSpecification extends Specification {
         when: // Inherits from DB
         db.setReadConcern(ReadConcern.MAJORITY)
         collection.count()
+        executor.getReadConcern() == ReadConcern.MAJORITY
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace())
-                .filter(new BsonDocument())
-                .readConcern(ReadConcern.MAJORITY))
+                .filter(new BsonDocument()))
+        executor.getReadConcern() == ReadConcern.MAJORITY
 
         when:
         collection.setReadConcern(ReadConcern.LOCAL)
@@ -450,8 +451,8 @@ class DBCollectionSpecification extends Specification {
         then:
         expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace())
                 .filter(new BsonDocument())
-                .readConcern(ReadConcern.LOCAL)
                 .collation(collation))
+        executor.getReadConcern() == ReadConcern.LOCAL
     }
 
     def 'distinct should create the correct DistinctOperation'() {
@@ -477,6 +478,7 @@ class DBCollectionSpecification extends Specification {
         distinctFieldValues == [1, 2]
         expect executor.getReadOperation(), isTheSameAs(new DistinctOperation(collection.getNamespace(), 'field1', new BsonValueCodec())
                                                                 .filter(new BsonDocument()))
+        executor.getReadConcern() == ReadConcern.DEFAULT
 
         when: // Inherits from DB
         db.setReadConcern(ReadConcern.MAJORITY)
@@ -484,8 +486,8 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new DistinctOperation(collection.getNamespace(), 'field1', new BsonValueCodec())
-                .filter(new BsonDocument())
-                .readConcern(ReadConcern.MAJORITY))
+                .filter(new BsonDocument()))
+        executor.getReadConcern() == ReadConcern.MAJORITY
 
         when:
         collection.setReadConcern(ReadConcern.LOCAL)
@@ -493,8 +495,8 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new DistinctOperation(collection.getNamespace(), 'field1', new BsonValueCodec())
-                .readConcern(ReadConcern.LOCAL)
                 .collation(collation))
+        executor.getReadConcern() == ReadConcern.LOCAL
     }
 
     def 'group should create the correct GroupOperation'() {
@@ -546,8 +548,8 @@ class DBCollectionSpecification extends Specification {
                 new MapReduceWithInlineResultsOperation(collection.getNamespace(), new BsonJavaScript('map'), new BsonJavaScript('reduce'),
                         collection.getDefaultDBObjectCodec())
                         .verbose(true)
-                        .filter(new BsonDocument())
-        )
+                        .filter(new BsonDocument()))
+        executor.getReadConcern() == ReadConcern.DEFAULT
 
         when: // Inherits from DB
         db.setReadConcern(ReadConcern.LOCAL)
@@ -558,9 +560,8 @@ class DBCollectionSpecification extends Specification {
                 new MapReduceWithInlineResultsOperation(collection.getNamespace(), new BsonJavaScript('map'), new BsonJavaScript('reduce'),
                         collection.getDefaultDBObjectCodec())
                         .verbose(true)
-                        .filter(new BsonDocument())
-                        .readConcern(ReadConcern.LOCAL)
-        )
+                        .filter(new BsonDocument()))
+        executor.getReadConcern() == ReadConcern.LOCAL
 
         when:
         collection.setReadConcern(ReadConcern.MAJORITY)
@@ -575,9 +576,8 @@ class DBCollectionSpecification extends Specification {
                         collection.getDefaultDBObjectCodec())
                         .verbose(true)
                         .filter(new BsonDocument())
-                        .readConcern(ReadConcern.MAJORITY)
-                        .collation(collation)
-        )
+                        .collation(collation))
+        executor.getReadConcern() == ReadConcern.MAJORITY
     }
 
     def 'mapReduce should create the correct MapReduceToCollectionOperation'() {
@@ -643,6 +643,7 @@ class DBCollectionSpecification extends Specification {
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
                 collection.getDefaultDBObjectCodec()).useCursor(true))
+        executor.getReadConcern() == ReadConcern.DEFAULT
 
         when: // Inherits from DB
         db.setReadConcern(ReadConcern.MAJORITY)
@@ -650,7 +651,8 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
-                collection.getDefaultDBObjectCodec()).useCursor(true).readConcern(ReadConcern.MAJORITY))
+                collection.getDefaultDBObjectCodec()).useCursor(true))
+        executor.getReadConcern() == ReadConcern.MAJORITY
 
         when:
         collection.setReadConcern(ReadConcern.LOCAL)
@@ -658,7 +660,8 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
-                collection.getDefaultDBObjectCodec()).useCursor(true).readConcern(ReadConcern.LOCAL).collation(collation))
+                collection.getDefaultDBObjectCodec()).useCursor(true).collation(collation))
+        executor.getReadConcern() == ReadConcern.LOCAL
     }
 
     def 'aggregate should create the correct AggregateToCollectionOperation'() {
@@ -743,9 +746,8 @@ class DBCollectionSpecification extends Specification {
         then:
         cursors.size() == 1
         expect executor.getReadOperation(), isTheSameAs(new ParallelCollectionScanOperation(collection.getNamespace(), 1,
-                                                                                            collection.getObjectCodec())
-                                                                .readConcern(ReadConcern.MAJORITY)
-        )
+                                                                                            collection.getObjectCodec()))
+        executor.getReadConcern() == ReadConcern.MAJORITY
     }
 
     def 'update should create the correct UpdateOperation'() {

@@ -53,6 +53,7 @@ import com.mongodb.operation.AsyncWriteOperation
 import com.mongodb.operation.InsertOperation
 import com.mongodb.operation.ReadOperation
 import com.mongodb.operation.WriteOperation
+import com.mongodb.session.SessionContext
 import org.bson.BsonDocument
 import org.bson.Document
 import org.bson.FieldNameValidator
@@ -198,8 +199,17 @@ class OperationFunctionalSpecification extends Specification {
     void testOperation(operation, List<Integer> serverVersion, BsonDocument expectedCommand, boolean async, result = null,
                        boolean checkCommand = true, boolean checkSlaveOk = false, ReadPreference readPreference = ReadPreference.primary(),
                        boolean retryable = false, ServerType serverType = ServerType.STANDALONE) {
+        testOperation(operation, serverVersion, ReadConcern.DEFAULT, expectedCommand, async, result, checkCommand, checkSlaveOk,
+        readPreference, retryable, serverType)
+    }
+
+    void testOperation(operation, List<Integer> serverVersion, ReadConcern readConcern, BsonDocument expectedCommand, boolean async,
+                       result = null, boolean checkCommand = true, boolean checkSlaveOk = false,
+                       ReadPreference readPreference = ReadPreference.primary(), boolean retryable = false,
+                       ServerType serverType = ServerType.STANDALONE) {
         def test = async ? this.&testAsyncOperation : this.&testSyncOperation
-        test(operation, serverVersion, result, checkCommand, expectedCommand, checkSlaveOk, readPreference, retryable, serverType)
+        test(operation, serverVersion, readConcern, result, checkCommand, expectedCommand, checkSlaveOk, readPreference, retryable,
+                serverType)
     }
 
     void testOperationRetries(operation, List<Integer> serverVersion, BsonDocument expectedCommand, boolean async, result = null) {
@@ -215,15 +225,19 @@ class OperationFunctionalSpecification extends Specification {
 
     void testOperationSlaveOk(operation, List<Integer> serverVersion, ReadPreference readPreference, boolean async, result = null) {
         def test = async ? this.&testAsyncOperation : this.&testSyncOperation
-        test(operation, serverVersion, result, false, null, true, readPreference)
+        test(operation, serverVersion, ReadConcern.DEFAULT, result, false, null, true, readPreference)
     }
 
     void testOperationThrows(operation, List<Integer> serverVersion, boolean async) {
-        def test = async ? this.&testAsyncOperation : this.&testSyncOperation
-        test(operation, serverVersion, null, false)
+        testOperationThrows(operation, serverVersion, ReadConcern.DEFAULT, async)
     }
 
-    def testSyncOperation(operation, List<Integer> serverVersion, result, Boolean checkCommand=true,
+    void testOperationThrows(operation, List<Integer> serverVersion, ReadConcern readConcern, boolean async) {
+        def test = async ? this.&testAsyncOperation : this.&testSyncOperation
+        test(operation, serverVersion, readConcern, null, false)
+    }
+
+    def testSyncOperation(operation, List<Integer> serverVersion, ReadConcern readConcern, result, Boolean checkCommand=true,
                           BsonDocument expectedCommand=null, Boolean checkSlaveOk=false,
                           ReadPreference readPreference=ReadPreference.primary(), Boolean retryable = false,
                           ServerType serverType = ServerType.STANDALONE) {
@@ -249,6 +263,10 @@ class OperationFunctionalSpecification extends Specification {
         def readBinding = Stub(ReadBinding) {
             getReadConnectionSource() >> connectionSource
             getReadPreference() >> readPreference
+            getSessionContext() >> Stub(SessionContext) {
+                hasActiveTransaction() >> false
+                getReadConcern() >> readConcern
+            }
         }
         def writeBinding = Stub(WriteBinding) {
             getWriteConnectionSource() >> connectionSource
@@ -291,7 +309,7 @@ class OperationFunctionalSpecification extends Specification {
         }
     }
 
-    def testAsyncOperation(operation = operation, List<Integer> serverVersion = serverVersion, result = null,
+    def testAsyncOperation(operation = operation, List<Integer> serverVersion = serverVersion, ReadConcern readConcern, result = null,
                            Boolean checkCommand = true, BsonDocument expectedCommand = null, Boolean checkSlaveOk = false,
                            ReadPreference readPreference = ReadPreference.primary(), Boolean retryable = false,
                            ServerType serverType = ServerType.STANDALONE) {
@@ -315,6 +333,10 @@ class OperationFunctionalSpecification extends Specification {
         def readBinding = Stub(AsyncReadBinding) {
             getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
             getReadPreference() >> readPreference
+            getSessionContext() >> Stub(SessionContext) {
+                hasActiveTransaction() >> false
+                getReadConcern() >> readConcern
+            }
         }
         def writeBinding = Stub(AsyncWriteBinding) {
             getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }

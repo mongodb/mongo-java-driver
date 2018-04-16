@@ -285,7 +285,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         def cannedResult = new BsonDocument('value', new BsonDocumentWrapper(BsonDocument.parse('{}'), new BsonDocumentCodec()))
         def replacement = BsonDocument.parse('{ replacement: 1}')
         def operation = new FindAndReplaceOperation<Document>(getNamespace(), writeConcern, retryWrites, documentCodec, replacement)
-        def expectedCommand = new BsonDocument('findandmodify', new BsonString(getNamespace().getCollectionName()))
+        def expectedCommand = new BsonDocument('findAndModify', new BsonString(getNamespace().getCollectionName()))
                 .append('update', replacement)
         if (includeWriteConcern) {
             expectedCommand.put('writeConcern', writeConcern.asDocument())
@@ -293,6 +293,7 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         if (includeTxnNumber) {
             expectedCommand.put('txnNumber', new BsonInt64(0))
         }
+        expectedCommand.put('new', BsonBoolean.FALSE)
 
         then:
         testOperation([operation: operation, serverVersion: serverVersion, expectedCommand: expectedCommand, async: async,
@@ -370,9 +371,10 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         def cannedResult = new BsonDocument('value', new BsonDocumentWrapper(BsonDocument.parse('{}'), new BsonDocumentCodec()))
         def replacement = BsonDocument.parse('{ replacement: 1}')
         def operation = new FindAndReplaceOperation<Document>(getNamespace(), ACKNOWLEDGED, true, documentCodec, replacement)
-        def expectedCommand = new BsonDocument('findandmodify', new BsonString(getNamespace().getCollectionName()))
+        def expectedCommand = new BsonDocument('findAndModify', new BsonString(getNamespace().getCollectionName()))
                 .append('update', replacement)
                 .append('txnNumber', new BsonInt64(0))
+                .append('new', BsonBoolean.FALSE)
 
         then:
         testOperationRetries(operation, [3, 6, 0], expectedCommand, async, cannedResult)

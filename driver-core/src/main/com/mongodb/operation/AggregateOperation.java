@@ -58,7 +58,7 @@ import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotSix;
 import static com.mongodb.operation.OperationHelper.validateReadConcernAndCollation;
 import static com.mongodb.operation.OperationHelper.withConnection;
-import static com.mongodb.operation.ReadConcernHelper.appendReadConcernToCommand;
+import static com.mongodb.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 
 /**
  * An operation that executes an aggregation query.
@@ -352,7 +352,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
         return withConnection(binding, new CallableWithConnectionAndSource<BatchCursor<T>>() {
             @Override
             public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
-                validateReadConcernAndCollation(connection, readConcern, collation);
+                validateReadConcernAndCollation(connection, binding.getSessionContext().getReadConcern(), collation);
                 return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(),
                         getCommand(connection.getDescription(), binding.getSessionContext()),
                         CommandResultDocumentCodec.create(decoder, FIELD_NAMES_WITH_RESULT),
@@ -372,7 +372,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
                 } else {
                     final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback =
                             releasingCallback(errHandlingCallback, source, connection);
-                    validateReadConcernAndCollation(source, connection, readConcern, collation,
+                    validateReadConcernAndCollation(source, connection, binding.getSessionContext().getReadConcern(), collation,
                             new AsyncCallableWithConnectionAndSource() {
                                 @Override
                                 public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
@@ -423,7 +423,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
     private BsonDocument getCommand(final ConnectionDescription description, final SessionContext sessionContext) {
         BsonDocument commandDocument = new BsonDocument("aggregate", new BsonString(namespace.getCollectionName()));
 
-        appendReadConcernToCommand(readConcern, sessionContext, commandDocument);
+        appendReadConcernToCommand(sessionContext, commandDocument);
         commandDocument.put("pipeline", new BsonArray(pipeline));
         if (maxTimeMS > 0) {
             commandDocument.put("maxTimeMS", new BsonInt64(maxTimeMS));

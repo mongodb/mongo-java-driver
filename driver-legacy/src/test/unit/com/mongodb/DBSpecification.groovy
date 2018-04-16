@@ -72,6 +72,7 @@ class DBSpecification extends Specification {
         mongo.mongoClientOptions >> MongoClientOptions.builder().build()
         def executor = new TestOperationExecutor([1L, 2L, 3L])
         def db = new DB(mongo, 'test', executor)
+        db.setReadConcern(ReadConcern.MAJORITY)
 
         when:
         db.createCollection('ctest', new BasicDBObject())
@@ -79,6 +80,7 @@ class DBSpecification extends Specification {
         then:
         def operation = executor.getWriteOperation() as CreateCollectionOperation
         expect operation, isTheSameAs(new CreateCollectionOperation('test', 'ctest', db.getWriteConcern()))
+        executor.getReadConcern() == ReadConcern.MAJORITY
 
         when:
         def options = new BasicDBObject()
@@ -107,6 +109,7 @@ class DBSpecification extends Specification {
                 .validator(BsonDocument.parse('{level : { $gte: 10 } }'))
                 .validationLevel(ValidationLevel.MODERATE)
                 .validationAction(ValidationAction.WARN))
+        executor.getReadConcern() == ReadConcern.MAJORITY
 
         when:
         def collation = Collation.builder()
@@ -125,6 +128,7 @@ class DBSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new CreateCollectionOperation('test', 'ctest', db.getWriteConcern()).collation(collation))
+        executor.getReadConcern() == ReadConcern.MAJORITY
     }
 
     def 'should execute CreateViewOperation'() {
@@ -142,6 +146,7 @@ class DBSpecification extends Specification {
 
         def db = new DB(mongo, databaseName, executor)
         db.setWriteConcern(writeConcern)
+        db.setReadConcern(ReadConcern.MAJORITY)
 
         when:
         db.createView(viewName, viewOn, pipeline)
@@ -150,6 +155,7 @@ class DBSpecification extends Specification {
         def operation = executor.getWriteOperation() as CreateViewOperation
         expect operation, isTheSameAs(new CreateViewOperation(databaseName, viewName, viewOn,
                 [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern))
+        executor.getReadConcern() == ReadConcern.MAJORITY
 
         when:
         db.createView(viewName, viewOn, pipeline, new DBCreateViewOptions().collation(collation))
@@ -158,6 +164,7 @@ class DBSpecification extends Specification {
         then:
         expect operation, isTheSameAs(new CreateViewOperation(databaseName, viewName, viewOn,
                 [new BsonDocument('$match', new BsonDocument('x', BsonBoolean.TRUE))], writeConcern).collation(collation))
+        executor.getReadConcern() == ReadConcern.MAJORITY
     }
 
 
@@ -168,12 +175,14 @@ class DBSpecification extends Specification {
         def executor = new TestOperationExecutor([new BsonDocument('ok', new BsonDouble(1.0))])
         def database = new DB(mongo, 'test', executor)
         database.setReadPreference(ReadPreference.secondary())
+        database.setReadConcern(ReadConcern.MAJORITY)
 
         when:
         database.command(cmd)
 
         then:
         executor.getReadPreference() == expectedReadPreference
+        executor.getReadConcern() == ReadConcern.MAJORITY
 
         where:
         expectedReadPreference     | cmd
@@ -197,12 +206,14 @@ class DBSpecification extends Specification {
         def executor = new TestOperationExecutor([new BsonDocument('ok', new BsonDouble(1.0))])
         def database = new DB(mongo, 'test', executor)
         database.setReadPreference(ReadPreference.secondary())
+        database.setReadConcern(ReadConcern.MAJORITY)
 
         when:
         database.command(cmd)
 
         then:
         executor.getReadPreference() == expectedReadPreference
+        executor.getReadConcern() == ReadConcern.MAJORITY
 
         where:
         expectedReadPreference      | cmd

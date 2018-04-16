@@ -279,7 +279,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         def cannedResult = new BsonDocument('value', new BsonDocumentWrapper(BsonDocument.parse('{}'), new BsonDocumentCodec()))
         def update = BsonDocument.parse('{ update: 1}')
         def operation = new FindAndUpdateOperation<Document>(getNamespace(), writeConcern, retryWrites, documentCodec, update)
-        def expectedCommand = new BsonDocument('findandmodify', new BsonString(getNamespace().getCollectionName()))
+        def expectedCommand = new BsonDocument('findAndModify', new BsonString(getNamespace().getCollectionName()))
                 .append('update', update)
         if (includeWriteConcern) {
             expectedCommand.put('writeConcern', writeConcern.asDocument())
@@ -287,6 +287,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         if (includeTxnNumber) {
             expectedCommand.put('txnNumber', new BsonInt64(0))
         }
+        expectedCommand.put('new', BsonBoolean.FALSE)
 
         then:
         testOperation([operation: operation, serverVersion: serverVersion, expectedCommand: expectedCommand, async: async,
@@ -365,9 +366,10 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         def cannedResult = new BsonDocument('value', new BsonDocumentWrapper(BsonDocument.parse('{}'), new BsonDocumentCodec()))
         def update = BsonDocument.parse('{ update: 1}')
         def operation = new FindAndUpdateOperation<Document>(getNamespace(), ACKNOWLEDGED, true, documentCodec, update)
-        def expectedCommand = new BsonDocument('findandmodify', new BsonString(getNamespace().getCollectionName()))
+        def expectedCommand = new BsonDocument('findAndModify', new BsonString(getNamespace().getCollectionName()))
                 .append('update', update)
                 .append('txnNumber', new BsonInt64(0))
+                .append('new', BsonBoolean.FALSE)
 
         then:
         testOperationRetries(operation, [3, 6, 0], expectedCommand, async, cannedResult)

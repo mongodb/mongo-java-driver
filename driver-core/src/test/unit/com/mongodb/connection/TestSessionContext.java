@@ -16,6 +16,7 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.ReadConcern;
 import com.mongodb.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
@@ -49,7 +50,17 @@ class TestSessionContext implements SessionContext {
     }
 
     @Override
+    public long getTransactionNumber() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public long advanceTransactionNumber() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int advanceStatementId(final int increment) {
         throw new UnsupportedOperationException();
     }
 
@@ -66,5 +77,15 @@ class TestSessionContext implements SessionContext {
     @Override
     public void advanceClusterTime(final BsonDocument clusterTime) {
         this.clusterTime = clusterTime;
+    }
+
+    @Override
+    public boolean hasActiveTransaction() {
+        return false;
+    }
+
+    @Override
+    public ReadConcern getReadConcern() {
+        return ReadConcern.DEFAULT;
     }
 }

@@ -22,7 +22,7 @@ import com.mongodb.binding.ConnectionSource
 import com.mongodb.binding.ReadWriteBinding
 import com.mongodb.connection.Cluster
 import com.mongodb.internal.session.ClientSessionContext
-import com.mongodb.session.ClientSession
+import com.mongodb.client.ClientSession
 import spock.lang.Specification
 
 class ClientSessionBindingSpecification extends Specification {

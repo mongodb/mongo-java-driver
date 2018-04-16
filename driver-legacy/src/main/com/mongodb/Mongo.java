@@ -42,7 +42,7 @@ import com.mongodb.operation.CurrentOpOperation;
 import com.mongodb.operation.FsyncUnlockOperation;
 import com.mongodb.operation.ListDatabasesOperation;
 import com.mongodb.operation.ReadOperation;
-import com.mongodb.session.ClientSession;
+import com.mongodb.client.ClientSession;
 import org.bson.BsonBoolean;
 
 import java.util.ArrayList;
@@ -645,7 +645,7 @@ public class Mongo {
      * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
     public DBObject unlock() {
-        return DBObjects.toDBObject(createOperationExecutor().execute(new FsyncUnlockOperation(), readPreference));
+        return DBObjects.toDBObject(createOperationExecutor().execute(new FsyncUnlockOperation(), readPreference, readConcern));
     }
 
     /**
@@ -656,7 +656,7 @@ public class Mongo {
      * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
     public boolean isLocked() {
-        return createOperationExecutor().execute(new CurrentOpOperation(), ReadPreference.primary())
+        return createOperationExecutor().execute(new CurrentOpOperation(), ReadPreference.primary(), readConcern)
                        .getBoolean("fsyncLock", BsonBoolean.FALSE).getValue();
     }
 
@@ -797,7 +797,7 @@ public class Mongo {
 
     @Nullable
     ClientSession createClientSession(final ClientSessionOptions options) {
-        return delegate.createClientSession(options);
+        return delegate.createClientSession(options, this.options.getReadConcern(), this.options.getWriteConcern());
     }
 
     private ExecutorService createCursorCleaningService() {

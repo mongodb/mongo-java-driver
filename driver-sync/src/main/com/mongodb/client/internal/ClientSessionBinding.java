@@ -16,13 +16,14 @@
 
 package com.mongodb.client.internal;
 
+import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadWriteBinding;
+import com.mongodb.client.ClientSession;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.session.ClientSessionContext;
-import com.mongodb.session.ClientSession;
 import com.mongodb.session.SessionContext;
 
 import static org.bson.assertions.Assertions.notNull;
@@ -40,7 +41,7 @@ public class ClientSessionBinding implements ReadWriteBinding {
         this.wrapped = notNull("wrapped", wrapped);
         this.ownsSession = ownsSession;
         this.session = notNull("session", session);
-        this.sessionContext = new ClientSessionContext(session);
+        this.sessionContext = new SyncClientSessionContext(session);
     }
 
     @Override
@@ -73,7 +74,8 @@ public class ClientSessionBinding implements ReadWriteBinding {
 
     @Override
     public ConnectionSource getReadConnectionSource() {
-        return new SessionBindingConnectionSource(wrapped.getReadConnectionSource());
+        ConnectionSource readConnectionSource = wrapped.getReadConnectionSource();
+        return new SessionBindingConnectionSource(readConnectionSource);
     }
 
     @Override
@@ -83,7 +85,8 @@ public class ClientSessionBinding implements ReadWriteBinding {
 
     @Override
     public ConnectionSource getWriteConnectionSource() {
-        return new SessionBindingConnectionSource(wrapped.getWriteConnectionSource());
+        ConnectionSource writeConnectionSource = wrapped.getWriteConnectionSource();
+        return new SessionBindingConnectionSource(writeConnectionSource);
     }
 
     private class SessionBindingConnectionSource implements ConnectionSource {
@@ -127,4 +130,28 @@ public class ClientSessionBinding implements ReadWriteBinding {
         }
     }
 
+    private final class SyncClientSessionContext extends ClientSessionContext implements SessionContext {
+
+        private final ClientSession clientSession;
+
+        SyncClientSessionContext(final ClientSession clientSession) {
+            super(clientSession);
+            this.clientSession = clientSession;
+        }
+
+
+        @Override
+        public boolean hasActiveTransaction() {
+            return clientSession.hasActiveTransaction();
+        }
+
+        @Override
+        public ReadConcern getReadConcern() {
+            if (clientSession.hasActiveTransaction()) {
+                return clientSession.getTransactionOptions().getReadConcern();
+            } else {
+               return wrapped.getSessionContext().getReadConcern();
+            }
+        }
+    }
 }

@@ -20,7 +20,7 @@ import com.mongodb.Block
 import com.mongodb.Function
 import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.ListCollectionsOperation
-import com.mongodb.session.ClientSession
+import com.mongodb.client.ClientSession
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document

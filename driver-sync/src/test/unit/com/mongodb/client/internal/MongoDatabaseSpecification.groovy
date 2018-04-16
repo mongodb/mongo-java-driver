@@ -31,7 +31,7 @@ import com.mongodb.operation.CommandReadOperation
 import com.mongodb.operation.CreateCollectionOperation
 import com.mongodb.operation.CreateViewOperation
 import com.mongodb.operation.DropDatabaseOperation
-import com.mongodb.session.ClientSession
+import com.mongodb.client.ClientSession
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32

@@ -40,6 +40,7 @@ class ClientSessionContextSpecification extends Specification {
         def expectedSessionId = new BsonDocument('id', new BsonInt32(1))
         def expectedClusterTime = new BsonDocument('x', BsonBoolean.TRUE)
         def expectedOperationTime = new BsonTimestamp(42, 1)
+        def expectedTransactionNumber = 2
 
         def serverSession = Mock(ServerSession)
         def clientSession = Mock(ClientSession) {
@@ -87,6 +88,21 @@ class ClientSessionContextSpecification extends Specification {
 
         then:
         1 * serverSession.advanceTransactionNumber()
+
+        when:
+        def transactionNumber = context.getTransactionNumber()
+
+        then:
+        transactionNumber == expectedTransactionNumber
+        1 * serverSession.getTransactionNumber() >> {
+            expectedTransactionNumber
+        }
+
+        when:
+        context.advanceStatementId(2)
+
+        then:
+        1 * serverSession.advanceStatementId(2)
 
         when:
         def clusterTime = context.getClusterTime()

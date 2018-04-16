@@ -16,11 +16,12 @@
 
 package com.mongodb.client.internal;
 
+import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.lang.Nullable;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
-import com.mongodb.session.ClientSession;
+import com.mongodb.client.ClientSession;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,7 @@ public class TestOperationExecutor implements OperationExecutor {
     private final List<Object> responses;
     private List<ClientSession> clientSessions = new ArrayList<ClientSession>();
     private List<ReadPreference> readPreferences = new ArrayList<ReadPreference>();
+    private List<ReadConcern> readConcerns = new ArrayList<ReadConcern>();
     private List<ReadOperation> readOperations = new ArrayList<ReadOperation>();
     private List<WriteOperation> writeOperations = new ArrayList<WriteOperation>();
 
@@ -40,28 +42,31 @@ public class TestOperationExecutor implements OperationExecutor {
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference) {
-        return execute(operation, readPreference, null);
+    public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern) {
+        return execute(operation, readPreference, readConcern, null);
     }
 
     @Override
     @SuppressWarnings("unchecked")
-    public <T> T execute(final WriteOperation<T> operation) {
-        return execute(operation, null);
+    public <T> T execute(final WriteOperation<T> operation, final ReadConcern readConcern) {
+        return execute(operation, readConcern, null);
     }
 
     @Override
-    public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, @Nullable final ClientSession session) {
+    public <T> T execute(final ReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
+                         @Nullable final ClientSession session) {
         clientSessions.add(session);
         readOperations.add(operation);
         readPreferences.add(readPreference);
+        readConcerns.add(readConcern);
         return getResponse();
     }
 
     @Override
-    public <T> T execute(final WriteOperation<T> operation, @Nullable final ClientSession session) {
+    public <T> T execute(final WriteOperation<T> operation, final ReadConcern readConcern, @Nullable final ClientSession session) {
         clientSessions.add(session);
         writeOperations.add(operation);
+        readConcerns.add(readConcern);
         return getResponse();
     }
 
@@ -86,6 +91,11 @@ public class TestOperationExecutor implements OperationExecutor {
     @Nullable
     public ReadPreference getReadPreference() {
         return readPreferences.isEmpty() ? null : readPreferences.remove(0);
+    }
+
+    @Nullable
+    public ReadConcern getReadConcern() {
+        return readConcerns.isEmpty() ? null : readConcerns.remove(0);
     }
 
     @Nullable

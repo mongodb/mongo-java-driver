@@ -45,6 +45,7 @@ import com.mongodb.connection.ServerType;
 import com.mongodb.connection.ServerVersion;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.BsonInt64;
 import org.bson.codecs.Decoder;
@@ -247,11 +248,15 @@ final class OperationHelper {
     }
 
     static boolean isRetryableWrite(final boolean retryWrites, final WriteConcern writeConcern,
-                                    final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
+                                    final ServerDescription serverDescription, final ConnectionDescription connectionDescription,
+                                    final SessionContext sessionContext) {
         if (!retryWrites) {
             return false;
         } else if (!writeConcern.isAcknowledged()) {
             LOGGER.debug("retryWrites set to true but the writeConcern is unacknowledged.");
+            return false;
+        } else if (sessionContext.hasActiveTransaction()) {
+            LOGGER.debug("retryWrites set to true but in an active transaction.");
             return false;
         } else {
             return canRetryWrite(serverDescription, connectionDescription);

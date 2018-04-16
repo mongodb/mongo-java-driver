@@ -45,7 +45,7 @@ import static com.mongodb.bulk.WriteRequest.Type.INSERT;
 import static com.mongodb.bulk.WriteRequest.Type.REPLACE;
 import static com.mongodb.bulk.WriteRequest.Type.UPDATE;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.operation.CommandOperationHelper.isRetryableException;
+import static com.mongodb.operation.CommandOperationHelper.shouldNotAttemptToRetry;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
@@ -263,7 +263,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
         if (exception == null) {
             return currentBatch.getResult();
-        } else if (!originalBatch.getRetryWrites() || !isRetryableException(exception)) {
+        } else if (shouldNotAttemptToRetry(originalBatch.getRetryWrites(), exception, binding.getSessionContext())) {
             throw exception;
         } else {
             return retryExecuteBatches(binding, currentBatch, exception);
@@ -275,7 +275,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         return withReleasableConnection(binding, originalError, new CallableWithConnectionAndSource<BulkWriteResult>() {
             @Override
             public BulkWriteResult call(final ConnectionSource source, final Connection connection) {
-                if (!isRetryableWrite(retryWrites, writeConcern, source.getServerDescription(), connection.getDescription())) {
+                if (!isRetryableWrite(retryWrites, writeConcern, source.getServerDescription(), connection.getDescription(),
+                        binding.getSessionContext())) {
                     connection.release();
                     throw originalError;
                 } else {
@@ -310,7 +311,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
     private void executeBatchesAsync(final AsyncWriteBinding binding, final AsyncConnection connection, final BulkWriteBatch batch,
                                      final boolean retryWrites, final ConnectionReleasingWrappedCallback<BulkWriteResult> callback) {
-        executeCommandAsync(binding, connection, batch, callback, getCommandCallback(binding, connection, batch, retryWrites, true,
+        executeCommandAsync(binding, connection, batch, callback, getCommandCallback(binding, connection, batch, retryWrites, false,
                 callback));
     }
 
@@ -324,11 +325,12 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 } else {
                     ConnectionReleasingWrappedCallback<BulkWriteResult> releasingCallback =
                             new ConnectionReleasingWrappedCallback<BulkWriteResult>(callback, source, connection);
-                    if (!isRetryableWrite(retryWrites, writeConcern, source.getServerDescription(), connection.getDescription())) {
+                    if (!isRetryableWrite(retryWrites, writeConcern, source.getServerDescription(), connection.getDescription(),
+                            binding.getSessionContext())) {
                         releasingCallback.onResult(null, originalError);
                     } else {
                         executeCommandAsync(binding, connection, retryBatch, releasingCallback,
-                                getCommandCallback(binding, connection, retryBatch, true, false, releasingCallback));
+                                getCommandCallback(binding, connection, retryBatch, true, true, releasingCallback));
                     }
                 }
             }
@@ -392,16 +394,16 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
     private SingleResultCallback<BsonDocument> getCommandCallback(final AsyncWriteBinding binding, final AsyncConnection connection,
                                                                   final BulkWriteBatch batch, final boolean retryWrites,
-                                                                  final boolean canRetryIfError,
+                                                                  final boolean isSecondAttempt,
                                                                   final ConnectionReleasingWrappedCallback<BulkWriteResult> callback) {
         return new SingleResultCallback<BsonDocument>() {
             @Override
             public void onResult(final BsonDocument result, final Throwable t) {
                 if (t != null) {
-                    if (canRetryIfError && retryWrites && isRetryableException(t)) {
-                        retryExecuteBatchesAsync(binding, batch, t, callback.releaseConnectionAndGetWrapped());
-                    } else {
+                    if (isSecondAttempt || shouldNotAttemptToRetry(retryWrites, t, binding.getSessionContext())) {
                         callback.onResult(null, t);
+                    } else {
+                        retryExecuteBatchesAsync(binding, batch, t, callback.releaseConnectionAndGetWrapped());
                     }
                 } else {
                     batch.addResult(result);

@@ -19,7 +19,6 @@ package com.mongodb.client;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoNamespace;
 import com.mongodb.annotations.Immutable;
-import com.mongodb.session.ClientSession;
 import org.bson.Document;
 
 /**
@@ -49,9 +48,19 @@ public interface MongoClient {
     MongoDatabase getDatabase(String databaseName);
 
     /**
+     * Creates a client session with default options.
+     *
+     * <p>Note: A ClientSession instance can not be used concurrently in multiple operations.</p>
+     *
+     * @return the client session
+     * @mongodb.server.release 3.6
+     */
+    ClientSession startSession();
+
+    /**
      * Creates a client session.
      *
-     * <p>Note: A ClientSession instance can not be used concurrently in multiple asynchronous operations.</p>
+     * <p>Note: A ClientSession instance can not be used concurrently in multiple operations.</p>
      *
      * @param options  the options for the client session
      * @return the client session

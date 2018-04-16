@@ -17,6 +17,7 @@
 package com.mongodb.operation
 
 import com.mongodb.MongoNamespace
+import com.mongodb.ReadConcern
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcern
 import com.mongodb.bulk.BulkWriteResult
@@ -33,7 +34,7 @@ import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerType
 import com.mongodb.connection.ServerVersion
-import com.mongodb.internal.connection.NoOpSessionContext
+import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import spock.lang.Specification
@@ -51,7 +52,7 @@ class BulkWriteBatchSpecification extends Specification {
     def connectionDescription = new ConnectionDescription(
             new ConnectionId(new ServerId(new ClusterId(), serverDescription.getAddress())), new ServerVersion(3, 6),
             ServerType.REPLICA_SET_PRIMARY, 1000, 16000, 48000, [])
-    def sessionContext = new NoOpSessionContext()
+    def sessionContext = new ReadConcernAwareNoOpSessionContext(ReadConcern.DEFAULT)
 
     def 'should split payloads by type when ordered'() {
         when:

@@ -104,14 +104,14 @@ class MongoSpecification extends Specification {
             1 * getDB('admin') >> db
             1 * createOperationExecutor() >> {
                 Mock(OperationExecutor) {
-                    1 * execute({ compare(new CurrentOpOperation(), it) }, ReadPreference.primary()) >> {
+                    1 * execute({ compare(new CurrentOpOperation(), it) }, ReadPreference.primary(), _) >> {
                         new BsonDocument('fsyncLock', BsonBoolean.TRUE)
                     }
                 }
             }
             1 * createOperationExecutor() >> {
                 Mock(OperationExecutor) {
-                    1 * execute({ compare(new FsyncUnlockOperation(), it) }, ReadPreference.primary()) >> {
+                    1 * execute({ compare(new FsyncUnlockOperation(), it) }, ReadPreference.primary(), _) >> {
                         new BsonDocument('ok', new BsonInt32(1))
                     }
                 }

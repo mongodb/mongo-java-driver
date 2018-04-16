@@ -96,7 +96,7 @@ final class BulkWriteBatch {
                                                       final Boolean bypassDocumentValidation, final boolean retryWrites,
                                                       final List<? extends WriteRequest> writeRequests,
                                                       final SessionContext sessionContext) {
-        boolean canRetryWrites = isRetryableWrite(retryWrites, writeConcern, serverDescription, connectionDescription);
+        boolean canRetryWrites = isRetryableWrite(retryWrites, writeConcern, serverDescription, connectionDescription, sessionContext);
         List<WriteRequestWithIndex> writeRequestsWithIndex = new ArrayList<WriteRequestWithIndex>();
         boolean writeRequestsAreRetryable = true;
         for (int i = 0; i < writeRequests.size(); i++) {
@@ -125,19 +125,6 @@ final class BulkWriteBatch {
         this.bulkWriteBatchCombiner = bulkWriteBatchCombiner;
         this.batchType = writeRequestsWithIndices.isEmpty() ? INSERT : writeRequestsWithIndices.get(0).writeRequest.getType();
         this.retryWrites = retryWrites;
-        this.command = new BsonDocument();
-
-        command.put(getCommandName(batchType), new BsonString(namespace.getCollectionName()));
-        command.put("ordered", new BsonBoolean(ordered));
-        if (!writeConcern.isServerDefault()) {
-            command.put("writeConcern", writeConcern.asDocument());
-        }
-        if (bypassDocumentValidation != null) {
-            command.put("bypassDocumentValidation", new BsonBoolean(bypassDocumentValidation));
-        }
-        if (retryWrites) {
-            command.put("txnNumber", new BsonInt64(sessionContext.advanceTransactionNumber()));
-        }
 
         List<BsonDocument> payloadItems = new ArrayList<BsonDocument>();
         List<WriteRequestWithIndex> unprocessedItems = new ArrayList<WriteRequestWithIndex>();
@@ -163,6 +150,21 @@ final class BulkWriteBatch {
         this.unprocessed = unprocessedItems;
         this.payload = new SplittablePayload(getPayloadType(batchType), payloadItems);
         this.sessionContext = sessionContext;
+        this.command = new BsonDocument();
+
+        if (!payloadItems.isEmpty()) {
+            command.put(getCommandName(batchType), new BsonString(namespace.getCollectionName()));
+            command.put("ordered", new BsonBoolean(ordered));
+            if (!writeConcern.isServerDefault() && !sessionContext.hasActiveTransaction()) {
+                command.put("writeConcern", writeConcern.asDocument());
+            }
+            if (bypassDocumentValidation != null) {
+                command.put("bypassDocumentValidation", new BsonBoolean(bypassDocumentValidation));
+            }
+            if (retryWrites) {
+                command.put("txnNumber", new BsonInt64(sessionContext.advanceTransactionNumber()));
+            }
+        }
     }
 
     private BulkWriteBatch(final MongoNamespace namespace, final ConnectionDescription connectionDescription,

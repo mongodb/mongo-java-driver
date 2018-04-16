@@ -17,6 +17,7 @@
 package com.mongodb.connection
 
 import com.mongodb.MongoNamespace
+import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.internal.connection.NoOpSessionContext
 import com.mongodb.internal.validator.NoOpFieldNameValidator
@@ -97,21 +98,25 @@ class CommandMessageSpecification extends Specification {
                             hasSession() >> false
                             getClusterTime() >> null
                             getSessionId() >> new BsonDocument('id', new BsonBinary([1, 2, 3] as byte[]))
+                            getReadConcern() >> ReadConcern.DEFAULT
                         },
                         Stub(SessionContext) {
                             hasSession() >> false
                             getClusterTime() >> new BsonDocument('clusterTime', new BsonTimestamp(42, 1))
+                            getReadConcern() >> ReadConcern.DEFAULT
                         },
                         Stub(SessionContext) {
                             hasSession() >> true
                             getClusterTime() >> null
                             getSessionId() >> new BsonDocument('id', new BsonBinary([1, 2, 3] as byte[]))
+                            getReadConcern() >> ReadConcern.DEFAULT
                         },
                         Stub(SessionContext) {
                             hasSession() >> true
                             getClusterTime() >> new BsonDocument('clusterTime', new BsonTimestamp(42, 1))
                             getSessionId() >> new BsonDocument('id', new BsonBinary([1, 2, 3] as byte[]))
-                        }
+                            getReadConcern() >> ReadConcern.DEFAULT
+                            }
                 ],
                 [true, false]
         ].combinations()
@@ -240,7 +245,9 @@ class CommandMessageSpecification extends Specification {
         def message = new CommandMessage(namespace, insertCommand, fieldNameValidator, ReadPreference.primary(), messageSettings,
                 false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE)
         def output = new BasicOutputBuffer()
-        def sessionContext = Stub(SessionContext)
+        def sessionContext = Stub(SessionContext) {
+            getReadConcern() >> ReadConcern.DEFAULT
+        }
 
         when:
         message.encode(output, sessionContext)
@@ -320,7 +327,9 @@ class CommandMessageSpecification extends Specification {
         def message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
                 false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE)
         def output = new BasicOutputBuffer()
-        def sessionContext = Stub(SessionContext)
+        def sessionContext = Stub(SessionContext) {
+            getReadConcern() >> ReadConcern.DEFAULT
+        }
 
         when:
         message.encode(output, sessionContext)
@@ -361,7 +370,9 @@ class CommandMessageSpecification extends Specification {
         def message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
                 false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE)
         def output = new BasicOutputBuffer()
-        def sessionContext = Stub(SessionContext)
+        def sessionContext = Stub(SessionContext) {
+            getReadConcern() >> ReadConcern.DEFAULT
+        }
 
         when:
         message.encode(output, sessionContext)

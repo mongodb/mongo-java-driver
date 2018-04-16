@@ -17,6 +17,7 @@
 package com.mongodb.operation
 
 import com.mongodb.MongoException
+import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.binding.AsyncConnectionSource
@@ -34,6 +35,7 @@ import com.mongodb.connection.AsyncConnection
 import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerVersion
+import com.mongodb.session.SessionContext
 import org.bson.BsonDocument
 import spock.lang.Shared
 import spock.lang.Specification
@@ -72,6 +74,10 @@ class OperationUnitSpecification extends Specification {
         def readBinding = Stub(ReadBinding) {
             getReadConnectionSource() >> connectionSource
             getReadPreference() >> readPreference
+            getSessionContext() >> Stub(SessionContext) {
+                hasActiveTransaction() >> false
+                getReadConcern() >> ReadConcern.DEFAULT
+            }
         }
         def writeBinding = Stub(WriteBinding) {
             getWriteConnectionSource() >> connectionSource
@@ -118,6 +124,10 @@ class OperationUnitSpecification extends Specification {
         def readBinding = Stub(AsyncReadBinding) {
             getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
             getReadPreference() >> readPreference
+            getSessionContext() >> Stub(SessionContext) {
+                hasActiveTransaction() >> false
+                getReadConcern() >> ReadConcern.DEFAULT
+            }
         }
         def writeBinding = Stub(AsyncWriteBinding) {
             getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }

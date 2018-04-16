@@ -34,6 +34,7 @@ import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.lang.Nullable;
 import com.mongodb.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import org.bson.BsonDocument;
@@ -430,14 +431,14 @@ final class CommandOperationHelper {
             @Override
             public R call(final ConnectionSource source, final Connection connection) {
                 BsonDocument command = null;
-                MongoException exception = null;
+                MongoException exception;
                 try {
                     command = commandCreator.create(source.getServerDescription(), connection.getDescription());
                     return transformer.apply(connection.command(database, command, fieldNameValidator, readPreference,
                             commandResultDecoder, binding.getSessionContext()), connection.getDescription().getServerAddress());
                 } catch (MongoException e) {
                     exception = e;
-                    if (command == null || !command.containsKey("txnNumber") || !isRetryableException(exception)) {
+                    if (shouldNotAttemptToRetry(command, exception, binding.getSessionContext())) {
                         throw exception;
                     }
                 } finally {
@@ -516,7 +517,7 @@ final class CommandOperationHelper {
                 if (originalError != null) {
                     oldConnection.release();
                     oldSource.release();
-                    if (!command.containsKey("txnNumber") || !isRetryableException(originalError)) {
+                    if (shouldNotAttemptToRetry(command, originalError, binding.getSessionContext())) {
                         callback.onResult(null, originalError);
                     } else {
                         withConnection(binding, new AsyncCallableWithConnectionAndSource() {
@@ -652,6 +653,17 @@ final class CommandOperationHelper {
                 });
             }
         }
+    }
+
+    private static boolean shouldNotAttemptToRetry(@Nullable final BsonDocument command, final Throwable exception,
+                                                   final SessionContext sessionContext) {
+        return shouldNotAttemptToRetry(command != null && command.containsKey("txnNumber"), exception, sessionContext);
+    }
+
+
+    static boolean shouldNotAttemptToRetry(final boolean retryWritesEnabled, final Throwable exception,
+                                           final SessionContext sessionContext) {
+        return !retryWritesEnabled || !isRetryableException(exception) || sessionContext.hasActiveTransaction();
     }
 
     private CommandOperationHelper() {

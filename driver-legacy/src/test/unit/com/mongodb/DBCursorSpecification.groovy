@@ -259,8 +259,8 @@ class DBCursorSpecification extends Specification {
         then:
         result == 42
         expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace())
-                                                                .readConcern(ReadConcern.MAJORITY)
                                                                 .filter(new BsonDocument()))
+        executor.getReadConcern() == ReadConcern.MAJORITY
     }
 
     def 'size should create the correct CountOperation'() {
@@ -275,8 +275,8 @@ class DBCursorSpecification extends Specification {
         then:
         result == 42
         expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace())
-                                                                .readConcern(ReadConcern.MAJORITY)
                                                                 .filter(new BsonDocument()))
+        executor.getReadConcern() == ReadConcern.MAJORITY
     }
 
     private stubBatchCursor() {

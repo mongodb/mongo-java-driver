@@ -22,7 +22,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.lang.Nullable;
-import com.mongodb.session.ClientSession;
+import com.mongodb.client.ClientSession;
 import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.types.Binary;

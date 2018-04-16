@@ -24,7 +24,7 @@ import com.mongodb.ReadConcern
 import com.mongodb.client.model.Collation
 import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.FindOperation
-import com.mongodb.session.ClientSession
+import com.mongodb.client.ClientSession
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document

@@ -24,7 +24,7 @@ import org.bson.BsonTimestamp;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 
-public class ClientSessionImpl implements ClientSession {
+public class BaseClientSessionImpl implements ClientSession {
     private static final String CLUSTER_TIME_KEY = "clusterTime";
 
     private final ServerSessionPool serverSessionPool;
@@ -35,7 +35,7 @@ public class ClientSessionImpl implements ClientSession {
     private BsonTimestamp operationTime;
     private volatile boolean closed;
 
-    public ClientSessionImpl(final ServerSessionPool serverSessionPool, final Object originator, final ClientSessionOptions options) {
+    public BaseClientSessionImpl(final ServerSessionPool serverSessionPool, final Object originator, final ClientSessionOptions options) {
         this.serverSessionPool = serverSessionPool;
         this.serverSession = serverSessionPool.get();
         this.originator = originator;

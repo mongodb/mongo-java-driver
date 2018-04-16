@@ -59,7 +59,7 @@ import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.connection.ServerType.STANDALONE
-import static com.mongodb.operation.ReadConcernHelper.appendReadConcernToCommand
+import static com.mongodb.operation.OperationReadConcernHelper.appendReadConcernToCommand
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
@@ -223,14 +223,12 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         def operation = new DistinctOperation(helper.namespace, 'name', new BsonDocumentCodec())
                 .filter(new BsonDocument('a', BsonBoolean.TRUE))
                 .maxTime(10, MILLISECONDS)
-                .readConcern(ReadConcern.MAJORITY)
                 .collation(defaultCollation)
 
         def expectedCommand = new BsonDocument('distinct', new BsonString(helper.namespace.getCollectionName()))
                 .append('key', new BsonString('name'))
                 .append('query', operation.getFilter())
                 .append('maxTimeMS', new BsonInt64(operation.getMaxTime(MILLISECONDS)))
-                .append('readConcern', new BsonDocument('level', new BsonString('majority')))
                 .append('collation', defaultCollation.asDocument())
 
         then:
@@ -243,10 +241,10 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should throw an exception when using an unsupported ReadConcern'() {
         given:
-        def operation = new DistinctOperation(helper.namespace, 'name', helper.decoder).readConcern(readConcern)
+        def operation = new DistinctOperation(helper.namespace, 'name', helper.decoder)
 
         when:
-        testOperationThrows(operation, [3, 0, 0], async)
+        testOperationThrows(operation, [3, 0, 0], readConcern, async)
 
         then:
         def exception = thrown(IllegalArgumentException)
@@ -301,10 +299,9 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         source.retain() >> source
         def commandDocument = new BsonDocument('distinct', new BsonString(getCollectionName()))
                 .append('key', new BsonString('str'))
-        appendReadConcernToCommand(ReadConcern.MAJORITY, sessionContext, commandDocument)
+        appendReadConcernToCommand(sessionContext, commandDocument)
 
         def operation = new DistinctOperation<String>(getNamespace(), 'str', new StringCodec())
-                .readConcern(ReadConcern.MAJORITY)
 
         when:
         operation.execute(binding)
@@ -321,6 +318,8 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
                 Stub(SessionContext) {
                     isCausallyConsistent() >> true
                     getOperationTime() >> new BsonTimestamp(42, 0)
+                    hasActiveTransaction() >> false
+                    getReadConcern() >> ReadConcern.MAJORITY
                 }
         ]
     }
@@ -337,10 +336,9 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
         source.retain() >> source
         def commandDocument = new BsonDocument('distinct', new BsonString(getCollectionName()))
                 .append('key', new BsonString('str'))
-        appendReadConcernToCommand(ReadConcern.MAJORITY, sessionContext, commandDocument)
+        appendReadConcernToCommand(sessionContext, commandDocument)
 
         def operation = new DistinctOperation<String>(getNamespace(), 'str', new StringCodec())
-                .readConcern(ReadConcern.MAJORITY)
 
         when:
         executeAsync(operation, binding)
@@ -358,6 +356,8 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
                 Stub(SessionContext) {
                     isCausallyConsistent() >> true
                     getOperationTime() >> new BsonTimestamp(42, 0)
+                    hasActiveTransaction() >> false
+                    getReadConcern() >> ReadConcern.MAJORITY
                 }
         ]
     }

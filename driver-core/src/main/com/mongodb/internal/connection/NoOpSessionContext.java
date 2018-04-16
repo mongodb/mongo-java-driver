@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.ReadConcern;
 import com.mongodb.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
@@ -25,7 +26,7 @@ import org.bson.BsonTimestamp;
  *
  * <p>This class should not be considered a part of the public API.</p>
  */
-public final class NoOpSessionContext implements SessionContext {
+public class NoOpSessionContext implements SessionContext {
 
     /**
      * A singleton instance of a NoOpSessionContext
@@ -48,7 +49,17 @@ public final class NoOpSessionContext implements SessionContext {
     }
 
     @Override
+    public long getTransactionNumber() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public long advanceTransactionNumber() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public int advanceStatementId(final int increment) {
         throw new UnsupportedOperationException();
     }
 
@@ -70,6 +81,13 @@ public final class NoOpSessionContext implements SessionContext {
     public void advanceClusterTime(final BsonDocument clusterTime) {
     }
 
-    private NoOpSessionContext() {
+    @Override
+    public boolean hasActiveTransaction() {
+        return false;
+    }
+
+    @Override
+    public ReadConcern getReadConcern() {
+        return ReadConcern.DEFAULT;
     }
 }

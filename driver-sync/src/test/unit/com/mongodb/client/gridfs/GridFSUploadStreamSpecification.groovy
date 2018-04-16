@@ -19,7 +19,7 @@ package com.mongodb.client.gridfs
 import com.mongodb.MongoGridFSException
 import com.mongodb.client.MongoCollection
 import com.mongodb.client.gridfs.model.GridFSFile
-import com.mongodb.session.ClientSession
+import com.mongodb.client.ClientSession
 import org.bson.BsonObjectId
 import org.bson.BsonString
 import org.bson.Document

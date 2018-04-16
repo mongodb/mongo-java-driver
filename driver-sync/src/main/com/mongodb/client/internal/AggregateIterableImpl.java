@@ -27,7 +27,7 @@ import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.lang.Nullable;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.ReadOperation;
-import com.mongodb.session.ClientSession;
+import com.mongodb.client.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -77,7 +77,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         }
 
         getExecutor().execute(operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint,
-                comment), getClientSession());
+                comment), getReadConcern(), getClientSession());
     }
 
     @Override
@@ -144,7 +144,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
         if (outCollection != null) {
             getExecutor().execute(operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation,
-                    hint, comment), getClientSession());
+                    hint, comment), getReadConcern(), getClientSession());
 
             FindOptions findOptions = new FindOptions().collation(collation);
             Integer batchSize = getBatchSize();

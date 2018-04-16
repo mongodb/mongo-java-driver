@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection
 
+import com.mongodb.ReadConcern
 import org.bson.BsonDocument
 import org.bson.BsonTimestamp
 import spock.lang.Specification
@@ -30,6 +31,7 @@ class NoOpSessionContextSpecification extends Specification {
         sessionContext.getClusterTime() == null
         sessionContext.getOperationTime() == null
         !sessionContext.isCausallyConsistent()
+        sessionContext.readConcern == ReadConcern.DEFAULT
 
         when:
         sessionContext.advanceOperationTime(new BsonTimestamp(42, 1))
@@ -54,5 +56,13 @@ class NoOpSessionContextSpecification extends Specification {
 
         then:
         thrown(UnsupportedOperationException)
+    }
+
+    def 'should provide given read concern for ReadConcernAwareNoOpSessionContext'() {
+        given:
+        def sessionContext = new ReadConcernAwareNoOpSessionContext(ReadConcern.MAJORITY)
+
+        expect:
+        sessionContext.readConcern == ReadConcern.MAJORITY
     }
 }

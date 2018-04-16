@@ -55,7 +55,7 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.connection.ServerType.STANDALONE
-import static com.mongodb.operation.ReadConcernHelper.appendReadConcernToCommand
+import static com.mongodb.operation.OperationReadConcernHelper.appendReadConcernToCommand
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 
@@ -300,7 +300,6 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
                 .skip(30)
                 .hint(hint)
                 .maxTime(10, MILLISECONDS)
-                .readConcern(ReadConcern.MAJORITY)
                 .collation(defaultCollation)
 
          expectedCommand.append('query', filter)
@@ -308,7 +307,6 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
                 .append('skip', new BsonInt64(30))
                 .append('hint', hint)
                 .append('maxTimeMS', new BsonInt64(10))
-                .append('readConcern', new BsonDocument('level', new BsonString('majority')))
                 .append('collation', defaultCollation.asDocument())
 
         then:
@@ -320,10 +318,10 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should throw an exception when using an unsupported ReadConcern'() {
         given:
-        def operation = new CountOperation(helper.namespace).readConcern(readConcern)
+        def operation = new CountOperation(helper.namespace)
 
         when:
-        testOperationThrows(operation, [3, 0, 0], async)
+        testOperationThrows(operation, [3, 0, 0], readConcern, async)
 
         then:
         def exception = thrown(IllegalArgumentException)
@@ -375,10 +373,9 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         source.connection >> connection
         source.retain() >> source
         def commandDocument = new BsonDocument('count', new BsonString(getCollectionName()))
-        appendReadConcernToCommand(ReadConcern.MAJORITY, sessionContext, commandDocument)
+        appendReadConcernToCommand(sessionContext, commandDocument)
 
         def operation = new CountOperation(getNamespace())
-                .readConcern(ReadConcern.MAJORITY)
 
         when:
         operation.execute(binding)
@@ -395,6 +392,8 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
                 Stub(SessionContext) {
                     isCausallyConsistent() >> true
                     getOperationTime() >> new BsonTimestamp(42, 0)
+                    hasActiveTransaction() >> false
+                    getReadConcern() >> ReadConcern.MAJORITY
                 }
         ]
     }
@@ -410,10 +409,9 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         source.getConnection(_) >> { it[0].onResult(connection, null) }
         source.retain() >> source
         def commandDocument = new BsonDocument('count', new BsonString(getCollectionName()))
-        appendReadConcernToCommand(ReadConcern.MAJORITY, sessionContext, commandDocument)
+        appendReadConcernToCommand(sessionContext, commandDocument)
 
         def operation = new CountOperation(getNamespace())
-                .readConcern(ReadConcern.MAJORITY)
 
         when:
         executeAsync(operation, binding)
@@ -431,6 +429,8 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
                 Stub(SessionContext) {
                     isCausallyConsistent() >> true
                     getOperationTime() >> new BsonTimestamp(42, 0)
+                    hasActiveTransaction() >> false
+                    getReadConcern() >> ReadConcern.MAJORITY
                 }
         ]
     }

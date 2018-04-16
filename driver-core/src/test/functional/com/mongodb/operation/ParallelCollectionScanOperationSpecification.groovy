@@ -23,26 +23,20 @@ import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
-import com.mongodb.ServerAddress
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.binding.AsyncConnectionSource
 import com.mongodb.binding.AsyncReadBinding
 import com.mongodb.binding.ConnectionSource
 import com.mongodb.binding.ReadBinding
 import com.mongodb.connection.AsyncConnection
-import com.mongodb.connection.ClusterId
 import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
-import com.mongodb.connection.ConnectionId
-import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerVersion
 import com.mongodb.session.SessionContext
-import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonJavaScript
 import org.bson.BsonString
-import org.bson.BsonTimestamp
 import org.bson.Document
 import org.bson.codecs.Decoder
 import org.bson.codecs.DocumentCodec
@@ -55,8 +49,6 @@ import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.loopCursor
-import static com.mongodb.connection.ServerType.STANDALONE
-import static com.mongodb.operation.ReadConcernHelper.appendReadConcernToCommand
 import static org.junit.Assert.assertTrue
 
 @IgnoreIf({ isSharded() })
@@ -139,6 +131,10 @@ class ParallelCollectionScanOperationSpecification extends OperationFunctionalSp
         def readBinding = Stub(ReadBinding) {
             getReadConnectionSource() >> connectionSource
             getReadPreference() >> readPreference
+            getSessionContext() >> Stub(SessionContext) {
+                hasActiveTransaction() >> false
+                getReadConcern() >> ReadConcern.DEFAULT
+            }
         }
         def operation = new ParallelCollectionScanOperation<Document>(helper.namespace, 2, helper.decoder)
 
@@ -163,6 +159,10 @@ class ParallelCollectionScanOperationSpecification extends OperationFunctionalSp
         def readBinding = Stub(AsyncReadBinding) {
             getReadPreference() >> readPreference
             getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+            getSessionContext() >> Stub(SessionContext) {
+                hasActiveTransaction() >> false
+                getReadConcern() >> ReadConcern.DEFAULT
+            }
         }
         def operation = new ParallelCollectionScanOperation<Document>(helper.namespace, 2, helper.decoder)
 
@@ -191,6 +191,10 @@ class ParallelCollectionScanOperationSpecification extends OperationFunctionalSp
         }
         def readBinding = Stub(ReadBinding) {
             getReadConnectionSource() >> connectionSource
+            getSessionContext() >> Stub(SessionContext) {
+                hasActiveTransaction() >> false
+                getReadConcern() >> ReadConcern.DEFAULT
+            }
         }
 
         def operation = new ParallelCollectionScanOperation<Document>(helper.namespace, 2, helper.decoder)
@@ -205,8 +209,7 @@ class ParallelCollectionScanOperationSpecification extends OperationFunctionalSp
         1 * connection.release()
 
         when:
-        operation.batchSize(10).readConcern(ReadConcern.MAJORITY)
-        expectedCommand.append('readConcern', new BsonDocument('level', new BsonString('majority')))
+        operation.batchSize(10)
 
         operation.execute(readBinding)
 
@@ -227,6 +230,10 @@ class ParallelCollectionScanOperationSpecification extends OperationFunctionalSp
         }
         def readBinding = Stub(AsyncReadBinding) {
             getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+            getSessionContext() >> Stub(SessionContext) {
+                hasActiveTransaction() >> false
+                getReadConcern() >> ReadConcern.DEFAULT
+            }
         }
         def operation = new ParallelCollectionScanOperation<Document>(helper.namespace, 2, helper.decoder)
         def expectedCommand = new BsonDocument('parallelCollectionScan', new BsonString(helper.namespace.getCollectionName()))
@@ -240,8 +247,7 @@ class ParallelCollectionScanOperationSpecification extends OperationFunctionalSp
         1 * connection.release()
 
         when:
-        operation.batchSize(10).readConcern(ReadConcern.MAJORITY)
-        expectedCommand.append('readConcern', new BsonDocument('level', new BsonString('majority')))
+        operation.batchSize(10)
 
         operation.executeAsync(readBinding, Stub(SingleResultCallback))
 
@@ -260,9 +266,12 @@ class ParallelCollectionScanOperationSpecification extends OperationFunctionalSp
                     }
                 }
             }
+            getSessionContext() >> Stub(SessionContext) {
+                getReadConcern() >> readConcern
+            }
         }
         def operation = new MapReduceWithInlineResultsOperation<Document>(helper.namespace, new BsonJavaScript('function(){ }'),
-                new BsonJavaScript('function(key, values){ }'), helper.decoder).readConcern(readConcern)
+                new BsonJavaScript('function(key, values){ }'), helper.decoder)
 
         when:
         operation.execute(readBinding)
@@ -286,6 +295,9 @@ class ParallelCollectionScanOperationSpecification extends OperationFunctionalSp
         }
         def readBinding = Stub(AsyncReadBinding) {
             getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+            getSessionContext() >> Stub(SessionContext) {
+                getReadConcern() >> readConcern
+            }
         }
         def operation = new MapReduceWithInlineResultsOperation<Document>(helper.namespace, new BsonJavaScript('function(){ }'),
                 new BsonJavaScript('function(key, values){ }'), helper.decoder).readConcern(readConcern)
@@ -299,79 +311,6 @@ class ParallelCollectionScanOperationSpecification extends OperationFunctionalSp
 
         where:
         readConcern << [ReadConcern.MAJORITY, ReadConcern.LOCAL]
-    }
-
-    def 'should add read concern to command'() {
-        given:
-        def binding = Stub(ReadBinding)
-        def source = Stub(ConnectionSource)
-        def connection = Mock(Connection)
-        binding.readPreference >> ReadPreference.primary()
-        binding.readConnectionSource >> source
-        binding.sessionContext >> sessionContext
-        source.connection >> connection
-        source.retain() >> source
-        def commandDocument = new BsonDocument('parallelCollectionScan', new BsonString(getCollectionName()))
-            .append('numCursors', new BsonInt32(1))
-        appendReadConcernToCommand(ReadConcern.MAJORITY, sessionContext, commandDocument)
-
-        def operation = new ParallelCollectionScanOperation<Document>(getNamespace(), 1, new DocumentCodec())
-                .readConcern(ReadConcern.MAJORITY)
-
-        when:
-        operation.execute(binding)
-
-        then:
-        _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                new ServerVersion(3, 6), STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.command(_, commandDocument, _, _, _, sessionContext) >>
-                new BsonDocument('cursors', new BsonArray())
-        1 * connection.release()
-
-        where:
-        sessionContext << [
-                Stub(SessionContext) {
-                    isCausallyConsistent() >> true
-                    getOperationTime() >> new BsonTimestamp(42, 0)
-                }
-        ]
-    }
-
-    def 'should add read concern to command asynchronously'() {
-        given:
-        def binding = Stub(AsyncReadBinding)
-        def source = Stub(AsyncConnectionSource)
-        def connection = Mock(AsyncConnection)
-        binding.readPreference >> ReadPreference.primary()
-        binding.getReadConnectionSource(_) >> { it[0].onResult(source, null) }
-        binding.sessionContext >> sessionContext
-        source.getConnection(_) >> { it[0].onResult(connection, null) }
-        source.retain() >> source
-        def commandDocument = new BsonDocument('parallelCollectionScan', new BsonString(getCollectionName()))
-                .append('numCursors', new BsonInt32(1))
-        appendReadConcernToCommand(ReadConcern.MAJORITY, sessionContext, commandDocument)
-
-        def operation = new ParallelCollectionScanOperation<Document>(getNamespace(), 1, new DocumentCodec())
-                .readConcern(ReadConcern.MAJORITY)
-
-        when:
-        executeAsync(operation, binding)
-
-        then:
-        _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                new ServerVersion(3, 6), STANDALONE, 1000, 100000, 100000, [])
-        1 * connection.commandAsync(_, commandDocument, _, _, _, sessionContext, _) >> {
-            it[6].onResult(new BsonDocument('cursors', new BsonArray()), null)
-        }
-        1 * connection.release()
-
-        where:
-        sessionContext << [
-                Stub(SessionContext) {
-                    isCausallyConsistent() >> true
-                    getOperationTime() >> new BsonTimestamp(42, 0)
-                }
-        ]
     }
 
     def helper = [
