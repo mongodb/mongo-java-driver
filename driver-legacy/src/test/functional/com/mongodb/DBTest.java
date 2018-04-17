@@ -23,7 +23,6 @@ import com.mongodb.client.model.CollationCaseFirst;
 import com.mongodb.client.model.CollationMaxVariable;
 import com.mongodb.client.model.CollationStrength;
 import com.mongodb.operation.ListCollectionsOperation;
-import com.mongodb.operation.UserExistsOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
@@ -305,7 +304,7 @@ public class DBTest extends DatabaseTestCase {
         WriteResult result = database.addUser(userName, password, readOnly);
         assertEquals(1, result.getN());
         assertFalse(result.isUpdateOfExisting());
-        assertTrue(new UserExistsOperation(database.getName(), userName).execute(getBinding()));
+        assertTrue(new com.mongodb.operation.UserExistsOperation(database.getName(), userName).execute(getBinding()));
     }
 
     @Test
@@ -328,7 +327,7 @@ public class DBTest extends DatabaseTestCase {
         result = database.addUser(userName, newPassword, newReadOnly);
         assertEquals(1, result.getN());
         assertTrue(result.isUpdateOfExisting());
-        assertTrue(new UserExistsOperation(database.getName(), userName).execute(getBinding()));
+        assertTrue(new com.mongodb.operation.UserExistsOperation(database.getName(), userName).execute(getBinding()));
     }
 
     @Test
@@ -341,7 +340,7 @@ public class DBTest extends DatabaseTestCase {
 
         database.removeUser(userName);
 
-        assertFalse(new UserExistsOperation(database.getName(), userName).execute(getBinding()));
+        assertFalse(new com.mongodb.operation.UserExistsOperation(database.getName(), userName).execute(getBinding()));
     }
 
     @Test(expected = IllegalArgumentException.class)
