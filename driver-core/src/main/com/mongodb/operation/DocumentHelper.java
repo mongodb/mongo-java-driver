@@ -33,6 +33,12 @@ final class DocumentHelper {
         }
     }
 
+    static void putIfFalse(final BsonDocument command, final String key, final boolean condition) {
+        if (!condition) {
+            command.put(key, BsonBoolean.FALSE);
+        }
+    }
+
     static void putIfNotNullOrEmpty(final BsonDocument command, final String key, final BsonDocument documentValue) {
         if (documentValue != null && !documentValue.isEmpty()) {
             command.put(key, documentValue);

@@ -146,7 +146,6 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         assert !collectionNameExists(getCollectionName())
         def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
                 .capped(true)
-                .autoIndex(false)
                 .maxDocuments(100)
                 .sizeInBytes(40 * 1024)
 
@@ -172,6 +171,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         async << [true, false]
     }
 
+    @IgnoreIf({ serverVersionAtLeast(3, 7) })
     def 'should create collection in respect to the autoIndex option'() {
         given:
         assert !collectionNameExists(getCollectionName())

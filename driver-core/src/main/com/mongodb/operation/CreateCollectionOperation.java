@@ -36,6 +36,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static com.mongodb.operation.DocumentHelper.putIfFalse;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
@@ -412,7 +413,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
 
     private BsonDocument getCommand(final ConnectionDescription description) {
         BsonDocument document = new BsonDocument("create", new BsonString(collectionName));
-        document.put("autoIndexId", BsonBoolean.valueOf(autoIndex));
+        putIfFalse(document, "autoIndexId", autoIndex);
         document.put("capped", BsonBoolean.valueOf(capped));
         if (capped) {
             putIfNotZero(document, "size", sizeInBytes);
