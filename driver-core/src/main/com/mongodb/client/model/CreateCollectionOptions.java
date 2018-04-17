@@ -42,7 +42,9 @@ public class CreateCollectionOptions {
      * Gets if auto-index is enabled
      *
      * @return true if auto-index is enabled
+     * @deprecated this option was deprecated in MongoDB 3.2 and removed in MongodB 4.0
      */
+    @Deprecated
     public boolean isAutoIndex() {
         return autoIndex;
     }
@@ -52,7 +54,9 @@ public class CreateCollectionOptions {
      *
      * @param autoIndex true if auto-index is enabled
      * @return this
+     * @deprecated this option was deprecated in MongoDB 3.2 and removed in MongodB 4.0
      */
+    @Deprecated
     public CreateCollectionOptions autoIndex(final boolean autoIndex) {
         this.autoIndex = autoIndex;
         return this;
