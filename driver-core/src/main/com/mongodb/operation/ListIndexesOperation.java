@@ -226,7 +226,7 @@ public class ListIndexesOperation<T> implements AsyncReadOperation<AsyncBatchCur
 
     private BsonDocument getCommand() {
         BsonDocument command = new BsonDocument("listIndexes", new BsonString(namespace.getCollectionName()))
-                .append("cursor", getCursorDocumentFromBatchSize(batchSize));
+                .append("cursor", getCursorDocumentFromBatchSize(batchSize == 0 ? null : batchSize));
         if (maxTimeMS > 0) {
             command.put("maxTimeMS", new BsonInt64(maxTimeMS));
         }

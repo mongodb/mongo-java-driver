@@ -270,7 +270,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
 
     private BsonDocument getCommand() {
         BsonDocument command = new BsonDocument("listCollections", new BsonInt32(1))
-                .append("cursor", getCursorDocumentFromBatchSize(batchSize));
+                .append("cursor", getCursorDocumentFromBatchSize(batchSize == 0 ? null : batchSize));
         if (filter != null) {
             command.append("filter", filter);
         }
