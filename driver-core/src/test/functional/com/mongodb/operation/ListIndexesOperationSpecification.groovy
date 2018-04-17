@@ -52,8 +52,10 @@ import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
+@IgnoreIf({ serverVersionAtLeast(3, 7) && isSharded() })
 class ListIndexesOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should return empty list for nonexistent collection'() {
