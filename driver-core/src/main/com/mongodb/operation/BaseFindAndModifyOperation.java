@@ -38,7 +38,7 @@ import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeD
 /**
  * Abstract base class for findAndModify-based operations
  *
- * @param <T>
+ * @param <T> the document type
  * @since 3.8
  */
 public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
@@ -57,7 +57,7 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
      * @param decoder     the decoder for the result documents.
      */
     protected BaseFindAndModifyOperation(final MongoNamespace namespace, final WriteConcern writeConcern,
-                                      final boolean retryWrites, final Decoder<T> decoder) {
+                                         final boolean retryWrites, final Decoder<T> decoder) {
         this.namespace = notNull("namespace", namespace);
         this.writeConcern = notNull("writeConcern", writeConcern);
         this.retryWrites = retryWrites;
