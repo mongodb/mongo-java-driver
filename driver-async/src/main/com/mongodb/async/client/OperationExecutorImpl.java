@@ -122,6 +122,9 @@ class OperationExecutorImpl implements OperationExecutor {
             if (session.hasActiveTransaction() && !readPreference.equals(primary())) {
                 throw new MongoClientException("Read preference in a transaction must be primary");
             }
+            if (!session.hasActiveTransaction() && session.getOptions().getAutoStartTransaction()) {
+                session.startTransaction();
+            }
             readWriteBinding = new ClientSessionBinding(session, ownsSession, readWriteBinding);
         }
         return readWriteBinding;

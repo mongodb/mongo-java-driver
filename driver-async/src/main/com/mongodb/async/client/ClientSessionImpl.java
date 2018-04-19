@@ -26,7 +26,6 @@ import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.operation.AbortTransactionOperation;
 import com.mongodb.operation.CommitTransactionOperation;
-import com.mongodb.operation.TransactionOperation;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -41,9 +40,6 @@ class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
                       final OperationExecutor executor) {
         super(serverSessionPool, mongoClient, options);
         this.executor = executor;
-        if (options.getAutoStartTransaction()) {
-            startTransaction(options.getDefaultTransactionOptions());
-        }
    }
 
     @Override
@@ -74,27 +70,9 @@ class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
 
     @Override
     public void commitTransaction(final SingleResultCallback<Void> callback) {
-        if (!inTransaction) {
+        if (!canCommitOrAbort()) {
             throw new IllegalStateException("There is no transaction started");
         }
-        endTransaction(new CommitTransactionOperation(transactionOptions.getWriteConcern()), callback);
-    }
-
-    @Override
-    public void abortTransaction(final SingleResultCallback<Void> callback) {
-        if (!inTransaction) {
-            throw new IllegalStateException("There is no transaction started");
-        }
-        endTransaction(new AbortTransactionOperation(transactionOptions.getWriteConcern()), new SingleResultCallback<Void>() {
-            @Override
-            public void onResult(final Void result, final Throwable t) {
-                // Don't report failure to abort the transaction
-                callback.onResult(null, null);
-            }
-        });
-    }
-
-    private void endTransaction(final TransactionOperation operation, final SingleResultCallback<Void> callback) {
         if (getServerSession().getStatementId() == 0) {
             cleanupTransaction();
             callback.onResult(null, null);
@@ -103,7 +81,7 @@ class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
             if (readConcern == null) {
                 throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
             }
-            executor.execute(operation,
+            executor.execute(new CommitTransactionOperation(transactionOptions.getWriteConcern()),
                     ReadPreference.primary(), readConcern, this,
                     new SingleResultCallback<Void>() {
                         @Override
@@ -113,6 +91,35 @@ class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
                         }
                     });
         }
+    }
+
+    @Override
+    public void abortTransaction(final SingleResultCallback<Void> callback) {
+        if (!canCommitOrAbort()) {
+            throw new IllegalStateException("There is no transaction started");
+        }
+        if (getServerSession().getStatementId() == 0) {
+            cleanupTransaction();
+            callback.onResult(null, null);
+        } else {
+            ReadConcern readConcern = transactionOptions.getReadConcern();
+            if (readConcern == null) {
+                throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
+            }
+            executor.execute(new AbortTransactionOperation(transactionOptions.getWriteConcern()),
+                    ReadPreference.primary(), readConcern, this,
+                    new SingleResultCallback<Void>() {
+                        @Override
+                        public void onResult(final Void result, final Throwable t) {
+                            cleanupTransaction();
+                            callback.onResult(null, null);
+                        }
+                    });
+        }
+    }
+
+    private boolean canCommitOrAbort() {
+        return inTransaction || getOptions().getAutoStartTransaction();
     }
 
     // TODO: should there be a version of this that takes a callback?
@@ -133,9 +140,6 @@ class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
     private void cleanupTransaction() {
         inTransaction = false;
         transactionOptions = null;
-        if (getOptions().getAutoStartTransaction()) {
-            startTransaction(getOptions().getDefaultTransactionOptions());
-        }
         getServerSession().advanceTransactionNumber();
     }
 }
