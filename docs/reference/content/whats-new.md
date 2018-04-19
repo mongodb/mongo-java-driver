@@ -7,6 +7,19 @@ title = "What's New"
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
+## What's New in 3.8
+
+Key new features of the 3.8 Java driver release:
+
+### Transactions
+
+The Java driver now provides support for executing CRUD operations within a transaction (requires MongoDB 4.0).
+
+### SCRAM-256 Authentication Mechanism
+
+The Java driver now provides support for the SCRAM-256 authentication mechanism (requires MongoDB 4.0).
+
+
 ## What's New in 3.7
 
 Key new features of the 3.7 Java driver release:
