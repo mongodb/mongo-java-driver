@@ -6,12 +6,12 @@ type = "index"
 
 ## MongoDB Java Driver Documentation
 
-Welcome to the MongoDB Java driver documentation hub for the 3.7 driver release.
+Welcome to the MongoDB Java driver documentation hub for the 3.8 driver release.
 
 
-### What's New in 3.7
+### What's New in 3.8
 
-For key new features of 3.7, see [What's New]({{< relref "whats-new.md" >}}).
+For key new features of 3.8, see [What's New]({{< relref "whats-new.md" >}}).
 
 ### Upgrade
 
