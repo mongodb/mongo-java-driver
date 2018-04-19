@@ -268,8 +268,8 @@ public class TransactionsTest {
                     } else if (hasErrorCodeNameField(expectedResult) || (e instanceof MongoCommandException)) {
                         String expectedErrorCodeName = getErrorCodeNameField(expectedResult);
                         MongoCommandException commandException = (MongoCommandException) e;
-                        assertEquals(commandException.getResponse().getString("codeName", new BsonString("")).getValue(),
-                                expectedErrorCodeName);
+                        assertEquals(expectedErrorCodeName,
+                                commandException.getResponse().getString("codeName", new BsonString("")).getValue());
                     } else {
                         throw e;
                     }

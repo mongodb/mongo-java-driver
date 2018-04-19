@@ -40,9 +40,6 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                       final MongoClientDelegate delegate) {
         super(serverSessionPool, originator, options);
         this.delegate = delegate;
-        if (options.getAutoStartTransaction()) {
-            startTransaction(options.getDefaultTransactionOptions());
-        }
     }
 
     @Override
@@ -73,7 +70,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
 
     @Override
     public void commitTransaction() {
-        if (!inTransaction) {
+        if (canCommitOrAbort()) {
             throw new IllegalStateException("There is no transaction started");
         }
         try {
@@ -92,7 +89,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
 
     @Override
     public void abortTransaction() {
-        if (!inTransaction) {
+        if (canCommitOrAbort()) {
             throw new IllegalStateException("There is no transaction started");
         }
         try {
@@ -123,14 +120,13 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         }
     }
 
-
+    private boolean canCommitOrAbort() {
+        return !inTransaction && !getOptions().getAutoStartTransaction();
+    }
 
     private void cleanupTransaction() {
         inTransaction = false;
         transactionOptions = null;
-        if (getOptions().getAutoStartTransaction()) {
-            startTransaction(getOptions().getDefaultTransactionOptions());
-        }
         getServerSession().advanceTransactionNumber();
     }
 }
