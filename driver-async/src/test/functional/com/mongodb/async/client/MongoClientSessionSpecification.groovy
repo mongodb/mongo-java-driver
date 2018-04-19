@@ -304,7 +304,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
                         .withReadPreference(ReadPreference.secondaryPreferred()) // read from secondary if available
                         .withReadConcern(readConcern)
                         .find(clientSession, document)
-                        .maxTime(5000, TimeUnit.MILLISECONDS)  // to avoid the test running forever in case replication is broken
+                        .maxTime(30, TimeUnit.SECONDS)  // to avoid the test running forever in case replication is broken
                         .&first)
                 if (foundDocument == null) {
                     Assert.fail('Should have found recently inserted document on secondary with causal consistency enabled')
