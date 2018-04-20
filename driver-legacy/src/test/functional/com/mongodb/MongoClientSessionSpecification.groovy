@@ -86,6 +86,26 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
                           getMongoClient().startSession(ClientSessionOptions.builder().build())]
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(3, 7) })
+    def 'should use mutated client write concern for default transaction options'() {
+        given:
+        def originalWriteConcern = getMongoClient().getWriteConcern()
+        getMongoClient().setWriteConcern(WriteConcern.MAJORITY)
+
+        when:
+        def clientSession = getMongoClient().startSession()
+
+        then:
+        clientSession.getOptions().defaultTransactionOptions == TransactionOptions.builder()
+                .readConcern(ReadConcern.DEFAULT)
+                .writeConcern(WriteConcern.MAJORITY)
+                .build()
+
+        cleanup:
+        getMongoClient().setWriteConcern(originalWriteConcern)
+        clientSession?.close()
+    }
+
     @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'cluster time should advance'() {
         given:
