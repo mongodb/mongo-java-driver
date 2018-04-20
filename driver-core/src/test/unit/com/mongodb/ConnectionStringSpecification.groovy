@@ -279,7 +279,7 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://jeff@localhost/?' +
                            'authMechanism=GSSAPI')            | createGSSAPICredential('jeff')
         new ConnectionString('mongodb://jeff:123@localhost/?' +
-                           'authMechanism=PLAIN')             | createPlainCredential('jeff', 'admin', '123'.toCharArray())
+                           'authMechanism=PLAIN')             | createPlainCredential('jeff', '$external', '123'.toCharArray())
         new ConnectionString('mongodb://jeff@localhost/?' +
                            'authMechanism=MONGODB-X509')      | createMongoX509Credential('jeff')
         new ConnectionString('mongodb://localhost/?' +

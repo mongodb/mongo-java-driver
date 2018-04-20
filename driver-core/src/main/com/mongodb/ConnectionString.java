@@ -593,7 +593,7 @@ public class ConnectionString {
     private MongoCredential createCredentials(final Map<String, List<String>> optionsMap, @Nullable final String userName,
                                               @Nullable final char[] password) {
         AuthenticationMechanism mechanism = null;
-        String authSource = (database == null) ? "admin" : database;
+        String authSource = null;
         String gssapiServiceName = null;
         String authMechanismProperties = null;
 
@@ -620,7 +620,8 @@ public class ConnectionString {
         if (mechanism != null) {
             credential = createMongoCredentialWithMechanism(mechanism, userName, password, authSource, gssapiServiceName);
         } else if (userName != null) {
-            credential = MongoCredential.createCredential(userName, authSource, password);
+            credential = MongoCredential.createCredential(userName,
+                    getAuthSourceOrDefault(authSource, database != null ? database : "admin"), password);
         }
 
         if (credential != null && authMechanismProperties != null) {
@@ -644,30 +645,53 @@ public class ConnectionString {
 
     @SuppressWarnings("deprecation")
     private MongoCredential createMongoCredentialWithMechanism(final AuthenticationMechanism mechanism, final String userName,
-                                                               @Nullable final char[] password, final String authSource,
+                                                               @Nullable final char[] password,
+                                                               @Nullable final String authSource,
                                                                @Nullable final String gssapiServiceName) {
         MongoCredential credential;
+        String mechanismAuthSource;
+        switch (mechanism) {
+            case PLAIN:
+                mechanismAuthSource = getAuthSourceOrDefault(authSource, database != null ? database : "$external");
+                break;
+            case GSSAPI:
+            case MONGODB_X509:
+                mechanismAuthSource = getAuthSourceOrDefault(authSource, "$external");
+                if (!mechanismAuthSource.equals("$external")) {
+                    throw new IllegalArgumentException(format("Invalid authSource for %s, it must be '$external'", mechanism));
+                }
+                break;
+            default:
+                mechanismAuthSource = getAuthSourceOrDefault(authSource, database != null ? database : "admin");
+        }
+
         switch (mechanism) {
             case GSSAPI:
                 credential = MongoCredential.createGSSAPICredential(userName);
                 if (gssapiServiceName != null) {
                     credential = credential.withMechanismProperty("SERVICE_NAME", gssapiServiceName);
                 }
+                if (password != null && LOGGER.isWarnEnabled()) {
+                    LOGGER.warn("Password in connection string not used with MONGODB_X509 authentication mechanism.");
+                }
                 break;
             case PLAIN:
-                credential = MongoCredential.createPlainCredential(userName, authSource, password);
+                credential = MongoCredential.createPlainCredential(userName, mechanismAuthSource, password);
                 break;
             case MONGODB_CR:
-                credential = MongoCredential.createMongoCRCredential(userName, authSource, password);
+                credential = MongoCredential.createMongoCRCredential(userName, mechanismAuthSource, password);
                 break;
             case MONGODB_X509:
+                if (password != null) {
+                    throw new IllegalArgumentException("Invalid mechanism, MONGODB_x509 does not support passwords");
+                }
                 credential = MongoCredential.createMongoX509Credential(userName);
                 break;
             case SCRAM_SHA_1:
-                credential = MongoCredential.createScramSha1Credential(userName, authSource, password);
+                credential = MongoCredential.createScramSha1Credential(userName, mechanismAuthSource, password);
                 break;
             case SCRAM_SHA_256:
-                credential = MongoCredential.createScramSha256Credential(userName, authSource, password);
+                credential = MongoCredential.createScramSha256Credential(userName, mechanismAuthSource, password);
                 break;
             default:
                 throw new UnsupportedOperationException(format("The connection string contains an invalid authentication mechanism'. "
@@ -675,6 +699,14 @@ public class ConnectionString {
                         mechanism));
         }
         return credential;
+    }
+
+    private String getAuthSourceOrDefault(@Nullable final String authSource, final String defaultAuthSource) {
+        if (authSource != null) {
+            return authSource;
+        } else {
+            return defaultAuthSource;
+        }
     }
 
     @Nullable
