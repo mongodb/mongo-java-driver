@@ -197,7 +197,7 @@ class MongoClientURISpecification extends Specification {
         new MongoClientURI('mongodb://jeff@localhost/?' +
                            'authMechanism=GSSAPI')            | createGSSAPICredential('jeff')
         new MongoClientURI('mongodb://jeff:123@localhost/?' +
-                           'authMechanism=PLAIN')             | createPlainCredential('jeff', 'admin', '123'.toCharArray())
+                           'authMechanism=PLAIN')             | createPlainCredential('jeff', '$external', '123'.toCharArray())
         new MongoClientURI('mongodb://jeff@localhost/?' +
                            'authMechanism=MONGODB-X509')      | createMongoX509Credential('jeff')
         new MongoClientURI('mongodb://jeff@localhost/?' +

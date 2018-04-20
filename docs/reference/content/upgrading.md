@@ -7,6 +7,12 @@ title = "Upgrade Considerations"
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
+
+## Upgrading from 3.7.x
+
+The default `authSource` value for connection strings with an `authMechanism` of PLAIN has changed from `admin` to `$external`. Users
+wishing to continue to use PLAIN authentication with the `admin` database should declare `authSource=admin` on the connection string.
+
 ## Upgrading from 3.6.x
 
 The 3.7 release is binary and source compatible with the 3.5 release, except for methods that have been added to interfaces that
