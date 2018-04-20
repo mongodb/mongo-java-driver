@@ -83,7 +83,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
                 }
                 delegate.getOperationExecutor().execute(new CommitTransactionOperation(transactionOptions.getWriteConcern()),
-                        getTransactionReadPreferenceOrPrimary(), readConcern, this);
+                        ReadPreference.primary(), readConcern, this);
             }
         } finally {
             cleanupTransaction();
@@ -102,7 +102,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
                 }
                 delegate.getOperationExecutor().execute(new AbortTransactionOperation(transactionOptions.getWriteConcern()),
-                        getTransactionReadPreferenceOrPrimary(), readConcern, this);
+                        ReadPreference.primary(), readConcern, this);
             }
         } catch (Exception e) {
             // ignore errors
@@ -132,9 +132,5 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
             startTransaction(getOptions().getDefaultTransactionOptions());
         }
         getServerSession().advanceTransactionNumber();
-    }
-
-    private ReadPreference getTransactionReadPreferenceOrPrimary() {
-        return ReadPreference.primary();
     }
 }
