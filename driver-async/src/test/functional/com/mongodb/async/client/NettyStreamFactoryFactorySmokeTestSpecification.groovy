@@ -34,11 +34,12 @@ class NettyStreamFactoryFactorySmokeTestSpecification extends FunctionalSpecific
         def eventLoopGroup = new OioEventLoopGroup()
         def streamFactoryFactory = NettyStreamFactoryFactory.builder()
                 .eventLoopGroup(eventLoopGroup).socketChannelClass(OioSocketChannel).build()
-        MongoClientSettings.Builder builder = getMongoClientBuilderFromConnectionString().streamFactoryFactory(streamFactoryFactory)
+        com.mongodb.MongoClientSettings settings = getMongoClientBuilderFromConnectionString()
+                .streamFactoryFactory(streamFactoryFactory).build()
         def document = new Document('a', 1)
 
         when:
-        mongoClient = MongoClients.create(builder.build())
+        mongoClient = MongoClients.create(settings)
         def collection = mongoClient.getDatabase(databaseName).getCollection(collectionName)
 
 

@@ -134,7 +134,7 @@ The connection string mostly follows [RFC 3986](http://tools.ietf.org/html/rfc39
 MongoClient mongoClient = MongoClients.create(new ConnectionString("mongodb://localhost"));
 ```
 
-- You can call [`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create-com.mongodb.async.client.MongoClientSettings-" >}}) with a [`MongoClientSettings`]({{< apiref "com/mongodb/async/client/MongoClientSettings.html">}}) object:
+- You can call [`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create-com.mongodb.MongoClientSettings-" >}}) with a [`MongoClientSettings`]({{< apiref "com/mongodb/MongoClientSettings.html">}}) object:
 
 ```java
 ClusterSettings clusterSettings = ClusterSettings.builder()

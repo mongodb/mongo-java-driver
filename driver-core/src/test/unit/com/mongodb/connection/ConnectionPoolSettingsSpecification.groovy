@@ -18,6 +18,7 @@
 package com.mongodb.connection
 
 import com.mongodb.ConnectionString
+import com.mongodb.event.ConnectionPoolListener
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -160,6 +161,7 @@ class ConnectionPoolSettingsSpecification extends Specification {
         def defaultSettings = ConnectionPoolSettings.builder().build()
         def customSettings = ConnectionPoolSettings
                 .builder()
+                .addConnectionPoolListener(Stub(ConnectionPoolListener))
                 .maxWaitTime(5, SECONDS)
                 .maxSize(75)
                 .maxWaitQueueSize(11)

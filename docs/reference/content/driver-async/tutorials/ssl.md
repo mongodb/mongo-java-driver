@@ -36,7 +36,7 @@ You can also specify the connection string via the [`ConnectionString`]({{< apir
 
 ### Via `MongoClientSettings`
 
-To specify TLS/SSL with  [`MongoClientSettings`]({{< apiref "com/mongodb/async/client/MongoClientSettings.Builder.html#streamFactoryFactory-com.mongodb.connection.StreamFactoryFactory-">}}) , 
+To specify TLS/SSL with  [`MongoClientSettings`]({{< apiref "com/mongodb/MongoClientSettings.Builder.html#streamFactoryFactory-com.mongodb.connection.StreamFactoryFactory-">}}) ,
 set the ``sslEnabled`` property to ``true``, and the stream factory to 
 [`NettyStreamFactoryFactory`]({{< apiref "com/mongodb/connection/netty/NettyStreamFactoryFactory" >}}), as in
 

@@ -30,6 +30,7 @@ import com.mongodb.client.internal.MongoDatabaseImpl;
 import com.mongodb.client.internal.OperationExecutor;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.DefaultClusterFactory;
+import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.StreamFactoryFactory;
@@ -133,17 +134,18 @@ final class MongoClientImpl implements MongoClient {
         List<MongoCredential> credentialList = settings.getCredential() != null ? Collections.singletonList(settings.getCredential())
                 : Collections.<MongoCredential>emptyList();
         return new DefaultClusterFactory().createCluster(settings.getClusterSettings(), settings.getServerSettings(),
-                settings.getConnectionPoolSettings(), getStreamFactory(settings), getStreamFactory(settings), credentialList,
+                settings.getConnectionPoolSettings(), getStreamFactory(settings, false), getStreamFactory(settings, true), credentialList,
                 getCommandListener(settings.getCommandListeners()), settings.getApplicationName(), mongoDriverInformation,
                 settings.getCompressorList());
     }
 
-    private static StreamFactory getStreamFactory(final MongoClientSettings settings) {
+    private static StreamFactory getStreamFactory(final MongoClientSettings settings, final boolean isHeartbeat) {
         StreamFactoryFactory streamFactoryFactory = settings.getStreamFactoryFactory();
+        SocketSettings socketSettings = isHeartbeat ? settings.getHeartbeatSocketSettings() : settings.getSocketSettings();
         if (streamFactoryFactory == null) {
-            return new SocketStreamFactory(settings.getSocketSettings(), settings.getSslSettings());
+            return new SocketStreamFactory(socketSettings, settings.getSslSettings());
         } else {
-            return streamFactoryFactory.create(settings.getSocketSettings(), settings.getSslSettings());
+            return streamFactoryFactory.create(socketSettings, settings.getSslSettings());
         }
     }
 

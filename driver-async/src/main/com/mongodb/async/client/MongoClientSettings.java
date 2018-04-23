@@ -48,8 +48,10 @@ import static java.util.Collections.singletonList;
  * Various settings to control the behavior of a {@code MongoClient}.
  *
  * @since 3.0
+ * @deprecated use {@link com.mongodb.MongoClientSettings} instead
  */
 @Immutable
+@Deprecated
 public final class MongoClientSettings {
     private final com.mongodb.MongoClientSettings wrapped;
     private final SocketSettings heartbeatSocketSettings;
@@ -74,46 +76,40 @@ public final class MongoClientSettings {
         return new Builder(settings);
     }
 
+    static MongoClientSettings createFromClientSettings(final com.mongodb.MongoClientSettings wrapped) {
+        return new Builder(wrapped).build();
+    }
+
     /**
      * A builder for {@code MongoClientSettings} so that {@code MongoClientSettings} can be immutable, and to support easier construction
      * through chaining.
      */
     @NotThreadSafe
     public static final class Builder {
+        private final com.mongodb.MongoClientSettings.Builder wrappedBuilder;
         private List<MongoCredential> credentialList = Collections.emptyList();
-        private final com.mongodb.MongoClientSettings.Builder wrappedBuilder = com.mongodb.MongoClientSettings.builder();
         private SocketSettings.Builder heartbeatSocketSettingsBuilder = null;
 
         private Builder() {
+            wrappedBuilder = com.mongodb.MongoClientSettings.builder();
+        }
+
+        private Builder(final com.mongodb.MongoClientSettings settings) {
+            notNull("settings", settings);
+            wrappedBuilder = com.mongodb.MongoClientSettings.builder(settings);
+            MongoCredential credential = settings.getCredential();
+            if (credential != null) {
+                credentialList(singletonList(credential));
+            }
         }
 
         @SuppressWarnings("deprecation")
         private Builder(final MongoClientSettings settings) {
-            notNull("settings", settings);
+            this(notNull("settings", settings).wrapped);
             credentialList = new ArrayList<MongoCredential>(settings.credentialList);
-
-            wrappedBuilder.commandListenerList(new ArrayList<CommandListener>(settings.getCommandListeners()));
-            wrappedBuilder.codecRegistry(settings.getCodecRegistry());
-            wrappedBuilder.readPreference(settings.getReadPreference());
-            wrappedBuilder.writeConcern(settings.getWriteConcern());
-            wrappedBuilder.retryWrites(settings.getRetryWrites());
-            wrappedBuilder.readConcern(settings.getReadConcern());
-            wrappedBuilder.applicationName(settings.getApplicationName());
-            wrappedBuilder.compressorList(new ArrayList<MongoCompressor>(settings.getCompressorList()));
-
-            MongoCredential credential = settings.getCredential();
-            if (credential != null) {
-                wrappedBuilder.credential(credential);
-            }
-
-            clusterSettings(settings.getClusterSettings());
-            serverSettings(settings.getServerSettings());
-            socketSettings(settings.getSocketSettings());
             if (settings.heartbeatSocketSettings != null) {
                 heartbeatSocketSettings(settings.heartbeatSocketSettings);
             }
-            connectionPoolSettings(settings.getConnectionPoolSettings());
-            sslSettings(settings.getSslSettings());
         }
 
         /**
@@ -631,9 +627,9 @@ public final class MongoClientSettings {
 
     /**
      * Gets the connection settings for the heartbeat thread (the background task that checks the state of the cluster) wrapped in a
-     * settings object. This settings object uses the values for heartbeatConnectTimeout, heartbeatSocketTimeout and socketKeepAlive.
+     * settings object.
      *
-     * @return a SocketSettings object populated with the heartbeat connection settings from this {@code MongoClientSettings} instance.
+     * @return the SocketSettings for the heartbeat thread
      * @see com.mongodb.connection.SocketSettings
      */
     public SocketSettings getHeartbeatSocketSettings() {

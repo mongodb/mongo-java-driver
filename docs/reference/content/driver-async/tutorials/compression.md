@@ -55,15 +55,15 @@ In all cases the driver will use the first compressor in the list for which the 
 
 ```java
 import com.mongodb.connection.ClusterSettings;
-import com.mongodb.async.client.MongoClientSettings;
 import com.mongodb.async.client.MongoClients;
 import com.mongodb.async.client.MongoClient;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCompressor;
 import java.util.Arrays;
 
 ```
 
-To specify compression with [`MongoClientSettings`]({{<apiref "com/mongodb/async/client/MongoClientSettings">}}), set the `compressors` property 
+To specify compression with [`MongoClientSettings`]({{<apiref "com/mongodb/MongoClientSettings">}}), set the `compressors` property
 to a list of `MongoCompressor` instances:
 
 ```java
@@ -107,4 +107,3 @@ As with configuration with a URI, the driver will use the first compressor in th
 As the JDK has no built-in support for Snappy, the driver takes a dependency on an existing open-source Snappy implementation.  See the
 [snappy-java Github repository](https://github.com/xerial/snappy-java) for details.
 
- 

@@ -80,7 +80,7 @@ public class RetryableWritesTest extends DatabaseTestCase {
 
     @BeforeClass
     public static void beforeClass() {
-        MongoClientSettings.Builder builder = getMongoClientBuilderFromConnectionString();
+        com.mongodb.MongoClientSettings.Builder builder = getMongoClientBuilderFromConnectionString();
         mongoClient = MongoClients.create(builder.retryWrites(true).build());
     }
 

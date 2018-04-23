@@ -19,9 +19,9 @@ package com.mongodb.async.client;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
+import com.mongodb.connection.Cluster;
 import com.mongodb.connection.DefaultClusterFactory;
 import com.mongodb.connection.SocketSettings;
-import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.lang.Nullable;
@@ -29,6 +29,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 import java.io.Closeable;
 
+import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
 
 /**
@@ -52,7 +53,9 @@ public final class MongoClients {
      *
      * @param settings the settings
      * @return the client
+     * @deprecated use {@link #create(com.mongodb.MongoClientSettings)} instead
      */
+    @Deprecated
     public static MongoClient create(final MongoClientSettings settings) {
         return create(settings, null);
     }
@@ -71,9 +74,9 @@ public final class MongoClients {
     /**
      * Create a new client with the given connection string.
      * <p>
-     * For each of the settings classed configurable via {@link MongoClientSettings}, the connection string is applied by calling the
-     * {@code applyConnectionString} method on an instance of setting's builder class, building the setting, and adding it to an instance of
-     * {@link com.mongodb.async.client.MongoClientSettings.Builder}.
+     * For each of the settings classed configurable via {@link com.mongodb.MongoClientSettings}, the connection string is applied by
+     * calling the {@code applyConnectionString} method on an instance of setting's builder class, building the setting, and adding it to
+     * an instance of {@link com.mongodb.MongoClientSettings.Builder}.
      * </p>
      * <p>
      * The connection string's stream type is then applied by setting the
@@ -85,7 +88,7 @@ public final class MongoClients {
      * @throws IllegalArgumentException if the connection string's stream type is not one of "netty" or "nio2"
      *
      * @see ConnectionString#getStreamType()
-     * @see com.mongodb.async.client.MongoClientSettings.Builder
+     * @see com.mongodb.MongoClientSettings.Builder
      * @see com.mongodb.connection.ClusterSettings.Builder#applyConnectionString(ConnectionString)
      * @see com.mongodb.connection.ConnectionPoolSettings.Builder#applyConnectionString(ConnectionString)
      * @see com.mongodb.connection.ServerSettings.Builder#applyConnectionString(ConnectionString)
@@ -105,7 +108,9 @@ public final class MongoClients {
      * @param mongoDriverInformation any driver information to associate with the MongoClient
      * @return the client
      * @since 3.4
+     * @deprecated use {@link #create(com.mongodb.MongoClientSettings, MongoDriverInformation)} instead
      */
+    @Deprecated
     public static MongoClient create(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation) {
         return create(settings, mongoDriverInformation, null);
     }
@@ -121,6 +126,7 @@ public final class MongoClients {
      * @throws IllegalArgumentException if the connection string's stream type is not one of "netty" or "nio2"
      * @see MongoClients#create(ConnectionString)
      */
+    @SuppressWarnings("deprecation")
     public static MongoClient create(final ConnectionString connectionString,
                                      @Nullable final MongoDriverInformation mongoDriverInformation) {
 
@@ -128,17 +134,43 @@ public final class MongoClients {
                 mongoDriverInformation, connectionString.getStreamType());
     }
 
-    private static MongoClient create(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation,
+    /**
+     * Create a new client with the given client settings.
+     *
+     * @param settings the settings
+     * @return the client
+     * @since 3.7
+     */
+    public static MongoClient create(final com.mongodb.MongoClientSettings settings) {
+        return create(settings, null);
+    }
+
+    /**
+     * Creates a new client with the given client settings.
+     *
+     * <p>Note: Intended for driver and library authors to associate extra driver metadata with the connections.</p>
+     *
+     * @param settings               the settings
+     * @param mongoDriverInformation any driver information to associate with the MongoClient
+     * @return the client
+     * @since 3.7
+     */
+    @SuppressWarnings("deprecation")
+    public static MongoClient create(final com.mongodb.MongoClientSettings settings,
+                                     @Nullable final MongoDriverInformation mongoDriverInformation) {
+        return create(MongoClientSettings.createFromClientSettings(settings), mongoDriverInformation, null);
+    }
+
+    @SuppressWarnings("deprecation")
+    private static MongoClient create(final MongoClientSettings settings,
+                                      @Nullable final MongoDriverInformation mongoDriverInformation,
                                       @Nullable final String requestedStreamType) {
         String streamType = getStreamType(requestedStreamType);
         if (isNetty(streamType) && settings.getStreamFactoryFactory() == null) {
             return NettyMongoClients.create(settings, mongoDriverInformation);
         } else {
-            StreamFactory streamFactory = getStreamFactory(settings.getStreamFactoryFactory(), settings.getSocketSettings(),
-                    settings.getSslSettings(), streamType);
-            StreamFactory heartbeatStreamFactory = getStreamFactory(settings.getStreamFactoryFactory(),
-                    settings.getHeartbeatSocketSettings(), settings.getSslSettings(), streamType);
-            return createMongoClient(settings, mongoDriverInformation, streamFactory, heartbeatStreamFactory, null);
+            return new MongoClientImpl(settings, createCluster(settings, mongoDriverInformation,
+                    getStreamFactory(settings, streamType, false), getStreamFactory(settings, streamType, true)), (Closeable) null);
         }
     }
 
@@ -146,10 +178,18 @@ public final class MongoClients {
     static MongoClient createMongoClient(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation,
                                          final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory,
                                          @Nullable final Closeable externalResourceCloser) {
-        return new MongoClientImpl(settings, new DefaultClusterFactory().createCluster(settings.getClusterSettings(),
-                settings.getServerSettings(), settings.getConnectionPoolSettings(), streamFactory, heartbeatStreamFactory,
-                settings.getCredentialList(), getCommandListener(settings.getCommandListeners()), settings.getApplicationName(),
-                mongoDriverInformation, settings.getCompressorList()), externalResourceCloser);
+        return new MongoClientImpl(settings, createCluster(settings, mongoDriverInformation, streamFactory, heartbeatStreamFactory),
+                externalResourceCloser);
+    }
+
+    @SuppressWarnings("deprecation")
+    private static Cluster createCluster(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation,
+                                         final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory) {
+        notNull("settings", settings);
+        return new DefaultClusterFactory().createCluster(settings.getClusterSettings(), settings.getServerSettings(),
+                settings.getConnectionPoolSettings(), streamFactory, heartbeatStreamFactory, settings.getCredentialList(),
+                getCommandListener(settings.getCommandListeners()), settings.getApplicationName(), mongoDriverInformation,
+                settings.getCompressorList());
     }
 
     /**
@@ -168,20 +208,22 @@ public final class MongoClients {
      * </ul>
      *
      * @return the default codec registry
-     * @see MongoClientSettings#getCodecRegistry()
+     * @see com.mongodb.MongoClientSettings#getCodecRegistry()
      * @since 3.1
      */
     public static CodecRegistry getDefaultCodecRegistry() {
         return com.mongodb.MongoClientSettings.getDefaultCodecRegistry();
     }
 
-    private static StreamFactory getStreamFactory(@Nullable final StreamFactoryFactory streamFactoryFactory,
-                                                  final SocketSettings socketSettings, final SslSettings sslSettings,
-                                                  final String streamType) {
+    @SuppressWarnings("deprecation")
+    private static StreamFactory getStreamFactory(final MongoClientSettings settings, final String streamType,
+                                                  final boolean isHeartbeat) {
+        StreamFactoryFactory streamFactoryFactory = settings.getStreamFactoryFactory();
+        SocketSettings socketSettings = isHeartbeat ? settings.getHeartbeatSocketSettings() : settings.getSocketSettings();
         if (streamFactoryFactory != null) {
-            return streamFactoryFactory.create(socketSettings, sslSettings);
+            return streamFactoryFactory.create(socketSettings, settings.getSslSettings());
         } else if (isNio2(streamType)) {
-            return new AsynchronousSocketChannelStreamFactory(socketSettings, sslSettings);
+            return new AsynchronousSocketChannelStreamFactory(socketSettings, settings.getSslSettings());
         } else {
             throw new IllegalArgumentException("Unsupported stream type: " + streamType);
         }
