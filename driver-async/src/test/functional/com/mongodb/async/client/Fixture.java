@@ -48,15 +48,15 @@ public final class Fixture {
 
     public static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
-            MongoClientSettings.Builder builder = getMongoClientBuilderFromConnectionString();
-            mongoClient = (MongoClientImpl) MongoClients.create(builder.build());
+            mongoClient = (MongoClientImpl) MongoClients.create(getMongoClientBuilderFromConnectionString().build());
             Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         }
         return mongoClient;
     }
 
-    public static MongoClientSettings.Builder getMongoClientBuilderFromConnectionString() {
-        MongoClientSettings.Builder builder = MongoClientSettings.builder().applyConnectionString(getConnectionString());
+    public static com.mongodb.MongoClientSettings.Builder getMongoClientBuilderFromConnectionString() {
+        com.mongodb.MongoClientSettings.Builder builder = com.mongodb.MongoClientSettings.builder()
+                .applyConnectionString(getConnectionString());
         if (System.getProperty("java.version").startsWith("1.6.")) {
             builder.applyToSslSettings(new Block<SslSettings.Builder>() {
                 @Override

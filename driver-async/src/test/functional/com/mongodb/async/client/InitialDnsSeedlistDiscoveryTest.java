@@ -124,7 +124,7 @@ public class InitialDnsSeedlistDiscoveryTest {
         assumeTrue(isDiscoverableReplicaSet() && !serverVersionAtLeast(3, 7)
                 && getSslSettings().isEnabled() == sslSettings.isEnabled());
 
-        MongoClientSettings settings = MongoClientSettings.builder()
+        com.mongodb.MongoClientSettings settings = com.mongodb.MongoClientSettings.builder()
                 .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
             @Override
             public void apply(final ClusterSettings.Builder builder) {

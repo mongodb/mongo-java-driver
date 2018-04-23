@@ -560,9 +560,9 @@ public final class MongoClientSettings {
 
     /**
      * Gets the connection settings for the heartbeat thread (the background task that checks the state of the cluster) wrapped in a
-     * settings object. This settings object uses the values for heartbeatConnectTimeout, heartbeatSocketTimeout and socketKeepAlive.
+     * settings object.
      *
-     * @return a SocketSettings object populated with the heartbeat connection settings from this {@code MongoClientSettings} instance.
+     * @return the SocketSettings for the heartbeat thread
      * @see SocketSettings
      */
     public SocketSettings getHeartbeatSocketSettings() {
@@ -609,6 +609,7 @@ public final class MongoClientSettings {
         connectionPoolSettings = builder.connectionPoolSettingsBuilder.build();
         sslSettings = builder.sslSettingsBuilder.build();
         compressorList = builder.compressorList;
+
         SocketSettings.Builder heartbeatSocketSettingsBuilder = SocketSettings.builder()
                 .readTimeout(socketSettings.getConnectTimeout(MILLISECONDS), MILLISECONDS)
                 .connectTimeout(socketSettings.getConnectTimeout(MILLISECONDS), MILLISECONDS);

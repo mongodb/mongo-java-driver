@@ -339,7 +339,7 @@ Applications can configure [write concern]({{<docsref "reference/write-concern">
 
 - In a [`MongoClient()`]({{< apiref "com/mongodb/async/client/MongoClient.html" >}})
 
-  - Via [`MongoClientSettings`]({{<apiref "com/mongodb/async/client/MongoClientSettings.html">}}), as in the following example:
+  - Via [`MongoClientSettings`]({{<apiref "com/mongodb/MongoClientSettings.html">}}), as in the following example:
 
       ```java
       ClusterSettings clusterSettings = ClusterSettings.builder()
