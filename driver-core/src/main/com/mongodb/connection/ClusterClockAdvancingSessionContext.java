@@ -57,8 +57,8 @@ final class ClusterClockAdvancingSessionContext implements SessionContext {
     }
 
     @Override
-    public int advanceStatementId(final int increment) {
-        return wrapped.advanceStatementId(increment);
+    public boolean notifyMessageSent() {
+        return wrapped.notifyMessageSent();
     }
 
     @Override

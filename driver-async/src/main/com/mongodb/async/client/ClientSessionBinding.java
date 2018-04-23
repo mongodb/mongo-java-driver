@@ -153,6 +153,11 @@ class ClientSessionBinding implements AsyncReadWriteBinding {
 
 
         @Override
+        public boolean notifyMessageSent() {
+            return clientSession.notifyMessageSent();
+        }
+
+        @Override
         public boolean hasActiveTransaction() {
             return clientSession.hasActiveTransaction();
         }

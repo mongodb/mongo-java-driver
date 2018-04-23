@@ -61,11 +61,6 @@ public abstract class ClientSessionContext implements SessionContext {
     }
 
     @Override
-    public int advanceStatementId(final int increment) {
-        return clientSession.getServerSession().advanceStatementId(increment);
-    }
-
-    @Override
     public BsonTimestamp getOperationTime() {
         return clientSession.getOperationTime();
     }

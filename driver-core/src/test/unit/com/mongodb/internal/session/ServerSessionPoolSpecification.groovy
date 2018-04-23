@@ -239,21 +239,8 @@ class ServerSessionPoolSpecification extends Specification {
 
         then:
         session.transactionNumber == 1
-        session.statementId == 0
         session.advanceTransactionNumber() == 1
         session.transactionNumber == 2
-        session.advanceTransactionNumber() == 2
-        session.transactionNumber == 3
-        session.statementId == 0
-        session.advanceStatementId(2) == 0
-        session.statementId == 2
-        session.advanceStatementId(3) == 2
-        session.statementId == 5
-        session.advanceTransactionNumber() == 3
-        session.transactionNumber == 4
-        session.statementId == 0
-        session.advanceStatementId(0) == 0
-        session.getStatementId() == 0
     }
 
     def 'should end pooled sessions when pool is closed'() {

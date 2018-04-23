@@ -39,6 +39,11 @@ class ClientSessionContextSpecification extends Specification {
         }
 
         @Override
+        boolean notifyMessageSent() {
+            throw new UnsupportedOperationException()
+        }
+
+        @Override
         ReadConcern getReadConcern() {
             ReadConcern.DEFAULT;
         }
@@ -115,12 +120,6 @@ class ClientSessionContextSpecification extends Specification {
         1 * serverSession.getTransactionNumber() >> {
             expectedTransactionNumber
         }
-
-        when:
-        context.advanceStatementId(2)
-
-        then:
-        1 * serverSession.advanceStatementId(2)
 
         when:
         def clusterTime = context.getClusterTime()

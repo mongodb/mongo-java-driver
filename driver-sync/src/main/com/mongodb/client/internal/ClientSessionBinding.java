@@ -141,6 +141,11 @@ public class ClientSessionBinding implements ReadWriteBinding {
 
 
         @Override
+        public boolean notifyMessageSent() {
+            return clientSession.notifyMessageSent();
+        }
+
+        @Override
         public boolean hasActiveTransaction() {
             return clientSession.hasActiveTransaction();
         }

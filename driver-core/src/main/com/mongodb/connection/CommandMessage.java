@@ -25,7 +25,6 @@ import org.bson.BsonBinaryWriter;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonElement;
-import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonWriter;
@@ -133,7 +132,6 @@ final class CommandMessage extends RequestMessage {
             addDocument(getCommandToEncode(), bsonOutput, commandFieldNameValidator, getExtraElements(sessionContext));
 
             if (payload != null) {
-                int payloadStartPosition = payload.getPosition();
                 bsonOutput.writeByte(1);          // payload type
                 int payloadBsonOutputStartPosition = bsonOutput.getPosition();
                 bsonOutput.writeInt32(0);         // size
@@ -143,10 +141,6 @@ final class CommandMessage extends RequestMessage {
 
                 int payloadBsonOutputLength = bsonOutput.getPosition() - payloadBsonOutputStartPosition;
                 bsonOutput.writeInt32(payloadBsonOutputStartPosition, payloadBsonOutputLength);
-
-                if (sessionContext.hasActiveTransaction()) {
-                    sessionContext.advanceStatementId(payload.getPosition() - payloadStartPosition - 1);
-                }
             }
 
             // Write the flag bits
@@ -244,9 +238,8 @@ final class CommandMessage extends RequestMessage {
         }
         if (sessionContext.hasActiveTransaction()) {
             extraElements.add(new BsonElement("txnNumber", new BsonInt64(sessionContext.getTransactionNumber())));
-            int statementId = sessionContext.advanceStatementId(1);
-            extraElements.add(new BsonElement("stmtId", new BsonInt32(statementId)));
-            if (statementId == 0) {
+            boolean firstMessage = sessionContext.notifyMessageSent();
+            if (firstMessage) {
                 extraElements.add(new BsonElement("startTransaction", BsonBoolean.TRUE));
                 addReadConcernDocument(extraElements, sessionContext);
             }
