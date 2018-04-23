@@ -17,7 +17,6 @@
 package com.mongodb.async.client;
 
 import com.mongodb.ConnectionString;
-import com.mongodb.MongoCredential;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
 import com.mongodb.connection.Cluster;
@@ -29,8 +28,6 @@ import com.mongodb.lang.Nullable;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.io.Closeable;
-import java.util.Collections;
-import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
