@@ -34,6 +34,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
 
     private final MongoClientDelegate delegate;
     private boolean inTransaction;
+    private boolean messageSent;
     private TransactionOptions transactionOptions;
 
     ClientSessionImpl(final ServerSessionPool serverSessionPool, final Object originator, final ClientSessionOptions options,
@@ -45,6 +46,13 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
     @Override
     public boolean hasActiveTransaction() {
         return inTransaction;
+    }
+
+    @Override
+    public boolean notifyMessageSent() {
+        boolean firstMessage = !messageSent;
+        messageSent = true;
+        return firstMessage;
     }
 
     @Override
@@ -74,7 +82,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
             throw new IllegalStateException("There is no transaction started");
         }
         try {
-            if (getServerSession().getStatementId() > 0) {
+            if (messageSent) {
                 ReadConcern readConcern = transactionOptions.getReadConcern();
                 if (readConcern == null) {
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
@@ -93,7 +101,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
             throw new IllegalStateException("There is no transaction started");
         }
         try {
-            if (getServerSession().getStatementId() > 0) {
+            if (messageSent) {
                 ReadConcern readConcern = transactionOptions.getReadConcern();
                 if (readConcern == null) {
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
@@ -126,6 +134,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
 
     private void cleanupTransaction() {
         inTransaction = false;
+        messageSent = false;
         transactionOptions = null;
         getServerSession().advanceTransactionNumber();
     }

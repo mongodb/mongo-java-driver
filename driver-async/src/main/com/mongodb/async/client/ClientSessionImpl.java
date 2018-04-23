@@ -34,6 +34,7 @@ class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
 
     private final OperationExecutor executor;
     private boolean inTransaction;
+    private boolean messageSent;
     private TransactionOptions transactionOptions;
 
     ClientSessionImpl(final ServerSessionPool serverSessionPool, final MongoClient mongoClient, final ClientSessionOptions options,
@@ -45,6 +46,13 @@ class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
     @Override
     public boolean hasActiveTransaction() {
         return inTransaction;
+    }
+
+    @Override
+    public boolean notifyMessageSent() {
+        boolean firstMessage = !messageSent;
+        messageSent = true;
+        return firstMessage;
     }
 
     @Override
@@ -73,7 +81,7 @@ class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
         if (!canCommitOrAbort()) {
             throw new IllegalStateException("There is no transaction started");
         }
-        if (getServerSession().getStatementId() == 0) {
+        if (!messageSent) {
             cleanupTransaction();
             callback.onResult(null, null);
         } else {
@@ -98,7 +106,7 @@ class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
         if (!canCommitOrAbort()) {
             throw new IllegalStateException("There is no transaction started");
         }
-        if (getServerSession().getStatementId() == 0) {
+        if (!messageSent) {
             cleanupTransaction();
             callback.onResult(null, null);
         } else {
@@ -139,6 +147,7 @@ class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
 
     private void cleanupTransaction() {
         inTransaction = false;
+        messageSent = false;
         transactionOptions = null;
         getServerSession().advanceTransactionNumber();
     }

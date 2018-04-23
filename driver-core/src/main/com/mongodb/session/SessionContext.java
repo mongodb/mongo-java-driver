@@ -64,13 +64,12 @@ public interface SessionContext {
     long advanceTransactionNumber();
 
     /**
-     * Advance the statement id by the given increment
+     *  Notify the session context that a message has been sent.
      *
-     * @param increment the increment, which much by &gt;= 1
-     * @return the statement id prior to advancement
+     * @return true if this is the first message sent, false otherwise
      * @since 3.8
      */
-    int advanceStatementId(int increment);
+    boolean notifyMessageSent();
 
     /**
      * Gets the current operation time for this session context

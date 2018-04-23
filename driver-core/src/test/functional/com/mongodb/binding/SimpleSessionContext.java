@@ -64,7 +64,7 @@ class SimpleSessionContext implements SessionContext {
     }
 
     @Override
-    public int advanceStatementId(final int increment) {
+    public boolean notifyMessageSent() {
         throw new UnsupportedOperationException();
     }
 
