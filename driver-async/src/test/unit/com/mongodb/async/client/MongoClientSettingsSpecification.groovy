@@ -81,11 +81,6 @@ class MongoClientSettingsSpecification extends Specification {
         thrown(IllegalArgumentException)
 
         when:
-        builder.heartbeatSocketSettings(null)
-        then:
-        thrown(IllegalArgumentException)
-
-        when:
         builder.connectionPoolSettings(null)
         then:
         thrown(IllegalArgumentException)
@@ -146,8 +141,8 @@ class MongoClientSettingsSpecification extends Specification {
         def streamFactoryFactory = NettyStreamFactoryFactory.builder().build()
         def sslSettings = SslSettings.builder().build()
         def socketSettings = SocketSettings.builder().build()
+        def heartbeatSocketSettings = SocketSettings.builder().readTimeout(100, TimeUnit.MILLISECONDS).build()
         def serverSettings = ServerSettings.builder().build()
-        def heartbeatSocketSettings = SocketSettings.builder().build()
         def credentialList = [MongoCredential.createMongoX509Credential('test')]
         def connectionPoolSettings = ConnectionPoolSettings.builder().build()
         def codecRegistry = Stub(CodecRegistry)
@@ -162,15 +157,14 @@ class MongoClientSettingsSpecification extends Specification {
                 .readConcern(ReadConcern.LOCAL)
                 .applicationName('app1')
                 .addCommandListener(commandListener)
+                .codecRegistry(codecRegistry)
                 .sslSettings(sslSettings)
                 .socketSettings(socketSettings)
-                .serverSettings(serverSettings)
                 .heartbeatSocketSettings(heartbeatSocketSettings)
+                .serverSettings(serverSettings)
                 .credentialList(credentialList)
                 .connectionPoolSettings(connectionPoolSettings)
-                .codecRegistry(codecRegistry)
-                .clusterSettings(clusterSettings)
-                                         .streamFactoryFactory(streamFactoryFactory)
+                .clusterSettings(clusterSettings).streamFactoryFactory(streamFactoryFactory)
                 .compressorList([MongoCompressor.createZlibCompressor()])
                 .build()
 
@@ -189,6 +183,52 @@ class MongoClientSettingsSpecification extends Specification {
         settings.getCredentialList() == credentialList
         settings.getCredential() == credentialList.get(0)
         settings.getConnectionPoolSettings() == connectionPoolSettings
+        settings.getClusterSettings() == clusterSettings
+        settings.getStreamFactoryFactory() == streamFactoryFactory
+        settings.getCompressorList() == [MongoCompressor.createZlibCompressor()]
+    }
+
+    def 'should create from client settings'() {
+        given:
+        def streamFactoryFactory = NettyStreamFactoryFactory.builder().build()
+        def credential = MongoCredential.createMongoX509Credential('test')
+        def codecRegistry = Stub(CodecRegistry)
+        def commandListener = Stub(CommandListener)
+        def clusterSettings = ClusterSettings.builder().hosts([new ServerAddress('localhost')]).requiredReplicaSetName('test').build()
+
+        when:
+        def originalSettings = com.mongodb.MongoClientSettings.builder()
+                .readPreference(ReadPreference.secondary())
+                .writeConcern(WriteConcern.JOURNALED)
+                .retryWrites(true)
+                .readConcern(ReadConcern.LOCAL)
+                .applicationName('app1')
+                .addCommandListener(commandListener)
+                .credential(credential)
+                .codecRegistry(codecRegistry)
+                .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
+                    @Override
+                    void apply(final ClusterSettings.Builder builder) {
+                        builder.applySettings(clusterSettings)
+                    }
+                })
+                .streamFactoryFactory(streamFactoryFactory)
+                .compressorList([MongoCompressor.createZlibCompressor()])
+                .build()
+        def settings = MongoClientSettings.createFromClientSettings(originalSettings)
+
+        then:
+        settings.getReadPreference() == ReadPreference.secondary()
+        settings.getWriteConcern() == WriteConcern.JOURNALED
+        settings.getRetryWrites()
+        settings.getReadConcern() == ReadConcern.LOCAL
+        settings.getApplicationName() == 'app1'
+        settings.getSocketSettings() == SocketSettings.builder().build()
+        settings.getHeartbeatSocketSettings() == SocketSettings.builder().readTimeout(10000, TimeUnit.MILLISECONDS).keepAlive(true).build()
+        settings.getCommandListeners().get(0) == commandListener
+        settings.getCodecRegistry() == codecRegistry
+        settings.getCredential() == credential
+        settings.getCredentialList() == [credential]
         settings.getClusterSettings() == clusterSettings
         settings.getStreamFactoryFactory() == streamFactoryFactory
         settings.getCompressorList() == [MongoCompressor.createZlibCompressor()]

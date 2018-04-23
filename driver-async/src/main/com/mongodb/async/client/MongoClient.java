@@ -71,7 +71,9 @@ public interface MongoClient extends Closeable {
      * <p>Note: {@link MongoClientSettings} is immutable.</p>
      *
      * @return the settings
+     * @deprecated this method is being removed
      */
+    @Deprecated
     MongoClientSettings getSettings();
 
     /**

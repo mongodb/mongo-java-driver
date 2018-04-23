@@ -138,12 +138,14 @@ class MongoClientSettingsSpecification extends Specification {
         settings.getRetryWrites()
         settings.getReadConcern() == ReadConcern.LOCAL
         settings.getApplicationName() == 'app1'
-        settings.commandListeners.get(0) == commandListener
-        settings.codecRegistry == codecRegistry
-        settings.credential == credential
-        settings.clusterSettings == clusterSettings
-        settings.streamFactoryFactory == streamFactoryFactory
-        settings.compressorList == [MongoCompressor.createZlibCompressor()]
+        settings.getSocketSettings() == SocketSettings.builder().build()
+        settings.getHeartbeatSocketSettings() == SocketSettings.builder().readTimeout(10000, TimeUnit.MILLISECONDS).keepAlive(true).build()
+        settings.getCommandListeners().get(0) == commandListener
+        settings.getCodecRegistry() == codecRegistry
+        settings.getCredential() == credential
+        settings.getClusterSettings() == clusterSettings
+        settings.getStreamFactoryFactory() == streamFactoryFactory
+        settings.getCompressorList() == [MongoCompressor.createZlibCompressor()]
     }
 
     def 'should be easy to create new settings from existing'() {

@@ -52,7 +52,8 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
                 .applyToConnectionPoolSettings { it.addConnectionPoolListener(connectionPoolListener) }
                 .applyToServerSettings { it.addServerListener(serverListener).addServerMonitorListener(serverMonitorListener) }
                 .addCommandListener(commandListener)
-        def client = MongoClients.create(builder.build())
+        def settings = builder.build()
+        def client = MongoClients.create(settings)
 
         then:
         run(client.getDatabase('admin').&runCommand, new Document('ping', 1))
