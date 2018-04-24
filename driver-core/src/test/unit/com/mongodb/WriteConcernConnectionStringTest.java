@@ -51,14 +51,16 @@ public class WriteConcernConnectionStringTest extends TestCase {
 
     @Test
     public void shouldPassAllOutcomes() {
+        boolean valid = definition.getBoolean("valid", BsonBoolean.TRUE).getValue();
         try {
             ConnectionString connectionString = new ConnectionString(input);
             WriteConcern writeConcern = connectionString.getWriteConcern() != null
                                         ? connectionString.getWriteConcern()
                                         : WriteConcern.ACKNOWLEDGED;
+            assertTrue(valid);
             assertEquals(getExpectedWriteConcern(), writeConcern);
-        } catch (Throwable t) {
-            assertFalse(definition.getBoolean("valid", BsonBoolean.TRUE).getValue());
+        } catch (IllegalArgumentException e) {
+            assertFalse(valid);
         }
     }
 
