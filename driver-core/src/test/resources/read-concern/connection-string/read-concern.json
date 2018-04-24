@@ -2,22 +2,28 @@
   "tests": [
     {
       "description": "Default",
-      "readConcern": {},
-      "uri": "mongodb://localhost/"
+      "uri": "mongodb://localhost/",
+      "valid": true,
+      "warning": false,
+      "readConcern": {}
     },
     {
       "description": "local specified",
+      "uri": "mongodb://localhost/?readConcernLevel=local",
+      "valid": true,
+      "warning": false,
       "readConcern": {
         "level": "local"
-      },
-      "uri": "mongodb://localhost/?readConcernLevel=local"
+      }
     },
     {
       "description": "majority specified",
+      "uri": "mongodb://localhost/?readConcernLevel=majority",
+      "valid": true,
+      "warning": false,
       "readConcern": {
         "level": "majority"
-      },
-      "uri": "mongodb://localhost/?readConcernLevel=majority"
+      }
     }
   ]
 }

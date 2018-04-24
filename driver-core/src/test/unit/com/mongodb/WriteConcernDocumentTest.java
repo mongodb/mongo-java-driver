@@ -51,13 +51,15 @@ public class WriteConcernDocumentTest extends TestCase {
 
     @Test
     public void shouldPassAllOutcomes() {
+        boolean valid = definition.getBoolean("valid", BsonBoolean.TRUE).getValue();
         try {
             WriteConcern writeConcern = getWriteConcern(writeConcernDocument);
+            assertTrue(valid);
             assertEquals(writeConcern.isAcknowledged(), definition.getBoolean("isAcknowledged").getValue());
             assertEquals(writeConcern.isServerDefault(), definition.getBoolean("isServerDefault").getValue());
             assertEquals(writeConcern.asDocument(), definition.getDocument("writeConcernDocument"));
-        } catch (Exception e) {
-            assertFalse(definition.getBoolean("valid", BsonBoolean.TRUE).getValue());
+        } catch (IllegalArgumentException e) {
+            assertFalse(valid);
         }
     }
 
