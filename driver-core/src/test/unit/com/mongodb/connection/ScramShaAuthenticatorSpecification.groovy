@@ -24,11 +24,13 @@ import org.bson.internal.Base64
 import spock.lang.Specification
 
 import javax.security.sasl.SaslException
+import java.nio.charset.Charset
 import java.util.concurrent.TimeUnit
 
 import static com.mongodb.MongoCredential.createScramSha1Credential
 import static com.mongodb.MongoCredential.createScramSha256Credential
 import static com.mongodb.connection.MessageHelper.buildSuccessfulReply
+import static org.junit.Assert.assertEquals
 
 class ScramShaAuthenticatorSpecification extends Specification {
     def serverId = new ServerId(new ClusterId(), new ServerAddress('localhost', 27017))
@@ -372,7 +374,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
             def sentMessage = sent.get(it)
             def messageStart = it == 0 ? "saslStart: 1, mechanism:'$mechanism'" : 'saslContinue: 1, conversationId: 1'
             def expectedMessage = BsonDocument.parse("{$messageStart, payload: BinData(0, '${encode64(clientMessages.get(it))}')}")
-            assert(expectedMessage == sentMessage)
+            assertEquals(expectedMessage, sentMessage)
         }
     }
 
@@ -395,7 +397,7 @@ class ScramShaAuthenticatorSpecification extends Specification {
 
 
     def encode64(String string) {
-        Base64.encode(string.getBytes())
+        Base64.encode(string.getBytes(Charset.forName('UTF-8')))
     }
 
     def createMessages(String messages) {
