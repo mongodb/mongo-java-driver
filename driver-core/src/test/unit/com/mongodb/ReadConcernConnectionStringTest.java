@@ -33,12 +33,12 @@ import java.util.List;
 
 // See https://github.com/mongodb/specifications/tree/master/source/read-write-concern/tests/
 @RunWith(Parameterized.class)
-public class ReadConcernTest extends TestCase {
+public class ReadConcernConnectionStringTest extends TestCase {
     private final String description;
     private final String input;
     private final BsonDocument definition;
 
-    public ReadConcernTest(final String description, final String input, final BsonDocument definition) {
+    public ReadConcernConnectionStringTest(final String description, final String input, final BsonDocument definition) {
         this.description = description;
         this.input = input;
         this.definition = definition;
@@ -54,7 +54,7 @@ public class ReadConcernTest extends TestCase {
     @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<Object[]>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/read-concern")) {
+        for (File file : JsonPoweredTestHelper.getTestFiles("/read-concern/connection-string")) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             for (BsonValue test : testDocument.getArray("tests")) {
                 data.add(new Object[]{test.asDocument().getString("description").getValue(),
