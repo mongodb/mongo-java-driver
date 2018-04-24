@@ -316,6 +316,10 @@ public class WriteConcern implements Serializable {
                          @Nullable final Boolean journal) {
         if (w instanceof Integer) {
             isTrueArgument("w >= 0", ((Integer) w) >= 0);
+            if ((Integer) w == 0) {
+                isTrueArgument("fsync is false when w is 0", fsync == null || !fsync);
+                isTrueArgument("journal is false when w is 0", journal == null || !journal);
+            }
         } else if (w != null) {
             isTrueArgument("w must be String or int", w instanceof String);
         }

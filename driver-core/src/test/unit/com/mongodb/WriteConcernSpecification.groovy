@@ -165,6 +165,18 @@ class WriteConcernSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+
+        when:
+        WriteConcern.UNACKNOWLEDGED.withFsync(true)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        WriteConcern.UNACKNOWLEDGED.withJournal(true)
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'test withFsync methods'() {
@@ -293,10 +305,8 @@ class WriteConcernSpecification extends Specification {
         WriteConcern.MAJORITY                                      | true
         WriteConcern.UNACKNOWLEDGED                                | false
         WriteConcern.UNACKNOWLEDGED.withWTimeout(10, MILLISECONDS) | false
-        WriteConcern.UNACKNOWLEDGED.withFsync(true)                | true
-        WriteConcern.UNACKNOWLEDGED.withJournal(true)              | true
-        WriteConcern.UNACKNOWLEDGED.withFsync(false)               | false
-        WriteConcern.UNACKNOWLEDGED.withJournal(false)             | false
+        WriteConcern.UNACKNOWLEDGED.withFsync(false)         | false
+        WriteConcern.UNACKNOWLEDGED.withJournal(false)      | false
     }
 
     def 'test value of'() {
