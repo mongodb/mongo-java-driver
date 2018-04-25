@@ -150,7 +150,7 @@
       "uri": "mongodb://localhost/?authMechanism=GSSAPI",
       "hosts": null,
       "valid": false,
-      "warning": true,
+      "warning": false,
       "auth": null,
       "options": null
     },
@@ -204,7 +204,7 @@
       "uri": "mongodb://localhost/?authMechanism=MONGODB-CR",
       "hosts": null,
       "valid": false,
-      "warning": true,
+      "warning": false,
       "auth": null,
       "options": null
     },
@@ -282,7 +282,7 @@
       "uri": "mongodb://CN%3DmyName%2COU%3DmyOrgUnit%2CO%3DmyOrg%2CL%3DmyLocality%2CST%3DmyState%2CC%3DmyCountry@localhost/foo?authMechanism=MONGODB-X509&authSource=bar",
       "hosts": null,
       "valid": false,
-      "warning": true,
+      "warning": false,
       "auth": null,
       "options": null
     },
