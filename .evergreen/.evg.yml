@@ -245,6 +245,16 @@ functions:
           # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
           PROJECT_DIRECTORY=${PROJECT_DIRECTORY} JDK=${JDK} MONGODB_URI=${gssapi_auth_mongodb_uri} KDC=${gssapi_auth_kdc} REALM=${gssapi_auth_realm} KEYTAB_BASE64=${gssapi_auth_keytab_base64} .evergreen/run-gssapi-auth-test.sh
 
+  "run atlas test":
+    - command: shell.exec
+      type: test
+      params:
+        silent: true
+        working_dir: "src"
+        script: |
+          # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
+          JDK="jdk8" .evergreen/run-connectivity-tests.sh '${atlas_free_tier_uri}' '${atlas_replica_set_uri}' '${atlas_sharded_uri}' '${atlas_tls_v11_uri}' '${atlas_tls_v12_uri}'
+ 
   "publish snapshot":
     - command: shell.exec
       type: test
@@ -375,6 +385,13 @@ tasks:
       commands:
         - func: "bootstrap mongo-orchestration"
         - func: "run socket tests"
+
+    - name: "atlas-test"
+      depends_on:
+        - variant: "static-checks"
+          name: "static-analysis"
+      commands:
+        - func: "run atlas test"
 
     - name: publish-snapshot
       depends_on:
@@ -570,6 +587,12 @@ buildvariants:
   run_on: *hosts
   tasks:
     - name: "plain-auth-test"
+
+- name: atlas-test
+  display_name: "Atlas test"
+  run_on: *hosts
+  tasks:
+    - name: "atlas-test"
 
 - name: publish-snapshot
   display_name: "Publish Snapshot"
