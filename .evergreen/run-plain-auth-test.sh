@@ -9,7 +9,6 @@ set -o errexit  # Exit the script with error if any of the commands fail
 #                               "jdk5", "jdk6", "jdk7", "jdk8"
 
 JDK=${JDK:-jdk}
-JAVA_HOME="/opt/java/${JDK}"
 
 ############################################
 #            Main Program                  #
