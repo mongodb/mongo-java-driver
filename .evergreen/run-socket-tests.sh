@@ -15,7 +15,6 @@ set -o errexit  # Exit the script with error if any of the commands fail
 AUTH=${AUTH:-noauth}
 MONGODB_URI=${MONGODB_URI:-}
 JDK=${JDK:-jdk}
-JAVA_HOME="/opt/java/${JDK}"
 TOPOLOGY=${TOPOLOGY:-server}
 COMPRESSOR=${COMPRESSOR:-}
 
