@@ -254,10 +254,10 @@ class ScramShaAuthenticatorSpecification extends Specification {
         def password ='p\u212bssword'
         def preppedPassword ='p\u00c5ssword'
         def payloads = '''
-            C: n,,n=ram\u00f3n,r=clientNONCE
+            C: n,,n=ramo\u0301n,r=clientNONCE
             S: r=clientNONCEserverNONCE,s=c2FsdFNBTFRzYWx0,i=4096
-            C: c=biws,r=clientNONCEserverNONCE,p=KXgIc8B+d5k3zx1P4rfs4TiybIlv11O85Jl1TrzEsfI=
-            S: v=zG9u+MI5GPTROhnW/W1PUCKV4Uvp2SHzwFOZV9Hth/c=
+            C: c=biws,r=clientNONCEserverNONCE,p=KkLV/eEHHw0LrTlnmElWuTiL0RxDa8lF/RqzsDP04sE=
+            S: v=eLTDerRxJFOBV8+/9xOcIkv4PezVAcNAarSyqa5mQyI=
         '''
 
         when:
