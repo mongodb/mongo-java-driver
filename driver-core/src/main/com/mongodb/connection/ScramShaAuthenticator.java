@@ -307,11 +307,7 @@ class ScramShaAuthenticator extends SaslAuthenticator {
             if (userName == null) {
                 throw new IllegalArgumentException("Username can not be null");
             }
-            userName = userName.replace("=", "=3D").replace(",", "=2C");
-            if (credential.getAuthenticationMechanism() == SCRAM_SHA_256) {
-                userName = SaslPrep.saslPrepStored(userName);
-            }
-            return userName;
+            return userName.replace("=", "=3D").replace(",", "=2C");
         }
 
         private String getAuthenicationHash() {
