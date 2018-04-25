@@ -201,22 +201,22 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
             return true;
         }
 
-        if (!(o instanceof DBObject)) {
+        if (!(o instanceof BSONObject)) {
             return false;
         }
 
-        DBObject other = (DBObject) o;
+        BSONObject other = (BSONObject) o;
 
         if (!keySet().equals(other.keySet())) {
             return false;
         }
 
-        return Arrays.equals(toBson(canonicalizeDBObject(this)), toBson(canonicalizeDBObject(other)));
+        return Arrays.equals(toBson(canonicalizeBSONObject(this)), toBson(canonicalizeBSONObject(other)));
     }
 
     @Override
     public int hashCode() {
-        return Arrays.hashCode(toBson(canonicalizeDBObject(this)));
+        return Arrays.hashCode(toBson(canonicalizeBSONObject(this)));
     }
 
     private static byte[] toBson(final DBObject dbObject) {
@@ -275,7 +275,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
     @SuppressWarnings("unchecked")
     private static Object canonicalize(final Object from) {
         if (from instanceof BSONObject && !(from instanceof BasicBSONList)) {
-            return canonicalizeDBObject((DBObject) from);
+            return canonicalizeBSONObject((BSONObject) from);
         } else if (from instanceof List) {
             return canonicalizeList((List<Object>) from);
         } else if (from instanceof Map) {
@@ -295,7 +295,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
         return canonicalized;
     }
 
-    private static DBObject canonicalizeDBObject(final DBObject from) {
+    private static DBObject canonicalizeBSONObject(final BSONObject from) {
         BasicDBObject canonicalized = new BasicDBObject();
         TreeSet<String> keysInOrder = new TreeSet<String>(from.keySet());
         for (String key : keysInOrder) {

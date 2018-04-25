@@ -16,9 +16,12 @@
 
 package com.mongodb;
 
+import org.bson.BSONObject;
+import org.bson.BasicBSONObject;
 import org.bson.codecs.Codec;
 import org.bson.json.JsonMode;
 import org.bson.json.JsonWriterSettings;
+import org.bson.types.BasicBSONList;
 import org.bson.types.ObjectId;
 import org.junit.Assert;
 import org.junit.Test;
@@ -165,12 +168,16 @@ public class BasicDBObjectTest {
         assertEquality(new BasicDBObject(), new BasicDBObject());
 
         assertEquality(new BasicDBObject("x", 1), new BasicDBObject("x", 1));
+        assertEquality(new BasicDBObject("x", 1), new BasicBSONObject("x", 1));
 
         assertInequality(new BasicDBObject("x", 1), new BasicDBObject("x", 2));
+        assertInequality(new BasicDBObject("x", 1), new BasicBSONObject("x", 2));
 
         assertInequality(new BasicDBObject("x", 1), new BasicDBObject("y", 1));
+        assertInequality(new BasicDBObject("x", 1), new BasicBSONObject("y", 1));
 
         assertEquality(new BasicDBObject("x", asList(1, 2, 3)), new BasicDBObject("x", new int[]{1, 2, 3}));
+        assertEquality(new BasicDBObject("x", asList(1, 2, 3)), new BasicBSONObject("x", asList(1, 2, 3)));
 
         BasicDBList list = new BasicDBList();
         list.put(0, 1);
@@ -178,17 +185,26 @@ public class BasicDBObjectTest {
         list.put(2, 3);
 
         assertEquality(new BasicDBObject("x", asList(1, 2, 3)), new BasicDBObject("x", list));
+        assertEquality(new BasicDBObject("x", asList(1, 2, 3)), new BasicBSONObject("x", list));
+
 
         assertEquality(new BasicDBObject("x", 1).append("y", 2), new BasicDBObject("y", 2).append("x", 1));
+        assertEquality(new BasicDBObject("x", 1).append("y", 2), new BasicBSONObject("y", 2).append("x", 1));
 
         assertEquality(new BasicDBObject("a", new BasicDBObject("y", 2).append("x", 1)),
                        new BasicDBObject("a", new BasicDBObject("x", 1).append("y", 2)));
+        assertEquality(new BasicDBObject("a", new BasicDBObject("y", 2).append("x", 1)),
+                       new BasicBSONObject("a", new BasicBSONObject("x", 1).append("y", 2)));
 
         assertEquality(new BasicDBObject("a", asList(new BasicDBObject("y", 2).append("x", 1))),
                        new BasicDBObject("a", asList(new BasicDBObject("x", 1).append("y", 2))));
+        assertEquality(new BasicDBObject("a", asList(new BasicDBObject("y", 2).append("x", 1))),
+                       new BasicBSONObject("a", asList(new BasicBSONObject("x", 1).append("y", 2))));
 
         assertEquality(new BasicDBObject("a", new BasicDBList().put(1, new BasicDBObject("y", 2).append("x", 1))),
                        new BasicDBObject("a", new BasicDBList().put(1, new BasicDBObject("x", 1).append("y", 2))));
+        assertEquality(new BasicDBObject("a", new BasicDBList().put(1, new BasicDBObject("y", 2).append("x", 1))),
+                       new BasicBSONObject("a", new BasicBSONList().put(1, new BasicBSONObject("x", 1).append("y", 2))));
 
         Map<String, Object> first = new HashMap<String, Object>();
         first.put("1", new BasicDBObject("y", 2).append("x", 1));
@@ -196,17 +212,21 @@ public class BasicDBObjectTest {
         Map<String, Object> second = new TreeMap<String, Object>();
         second.put("2", new BasicDBObject("b", 1).append("a", 2));
         second.put("1", new BasicDBObject("x", 1).append("y", 2));
+        Map<String, Object> third = new TreeMap<String, Object>();
+        third.put("2", new BasicBSONObject("a", 2).append("b", 1));
+        third.put("1", new BasicBSONObject("x", 1).append("y", 2));
 
         assertEquality(new BasicDBObject("a", first), new BasicDBObject("a", second));
+        assertEquality(new BasicDBObject("a", first), new BasicBSONObject("a", third));
     }
 
-    void assertEquality(final BasicDBObject x, final BasicDBObject y) {
+    void assertEquality(final BSONObject x, final BSONObject y) {
         assertEquals(x, y);
         assertEquals(y, x);
         assertEquals(x.hashCode(), y.hashCode());
     }
 
-    void assertInequality(final BasicDBObject x, final BasicDBObject y) {
+    void assertInequality(final BSONObject x, final BSONObject y) {
         assertThat(x, not(y));
         assertThat(y, not(x));
         assertThat(x.hashCode(), not(y.hashCode()));
