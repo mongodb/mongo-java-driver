@@ -20,7 +20,7 @@ package com.mongodb.client.model;
  * Builders for accumulators used in the group pipeline stage of an aggregation pipeline.
  *
  * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation pipeline
- * @mongodb.driver.manual operator/aggregation/group/#accumulator-operator Accumulators
+ * @mongodb.driver.manual reference/operator/aggregation/group/#accumulator-operator Accumulators
  * @mongodb.driver.manual meta/aggregation-quick-reference/#aggregation-expressions Expressions
  * @mongodb.server.release 2.2
  * @since 3.1
