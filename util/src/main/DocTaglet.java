@@ -52,9 +52,9 @@ public abstract class DocTaglet implements Taglet {
             return null;
         }
 
-        StringBuilder buf = new StringBuilder(String.format("%n<dl><dt><span class=\"strong\">%s</span></dt>%n", getHeader()));
+        StringBuilder buf = new StringBuilder(String.format("<dl><dt><span class=\"strong\">%s</span></dt>", getHeader()));
         for (Tag t : tags) {
-            buf.append("   <dd>").append(genLink(t.text())).append("</dd>%n");
+            buf.append("<dd>").append(genLink(t.text())).append("</dd>");
         }
         return buf.toString();
     }
