@@ -56,7 +56,7 @@ import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.validateIndexRequestCollations;
 import static com.mongodb.operation.OperationHelper.withConnection;
-import static com.mongodb.operation.WriteConcernHelper.appendWriteConcernToCommand;
+import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTransformer;
 
 /**

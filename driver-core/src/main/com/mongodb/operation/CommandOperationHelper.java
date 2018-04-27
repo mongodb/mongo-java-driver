@@ -34,6 +34,7 @@ import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.operation.WriteConcernHelper;
 import com.mongodb.lang.Nullable;
 import com.mongodb.session.SessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
