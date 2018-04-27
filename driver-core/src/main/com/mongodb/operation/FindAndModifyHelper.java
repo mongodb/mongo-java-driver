@@ -19,11 +19,12 @@ package com.mongodb.operation;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcernResult;
-import com.mongodb.bulk.WriteConcernError;
 import com.mongodb.operation.CommandOperationHelper.CommandTransformer;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
+
+import static com.mongodb.internal.operation.WriteConcernHelper.createWriteConcernError;
 
 final class FindAndModifyHelper {
 
@@ -45,12 +46,6 @@ final class FindAndModifyHelper {
                 return BsonDocumentWrapperHelper.toDocument(result.getDocument("value", null));
             }
         };
-    }
-
-    private static WriteConcernError createWriteConcernError(final BsonDocument writeConcernErrorDocument) {
-        return new WriteConcernError(writeConcernErrorDocument.getNumber("code").intValue(),
-                                     writeConcernErrorDocument.getString("errmsg").getValue(),
-                                     writeConcernErrorDocument.getDocument("errInfo", new BsonDocument()));
     }
 
     private static WriteConcernResult createWriteConcernResult(final BsonDocument result) {
