@@ -14,55 +14,41 @@
  * limitations under the License.
  */
 
-import com.sun.javadoc.Tag;
-import com.sun.tools.doclets.Taglet;
+import com.sun.source.doctree.DocTree;
+import com.sun.source.doctree.UnknownBlockTagTree;
+import jdk.javadoc.doclet.Taglet;
+import javax.lang.model.element.Element;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import static java.util.Arrays.asList;
+import static jdk.javadoc.doclet.Taglet.Location.*;
 
 public abstract class DocTaglet implements Taglet {
 
-    public boolean inConstructor() {
-        return true;
+    @Override
+    public Set<Location> getAllowedLocations() {
+        return new HashSet<Location>(asList(CONSTRUCTOR, METHOD, FIELD, OVERVIEW, PACKAGE, TYPE));
     }
 
-    public boolean inField() {
-        return true;
-    }
-
-    public boolean inMethod() {
-        return true;
-    }
-
-    public boolean inOverview() {
-        return true;
-    }
-
-    public boolean inPackage() {
-        return true;
-    }
-
-    public boolean inType() {
-        return true;
-    }
-
+    @Override
     public boolean isInlineTag() {
         return false;
     }
 
-    public String toString(final Tag[] tags) {
-        if (tags.length == 0) {
+    @Override
+    public String toString(List<? extends DocTree> tags, Element element) {
+        if (tags.size() == 0) {
             return null;
         }
 
         StringBuilder buf = new StringBuilder(String.format("<dl><dt><span class=\"strong\">%s</span></dt>", getHeader()));
-        for (Tag t : tags) {
-            buf.append("<dd>").append(genLink(t.text())).append("</dd>");
+        for (DocTree tag : tags) {
+            String text = ((UnknownBlockTagTree) tag).getContent().get(0).toString();
+            buf.append("<dd>").append(genLink(text)).append("</dd>");
         }
         return buf.toString();
-    }
-
-    protected abstract String getHeader();
-
-    public String toString(final Tag tag) {
-        return toString(new Tag[]{tag});
     }
 
     protected String genLink(final String text) {
@@ -77,6 +63,8 @@ public abstract class DocTaglet implements Taglet {
 
         return String.format("<a href='%s%s'>%s</a>", getBaseDocURI(), relativePath, display);
     }
+
+    protected abstract String getHeader();
 
     protected abstract String getBaseDocURI();
 }

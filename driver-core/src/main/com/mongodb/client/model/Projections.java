@@ -185,7 +185,6 @@ public final class Projections {
      *
      * @param projections the list of projections to combine
      * @return the combined projection
-     * @mongodb.driver.manual
      */
     public static Bson fields(final List<? extends Bson> projections) {
         notNull("sorts", projections);

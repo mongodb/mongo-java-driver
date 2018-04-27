@@ -2,7 +2,7 @@ dist: trusty
 sudo: true
 language: java
 jdk:
-- oraclejdk8
+- oraclejdk9
 
 notifications:
   email:
@@ -38,6 +38,7 @@ before_script:
 script:
   - ./gradlew -q assemble
   - ./gradlew check -Ptravistest=true
+  - ./gradlew docs
 
 after_script:
   - pkill mongod
