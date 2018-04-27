@@ -45,6 +45,7 @@ import com.mongodb.connection.ServerType;
 import com.mongodb.connection.ServerVersion;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.internal.operation.ServerVersionHelper;
 import com.mongodb.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.BsonInt64;
@@ -79,7 +80,7 @@ final class OperationHelper {
     }
 
     static void validateReadConcern(final Connection connection, final ReadConcern readConcern) {
-        if (!serverIsAtLeastVersionThreeDotTwo(connection.getDescription()) && !readConcern.isServerDefault()) {
+        if (!ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo(connection.getDescription()) && !readConcern.isServerDefault()) {
             throw new IllegalArgumentException(format("ReadConcern not supported by server version: %s",
                     connection.getDescription().getServerVersion()));
         }
@@ -88,7 +89,7 @@ final class OperationHelper {
     static void validateReadConcern(final AsyncConnection connection, final ReadConcern readConcern,
                                     final AsyncCallableWithConnection callable) {
         Throwable throwable = null;
-        if (!serverIsAtLeastVersionThreeDotTwo(connection.getDescription()) && !readConcern.isServerDefault()) {
+        if (!ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo(connection.getDescription()) && !readConcern.isServerDefault()) {
             throwable = new IllegalArgumentException(format("ReadConcern not supported by server version: %s",
                     connection.getDescription().getServerVersion()));
         }
@@ -110,7 +111,7 @@ final class OperationHelper {
     }
 
     static void validateCollation(final ConnectionDescription connectionDescription, final Collation collation) {
-        if (collation != null && !serverIsAtLeastVersionThreeDotFour(connectionDescription)) {
+        if (collation != null && !ServerVersionHelper.serverIsAtLeastVersionThreeDotFour(connectionDescription)) {
             throw new IllegalArgumentException(format("Collation not supported by server version: %s",
                     connectionDescription.getServerVersion()));
         }
@@ -118,7 +119,7 @@ final class OperationHelper {
 
     static void validateCollationAndWriteConcern(final ConnectionDescription connectionDescription, final Collation collation,
                                                  final WriteConcern writeConcern) {
-        if (collation != null && !serverIsAtLeastVersionThreeDotFour(connectionDescription)) {
+        if (collation != null && !ServerVersionHelper.serverIsAtLeastVersionThreeDotFour(connectionDescription)) {
             throw new IllegalArgumentException(format("Collation not supported by server version: %s",
                     connectionDescription.getServerVersion()));
         } else if (collation != null && !writeConcern.isAcknowledged()) {
@@ -129,7 +130,7 @@ final class OperationHelper {
     static void validateCollation(final AsyncConnection connection, final Collation collation,
                                   final AsyncCallableWithConnection callable) {
         Throwable throwable = null;
-        if (!serverIsAtLeastVersionThreeDotFour(connection.getDescription()) && collation != null) {
+        if (!ServerVersionHelper.serverIsAtLeastVersionThreeDotFour(connection.getDescription()) && collation != null) {
             throwable = new IllegalArgumentException(format("Collation not supported by server version: %s",
                     connection.getDescription().getServerVersion()));
         }
@@ -241,7 +242,7 @@ final class OperationHelper {
 
     static void checkBypassDocumentValidationIsSupported(final ConnectionDescription connectionDescription,
                                                          final Boolean bypassDocumentValidation, final WriteConcern writeConcern) {
-        if (bypassDocumentValidation != null && serverIsAtLeastVersionThreeDotTwo(connectionDescription)
+        if (bypassDocumentValidation != null && ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo(connectionDescription)
                 && !writeConcern.isAcknowledged()) {
             throw new MongoClientException("Specifying bypassDocumentValidation with an unacknowledged WriteConcern is not supported");
         }
@@ -383,26 +384,6 @@ final class OperationHelper {
             source.release();
             return wrapped;
         }
-    }
-
-    static boolean serverIsAtLeastVersionThreeDotZero(final ConnectionDescription description) {
-        return serverIsAtLeastVersion(description, new ServerVersion(3, 0));
-    }
-
-    static boolean serverIsAtLeastVersionThreeDotTwo(final ConnectionDescription description) {
-        return serverIsAtLeastVersion(description, new ServerVersion(3, 2));
-    }
-
-    static boolean serverIsAtLeastVersionThreeDotFour(final ConnectionDescription description) {
-        return serverIsAtLeastVersion(description, new ServerVersion(3, 4));
-    }
-
-    static boolean serverIsAtLeastVersionThreeDotSix(final ConnectionDescription description) {
-        return serverIsAtLeastVersion(description, new ServerVersion(3, 6));
-    }
-
-    static boolean serverIsAtLeastVersion(final ConnectionDescription description, final ServerVersion serverVersion) {
-        return description.getServerVersion().compareTo(serverVersion) >= 0;
     }
 
     static <T> T withConnection(final ReadBinding binding, final CallableWithConnection<T> callable) {

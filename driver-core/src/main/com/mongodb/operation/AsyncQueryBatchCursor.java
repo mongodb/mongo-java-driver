@@ -48,7 +48,7 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 import static com.mongodb.operation.CursorHelper.getNumberToReturn;
 import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.getMoreCursorDocumentToQueryResult;
-import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.operation.QueryHelper.translateCommandException;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;

@@ -26,7 +26,7 @@ import org.bson.BsonInt32;
 import org.bson.codecs.BsonDocumentCodec;
 
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
-import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
 /**

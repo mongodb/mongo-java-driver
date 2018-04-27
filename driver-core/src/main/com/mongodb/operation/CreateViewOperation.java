@@ -39,7 +39,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
-import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotFour;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotFour;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static com.mongodb.operation.WriteConcernHelper.appendWriteConcernToCommand;
 import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTransformer;

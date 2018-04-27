@@ -52,7 +52,7 @@ import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSou
 import static com.mongodb.operation.OperationHelper.ConnectionReleasingWrappedCallback;
 import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.isRetryableWrite;
-import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotSix;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotSix;
 import static com.mongodb.operation.OperationHelper.validateWriteRequests;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static com.mongodb.operation.OperationHelper.withReleasableConnection;

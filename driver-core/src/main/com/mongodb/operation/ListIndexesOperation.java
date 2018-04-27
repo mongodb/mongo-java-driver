@@ -55,7 +55,7 @@ import static com.mongodb.operation.OperationHelper.createEmptyBatchCursor;
 import static com.mongodb.operation.OperationHelper.cursorDocumentToAsyncBatchCursor;
 import static com.mongodb.operation.OperationHelper.cursorDocumentToBatchCursor;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
-import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotZero;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotZero;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
 /**

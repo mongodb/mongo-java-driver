@@ -54,7 +54,7 @@ import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSou
 import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
-import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotSix;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotSix;
 import static com.mongodb.operation.OperationHelper.validateReadConcernAndCollation;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static com.mongodb.operation.OperationReadConcernHelper.appendReadConcernToCommand;

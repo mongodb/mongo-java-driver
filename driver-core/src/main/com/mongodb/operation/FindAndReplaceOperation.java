@@ -40,7 +40,7 @@ import static com.mongodb.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.operation.DocumentHelper.putIfTrue;
-import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotTwo;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.operation.OperationHelper.validateCollation;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 

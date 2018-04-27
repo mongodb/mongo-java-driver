@@ -22,10 +22,9 @@ import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.bulk.WriteConcernError;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.operation.CommandOperationHelper.CommandTransformer;
 import org.bson.BsonDocument;
 
-import static com.mongodb.operation.OperationHelper.serverIsAtLeastVersionThreeDotFour;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotFour;
 
 final class WriteConcernHelper {
 
