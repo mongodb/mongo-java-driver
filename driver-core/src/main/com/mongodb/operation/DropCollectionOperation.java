@@ -40,7 +40,7 @@ import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static com.mongodb.operation.WriteConcernHelper.appendWriteConcernToCommand;
-import static com.mongodb.operation.WriteConcernHelper.writeConcernErrorTransformer;
+import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTransformer;
 
 /**
  * Operation to drop a Collection in MongoDB.  The {@code execute} method throws MongoCommandFailureException if something goes wrong, but

@@ -35,7 +35,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
-import static com.mongodb.operation.WriteConcernHelper.writeConcernErrorTransformer;
+import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTransformer;
 
 /**
  * A base class for transaction-related operations

@@ -73,6 +73,16 @@ final class CommandOperationHelper {
         }
     }
 
+    static CommandTransformer<BsonDocument, Void> writeConcernErrorTransformer() {
+        return new CommandTransformer<BsonDocument, Void>() {
+            @Override
+            public Void apply(final BsonDocument result, final ServerAddress serverAddress) {
+                WriteConcernHelper.throwOnWriteConcernError(result, serverAddress);
+                return null;
+            }
+        };
+    }
+
     interface CommandCreator {
         BsonDocument create(ServerDescription serverDescription, ConnectionDescription connectionDescription);
     }

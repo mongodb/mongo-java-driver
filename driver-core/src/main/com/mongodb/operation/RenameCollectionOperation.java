@@ -36,7 +36,7 @@ import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static com.mongodb.operation.WriteConcernHelper.appendWriteConcernToCommand;
-import static com.mongodb.operation.WriteConcernHelper.writeConcernErrorTransformer;
+import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTransformer;
 
 /**
  * An operation that renames the given collection to the new name.

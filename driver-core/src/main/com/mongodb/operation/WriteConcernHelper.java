@@ -36,16 +36,6 @@ final class WriteConcernHelper {
         }
     }
 
-    static CommandTransformer<BsonDocument, Void> writeConcernErrorTransformer() {
-        return new CommandTransformer<BsonDocument, Void>() {
-            @Override
-            public Void apply(final BsonDocument result, final ServerAddress serverAddress) {
-                throwOnWriteConcernError(result, serverAddress);
-                return null;
-            }
-        };
-    }
-
     static void throwOnWriteConcernError(final BsonDocument result, final ServerAddress serverAddress) {
         if (hasWriteConcernError(result)) {
             throw createWriteConcernError(result, serverAddress); }

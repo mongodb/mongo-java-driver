@@ -40,7 +40,7 @@ import static com.mongodb.operation.UserOperationHelper.asCommandDocument;
 import static com.mongodb.operation.UserOperationHelper.translateUserCommandException;
 import static com.mongodb.operation.UserOperationHelper.userCommandCallback;
 import static com.mongodb.operation.WriteConcernHelper.appendWriteConcernToCommand;
-import static com.mongodb.operation.WriteConcernHelper.writeConcernErrorTransformer;
+import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTransformer;
 
 /**
  * An operation to create a user.
