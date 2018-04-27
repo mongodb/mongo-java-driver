@@ -14,17 +14,11 @@
  * limitations under the License.
  */
 
-import com.sun.tools.doclets.Taglet;
-
-import java.util.Map;
-
 public class ManualTaglet extends DocTaglet {
 
-    public static void register(final Map<String, Taglet> tagletMap) {
-        ManualTaglet t = new ManualTaglet();
-        tagletMap.put(t.getName(), t);
-    }
+    public ManualTaglet() { }
 
+    @Override
     public String getName() {
         return "mongodb.driver.manual";
     }
