@@ -16,9 +16,24 @@
 
 package com.mongodb.internal.operation
 
-class WriteConcernHelperSpecification {
+import org.bson.BsonDocument
+import org.bson.BsonInt32
+import org.bson.BsonString
+import spock.lang.Specification
+
+import static com.mongodb.internal.operation.WriteConcernHelper.createWriteConcernError
+
+class WriteConcernHelperSpecification extends Specification {
 
     def 'should create write concern error'() {
+        when:
+        def writeConcernError = createWriteConcernError(new BsonDocument('code', new BsonInt32(42))
+                .append('errmsg', new BsonString('a timeout'))
+                .append('errInfo', new BsonDocument('wtimeout', new BsonInt32(1))))
 
-    }
+        then:
+        writeConcernError.getCode() == 42
+        writeConcernError.getMessage() == 'a timeout'
+        writeConcernError.getDetails() == new BsonDocument('wtimeout', new BsonInt32(1))
+   }
 }
