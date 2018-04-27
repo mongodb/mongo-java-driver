@@ -65,6 +65,7 @@ import static com.mongodb.bulk.WriteRequest.Type.DELETE;
 import static com.mongodb.bulk.WriteRequest.Type.INSERT;
 import static com.mongodb.bulk.WriteRequest.Type.REPLACE;
 import static com.mongodb.bulk.WriteRequest.Type.UPDATE;
+import static com.mongodb.internal.operation.WriteConcernHelper.createWriteConcernError;
 import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.isRetryableWrite;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -328,9 +329,7 @@ final class BulkWriteBatch {
         if (writeConcernErrorDocument == null) {
             return null;
         } else {
-            return new WriteConcernError(writeConcernErrorDocument.getNumber("code").intValue(),
-                    writeConcernErrorDocument.getString("errmsg").getValue(),
-                    writeConcernErrorDocument.getDocument("errInfo", new BsonDocument()));
+            return createWriteConcernError(writeConcernErrorDocument);
         }
     }
 
