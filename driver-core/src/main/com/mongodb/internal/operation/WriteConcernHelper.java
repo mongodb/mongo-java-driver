@@ -23,6 +23,7 @@ import com.mongodb.WriteConcernResult;
 import com.mongodb.bulk.WriteConcernError;
 import com.mongodb.connection.ConnectionDescription;
 import org.bson.BsonDocument;
+import org.bson.BsonString;
 
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotFour;
 
@@ -55,6 +56,7 @@ public final class WriteConcernHelper {
 
     public static WriteConcernError createWriteConcernError(final BsonDocument writeConcernErrorDocument) {
         return new WriteConcernError(writeConcernErrorDocument.getNumber("code").intValue(),
+                writeConcernErrorDocument.getString("codeName", new BsonString("")).getValue(),
                 writeConcernErrorDocument.getString("errmsg").getValue(),
                 writeConcernErrorDocument.getDocument("errInfo", new BsonDocument()));
     }

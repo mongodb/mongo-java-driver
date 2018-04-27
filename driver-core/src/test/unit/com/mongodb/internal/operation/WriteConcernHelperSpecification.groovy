@@ -33,7 +33,20 @@ class WriteConcernHelperSpecification extends Specification {
 
         then:
         writeConcernError.getCode() == 42
+        writeConcernError.getCodeName() == ''
         writeConcernError.getMessage() == 'a timeout'
         writeConcernError.getDetails() == new BsonDocument('wtimeout', new BsonInt32(1))
-   }
+
+        when:
+        writeConcernError = createWriteConcernError(new BsonDocument('code', new BsonInt32(42))
+                .append('codeName', new BsonString('TimeoutError'))
+                .append('errmsg', new BsonString('a timeout'))
+                .append('errInfo', new BsonDocument('wtimeout', new BsonInt32(1))))
+
+        then:
+        writeConcernError.getCode() == 42
+        writeConcernError.getCodeName() == 'TimeoutError'
+        writeConcernError.getMessage() == 'a timeout'
+        writeConcernError.getDetails() == new BsonDocument('wtimeout', new BsonInt32(1))
+    }
 }
