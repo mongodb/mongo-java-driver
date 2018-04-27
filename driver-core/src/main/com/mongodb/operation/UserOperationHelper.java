@@ -20,6 +20,7 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoInternalException;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.operation.WriteConcernHelper;
 import com.mongodb.lang.NonNull;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerVersion;
@@ -32,7 +33,6 @@ import org.bson.BsonValue;
 import java.util.Collections;
 
 import static com.mongodb.internal.authentication.NativeAuthenticationHelper.createAuthenticationHash;
-import static com.mongodb.internal.operation.WriteConcernHelper.createWriteConcernError;
 import static com.mongodb.internal.operation.WriteConcernHelper.hasWriteConcernError;
 
 final class UserOperationHelper {
@@ -60,7 +60,7 @@ final class UserOperationHelper {
 
     static void translateUserCommandException(final MongoCommandException e) {
         if (e.getErrorCode() == 100 && hasWriteConcernError(e.getResponse())) {
-            throw createWriteConcernError(e.getResponse(), e.getServerAddress());
+            throw WriteConcernHelper.createWriteConcernException(e.getResponse(), e.getServerAddress());
         } else {
             throw e;
         }
@@ -74,7 +74,7 @@ final class UserOperationHelper {
                     if (t instanceof MongoCommandException
                                 && hasWriteConcernError(((MongoCommandException) t).getResponse())) {
                         wrappedCallback.onResult(null,
-                                createWriteConcernError(((MongoCommandException) t).getResponse(),
+                                WriteConcernHelper.createWriteConcernException(((MongoCommandException) t).getResponse(),
                                         ((MongoCommandException) t).getServerAddress()));
                     } else {
                         wrappedCallback.onResult(null, t);
