@@ -32,8 +32,8 @@ import org.bson.BsonValue;
 import java.util.Collections;
 
 import static com.mongodb.internal.authentication.NativeAuthenticationHelper.createAuthenticationHash;
-import static com.mongodb.operation.WriteConcernHelper.createWriteConcernError;
-import static com.mongodb.operation.WriteConcernHelper.hasWriteConcernError;
+import static com.mongodb.internal.operation.WriteConcernHelper.createWriteConcernError;
+import static com.mongodb.internal.operation.WriteConcernHelper.hasWriteConcernError;
 
 final class UserOperationHelper {
     private static final ServerVersion FOUR_ZERO = new ServerVersion(3, 7);

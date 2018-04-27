@@ -52,8 +52,8 @@ import static com.mongodb.operation.OperationHelper.validateCollation;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.operation.OperationHelper.withConnection;
-import static com.mongodb.operation.WriteConcernHelper.appendWriteConcernToCommand;
-import static com.mongodb.operation.WriteConcernHelper.throwOnWriteConcernError;
+import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
+import static com.mongodb.internal.operation.WriteConcernHelper.throwOnWriteConcernError;
 import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 

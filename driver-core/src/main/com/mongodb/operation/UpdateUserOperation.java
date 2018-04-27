@@ -39,7 +39,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
 import static com.mongodb.operation.UserOperationHelper.asCommandDocument;
 import static com.mongodb.operation.UserOperationHelper.translateUserCommandException;
 import static com.mongodb.operation.UserOperationHelper.userCommandCallback;
-import static com.mongodb.operation.WriteConcernHelper.appendWriteConcernToCommand;
+import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTransformer;
 
 /**
