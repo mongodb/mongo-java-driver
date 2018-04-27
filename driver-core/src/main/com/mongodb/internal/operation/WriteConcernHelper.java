@@ -40,7 +40,7 @@ public final class WriteConcernHelper {
 
     public static void throwOnWriteConcernError(final BsonDocument result, final ServerAddress serverAddress) {
         if (hasWriteConcernError(result)) {
-            throw createWriteConcernError(result, serverAddress);
+            throw createWriteConcernException(result, serverAddress);
         }
     }
 
@@ -48,7 +48,7 @@ public final class WriteConcernHelper {
         return result.containsKey("writeConcernError");
     }
 
-    public static MongoWriteConcernException createWriteConcernError(final BsonDocument result, final ServerAddress serverAddress) {
+    public static MongoWriteConcernException createWriteConcernException(final BsonDocument result, final ServerAddress serverAddress) {
         return new MongoWriteConcernException(createWriteConcernError(result.getDocument("writeConcernError")),
                 WriteConcernResult.acknowledged(0, false, null), serverAddress);
     }
