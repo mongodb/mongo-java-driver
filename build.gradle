@@ -285,6 +285,7 @@ def setJavaDocOptions(MinimalJavadocOptions options) {
     options.encoding = 'UTF-8'
     options.charSet 'UTF-8'
     options.docEncoding 'UTF-8'
+    options.addBooleanOption("html4", true)
     options.header = '''
             <script type="text/javascript">
             <!-- Set the location hash in the classFrame -->
