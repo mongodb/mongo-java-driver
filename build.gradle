@@ -286,6 +286,7 @@ def setJavaDocOptions(MinimalJavadocOptions options) {
     options.charSet 'UTF-8'
     options.docEncoding 'UTF-8'
     options.addBooleanOption("html4", true)
+    options.addBooleanOption("-allow-script-in-comments", true)
     options.header = '''
             <script type="text/javascript">
             <!-- Set the location hash in the classFrame -->
@@ -308,15 +309,6 @@ def setJavaDocOptions(MinimalJavadocOptions options) {
             }
             </script>
         '''
-
-    // Add --allow-script-in-comments if available (since 1.8.0_121)
-    try {
-        if (Class.forName('com.sun.tools.doclets.formats.html.ConfigurationImpl')
-                .newInstance().optionLength('--allow-script-in-comments') > 0) {
-            options.addBooleanOption("-allow-script-in-comments", true)
-        }
-    } catch (ignored) {
-    }
 }
 
 //////////////////////////////////////////
@@ -327,8 +319,8 @@ task wrapper(type: Wrapper) {
 }
 
 gradle.buildFinished { BuildResult result ->
-    if (result.failure && !JavaVersion.current().isJava8Compatible()) {
-        gradle.rootProject.logger.error("\nWARNING:\nJDK ${JavaVersion.VERSION_1_8} is required to build the driver: " +
+    if (result.failure && !JavaVersion.current().isJava9Compatible()) {
+        gradle.rootProject.logger.error("\nWARNING:\nJDK ${JavaVersion.VERSION_1_9} is required to build the driver: " +
                 "you are using JDK ${JavaVersion.current()}.")
     }
 }
