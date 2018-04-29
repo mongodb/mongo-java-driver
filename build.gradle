@@ -277,7 +277,7 @@ task docs(type: Javadoc) {
 def setJavaDocOptions(MinimalJavadocOptions options) {
     options.author = true
     options.version = true
-    options.links 'http://docs.oracle.com/javase/7/docs/api/'
+    options.links 'https://docs.oracle.com/javase/9/docs/api/'
     options.tagletPath single(project(':util').sourceSets.main.output.classesDirs)
     options.taglets 'ManualTaglet'
     options.taglets 'DochubTaglet'
