@@ -20,6 +20,7 @@ import com.mongodb.Block;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.MongoWriteConcernException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadConcernLevel;
 import com.mongodb.TransactionOptions;
@@ -252,13 +253,17 @@ public class TransactionsTest {
                         String expectedError = getErrorContainsField(expectedResult);
                         assertTrue(String.format("Expected '%s' but got '%s'", expectedError, e.getMessage()),
                                 e.getMessage().toLowerCase().contains(expectedError.toLowerCase()));
-                    } else if (hasErrorCodeNameField(expectedResult) || (e instanceof MongoCommandException)) {
+                    } else if (hasErrorCodeNameField(expectedResult) || (e instanceof MongoCommandException)
+                            || (e instanceof MongoWriteConcernException)) {
                         String expectedErrorCodeName = getErrorCodeNameField(expectedResult);
-                        MongoCommandException commandException = (MongoCommandException) e;
-                        assertEquals(expectedErrorCodeName,
-                                commandException.getResponse().getString("codeName", new BsonString("")).getValue());
-                    }
-                    else {
+                        if (e instanceof MongoCommandException) {
+                            assertEquals(expectedErrorCodeName, ((MongoCommandException) e).getErrorCodeName());
+                        } else if (e instanceof MongoWriteConcernException) {
+                            assertEquals(expectedErrorCodeName, ((MongoWriteConcernException) e).getWriteConcernError().getCodeName());
+                        } else {
+                            throw e;
+                        }
+                    } else {
                         throw e;
                     }
                 }
