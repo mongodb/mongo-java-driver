@@ -6,7 +6,7 @@ set -o errexit  # Exit the script with error if any of the commands fail
 # Supported/used environment variables:
 #       MONGODB_URI             Set the URI, including username/password to use to connect to the server via PLAIN authentication mechanism
 #       JDK                     Set the version of java to be used.  Java versions can be set from the java toolchain /opt/java
-#                               "jdk5", "jdk6", "jdk7", "jdk8"
+#                               "jdk5", "jdk6", "jdk7", "jdk8", "jdk9"
 
 JDK=${JDK:-jdk}
 
@@ -17,7 +17,7 @@ JDK=${JDK:-jdk}
 echo "Running PLAIN authentication tests"
 
 # We always compile with the latest version of java
-export JAVA_HOME="/opt/java/jdk8"
+export JAVA_HOME="/opt/java/jdk9"
 
 echo "Running tests with ${JDK}"
 ./gradlew -version

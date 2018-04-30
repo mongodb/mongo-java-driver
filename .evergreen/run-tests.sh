@@ -11,7 +11,7 @@ set -o errexit  # Exit the script with error if any of the commands fail
 #                               Supported values: "server", "replica_set", "sharded_cluster"
 #       COMPRESSOR              Set to enable compression. Values are "snappy" and "zlib" (default is no compression)
 #       JDK                     Set the version of java to be used.  Java versions can be set from the java toolchain /opt/java
-#                               "jdk5", "jdk6", "jdk7", "jdk8"
+#                               "jdk5", "jdk6", "jdk7", "jdk8", "jdk9"
 
 AUTH=${AUTH:-noauth}
 SSL=${SSL:-nossl}
@@ -28,7 +28,7 @@ else
 fi
 
 # We always compile with the latest version of java
-export JAVA_HOME="/opt/java/jdk8"
+export JAVA_HOME="/opt/java/jdk9"
 
 
 ############################################
@@ -43,7 +43,7 @@ provision_ssl () {
     openssl pkcs12 -CAfile ${DRIVERS_TOOLS}/.evergreen/x509gen/ca.pem -export -in ${DRIVERS_TOOLS}/.evergreen/x509gen/client.pem -out client.pkc -password pass:bithere
   fi
   if [ ! -f mongo-truststore ]; then
-    echo "y" | ${JAVA_HOME}/bin/keytool -importcert -trustcacerts -file ${DRIVERS_TOOLS}/.evergreen/x509gen/ca.pem -keystore mongo-truststore -storepass hithere
+    ${JAVA_HOME}/bin/keytool -importcert -trustcacerts -file ${DRIVERS_TOOLS}/.evergreen/x509gen/ca.pem -keystore mongo-truststore -storepass hithere -storetype JKS -noprompt
   fi
 
   # We add extra gradle arguments for SSL
