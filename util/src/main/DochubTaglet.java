@@ -16,8 +16,6 @@
 
 public class DochubTaglet extends DocTaglet {
 
-    public DochubTaglet() { }
-
     @Override
     public String getName() {
         return "mongodb.driver.dochub";

@@ -16,8 +16,6 @@
 
 public class ManualTaglet extends DocTaglet {
 
-    public ManualTaglet() { }
-
     @Override
     public String getName() {
         return "mongodb.driver.manual";

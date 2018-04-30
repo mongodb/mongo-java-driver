@@ -16,11 +16,14 @@
 
 public class ServerReleaseTaglet extends DocTaglet {
 
-    public ServerReleaseTaglet() { }
-
     @Override
     public String getName() {
         return "mongodb.server.release";
+    }
+
+    @Override
+    protected String getHeader() {
+        return "Since server release";
     }
 
     @Override
@@ -28,8 +31,4 @@ public class ServerReleaseTaglet extends DocTaglet {
         return "http://docs.mongodb.org/manual/release-notes/";
     }
 
-    @Override
-    protected String getHeader() {
-        return "Since server release";
-    }
 }

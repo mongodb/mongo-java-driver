@@ -25,7 +25,6 @@ import java.util.Set;
 import static java.util.Arrays.asList;
 import static jdk.javadoc.doclet.Taglet.Location.*;
 
-
 public abstract class DocTaglet implements Taglet {
 
     @Override
@@ -43,9 +42,10 @@ public abstract class DocTaglet implements Taglet {
         if (tags.size() == 0) {
             return null;
         }
+
         StringBuilder buf = new StringBuilder(String.format("<dl><dt><span class=\"strong\">%s</span></dt>", getHeader()));
-        for (DocTree t : tags) {
-            String text = ((UnknownBlockTagTree) t).getContent().get(0).toString();
+        for (DocTree tag : tags) {
+            String text = ((UnknownBlockTagTree) tag).getContent().get(0).toString();
             buf.append("<dd>").append(genLink(text)).append("</dd>");
         }
         return buf.toString();
@@ -65,6 +65,6 @@ public abstract class DocTaglet implements Taglet {
     }
 
     protected abstract String getHeader();
-    
+
     protected abstract String getBaseDocURI();
 }
