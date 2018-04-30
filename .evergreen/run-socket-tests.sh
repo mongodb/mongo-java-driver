@@ -10,7 +10,7 @@ set -o errexit  # Exit the script with error if any of the commands fail
 #                               Supported values: "server", "replica_set", "sharded_cluster"
 #       COMPRESSOR              Set to enable compression. Values are "snappy" and "zlib" (default is no compression)
 #       JDK                     Set the version of java to be used.  Java versions can be set from the java toolchain /opt/java
-#                               "jdk5", "jdk6", "jdk7", "jdk8"
+#                               "jdk5", "jdk6", "jdk7", "jdk8", "jdk9"
 
 AUTH=${AUTH:-noauth}
 MONGODB_URI=${MONGODB_URI:-}
@@ -48,7 +48,7 @@ fi
 echo "Running $AUTH tests over for $TOPOLOGY and connecting to $MONGODB_URI"
 
 # We always compile with the latest version of java
-export JAVA_HOME="/opt/java/jdk8"
+export JAVA_HOME="/opt/java/jdk9"
 
 echo "Running tests with ${JDK}"
 ./gradlew -version
