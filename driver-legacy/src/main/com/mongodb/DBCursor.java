@@ -292,6 +292,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return {@code this} so calls can be chained
      * @mongodb.driver.manual reference/operator Special Operators
      */
+    @SuppressWarnings("deprecation")
     public DBCursor addSpecial(@Nullable final String name, @Nullable final Object value) {
         if (name == null || value == null) {
             return this;
@@ -461,7 +462,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @see com.mongodb.DBCursor#sort(DBObject)
      * @see com.mongodb.DBCursor#hint(DBObject)
      * @mongodb.driver.manual reference/operator/meta/snapshot/ $snapshot
+     * @deprecated Deprecated in MongoDB 3.6 release and removed in MongoDB 4.0 release
      */
+    @Deprecated
     public DBCursor snapshot() {
         findOptions.getModifiers().put("$snapshot", true);
         return this;

@@ -83,6 +83,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testSnapshot() {
         assumeTrue(serverVersionLessThan("3.7"));
         insertTestData(collection, 100);
