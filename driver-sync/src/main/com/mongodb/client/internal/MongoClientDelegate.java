@@ -32,6 +32,7 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
@@ -83,7 +84,12 @@ public class MongoClientDelegate {
             return null;
         }
 
-        if (getConnectedClusterDescription().getLogicalSessionTimeoutMinutes() != null) {
+        ClusterDescription connectedClusterDescription = getConnectedClusterDescription();
+
+        if (connectedClusterDescription.getType() == ClusterType.STANDALONE
+                || connectedClusterDescription.getLogicalSessionTimeoutMinutes() == null) {
+            return null;
+        } else {
             ClientSessionOptions mergedOptions = ClientSessionOptions.builder(options)
                     .defaultTransactionOptions(
                             TransactionOptions.merge(
@@ -94,8 +100,6 @@ public class MongoClientDelegate {
                                             .build()))
                     .build();
             return new ClientSessionImpl(serverSessionPool, originator, mergedOptions, this);
-        } else {
-            return null;
         }
     }
 
