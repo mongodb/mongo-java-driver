@@ -36,7 +36,7 @@ buildscript {
         classpath 'org.kordamp.gradle:clirr-gradle-plugin:0.2.2'
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:1.12.+'
         classpath 'com.bmuschko:gradle-nexus-plugin:2.2'
-        classpath "gradle.plugin.com.github.spotbugs:gradlePlugin:1.6.0"
+        classpath "gradle.plugin.com.github.spotbugs:spotbugs-gradle-plugin:1.6.1"
     }
 }
 
@@ -231,7 +231,7 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
     spotbugs {
         excludeFilter = new File(configDir, 'findbugs-exclude.xml')
         sourceSets = [sourceSets.main]
-        toolVersion = '3.1.0'
+        toolVersion = '3.1.3'
     }
 
     codenarc {
@@ -315,7 +315,7 @@ def setJavaDocOptions(MinimalJavadocOptions options) {
 // Root project configuration           //
 //////////////////////////////////////////
 task wrapper(type: Wrapper) {
-    gradleVersion = '4.5.1'
+    gradleVersion = '4.7'
 }
 
 gradle.buildFinished { BuildResult result ->
