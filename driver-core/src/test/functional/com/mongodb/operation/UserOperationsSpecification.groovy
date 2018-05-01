@@ -19,8 +19,8 @@ package com.mongodb.operation
 import category.Slow
 import com.mongodb.MongoCredential
 import com.mongodb.MongoNamespace
+import com.mongodb.MongoSecurityException
 import com.mongodb.MongoServerException
-import com.mongodb.MongoTimeoutException
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
@@ -135,12 +135,13 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         given:
         def credential = createCredential('user', databaseName, 'pencil' as char[])
         def cluster = getCluster(credential, ClusterSettings.builder().serverSelectionTimeout(1, TimeUnit.SECONDS))
+        def server = cluster.selectServer(new WritableServerSelector())
 
         when:
-        cluster.selectServer(new WritableServerSelector())
+        server.getConnection()
 
         then:
-        thrown(MongoTimeoutException)
+        thrown(MongoSecurityException)
 
         cleanup:
         cluster?.close()
@@ -155,12 +156,13 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
         execute(new CreateUserOperation(credential, true), async)
         execute(new DropUserOperation(databaseName, credential.userName), async)
         def cluster = getCluster(ClusterSettings.builder().serverSelectionTimeout(1, TimeUnit.SECONDS))
+        def server = cluster.selectServer(new WritableServerSelector())
 
         when:
-        cluster.selectServer(new WritableServerSelector())
+        server.getConnection()
 
         then:
-        thrown(MongoTimeoutException)
+        thrown(MongoSecurityException)
 
         cleanup:
         cluster?.close()

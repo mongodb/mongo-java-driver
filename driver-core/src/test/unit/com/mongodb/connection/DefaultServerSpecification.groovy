@@ -156,11 +156,38 @@ class DefaultServerSpecification extends Specification {
 
         where:
         exceptionToThrow << [
-                new MongoSecurityException(createCredential('jeff', 'admin', '123'.toCharArray()), 'Auth failed'),
                 new MongoSocketOpenException('open failed', new ServerAddress(), new IOException()),
                 new MongoSocketWriteException('Write failed', new ServerAddress(), new IOException()),
                 new MongoSocketReadException('Read failed', new ServerAddress(), new IOException()),
                 new MongoSocketReadTimeoutException('Read timed out', new ServerAddress(), new IOException()),
+        ]
+    }
+
+    def 'failed authentication should invalidate the connection pool'() {
+        given:
+        def clusterTime = new ClusterClock()
+        def connectionPool = Mock(ConnectionPool)
+        def connectionFactory = Mock(ConnectionFactory)
+        def serverMonitorFactory = Stub(ServerMonitorFactory)
+        def serverMonitor = Mock(ServerMonitor)
+        connectionPool.get() >> { throw exceptionToThrow }
+        serverMonitorFactory.create(_) >> { serverMonitor }
+
+        def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
+                NO_OP_SERVER_LISTENER, null, clusterTime)
+
+        when:
+        server.getConnection()
+
+        then:
+        def e = thrown(MongoSecurityException)
+        e.is(exceptionToThrow)
+        1 * connectionPool.invalidate()
+        0 * serverMonitor.connect()
+
+        where:
+        exceptionToThrow << [
+                new MongoSecurityException(createCredential('jeff', 'admin', '123'.toCharArray()), 'Auth failed'),
         ]
     }
 
@@ -192,11 +219,42 @@ class DefaultServerSpecification extends Specification {
 
         where:
         exceptionToThrow << [
-                new MongoSecurityException(createCredential('jeff', 'admin', '123'.toCharArray()), 'Auth failed'),
                 new MongoSocketOpenException('open failed', new ServerAddress(), new IOException()),
                 new MongoSocketWriteException('Write failed', new ServerAddress(), new IOException()),
                 new MongoSocketReadException('Read failed', new ServerAddress(), new IOException()),
                 new MongoSocketReadTimeoutException('Read timed out', new ServerAddress(), new IOException()),
+        ]
+    }
+
+    def 'failed auth should invalidate the connection pool asynchronously'() {
+        given:
+        def clusterTime = new ClusterClock()
+        def connectionPool = Mock(ConnectionPool)
+        def connectionFactory = Mock(ConnectionFactory)
+        def serverMonitorFactory = Stub(ServerMonitorFactory)
+        def serverMonitor = Mock(ServerMonitor)
+        connectionPool.getAsync(_) >> { it[0].onResult(null, exceptionToThrow) }
+        serverMonitorFactory.create(_) >> { serverMonitor }
+        def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory,
+                serverMonitorFactory, NO_OP_SERVER_LISTENER, null, clusterTime)
+
+        when:
+        def latch = new CountDownLatch(1)
+        def receivedConnection = null
+        def receivedThrowable = null
+        server.getConnectionAsync { result, throwable -> receivedConnection = result; receivedThrowable = throwable; latch.countDown() }
+        latch.await()
+
+        then:
+        !receivedConnection
+        receivedThrowable.is(exceptionToThrow)
+        1 * connectionPool.invalidate()
+        0 * serverMonitor.connect()
+
+
+        where:
+        exceptionToThrow << [
+                new MongoSecurityException(createCredential('jeff', 'admin', '123'.toCharArray()), 'Auth failed'),
         ]
     }
 
