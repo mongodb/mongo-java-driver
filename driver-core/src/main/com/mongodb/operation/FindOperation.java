@@ -588,7 +588,9 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
      *
      * @return the maxScan
      * @since 3.5
+     * @deprecated Deprecated as of MongoDB 4.0 release
      */
+    @Deprecated
     public long getMaxScan() {
         return maxScan;
     }
@@ -601,7 +603,9 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
      * @param maxScan the maxScan
      * @return this
      * @since 3.5
+     * @deprecated Deprecated as of MongoDB 4.0 release
      */
+    @Deprecated
     public FindOperation<T> maxScan(final long maxScan) {
         this.maxScan = maxScan;
         return this;

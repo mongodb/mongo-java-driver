@@ -166,6 +166,7 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     }
 
     @Override
+    @Deprecated
     public FindIterable<TResult> maxScan(final long maxScan) {
         findOptions.maxScan(maxScan);
         return this;

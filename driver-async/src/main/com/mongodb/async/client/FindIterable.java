@@ -213,7 +213,9 @@ public interface FindIterable<T> extends MongoIterable<T> {
      * @param maxScan the maxScan
      * @return this
      * @since 3.5
+     * @deprecated Deprecated as of MongoDB 4.0 release
      */
+    @Deprecated
     FindIterable<T> maxScan(long maxScan);
 
     /**

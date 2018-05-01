@@ -502,7 +502,9 @@ public final class FindOptions {
      *
      * @return the maxScan
      * @since 3.5
+     * @deprecated Deprecated as of MongoDB 4.0 release
      */
+    @Deprecated
     public long getMaxScan() {
         return maxScan;
     }
@@ -515,7 +517,9 @@ public final class FindOptions {
      * @param maxScan the maxScan
      * @return this
      * @since 3.5
+     * @deprecated Deprecated as of MongoDB 4.0 release
      */
+    @Deprecated
     public FindOptions maxScan(final long maxScan) {
         this.maxScan = maxScan;
         return this;
