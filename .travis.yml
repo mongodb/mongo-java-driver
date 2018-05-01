@@ -2,7 +2,7 @@ dist: trusty
 sudo: true
 language: java
 jdk:
-- oraclejdk10
+- oraclejdk9
 
 notifications:
   email:
