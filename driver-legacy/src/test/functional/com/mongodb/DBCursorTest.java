@@ -309,6 +309,7 @@ public class DBCursorTest extends DatabaseTestCase {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
     public void testMaxScan() {
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
                      .addSpecial("$maxScan", 4), 4);

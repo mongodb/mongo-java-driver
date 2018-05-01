@@ -281,10 +281,10 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
-     * Adds a special operator like $maxScan or $returnKey. For example:
+     * Adds a special operator like $comment or $returnKey. For example:
      * <pre>
      *    addSpecial("$returnKey", 1)
-     *    addSpecial("$maxScan", 100)
+     *    addSpecial("$comment", "this is a special query)
      * </pre>
      *
      * @param name  the name of the special query operator
@@ -352,7 +352,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @mongodb.driver.manual reference/operator/meta/maxScan/ $maxScan
      * @see #limit(int)
      * @since 2.12
+     * @deprecated Deprecated as of MongoDB 4.0 release
      */
+    @Deprecated
     public DBCursor maxScan(final int max) {
         findOptions.getModifiers().put("$maxScan", max);
         return this;
