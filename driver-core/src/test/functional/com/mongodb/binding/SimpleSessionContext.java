@@ -39,6 +39,11 @@ class SimpleSessionContext implements SessionContext {
 
     @Override
     public boolean hasSession() {
+        return false;
+    }
+
+    @Override
+    public boolean isImplicitSession() {
         return true;
     }
 
