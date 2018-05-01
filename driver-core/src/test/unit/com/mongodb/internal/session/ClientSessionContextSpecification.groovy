@@ -39,6 +39,11 @@ class ClientSessionContextSpecification extends Specification {
         }
 
         @Override
+        boolean isImplicitSession() {
+            throw new UnsupportedOperationException()
+        }
+
+        @Override
         boolean notifyMessageSent() {
             throw new UnsupportedOperationException()
         }

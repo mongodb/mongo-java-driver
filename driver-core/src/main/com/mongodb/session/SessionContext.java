@@ -35,6 +35,14 @@ public interface SessionContext {
     boolean hasSession();
 
     /**
+     * Returns true if the session is implicit, and false if the application started the session explicity.
+     *
+     * @return true if the session is implicit
+     * @since 3.8
+     */
+    boolean isImplicitSession();
+
+    /**
      * Gets the session identifier if this context has a session backing it.
      *
      * @return the session id

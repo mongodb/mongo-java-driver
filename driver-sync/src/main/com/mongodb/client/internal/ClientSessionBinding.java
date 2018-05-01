@@ -139,6 +139,10 @@ public class ClientSessionBinding implements ReadWriteBinding {
             this.clientSession = clientSession;
         }
 
+        @Override
+        public boolean isImplicitSession() {
+            return ownsSession;
+        }
 
         @Override
         public boolean notifyMessageSent() {

@@ -384,7 +384,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 6) })
-    def 'should not use a session for an unacknowledged write'() {
+    def 'should not use an implicit session for an unacknowledged write'() {
         given:
         def commandListener = new TestCommandListener()
         def optionsBuilder = MongoClientOptions.builder()

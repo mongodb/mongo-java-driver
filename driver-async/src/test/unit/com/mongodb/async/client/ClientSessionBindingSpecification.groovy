@@ -149,6 +149,21 @@ class ClientSessionBindingSpecification extends Specification {
         0 * session.close()
     }
 
+    def 'owned session is implicit'() {
+        given:
+        def session = Mock(ClientSession)
+        def wrappedBinding = createStubBinding()
+
+        when:
+        def binding = new ClientSessionBinding(session, ownsSession, wrappedBinding)
+
+        then:
+        binding.getSessionContext().isImplicitSession() == ownsSession
+
+        where:
+        ownsSession << [true, false]
+    }
+    
     private AsyncReadWriteBinding createStubBinding() {
         def cluster = Mock(Cluster) {
             selectServerAsync(_, _) >> {

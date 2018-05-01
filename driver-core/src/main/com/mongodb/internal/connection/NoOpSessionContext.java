@@ -39,6 +39,11 @@ public class NoOpSessionContext implements SessionContext {
     }
 
     @Override
+    public boolean isImplicitSession() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
     public BsonDocument getSessionId() {
         throw new UnsupportedOperationException();
     }

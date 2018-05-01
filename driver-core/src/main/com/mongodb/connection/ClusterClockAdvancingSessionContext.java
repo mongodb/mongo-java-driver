@@ -37,6 +37,11 @@ final class ClusterClockAdvancingSessionContext implements SessionContext {
     }
 
     @Override
+    public boolean isImplicitSession() {
+        return wrapped.isImplicitSession();
+    }
+
+    @Override
     public BsonDocument getSessionId() {
         return wrapped.getSessionId();
     }
