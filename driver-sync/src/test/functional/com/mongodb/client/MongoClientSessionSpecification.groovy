@@ -19,6 +19,7 @@ package com.mongodb.client
 import category.Slow
 import com.mongodb.ClientSessionOptions
 import com.mongodb.MongoClientException
+import com.mongodb.MongoClientSettings
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.TransactionOptions
@@ -52,7 +53,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         thrown(IllegalArgumentException)
     }
 
-    @IgnoreIf({ serverVersionAtLeast(3, 6) })
+    @IgnoreIf({ serverVersionAtLeast(3, 6) && !isStandalone() })
     def 'should throw MongoClientException starting a session when sessions are not supported'() {
         when:
         getMongoClient().startSession()
@@ -67,7 +68,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         thrown(MongoClientException)
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) || isStandalone() })
     def 'should create session with correct defaults'() {
         expect:
         clientSession.getOriginator() == getMongoClient()
@@ -90,7 +91,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
                           getMongoClient().startSession(ClientSessionOptions.builder().build())]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) || isStandalone() })
     def 'cluster time should advance'() {
         given:
         def firstOperationTime = new BsonTimestamp(42, 1)
@@ -131,7 +132,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         clientSession.getClusterTime() == secondClusterTime
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) || isStandalone() })
     def 'operation time should advance'() {
         given:
         def firstOperationTime = new BsonTimestamp(42, 1)
@@ -169,7 +170,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         clientSession.getOperationTime() == secondOperationTime
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) || isStandalone() })
     def 'methods that use the session should throw if the session is closed'() {
         given:
         def options = ClientSessionOptions.builder().build()
@@ -195,7 +196,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         thrown(IllegalStateException)
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) || isStandalone() })
     def 'informational methods should not throw if the session is closed'() {
         given:
         def options = ClientSessionOptions.builder().build()
@@ -212,7 +213,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         noExceptionThrown()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) || isStandalone() })
     def 'should apply causally consistent session option to client session'() {
         when:
         def clientSession = getMongoClient().startSession(ClientSessionOptions.builder()
@@ -227,7 +228,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         causallyConsistent << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) || isStandalone() })
     def 'client session should have server session with valid identifier'() {
         given:
         def clientSession = getMongoClient().startSession(ClientSessionOptions.builder().build())
@@ -243,7 +244,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         identifier.getBinary('id').data.length == 16
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) || isStandalone() })
     def 'should use a default session'() {
         given:
         def commandListener = new TestCommandListener()
@@ -262,7 +263,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         client?.close()
     }
 
-    @IgnoreIf({ serverVersionAtLeast(3, 6) })
+    @IgnoreIf({ serverVersionAtLeast(3, 6) && !isStandalone() })
     def 'should not use a default session when sessions are not supported'() {
         given:
         def commandListener = new TestCommandListener()
