@@ -185,6 +185,7 @@ class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> im
     }
 
     @Override
+    @Deprecated
     public FindIterable<TResult> snapshot(final boolean snapshot) {
         findOptions.snapshot(snapshot);
         return this;

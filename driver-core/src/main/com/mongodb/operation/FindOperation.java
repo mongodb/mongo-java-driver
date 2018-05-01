@@ -667,7 +667,9 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
      *
      * @return the snapshot
      * @since 3.5
+     * @deprecated Deprecated in MongoDB 3.6 release and removed in MongoDB 4.0 release
      */
+    @Deprecated
     public boolean isSnapshot() {
         return snapshot;
     }
@@ -680,7 +682,9 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
      * @param snapshot the snapshot
      * @return this
      * @since 3.5
+     * @deprecated Deprecated in MongoDB 3.6 release and removed in MongoDB 4.0 release
      */
+    @Deprecated
     public FindOperation<T> snapshot(final boolean snapshot) {
         this.snapshot = snapshot;
         return this;

@@ -245,6 +245,8 @@ public interface FindIterable<TResult> extends MongoIterable<TResult> {
      * @param snapshot the snapshot
      * @return this
      * @since 3.5
+     * @deprecated Deprecated in MongoDB 3.6 release and removed in MongoDB 4.0 release
      */
+    @Deprecated
     FindIterable<TResult> snapshot(boolean snapshot);
 }
