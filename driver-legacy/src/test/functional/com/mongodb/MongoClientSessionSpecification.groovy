@@ -33,10 +33,11 @@ import java.util.concurrent.TimeUnit
 import static Fixture.getDefaultDatabaseName
 import static Fixture.getMongoClientURI
 import static com.mongodb.ClusterFixture.isAuthenticated
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static com.mongodb.Fixture.getMongoClient
 import static com.mongodb.MongoCredential.createCredential
+import static com.mongodb.Fixture.getMongoClient
 
 class MongoClientSessionSpecification extends FunctionalSpecification {
 
@@ -403,5 +404,40 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
 
         cleanup:
         client?.close()
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) || isStandalone() })
+    def 'should throw exception if unacknowledged write used with explicit session'() {
+        given:
+        def session = getMongoClient().startSession()
+
+        when:
+        getMongoClient().getDatabase(getDatabaseName()).getCollection(getCollectionName())
+                .withWriteConcern(WriteConcern.UNACKNOWLEDGED)
+                .insertOne(session, new Document())
+
+        then:
+        thrown(MongoClientException)
+
+        cleanup:
+        session?.close()
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 7) || !isDiscoverableReplicaSet() })
+    def 'should ignore unacknowledged write concern when in a transaction'() {
+        given:
+        def session = getMongoClient().startSession()
+        session.startTransaction()
+
+        when:
+        getMongoClient().getDatabase(getDatabaseName()).getCollection(getCollectionName())
+                .withWriteConcern(WriteConcern.UNACKNOWLEDGED)
+                .insertOne(session, new Document())
+
+        then:
+        noExceptionThrown()
+
+        cleanup:
+        session.close()
     }
 }

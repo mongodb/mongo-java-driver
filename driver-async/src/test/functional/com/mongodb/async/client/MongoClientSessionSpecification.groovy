@@ -38,8 +38,10 @@ import spock.lang.IgnoreIf
 
 import java.util.concurrent.TimeUnit
 
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.async.client.Fixture.getMongoClient
 import static com.mongodb.async.client.TestHelper.run
 
 class MongoClientSessionSpecification extends FunctionalSpecification {
@@ -283,8 +285,43 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         then:
         def pingCommandStartedEvent = commandListener.events.get(0)
         !(pingCommandStartedEvent as CommandStartedEvent).command.containsKey('lsid')
+
         cleanup:
         client?.close()
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) || isStandalone() })
+    def 'should throw exception if unacknowledged write used with explicit session'() {
+        given:
+        def session = run(getMongoClient().&startSession)
+
+        when:
+        run(getMongoClient().getDatabase(getDatabaseName()).getCollection(getCollectionName())
+                .withWriteConcern(WriteConcern.UNACKNOWLEDGED).&insertOne, session, new Document())
+
+        then:
+        thrown(MongoClientException)
+
+        cleanup:
+        session?.close()
+    }
+
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 7) || !isDiscoverableReplicaSet() })
+    def 'should ignore unacknowledged write concern when in a transaction'() {
+        given:
+        def session = run(getMongoClient().&startSession)
+        session.startTransaction()
+
+        when:
+        run(getMongoClient().getDatabase(getDatabaseName()).getCollection(getCollectionName())
+                .withWriteConcern(WriteConcern.UNACKNOWLEDGED).&insertOne, session, new Document())
+
+        then:
+        noExceptionThrown()
+
+        cleanup:
+        session.close()
     }
 
     // This test attempts attempts to demonstrate that causal consistency works correctly by inserting a document and then immediately

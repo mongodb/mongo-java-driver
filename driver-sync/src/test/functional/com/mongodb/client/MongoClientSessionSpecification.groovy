@@ -37,6 +37,7 @@ import spock.lang.IgnoreIf
 
 import java.util.concurrent.TimeUnit
 
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.Fixture.getDefaultDatabaseName
@@ -321,7 +322,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 6) })
-    def 'should not use a session for an unacknowledged write'() {
+    def 'should not use an implicit session for an unacknowledged write'() {
         given:
         def commandListener = new TestCommandListener()
         def settings = MongoClientSettings.builder(getMongoClientSettings()).commandListenerList([commandListener]).build()
@@ -338,5 +339,41 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
 
         cleanup:
         client?.close()
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) || isStandalone() })
+    def 'should throw exception if unacknowledged write used with explicit session'() {
+        given:
+        def session = getMongoClient().startSession()
+
+        when:
+        getMongoClient().getDatabase(getDatabaseName()).getCollection(getCollectionName())
+                .withWriteConcern(WriteConcern.UNACKNOWLEDGED)
+                .insertOne(session, new Document())
+
+        then:
+        thrown(MongoClientException)
+
+        cleanup:
+        session?.close()
+    }
+
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 7) || !isDiscoverableReplicaSet() })
+    def 'should ignore unacknowledged write concern when in a transaction'() {
+        given:
+        def session = getMongoClient().startSession()
+        session.startTransaction()
+
+        when:
+        getMongoClient().getDatabase(getDatabaseName()).getCollection(getCollectionName())
+                .withWriteConcern(WriteConcern.UNACKNOWLEDGED)
+                .insertOne(session, new Document())
+
+        then:
+        noExceptionThrown()
+
+        cleanup:
+        session.close()
     }
 }
