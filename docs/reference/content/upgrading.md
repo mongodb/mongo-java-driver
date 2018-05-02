@@ -2,7 +2,7 @@
 date = "2015-03-19T12:53:39-04:00"
 title = "Upgrade Considerations"
 [menu.main]
-  identifier = "Upgrading to 3.7"
+  identifier = "Upgrading to 3.8"
   weight = 80
   pre = "<i class='fa fa-level-up'></i>"
 +++
