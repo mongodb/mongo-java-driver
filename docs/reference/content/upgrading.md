@@ -9,12 +9,17 @@ title = "Upgrade Considerations"
 
 ## Upgrading from 3.6.x
 
-The 3.7 release is binary and source compatible with the 3.5 release, except for methods that have been added to interfaces that
+In order to modularize the driver for Java 9, the ```MongoDriverInformation`` class had to be moved from the ``com.mongodb.client`` package
+to the ``com.mongodb`` package.  Generally the only consumers who rely on this class directly are other drivers that wrap the Java driver,
+so it's not expected that this change will affect many applications, so long as they also upgrade any wrapping drivers they they rely on
+(e .g. the Reactive Streams driver or the Scala driver) at the same time.
+
+Otherwise, the 3.7 release is binary and source compatible with the 3.6 release, except for methods that have been added to interfaces that
 have been marked as unstable, and changes to classes or interfaces that have been marked as internal or annotated as Beta.
 
 ## Upgrading from 2.x
 
-You must upgrade first to 3.0 driver.  See the Upgrade guide in the 3.0 driver reference documentation.
+See the Upgrade guide in the 3.0 driver reference documentation for breaking changes in 3.0.
 
 ### System Requirements
 
