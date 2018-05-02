@@ -19,8 +19,10 @@ package com.mongodb.client.model.changestream;
 import com.mongodb.MongoNamespace;
 import org.bson.BsonDocument;
 import org.bson.BsonReader;
+import org.bson.BsonTimestamp;
 import org.bson.BsonWriter;
 import org.bson.codecs.BsonDocumentCodec;
+import org.bson.codecs.BsonTimestampCodec;
 import org.bson.codecs.Codec;
 import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
@@ -44,6 +46,7 @@ final class ChangeStreamDocumentCodec<TResult> implements Codec<ChangeStreamDocu
     ChangeStreamDocumentCodec(final Class<TResult> fullDocumentClass, final CodecRegistry codecRegistry) {
 
         ClassModelBuilder<ChangeStreamDocument> classModelBuilder = ClassModel.builder(ChangeStreamDocument.class);
+        ((PropertyModelBuilder<BsonTimestamp>) classModelBuilder.getProperty("clusterTime")).codec(new BsonTimestampCodec());
         ((PropertyModelBuilder<BsonDocument>) classModelBuilder.getProperty("documentKey")).codec(BSON_DOCUMENT_CODEC);
         ((PropertyModelBuilder<TResult>) classModelBuilder.getProperty("fullDocument")).codec(codecRegistry.get(fullDocumentClass));
         ((PropertyModelBuilder<BsonDocument>) classModelBuilder.getProperty("resumeToken")).codec(BSON_DOCUMENT_CODEC);

@@ -22,6 +22,7 @@ import org.bson.BsonDocumentReader
 import org.bson.BsonDocumentWriter
 import org.bson.BsonInt32
 import org.bson.BsonReader
+import org.bson.BsonTimestamp
 import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DecoderContext
@@ -61,6 +62,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                         new MongoNamespace('databaseName.collectionName'),
                         Document.parse('{key: "value for fullDocument"}'),
                         new BsonDocument('_id', new BsonInt32(1)),
+                        new BsonTimestamp(1234, 2),
                         OperationType.INSERT,
                         null
                 ),
@@ -69,6 +71,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                         new MongoNamespace('databaseName.collectionName'),
                         BsonDocument.parse('{key: "value for fullDocument"}'),
                         new BsonDocument('_id', new BsonInt32(2)),
+                        null,
                         OperationType.UPDATE,
                         new UpdateDescription(['a', 'b'], BsonDocument.parse('{c: 1}'))
                 )
@@ -76,7 +79,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
         clazz << [Document, BsonDocument]
         json << [
             '''{_id: {token: true}, ns: {db: "databaseName", coll: "collectionName"}, documentKey : {_id : 1},
-                fullDocument: {key: "value for fullDocument"},
+                fullDocument: {key: "value for fullDocument"}, clusterTime: { "$timestamp" : { "t" : 1234, "i" : 2 } }
                 operationType: "insert"}''',
             '''{_id: {token: true}, ns: {db: "databaseName", coll: "collectionName"}, documentKey : {_id : 2},
                 fullDocument: {key: "value for fullDocument"},

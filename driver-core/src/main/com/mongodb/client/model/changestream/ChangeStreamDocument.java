@@ -17,7 +17,9 @@
 package com.mongodb.client.model.changestream;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
+import org.bson.BsonTimestamp;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.annotations.BsonCreator;
@@ -41,6 +43,7 @@ public final class ChangeStreamDocument<TDocument> {
     private final MongoNamespace namespace;
     private final TDocument fullDocument;
     private final BsonDocument documentKey;
+    private final BsonTimestamp clusterTime;
     private final OperationType operationType;
     private final UpdateDescription updateDescription;
 
@@ -53,18 +56,43 @@ public final class ChangeStreamDocument<TDocument> {
      * @param fullDocument the fullDocument
      * @param operationType the operation type
      * @param updateDescription the update description
+     * @deprecated Prefer {@link #ChangeStreamDocument(BsonDocument, MongoNamespace, Object, BsonDocument, BsonTimestamp, OperationType,
+     *                                                 UpdateDescription)}
      */
-    @BsonCreator
+    @Deprecated
     public ChangeStreamDocument(@BsonProperty("resumeToken") final BsonDocument resumeToken,
                                 @BsonProperty("namespace") final MongoNamespace namespace,
                                 @BsonProperty("fullDocument") final TDocument fullDocument,
                                 @BsonProperty("documentKey") final BsonDocument documentKey,
                                 @BsonProperty("operationType") final OperationType operationType,
                                 @BsonProperty("updateDescription") final UpdateDescription updateDescription) {
+        this(resumeToken, namespace, fullDocument, documentKey, null, operationType, updateDescription);
+    }
+
+    /**
+     * Creates a new instance
+     *
+     * @param resumeToken the resume token
+     * @param namespace the namespace
+     * @param documentKey a document containing the _id of the changed document
+     * @param clusterTime the cluster time at which the change occurred
+     * @param fullDocument the fullDocument
+     * @param operationType the operation type
+     * @param updateDescription the update description
+     */
+    @BsonCreator
+    public ChangeStreamDocument(@BsonProperty("resumeToken") final BsonDocument resumeToken,
+                                @BsonProperty("namespace") final MongoNamespace namespace,
+                                @BsonProperty("fullDocument") final TDocument fullDocument,
+                                @BsonProperty("documentKey") final BsonDocument documentKey,
+                                @Nullable @BsonProperty("clusterTime") final BsonTimestamp clusterTime,
+                                @BsonProperty("operationType") final OperationType operationType,
+                                @BsonProperty("updateDescription") final UpdateDescription updateDescription) {
         this.resumeToken = resumeToken;
         this.namespace = namespace;
         this.documentKey = documentKey;
         this.fullDocument = fullDocument;
+        this.clusterTime = clusterTime;
         this.operationType = operationType;
         this.updateDescription = updateDescription;
     }
@@ -109,6 +137,18 @@ public final class ChangeStreamDocument<TDocument> {
      */
     public BsonDocument getDocumentKey() {
         return documentKey;
+    }
+
+    /**
+     * Gets the cluster time at which the change occurred.
+     *
+     * @return the cluster time at which the change occurred
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     */
+    @Nullable
+    public BsonTimestamp getClusterTime() {
+        return clusterTime;
     }
 
     /**
@@ -165,6 +205,9 @@ public final class ChangeStreamDocument<TDocument> {
         if (documentKey != null ? !documentKey.equals(that.documentKey) : that.documentKey != null) {
             return false;
         }
+        if (clusterTime != null ? !clusterTime.equals(that.clusterTime) : that.clusterTime != null) {
+            return false;
+        }
         if (operationType != that.operationType) {
             return false;
         }
@@ -181,6 +224,7 @@ public final class ChangeStreamDocument<TDocument> {
         result = 31 * result + (namespace != null ? namespace.hashCode() : 0);
         result = 31 * result + (fullDocument != null ? fullDocument.hashCode() : 0);
         result = 31 * result + (documentKey != null ? documentKey.hashCode() : 0);
+        result = 31 * result + (clusterTime != null ? clusterTime.hashCode() : 0);
         result = 31 * result + (operationType != null ? operationType.hashCode() : 0);
         result = 31 * result + (updateDescription != null ? updateDescription.hashCode() : 0);
         return result;
@@ -193,6 +237,7 @@ public final class ChangeStreamDocument<TDocument> {
                 + ", namespace=" + namespace
                 + ", fullDocument=" + fullDocument
                 + ", documentKey=" + documentKey
+                + ", clusterTime=" + clusterTime
                 + ", operationType=" + operationType
                 + ", updateDescription=" + updateDescription
                 + "}";
