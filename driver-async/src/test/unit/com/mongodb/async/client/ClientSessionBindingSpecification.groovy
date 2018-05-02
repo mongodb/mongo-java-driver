@@ -163,7 +163,7 @@ class ClientSessionBindingSpecification extends Specification {
         where:
         ownsSession << [true, false]
     }
-    
+
     private AsyncReadWriteBinding createStubBinding() {
         def cluster = Mock(Cluster) {
             selectServerAsync(_, _) >> {

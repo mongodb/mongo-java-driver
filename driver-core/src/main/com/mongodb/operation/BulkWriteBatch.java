@@ -17,6 +17,7 @@
 package com.mongodb.operation;
 
 import com.mongodb.MongoBulkWriteException;
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
@@ -97,6 +98,10 @@ final class BulkWriteBatch {
                                                       final Boolean bypassDocumentValidation, final boolean retryWrites,
                                                       final List<? extends WriteRequest> writeRequests,
                                                       final SessionContext sessionContext) {
+        if (sessionContext.hasSession() && !sessionContext.isImplicitSession() && !sessionContext.hasActiveTransaction()
+                && !writeConcern.isAcknowledged()) {
+            throw new MongoClientException("Unacknowledged writes are not supported when using an explicit session");
+        }
         boolean canRetryWrites = isRetryableWrite(retryWrites, writeConcern, serverDescription, connectionDescription, sessionContext);
         List<WriteRequestWithIndex> writeRequestsWithIndex = new ArrayList<WriteRequestWithIndex>();
         boolean writeRequestsAreRetryable = true;
