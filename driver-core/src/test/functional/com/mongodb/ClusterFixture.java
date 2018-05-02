@@ -50,6 +50,7 @@ import com.mongodb.connection.netty.NettyStreamFactory;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
 import com.mongodb.operation.BatchCursor;
+import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.DropDatabaseOperation;
 import com.mongodb.operation.ReadOperation;
@@ -98,10 +99,6 @@ public final class ClusterFixture {
     private static Map<ReadPreference, AsyncReadWriteBinding> asyncBindingMap = new HashMap<ReadPreference, AsyncReadWriteBinding>();
 
     static {
-        String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
-        String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty()
-                ? DEFAULT_URI : mongoURIProperty;
-        connectionString = new ConnectionString(mongoURIString);
         Runtime.getRuntime().addShutdownHook(new ShutdownHook());
     }
 
@@ -188,7 +185,37 @@ public final class ClusterFixture {
     }
 
     public static synchronized ConnectionString getConnectionString() {
-        return connectionString;
+        if (connectionString != null) {
+            return connectionString;
+        }
+
+        String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
+        if (mongoURIProperty != null && !mongoURIProperty.isEmpty()) {
+            connectionString = new ConnectionString(mongoURIProperty);
+            return connectionString;
+        }
+
+        // Figure out what the connection string should be
+        Cluster cluster = createCluster(new ConnectionString(DEFAULT_URI),
+                new SocketStreamFactory(SocketSettings.builder().build(), SslSettings.builder().build()));
+        try {
+            BsonDocument isMasterResult = new CommandReadOperation<BsonDocument>("admin",
+                    new BsonDocument("ismaster", new BsonInt32(1)), new BsonDocumentCodec()).execute(new ClusterBinding(cluster,
+                    ReadPreference.nearest(), ReadConcern.DEFAULT));
+            if (isMasterResult.containsKey("setName")) {
+                connectionString = new ConnectionString(DEFAULT_URI + "/?replicaSet="
+                        + isMasterResult.getString("setName").getValue());
+            } else {
+                connectionString = new ConnectionString(DEFAULT_URI);
+                ClusterFixture.cluster = cluster;
+            }
+
+            return connectionString;
+        } finally {
+            if (ClusterFixture.cluster == null) {
+                cluster.close();
+            }
+        }
     }
 
     public static ReadWriteBinding getBinding(final Cluster cluster) {
@@ -263,15 +290,19 @@ public final class ClusterFixture {
         return asyncCluster;
     }
 
-    @SuppressWarnings("deprecation")
     public static Cluster createCluster(final StreamFactory streamFactory) {
-        return new DefaultClusterFactory().createCluster(ClusterSettings.builder().applyConnectionString(getConnectionString()).build(),
+        return createCluster(getConnectionString(), streamFactory);
+    }
+
+    @SuppressWarnings("deprecation")
+    private static Cluster createCluster(final ConnectionString connectionString, final StreamFactory streamFactory) {
+        return new DefaultClusterFactory().createCluster(ClusterSettings.builder().applyConnectionString(connectionString).build(),
                 ServerSettings.builder().build(),
-                ConnectionPoolSettings.builder().applyConnectionString(getConnectionString()).build(),
+                ConnectionPoolSettings.builder().applyConnectionString(connectionString).build(),
                 streamFactory,
-                new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()),
-                getConnectionString().getCredentialList(), null, null, null,
-                getConnectionString().getCompressorList());
+                new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings(connectionString)),
+                connectionString.getCredentialList(), null, null, null,
+                connectionString.getCompressorList());
     }
 
     public static StreamFactory getAsyncStreamFactory() {
