@@ -18,6 +18,7 @@ package com.mongodb.client.model.changestream
 
 import com.mongodb.MongoNamespace
 import org.bson.BsonDocument
+import org.bson.BsonTimestamp
 import org.bson.RawBsonDocument
 import spock.lang.Specification
 
@@ -29,17 +30,19 @@ class ChangeStreamDocumentSpecification extends Specification {
         def namespace = new MongoNamespace('databaseName.collectionName')
         def fullDocument = BsonDocument.parse('{key: "value for fullDocument"}')
         def documentKey = BsonDocument.parse('{_id : 1}')
+        def clusterTime = new BsonTimestamp(1234, 2)
         def operationType = OperationType.UPDATE
         def updateDesc = new UpdateDescription(['a', 'b'], BsonDocument.parse('{c: 1}'))
 
         when:
-        def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(resumeToken, namespace, fullDocument, documentKey,
+        def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(resumeToken, namespace, fullDocument, documentKey, clusterTime,
                 operationType, updateDesc)
 
         then:
         changeStreamDocument.getResumeToken() == resumeToken
         changeStreamDocument.getFullDocument() == fullDocument
         changeStreamDocument.getDocumentKey() == documentKey
+        changeStreamDocument.getClusterTime() == clusterTime
         changeStreamDocument.getNamespace() == namespace
         changeStreamDocument.getOperationType() == operationType
         changeStreamDocument.getUpdateDescription() == updateDesc
