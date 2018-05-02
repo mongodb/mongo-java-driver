@@ -35,11 +35,8 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * Helper class for asynchronous tests.
  */
 public final class Fixture {
-    public static final String DEFAULT_URI = "mongodb://localhost:27017";
-    public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
     private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
 
-    private static ConnectionString connectionString;
     private static MongoClientImpl mongoClient;
 
 
@@ -69,13 +66,7 @@ public final class Fixture {
     }
 
     public static synchronized ConnectionString getConnectionString() {
-        if (connectionString == null) {
-            String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
-            String mongoURIString = mongoURIProperty == null || mongoURIProperty.isEmpty()
-                                    ? DEFAULT_URI : mongoURIProperty;
-            connectionString = new ConnectionString(mongoURIString);
-        }
-        return connectionString;
+        return ClusterFixture.getConnectionString();
     }
 
     public static String getDefaultDatabaseName() {

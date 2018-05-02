@@ -17,6 +17,7 @@
 package com.mongodb.client;
 
 import com.mongodb.Block;
+import com.mongodb.ClusterFixture;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
@@ -29,8 +30,6 @@ import java.util.List;
  * Helper class for the acceptance tests.
  */
 public final class Fixture {
-    private static final String DEFAULT_URI = "mongodb://localhost:27017";
-    private static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
     private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
 
     private static MongoClient mongoClient;
@@ -75,8 +74,7 @@ public final class Fixture {
     }
 
     private static synchronized String getConnectionStringProperty() {
-        String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
-        return mongoURIProperty == null || mongoURIProperty.isEmpty() ? DEFAULT_URI : mongoURIProperty;
+        return ClusterFixture.getConnectionString().getConnectionString();
     }
 
     public static synchronized MongoClientSettings getMongoClientSettings() {
