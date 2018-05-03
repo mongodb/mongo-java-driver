@@ -39,7 +39,7 @@ class SimpleSessionContext implements SessionContext {
 
     @Override
     public boolean hasSession() {
-        return false;
+        return true;
     }
 
     @Override
