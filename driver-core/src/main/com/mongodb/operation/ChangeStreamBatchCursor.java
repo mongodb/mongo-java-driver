@@ -127,19 +127,19 @@ final class ChangeStreamBatchCursor<T> implements BatchCursor<T> {
     }
 
     <R> R resumeableOperation(final Function<BatchCursor<RawBsonDocument>, R> function) {
-        try {
-            return function.apply(wrapped);
-        } catch (MongoNotPrimaryException e) {
-            // Ignore
-        } catch (MongoCursorNotFoundException w) {
-            // Ignore
-        } catch (MongoSocketException e) {
-            // Ignore
+        while (true) {
+            try {
+                return function.apply(wrapped);
+            } catch (MongoNotPrimaryException e) {
+                // Ignore
+            } catch (MongoCursorNotFoundException w) {
+                // Ignore
+            } catch (MongoSocketException e) {
+                // Ignore
+            }
+            wrapped.close();
+            wrapped = ((ChangeStreamBatchCursor<T>) changeStreamOperation.resumeAfter(resumeToken).execute(binding)).getWrapped();
+            binding.release(); // release the new change stream batch cursor's reference to the binding
         }
-        wrapped.close();
-        wrapped = ((ChangeStreamBatchCursor<T>) changeStreamOperation.resumeAfter(resumeToken).execute(binding)).getWrapped();
-        binding.release(); // release the new change stream batch cursor's reference to the binding
-        return function.apply(wrapped);
     }
-
 }
