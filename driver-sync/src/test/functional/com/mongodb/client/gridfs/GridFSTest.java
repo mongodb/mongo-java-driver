@@ -261,6 +261,7 @@ public class GridFSTest extends DatabaseTestCase {
         ObjectId objectId = null;
         BsonDocument arguments = parseHexDocument(rawArguments, "source");
         try {
+            GridFSBucket gridFSUploadBucket = gridFSBucket;
             String filename = arguments.getString("filename").getValue();
             InputStream input = new ByteArrayInputStream(arguments.getBinary("source").getData());
             GridFSUploadOptions options = new GridFSUploadOptions();
@@ -271,8 +272,11 @@ public class GridFSTest extends DatabaseTestCase {
             if (rawOptions.containsKey("metadata")) {
                 options = options.metadata(Document.parse(rawOptions.getDocument("metadata").toJson()));
             }
+            if (rawOptions.containsKey("disableMD5")) {
+                gridFSUploadBucket = gridFSUploadBucket.withDisableMD5(rawOptions.getBoolean("disableMD5").getValue());
+            }
 
-            objectId = gridFSBucket.uploadFromStream(filename, input, options);
+            objectId = gridFSUploadBucket.uploadFromStream(filename, input, options);
         } catch (Throwable e) {
             error = e;
         }

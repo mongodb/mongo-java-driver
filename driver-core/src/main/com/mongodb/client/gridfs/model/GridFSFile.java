@@ -58,7 +58,7 @@ public final class GridFSFile {
      * @param metadata the optional metadata for the file
      */
     public GridFSFile(final BsonValue id, final String filename, final long length, final int chunkSize, final Date uploadDate,
-                      final String md5, final Document metadata) {
+                      @Nullable final String md5, final Document metadata) {
         this(id, filename, length, chunkSize, uploadDate, md5, metadata, null);
     }
 
@@ -77,13 +77,13 @@ public final class GridFSFile {
      * @param extraElements any extra data stored in the document
      */
     public GridFSFile(final BsonValue id, final String filename, final long length, final int chunkSize, final Date uploadDate,
-                      final String md5, @Nullable final Document metadata, @Nullable final Document extraElements) {
+                      @Nullable final String md5, @Nullable final Document metadata, @Nullable final Document extraElements) {
         this.id = notNull("id", id);
         this.filename = notNull("filename", filename);
         this.length = notNull("length", length);
         this.chunkSize = notNull("chunkSize", chunkSize);
         this.uploadDate = notNull("uploadDate", uploadDate);
-        this.md5 = notNull("md5", md5);
+        this.md5 = md5;
         this.metadata = metadata != null && metadata.isEmpty() ? null : metadata;
         this.extraElements = extraElements;
     }
@@ -150,8 +150,11 @@ public final class GridFSFile {
     /**
      * The hash of the contents of the stored file
      *
-     * @return the hash of the contents of the stored file
+     * @return the hash of the contents of the stored file or null if hashing the contents was disabled.
+     * @deprecated file hashing is deprecated and may be removed in the future.
      */
+    @Deprecated
+    @Nullable
     public String getMD5() {
         return md5;
     }
@@ -235,7 +238,7 @@ public final class GridFSFile {
         if (!uploadDate.equals(that.uploadDate)) {
             return false;
         }
-        if (!md5.equals(that.md5)) {
+        if (md5 != null ? !md5.equals(that.md5) : that.md5 != null) {
             return false;
         }
         if (metadata != null ? !metadata.equals(that.metadata) : that.metadata != null) {
@@ -254,7 +257,7 @@ public final class GridFSFile {
         result = 31 * result + (int) (length ^ (length >>> 32));
         result = 31 * result + chunkSize;
         result = 31 * result + uploadDate.hashCode();
-        result = 31 * result + md5.hashCode();
+        result = 31 * result + (md5 != null ? md5.hashCode() : 0);
         result = 31 * result + (metadata != null ? metadata.hashCode() : 0);
         result = 31 * result + (extraElements != null ? extraElements.hashCode() : 0);
         return result;

@@ -23,6 +23,7 @@ import org.bson.Document
 import org.bson.types.ObjectId
 import spock.lang.Specification
 
+@SuppressWarnings('deprecation')
 class GridFSFileSpecification extends Specification {
 
     def 'should return the expected valued'() {

@@ -40,6 +40,7 @@ import static com.mongodb.client.model.Updates.unset
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries
 
+@SuppressWarnings('deprecation')
 class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
     protected MongoDatabase mongoDatabase;
     protected MongoCollection<GridFSFile> filesCollection;
@@ -70,15 +71,16 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         def content = multiChunk ? multiChunkString : singleChunkString
         def contentBytes = content as byte[]
         def expectedLength = contentBytes.length as Long
-        def expectedMD5 = MessageDigest.getInstance('MD5').digest(contentBytes).encodeHex().toString()
+        def expectedMD5 = md5Disabled ? null : MessageDigest.getInstance('MD5').digest(contentBytes).encodeHex().toString()
+        def bucket = gridFSBucket.withDisableMD5(md5Disabled)
         ObjectId fileId
         byte[] gridFSContentBytes
 
         when:
         if (direct) {
-            fileId = gridFSBucket.uploadFromStream('myFile', new ByteArrayInputStream(contentBytes));
+            fileId = bucket.uploadFromStream('myFile', new ByteArrayInputStream(contentBytes))
         } else {
-            def outputStream = gridFSBucket.openUploadStream('myFile')
+            def outputStream = bucket.openUploadStream('myFile')
             outputStream.write(contentBytes)
             outputStream.close()
             fileId = outputStream.getObjectId()
@@ -93,17 +95,17 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
 
         then:
         file.getObjectId() == fileId
-        file.getChunkSize() == gridFSBucket.getChunkSizeBytes()
+        file.getChunkSize() == bucket.getChunkSizeBytes()
         file.getLength() == expectedLength
         file.getMD5() == expectedMD5
         file.getMetadata() == null
 
         when:
         if (direct) {
-            gridFSContentBytes = gridFSBucket.openDownloadStream(fileId).getBytes()
+            gridFSContentBytes = bucket.openDownloadStream(fileId).getBytes()
         } else {
             def outputStream = new ByteArrayOutputStream(expectedLength as int)
-            gridFSBucket.downloadToStream(fileId, outputStream)
+            bucket.downloadToStream(fileId, outputStream)
             outputStream.close()
             gridFSContentBytes = outputStream.toByteArray()
         }
@@ -112,11 +114,13 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         gridFSContentBytes == contentBytes
 
         where:
-        description              | multiChunk | chunkCount | direct
-        'a small file directly'  | false      | 1          | true
-        'a small file to stream' | false      | 1          | false
-        'a large file directly'  | true       | 5          | true
-        'a large file to stream' | true       | 5          | false
+        description                     | multiChunk | chunkCount | direct | md5Disabled
+        'a small file directly'         | false      | 1          | true   | false
+        'a small file to stream'        | false      | 1          | false  | false
+        'a large file directly'         | true       | 5          | true   | false
+        'a large file to stream'        | true       | 5          | false  | false
+        'a small file directly no md5'  | false      | 1          | true   | true
+        'a small file to stream no md5' | false      | 1          | false  | true
     }
 
     def 'should round trip with a batchSize of 1'() {

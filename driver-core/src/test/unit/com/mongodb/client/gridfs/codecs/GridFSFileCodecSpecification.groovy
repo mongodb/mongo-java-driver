@@ -63,9 +63,11 @@ class GridFSFileCodecSpecification extends Specification {
 
         where:
         original << [
+            new GridFSFile(ID, FILENAME, LENGTH, CHUNKSIZE, UPLOADDATE, null, null, null),
             new GridFSFile(ID, FILENAME, LENGTH, CHUNKSIZE, UPLOADDATE, MD5, null, null),
             new GridFSFile(ID, FILENAME, LENGTH, CHUNKSIZE, UPLOADDATE, MD5, METADATA, null),
             new GridFSFile(ID, FILENAME, LENGTH, CHUNKSIZE, UPLOADDATE, MD5, null, EXTRAELEMENTS),
+            new GridFSFile(ID, FILENAME, LENGTH, CHUNKSIZE, UPLOADDATE, null, METADATA, EXTRAELEMENTS),
             new GridFSFile(ID, FILENAME, LENGTH, CHUNKSIZE, UPLOADDATE, MD5, METADATA, EXTRAELEMENTS)
         ]
     }

@@ -70,7 +70,7 @@ public final class GridFSFileCodec implements Codec<GridFSFile> {
         long length = bsonDocument.getNumber("length").longValue();
         int chunkSize = bsonDocument.getNumber("chunkSize").intValue();
         Date uploadDate = new Date(bsonDocument.getDateTime("uploadDate").getValue());
-        String md5 = bsonDocument.getString("md5").getValue();
+        String md5 = bsonDocument.containsKey("md5") ? bsonDocument.getString("md5").getValue() : null;
         BsonDocument metadataBsonDocument = bsonDocument.getDocument("metadata", new BsonDocument());
 
         Document optionalMetadata = asDocumentOrNull(metadataBsonDocument);
@@ -92,7 +92,9 @@ public final class GridFSFileCodec implements Codec<GridFSFile> {
         bsonDocument.put("length", new BsonInt64(value.getLength()));
         bsonDocument.put("chunkSize", new BsonInt32(value.getChunkSize()));
         bsonDocument.put("uploadDate", new BsonDateTime(value.getUploadDate().getTime()));
-        bsonDocument.put("md5", new BsonString(value.getMD5()));
+        if (value.getMD5() != null) {
+            bsonDocument.put("md5", new BsonString(value.getMD5()));
+        }
 
         Document metadata = value.getMetadata();
         if (metadata != null) {

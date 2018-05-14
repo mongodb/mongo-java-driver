@@ -57,6 +57,7 @@ final class GridFSBucketImpl implements GridFSBucket {
     private final int chunkSizeBytes;
     private final MongoCollection<GridFSFile> filesCollection;
     private final MongoCollection<Document> chunksCollection;
+    private final boolean disableMD5;
     private volatile boolean checkedIndexes;
 
     GridFSBucketImpl(final MongoDatabase database) {
@@ -66,15 +67,16 @@ final class GridFSBucketImpl implements GridFSBucket {
     GridFSBucketImpl(final MongoDatabase database, final String bucketName) {
         this(notNull("bucketName", bucketName), DEFAULT_CHUNKSIZE_BYTES,
                 getFilesCollection(notNull("database", database), bucketName),
-                getChunksCollection(database, bucketName));
+                getChunksCollection(database, bucketName), false);
     }
 
     GridFSBucketImpl(final String bucketName, final int chunkSizeBytes, final MongoCollection<GridFSFile> filesCollection,
-                     final MongoCollection<Document> chunksCollection) {
+                     final MongoCollection<Document> chunksCollection, final boolean disableMD5) {
         this.bucketName = notNull("bucketName", bucketName);
         this.chunkSizeBytes = chunkSizeBytes;
         this.filesCollection = notNull("filesCollection", filesCollection);
         this.chunksCollection = notNull("chunksCollection", chunksCollection);
+        this.disableMD5 = disableMD5;
     }
 
     @Override
@@ -103,26 +105,36 @@ final class GridFSBucketImpl implements GridFSBucket {
     }
 
     @Override
+    public boolean getDisableMD5() {
+        return disableMD5;
+    }
+
+    @Override
     public GridFSBucket withChunkSizeBytes(final int chunkSizeBytes) {
-        return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection, chunksCollection);
+        return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection, chunksCollection, disableMD5);
     }
 
     @Override
     public GridFSBucket withReadPreference(final ReadPreference readPreference) {
         return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection.withReadPreference(readPreference),
-                chunksCollection.withReadPreference(readPreference));
+                chunksCollection.withReadPreference(readPreference), disableMD5);
     }
 
     @Override
     public GridFSBucket withWriteConcern(final WriteConcern writeConcern) {
         return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection.withWriteConcern(writeConcern),
-                chunksCollection.withWriteConcern(writeConcern));
+                chunksCollection.withWriteConcern(writeConcern), disableMD5);
     }
 
     @Override
     public GridFSBucket withReadConcern(final ReadConcern readConcern) {
         return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection.withReadConcern(readConcern),
-                chunksCollection.withReadConcern(readConcern));
+                chunksCollection.withReadConcern(readConcern), disableMD5);
+    }
+
+    @Override
+    public GridFSBucket withDisableMD5(final boolean disableMD5) {
+        return new GridFSBucketImpl(bucketName, chunkSizeBytes, filesCollection, chunksCollection, disableMD5);
     }
 
     @Override
@@ -179,7 +191,8 @@ final class GridFSBucketImpl implements GridFSBucket {
         Integer chunkSizeBytes = options.getChunkSizeBytes();
         int chunkSize = chunkSizeBytes == null ? this.chunkSizeBytes : chunkSizeBytes;
         checkCreateIndex(clientSession);
-        return new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, id, filename, chunkSize, options.getMetadata());
+        return new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, id, filename, chunkSize,
+                disableMD5, options.getMetadata());
     }
 
     @Override
