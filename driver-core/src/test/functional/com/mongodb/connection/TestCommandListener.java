@@ -71,6 +71,17 @@ public class TestCommandListener implements CommandListener {
         return events;
     }
 
+    public List<CommandEvent> getCommandStartedEvents() {
+        List<CommandEvent> commandStartedEvents = new ArrayList<CommandEvent>();
+        for (CommandEvent cur : getEvents()) {
+            if (cur instanceof CommandStartedEvent) {
+                commandStartedEvents.add(cur);
+            }
+        }
+        return commandStartedEvents;
+    }
+
+
     @Override
     public void commandStarted(final CommandStartedEvent event) {
         events.add(new CommandStartedEvent(event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),

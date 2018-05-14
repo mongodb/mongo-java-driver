@@ -122,7 +122,7 @@ class OperationExecutorImpl implements OperationExecutor {
                                                       @Nullable final ClientSession session, final boolean ownsSession) {
         notNull("readPreference", readPreference);
         AsyncReadWriteBinding readWriteBinding = new AsyncClusterBinding(mongoClient.getCluster(),
-                getReadPreferenceForBinding(readPreference, session));
+                getReadPreferenceForBinding(readPreference, session), readConcern);
         if (session != null) {
             if (!session.hasActiveTransaction() && session.getOptions().getAutoStartTransaction()) {
                 session.startTransaction();
