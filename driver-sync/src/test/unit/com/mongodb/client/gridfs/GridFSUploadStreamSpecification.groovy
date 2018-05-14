@@ -32,11 +32,12 @@ class GridFSUploadStreamSpecification extends Specification {
     def fileId = new BsonObjectId()
     def filename = 'filename'
     def metadata = new Document()
+    def disableMD5 = false
 
     def 'should return the file id'() {
         when:
-        def uploadStream = new GridFSUploadStreamImpl(null, Stub(MongoCollection), Stub(MongoCollection), fileId, filename, 255, metadata)
-
+        def uploadStream = new GridFSUploadStreamImpl(null, Stub(MongoCollection), Stub(MongoCollection), fileId, filename, 255,
+                disableMD5, metadata)
         then:
         uploadStream.getId() == fileId
     }
@@ -45,8 +46,8 @@ class GridFSUploadStreamSpecification extends Specification {
         given:
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
-        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 2, metadata)
-
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 2,
+                disableMD5, metadata)
         when:
         uploadStream.write(1)
 
@@ -71,7 +72,8 @@ class GridFSUploadStreamSpecification extends Specification {
         given:
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
-        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255, null)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255,
+                disableMD5, null)
 
         when:
         uploadStream.write('file content ' as byte[])
@@ -101,7 +103,8 @@ class GridFSUploadStreamSpecification extends Specification {
         def chunksCollection = Mock(MongoCollection)
         def content = 'file content ' as byte[]
         def metadata = new Document('contentType', 'text/txt')
-        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255, metadata)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255,
+                md5Disabled, metadata)
         def chunksData
         def fileData
 
@@ -131,19 +134,19 @@ class GridFSUploadStreamSpecification extends Specification {
         fileData.getFilename() == filename
         fileData.getLength() == content.length as Long
         fileData.getChunkSize() == 255
-        fileData.getMD5() == MessageDigest.getInstance('MD5').digest(content).encodeHex().toString()
+        fileData.getMD5() == md5Disabled ? null : MessageDigest.getInstance('MD5').digest(content).encodeHex().toString()
         fileData.getMetadata() == metadata
 
         where:
-        clientSession << [null, Stub(ClientSession)]
+        [clientSession, md5Disabled] << [[null, Stub(ClientSession)], [true, false]].combinations()
     }
 
     def 'should not write an empty chunk'() {
         given:
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
-        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255, metadata)
-
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255,
+                disableMD5, metadata)
         when:
         uploadStream.close()
 
@@ -163,7 +166,7 @@ class GridFSUploadStreamSpecification extends Specification {
         given:
         def chunksCollection = Mock(MongoCollection)
         def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), chunksCollection, fileId, filename, 255,
-                metadata)
+                disableMD5, metadata)
 
         when:
         uploadStream.write('file content ' as byte[])
@@ -183,7 +186,7 @@ class GridFSUploadStreamSpecification extends Specification {
     def 'should close the stream on abort'() {
         given:
         def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), Stub(MongoCollection), fileId, filename, 255,
-                metadata)
+                disableMD5, metadata)
         uploadStream.write('file content ' as byte[])
         uploadStream.abort()
 
@@ -201,7 +204,7 @@ class GridFSUploadStreamSpecification extends Specification {
         given:
         def chunksCollection = Mock(MongoCollection)
         def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), chunksCollection, fileId, filename, 255,
-                metadata)
+                disableMD5, metadata)
 
         when:
         uploadStream.write('file content ' as byte[])
@@ -218,8 +221,8 @@ class GridFSUploadStreamSpecification extends Specification {
         given:
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
-        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255, metadata)
-
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255,
+                disableMD5, metadata)
         when:
         uploadStream.close()
         uploadStream.write(1)
@@ -236,8 +239,8 @@ class GridFSUploadStreamSpecification extends Specification {
         def fileId = new BsonString('myFile')
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
-        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255, metadata)
-
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255,
+                disableMD5, metadata)
         when:
         uploadStream.getObjectId()
 

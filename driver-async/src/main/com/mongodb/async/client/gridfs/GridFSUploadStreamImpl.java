@@ -49,6 +49,7 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
     private final int chunkSizeBytes;
     private final Document metadata;
     private final MessageDigest md5;
+    private final boolean disableMD5;
     private final GridFSIndexCheck indexCheck;
     private final Object closeAndWritingLock = new Object();
 
@@ -68,7 +69,8 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
 
     GridFSUploadStreamImpl(@Nullable final ClientSession clientSession, final MongoCollection<GridFSFile> filesCollection,
                            final MongoCollection<Document> chunksCollection, final BsonValue fileId, final String filename,
-                           final int chunkSizeBytes, @Nullable final Document metadata, final GridFSIndexCheck indexCheck) {
+                           final int chunkSizeBytes, final boolean disableMD5, @Nullable final Document metadata,
+                           final GridFSIndexCheck indexCheck) {
         this.clientSession = clientSession;
         this.filesCollection = notNull("files collection", filesCollection);
         this.chunksCollection = notNull("chunks collection", chunksCollection);
@@ -77,7 +79,8 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
         this.chunkSizeBytes = chunkSizeBytes;
         this.metadata = metadata;
         this.indexCheck = indexCheck;
-        md5 = getDigest();
+        this.disableMD5 = disableMD5;
+        md5 = createMD5Digest();
         chunkIndex = 0;
         bufferOffset = 0;
         buffer = new byte[chunkSizeBytes];
@@ -176,7 +179,7 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
                     errHandlingCallback.onResult(null, t);
                 } else {
                     GridFSFile gridFSFile = new GridFSFile(fileId, filename, lengthInBytes, chunkSizeBytes, new Date(),
-                            toHex(md5.digest()), metadata);
+                            getMD5Digest(), metadata);
 
                     SingleResultCallback<Void> insertCallback = new SingleResultCallback<Void>() {
                         @Override
@@ -248,8 +251,9 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
     }
 
     private void writeChunk(final SingleResultCallback<Void> callback) {
-        if (md5 == null) {
-            callback.onResult(null, new MongoGridFSException("No MD5 message digest available, cannot upload file"));
+        if (md5 == null && !disableMD5) {
+            callback.onResult(null, new MongoGridFSException("No MD5 message digest available. "
+                    + "Use `GridFSBucket.withDisableMD5(true)` to disable creating a MD5 hash."));
         } else if (bufferOffset > 0) {
             Document insertDocument = new Document("files_id", fileId).append("n", chunkIndex).append("data", getData());
             SingleResultCallback<Void> insertCallback = new SingleResultCallback<Void>() {
@@ -258,7 +262,7 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
                     if (t != null) {
                         callback.onResult(null, t);
                     } else {
-                        md5.update(buffer);
+                        updateMD5();
                         chunkIndex++;
                         bufferOffset = 0;
                         callback.onResult(null, null);
@@ -316,11 +320,26 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
     }
 
     @Nullable
-    private static MessageDigest getDigest() {
-        try {
-            return MessageDigest.getInstance("MD5");
-        } catch (NoSuchAlgorithmException e) {
+    private MessageDigest createMD5Digest() {
+        if (disableMD5) {
             return null;
+        } else {
+            try {
+                return MessageDigest.getInstance("MD5");
+            } catch (NoSuchAlgorithmException e) {
+                return null;
+            }
+        }
+    }
+
+    @Nullable
+    private String getMD5Digest() {
+        return md5 != null ? toHex(md5.digest()) : null;
+    }
+
+    private void updateMD5() {
+        if (md5 != null) {
+            md5.update(buffer);
         }
     }
 }

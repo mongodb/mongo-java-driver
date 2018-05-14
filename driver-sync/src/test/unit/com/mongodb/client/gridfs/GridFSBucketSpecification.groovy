@@ -60,6 +60,7 @@ class GridFSBucketSpecification extends Specification {
     def databaseWithExecutor(OperationExecutor executor) {
         new MongoDatabaseImpl('test', registry, primary(), WriteConcern.ACKNOWLEDGED, false, readConcern, executor)
     }
+    def disableMD5 = false
 
     def 'should return the correct bucket name'() {
         when:
@@ -93,7 +94,8 @@ class GridFSBucketSpecification extends Specification {
         def newReadPreference = secondary()
 
         when:
-        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection).withReadPreference(newReadPreference)
+        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection, disableMD5)
+                .withReadPreference(newReadPreference)
 
         then:
         1 * filesCollection.withReadPreference(newReadPreference) >> filesCollection
@@ -113,7 +115,8 @@ class GridFSBucketSpecification extends Specification {
         def newWriteConcern = WriteConcern.MAJORITY
 
         when:
-        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection).withWriteConcern(newWriteConcern)
+        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection, disableMD5)
+                .withWriteConcern(newWriteConcern)
 
         then:
         1 * filesCollection.withWriteConcern(newWriteConcern) >> filesCollection
@@ -133,7 +136,8 @@ class GridFSBucketSpecification extends Specification {
         def newReadConcern = ReadConcern.MAJORITY
 
         when:
-        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection).withReadConcern(newReadConcern)
+        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection, disableMD5)
+                .withReadConcern(newReadConcern)
 
         then:
         1 * filesCollection.withReadConcern(newReadConcern) >> filesCollection
@@ -144,6 +148,20 @@ class GridFSBucketSpecification extends Specification {
 
         then:
         1 * filesCollection.getReadConcern() >> newReadConcern
+    }
+
+    def 'should behave correctly when using withDisableMD5'() {
+        when:
+        def gridFSBucket = new GridFSBucketImpl('fs', 255, Stub(MongoCollection), Stub(MongoCollection), disableMD5)
+
+        then:
+        !gridFSBucket.getDisableMD5()
+
+        when:
+        gridFSBucket = gridFSBucket.withDisableMD5(true)
+
+        then:
+        gridFSBucket.getDisableMD5()
     }
 
     def 'should get defaults from MongoDatabase'() {
@@ -160,13 +178,14 @@ class GridFSBucketSpecification extends Specification {
         gridFSBucket.getReadPreference() == database.getReadPreference()
         gridFSBucket.getWriteConcern() == database.getWriteConcern()
         gridFSBucket.getReadConcern() == database.getReadConcern()
+        gridFSBucket.getDisableMD5() == disableMD5
     }
 
     def 'should create the expected GridFSUploadStream'() {
         given:
         def filesCollection = Stub(MongoCollection)
         def chunksCollection = Stub(MongoCollection)
-        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
+        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection, disableMD5)
 
         when:
         def stream
@@ -178,7 +197,7 @@ class GridFSBucketSpecification extends Specification {
 
         then:
         expect stream, isTheSameAs(new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, stream.getId(), 'filename',
-                255, null), ['md5', 'closeLock'])
+                255, disableMD5, null), ['md5', 'closeLock'])
 
         where:
         clientSession << [null, Stub(ClientSession)]
@@ -189,7 +208,7 @@ class GridFSBucketSpecification extends Specification {
         def findIterable = Mock(FindIterable)
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
-        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
+        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection, disableMD5)
         def contentBytes = 'content' as byte[]
         def inputStream = new ByteArrayInputStream(contentBytes)
 
@@ -215,7 +234,7 @@ class GridFSBucketSpecification extends Specification {
         def findIterable = Mock(FindIterable)
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
-        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
+        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection, disableMD5)
         def inputStream = Mock(InputStream) {
             2 * read(_) >> 255 >> { throw new IOException('stream failure') }
         }
@@ -250,7 +269,7 @@ class GridFSBucketSpecification extends Specification {
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
         def alternativeException = new MongoGridFSException('Alternative failure')
-        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
+        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection, disableMD5)
         def inputStream = Mock(InputStream) {
             2 * read(_) >> 255 >> { throw alternativeException }
         }
@@ -286,7 +305,7 @@ class GridFSBucketSpecification extends Specification {
         def findIterable =  Mock(FindIterable)
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Stub(MongoCollection)
-        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
+        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection, disableMD5)
 
         when:
         def stream
@@ -324,7 +343,7 @@ class GridFSBucketSpecification extends Specification {
         def tenBytes = new byte[10]
         def chunkDocument = new Document('files_id', fileInfo.getId()).append('n', 0).append('data', new Binary(tenBytes))
         def chunksCollection = Mock(MongoCollection)
-        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
+        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection, disableMD5)
         def outputStream = new ByteArrayOutputStream(10)
 
         when:
@@ -373,7 +392,7 @@ class GridFSBucketSpecification extends Specification {
         def tenBytes = new byte[10]
         def chunkDocument = new Document('files_id', fileInfo.getId()).append('n', 0).append('data', new Binary(tenBytes))
         def chunksCollection = Mock(MongoCollection)
-        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
+        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection, disableMD5)
         def outputStream = new ByteArrayOutputStream(10)
 
         when:
@@ -425,7 +444,7 @@ class GridFSBucketSpecification extends Specification {
         def tenBytes = new byte[10]
         def chunkDocument = new Document('files_id', fileInfo.getId()).append('n', 0).append('data', new Binary(tenBytes))
         def chunksCollection = Mock(MongoCollection)
-        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
+        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection, disableMD5)
         def outputStream = new ByteArrayOutputStream(10)
 
         when:
@@ -475,7 +494,7 @@ class GridFSBucketSpecification extends Specification {
         def findIterable =  Mock(FindIterable)
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Stub(MongoCollection)
-        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
+        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection, disableMD5)
 
         when:
         if (clientSession != null) {
@@ -511,7 +530,7 @@ class GridFSBucketSpecification extends Specification {
         def findIterable =  Mock(FindIterable)
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Stub(MongoCollection)
-        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
+        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection, disableMD5)
 
         when:
         def stream = gridFSBucket.openDownloadStream(filename, new GridFSDownloadOptions().revision(version))
@@ -545,7 +564,7 @@ class GridFSBucketSpecification extends Specification {
         given:
         def collection = Mock(MongoCollection)
         def findIterable = Mock(FindIterable)
-        def gridFSBucket = new GridFSBucketImpl('fs', 255, collection, Stub(MongoCollection))
+        def gridFSBucket = new GridFSBucketImpl('fs', 255, collection, Stub(MongoCollection), disableMD5)
 
         when:
         def result
@@ -597,7 +616,7 @@ class GridFSBucketSpecification extends Specification {
         def filesCollection = Mock(MongoCollection)
         def findIterable = Mock(FindIterable)
         def chunksCollection = Stub(MongoCollection)
-        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
+        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection, disableMD5)
 
         when:
         if (clientSession != null) {
@@ -631,7 +650,7 @@ class GridFSBucketSpecification extends Specification {
         def chunksCollection = Mock(MongoCollection)
         def listIndexesIterable = Mock(ListIndexesIterable)
         def findIterable = Mock(FindIterable)
-        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
+        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection, disableMD5)
 
         when:
         if (clientSession != null) {
@@ -697,7 +716,7 @@ class GridFSBucketSpecification extends Specification {
         def chunksCollection = Mock(MongoCollection)
         def listIndexesIterable = Mock(ListIndexesIterable)
         def findIterable = Mock(FindIterable)
-        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
+        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection, disableMD5)
 
         when:
         gridFSBucket.openUploadStream('filename')
@@ -733,7 +752,7 @@ class GridFSBucketSpecification extends Specification {
         def fileId = new ObjectId()
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
-        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
+        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection, disableMD5)
 
         when:
         gridFSBucket.delete(fileId)
@@ -750,7 +769,7 @@ class GridFSBucketSpecification extends Specification {
         def fileId = new ObjectId()
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
-        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
+        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection, disableMD5)
 
         when:
         gridFSBucket.delete(fileId)
@@ -771,7 +790,7 @@ class GridFSBucketSpecification extends Specification {
         def fileId = new BsonObjectId(id)
         def filesCollection = Mock(MongoCollection)
         def newFilename = 'newFilename'
-        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, Stub(MongoCollection))
+        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, Stub(MongoCollection), disableMD5)
 
         when:
         gridFSBucket.rename(id, newFilename)
@@ -797,7 +816,7 @@ class GridFSBucketSpecification extends Specification {
             1 * updateOne(_, _) >> new UpdateResult.AcknowledgedUpdateResult(0, 0, null)
         }
         def newFilename = 'newFilename'
-        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, Stub(MongoCollection))
+        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, Stub(MongoCollection), disableMD5)
 
         when:
         gridFSBucket.rename(fileId, newFilename)
@@ -810,7 +829,7 @@ class GridFSBucketSpecification extends Specification {
         given:
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
-        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
+        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection, disableMD5)
 
         when:
         gridFSBucket.drop()
@@ -829,7 +848,7 @@ class GridFSBucketSpecification extends Specification {
         def filename = 'filename'
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
-        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection)
+        def gridFSBucket = new GridFSBucketImpl('fs', 255, filesCollection, chunksCollection, disableMD5)
 
         when:
         gridFSBucket.delete(null, objectId)

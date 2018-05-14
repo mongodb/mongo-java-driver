@@ -326,6 +326,7 @@ public class GridFSTest extends DatabaseTestCase {
             final String filename = arguments.getString("filename").getValue();
             final InputStream inputStream = new ByteArrayInputStream(arguments.getBinary("source").getData());
             final GridFSUploadOptions options = new GridFSUploadOptions();
+            GridFSBucket bucket = gridFSBucket;
             BsonDocument rawOptions = arguments.getDocument("options", new BsonDocument());
             if (rawOptions.containsKey("chunkSizeBytes")) {
                 options.chunkSizeBytes(rawOptions.getInt32("chunkSizeBytes").getValue());
@@ -333,11 +334,15 @@ public class GridFSTest extends DatabaseTestCase {
             if (rawOptions.containsKey("metadata")) {
                 options.metadata(Document.parse(rawOptions.getDocument("metadata").toJson()));
             }
+            if (rawOptions.containsKey("disableMD5")) {
+                bucket = bucket.withDisableMD5(rawOptions.getBoolean("disableMD5").getValue());
+            }
+            final GridFSBucket gridFSUploadBucket = bucket;
 
             objectId = new MongoOperation<ObjectId>() {
                 @Override
                 public void execute() {
-                    gridFSBucket.uploadFromStream(filename, toAsyncInputStream(inputStream), options, getCallback());
+                    gridFSUploadBucket.uploadFromStream(filename, toAsyncInputStream(inputStream), options, getCallback());
                 }
             }.get();
         } catch (Throwable e) {
