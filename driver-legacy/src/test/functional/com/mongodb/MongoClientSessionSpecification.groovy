@@ -73,6 +73,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
                 .defaultTransactionOptions(TransactionOptions.builder()
                 .readConcern(ReadConcern.DEFAULT)
                 .writeConcern(WriteConcern.ACKNOWLEDGED)
+                .readPreference(ReadPreference.primary())
                 .build())
                 .build()
         clientSession.getClusterTime() == null
@@ -88,10 +89,12 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 7) || isStandalone()  })
-    def 'should use mutated client write concern for default transaction options'() {
+    def 'should use mutated client properties for default transaction options'() {
         given:
         def originalWriteConcern = getMongoClient().getWriteConcern()
+        def originalReadPreference = getMongoClient().getReadPreference()
         getMongoClient().setWriteConcern(WriteConcern.MAJORITY)
+        getMongoClient().setReadPreference(ReadPreference.secondary())
 
         when:
         def clientSession = getMongoClient().startSession()
@@ -100,10 +103,12 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         clientSession.getOptions().defaultTransactionOptions == TransactionOptions.builder()
                 .readConcern(ReadConcern.DEFAULT)
                 .writeConcern(WriteConcern.MAJORITY)
+                .readPreference(ReadPreference.secondary())
                 .build()
 
         cleanup:
         getMongoClient().setWriteConcern(originalWriteConcern)
+        getMongoClient().setReadPreference(originalReadPreference)
         clientSession?.close()
     }
 

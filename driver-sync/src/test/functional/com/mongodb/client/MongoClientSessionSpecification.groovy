@@ -78,6 +78,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
                 .defaultTransactionOptions(TransactionOptions.builder()
                 .readConcern(ReadConcern.DEFAULT)
                 .writeConcern(WriteConcern.ACKNOWLEDGED)
+                .readPreference(ReadPreference.primary())
                 .build())
                 .build()
         clientSession.getClusterTime() == null

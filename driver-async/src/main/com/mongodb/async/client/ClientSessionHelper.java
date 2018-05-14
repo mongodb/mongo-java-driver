@@ -95,6 +95,7 @@ class ClientSessionHelper {
                                 TransactionOptions.builder()
                                         .readConcern(mongoClient.getSettings().getReadConcern())
                                         .writeConcern(mongoClient.getSettings().getWriteConcern())
+                                        .readPreference(mongoClient.getSettings().getReadPreference())
                                         .build()))
                 .build();
         return new ClientSessionImpl(serverSessionPool, mongoClient, mergedOptions, executor);

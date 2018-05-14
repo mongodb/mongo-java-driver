@@ -26,6 +26,7 @@ class TransactionOptionsSpecification extends Specification {
         then:
         options.getReadConcern() == null
         options.getWriteConcern() == null
+        options.getReadPreference() == null
     }
 
     def 'should apply options set in builder'() {
@@ -33,18 +34,27 @@ class TransactionOptionsSpecification extends Specification {
         def options = TransactionOptions.builder()
                 .readConcern(ReadConcern.LOCAL)
                 .writeConcern(WriteConcern.JOURNALED)
+                .readPreference(ReadPreference.secondary())
                 .build()
 
         then:
         options.readConcern == ReadConcern.LOCAL
         options.writeConcern == WriteConcern.JOURNALED
+        options.readPreference == ReadPreference.secondary()
     }
 
     def 'should merge'() {
         given:
         def first = TransactionOptions.builder().build();
-        def second = TransactionOptions.builder().readConcern(ReadConcern.MAJORITY).writeConcern(WriteConcern.MAJORITY).build()
-        def third = TransactionOptions.builder().readConcern(ReadConcern.LOCAL).writeConcern(WriteConcern.W2).build()
+        def second = TransactionOptions.builder().readConcern(ReadConcern.MAJORITY)
+                .writeConcern(WriteConcern.MAJORITY)
+                .readPreference(ReadPreference.secondary())
+                .build()
+        def third = TransactionOptions.builder()
+                .readConcern(ReadConcern.LOCAL)
+                .writeConcern(WriteConcern.W2)
+                .readPreference(ReadPreference.nearest())
+                .build()
 
         expect:
         TransactionOptions.merge(first, second) == second

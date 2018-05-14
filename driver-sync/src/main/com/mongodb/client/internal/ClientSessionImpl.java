@@ -19,7 +19,6 @@ package com.mongodb.client.internal;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoInternalException;
 import com.mongodb.ReadConcern;
-import com.mongodb.ReadPreference;
 import com.mongodb.TransactionOptions;
 import com.mongodb.client.ClientSession;
 import com.mongodb.internal.session.BaseClientSessionImpl;
@@ -88,7 +87,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
                 }
                 delegate.getOperationExecutor().execute(new CommitTransactionOperation(transactionOptions.getWriteConcern()),
-                        ReadPreference.primary(), readConcern, this);
+                        readConcern, this);
             }
         } finally {
             cleanupTransaction();
@@ -107,7 +106,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
                 }
                 delegate.getOperationExecutor().execute(new AbortTransactionOperation(transactionOptions.getWriteConcern()),
-                        ReadPreference.primary(), readConcern, this);
+                        readConcern, this);
             }
         } catch (Exception e) {
             // ignore errors

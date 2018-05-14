@@ -19,6 +19,7 @@ package com.mongodb.client.internal;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoCredential;
+import com.mongodb.MongoInternalException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
@@ -76,9 +77,10 @@ public class MongoClientDelegate {
 
     @Nullable
     public ClientSession createClientSession(final ClientSessionOptions options, final ReadConcern readConcern,
-                                             final WriteConcern writeConcern) {
+                                             final WriteConcern writeConcern, final ReadPreference readPreference) {
         notNull("readConcern", readConcern);
         notNull("writeConcern", writeConcern);
+        notNull("readPreference", readPreference);
 
         if (credentialList.size() > 1) {
             return null;
@@ -97,6 +99,7 @@ public class MongoClientDelegate {
                                     TransactionOptions.builder()
                                             .readConcern(readConcern)
                                             .writeConcern(writeConcern)
+                                            .readPreference(readPreference)
                                             .build()))
                     .build();
             return new ClientSessionImpl(serverSessionPool, originator, mergedOptions, this);
@@ -161,6 +164,9 @@ public class MongoClientDelegate {
             ReadBinding binding = getReadBinding(readPreference, readConcern, actualClientSession,
                     session == null && actualClientSession != null);
             try {
+                if (session != null && session.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
+                    throw new MongoClientException("Read preference in a transaction must be primary");
+                }
                 return operation.execute(binding);
             } finally {
                 binding.release();
@@ -189,17 +195,29 @@ public class MongoClientDelegate {
 
         ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, final ReadConcern readConcern,
                                              @Nullable final ClientSession session, final boolean ownsSession) {
-            ReadWriteBinding readWriteBinding = new ClusterBinding(cluster, readPreference, readConcern);
+            ReadWriteBinding readWriteBinding = new ClusterBinding(cluster, getReadPreferenceForBinding(readPreference, session),
+                    readConcern);
             if (session != null) {
-                if (session.hasActiveTransaction() && !readPreference.equals(primary())) {
-                    throw new MongoClientException("Read preference in a transaction must be primary");
-                }
                 if (!session.hasActiveTransaction() && session.getOptions().getAutoStartTransaction()) {
                     session.startTransaction();
                 }
                 readWriteBinding = new ClientSessionBinding(session, ownsSession, readWriteBinding);
             }
             return readWriteBinding;
+        }
+
+        private ReadPreference getReadPreferenceForBinding(final ReadPreference readPreference, @Nullable final ClientSession session) {
+            if (session == null) {
+                return readPreference;
+            }
+            if (session.hasActiveTransaction()) {
+                ReadPreference readPreferenceForBinding = session.getTransactionOptions().getReadPreference();
+                if (readPreferenceForBinding == null) {
+                    throw new MongoInternalException("Invariant violated.  Transaction options read preference can not be null");
+                }
+                return readPreferenceForBinding;
+            }
+            return readPreference;
         }
 
         @Nullable
@@ -210,7 +228,7 @@ public class MongoClientDelegate {
                 session = clientSessionFromOperation;
             } else {
                 session = createClientSession(ClientSessionOptions.builder().causallyConsistent(false).build(), ReadConcern.DEFAULT,
-                        WriteConcern.ACKNOWLEDGED);
+                        WriteConcern.ACKNOWLEDGED, ReadPreference.primary());
             }
             return session;
         }

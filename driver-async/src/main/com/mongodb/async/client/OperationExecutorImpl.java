@@ -17,6 +17,7 @@
 package com.mongodb.async.client;
 
 import com.mongodb.MongoClientException;
+import com.mongodb.MongoInternalException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
@@ -65,6 +66,9 @@ class OperationExecutorImpl implements OperationExecutor {
                 } else {
                     final AsyncReadBinding binding = getReadWriteBinding(readPreference, readConcern, clientSession,
                             session == null && clientSession != null);
+                    if (session != null && session.hasActiveTransaction() && !binding.getReadPreference().equals(primary())) {
+                        throw new MongoClientException("Read preference in a transaction must be primary");
+                    }
                     operation.executeAsync(binding, new SingleResultCallback<T>() {
                         @Override
                         public void onResult(final T result, final Throwable t) {
@@ -117,11 +121,9 @@ class OperationExecutorImpl implements OperationExecutor {
     private AsyncReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, final ReadConcern readConcern,
                                                       @Nullable final ClientSession session, final boolean ownsSession) {
         notNull("readPreference", readPreference);
-        AsyncReadWriteBinding readWriteBinding = new AsyncClusterBinding(mongoClient.getCluster(), readPreference);
+        AsyncReadWriteBinding readWriteBinding = new AsyncClusterBinding(mongoClient.getCluster(),
+                getReadPreferenceForBinding(readPreference, session));
         if (session != null) {
-            if (session.hasActiveTransaction() && !readPreference.equals(primary())) {
-                throw new MongoClientException("Read preference in a transaction must be primary");
-            }
             if (!session.hasActiveTransaction() && session.getOptions().getAutoStartTransaction()) {
                 session.startTransaction();
             }
@@ -130,4 +132,17 @@ class OperationExecutorImpl implements OperationExecutor {
         return readWriteBinding;
     }
 
+    private ReadPreference getReadPreferenceForBinding(final ReadPreference readPreference, @Nullable final ClientSession session) {
+        if (session == null) {
+            return readPreference;
+        }
+        if (session.hasActiveTransaction()) {
+            ReadPreference readPreferenceForBinding = session.getTransactionOptions().getReadPreference();
+            if (readPreferenceForBinding == null) {
+                throw new MongoInternalException("Invariant violated.  Transaction options read preference can not be null");
+            }
+            return readPreferenceForBinding;
+        }
+        return readPreference;
+    }
 }

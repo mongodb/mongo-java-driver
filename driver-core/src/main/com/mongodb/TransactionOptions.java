@@ -23,7 +23,9 @@ import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * Options to apply to transactions.
+ * Options to apply to transactions. The default values for the options depend on context.  For options specified per-transaction, the
+ * default values come from the default transaction options.  For the default transaction options themselves, the default values come from
+ * the MongoClient on which the session was started.
  *
  * @see com.mongodb.session.ClientSession
  * @see ClientSessionOptions
@@ -34,11 +36,12 @@ import static com.mongodb.assertions.Assertions.notNull;
 public final class TransactionOptions {
     private final ReadConcern readConcern;
     private final WriteConcern writeConcern;
+    private final ReadPreference readPreference;
 
     /**
      * Gets the read concern.
      *
-     * @return the read concern, which defaults to {@link ReadConcern#SNAPSHOT}
+     * @return the read concern
      */
     @Nullable
     public ReadConcern getReadConcern() {
@@ -48,11 +51,21 @@ public final class TransactionOptions {
     /**
      * Gets the write concern.
      *
-     * @return the write concern, which defaults to {@link WriteConcern#ACKNOWLEDGED}
+     * @return the write concern
      */
     @Nullable
     public WriteConcern getWriteConcern() {
         return writeConcern;
+    }
+
+    /**
+     * Gets the read preference.
+     *
+     * @return the write concern
+     */
+    @Nullable
+    public ReadPreference getReadPreference() {
+        return readPreference;
     }
 
     /**
@@ -79,6 +92,8 @@ public final class TransactionOptions {
                         ? defaultOptions.getWriteConcern() : options.getWriteConcern())
                 .readConcern(options.getReadConcern() == null
                         ? defaultOptions.getReadConcern() : options.getReadConcern())
+                .readPreference(options.getReadPreference() == null
+                        ? defaultOptions.getReadPreference() : options.getReadPreference())
                 .build();
     }
 
@@ -99,6 +114,9 @@ public final class TransactionOptions {
         if (writeConcern != null ? !writeConcern.equals(that.writeConcern) : that.writeConcern != null) {
             return false;
         }
+        if (readPreference != null ? !readPreference.equals(that.readPreference) : that.readPreference != null) {
+            return false;
+        }
 
         return true;
     }
@@ -107,14 +125,17 @@ public final class TransactionOptions {
     public int hashCode() {
         int result = readConcern != null ? readConcern.hashCode() : 0;
         result = 31 * result + (writeConcern != null ? writeConcern.hashCode() : 0);
+        result = 31 * result + (readPreference != null ? readPreference.hashCode() : 0);
         return result;
     }
 
     @Override
     public String toString() {
-        return "TransactionOptions{readConcern="
-                + readConcern + ", writeConcern="
-                + writeConcern + '}';
+        return "TransactionOptions{"
+                + "readConcern=" + readConcern
+                + ", writeConcern=" + writeConcern
+                + ", readPreference=" + readPreference
+                + '}';
     }
 
     /**
@@ -123,6 +144,7 @@ public final class TransactionOptions {
     public static final class Builder {
         private ReadConcern readConcern;
         private WriteConcern writeConcern;
+        private ReadPreference readPreference;
 
         /**
          * Sets the read concern.
@@ -148,6 +170,17 @@ public final class TransactionOptions {
         }
 
         /**
+         * Sets the read preference.
+         *
+         * @param readPreference the read preference, which currently must be primary. This restriction may be relaxed in future versions.
+         * @return this
+         */
+        public Builder readPreference(@Nullable final ReadPreference readPreference) {
+            this.readPreference = readPreference;
+            return this;
+        }
+
+        /**
          * Build the transaction options instance.
          *
          * @return The {@code TransactionOptions}
@@ -164,5 +197,6 @@ public final class TransactionOptions {
     private TransactionOptions(final Builder builder) {
         readConcern = builder.readConcern;
         writeConcern = builder.writeConcern;
+        readPreference = builder.readPreference;
     }
 }

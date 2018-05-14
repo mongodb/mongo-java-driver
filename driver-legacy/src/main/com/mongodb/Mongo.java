@@ -797,7 +797,7 @@ public class Mongo {
 
     @Nullable
     ClientSession createClientSession(final ClientSessionOptions options) {
-        return delegate.createClientSession(options, readConcern, writeConcern);
+        return delegate.createClientSession(options, readConcern, writeConcern, readPreference);
     }
 
     private ExecutorService createCursorCleaningService() {
