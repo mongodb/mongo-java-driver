@@ -23,6 +23,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadConcernLevel;
+import com.mongodb.ReadPreference;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.CreateCollectionOptions;
@@ -134,6 +135,7 @@ public class TransactionsTest {
                 .retryWrites(clientOptions.getBoolean("retryWrites", BsonBoolean.FALSE).getValue())
                 .writeConcern(getWriteConcern(clientOptions))
                 .readConcern(getReadConcern(clientOptions))
+                .readPreference(getReadPreference(clientOptions))
                 .build());
 
         MongoDatabase database = mongoClient.getDatabase(databaseName);
@@ -167,6 +169,14 @@ public class TransactionsTest {
         }
     }
 
+    private ReadPreference getReadPreference(final BsonDocument clientOptions) {
+        if (clientOptions.containsKey("readPreference")) {
+            return ReadPreference.valueOf(clientOptions.getString("readPreference").getValue());
+        } else {
+            return ReadPreference.primary();
+        }
+    }
+
     private ClientSession createSession(final String sessionName) {
         BsonDocument optionsDocument = definition.getDocument("sessionOptions", new BsonDocument())
                 .getDocument(sessionName, new BsonDocument());
@@ -192,6 +202,9 @@ public class TransactionsTest {
             }
             if (defaultTransactionOptionsDocument.containsKey("writeConcern")) {
                 builder.writeConcern(helper.getWriteConcern(defaultTransactionOptionsDocument));
+            }
+            if (defaultTransactionOptionsDocument.containsKey("readPreference")) {
+                builder.readPreference(helper.getReadPreference(defaultTransactionOptionsDocument));
             }
         }
         return builder.build();
@@ -232,6 +245,9 @@ public class TransactionsTest {
                             }
                             if (options.containsKey("readConcern")) {
                                 builder.readConcern(helper.getReadConcern(options));
+                            }
+                            if (options.containsKey("readPreference")) {
+                                builder.readPreference(helper.getReadPreference(options));
                             }
                             nonNullClientSession(clientSession).startTransaction(builder.build());
                         } else {

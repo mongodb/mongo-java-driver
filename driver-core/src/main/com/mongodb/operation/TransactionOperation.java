@@ -18,8 +18,8 @@ package com.mongodb.operation;
 
 import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.binding.AsyncReadBinding;
-import com.mongodb.binding.ReadBinding;
+import com.mongodb.binding.AsyncWriteBinding;
+import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
@@ -32,17 +32,17 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTransformer;
 import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
-import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTransformer;
 
 /**
  * A base class for transaction-related operations
  *
  * @since 3.8
  */
-public abstract class TransactionOperation implements ReadOperation<Void>, AsyncReadOperation<Void> {
+public abstract class TransactionOperation implements WriteOperation<Void>, AsyncWriteOperation<Void> {
     private final WriteConcern writeConcern;
 
     /**
@@ -64,7 +64,7 @@ public abstract class TransactionOperation implements ReadOperation<Void>, Async
     }
 
     @Override
-    public Void execute(final ReadBinding binding) {
+    public Void execute(final WriteBinding binding) {
         isTrue("in transaction", binding.getSessionContext().hasActiveTransaction());
         return withConnection(binding, new CallableWithConnection<Void>() {
             @Override
@@ -76,7 +76,7 @@ public abstract class TransactionOperation implements ReadOperation<Void>, Async
     }
 
     @Override
-    public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Void> callback) {
+    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
         isTrue("in transaction", binding.getSessionContext().hasActiveTransaction());
         withConnection(binding, new AsyncCallableWithConnection() {
             @Override
