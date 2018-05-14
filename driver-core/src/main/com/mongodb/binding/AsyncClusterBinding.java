@@ -16,17 +16,18 @@
 
 package com.mongodb.binding;
 
+import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.session.SessionContext;
-import com.mongodb.internal.connection.NoOpSessionContext;
+import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
 import com.mongodb.selector.ReadPreferenceServerSelector;
 import com.mongodb.selector.ServerSelector;
 import com.mongodb.selector.WritableServerSelector;
+import com.mongodb.session.SessionContext;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -39,16 +40,32 @@ import static com.mongodb.assertions.Assertions.notNull;
 public class AsyncClusterBinding extends AbstractReferenceCounted implements AsyncReadWriteBinding {
     private final Cluster cluster;
     private final ReadPreference readPreference;
+    private final ReadConcern readConcern;
 
     /**
      * Creates an instance.
      *
      * @param cluster        a non-null Cluster which will be used to select a server to bind to
      * @param readPreference a non-null ReadPreference for read operations
+     * @deprecated Prefer {@link #AsyncClusterBinding(Cluster, ReadPreference, ReadConcern)}
      */
+    @Deprecated
     public AsyncClusterBinding(final Cluster cluster, final ReadPreference readPreference) {
+        this(cluster, readPreference, ReadConcern.DEFAULT);
+    }
+
+    /**
+     * Creates an instance.
+     *
+     * @param cluster        a non-null Cluster which will be used to select a server to bind to
+     * @param readPreference a non-null ReadPreference for read operations
+     * @param readConcern    a non-null read concern
+     * @since 3.8
+     */
+    public AsyncClusterBinding(final Cluster cluster, final ReadPreference readPreference, final ReadConcern readConcern) {
         this.cluster = notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
+        this.readConcern = (notNull("readConcern", readConcern));
     }
 
     @Override
@@ -64,7 +81,7 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
 
     @Override
     public SessionContext getSessionContext() {
-        return NoOpSessionContext.INSTANCE;
+        return new ReadConcernAwareNoOpSessionContext(readConcern);
     }
 
     @Override
@@ -106,7 +123,7 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
 
         @Override
         public SessionContext getSessionContext() {
-            return NoOpSessionContext.INSTANCE;
+            return new ReadConcernAwareNoOpSessionContext(readConcern);
         }
 
         @Override

@@ -31,7 +31,6 @@ import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.TestCommandListener;
 import com.mongodb.event.CommandEvent;
-import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -305,7 +304,7 @@ public class TransactionsTest {
             // TODO: null operation may cause test failures, since it's used to grab the read preference
             // TODO: though read-pref.json doesn't declare expectations, so maybe not
             List<CommandEvent> expectedEvents = getExpectedEvents(definition.getArray("expectations"), databaseName, null);
-            List<CommandEvent> events = getCommandStartedEvents();
+            List<CommandEvent> events = commandListener.getCommandStartedEvents();
 
             assertEventsEquality(expectedEvents, events, commandListener.getSessions());
         }
@@ -350,16 +349,6 @@ public class TransactionsTest {
             throw new IllegalArgumentException("clientSession can't be null in this context");
         }
         return clientSession;
-    }
-
-    private List<CommandEvent> getCommandStartedEvents() {
-        List<CommandEvent> commandStartedEvents = new ArrayList<CommandEvent>();
-        for (CommandEvent cur : commandListener.getEvents()) {
-            if (cur instanceof CommandStartedEvent) {
-                commandStartedEvents.add(cur);
-            }
-        }
-        return commandStartedEvents;
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
