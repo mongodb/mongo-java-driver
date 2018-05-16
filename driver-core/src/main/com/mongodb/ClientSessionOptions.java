@@ -35,7 +35,6 @@ import static com.mongodb.assertions.Assertions.notNull;
 public final class ClientSessionOptions {
 
     private final Boolean causallyConsistent;
-    private final boolean autoStartTransaction;
     private final TransactionOptions defaultTransactionOptions;
 
     /**
@@ -48,17 +47,6 @@ public final class ClientSessionOptions {
     @Nullable
     public Boolean isCausallyConsistent() {
         return causallyConsistent;
-    }
-
-    /**
-     * Gets whether a transaction should be automatically started along with the session.
-     *
-     * @return whether a transaction should be automatically started along with the session.  The default is false.
-     * @since 3.8
-     * @mongodb.server.release 4.0
-     */
-    public boolean getAutoStartTransaction() {
-        return autoStartTransaction;
     }
 
     /**
@@ -83,9 +71,6 @@ public final class ClientSessionOptions {
 
         ClientSessionOptions that = (ClientSessionOptions) o;
 
-        if (autoStartTransaction != that.autoStartTransaction) {
-            return false;
-        }
         if (causallyConsistent != null ? !causallyConsistent.equals(that.causallyConsistent) : that.causallyConsistent != null) {
             return false;
         }
@@ -100,7 +85,6 @@ public final class ClientSessionOptions {
     @Override
     public int hashCode() {
         int result = causallyConsistent != null ? causallyConsistent.hashCode() : 0;
-        result = 31 * result + (autoStartTransaction ? 1 : 0);
         result = 31 * result + (defaultTransactionOptions != null ? defaultTransactionOptions.hashCode() : 0);
         return result;
     }
@@ -109,7 +93,6 @@ public final class ClientSessionOptions {
     public String toString() {
         return "ClientSessionOptions{"
                 + "causallyConsistent=" + causallyConsistent
-                + ", autoStartTransaction=" + autoStartTransaction
                 + ", defaultTransactionOptions=" + defaultTransactionOptions
                 + '}';
     }
@@ -134,7 +117,6 @@ public final class ClientSessionOptions {
         notNull("options", options);
         Builder builder = new Builder();
         builder.causallyConsistent = options.isCausallyConsistent();
-        builder.autoStartTransaction = options.getAutoStartTransaction();
         builder.defaultTransactionOptions = options.getDefaultTransactionOptions();
         return builder;
     }
@@ -145,7 +127,6 @@ public final class ClientSessionOptions {
     @NotThreadSafe
     public static final class Builder {
         private Boolean causallyConsistent;
-        private boolean autoStartTransaction;
         private TransactionOptions defaultTransactionOptions = TransactionOptions.builder().build();
 
         /**
@@ -157,20 +138,6 @@ public final class ClientSessionOptions {
          */
         public Builder causallyConsistent(final boolean causallyConsistent) {
             this.causallyConsistent = causallyConsistent;
-            return this;
-        }
-
-        /**
-         * Sets whether operations using the session should causally consistent with each other.
-         *
-         * @param autoStartTransaction whether a transaction should be started automatically when the session is started.
-         *
-         * @return this
-         * @since 3.8
-         * @mongodb.server.release 4.0
-         */
-        public Builder autoStartTransaction(final boolean autoStartTransaction) {
-            this.autoStartTransaction = autoStartTransaction;
             return this;
         }
 
@@ -202,7 +169,6 @@ public final class ClientSessionOptions {
 
     private ClientSessionOptions(final Builder builder) {
         this.causallyConsistent = builder.causallyConsistent;
-        this.autoStartTransaction = builder.autoStartTransaction;
         this.defaultTransactionOptions = builder.defaultTransactionOptions;
     }
 }

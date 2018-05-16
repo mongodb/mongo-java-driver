@@ -26,7 +26,6 @@ class ClientSessionOptionsSpecification extends Specification {
 
         then:
         options.isCausallyConsistent() == null
-        !options.autoStartTransaction
         options.defaultTransactionOptions == TransactionOptions.builder().build()
     }
 
@@ -34,18 +33,15 @@ class ClientSessionOptionsSpecification extends Specification {
         when:
         def options = ClientSessionOptions.builder()
                 .causallyConsistent(causallyConsistent)
-                .autoStartTransaction(autoStartTransaction)
                 .defaultTransactionOptions(transactionOptions)
                 .build()
 
         then:
         options.isCausallyConsistent() == causallyConsistent
-        options.autoStartTransaction == autoStartTransaction
         options.defaultTransactionOptions == transactionOptions
 
         where:
         causallyConsistent << [true, false]
-        autoStartTransaction << [true, false]
         transactionOptions << [TransactionOptions.builder().build(), TransactionOptions.builder().readConcern(ReadConcern.LOCAL).build()]
     }
 
@@ -57,7 +53,6 @@ class ClientSessionOptionsSpecification extends Specification {
         baseOptions << [ClientSessionOptions.builder().build(),
                         ClientSessionOptions.builder()
                                 .causallyConsistent(true)
-                                .autoStartTransaction(false)
                                 .defaultTransactionOptions(TransactionOptions.builder()
                                 .writeConcern(WriteConcern.MAJORITY)
                                 .readConcern(ReadConcern

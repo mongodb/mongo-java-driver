@@ -128,7 +128,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
     }
 
     private boolean canCommitOrAbort() {
-        return !inTransaction && !getOptions().getAutoStartTransaction();
+        return !inTransaction;
     }
 
     private void cleanupTransaction() {

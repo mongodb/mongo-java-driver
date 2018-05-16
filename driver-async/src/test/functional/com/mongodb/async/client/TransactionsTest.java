@@ -181,7 +181,6 @@ public class TransactionsTest {
                 .getDocument(sessionName, new BsonDocument());
         final ClientSessionOptions options = ClientSessionOptions.builder()
                 .causallyConsistent(optionsDocument.getBoolean("causalConsistency", BsonBoolean.TRUE).getValue())
-                .autoStartTransaction(optionsDocument.getBoolean("autoStartTransaction", BsonBoolean.FALSE).getValue())
                 .defaultTransactionOptions(createDefaultTransactionOptions(optionsDocument))
                 .build();
         return new MongoOperation<ClientSession>() {
