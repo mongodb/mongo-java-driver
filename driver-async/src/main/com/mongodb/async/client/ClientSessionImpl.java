@@ -126,7 +126,7 @@ class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
     }
 
     private boolean canCommitOrAbort() {
-        return inTransaction || getOptions().getAutoStartTransaction();
+        return inTransaction;
     }
 
     // TODO: should there be a version of this that takes a callback?

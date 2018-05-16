@@ -198,9 +198,6 @@ public class MongoClientDelegate {
             ReadWriteBinding readWriteBinding = new ClusterBinding(cluster, getReadPreferenceForBinding(readPreference, session),
                     readConcern);
             if (session != null) {
-                if (!session.hasActiveTransaction() && session.getOptions().getAutoStartTransaction()) {
-                    session.startTransaction();
-                }
                 readWriteBinding = new ClientSessionBinding(session, ownsSession, readWriteBinding);
             }
             return readWriteBinding;
