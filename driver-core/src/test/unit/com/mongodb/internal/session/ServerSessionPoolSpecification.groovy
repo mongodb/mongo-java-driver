@@ -67,7 +67,7 @@ class ServerSessionPoolSpecification extends Specification {
     def 'should get session'() {
         given:
         def cluster = Stub(Cluster) {
-            getDescription() >> connectedDescription
+            getCurrentDescription() >> connectedDescription
         }
         def pool = new ServerSessionPool(cluster)
 
@@ -81,7 +81,7 @@ class ServerSessionPoolSpecification extends Specification {
     def 'should throw IllegalStateException if pool is closed'() {
         given:
         def cluster = Stub(Cluster) {
-            getDescription() >> connectedDescription
+            getCurrentDescription() >> connectedDescription
         }
         def pool = new ServerSessionPool(cluster)
         pool.close()
@@ -96,7 +96,7 @@ class ServerSessionPoolSpecification extends Specification {
     def 'should pool session'() {
         given:
         def cluster = Stub(Cluster) {
-            getDescription() >> connectedDescription
+            getCurrentDescription() >> connectedDescription
         }
         def pool = new ServerSessionPool(cluster)
         def session = pool.get()
@@ -112,7 +112,7 @@ class ServerSessionPoolSpecification extends Specification {
     def 'should prune sessions on release'() {
         given:
         def cluster = Mock(Cluster) {
-            getDescription() >> connectedDescription
+            getCurrentDescription() >> connectedDescription
         }
         def clock = Stub(ServerSessionPool.Clock) {
             millis() >>> [0, 0,                          // first get
@@ -156,7 +156,7 @@ class ServerSessionPoolSpecification extends Specification {
     def 'should prune sessions when getting'() {
         given:
         def cluster = Mock(Cluster) {
-            getDescription() >> connectedDescription
+            getCurrentDescription() >> connectedDescription
         }
         def clock = Stub(ServerSessionPool.Clock) {
             millis() >>> [0, 0,                          // first get
@@ -185,11 +185,10 @@ class ServerSessionPoolSpecification extends Specification {
     def 'should not prune session when timeout is null'() {
         given:
         def cluster = Stub(Cluster) {
-            getDescription() >> unconnectedDescription
+            getCurrentDescription() >> unconnectedDescription
         }
         def clock = Stub(ServerSessionPool.Clock) {
-            millis() >>> [0, 0,
-                          MINUTES.toMillis(29) + 1]
+            millis() >>> [0, 0, 0]
         }
         def pool = new ServerSessionPool(cluster, clock)
         def session = pool.get()
@@ -205,7 +204,7 @@ class ServerSessionPoolSpecification extends Specification {
     def 'should initialize session'() {
         given:
         def cluster = Stub(Cluster) {
-            getDescription() >> connectedDescription
+            getCurrentDescription() >> connectedDescription
         }
         def clock = Stub(ServerSessionPool.Clock) {
             millis() >> 42
@@ -227,7 +226,7 @@ class ServerSessionPoolSpecification extends Specification {
     def 'should advance transaction and statement numbers'() {
         given:
         def cluster = Stub(Cluster) {
-            getDescription() >> connectedDescription
+            getCurrentDescription() >> connectedDescription
         }
         def clock = Stub(ServerSessionPool.Clock) {
             millis() >> 42
@@ -250,7 +249,7 @@ class ServerSessionPoolSpecification extends Specification {
             getConnection() >> connection
         }
         def cluster = Mock(Cluster) {
-            getDescription() >> connectedDescription
+            getCurrentDescription() >> connectedDescription
         }
         def pool = new ServerSessionPool(cluster)
         // check out sessions up the the endSessions batch size
