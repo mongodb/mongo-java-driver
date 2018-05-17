@@ -31,9 +31,15 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
 
+    private enum TransactionState {
+        NONE, IN, DONE, ABORTED
+    }
+
     private final OperationExecutor executor;
-    private boolean inTransaction;
+    private TransactionState transactionState = TransactionState.NONE;
     private boolean messageSent;
+    private boolean commitInProgress;
+
     private TransactionOptions transactionOptions;
 
     ClientSessionImpl(final ServerSessionPool serverSessionPool, final MongoClient mongoClient, final ClientSessionOptions options,
@@ -44,7 +50,7 @@ class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
 
     @Override
     public boolean hasActiveTransaction() {
-        return inTransaction;
+        return transactionState == TransactionState.IN || (transactionState == TransactionState.DONE && commitInProgress);
     }
 
     @Override
@@ -56,7 +62,7 @@ class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
 
     @Override
     public TransactionOptions getTransactionOptions() {
-        isTrue("in transaction", inTransaction);
+        isTrue("in transaction", transactionState == TransactionState.IN || transactionState == TransactionState.DONE);
         return transactionOptions;
     }
 
@@ -68,32 +74,42 @@ class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
     @Override
     public void startTransaction(final TransactionOptions transactionOptions) {
         notNull("transactionOptions", transactionOptions);
-        if (inTransaction) {
+        if (transactionState == TransactionState.IN) {
             throw new IllegalStateException("Transaction already in progress");
         }
-        inTransaction = true;
+        if (transactionState == TransactionState.DONE) {
+            cleanupTransaction(TransactionState.IN);
+        } else {
+            transactionState = TransactionState.IN;
+        }
+        getServerSession().advanceTransactionNumber();
         this.transactionOptions = TransactionOptions.merge(transactionOptions, getOptions().getDefaultTransactionOptions());
     }
 
     @Override
     public void commitTransaction(final SingleResultCallback<Void> callback) {
-        if (!canCommitOrAbort()) {
+        if (transactionState == TransactionState.ABORTED) {
+            throw new IllegalStateException("Cannot call commitTransaction after calling abortTransaction");
+        }
+        if (transactionState == TransactionState.NONE) {
             throw new IllegalStateException("There is no transaction started");
         }
         if (!messageSent) {
-            cleanupTransaction();
+            cleanupTransaction(TransactionState.DONE);
             callback.onResult(null, null);
         } else {
             ReadConcern readConcern = transactionOptions.getReadConcern();
             if (readConcern == null) {
                 throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
             }
+            commitInProgress = true;
             executor.execute(new CommitTransactionOperation(transactionOptions.getWriteConcern()),
                     readConcern, this,
                     new SingleResultCallback<Void>() {
                         @Override
                         public void onResult(final Void result, final Throwable t) {
-                            cleanupTransaction();
+                            commitInProgress = false;
+                            transactionState = TransactionState.DONE;
                             callback.onResult(result, t);
                         }
                     });
@@ -102,11 +118,17 @@ class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
 
     @Override
     public void abortTransaction(final SingleResultCallback<Void> callback) {
-        if (!canCommitOrAbort()) {
+        if (transactionState == TransactionState.ABORTED) {
+            throw new IllegalStateException("Cannot call abortTransaction twice");
+        }
+        if (transactionState == TransactionState.DONE) {
+            throw new IllegalStateException("Cannot call abortTransaction after calling commitTransaction");
+        }
+        if (transactionState == TransactionState.NONE) {
             throw new IllegalStateException("There is no transaction started");
         }
         if (!messageSent) {
-            cleanupTransaction();
+            cleanupTransaction(TransactionState.ABORTED);
             callback.onResult(null, null);
         } else {
             ReadConcern readConcern = transactionOptions.getReadConcern();
@@ -118,21 +140,17 @@ class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
                     new SingleResultCallback<Void>() {
                         @Override
                         public void onResult(final Void result, final Throwable t) {
-                            cleanupTransaction();
+                            cleanupTransaction(TransactionState.ABORTED);
                             callback.onResult(null, null);
                         }
                     });
         }
     }
 
-    private boolean canCommitOrAbort() {
-        return inTransaction;
-    }
-
     // TODO: should there be a version of this that takes a callback?
     @Override
     public void close() {
-        if (inTransaction) {
+        if (transactionState == TransactionState.IN) {
             abortTransaction(new SingleResultCallback<Void>() {
                 @Override
                 public void onResult(final Void result, final Throwable t) {
@@ -144,10 +162,9 @@ class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
         }
     }
 
-    private void cleanupTransaction() {
-        inTransaction = false;
+    private void cleanupTransaction(final TransactionState nextState) {
         messageSent = false;
         transactionOptions = null;
-        getServerSession().advanceTransactionNumber();
+        transactionState = nextState;
     }
 }

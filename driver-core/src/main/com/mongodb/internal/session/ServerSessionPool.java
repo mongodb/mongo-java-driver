@@ -146,7 +146,7 @@ public class ServerSessionPool {
 
     final class ServerSessionImpl implements ServerSession {
         private final BsonDocument identifier;
-        private long transactionNumber = 1;
+        private long transactionNumber = 0;
         private volatile long lastUsedAtMillis = clock.millis();
         private volatile boolean closed;
 
@@ -175,7 +175,8 @@ public class ServerSessionPool {
 
         @Override
         public long advanceTransactionNumber() {
-            return transactionNumber++;
+            transactionNumber++;
+            return transactionNumber;
         }
 
         @Override
