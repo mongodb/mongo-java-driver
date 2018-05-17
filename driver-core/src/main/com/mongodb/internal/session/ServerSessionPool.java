@@ -132,7 +132,8 @@ public class ServerSessionPool {
     }
 
     private boolean shouldPrune(final ServerSessionImpl serverSession) {
-        Integer logicalSessionTimeoutMinutes = cluster.getDescription().getLogicalSessionTimeoutMinutes();
+        Integer logicalSessionTimeoutMinutes = cluster.getCurrentDescription().getLogicalSessionTimeoutMinutes();
+        // if the server no longer supports sessions, prune the session
         if (logicalSessionTimeoutMinutes == null) {
             return false;
         }
