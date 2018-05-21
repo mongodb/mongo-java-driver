@@ -24,9 +24,11 @@ import com.mongodb.WriteConcern
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonInt64
+import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
+import spock.lang.Unroll
 
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint
@@ -79,9 +81,9 @@ class DropIndexOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
+    @Unroll
     def 'should drop existing index by keys'() {
         given:
-        def keys = new BsonDocument('theField', new BsonInt32(1))
         collectionHelper.createIndex(keys)
 
         when:
@@ -93,7 +95,14 @@ class DropIndexOperationSpecification extends OperationFunctionalSpecification {
         indexes[0].name == '_id_'
 
         where:
-        async << [true, false]
+        [keys, async] << [
+                [new BsonDocument('theField', new BsonInt32(1)),
+                 new BsonDocument('theField', new BsonInt32(1)).append('theSecondField', new BsonInt32(-1)),
+                 new BsonDocument('theField', new BsonString('2d')),
+                 new BsonDocument('theField', new BsonString('hashed')),
+                ],
+                [true, false]
+        ].combinations()
     }
 
     @IgnoreIf({ isSharded() })
