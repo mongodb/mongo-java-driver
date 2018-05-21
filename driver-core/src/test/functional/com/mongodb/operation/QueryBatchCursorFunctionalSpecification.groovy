@@ -187,7 +187,6 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
 
     @SuppressWarnings('EmptyCatchBlock')
     @Category(Slow)
-    @IgnoreIf({ serverVersionAtLeast(3, 7) && isSharded() })
     def 'should block waiting for next batch on a tailable cursor'() {
         given:
         def connection = connectionSource.getConnection()
@@ -236,7 +235,6 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
     }
 
     @Category(Slow)
-    @IgnoreIf({ serverVersionAtLeast(3, 7) && isSharded() })
     def 'test try next with tailable'() {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
