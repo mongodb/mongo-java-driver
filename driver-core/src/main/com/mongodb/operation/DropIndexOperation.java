@@ -35,16 +35,15 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
 import static com.mongodb.operation.CommandOperationHelper.isNamespaceError;
+import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTransformer;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
-import static com.mongodb.internal.operation.IndexHelper.generateIndexName;
 import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
-import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
-import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTransformer;
 
 /**
  * An operation that drops an index.
@@ -55,6 +54,7 @@ import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTran
 public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final MongoNamespace namespace;
     private final String indexName;
+    private final BsonDocument indexKeys;
     private final WriteConcern writeConcern;
     private long maxTimeMS;
 
@@ -93,6 +93,7 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
     public DropIndexOperation(final MongoNamespace namespace, final String indexName, final WriteConcern writeConcern) {
         this.namespace = notNull("namespace", namespace);
         this.indexName = notNull("indexName", indexName);
+        this.indexKeys = null;
         this.writeConcern = writeConcern;
     }
 
@@ -100,13 +101,14 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
      * Construct a new instance.
      *
      * @param namespace    the database and collection namespace for the operation.
-     * @param keys         the keys of the index to be dropped
+     * @param indexKeys    the keys of the index to be dropped
      * @param writeConcern the write concern
      * @since 3.4
      */
-    public DropIndexOperation(final MongoNamespace namespace, final BsonDocument keys, final WriteConcern writeConcern) {
+    public DropIndexOperation(final MongoNamespace namespace, final BsonDocument indexKeys, final WriteConcern writeConcern) {
         this.namespace = notNull("namespace", namespace);
-        this.indexName = generateIndexName(notNull("keys", keys));
+        this.indexKeys = notNull("indexKeys", indexKeys);
+        this.indexName = null;
         this.writeConcern = writeConcern;
     }
 
@@ -190,8 +192,13 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
     }
 
     private BsonDocument getCommand(final ConnectionDescription description) {
-        BsonDocument command = new BsonDocument("dropIndexes", new BsonString(namespace.getCollectionName()))
-                                               .append("index", new BsonString(indexName));
+        BsonDocument command = new BsonDocument("dropIndexes", new BsonString(namespace.getCollectionName()));
+        if (indexName != null) {
+            command.put("index", new BsonString(indexName));
+        } else {
+            command.put("index", indexKeys);
+        }
+
         putIfNotZero(command, "maxTimeMS", maxTimeMS);
         appendWriteConcernToCommand(writeConcern, command, description);
         return command;

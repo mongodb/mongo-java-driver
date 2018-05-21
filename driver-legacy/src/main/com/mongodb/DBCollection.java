@@ -2199,7 +2199,11 @@ public class DBCollection {
      * @mongodb.driver.manual core/indexes/ Indexes
      */
     public void dropIndex(final DBObject index) {
-        dropIndex(getIndexNameFromIndexFields(index));
+        try {
+            executor.execute(new DropIndexOperation(getNamespace(), wrap(index), getWriteConcern()), getReadConcern());
+        } catch (MongoWriteConcernException e) {
+            throw createWriteConcernException(e);
+        }
     }
 
     /**
@@ -2471,31 +2475,6 @@ public class DBCollection {
             request.collation(DBObjectCollationHelper.createCollationFromOptions(options));
         }
         return new CreateIndexesOperation(getNamespace(), singletonList(request), writeConcern);
-    }
-
-    private String getIndexNameFromIndexFields(final DBObject index) {
-        StringBuilder indexName = new StringBuilder();
-        for (final String keyNames : index.keySet()) {
-            if (indexName.length() != 0) {
-                indexName.append('_');
-            }
-            indexName.append(keyNames).append('_');
-            Object keyType = index.get(keyNames);
-            if (keyType instanceof Integer) {
-                List<Integer> validIndexTypes = asList(1, -1);
-                if (!validIndexTypes.contains(keyType)) {
-                    throw new UnsupportedOperationException("Unsupported index type: " + keyType);
-                }
-                indexName.append(((Integer) keyType));
-            } else if (keyType instanceof String) {
-                List<String> validIndexTypes = asList("2d", "2dsphere", "text", "geoHaystack", "hashed");
-                if (!validIndexTypes.contains(keyType)) {
-                    throw new UnsupportedOperationException("Unsupported index type: " + keyType);
-                }
-                indexName.append(((String) keyType).replace(' ', '_'));
-            }
-        }
-        return indexName.toString();
     }
 
     Codec<DBObject> getObjectCodec() {

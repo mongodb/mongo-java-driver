@@ -210,7 +210,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
 
         then:
         def exception = thrown(MongoCommandException)
-        exception.getErrorMessage().contains('index not found')
+        exception.getErrorMessage().contains('can\'t find index')
     }
 
     def 'should drop nested index'() {
@@ -799,6 +799,17 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         result == document
     }
 
+    def 'should drop compound index by key'() {
+        given:
+        def indexKeys = new BasicDBObject('x', 1).append('y', -1)
+        collection.createIndex(indexKeys)
+
+        when:
+        collection.dropIndex(indexKeys)
+
+        then:
+        collection.getIndexInfo().size() == 1
+    }
 
     def caseInsensitive = Collation.builder().locale('en').collationStrength(CollationStrength.SECONDARY).build()
 }
