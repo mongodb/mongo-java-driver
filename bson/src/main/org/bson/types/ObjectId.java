@@ -516,9 +516,9 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
             }
             machinePiece = sb.toString().hashCode();
         } catch (Throwable t) {
-            // exception sometimes happens with IBM JVM, use random
+            // exception sometimes happens with IBM JVM, use SecureRandom instead
             machinePiece = (new SecureRandom().nextInt());
-            LOGGER.warn("Failed to get machine identifier from network interface, using random number instead", t);
+            LOGGER.debug("Failed to get machine identifier from network interface, using SecureRandom instead");
         }
         machinePiece = machinePiece & LOW_ORDER_THREE_BYTES;
         return machinePiece;
@@ -537,8 +537,9 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
             }
 
         } catch (Throwable t) {
+            // JMX not available on Android, use SecureRandom instead
             processId = (short) new SecureRandom().nextInt();
-            LOGGER.warn("Failed to get process identifier from JMX, using random number instead", t);
+            LOGGER.debug("Failed to get process identifier from JMX, using SecureRandom instead");
         }
 
         return processId;
