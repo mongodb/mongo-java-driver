@@ -52,11 +52,10 @@ import static com.mongodb.ClusterFixture.getReadConnectionSource
 import static com.mongodb.ClusterFixture.getReferenceCountAfterTimeout
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.connection.ServerHelper.waitForLastRelease
 import static com.mongodb.connection.ServerHelper.waitForRelease
-import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo
+import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult
 import static java.util.Arrays.asList
 import static java.util.concurrent.TimeUnit.SECONDS
 import static org.junit.Assert.assertEquals
@@ -262,7 +261,6 @@ class AsyncQueryBatchCursorFunctionalSpecification extends OperationFunctionalSp
     }
 
     @Category(Slow)
-    @IgnoreIf({ serverVersionAtLeast(3, 7) && isSharded() })
     def 'should block waiting for next batch on a tailable cursor'() {
         collectionHelper.create(collectionName, new CreateCollectionOptions().capped(true).sizeInBytes(1000))
         collectionHelper.insertDocuments(new DocumentCodec(), new Document('_id', 1).append('ts', new BsonTimestamp(5, 0)))
