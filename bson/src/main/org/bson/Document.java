@@ -154,9 +154,8 @@ public class Document implements Map<String, Object>, Serializable, Bson {
     @SuppressWarnings("unchecked")
     public <T> T get(final Object key, final T defaultValue) {
         notNull("defaultValue", defaultValue);
-        Class<T> clazz = notNull("clazz", (Class<T>) defaultValue.getClass());
         Object value = documentAsMap.get(key);
-        return value == null ? defaultValue : clazz.cast(value);
+        return value == null ? defaultValue : (T) value;
     }
 
     /**

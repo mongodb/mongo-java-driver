@@ -29,6 +29,10 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.json.JsonReader;
 import org.junit.Test;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import static java.util.Arrays.asList;
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
@@ -73,6 +77,35 @@ public class DocumentTest {
     public void toJsonShouldReturnEquivalent() {
         assertEquals(new DocumentCodec().decode(new JsonReader(document.toJson()), DecoderContext.builder().build()),
                      document);
+    }
+
+    // Test in Java to make sure none of the casts result in compiler warnings or class cast exceptions
+    @Test
+    public void shouldGetWithDefaultValue() {
+        // given
+        Document d = new Document("x", 1)
+                .append("y", Collections.singletonList("one"))
+                .append("z", "foo");
+
+        // when the key is found
+        int x = d.get("x", 2);
+        List<String> y = d.get("y", Arrays.asList("three", "four"));
+        String z = d.get("z", "bar");
+
+        // then it returns the value
+        assertEquals(1, x);
+        assertEquals(Arrays.asList("one"), y);
+        assertEquals("foo", z);
+
+        // when the key is not found
+        int x2 = d.get("x2", 2);
+        List<String> y2 = d.get("y2", Arrays.asList("three", "four"));
+        String z2 = d.get("z2", "bar");
+
+        // then it returns the default value
+        assertEquals(2, x2);
+        assertEquals(Arrays.asList("three", "four"), y2);
+        assertEquals("bar", z2);
     }
 
     @Test
