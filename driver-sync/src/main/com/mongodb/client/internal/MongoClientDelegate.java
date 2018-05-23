@@ -123,6 +123,10 @@ public class MongoClientDelegate {
         return cluster;
     }
 
+    public ServerSessionPool getServerSessionPool() {
+        return serverSessionPool;
+    }
+
     private ClusterDescription getConnectedClusterDescription() {
         ClusterDescription clusterDescription = cluster.getDescription();
         if (getServerDescriptionListToConsiderForSessionSupport(clusterDescription).isEmpty()) {
