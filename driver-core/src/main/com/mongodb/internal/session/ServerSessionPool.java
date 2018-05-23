@@ -19,12 +19,15 @@ package com.mongodb.internal.session;
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
 import com.mongodb.connection.Cluster;
+import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.Connection;
+import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.ConcurrentPool;
 import com.mongodb.internal.connection.ConcurrentPool.Prune;
 import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.selector.ReadPreferenceServerSelector;
+import com.mongodb.selector.ServerSelector;
 import com.mongodb.session.ServerSession;
 import org.bson.BsonArray;
 import org.bson.BsonBinary;
@@ -36,6 +39,7 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.UuidCodec;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -118,7 +122,23 @@ public class ServerSessionPool {
             return;
         }
 
-        Connection connection = cluster.selectServer(new ReadPreferenceServerSelector(ReadPreference.primaryPreferred())).getConnection();
+        final List<ServerDescription> primaryPreferred = new ReadPreferenceServerSelector(ReadPreference.primaryPreferred())
+                .select(cluster.getCurrentDescription());
+        if (primaryPreferred.isEmpty()) {
+            return;
+        }
+
+        Connection connection = cluster.selectServer(new ServerSelector() {
+            @Override
+            public List<ServerDescription> select(final ClusterDescription clusterDescription) {
+                for (ServerDescription cur : clusterDescription.getServerDescriptions()) {
+                    if (cur.getAddress().equals(primaryPreferred.get(0).getAddress())) {
+                        return Collections.singletonList(cur);
+                    }
+                }
+                return Collections.emptyList();
+            }
+        }).getConnection();
         try {
             connection.command("admin",
                     new BsonDocument("endSessions", new BsonArray(closedSessionIdentifiers)), new NoOpFieldNameValidator(),

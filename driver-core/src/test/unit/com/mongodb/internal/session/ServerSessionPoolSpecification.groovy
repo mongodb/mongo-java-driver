@@ -26,7 +26,6 @@ import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerSettings
 import com.mongodb.internal.connection.NoOpSessionContext
 import com.mongodb.internal.validator.NoOpFieldNameValidator
-import com.mongodb.selector.ReadPreferenceServerSelector
 import org.bson.BsonArray
 import org.bson.BsonBinarySubType
 import org.bson.BsonDocument
@@ -269,14 +268,14 @@ class ServerSessionPoolSpecification extends Specification {
 
         then:
         // first batch is the first 10K sessions, final batch is the last one
-        1 * cluster.selectServer { (it as ReadPreferenceServerSelector).readPreference == primaryPreferred() }  >> server
+        1 * cluster.selectServer(_)  >> server
         1 * connection.command('admin',
                 new BsonDocument('endSessions', new BsonArray(sessions*.getIdentifier())),
                 { it instanceof NoOpFieldNameValidator }, primaryPreferred(),
                 { it instanceof BsonDocumentCodec }, NoOpSessionContext.INSTANCE) >> new BsonDocument()
         1 * connection.release()
 
-        1 * cluster.selectServer { (it as ReadPreferenceServerSelector).readPreference == primaryPreferred() }  >> server
+        1 * cluster.selectServer(_)  >> server
         1 * connection.command('admin',
                 new BsonDocument('endSessions', new BsonArray([oneOverBatchSizeSession.getIdentifier()])),
                 { it instanceof NoOpFieldNameValidator }, primaryPreferred(),
