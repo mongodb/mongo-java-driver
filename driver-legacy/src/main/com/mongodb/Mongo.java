@@ -92,13 +92,11 @@ public class Mongo {
 
     private final Bytes.OptionHolder optionHolder;
 
-    private final Cluster cluster;
     private final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
 
     private final ConcurrentLinkedQueue<ServerCursorAndNamespace> orphanedCursors = new ConcurrentLinkedQueue<ServerCursorAndNamespace>();
     private final ExecutorService cursorCleaningService;
     private final MongoClientDelegate delegate;
-    private final ServerSessionPool serverSessionPool;
 
     /**
      * Creates a Mongo instance based on a (single) mongodb node (localhost, default port)
@@ -312,8 +310,6 @@ public class Mongo {
     }
 
     Mongo(final Cluster cluster, final MongoClientOptions options, final List<MongoCredential> credentialsList) {
-        this.cluster = cluster;
-        this.serverSessionPool = new ServerSessionPool(cluster);
         this.options = options;
         this.readPreference = options.getReadPreference();
         this.writeConcern = options.getWriteConcern();
@@ -392,7 +388,7 @@ public class Mongo {
      * @throws MongoException if there's a failure
      */
     public List<ServerAddress> getAllAddress() {
-        return cluster.getSettings().getHosts();
+        return delegate.getCluster().getSettings().getHosts();
     }
 
     /**
@@ -406,7 +402,7 @@ public class Mongo {
     }
 
     private ClusterDescription getClusterDescription() {
-        return cluster.getDescription();
+        return delegate.getCluster().getDescription();
     }
 
     /**
@@ -447,7 +443,7 @@ public class Mongo {
     public ReplicaSetStatus getReplicaSetStatus() {
         ClusterDescription clusterDescription = getClusterDescription();
         return clusterDescription.getType() == REPLICA_SET && clusterDescription.getConnectionMode() == MULTIPLE
-               ? new ReplicaSetStatus(cluster) : null; // this is intended behavior in 2.x
+               ? new ReplicaSetStatus(delegate.getCluster()) : null; // this is intended behavior in 2.x
     }
 
 
@@ -530,8 +526,7 @@ public class Mongo {
      * databases obtained from it can no longer be used.
      */
     public void close() {
-        serverSessionPool.close();
-        cluster.close();
+        delegate.close();
         if (cursorCleaningService != null) {
             cursorCleaningService.shutdownNow();
         }
@@ -764,11 +759,11 @@ public class Mongo {
     }
 
     Cluster getCluster() {
-        return cluster;
+        return delegate.getCluster();
     }
 
     ServerSessionPool getServerSessionPool() {
-        return serverSessionPool;
+        return delegate.getServerSessionPool();
     }
 
     Bytes.OptionHolder getOptionHolder() {
@@ -814,7 +809,7 @@ public class Mongo {
     private void cleanCursors() {
         ServerCursorAndNamespace cur;
         while ((cur = orphanedCursors.poll()) != null) {
-            ReadWriteBinding binding = new SingleServerBinding(cluster, cur.serverCursor.getAddress());
+            ReadWriteBinding binding = new SingleServerBinding(delegate.getCluster(), cur.serverCursor.getAddress());
             try {
                 ConnectionSource source = binding.getReadConnectionSource();
                 try {
