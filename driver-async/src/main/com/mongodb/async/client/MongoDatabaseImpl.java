@@ -17,6 +17,7 @@
 package com.mongodb.async.client;
 
 import com.mongodb.Function;
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
@@ -220,6 +221,9 @@ class MongoDatabaseImpl implements MongoDatabase {
                                           final SingleResultCallback<TResult> callback) {
         notNull("command", command);
         notNull("readPreference", readPreference);
+        if (clientSession != null && clientSession.hasActiveTransaction() && !readPreference.equals(ReadPreference.primary())) {
+            throw new MongoClientException("Read preference in a transaction must be primary");
+        }
         executor.execute(new CommandReadOperation<TResult>(getName(), toBsonDocument(command), codecRegistry.get(resultClass)),
                 readPreference, readConcern, clientSession, callback);
     }

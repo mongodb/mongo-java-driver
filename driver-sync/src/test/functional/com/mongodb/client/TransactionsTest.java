@@ -140,7 +140,7 @@ public class TransactionsTest {
                 .build());
 
         MongoDatabase database = mongoClient.getDatabase(databaseName);
-        helper = new JsonPoweredCrudTestHelper(description, database.getCollection(collectionName, BsonDocument.class));
+        helper = new JsonPoweredCrudTestHelper(description, database, database.getCollection(collectionName, BsonDocument.class));
 
         ClientSession sessionZero = createSession("session0");
         ClientSession sessionOne = createSession("session1");

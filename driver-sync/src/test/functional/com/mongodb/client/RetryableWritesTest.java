@@ -123,8 +123,9 @@ public class RetryableWritesTest {
         collectionHelper.drop();
         collectionHelper.insertDocuments(documents);
 
-        collection = mongoClient.getDatabase(databaseName).getCollection(collectionName, BsonDocument.class);
-        helper = new JsonPoweredCrudTestHelper(description, collection);
+        MongoDatabase database = mongoClient.getDatabase(databaseName);
+        collection = database.getCollection(collectionName, BsonDocument.class);
+        helper = new JsonPoweredCrudTestHelper(description, database, collection);
         setFailPoint();
     }
 

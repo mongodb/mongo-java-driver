@@ -62,7 +62,7 @@ public class LegacyCrudTest extends LegacyDatabaseTestCase {
         }
         getCollectionHelper().insertDocuments(documents);
         collection = database.getCollection(getClass().getName(), BsonDocument.class);
-        helper = new JsonPoweredCrudTestHelper(description, collection);
+        helper = new JsonPoweredCrudTestHelper(description, database, collection);
     }
 
     @Test
