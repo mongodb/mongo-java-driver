@@ -37,12 +37,14 @@ final class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResu
     private final Class<TResult> resultClass;
 
     private Bson filter;
+    private boolean collectionNamesOnly;
     private long maxTimeMS;
 
-    ListCollectionsIterableImpl(@Nullable final ClientSession clientSession, final String databaseName, final Class<TResult> resultClass,
-                                final CodecRegistry codecRegistry,
-                                final ReadPreference readPreference, final OperationExecutor executor) {
+    ListCollectionsIterableImpl(@Nullable final ClientSession clientSession, final String databaseName, final boolean collectionNamesOnly,
+                                final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
+                                final OperationExecutor executor) {
         super(clientSession, executor, ReadConcern.DEFAULT, readPreference); // TODO: read concern?
+        this.collectionNamesOnly = collectionNamesOnly;
         this.operations = new AsyncOperations<BsonDocument>(BsonDocument.class, readPreference, codecRegistry);
         this.databaseName = notNull("databaseName", databaseName);
         this.resultClass = notNull("resultClass", resultClass);
@@ -70,7 +72,7 @@ final class ListCollectionsIterableImpl<TResult> extends MongoIterableImpl<TResu
 
     @Override
     AsyncReadOperation<AsyncBatchCursor<TResult>> asAsyncReadOperation() {
-        return operations.listCollections(databaseName, resultClass, filter, getBatchSize(), maxTimeMS);
+        return operations.listCollections(databaseName, resultClass, filter, collectionNamesOnly, getBatchSize(), maxTimeMS);
     }
 
 }

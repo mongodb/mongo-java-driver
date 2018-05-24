@@ -260,7 +260,8 @@ public class DB {
                 new MongoIterableImpl<DBObject>(null, executor, ReadConcern.DEFAULT, primary()) {
                     @Override
                     public ReadOperation<BatchCursor<DBObject>> asReadOperation() {
-                        return new ListCollectionsOperation<DBObject>(name, commandCodec);
+                        return new ListCollectionsOperation<DBObject>(name, commandCodec)
+                                .nameOnly(true);
                     }
                 }.map(new Function<DBObject, String>() {
                             @Override

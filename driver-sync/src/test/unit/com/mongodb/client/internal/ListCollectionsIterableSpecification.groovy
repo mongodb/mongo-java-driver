@@ -44,12 +44,14 @@ class ListCollectionsIterableSpecification extends Specification {
 
     def 'should build the expected listCollectionOperation'() {
         given:
-        def executor = new TestOperationExecutor([null, null]);
-        def listCollectionIterable = new ListCollectionsIterableImpl<Document>(null, 'db', Document, codecRegistry,
+        def executor = new TestOperationExecutor([null, null, null]);
+        def listCollectionIterable = new ListCollectionsIterableImpl<Document>(null, 'db', false, Document, codecRegistry,
                 readPreference, executor)
                 .filter(new Document('filter', 1))
                 .batchSize(100)
                 .maxTime(1000, MILLISECONDS)
+        def listCollectionNamesIterable = new ListCollectionsIterableImpl<Document>(null, 'db', true, Document, codecRegistry,
+                readPreference, executor)
 
         when: 'default input should be as expected'
         listCollectionIterable.iterator()
@@ -70,6 +72,14 @@ class ListCollectionsIterableSpecification extends Specification {
         then: 'should use the overrides'
         expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec())
                 .filter(new BsonDocument('filter', new BsonInt32(2))).batchSize(99).maxTime(999, MILLISECONDS))
+
+        when: 'requesting collection names only'
+        listCollectionNamesIterable.iterator()
+
+        operation = executor.getReadOperation() as ListCollectionsOperation<Document>
+
+        then: 'should create operation with nameOnly'
+        expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec()).nameOnly(true))
     }
 
     def 'should use ClientSession'() {
@@ -78,7 +88,7 @@ class ListCollectionsIterableSpecification extends Specification {
             _ * hasNext() >> { false }
         }
         def executor = new TestOperationExecutor([batchCursor, batchCursor]);
-        def listCollectionIterable = new ListCollectionsIterableImpl<Document>(clientSession, 'db', Document, codecRegistry,
+        def listCollectionIterable = new ListCollectionsIterableImpl<Document>(clientSession, 'db', false, Document, codecRegistry,
                 readPreference, executor)
 
         when:
@@ -118,7 +128,7 @@ class ListCollectionsIterableSpecification extends Specification {
             }
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor()]);
-        def mongoIterable = new ListCollectionsIterableImpl<Document>(null, 'db', Document, codecRegistry, readPreference,
+        def mongoIterable = new ListCollectionsIterableImpl<Document>(null, 'db', false, Document, codecRegistry, readPreference,
                 executor)
 
         when:
@@ -162,7 +172,7 @@ class ListCollectionsIterableSpecification extends Specification {
     def 'should get and set batchSize as expected'() {
         when:
         def batchSize = 5
-        def mongoIterable = new ListCollectionsIterableImpl<Document>(null, 'db', Document, codecRegistry, readPreference,
+        def mongoIterable = new ListCollectionsIterableImpl<Document>(null, 'db', false, Document, codecRegistry, readPreference,
                 Stub(OperationExecutor))
 
         then:

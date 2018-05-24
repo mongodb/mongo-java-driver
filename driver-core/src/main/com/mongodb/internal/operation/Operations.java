@@ -453,9 +453,11 @@ final class Operations<TDocument> {
     }
 
     <TResult> ListCollectionsOperation<TResult> listCollections(final String databaseName, final Class<TResult> resultClass,
-                                                                       final Bson filter, final Integer batchSize, final long maxTimeMS) {
+                                                                final Bson filter, final boolean collectionNamesOnly,
+                                                                final Integer batchSize, final long maxTimeMS) {
         return new ListCollectionsOperation<TResult>(databaseName, codecRegistry.get(resultClass))
                 .filter(toBsonDocumentOrNull(filter))
+                .nameOnly(collectionNamesOnly)
                 .batchSize(batchSize == null ? 0 : batchSize)
                 .maxTime(maxTimeMS, MILLISECONDS);
     }
