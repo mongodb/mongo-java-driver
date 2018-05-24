@@ -17,6 +17,7 @@
 package com.mongodb.client.internal;
 
 import com.mongodb.Function;
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
@@ -172,6 +173,9 @@ public class MongoDatabaseImpl implements MongoDatabase {
     private <TResult> TResult executeCommand(@Nullable final ClientSession clientSession, final Bson command,
                                              final ReadPreference readPreference, final Class<TResult> resultClass) {
         notNull("readPreference", readPreference);
+        if (clientSession != null && clientSession.hasActiveTransaction() && !readPreference.equals(ReadPreference.primary())) {
+            throw new MongoClientException("Read preference in a transaction must be primary");
+        }
         return executor.execute(new CommandReadOperation<TResult>(getName(), toBsonDocument(command), codecRegistry.get(resultClass)),
                 readPreference, readConcern, clientSession);
     }

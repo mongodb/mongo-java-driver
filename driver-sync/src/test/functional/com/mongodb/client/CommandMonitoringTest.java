@@ -124,13 +124,14 @@ public class CommandMonitoringTest {
         collectionHelper.insertDocuments(documents);
 
         commandListener.reset();
-        collection = mongoClient.getDatabase(databaseName).getCollection(collectionName, BsonDocument.class);
+        MongoDatabase database = mongoClient.getDatabase(databaseName);
+        collection = database.getCollection(collectionName, BsonDocument.class);
         if (definition.getDocument("operation").containsKey("read_preference")) {
             collection = collection.withReadPreference(ReadPreference.valueOf(definition.getDocument("operation")
                                                                                         .getDocument("read_preference")
                                                                                         .getString("mode").getValue()));
         }
-        helper = new JsonPoweredCrudTestHelper(description, collection);
+        helper = new JsonPoweredCrudTestHelper(description, database, collection);
     }
 
     private ServerVersion getServerVersion(final String fieldName) {

@@ -68,10 +68,13 @@ import static java.lang.String.format;
 
 public class JsonPoweredCrudTestHelper {
     private final String description;
+    private final MongoDatabase database;
     private final MongoCollection<BsonDocument> baseCollection;
 
-    public JsonPoweredCrudTestHelper(final String description, final MongoCollection<BsonDocument> collection) {
+    public JsonPoweredCrudTestHelper(final String description, final MongoDatabase database,
+                                     final MongoCollection<BsonDocument> collection) {
         this.description = description;
+        this.database = database;
         this.baseCollection = collection;
     }
 
@@ -647,6 +650,34 @@ public class JsonPoweredCrudTestHelper {
 
     BsonDocument toResult(@Nullable final BsonValue results) {
         return new BsonDocument("result", results != null ? results : BsonNull.VALUE);
+    }
+
+    BsonDocument getRunCommandResult(final BsonDocument arguments, @Nullable final ClientSession clientSession) {
+        BsonDocument command = arguments.getDocument("command");
+        ReadPreference readPreference = arguments.containsKey("readPreference") ? getReadPreference(arguments) : null;
+
+        FutureResultCallback<BsonDocument> futureResultCallback = new FutureResultCallback<BsonDocument>();
+
+        if (clientSession == null) {
+            if (readPreference == null) {
+                database.runCommand(command, BsonDocument.class, futureResultCallback);
+            } else {
+                database.runCommand(command, readPreference, BsonDocument.class, futureResultCallback);
+            }
+        } else {
+            if (readPreference == null) {
+                database.runCommand(clientSession, command, BsonDocument.class, futureResultCallback);
+            } else {
+                database.runCommand(clientSession, command, readPreference, BsonDocument.class, futureResultCallback);
+            }
+        }
+        BsonDocument response = futureResult(futureResultCallback);
+        response.remove("ok");
+        response.remove("operationTime");
+        response.remove("opTime");
+        response.remove("electionId");
+        response.remove("$clusterTime");
+        return toResult(response);
     }
 
     BsonDocument getAggregateResult(final BsonDocument arguments, @Nullable final ClientSession clientSession) {

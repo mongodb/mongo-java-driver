@@ -62,7 +62,7 @@ public class CrudTest extends DatabaseTestCase {
         super.setUp();
         collection = Fixture.initializeCollection(new MongoNamespace(getDefaultDatabaseName(), getClass().getName()))
                 .withDocumentClass(BsonDocument.class);
-        helper = new JsonPoweredCrudTestHelper(description, collection);
+        helper = new JsonPoweredCrudTestHelper(description, getDefaultDatabase(), collection);
         new MongoOperation<Void>() {
             @Override
             public void execute() {
