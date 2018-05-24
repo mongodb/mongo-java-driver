@@ -121,7 +121,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     }
 
     private MongoIterable<String> createListCollectionNamesIterable(@Nullable final ClientSession clientSession) {
-        return createListCollectionsIterable(clientSession, BsonDocument.class)
+        return createListCollectionsIterable(clientSession, BsonDocument.class, true)
                 .map(new Function<BsonDocument, String>() {
                     @Override
                     public String apply(final BsonDocument result) {
@@ -137,7 +137,7 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public <TResult> ListCollectionsIterable<TResult> listCollections(final Class<TResult> resultClass) {
-        return createListCollectionsIterable(null, resultClass);
+        return createListCollectionsIterable(null, resultClass, false);
     }
 
     @Override
@@ -148,13 +148,14 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public <TResult> ListCollectionsIterable<TResult> listCollections(final ClientSession clientSession, final Class<TResult> resultClass) {
         notNull("clientSession", clientSession);
-        return createListCollectionsIterable(clientSession, resultClass);
+        return createListCollectionsIterable(clientSession, resultClass, false);
     }
 
     private <TResult> ListCollectionsIterable<TResult> createListCollectionsIterable(@Nullable final ClientSession clientSession,
-                                                                                     final Class<TResult> resultClass) {
-        return new ListCollectionsIterableImpl<TResult>(clientSession, name, resultClass, codecRegistry, ReadPreference.primary(),
-                executor);
+                                                                                     final Class<TResult> resultClass,
+                                                                                     final boolean collectionNamesOnly) {
+        return new ListCollectionsIterableImpl<TResult>(clientSession, name, collectionNamesOnly, resultClass, codecRegistry,
+                ReadPreference.primary(), executor);
     }
 
     @Override

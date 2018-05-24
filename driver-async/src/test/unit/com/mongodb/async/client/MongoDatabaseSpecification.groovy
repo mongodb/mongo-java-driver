@@ -222,14 +222,15 @@ class MongoDatabaseSpecification extends Specification {
         def listCollectionIterable = execute(listCollectionsMethod, session)
 
         then:
-        expect listCollectionIterable, isTheSameAs(new ListCollectionsIterableImpl<Document>(session, name, Document, codecRegistry,
+        expect listCollectionIterable, isTheSameAs(new ListCollectionsIterableImpl<Document>(session, name, false, Document, codecRegistry,
                 primary(), executor))
 
         when:
         listCollectionIterable = execute(listCollectionsMethod, session, BsonDocument)
 
         then:
-        expect listCollectionIterable, isTheSameAs(new ListCollectionsIterableImpl<BsonDocument>(session, name, BsonDocument, codecRegistry,
+        expect listCollectionIterable, isTheSameAs(new ListCollectionsIterableImpl<BsonDocument>(session, name, false, BsonDocument,
+                codecRegistry,
                 primary(), executor))
 
         when:
@@ -237,8 +238,8 @@ class MongoDatabaseSpecification extends Specification {
 
         then:
         // listCollectionNamesIterable is an instance of a MappingIterable, so have to get the mapped iterable inside it
-        expect listCollectionNamesIterable.getMapped(), isTheSameAs(new ListCollectionsIterableImpl<BsonDocument>(session, name,
-                BsonDocument, codecRegistry, primary(), executor))
+                expect listCollectionNamesIterable.getMapped(), isTheSameAs(new ListCollectionsIterableImpl<BsonDocument>(session, name,
+                        true, BsonDocument, codecRegistry, primary(), executor))
 
         where:
         session << [null, Stub(ClientSession)]

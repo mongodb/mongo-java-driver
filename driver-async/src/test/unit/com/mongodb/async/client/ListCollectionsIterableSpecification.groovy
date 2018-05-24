@@ -49,9 +49,11 @@ class ListCollectionsIterableSpecification extends Specification {
                 it[0].onResult(null, null)
             }
         }
-        def executor = new TestOperationExecutor([cursor, cursor]);
-        def listCollectionIterable = new ListCollectionsIterableImpl<Document>(null, 'db', Document, codecRegistry, readPreference,
+        def executor = new TestOperationExecutor([cursor, cursor, cursor]);
+        def listCollectionIterable = new ListCollectionsIterableImpl<Document>(null, 'db', false, Document, codecRegistry, readPreference,
                 executor).filter(new Document('filter', 1)).batchSize(100).maxTime(1000, MILLISECONDS)
+        def listCollectionNamesIterable = new ListCollectionsIterableImpl<Document>(null, 'db', true, Document, codecRegistry,
+                readPreference, executor)
 
         when: 'default input should be as expected'
         listCollectionIterable.into([]) { result, t -> }
@@ -72,6 +74,14 @@ class ListCollectionsIterableSpecification extends Specification {
         then: 'should use the overrides'
         expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec())
                 .filter(new BsonDocument('filter', new BsonInt32(2))).batchSize(99).maxTime(999, MILLISECONDS))
+
+        when: 'requesting collection names only'
+        listCollectionNamesIterable.into([]) { result, t -> }
+
+        operation = executor.getReadOperation() as ListCollectionsOperation<Document>
+
+        then: 'should create operation with nameOnly'
+        expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec()).nameOnly(true))
     }
 
     def 'should follow the MongoIterable interface as expected'() {
@@ -93,7 +103,7 @@ class ListCollectionsIterableSpecification extends Specification {
             }
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor()]);
-        def mongoIterable = new ListCollectionsIterableImpl<Document>(null, 'db', Document, codecRegistry, readPreference, executor)
+        def mongoIterable = new ListCollectionsIterableImpl<Document>(null, 'db', false, Document, codecRegistry, readPreference, executor)
 
         when:
         def results = new FutureResultCallback()
@@ -155,7 +165,7 @@ class ListCollectionsIterableSpecification extends Specification {
 
     def 'should check variables using notNull'() {
         given:
-        def mongoIterable = new ListCollectionsIterableImpl<Document>(null, 'db', Document, codecRegistry, readPreference,
+        def mongoIterable = new ListCollectionsIterableImpl<Document>(null, 'db', false, Document, codecRegistry, readPreference,
                 Stub(OperationExecutor))
         def callback = Stub(SingleResultCallback)
         def block = Stub(Block)
@@ -201,7 +211,7 @@ class ListCollectionsIterableSpecification extends Specification {
     def 'should get and set batchSize as expected'() {
         when:
         def batchSize = 5
-        def mongoIterable = new ListCollectionsIterableImpl<Document>(null, 'db', Document, codecRegistry, readPreference,
+        def mongoIterable = new ListCollectionsIterableImpl<Document>(null, 'db', false, Document, codecRegistry, readPreference,
                 Stub(OperationExecutor))
 
         then:

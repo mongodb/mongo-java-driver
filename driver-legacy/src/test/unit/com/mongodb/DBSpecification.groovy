@@ -25,15 +25,17 @@ import com.mongodb.client.model.CollationStrength
 import com.mongodb.client.model.DBCreateViewOptions
 import com.mongodb.client.model.ValidationAction
 import com.mongodb.client.model.ValidationLevel
+import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.CreateCollectionOperation
 import com.mongodb.operation.CreateViewOperation
+import com.mongodb.operation.ListCollectionsOperation
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonDouble
 import spock.lang.Specification
 
-import static com.mongodb.CustomMatchers.isTheSameAs
 import static Fixture.getMongoClient
+import static com.mongodb.CustomMatchers.isTheSameAs
 import static spock.util.matcher.HamcrestSupport.expect
 
 class DBSpecification extends Specification {
@@ -167,6 +169,30 @@ class DBSpecification extends Specification {
         executor.getReadConcern() == ReadConcern.MAJORITY
     }
 
+    def 'should execute ListCollectionsOperation'() {
+        given:
+        def mongo = Stub(Mongo)
+        mongo.mongoClientOptions >> MongoClientOptions.builder().build()
+        def executor = new TestOperationExecutor([Stub(BatchCursor), Stub(BatchCursor)])
+
+        def databaseName = 'test'
+
+        def db = new DB(mongo, databaseName, executor)
+
+        when:
+        db.getCollectionNames()
+        def operation = executor.getReadOperation() as ListCollectionsOperation
+
+        then:
+        expect operation, isTheSameAs(new ListCollectionsOperation(databaseName, MongoClient.getCommandCodec()).nameOnly(true))
+
+        when:
+        db.collectionExists('someCollection')
+        operation = executor.getReadOperation() as ListCollectionsOperation
+
+        then:
+        expect operation, isTheSameAs(new ListCollectionsOperation(databaseName, MongoClient.getCommandCodec()).nameOnly(true))
+    }
 
     def 'should use provided read preference for obedient commands'() {
         given:
