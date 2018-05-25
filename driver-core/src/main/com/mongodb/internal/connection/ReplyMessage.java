@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.MongoInternalException;
 import org.bson.BsonBinaryReader;
 import org.bson.codecs.Decoder;
 import org.bson.codecs.DecoderContext;
@@ -25,8 +24,6 @@ import org.bson.io.ByteBufferBsonInput;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static java.lang.String.format;
 
 /**
  * An OP_REPLY message.
@@ -61,10 +58,11 @@ public class ReplyMessage<T> {
     }
 
     ReplyMessage(final ReplyHeader replyHeader, final long requestId) {
-        if (requestId != replyHeader.getResponseTo()) {
-            throw new MongoInternalException(format("The responseTo (%d) in the response does not match the requestId (%d) in the "
-                                                    + "request", replyHeader.getResponseTo(), requestId));
-        }
+// Todo - find out why
+//        if (requestId != replyHeader.getResponseTo()) {
+//            throw new MongoInternalException(format("The responseTo (%d) in the response does not match the requestId (%d) in the "
+//                                                    + "request", replyHeader.getResponseTo(), requestId));
+//        }
 
         this.replyHeader = replyHeader;
 

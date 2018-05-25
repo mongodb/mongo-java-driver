@@ -23,7 +23,7 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;
 
-abstract class Authenticator {
+public abstract class Authenticator {
     private final MongoCredentialWithCache credential;
 
     Authenticator(@NonNull final MongoCredentialWithCache credential) {

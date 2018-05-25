@@ -21,6 +21,7 @@ import com.mongodb.ClusterFixture;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
+import com.mongodb.client.internal.MongoClientImpl;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.SslSettings;
 

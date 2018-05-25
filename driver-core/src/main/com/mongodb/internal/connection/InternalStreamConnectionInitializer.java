@@ -42,14 +42,14 @@ import static com.mongodb.internal.connection.DescriptionHelper.createConnection
 import static com.mongodb.internal.connection.DescriptionHelper.getVersion;
 import static java.lang.String.format;
 
-class InternalStreamConnectionInitializer implements InternalConnectionInitializer {
+public class InternalStreamConnectionInitializer implements InternalConnectionInitializer {
     private final List<Authenticator> authenticators;
     private final BsonDocument clientMetadataDocument;
     private final List<MongoCompressor> requestedCompressors;
     private final boolean checkSaslSupportedMechs;
 
-    InternalStreamConnectionInitializer(final List<Authenticator> authenticators, final BsonDocument clientMetadataDocument,
-                                        final List<MongoCompressor> requestedCompressors) {
+    public InternalStreamConnectionInitializer(final List<Authenticator> authenticators, final BsonDocument clientMetadataDocument,
+                                               final List<MongoCompressor> requestedCompressors) {
         this.authenticators = new ArrayList<Authenticator>(notNull("authenticators", authenticators));
         this.clientMetadataDocument = clientMetadataDocument;
         this.requestedCompressors = notNull("requestedCompressors", requestedCompressors);

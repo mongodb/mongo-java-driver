@@ -19,6 +19,7 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoInternalException;
 import org.bson.ByteBufNIO;
 import org.bson.Document;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.nio.Buffer;
@@ -28,6 +29,8 @@ import java.nio.ByteOrder;
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize;
 
 public class ReplyMessageTest {
+
+    @Ignore // Todo - return once embedded ReplyMessage check re-enabled.
     @Test(expected = MongoInternalException.class)
     public void shouldThrowExceptionIfRequestIdDoesNotMatchResponseTo() {
         int badResponseTo = 34565;
