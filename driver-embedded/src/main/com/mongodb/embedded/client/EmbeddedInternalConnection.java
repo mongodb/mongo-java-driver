@@ -41,6 +41,7 @@ import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
 import org.bson.codecs.Decoder;
 
+import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -162,9 +163,8 @@ class EmbeddedInternalConnection implements InternalConnection {
         @Override
         public ByteBuf read(final int numBytes) {
             ByteBuffer slice = curResponse.slice();
-            slice.limit(numBytes);
-            curResponse.position(curResponse.position() + numBytes);
-
+            ((Buffer) slice).limit(numBytes);
+            ((Buffer) curResponse).position(((Buffer)curResponse).position() + numBytes);
             return new ByteBufNIO(slice);
         }
 
