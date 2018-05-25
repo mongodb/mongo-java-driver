@@ -19,7 +19,7 @@ A `ClassModel` for a POJO includes:
   * A new instance factory. Handling the creation of new instances of the POJO. By default it requires the POJO to have an empty constructor.
   * Property information, a list of [`PropertyModel`]({{<apiref "org/bson/codecs/pojo/PropertyModel.html">}}) instances that contain all the 
     property metadata. By default this includes; any public getter methods with any corresponding setter methods and any public fields.
-  * An optional IdProperty. By default the `_id` or `id` property in the POJO.
+  * An optional IdProperty (see `BsonId` annotation). By default the `_id` or `id` property in the POJO.
   * Type data for the POJO and its fields to work around type erasure.
   * An optional discriminator value. The discriminator is the value used to represent the POJO class being stored.
   * An optional discriminator key. The document key name for the discriminator.
