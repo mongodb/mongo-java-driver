@@ -16,16 +16,15 @@
 
 package com.mongodb.embedded.client;
 
-import org.junit.Before;
+import org.junit.BeforeClass;
 
 import static org.junit.Assume.assumeTrue;
 
 public class DatabaseTestCase {
 
-    @Before
-    public void setUp() {
+    @BeforeClass
+    public static void beforeAll() {
         assumeTrue("No embedded path set.", Fixture.hasLibraryPath());
         Fixture.getMongoClient();
     }
-
 }

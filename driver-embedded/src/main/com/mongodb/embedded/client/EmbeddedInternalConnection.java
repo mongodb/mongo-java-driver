@@ -49,11 +49,13 @@ import java.util.List;
 
 class EmbeddedInternalConnection implements InternalConnection {
     private final InternalConnection wrapped;
+    private volatile Pointer clientStatusPointer;
     private volatile Pointer clientPointer;
 
-    EmbeddedInternalConnection(final Pointer databasePointer, final CommandListener commandListener,
+    EmbeddedInternalConnection(final Pointer instancePointer, final CommandListener commandListener,
                                final BsonDocument clientMetadataDocument) {
-        this.clientPointer = MongoDBCAPIHelper.db_client_new(databasePointer);
+        this.clientStatusPointer = MongoDBCAPIHelper.createStatusPointer();
+        this.clientPointer = MongoDBCAPIHelper.create_client(instancePointer, clientStatusPointer);
         this.wrapped = new InternalStreamConnection(new ServerId(new ClusterId(), new ServerAddress()),
                 new StreamFactory() {
                     @Override
@@ -84,8 +86,10 @@ class EmbeddedInternalConnection implements InternalConnection {
     public void close() {
         if (!wrapped.isClosed()) {
             wrapped.close();
-            MongoDBCAPIHelper.db_client_destroy(clientPointer);
+            MongoDBCAPIHelper.client_destroy(clientPointer, clientStatusPointer);
             clientPointer = null;
+            MongoDBCAPIHelper.destroyStatusPointer(clientStatusPointer);
+            clientStatusPointer = null;
         }
     }
 
@@ -156,7 +160,7 @@ class EmbeddedInternalConnection implements InternalConnection {
 
             PointerByReference outputBufferReference = new PointerByReference();
             IntByReference outputSize = new IntByReference();
-            MongoDBCAPIHelper.db_client_wire_protocol_rpc(clientPointer, message, message.length, outputBufferReference, outputSize);
+            MongoDBCAPIHelper.client_invoke(clientPointer, message, outputBufferReference, outputSize, clientStatusPointer);
             curResponse = outputBufferReference.getValue().getByteBuffer(0, outputSize.getValue());
         }
 
@@ -164,7 +168,7 @@ class EmbeddedInternalConnection implements InternalConnection {
         public ByteBuf read(final int numBytes) {
             ByteBuffer slice = curResponse.slice();
             ((Buffer) slice).limit(numBytes);
-            ((Buffer) curResponse).position(((Buffer)curResponse).position() + numBytes);
+            ((Buffer) curResponse).position(((Buffer) curResponse).position() + numBytes);
             return new ByteBufNIO(slice);
         }
 
