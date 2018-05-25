@@ -120,7 +120,7 @@ public final class MongoClientSettings {
                             connectionString.getHosts().get(0)));
                 }
             } else {
-                throw new MongoClientException(format("Connection String contains invalid hosts: %s", connectionString.getHosts()));
+                throw new MongoClientEmbeddedException(format("Connection String contains invalid hosts: %s", connectionString.getHosts()));
             }
             return this;
         }
