@@ -34,6 +34,7 @@ import static java.util.Arrays.asList;
 final class MongoDBCAPIHelper {
     private static final Logger LOGGER = Loggers.getLogger("embedded.server");
     private static final String NATIVE_LIBRARY_NAME = "mongo_embedded_capi";
+    private static final LogCallback LOG_CALLBACK = new LogCallback();
     private static volatile MongoDBCAPI mongoDBCAPI;
     private static volatile Pointer libraryStatusPointer;
     private static volatile Pointer libraryPointer;
@@ -204,7 +205,7 @@ final class MongoDBCAPIHelper {
             super();
             this.yamlConfig = settings.getYamlConfig();
             this.logFlags = settings.getLogLevel().getLevel();
-            this.logCallback = settings.getLogLevel() == MongoEmbeddedSettings.LogLevel.LOGGER ? new LogCallback() : null;
+            this.logCallback = settings.getLogLevel() == MongoEmbeddedSettings.LogLevel.LOGGER ? LOG_CALLBACK : null;
         }
 
         protected List<String> getFieldOrder() {
