@@ -44,7 +44,6 @@ public final class MongoClientSettings {
 
     private final com.mongodb.MongoClientSettings wrappedMongoClientSettings;
     private final String dbPath;
-    private final String libraryPath;
 
     /**
      * Gets the default codec registry.  It includes the following providers:
@@ -94,7 +93,6 @@ public final class MongoClientSettings {
     public static final class Builder {
         private com.mongodb.MongoClientSettings.Builder wrappedBuilder;
         private String dbPath;
-        private String libraryPath;
 
         private Builder() {
             wrappedBuilder = com.mongodb.MongoClientSettings.builder();
@@ -104,7 +102,6 @@ public final class MongoClientSettings {
             notNull("settings", settings);
             wrappedBuilder = com.mongodb.MongoClientSettings.builder(settings.wrappedMongoClientSettings);
             dbPath = settings.dbPath;
-            libraryPath = settings.libraryPath;
         }
 
         /**
@@ -188,17 +185,6 @@ public final class MongoClientSettings {
         }
 
         /**
-         * Sets the library path for mongod.
-         *
-         * @param libraryPath the library path for mongod
-         * @return this
-         */
-        public Builder libraryPath(final String libraryPath) {
-            this.libraryPath = libraryPath;
-            return this;
-        }
-
-        /**
          * Build an instance of {@code MongoClientSettings}.
          *
          * @return the settings from this builder
@@ -250,15 +236,6 @@ public final class MongoClientSettings {
     }
 
     /**
-     * Gets the library path for the embedded mongod
-     *
-     * @return the library path if set or null
-     */
-    public String getLibraryPath() {
-        return libraryPath;
-    }
-
-    /**
      * Returns the wrapped MongoClientSettings instance
      *
      * @return the wrapped MongoClient Settings instance.
@@ -270,7 +247,6 @@ public final class MongoClientSettings {
     private MongoClientSettings(final Builder builder) {
         isTrue("dbPath is set", builder.dbPath != null && !builder.dbPath.isEmpty());
         dbPath = builder.dbPath;
-        libraryPath = builder.libraryPath;
         wrappedMongoClientSettings = builder.wrappedBuilder.build();
     }
 }

@@ -42,7 +42,6 @@ public class SmokeTest extends DatabaseTestCase {
         MongoCollection<Document> collection = database.getCollection("test");
         collection.drop();
 
-
         Document document = new Document("_id", 1);
         Document updatedDocument = new Document("_id", 1).append("a", 1);
 
@@ -68,13 +67,11 @@ public class SmokeTest extends DatabaseTestCase {
     }
 
     @Test
-    public void shouldHandleCommonAdministrativeScenariosWithoutError(){
+    public void shouldHandleCommonAdministrativeScenariosWithoutError() {
         MongoDatabase database = Fixture.getDefaultDatabase();
         MongoClient mongoClient = Fixture.getMongoClient();
-
         database.drop();
         List<String> databaseNames = mongoClient.listDatabaseNames().into(new ArrayList<String>());
-
 
         String collectionName = "test";
         database.createCollection(collectionName);

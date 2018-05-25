@@ -29,6 +29,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  */
 @Immutable
 public final class MongoEmbeddedSettings {
+    private final String libraryPath;
 
     /**
      * Convenience method to create a Builder.
@@ -55,12 +56,25 @@ public final class MongoEmbeddedSettings {
      */
     @NotThreadSafe
     public static final class Builder {
+        private String libraryPath;
 
         private Builder() {
         }
 
         private Builder(final MongoEmbeddedSettings settings) {
             notNull("settings", settings);
+            libraryPath = settings.libraryPath;
+        }
+
+        /**
+         * Sets the library path for mongod.
+         *
+         * @param libraryPath the library path for mongod
+         * @return this
+         */
+        public Builder libraryPath(final String libraryPath) {
+            this.libraryPath = libraryPath;
+            return this;
         }
 
         /**
@@ -73,6 +87,16 @@ public final class MongoEmbeddedSettings {
         }
     }
 
+    /**
+     * Gets the library path for the embedded mongod
+     *
+     * @return the library path if set or null
+     */
+    public String getLibraryPath() {
+        return libraryPath;
+    }
+
     private MongoEmbeddedSettings(final Builder builder) {
+        this.libraryPath = builder.libraryPath;
     }
 }

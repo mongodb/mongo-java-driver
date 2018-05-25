@@ -23,19 +23,39 @@ import static spock.util.matcher.HamcrestSupport.expect
 
 class MongoEmbeddedSettingsSpecification extends Specification {
 
-    def 'should be easy to create new settings from existing'() {
-        when:
+
+    def 'should set the correct default values'() {
+        given:
         def settings = MongoEmbeddedSettings.builder().build()
 
+        expect:
+        settings.getLibraryPath() == null
+    }
+
+    def 'should set the correct settings'() {
+        when:
+        def settings = MongoEmbeddedSettings.builder().libraryPath('/mongo/lib/').build()
+
         then:
+        settings.getLibraryPath() == '/mongo/lib/'
         expect settings, isTheSameAs(MongoEmbeddedSettings.builder(settings).build())
+    }
+
+    def 'should only have the following fields in the builder'() {
+        when:
+        // A regression test so that if anymore fields are added then the builder(final MongoEmbeddedSettings settings) should be updated
+        def actual = MongoEmbeddedSettings.Builder.declaredFields.grep {  !it.synthetic } *.name.sort()
+        def expected = ['libraryPath']
+
+        then:
+        actual == expected
     }
 
     def 'should only have the following methods in the builder'() {
         when:
         // A regression test so that if anymore methods are added then the builder(final MongoEmbeddedSettings settings) should be updated
         def actual = MongoEmbeddedSettings.Builder.declaredMethods.grep {  !it.synthetic } *.name.sort()
-        def expected = ['build']
+        def expected = ['build', 'libraryPath']
 
         then:
         actual == expected

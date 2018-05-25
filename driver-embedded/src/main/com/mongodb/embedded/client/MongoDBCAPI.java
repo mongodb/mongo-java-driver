@@ -27,6 +27,25 @@ interface MongoDBCAPI extends Library {
     // CHECKSTYLE.OFF: MethodName
 
     /**
+     * Initializes the mongodbcapi library, required before any other call. Cannot be called again
+     * without libmongodbcapi_fini() being called first.
+     *
+     * @param config the YAML formatted MongoDB configuration string. See documentation for valid options.
+     *
+     * @note This function is not thread safe.
+     *
+     * @return the error, or 0 if success
+     */
+    int libmongodbcapi_init(String config);
+
+    /**
+     * Tears down the state of the library, all databases must be closed before calling this.
+     *
+     * @return the error, or 0 if success
+     */
+    int libmongodbcapi_fini();
+
+    /**
      * Create a new db instance.
      *
      * @param argc the number of arguments
