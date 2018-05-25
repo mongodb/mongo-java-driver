@@ -63,7 +63,7 @@ import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.ExplainVerbosity.QUERY_PLANNER
-import static com.mongodb.connection.ServerHelper.waitForLastRelease
+import static com.mongodb.internal.connection.ServerHelper.waitForLastRelease
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.operation.QueryOperationHelper.getKeyPattern
 import static com.mongodb.operation.OperationReadConcernHelper.appendReadConcernToCommand

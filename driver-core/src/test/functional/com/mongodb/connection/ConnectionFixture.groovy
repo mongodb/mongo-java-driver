@@ -16,6 +16,8 @@
 
 package com.mongodb.connection
 
+import com.mongodb.internal.connection.MongoCredentialWithCache
+
 import static com.mongodb.ClusterFixture.getCredentialList
 
 class ConnectionFixture {

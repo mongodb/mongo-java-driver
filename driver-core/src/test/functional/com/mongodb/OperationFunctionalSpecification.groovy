@@ -43,7 +43,7 @@ import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
-import com.mongodb.connection.ServerHelper
+import com.mongodb.internal.connection.ServerHelper
 import com.mongodb.connection.ServerType
 import com.mongodb.connection.ServerVersion
 import com.mongodb.connection.SplittablePayload

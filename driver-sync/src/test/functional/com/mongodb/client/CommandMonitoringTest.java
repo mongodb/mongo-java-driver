@@ -22,7 +22,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.connection.ServerVersion;
-import com.mongodb.connection.TestCommandListener;
+import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.event.CommandEvent;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;

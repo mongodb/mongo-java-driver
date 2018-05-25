@@ -50,18 +50,6 @@ public class QueryResult<T> {
     }
 
     /**
-     * Construct an instance.
-     *
-     * @param namespace    the namespace
-     * @param replyMessage the reply message
-     * @param address      the server address
-     */
-    QueryResult(final MongoNamespace namespace, final ReplyMessage<T> replyMessage, final ServerAddress address) {
-        this(namespace, replyMessage.getDocuments(), replyMessage.getReplyHeader().getCursorId(), address
-            );
-    }
-
-    /**
      * Gets the namespace.
      *
      * @return the namespace

@@ -17,6 +17,7 @@
 package com.mongodb.connection
 
 import com.mongodb.ServerAddress
+import com.mongodb.internal.connection.AsynchronousSocketChannelStream
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 import spock.lang.Unroll

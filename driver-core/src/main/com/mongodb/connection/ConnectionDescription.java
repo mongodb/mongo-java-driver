@@ -96,7 +96,14 @@ public class ConnectionDescription {
     }
 
 
-    ConnectionDescription withConnectionId(final ConnectionId connectionId) {
+    /**
+     * Creates a new connection description with the set connection id
+     *
+     * @param connectionId the connection id
+     * @return the new connection description
+     * @since 3.8
+     */
+    public ConnectionDescription withConnectionId(final ConnectionId connectionId) {
         notNull("connectionId", connectionId);
         return new ConnectionDescription(connectionId, serverVersion, serverType, maxBatchCount, maxDocumentSize, maxMessageSize,
                                                 compressors);

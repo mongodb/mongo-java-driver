@@ -44,8 +44,9 @@ public final class ConnectionId {
      * Construct an instance with the given server id.
      *
      * @param serverId the server id
+     * @since 3.8
      */
-    ConnectionId(final ServerId serverId) {
+    public ConnectionId(final ServerId serverId) {
         this(serverId, INCREMENTING_ID.incrementAndGet(), null);
     }
 
@@ -60,7 +61,14 @@ public final class ConnectionId {
         }
     }
 
-    ConnectionId withServerValue(final int serverValue) {
+    /**
+     * Creates a new connectionId with the set server value
+     *
+     * @param serverValue the server value
+     * @return the new connection id
+     * @since 3.8
+     */
+    public ConnectionId withServerValue(final int serverValue) {
         isTrue("server value is null", this.serverValue == null);
         return new ConnectionId(serverId, localValue, serverValue);
     }
