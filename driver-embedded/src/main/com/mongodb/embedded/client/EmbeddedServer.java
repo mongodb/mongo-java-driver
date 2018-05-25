@@ -16,24 +16,19 @@
 
 package com.mongodb.embedded.client;
 
-import com.mongodb.MongoCompressor;
 import com.mongodb.MongoDriverInformation;
+import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.ClusterConnectionMode;
-import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerVersion;
-import com.mongodb.connection.Stream;
-import com.mongodb.connection.StreamFactory;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.CommandListener;
-import com.mongodb.internal.connection.Authenticator;
 import com.mongodb.internal.connection.ClusterClock;
 import com.mongodb.internal.connection.ClusterClockAdvancingSessionContext;
 import com.mongodb.internal.connection.CommandHelper;
@@ -41,53 +36,59 @@ import com.mongodb.internal.connection.CommandProtocol;
 import com.mongodb.internal.connection.DefaultServerConnection;
 import com.mongodb.internal.connection.DescriptionHelper;
 import com.mongodb.internal.connection.InternalConnection;
-import com.mongodb.internal.connection.InternalStreamConnection;
-import com.mongodb.internal.connection.InternalStreamConnectionInitializer;
 import com.mongodb.internal.connection.LegacyProtocol;
 import com.mongodb.internal.connection.ProtocolExecutor;
 import com.mongodb.session.SessionContext;
+import com.sun.jna.Pointer;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 
 import java.io.Closeable;
-import java.util.Collections;
+import java.io.File;
 
+import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.ClientMetadataHelper.createClientMetadataDocument;
 import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
+import static java.lang.String.format;
 
 class EmbeddedServer implements Server, Closeable {
-    private static final Logger LOGGER = Loggers.getLogger("connection");
-    private static final MongoDriverInformation MONGO_DRIVER_INFORMATION = MongoDriverInformation.builder()
-            .driverName("embedded").build();
-    private final BsonDocument clientMetadataDocument;
-    private final ClusterId clusterId;
+    private static final Logger LOGGER = Loggers.getLogger("embedded.client");
+    private static final MongoDriverInformation MONGO_DRIVER_INFORMATION = MongoDriverInformation.builder().driverName("embedded").build();
     private final ClusterClock clusterClock;
     private final CommandListener commandListener;
     private final ServerAddress serverAddress;
-    private final EmbeddedDatabase embeddedDatabase;
     private final ServerDescription serverDescription;
+    private final EmbeddedInternalConnectionPool connectionPool;
+    private volatile boolean isClosed;
+    private volatile Pointer databasePointer;
 
     EmbeddedServer(final MongoClientSettings mongoClientSettings) {
-        this.embeddedDatabase = new EmbeddedDatabase(mongoClientSettings);
-        this.clientMetadataDocument = createClientMetadataDocument(mongoClientSettings.getApplicationName(), MONGO_DRIVER_INFORMATION);
-        this.clusterId = new ClusterId();
+        this.databasePointer = createDatabasePointer(mongoClientSettings);
         this.clusterClock = new ClusterClock();
         this.commandListener =  getCommandListener(mongoClientSettings.getCommandListeners());
         this.serverAddress = new ServerAddress();
+        this.connectionPool = new EmbeddedInternalConnectionPool(new EmbeddedInternalConnectionFactory() {
+            @Override
+            public EmbeddedInternalConnection create() {
+                return new EmbeddedInternalConnection(databasePointer, commandListener,
+                        createClientMetadataDocument(mongoClientSettings.getApplicationName(), MONGO_DRIVER_INFORMATION));
+            }
+        });
+
         this.serverDescription = createServerDescription();
     }
 
     @Override
     public ServerDescription getDescription() {
+        isTrue("open", !isClosed);
         return serverDescription;
     }
 
     @Override
     public Connection getConnection() {
-        InternalConnection internalConnection = getInternalConnection();
-        internalConnection.open();
-        return new DefaultServerConnection(internalConnection, new DefaultServerProtocolExecutor(), ClusterConnectionMode.SINGLE);
+        isTrue("open", !isClosed);
+        return new DefaultServerConnection(connectionPool.get(), new DefaultServerProtocolExecutor(), ClusterConnectionMode.SINGLE);
     }
 
     @Override
@@ -99,24 +100,40 @@ class EmbeddedServer implements Server, Closeable {
      * Pump the message queue.
      */
     public void pump() {
-        embeddedDatabase.pump();
+        isTrue("open", !isClosed);
+        MongoDBCAPIHelper.db_pump(databasePointer);
     }
 
     @Override
     public void close() {
-        embeddedDatabase.close();
+        if (!isClosed) {
+            isClosed = true;
+            connectionPool.close();
+            destroyDatabasePointer();
+        }
     }
 
-    private InternalConnection getInternalConnection() {
-        return new InternalStreamConnection(new ServerId(clusterId, serverAddress),
-                new StreamFactory() {
-                    @Override
-                    public Stream create(final ServerAddress serverAddress) {
-                        return new EmbeddedStream(embeddedDatabase.createConnection());
-                    }
-                }, Collections.<MongoCompressor>emptyList(), commandListener,
-                new InternalStreamConnectionInitializer(Collections.<Authenticator>emptyList(), clientMetadataDocument,
-                        Collections.<MongoCompressor>emptyList()));
+    private Pointer createDatabasePointer(final MongoClientSettings mongoClientSettings) {
+        File directory = new File(mongoClientSettings.getDbPath());
+        try {
+            if (directory.mkdirs() && LOGGER.isInfoEnabled()) {
+                LOGGER.info(format("Created dbpath directory: %s", mongoClientSettings.getDbPath()));
+            }
+        } catch (SecurityException e) {
+            throw new MongoException(format("Could not validate / create the dbpath: %s", mongoClientSettings.getDbPath()));
+        }
+
+        String yamlConfig = createYamlConfig(mongoClientSettings);
+        return MongoDBCAPIHelper.db_new(yamlConfig);
+    }
+
+    private void destroyDatabasePointer() {
+        MongoDBCAPIHelper.db_destroy(databasePointer);
+        databasePointer = null;
+    }
+
+    private String createYamlConfig(final MongoClientSettings mongoClientSettings) {
+        return format("{ storage: { dbPath: %s } }", mongoClientSettings.getDbPath());
     }
 
     private class DefaultServerProtocolExecutor implements ProtocolExecutor {
@@ -150,9 +167,8 @@ class EmbeddedServer implements Server, Closeable {
     }
 
     private ServerDescription createServerDescription() {
-        InternalConnection connection = getInternalConnection();
+        InternalConnection connection = connectionPool.get();
         try {
-            connection.open();
             long start = System.nanoTime();
             BsonDocument isMasterResult = CommandHelper.executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)),
                     clusterClock, connection);

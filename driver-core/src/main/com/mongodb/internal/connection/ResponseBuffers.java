@@ -22,7 +22,7 @@ import org.bson.codecs.Decoder;
 
 import java.io.Closeable;
 
-class ResponseBuffers implements Closeable {
+public class ResponseBuffers implements Closeable {
     private final ReplyHeader replyHeader;
     private final ByteBuf bodyByteBuffer;
     private final int bodyByteBufferStartPosition;
