@@ -18,6 +18,7 @@ package com.mongodb.embedded.client;
 
 import com.sun.jna.Library;
 import com.sun.jna.Pointer;
+import com.sun.jna.Structure;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 
@@ -25,18 +26,16 @@ interface MongoDBCAPI extends Library {
 
 
     // CHECKSTYLE.OFF: MethodName
-
     /**
      * Initializes the mongodbcapi library, required before any other call. Cannot be called again
      * without libmongodbcapi_fini() being called first.
      *
-     * @param config the YAML formatted MongoDB configuration string. See documentation for valid options.
-     *
+     * @param initParams the embedded mongod initialization parameters.
+
      * @note This function is not thread safe.
-     *
      * @return the error, or 0 if success
      */
-    int libmongodbcapi_init(String config);
+    int libmongodbcapi_init(Structure initParams);
 
     /**
      * Tears down the state of the library, all databases must be closed before calling this.
@@ -48,12 +47,10 @@ interface MongoDBCAPI extends Library {
     /**
      * Create a new db instance.
      *
-     * @param argc the number of arguments
-     * @param argv the arguments
-     * @param envp the environment variables
+     * @param yamlConfig null-terminated YAML formatted MongoDB configuration string
      * @return the db pointer
      */
-    Pointer libmongodbcapi_db_new(int argc, String[] argv, String[] envp);
+    Pointer libmongodbcapi_db_new(String yamlConfig);
 
     /**
      * Destroy a db instance.

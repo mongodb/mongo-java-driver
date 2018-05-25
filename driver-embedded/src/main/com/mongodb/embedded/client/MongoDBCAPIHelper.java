@@ -18,15 +18,23 @@ package com.mongodb.embedded.client;
 
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
+import com.sun.jna.Callback;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLibrary;
 import com.sun.jna.Pointer;
+import com.sun.jna.Structure;
 import com.sun.jna.ptr.IntByReference;
 import com.sun.jna.ptr.PointerByReference;
 
+import java.util.List;
+
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 
 final class MongoDBCAPIHelper {
+    private static final Logger LOGGER = Loggers.getLogger("embedded.server");
     private static final String NATIVE_LIBRARY_NAME = "mongo_embedded_capi";
     private static volatile MongoDBCAPI mongoDBCAPI;
 
@@ -35,8 +43,7 @@ final class MongoDBCAPIHelper {
     }
 
     // CHECKSTYLE.OFF: MethodName
-
-    static synchronized void init(final MongoEmbeddedSettings mongoEmbeddedSettings, final String config) {
+    static synchronized void init(final MongoEmbeddedSettings mongoEmbeddedSettings) {
         if (mongoDBCAPI != null) {
             throw new MongoClientException("MongoDBCAPI has been initialized but not closed");
         }
@@ -57,7 +64,7 @@ final class MongoDBCAPIHelper {
                     + "%n", NATIVE_LIBRARY_NAME, e.getMessage()), e);
         }
         try {
-            validateErrorCode(mongoDBCAPI.libmongodbcapi_init(config));
+            validateErrorCode(mongoDBCAPI.libmongodbcapi_init(new MongoDBCAPIInitParams(mongoEmbeddedSettings)));
         } catch (Throwable t) {
             throw createError("init", t);
         }
@@ -73,10 +80,10 @@ final class MongoDBCAPIHelper {
         }
     }
 
-    static Pointer db_new(final int argc, final String[] argv, final String[] envp) {
+    static Pointer db_new(final String yamlConfig) {
         checkInitialized();
         try {
-            return mongoDBCAPI.libmongodbcapi_db_new(argc, argv, envp);
+            return mongoDBCAPI.libmongodbcapi_db_new(yamlConfig);
         } catch (Throwable t) {
             throw createError("db_new", t);
         }
@@ -164,5 +171,46 @@ final class MongoDBCAPIHelper {
     }
 
     private MongoDBCAPIHelper() {
+    }
+
+    /**
+     * Represents libmongodbcapi_init_params
+     */
+    public static class MongoDBCAPIInitParams extends Structure {
+        // CHECKSTYLE.OFF: VisibilityModifier
+        public String yamlConfig;
+        public long logFlags;
+        public Callback logCallback;
+        public String userData;
+        // CHECKSTYLE.ON: VisibilityModifier
+
+        MongoDBCAPIInitParams(final MongoEmbeddedSettings settings) {
+            super();
+            this.yamlConfig = settings.getYamlConfig();
+            this.logFlags = settings.getLogLevel().getLevel();
+            this.logCallback = settings.getLogLevel() == MongoEmbeddedSettings.LogLevel.LOGGER ? new LogCallback() : null;
+        }
+
+        protected List<String> getFieldOrder() {
+            return asList("yamlConfig", "logFlags", "logCallback", "userData");
+        }
+    }
+
+    static class LogCallback implements Callback {
+
+        public void apply(final String userData, final String message, final String component, final String context,
+                          final int severity) {
+            String logMessage = format("%-9s [%s] %s", component.toUpperCase(), context, message).trim();
+
+            if (severity < -2) {
+                LOGGER.error(logMessage);   // Severe/Fatal & Error messages
+            } else if (severity == -2) {
+                LOGGER.warn(logMessage);    // Warning messages
+            } else if (severity < 1) {
+                LOGGER.info(logMessage);    // Info / Log messages
+            } else {
+                LOGGER.debug(logMessage);   // Debug messages
+            }
+        }
     }
 }

@@ -99,6 +99,10 @@
         <Bug pattern="DE_MIGHT_IGNORE"/>
     </Match>
 
+    <Match>
+        <Class name="com.mongodb.embedded.client.MongoDBCAPIHelper$MongoDBCAPIInitParams"/>
+        <Bug pattern="URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD"/>
+    </Match>
 
     <!-- Test exclusions -->
     <!-- All bugs in test classes, except for JUnit-specific bugs -->
