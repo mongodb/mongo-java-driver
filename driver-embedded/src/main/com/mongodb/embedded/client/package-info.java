@@ -14,5 +14,7 @@
  * limitations under the License.
  */
 
-include 'util','bson', 'driver-core', 'driver-sync', 'driver-async', 'driver-legacy', 'mongodb-driver', 'driver-embedded', 'mongo-java-driver'
-
+/**
+ * This packages contains classes for the embedded client
+ */
+package com.mongodb.embedded.client;

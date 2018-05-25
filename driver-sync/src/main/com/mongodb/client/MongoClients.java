@@ -20,6 +20,8 @@ import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.lang.Nullable;
+import com.mongodb.client.internal.MongoClientImpl;
+
 
 /**
  * A factory for {@link MongoClient} instances.  Use of this class is now the recommended way to connect to MongoDB via the Java driver.
