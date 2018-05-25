@@ -54,7 +54,7 @@ import static com.mongodb.internal.connection.ReadConcernHelper.getReadConcernDo
 /**
  * A command message that uses OP_MSG or OP_QUERY to send the command.
  */
-final class CommandMessage extends RequestMessage {
+public final class CommandMessage extends RequestMessage {
     private final MongoNamespace namespace;
     private final BsonDocument command;
     private final FieldNameValidator commandFieldNameValidator;
