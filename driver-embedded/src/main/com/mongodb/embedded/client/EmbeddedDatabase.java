@@ -25,7 +25,6 @@ import java.io.Closeable;
 import java.io.File;
 
 import static java.lang.String.format;
-import static java.util.Arrays.asList;
 
 final class EmbeddedDatabase implements Closeable {
     private static final Logger LOGGER = Loggers.getLogger("embedded.client");
@@ -41,8 +40,8 @@ final class EmbeddedDatabase implements Closeable {
             throw new MongoException(format("Could not validate / create the dbpath: %s", mongoClientSettings.getDbPath()));
         }
 
-        String[] cmdArgs = createCmdArgs(mongoClientSettings);
-        this.databasePointer = MongoDBCAPIHelper.db_new(cmdArgs.length, cmdArgs, createEnvArgs());
+        String yamlConfig = createYamlConfig(mongoClientSettings);
+        this.databasePointer = MongoDBCAPIHelper.db_new(yamlConfig);
     }
 
     public EmbeddedConnection createConnection() {
@@ -61,15 +60,8 @@ final class EmbeddedDatabase implements Closeable {
         }
     }
 
-    private String[] createCmdArgs(final MongoClientSettings mongoClientSettings) {
-        return asList(
-                "--port=0",
-                "--storageEngine=mobile",
-                "--dbpath=" + mongoClientSettings.getDbPath()
-        ).toArray(new String[0]);
+    private String createYamlConfig(final MongoClientSettings mongoClientSettings) {
+        return format("{ storage: { dbPath: %s } }", mongoClientSettings.getDbPath());
     }
 
-    private String[] createEnvArgs() {
-        return new String[0];
-    }
 }

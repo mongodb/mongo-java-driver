@@ -35,8 +35,7 @@ public final class MongoClients {
      * @param mongoEmbeddedSettings the settings for the embedded driver.
      */
     public static void init(final MongoEmbeddedSettings mongoEmbeddedSettings) {
-        // TODO - support yaml
-        MongoDBCAPIHelper.init(mongoEmbeddedSettings, "");
+        MongoDBCAPIHelper.init(mongoEmbeddedSettings);
     }
 
     /**

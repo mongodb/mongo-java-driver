@@ -30,14 +30,27 @@ class MongoEmbeddedSettingsSpecification extends Specification {
 
         expect:
         settings.getLibraryPath() == null
+        settings.getLogLevel() == MongoEmbeddedSettings.LogLevel.LOGGER
+        settings.getYamlConfig() == null
     }
 
     def 'should set the correct settings'() {
+        given:
+        def libraryPath = '/mongo/lib/'
+        def logLevel = MongoEmbeddedSettings.LogLevel.NONE
+        def yamlConfig = '{systemLog: {verbosity: 5} }'
+
         when:
-        def settings = MongoEmbeddedSettings.builder().libraryPath('/mongo/lib/').build()
+        def settings = MongoEmbeddedSettings.builder()
+                .libraryPath(libraryPath)
+                .logLevel(logLevel)
+                .yamlConfig(yamlConfig)
+                .build()
 
         then:
-        settings.getLibraryPath() == '/mongo/lib/'
+        settings.getLibraryPath() == libraryPath
+        settings.getLogLevel() == logLevel
+        settings.getYamlConfig() == yamlConfig
         expect settings, isTheSameAs(MongoEmbeddedSettings.builder(settings).build())
     }
 
@@ -45,7 +58,7 @@ class MongoEmbeddedSettingsSpecification extends Specification {
         when:
         // A regression test so that if anymore fields are added then the builder(final MongoEmbeddedSettings settings) should be updated
         def actual = MongoEmbeddedSettings.Builder.declaredFields.grep {  !it.synthetic } *.name.sort()
-        def expected = ['libraryPath']
+        def expected = ['libraryPath', 'logLevel', 'yamlConfig']
 
         then:
         actual == expected
@@ -55,7 +68,7 @@ class MongoEmbeddedSettingsSpecification extends Specification {
         when:
         // A regression test so that if anymore methods are added then the builder(final MongoEmbeddedSettings settings) should be updated
         def actual = MongoEmbeddedSettings.Builder.declaredMethods.grep {  !it.synthetic } *.name.sort()
-        def expected = ['build', 'libraryPath']
+        def expected = ['build', 'libraryPath', 'logLevel', 'yamlConfig']
 
         then:
         actual == expected

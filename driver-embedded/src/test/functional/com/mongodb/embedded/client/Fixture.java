@@ -21,7 +21,6 @@ import com.mongodb.ConnectionString;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.connection.ServerVersion;
-import com.sun.jna.Native;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.Document;
@@ -53,7 +52,6 @@ public final class Fixture {
     static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
             cleanDBPath();
-            Native.setProtected(true);
             MongoClients.init(getMongoEmbeddedSettings());
             mongoClient = MongoClients.create(getMongoClientSettings());
             Runtime.getRuntime().addShutdownHook(new ShutdownHook());
@@ -126,7 +124,10 @@ public final class Fixture {
 
     static synchronized MongoEmbeddedSettings getMongoEmbeddedSettings() {
         if (mongoEmbeddedSettings == null) {
-            mongoEmbeddedSettings = MongoEmbeddedSettings.builder().libraryPath(System.getProperty(EMBEDDED_PATH_PROPERTY_NAME)).build();
+            mongoEmbeddedSettings = MongoEmbeddedSettings.builder()
+                    .libraryPath(System.getProperty(EMBEDDED_PATH_PROPERTY_NAME))
+                    .logLevel(MongoEmbeddedSettings.LogLevel.LOGGER)
+                    .build();
         }
         return mongoEmbeddedSettings;
     }
