@@ -288,7 +288,6 @@ public class InternalStreamConnection implements InternalConnection {
         ResponseBuffers responseBuffers = receiveMessage(message.getId());
         try {
             updateSessionContext(sessionContext, responseBuffers);
-
             if (!isCommandOk(responseBuffers)) {
                 throw getCommandFailureException(responseBuffers.getResponseDocument(message.getId(), new BsonDocumentCodec()),
                         description.getServerAddress());

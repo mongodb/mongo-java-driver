@@ -104,6 +104,12 @@
         <Bug pattern="URF_UNREAD_PUBLIC_OR_PROTECTED_FIELD"/>
     </Match>
 
+    <Match>
+        <Class name="com.mongodb.embedded.client.MongoDBCAPIHelper$MongoDBCAPIInitParams"/>
+        <Field name="userData"/>
+        <Bug pattern="UUF_UNUSED_PUBLIC_OR_PROTECTED_FIELD"/>
+    </Match>
+
     <!-- Test exclusions -->
     <!-- All bugs in test classes, except for JUnit-specific bugs -->
     <Match>

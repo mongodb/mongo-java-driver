@@ -111,6 +111,7 @@
     <suppress checks="HideUtilityClassConstructor" files="JSON"/>
     <suppress checks="HideUtilityClassConstructor" files="QuickTour"/>
     <suppress checks="HideUtilityClassConstructor" files="Util"/>
+    <suppress checks="HideUtilityClassConstructor" files="DatabaseTestCase"/>
 
     <suppress checks="ParameterNumber" files="BulkWriteBatch"/>
 

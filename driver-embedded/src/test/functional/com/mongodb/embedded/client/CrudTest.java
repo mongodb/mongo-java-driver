@@ -60,7 +60,6 @@ public class CrudTest extends DatabaseTestCase {
 
     @Before
     public void setUp() {
-        super.setUp();
         database = Fixture.getDefaultDatabase();
 
         collection = database.getCollection(getClass().getName(), BsonDocument.class);

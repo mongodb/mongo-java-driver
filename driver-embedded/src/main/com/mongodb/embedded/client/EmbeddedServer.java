@@ -61,17 +61,20 @@ class EmbeddedServer implements Server, Closeable {
     private final ServerDescription serverDescription;
     private final EmbeddedInternalConnectionPool connectionPool;
     private volatile boolean isClosed;
-    private volatile Pointer databasePointer;
+    private volatile Pointer instanceStatusPointer;
+    private volatile Pointer instancePointer;
+
 
     EmbeddedServer(final MongoClientSettings mongoClientSettings) {
-        this.databasePointer = createDatabasePointer(mongoClientSettings);
+        this.instanceStatusPointer = MongoDBCAPIHelper.createStatusPointer();
+        this.instancePointer = createInstancePointer(mongoClientSettings);
         this.clusterClock = new ClusterClock();
         this.commandListener =  getCommandListener(mongoClientSettings.getCommandListeners());
         this.serverAddress = new ServerAddress();
         this.connectionPool = new EmbeddedInternalConnectionPool(new EmbeddedInternalConnectionFactory() {
             @Override
             public EmbeddedInternalConnection create() {
-                return new EmbeddedInternalConnection(databasePointer, commandListener,
+                return new EmbeddedInternalConnection(instancePointer, commandListener,
                         createClientMetadataDocument(mongoClientSettings.getApplicationName(), MONGO_DRIVER_INFORMATION));
             }
         });
@@ -96,24 +99,16 @@ class EmbeddedServer implements Server, Closeable {
         throw new UnsupportedOperationException("Async not supported");
     }
 
-    /**
-     * Pump the message queue.
-     */
-    public void pump() {
-        isTrue("open", !isClosed);
-        MongoDBCAPIHelper.db_pump(databasePointer);
-    }
-
     @Override
     public void close() {
         if (!isClosed) {
             isClosed = true;
             connectionPool.close();
-            destroyDatabasePointer();
+            destroyInstancePointer();
         }
     }
 
-    private Pointer createDatabasePointer(final MongoClientSettings mongoClientSettings) {
+    private Pointer createInstancePointer(final MongoClientSettings mongoClientSettings) {
         File directory = new File(mongoClientSettings.getDbPath());
         try {
             if (directory.mkdirs() && LOGGER.isInfoEnabled()) {
@@ -124,12 +119,14 @@ class EmbeddedServer implements Server, Closeable {
         }
 
         String yamlConfig = createYamlConfig(mongoClientSettings);
-        return MongoDBCAPIHelper.db_new(yamlConfig);
+        return MongoDBCAPIHelper.instance_create(yamlConfig, instanceStatusPointer);
     }
 
-    private void destroyDatabasePointer() {
-        MongoDBCAPIHelper.db_destroy(databasePointer);
-        databasePointer = null;
+    private void destroyInstancePointer() {
+        MongoDBCAPIHelper.instance_destroy(instancePointer, instanceStatusPointer);
+        instancePointer = null;
+        MongoDBCAPIHelper.destroyStatusPointer(instanceStatusPointer);
+        instanceStatusPointer = null;
     }
 
     private String createYamlConfig(final MongoClientSettings mongoClientSettings) {

@@ -52,7 +52,7 @@ class EmbeddedInternalConnectionPool {
         }
     }
 
-    private final class EmbeddedConnectionItemFactory implements ConcurrentPool.ItemFactory<EmbeddedInternalConnection> {
+    private static class EmbeddedConnectionItemFactory implements ConcurrentPool.ItemFactory<EmbeddedInternalConnection> {
         private final EmbeddedInternalConnectionFactory internalConnectionFactory;
 
         EmbeddedConnectionItemFactory(final EmbeddedInternalConnectionFactory internalConnectionFactory) {

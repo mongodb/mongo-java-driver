@@ -68,8 +68,8 @@ public class SmokeTest extends DatabaseTestCase {
 
     @Test
     public void shouldHandleCommonAdministrativeScenariosWithoutError() {
-        MongoDatabase database = Fixture.getDefaultDatabase();
         MongoClient mongoClient = Fixture.getMongoClient();
+        MongoDatabase database = Fixture.getDefaultDatabase();
         database.drop();
         List<String> databaseNames = mongoClient.listDatabaseNames().into(new ArrayList<String>());
 
