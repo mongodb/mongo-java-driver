@@ -21,10 +21,12 @@ import com.mongodb.ConnectionString;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.connection.ServerVersion;
+import com.sun.jna.Native;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.Document;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,8 +43,8 @@ public final class Fixture {
     private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
 
     private static MongoClient mongoClient;
+    private static MongoEmbeddedSettings mongoEmbeddedSettings;
     private static MongoClientSettings mongoClientSettings;
-    private static MongoDatabase defaultDatabase;
     private static ServerVersion serverVersion;
 
     private Fixture() {
@@ -50,38 +52,36 @@ public final class Fixture {
 
     static synchronized MongoClient getMongoClient() {
         if (mongoClient == null) {
-            MongoClients.init(MongoEmbeddedSettings.builder().build());
+            cleanDBPath();
+            Native.setProtected(true);
+            MongoClients.init(getMongoEmbeddedSettings());
             mongoClient = MongoClients.create(getMongoClientSettings());
             Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         }
         return mongoClient;
     }
 
-    static synchronized MongoDatabase getDefaultDatabase() {
-        if (defaultDatabase == null) {
-            defaultDatabase = getMongoClient().getDatabase(getDefaultDatabaseName());
+    static class ShutdownHook extends Thread {
+        @Override
+        public void run() {
+            close();
         }
-        return defaultDatabase;
+    }
+
+    static synchronized void close() {
+        if (mongoClient != null) {
+            mongoClient.close();
+            MongoClients.close();
+            mongoClient = null;
+        }
+    }
+
+    static synchronized MongoDatabase getDefaultDatabase() {
+        return getMongoClient().getDatabase(getDefaultDatabaseName());
     }
 
     static String getDefaultDatabaseName() {
         return DEFAULT_DATABASE_NAME;
-    }
-
-    static class ShutdownHook extends Thread {
-        @Override
-        public void run() {
-            synchronized (Fixture.class) {
-                if (mongoClient != null) {
-                    if (defaultDatabase != null) {
-                        defaultDatabase.drop();
-                    }
-                    mongoClient.close();
-                    mongoClient = null;
-                    MongoClients.close();
-                }
-            }
-        }
     }
 
     static boolean serverVersionLessThan(final String versionString) {
@@ -92,7 +92,7 @@ public final class Fixture {
         return getServerVersion().compareTo(new ServerVersion(getVersionList(versionString).subList(0, 3))) > 0;
     }
 
-    private static ServerVersion getServerVersion() {
+    private static synchronized ServerVersion getServerVersion() {
         if (serverVersion == null) {
             BsonDocument buildInfoResult = getMongoClient().getDatabase("admin")
                     .runCommand(new Document("buildInfo", 1), BsonDocument.class);
@@ -105,19 +105,30 @@ public final class Fixture {
         return serverVersion;
     }
 
-    private static synchronized String getConnectionStringProperty() {
+    private static String getConnectionStringProperty() {
         String connectionString = System.getProperty(CONNECTION_STRING_PROPERTY_NAME);
         return connectionString == null || connectionString.isEmpty() ? DEFAULT_CONNECTION_STRING : connectionString;
+    }
+
+    static boolean hasLibraryPath() {
+        String libraryPath = Fixture.getMongoEmbeddedSettings().getLibraryPath();
+        return libraryPath != null && new File(libraryPath).exists();
     }
 
     static synchronized MongoClientSettings getMongoClientSettings() {
         if (mongoClientSettings == null) {
             MongoClientSettings.Builder builder = MongoClientSettings.builder()
                     .applyConnectionString(new ConnectionString(getConnectionStringProperty()));
-            builder.libraryPath(System.getProperty(EMBEDDED_PATH_PROPERTY_NAME));
             mongoClientSettings = builder.build();
         }
         return mongoClientSettings;
+    }
+
+    static synchronized MongoEmbeddedSettings getMongoEmbeddedSettings() {
+        if (mongoEmbeddedSettings == null) {
+            mongoEmbeddedSettings = MongoEmbeddedSettings.builder().libraryPath(System.getProperty(EMBEDDED_PATH_PROPERTY_NAME)).build();
+        }
+        return mongoEmbeddedSettings;
     }
 
     private static List<Integer> getVersionList(final String versionString) {
@@ -129,6 +140,25 @@ public final class Fixture {
             versionList.add(0);
         }
         return versionList;
+    }
+
+    static void cleanDBPath() {
+        rmDir(new File(getMongoClientSettings().getDbPath()));
+    }
+
+    private static boolean rmDir(final File dir) {
+        if (dir.isDirectory()) {
+            String[] children = dir.list();
+            if (children != null) {
+                for (String child : children) {
+                    boolean success = rmDir(new File(dir, child));
+                    if (!success) {
+                        return false;
+                    }
+                }
+            }
+        }
+        return dir.delete();
     }
 
 }

@@ -164,6 +164,7 @@ configure(subprojects.findAll { it.name != 'util' && it.name != 'mongo-java-driv
 
         systemProperties(
                 'org.mongodb.test.uri': System.getProperty('org.mongodb.test.uri'),
+                'org.mongodb.test.embedded.path': System.getProperty('org.mongodb.test.embedded.path'),
                 'org.mongodb.useSocket': System.getProperty('org.mongodb.useSocket', 'false'),
                 'org.mongodb.disableAsync': System.getProperty('org.mongodb.disableAsync', 'false'),
                 'org.mongodb.async.type': System.getProperty('org.mongodb.async.type', 'nio2'),

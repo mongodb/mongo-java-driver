@@ -16,29 +16,16 @@
 
 package com.mongodb.embedded.client;
 
-import com.mongodb.MongoClientException;
-import com.sun.jna.Native;
-import org.junit.After;
 import org.junit.Before;
 
-import static com.mongodb.embedded.client.Fixture.getMongoClient;
-import static java.lang.String.format;
 import static org.junit.Assume.assumeTrue;
 
 public class DatabaseTestCase {
 
-
     @Before
     public void setUp() {
-        try {
-            getMongoClient();
-        } catch (MongoClientException e) {
-            assumeTrue(format("Could not create a MongoClient: %s", e.getMessage()), false);
-        }
-        Native.setProtected(true);
+        assumeTrue("No embedded path set.", Fixture.hasLibraryPath());
+        Fixture.getMongoClient();
     }
 
-    @After
-    public void tearDown() {
-    }
 }

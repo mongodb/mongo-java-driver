@@ -35,6 +35,8 @@ public final class MongoClients {
      * @param mongoEmbeddedSettings the settings for the embedded driver.
      */
     public static void init(final MongoEmbeddedSettings mongoEmbeddedSettings) {
+        // TODO - support yaml
+        MongoDBCAPIHelper.init(mongoEmbeddedSettings, "");
     }
 
     /**
@@ -44,6 +46,7 @@ public final class MongoClients {
      * @return the client
      */
     public static MongoClient create(final MongoClientSettings mongoClientSettings) {
+        MongoDBCAPIHelper.checkHasBeenInitialized();
         Cluster cluster = new EmbeddedCluster(mongoClientSettings);
         return new MongoClientImpl(cluster, mongoClientSettings.getWrappedMongoClientSettings(), null);
     }
@@ -52,6 +55,7 @@ public final class MongoClients {
      * Closes down the mongod library
      */
     public static void close() {
+        MongoDBCAPIHelper.fini();
     }
 
     private MongoClients() {

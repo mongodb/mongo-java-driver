@@ -16,12 +16,9 @@
 
 package com.mongodb.embedded.client;
 
-import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
-import com.sun.jna.Native;
-import com.sun.jna.NativeLibrary;
 import com.sun.jna.Pointer;
 
 import java.io.Closeable;
@@ -32,8 +29,6 @@ import static java.util.Arrays.asList;
 
 final class EmbeddedDatabase implements Closeable {
     private static final Logger LOGGER = Loggers.getLogger("embedded.client");
-    private static final String NATIVE_LIBRARY_NAME = "mongo_embedded_capi";
-    private final MongoDBCAPI mongoDBCAPI;
     private volatile Pointer databasePointer;
 
     EmbeddedDatabase(final MongoClientSettings mongoClientSettings) {
@@ -46,55 +41,22 @@ final class EmbeddedDatabase implements Closeable {
             throw new MongoException(format("Could not validate / create the dbpath: %s", mongoClientSettings.getDbPath()));
         }
 
-        if (mongoClientSettings.getLibraryPath() != null) {
-            NativeLibrary.addSearchPath(NATIVE_LIBRARY_NAME, mongoClientSettings.getLibraryPath());
-        }
-        try {
-            this.mongoDBCAPI = Native.loadLibrary(NATIVE_LIBRARY_NAME, MongoDBCAPI.class);
-        } catch (UnsatisfiedLinkError e) {
-            throw new MongoClientException(format("Failed to load the mongodb library: '%s'."
-                    + "%n %s %n"
-                    + "%n Please set the library location by either:"
-                    + "%n - Adding it to the classpath."
-                    + "%n - Setting 'jna.library.path' system property"
-                    + "%n - Configuring it in the 'MongoClientSettings.builder().libraryPath' method."
-                    + "%n", NATIVE_LIBRARY_NAME, e.getMessage()), e);
-        }
-
         String[] cmdArgs = createCmdArgs(mongoClientSettings);
-        try {
-            this.databasePointer = mongoDBCAPI.libmongodbcapi_db_new(cmdArgs.length, cmdArgs, createEnvArgs());
-            if (databasePointer == null) {
-                throw new MongoException("Could not create a new embedded database");
-            }
-        } catch (Throwable t) {
-            throw new MongoException("Error from embedded server when calling db_new: " + t.getMessage(), t);
-        }
+        this.databasePointer = MongoDBCAPIHelper.db_new(cmdArgs.length, cmdArgs, createEnvArgs());
     }
 
     public EmbeddedConnection createConnection() {
-        return new EmbeddedConnection(mongoDBCAPI, databasePointer);
+        return new EmbeddedConnection(databasePointer);
     }
 
     public void pump() {
-        try {
-            int errorCode = mongoDBCAPI.libmongodbcapi_db_pump(databasePointer);
-            if (errorCode != 0) {
-                throw new MongoException(errorCode, "Error from embedded server: + " + errorCode);
-            }
-        } catch (Throwable t) {
-            throw new MongoException("Error from embedded server when calling db_pump: " + t.getMessage(), t);
-        }
+        MongoDBCAPIHelper.db_pump(databasePointer);
     }
 
     @Override
     public void close() {
         if (databasePointer != null) {
-            try {
-                mongoDBCAPI.libmongodbcapi_db_destroy(databasePointer);
-            } catch (Throwable t) {
-                throw new MongoException("Error from embedded server when calling db_destroy: " + t.getMessage(), t);
-            }
+            MongoDBCAPIHelper.db_destroy(databasePointer);
             databasePointer = null;
         }
     }

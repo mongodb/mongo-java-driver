@@ -72,7 +72,6 @@ class MongoClientSettingsSpecification extends Specification {
                 .applicationName('app1')
                 .addCommandListener(commandListener)
                 .codecRegistry(codecRegistry)
-                .libraryPath('/mongo/lib/')
                 .build()
 
         then:
@@ -80,7 +79,6 @@ class MongoClientSettingsSpecification extends Specification {
         settings.getApplicationName() == 'app1'
         settings.getCommandListeners() == [commandListener]
         settings.getCodecRegistry() == codecRegistry
-        settings.getLibraryPath() == '/mongo/lib/'
     }
 
     def 'should be easy to create new settings from existing'() {
@@ -188,7 +186,7 @@ class MongoClientSettingsSpecification extends Specification {
         when:
         // A regression test so that if anymore fields are added then the builder(final MongoClientSettings settings) should be updated
         def actual = MongoClientSettings.Builder.declaredFields.grep {  !it.synthetic } *.name.sort()
-        def expected = ['dbPath', 'libraryPath', 'wrappedBuilder']
+        def expected = ['dbPath', 'wrappedBuilder']
 
         then:
         actual == expected
@@ -199,7 +197,7 @@ class MongoClientSettingsSpecification extends Specification {
         // A regression test so that if anymore methods are added then the builder(final MongoClientSettings settings) should be updated
         def actual = MongoClientSettings.Builder.declaredMethods.grep {  !it.synthetic } *.name.sort()
         def expected = ['addCommandListener', 'applicationName', 'applyConnectionString', 'build', 'codecRegistry', 'commandListenerList',
-                        'dbPath', 'libraryPath']
+                        'dbPath']
         then:
         actual == expected
     }
