@@ -22,6 +22,10 @@ import com.mongodb.MongoDriverInformation;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.ConnectionPoolListener;
+import com.mongodb.internal.connection.ClusterableServerFactory;
+import com.mongodb.internal.connection.DefaultClusterableServerFactory;
+import com.mongodb.internal.connection.MultiServerCluster;
+import com.mongodb.internal.connection.SingleServerCluster;
 
 import java.util.Collections;
 import java.util.List;

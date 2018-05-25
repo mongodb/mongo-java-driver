@@ -20,7 +20,7 @@ import com.mongodb.ClusterFixture;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.connection.TestCommandListener;
+import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
 import org.bson.BsonDocument;

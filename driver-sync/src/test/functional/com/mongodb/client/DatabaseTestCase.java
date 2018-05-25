@@ -18,7 +18,7 @@ package com.mongodb.client;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.test.CollectionHelper;
-import com.mongodb.connection.ServerHelper;
+import com.mongodb.internal.connection.ServerHelper;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.Document;

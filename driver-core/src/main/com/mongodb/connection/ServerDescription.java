@@ -21,6 +21,8 @@ import com.mongodb.TagSet;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.lang.Nullable;
+import com.mongodb.internal.connection.DecimalFormatHelper;
+import com.mongodb.internal.connection.Time;
 import org.bson.types.ObjectId;
 
 import java.util.Collections;
@@ -45,9 +47,21 @@ import static com.mongodb.connection.ServerType.UNKNOWN;
 @Immutable
 public class ServerDescription {
 
-    static final String MIN_DRIVER_SERVER_VERSION = "2.6";
-    static final int MIN_DRIVER_WIRE_VERSION = 1;
-    static final int MAX_DRIVER_WIRE_VERSION = 6;
+    /**
+     * The minimum supported driver server version
+     * @since 3.8
+     */
+    public static final String MIN_DRIVER_SERVER_VERSION = "2.6";
+    /**
+     * The minimum supported driver wire version
+     * @since 3.8
+     */
+    public static final int MIN_DRIVER_WIRE_VERSION = 1;
+    /**
+     * The maximum supported driver wire version
+     * @since 3.8
+     */
+    public static final int MAX_DRIVER_WIRE_VERSION = 6;
 
     private static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
 

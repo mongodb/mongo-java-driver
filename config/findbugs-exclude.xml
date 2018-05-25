@@ -33,7 +33,7 @@
 
     <!-- Deliberately ignoring return value of CountDownLatch.await -->
     <Match>
-        <Class name="com.mongodb.connection.BaseCluster"/>
+        <Class name="com.mongodb.internal.connection.BaseCluster"/>
         <Bug pattern="RV_RETURN_VALUE_IGNORED"/>
     </Match>
 
@@ -128,7 +128,7 @@
     </Match>
 
     <Match>
-        <Class name="~com.mongodb.connection.AbstractByteBufBsonDocument.*"/>
+        <Class name="~com.mongodb.internal.connection.AbstractByteBufBsonDocument.*"/>
         <Bug pattern="NP_BOOLEAN_RETURN_NULL"/>
     </Match>
 

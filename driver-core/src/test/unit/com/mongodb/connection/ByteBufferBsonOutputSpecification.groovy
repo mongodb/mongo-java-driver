@@ -17,6 +17,7 @@
 package com.mongodb.connection
 
 import category.Slow
+import com.mongodb.internal.connection.SimpleBufferProvider
 import org.bson.BsonSerializationException
 import org.bson.types.ObjectId
 import org.junit.experimental.categories.Category

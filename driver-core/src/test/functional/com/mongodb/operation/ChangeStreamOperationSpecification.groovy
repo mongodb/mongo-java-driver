@@ -42,7 +42,7 @@ import static com.mongodb.ClusterFixture.getAsyncCluster
 import static com.mongodb.ClusterFixture.getCluster
 import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static com.mongodb.connection.ServerHelper.waitForLastRelease
+import static com.mongodb.internal.connection.ServerHelper.waitForLastRelease
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 

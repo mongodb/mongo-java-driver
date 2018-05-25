@@ -17,7 +17,7 @@
 package com.mongodb
 
 import category.Slow
-import com.mongodb.connection.TestCommandListener
+import com.mongodb.internal.connection.TestCommandListener
 import com.mongodb.event.CommandStartedEvent
 import org.bson.BsonBinarySubType
 import org.bson.BsonDocument

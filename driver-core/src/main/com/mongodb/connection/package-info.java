@@ -17,4 +17,4 @@
 /**
  * Contains classes that manage connecting to MongoDB servers.
  */
-package com.mongodb.connection;
+package com.mongodb.internal.connection;

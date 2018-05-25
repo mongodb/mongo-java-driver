@@ -24,7 +24,7 @@ import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.TransactionOptions
 import com.mongodb.WriteConcern
-import com.mongodb.connection.TestCommandListener
+import com.mongodb.internal.connection.TestCommandListener
 import com.mongodb.event.CommandStartedEvent
 import org.bson.BsonBinarySubType
 import org.bson.BsonDocument
