@@ -65,6 +65,7 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DocumentCodec;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -294,6 +295,23 @@ public final class ClusterFixture {
         return createCluster(getConnectionString(), streamFactory);
     }
 
+
+    public static Cluster createCluster(final List<MongoCredential> credentials) {
+        return createCluster(credentials, getStreamFactory());
+    }
+
+    public static Cluster createAsyncCluster(final List<MongoCredential> credentials) {
+        return createCluster(credentials, getAsyncStreamFactory());
+    }
+
+    private static Cluster createCluster(final List<MongoCredential> credentials, final StreamFactory streamFactory) {
+        return new DefaultClusterFactory().createCluster(ClusterSettings.builder().hosts(asList(getPrimary())).build(),
+                ServerSettings.builder().build(),
+                ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build(),
+                streamFactory, streamFactory, credentials, null, null, null,
+                Collections.<MongoCompressor>emptyList());
+    }
+
     @SuppressWarnings("deprecation")
     private static Cluster createCluster(final ConnectionString connectionString, final StreamFactory streamFactory) {
         return new DefaultClusterFactory().createCluster(ClusterSettings.builder().applyConnectionString(connectionString).build(),
@@ -303,6 +321,10 @@ public final class ClusterFixture {
                 new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings(connectionString)),
                 connectionString.getCredentialList(), null, null, null,
                 connectionString.getCompressorList());
+    }
+
+    public static StreamFactory getStreamFactory() {
+        return new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings());
     }
 
     public static StreamFactory getAsyncStreamFactory() {
