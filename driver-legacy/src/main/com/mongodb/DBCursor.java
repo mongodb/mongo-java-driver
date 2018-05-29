@@ -1008,6 +1008,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         }
 
         @Override
+        @SuppressWarnings("deprecation")
         protected void finalize() {
             if (serverCursor != null) {
                 mongo.addOrphanedCursor(serverCursor, namespace);
