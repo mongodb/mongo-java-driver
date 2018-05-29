@@ -17,8 +17,8 @@
 package com.mongodb
 
 import category.Slow
-import com.mongodb.internal.connection.TestCommandListener
 import com.mongodb.event.CommandStartedEvent
+import com.mongodb.internal.connection.TestCommandListener
 import org.bson.BsonBinarySubType
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -36,8 +36,8 @@ import static com.mongodb.ClusterFixture.isAuthenticated
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.Fixture.getMongoClient
+import static com.mongodb.MongoCredential.createCredential
 
 class MongoClientSessionSpecification extends FunctionalSpecification {
 
@@ -66,6 +66,9 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
 
     @IgnoreIf({ !serverVersionAtLeast(3, 6) || isStandalone() })
     def 'should create session with correct defaults'() {
+        given:
+        def clientSession = getMongoClient().startSession()
+
         expect:
         clientSession.getOriginator() == getMongoClient()
         clientSession.isCausallyConsistent()
@@ -82,10 +85,6 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
 
         cleanup:
         clientSession?.close()
-
-        where:
-        clientSession << [getMongoClient().startSession(),
-                          getMongoClient().startSession(ClientSessionOptions.builder().build())]
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 7) || isStandalone()  })
