@@ -240,10 +240,10 @@ public final class CommandMessage extends RequestMessage {
         if (sessionContext.hasSession() && responseExpected) {
             extraElements.add(new BsonElement("lsid", sessionContext.getSessionId()));
         }
+        boolean firstMessageInTransaction = sessionContext.notifyMessageSent();
         if (sessionContext.hasActiveTransaction()) {
             extraElements.add(new BsonElement("txnNumber", new BsonInt64(sessionContext.getTransactionNumber())));
-            boolean firstMessage = sessionContext.notifyMessageSent();
-            if (firstMessage) {
+            if (firstMessageInTransaction) {
                 extraElements.add(new BsonElement("startTransaction", BsonBoolean.TRUE));
                 addReadConcernDocument(extraElements, sessionContext);
             }

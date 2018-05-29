@@ -45,7 +45,7 @@ class ClientSessionContextSpecification extends Specification {
 
         @Override
         boolean notifyMessageSent() {
-            throw new UnsupportedOperationException()
+            false
         }
 
         @Override
