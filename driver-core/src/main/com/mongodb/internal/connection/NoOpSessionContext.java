@@ -65,7 +65,7 @@ public class NoOpSessionContext implements SessionContext {
 
     @Override
     public boolean notifyMessageSent() {
-        throw new UnsupportedOperationException();
+        return false;
     }
 
     @Override
