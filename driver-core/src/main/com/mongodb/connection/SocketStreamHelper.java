@@ -48,6 +48,9 @@ final class SocketStreamHelper {
             }
             SSLSocket sslSocket = (SSLSocket) socket;
             SSLParameters sslParameters = sslSocket.getSSLParameters();
+            if (sslParameters == null) {
+                sslParameters = new SSLParameters();
+            }
 
             enableSni(address, sslParameters);
 
