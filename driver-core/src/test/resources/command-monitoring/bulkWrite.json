@@ -110,6 +110,11 @@
       "description": "A successful unordered bulk write with an unacknowledged write concern",
       "operation": {
         "name": "bulkWrite",
+        "collectionOptions": {
+          "writeConcern": {
+            "w": 0
+          }
+        },
         "arguments": {
           "requests": [
             {
@@ -122,9 +127,6 @@
             }
           ],
           "ordered": false,
-          "writeConcern": {
-            "w": 0
-          }
         }
       },
       "expectations": [
