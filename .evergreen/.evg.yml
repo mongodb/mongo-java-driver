@@ -325,6 +325,21 @@ functions:
         file="${PROJECT_DIRECTORY}/.evergreen/install-dependencies.sh"
         [ -f ${file} ] && sh ${file} || echo "${file} not available, skipping"
 
+  "run perf tests":
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          PROJECT_DIRECTORY=${PROJECT_DIRECTORY} .evergreen/run-perf-tests.sh
+
+  "send dashboard data":
+    - command: json.send
+      params:
+        name: perf
+        file: src/results.json
+
 # Anchors
 
 hosts: &hosts
@@ -404,6 +419,12 @@ tasks:
       commands:
         - func: "publish snapshot"
 
+    - name: "perf"
+      tags: ["perf"]
+      commands:
+        - func: "bootstrap mongo-orchestration"
+        - func: "run perf tests"
+        - func: "send dashboard data"
 axes:
   - id: version
     display_name: MongoDB Version
@@ -583,6 +604,14 @@ buildvariants:
   tags: ["test-gssapi-variant"]
   tasks:
      - name: "gssapi-auth-test"
+
+- matrix_name: "perf"
+  matrix_spec:  { auth: "noauth", ssl: "nossl", jdk: "jdk9", version: "*", topology: "standalone", os: "linux" }
+  batchtime: 1440 # run once a day
+  display_name: "Perf Tests ${version} "
+  tags: ["perf-variant"]
+  tasks:
+     - name: "perf"
 
 - name: plain-auth-test
   display_name: "PLAIN (LDAP) Auth test"
