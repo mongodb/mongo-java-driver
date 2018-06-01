@@ -228,13 +228,15 @@ public class TransactionsTest {
                 BsonDocument operation = cur.asDocument();
                 String operationName = operation.getString("name").getValue();
                 BsonValue expectedResult = operation.get("result", new BsonDocument());
-                final ClientSession clientSession = operation.getDocument("arguments").containsKey("session")
-                        ? sessionsMap.get(operation.getDocument("arguments").getString("session").getValue()) : null;
+                String receiver = operation.getString("object").getValue();
+                final ClientSession clientSession = receiver.startsWith("session") ? sessionsMap.get(receiver)
+                        : (operation.getDocument("arguments").containsKey("session")
+                                ? sessionsMap.get(operation.getDocument("arguments").getString("session").getValue()) : null);
                 BsonDocument sessionIdentifier = (clientSession == null) ? null : clientSession.getServerSession().getIdentifier();
                 commandListener.addExpectedSessionNextStartedEvent(sessionIdentifier);
                 try {
                     if (operationName.equals("startTransaction")) {
-                        BsonDocument arguments = operation.getDocument("arguments");
+                        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
                         if (arguments.containsKey("options")) {
                             BsonDocument options = arguments.getDocument("options");
                             TransactionOptions.Builder builder = TransactionOptions.builder();
