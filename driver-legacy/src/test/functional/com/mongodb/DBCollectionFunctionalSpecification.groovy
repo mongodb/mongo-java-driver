@@ -364,6 +364,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         collection.save(~['x': 'c']);
     }
 
+    @IgnoreIf({ serverVersionAtLeast(4, 1) })
     def 'should group by the x field and apply the provided count function'() {
         given:
         insertDataForGroupTests()
@@ -379,6 +380,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         that result, contains(~['x': 'a', 'count': 3.0D], ~['x': 'b', 'count': 4.0D], ~['x': 'c', 'count': 1.0D]);
     }
 
+    @IgnoreIf({ serverVersionAtLeast(4, 1) })
     def 'should group by the x field and apply the provided count function using a GroupCommand'() {
         given:
         insertDataForGroupTests()
@@ -397,6 +399,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         that result, contains(~['x': 'a', 'count': 3.0D], ~['x': 'b', 'count': 4.0D], ~['x': 'c', 'count': 1.0D]);
     }
 
+    @IgnoreIf({ serverVersionAtLeast(4, 1) })
     def 'should group using a key function in a GroupCommand'() {
         given:
         insertDataForGroupTests()
@@ -415,6 +418,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         that result, contains(~['x': 'a', 'count': 3.0D], ~['x': 'b', 'count': 4.0D], ~['x': 'c', 'count': 1.0D]);
     }
 
+    @IgnoreIf({ serverVersionAtLeast(4, 1) })
     def 'should group and count only those documents that fulfull the given condition'() {
         given:
         insertDataForGroupTests()
@@ -430,6 +434,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         that result, contains(~['x': 'b', 'count': 4.0D]);
     }
 
+    @IgnoreIf({ serverVersionAtLeast(4, 1) })
     def 'should be able to set a value in the results'() {
         given:
         insertDataForGroupTests()
@@ -445,6 +450,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         that result, contains(~['x': 'c', 'valueFound': true]);
     }
 
+    @IgnoreIf({ serverVersionAtLeast(4, 1) })
     def 'should return results set by the function, based on condition supplied without key'() {
         given:
         insertDataForGroupTests()
@@ -460,6 +466,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         that result, contains(~['valueFound': true]);
     }
 
+    @IgnoreIf({ serverVersionAtLeast(4, 1) })
     def 'finalize function should replace the whole result document if a document is the return type of finalize function'() {
         given:
         insertDataForGroupTests()
@@ -476,6 +483,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         that result, contains(~['a': 1.0D]);
     }
 
+    @IgnoreIf({ serverVersionAtLeast(4, 1) })
     def 'finalize function should modify the result document'() {
         given:
         insertDataForGroupTests()
@@ -492,6 +500,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         that result, contains(~['x': 'b', 'valueFound': true, 'a': 1.0D]);
     }
 
+    @IgnoreIf({ serverVersionAtLeast(4, 1) })
     def 'should throw an Exception if no initial document provided'() {
         when:
         collection.group(~['x': 1],
@@ -503,6 +512,7 @@ class DBCollectionFunctionalSpecification extends FunctionalSpecification {
         thrown(IllegalArgumentException)
     }
 
+    @IgnoreIf({ serverVersionAtLeast(4, 1) })
     def 'should throw an Exception if no reduce function provided'() {
         when:
         collection.group(~['x': 1],
