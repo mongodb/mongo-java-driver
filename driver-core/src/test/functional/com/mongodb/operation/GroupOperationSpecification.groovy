@@ -30,6 +30,7 @@ import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 
+@IgnoreIf({ serverVersionAtLeast(4, 1) })
 class GroupOperationSpecification extends OperationFunctionalSpecification {
 
     def reduceFunction = new BsonJavaScript('''
