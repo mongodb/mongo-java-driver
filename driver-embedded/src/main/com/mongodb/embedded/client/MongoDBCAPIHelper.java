@@ -66,7 +66,7 @@ final class MongoDBCAPIHelper {
                     + "%n", NATIVE_LIBRARY_NAME, e.getMessage()), e);
         }
         libraryStatusPointer = createStatusPointer();
-        libraryPointer = mongoDBCAPI.libmongodbcapi_lib_init(new MongoDBCAPIInitParams(mongoEmbeddedSettings), libraryStatusPointer);
+        libraryPointer = mongoDBCAPI.mongo_embedded_v1_lib_init(new MongoDBCAPIInitParams(mongoEmbeddedSettings), libraryStatusPointer);
         if (libraryPointer == null) {
             createErrorFromStatus(libraryStatusPointer);
         }
@@ -75,7 +75,7 @@ final class MongoDBCAPIHelper {
     static synchronized void fini() {
         checkInitialized();
         try {
-            validateErrorCode(libraryStatusPointer, mongoDBCAPI.libmongodbcapi_lib_fini(libraryPointer, libraryStatusPointer));
+            validateErrorCode(libraryStatusPointer, mongoDBCAPI.mongo_embedded_v1_lib_fini(libraryPointer, libraryStatusPointer));
             libraryPointer = null;
         } catch (Throwable t) {
             throw createError("fini", t);
@@ -88,7 +88,7 @@ final class MongoDBCAPIHelper {
     static Pointer instance_create(final String yamlConfig, final Pointer instanceStatusPointer) {
         checkInitialized();
         try {
-            return validatePointerCreated(instanceStatusPointer, mongoDBCAPI.libmongodbcapi_instance_create(libraryPointer, yamlConfig,
+            return validatePointerCreated(instanceStatusPointer, mongoDBCAPI.mongo_embedded_v1_instance_create(libraryPointer, yamlConfig,
                     instanceStatusPointer)
             );
         } catch (Throwable t) {
@@ -99,7 +99,7 @@ final class MongoDBCAPIHelper {
     static void instance_destroy(final Pointer instance, final Pointer instanceStatusPointer) {
         checkInitialized();
         try {
-            validateErrorCode(instanceStatusPointer, mongoDBCAPI.libmongodbcapi_instance_destroy(instance, instanceStatusPointer));
+            validateErrorCode(instanceStatusPointer, mongoDBCAPI.mongo_embedded_v1_instance_destroy(instance, instanceStatusPointer));
         } catch (Throwable t) {
             throw createError("instance_destroy", t);
         }
@@ -108,7 +108,7 @@ final class MongoDBCAPIHelper {
     static Pointer create_client(final Pointer instance, final Pointer clientStatusPointer) {
         checkInitialized();
         try {
-            return validatePointerCreated(clientStatusPointer, mongoDBCAPI.libmongodbcapi_client_create(instance, clientStatusPointer));
+            return validatePointerCreated(clientStatusPointer, mongoDBCAPI.mongo_embedded_v1_client_create(instance, clientStatusPointer));
         } catch (Throwable t) {
             throw createError("client_create", t);
         }
@@ -117,7 +117,7 @@ final class MongoDBCAPIHelper {
     static void client_destroy(final Pointer client, final Pointer clientStatusPointer) {
         checkInitialized();
         try {
-            validateErrorCode(clientStatusPointer, mongoDBCAPI.libmongodbcapi_client_destroy(client, clientStatusPointer));
+            validateErrorCode(clientStatusPointer, mongoDBCAPI.mongo_embedded_v1_client_destroy(client, clientStatusPointer));
         } catch (Throwable t) {
             throw createError("client_destroy", t);
         }
@@ -127,7 +127,7 @@ final class MongoDBCAPIHelper {
                               final Pointer clientStatusPointer) {
         checkInitialized();
         try {
-            validateErrorCode(clientStatusPointer, mongoDBCAPI.libmongodbcapi_client_invoke(client, input, input.length, output,
+            validateErrorCode(clientStatusPointer, mongoDBCAPI.mongo_embedded_v1_client_invoke(client, input, input.length, output,
                     outputSize, clientStatusPointer)
             );
         } catch (Throwable t) {
@@ -137,7 +137,7 @@ final class MongoDBCAPIHelper {
 
     static Pointer createStatusPointer() {
         try {
-            return mongoDBCAPI.libmongodbcapi_status_create();
+            return mongoDBCAPI.mongo_embedded_v1_status_create();
         } catch (Throwable t) {
             throw createError("status_create", t);
         }
@@ -145,7 +145,7 @@ final class MongoDBCAPIHelper {
 
     static void destroyStatusPointer(final Pointer statusPointer) {
         try {
-            mongoDBCAPI.libmongodbcapi_status_destroy(statusPointer);
+            mongoDBCAPI.mongo_embedded_v1_status_destroy(statusPointer);
         } catch (Throwable t) {
             throw createError("status_destroy", t);
         }
@@ -159,13 +159,13 @@ final class MongoDBCAPIHelper {
     }
 
     private static void createErrorFromStatus(final Pointer statusPointer) {
-        createErrorFromStatus(statusPointer, mongoDBCAPI.libmongodbcapi_status_get_error(statusPointer));
+        createErrorFromStatus(statusPointer, mongoDBCAPI.mongo_embedded_v1_status_get_error(statusPointer));
     }
 
     private static void createErrorFromStatus(final Pointer statusPointer, final int errorCode) {
         throw new MongoClientEmbeddedException(errorCode,
-                mongoDBCAPI.libmongodbcapi_status_get_code(statusPointer),
-                mongoDBCAPI.libmongodbcapi_status_get_explanation(statusPointer));
+                mongoDBCAPI.mongo_embedded_v1_status_get_code(statusPointer),
+                mongoDBCAPI.mongo_embedded_v1_status_get_explanation(statusPointer));
     }
 
     private static Pointer validatePointerCreated(final Pointer statusPointer, final Pointer pointer) {
@@ -191,7 +191,7 @@ final class MongoDBCAPIHelper {
     }
 
     /**
-     * Represents libmongodbcapi_init_params
+     * Represents mongo_embedded_v1_init_params
      */
     public static class MongoDBCAPIInitParams extends Structure {
         // CHECKSTYLE.OFF: VisibilityModifier
