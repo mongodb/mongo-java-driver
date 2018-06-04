@@ -1250,7 +1250,7 @@
           }
         },
         {
-          "name": "count",
+          "name": "find",
           "object": "collection",
           "arguments": {
             "session": "session0",
@@ -1352,7 +1352,7 @@
           }
         },
         {
-          "name": "count",
+          "name": "find",
           "object": "collection",
           "arguments": {
             "session": "session0",
@@ -1461,7 +1461,7 @@
           }
         },
         {
-          "name": "count",
+          "name": "find",
           "object": "collection",
           "arguments": {
             "session": "session0",

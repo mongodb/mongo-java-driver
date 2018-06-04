@@ -99,21 +99,12 @@
               "_id": 1
             }
           },
-          "result": 1
+          "result": {
+            "errorContains": "Cannot run 'count' in a multi-document transaction"
+          }
         },
         {
-          "name": "count",
-          "object": "collection",
-          "arguments": {
-            "session": "session0",
-            "filter": {
-              "_id": 1
-            }
-          },
-          "result": 1
-        },
-        {
-          "name": "commitTransaction",
+          "name": "abortTransaction",
           "object": "session0"
         }
       ],
@@ -141,10 +132,7 @@
         {
           "command_started_event": {
             "command": {
-              "count": "test",
-              "query": {
-                "_id": 1
-              },
+              "abortTransaction": 1,
               "lsid": "session0",
               "txnNumber": {
                 "$numberLong": "1"
@@ -153,23 +141,7 @@
               "autocommit": false,
               "writeConcern": null
             },
-            "command_name": "count",
-            "database_name": "transaction-tests"
-          }
-        },
-        {
-          "command_started_event": {
-            "command": {
-              "commitTransaction": 1,
-              "lsid": "session0",
-              "txnNumber": {
-                "$numberLong": "1"
-              },
-              "startTransaction": null,
-              "autocommit": false,
-              "writeConcern": null
-            },
-            "command_name": "commitTransaction",
+            "command_name": "abortTransaction",
             "database_name": "admin"
           }
         }

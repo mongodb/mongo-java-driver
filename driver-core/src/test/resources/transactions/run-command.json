@@ -242,11 +242,11 @@
         {
           "name": "runCommand",
           "object": "database",
-          "command_name": "count",
+          "command_name": "find",
           "arguments": {
             "session": "session0",
             "command": {
-              "count": "test"
+              "find": "test"
             },
             "readPreference": {
               "mode": "Secondary"
@@ -275,11 +275,11 @@
         {
           "name": "runCommand",
           "object": "database",
-          "command_name": "count",
+          "command_name": "find",
           "arguments": {
             "session": "session0",
             "command": {
-              "count": "test"
+              "find": "test"
             }
           },
           "result": {
