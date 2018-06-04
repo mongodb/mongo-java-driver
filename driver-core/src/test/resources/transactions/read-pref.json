@@ -40,7 +40,7 @@
           }
         },
         {
-          "name": "count",
+          "name": "aggregate",
           "object": "collection",
           "collectionOptions": {
             "readPreference": {
@@ -49,11 +49,22 @@
           },
           "arguments": {
             "session": "session0",
-            "filter": {
-              "_id": 1
-            }
+            "pipeline": [
+              {
+                "$match": {
+                  "_id": 1
+                }
+              },
+              {
+                "$count": "count"
+              }
+            ]
           },
-          "result": 1
+          "result": [
+            {
+              "count": 1
+            }
+          ]
         },
         {
           "name": "find",
@@ -184,7 +195,7 @@
           }
         },
         {
-          "name": "count",
+          "name": "aggregate",
           "object": "collection",
           "collectionOptions": {
             "readPreference": {
@@ -193,11 +204,22 @@
           },
           "arguments": {
             "session": "session0",
-            "filter": {
-              "_id": 1
-            }
+            "pipeline": [
+              {
+                "$match": {
+                  "_id": 1
+                }
+              },
+              {
+                "$count": "count"
+              }
+            ]
           },
-          "result": 1
+          "result": [
+            {
+              "count": 1
+            }
+          ]
         },
         {
           "name": "find",
@@ -328,7 +350,7 @@
           }
         },
         {
-          "name": "count",
+          "name": "aggregate",
           "object": "collection",
           "collectionOptions": {
             "readPreference": {
@@ -337,9 +359,16 @@
           },
           "arguments": {
             "session": "session0",
-            "filter": {
-              "_id": 1
-            }
+            "pipeline": [
+              {
+                "$match": {
+                  "_id": 1
+                }
+              },
+              {
+                "$count": "count"
+              }
+            ]
           },
           "result": {
             "errorContains": "read preference in a transaction must be primary"
@@ -439,7 +468,7 @@
           }
         },
         {
-          "name": "count",
+          "name": "aggregate",
           "object": "collection",
           "collectionOptions": {
             "readPreference": {
@@ -448,9 +477,16 @@
           },
           "arguments": {
             "session": "session0",
-            "filter": {
-              "_id": 1
-            }
+            "pipeline": [
+              {
+                "$match": {
+                  "_id": 1
+                }
+              },
+              {
+                "$count": "count"
+              }
+            ]
           },
           "result": {
             "errorContains": "read preference in a transaction must be primary"
@@ -550,7 +586,7 @@
           }
         },
         {
-          "name": "count",
+          "name": "aggregate",
           "object": "collection",
           "collectionOptions": {
             "readPreference": {
@@ -559,9 +595,16 @@
           },
           "arguments": {
             "session": "session0",
-            "filter": {
-              "_id": 1
-            }
+            "pipeline": [
+              {
+                "$match": {
+                  "_id": 1
+                }
+              },
+              {
+                "$count": "count"
+              }
+            ]
           },
           "result": {
             "errorContains": "read preference in a transaction must be primary"
