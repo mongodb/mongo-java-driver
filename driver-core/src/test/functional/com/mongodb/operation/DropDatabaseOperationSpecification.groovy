@@ -83,7 +83,7 @@ class DropDatabaseOperationSpecification extends OperationFunctionalSpecificatio
         !databaseNameExists(dbName)
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || serverVersionAtLeast(4, 1) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) || serverVersionAtLeast(4, 0) || !isDiscoverableReplicaSet() })
     def 'should throw on write concern error'() {
         given:
         getCollectionHelper().insertDocuments(new DocumentCodec(), new Document('documentTo', 'createTheCollection'))

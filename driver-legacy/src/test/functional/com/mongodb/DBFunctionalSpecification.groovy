@@ -87,7 +87,7 @@ class DBFunctionalSpecification extends FunctionalSpecification {
     }
 
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || serverVersionAtLeast(4, 1) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) || serverVersionAtLeast(4, 0) || !isDiscoverableReplicaSet() })
     def 'should throw WriteConcernException on write concern error for drop'() {
         given:
         database.createCollection('ctest', new BasicDBObject())
