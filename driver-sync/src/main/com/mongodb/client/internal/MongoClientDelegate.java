@@ -19,7 +19,9 @@ package com.mongodb.client.internal;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoCredential;
+import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
+import com.mongodb.MongoSocketException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
@@ -183,7 +185,13 @@ public class MongoClientDelegate {
             WriteBinding binding = getWriteBinding(readConcern, actualClientSession, session == null && actualClientSession != null);
             try {
                 return operation.execute(binding);
-            } finally {
+            } catch (MongoSocketException e) {
+                if (session != null && session.hasActiveTransaction()) {
+                    e.addLabel(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL);
+                }
+                throw e;
+            }
+            finally {
                 binding.release();
             }
         }
