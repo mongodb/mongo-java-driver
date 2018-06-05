@@ -18,13 +18,29 @@ package com.mongodb;
 
 import com.mongodb.lang.Nullable;
 
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
+import static com.mongodb.assertions.Assertions.notNull;
+
 /**
  * Top level Exception for all Exceptions, server-side or client-side, that come from the driver.
  */
 public class MongoException extends RuntimeException {
+
+    /**
+     * An error label indicating that the exception can be treated as a transient transaction error.
+     *
+     * @see #hasErrorLabel(String)
+     * @since 3.8
+     */
+    public static final String TRANSIENT_TRANSACTION_ERROR_LABEL = "TransientTransactionError";
+
     private static final long serialVersionUID = -4415279469780082174L;
 
     private final int code;
+    private final Set<String> errorLabels = new HashSet<String>();
 
     /**
      * Static helper to create or cast a MongoException from a throwable
@@ -99,5 +115,39 @@ public class MongoException extends RuntimeException {
      */
     public int getCode() {
         return code;
+    }
+
+    /**
+     * Adds the given error label to the exception.
+     *
+     * @param errorLabel the non-null error label to add to the exception
+     *
+     * @since 3.8
+     */
+    public void addLabel(final String errorLabel) {
+        notNull("errorLabel", errorLabel);
+        errorLabels.add(errorLabel);
+    }
+
+    /**
+     * Gets the set of error labels associated with this exception.
+     *
+     * @return the error labels, which may not be null but may be empty
+     * @since 3.8
+     */
+    public Set<String> getErrorLabels() {
+        return Collections.unmodifiableSet(errorLabels);
+    }
+
+    /**
+     * Return true if the exception is labelled with the given error label, and false otherwise.
+     *
+     * @param errorLabel the non-null error label
+     * @return true if the exception is labelled with the given error label
+     * @since 3.8
+     */
+    public boolean hasErrorLabel(final String errorLabel) {
+        notNull("errorLabel", errorLabel);
+        return errorLabels.contains(errorLabel);
     }
 }
