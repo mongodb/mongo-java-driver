@@ -132,4 +132,10 @@
         <Bug pattern="NP_BOOLEAN_RETURN_NULL"/>
     </Match>
 
+    <!-- Spotbugs assumes that SSLSocket#getSSLParameters never returns null, when that is not the case for all JDKs -->
+    <Match>
+        <Class name="com.mongodb.connection.SocketStreamHelper"/>
+        <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
+    </Match>
+
 </FindBugsFilter>
