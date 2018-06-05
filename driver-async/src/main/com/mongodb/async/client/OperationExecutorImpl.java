@@ -17,7 +17,9 @@
 package com.mongodb.async.client;
 
 import com.mongodb.MongoClientException;
+import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
+import com.mongodb.MongoSocketException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
@@ -107,6 +109,9 @@ class OperationExecutorImpl implements OperationExecutor {
                         @Override
                         public void onResult(final T result, final Throwable t) {
                             try {
+                                if (t instanceof MongoSocketException && session != null && session.hasActiveTransaction()) {
+                                    ((MongoException) t).addLabel(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL);
+                                }
                                 errHandlingCallback.onResult(result, t);
                             } finally {
                                 binding.release();

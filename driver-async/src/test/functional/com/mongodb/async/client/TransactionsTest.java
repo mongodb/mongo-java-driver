@@ -19,6 +19,7 @@ package com.mongodb.async.client;
 import com.mongodb.Block;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoCommandException;
+import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.ReadConcern;
@@ -121,6 +122,11 @@ public class TransactionsTest {
             collectionHelper.insertDocuments(documents, WriteConcern.MAJORITY);
         }
 
+
+        if (definition.containsKey("failPoint")) {
+            collectionHelper.runAdminCommand(definition.getDocument("failPoint"));
+        }
+
         BsonDocument clientOptions = definition.getDocument("clientOptions", new BsonDocument());
 
         mongoClient = MongoClients.create(Fixture.getMongoClientBuilderFromConnectionString()
@@ -213,6 +219,12 @@ public class TransactionsTest {
         if (mongoClient != null) {
             mongoClient.close();
         }
+
+        if (definition.containsKey("failPoint")) {
+            collectionHelper.runAdminCommand(new BsonDocument("configureFailPoint",
+                    definition.getDocument("failPoint").getString("configureFailPoint"))
+                    .append("mode", new BsonString("off")));
+        }
     }
 
     private void closeAllSessions() {
@@ -278,24 +290,37 @@ public class TransactionsTest {
                     assertFalse(String.format("Expected error code '%s' but none thrown", getErrorCodeNameField(expectedResult)),
                             hasErrorCodeNameField(expectedResult));
                 } catch (RuntimeException e) {
+                    boolean passedAssertion = false;
+                    if (hasErrorLabelContainsField(expectedResult)) {
+                        if (e instanceof MongoException) {
+                            MongoException mongoException = (MongoException) e;
+                            for (String curErrorLabel : getErrorLabelContainsField(expectedResult)) {
+                                assertTrue(String.format("Expected error label '%s but found labels '%s'", curErrorLabel,
+                                        mongoException.getErrorLabels()),
+                                        mongoException.hasErrorLabel(curErrorLabel));
+                            }
+                            passedAssertion = true;
+                        }
+                    }
                     if (hasErrorContainsField(expectedResult)) {
                         String expectedError = getErrorContainsField(expectedResult);
                         assertTrue(String.format("Expected '%s' but got '%s'", expectedError, e.getMessage()),
                                 e.getMessage().toLowerCase().contains(expectedError.toLowerCase()));
-                    } else if (hasErrorCodeNameField(expectedResult) || (e instanceof MongoCommandException)
-                            || (e instanceof MongoWriteConcernException)) {
+                        passedAssertion = true;
+                    }
+                    if (hasErrorCodeNameField(expectedResult)) {
                         String expectedErrorCodeName = getErrorCodeNameField(expectedResult);
                         if (e instanceof MongoCommandException) {
                             assertEquals(expectedErrorCodeName, ((MongoCommandException) e).getErrorCodeName());
+                            passedAssertion = true;
                         } else if (e instanceof MongoWriteConcernException) {
                             assertEquals(expectedErrorCodeName, ((MongoWriteConcernException) e).getWriteConcernError().getCodeName());
-                        } else {
-                            throw e;
+                            passedAssertion = true;
                         }
-                    } else {
-                        throw e;
                     }
-                }
+                    if (!passedAssertion) {
+                        throw e;
+                    }                }
             }
         } finally {
             closeAllSessions();
@@ -331,6 +356,18 @@ public class TransactionsTest {
         } else {
             return "";
         }
+    }
+
+    private boolean hasErrorLabelContainsField(final BsonValue expectedResult) {
+        return hasErrorField(expectedResult, "errorLabelsContain");
+    }
+
+    private List<String> getErrorLabelContainsField(final BsonValue expectedResult) {
+        List<String> errorLabelContainsList = new ArrayList<String>();
+        for (BsonValue cur : expectedResult.asDocument().getArray("errorLabelsContain")) {
+            errorLabelContainsList.add(cur.asString().getValue());
+        }
+        return errorLabelContainsList;
     }
 
     private boolean hasErrorContainsField(final BsonValue expectedResult) {
