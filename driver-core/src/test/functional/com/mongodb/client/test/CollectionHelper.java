@@ -368,8 +368,12 @@ public final class CollectionHelper<T> {
     }
 
     public void killAllSessions() {
-        new CommandWriteOperation<BsonDocument>("admin", new BsonDocument("killAllSessions", new BsonArray()),
-                new BsonDocumentCodec());
+        try {
+            new CommandWriteOperation<BsonDocument>("admin", new BsonDocument("killAllSessions", new BsonArray()),
+                    new BsonDocumentCodec()).execute(getBinding());
+        } catch (MongoCommandException e) {
+            // ignore exception caused by killing the implicit session that the killAllSessions command itself is running in
+        }
     }
 
     public void runAdminCommand(final BsonDocument command) {

@@ -279,11 +279,22 @@ public class TransactionsTest {
                             hasErrorCodeNameField(expectedResult));
                 } catch (RuntimeException e) {
                     boolean passedAssertion = false;
-                    if (hasErrorLabelContainsField(expectedResult)) {
+                    if (hasErrorLabelsContainField(expectedResult)) {
                         if (e instanceof MongoException) {
                             MongoException mongoException = (MongoException) e;
-                            for (String curErrorLabel : getErrorLabelContainsField(expectedResult)) {
+                            for (String curErrorLabel : getErrorLabelsContainField(expectedResult)) {
                                 assertTrue(String.format("Expected error label '%s but found labels '%s'", curErrorLabel,
+                                        mongoException.getErrorLabels()),
+                                        mongoException.hasErrorLabel(curErrorLabel));
+                            }
+                            passedAssertion = true;
+                        }
+                    }
+                    if (hasErrorLabelsOmitField(expectedResult)) {
+                        if (e instanceof MongoException) {
+                            MongoException mongoException = (MongoException) e;
+                            for (String curErrorLabel : getErrorLabelsOmitField(expectedResult)) {
+                                assertFalse(String.format("Expected error label '%s omitted but found labels '%s'", curErrorLabel,
                                         mongoException.getErrorLabels()),
                                         mongoException.hasErrorLabel(curErrorLabel));
                             }
@@ -347,13 +358,26 @@ public class TransactionsTest {
         }
     }
 
-    private boolean hasErrorLabelContainsField(final BsonValue expectedResult) {
+    private boolean hasErrorLabelsContainField(final BsonValue expectedResult) {
         return hasErrorField(expectedResult, "errorLabelsContain");
     }
 
-    private List<String> getErrorLabelContainsField(final BsonValue expectedResult) {
+    private List<String> getErrorLabelsContainField(final BsonValue expectedResult) {
+        return getListOfStringsFromBsonArrays(expectedResult.asDocument(), "errorLabelsContain");
+    }
+
+    private boolean hasErrorLabelsOmitField(final BsonValue expectedResult) {
+        return hasErrorField(expectedResult, "errorLabelsOmit");
+    }
+
+    private List<String> getErrorLabelsOmitField(final BsonValue expectedResult) {
+        return getListOfStringsFromBsonArrays(expectedResult.asDocument(), "errorLabelsOmit");
+    }
+
+
+    private List<String> getListOfStringsFromBsonArrays(final BsonDocument expectedResult, final String arrayFieldName) {
         List<String> errorLabelContainsList = new ArrayList<String>();
-        for (BsonValue cur : expectedResult.asDocument().getArray("errorLabelsContain")) {
+        for (BsonValue cur : expectedResult.asDocument().getArray(arrayFieldName)) {
             errorLabelContainsList.add(cur.asString().getValue());
         }
         return errorLabelContainsList;

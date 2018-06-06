@@ -20,22 +20,20 @@ import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
-import com.mongodb.connection.AsyncConnection;
-import com.mongodb.connection.Connection;
-import com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
-import com.mongodb.operation.OperationHelper.CallableWithConnection;
+import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.validator.NoOpFieldNameValidator;
+import com.mongodb.operation.CommandOperationHelper.CommandCreator;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
+import org.bson.codecs.BsonDocumentCodec;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
-import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static com.mongodb.operation.CommandOperationHelper.executeRetryableCommand;
 import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTransformer;
 import static com.mongodb.operation.OperationHelper.LOGGER;
-import static com.mongodb.operation.OperationHelper.releasingCallback;
-import static com.mongodb.operation.OperationHelper.withConnection;
 
 /**
  * A base class for transaction-related operations
@@ -66,31 +64,25 @@ public abstract class TransactionOperation implements WriteOperation<Void>, Asyn
     @Override
     public Void execute(final WriteBinding binding) {
         isTrue("in transaction", binding.getSessionContext().hasActiveTransaction());
-        return withConnection(binding, new CallableWithConnection<Void>() {
-            @Override
-            public Void call(final Connection connection) {
-                executeWrappedCommandProtocol(binding, "admin", getCommand(), connection, writeConcernErrorTransformer());
-                return null;
-            }
-        });
+        return executeRetryableCommand(binding, "admin", null, new NoOpFieldNameValidator(),
+                new BsonDocumentCodec(), getCommandCreator(), writeConcernErrorTransformer());
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
         isTrue("in transaction", binding.getSessionContext().hasActiveTransaction());
-        withConnection(binding, new AsyncCallableWithConnection() {
-            @Override
-            public void call(final AsyncConnection connection, final Throwable t) {
-                SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-                if (t != null) {
-                    errHandlingCallback.onResult(null, t);
-                } else {
-                    executeWrappedCommandProtocolAsync(binding, "admin", getCommand(), connection,
-                            writeConcernErrorTransformer(), releasingCallback(errHandlingCallback, connection));
+        executeRetryableCommand(binding, "admin", null, new NoOpFieldNameValidator(),
+                new BsonDocumentCodec(), getCommandCreator(), writeConcernErrorTransformer(),
+                errorHandlingCallback(callback, LOGGER));
+    }
 
-                }
+    private CommandCreator getCommandCreator() {
+        return new CommandCreator() {
+            @Override
+            public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
+                return getCommand();
             }
-        });
+        };
     }
 
     private BsonDocument getCommand() {

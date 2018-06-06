@@ -453,7 +453,7 @@ final class CommandOperationHelper {
                             commandResultDecoder, binding.getSessionContext()), connection.getDescription().getServerAddress());
                 } catch (MongoException e) {
                     exception = e;
-                    if (!shouldAttemptToRetry(command, e, binding.getSessionContext())) {
+                    if (!shouldAttemptToRetry(command, e)) {
                         throw exception;
                     }
                 } finally {
@@ -544,7 +544,7 @@ final class CommandOperationHelper {
             }
 
             private void checkRetryableException(final Throwable originalError, final SingleResultCallback<R> releasingCallback) {
-                if (!shouldAttemptToRetry(command, originalError, binding.getSessionContext())) {
+                if (!shouldAttemptToRetry(command, originalError)) {
                     releasingCallback.onResult(null, originalError);
                 } else {
                     oldConnection.release();
@@ -700,14 +700,15 @@ final class CommandOperationHelper {
         }
     }
 
-    private static boolean shouldAttemptToRetry(@Nullable final BsonDocument command, final Throwable exception,
-                                                final SessionContext sessionContext) {
-        return shouldAttemptToRetry(command != null && command.containsKey("txnNumber"), exception, sessionContext);
+    private static boolean shouldAttemptToRetry(@Nullable final BsonDocument command, final Throwable exception) {
+        return shouldAttemptToRetry(command != null
+                        && (command.containsKey("txnNumber")
+                        || command.getFirstKey().equals("commitTransaction") || command.getFirstKey().equals("abortTransaction")),
+                exception);
     }
 
-    static boolean shouldAttemptToRetry(final boolean retryWritesEnabled, final Throwable exception,
-                                        final SessionContext sessionContext) {
-        return retryWritesEnabled && isRetryableException(exception) && !sessionContext.hasActiveTransaction();
+    static boolean shouldAttemptToRetry(final boolean retryWritesEnabled, final Throwable exception) {
+        return retryWritesEnabled && isRetryableException(exception);
     }
 
     private CommandOperationHelper() {

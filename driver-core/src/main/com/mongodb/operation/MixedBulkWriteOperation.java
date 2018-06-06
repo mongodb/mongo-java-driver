@@ -258,7 +258,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 if (retryWrites && !binding.getSessionContext().hasActiveTransaction()) {
                     MongoException writeConcernBasedError = ProtocolHelper.createSpecialException(result,
                             connection.getDescription().getServerAddress(), "errMsg");
-                    if (writeConcernBasedError != null && shouldAttemptToRetry(true, writeConcernBasedError, binding.getSessionContext())) {
+                    if (writeConcernBasedError != null && shouldAttemptToRetry(true, writeConcernBasedError)) {
                         throw new MongoWriteConcernWithResponseException(writeConcernBasedError, result);
                     }
                 }
@@ -275,7 +275,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         if (exception == null) {
             return currentBatch.getResult();
         } else if (!(exception instanceof MongoWriteConcernWithResponseException)
-                && !shouldAttemptToRetry(originalBatch.getRetryWrites(), exception, binding.getSessionContext())) {
+                && !shouldAttemptToRetry(originalBatch.getRetryWrites(), exception)) {
             throw exception;
         } else {
             return retryExecuteBatches(binding, currentBatch, exception);
@@ -444,7 +444,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             @Override
             public void onResult(final BsonDocument result, final Throwable t) {
                 if (t != null) {
-                    if (isSecondAttempt || !shouldAttemptToRetry(retryWrites, t, binding.getSessionContext())) {
+                    if (isSecondAttempt || !shouldAttemptToRetry(retryWrites, t)) {
                         if (t instanceof MongoWriteConcernWithResponseException) {
                             addBatchResult((BsonDocument) ((MongoWriteConcernWithResponseException) t).getResponse(), binding, connection,
                                     batch, retryWrites, callback);
@@ -458,8 +458,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                     if (retryWrites && !isSecondAttempt) {
                         MongoException writeConcernBasedError = ProtocolHelper.createSpecialException(result,
                                 connection.getDescription().getServerAddress(), "errMsg");
-                        if (writeConcernBasedError != null && shouldAttemptToRetry(true, writeConcernBasedError,
-                                binding.getSessionContext())) {
+                        if (writeConcernBasedError != null && shouldAttemptToRetry(true, writeConcernBasedError)) {
                             retryExecuteBatchesAsync(binding, batch,
                                     new MongoWriteConcernWithResponseException(writeConcernBasedError, result),
                                     callback.releaseConnectionAndGetWrapped());
