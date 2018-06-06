@@ -37,6 +37,14 @@ public class MongoException extends RuntimeException {
      */
     public static final String TRANSIENT_TRANSACTION_ERROR_LABEL = "TransientTransactionError";
 
+    /**
+     * An error label indicating that the exception can be treated as an unknown transaction commit result.
+     *
+     * @see #hasErrorLabel(String)
+     * @since 3.8
+     */
+    public static final String UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL = "UnknownTransactionCommitResult";
+
     private static final long serialVersionUID = -4415279469780082174L;
 
     private final int code;
@@ -130,6 +138,18 @@ public class MongoException extends RuntimeException {
     }
 
     /**
+     * Removes the given error label from the exception.
+     *
+     * @param errorLabel the non-null error label to remove from the exception
+     *
+     * @since 3.8
+     */
+    public void removeLabel(final String errorLabel) {
+        notNull("errorLabel", errorLabel);
+        errorLabels.remove(errorLabel);
+    }
+
+    /**
      * Gets the set of error labels associated with this exception.
      *
      * @return the error labels, which may not be null but may be empty
@@ -150,4 +170,5 @@ public class MongoException extends RuntimeException {
         notNull("errorLabel", errorLabel);
         return errorLabels.contains(errorLabel);
     }
+
 }

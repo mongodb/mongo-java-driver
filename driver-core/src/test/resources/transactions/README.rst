@@ -109,8 +109,8 @@ Each YAML file has the following keys:
     - ``arguments``: Optional, the names and values of arguments.
 
     - ``result``: The return value from the operation, if any. If the
-      operation is expected to return an error, the ``result`` has one of
-      the following fields:
+      operation is expected to return an error, the ``result`` has one or more
+      of the following fields:
 
       - ``errorContains``: A substring of the expected error message.
 
