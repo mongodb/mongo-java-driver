@@ -17,10 +17,12 @@
 package com.mongodb.async.client;
 
 import com.mongodb.ClientSessionOptions;
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.ReadConcern;
 import com.mongodb.TransactionOptions;
+import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
@@ -94,6 +96,13 @@ class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
         }
         getServerSession().advanceTransactionNumber();
         this.transactionOptions = TransactionOptions.merge(transactionOptions, getOptions().getDefaultTransactionOptions());
+        WriteConcern writeConcern = this.transactionOptions.getWriteConcern();
+        if (writeConcern == null) {
+            throw new MongoInternalException("Invariant violated.  Transaction options write concern can not be null");
+        }
+        if (!writeConcern.isAcknowledged()) {
+            throw new MongoClientException("Transactions do not support unacknowledged write concern");
+        }
     }
 
     @Override
