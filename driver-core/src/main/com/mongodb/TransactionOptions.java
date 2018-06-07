@@ -19,7 +19,6 @@ package com.mongodb;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.lang.Nullable;
 
-import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
@@ -165,7 +164,6 @@ public final class TransactionOptions {
          */
         public Builder writeConcern(@Nullable final WriteConcern writeConcern) {
             this.writeConcern = writeConcern;
-            isTrueArgument("acknowledged write concern", writeConcern != null && writeConcern.isAcknowledged());
             return this;
         }
 
