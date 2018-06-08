@@ -604,7 +604,7 @@ final class CommandOperationHelper {
     }
 
     private static final List<Integer> RETRYABLE_ERROR_CODES = asList(6, 7, 89, 91, 189, 9001, 13436, 13435, 11602, 11600, 10107);
-    private static boolean isRetryableException(final Throwable t) {
+    static boolean isRetryableException(final Throwable t) {
         if (!(t instanceof MongoException)) {
             return false;
         }
