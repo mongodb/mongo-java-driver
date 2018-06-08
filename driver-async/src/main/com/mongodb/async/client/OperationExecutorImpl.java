@@ -33,6 +33,8 @@ import com.mongodb.lang.Nullable;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
 
+import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
+import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -109,8 +111,9 @@ class OperationExecutorImpl implements OperationExecutor {
                         @Override
                         public void onResult(final T result, final Throwable t) {
                             try {
-                                if (t instanceof MongoSocketException && session != null && session.hasActiveTransaction()) {
-                                    ((MongoException) t).addLabel(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL);
+                                if (t instanceof MongoSocketException && session != null && session.hasActiveTransaction()
+                                        && !((MongoException) t).hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
+                                    ((MongoException) t).addLabel(TRANSIENT_TRANSACTION_ERROR_LABEL);
                                 }
                                 errHandlingCallback.onResult(result, t);
                             } finally {

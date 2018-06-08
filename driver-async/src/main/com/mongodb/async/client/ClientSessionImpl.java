@@ -18,7 +18,6 @@ package com.mongodb.async.client;
 
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientException;
-import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.ReadConcern;
 import com.mongodb.TransactionOptions;
@@ -29,8 +28,6 @@ import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.operation.AbortTransactionOperation;
 import com.mongodb.operation.CommitTransactionOperation;
 
-import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
-import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -129,13 +126,6 @@ class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
                         public void onResult(final Void result, final Throwable t) {
                             commitInProgress = false;
                             transactionState = TransactionState.COMMITTED;
-                            if (t instanceof MongoException) {
-                                MongoException e = (MongoException) t;
-                                if (e.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)) {
-                                    e.removeLabel(TRANSIENT_TRANSACTION_ERROR_LABEL);
-                                    e.addLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL);
-                                }
-                            }
                             callback.onResult(result, t);
                         }
                     });

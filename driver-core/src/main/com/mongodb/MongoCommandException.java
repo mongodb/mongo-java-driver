@@ -16,9 +16,11 @@
 
 package com.mongodb;
 
+import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.EncoderContext;
 import org.bson.json.JsonWriter;
@@ -48,6 +50,9 @@ public class MongoCommandException extends MongoServerException {
               format("Command failed with error %s: '%s' on server %s. The full response is %s", extractErrorCodeAndName(response),
                      extractErrorMessage(response), address, getResponseAsJson(response)), address);
         this.response = response;
+        for (BsonValue curErrorLabel : response.getArray("errorLabels", new BsonArray())) {
+            addLabel(curErrorLabel.asString().getValue());
+        }
     }
 
     /**

@@ -16,7 +16,14 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
+import com.mongodb.async.SingleResultCallback;
+import com.mongodb.binding.AsyncWriteBinding;
+import com.mongodb.binding.WriteBinding;
+
+import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
+import static com.mongodb.operation.CommandOperationHelper.isRetryableException;
 
 /**
  * An operation that commits a transaction.
@@ -32,6 +39,35 @@ public class CommitTransactionOperation extends TransactionOperation {
      */
     public CommitTransactionOperation(final WriteConcern writeConcern) {
         super(writeConcern);
+    }
+
+    @Override
+    public Void execute(final WriteBinding binding) {
+        try {
+            return super.execute(binding);
+        } catch (MongoException e) {
+            addErrorLabels(e);
+            throw e;
+        }
+    }
+
+    @Override
+    public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
+        super.executeAsync(binding, new SingleResultCallback<Void>() {
+            @Override
+            public void onResult(final Void result, final Throwable t) {
+                 if (t instanceof MongoException) {
+                     addErrorLabels((MongoException) t);
+                 }
+                 callback.onResult(result, t);
+            }
+        });
+    }
+
+    private void addErrorLabels(final MongoException e) {
+        if (isRetryableException(e)) {
+            e.addLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL);
+        }
     }
 
     @Override

@@ -18,7 +18,6 @@ package com.mongodb.client.internal;
 
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientException;
-import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.ReadConcern;
 import com.mongodb.TransactionOptions;
@@ -29,8 +28,6 @@ import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.operation.AbortTransactionOperation;
 import com.mongodb.operation.CommitTransactionOperation;
 
-import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
-import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -122,17 +119,12 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                 delegate.getOperationExecutor().execute(new CommitTransactionOperation(transactionOptions.getWriteConcern()),
                         readConcern, this);
             }
-        } catch (MongoException e) {
-            if (e.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)) {
-                e.removeLabel(TRANSIENT_TRANSACTION_ERROR_LABEL);
-                e.addLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL);
-            }
-            throw e;
         } finally {
             commitInProgress = false;
             transactionState = TransactionState.COMMITTED;
         }
     }
+
 
     @Override
     public void abortTransaction() {

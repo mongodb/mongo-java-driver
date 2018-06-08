@@ -46,6 +46,7 @@ import com.mongodb.selector.ServerSelector;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
@@ -186,7 +187,7 @@ public class MongoClientDelegate {
             try {
                 return operation.execute(binding);
             } catch (MongoSocketException e) {
-                if (session != null && session.hasActiveTransaction()) {
+                if (session != null && session.hasActiveTransaction() && !e.hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
                     e.addLabel(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL);
                 }
                 throw e;

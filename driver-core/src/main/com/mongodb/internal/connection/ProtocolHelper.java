@@ -240,9 +240,9 @@ public final class ProtocolHelper {
             return new MongoExecutionTimeoutException(errorCode, errorMessage);
         } else if (errorMessage.contains("not master or secondary") || errorMessage.contains("node is recovering")
                 || RECOVERING_CODES.contains(errorCode)) {
-            return new MongoNodeIsRecoveringException(serverAddress);
+            return new MongoNodeIsRecoveringException(response, serverAddress);
         } else if (errorMessage.contains("not master") || NOT_MASTER_CODES.contains(errorCode)) {
-            return new MongoNotPrimaryException(serverAddress);
+            return new MongoNotPrimaryException(response, serverAddress);
         } else if (response.containsKey("writeConcernError")) {
             return createSpecialException(response.getDocument("writeConcernError"), serverAddress, "errmsg");
         } else {
