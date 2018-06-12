@@ -39,6 +39,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
@@ -311,6 +312,7 @@ public class DBCursorTest extends DatabaseTestCase {
     @Test
     @SuppressWarnings("deprecation")
     public void testMaxScan() {
+        assumeFalse(serverVersionAtLeast(4, 1));
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
                      .addSpecial("$maxScan", 4), 4);
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary()).maxScan(4), 4);
