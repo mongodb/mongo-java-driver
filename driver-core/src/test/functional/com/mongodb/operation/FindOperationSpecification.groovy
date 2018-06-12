@@ -389,6 +389,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
+    @IgnoreIf({ serverVersionAtLeast(4, 1) })
     def '$maxScan should limit items returned'() {
         given:
         (1..100).each {
