@@ -87,7 +87,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         clientSession?.close()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 7) || isStandalone()  })
+    @IgnoreIf({ !serverVersionAtLeast(4, 0) || isStandalone()  })
     def 'should use mutated client properties for default transaction options'() {
         given:
         def originalWriteConcern = getMongoClient().getWriteConcern()
@@ -427,7 +427,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         session?.close()
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 7) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !serverVersionAtLeast(4, 0) || !isDiscoverableReplicaSet() })
     def 'should ignore unacknowledged write concern when in a transaction'() {
         given:
         def session = getMongoClient().startSession()

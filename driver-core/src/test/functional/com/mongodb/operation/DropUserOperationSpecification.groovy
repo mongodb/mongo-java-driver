@@ -49,7 +49,7 @@ class DropUserOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 7) })
+    @IgnoreIf({ !serverVersionAtLeast(4, 0) })
     def 'should delete user without error SHA_256'() {
         given:
         def credential = createScramSha256Credential('userToDrop', databaseName, '123'.toCharArray())

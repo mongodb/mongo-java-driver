@@ -49,7 +49,6 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.codecs.BsonDocumentCodec
 import org.junit.experimental.categories.Category
-import spock.lang.Ignore
 import spock.lang.IgnoreIf
 
 import java.util.concurrent.TimeUnit
@@ -64,10 +63,8 @@ import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.MongoCredential.createCredential
-import static com.mongodb.MongoCredential.createScramSha256Credential
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static java.util.Arrays.asList
-
 
 class UserOperationsSpecification extends OperationFunctionalSpecification {
     def credential = createCredential('\u53f0\u5317', databaseName, 'Ta\u0301ibe\u030Ci'.toCharArray())
@@ -103,32 +100,6 @@ class UserOperationsSpecification extends OperationFunctionalSpecification {
 
         where:
         async << [true, false]
-    }
-
-    // TODO: Waiting on final spec changes for SASL Prep
-//    @IgnoreIf({ !serverVersionAtLeast(3, 7) })
-    @Ignore
-    def 'should correctly, prep username and be able to authenticate users with unicode in their name'() {
-        when:
-        def user = createScramSha256Credential('IX', databaseName, authCredential.getPassword())
-        execute(new CreateUserOperation(user, true), async)
-        def cluster = getCluster(authCredential)
-        def server = cluster.selectServer(new WritableServerSelector())
-        def connection = server.getConnection()
-
-        then:
-        !testConnection(connection).isEmpty()
-
-        cleanup:
-        connection?.release()
-        execute(new DropUserOperation(databaseName, user.userName), async)
-        cluster?.close()
-
-        where:
-        [async, authCredential] << [[true, false],
-                [createCredential('I\u00ADX', databaseName, 'pass\u2010word' as char[]),
-                 createScramSha256Credential('I\u00ADX', databaseName, 'pass\u2010word' as char[]),
-                 createScramSha256Credential('\u2168', databaseName, 'pass\u2010word' as char[])]].combinations()
     }
 
     def 'should handle user not found'() {

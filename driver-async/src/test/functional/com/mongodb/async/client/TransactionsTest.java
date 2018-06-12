@@ -427,6 +427,6 @@ public class TransactionsTest {
     }
 
     private boolean canRunTests() {
-        return serverVersionAtLeast(3, 7) && isDiscoverableReplicaSet();
+        return serverVersionAtLeast(4, 0) && isDiscoverableReplicaSet();
     }
 }

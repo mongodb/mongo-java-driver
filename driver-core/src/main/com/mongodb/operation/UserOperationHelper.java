@@ -36,7 +36,7 @@ import static com.mongodb.internal.authentication.NativeAuthenticationHelper.cre
 import static com.mongodb.internal.operation.WriteConcernHelper.hasWriteConcernError;
 
 final class UserOperationHelper {
-    private static final ServerVersion FOUR_ZERO = new ServerVersion(3, 7);
+    private static final ServerVersion FOUR_ZERO = new ServerVersion(4, 0);
 
     static BsonDocument asCommandDocument(final MongoCredential credential, final ConnectionDescription connectionDescription,
                                           final boolean readOnly, final String commandName) {
