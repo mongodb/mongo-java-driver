@@ -121,8 +121,9 @@ public class InitialDnsSeedlistDiscoveryTest {
         final ConnectionString connectionString = new ConnectionString(uri);
         final SslSettings sslSettings = getSslSettings(connectionString);
 
-        assumeTrue(isDiscoverableReplicaSet() && !serverVersionAtLeast(3, 7)
-                && getSslSettings().isEnabled() == sslSettings.isEnabled());
+        assumeTrue("It's not a replica set", isDiscoverableReplicaSet());
+        assumeTrue("Server version is >= 4.0", !serverVersionAtLeast(4, 0));
+        assumeTrue("SSL settings don't match", getSslSettings().isEnabled() == sslSettings.isEnabled());
 
         MongoClientSettings settings = MongoClientSettings.builder()
                 .applyToClusterSettings(new Block<ClusterSettings.Builder>() {

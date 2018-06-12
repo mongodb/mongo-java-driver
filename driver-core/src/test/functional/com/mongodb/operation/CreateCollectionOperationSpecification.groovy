@@ -171,7 +171,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         async << [true, false]
     }
 
-    @IgnoreIf({ serverVersionAtLeast(3, 7) })
+    @IgnoreIf({ serverVersionAtLeast(4, 0) })
     def 'should create collection in respect to the autoIndex option'() {
         given:
         assert !collectionNameExists(getCollectionName())

@@ -56,7 +56,7 @@ import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
-@IgnoreIf({ serverVersionAtLeast(3, 7) && isSharded() })
+@IgnoreIf({ serverVersionAtLeast(4, 0) && isSharded() })
 class ListCollectionsOperationSpecification extends OperationFunctionalSpecification {
 
     def madeUpDatabase = 'MadeUpDatabase'
