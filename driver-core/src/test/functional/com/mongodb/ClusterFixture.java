@@ -406,36 +406,11 @@ public final class ClusterFixture {
     }
 
     public static void enableMaxTimeFailPoint() {
-        assumeThat(isSharded(), is(false));
-        boolean failsPointsSupported = true;
-        try {
-            new CommandWriteOperation<BsonDocument>("admin",
-                    new BsonDocument("configureFailPoint", new BsonString("maxTimeAlwaysTimeOut"))
-                            .append("mode", new BsonString("alwaysOn")),
-                    new BsonDocumentCodec())
-                    .execute(getBinding());
-        } catch (MongoCommandException e) {
-            if (e.getErrorCode() == COMMAND_NOT_FOUND_ERROR_CODE) {
-                failsPointsSupported = false;
-            }
-        }
-        assumeTrue("configureFailPoint is not enabled", failsPointsSupported);
+        configureFailPoint(BsonDocument.parse("{configureFailPoint: 'maxTimeAlwaysTimeOut', mode: 'alwaysOn'}"));
     }
 
     public static void disableMaxTimeFailPoint() {
-        assumeThat(isSharded(), is(false));
-        if (!isSharded()) {
-            try {
-                new CommandWriteOperation<BsonDocument>("admin",
-                        new BsonDocument("configureFailPoint",
-                                new BsonString("maxTimeAlwaysTimeOut"))
-                                .append("mode", new BsonString("off")),
-                        new BsonDocumentCodec())
-                        .execute(getBinding());
-            } catch (MongoCommandException e) {
-                // ignore
-            }
-        }
+        disableFailPoint("maxTimeAlwaysTimeOut");
     }
 
     public static void enableOnPrimaryTransactionalWriteFailPoint(final BsonValue failPointData) {
@@ -448,27 +423,35 @@ public final class ClusterFixture {
         } else {
             command.append("mode", failPointData);
         }
-        boolean failsPointsSupported = true;
-        try {
-            new CommandWriteOperation<BsonDocument>("admin", command, new BsonDocumentCodec()).execute(getBinding());
-        } catch (MongoCommandException e) {
-            if (e.getErrorCode() == COMMAND_NOT_FOUND_ERROR_CODE) {
-                failsPointsSupported = false;
-            }
-        }
-        assumeTrue("configureFailPoint is not enabled", failsPointsSupported);
+        configureFailPoint(command);
     }
 
     public static void disableOnPrimaryTransactionalWriteFailPoint() {
+        disableFailPoint("onPrimaryTransactionalWrite");
+    }
+
+    public static void configureFailPoint(final BsonDocument failPointDocument) {
         assumeThat(isSharded(), is(false));
+        boolean failsPointsSupported = true;
         if (!isSharded()) {
             try {
-                new CommandWriteOperation<BsonDocument>("admin",
-                        new BsonDocument("configureFailPoint",
-                                new BsonString("onPrimaryTransactionalWrite"))
-                                .append("mode", new BsonString("off")),
-                        new BsonDocumentCodec())
+                new CommandWriteOperation<BsonDocument>("admin", failPointDocument, new BsonDocumentCodec())
                         .execute(getBinding());
+            } catch (MongoCommandException e) {
+                if (e.getErrorCode() == COMMAND_NOT_FOUND_ERROR_CODE) {
+                    failsPointsSupported = false;
+                }
+            }
+            assumeTrue("configureFailPoint is not enabled", failsPointsSupported);
+        }
+    }
+
+    public static void disableFailPoint(final String failPoint) {
+        if (!isSharded()) {
+            BsonDocument failPointDocument = new BsonDocument("configureFailPoint", new BsonString(failPoint))
+                    .append("mode", new BsonString("off"));
+            try {
+                new CommandWriteOperation<BsonDocument>("admin", failPointDocument, new BsonDocumentCodec()).execute(getBinding());
             } catch (MongoCommandException e) {
                 // ignore
             }

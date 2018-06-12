@@ -9,17 +9,23 @@
       "x": 22
     }
   ],
-  "minServerVersion": "3.6",
+  "minServerVersion": "3.99",
   "tests": [
     {
-      "description": "ReplaceOne is committed on first attempt",
+      "description": "ReplaceOne succeeds after PrimarySteppedDown",
       "clientOptions": {
         "retryWrites": true
       },
       "failPoint": {
-        "configureFailPoint": "onPrimaryTransactionalWrite",
+        "configureFailPoint": "failCommand",
         "mode": {
           "times": 1
+        },
+        "data": {
+          "failCommands": [
+            "update"
+          ],
+          "errorCode": 189
         }
       },
       "operation": {
@@ -55,17 +61,23 @@
       }
     },
     {
-      "description": "ReplaceOne is not committed on first attempt",
+      "description": "ReplaceOne succeeds after WriteConcernError ShutdownInProgress",
       "clientOptions": {
         "retryWrites": true
       },
       "failPoint": {
-        "configureFailPoint": "onPrimaryTransactionalWrite",
+        "configureFailPoint": "failCommand",
         "mode": {
           "times": 1
         },
         "data": {
-          "failBeforeCommitExceptionCode": 1
+          "failCommands": [
+            "update"
+          ],
+          "writeConcernError": {
+            "code": 91,
+            "errmsg": "Replication is being shut down"
+          }
         }
       },
       "operation": {
@@ -91,48 +103,6 @@
             {
               "_id": 1,
               "x": 111
-            },
-            {
-              "_id": 2,
-              "x": 22
-            }
-          ]
-        }
-      }
-    },
-    {
-      "description": "ReplaceOne is never committed",
-      "clientOptions": {
-        "retryWrites": true
-      },
-      "failPoint": {
-        "configureFailPoint": "onPrimaryTransactionalWrite",
-        "mode": {
-          "times": 2
-        },
-        "data": {
-          "failBeforeCommitExceptionCode": 1
-        }
-      },
-      "operation": {
-        "name": "replaceOne",
-        "arguments": {
-          "filter": {
-            "_id": 1
-          },
-          "replacement": {
-            "_id": 1,
-            "x": 111
-          }
-        }
-      },
-      "outcome": {
-        "error": true,
-        "collection": {
-          "data": [
-            {
-              "_id": 1,
-              "x": 11
             },
             {
               "_id": 2,

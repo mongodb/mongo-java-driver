@@ -17,6 +17,7 @@
 package com.mongodb.operation
 
 import com.mongodb.MongoCommandException
+import com.mongodb.MongoWriteConcernException
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.async.SingleResultCallback
@@ -29,14 +30,20 @@ import com.mongodb.binding.WriteBinding
 import com.mongodb.connection.AsyncConnection
 import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
+import com.mongodb.connection.ServerDescription
+import com.mongodb.connection.ServerType
+import com.mongodb.connection.ServerVersion
+import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
+import org.bson.codecs.BsonDocumentCodec
 import org.bson.codecs.Decoder
 import spock.lang.Specification
 
 import static com.mongodb.ReadPreference.primary
+import static com.mongodb.operation.CommandOperationHelper.executeRetryableCommand
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync
 import static com.mongodb.operation.CommandOperationHelper.isNamespaceError
@@ -127,6 +134,92 @@ class CommandOperationHelperSpecification extends Specification {
         _ * connection.getDescription() >> connectionDescription
         1 * connection.command(dbName, command, _, primary(), decoder, _)
         1 * connection.release()
+    }
+
+    def 'should retry with retryable exception'() {
+        given:
+        def dbName = 'db'
+        def command = BsonDocument.parse('''{findAndModify: "coll", query: {a: 1}, new: false, update: {$inc: {a :1}}, txnNumber: 1}''')
+        def commandCreator = { serverDescription, connectionDescription -> command }
+        def decoder = new BsonDocumentCodec()
+        def results = [
+            BsonDocument.parse('{ok: 1.0, writeConcernError: {code: 91, errmsg: "Replication is being shut down"}}'),
+            BsonDocument.parse('{ok: 1.0, writeConcernError: {code: -1, errmsg: "UnknownError"}}')] as Queue
+        def connection = Mock(Connection) {
+            _ * release()
+            _ * getDescription() >> Stub(ConnectionDescription) {
+                getServerVersion() >> new ServerVersion([4, 0, 0])
+                getServerType() >> ServerType.REPLICA_SET_PRIMARY
+            }
+        }
+        def connectionSource = Stub(ConnectionSource) {
+            _ * getConnection() >> connection
+            _ * getServerDescription() >> Stub(ServerDescription) {
+                getLogicalSessionTimeoutMinutes() >> 1
+            }
+        }
+        def writeBinding = Stub(WriteBinding) {
+            getWriteConnectionSource() >> connectionSource
+        }
+
+        when:
+        executeRetryableCommand(writeBinding, dbName, primary(), new NoOpFieldNameValidator(), decoder, commandCreator,
+                FindAndModifyHelper.transformer())
+
+        then:
+        2 * connection.command(dbName, command, _, primary(), decoder, _) >> { results.poll() }
+
+        then:
+        def ex = thrown(MongoWriteConcernException)
+        ex.writeConcernError.code == 91
+    }
+
+    def 'should retry with retryable exception async'() {
+        given:
+        def dbName = 'db'
+        def command = BsonDocument.parse('''{findAndModify: "coll", query: {a: 1}, new: false, update: {$inc: {a :1}}, txnNumber: 1}''')
+        def commandCreator = { serverDescription, connectionDescription -> command }
+        def callback = new SingleResultCallback() {
+            def result
+            def throwable
+            @Override
+            void onResult(final Object result, final Throwable t) {
+                this.result = result
+                this.throwable = t
+            }
+        }
+        def decoder = new BsonDocumentCodec()
+        def results = [
+                BsonDocument.parse('{ok: 1.0, writeConcernError: {code: 91, errmsg: "Replication is being shut down"}}'),
+                BsonDocument.parse('{ok: 1.0, writeConcernError: {code: -1, errmsg: "UnknownError"}}')] as Queue
+
+        def connection = Mock(AsyncConnection) {
+            _ * getDescription() >> Stub(ConnectionDescription) {
+                getServerVersion() >> new ServerVersion([4, 0, 0])
+                getServerType() >> ServerType.REPLICA_SET_PRIMARY
+            }
+        }
+
+        def connectionSource = Stub(AsyncConnectionSource) {
+            getConnection(_) >> { it[0].onResult(connection, null) }
+            _ * getServerDescription() >> Stub(ServerDescription) {
+                getLogicalSessionTimeoutMinutes() >> 1
+            }
+        }
+        def asyncWriteBinding = Stub(AsyncWriteBinding) {
+            getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+        }
+
+        when:
+        executeRetryableCommand(asyncWriteBinding, dbName, primary(), new NoOpFieldNameValidator(), decoder, commandCreator,
+                FindAndModifyHelper.transformer(), callback)
+
+        then:
+        2 * connection.commandAsync(dbName, command, _, primary(), decoder, _, _) >> { it.last().onResult(results.poll(), null) }
+
+        then:
+        callback.throwable instanceof MongoWriteConcernException
+        callback.throwable.writeConcernError.code == 91
     }
 
     def 'should use the ReadBindings readPreference'() {

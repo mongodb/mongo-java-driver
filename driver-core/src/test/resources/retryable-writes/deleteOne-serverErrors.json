@@ -9,17 +9,23 @@
       "x": 22
     }
   ],
-  "minServerVersion": "3.6",
+  "minServerVersion": "3.99",
   "tests": [
     {
-      "description": "DeleteOne is committed on first attempt",
+      "description": "DeleteOne succeeds after PrimarySteppedDown",
       "clientOptions": {
         "retryWrites": true
       },
       "failPoint": {
-        "configureFailPoint": "onPrimaryTransactionalWrite",
+        "configureFailPoint": "failCommand",
         "mode": {
           "times": 1
+        },
+        "data": {
+          "failCommands": [
+            "delete"
+          ],
+          "errorCode": 189
         }
       },
       "operation": {
@@ -45,17 +51,23 @@
       }
     },
     {
-      "description": "DeleteOne is not committed on first attempt",
+      "description": "DeleteOne succeeds after WriteConcernError ShutdownInProgress",
       "clientOptions": {
         "retryWrites": true
       },
       "failPoint": {
-        "configureFailPoint": "onPrimaryTransactionalWrite",
+        "configureFailPoint": "failCommand",
         "mode": {
           "times": 1
         },
         "data": {
-          "failBeforeCommitExceptionCode": 1
+          "failCommands": [
+            "delete"
+          ],
+          "writeConcernError": {
+            "code": 91,
+            "errmsg": "Replication is being shut down"
+          }
         }
       },
       "operation": {
@@ -72,44 +84,6 @@
         },
         "collection": {
           "data": [
-            {
-              "_id": 2,
-              "x": 22
-            }
-          ]
-        }
-      }
-    },
-    {
-      "description": "DeleteOne is never committed",
-      "clientOptions": {
-        "retryWrites": true
-      },
-      "failPoint": {
-        "configureFailPoint": "onPrimaryTransactionalWrite",
-        "mode": {
-          "times": 2
-        },
-        "data": {
-          "failBeforeCommitExceptionCode": 1
-        }
-      },
-      "operation": {
-        "name": "deleteOne",
-        "arguments": {
-          "filter": {
-            "_id": 1
-          }
-        }
-      },
-      "outcome": {
-        "error": true,
-        "collection": {
-          "data": [
-            {
-              "_id": 1,
-              "x": 11
-            },
             {
               "_id": 2,
               "x": 22

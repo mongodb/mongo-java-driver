@@ -17,9 +17,6 @@
 package com.mongodb.operation;
 
 import com.mongodb.MongoChangeStreamException;
-import com.mongodb.MongoCursorNotFoundException;
-import com.mongodb.MongoNotPrimaryException;
-import com.mongodb.MongoSocketException;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncReadBinding;
@@ -30,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.operation.ChangeStreamBatchCursorHelper.isRetryableError;
 import static com.mongodb.operation.OperationHelper.LOGGER;
 
 final class AsyncChangeStreamBatchCursor<T> implements AsyncBatchCursor<T> {
@@ -104,9 +102,7 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncBatchCursor<T> {
             public void onResult(final List<RawBsonDocument> result, final Throwable t) {
                 if (t == null) {
                     callback.onResult(result, null);
-                } else if (t instanceof MongoNotPrimaryException
-                        || t instanceof MongoCursorNotFoundException
-                        || t instanceof MongoSocketException) {
+                } else if (isRetryableError(t)) {
                     wrapped.close();
                     retryOperation(asyncBlock, callback);
                 } else {

@@ -18,9 +18,7 @@ package com.mongodb.operation;
 
 import com.mongodb.Function;
 import com.mongodb.MongoChangeStreamException;
-import com.mongodb.MongoCursorNotFoundException;
-import com.mongodb.MongoNotPrimaryException;
-import com.mongodb.MongoSocketException;
+import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.binding.ReadBinding;
@@ -29,6 +27,8 @@ import org.bson.RawBsonDocument;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.mongodb.operation.ChangeStreamBatchCursorHelper.isRetryableError;
 
 final class ChangeStreamBatchCursor<T> implements BatchCursor<T> {
     private final ReadBinding binding;
@@ -130,12 +130,10 @@ final class ChangeStreamBatchCursor<T> implements BatchCursor<T> {
         while (true) {
             try {
                 return function.apply(wrapped);
-            } catch (MongoNotPrimaryException e) {
-                // Ignore
-            } catch (MongoCursorNotFoundException w) {
-                // Ignore
-            } catch (MongoSocketException e) {
-                // Ignore
+            } catch (Throwable t) {
+                if (!isRetryableError(t)) {
+                    throw MongoException.fromThrowableNonNull(t);
+                }
             }
             wrapped.close();
             wrapped = ((ChangeStreamBatchCursor<T>) changeStreamOperation.resumeAfter(resumeToken).execute(binding)).getWrapped();

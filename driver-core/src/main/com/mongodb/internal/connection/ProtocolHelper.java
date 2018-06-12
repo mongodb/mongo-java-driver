@@ -49,11 +49,17 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.io.BsonOutput;
 import org.bson.io.ByteBufferBsonInput;
 
+import java.util.List;
+
 import static java.lang.String.format;
+import static java.util.Arrays.asList;
 import static org.bson.codecs.BsonValueCodecProvider.getClassForBsonType;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
-final class ProtocolHelper {
+/**
+ * This class is NOT part of the public API. It may change at any time without notification.
+ */
+public final class ProtocolHelper {
     private static final Logger PROTOCOL_EVENT_LOGGER = Loggers.getLogger("protocol.event");
     private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
 
@@ -91,6 +97,15 @@ final class ProtocolHelper {
             return isCommandOk(createBsonReader(responseBuffers));
         } finally {
             responseBuffers.reset();
+        }
+    }
+
+    static MongoException createSpecialWriteConcernException(final ResponseBuffers responseBuffers, final ServerAddress serverAddress) {
+        BsonValue writeConcernError = getField(createBsonReader(responseBuffers), "writeConcernError");
+        if (writeConcernError == null) {
+            return null;
+        } else {
+            return createSpecialException(writeConcernError.asDocument(), serverAddress, "errmsg");
         }
     }
 
@@ -215,18 +230,27 @@ final class ProtocolHelper {
         }
     }
 
-    private static MongoException createSpecialException(final BsonDocument response, final ServerAddress serverAddress,
-                                                         final String errorMessageFieldName) {
-        if (ErrorCategory.fromErrorCode(getErrorCode(response)) == ErrorCategory.EXECUTION_TIMEOUT) {
-            return new MongoExecutionTimeoutException(getErrorCode(response), getErrorMessage(response, errorMessageFieldName));
-        } else if (getErrorMessage(response, errorMessageFieldName).startsWith("not master")) {
-            return new MongoNotPrimaryException(serverAddress);
-        } else if (getErrorMessage(response, errorMessageFieldName).startsWith("node is recovering")) {
+    private static final List<Integer> NOT_MASTER_CODES = asList(10107, 13435);
+    private static final List<Integer> RECOVERING_CODES = asList(11600, 11602, 13436, 189, 91);
+    public static MongoException createSpecialException(final BsonDocument response, final ServerAddress serverAddress,
+                                                        final String errorMessageFieldName) {
+        int errorCode = getErrorCode(response);
+        String errorMessage = getErrorMessage(response, errorMessageFieldName);
+        if (ErrorCategory.fromErrorCode(errorCode) == ErrorCategory.EXECUTION_TIMEOUT) {
+            return new MongoExecutionTimeoutException(errorCode, errorMessage);
+        } else if (errorMessage.contains("not master or secondary") || errorMessage.contains("node is recovering")
+                || RECOVERING_CODES.contains(errorCode)) {
             return new MongoNodeIsRecoveringException(serverAddress);
+        } else if (errorMessage.contains("not master") || NOT_MASTER_CODES.contains(errorCode)) {
+            return new MongoNotPrimaryException(serverAddress);
+        } else if (response.containsKey("writeConcernError")) {
+            return createSpecialException(response.getDocument("writeConcernError"), serverAddress, "errmsg");
         } else {
             return null;
         }
     }
+
+
 
     private static boolean hasWriteError(final BsonDocument response) {
         String err = WriteConcernException.extractErrorMessage(response);
