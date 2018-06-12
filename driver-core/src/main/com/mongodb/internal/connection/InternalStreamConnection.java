@@ -61,6 +61,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.connection.MessageHeader.MESSAGE_HEADER_LENGTH;
 import static com.mongodb.internal.connection.OpCode.OP_COMPRESSED;
+import static com.mongodb.internal.connection.ProtocolHelper.createSpecialWriteConcernException;
 import static com.mongodb.internal.connection.ProtocolHelper.getClusterTime;
 import static com.mongodb.internal.connection.ProtocolHelper.getCommandFailureException;
 import static com.mongodb.internal.connection.ProtocolHelper.getMessageSettings;
@@ -295,7 +296,7 @@ public class InternalStreamConnection implements InternalConnection {
 
             commandEventSender.sendSucceededEvent(responseBuffers);
 
-            return new ReplyMessage<T>(responseBuffers, decoder, message.getId()).getDocuments().get(0);
+            return getCommandResult(decoder, responseBuffers, message.getId());
         } finally {
             responseBuffers.close();
         }
@@ -373,8 +374,8 @@ public class InternalStreamConnection implements InternalConnection {
                                     throw commandFailureException;
                                 }
                                 commandEventSender.sendSucceededEvent(responseBuffers);
-                                T result = new ReplyMessage<T>(responseBuffers, decoder, messageId).getDocuments().get(0);
 
+                                T result = getCommandResult(decoder, responseBuffers, messageId);
                                 callback.onResult(result, null);
                             } catch (Throwable localThrowable) {
                                 callback.onResult(null, localThrowable);
@@ -386,6 +387,15 @@ public class InternalStreamConnection implements InternalConnection {
                 }
             }
         });
+    }
+
+    private <T> T getCommandResult(final Decoder<T> decoder, final ResponseBuffers responseBuffers, final int messageId) {
+        T result = new ReplyMessage<T>(responseBuffers, decoder, messageId).getDocuments().get(0);
+        MongoException writeConcernBasedError = createSpecialWriteConcernException(responseBuffers, description.getServerAddress());
+        if (writeConcernBasedError != null) {
+            throw new MongoWriteConcernWithResponseException(writeConcernBasedError, result);
+        }
+        return result;
     }
 
     @Override

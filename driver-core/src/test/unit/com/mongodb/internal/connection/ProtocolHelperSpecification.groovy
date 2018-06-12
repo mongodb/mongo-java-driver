@@ -83,28 +83,58 @@ class ProtocolHelperSpecification extends Specification {
                                  new ServerAddress()) instanceof MongoExecutionTimeoutException
     }
 
-    def 'command failure exception should be MongoNotPrimaryException if errmsg starts with not master'() {
+    def 'command failure exceptions should handle MongoNotPrimaryException scenarios'() {
         expect:
-        getCommandFailureException(new BsonDocument('ok', new BsonInt32(0)).append('errmsg', new BsonString('not master server')),
-                                   new ServerAddress()) instanceof MongoNotPrimaryException
+        getCommandFailureException(exception, new ServerAddress()) instanceof MongoNotPrimaryException
+
+        where:
+        exception << [
+                BsonDocument.parse('{ok: 0, errmsg: "not master server"}'),
+                BsonDocument.parse('{ok: 0, code: 10107}'),
+                BsonDocument.parse('{ok: 0, code: 13435}')
+        ]
     }
 
-    def 'query failure exception should be MongoNotPrimaryException if $err starts with not master'() {
+    def 'query failure exceptions should handle MongoNotPrimaryException scenarios'() {
         expect:
-        getQueryFailureException(new BsonDocument('$err', new BsonString('not master server')),
-                                 new ServerAddress()) instanceof MongoNotPrimaryException
+        getQueryFailureException(exception, new ServerAddress()) instanceof MongoNotPrimaryException
+
+        where:
+        exception << [
+                BsonDocument.parse('{$err: "not master server"}'),
+                BsonDocument.parse('{code: 10107}'),
+                BsonDocument.parse('{code: 13435}')
+        ]
     }
 
-    def 'command failure exception should be MongoNodeIsRecoveringException if errmsg starts with node is recovering'() {
+    def 'command failure exceptions should handle MongoNodeIsRecoveringException scenarios'() {
         expect:
-        getCommandFailureException(new BsonDocument('ok', new BsonInt32(0)).append('errmsg', new BsonString('node is recovering now')),
-                                   new ServerAddress()) instanceof MongoNodeIsRecoveringException
+        getCommandFailureException(exception, new ServerAddress()) instanceof MongoNodeIsRecoveringException
+
+        where:
+        exception << [
+                BsonDocument.parse('{ok: 0, errmsg: "node is recovering now"}'),
+                BsonDocument.parse('{ok: 0, code: 11600}'),
+                BsonDocument.parse('{ok: 0, code: 11602}'),
+                BsonDocument.parse('{ok: 0, code: 13436}'),
+                BsonDocument.parse('{ok: 0, code: 189}'),
+                BsonDocument.parse('{ok: 0, code: 91}'),
+        ]
     }
 
-    def 'query failure exception should be MongoNodeIsRecoveringException if $err starts with node is recovering'() {
+    def 'query failure exceptions should handle MongoNodeIsRecoveringException scenarios'() {
         expect:
-        getQueryFailureException(new BsonDocument('$err', new BsonString('node is recovering now')),
-                                 new ServerAddress()) instanceof MongoNodeIsRecoveringException
+        getQueryFailureException(exception, new ServerAddress()) instanceof MongoNodeIsRecoveringException
+
+        where:
+        exception << [
+                BsonDocument.parse('{$err: "node is recovering now"}'),
+                BsonDocument.parse('{code: 11600}'),
+                BsonDocument.parse('{code: 11602}'),
+                BsonDocument.parse('{code: 13436}'),
+                BsonDocument.parse('{code: 189}'),
+                BsonDocument.parse('{code: 91}'),
+        ]
     }
 
     def 'command failure exception should be MongoCommandException'() {

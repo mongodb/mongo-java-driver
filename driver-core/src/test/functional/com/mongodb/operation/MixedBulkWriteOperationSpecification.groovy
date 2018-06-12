@@ -47,6 +47,8 @@ import org.bson.types.ObjectId
 import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.configureFailPoint
+import static com.mongodb.ClusterFixture.disableFailPoint
 import static com.mongodb.ClusterFixture.disableOnPrimaryTransactionalWriteFailPoint
 import static com.mongodb.ClusterFixture.enableOnPrimaryTransactionalWriteFailPoint
 import static com.mongodb.ClusterFixture.getAsyncSingleConnectionBinding
@@ -757,6 +759,40 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         ex.writeErrors[0].index == 1
         ex.writeErrors[0].code == 11000
         ex.writeConcernError != null
+
+        where:
+        async << [true, false]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 8) || !isDiscoverableReplicaSet() })
+    def 'should throw on write concern error on multiple failpoint'() {
+        given:
+        getCollectionHelper().insertDocuments(getTestInserts())
+        def operation = new MixedBulkWriteOperation(getNamespace(),
+                [new InsertRequest(new BsonDocument('_id', new BsonInt32(7))),
+                 new InsertRequest(new BsonDocument('_id', new BsonInt32(1)))   // duplicate key
+                ], false, ACKNOWLEDGED, true)
+
+        def failPoint = BsonDocument.parse('''{
+            "configureFailPoint": "failCommand",
+            "mode": {"times": 2 },
+            "data": { "failCommands": ["insert"],
+                      "writeConcernError": {"code": 91, "errmsg": "Replication is being shut down"}}}''')
+        configureFailPoint(failPoint)
+
+        when:
+        execute(operation, async)  // This is assuming that it won't be able to replicate to 4 servers in 1 ms
+
+        then:
+        def ex = thrown(MongoBulkWriteException)
+        ex.writeErrors.size() == 1
+        ex.writeErrors[0].index == 1
+        ex.writeErrors[0].code == 11000
+        ex.writeConcernError != null
+        ex.writeConcernError.code == 91
+
+        cleanup:
+        disableFailPoint('failCommand')
 
         where:
         async << [true, false]

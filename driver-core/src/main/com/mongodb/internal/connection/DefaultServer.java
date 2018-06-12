@@ -191,18 +191,23 @@ class DefaultServer implements ClusterableServer {
             }, LOGGER));
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public <T> T execute(final CommandProtocol<T> protocol, final InternalConnection connection,
                              final SessionContext sessionContext) {
             try {
                 protocol.sessionContext(new ClusterClockAdvancingSessionContext(sessionContext, clusterClock));
                 return protocol.execute(connection);
+            } catch (MongoWriteConcernWithResponseException e) {
+                invalidate();
+                return (T) e.getResponse();
             } catch (MongoException e) {
                 handleThrowable(e);
                 throw e;
             }
         }
 
+        @SuppressWarnings("unchecked")
         @Override
         public <T> void executeAsync(final CommandProtocol<T> protocol, final InternalConnection connection,
                                      final SessionContext sessionContext, final SingleResultCallback<T> callback) {
@@ -211,8 +216,13 @@ class DefaultServer implements ClusterableServer {
                 @Override
                 public void onResult(final T result, final Throwable t) {
                     if (t != null) {
-                        handleThrowable(t);
-                        callback.onResult(null, t);
+                        if (t instanceof MongoWriteConcernWithResponseException) {
+                            invalidate();
+                            callback.onResult((T) ((MongoWriteConcernWithResponseException) t).getResponse(), null);
+                        } else {
+                            handleThrowable(t);
+                            callback.onResult(null, t);
+                        }
                     } else {
                         callback.onResult(result, null);
                     }

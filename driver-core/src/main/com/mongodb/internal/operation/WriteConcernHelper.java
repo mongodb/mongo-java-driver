@@ -16,12 +16,14 @@
 
 package com.mongodb.internal.operation;
 
+import com.mongodb.MongoException;
 import com.mongodb.MongoWriteConcernException;
 import com.mongodb.ServerAddress;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.bulk.WriteConcernError;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.internal.connection.ProtocolHelper;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
@@ -41,7 +43,15 @@ public final class WriteConcernHelper {
 
     public static void throwOnWriteConcernError(final BsonDocument result, final ServerAddress serverAddress) {
         if (hasWriteConcernError(result)) {
+            throwOnSpecialException(result, serverAddress);
             throw createWriteConcernException(result, serverAddress);
+        }
+    }
+
+    public static void throwOnSpecialException(final BsonDocument result, final ServerAddress serverAddress) {
+        MongoException specialException = ProtocolHelper.createSpecialException(result, serverAddress, "errmsg");
+        if (specialException != null) {
+            throw specialException;
         }
     }
 

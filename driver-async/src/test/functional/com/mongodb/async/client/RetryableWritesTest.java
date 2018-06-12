@@ -44,13 +44,13 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.async.client.Fixture.getMongoClientBuilderFromConnectionString;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeFalse;
@@ -59,13 +59,14 @@ import static org.junit.Assume.assumeTrue;
 // See https://github.com/mongodb/specifications/tree/master/source/retryable-writes/tests
 @RunWith(Parameterized.class)
 public class RetryableWritesTest extends DatabaseTestCase {
-    private static MongoClient mongoClient;
     private final String filename;
     private final String description;
     private final String databaseName;
     private final String collectionName;
     private final BsonArray data;
     private final BsonDocument definition;
+    private MongoClient mongoClient;
+    private CollectionHelper<Document> collectionHelper;
     private MongoCollection<BsonDocument> collection;
     private JsonPoweredCrudTestHelper helper;
 
@@ -80,15 +81,10 @@ public class RetryableWritesTest extends DatabaseTestCase {
 
     @BeforeClass
     public static void beforeClass() {
-        com.mongodb.MongoClientSettings.Builder builder = getMongoClientBuilderFromConnectionString();
-        mongoClient = MongoClients.create(builder.retryWrites(true).build());
     }
 
     @AfterClass
     public static void afterClass() {
-        if (mongoClient != null) {
-            mongoClient.close();
-        }
     }
 
     @Before
@@ -116,13 +112,16 @@ public class RetryableWritesTest extends DatabaseTestCase {
                 }
             }
         }
+        collectionHelper = new CollectionHelper<Document>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
+        BsonDocument clientOptions = definition.getDocument("clientOptions", new BsonDocument());
+        mongoClient = MongoClients.create(getMongoClientBuilderFromConnectionString()
+                .retryWrites(clientOptions.getBoolean("retryWrites", BsonBoolean.FALSE).getValue())
+                .build());
 
         List<BsonDocument> documents = new ArrayList<BsonDocument>();
         for (BsonValue document : data) {
             documents.add(document.asDocument());
         }
-        CollectionHelper<Document> collectionHelper = new CollectionHelper<Document>(new DocumentCodec(),
-                new MongoNamespace(databaseName, collectionName));
 
         collectionHelper.drop();
         collectionHelper.insertDocuments(documents);
@@ -130,13 +129,20 @@ public class RetryableWritesTest extends DatabaseTestCase {
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         collection = database.getCollection(collectionName, BsonDocument.class);
         helper = new JsonPoweredCrudTestHelper(description, database, collection);
-        setFailPoint();
+        if (definition.containsKey("failPoint")) {
+            collectionHelper.runAdminCommand(definition.getDocument("failPoint"));
+        }
     }
 
     @After
     public void cleanUp() {
-        if (canRunTests()) {
-            unsetFailPoint();
+        if (mongoClient != null) {
+            mongoClient.close();
+        }
+        if (collectionHelper != null && definition.containsKey("failPoint")) {
+            collectionHelper.runAdminCommand(new BsonDocument("configureFailPoint",
+                    definition.getDocument("failPoint").getString("configureFailPoint"))
+                    .append("mode", new BsonString("off")));
         }
     }
 
@@ -172,6 +178,10 @@ public class RetryableWritesTest extends DatabaseTestCase {
         List<Object[]> data = new ArrayList<Object[]>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/retryable-writes")) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
+            if (testDocument.containsKey("minServerVersion")
+                    && serverVersionLessThan(testDocument.getString("minServerVersion").getValue())) {
+                continue;
+            }
             for (BsonValue test : testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
                         testDocument.getArray("data"), test.asDocument()});
@@ -182,25 +192,6 @@ public class RetryableWritesTest extends DatabaseTestCase {
 
     private boolean canRunTests() {
         return serverVersionAtLeast(3, 6) && isDiscoverableReplicaSet();
-    }
-
-    private void setFailPoint() {
-        if (definition.containsKey("failPoint")) {
-            BsonDocument command = new BsonDocument("configureFailPoint", new BsonString("onPrimaryTransactionalWrite"));
-            for (Map.Entry<String, BsonValue> args : definition.getDocument("failPoint").entrySet()) {
-                command.put(args.getKey(), args.getValue());
-            }
-            FutureResultCallback<Document> futureResultCallback = new FutureResultCallback<Document>();
-            mongoClient.getDatabase("admin").runCommand(command, futureResultCallback);
-            futureResult(futureResultCallback);
-        }
-    }
-
-    private void unsetFailPoint() {
-        FutureResultCallback<Document> futureResultCallback = new FutureResultCallback<Document>();
-        mongoClient.getDatabase("admin").runCommand(
-                BsonDocument.parse("{ configureFailPoint: 'onPrimaryTransactionalWrite', mode: 'off'}"), futureResultCallback);
-        futureResult(futureResultCallback);
     }
 
     <T> T futureResult(final FutureResultCallback<T> callback) {

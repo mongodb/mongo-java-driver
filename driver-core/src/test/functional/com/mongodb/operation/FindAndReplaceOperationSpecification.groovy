@@ -42,6 +42,8 @@ import spock.lang.IgnoreIf
 
 import java.util.concurrent.TimeUnit
 
+import static com.mongodb.ClusterFixture.configureFailPoint
+import static com.mongodb.ClusterFixture.disableFailPoint
 import static com.mongodb.ClusterFixture.disableOnPrimaryTransactionalWriteFailPoint
 import static com.mongodb.ClusterFixture.enableOnPrimaryTransactionalWriteFailPoint
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
@@ -267,6 +269,42 @@ class FindAndReplaceOperationSpecification extends OperationFunctionalSpecificat
         ex.writeResult.count == 1
         !ex.writeResult.updateOfExisting
         ex.writeResult.upsertedId instanceof BsonObjectId
+
+        where:
+        async << [true, false]
+    }
+
+
+    @IgnoreIf({ !serverVersionAtLeast(3, 8) || !isDiscoverableReplicaSet() })
+    def 'should throw on write concern error on multiple failpoint'() {
+        CollectionHelper<Document> helper = new CollectionHelper<Document>(documentCodec, getNamespace())
+        Document pete = new Document('name', 'Pete').append('job', 'handyman')
+        helper.insertDocuments(new DocumentCodec(), pete)
+
+        def failPoint = BsonDocument.parse('''{
+            "configureFailPoint": "failCommand",
+            "mode": {"times": 2 },
+            "data": { "failCommands": ["findAndModify"],
+                      "writeConcernError": {"code": 91, "errmsg": "Replication is being shut down"}}}''')
+        configureFailPoint(failPoint)
+
+        BsonDocument jordan = BsonDocument.parse('{name: "Jordan", job: "sparky"}')
+        def operation = new FindAndReplaceOperation<Document>(getNamespace(), ACKNOWLEDGED,
+                false, documentCodec, jordan).filter(new BsonDocument('name', new BsonString('Pete')))
+
+        when:
+        execute(operation, async)
+
+        then:
+        def ex = thrown(MongoWriteConcernException)
+        ex.writeConcernError.code == 91
+        !ex.writeConcernError.message.isEmpty()
+        ex.writeResult.count == 1
+        ex.writeResult.updateOfExisting
+        ex.writeResult.upsertedId == null
+
+        cleanup:
+        disableFailPoint('failCommand')
 
         where:
         async << [true, false]

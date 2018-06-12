@@ -9,106 +9,102 @@
       "x": 22
     }
   ],
-  "minServerVersion": "3.6",
+  "minServerVersion": "3.99",
   "tests": [
     {
-      "description": "DeleteOne is committed on first attempt",
+      "description": "UpdateOne succeeds after PrimarySteppedDown",
       "clientOptions": {
         "retryWrites": true
       },
       "failPoint": {
-        "configureFailPoint": "onPrimaryTransactionalWrite",
+        "configureFailPoint": "failCommand",
         "mode": {
           "times": 1
+        },
+        "data": {
+          "failCommands": [
+            "update"
+          ],
+          "errorCode": 189
         }
       },
       "operation": {
-        "name": "deleteOne",
+        "name": "updateOne",
         "arguments": {
           "filter": {
             "_id": 1
+          },
+          "update": {
+            "$inc": {
+              "x": 1
+            }
           }
         }
       },
       "outcome": {
         "result": {
-          "deletedCount": 1
+          "matchedCount": 1,
+          "modifiedCount": 1,
+          "upsertedCount": 0
         },
-        "collection": {
-          "data": [
-            {
-              "_id": 2,
-              "x": 22
-            }
-          ]
-        }
-      }
-    },
-    {
-      "description": "DeleteOne is not committed on first attempt",
-      "clientOptions": {
-        "retryWrites": true
-      },
-      "failPoint": {
-        "configureFailPoint": "onPrimaryTransactionalWrite",
-        "mode": {
-          "times": 1
-        },
-        "data": {
-          "failBeforeCommitExceptionCode": 1
-        }
-      },
-      "operation": {
-        "name": "deleteOne",
-        "arguments": {
-          "filter": {
-            "_id": 1
-          }
-        }
-      },
-      "outcome": {
-        "result": {
-          "deletedCount": 1
-        },
-        "collection": {
-          "data": [
-            {
-              "_id": 2,
-              "x": 22
-            }
-          ]
-        }
-      }
-    },
-    {
-      "description": "DeleteOne is never committed",
-      "clientOptions": {
-        "retryWrites": true
-      },
-      "failPoint": {
-        "configureFailPoint": "onPrimaryTransactionalWrite",
-        "mode": {
-          "times": 2
-        },
-        "data": {
-          "failBeforeCommitExceptionCode": 1
-        }
-      },
-      "operation": {
-        "name": "deleteOne",
-        "arguments": {
-          "filter": {
-            "_id": 1
-          }
-        }
-      },
-      "outcome": {
-        "error": true,
         "collection": {
           "data": [
             {
               "_id": 1,
-              "x": 11
+              "x": 12
+            },
+            {
+              "_id": 2,
+              "x": 22
+            }
+          ]
+        }
+      }
+    },
+    {
+      "description": "UpdateOne succeeds after WriteConcernError ShutdownInProgress",
+      "clientOptions": {
+        "retryWrites": true
+      },
+      "failPoint": {
+        "configureFailPoint": "failCommand",
+        "mode": {
+          "times": 1
+        },
+        "data": {
+          "failCommands": [
+            "update"
+          ],
+          "writeConcernError": {
+            "code": 91,
+            "errmsg": "Replication is being shut down"
+          }
+        }
+      },
+      "operation": {
+        "name": "updateOne",
+        "arguments": {
+          "filter": {
+            "_id": 1
+          },
+          "update": {
+            "$inc": {
+              "x": 1
+            }
+          }
+        }
+      },
+      "outcome": {
+        "result": {
+          "matchedCount": 1,
+          "modifiedCount": 1,
+          "upsertedCount": 0
+        },
+        "collection": {
+          "data": [
+            {
+              "_id": 1,
+              "x": 12
             },
             {
               "_id": 2,

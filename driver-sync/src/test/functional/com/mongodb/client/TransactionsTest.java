@@ -216,7 +216,7 @@ public class TransactionsTest {
             mongoClient.close();
         }
 
-        if (definition.containsKey("failPoint")) {
+        if (collectionHelper != null && definition.containsKey("failPoint")) {
             collectionHelper.runAdminCommand(new BsonDocument("configureFailPoint",
                     definition.getDocument("failPoint").getString("configureFailPoint"))
                     .append("mode", new BsonString("off")));
