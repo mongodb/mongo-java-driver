@@ -285,18 +285,18 @@ public class TransactionsTest {
 
                         assertEquals("Expected operation result differs from actual", expectedResult, actualResult);
                     }
-                    assertFalse(String.format("Expected error '%s' but none thrown", getErrorContainsField(expectedResult)),
-                            hasErrorContainsField(expectedResult));
-                    assertFalse(String.format("Expected error code '%s' but none thrown", getErrorCodeNameField(expectedResult)),
-                            hasErrorCodeNameField(expectedResult));
+                    assertFalse(String.format("Expected error '%s' but none thrown for operation %s",
+                            getErrorContainsField(expectedResult), operationName), hasErrorContainsField(expectedResult));
+                    assertFalse(String.format("Expected error code '%s' but none thrown for operation %s",
+                            getErrorCodeNameField(expectedResult), operationName), hasErrorCodeNameField(expectedResult));
                 } catch (RuntimeException e) {
                     boolean passedAssertion = false;
                     if (hasErrorLabelsContainField(expectedResult)) {
                         if (e instanceof MongoException) {
                             MongoException mongoException = (MongoException) e;
                             for (String curErrorLabel : getErrorLabelsContainField(expectedResult)) {
-                                assertTrue(String.format("Expected error label '%s but found labels '%s'", curErrorLabel,
-                                        mongoException.getErrorLabels()),
+                                assertTrue(String.format("Expected error label '%s but found labels '%s' for operation %s",
+                                        curErrorLabel, mongoException.getErrorLabels(), operationName),
                                         mongoException.hasErrorLabel(curErrorLabel));
                             }
                             passedAssertion = true;
@@ -306,8 +306,8 @@ public class TransactionsTest {
                         if (e instanceof MongoException) {
                             MongoException mongoException = (MongoException) e;
                             for (String curErrorLabel : getErrorLabelsOmitField(expectedResult)) {
-                                assertFalse(String.format("Expected error label '%s omitted but found labels '%s'", curErrorLabel,
-                                        mongoException.getErrorLabels()),
+                                assertFalse(String.format("Expected error label '%s omitted but found labels '%s' for operation %s",
+                                        curErrorLabel, mongoException.getErrorLabels(), operationName),
                                         mongoException.hasErrorLabel(curErrorLabel));
                             }
                             passedAssertion = true;
@@ -315,8 +315,8 @@ public class TransactionsTest {
                     }
                     if (hasErrorContainsField(expectedResult)) {
                         String expectedError = getErrorContainsField(expectedResult);
-                        assertTrue(String.format("Expected '%s' but got '%s'", expectedError, e.getMessage()),
-                                e.getMessage().toLowerCase().contains(expectedError.toLowerCase()));
+                        assertTrue(String.format("Expected '%s' but got '%s' for operation %s", expectedError, e.getMessage(),
+                                operationName), e.getMessage().toLowerCase().contains(expectedError.toLowerCase()));
                         passedAssertion = true;
                     }
                     if (hasErrorCodeNameField(expectedResult)) {
@@ -331,7 +331,8 @@ public class TransactionsTest {
                     }
                     if (!passedAssertion) {
                         throw e;
-                    }                }
+                    }
+                }
             }
         } finally {
             closeAllSessions();
