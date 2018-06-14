@@ -17,6 +17,7 @@
 package com.mongodb.operation;
 
 import com.mongodb.MongoException;
+import com.mongodb.MongoTimeoutException;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
@@ -65,7 +66,7 @@ public class CommitTransactionOperation extends TransactionOperation {
     }
 
     private void addErrorLabels(final MongoException e) {
-        if (isRetryableException(e)) {
+        if (isRetryableException(e) || e instanceof MongoTimeoutException) {
             e.addLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL);
         }
     }
