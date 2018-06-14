@@ -77,6 +77,7 @@ class OperationExecutorImpl implements OperationExecutor {
                         @Override
                         public void onResult(final T result, final Throwable t) {
                             try {
+                                labelException(t, session);
                                 errHandlingCallback.onResult(result, t);
                             } finally {
                                 binding.release();
@@ -111,10 +112,7 @@ class OperationExecutorImpl implements OperationExecutor {
                         @Override
                         public void onResult(final T result, final Throwable t) {
                             try {
-                                if (t instanceof MongoSocketException && session != null && session.hasActiveTransaction()
-                                        && !((MongoException) t).hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
-                                    ((MongoException) t).addLabel(TRANSIENT_TRANSACTION_ERROR_LABEL);
-                                }
+                                labelException(t, session);
                                 errHandlingCallback.onResult(result, t);
                             } finally {
                                 binding.release();
@@ -124,6 +122,14 @@ class OperationExecutorImpl implements OperationExecutor {
                 }
             }
         });
+    }
+
+
+    private void labelException(final Throwable t, final ClientSession session) {
+        if (t instanceof MongoSocketException && session != null && session.hasActiveTransaction()
+                && !((MongoException) t).hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
+            ((MongoException) t).addLabel(TRANSIENT_TRANSACTION_ERROR_LABEL);
+        }
     }
 
     private AsyncReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, final ReadConcern readConcern,
