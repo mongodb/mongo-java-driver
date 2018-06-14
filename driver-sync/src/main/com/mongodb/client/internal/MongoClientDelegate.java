@@ -175,6 +175,9 @@ public class MongoClientDelegate {
                     throw new MongoClientException("Read preference in a transaction must be primary");
                 }
                 return operation.execute(binding);
+            } catch (MongoSocketException e) {
+                labelException(session, e);
+                throw e;
             } finally {
                 binding.release();
             }
@@ -187,12 +190,9 @@ public class MongoClientDelegate {
             try {
                 return operation.execute(binding);
             } catch (MongoSocketException e) {
-                if (session != null && session.hasActiveTransaction() && !e.hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
-                    e.addLabel(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL);
-                }
+                labelException(session, e);
                 throw e;
-            }
-            finally {
+            } finally {
                 binding.release();
             }
         }
@@ -214,6 +214,12 @@ public class MongoClientDelegate {
                 readWriteBinding = new ClientSessionBinding(session, ownsSession, readWriteBinding);
             }
             return readWriteBinding;
+        }
+
+        private void labelException(final @Nullable ClientSession session, final MongoException e) {
+            if (session != null && session.hasActiveTransaction() && !e.hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
+                e.addLabel(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL);
+            }
         }
 
         private ReadPreference getReadPreferenceForBinding(final ReadPreference readPreference, @Nullable final ClientSession session) {
