@@ -17,14 +17,20 @@
 package com.mongodb.operation;
 
 import com.mongodb.MongoException;
+import com.mongodb.MongoNodeIsRecoveringException;
+import com.mongodb.MongoNotPrimaryException;
+import com.mongodb.MongoSocketException;
 import com.mongodb.MongoTimeoutException;
+import com.mongodb.MongoWriteConcernException;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 
+import java.util.List;
+
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
-import static com.mongodb.operation.CommandOperationHelper.isRetryableException;
+import static java.util.Arrays.asList;
 
 /**
  * An operation that commits a transaction.
@@ -66,10 +72,32 @@ public class CommitTransactionOperation extends TransactionOperation {
     }
 
     private void addErrorLabels(final MongoException e) {
-        if (isRetryableException(e) || e instanceof MongoTimeoutException) {
+        if (shouldAddUnknownTransactionCommitResultLabel(e)) {
             e.addLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL);
         }
     }
+
+    private static final List<Integer> NON_RETRYABLE_WRITE_CONCERN_ERROR_CODES = asList(79, 100);
+
+    static boolean shouldAddUnknownTransactionCommitResultLabel(final Throwable t) {
+        if (!(t instanceof MongoException)) {
+            return false;
+        }
+
+        MongoException e = (MongoException) t;
+
+        if (e instanceof MongoSocketException || e instanceof MongoTimeoutException
+                || e instanceof MongoNotPrimaryException || e instanceof MongoNodeIsRecoveringException) {
+            return true;
+        }
+
+        if (e instanceof MongoWriteConcernException) {
+            return !NON_RETRYABLE_WRITE_CONCERN_ERROR_CODES.contains(e.getCode());
+        }
+
+        return false;
+    }
+
 
     @Override
     protected String getCommandName() {
