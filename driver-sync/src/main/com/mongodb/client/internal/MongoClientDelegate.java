@@ -22,6 +22,7 @@ import com.mongodb.MongoCredential;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoSocketException;
+import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
@@ -46,6 +47,7 @@ import com.mongodb.selector.ServerSelector;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -175,7 +177,7 @@ public class MongoClientDelegate {
                     throw new MongoClientException("Read preference in a transaction must be primary");
                 }
                 return operation.execute(binding);
-            } catch (MongoSocketException e) {
+            } catch (MongoException e) {
                 labelException(session, e);
                 throw e;
             } finally {
@@ -189,7 +191,7 @@ public class MongoClientDelegate {
             WriteBinding binding = getWriteBinding(readConcern, actualClientSession, session == null && actualClientSession != null);
             try {
                 return operation.execute(binding);
-            } catch (MongoSocketException e) {
+            } catch (MongoException e) {
                 labelException(session, e);
                 throw e;
             } finally {
@@ -217,8 +219,9 @@ public class MongoClientDelegate {
         }
 
         private void labelException(final @Nullable ClientSession session, final MongoException e) {
-            if (session != null && session.hasActiveTransaction() && !e.hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
-                e.addLabel(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL);
+            if ((e instanceof MongoSocketException || e instanceof MongoTimeoutException)
+                    && session != null && session.hasActiveTransaction() && !e.hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
+                e.addLabel(TRANSIENT_TRANSACTION_ERROR_LABEL);
             }
         }
 

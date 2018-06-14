@@ -20,6 +20,7 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoSocketException;
+import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
@@ -126,7 +127,8 @@ class OperationExecutorImpl implements OperationExecutor {
 
 
     private void labelException(final Throwable t, final ClientSession session) {
-        if (t instanceof MongoSocketException && session != null && session.hasActiveTransaction()
+        if ((t instanceof MongoSocketException || t instanceof MongoTimeoutException)
+                && session != null && session.hasActiveTransaction()
                 && !((MongoException) t).hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
             ((MongoException) t).addLabel(TRANSIENT_TRANSACTION_ERROR_LABEL);
         }
