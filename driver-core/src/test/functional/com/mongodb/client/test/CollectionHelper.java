@@ -123,6 +123,10 @@ public final class CollectionHelper<T> {
         drop(namespace, writeConcern);
     }
 
+    public void create() {
+        create(namespace.getCollectionName(), new CreateCollectionOptions(), WriteConcern.ACKNOWLEDGED);
+    }
+
     public void create(final String collectionName, final CreateCollectionOptions options) {
         create(collectionName, options, WriteConcern.ACKNOWLEDGED);
     }

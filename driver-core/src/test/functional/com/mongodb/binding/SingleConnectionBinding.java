@@ -25,6 +25,7 @@ import com.mongodb.session.SessionContext;
 import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.selector.ReadPreferenceServerSelector;
 import com.mongodb.selector.WritableServerSelector;
+import org.bson.BsonTimestamp;
 
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -107,6 +108,11 @@ public class SingleConnectionBinding implements ReadWriteBinding {
     @Override
     public SessionContext getSessionContext() {
         return NoOpSessionContext.INSTANCE;
+    }
+
+    @Override
+    public BsonTimestamp getClusterTime() {
+        throw new UnsupportedOperationException();
     }
 
     @Override

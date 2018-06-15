@@ -16,18 +16,23 @@
 
 package com.mongodb;
 
+import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.client.internal.ChangeStreamIterableImpl;
 import com.mongodb.client.internal.ListDatabasesIterableImpl;
 import com.mongodb.client.internal.MongoDatabaseImpl;
+import com.mongodb.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.lang.Nullable;
 import com.mongodb.client.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.conversions.Bson;
 
 import java.io.Closeable;
+import java.util.Collections;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -556,6 +561,130 @@ public class MongoClient extends Mongo implements Closeable {
         }
         return clientSession;
     }
+
+    /**
+     * Creates a change stream for this client.
+     *
+     * @return the change stream iterable
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     * @mongodb.driver.dochub core/changestreams Change Streams
+     */
+    public ChangeStreamIterable<Document> watch() {
+        return watch(Collections.<Bson>emptyList());
+    }
+
+    /**
+     * Creates a change stream for this client.
+     *
+     * @param resultClass the class to decode each document into
+     * @param <TResult>   the target document type of the iterable.
+     * @return the change stream iterable
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     * @mongodb.driver.dochub core/changestreams Change Streams
+     */
+    public <TResult> ChangeStreamIterable<TResult> watch(final Class<TResult> resultClass) {
+        return watch(Collections.<Bson>emptyList(), resultClass);
+    }
+
+    /**
+     * Creates a change stream for this client.
+     *
+     * @param pipeline    the aggregation pipeline to apply to the change stream
+     * @return the change stream iterable
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     * @mongodb.driver.dochub core/changestreams Change Streams
+     */
+    public ChangeStreamIterable<Document> watch(final List<? extends Bson> pipeline) {
+        return watch(pipeline, Document.class);
+    }
+
+    /**
+     * Creates a change stream for this client.
+     *
+     * @param pipeline    the aggregation pipeline to apply to the change stream
+     * @param resultClass the class to decode each document into
+     * @param <TResult>   the target document type of the iterable.
+     * @return the change stream iterable
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     * @mongodb.driver.dochub core/changestreams Change Streams
+     */
+    public <TResult> ChangeStreamIterable<TResult> watch(final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
+        return createChangeStreamIterable(null, pipeline, resultClass);
+    }
+
+    /**
+     * Creates a change stream for this client.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @return the change stream iterable
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     * @mongodb.driver.dochub core/changestreams Change Streams
+     */
+    public ChangeStreamIterable<Document> watch(final ClientSession clientSession) {
+        return watch(clientSession, Collections.<Bson>emptyList(), Document.class);
+    }
+
+    /**
+     * Creates a change stream for this client.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param resultClass the class to decode each document into
+     * @param <TResult>   the target document type of the iterable.
+     * @return the change stream iterable
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     * @mongodb.driver.dochub core/changestreams Change Streams
+     */
+    public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final Class<TResult> resultClass) {
+        return watch(clientSession, Collections.<Bson>emptyList(), resultClass);
+    }
+
+    /**
+     * Creates a change stream for this client.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param pipeline    the aggregation pipeline to apply to the change stream
+     * @return the change stream iterable
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     * @mongodb.driver.dochub core/changestreams Change Streams
+     */
+    public ChangeStreamIterable<Document> watch(final ClientSession clientSession, final List<? extends Bson> pipeline) {
+        return watch(clientSession, pipeline, Document.class);
+    }
+
+    /**
+     * Creates a change stream for this client.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param pipeline    the aggregation pipeline to apply to the change stream
+     * @param resultClass the class to decode each document into
+     * @param <TResult>   the target document type of the iterable.
+     * @return the change stream iterable
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     * @mongodb.driver.dochub core/changestreams Change Streams
+     */
+    public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final List<? extends Bson> pipeline,
+                                                         final Class<TResult> resultClass) {
+        notNull("clientSession", clientSession);
+        return createChangeStreamIterable(clientSession, pipeline, resultClass);
+    }
+
+    private <TResult> ChangeStreamIterable<TResult> createChangeStreamIterable(@Nullable final ClientSession clientSession,
+                                                                               final List<? extends Bson> pipeline,
+                                                                               final Class<TResult> resultClass) {
+        MongoClientOptions clientOptions = getMongoClientOptions();
+        return new ChangeStreamIterableImpl<TResult>(clientSession, "admin",
+                clientOptions.getCodecRegistry(), clientOptions.getReadPreference(), clientOptions.getReadConcern(),
+                createOperationExecutor(), pipeline, resultClass, ChangeStreamLevel.CLIENT);
+    }
+
 
     static DBObjectCodec getCommandCodec() {
         return new DBObjectCodec(getDefaultCodecRegistry());

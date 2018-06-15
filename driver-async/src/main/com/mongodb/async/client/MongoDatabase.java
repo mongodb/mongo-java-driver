@@ -403,4 +403,101 @@ public interface MongoDatabase {
      */
     void createView(ClientSession clientSession, String viewName, String viewOn, List<? extends Bson> pipeline,
                     CreateViewOptions createViewOptions, SingleResultCallback<Void> callback);
+
+    /**
+     * Creates a change stream for this database.
+     *
+     * @return the change stream iterable
+     * @mongodb.driver.dochub core/changestreams Change Streams
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     */
+    ChangeStreamIterable<Document> watch();
+
+    /**
+     * Creates a change stream for this database.
+     *
+     * @param resultClass the class to decode each document into
+     * @param <TResult>   the target document type of the iterable.
+     * @return the change stream iterable
+     * @mongodb.driver.dochub core/changestreams Change Streams
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     */
+    <TResult> ChangeStreamIterable<TResult> watch(Class<TResult> resultClass);
+
+    /**
+     * Creates a change stream for this database.
+     *
+     * @param pipeline the aggregation pipeline to apply to the change stream.
+     * @return the change stream iterable
+     * @mongodb.driver.dochub core/changestreams Change Streams
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     */
+    ChangeStreamIterable<Document> watch(List<? extends Bson> pipeline);
+
+    /**
+     * Creates a change stream for this database.
+     *
+     * @param pipeline    the aggregation pipeline to apply to the change stream
+     * @param resultClass the class to decode each document into
+     * @param <TResult>   the target document type of the iterable.
+     * @return the change stream iterable
+     * @mongodb.driver.dochub core/changestreams Change Streams
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     */
+    <TResult> ChangeStreamIterable<TResult> watch(List<? extends Bson> pipeline, Class<TResult> resultClass);
+
+    /**
+     * Creates a change stream for this database.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @return the change stream iterable
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     * @mongodb.driver.dochub core/changestreams Change Streams
+     */
+    ChangeStreamIterable<Document> watch(ClientSession clientSession);
+
+    /**
+     * Creates a change stream for this database.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param resultClass the class to decode each document into
+     * @param <TResult>   the target document type of the iterable.
+     * @return the change stream iterable
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     * @mongodb.driver.dochub core/changestreams Change Streams
+     */
+    <TResult> ChangeStreamIterable<TResult> watch(ClientSession clientSession, Class<TResult> resultClass);
+
+    /**
+     * Creates a change stream for this database.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param pipeline the aggregation pipeline to apply to the change stream.
+     * @return the change stream iterable
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     * @mongodb.driver.dochub core/changestreams Change Streams
+     */
+    ChangeStreamIterable<Document> watch(ClientSession clientSession, List<? extends Bson> pipeline);
+
+    /**
+     * Creates a change stream for this database.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param pipeline    the aggregation pipeline to apply to the change stream
+     * @param resultClass the class to decode each document into
+     * @param <TResult>   the target document type of the iterable.
+     * @return the change stream iterable
+     * @since 3.8
+     * @mongodb.server.release 4.0
+     * @mongodb.driver.dochub core/changestreams Change Streams
+     */
+    <TResult> ChangeStreamIterable<TResult> watch(ClientSession clientSession, List<? extends Bson> pipeline, Class<TResult> resultClass);
+
 }

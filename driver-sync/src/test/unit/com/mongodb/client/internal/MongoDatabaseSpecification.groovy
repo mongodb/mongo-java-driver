@@ -27,6 +27,7 @@ import com.mongodb.client.model.IndexOptionDefaults
 import com.mongodb.client.model.ValidationAction
 import com.mongodb.client.model.ValidationLevel
 import com.mongodb.client.model.ValidationOptions
+import com.mongodb.client.model.changestream.ChangeStreamLevel
 import com.mongodb.operation.CommandReadOperation
 import com.mongodb.operation.CreateCollectionOperation
 import com.mongodb.operation.CreateViewOperation
@@ -48,6 +49,7 @@ import static com.mongodb.ReadPreference.primaryPreferred
 import static com.mongodb.ReadPreference.secondary
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
+import static com.mongodb.client.internal.TestHelper.execute
 
 class MongoDatabaseSpecification extends Specification {
 
@@ -342,6 +344,56 @@ class MongoDatabaseSpecification extends Specification {
 
         when:
         database.createView(viewName, viewOn, [null])
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def 'should create ChangeStreamIterable correctly'() {
+        given:
+        def executor = new TestOperationExecutor([])
+        def namespace = new MongoNamespace(name, 'ignored')
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, readConcern, executor)
+        def watchMethod = database.&watch
+
+        when:
+        def changeStreamIterable = execute(watchMethod, session)
+
+        then:
+        expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl(session, namespace, codecRegistry, readPreference,
+                readConcern, executor, [], Document, ChangeStreamLevel.DATABASE), ['codec'])
+
+        when:
+        changeStreamIterable = execute(watchMethod, session, [new Document('$match', 1)])
+
+        then:
+        expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl(session, namespace, codecRegistry, readPreference,
+                readConcern, executor, [new Document('$match', 1)], Document, ChangeStreamLevel.DATABASE), ['codec'])
+
+        when:
+        changeStreamIterable = execute(watchMethod, session, [new Document('$match', 1)], BsonDocument)
+
+        then:
+        expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl(session, namespace, codecRegistry, readPreference,
+                readConcern, executor, [new Document('$match', 1)], BsonDocument, ChangeStreamLevel.DATABASE), ['codec'])
+
+        where:
+        session << [null, Stub(ClientSession)]
+    }
+
+    def 'should validate the ChangeStreamIterable pipeline data correctly'() {
+        given:
+        def executor = new TestOperationExecutor([])
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, readConcern, executor)
+
+        when:
+        database.watch((Class) null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        database.watch([null]).into([])
 
         then:
         thrown(IllegalArgumentException)

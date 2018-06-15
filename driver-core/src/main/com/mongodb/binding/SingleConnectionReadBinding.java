@@ -21,6 +21,7 @@ import com.mongodb.connection.Connection;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.session.SessionContext;
 import com.mongodb.internal.connection.NoOpSessionContext;
+import org.bson.BsonTimestamp;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -62,6 +63,11 @@ public class SingleConnectionReadBinding extends AbstractReferenceCounted implem
     @Override
     public SessionContext getSessionContext() {
         return NoOpSessionContext.INSTANCE;
+    }
+
+    @Override
+    public BsonTimestamp getClusterTime() {
+        throw new UnsupportedOperationException();
     }
 
     @Override
