@@ -55,6 +55,7 @@ import com.mongodb.client.model.ReplaceOptions
 import com.mongodb.client.model.UpdateManyModel
 import com.mongodb.client.model.UpdateOneModel
 import com.mongodb.client.model.UpdateOptions
+import com.mongodb.client.model.changestream.ChangeStreamLevel
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 import com.mongodb.client.test.Worker
@@ -358,21 +359,21 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl(session, namespace, codecRegistry, readPreference,
-                readConcern, executor, [], Document), ['codec'])
+                readConcern, executor, [], Document, ChangeStreamLevel.COLLECTION), ['codec'])
 
         when:
         changeStreamIterable = execute(watchMethod, session, [new Document('$match', 1)])
 
         then:
         expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl(session, namespace, codecRegistry, readPreference,
-                readConcern, executor, [new Document('$match', 1)], Document), ['codec'])
+                readConcern, executor, [new Document('$match', 1)], Document, ChangeStreamLevel.COLLECTION), ['codec'])
 
         when:
         changeStreamIterable = execute(watchMethod, session, [new Document('$match', 1)], BsonDocument)
 
         then:
         expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl(session, namespace, codecRegistry, readPreference,
-                readConcern, executor, [new Document('$match', 1)], BsonDocument), ['codec'])
+                readConcern, executor, [new Document('$match', 1)], BsonDocument, ChangeStreamLevel.COLLECTION), ['codec'])
 
         where:
         session << [null, Stub(ClientSession)]

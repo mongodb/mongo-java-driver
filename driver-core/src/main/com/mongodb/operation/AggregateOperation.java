@@ -18,46 +18,16 @@ package com.mongodb.operation;
 
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
-import com.mongodb.ServerAddress;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
-import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.client.model.Collation;
-import com.mongodb.connection.AsyncConnection;
-import com.mongodb.connection.Connection;
-import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.connection.QueryResult;
-import com.mongodb.operation.CommandOperationHelper.CommandTransformer;
-import com.mongodb.session.SessionContext;
-import org.bson.BsonArray;
-import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
-import org.bson.BsonInt32;
-import org.bson.BsonInt64;
-import org.bson.BsonString;
 import org.bson.codecs.Decoder;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
-import static com.mongodb.assertions.Assertions.isTrueArgument;
-import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
-import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
-import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
-import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
-import static com.mongodb.operation.OperationHelper.LOGGER;
-import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult;
-import static com.mongodb.operation.OperationHelper.releasingCallback;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotSix;
-import static com.mongodb.operation.OperationHelper.validateReadConcernAndCollation;
-import static com.mongodb.operation.OperationHelper.withConnection;
-import static com.mongodb.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 
 /**
  * An operation that executes an aggregation query.
@@ -68,23 +38,7 @@ import static com.mongodb.operation.OperationReadConcernHelper.appendReadConcern
  * @since 3.0
  */
 public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
-    private static final String RESULT = "result";
-    private static final String CURSOR = "cursor";
-    private static final String FIRST_BATCH = "firstBatch";
-    private static final List<String> FIELD_NAMES_WITH_RESULT = Arrays.asList(RESULT, FIRST_BATCH);
-
-    private final MongoNamespace namespace;
-    private final List<BsonDocument> pipeline;
-    private final Decoder<T> decoder;
-    private Boolean allowDiskUse;
-    private Integer batchSize;
-    private Collation collation;
-    private String comment;
-    private BsonDocument hint;
-    private long maxAwaitTimeMS;
-    private long maxTimeMS;
-    private Boolean useCursor;
-
+    private final AggregateOperationImpl<T> wrapped;
     /**
      * Construct a new instance.
      *
@@ -93,9 +47,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      * @param decoder the decoder for the result documents.
      */
     public AggregateOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder) {
-        this.namespace = notNull("namespace", namespace);
-        this.pipeline = notNull("pipeline", pipeline);
-        this.decoder = notNull("decoder", decoder);
+        this.wrapped = new AggregateOperationImpl<T>(namespace, pipeline, decoder);
     }
 
     /**
@@ -105,7 +57,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      * @mongodb.driver.manual core/aggregation-introduction/#aggregation-pipelines Aggregation Pipeline
      */
     public List<BsonDocument> getPipeline() {
-        return pipeline;
+        return wrapped.getPipeline();
     }
 
     /**
@@ -116,7 +68,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      * @mongodb.server.release 2.6
      */
     public Boolean getAllowDiskUse() {
-        return allowDiskUse;
+        return wrapped.getAllowDiskUse();
     }
 
     /**
@@ -128,7 +80,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      * @mongodb.server.release 2.6
      */
     public AggregateOperation<T> allowDiskUse(final Boolean allowDiskUse) {
-        this.allowDiskUse = allowDiskUse;
+        wrapped.allowDiskUse(allowDiskUse);
         return this;
     }
 
@@ -139,7 +91,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     public Integer getBatchSize() {
-        return batchSize;
+        return wrapped.getBatchSize();
     }
 
     /**
@@ -150,7 +102,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      * @mongodb.driver.manual reference/method/cursor.batchSize/#cursor.batchSize Batch Size
      */
     public AggregateOperation<T> batchSize(final Integer batchSize) {
-        this.batchSize = batchSize;
+        wrapped.batchSize(batchSize);
         return this;
     }
 
@@ -167,8 +119,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
     public long getMaxAwaitTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxAwaitTimeMS, TimeUnit.MILLISECONDS);
+        return wrapped.getMaxAwaitTime(timeUnit);
     }
 
     /**
@@ -181,9 +132,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      * @mongodb.server.release 3.6
      */
     public AggregateOperation<T> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        isTrueArgument("maxAwaitTime >= 0", maxAwaitTime >= 0);
-        this.maxAwaitTimeMS = TimeUnit.MILLISECONDS.convert(maxAwaitTime, timeUnit);
+        wrapped.maxAwaitTime(maxAwaitTime, timeUnit);
         return this;
     }
 
@@ -195,8 +144,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
     public long getMaxTime(final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        return timeUnit.convert(maxTimeMS, TimeUnit.MILLISECONDS);
+        return wrapped.getMaxTime(timeUnit);
     }
 
     /**
@@ -208,9 +156,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      * @mongodb.driver.manual reference/method/cursor.maxTimeMS/#cursor.maxTimeMS Max Time
      */
     public AggregateOperation<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
-        notNull("timeUnit", timeUnit);
-        isTrueArgument("maxTime >= 0", maxTime >= 0);
-        this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
+        wrapped.maxTime(maxTime, timeUnit);
         return this;
     }
 
@@ -227,7 +173,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      */
     @Deprecated
     public Boolean getUseCursor() {
-        return useCursor;
+        return wrapped.getUseCursor();
     }
 
     /**
@@ -243,7 +189,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      */
     @Deprecated
     public AggregateOperation<T> useCursor(final Boolean useCursor) {
-        this.useCursor = useCursor;
+        wrapped.useCursor(useCursor);
         return this;
     }
 
@@ -256,7 +202,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      * @mongodb.server.release 3.4
      */
     public Collation getCollation() {
-        return collation;
+        return wrapped.getCollation();
     }
 
     /**
@@ -270,7 +216,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      * @mongodb.server.release 3.4
      */
     public AggregateOperation<T> collation(final Collation collation) {
-        this.collation = collation;
+        wrapped.collation(collation);
         return this;
     }
 
@@ -282,7 +228,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      * @mongodb.server.release 3.6
      */
     public String getComment() {
-        return comment;
+        return wrapped.getComment();
     }
 
     /**
@@ -294,7 +240,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      * @mongodb.server.release 3.6
      */
     public AggregateOperation<T> comment(final String comment) {
-        this.comment = comment;
+        wrapped.comment(comment);
         return this;
     }
 
@@ -306,7 +252,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      * @mongodb.server.release 3.6
      */
     public BsonDocument getHint() {
-        return hint;
+        return wrapped.getHint();
     }
 
     /**
@@ -318,52 +264,18 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      * @mongodb.server.release 3.6
      */
     public AggregateOperation<T> hint(final BsonDocument hint) {
-        this.hint = hint;
+        wrapped.hint(hint);
         return this;
     }
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return withConnection(binding, new CallableWithConnectionAndSource<BatchCursor<T>>() {
-            @Override
-            public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
-                validateReadConcernAndCollation(connection, binding.getSessionContext().getReadConcern(), collation);
-                return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(),
-                        getCommand(connection.getDescription(), binding.getSessionContext()),
-                        CommandResultDocumentCodec.create(decoder, FIELD_NAMES_WITH_RESULT),
-                        connection, transformer(source, connection));
-            }
-        });
+        return wrapped.execute(binding);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        withConnection(binding, new AsyncCallableWithConnectionAndSource() {
-            @Override
-            public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
-                SingleResultCallback<AsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-                if (t != null) {
-                    errHandlingCallback.onResult(null, t);
-                } else {
-                    final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback =
-                            releasingCallback(errHandlingCallback, source, connection);
-                    validateReadConcernAndCollation(source, connection, binding.getSessionContext().getReadConcern(), collation,
-                            new AsyncCallableWithConnectionAndSource() {
-                                @Override
-                                public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
-                                    if (t != null) {
-                                        wrappedCallback.onResult(null, t);
-                                    } else {
-                                        executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
-                                                getCommand(connection.getDescription(), binding.getSessionContext()),
-                                                CommandResultDocumentCodec.create(decoder, FIELD_NAMES_WITH_RESULT),
-                                                connection, asyncTransformer(source, connection), wrappedCallback);
-                                    }
-                                }
-                            });
-                }
-            }
-        });
+        wrapped.executeAsync(binding, callback);
     }
 
     /**
@@ -373,10 +285,10 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      * @return a read operation that when executed will explain this operation
      */
     public ReadOperation<BsonDocument> asExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        return new AggregateExplainOperation(namespace, pipeline)
-               .allowDiskUse(allowDiskUse)
-               .maxTime(maxTimeMS, TimeUnit.MILLISECONDS)
-               .hint(hint);
+        return new AggregateExplainOperation(getNamespace(), getPipeline())
+               .allowDiskUse(getAllowDiskUse())
+               .maxTime(getMaxAwaitTime(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS)
+               .hint(wrapped.getHint());
     }
 
     /**
@@ -386,91 +298,35 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      * @return a read operation that when executed will explain this operation
      */
     public AsyncReadOperation<BsonDocument> asExplainableOperationAsync(final ExplainVerbosity explainVerbosity) {
-        return new AggregateExplainOperation(namespace, pipeline)
-               .allowDiskUse(allowDiskUse)
-               .maxTime(maxTimeMS, TimeUnit.MILLISECONDS);
+        return new AggregateExplainOperation(getNamespace(), getPipeline())
+                .allowDiskUse(getAllowDiskUse())
+                .maxTime(getMaxAwaitTime(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS)
+                .hint(getHint());
     }
 
-    private boolean isInline(final ConnectionDescription description) {
-        return !serverIsAtLeastVersionThreeDotSix(description) && ((useCursor != null && !useCursor));
+
+    MongoNamespace getNamespace() {
+        return wrapped.getNamespace();
     }
 
-    private BsonDocument getCommand(final ConnectionDescription description, final SessionContext sessionContext) {
-        BsonDocument commandDocument = new BsonDocument("aggregate", new BsonString(namespace.getCollectionName()));
-
-        appendReadConcernToCommand(sessionContext, commandDocument);
-        commandDocument.put("pipeline", new BsonArray(pipeline));
-        if (maxTimeMS > 0) {
-            commandDocument.put("maxTimeMS", new BsonInt64(maxTimeMS));
-        }
-        if (!isInline(description)) {
-            BsonDocument cursor = new BsonDocument();
-            if (batchSize != null) {
-                cursor.put("batchSize", new BsonInt32(batchSize));
-            }
-            commandDocument.put(CURSOR, cursor);
-        }
-        if (allowDiskUse != null) {
-            commandDocument.put("allowDiskUse", BsonBoolean.valueOf(allowDiskUse));
-        }
-        if (collation != null) {
-            commandDocument.put("collation", collation.asDocument());
-        }
-        if (comment != null) {
-            commandDocument.put("comment", new BsonString(comment));
-        }
-        if (hint != null) {
-            commandDocument.put("hint", hint);
-        }
-        return commandDocument;
-    }
-
-    private QueryResult<T> createQueryResult(final BsonDocument result, final ConnectionDescription description) {
-        if (!isInline(description) || result.containsKey(CURSOR)) {
-            return cursorDocumentToQueryResult(result.getDocument(CURSOR), description.getServerAddress());
-        } else {
-            return new QueryResult<T>(namespace, BsonDocumentWrapperHelper.<T>toList(result, RESULT), 0L,
-                                      description.getServerAddress());
-        }
-    }
-
-    private CommandTransformer<BsonDocument, BatchCursor<T>> transformer(final ConnectionSource source, final Connection connection) {
-        return new CommandTransformer<BsonDocument, BatchCursor<T>>() {
-            @Override
-            public BatchCursor<T> apply(final BsonDocument result, final ServerAddress serverAddress) {
-                QueryResult<T> queryResult = createQueryResult(result, connection.getDescription());
-                return new QueryBatchCursor<T>(queryResult, 0, batchSize != null ? batchSize : 0, maxAwaitTimeMS, decoder, source,
-                        connection);
-            }
-        };
-    }
-
-    private CommandTransformer<BsonDocument, AsyncBatchCursor<T>> asyncTransformer(final AsyncConnectionSource source,
-                                                                                   final AsyncConnection connection) {
-        return new CommandTransformer<BsonDocument, AsyncBatchCursor<T>>() {
-            @Override
-            public AsyncBatchCursor<T> apply(final BsonDocument result, final ServerAddress serverAddress) {
-                QueryResult<T> queryResult = createQueryResult(result, connection.getDescription());
-                return new AsyncQueryBatchCursor<T>(queryResult, 0, batchSize != null ? batchSize : 0, maxAwaitTimeMS, decoder,
-                        source, connection);
-            }
-        };
+    Decoder<T> getDecoder() {
+        return wrapped.getDecoder();
     }
 
     @Override
     public String toString() {
         return "AggregateOperation{"
-                + "namespace=" + namespace
-                + ", pipeline=" + pipeline
-                + ", decoder=" + decoder
-                + ", allowDiskUse=" + allowDiskUse
-                + ", batchSize=" + batchSize
-                + ", collation=" + collation
-                + ", comment=" + comment
-                + ", hint=" + hint
-                + ", maxAwaitTimeMS=" + maxAwaitTimeMS
-                + ", maxTimeMS=" + maxTimeMS
-                + ", useCursor=" + useCursor
+                + "namespace=" + getNamespace()
+                + ", pipeline=" + getPipeline()
+                + ", decoder=" + getDecoder()
+                + ", allowDiskUse=" + getAllowDiskUse()
+                + ", batchSize=" + getBatchSize()
+                + ", collation=" + getCollation()
+                + ", comment=" + getComment()
+                + ", hint=" + getHint()
+                + ", maxAwaitTimeMS=" + getMaxAwaitTime(TimeUnit.MILLISECONDS)
+                + ", maxTimeMS=" + getMaxTime(TimeUnit.MILLISECONDS)
+                + ", useCursor=" + wrapped.getUseCursor()
                 + "}";
     }
 }

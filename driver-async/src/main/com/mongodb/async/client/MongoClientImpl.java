@@ -21,6 +21,7 @@ import com.mongodb.Function;
 import com.mongodb.MongoClientException;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.connection.Cluster;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
@@ -28,9 +29,12 @@ import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.Document;
+import org.bson.conversions.Bson;
 
 import java.io.Closeable;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
@@ -155,6 +159,56 @@ class MongoClientImpl implements MongoClient {
     public <TResult> ListDatabasesIterable<TResult> listDatabases(final ClientSession clientSession, final Class<TResult> resultClass) {
         notNull("clientSession", clientSession);
         return createListDatabasesIterable(clientSession, resultClass);
+    }
+
+
+    @Override
+    public ChangeStreamIterable<Document> watch() {
+        return watch(Collections.<Bson>emptyList());
+    }
+
+    @Override
+    public <TResult> ChangeStreamIterable<TResult> watch(final Class<TResult> resultClass) {
+        return watch(Collections.<Bson>emptyList(), resultClass);
+    }
+
+    @Override
+    public ChangeStreamIterable<Document> watch(final List<? extends Bson> pipeline) {
+        return watch(pipeline, Document.class);
+    }
+
+    @Override
+    public <TResult> ChangeStreamIterable<TResult> watch(final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
+        return createChangeStreamIterable(null, pipeline, resultClass);
+    }
+
+    @Override
+    public ChangeStreamIterable<Document> watch(final ClientSession clientSession) {
+        return watch(clientSession, Collections.<Bson>emptyList(), Document.class);
+    }
+
+    @Override
+    public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final Class<TResult> resultClass) {
+        return watch(clientSession, Collections.<Bson>emptyList(), resultClass);
+    }
+
+    @Override
+    public ChangeStreamIterable<Document> watch(final ClientSession clientSession, final List<? extends Bson> pipeline) {
+        return watch(clientSession, pipeline, Document.class);
+    }
+
+    @Override
+    public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final List<? extends Bson> pipeline,
+                                                         final Class<TResult> resultClass) {
+        notNull("clientSession", clientSession);
+        return createChangeStreamIterable(clientSession, pipeline, resultClass);
+    }
+
+    private <TResult> ChangeStreamIterable<TResult> createChangeStreamIterable(@Nullable final ClientSession clientSession,
+                                                                               final List<? extends Bson> pipeline,
+                                                                               final Class<TResult> resultClass) {
+        return new ChangeStreamIterableImpl<TResult>(clientSession, "admin", settings.getCodecRegistry(),
+                settings.getReadPreference(), settings.getReadConcern(), executor, pipeline, resultClass, ChangeStreamLevel.CLIENT);
     }
 
     private <T> ListDatabasesIterable<T> createListDatabasesIterable(@Nullable final ClientSession clientSession, final Class<T> clazz) {

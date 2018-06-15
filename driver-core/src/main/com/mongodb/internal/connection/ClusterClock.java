@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import org.bson.BsonDocument;
+import org.bson.BsonTimestamp;
 
 public class ClusterClock {
     private static final String CLUSTER_TIME_KEY = "clusterTime";
@@ -24,6 +25,10 @@ public class ClusterClock {
 
     public synchronized BsonDocument getCurrent() {
         return clusterTime;
+    }
+
+    public synchronized BsonTimestamp getClusterTime() {
+        return clusterTime != null ? clusterTime.getTimestamp(CLUSTER_TIME_KEY) : null;
     }
 
     public synchronized void advance(final BsonDocument other) {

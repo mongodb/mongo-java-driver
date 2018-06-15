@@ -21,6 +21,7 @@ import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
+import org.bson.BsonTimestamp;
 
 import java.util.concurrent.TimeUnit;
 
@@ -89,4 +90,17 @@ public interface ChangeStreamIterable<TResult> extends MongoIterable<ChangeStrea
      */
     <TDocument> MongoIterable<TDocument> withDocumentClass(Class<TDocument> clazz);
 
+    /**
+     * The change stream will only provides changes that occurred after the specified timestamp.
+     *
+     * <p>Any command run against the server will return an operation time that can be used here.</p>
+     * <p>The default value is an operation time obtained from the server before the change stream was created.</p>
+     *
+     * @param startAtOperationTime the start at operation time
+     * @since 3.8
+     * @return this
+     * @mongodb.server.release 4.0
+     * @mongodb.driver.manual reference/method/db.runCommand/
+     */
+    ChangeStreamIterable<TResult> startAtOperationTime(BsonTimestamp startAtOperationTime);
 }

@@ -28,6 +28,7 @@ import com.mongodb.session.SessionContext;
 import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.selector.ReadPreferenceServerSelector;
 import com.mongodb.selector.WritableServerSelector;
+import org.bson.BsonTimestamp;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -153,6 +154,11 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
     @Override
     public SessionContext getSessionContext() {
         return NoOpSessionContext.INSTANCE;
+    }
+
+    @Override
+    public BsonTimestamp getClusterTime() {
+        throw new UnsupportedOperationException();
     }
 
     @Override

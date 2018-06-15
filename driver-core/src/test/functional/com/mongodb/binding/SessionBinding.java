@@ -20,6 +20,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.session.SessionContext;
+import org.bson.BsonTimestamp;
 
 import static org.bson.assertions.Assertions.notNull;
 
@@ -61,6 +62,11 @@ public class SessionBinding implements ReadWriteBinding {
     @Override
     public SessionContext getSessionContext() {
         return sessionContext;
+    }
+
+    @Override
+    public BsonTimestamp getClusterTime() {
+        return wrapped.getClusterTime();
     }
 
     @Override

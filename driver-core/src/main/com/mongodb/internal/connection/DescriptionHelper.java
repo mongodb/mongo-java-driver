@@ -64,7 +64,6 @@ public final class DescriptionHelper {
         return new ConnectionDescription(connectionId, getVersion(buildInfoResult), getServerType(isMasterResult),
                                          getMaxWriteBatchSize(isMasterResult), getMaxBsonObjectSize(isMasterResult),
                                          getMaxMessageSizeBytes(isMasterResult), getCompressors(isMasterResult));
-
     }
 
     public static ServerDescription createServerDescription(final ServerAddress serverAddress, final BsonDocument isMasterResult,

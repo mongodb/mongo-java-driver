@@ -17,12 +17,15 @@
 package com.mongodb.client
 
 import com.mongodb.MongoClientSettings
+import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.WriteConcern
+import com.mongodb.client.internal.ChangeStreamIterableImpl
 import com.mongodb.client.internal.ListDatabasesIterableImpl
 import com.mongodb.client.internal.MongoClientImpl
 import com.mongodb.client.internal.MongoDatabaseImpl
 import com.mongodb.client.internal.TestOperationExecutor
+import com.mongodb.client.model.changestream.ChangeStreamLevel
 import com.mongodb.connection.Cluster
 import org.bson.BsonDocument
 import org.bson.Document
@@ -92,5 +95,63 @@ class MongoClientSpecification extends Specification {
 
         where:
         session << [null, Stub(ClientSession)]
+    }
+
+    def 'should create ChangeStreamIterable correctly'() {
+        given:
+        def executor = new TestOperationExecutor([])
+        def namespace = new MongoNamespace('admin', 'ignored')
+        def settings = MongoClientSettings.builder()
+                .readPreference(secondary())
+                .readConcern(ReadConcern.MAJORITY)
+                .codecRegistry(getDefaultCodecRegistry())
+                .build()
+        def codecRegistry = settings.getCodecRegistry()
+        def readPreference = settings.getReadPreference()
+        def readConcern = settings.getReadConcern()
+        def client = new MongoClientImpl(Stub(Cluster), settings, executor)
+        def watchMethod = client.&watch
+
+        when:
+        def changeStreamIterable = execute(watchMethod, session)
+
+        then:
+        expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl(session, namespace, codecRegistry, readPreference,
+                readConcern, executor, [], Document, ChangeStreamLevel.CLIENT), ['codec'])
+
+        when:
+        changeStreamIterable = execute(watchMethod, session, [new Document('$match', 1)])
+
+        then:
+        expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl(session, namespace, codecRegistry, readPreference,
+                readConcern, executor, [new Document('$match', 1)], Document, ChangeStreamLevel.CLIENT), ['codec'])
+
+        when:
+        changeStreamIterable = execute(watchMethod, session, [new Document('$match', 1)], BsonDocument)
+
+        then:
+        expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl(session, namespace, codecRegistry, readPreference,
+                readConcern, executor, [new Document('$match', 1)], BsonDocument, ChangeStreamLevel.CLIENT), ['codec'])
+
+        where:
+        session << [null, Stub(ClientSession)]
+    }
+
+    def 'should validate the ChangeStreamIterable pipeline data correctly'() {
+        given:
+        def executor = new TestOperationExecutor([])
+        def client = new MongoClientImpl(Stub(Cluster), MongoClientSettings.builder().build(), executor)
+
+        when:
+        client.watch((Class) null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        client.watch([null]).into([])
+
+        then:
+        thrown(IllegalArgumentException)
     }
 }

@@ -22,6 +22,8 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.ChangeStreamIterable;
+import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListCollectionsIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -30,18 +32,19 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateViewOptions;
 import com.mongodb.client.model.IndexOptionDefaults;
 import com.mongodb.client.model.ValidationOptions;
+import com.mongodb.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.lang.Nullable;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CreateCollectionOperation;
 import com.mongodb.operation.CreateViewOperation;
 import com.mongodb.operation.DropDatabaseOperation;
-import com.mongodb.client.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
@@ -319,6 +322,55 @@ public class MongoDatabaseImpl implements MongoDatabase {
                            final List<? extends Bson> pipeline, final CreateViewOptions createViewOptions) {
         notNull("clientSession", clientSession);
         executeCreateView(clientSession, viewName, viewOn, pipeline, createViewOptions);
+    }
+
+    @Override
+    public ChangeStreamIterable<Document> watch() {
+        return watch(Collections.<Bson>emptyList());
+    }
+
+    @Override
+    public <TResult> ChangeStreamIterable<TResult> watch(final Class<TResult> resultClass) {
+        return watch(Collections.<Bson>emptyList(), resultClass);
+    }
+
+    @Override
+    public ChangeStreamIterable<Document> watch(final List<? extends Bson> pipeline) {
+        return watch(pipeline, Document.class);
+    }
+
+    @Override
+    public <TResult> ChangeStreamIterable<TResult> watch(final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
+        return createChangeStreamIterable(null, pipeline, resultClass);
+    }
+
+    @Override
+    public ChangeStreamIterable<Document> watch(final ClientSession clientSession) {
+        return watch(clientSession, Collections.<Bson>emptyList(), Document.class);
+    }
+
+    @Override
+    public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final Class<TResult> resultClass) {
+        return watch(clientSession, Collections.<Bson>emptyList(), resultClass);
+    }
+
+    @Override
+    public ChangeStreamIterable<Document> watch(final ClientSession clientSession, final List<? extends Bson> pipeline) {
+        return watch(clientSession, pipeline, Document.class);
+    }
+
+    @Override
+    public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final List<? extends Bson> pipeline,
+                                                         final Class<TResult> resultClass) {
+        notNull("clientSession", clientSession);
+        return createChangeStreamIterable(clientSession, pipeline, resultClass);
+    }
+
+    private <TResult> ChangeStreamIterable<TResult> createChangeStreamIterable(@Nullable final ClientSession clientSession,
+                                                                               final List<? extends Bson> pipeline,
+                                                                               final Class<TResult> resultClass) {
+        return new ChangeStreamIterableImpl<TResult>(clientSession, name, codecRegistry, readPreference,
+                readConcern, executor, pipeline, resultClass, ChangeStreamLevel.DATABASE);
     }
 
     private void executeCreateView(@Nullable final ClientSession clientSession, final String viewName, final String viewOn,

@@ -20,16 +20,18 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ChangeStreamIterable;
+import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
+import com.mongodb.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.lang.Nullable;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.ChangeStreamOperation;
 import com.mongodb.operation.ReadOperation;
-import com.mongodb.client.ClientSession;
 import org.bson.BsonDocument;
+import org.bson.BsonTimestamp;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -41,27 +43,41 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-final class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeStreamDocument<TResult>>
+/**
+ * This class is NOT part of the public API. It may change at any time without notification.
+ */
+public final class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeStreamDocument<TResult>>
         implements ChangeStreamIterable<TResult> {
     private final MongoNamespace namespace;
     private final CodecRegistry codecRegistry;
     private final List<? extends Bson> pipeline;
     private final Codec<ChangeStreamDocument<TResult>> codec;
+    private final ChangeStreamLevel changeStreamLevel;
 
     private FullDocument fullDocument = FullDocument.DEFAULT;
     private BsonDocument resumeToken;
     private long maxAwaitTimeMS;
     private Collation collation;
+    private BsonTimestamp startAtOperationTime;
 
+    public ChangeStreamIterableImpl(@Nullable final ClientSession clientSession, final String databaseName,
+                                    final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
+                                    final OperationExecutor executor, final List<? extends Bson> pipeline, final Class<TResult> resultClass,
+                                    final ChangeStreamLevel changeStreamLevel) {
+        this(clientSession, new MongoNamespace(databaseName, "ignored"), codecRegistry, readPreference, readConcern, executor, pipeline,
+                resultClass, changeStreamLevel);
+    }
 
-    ChangeStreamIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final CodecRegistry codecRegistry,
-                             final ReadPreference readPreference, final ReadConcern readConcern, final OperationExecutor executor,
-                             final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
+    public ChangeStreamIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace,
+                                    final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
+                                    final OperationExecutor executor, final List<? extends Bson> pipeline, final Class<TResult> resultClass,
+                                    final ChangeStreamLevel changeStreamLevel) {
         super(clientSession, executor, readConcern, readPreference);
         this.namespace = notNull("namespace", namespace);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.pipeline = notNull("pipeline", pipeline);
         this.codec = ChangeStreamDocument.createCodec(notNull("resultClass", resultClass), codecRegistry);
+        this.changeStreamLevel = notNull("changeStreamLevel", changeStreamLevel);
     }
 
     @Override
@@ -108,31 +124,30 @@ final class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeSt
     }
 
     @Override
+    public ChangeStreamIterable<TResult> startAtOperationTime(final BsonTimestamp startAtOperationTime) {
+        this.startAtOperationTime = notNull("startAtOperationTime", startAtOperationTime);
+        return this;
+    }
+
+    @Override
     public ReadOperation<BatchCursor<ChangeStreamDocument<TResult>>> asReadOperation() {
         return createChangeStreamOperation(codec);
     }
 
     private <S> ReadOperation<BatchCursor<S>> createChangeStreamOperation(final Codec<S> codec) {
-        List<BsonDocument> aggregateList = createBsonDocumentList(pipeline);
-
-        ChangeStreamOperation<S> changeStreamOperation =
-                new ChangeStreamOperation<S>(namespace, fullDocument, aggregateList, codec)
-                        .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
+        return new ChangeStreamOperation<S>(namespace, fullDocument,  createBsonDocumentList(pipeline), codec, changeStreamLevel)
                         .batchSize(getBatchSize())
-                        .collation(collation);
-
-        if (resumeToken != null) {
-            changeStreamOperation.resumeAfter(resumeToken);
-        }
-
-        return changeStreamOperation;
+                        .collation(collation)
+                        .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
+                        .resumeAfter(resumeToken)
+                        .startAtOperationTime(startAtOperationTime);
     }
 
     private List<BsonDocument> createBsonDocumentList(final List<? extends Bson> pipeline) {
         List<BsonDocument> aggregateList = new ArrayList<BsonDocument>(pipeline.size());
         for (Bson obj : pipeline) {
             if (obj == null) {
-                throw new IllegalArgumentException("pipeline can not contain a null value");
+                throw new IllegalArgumentException("pipeline cannot contain a null value");
             }
             aggregateList.add(obj.toBsonDocument(BsonDocument.class, codecRegistry));
         }

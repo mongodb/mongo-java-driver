@@ -29,6 +29,7 @@ import com.mongodb.connection.ServerDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.selector.ServerSelector;
+import org.bson.BsonTimestamp;
 
 import java.util.List;
 
@@ -64,6 +65,11 @@ final class EmbeddedCluster implements Cluster {
     @Override
     public ClusterDescription getCurrentDescription() {
         return clusterDescription;
+    }
+
+    @Override
+    public BsonTimestamp getClusterTime() {
+        return null;
     }
 
     @Override

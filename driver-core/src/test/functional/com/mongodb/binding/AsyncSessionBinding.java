@@ -21,6 +21,7 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.session.SessionContext;
+import org.bson.BsonTimestamp;
 
 import static org.bson.assertions.Assertions.notNull;
 
@@ -56,6 +57,11 @@ public final class AsyncSessionBinding implements AsyncReadWriteBinding {
     @Override
     public SessionContext getSessionContext() {
         return sessionContext;
+    }
+
+    @Override
+    public BsonTimestamp getClusterTime() {
+        return wrapped.getClusterTime();
     }
 
     @Override

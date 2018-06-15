@@ -25,6 +25,7 @@ import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.session.ClientSessionContext;
 import com.mongodb.session.SessionContext;
+import org.bson.BsonTimestamp;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -63,6 +64,11 @@ class ClientSessionBinding implements AsyncReadWriteBinding {
     @Override
     public SessionContext getSessionContext() {
         return sessionContext;
+    }
+
+    @Override
+    public BsonTimestamp getClusterTime() {
+        return wrapped.getClusterTime();
     }
 
     @Override

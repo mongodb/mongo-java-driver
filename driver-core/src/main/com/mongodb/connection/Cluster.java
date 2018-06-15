@@ -18,7 +18,9 @@ package com.mongodb.connection;
 
 
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
+import org.bson.BsonTimestamp;
 
 import java.io.Closeable;
 
@@ -51,6 +53,15 @@ public interface Cluster extends Closeable {
      * @return the current ClusterDescription representing the current state of the cluster.
      */
     ClusterDescription getCurrentDescription();
+
+    /**
+     * Get the last seen cluster time
+     *
+     * @since 3.8
+     * @return the last seen cluster time or null if not set
+     */
+    @Nullable
+    BsonTimestamp getClusterTime();
 
     /**
      * Get a MongoDB server that matches the criteria defined by the serverSelector
