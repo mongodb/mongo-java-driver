@@ -203,8 +203,8 @@ public class GridFSTest extends DatabaseTestCase {
                     } else if (delete.equals("expected.chunks")) {
                         id = deletedItem.asDocument().getDocument("q").getObjectId("files_id");
                     }
-                    assertEquals(filesCollection.count(new BsonDocument("_id", id)), 0);
-                    assertEquals(chunksCollection.count(new BsonDocument("files_id", id)), 0);
+                    assertEquals(filesCollection.countDocuments(new BsonDocument("_id", id)), 0);
+                    assertEquals(chunksCollection.countDocuments(new BsonDocument("files_id", id)), 0);
                 }
             }
         }
@@ -294,7 +294,7 @@ public class GridFSTest extends DatabaseTestCase {
                 if (insert.equals("expected.files")) {
                     List<BsonDocument> documents = processFiles(dataItem.getArray("documents", new BsonArray()),
                             new ArrayList<BsonDocument>());
-                    assertEquals(filesCollection.count(), documents.size());
+                    assertEquals(filesCollection.countDocuments(), documents.size());
 
                     BsonDocument actual = filesCollection.find().first();
                     for (BsonDocument expected : documents) {
@@ -310,7 +310,7 @@ public class GridFSTest extends DatabaseTestCase {
                 } else if (insert.equals("expected.chunks")) {
                     List<BsonDocument> documents = processChunks(dataItem.getArray("documents", new BsonArray()),
                             new ArrayList<BsonDocument>());
-                    assertEquals(chunksCollection.count(), documents.size());
+                    assertEquals(chunksCollection.countDocuments(), documents.size());
 
                     List<BsonDocument> actualDocuments = chunksCollection.find().into(new ArrayList<BsonDocument>());
                     for (int i = 0; i < documents.size(); i++) {

@@ -77,7 +77,7 @@ public class CrudTest extends DatabaseTestCase {
 
     @Test
     public void shouldPassAllOutcomes() {
-        BsonDocument outcome = helper.getOperationMongoOperations(definition.getDocument("operation"));
+        BsonDocument outcome = helper.getOperationResults(definition.getDocument("operation"));
         BsonDocument expectedOutcome = definition.getDocument("outcome");
 
         // Hack to workaround the lack of upsertedCount

@@ -19,22 +19,30 @@ package com.mongodb.operation;
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ServerAddress;
+import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
+import com.mongodb.internal.client.model.CountStrategy;
 import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.operation.CommandOperationHelper.CommandTransformer;
 import com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import com.mongodb.operation.OperationHelper.CallableWithConnection;
 import com.mongodb.session.SessionContext;
 import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonInt64;
+import org.bson.BsonNull;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
+import org.bson.codecs.Decoder;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -56,7 +64,9 @@ import static com.mongodb.operation.OperationReadConcernHelper.appendReadConcern
  * @since 3.0
  */
 public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
+    private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
     private final MongoNamespace namespace;
+    private final CountStrategy countStrategy;
     private BsonDocument filter;
     private BsonValue hint;
     private long skip;
@@ -70,7 +80,18 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
      * @param namespace the database and collection namespace for the operation.
      */
     public CountOperation(final MongoNamespace namespace) {
+        this(namespace, CountStrategy.COMMAND);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param namespace     the database and collection namespace for the operation.
+     * @param countStrategy the strategy to use for calculating the count.
+     */
+    public CountOperation(final MongoNamespace namespace, final CountStrategy countStrategy) {
         this.namespace = notNull("namespace", namespace);
+        this.countStrategy = notNull("countStrategy", countStrategy);
     }
 
     /**
@@ -208,42 +229,69 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
 
     @Override
     public Long execute(final ReadBinding binding) {
-        return withConnection(binding, new CallableWithConnection<Long>() {
-            @Override
-            public Long call(final Connection connection) {
-                validateReadConcernAndCollation(connection, binding.getSessionContext().getReadConcern(), collation);
-                return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(binding.getSessionContext()),
-                        new BsonDocumentCodec(), connection, transformer());
-            }
-        });
+        if (countStrategy.equals(CountStrategy.COMMAND)) {
+            return withConnection(binding, new CallableWithConnection<Long>() {
+                @Override
+                public Long call(final Connection connection) {
+                    validateReadConcernAndCollation(connection, binding.getSessionContext().getReadConcern(), collation);
+                    return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(binding.getSessionContext()),
+                            DECODER, connection, transformer());
+                }
+            });
+        } else {
+            BatchCursor<BsonDocument> cursor = getAggregateOperation().execute(binding);
+            return cursor.hasNext() ? getCountFromAggregateResults(cursor.next()) : 0;
+        }
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<Long> callback) {
-        withConnection(binding, new AsyncCallableWithConnection() {
-            @Override
-            public void call(final AsyncConnection connection, final Throwable t) {
-                SingleResultCallback<Long> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-                if (t != null) {
-                    errHandlingCallback.onResult(null, t);
-                } else {
-                    final SingleResultCallback<Long> wrappedCallback = releasingCallback(errHandlingCallback, connection);
-                    validateReadConcernAndCollation(connection, binding.getSessionContext().getReadConcern(), collation,
-                            new AsyncCallableWithConnection() {
-                                @Override
-                                public void call(final AsyncConnection connection, final Throwable t) {
-                                    if (t != null) {
-                                        wrappedCallback.onResult(null, t);
-                                    } else {
-                                        executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
-                                                getCommand(binding.getSessionContext()), new BsonDocumentCodec(), connection, transformer(),
-                                                wrappedCallback);
+        if (countStrategy.equals(CountStrategy.COMMAND)) {
+            withConnection(binding, new AsyncCallableWithConnection() {
+                @Override
+                public void call(final AsyncConnection connection, final Throwable t) {
+                    SingleResultCallback<Long> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
+                    if (t != null) {
+                        errHandlingCallback.onResult(null, t);
+                    } else {
+                        final SingleResultCallback<Long> wrappedCallback = releasingCallback(errHandlingCallback, connection);
+                        validateReadConcernAndCollation(connection, binding.getSessionContext().getReadConcern(), collation,
+                                new AsyncCallableWithConnection() {
+                                    @Override
+                                    public void call(final AsyncConnection connection, final Throwable t) {
+                                        if (t != null) {
+                                            wrappedCallback.onResult(null, t);
+                                        } else {
+                                            executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
+                                                    getCommand(binding.getSessionContext()), DECODER, connection, transformer(),
+                                                    wrappedCallback);
+                                        }
                                     }
-                                }
-                    });
+                                });
+                    }
                 }
-            }
-        });
+            });
+        } else {
+            getAggregateOperation().executeAsync(binding, new SingleResultCallback<AsyncBatchCursor<BsonDocument>>(){
+                @Override
+                public void onResult(final AsyncBatchCursor<BsonDocument> result, final Throwable t) {
+                    if (t != null) {
+                        callback.onResult(null, t);
+                    } else {
+                        result.next(new SingleResultCallback<List<BsonDocument>>() {
+                            @Override
+                            public void onResult(final List<BsonDocument> result, final Throwable t) {
+                                if (t != null) {
+                                    callback.onResult(null, t);
+                                } else {
+                                    callback.onResult(getCountFromAggregateResults(result), null);
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+        }
     }
 
     /**
@@ -253,7 +301,11 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
      * @return a read operation that when executed will explain this operation
      */
     public ReadOperation<BsonDocument> asExplainableOperation(final ExplainVerbosity explainVerbosity) {
-        return createExplainableOperation(explainVerbosity);
+        if (countStrategy.equals(CountStrategy.COMMAND)) {
+            return createExplainableOperation(explainVerbosity);
+        } else {
+            return getAggregateOperation().asExplainableOperation(explainVerbosity);
+        }
     }
 
     /**
@@ -263,7 +315,11 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
      * @return a read operation that when executed will explain this operation
      */
     public AsyncReadOperation<BsonDocument> asExplainableOperationAsync(final ExplainVerbosity explainVerbosity) {
-        return createExplainableOperation(explainVerbosity);
+        if (countStrategy.equals(CountStrategy.COMMAND)) {
+            return createExplainableOperation(explainVerbosity);
+        } else {
+            return getAggregateOperation().asExplainableOperationAsync(explainVerbosity);
+        }
     }
 
     private CommandReadOperation<BsonDocument> createExplainableOperation(final ExplainVerbosity explainVerbosity) {
@@ -296,5 +352,34 @@ public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<L
             document.put("collation", collation.asDocument());
         }
         return document;
+    }
+
+    private AggregateOperation<BsonDocument> getAggregateOperation() {
+        return new AggregateOperation<BsonDocument>(namespace, getPipeline(), DECODER)
+                .collation(collation)
+                .hint(hint)
+                .maxTime(maxTimeMS, TimeUnit.MILLISECONDS);
+    }
+
+    private List<BsonDocument> getPipeline() {
+        ArrayList<BsonDocument> pipeline = new ArrayList<BsonDocument>();
+        pipeline.add(new BsonDocument("$match", filter != null ? filter : new BsonDocument()));
+        if (skip > 0) {
+            pipeline.add(new BsonDocument("$skip", new BsonInt64(skip)));
+        }
+        if (limit > 0) {
+            pipeline.add(new BsonDocument("$limit", new BsonInt64(limit)));
+        }
+        pipeline.add(new BsonDocument("$group", new BsonDocument("_id", new BsonNull())
+                .append("n", new BsonDocument("$sum", new BsonInt32(1)))));
+        return pipeline;
+    }
+
+    private Long getCountFromAggregateResults(final List<BsonDocument> results) {
+        if (results == null || results.isEmpty()) {
+            return 0L;
+        } else {
+            return results.get(0).getNumber("n").longValue();
+        }
     }
 }

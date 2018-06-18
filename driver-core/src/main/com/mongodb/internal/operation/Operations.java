@@ -27,6 +27,7 @@ import com.mongodb.bulk.WriteRequest;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CountOptions;
+import com.mongodb.internal.client.model.CountStrategy;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
@@ -103,8 +104,8 @@ final class Operations<TDocument> {
         this.retryWrites = retryWrites;
     }
 
-    CountOperation count(final Bson filter, final CountOptions options) {
-        CountOperation operation = new CountOperation(namespace)
+    CountOperation count(final Bson filter, final CountOptions options, final CountStrategy countStrategy) {
+        CountOperation operation = new CountOperation(namespace, countStrategy)
                 .filter(toBsonDocument(filter))
                 .skip(options.getSkip())
                 .limit(options.getLimit())

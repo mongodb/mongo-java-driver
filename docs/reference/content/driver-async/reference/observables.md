@@ -79,12 +79,12 @@ In the following example we print out the count of the number of documents in a 
     Block<SingleResultCallback<Long>> operation = new Block<SingleResultCallback<Long>>() {
         @Override
         void apply(final SingleResultCallback<Long> callback) {
-            collection.count(callback);
+            collection.countDocuments(callback);
         }
     };
 
     // Or in Java 8 syntax:
-    operation = (Block<SingleResultCallback<Long>>) collection::count;
+    operation = (Block<SingleResultCallback<Long>>) collection::countDocuments;
 
     Observables.observe(operation).subscribe(new Observer<Long>(){
         @Override

@@ -41,6 +41,7 @@ import com.mongodb.client.model.DeleteManyModel
 import com.mongodb.client.model.DeleteOneModel
 import com.mongodb.client.model.DeleteOptions
 import com.mongodb.client.model.DropIndexOptions
+import com.mongodb.client.model.EstimatedDocumentCountOptions
 import com.mongodb.client.model.FindOneAndDeleteOptions
 import com.mongodb.client.model.FindOneAndReplaceOptions
 import com.mongodb.client.model.FindOneAndUpdateOptions
@@ -59,6 +60,7 @@ import com.mongodb.client.model.changestream.ChangeStreamLevel
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 import com.mongodb.client.test.Worker
+import com.mongodb.internal.client.model.CountStrategy
 import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.CountOperation
 import com.mongodb.operation.CreateIndexesOperation
@@ -236,6 +238,77 @@ class MongoCollectionSpecification extends Specification {
 
         where:
         session << [null, Stub(ClientSession)]
+    }
+
+    def 'should use CountOperation correctly with documentCount'() {
+        given:
+        def executor = new TestOperationExecutor([1L, 2L, 3L, 4L])
+        def filter = new BsonDocument()
+        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED, true,
+                readConcern, executor)
+        def expectedOperation = new CountOperation(namespace, CountStrategy.AGGREGATE).filter(filter)
+
+        def countMethod = collection.&countDocuments
+
+        when:
+        execute(countMethod, session)
+        def operation = executor.getReadOperation() as CountOperation
+
+        then:
+        executor.getClientSession() == session
+        expect operation, isTheSameAs(expectedOperation)
+
+        when:
+        filter = new BsonDocument('a', new BsonInt32(1))
+        execute(countMethod, session, filter)
+        operation = executor.getReadOperation() as CountOperation
+
+        then:
+        executor.getClientSession() == session
+        expect operation, isTheSameAs(expectedOperation.filter(filter))
+
+        when:
+        def hint = new BsonDocument('hint', new BsonInt32(1))
+        execute(countMethod, session, filter, new CountOptions().hint(hint).skip(10).limit(100)
+                .maxTime(100, MILLISECONDS).collation(collation))
+        operation = executor.getReadOperation() as CountOperation
+
+        then:
+        executor.getClientSession() == session
+        expect operation, isTheSameAs(expectedOperation.filter(filter).hint(hint).skip(10).limit(100).maxTime(100, MILLISECONDS)
+                .collation(collation))
+
+        where:
+        session << [null, Stub(ClientSession)]
+    }
+
+    def 'should use CountOperation correctly with estimatedDocumentCount'() {
+        given:
+        def executor = new TestOperationExecutor([1L, 2L])
+        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED, true,
+                readConcern, executor)
+        def expectedOperation = new CountOperation(namespace, CountStrategy.COMMAND).filter(new BsonDocument())
+
+        def countMethod = collection.&estimatedDocumentCount
+
+        when:
+        execute(countMethod, session)
+        def operation = executor.getReadOperation() as CountOperation
+
+        then:
+        executor.getClientSession() == session
+        expect operation, isTheSameAs(expectedOperation)
+
+        when:
+        execute(countMethod, session, new EstimatedDocumentCountOptions().maxTime(100, MILLISECONDS))
+        operation = executor.getReadOperation() as CountOperation
+
+        then:
+        executor.getClientSession() == session
+        expect operation, isTheSameAs(expectedOperation.maxTime(100, MILLISECONDS))
+
+        where:
+        session << [null]
     }
 
     def 'should create DistinctIterable correctly'() {

@@ -31,9 +31,11 @@ import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.WriteRequest;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
+import com.mongodb.internal.client.model.CountStrategy;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.DropIndexOptions;
+import com.mongodb.client.model.EstimatedDocumentCountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
@@ -67,6 +69,7 @@ import static com.mongodb.bulk.WriteRequest.Type.INSERT;
 import static com.mongodb.bulk.WriteRequest.Type.REPLACE;
 import static com.mongodb.bulk.WriteRequest.Type.UPDATE;
 import static com.mongodb.client.model.ReplaceOptions.createReplaceOptions;
+import static com.mongodb.internal.client.model.CountOptionsHelper.fromEstimatedDocumentCountOptions;
 import static java.util.Collections.singletonList;
 
 class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
@@ -157,40 +160,88 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
+    @Deprecated
     public void count(final SingleResultCallback<Long> callback) {
         count(new BsonDocument(), callback);
     }
 
     @Override
+    @Deprecated
     public void count(final Bson filter, final SingleResultCallback<Long> callback) {
         count(filter, new CountOptions(), callback);
     }
 
     @Override
+    @Deprecated
     public void count(final Bson filter, final CountOptions options, final SingleResultCallback<Long> callback) {
-        executeCount(null, filter, options, callback);
+        executeCount(null, filter, options, CountStrategy.COMMAND, callback);
     }
 
     @Override
+    @Deprecated
     public void count(final ClientSession clientSession, final SingleResultCallback<Long> callback) {
         count(clientSession, new BsonDocument(), callback);
     }
 
     @Override
+    @Deprecated
     public void count(final ClientSession clientSession, final Bson filter, final SingleResultCallback<Long> callback) {
         count(clientSession, filter, new CountOptions(), callback);
     }
 
     @Override
+    @Deprecated
     public void count(final ClientSession clientSession, final Bson filter, final CountOptions options,
                       final SingleResultCallback<Long> callback) {
         notNull("clientSession", clientSession);
-        executeCount(clientSession, filter, options, callback);
+        executeCount(clientSession, filter, options, CountStrategy.COMMAND, callback);
+    }
+
+    @Override
+    public void countDocuments(final SingleResultCallback<Long> callback) {
+        countDocuments(new BsonDocument(), callback);
+    }
+
+    @Override
+    public void countDocuments(final Bson filter, final SingleResultCallback<Long> callback) {
+        countDocuments(filter, new CountOptions(), callback);
+    }
+
+    @Override
+    public void countDocuments(final Bson filter, final CountOptions options, final SingleResultCallback<Long> callback) {
+        executeCount(null, filter, options, CountStrategy.AGGREGATE, callback);
+    }
+
+    @Override
+    public void countDocuments(final ClientSession clientSession, final SingleResultCallback<Long> callback) {
+        countDocuments(clientSession, new BsonDocument(), callback);
+    }
+
+    @Override
+    public void countDocuments(final ClientSession clientSession, final Bson filter, final SingleResultCallback<Long> callback) {
+        countDocuments(clientSession, filter, new CountOptions(), callback);
+    }
+
+    @Override
+    public void countDocuments(final ClientSession clientSession, final Bson filter, final CountOptions options,
+                               final SingleResultCallback<Long> callback) {
+        notNull("clientSession", clientSession);
+        executeCount(clientSession, filter, options, CountStrategy.AGGREGATE, callback);
+    }
+
+    @Override
+    public void estimatedDocumentCount(final SingleResultCallback<Long> callback) {
+        estimatedDocumentCount(new EstimatedDocumentCountOptions(), callback);
+    }
+
+    @Override
+    public void estimatedDocumentCount(final EstimatedDocumentCountOptions options, final SingleResultCallback<Long> callback) {
+        executeCount(null, new BsonDocument(), fromEstimatedDocumentCountOptions(options), CountStrategy.COMMAND, callback);
     }
 
     private void executeCount(@Nullable final ClientSession clientSession, final Bson filter, final CountOptions options,
-                              final SingleResultCallback<Long> callback) {
-        executor.execute(operations.count(filter, options), readPreference, readConcern, clientSession, callback);
+                              final CountStrategy countStrategy, final SingleResultCallback<Long> callback) {
+        executor.execute(operations.count(filter, options, countStrategy), readPreference, readConcern, clientSession, callback);
     }
 
     @Override

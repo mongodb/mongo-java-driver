@@ -24,6 +24,7 @@ import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.client.model.Collation;
 import org.bson.BsonDocument;
+import org.bson.BsonValue;
 import org.bson.codecs.Decoder;
 
 import java.util.List;
@@ -252,6 +253,26 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      * @mongodb.server.release 3.6
      */
     public BsonDocument getHint() {
+        BsonValue hint = wrapped.getHint();
+        if (hint == null) {
+            return null;
+        }
+        if (!hint.isDocument()) {
+            throw new IllegalArgumentException("Hint is not a BsonDocument please use the #getHintBsonValue() method. ");
+        }
+        return hint.asDocument();
+    }
+
+    /**
+     * Returns the hint BsonValue for which index to use. The default is not to set a hint.
+     *
+     * <p>Hints can either be a BsonString or a BsonDocument.</p>
+     *
+     * @return the hint
+     * @since 3.8
+     * @mongodb.server.release 3.6
+     */
+    public BsonValue getHintBsonValue() {
         return wrapped.getHint();
     }
 
@@ -263,7 +284,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      * @since 3.6
      * @mongodb.server.release 3.6
      */
-    public AggregateOperation<T> hint(final BsonDocument hint) {
+    public AggregateOperation<T> hint(final BsonValue hint) {
         wrapped.hint(hint);
         return this;
     }
@@ -301,7 +322,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
         return new AggregateExplainOperation(getNamespace(), getPipeline())
                 .allowDiskUse(getAllowDiskUse())
                 .maxTime(getMaxAwaitTime(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS)
-                .hint(getHint());
+                .hint(wrapped.getHint());
     }
 
 

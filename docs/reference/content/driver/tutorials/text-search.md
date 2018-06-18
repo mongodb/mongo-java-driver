@@ -78,7 +78,7 @@ To perform text search, use the [`Filters.text()`]({{<apiref "com/mongodb/client
 For example, the following code performs a text search on the `name` field for the word `"bakery"` or `"coffee"`.
 
 ```java
-long matchCount = collection.count(Filters.text("bakery coffee"));
+long matchCount = collection.countDocuments(Filters.text("bakery coffee"));
 System.out.println("Text search matches: " + matchCount);
 ```
 
@@ -112,7 +112,7 @@ The  [`Filters.text()`]({{<apiref "com/mongodb/client/model/Filters.html#text-ja
 For example, the following text search specifies the [text search language]({{<docsref "reference/text-search-languages">}}) option when performing text search for the word `cafe`:
 
 ```java
-long matchCountEnglish = collection.count(Filters.text("cafe", new TextSearchOptions().language("english")));
+long matchCountEnglish = collection.countDocuments(Filters.text("cafe", new TextSearchOptions().language("english")));
 System.out.println("Text search matches (english): " + matchCountEnglish);
 ```
 

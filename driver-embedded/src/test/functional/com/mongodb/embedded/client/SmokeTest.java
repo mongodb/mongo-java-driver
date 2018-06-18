@@ -37,6 +37,7 @@ import static org.junit.Assert.assertTrue;
 public class SmokeTest extends DatabaseTestCase {
 
     @Test
+    @SuppressWarnings("deprecation")
     public void shouldHandleCommonCRUDScenariosWithoutError() {
         MongoDatabase database = Fixture.getDefaultDatabase();
         MongoCollection<Document> collection = database.getCollection("test");
@@ -45,7 +46,7 @@ public class SmokeTest extends DatabaseTestCase {
         Document document = new Document("_id", 1);
         Document updatedDocument = new Document("_id", 1).append("a", 1);
 
-        assertEquals(0, collection.count());
+        assertEquals(0, collection.countDocuments());
         assertEquals(null, collection.find().first());
 
         collection.insertOne(document);
@@ -59,7 +60,7 @@ public class SmokeTest extends DatabaseTestCase {
         assertEquals(updatedDocument, collection.aggregate(Collections.singletonList(Aggregates.match(new Document("a", 1)))).first());
         assertEquals(1, collection.deleteOne(new Document()).getDeletedCount());
 
-        assertEquals(0, collection.count());
+        assertEquals(0, collection.countDocuments());
 
         collection.insertMany(asList(new Document("id", "a"), new Document("id", "b"), new Document("id", "c")));
 

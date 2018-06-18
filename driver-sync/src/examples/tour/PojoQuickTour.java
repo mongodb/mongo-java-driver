@@ -86,7 +86,7 @@ public class PojoQuickTour {
         );
 
         collection.insertMany(people);
-        System.out.println("total # of people " + collection.count());
+        System.out.println("total # of people " + collection.countDocuments());
 
         System.out.println("");
         // lets get all the documents in the collection and print them out

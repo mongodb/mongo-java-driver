@@ -87,8 +87,8 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         }
 
         then:
-        filesCollection.count() == 1
-        chunksCollection.count() == chunkCount
+        filesCollection.countDocuments() == 1
+        chunksCollection.countDocuments() == chunkCount
 
         when:
         def file = filesCollection.find().first()
@@ -136,8 +136,8 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         fileId = gridFSBucket.uploadFromStream('myFile', new ByteArrayInputStream(contentBytes));
 
         then:
-        filesCollection.count() == 1
-        chunksCollection.count() == 5
+        filesCollection.countDocuments() == 1
+        chunksCollection.countDocuments() == 5
 
         when:
         def file = filesCollection.find().first()
@@ -180,8 +180,8 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         gridFSBucket.delete(fileId)
 
         then:
-        filesCollection.count() == 0
-        chunksCollection.count() == 0
+        filesCollection.countDocuments() == 0
+        chunksCollection.countDocuments() == 0
     }
 
     def 'should use custom uploadOptions when uploading' () {
@@ -210,8 +210,8 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         }
 
         then:
-        filesCollection.count() == 1
-        chunksCollection.count() == expectedNoChunks
+        filesCollection.countDocuments() == 1
+        chunksCollection.countDocuments() == expectedNoChunks
 
         when:
         def fileInfo = filesCollection.find().first()
@@ -340,15 +340,15 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         def fileId = gridFSBucket.uploadFromStream(filename, new ByteArrayInputStream('Hello GridFS' as byte[]))
 
         then:
-        filesCollection.count() == 1
-        chunksCollection.count() == 1
+        filesCollection.countDocuments() == 1
+        chunksCollection.countDocuments() == 1
 
         when:
         gridFSBucket.delete(fileId)
 
         then:
-        filesCollection.count() == 0
-        chunksCollection.count() == 0
+        filesCollection.countDocuments() == 0
+        chunksCollection.countDocuments() == 0
     }
 
     def 'should thrown when deleting nonexistent file'() {
@@ -367,8 +367,8 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         filesCollection.drop()
 
         then:
-        filesCollection.count() == 0
-        chunksCollection.count() == 1
+        filesCollection.countDocuments() == 0
+        chunksCollection.countDocuments() == 1
 
         when:
         gridFSBucket.delete(fileId)
@@ -377,8 +377,8 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         thrown(MongoGridFSException)
 
         then:
-        filesCollection.count() == 0
-        chunksCollection.count() == 0
+        filesCollection.countDocuments() == 0
+        chunksCollection.countDocuments() == 0
     }
 
     def 'should rename a file'() {
@@ -390,15 +390,15 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         def fileId = gridFSBucket.uploadFromStream(filename, new ByteArrayInputStream('Hello GridFS' as byte[]))
 
         then:
-        filesCollection.count() == 1
-        chunksCollection.count() == 1
+        filesCollection.countDocuments() == 1
+        chunksCollection.countDocuments() == 1
 
         when:
         gridFSBucket.rename(fileId, 'newFileName')
 
         then:
-        filesCollection.count() == 1
-        chunksCollection.count() == 1
+        filesCollection.countDocuments() == 1
+        chunksCollection.countDocuments() == 1
 
         when:
         gridFSBucket.openDownloadStream(newFileName)
@@ -476,8 +476,8 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
                 new GridFSUploadOptions().chunkSizeBytes(500));
 
         then:
-        filesCollection.count() == 1
-        chunksCollection.count() == 2
+        filesCollection.countDocuments() == 1
+        chunksCollection.countDocuments() == 2
 
         when:
         def gridFSDownloadStream = gridFSBucket.openDownloadStream(fileId)
@@ -584,7 +584,7 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         }
 
         then:
-        filesCollection.count() == 1
+        filesCollection.countDocuments() == 1
 
         when:
         // Remove filename

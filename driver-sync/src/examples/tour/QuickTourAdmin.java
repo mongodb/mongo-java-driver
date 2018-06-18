@@ -92,12 +92,12 @@ public class QuickTourAdmin {
         collection.insertOne(new Document("_id", 2).append("content", "irrelevant content"));
 
         // Find using the text index
-        long matchCount = collection.count(text("textual content -irrelevant"));
+        long matchCount = collection.countDocuments(text("textual content -irrelevant"));
         System.out.println("Text search matches: " + matchCount);
 
         // Find using the $language operator
         Bson textSearch = text("textual content -irrelevant", new TextSearchOptions().language("english"));
-        matchCount = collection.count(textSearch);
+        matchCount = collection.countDocuments(textSearch);
         System.out.println("Text search matches (english): " + matchCount);
 
         // Find the highest scoring match

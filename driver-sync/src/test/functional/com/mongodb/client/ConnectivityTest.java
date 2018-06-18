@@ -31,7 +31,7 @@ public class ConnectivityTest {
             client.getDatabase("admin").runCommand(new Document("ismaster", 1));
 
             // test that a command that requires auth completes normally
-            client.getDatabase("test").getCollection("test").count();
+            client.getDatabase("test").getCollection("test").estimatedDocumentCount();
         } finally {
             client.close();
         }
