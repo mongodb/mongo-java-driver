@@ -100,7 +100,7 @@ public class QuickTour {
             documents.add(new Document("i", i));
         }
         collection.insertMany(documents);
-        System.out.println("total # of documents after inserting 100 small ones (should be 101) " + collection.count());
+        System.out.println("total # of documents after inserting 100 small ones (should be 101) " + collection.countDocuments());
 
         // find first
         myDoc = collection.find().first();

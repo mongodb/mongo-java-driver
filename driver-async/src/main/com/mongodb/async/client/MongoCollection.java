@@ -28,6 +28,7 @@ import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.DropIndexOptions;
+import com.mongodb.client.model.EstimatedDocumentCountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
@@ -156,7 +157,9 @@ public interface MongoCollection<TDocument> {
      * Counts the number of documents in the collection.
      *
      * @param callback the callback passed the number of documents in the collection
+     * @deprecated use {@link #estimatedDocumentCount(SingleResultCallback)} or {@link #countDocuments(SingleResultCallback)} instead
      */
+    @Deprecated
     void count(SingleResultCallback<Long> callback);
 
     /**
@@ -164,7 +167,9 @@ public interface MongoCollection<TDocument> {
      *
      * @param filter   the query filter
      * @param callback the callback passed the number of documents in the collection
+     * @deprecated use {@link #countDocuments(Bson, SingleResultCallback)} instead
      */
+    @Deprecated
     void count(Bson filter, SingleResultCallback<Long> callback);
 
     /**
@@ -173,7 +178,9 @@ public interface MongoCollection<TDocument> {
      * @param filter   the query filter
      * @param options  the options describing the count
      * @param callback the callback passed the number of documents in the collection
+     * @deprecated use {@link #countDocuments(Bson, CountOptions, SingleResultCallback)} instead
      */
+    @Deprecated
     void count(Bson filter, CountOptions options, SingleResultCallback<Long> callback);
 
     /**
@@ -183,7 +190,10 @@ public interface MongoCollection<TDocument> {
      * @param callback the callback passed the number of documents in the collection
      * @since 3.6
      * @mongodb.server.release 3.6
+     * @deprecated use {@link #estimatedDocumentCount(SingleResultCallback)} or
+     * {@link #countDocuments(ClientSession, SingleResultCallback)} instead
      */
+    @Deprecated
     void count(ClientSession clientSession, SingleResultCallback<Long> callback);
 
     /**
@@ -194,7 +204,9 @@ public interface MongoCollection<TDocument> {
      * @param callback the callback passed the number of documents in the collection
      * @since 3.6
      * @mongodb.server.release 3.6
+     * @deprecated use {@link #countDocuments(ClientSession, Bson, SingleResultCallback)} instead
      */
+    @Deprecated
     void count(ClientSession clientSession, Bson filter, SingleResultCallback<Long> callback);
 
     /**
@@ -206,8 +218,87 @@ public interface MongoCollection<TDocument> {
      * @param callback the callback passed the number of documents in the collection
      * @since 3.6
      * @mongodb.server.release 3.6
+     * @deprecated use {@link #countDocuments(ClientSession, Bson, CountOptions, SingleResultCallback)} instead
      */
+    @Deprecated
     void count(ClientSession clientSession, Bson filter, CountOptions options, SingleResultCallback<Long> callback);
+
+    /**
+     * Counts the number of documents in the collection.
+     *
+     * @param callback the callback passed the number of documents in the collection
+     * @since 3.8
+     */
+    void countDocuments(SingleResultCallback<Long> callback);
+
+    /**
+     * Counts the number of documents in the collection according to the given options.
+     *
+     * @param filter the query filter
+     * @param callback the callback passed the number of documents in the collection
+     * @since 3.8
+     */
+    void countDocuments(Bson filter, SingleResultCallback<Long> callback);
+
+    /**
+     * Counts the number of documents in the collection according to the given options.
+     *
+     * @param filter  the query filter
+     * @param options the options describing the count
+     * @param callback the callback passed the number of documents in the collection
+     * @since 3.8
+     */
+    void countDocuments(Bson filter, CountOptions options, SingleResultCallback<Long> callback);
+
+    /**
+     * Counts the number of documents in the collection.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param callback the callback passed the number of documents in the collection
+     * @since 3.8
+     * @mongodb.server.release 3.6
+     */
+    void countDocuments(ClientSession clientSession, SingleResultCallback<Long> callback);
+
+    /**
+     * Counts the number of documents in the collection according to the given options.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param filter the query filter
+     * @param callback the callback passed the number of documents in the collection
+     * @since 3.8
+     * @mongodb.server.release 3.6
+     */
+    void countDocuments(ClientSession clientSession, Bson filter, SingleResultCallback<Long> callback);
+
+    /**
+     * Counts the number of documents in the collection according to the given options.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param filter  the query filter
+     * @param options the options describing the count
+     * @param callback the callback passed the number of documents in the collection
+     * @since 3.8
+     * @mongodb.server.release 3.6
+     */
+    void countDocuments(ClientSession clientSession, Bson filter, CountOptions options, SingleResultCallback<Long> callback);
+
+    /**
+     * Gets an estimate of the count of documents in a collection using collection metadata.
+     *
+     * @param callback the callback passed the number of documents in the collection
+     * @since 3.8
+     */
+    void estimatedDocumentCount(SingleResultCallback<Long> callback);
+
+    /**
+     * Gets an estimate of the count of documents in a collection using collection metadata.
+     *
+     * @param options the options describing the count
+     * @param callback the callback passed the number of documents in the collection
+     * @since 3.8
+     */
+    void estimatedDocumentCount(EstimatedDocumentCountOptions options, SingleResultCallback<Long> callback);
 
     /**
      * Gets the distinct values of the specified field name.

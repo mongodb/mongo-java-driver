@@ -123,7 +123,7 @@ public class QuickTour {
         collection.insertMany(documents, new SingleResultCallback<Void>() {
             @Override
             public void onResult(final Void result, final Throwable t) {
-                collection.count(new SingleResultCallback<Long>() {
+                collection.countDocuments(new SingleResultCallback<Long>() {
                     @Override
                     public void onResult(final Long count, final Throwable t) {
                         System.out.println("total # of documents after inserting 100 small ones (should be 101) " + count);

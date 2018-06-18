@@ -28,10 +28,12 @@ import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
+import org.bson.BsonValue;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CommandOperationHelper.IdentityTransformer;
@@ -52,7 +54,7 @@ class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, Rea
     private Boolean allowDiskUse;
     private long maxTimeMS;
     private Collation collation;
-    private BsonDocument hint;
+    private BsonValue hint;
 
     AggregateExplainOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline) {
         this.namespace = notNull("namespace", namespace);
@@ -109,6 +111,25 @@ class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, Rea
      * @mongodb.server.release 3.6
      */
     public BsonDocument getHint() {
+        if (hint == null) {
+            return null;
+        }
+        if (!hint.isDocument()) {
+            throw new IllegalArgumentException("Hint is not a BsonDocument please use the #getHintBsonValue() method. ");
+        }
+        return hint.asDocument();
+    }
+
+    /**
+     * Returns the hint BsonValue for which index to use. The default is not to set a hint.
+     *
+     * <p>Hints can either be a BsonString or a BsonDocument.</p>
+     *
+     * @return the hint
+     * @since 3.8
+     * @mongodb.server.release 3.6
+     */
+    public BsonValue getHintBsonValue() {
         return hint;
     }
 
@@ -120,7 +141,8 @@ class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, Rea
      * @since 3.6
      * @mongodb.server.release 3.6
      */
-    public AggregateExplainOperation hint(final BsonDocument hint) {
+    public AggregateExplainOperation hint(final BsonValue hint) {
+        isTrueArgument("BsonString or BsonDocument", hint == null || hint.isDocument() || hint.isString());
         this.hint = hint;
         return this;
     }

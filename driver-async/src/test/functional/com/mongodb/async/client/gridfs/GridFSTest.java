@@ -409,7 +409,7 @@ public class GridFSTest extends DatabaseTestCase {
         return new MongoOperation<Long>() {
             @Override
             public void execute() {
-                chunksCollection.count(filter, getCallback());
+                chunksCollection.countDocuments(filter, getCallback());
             }
         }.get();
     }
@@ -418,7 +418,7 @@ public class GridFSTest extends DatabaseTestCase {
         return new MongoOperation<Long>() {
             @Override
             public void execute() {
-                filesCollection.count(filter, getCallback());
+                filesCollection.countDocuments(filter, getCallback());
             }
         }.get();
     }

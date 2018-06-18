@@ -162,7 +162,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         // End Example 3
 
         final CountDownLatch check2 = new CountDownLatch(1);
-        collection.count(new SingleResultCallback<Long>() {
+        collection.countDocuments(new SingleResultCallback<Long>() {
             @Override
             public void onResult(final Long result, final Throwable t) {
                 assertEquals(Long.valueOf(4), result);
@@ -194,7 +194,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         // End Example 6
 
         final CountDownLatch check1 = new CountDownLatch(1);
-        collection.count(new SingleResultCallback<Long>() {
+        collection.countDocuments(new SingleResultCallback<Long>() {
             @Override
             public void onResult(final Long result, final Throwable t) {
                 assertEquals(Long.valueOf(5), result);
@@ -327,7 +327,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         // End Example 14
 
         final CountDownLatch check1 = new CountDownLatch(1);
-        collection.count(new SingleResultCallback<Long>() {
+        collection.countDocuments(new SingleResultCallback<Long>() {
             @Override
             public void onResult(final Long result, final Throwable t) {
                 assertEquals(Long.valueOf(5), result);
@@ -434,7 +434,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         // End Example 20
 
         final CountDownLatch check1 = new CountDownLatch(1);
-        collection.count(new SingleResultCallback<Long>() {
+        collection.countDocuments(new SingleResultCallback<Long>() {
             @Override
             public void onResult(final Long result, final Throwable t) {
                 assertEquals(Long.valueOf(5), result);
@@ -553,7 +553,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         // End Example 29
 
         FutureResultCallback<Long> assertCountFuture = new FutureResultCallback<Long>();
-        collection.count(assertCountFuture);
+        collection.countDocuments(assertCountFuture);
         assertEquals(Long.valueOf(5), assertCountFuture.get(10, TimeUnit.SECONDS));
 
         //Start Example 30
@@ -664,7 +664,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         // End Example 38
 
         FutureResultCallback<Long> assertCountFuture = new FutureResultCallback<Long>();
-        collection.count(assertCountFuture);
+        collection.countDocuments(assertCountFuture);
         assertEquals(Long.valueOf(2), assertCountFuture.get(10, TimeUnit.SECONDS));
 
         //Start Example 39
@@ -725,7 +725,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         // End Example 42
 
         final CountDownLatch check1 = new CountDownLatch(1);
-        collection.count(new SingleResultCallback<Long>() {
+        collection.countDocuments(new SingleResultCallback<Long>() {
             @Override
             public void onResult(final Long result, final Throwable t) {
                 assertEquals(Long.valueOf(5), result);
@@ -879,7 +879,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         // End Example 51
 
         FutureResultCallback<Long> check1 = new FutureResultCallback<Long>();
-        collection.count(check1);
+        collection.countDocuments(check1);
         assertEquals(Long.valueOf(10), check1.get(10, TimeUnit.SECONDS));
 
         //Start Example 52
@@ -976,7 +976,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         // End Example 55
 
         FutureResultCallback<Long> check1 = new FutureResultCallback<Long>();
-        collection.count(check1);
+        collection.countDocuments(check1);
         assertEquals(Long.valueOf(5), check1.get(10, TimeUnit.SECONDS));
 
         //Start Example 57
@@ -991,7 +991,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         //End Example 57
 
         FutureResultCallback<Long> check2 = new FutureResultCallback<Long>();
-        collection.count(check2);
+        collection.countDocuments(check2);
         assertEquals(Long.valueOf(2), check2.get(10, TimeUnit.SECONDS));
 
         //Start Example 58
@@ -1006,7 +1006,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         //End Example 58
 
         FutureResultCallback<Long> check3 = new FutureResultCallback<Long>();
-        collection.count(check3);
+        collection.countDocuments(check3);
         assertEquals(Long.valueOf(1), check3.get(10, TimeUnit.SECONDS));
 
         //Start Example 56
@@ -1021,7 +1021,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         //End Example 56
 
         FutureResultCallback<Long> check4 = new FutureResultCallback<Long>();
-        collection.count(check4);
+        collection.countDocuments(check4);
         assertEquals(Long.valueOf(0), check4.get(10, TimeUnit.SECONDS));
     }
 

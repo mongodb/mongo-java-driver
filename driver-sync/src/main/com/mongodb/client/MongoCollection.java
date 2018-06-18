@@ -27,6 +27,7 @@ import com.mongodb.client.model.CountOptions;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.DropIndexOptions;
+import com.mongodb.client.model.EstimatedDocumentCountOptions;
 import com.mongodb.client.model.FindOneAndDeleteOptions;
 import com.mongodb.client.model.FindOneAndReplaceOptions;
 import com.mongodb.client.model.FindOneAndUpdateOptions;
@@ -154,7 +155,9 @@ public interface MongoCollection<TDocument> {
      * Counts the number of documents in the collection.
      *
      * @return the number of documents in the collection
+     * @deprecated use {@link #countDocuments()} or {@link #estimatedDocumentCount()} instead
      */
+    @Deprecated
     long count();
 
     /**
@@ -162,7 +165,9 @@ public interface MongoCollection<TDocument> {
      *
      * @param filter the query filter
      * @return the number of documents in the collection
+     * @deprecated use {@link #countDocuments(Bson)} instead
      */
+    @Deprecated
     long count(Bson filter);
 
     /**
@@ -171,7 +176,9 @@ public interface MongoCollection<TDocument> {
      * @param filter  the query filter
      * @param options the options describing the count
      * @return the number of documents in the collection
+     * @deprecated use {@link #countDocuments(Bson, CountOptions)} instead
      */
+    @Deprecated
     long count(Bson filter, CountOptions options);
 
     /**
@@ -181,7 +188,9 @@ public interface MongoCollection<TDocument> {
      * @return the number of documents in the collection
      * @since 3.6
      * @mongodb.server.release 3.6
+     * @deprecated use {@link #countDocuments(ClientSession)} instead
      */
+    @Deprecated
     long count(ClientSession clientSession);
 
     /**
@@ -192,7 +201,9 @@ public interface MongoCollection<TDocument> {
      * @return the number of documents in the collection
      * @since 3.6
      * @mongodb.server.release 3.6
+     * @deprecated use {@link #countDocuments(ClientSession, Bson)} instead
      */
+    @Deprecated
     long count(ClientSession clientSession, Bson filter);
 
     /**
@@ -204,8 +215,87 @@ public interface MongoCollection<TDocument> {
      * @return the number of documents in the collection
      * @since 3.6
      * @mongodb.server.release 3.6
+     * @deprecated use {@link #countDocuments(ClientSession, Bson, CountOptions)} instead
      */
+    @Deprecated
     long count(ClientSession clientSession, Bson filter, CountOptions options);
+
+    /**
+     * Counts the number of documents in the collection.
+     *
+     * @return the number of documents in the collection
+     * @since 3.8
+     */
+    long countDocuments();
+
+    /**
+     * Counts the number of documents in the collection according to the given options.
+     *
+     * @param filter the query filter
+     * @return the number of documents in the collection
+     * @since 3.8
+     */
+    long countDocuments(Bson filter);
+
+    /**
+     * Counts the number of documents in the collection according to the given options.
+     *
+     * @param filter  the query filter
+     * @param options the options describing the count
+     * @return the number of documents in the collection
+     * @since 3.8
+     */
+    long countDocuments(Bson filter, CountOptions options);
+
+    /**
+     * Counts the number of documents in the collection.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @return the number of documents in the collection
+     * @since 3.8
+     * @mongodb.server.release 3.6
+     */
+    long countDocuments(ClientSession clientSession);
+
+    /**
+     * Counts the number of documents in the collection according to the given options.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param filter the query filter
+     * @return the number of documents in the collection
+     * @since 3.8
+     * @mongodb.server.release 3.6
+     */
+    long countDocuments(ClientSession clientSession, Bson filter);
+
+    /**
+     * Counts the number of documents in the collection according to the given options.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param filter  the query filter
+     * @param options the options describing the count
+     * @return the number of documents in the collection
+     * @since 3.8
+     * @mongodb.server.release 3.6
+     */
+    long countDocuments(ClientSession clientSession, Bson filter, CountOptions options);
+
+    /**
+     * Gets an estimate of the count of documents in a collection using collection metadata.
+     *
+     * @return the number of documents in the collection
+     * @since 3.8
+     */
+    long estimatedDocumentCount();
+
+    /**
+     * Gets an estimate of the count of documents in a collection using collection metadata.
+     *
+     * @param options the options describing the count
+     * @return the number of documents in the collection
+     * @since 3.8
+     */
+    long estimatedDocumentCount(EstimatedDocumentCountOptions options);
 
     /**
      * Gets the distinct values of the specified field name.

@@ -262,11 +262,11 @@ If no top-level `_id` field is specified in the document, MongoDB automatically 
 
 ## Count Documents in A Collection
 
-To count the number of documents in a collection, you can use the collection's [`count()`]({{< apiref "com/mongodb/client/MongoCollection#count--">}})
+To count the number of documents in a collection, you can use the collection's [`countDocuments()`]({{< apiref "com/mongodb/client/MongoCollection#countDocuments--">}})
 method.  The following code should print `101` (the 100 inserted via `insertMany` plus the 1 inserted via the `insertOne`).
 
 ```java
-System.out.println(collection.count());
+System.out.println(collection.countDocuments());
 ```
 
 ## Query the Collection

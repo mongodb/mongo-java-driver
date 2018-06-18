@@ -94,11 +94,15 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     }
 
     def 'should set optional values correctly'(){
+        given:
+        def hint = BsonDocument.parse('{a: 1}')
+
         when:
         AggregateOperation operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec())
                 .allowDiskUse(true)
                 .batchSize(10)
                 .collation(defaultCollation)
+                .hint(hint)
                 .maxAwaitTime(10, MILLISECONDS)
                 .maxTime(10, MILLISECONDS)
                 .useCursor(true)
@@ -110,6 +114,31 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         operation.getMaxAwaitTime(MILLISECONDS) == 10
         operation.getMaxTime(MILLISECONDS) == 10
         operation.getUseCursor()
+        operation.getHint() == hint
+    }
+
+    def 'should throw when using invalid hint'() {
+        given:
+        def hint = new BsonString('ok')
+        def operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).hint(hint)
+
+        when:
+        operation.getHint()
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        def result = operation.getHintBsonValue()
+
+        then:
+        result == hint
+
+        when:
+        operation.hint(new BsonInt32(1))
+
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'should create the expected command'() {
@@ -352,8 +381,8 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'should apply $hint'() {
         given:
-        def hint = new BsonDocument('a', new BsonInt32(1))
-        collectionHelper.createIndex(hint)
+        def index = new BsonDocument('a', new BsonInt32(1))
+        collectionHelper.createIndex(index)
 
         def operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec())
                 .hint(hint)
@@ -363,10 +392,10 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         BsonDocument explainPlan = execute(operation.asExplainableOperation(QUERY_PLANNER), async)
 
         then:
-        getKeyPattern(explainPlan.getArray('stages').get(0).asDocument().getDocument('$cursor')) == hint
+        getKeyPattern(explainPlan.getArray('stages').get(0).asDocument().getDocument('$cursor')) == index
 
         where:
-        async << [true, false]
+        [async, hint] << [[true, false], [BsonDocument.parse('{a: 1}'), new BsonString('a_1')]].combinations()
     }
 
     @IgnoreIf({ isSharded() || !serverVersionAtLeast(3, 6) })

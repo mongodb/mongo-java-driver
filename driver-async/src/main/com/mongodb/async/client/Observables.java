@@ -59,7 +59,7 @@ public final class Observables {
      * {@code
      *    Observable<Long> countObservable = observe(new Block<SingleResultCallback<Long>>() {
      *        public void apply(final SingleResultCallback<Long> callback) {
-     *            collection.count(callback);
+     *            collection.countDocuments(callback);
      *        }
      *    });
      * }

@@ -268,7 +268,7 @@ To count the number of documents in a collection, you can use the collection's [
 method.  The following code should print `101` (the 100 inserted via `insertMany` plus the 1 inserted via the `insertOne`).
 
 ```java
-collection.count(
+collection.countDocuments(
   new SingleResultCallback<Long>() {
       @Override
       public void onResult(final Long count, final Throwable t) {

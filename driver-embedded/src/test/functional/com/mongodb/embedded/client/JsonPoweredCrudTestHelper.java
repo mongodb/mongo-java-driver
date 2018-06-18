@@ -161,6 +161,7 @@ public class JsonPoweredCrudTestHelper {
         return toResult(iterable);
     }
 
+    @SuppressWarnings("deprecation")
     BsonDocument getCountResult(final BsonDocument arguments) {
         CountOptions options = new CountOptions();
         if (arguments.containsKey("skip")) {
@@ -173,6 +174,27 @@ public class JsonPoweredCrudTestHelper {
             options.collation(getCollation(arguments.getDocument("collation")));
         }
         return toResult((int) collection.count(arguments.getDocument("filter"), options));
+    }
+
+    BsonDocument getEstimatedDocumentCountResult(final BsonDocument arguments) {
+        if (!arguments.isEmpty()) {
+            throw new UnsupportedOperationException("Unexpected arguments: " + arguments);
+        }
+        return toResult((int) collection.estimatedDocumentCount());
+    }
+
+    BsonDocument getCountDocumentsResult(final BsonDocument arguments) {
+        CountOptions options = new CountOptions();
+        if (arguments.containsKey("skip")) {
+            options.skip(arguments.getNumber("skip").intValue());
+        }
+        if (arguments.containsKey("limit")) {
+            options.limit(arguments.getNumber("limit").intValue());
+        }
+        if (arguments.containsKey("collation")) {
+            options.collation(getCollation(arguments.getDocument("collation")));
+        }
+        return toResult((int) collection.countDocuments(arguments.getDocument("filter"), options));
     }
 
     BsonDocument getDistinctResult(final BsonDocument arguments) {

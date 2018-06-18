@@ -132,7 +132,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         collection.insertMany(asList(journal, mat, mousePad));
         // End Example 3
 
-        assertEquals(4, collection.count());
+        assertEquals(4, collection.countDocuments());
     }
 
     @Test
@@ -147,7 +147,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         ));
         // End Example 6
 
-        assertEquals(5, collection.count());
+        assertEquals(5, collection.countDocuments());
 
         // Start Example 7
         FindIterable<Document> findIterable = collection.find(new Document());
@@ -207,7 +207,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         ));
         // End Example 14
 
-        assertEquals(5, collection.count());
+        assertEquals(5, collection.countDocuments());
 
         // Start Example 15
         FindIterable<Document> findIterable = collection.find(eq("size", Document.parse("{ h: 14, w: 21, uom: 'cm' }")));
@@ -257,7 +257,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         ));
         //End Example 20
 
-        assertEquals(5, collection.count());
+        assertEquals(5, collection.countDocuments());
 
         //Start Example 21
         FindIterable<Document> findIterable = collection.find(eq("tags", asList("red", "blank")));
@@ -321,7 +321,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         ));
         //End Example 29
 
-        assertEquals(5, collection.count());
+        assertEquals(5, collection.countDocuments());
 
         //Start Example 30
         FindIterable<Document> findIterable = collection.find(eq("instock", Document.parse("{ warehouse: 'A', qty: 5 }")));
@@ -382,7 +382,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         ));
         //End Example 38
 
-        assertEquals(2, collection.count());
+        assertEquals(2, collection.countDocuments());
 
         //Start Example 39
         FindIterable<Document> findIterable = collection.find(eq("item", null));
@@ -418,7 +418,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         ));
         //End Example 42
 
-        assertEquals(5, collection.count());
+        assertEquals(5, collection.countDocuments());
 
         //Start Example 43
         FindIterable<Document> findIterable = collection.find(eq("status", "A"));
@@ -534,7 +534,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
         ));
         //End Example 51
 
-        assertEquals(10, collection.count());
+        assertEquals(10, collection.countDocuments());
 
         //Start Example 52
         collection.updateOne(eq("item", "paper"),
@@ -593,25 +593,25 @@ public final class DocumentationSamples extends DatabaseTestCase {
         ));
         //End Example 55
 
-        assertEquals(5, collection.count());
+        assertEquals(5, collection.countDocuments());
 
         //Start Example 57
         collection.deleteMany(eq("status", "A"));
         //End Example 57
 
-        assertEquals(2, collection.count());
+        assertEquals(2, collection.countDocuments());
 
         //Start Example 58
         collection.deleteOne(eq("status", "D"));
         //End Example 58
 
-        assertEquals(1, collection.count());
+        assertEquals(1, collection.countDocuments());
 
         //Start Example 56
         collection.deleteMany(new Document());
         //End Example 56
 
-        assertEquals(0, collection.count());
+        assertEquals(0, collection.countDocuments());
     }
 
     @Test

@@ -23,6 +23,7 @@ import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CountOptions;
+import com.mongodb.internal.client.model.CountStrategy;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.DropIndexOptions;
@@ -69,8 +70,8 @@ public final class SyncOperations<TDocument> {
         this.operations = new Operations<TDocument>(namespace, documentClass, readPreference, codecRegistry, writeConcern, retryWrites);
     }
 
-    public ReadOperation<Long> count(final Bson filter, final CountOptions options) {
-        return operations.count(filter, options);
+    public ReadOperation<Long> count(final Bson filter, final CountOptions options, final CountStrategy countStrategy) {
+        return operations.count(filter, options, countStrategy);
     }
 
     public <TResult> ReadOperation<BatchCursor<TResult>> findFirst(final Bson filter, final Class<TResult> resultClass,

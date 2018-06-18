@@ -47,7 +47,7 @@ class  MongoClientsSpecification extends FunctionalSpecification {
         database.runCommand(new Document('profile', 2))
 
         when:
-        collection.count()
+        collection.countDocuments()
 
         then:
         Document profileDocument = profileCollection.find().first()
@@ -100,7 +100,7 @@ class  MongoClientsSpecification extends FunctionalSpecification {
 
         when:
         for (int i = 0; i < 10; i++) {
-            collection.count()
+            collection.countDocuments()
         }
 
         then:

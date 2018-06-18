@@ -131,7 +131,7 @@ public class QuickTourAdmin {
         collection.insertOne(new Document("_id", 2).append("content", "irrelevant content"), callbackWhenFinished);
 
         // Find using the text index
-        collection.count(text("textual content -irrelevant"), new SingleResultCallback<Long>() {
+        collection.countDocuments(text("textual content -irrelevant"), new SingleResultCallback<Long>() {
             @Override
             public void onResult(final Long matchCount, final Throwable t) {
                 System.out.println("Text search matches: " + matchCount);
@@ -141,7 +141,7 @@ public class QuickTourAdmin {
 
         // Find using the $language operator
         Bson textSearch = text("textual content -irrelevant", new TextSearchOptions().language("english"));
-        collection.count(textSearch, new SingleResultCallback<Long>() {
+        collection.countDocuments(textSearch, new SingleResultCallback<Long>() {
             @Override
             public void onResult(final Long matchCount, final Throwable t) {
                 System.out.println("Text search matches (english): " + matchCount);
