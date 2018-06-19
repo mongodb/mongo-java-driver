@@ -24,7 +24,6 @@ import com.mongodb.client.model.changestream.OperationType;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.connection.ServerVersion;
 import com.mongodb.event.CommandEvent;
-import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
@@ -191,21 +190,6 @@ public class ChangeStreamsTest {
             for (int i = 0; i < expectedEvents.size(); i++) {
                 CommandEvent expectedEvent = expectedEvents.get(i);
                 CommandEvent event = events.get(i);
-                if (expectedEvent instanceof CommandStartedEvent && event instanceof CommandStartedEvent) {
-                    BsonDocument eventCommand = ((CommandStartedEvent) event).getCommand();
-
-                    BsonDocument eventChangeStream = eventCommand.getArray("pipeline").get(0).asDocument().getDocument("$changeStream");
-
-                    BsonDocument expectedChangeStream = ((CommandStartedEvent) expectedEvent).getCommand().getArray("pipeline").get(0)
-                            .asDocument().getDocument("$changeStream");
-
-                    if (expectedChangeStream.containsKey("startAtOperationTime") && eventChangeStream.containsKey("startAtOperationTime")) {
-                        eventChangeStream.put("startAtOperationTime", expectedChangeStream.get("startAtOperationTime"));
-                    } else {
-                        eventChangeStream.remove("startAtOperationTime");
-                    }
-                }
-
                 CommandMonitoringTestHelper.assertEventsEquality(singletonList(expectedEvent), singletonList(event));
             }
         }

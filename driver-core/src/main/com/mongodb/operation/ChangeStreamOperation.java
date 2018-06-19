@@ -42,7 +42,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionFourDotZero;
 
 /**
  * An operation that executes an {@code $changeStream} aggregation.
@@ -284,8 +283,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
     private AggregateOperationImpl.PipelineCreator getPipelineCreator() {
         return new AggregateOperationImpl.PipelineCreator() {
             @Override
-            public BsonArray create(final ConnectionDescription description, final SessionContext sessionContext,
-                                    final BsonTimestamp clusterTime) {
+            public BsonArray create(final ConnectionDescription description, final SessionContext sessionContext) {
                 List<BsonDocument> changeStreamPipeline = new ArrayList<BsonDocument>();
                 BsonDocument changeStream = new BsonDocument("fullDocument", new BsonString(fullDocument.getValue()));
 
@@ -297,13 +295,8 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
                     changeStream.append("resumeAfter", resumeToken);
                 }
 
-                BsonTimestamp startAtTime = startAtOperationTime;
-                if (startAtTime == null && resumeToken == null && serverIsAtLeastVersionFourDotZero(description)) {
-                    startAtTime = clusterTime;
-                }
-
-                if (startAtTime != null) {
-                    changeStream.append("startAtOperationTime", startAtTime);
+                if (startAtOperationTime != null) {
+                    changeStream.append("startAtOperationTime", startAtOperationTime);
                 }
 
                 changeStreamPipeline.add(new BsonDocument("$changeStream", changeStream));

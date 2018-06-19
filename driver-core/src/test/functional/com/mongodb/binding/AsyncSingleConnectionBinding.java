@@ -24,11 +24,10 @@ import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.session.SessionContext;
 import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.selector.ReadPreferenceServerSelector;
 import com.mongodb.selector.WritableServerSelector;
-import org.bson.BsonTimestamp;
+import com.mongodb.session.SessionContext;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -154,11 +153,6 @@ public class AsyncSingleConnectionBinding extends AbstractReferenceCounted imple
     @Override
     public SessionContext getSessionContext() {
         return NoOpSessionContext.INSTANCE;
-    }
-
-    @Override
-    public BsonTimestamp getClusterTime() {
-        throw new UnsupportedOperationException();
     }
 
     @Override

@@ -27,7 +27,6 @@ import com.mongodb.selector.ReadPreferenceServerSelector;
 import com.mongodb.selector.ServerSelector;
 import com.mongodb.selector.WritableServerSelector;
 import com.mongodb.session.SessionContext;
-import org.bson.BsonTimestamp;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -85,11 +84,6 @@ public class ClusterBinding extends AbstractReferenceCounted implements ReadWrit
     @Override
     public SessionContext getSessionContext() {
         return new ReadConcernAwareNoOpSessionContext(readConcern);
-    }
-
-    @Override
-    public BsonTimestamp getClusterTime() {
-        return cluster.getClusterTime();
     }
 
     @Override

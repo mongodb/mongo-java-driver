@@ -37,7 +37,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
-import org.bson.BsonTimestamp;
 import org.bson.BsonValue;
 import org.bson.codecs.Decoder;
 
@@ -192,7 +191,7 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
             public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
                 validateReadConcernAndCollation(connection, binding.getSessionContext().getReadConcern(), collation);
                 return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(),
-                        getCommand(connection.getDescription(), binding.getSessionContext(), binding.getClusterTime()),
+                        getCommand(connection.getDescription(), binding.getSessionContext()),
                         CommandResultDocumentCodec.create(decoder, FIELD_NAMES_WITH_RESULT),
                         connection, transformer(source, connection));
             }
@@ -218,8 +217,7 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
                                         wrappedCallback.onResult(null, t);
                                     } else {
                                         executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
-                                                getCommand(connection.getDescription(), binding.getSessionContext(),
-                                                        binding.getClusterTime()),
+                                                getCommand(connection.getDescription(), binding.getSessionContext()),
                                                 CommandResultDocumentCodec.create(decoder, FIELD_NAMES_WITH_RESULT),
                                                 connection, asyncTransformer(source, connection), wrappedCallback);
                                     }
@@ -234,12 +232,11 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
         return !serverIsAtLeastVersionThreeDotSix(description) && ((useCursor != null && !useCursor));
     }
 
-    private BsonDocument getCommand(final ConnectionDescription description, final SessionContext sessionContext,
-                                    final BsonTimestamp clusterTime) {
+    private BsonDocument getCommand(final ConnectionDescription description, final SessionContext sessionContext) {
         BsonDocument commandDocument = new BsonDocument("aggregate", aggregateTarget.create());
 
         appendReadConcernToCommand(sessionContext, commandDocument);
-        commandDocument.put("pipeline", pipelineCreator.create(description, sessionContext, clusterTime));
+        commandDocument.put("pipeline", pipelineCreator.create(description, sessionContext));
         if (maxTimeMS > 0) {
             commandDocument.put("maxTimeMS", new BsonInt64(maxTimeMS));
         }
@@ -303,7 +300,7 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     }
 
     interface PipelineCreator {
-        BsonArray create(ConnectionDescription connectionDescription, SessionContext sessionContext, BsonTimestamp clusterTime);
+        BsonArray create(ConnectionDescription connectionDescription, SessionContext sessionContext);
     }
 
     private static AggregateTarget defaultAggregateTarget(final String collectionName) {
@@ -318,8 +315,7 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     private static PipelineCreator defaultPipelineCreator(final List<BsonDocument> pipeline) {
         return new PipelineCreator() {
             @Override
-            public BsonArray create(final ConnectionDescription connectionDescription, final SessionContext sessionContext,
-                                    final BsonTimestamp clusterTime) {
+            public BsonArray create(final ConnectionDescription connectionDescription, final SessionContext sessionContext) {
                 return new BsonArray(pipeline);
             }
         };
