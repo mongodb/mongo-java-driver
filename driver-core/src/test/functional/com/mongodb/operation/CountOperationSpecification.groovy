@@ -178,6 +178,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         [async, strategy] << [[true, false], [CountStrategy.AGGREGATE, CountStrategy.COMMAND]].combinations()
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'should use hint with the count'() {
         given:
         def indexDefinition = new BsonDocument('y', new BsonInt32(1))
@@ -189,13 +190,23 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         def count = execute(operation, async)
 
         then:
-        count == (serverVersionAtLeast(3, 4) ? 1 : documents.size())
+        count == 1
 
         where:
         [async, strategy] << [[true, false], [CountStrategy.AGGREGATE, CountStrategy.COMMAND]].combinations()
     }
 
-    def 'should throw with bad hint with mongod 2.6+'() {
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    def 'should support hints that are bson documents or strings'() {
+        expect:
+        execute(new CountOperation(getNamespace(), strategy).hint(hint), async) == 5
+
+        where:
+        [async, strategy, hint] << [[true, false], [CountStrategy.AGGREGATE, CountStrategy.COMMAND],
+                                    [new BsonString('_id_'), BsonDocument.parse('{_id: 1}')]].combinations()
+    }
+
+    def 'should throw with bad hint'() {
         given:
         def operation = new CountOperation(getNamespace(), strategy)
                 .filter(new BsonDocument('a', new BsonInt32(1)))
@@ -209,15 +220,6 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
 
         where:
         [async, strategy] << [[true, false], [CountStrategy.AGGREGATE, CountStrategy.COMMAND]].combinations()
-    }
-
-    def 'should support hints that are bson documents or strings'() {
-        expect:
-        execute(new CountOperation(getNamespace(), strategy).hint(hint), async) == 5
-
-        where:
-        [async, strategy, hint] << [[true, false], [CountStrategy.AGGREGATE, CountStrategy.COMMAND],
-                                    [new BsonString('_id_'), BsonDocument.parse('{_id: 1}')]].combinations()
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 0) || isSharded() })
