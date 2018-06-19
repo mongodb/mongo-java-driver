@@ -20,9 +20,8 @@ import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.session.SessionContext;
 import com.mongodb.internal.connection.NoOpSessionContext;
-import org.bson.BsonTimestamp;
+import com.mongodb.session.SessionContext;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -58,11 +57,6 @@ public class AsyncSingleConnectionReadBinding extends AbstractReferenceCounted i
     @Override
     public SessionContext getSessionContext() {
         return NoOpSessionContext.INSTANCE;
-    }
-
-    @Override
-    public BsonTimestamp getClusterTime() {
-        throw new UnsupportedOperationException();
     }
 
     @Override

@@ -19,7 +19,6 @@ package com.mongodb.binding;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.session.SessionContext;
-import org.bson.BsonTimestamp;
 
 /**
  * An asynchronous factory of connection sources to servers that can be read from and that satisfy the specified read preference.
@@ -41,14 +40,6 @@ public interface AsyncReadBinding extends ReferenceCounted {
      * @since 3.6
      */
     SessionContext getSessionContext();
-
-    /**
-     * Get the last seen cluster time
-     *
-     * @since 3.8
-     * @return the last seen cluster time
-     */
-    BsonTimestamp getClusterTime();
 
     /**
      * Returns a connection source to a server that satisfies the specified read preference.

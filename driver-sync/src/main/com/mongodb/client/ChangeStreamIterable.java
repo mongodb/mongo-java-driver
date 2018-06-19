@@ -91,7 +91,7 @@ public interface ChangeStreamIterable<TResult> extends MongoIterable<ChangeStrea
     <TDocument> MongoIterable<TDocument> withDocumentClass(Class<TDocument> clazz);
 
     /**
-     * The change stream will only provides changes that occurred after the specified timestamp.
+     * The change stream will only provide changes that occurred at or after the specified timestamp.
      *
      * <p>Any command run against the server will return an operation time that can be used here.</p>
      * <p>The default value is an operation time obtained from the server before the change stream was created.</p>

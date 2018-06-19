@@ -28,7 +28,6 @@ import com.mongodb.selector.ReadPreferenceServerSelector;
 import com.mongodb.selector.ServerSelector;
 import com.mongodb.selector.WritableServerSelector;
 import com.mongodb.session.SessionContext;
-import org.bson.BsonTimestamp;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -83,11 +82,6 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
     @Override
     public SessionContext getSessionContext() {
         return new ReadConcernAwareNoOpSessionContext(readConcern);
-    }
-
-    @Override
-    public BsonTimestamp getClusterTime() {
-        return cluster.getClusterTime();
     }
 
     @Override

@@ -22,10 +22,9 @@ import com.mongodb.connection.Cluster;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.session.SessionContext;
 import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.selector.ServerAddressSelector;
-import org.bson.BsonTimestamp;
+import com.mongodb.session.SessionContext;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -78,11 +77,6 @@ public class SingleServerBinding extends AbstractReferenceCounted implements Rea
     @Override
     public SessionContext getSessionContext() {
         return NoOpSessionContext.INSTANCE;
-    }
-
-    @Override
-    public BsonTimestamp getClusterTime() {
-        return cluster.getClusterTime();
     }
 
     @Override

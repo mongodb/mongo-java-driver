@@ -110,6 +110,9 @@
         <rule-config name='ParameterCount'>
             <property name='doNotApplyToFilesMatching' value='.*Specification.groovy'/>
         </rule-config>
+        <rule-config name='NestedBlockDepth'>
+            <property name='doNotApplyToFilesMatching' value='.*Specification.groovy'/>
+        </rule-config>
         <exclude name='CrapMetric'/>
         <exclude name='AbcMetric'/>
         <exclude name='MethodSize'/>
