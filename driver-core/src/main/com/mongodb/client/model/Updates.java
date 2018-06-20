@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
 import org.bson.BsonInt32;
@@ -68,12 +69,12 @@ public final class Updates {
      * Creates an update that sets the value of the field with the given name to the given value.
      *
      * @param fieldName the non-null field name
-     * @param value     the value
+     * @param value     the value, which may be null
      * @param <TItem>   the value type
      * @return the update
      * @mongodb.driver.manual reference/operator/update/set/ $set
      */
-    public static <TItem> Bson set(final String fieldName, final TItem value) {
+    public static <TItem> Bson set(final String fieldName, @Nullable final TItem value) {
         return new SimpleUpdate<TItem>(fieldName, value, "$set");
     }
 
@@ -93,13 +94,13 @@ public final class Updates {
      * results in an insert of a document.
      *
      * @param fieldName the non-null field name
-     * @param value     the value
+     * @param value     the value, which may be null
      * @param <TItem>   the value type
      * @return the update
      * @mongodb.driver.manual reference/operator/update/setOnInsert/ $setOnInsert
      * @see UpdateOptions#upsert(boolean)
      */
-    public static <TItem> Bson setOnInsert(final String fieldName, final TItem value) {
+    public static <TItem> Bson setOnInsert(final String fieldName, @Nullable final TItem value) {
         return new SimpleUpdate<TItem>(fieldName, value, "$setOnInsert");
     }
 
@@ -200,12 +201,12 @@ public final class Updates {
      * already present, in which case it does nothing
      *
      * @param fieldName the non-null field name
-     * @param value     the value
+     * @param value     the value, which may be null
      * @param <TItem>   the value type
      * @return the update
      * @mongodb.driver.manual reference/operator/update/addToSet/ $addToSet
      */
-    public static <TItem> Bson addToSet(final String fieldName, final TItem value) {
+    public static <TItem> Bson addToSet(final String fieldName, @Nullable final TItem value) {
         return new SimpleUpdate<TItem>(fieldName, value, "$addToSet");
     }
 
@@ -227,12 +228,12 @@ public final class Updates {
      * Creates an update that adds the given value to the array value of the field with the given name.
      *
      * @param fieldName the non-null field name
-     * @param value     the value
+     * @param value     the value, which may be null
      * @param <TItem>   the value type
      * @return the update
      * @mongodb.driver.manual reference/operator/update/push/ $push
      */
-    public static <TItem> Bson push(final String fieldName, final TItem value) {
+    public static <TItem> Bson push(final String fieldName, @Nullable final TItem value) {
         return new SimpleUpdate<TItem>(fieldName, value, "$push");
     }
 
@@ -268,12 +269,12 @@ public final class Updates {
      * Creates an update that removes all instances of the given value from the array value of the field with the given name.
      *
      * @param fieldName the non-null field name
-     * @param value     the value
+     * @param value     the value, which may be null
      * @param <TItem>   the value type
      * @return the update
      * @mongodb.driver.manual reference/operator/update/pull/ $pull
      */
-    public static <TItem> Bson pull(final String fieldName, final TItem value) {
+    public static <TItem> Bson pull(final String fieldName, @Nullable final TItem value) {
         return new SimpleUpdate<TItem>(fieldName, value, "$pull");
     }
 

@@ -649,80 +649,95 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
+    @Nullable
     public TDocument findOneAndDelete(final Bson filter) {
         return findOneAndDelete(filter, new FindOneAndDeleteOptions());
     }
 
     @Override
+    @Nullable
     public TDocument findOneAndDelete(final Bson filter, final FindOneAndDeleteOptions options) {
         return executeFindOneAndDelete(null, filter, options);
     }
 
     @Override
+    @Nullable
     public TDocument findOneAndDelete(final ClientSession clientSession, final Bson filter) {
         return findOneAndDelete(clientSession, filter, new FindOneAndDeleteOptions());
     }
 
     @Override
+    @Nullable
     public TDocument findOneAndDelete(final ClientSession clientSession, final Bson filter, final FindOneAndDeleteOptions options) {
         notNull("clientSession", clientSession);
         return executeFindOneAndDelete(clientSession, filter, options);
     }
 
+    @Nullable
     private TDocument executeFindOneAndDelete(@Nullable final ClientSession clientSession, final Bson filter,
                                               final FindOneAndDeleteOptions options) {
         return executor.execute(operations.findOneAndDelete(filter, options), readConcern, clientSession);
     }
 
     @Override
+    @Nullable
     public TDocument findOneAndReplace(final Bson filter, final TDocument replacement) {
         return findOneAndReplace(filter, replacement, new FindOneAndReplaceOptions());
     }
 
     @Override
+    @Nullable
     public TDocument findOneAndReplace(final Bson filter, final TDocument replacement, final FindOneAndReplaceOptions options) {
         return executeFindOneAndReplace(null, filter, replacement, options);
     }
 
     @Override
+    @Nullable
     public TDocument findOneAndReplace(final ClientSession clientSession, final Bson filter, final TDocument replacement) {
         return findOneAndReplace(clientSession, filter, replacement, new FindOneAndReplaceOptions());
     }
 
     @Override
+    @Nullable
     public TDocument findOneAndReplace(final ClientSession clientSession, final Bson filter, final TDocument replacement,
                                        final FindOneAndReplaceOptions options) {
         notNull("clientSession", clientSession);
         return executeFindOneAndReplace(clientSession, filter, replacement, options);
     }
 
+    @Nullable
     private TDocument executeFindOneAndReplace(@Nullable final ClientSession clientSession, final Bson filter, final TDocument replacement,
                                                final FindOneAndReplaceOptions options) {
         return executor.execute(operations.findOneAndReplace(filter, replacement, options), readConcern, clientSession);
     }
 
     @Override
+    @Nullable
     public TDocument findOneAndUpdate(final Bson filter, final Bson update) {
         return findOneAndUpdate(filter, update, new FindOneAndUpdateOptions());
     }
 
     @Override
+    @Nullable
     public TDocument findOneAndUpdate(final Bson filter, final Bson update, final FindOneAndUpdateOptions options) {
         return executeFindOneAndUpdate(null, filter, update, options);
     }
 
     @Override
+    @Nullable
     public TDocument findOneAndUpdate(final ClientSession clientSession, final Bson filter, final Bson update) {
         return findOneAndUpdate(clientSession, filter, update, new FindOneAndUpdateOptions());
     }
 
     @Override
+    @Nullable
     public TDocument findOneAndUpdate(final ClientSession clientSession, final Bson filter, final Bson update,
                                       final FindOneAndUpdateOptions options) {
         notNull("clientSession", clientSession);
         return executeFindOneAndUpdate(clientSession, filter, update, options);
     }
 
+    @Nullable
     private TDocument executeFindOneAndUpdate(@Nullable final ClientSession clientSession, final Bson filter, final Bson update,
                                               final FindOneAndUpdateOptions options) {
         return executor.execute(operations.findOneAndUpdate(filter, update, options), readConcern, clientSession);

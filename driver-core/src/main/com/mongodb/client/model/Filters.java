@@ -58,14 +58,14 @@ public final class Filters {
      * Creates a filter that matches all documents where the value of _id field equals the specified value. Note that this doesn't
      * actually generate a $eq operator, as the query language doesn't require it.
      *
-     * @param value     the value
+     * @param value     the value, which may be null
      * @param <TItem>   the value type
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/eq $eq
      *
      * @since 3.4
      */
-    public static <TItem> Bson eq(final TItem value) {
+    public static <TItem> Bson eq(@Nullable final TItem value) {
         return eq("_id", value);
     }
 
@@ -74,12 +74,12 @@ public final class Filters {
      * actually generate a $eq operator, as the query language doesn't require it.
      *
      * @param fieldName the field name
-     * @param value     the value
+     * @param value     the value, which may be null
      * @param <TItem>   the value type
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/eq $eq
      */
-    public static <TItem> Bson eq(final String fieldName, final TItem value) {
+    public static <TItem> Bson eq(final String fieldName, @Nullable final TItem value) {
         return new SimpleEncodingFilter<TItem>(fieldName, value);
     }
 
@@ -87,12 +87,12 @@ public final class Filters {
      * Creates a filter that matches all documents where the value of the field name does not equal the specified value.
      *
      * @param fieldName the field name
-     * @param value     the value
+     * @param value     the value, which may be null
      * @param <TItem>   the value type
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/ne $ne
      */
-    public static <TItem> Bson ne(final String fieldName, final TItem value) {
+    public static <TItem> Bson ne(final String fieldName, @Nullable final TItem value) {
         return new OperatorFilter<TItem>("$ne", fieldName, value);
     }
 

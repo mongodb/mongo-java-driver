@@ -350,13 +350,13 @@ public final class Aggregates {
      * Creates a $group pipeline stage for the specified filter
      *
      * @param <TExpression>     the expression type
-     * @param id                the id expression for the group
+     * @param id                the id expression for the group, which may be null
      * @param fieldAccumulators zero or more field accumulator pairs
      * @return the $group pipeline stage
      * @mongodb.driver.manual reference/operator/aggregation/group/ $group
      * @mongodb.driver.manual meta/aggregation-quick-reference/#aggregation-expressions Expressions
      */
-    public static <TExpression> Bson group(final TExpression id, final BsonField... fieldAccumulators) {
+    public static <TExpression> Bson group(@Nullable final TExpression id, final BsonField... fieldAccumulators) {
         return group(id, asList(fieldAccumulators));
     }
 
@@ -364,13 +364,13 @@ public final class Aggregates {
      * Creates a $group pipeline stage for the specified filter
      *
      * @param <TExpression>     the expression type
-     * @param id                the id expression for the group
+     * @param id                the id expression for the group, which may be null
      * @param fieldAccumulators zero or more field accumulator pairs
      * @return the $group pipeline stage
      * @mongodb.driver.manual reference/operator/aggregation/group/ $group
      * @mongodb.driver.manual meta/aggregation-quick-reference/#aggregation-expressions Expressions
      */
-    public static <TExpression> Bson group(final TExpression id, final List<BsonField> fieldAccumulators) {
+    public static <TExpression> Bson group(@Nullable final TExpression id, final List<BsonField> fieldAccumulators) {
         return new GroupStage<TExpression>(id, fieldAccumulators);
     }
 
