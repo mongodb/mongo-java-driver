@@ -41,6 +41,7 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
+import com.mongodb.lang.Nullable;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -1151,6 +1152,7 @@ public interface MongoCollection<TDocument> {
      * @param filter the query filter to find the document with
      * @return the document that was removed.  If no documents matched the query filter, then null will be returned
      */
+    @Nullable
     TDocument findOneAndDelete(Bson filter);
 
     /**
@@ -1161,6 +1163,7 @@ public interface MongoCollection<TDocument> {
      * @param options the options to apply to the operation
      * @return the document that was removed.  If no documents matched the query filter, then null will be returned
      */
+    @Nullable
     TDocument findOneAndDelete(Bson filter, FindOneAndDeleteOptions options);
 
     /**
@@ -1173,6 +1176,7 @@ public interface MongoCollection<TDocument> {
      * @since 3.6
      * @mongodb.server.release 3.6
      */
+    @Nullable
     TDocument findOneAndDelete(ClientSession clientSession, Bson filter);
 
     /**
@@ -1186,6 +1190,7 @@ public interface MongoCollection<TDocument> {
      * @since 3.6
      * @mongodb.server.release 3.6
      */
+    @Nullable
     TDocument findOneAndDelete(ClientSession clientSession, Bson filter, FindOneAndDeleteOptions options);
 
     /**
@@ -1198,6 +1203,7 @@ public interface MongoCollection<TDocument> {
      * document as it was before the update or as it is after the update.  If no documents matched the query filter, then null will be
      * returned
      */
+    @Nullable
     TDocument findOneAndReplace(Bson filter, TDocument replacement);
 
     /**
@@ -1211,6 +1217,7 @@ public interface MongoCollection<TDocument> {
      * document as it was before the update or as it is after the update.  If no documents matched the query filter, then null will be
      * returned
      */
+    @Nullable
     TDocument findOneAndReplace(Bson filter, TDocument replacement, FindOneAndReplaceOptions options);
 
     /**
@@ -1226,6 +1233,7 @@ public interface MongoCollection<TDocument> {
      * @since 3.6
      * @mongodb.server.release 3.6
      */
+    @Nullable
     TDocument findOneAndReplace(ClientSession clientSession, Bson filter, TDocument replacement);
 
     /**
@@ -1242,6 +1250,7 @@ public interface MongoCollection<TDocument> {
      * @since 3.6
      * @mongodb.server.release 3.6
      */
+    @Nullable
     TDocument findOneAndReplace(ClientSession clientSession, Bson filter, TDocument replacement, FindOneAndReplaceOptions options);
 
     /**
@@ -1253,6 +1262,7 @@ public interface MongoCollection<TDocument> {
      * @return the document that was updated before the update was applied.  If no documents matched the query filter, then null will be
      * returned
      */
+    @Nullable
     TDocument findOneAndUpdate(Bson filter, Bson update);
 
     /**
@@ -1266,6 +1276,7 @@ public interface MongoCollection<TDocument> {
      * document as it was before the update or as it is after the update.  If no documents matched the query filter, then null will be
      * returned
      */
+    @Nullable
     TDocument findOneAndUpdate(Bson filter, Bson update, FindOneAndUpdateOptions options);
 
     /**
@@ -1280,6 +1291,7 @@ public interface MongoCollection<TDocument> {
      * @since 3.6
      * @mongodb.server.release 3.6
      */
+    @Nullable
     TDocument findOneAndUpdate(ClientSession clientSession, Bson filter, Bson update);
 
     /**
@@ -1296,6 +1308,7 @@ public interface MongoCollection<TDocument> {
      * @since 3.6
      * @mongodb.server.release 3.6
      */
+    @Nullable
     TDocument findOneAndUpdate(ClientSession clientSession, Bson filter, Bson update, FindOneAndUpdateOptions options);
 
     /**
