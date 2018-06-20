@@ -13,7 +13,16 @@ Key new features of the 3.8 Java driver release:
 
 ### Transactions
 
-The Java driver now provides support for executing CRUD operations within a transaction (requires MongoDB 4.0).
+The Java driver now provides support for executing CRUD operations within a transaction (requires MongoDB 4.0).  See the 
+[Transactions and MongoDB Drivers](https://docs.mongodb.com/master/core/transactions/#transactions-and-mongodb-drivers) section
+of the documentation and select the `Java (Sync)` tab.
+
+### Change Stream enhancements
+
+The Java driver now provides support for opening a change stream against an entire database, via new 
+[`MongoDatabase.watch`]({{<apiref "com/mongodb/client/MongoDatabase.html">}}) methods, or an 
+entire deployment, via new [`MongoClient.watch`]({{<apiref "com/mongodb/client/MongoClient.html">}}) methods. See 
+[Change Streams]({{<ref "driver/tutorials/change-streams.md">}}) for further details.
 
 ### SCRAM-256 Authentication Mechanism
 

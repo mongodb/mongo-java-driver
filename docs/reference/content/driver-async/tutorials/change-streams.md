@@ -8,7 +8,7 @@ title = "Change Streams"
   pre = "<i class='fa'></i>"
 +++
 
-## Change Streams - Draft
+## Change Streams
 
 MongoDB 3.6 introduces a new [`$changeStream`](http://dochub.mongodb.org/core/changestreams) aggregation pipeline
 operator.
@@ -74,12 +74,38 @@ For additional information on connecting to MongoDB, see [Connect to MongoDB]({{
 
 ## Watch the collection
 
-To create a change stream use the the [`MongoCollection.watch()`]({{<apiref "com/mongodb/client/MongoCollection.html#watch">}}) method.
+To create a change stream use one the [`MongoCollection.watch()`]({{<apiref "com/mongodb/async/client/MongoCollection.html#watch">}}) 
+methods.
 
 In the following example, the change stream prints out all changes it observes.
 
 ```java
 collection.watch().forEach(printBlock, callbackWhenFinished);
+```
+
+## Watch the database
+
+New in the 3.8 driver and MongoDB 4.0, applications can open a single change stream to watch all non-system collections of a database. To
+create such a change stream use one of the [`MongoDatabase.watch()`]({{<apiref "com/mongodb/async/client/MongoDatabase.html#watch">}}) 
+methods.
+
+In the following example, the change stream prints out all the changes it observes on the given database.
+
+```java
+database.watch().forEach(printBlock, callbackWhenFinished);
+```
+
+## Watch all databases
+
+New in the 3.8 driver and MongoDB 4.0, applications can open a single change stream to watch all non-system collections of all databases 
+in a MongoDB deployment. To create such a change stream use one of the 
+[`MongoClient.watch()`]({{<apiref "com/mongodb/async/client/MongoClient.html#watch">}}) methods.
+
+In the following example, the change stream prints out all the changes it observes on the deployement to which the `MongoClient` is
+connected
+
+```java
+mongoClient.watch().forEach(printBlock, callbackWhenFinished);
 ```
 
 ## Filtering content
