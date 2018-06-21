@@ -1,5 +1,7 @@
 /*
  * Copyright 2008-present MongoDB, Inc.
+ * Copyright 2010 The Guava Authors
+ * Copyright 2011 The Guava Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
