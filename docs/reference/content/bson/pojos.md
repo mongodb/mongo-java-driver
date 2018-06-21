@@ -363,13 +363,20 @@ import org.bson.codecs.pojo.annotations.*;
 
 @BsonDiscriminator
 public final class Person {
+
+    @BsonId
     public String personId;
     public String firstName;
+
+    @BsonProperty("surname")
     public String lastName;
-    
+
+    @BsonIgnore
+    public String password;
+
     @BsonProperty(useDiscriminator = true)
     public Address addr;
-    
+
     public Person(){
     }
 
@@ -379,7 +386,7 @@ public final class Person {
 The `Person` POJO Will produce BSON similar to:
 
 ```json
-{ "_id": "1234567890", "_t": "Person", "firstName": "Alan", "lastName": "Turing",
+{ "_id": "1234567890", "_t": "Person", "firstName": "Alan", "surname": "Turing",
   "address": { "_t": "Address", "address": "The Mansion", "street": "Sherwood Drive", 
                "town": "Bletchley", "postcode": "MK3 6EB" } }
 ```
