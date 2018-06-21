@@ -25,7 +25,6 @@ import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.connection.ServerVersion;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.CommandListener;
@@ -169,7 +168,8 @@ class EmbeddedServer implements Server, Closeable {
             long start = System.nanoTime();
             BsonDocument isMasterResult = CommandHelper.executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)),
                     clusterClock, connection);
-            return DescriptionHelper.createServerDescription(serverAddress, isMasterResult, new ServerVersion(), System.nanoTime() - start);
+            return DescriptionHelper.createServerDescription(serverAddress, isMasterResult, connection.getDescription().getServerVersion(),
+                    System.nanoTime() - start);
         } finally {
             connection.close();
         }
