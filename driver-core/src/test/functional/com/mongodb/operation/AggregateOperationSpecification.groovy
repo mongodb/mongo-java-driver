@@ -443,7 +443,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    @IgnoreIf({ !isStandalone() || !serverVersionAtLeast(3, 6) })
+    @IgnoreIf({ isStandalone() || !serverVersionAtLeast(3, 6) })
     def 'should be able to respect maxAwaitTime with pipeline'() {
         given:
         AggregateOperation operation = new AggregateOperation<Document>(getNamespace(), [
