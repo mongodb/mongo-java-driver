@@ -455,7 +455,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         def binding = Stub(ReadBinding) {
             getSessionContext() >> Stub(SessionContext) {
                 getReadConcern() >> ReadConcern.DEFAULT
-                getOperationTime() >> new BsonTimestamp()
+                getOperationTime() >> new BsonTimestamp(42, 1)
             }
             getReadConnectionSource() >> Stub(ConnectionSource) {
                 getConnection() >> Stub(Connection) {
@@ -479,7 +479,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         operation.execute(binding)
 
         then:
-        operation.getStartAtOperationTime() == new BsonTimestamp()
+        operation.getStartAtOperationTime() == new BsonTimestamp(42, 1)
 
         when: 'Set time'
         def startAtTime = new BsonTimestamp(42)

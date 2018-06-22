@@ -42,6 +42,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionFourDotZero;
 
 /**
  * An operation that executes an {@code $changeStream} aggregation.
@@ -60,6 +61,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
 
     private BsonDocument resumeToken;
     private BsonTimestamp startAtOperationTime;
+    private boolean startAtOperationTimeForResume;
 
     /**
      * Construct a new instance.
@@ -240,6 +242,17 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
         return this;
     }
 
+
+    void setStartOperationTimeForResume(final BsonTimestamp startAtOperationTime) {
+        if (startAtOperationTime == null && startAtOperationTimeForResume) {
+            this.startAtOperationTime = null;
+            startAtOperationTimeForResume = false;
+        } else if (this.startAtOperationTime == null && resumeToken == null)  {
+            this.startAtOperationTime = startAtOperationTime;
+            startAtOperationTimeForResume = true;
+        }
+    }
+
     /**
      * Returns the start at operation time
      *
@@ -296,7 +309,9 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
                 }
 
                 if (startAtOperationTime != null) {
-                    changeStream.append("startAtOperationTime", startAtOperationTime);
+                    if (!startAtOperationTimeForResume || serverIsAtLeastVersionFourDotZero(description)) {
+                        changeStream.append("startAtOperationTime", startAtOperationTime);
+                    }
                 }
 
                 changeStreamPipeline.add(new BsonDocument("$changeStream", changeStream));
@@ -305,5 +320,4 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
             }
         };
     }
-
 }

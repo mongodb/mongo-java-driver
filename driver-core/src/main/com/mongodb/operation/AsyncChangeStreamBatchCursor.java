@@ -40,9 +40,7 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncBatchCursor<T> {
     AsyncChangeStreamBatchCursor(final ChangeStreamOperation<T> changeStreamOperation,
                                  final AsyncBatchCursor<RawBsonDocument> wrapped,
                                  final AsyncReadBinding binding) {
-        if (changeStreamOperation.getResumeToken() == null && changeStreamOperation.getStartAtOperationTime() == null) {
-            changeStreamOperation.startAtOperationTime(binding.getSessionContext().getOperationTime());
-        }
+        changeStreamOperation.setStartOperationTimeForResume(binding.getSessionContext().getOperationTime());
         this.changeStreamOperation = changeStreamOperation;
         this.resumeToken = changeStreamOperation.getResumeToken();
         this.wrapped = wrapped;
@@ -117,7 +115,8 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncBatchCursor<T> {
 
     private void retryOperation(final AsyncBlock asyncBlock, final SingleResultCallback<List<RawBsonDocument>> callback) {
         if (resumeToken != null) {
-            changeStreamOperation.startAtOperationTime(null).resumeAfter(resumeToken);
+            changeStreamOperation.setStartOperationTimeForResume(null);
+            changeStreamOperation.resumeAfter(resumeToken);
         }
         changeStreamOperation.executeAsync(binding, new SingleResultCallback<AsyncBatchCursor<T>>() {
             @Override
