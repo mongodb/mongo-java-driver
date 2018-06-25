@@ -140,7 +140,7 @@ The following example will combine the default codec registry, with the `PojoCod
 `Codec`s:
 
 ```java
-CodecRegistry pojoCodecRegistry = fromRegistries(MongoClient.getDefaultCodecRegistry(),
+CodecRegistry pojoCodecRegistry = fromRegistries(MongoClientSettings.getDefaultCodecRegistry(),
                 fromProviders(PojoCodecProvider.builder().automatic(true).build()));
 ```
 
