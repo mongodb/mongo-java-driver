@@ -61,7 +61,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
 
     private BsonDocument resumeToken;
     private BsonTimestamp startAtOperationTime;
-    private boolean startAtOperationTimeForResume;
+    private BsonTimestamp startAtOperationTimeForResume;
 
     /**
      * Construct a new instance.
@@ -243,14 +243,9 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
     }
 
 
-    void setStartOperationTimeForResume(final BsonTimestamp startAtOperationTime) {
-        if (startAtOperationTime == null && startAtOperationTimeForResume) {
-            this.startAtOperationTime = null;
-            startAtOperationTimeForResume = false;
-        } else if (this.startAtOperationTime == null && resumeToken == null)  {
-            this.startAtOperationTime = startAtOperationTime;
-            startAtOperationTimeForResume = true;
-        }
+    ChangeStreamOperation<T> startOperationTimeForResume(final BsonTimestamp startAtOperationTime) {
+        startAtOperationTimeForResume = startAtOperationTime;
+        return this;
     }
 
     /**
@@ -309,9 +304,9 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
                 }
 
                 if (startAtOperationTime != null) {
-                    if (!startAtOperationTimeForResume || serverIsAtLeastVersionFourDotZero(description)) {
-                        changeStream.append("startAtOperationTime", startAtOperationTime);
-                    }
+                    changeStream.append("startAtOperationTime", startAtOperationTime);
+                } else if (resumeToken == null && startAtOperationTimeForResume != null && serverIsAtLeastVersionFourDotZero(description)) {
+                    changeStream.append("startAtOperationTime", startAtOperationTimeForResume);
                 }
 
                 changeStreamPipeline.add(new BsonDocument("$changeStream", changeStream));

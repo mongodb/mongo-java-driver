@@ -229,8 +229,9 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
                     throw translateCommandException(e, serverCursor);
                 }
             } else {
-                initFromQueryResult(connection.getMore(namespace, serverCursor.getId(),
-                        getNumberToReturn(limit, batchSize, count), decoder));
+                QueryResult<T> getMore = connection.getMore(namespace, serverCursor.getId(),
+                        getNumberToReturn(limit, batchSize, count), decoder);
+                initFromQueryResult(getMore);
             }
             if (limitReached()) {
                 killCursor(connection);

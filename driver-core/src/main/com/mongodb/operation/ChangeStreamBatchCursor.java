@@ -40,7 +40,7 @@ final class ChangeStreamBatchCursor<T> implements BatchCursor<T> {
     ChangeStreamBatchCursor(final ChangeStreamOperation<T> changeStreamOperation,
                             final BatchCursor<RawBsonDocument> wrapped,
                             final ReadBinding binding) {
-        changeStreamOperation.setStartOperationTimeForResume(binding.getSessionContext().getOperationTime());
+        changeStreamOperation.startOperationTimeForResume(binding.getSessionContext().getOperationTime());
         this.changeStreamOperation = changeStreamOperation;
         this.resumeToken = changeStreamOperation.getResumeToken();
         this.wrapped = wrapped;
@@ -139,7 +139,7 @@ final class ChangeStreamBatchCursor<T> implements BatchCursor<T> {
             wrapped.close();
 
             if (resumeToken != null) {
-                changeStreamOperation.setStartOperationTimeForResume(null);
+                changeStreamOperation.startOperationTimeForResume(null);
                 changeStreamOperation.resumeAfter(resumeToken);
             }
             wrapped = ((ChangeStreamBatchCursor<T>) changeStreamOperation.execute(binding)).getWrapped();
