@@ -18,8 +18,8 @@ package com.mongodb.async.client;
 
 import com.mongodb.Block;
 import com.mongodb.Function;
-import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.AsyncBatchCursor;
+import com.mongodb.async.SingleResultCallback;
 
 import java.util.Collection;
 
@@ -34,10 +34,6 @@ class MappingIterable<U, V> implements MongoIterable<V> {
         this.mapper = notNull("mapper", mapper);
     }
 
-    MongoIterable<U> getMapped() {
-        return iterable;
-    }
-
     @Override
     public void first(final SingleResultCallback<V> callback) {
         notNull("callback", callback);
@@ -46,6 +42,8 @@ class MappingIterable<U, V> implements MongoIterable<V> {
             public void onResult(final U result, final Throwable t) {
                 if (t != null) {
                     callback.onResult(null, t);
+                } else if (result == null) {
+                    callback.onResult(null, null);
                 } else {
                     callback.onResult(mapper.apply(result), null);
                 }
@@ -124,5 +122,9 @@ class MappingIterable<U, V> implements MongoIterable<V> {
                 }
             }
         });
+    }
+
+    MongoIterable<U> getMapped() {
+        return iterable;
     }
 }
