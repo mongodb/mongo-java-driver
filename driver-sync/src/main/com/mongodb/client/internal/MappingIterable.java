@@ -34,10 +34,6 @@ class MappingIterable<U, V> implements MongoIterable<V> {
         this.mapper = mapper;
     }
 
-    MongoIterable<U> getMapped() {
-        return iterable;
-    }
-
     @Override
     public MongoCursor<V> iterator() {
         return new MongoMappingCursor<U, V>(iterable.iterator(), mapper);
@@ -46,11 +42,11 @@ class MappingIterable<U, V> implements MongoIterable<V> {
     @Nullable
     @Override
     public V first() {
-        MongoCursor<V> iterator = iterator();
-        if (!iterator.hasNext()) {
+        U first = iterable.first();
+        if (first == null) {
             return null;
         }
-        return iterator.next();
+        return mapper.apply(first);
     }
 
     @Override
@@ -83,5 +79,9 @@ class MappingIterable<U, V> implements MongoIterable<V> {
     @Override
     public <W> MongoIterable<W> map(final Function<V, W> newMap) {
         return new MappingIterable<V, W>(this, newMap);
+    }
+
+    MongoIterable<U> getMapped() {
+        return iterable;
     }
 }
