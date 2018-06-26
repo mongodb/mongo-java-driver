@@ -53,14 +53,14 @@ The following table specifies the compatibility of the MongoDB Java driver for u
 
 The following table specifies the compatibility of the MongoDB Java driver for use with a specific version of Java.
 
-|Java Driver Version|Java 5 | Java 6 | Java 7 | Java 8 |
-|-------------------|-------|--------|--------|--------|
-|Version 3.8        |     | ✓ | ✓ | ✓ |
-|Version 3.7        |     | ✓ | ✓ | ✓ |
-|Version 3.6        |     | ✓ | ✓ | ✓ |
-|Version 3.5        |     | ✓ | ✓ | ✓ |
-|Version 3.4        |     | ✓ | ✓ | ✓ |
-|Version 3.3        |     | ✓ | ✓ | ✓ |
-|Version 3.2        |     | ✓ | ✓ | ✓ |
-|Version 3.1        |     | ✓ | ✓ | ✓ |
-|Version 3.0        |     | ✓ | ✓ | ✓ |
+|Java Driver Version|Java 5 | Java 6 | Java 7 | Java 8 | Java 9 |
+|-------------------|-------|--------|--------|--------|--------|
+|Version 3.8        |     | ✓ | ✓ | ✓ | ✓ |
+|Version 3.7        |     | ✓ | ✓ | ✓ | ✓ |
+|Version 3.6        |     | ✓ | ✓ | ✓ |   |
+|Version 3.5        |     | ✓ | ✓ | ✓ |   |
+|Version 3.4        |     | ✓ | ✓ | ✓ |   |
+|Version 3.3        |     | ✓ | ✓ | ✓ |   |
+|Version 3.2        |     | ✓ | ✓ | ✓ |   |
+|Version 3.1        |     | ✓ | ✓ | ✓ |   |
+|Version 3.0        |     | ✓ | ✓ | ✓ |   |
