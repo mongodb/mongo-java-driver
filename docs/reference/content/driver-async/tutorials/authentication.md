@@ -23,14 +23,17 @@ An authentication credential is represented as an instance of the
 [`MongoCredential`]({{< apiref "com/mongodb/MongoCredential" >}}) class. The [`MongoCredential`]({{<apiref "com/mongodb/MongoCredential.html">}}) class includes static
 factory methods for each of the supported authentication mechanisms.  
 
-You can also use the [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString" >}}) and pass it to a
-[`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create-com.mongodb.ConnectionString-" >}}) method.
+You can also use a connection string and pass it to a
+[`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create-String-" >}}) method.
 
 ## Default Authentication Mechanism
 
-Starting in MongoDB 3.0, MongoDB changed the default authentication
-mechanism from [`MONGODB-CR`]({{<docsref "core/security-mongodb-cr">}}) to
-[`SCRAM-SHA-1`]({{<docsref "core/security-scram-sha-1">}}).
+
+In MongoDB 3.0, MongoDB changed the default authentication mechanism from [`MONGODB-CR`]({{<docsref "core/security-mongodb-cr">}}) to
+[`SCRAM-SHA-1`]({{<docsref "core/security-scram">}}). In MongoDB 4.0 support for the deprecated
+[`MONGODB-CR`]({{<docsref "core/security-mongodb-cr">}}) mechanism was removed and
+[`SCRAM-SHA-256`]({{<docsref "core/security-scram">}}) support was added.
+
 
 To create a credential that will authenticate using the default
 authentication mechanism regardless of server version, create a
@@ -38,94 +41,125 @@ credential using the [`createCredential`]({{<apiref "com/mongodb/MongoCredential
 static factory method:
 
 ```java
-String user; // the user name
-String database; // the name of the database in which the user is defined
+String user;     // the user name
+String source;   // the source where the user is defined
 char[] password; // the password as a character array
 // ...
 
+MongoCredential credential = MongoCredential.createCredential(user, source, password);
 
-MongoCredential credential = MongoCredential.createCredential(user, database, password);
-
-ClusterSettings clusterSettings = ClusterSettings.builder()
-                                  .hosts(asList(new ServerAddress("localhost"))).build();
-MongoClientSettings settings = MongoClientSettings.builder()
-                                  .clusterSettings(clusterSettings)
-                                  .credential(credential)
-                                  .build();
-MongoClient mongoClient = MongoClients.create(settings);
-```
-
-Or use a `ConnectionString` instance that does not  specify the
-authentication mechanism:
-
-```java
 MongoClient mongoClient = MongoClients.create(
-            new ConnectionString("mongodb://user1:pwd1@host1/?authSource=db1"));
+        MongoClientSettings.builder()
+                .applyToClusterSettings(builder ->
+                        builder.hosts(Arrays.asList(new ServerAddress("host1", 27017))))
+                .credential(credential)
+                .build());
 ```
 
-For challenge and response mechanisms, using the default authentication
-mechanism is the recommended approach as it will make
-upgrading from MongoDB 2.6 to MongoDB 3.0 seamless, even after
-[upgrading the authentication schema]({{<docsref "release-notes/3.0-scram/">}}).
+Or use a connection string that does not  specify the authentication mechanism:
 
-## SCRAM-SHA-1
+```java
+MongoClient mongoClient = MongoClients.create("mongodb://user1:pwd1@host1/?authSource=db1");
+```
 
-To explicitly create a credential of type [`SCRAM-SHA-1`]({{<docsref "core/security-scram-sha-1/">}}), use the [`createScramSha1Credential`]({{<apiref "com/mongodb/MongoCredential.html#createScramSha1Credential-java.lang.String-java.lang.String-char:A-">}}) method:
+## SCRAM
+
+Salted Challenge Response Authentication Mechanism (`SCRAM`) has been the default authentication mechanism for MongoDB since 3.0. `SCRAM` is
+based on the [IETF RFC 5802](https://tools.ietf.org/html/rfc5802) standard that defines best practices for implementation of
+challenge-response mechanisms for authenticating users with passwords.
+
+MongoDB 3.0 introduced support for `SCRAM-SHA-1` which uses the `SHA-1` hashing function. MongoDB 4.0 introduced support for `SCRAM-SHA-256`
+which uses the `SHA-256` hashing function.
+
+### SCRAM-SHA-256
+
+Requires MongoDB 4.0 and `featureCompatibilityVersion` to be set to 4.0.
+
+To explicitly create a credential of type [`SCRAM-SHA-256`]({{<docsref "core/security-scram/">}}), use the
+[`createScramSha256Credential`]({{<apiref "com/mongodb/MongoCredential.html#createScramSha256Credential-java.lang.String-java.lang.String-char:A-">}})
+method:
+
+```java
+String user;     // the user name
+String source;   // the source where the user is defined
+char[] password; // the password as a character array
+// ...
+
+MongoCredential credential = MongoCredential.createScramSha256Credential(user, source, password);
+
+MongoClient mongoClient = MongoClients.create(
+        MongoClientSettings.builder()
+                .applyToClusterSettings(builder ->
+                        builder.hosts(Arrays.asList(new ServerAddress("host1", 27017))))
+                .credential(credential)
+                .build());
+```
+
+Or use a connection string that explicitly specifies the `authMechanism=SCRAM-SHA-256`:
+
+```java
+MongoClient mongoClient = MongoClients.create("mongodb://user1:pwd1@host1/?authSource=db1&authMechanism=SCRAM-SHA-256");
+```
+
+### SCRAM-SHA-1
+
+To explicitly create a credential of type [`SCRAM-SHA-1`]({{<docsref "core/security-scram-sha-1/">}}), use the
+[`createScramSha1Credential`]({{<apiref "com/mongodb/MongoCredential.html#createScramSha1Credential-java.lang.String-java.lang.String-char:A-">}}) method:
 
 
 ```java
-MongoCredential credential = MongoCredential.createScramSha1Credential(user,
-                                                                       database,
-                                                                       password);
+String user;     // the user name
+String source;   // the source where the user is defined
+char[] password; // the password as a character array
+// ...
 
-ClusterSettings clusterSettings = ClusterSettings.builder()
-                                  .hosts(asList(new ServerAddress("localhost"))).build();
-MongoClientSettings settings = MongoClientSettings.builder()
-                                  .clusterSettings(clusterSettings)
-                                  .credential(credential)
-                                  .build();
-MongoClient mongoClient = MongoClients.create(settings);
+MongoCredential credential = MongoCredential.createScramSha1Credential(user, source, password);
 
-```
+MongoClient mongoClient = MongoClients.create(
+        MongoClientSettings.builder()
+                .applyToClusterSettings(builder ->
+                        builder.hosts(Arrays.asList(new ServerAddress("host1", 27017))))
+                .credential(credential)
+                .build());
 
-Or use a `ConnectionString` instance that explicitly specifies the
-`authMechanism=SCRAM-SHA-1`:
+Or use a connection string that explicitly specifies the `authMechanism=SCRAM-SHA-1`:
 
 
 ```java
-MongoClient mongoClient = MongoClients.create(new ConnectionString(
-            "mongodb://user1:pwd1@host1/?authSource=db1&authMechanism=SCRAM-SHA-1"));
-
+MongoClient mongoClient = MongoClients.create("mongodb://user1:pwd1@host1/?authSource=db1&authMechanism=SCRAM-SHA-1");
 ```
 
 ## MONGODB-CR
+
+{{% note class="important" %}}
+Starting in version 4.0, MongoDB removes support for the deprecated MongoDB Challenge-Response (`MONGODB-CR`) authentication mechanism.
+
+If your deployment has user credentials stored in `MONGODB-CR` schema, you must upgrade to `SCRAM` before you upgrade to version 4.0.
+For information on upgrading to `SCRAM`, see Upgrade to [SCRAM]({{<docsref "release-notes/3.0-scram/">}}).
+{{% /note %}}
 
 To explicitly create a credential of type [`MONGODB-CR`]({{<docsref "core/security-mongodb-cr">}}) use the [`createMongCRCredential`]({{<apiref "com/mongodb/MongoCredential.html#createMongoCRCredential-java.lang.String-java.lang.String-char:A-">}})
 static factory method:
 
 ```java
-MongoCredential credential = MongoCredential.createMongoCRCredential(user,
-                                                                     database,
-                                                                     password);
-ClusterSettings clusterSettings = ClusterSettings.builder()
-                                  .hosts(asList(new ServerAddress("localhost"))).build();
-MongoClientSettings settings = MongoClientSettings.builder()
-                                  .clusterSettings(clusterSettings)
-                                  .credential(credential)
-                                  .build();
-MongoClient mongoClient = MongoClients.create(settings);
+MongoCredential credential = MongoCredential.createMongoCRCredential(user, source, password);
+
+MongoClient mongoClient = MongoClients.create(
+        MongoClientSettings.builder()
+                .applyToClusterSettings(builder ->
+                        builder.hosts(Arrays.asList(new ServerAddress("host1", 27017))))
+                .credential(credential)
+                .build());
 ```
 
-Or use a  `ConnectionString` instance that explicitly specifies the
-`authMechanism=MONGODB-CR`:
+Or use a connection string that explicitly specifies the `authMechanism=MONGODB-CR`:
 
 ```java
-MongoClient mongoClient = MongoClients.create(new ConnectionString(
-            "mongodb://user1:pwd1@host1/?authSource=db1&authMechanism=MONGODB-CR"));
+MongoClient mongoClient = MongoClients.create("mongodb://user1:pwd1@host1/?authSource=db1&authMechanism=MONGODB-CR");
 ```
 
 {{% note %}}
-After the [authentication schema upgrade]({{<docsref "release-notes/3.0-scram/">}}) from MONGODB-CR to SCRAM-SHA-1,
+After the [authentication schema upgrade]({{<docsref "release-notes/3.0-scram/">}}) from MONGODB-CR to SCRAM,
 MONGODB-CR credentials will fail to authenticate.
 {{% /note %}}
 
@@ -144,26 +178,24 @@ create a credential of this type use the
 ```java
 String user;     // The x.509 certificate derived user name, e.g. "CN=user,OU=OrgUnit,O=myOrg,..."
 MongoCredential credential = MongoCredential.createMongoX509Credential(user);
-ClusterSettings clusterSettings = ClusterSettings.builder()
-                                  .hosts(asList(new ServerAddress("localhost"))).build();
 
 EventLoopGroup eventLoopGroup = new NioEventLoopGroup();  // make sure application shuts this down
 
-MongoClientSettings settings = MongoClientSettings.builder()
-                .clusterSettings(clusterSettings)
+MongoClient mongoClient = MongoClients.create(
+        MongoClientSettings.builder()
+                .applyToClusterSettings(builder ->
+                        builder.hosts(Arrays.asList(new ServerAddress("host1", 27017))))
                 .credential(credential)
                 .streamFactoryFactory(NettyStreamFactoryFactory.builder().eventLoopGroup(eventLoopGroup).build())
-                .sslSettings(SslSettings.builder().enabled(true).build())
-                .build();
-MongoClient mongoClient = MongoClients.create(settings);
+                .applyToSslSettings(builder ->
+                        builder.enabled(true))
+                .build());
 ```
 
-Or use a `ConnectionString` instance that explicitly specifies the
-`authMechanism=MONGODB-X509`:
+Or use a connection string that explicitly specifies the `authMechanism=MONGODB-X509`:
 
 ```java
-MongoClient mongoClient = MongoClients.create(new ConnectionString(
-            "mongodb://subjectName@host1/?authMechanism=MONGODB-X509&streamType=netty&ssl=true"));
+MongoClient mongoClient = MongoClients.create("mongodb://subjectName@host1/?authMechanism=MONGODB-X509&streamType=netty&ssl=true");
 ```
 
 See the MongoDB server
@@ -182,22 +214,19 @@ static factory method:
 String user;   // The Kerberos user name, including the realm, e.g. "user1@MYREALM.ME"
 // ...
 MongoCredential credential = MongoCredential.createGSSAPICredential(user);
-ClusterSettings clusterSettings = ClusterSettings.builder()
-                                  .hosts(asList(new ServerAddress("localhost"))).build();
-MongoClientSettings settings = MongoClientSettings.builder()
-                                  .clusterSettings(clusterSettings)
-                                  .credential(credential)
-                                  .build();
-MongoClient mongoClient = MongoClients.create(settings);
+MongoClient mongoClient = MongoClients.create(
+        MongoClientSettings.builder()
+                .applyToClusterSettings(builder ->
+                        builder.hosts(Arrays.asList(new ServerAddress("host1", 27017))))
+                .credential(credential)
+                .build());
 
 ```
 
-Or use a `ConnectionString` that explicitly specifies the
-`authMechanism=GSSAPI`:
+Or use a connection string that explicitly specifies the `authMechanism=GSSAPI`:
 
 ```java
-MongoClient mongoClient = MongoClients.create(new ConnectionString(
-            "mongodb://username%40MYREALM.ME@host1/?authMechanism=GSSAPI"));
+MongoClient mongoClient = MongoClients.create("mongodb://username%40MYREALM.ME@host1/?authMechanism=GSSAPI");
 ```
 
 {{% note %}}
@@ -233,7 +262,7 @@ For example, to specify the `SERVICE_NAME` property via the `MongoCredential` ob
 credential = credential.withMechanismProperty(MongoCredential.SERVICE_NAME_KEY, "othername");
 ```
 
-Or via the `ConnectionString`:
+Or via a connection string:
 
 ```
 mongodb://username%40MYREALM.com@myserver/?authMechanism=GSSAPI&authMechanismProperties=SERVICE_NAME:othername
@@ -260,20 +289,18 @@ String user;          // The LDAP user name
 char[] password;      // The LDAP password
 // ...
 MongoCredential credential = MongoCredential.createPlainCredential(user, "$external", password);
-ClusterSettings clusterSettings = ClusterSettings.builder()
-                                  .hosts(asList(new ServerAddress("localhost"))).build();
-MongoClientSettings settings = MongoClientSettings.builder()
-                                  .clusterSettings(clusterSettings)
-                                  .credential(credential)
-                                  .build();
-MongoClient mongoClient = MongoClients.create(settings);
+MongoClient mongoClient = MongoClients.create(
+        MongoClientSettings.builder()
+                .applyToClusterSettings(builder ->
+                        builder.hosts(Arrays.asList(new ServerAddress("host1", 27017))))
+                .credential(credential)
+                .build());
 ```
 
 or with a connection string:
 
 ```java
-MongoClient mongoClient = MongoClients.create(new ConnectionString(
-          "mongodb://user1@host1/?authSource=$external&authMechanism=PLAIN"));
+MongoClient mongoClient = MongoClients.create("mongodb://user1@host1/?authSource=$external&authMechanism=PLAIN");
 ```
 
 {{% note %}}

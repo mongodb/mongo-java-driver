@@ -43,9 +43,11 @@ You can also use a [`MongoClientURI`]({{< apiref "/com/mongodb/MongoClientURI.ht
 
 ## Default Authentication Mechanism
 
-Starting in MongoDB 3.0, MongoDB changed the default authentication
-mechanism from [`MONGODB-CR`]({{<docsref "core/security-mongodb-cr">}}) to
-[`SCRAM-SHA-1`]({{<docsref "core/security-scram-sha-1">}}).
+In MongoDB 3.0, MongoDB changed the default authentication mechanism from [`MONGODB-CR`]({{<docsref "core/security-mongodb-cr">}}) to
+[`SCRAM-SHA-1`]({{<docsref "core/security-scram">}}). In MongoDB 4.0 support for the deprecated
+[`MONGODB-CR`]({{<docsref "core/security-mongodb-cr">}}) mechanism was removed and
+[`SCRAM-SHA-256`]({{<docsref "core/security-scram">}}) support was added.
+
 
 To create a credential that will authenticate using the default
 authentication mechanism regardless of server version, create a
@@ -54,10 +56,10 @@ static factory method:
 
 ```java
 String user;     // the user name
-String database; // the name of the database in which the user is defined
+String source;   // the source where the user is defined
 char[] password; // the password as a character array
 // ...
-MongoCredential credential = MongoCredential.createCredential(user, database, password);
+MongoCredential credential = MongoCredential.createCredential(user, source, password);
 ```
 
 and then construct a MongoClient with that credential.  Using the new (since 3.7) MongoClient API:
@@ -90,23 +92,79 @@ MongoClientURI uri = new MongoClientURI("mongodb://user1:pwd1@host1/?authSource=
 MongoClient mongoClient = new MongoClient(uri);
 ```
 
-For challenge and response mechanisms, using the default authentication
-mechanism is the recommended approach as it will make
-upgrading from MongoDB 2.6 to MongoDB 3.0 seamless, even after
-[upgrading the authentication schema]({{<docsref "release-notes/3.0-scram/">}}).
+For challenge and response mechanisms, using the default authentication mechanism is the recommended approach as it will make upgrading
+from MongoDB 2.6 to MongoDB 3.0 seamless, even after [upgrading the authentication schema]({{<docsref "release-notes/3.0-scram/">}}).
+For MongoDB 4.0 users it is also recommended as the supported authentication mechanisms are checked and the correct hashing algorithm is
+used.
 
-## SCRAM-SHA-1
+## SCRAM
 
-To explicitly create a credential of type [`SCRAM-SHA-1`]({{<docsref "core/security-scram-sha-1/">}}), use the 
+Salted Challenge Response Authentication Mechanism (`SCRAM`) has been the default authentication mechanism for MongoDB since 3.0. `SCRAM` is
+based on the [IETF RFC 5802](https://tools.ietf.org/html/rfc5802) standard that defines best practices for implementation of
+challenge-response mechanisms for authenticating users with passwords.
+
+MongoDB 3.0 introduced support for `SCRAM-SHA-1` which uses the `SHA-1` hashing function. MongoDB 4.0 introduced support for `SCRAM-SHA-256`
+which uses the `SHA-256` hashing function.
+
+### SCRAM-SHA-256
+
+Requires MongoDB 4.0 and `featureCompatibilityVersion` to be set to 4.0.
+
+To explicitly create a credential of type [`SCRAM-SHA-256`]({{<docsref "core/security-scram/">}}), use the
+[`createScramSha256Credential`]({{<apiref "com/mongodb/MongoCredential.html#createScramSha256Credential-java.lang.String-java.lang.String-char:A-">}})
+method:
+
+```java
+String user;     // the user name
+String source;   // the source where the user is defined
+char[] password; // the password as a character array
+// ...
+MongoCredential credential = MongoCredential.createScramSha256Credential(user, source, password);
+```
+
+and then construct a MongoClient with that credential.  Using the new (since 3.7) MongoClient API:
+
+```java
+MongoClient mongoClient = MongoClients.create(
+        MongoClientSettings.builder()
+                .applyToClusterSettings(builder ->
+                        builder.hosts(Arrays.asList(new ServerAddress("host1", 27017))))
+                .credential(credential)
+                .build());
+```
+
+or using the legacy MongoClient API:
+
+```java
+MongoClient mongoClient = new MongoClient(new ServerAddress("host1", 27017), credential);
+```
+
+Or use a connection string that explicitly specifies the `authMechanism=SCRAM-SHA-256`. Using the new MongoClient API:
+
+```java
+MongoClient mongoClient = MongoClients.create("mongodb://user1:pwd1@host1/?authSource=db1&authMechanism=SCRAM-SHA-256");
+```
+
+or using the legacy MongoClient API:
+
+```java
+MongoClientURI uri = new MongoClientURI("mongodb://user1:pwd1@host1/?authSource=db1&authMechanism=SCRAM-SHA-256");
+MongoClient mongoClient = new MongoClient(uri);
+```
+
+
+### SCRAM-SHA-1
+
+To explicitly create a credential of type [`SCRAM-SHA-1`]({{<docsref "core/security-scram/">}}), use the 
 [`createScramSha1Credential`]({{<apiref "com/mongodb/MongoCredential.html#createScramSha1Credential-java.lang.String-java.lang.String-char:A-">}}) 
 method:
 
 ```java
 String user;     // the user name
-String database; // the name of the database in which the user is defined
+String source;   // the source where the user is defined
 char[] password; // the password as a character array
 // ...
-MongoCredential credential = MongoCredential.createScramSha1Credential(user, database, password);
+MongoCredential credential = MongoCredential.createScramSha1Credential(user, source, password);
 ```
 
 and then construct a MongoClient with that credential.  Using the new (since 3.7) MongoClient API:
@@ -141,6 +199,14 @@ MongoClient mongoClient = new MongoClient(uri);
 
 ## MONGODB-CR
 
+{{% note class="important" %}}
+Starting in version 4.0, MongoDB removes support for the deprecated MongoDB Challenge-Response (`MONGODB-CR`) authentication mechanism.
+
+If your deployment has user credentials stored in `MONGODB-CR` schema, you must upgrade to `SCRAM` before you upgrade to version 4.0.
+For information on upgrading to `SCRAM`, see Upgrade to [SCRAM]({{<docsref "release-notes/3.0-scram/">}}).
+{{% /note %}}
+
+
 To explicitly create a credential of type [`MONGODB-CR`]({{<docsref "core/security-mongodb-cr">}}) use the [`createMongCRCredential`]({{<apiref "com/mongodb/MongoCredential.html#createMongoCRCredential-java.lang.String-java.lang.String-char:A-">}})
 static factory method:
 
@@ -149,9 +215,7 @@ String user; // the user name
 String database; // the name of the database in which the user is defined
 char[] password; // the password as a character array
 // ...
-MongoCredential credential = MongoCredential.createMongoCRCredential(user,
-                                                                    database,
-                                                                    password);
+MongoCredential credential = MongoCredential.createMongoCRCredential(user, database, password);
 ```
 
 and then construct a MongoClient with that credential.  Using the new (since 3.7) MongoClient API:
@@ -185,7 +249,7 @@ MongoClient mongoClient = new MongoClient(uri);
 ```
 
 {{% note %}}
-After the [authentication schema upgrade]({{<docsref "release-notes/3.0-scram/">}}) from MONGODB-CR to SCRAM-SHA-1,
+After the [authentication schema upgrade]({{<docsref "release-notes/3.0-scram/">}}) from MONGODB-CR to SCRAM,
 MONGODB-CR credentials will fail to authenticate.
 {{% /note %}}
 
