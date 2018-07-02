@@ -62,6 +62,11 @@ Or use a connection string that does not  specify the authentication mechanism:
 MongoClient mongoClient = MongoClients.create("mongodb://user1:pwd1@host1/?authSource=db1");
 ```
 
+For challenge and response mechanisms, using the default authentication mechanism is the recommended approach as it will make upgrading
+from MongoDB 2.6 to MongoDB 3.0 seamless, even after [upgrading the authentication schema]({{<docsref "release-notes/3.0-scram/">}}).
+For MongoDB 4.0 users it is also recommended as the supported authentication mechanisms are checked and the correct hashing algorithm is
+used.
+
 ## SCRAM
 
 Salted Challenge Response Authentication Mechanism (`SCRAM`) has been the default authentication mechanism for MongoDB since 3.0. `SCRAM` is
