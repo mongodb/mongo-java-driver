@@ -393,7 +393,6 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
     def 'should pass through storage engine options'() {
         given:
         def storageEngineOptions = new Document('wiredTiger', new Document('configString', 'block_compressor=zlib'))
-                .append('mmapv1', new Document())
         def operation = new CreateIndexesOperation(getNamespace(),
                 [new IndexRequest(new BsonDocument('a', new BsonInt32(1)))
                          .storageEngine(new BsonDocumentWrapper(storageEngineOptions, new DocumentCodec()))])

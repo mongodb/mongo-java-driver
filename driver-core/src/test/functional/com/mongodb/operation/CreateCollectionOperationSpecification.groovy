@@ -54,10 +54,11 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         operation.getCollation() == null
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(3, 0) })
     def 'should set optional values correctly'(){
         given:
-        def storageEngineOptions = BsonDocument.parse('{ mmapv1 : {}}')
-        def indexOptionDefaults = BsonDocument.parse('{ storageEngine: { mmapv1 : {} }}')
+        def storageEngineOptions = BsonDocument.parse('{ wiredTiger : {}}')
+        def indexOptionDefaults = BsonDocument.parse('{ storageEngine: { wiredTiger : {} }}')
         def validator = BsonDocument.parse('{ level: { $gte : 10 }}')
 
         when:
@@ -106,10 +107,12 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
     @IgnoreIf({ !serverVersionAtLeast(3, 0) })
     def 'should pass through storage engine options'() {
         given:
+        def storageEngineOptions = new BsonDocument('wiredTiger', new BsonDocument('configString', new BsonString('block_compressor=zlib')))
+        if (!serverVersionAtLeast(4, 1)) {
+            storageEngineOptions.append('mmapv1', new BsonDocument())
+        }
         def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
-                .storageEngineOptions(new BsonDocument('wiredTiger',
-                                                       new BsonDocument('configString', new BsonString('block_compressor=zlib')))
-                                              .append('mmapv1', new BsonDocument()))
+                .storageEngineOptions(storageEngineOptions)
 
         when:
         execute(operation, async)
@@ -199,7 +202,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
     def 'should allow indexOptionDefaults'() {
         given:
         assert !collectionNameExists(getCollectionName())
-        def indexOptionDefaults = BsonDocument.parse('{ storageEngine: { mmapv1 : {} }}')
+        def indexOptionDefaults = BsonDocument.parse('{ storageEngine: { wiredTiger : {} }}')
         def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
                 .indexOptionDefaults(indexOptionDefaults)
 
