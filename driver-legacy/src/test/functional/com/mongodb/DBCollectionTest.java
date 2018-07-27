@@ -969,6 +969,7 @@ public class DBCollectionTest extends DatabaseTestCase {
     @Category(Slow.class)
     public void testParallelScan() throws UnknownHostException {
         assumeThat(isSharded(), is(false));
+        assumeThat(serverVersionAtLeast(4, 1), is(false));
 
         Set<Integer> ids = new HashSet<Integer>();
         List<BasicDBObject> documents = new ArrayList<BasicDBObject>(2000);
