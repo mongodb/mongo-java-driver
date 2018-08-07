@@ -18,31 +18,17 @@ package com.mongodb.internal.validator;
 
 import org.bson.FieldNameValidator;
 
-import java.util.Arrays;
-import java.util.List;
-
 /**
- * A field name validator for document that are meant for storage in MongoDB collections.  It ensures that no fields contain a '.',
- * or start with '$' (with the exception of "$db", "$ref", and "$id", so that DBRefs are not rejected).
+ * Make sure field names are not null.
  *
  * <p>This class should not be considered a part of the public API.</p>
  */
 public class CollectibleDocumentFieldNameValidator implements FieldNameValidator {
-    // Have to support DBRef fields
-    private static final List<String> EXCEPTIONS = Arrays.asList("$db", "$ref", "$id");
 
     @Override
     public boolean validate(final String fieldName) {
         if (fieldName == null) {
             throw new IllegalArgumentException("Field name can not be null");
-        }
-
-        if (fieldName.contains(".")) {
-            return false;
-        }
-
-        if (fieldName.startsWith("$") && !EXCEPTIONS.contains(fieldName)) {
-            return false;
         }
         return true;
     }
