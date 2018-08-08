@@ -217,6 +217,9 @@ final class ProtocolHelper {
 
     private static MongoException createSpecialException(final BsonDocument response, final ServerAddress serverAddress,
                                                          final String errorMessageFieldName) {
+        if (response == null) {
+            return null;
+        }
         if (ErrorCategory.fromErrorCode(getErrorCode(response)) == ErrorCategory.EXECUTION_TIMEOUT) {
             return new MongoExecutionTimeoutException(getErrorCode(response), getErrorMessage(response, errorMessageFieldName));
         } else if (getErrorMessage(response, errorMessageFieldName).startsWith("not master")) {
