@@ -1025,6 +1025,31 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         ].combinations()
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) || !isDiscoverableReplicaSet() })
+    def 'should not fail with unacknowledged writes, retryWrites and failPoints'() {
+        given:
+        def testWrites = getTestWrites()
+        getCollectionHelper().insertDocuments(getTestInserts())
+        def operation = new MixedBulkWriteOperation(getNamespace(), testWrites, true, UNACKNOWLEDGED, true)
+
+        when:
+        enableOnPrimaryTransactionalWriteFailPoint(BsonDocument.parse(failPoint))
+        def result = executeWithSession(operation, async)
+
+        then:
+        result == BulkWriteResult.unacknowledged()
+
+        cleanup:
+        disableOnPrimaryTransactionalWriteFailPoint()
+
+        where:
+        [async, failPoint] << [
+                [true, false],
+                ['{mode: {times: 2}, data: {failBeforeCommitExceptionCode : 1}}',
+                 '{mode: {skip: 2}, data: {failBeforeCommitExceptionCode : 1}}']
+        ].combinations()
+    }
+
     @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'should retry if the connection initially fails'() {
         when:
