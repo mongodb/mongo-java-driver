@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoDriverInformation;
+import com.mongodb.internal.build.MongoDriverVersion;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -24,15 +25,8 @@ import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.EncoderContext;
 import org.bson.io.BasicOutputBuffer;
 
-import java.io.IOException;
-import java.net.JarURLConnection;
-import java.net.URL;
 import java.nio.charset.Charset;
-import java.security.CodeSource;
-import java.security.ProtectionDomain;
 import java.util.List;
-import java.util.jar.Attributes;
-import java.util.jar.Manifest;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static java.lang.String.format;
@@ -102,47 +96,6 @@ public final class ClientMetadataHelper {
             }
         }
         return false;
-    }
-
-    private static String getDriverVersion() {
-        String driverVersion = "unknown";
-        String path = getCodeSourcePath();
-        if (path != null) {
-            try {
-                URL jarUrl = path.endsWith(".jar") ? new URL("jar:file:" + path + "!/") : null;
-                if (jarUrl != null) {
-                    JarURLConnection jarURLConnection = (JarURLConnection) jarUrl.openConnection();
-                    Manifest manifest = jarURLConnection.getManifest();
-                    if (manifest != null) {
-                        Attributes mainAttributes = manifest.getMainAttributes();
-                        if (mainAttributes != null) {
-                            String version = (String) mainAttributes.get(new Attributes.Name("Build-Version"));
-                            if (version != null) {
-                                driverVersion = version;
-                            }
-                        }
-                    }
-                }
-            } catch (IOException e) {
-                // do nothing
-            }
-        }
-        return driverVersion;
-    }
-
-    private static String getCodeSourcePath() {
-        String path = null;
-        ProtectionDomain protectionDomain = InternalStreamConnectionInitializer.class.getProtectionDomain();
-        if (protectionDomain != null) {
-            CodeSource codeSource = protectionDomain.getCodeSource();
-            if (codeSource != null) {
-                URL location = codeSource.getLocation();
-                if (location != null) {
-                    path = location.getPath();
-                }
-            }
-        }
-        return path;
     }
 
     static BsonDocument createClientMetadataDocument(final String applicationName) {
@@ -215,8 +168,8 @@ public final class ClientMetadataHelper {
         MongoDriverInformation.Builder builder = mongoDriverInformation != null ? MongoDriverInformation.builder(mongoDriverInformation)
                 : MongoDriverInformation.builder();
         return builder
-                .driverName("mongo-java-driver")
-                .driverVersion(getDriverVersion())
+                .driverName(MongoDriverVersion.NAME)
+                .driverVersion(MongoDriverVersion.VERSION)
                 .driverPlatform(format("Java/%s/%s", getProperty("java.vendor", "unknown-vendor"),
                         getProperty("java.runtime.version", "unknown-version")))
                 .build();

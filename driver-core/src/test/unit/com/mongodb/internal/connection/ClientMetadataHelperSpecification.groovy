@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection
 
 import com.mongodb.MongoDriverInformation
+import com.mongodb.internal.build.MongoDriverVersion
 import org.bson.BsonBinaryWriter
 import org.bson.BsonDocument
 import org.bson.BsonString
@@ -149,9 +150,8 @@ class ClientMetadataHelperSpecification extends Specification {
     }
 
     static BsonDocument createExpectedClientMetadataDocument(String appName) {
-        String driverVersion = 'unknown'
-        def expectedDriverDocument = new BsonDocument('name', new BsonString('mongo-java-driver'))
-                .append('version', new BsonString(driverVersion))
+        def expectedDriverDocument = new BsonDocument('name', new BsonString(MongoDriverVersion.NAME))
+                .append('version', new BsonString(MongoDriverVersion.VERSION))
         def expectedOperatingSystemDocument = new BsonDocument('type',
                 new BsonString(ClientMetadataHelper.getOperatingSystemType(System.getProperty('os.name'))))
                 .append('name', new BsonString(System.getProperty('os.name')))

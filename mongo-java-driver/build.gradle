@@ -35,10 +35,13 @@ sourceSets {
             srcDirs = ["$rootDir/driver-legacy/src/main",
                        "$rootDir/driver-sync/src/main",
                        "$rootDir/driver-core/src/main",
+                       "$rootDir/driver-core/build/gen/buildconfig/src/main",
                        "$rootDir/bson/src/main"]
         }
     }
 }
+
+compileJava.dependsOn(":driver-core:compileBuildConfig")
 
 // copied from driver-core
 jar {
