@@ -121,6 +121,21 @@ $ mongod --dbpath ./data/db --logpath ./data/mongod.log --port 27017 --logappend
 If you encounter `"Too many open files"` errors when running the tests then you will need to increase 
 the number of available file descriptors prior to starting mongod as described in [https://docs.mongodb.com/manual/reference/ulimit/](https://docs.mongodb.com/manual/reference/ulimit/)
 
+## IntelliJ IDEA
+
+A couple of manual configuration steps are required to run the code in IntelliJ:
+
+- Java 9 is required to build and compile the source.
+
+- **Error:** `java: cannot find symbol: class SNIHostName location: package javax.net.ssl`<br>
+ **Fix:** Settings > Build, Execution, Deployment > Compiler > Java Compiler - untick "Use '--release' option for cross-compilation (Java 9 and later)"
+
+- **Error:** `java: package com.mongodb.internal.build does not exist`<br>
+ **Fixes:** Any of the following: <br>
+ - Run the `compileBuildConfig` task: eg: `./gradlew compileBuildConfig` or via Gradle > driver-core > Tasks > other > compileBuildConfig
+ - Set `compileBuildConfig` to execute Before Build. via Gradle > Tasks > other > right click compileBuildConfig - click on "Execute Before Build" 
+ - Delegate all build actions to Gradle: Settings > Build, Execution, Deployment > Build Tools > Gradle > Runner - tick "Delegate IDE build/run actions to gradle"
+
 ### Build status:
 
 [![Build Status](https://travis-ci.org/mongodb/mongo-java-driver.svg?branch=master)](https://travis-ci.org/mongodb/mongo-java-driver)
