@@ -62,8 +62,29 @@ configure(subprojects - [project(':util'), project(':driver-legacy')]) {
 
     task uploadSnapshotArchives(dependsOn: uploadArchives) {
         if (!version.endsWith("-SNAPSHOT")) {
-            enabled = false;
-            dependsOn = [];
+            enabled = false
+            dependsOn = []
+        }
+    }
+
+    task publishArchives(dependsOn: uploadArchives) {
+        String gitVersion = getGitVersion()
+        if (gitVersion != version) {
+           dependsOn = []
+        }
+        doFirst {
+            if (gitVersion != version) {
+                def cause = """
+                | Version mismatch:
+                | =================
+                |
+                | $version != $gitVersion 
+                |
+                | The project version does not match the git tag.
+                |""".stripMargin()
+                throw new IllegalStateException(cause)
+            }
+            println("Publishing: ${project.name} : $gitVersion")
         }
     }
 
