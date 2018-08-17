@@ -408,10 +408,6 @@ axes:
   - id: version
     display_name: MongoDB Version
     values:
-      - id: "latest"
-        display_name: "latest"
-        variables:
-           VERSION: "latest"
       - id: "4.0"
         display_name: "4.0"
         variables:
@@ -521,14 +517,14 @@ buildvariants:
     - name: "static-analysis"
 
 - matrix_name: "tests-zlib-compression"
-  matrix_spec: { compressor : "zlib", auth: "noauth", ssl: "nossl", jdk: "jdk6", version: ["3.6", "4.0", "latest"], topology: "standalone", os: "linux" }
+  matrix_spec: { compressor : "zlib", auth: "noauth", ssl: "nossl", jdk: "jdk6", version: ["3.6", "4.0"], topology: "standalone", os: "linux" }
   display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
      - name: "test"
 
 - matrix_name: "tests-snappy-compression"
-  matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: ["3.4", "3.6", "4.0", "latest"], topology: "standalone", os: "linux" }
+  matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: ["3.4", "3.6", "4.0"], topology: "standalone", os: "linux" }
   display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
@@ -543,14 +539,14 @@ buildvariants:
 
 - matrix_name: "tests-jdk6-secure"
   matrix_spec:  { auth: "auth", ssl: "ssl", jdk: "jdk6", version: "*", topology: "*", os: "*" }
-  exclude_spec: { auth: "auth", ssl: "ssl", jdk: "jdk6", version: ["4.0", "latest"], topology: "*", os: "*" }
+  exclude_spec: { auth: "auth", ssl: "ssl", jdk: "jdk6", version: ["4.0"], topology: "*", os: "*" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
      - name: "test"
 
 - matrix_name: "tests-jdk8-secure"
-  matrix_spec: { auth: "auth", ssl: "ssl", jdk: "jdk8", version: ["4.0", "latest"], topology: "*", os: "*" }
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: "jdk8", version: ["4.0"], topology: "*", os: "*" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
