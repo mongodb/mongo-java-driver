@@ -37,6 +37,7 @@ import org.bson.BsonString
 import org.bson.BsonSymbol
 import org.bson.BsonTimestamp
 import org.bson.BsonUndefined
+import org.bson.RawBsonArray
 import org.bson.RawBsonDocument
 import spock.lang.Specification
 
@@ -73,6 +74,7 @@ class BsonValueCodecProviderSpecification extends Specification {
         provider.get(BsonJavaScriptWithScope, codecRegistry).class == BsonJavaScriptWithScopeCodec
 
         provider.get(BsonArray, codecRegistry).class == BsonArrayCodec
+        provider.get(RawBsonArray, codecRegistry).class == BsonArrayCodec
 
         provider.get(BsonDocument, codecRegistry).class == BsonDocumentCodec
         provider.get(BsonDocumentWrapper, codecRegistry).class == BsonDocumentWrapperCodec
