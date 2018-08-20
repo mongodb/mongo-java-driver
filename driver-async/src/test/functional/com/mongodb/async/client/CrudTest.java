@@ -63,16 +63,18 @@ public class CrudTest extends DatabaseTestCase {
         collection = Fixture.initializeCollection(new MongoNamespace(getDefaultDatabaseName(), getClass().getName()))
                 .withDocumentClass(BsonDocument.class);
         helper = new JsonPoweredCrudTestHelper(description, getDefaultDatabase(), collection);
-        new MongoOperation<Void>() {
-            @Override
-            public void execute() {
-                List<BsonDocument> documents = new ArrayList<BsonDocument>();
-                for (BsonValue document : data) {
-                    documents.add(document.asDocument());
+        if (!data.isEmpty()) {
+            new MongoOperation<Void>() {
+                @Override
+                public void execute() {
+                    List<BsonDocument> documents = new ArrayList<BsonDocument>();
+                    for (BsonValue document : data) {
+                        documents.add(document.asDocument());
+                    }
+                    collection.insertMany(documents, getCallback());
                 }
-                collection.insertMany(documents, getCallback());
-            }
-        }.get();
+            }.get();
+        }
     }
 
     @Test
