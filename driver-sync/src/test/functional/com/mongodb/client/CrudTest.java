@@ -57,10 +57,12 @@ public class CrudTest extends DatabaseTestCase {
     public void setUp() {
         super.setUp();
         List<BsonDocument> documents = new ArrayList<BsonDocument>();
-        for (BsonValue document: data) {
-            documents.add(document.asDocument());
+        if (!data.isEmpty()) {
+            for (BsonValue document : data) {
+                documents.add(document.asDocument());
+            }
+            getCollectionHelper().insertDocuments(documents);
         }
-        getCollectionHelper().insertDocuments(documents);
         collection = database.getCollection(getClass().getName(), BsonDocument.class);
         helper = new JsonPoweredCrudTestHelper(description, database, collection);
     }
@@ -79,7 +81,6 @@ public class CrudTest extends DatabaseTestCase {
                     && !expectedResult.asDocument().containsKey("upsertedCount")) {
             expectedResult.asDocument().append("upsertedCount", actualResult.asDocument().get("upsertedCount"));
         }
-
         assertEquals(description, expectedResult, actualResult);
 
         if (expectedOutcome.containsKey("collection")) {

@@ -144,6 +144,7 @@ public class JsonPoweredCrudTestHelper {
                 }
             }
             resultDoc.append("insertedIds", insertedIds);
+            resultDoc.append("insertedCount", new BsonInt32(insertedIds.size()));
 
             resultDoc.append("matchedCount", new BsonInt32(bulkWriteResult.getMatchedCount()));
             if (bulkWriteResult.isModifiedCountAvailable()) {

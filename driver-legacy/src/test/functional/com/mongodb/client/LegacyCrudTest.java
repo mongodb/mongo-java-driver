@@ -56,11 +56,13 @@ public class LegacyCrudTest extends LegacyDatabaseTestCase {
     @Before
     public void setUp() {
         super.setUp();
-        List<BsonDocument> documents = new ArrayList<BsonDocument>();
-        for (BsonValue document: data) {
-            documents.add(document.asDocument());
+        if (!data.isEmpty()) {
+            List<BsonDocument> documents = new ArrayList<BsonDocument>();
+            for (BsonValue document : data) {
+                documents.add(document.asDocument());
+            }
+            getCollectionHelper().insertDocuments(documents);
         }
-        getCollectionHelper().insertDocuments(documents);
         collection = database.getCollection(getClass().getName(), BsonDocument.class);
         helper = new JsonPoweredCrudTestHelper(description, database, collection);
     }
@@ -78,11 +80,6 @@ public class LegacyCrudTest extends LegacyDatabaseTestCase {
                     && actualResult.asDocument().getNumber("upsertedCount").intValue() == 0
                     && !expectedResult.asDocument().containsKey("upsertedCount")) {
             expectedResult.asDocument().append("upsertedCount", actualResult.asDocument().get("upsertedCount"));
-        }
-
-        // Remove insertCount
-        if (actualResult.isDocument() && actualResult.asDocument().containsKey("insertedCount")) {
-            actualResult.asDocument().remove("insertedCount");
         }
 
         assertEquals(description, expectedResult, actualResult);
