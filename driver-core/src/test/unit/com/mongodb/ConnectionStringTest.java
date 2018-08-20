@@ -34,7 +34,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-// See https://github.com/mongodb/specifications/tree/master/source/crud/tests
+// See https://github.com/mongodb/specifications/tree/master/source/connection-string/tests
 @RunWith(Parameterized.class)
 public class ConnectionStringTest extends TestCase {
     private final String filename;

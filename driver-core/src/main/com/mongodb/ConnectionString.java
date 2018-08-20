@@ -302,7 +302,7 @@ public class ConnectionString {
         char[] password = null;
         idx = userAndHostInformation.lastIndexOf("@");
         if (idx > 0) {
-            userInfo = userAndHostInformation.substring(0, idx);
+            userInfo = userAndHostInformation.substring(0, idx).replace("+", "%2B");
             hostIdentifier = userAndHostInformation.substring(idx + 1);
             int colonCount = countOccurrences(userInfo, ":");
             if (userInfo.contains("@") || colonCount > 1) {
