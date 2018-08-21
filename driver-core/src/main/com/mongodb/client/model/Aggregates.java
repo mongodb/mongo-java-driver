@@ -275,9 +275,9 @@ public final class Aggregates {
      * @mongodb.server.release 3.6
      * @since 3.7
      */
-    public static Bson lookup(final String from, @Nullable final List<Variable<?>> let, final List<? extends Bson> pipeline,
-                              final String as) {
-       return new LookupStage(from, let, pipeline, as);
+    public static <TExpression> Bson lookup(final String from, @Nullable final List<Variable<TExpression>> let,
+                                            final List<? extends Bson> pipeline, final String as) {
+       return new LookupStage<TExpression>(from, let, pipeline, as);
     }
 
     /**
@@ -583,13 +583,13 @@ public final class Aggregates {
         }
     }
 
-    private static final class LookupStage implements Bson {
+    private static final class LookupStage<TExpression> implements Bson {
         private final String from;
-        private final List<Variable<?>> let;
+        private final List<Variable<TExpression>> let;
         private final List<? extends Bson> pipeline;
         private final String as;
 
-        private LookupStage(final String from, @Nullable final List<Variable<?>> let, final List<? extends Bson> pipeline,
+        private LookupStage(final String from, @Nullable final List<Variable<TExpression>> let, final List<? extends Bson> pipeline,
                             final String as) {
             this.from = from;
             this.let = let;
