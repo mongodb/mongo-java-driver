@@ -303,6 +303,35 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         waitForLastRelease(getCluster())
     }
 
+    @IgnoreIf({ !serverVersionAtLeast([4, 0, 1]) })
+    def 'should decode drop to ChangeStreamDocument '() {
+        given:
+        def helper = getHelper()
+
+        def pipeline = [BsonDocument.parse('{$match: {operationType: "drop"}}')]
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.UPDATE_LOOKUP, pipeline,
+                ChangeStreamDocument.createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())))
+        helper.insertDocuments(BsonDocument.parse('{ _id : 2, x : 2, y : 3 }'))
+
+        when:
+        def cursor = execute(operation, false)
+        helper.drop()
+        ChangeStreamDocument<BsonDocument> next = next(cursor, false).get(0)
+
+        then:
+        next.getResumeToken() != null
+        next.getDocumentKey() == null
+        next.getFullDocument() == null
+        next.getNamespace() == helper.getNamespace()
+        next.getOperationType() == OperationType.DROP
+        next.getUpdateDescription() == null
+
+        cleanup:
+        cursor?.close()
+        waitForLastRelease(getCluster())
+    }
+
+
     def 'should throw if the _id field is projected out'() {
         given:
         def helper = getHelper()

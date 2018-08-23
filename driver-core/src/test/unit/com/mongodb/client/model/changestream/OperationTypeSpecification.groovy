@@ -27,8 +27,10 @@ class OperationTypeSpecification extends Specification {
         where:
         operationType            | expectedString
         OperationType.DELETE     | 'delete'
+        OperationType.DROP       | 'drop'
         OperationType.INSERT     | 'insert'
         OperationType.INVALIDATE | 'invalidate'
+        OperationType.OTHER      | 'other'
         OperationType.REPLACE    | 'replace'
         OperationType.UPDATE     | 'update'
     }
@@ -40,20 +42,19 @@ class OperationTypeSpecification extends Specification {
         where:
         operationType            | stringValue
         OperationType.DELETE     | 'delete'
+        OperationType.DROP       | 'drop'
         OperationType.INSERT     | 'insert'
         OperationType.INVALIDATE | 'invalidate'
+        OperationType.OTHER      | 'other'
         OperationType.REPLACE    | 'replace'
         OperationType.UPDATE     | 'update'
     }
 
-    def 'should throw an illegal argument exception for invalid values'() {
-        when:
-        OperationType.fromString(stringValue)
-
-        then:
-        thrown(IllegalArgumentException)
+    def 'should return UNKNOWN for new / unknown values'() {
+        expect:
+        OperationType.fromString(stringValue) == OperationType.OTHER
 
         where:
-        stringValue << [null, 'info']
+        stringValue << [null, 'info', 'reIndex']
     }
 }
