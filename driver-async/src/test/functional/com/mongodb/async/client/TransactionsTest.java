@@ -239,7 +239,7 @@ public class TransactionsTest {
             for (BsonValue cur : definition.getArray("operations")) {
                 BsonDocument operation = cur.asDocument();
                 String operationName = operation.getString("name").getValue();
-                BsonValue expectedResult = operation.get("result", new BsonDocument());
+                BsonValue expectedResult = operation.get("result");
                 String receiver = operation.getString("object").getValue();
                 final ClientSession clientSession = receiver.startsWith("session") ? sessionsMap.get(receiver)
                         : (operation.getDocument("arguments").containsKey("session")
@@ -281,9 +281,11 @@ public class TransactionsTest {
                         }.get();
                     } else {
                         BsonDocument actualOutcome = helper.getOperationResults(operation, clientSession);
-                        BsonValue actualResult = actualOutcome.get("result");
+                        if (expectedResult != null) {
+                            BsonValue actualResult = actualOutcome.get("result");
 
-                        assertEquals("Expected operation result differs from actual", expectedResult, actualResult);
+                            assertEquals("Expected operation result differs from actual", expectedResult, actualResult);
+                        }
                     }
                     assertFalse(String.format("Expected error '%s' but none thrown for operation %s",
                             getErrorContainsField(expectedResult), operationName), hasErrorContainsField(expectedResult));
@@ -404,7 +406,7 @@ public class TransactionsTest {
     }
 
     private boolean hasErrorField(final BsonValue expectedResult, final String key) {
-        return expectedResult.isDocument() && expectedResult.asDocument().containsKey(key);
+        return expectedResult != null && expectedResult.isDocument() && expectedResult.asDocument().containsKey(key);
     }
 
     private ClientSession nonNullClientSession(@Nullable final ClientSession clientSession) {
