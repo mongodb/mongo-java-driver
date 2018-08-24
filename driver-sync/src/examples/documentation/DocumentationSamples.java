@@ -37,6 +37,7 @@ import org.junit.After;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -572,7 +573,7 @@ public final class DocumentationSamples extends DatabaseTestCase {
                         include("revenue", "items_sold"),
                         computed("discount",
                                 new Document("$cond",
-                                        new Document("if", new Document("$lte", asList("$revenue", 250)))
+                                        new Document("if", new Document("$lte", Arrays.<Object>asList("$revenue", 250)))
                                                 .append("then", 25)
                                                 .append("else", 0)))))));
         // End Aggregation Example 3
