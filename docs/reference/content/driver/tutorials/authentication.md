@@ -23,8 +23,8 @@ New MongoClient API (since 3.7):
 
 ```java
 import com.mongodb.ConnectionString;
-import com.mongodb.clients.MongoClients;
-import com.mongodb.clients.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoClient;
 ```
 
 Legacy MongoClient API:
