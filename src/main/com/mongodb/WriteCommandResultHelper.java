@@ -88,7 +88,14 @@ final class WriteCommandResultHelper {
     }
 
     private static Integer getModifiedCount(final WriteRequest.Type type, final CommandResult commandResult) {
-        Integer modifiedCount =  (Integer) commandResult.get("nModified");
+        Object nModifiedValue = (Object) commandResult.get("nModified");
+        Integer modifiedCount = null;
+        if (nModifiedValue != null && nModifiedValue instanceof Long) {
+            Long modifiedCountLong = (Long) nModifiedValue;
+            modifiedCount = new Integer(modifiedCountLong.intValue());
+        } else if (nModifiedValue != null) {
+            modifiedCount = (Integer) nModifiedValue;
+        }
         if (modifiedCount == null && !(type == UPDATE || type == REPLACE)) {
             modifiedCount = 0;
         }
