@@ -33,6 +33,10 @@ public final class PrivateSetterFieldModel {
         this.listField = listField;
     }
 
+    public String getSomeMethod() {
+        return "some method";
+    }
+
     public Integer getIntegerField() {
         return integerField;
     }

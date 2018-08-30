@@ -184,7 +184,7 @@ public final class PojoCustomTest extends PojoTestCase {
         builder.conventions(conventions);
 
         roundTrip(builder, new PrivateSetterFieldModel(1, "2", asList("a", "b")),
-                "{'integerField': 1, 'stringField': '2', listField: ['a', 'b']}");
+                "{'someMethod': 'some method', 'integerField': 1, 'stringField': '2', listField: ['a', 'b']}");
     }
 
     @Test

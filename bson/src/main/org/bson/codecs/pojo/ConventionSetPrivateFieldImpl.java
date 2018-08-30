@@ -33,7 +33,8 @@ final class ConventionSetPrivateFieldImpl implements Convention {
             }
             PropertyAccessorImpl<?> defaultAccessor = (PropertyAccessorImpl<?>) propertyModelBuilder.getPropertyAccessor();
             PropertyMetadata<?> propertyMetaData = defaultAccessor.getPropertyMetadata();
-            if (!propertyMetaData.isDeserializable() && isPrivate(propertyMetaData.getField().getModifiers())) {
+            if (!propertyMetaData.isDeserializable() && propertyMetaData.getField() != null
+                    && isPrivate(propertyMetaData.getField().getModifiers())) {
                 setPropertyAccessor(propertyModelBuilder);
             }
         }
