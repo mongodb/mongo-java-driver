@@ -1526,7 +1526,9 @@ public class DBCollection {
      * @mongodb.driver.manual reference/command/parallelCollectionScan/ Parallel Collection Scan
      * @mongodb.server.release 2.6
      * @since 2.12
+     * @deprecated the parallelCollectionScan command will be removed in MongoDB 4.2
      */
+    @Deprecated
     public List<Cursor> parallelScan(final ParallelScanOptions options) {
         List<Cursor> cursors = new ArrayList<Cursor>();
         ParallelCollectionScanOperation<DBObject> operation = new ParallelCollectionScanOperation<DBObject>(getNamespace(),
