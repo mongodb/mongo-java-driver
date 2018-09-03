@@ -1066,7 +1066,9 @@ public class DBCollection {
      * @param reduce  specifies an $reduce function, that operates on the documents during the grouping operation
      * @return a document with the grouped records as well as the command meta-data
      * @mongodb.driver.manual reference/command/group/ Group Command
+     * @deprecated The group command was deprecated in MongoDB 3.4
      */
+    @Deprecated
     public DBObject group(final DBObject key, final DBObject cond, final DBObject initial, final String reduce) {
         return group(key, cond, initial, reduce, null);
     }
@@ -1082,7 +1084,9 @@ public class DBCollection {
      * @param finalize specifies a Javascript function that runs each item in the result set before final value will be returned
      * @return a document with the grouped records as well as the command meta-data
      * @mongodb.driver.manual reference/command/group/ Group Command
+     * @deprecated The group command was deprecated in MongoDB 3.4
      */
+    @Deprecated
     public DBObject group(final DBObject key, final DBObject cond, final DBObject initial, final String reduce,
                           @Nullable final String finalize) {
         return group(key, cond, initial, reduce, finalize, getReadPreference());
@@ -1100,7 +1104,9 @@ public class DBCollection {
      * @param readPreference {@link ReadPreference} to be used for this operation
      * @return a document with the grouped records as well as the command meta-data
      * @mongodb.driver.manual reference/command/group/ Group Command
+     * @deprecated The group command was deprecated in MongoDB 3.4
      */
+    @Deprecated
     public DBObject group(final DBObject key, final DBObject cond, final DBObject initial, final String reduce,
                           @Nullable final String finalize, final ReadPreference readPreference) {
         return group(new GroupCommand(this, key, cond, initial, reduce, finalize), readPreference);
@@ -1113,7 +1119,9 @@ public class DBCollection {
      * @param cmd the group command
      * @return a document with the grouped records as well as the command meta-data
      * @mongodb.driver.manual reference/command/group/ Group Command
+     * @deprecated The group command was deprecated in MongoDB 3.4
      */
+    @Deprecated
     public DBObject group(final GroupCommand cmd) {
         return group(cmd, getReadPreference());
     }
@@ -1126,7 +1134,9 @@ public class DBCollection {
      * @param readPreference {@link ReadPreference} to be used for this operation
      * @return a document with the grouped records as well as the command meta-data
      * @mongodb.driver.manual reference/command/group/ Group Command
+     * @deprecated The group command was deprecated in MongoDB 3.4
      */
+    @Deprecated
     public DBObject group(final GroupCommand cmd, final ReadPreference readPreference) {
         return toDBList(executor.execute(cmd.toOperation(getNamespace(), getDefaultDBObjectCodec()), readPreference, getReadConcern()));
     }
