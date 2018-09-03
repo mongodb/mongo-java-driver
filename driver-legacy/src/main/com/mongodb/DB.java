@@ -564,7 +564,9 @@ public class DB {
      * @return result of the command execution
      * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/method/db.eval/ db.eval()
+     * @deprecated The eval command was deprecated in MongoDB 3.0
      */
+    @Deprecated
     public CommandResult doEval(final String code, final Object... args) {
         DBObject commandDocument = new BasicDBObject("$eval", code).append("args", asList(args));
         return executeCommand(wrap(commandDocument));
@@ -579,7 +581,9 @@ public class DB {
      * @return result of the execution
      * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/method/db.eval/ db.eval()
+     * @deprecated The eval command was deprecated in MongoDB 3.0
      */
+    @Deprecated
     public Object eval(final String code, final Object... args) {
         CommandResult result = doEval(code, args);
         result.throwOnError();
