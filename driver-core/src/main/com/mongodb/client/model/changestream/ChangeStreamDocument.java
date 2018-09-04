@@ -120,6 +120,7 @@ public final class ChangeStreamDocument<TDocument> {
      *
      * @return the fullDocument
      */
+    @Nullable
     public TDocument getFullDocument() {
         return fullDocument;
     }
