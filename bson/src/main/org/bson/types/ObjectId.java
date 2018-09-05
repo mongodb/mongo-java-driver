@@ -246,7 +246,12 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
      * @throws IllegalArgumentException if array is null or not of length 12
      */
     public ObjectId(final byte[] bytes) {
-        this(ByteBuffer.wrap(notNull("bytes", bytes)));
+        notNull("bytes", bytes);
+        isTrueArgument("buffer.remaining() == 12", bytes.length == 12);
+        this.timestamp = makeInt(bytes[0], bytes[1], bytes[2], bytes[3]);
+        this.machineIdentifier = makeInt((byte) 0, bytes[4], bytes[5], bytes[6]);
+        this.processIdentifier = (short) makeInt((byte) 0, (byte) 0, bytes[7], bytes[8]);
+        this.counter = makeInt((byte) 0, bytes[9], bytes[10], bytes[11]);
     }
 
     /**

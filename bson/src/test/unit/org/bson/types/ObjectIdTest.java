@@ -56,6 +56,12 @@ public class ObjectIdTest {
         assertEquals(0x0036D289, objectId2.getCounter());
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testFromInvalidBytes() {
+        byte[] bytes = new byte[]{81, 6, -4, -102, -68, -126, 55, 85, -127, 54, -46, -119, -120, -4};
+        new ObjectId(bytes);
+    }
+
     @Test
     public void testBytesRoundtrip() {
         ObjectId expected = new ObjectId();
