@@ -12,7 +12,7 @@ title = "Readers and Writers"
 The various implementations of the `Bson` interface discussed in the previous section all represent BSON documents using an underlying 
 Java `Map` instance. However, they are not directly responsible for reading and writing their representations from and to BSON.  Instead, 
 this process is delegated to [`BsonWriter`]({{< apiref "org/bson/BsonWriter" >}}) and 
-[`BsonReader`]({{< apiref "org/bson/BsonReader" >}}), abstract classes that expose methods for iterative, stream-based processing of 
+[`BsonReader`]({{< apiref "org/bson/BsonReader" >}}), interfaces that expose methods for iterative, stream-based processing of 
 BSON documents. 
   
 ### BsonWriter
