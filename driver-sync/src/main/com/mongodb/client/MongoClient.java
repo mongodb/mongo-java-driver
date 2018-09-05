@@ -22,6 +22,7 @@ import com.mongodb.annotations.Immutable;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
+import java.io.Closeable;
 import java.util.List;
 
 /**
@@ -38,7 +39,7 @@ import java.util.List;
  * @since 3.7
  */
 @Immutable
-public interface MongoClient {
+public interface MongoClient extends Closeable {
 
     /**
      * Gets a {@link MongoDatabase} instance for the given database name.
