@@ -60,11 +60,27 @@ final class PropertyReflectionUtils {
     static PropertyMethods getPropertyMethods(final Class<?> clazz) {
         List<Method> setters = new ArrayList<Method>();
         List<Method> getters = new ArrayList<Method>();
+
+        // get all the default method from interface
+        for (Class<?> i : clazz.getInterfaces()) {
+            for (Method method : i.getDeclaredMethods()) {
+                if (isPublic(method.getModifiers()) && !method.isBridge() && method.isDefault()) {
+                    if (isGetter(method)) {
+                        getters.add(method);
+                    } else if (isSetter(method)) {
+                        // Setters are a bit more tricky - don't do anything fancy here
+                        setters.add(method);
+                    }
+                }
+            }
+        }
+
         for (Method method : clazz.getDeclaredMethods()) {
             // Note that if you override a getter to provide a more specific return type, getting the declared methods
             // on the subclass will return the overridden method as well as the method that was overridden from
             // the super class. This original method is copied over into the subclass as a bridge method, so we're
             // excluding them here to avoid multiple getters of the same property with different return types
+
             if (isPublic(method.getModifiers()) && !method.isBridge()) {
                 if (isGetter(method)) {
                     getters.add(method);
