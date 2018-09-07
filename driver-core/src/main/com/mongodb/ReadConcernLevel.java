@@ -56,7 +56,15 @@ public enum ReadConcernLevel {
      * @since 3.8
      * @mongodb.server.release 4.0
      */
-    SNAPSHOT("snapshot");
+    SNAPSHOT("snapshot"),
+
+    /**
+     * The available read concern level.
+     *
+     * @since 3.9
+     * @mongodb.server.release 3.6
+     */
+    AVAILABLE("available");
 
     private final String value;
 
