@@ -77,6 +77,14 @@ public final class ReadConcern {
     public static final ReadConcern SNAPSHOT = new ReadConcern(ReadConcernLevel.SNAPSHOT);
 
     /**
+     * The available read concern.
+     *
+     * @since 3.9
+     * @mongodb.server.release 3.6
+     */
+    public static final ReadConcern AVAILABLE = new ReadConcern(ReadConcernLevel.AVAILABLE);
+
+    /**
      * Gets the read concern level.
      *
      * @return the read concern level, which may be null (which indicates to use the server's default level)
