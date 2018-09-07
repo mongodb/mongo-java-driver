@@ -448,7 +448,7 @@ public final class Person {
         this.addr = address;
     }
 
-    @Id
+    @BsonId
     public String getPersonId() {
         return pid;
     }
