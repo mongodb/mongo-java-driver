@@ -24,9 +24,10 @@ import spock.lang.Specification
 
 class ChangeStreamDocumentSpecification extends Specification {
 
-    def 'should return the expected string value'() {
+    def 'should initialize correctly'() {
         given:
         def resumeToken = RawBsonDocument.parse('{token: true}')
+        def namespaceDocument = BsonDocument.parse('{db: "databaseName", coll: "collectionName"}')
         def namespace = new MongoNamespace('databaseName.collectionName')
         def fullDocument = BsonDocument.parse('{key: "value for fullDocument"}')
         def documentKey = BsonDocument.parse('{_id : 1}')
@@ -35,8 +36,8 @@ class ChangeStreamDocumentSpecification extends Specification {
         def updateDesc = new UpdateDescription(['a', 'b'], BsonDocument.parse('{c: 1}'))
 
         when:
-        def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(resumeToken, namespace, fullDocument, documentKey, clusterTime,
-                operationType, updateDesc)
+        def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(resumeToken, namespaceDocument, fullDocument,
+                documentKey, clusterTime, operationType, updateDesc)
 
         then:
         changeStreamDocument.getResumeToken() == resumeToken
@@ -46,5 +47,63 @@ class ChangeStreamDocumentSpecification extends Specification {
         changeStreamDocument.getNamespace() == namespace
         changeStreamDocument.getOperationType() == operationType
         changeStreamDocument.getUpdateDescription() == updateDesc
+        changeStreamDocument.getDatabaseName() == namespace.getDatabaseName()
+        changeStreamDocument.getNamespaceDocument() == namespaceDocument
+
+        when:
+        def changeStreamDocumentFromNamespace = new ChangeStreamDocument<BsonDocument>(resumeToken, namespace, fullDocument,
+                documentKey, clusterTime, operationType, updateDesc)
+
+        then:
+        changeStreamDocumentFromNamespace.getResumeToken() == resumeToken
+        changeStreamDocumentFromNamespace.getFullDocument() == fullDocument
+        changeStreamDocumentFromNamespace.getDocumentKey() == documentKey
+        changeStreamDocumentFromNamespace.getClusterTime() == clusterTime
+        changeStreamDocumentFromNamespace.getNamespace() == namespace
+        changeStreamDocumentFromNamespace.getOperationType() == operationType
+        changeStreamDocumentFromNamespace.getUpdateDescription() == updateDesc
+        changeStreamDocumentFromNamespace.getDatabaseName() == namespace.getDatabaseName()
+        changeStreamDocumentFromNamespace.getNamespaceDocument() == namespaceDocument
+    }
+
+    def 'should handle null namespace correctly'() {
+        given:
+        def resumeToken = RawBsonDocument.parse('{token: true}')
+        def fullDocument = BsonDocument.parse('{key: "value for fullDocument"}')
+        def documentKey = BsonDocument.parse('{_id : 1}')
+        def clusterTime = new BsonTimestamp(1234, 2)
+        def operationType = OperationType.DROP_DATABASE
+        def updateDesc = new UpdateDescription(['a', 'b'], BsonDocument.parse('{c: 1}'))
+        def changeStreamDocumentNullNamespace = new ChangeStreamDocument<BsonDocument>(resumeToken, (BsonDocument) null,
+                fullDocument, documentKey, clusterTime, operationType, updateDesc)
+
+        expect:
+        changeStreamDocumentNullNamespace.getDatabaseName() == null
+        changeStreamDocumentNullNamespace.getNamespace() == null
+        changeStreamDocumentNullNamespace.getNamespaceDocument() == null
+    }
+
+    def 'should return null on missing BsonDocument elements'() {
+        given:
+        def resumeToken = RawBsonDocument.parse('{token: true}')
+        def namespaceDocument = BsonDocument.parse('{db: "databaseName"}')
+        def namespaceDocumentEmpty = new BsonDocument()
+        def fullDocument = BsonDocument.parse('{key: "value for fullDocument"}')
+        def documentKey = BsonDocument.parse('{_id : 1}')
+        def clusterTime = new BsonTimestamp(1234, 2)
+        def operationType = OperationType.DROP_DATABASE
+        def updateDesc = new UpdateDescription(['a', 'b'], BsonDocument.parse('{c: 1}'))
+
+        def changeStreamDocument = new ChangeStreamDocument<BsonDocument>(resumeToken, namespaceDocument, fullDocument,
+                documentKey, clusterTime, operationType, updateDesc)
+        def changeStreamDocumentEmptyNamespace = new ChangeStreamDocument<BsonDocument>(resumeToken,
+                namespaceDocumentEmpty, fullDocument, documentKey, clusterTime, operationType, updateDesc)
+
+        expect:
+        changeStreamDocument.getNamespace() == null
+        changeStreamDocument.getDatabaseName() == 'databaseName'
+
+        changeStreamDocumentEmptyNamespace.getNamespace() == null
+        changeStreamDocumentEmptyNamespace.getDatabaseName() == null
     }
 }

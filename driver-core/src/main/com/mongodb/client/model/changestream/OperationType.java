@@ -56,6 +56,20 @@ public enum OperationType {
     DROP("drop"),
 
     /**
+     * The dropDatabase operation type
+     *
+     * @since 3.8.2
+     */
+    DROP_DATABASE("dropDatabase"),
+
+    /**
+     * The rename operation type for renaming collections
+     *
+     * @since 3.8.2
+     */
+    RENAME("rename"),
+
+    /**
      * The other operation type.
      *
      * <p>A placeholder for newer operation types issued by the server.
