@@ -380,6 +380,17 @@ public final class CollectionHelper<T> {
         }
     }
 
+    public void renameCollection(final MongoNamespace newNamespace) {
+        try {
+            new CommandWriteOperation<BsonDocument>("admin",
+                    new BsonDocument("renameCollection", new BsonString(getNamespace().getFullName()))
+                                .append("to", new BsonString(newNamespace.getFullName())),
+                    new BsonDocumentCodec()).execute(getBinding());
+        } catch (MongoCommandException e) {
+            // do nothing
+        }
+    }
+
     public void runAdminCommand(final BsonDocument command) {
         new CommandWriteOperation<BsonDocument>("admin", command, new BsonDocumentCodec()).execute(getBinding());
     }

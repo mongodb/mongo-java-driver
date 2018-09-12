@@ -17,6 +17,7 @@
 package com.mongodb.operation
 
 import com.mongodb.MongoChangeStreamException
+import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadConcern
 import com.mongodb.WriteConcern
@@ -331,6 +332,63 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         waitForLastRelease(getCluster())
     }
 
+    @IgnoreIf({ !serverVersionAtLeast([4, 0, 1]) })
+    def 'should decode dropDatabase to ChangeStreamDocument '() {
+        given:
+        def helper = getHelper()
+
+        def pipeline = [BsonDocument.parse('{$match: {operationType: "dropDatabase"}}')]
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.UPDATE_LOOKUP, pipeline,
+                ChangeStreamDocument.createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())),
+                ChangeStreamLevel.DATABASE)
+        helper.insertDocuments(BsonDocument.parse('{ _id : 2, x : 2, y : 3 }'))
+
+        when:
+        def cursor = execute(operation, false)
+        helper.dropDatabase('JavaDriverTest')
+        ChangeStreamDocument<BsonDocument> next = next(cursor, false).get(0)
+
+        then:
+        next.getResumeToken() != null
+        next.getDocumentKey() == null
+        next.getFullDocument() == null
+        next.getDatabaseName() == 'JavaDriverTest'
+        next.getOperationType() == OperationType.DROP_DATABASE
+        next.getUpdateDescription() == null
+
+        cleanup:
+        cursor?.close()
+        waitForLastRelease(getCluster())
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast([4, 0, 1]) })
+    def 'should decode rename to ChangeStreamDocument '() {
+        given:
+        def helper = getHelper()
+
+        def pipeline = [BsonDocument.parse('{$match: {operationType: "rename"}}')]
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.UPDATE_LOOKUP, pipeline,
+                ChangeStreamDocument.createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())))
+        def newNamespace = new MongoNamespace('JavaDriverTest', 'newCollectionName')
+        helper.insertDocuments(BsonDocument.parse('{ _id : 2, x : 2, y : 3 }'))
+
+        when:
+        def cursor = execute(operation, false)
+        helper.renameCollection(newNamespace)
+        ChangeStreamDocument<BsonDocument> next = next(cursor, false).get(0)
+
+        then:
+        next.getResumeToken() != null
+        next.getDocumentKey() == null
+        next.getFullDocument() == null
+        next.getNamespace() == helper.getNamespace()
+        next.getOperationType() == OperationType.RENAME
+        next.getUpdateDescription() == null
+
+        cleanup:
+        cursor?.close()
+        waitForLastRelease(getCluster())
+    }
 
     def 'should throw if the _id field is projected out'() {
         given:

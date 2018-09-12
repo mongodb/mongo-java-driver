@@ -25,14 +25,16 @@ class OperationTypeSpecification extends Specification {
         operationType.getValue() == expectedString
 
         where:
-        operationType            | expectedString
-        OperationType.DELETE     | 'delete'
-        OperationType.DROP       | 'drop'
-        OperationType.INSERT     | 'insert'
-        OperationType.INVALIDATE | 'invalidate'
-        OperationType.OTHER      | 'other'
-        OperationType.REPLACE    | 'replace'
-        OperationType.UPDATE     | 'update'
+        operationType               | expectedString
+        OperationType.DELETE        | 'delete'
+        OperationType.DROP          | 'drop'
+        OperationType.DROP_DATABASE | 'dropDatabase'
+        OperationType.INSERT        | 'insert'
+        OperationType.INVALIDATE    | 'invalidate'
+        OperationType.OTHER         | 'other'
+        OperationType.RENAME        | 'rename'
+        OperationType.REPLACE       | 'replace'
+        OperationType.UPDATE        | 'update'
     }
 
     def 'should support valid string representations'() {
@@ -40,14 +42,15 @@ class OperationTypeSpecification extends Specification {
         OperationType.fromString(stringValue) == operationType
 
         where:
-        operationType            | stringValue
-        OperationType.DELETE     | 'delete'
-        OperationType.DROP       | 'drop'
-        OperationType.INSERT     | 'insert'
-        OperationType.INVALIDATE | 'invalidate'
-        OperationType.OTHER      | 'other'
-        OperationType.REPLACE    | 'replace'
-        OperationType.UPDATE     | 'update'
+        operationType               | stringValue
+        OperationType.DELETE        | 'delete'
+        OperationType.DROP          | 'drop'
+        OperationType.DROP_DATABASE | 'dropDatabase'
+        OperationType.INSERT        | 'insert'
+        OperationType.INVALIDATE    | 'invalidate'
+        OperationType.OTHER         | 'other'
+        OperationType.REPLACE       | 'replace'
+        OperationType.UPDATE        | 'update'
     }
 
     def 'should return UNKNOWN for new / unknown values'() {
