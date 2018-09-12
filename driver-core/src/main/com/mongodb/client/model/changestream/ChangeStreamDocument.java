@@ -17,13 +17,16 @@
 package com.mongodb.client.model.changestream;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.assertions.Assertions;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
+import org.bson.BsonString;
 import org.bson.BsonTimestamp;
 import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.annotations.BsonCreator;
 import org.bson.codecs.pojo.annotations.BsonId;
+import org.bson.codecs.pojo.annotations.BsonIgnore;
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
 /**
@@ -39,8 +42,7 @@ public final class ChangeStreamDocument<TDocument> {
 
     @BsonId()
     private final BsonDocument resumeToken;
-    @BsonProperty("ns")
-    private final MongoNamespace namespace;
+    private final BsonDocument namespaceDocument;
     private final TDocument fullDocument;
     private final BsonDocument documentKey;
     private final BsonTimestamp clusterTime;
@@ -60,12 +62,12 @@ public final class ChangeStreamDocument<TDocument> {
      *                                                 UpdateDescription)}
      */
     @Deprecated
-    public ChangeStreamDocument(@BsonProperty("resumeToken") final BsonDocument resumeToken,
-                                @BsonProperty("namespace") final MongoNamespace namespace,
-                                @BsonProperty("fullDocument") final TDocument fullDocument,
-                                @BsonProperty("documentKey") final BsonDocument documentKey,
-                                @BsonProperty("operationType") final OperationType operationType,
-                                @BsonProperty("updateDescription") final UpdateDescription updateDescription) {
+    public ChangeStreamDocument(final BsonDocument resumeToken,
+                                final MongoNamespace namespace,
+                                final TDocument fullDocument,
+                                final BsonDocument documentKey,
+                                final OperationType operationType,
+                                final UpdateDescription updateDescription) {
         this(resumeToken, namespace, fullDocument, documentKey, null, operationType, updateDescription);
     }
 
@@ -80,21 +82,52 @@ public final class ChangeStreamDocument<TDocument> {
      * @param operationType the operation type
      * @param updateDescription the update description
      */
+    @Deprecated
+    public ChangeStreamDocument(final BsonDocument resumeToken,
+                                final MongoNamespace namespace,
+                                final TDocument fullDocument,
+                                final BsonDocument documentKey,
+                                @Nullable final BsonTimestamp clusterTime,
+                                final OperationType operationType,
+                                final UpdateDescription updateDescription) {
+        this(resumeToken, namespaceToDocument(namespace), fullDocument, documentKey,
+                clusterTime, operationType, updateDescription);
+    }
+
+    /**
+     * Creates a new instance
+     *
+     * @param resumeToken the resume token
+     * @param namespaceDocument the BsonDocument representing the namespace
+     * @param fullDocument the full document
+     * @param documentKey a document containing the _id of the changed document
+     * @param clusterTime the cluster time at which the change occured
+     * @param operationType the operation type
+     * @param updateDescription the update description
+     *
+     * @since 3.8
+     */
     @BsonCreator
     public ChangeStreamDocument(@BsonProperty("resumeToken") final BsonDocument resumeToken,
-                                @BsonProperty("namespace") final MongoNamespace namespace,
+                                @BsonProperty("ns") final BsonDocument namespaceDocument,
                                 @BsonProperty("fullDocument") final TDocument fullDocument,
                                 @BsonProperty("documentKey") final BsonDocument documentKey,
                                 @Nullable @BsonProperty("clusterTime") final BsonTimestamp clusterTime,
                                 @BsonProperty("operationType") final OperationType operationType,
                                 @BsonProperty("updateDescription") final UpdateDescription updateDescription) {
         this.resumeToken = resumeToken;
-        this.namespace = namespace;
+        this.namespaceDocument = namespaceDocument;
         this.documentKey = documentKey;
         this.fullDocument = fullDocument;
         this.clusterTime = clusterTime;
         this.operationType = operationType;
         this.updateDescription = updateDescription;
+    }
+
+    private static BsonDocument namespaceToDocument(final MongoNamespace namespace) {
+        Assertions.notNull("namespace", namespace);
+        return new BsonDocument("db", new BsonString(namespace.getDatabaseName()))
+                .append("coll", new BsonString(namespace.getCollectionName()));
     }
 
     /**
@@ -109,10 +142,55 @@ public final class ChangeStreamDocument<TDocument> {
     /**
      * Returns the namespace
      *
-     * @return the namespace
+     * The invalidate operation type does include a MongoNamespace in the ChangeStreamDocument response. The
+     * dropDatabase operation type includes a MongoNamespace, but does not include a collection name as part
+     * of the namespace.
+     *
+     * @return the namespace. If the namespaceDocument is null or if it is missing either the 'db' or 'coll' keys,
+     * then this will return null.
      */
+    @BsonIgnore @Nullable
     public MongoNamespace getNamespace() {
-        return namespace;
+        if (namespaceDocument == null) {
+            return null;
+        }
+        if (!namespaceDocument.containsKey("db") || !namespaceDocument.containsKey("coll")) {
+            return null;
+        }
+
+        return new MongoNamespace(namespaceDocument.getString("db").getValue(), namespaceDocument.getString("coll").getValue());
+    }
+
+    /**
+     * Returns the namespaceDocument
+     *
+     * The namespaceDocument is a BsonDocument containing the values associated with a MongoNamespace. The
+     * 'db' key refers to the database name and the 'coll' key refers to the collection name.
+     *
+     * @return the namespaceDocument
+     * @since 3.8
+     */
+    @BsonProperty("ns")
+    public BsonDocument getNamespaceDocument() {
+        return namespaceDocument;
+    }
+
+    /**
+     * Returns the database name
+     *
+     * @return the databaseName. If the namespaceDocument is null or if it is missing the 'db' key, then this will
+     * return null.
+     * @since 3.8
+     */
+    @BsonIgnore @Nullable
+    public String getDatabaseName() {
+        if (namespaceDocument == null) {
+            return null;
+        }
+        if (!namespaceDocument.containsKey("db")) {
+            return null;
+        }
+        return namespaceDocument.getString("db").getValue();
     }
 
     /**
@@ -197,7 +275,7 @@ public final class ChangeStreamDocument<TDocument> {
         if (resumeToken != null ? !resumeToken.equals(that.resumeToken) : that.resumeToken != null) {
             return false;
         }
-        if (namespace != null ? !namespace.equals(that.namespace) : that.namespace != null) {
+        if (namespaceDocument != null ? !namespaceDocument.equals(that.namespaceDocument) : that.namespaceDocument != null) {
             return false;
         }
         if (fullDocument != null ? !fullDocument.equals(that.fullDocument) : that.fullDocument != null) {
@@ -222,7 +300,7 @@ public final class ChangeStreamDocument<TDocument> {
     @Override
     public int hashCode() {
         int result = resumeToken != null ? resumeToken.hashCode() : 0;
-        result = 31 * result + (namespace != null ? namespace.hashCode() : 0);
+        result = 31 * result + (namespaceDocument != null ? namespaceDocument.hashCode() : 0);
         result = 31 * result + (fullDocument != null ? fullDocument.hashCode() : 0);
         result = 31 * result + (documentKey != null ? documentKey.hashCode() : 0);
         result = 31 * result + (clusterTime != null ? clusterTime.hashCode() : 0);
@@ -235,7 +313,7 @@ public final class ChangeStreamDocument<TDocument> {
     public String toString() {
         return "ChangeStreamDocument{"
                 + "resumeToken=" + resumeToken
-                + ", namespace=" + namespace
+                + ", namespace=" + getNamespace()
                 + ", fullDocument=" + fullDocument
                 + ", documentKey=" + documentKey
                 + ", clusterTime=" + clusterTime
