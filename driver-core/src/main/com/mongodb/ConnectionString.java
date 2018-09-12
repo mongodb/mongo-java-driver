@@ -266,6 +266,21 @@ public class ConnectionString {
      * @since 3.0
      */
     public ConnectionString(final String connectionString) {
+        this(connectionString, null, null);
+    }
+
+    /**
+     * Creates a ConnectionString from the given string and the specified credentials.
+     * This method permits to set the user name and the password directly outside of the
+     * connection string provided.
+     *
+     * @param connectionString     the connection string
+     * @param userName     the user name (or null to use {@code connectionSring} information)
+     * @param password     the password
+     *
+     * @since 3.9
+     */
+    public ConnectionString(final String connectionString, final String userName, final char[] password) {
         this.connectionString = connectionString;
         boolean isMongoDBProtocol = connectionString.startsWith(MONGODB_PREFIX);
         boolean isSRVProtocol = connectionString.startsWith(MONGODB_SRV_PREFIX);
@@ -298,8 +313,8 @@ public class ConnectionString {
         // Split the user and host information
         String userInfo;
         String hostIdentifier;
-        String userName = null;
-        char[] password = null;
+        String finalUserName = userName;
+        char[] finalPassword = password;
         idx = userAndHostInformation.lastIndexOf("@");
         if (idx > 0) {
             userInfo = userAndHostInformation.substring(0, idx).replace("+", "%2B");
@@ -309,12 +324,15 @@ public class ConnectionString {
                 throw new IllegalArgumentException("The connection string contains invalid user information. "
                         + "If the username or password contains a colon (:) or an at-sign (@) then it must be urlencoded");
             }
-            if (colonCount == 0) {
-                userName = urldecode(userInfo);
-            } else {
-                idx = userInfo.indexOf(":");
-                userName = urldecode(userInfo.substring(0, idx));
-                password = urldecode(userInfo.substring(idx + 1), true).toCharArray();
+            if (userName == null) {
+                if (colonCount == 0) {
+                    finalUserName = urldecode(userInfo);
+                    finalPassword = null;
+                } else {
+                    idx = userInfo.indexOf(":");
+                    finalUserName = urldecode(userInfo.substring(0, idx));
+                    finalPassword = urldecode(userInfo.substring(idx + 1), true).toCharArray();
+                }
             }
         } else {
             hostIdentifier = userAndHostInformation;
@@ -364,7 +382,7 @@ public class ConnectionString {
             combinedOptionsMaps.put("ssl", singletonList("true"));
         }
         translateOptions(combinedOptionsMaps);
-        credential = createCredentials(combinedOptionsMaps, userName, password);
+        credential = createCredentials(combinedOptionsMaps, finalUserName, finalPassword);
         warnOnUnsupportedOptions(combinedOptionsMaps);
     }
 
