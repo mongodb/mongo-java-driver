@@ -314,7 +314,7 @@ public class ConnectionString {
         String userInfo;
         String hostIdentifier;
         String finalUserName = userName;
-        char finalPassword[] = password;
+        char[] finalPassword = password;
         idx = userAndHostInformation.lastIndexOf("@");
         if (idx > 0) {
             userInfo = userAndHostInformation.substring(0, idx).replace("+", "%2B");
@@ -324,7 +324,7 @@ public class ConnectionString {
                 throw new IllegalArgumentException("The connection string contains invalid user information. "
                         + "If the username or password contains a colon (:) or an at-sign (@) then it must be urlencoded");
             }
-            if(userName == null) {
+            if (userName == null) {
                 if (colonCount == 0) {
                     finalUserName = urldecode(userInfo);
                     finalPassword = null;
