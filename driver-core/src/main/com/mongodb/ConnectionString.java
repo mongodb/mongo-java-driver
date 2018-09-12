@@ -280,7 +280,7 @@ public class ConnectionString {
      *
      * @since 3.9
      */
-    public ConnectionString(final String connectionString, String userName, char[] password) {
+    public ConnectionString(final String connectionString, final String userName, final char[] password) {
         this.connectionString = connectionString;
         boolean isMongoDBProtocol = connectionString.startsWith(MONGODB_PREFIX);
         boolean isSRVProtocol = connectionString.startsWith(MONGODB_SRV_PREFIX);
@@ -313,6 +313,8 @@ public class ConnectionString {
         // Split the user and host information
         String userInfo;
         String hostIdentifier;
+        String finalUserName = userName;
+        char finalPassword[] = password;
         idx = userAndHostInformation.lastIndexOf("@");
         if (idx > 0) {
             userInfo = userAndHostInformation.substring(0, idx).replace("+", "%2B");
@@ -324,12 +326,12 @@ public class ConnectionString {
             }
             if(userName == null) {
                 if (colonCount == 0) {
-                    userName = urldecode(userInfo);
-                    password = null;
+                    finalUserName = urldecode(userInfo);
+                    finalPassword = null;
                 } else {
                     idx = userInfo.indexOf(":");
-                    userName = urldecode(userInfo.substring(0, idx));
-                    password = urldecode(userInfo.substring(idx + 1), true).toCharArray();
+                    finalUserName = urldecode(userInfo.substring(0, idx));
+                    finalPassword = urldecode(userInfo.substring(idx + 1), true).toCharArray();
                 }
             }
         } else {
@@ -380,7 +382,7 @@ public class ConnectionString {
             combinedOptionsMaps.put("ssl", singletonList("true"));
         }
         translateOptions(combinedOptionsMaps);
-        credential = createCredentials(combinedOptionsMaps, userName, password);
+        credential = createCredentials(combinedOptionsMaps, finalUserName, finalPassword);
         warnOnUnsupportedOptions(combinedOptionsMaps);
     }
 
