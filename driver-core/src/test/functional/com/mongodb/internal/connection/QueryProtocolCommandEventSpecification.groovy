@@ -19,6 +19,7 @@ package com.mongodb.internal.connection
 import com.mongodb.MongoQueryException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.client.model.CreateCollectionOptions
+import com.mongodb.connection.AsynchronousSocketChannelStreamFactory
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.SocketSettings
@@ -35,28 +36,38 @@ import org.bson.BsonInt64
 import org.bson.BsonString
 import org.bson.BsonTimestamp
 import org.bson.codecs.BsonDocumentCodec
+import spock.lang.IgnoreIf
 import spock.lang.Shared
 
-import static org.bson.BsonDocument.parse
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
+import static com.mongodb.ClusterFixture.isNotAtLeastJava7
 import static com.mongodb.connection.ConnectionFixture.getCredentialListWithCache
 import static com.mongodb.internal.connection.ProtocolTestHelper.execute
+import static org.bson.BsonDocument.parse
 
-
+@IgnoreIf({ isNotAtLeastJava7() })
 class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecification {
     @Shared
-    InternalStreamConnection connection;
+    InternalStreamConnection nettyConnection
+    @Shared
+    InternalStreamConnection nioConnection
 
     def setupSpec() {
-        connection = new InternalStreamConnectionFactory(new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
+        nettyConnection = new InternalStreamConnectionFactory(new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings()),
                 getCredentialListWithCache(), null, null, [], null)
                 .create(new ServerId(new ClusterId(), getPrimary()))
-        connection.open();
+        nettyConnection.open()
+
+        nioConnection = new InternalStreamConnectionFactory(new AsynchronousSocketChannelStreamFactory(SocketSettings.builder().build(),
+                getSslSettings()), getCredentialListWithCache(), null, null, [], null)
+                .create(new ServerId(new ClusterId(), getPrimary()))
+        nioConnection.open()
     }
 
     def cleanupSpec() {
-        connection?.close()
+        nettyConnection?.close()
+        nioConnection?.close()
     }
 
     def 'should deliver start and completed command events with numberToReturn'() {
@@ -93,7 +104,7 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                              new CommandSucceededEvent(1, connection.getDescription(), 'find', response, 0)])
 
         where:
-        async << [false, true]
+        [async, connection] << [[false, true], [nettyConnection, nioConnection]].combinations()
     }
 
     def 'should deliver start and completed command events with limit and batchSize'() {
@@ -134,7 +145,7 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                              new CommandSucceededEvent(1, connection.getDescription(), 'find', response, 0)])
 
         where:
-        async << [false, true]
+        [async, connection] << [[false, true], [nettyConnection, nioConnection]].combinations()
     }
 
     def 'should deliver start and completed command events when there is no projection'() {
@@ -164,7 +175,7 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                              new CommandSucceededEvent(1, connection.getDescription(), 'find', response, 0)])
 
         where:
-        async << [false, true]
+        [async, connection] << [[false, true], [nettyConnection, nioConnection]].combinations()
     }
 
     def 'should deliver start and completed command events when there are boolean options'() {
@@ -206,7 +217,7 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                              new CommandSucceededEvent(1, connection.getDescription(), 'find', response, 0)])
 
         where:
-        async << [false, true]
+        [async, connection] << [[false, true], [nettyConnection, nioConnection]].combinations()
     }
 
     def 'should deliver start and completed command events with meta operators'() {
@@ -279,7 +290,7 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                              new CommandSucceededEvent(1, connection.getDescription(), 'find', response, 0)])
 
         where:
-        async << [false, true]
+        [async, connection] << [[false, true], [nettyConnection, nioConnection]].combinations()
     }
 
     def 'should deliver start and completed command events for an explain command when there is a $explain meta operator'() {
@@ -312,7 +323,7 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                              new CommandSucceededEvent(1, connection.getDescription(), 'explain', expectedResponse, 0)])
 
         where:
-        async << [false, true]
+        [async, connection] << [[false, true], [nettyConnection, nioConnection]].combinations()
     }
 
     def 'should deliver start and failed command events'() {
@@ -338,6 +349,6 @@ class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                              new CommandFailedEvent(1, connection.getDescription(), 'find', 0, e)])
 
         where:
-        async << [false, true]
+        [async, connection] << [[false, true], [nettyConnection, nioConnection]].combinations()
     }
 }
