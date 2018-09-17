@@ -46,7 +46,7 @@ import static com.mongodb.connection.ConnectionFixture.getCredentialListWithCach
 import static com.mongodb.internal.connection.ProtocolTestHelper.execute
 import static org.bson.BsonDocument.parse
 
-@IgnoreIf({ isNotAtLeastJava7() })
+@IgnoreIf({ isNotAtLeastJava7() || getSslSettings().isEnabled() })
 class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecification {
     @Shared
     InternalStreamConnection nettyConnection
