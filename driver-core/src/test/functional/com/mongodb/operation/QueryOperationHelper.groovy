@@ -25,6 +25,8 @@ class QueryOperationHelper {
         document.remove('executionStats')
         document.remove('serverInfo')
         document.remove('executionTimeMillis')
+        document.remove('operationTime')
+        document.remove('$clusterTime')
         document
     }
 
