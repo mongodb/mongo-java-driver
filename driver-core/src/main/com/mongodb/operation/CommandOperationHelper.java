@@ -466,7 +466,7 @@ final class CommandOperationHelper {
                     @Override
                     public R call(final ConnectionSource source, final Connection connection) {
                         try {
-                            if (!canRetryWrite(source.getServerDescription(), connection.getDescription())) {
+                            if (!canRetryWrite(source.getServerDescription(), connection.getDescription(), binding.getSessionContext())) {
                                 throw originalException;
                             }
                             return transformer.apply(connection.command(database, originalCommand, fieldNameValidator,
@@ -559,7 +559,8 @@ final class CommandOperationHelper {
                     public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
                         if (t != null) {
                             callback.onResult(null, originalError);
-                        } else if (!canRetryWrite(source.getServerDescription(), connection.getDescription())) {
+                        } else if (!canRetryWrite(source.getServerDescription(), connection.getDescription(),
+                                binding.getSessionContext())) {
                             releasingCallback(callback, source, connection).onResult(null, originalError);
                         } else {
                             connection.commandAsync(database, command, fieldNameValidator, readPreference,
