@@ -264,12 +264,18 @@ class OperationFunctionalSpecification extends Specification {
             getReadConnectionSource() >> connectionSource
             getReadPreference() >> readPreference
             getSessionContext() >> Stub(SessionContext) {
+                hasSession() >> true
                 hasActiveTransaction() >> false
                 getReadConcern() >> readConcern
             }
         }
         def writeBinding = Stub(WriteBinding) {
             getWriteConnectionSource() >> connectionSource
+            getSessionContext() >> Stub(SessionContext) {
+                hasSession() >> true
+                hasActiveTransaction() >> false
+                getReadConcern() >> readConcern
+            }
         }
 
         if (retryable) {
@@ -334,12 +340,18 @@ class OperationFunctionalSpecification extends Specification {
             getReadConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
             getReadPreference() >> readPreference
             getSessionContext() >> Stub(SessionContext) {
+                hasSession() >> true
                 hasActiveTransaction() >> false
                 getReadConcern() >> readConcern
             }
         }
         def writeBinding = Stub(AsyncWriteBinding) {
             getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+            getSessionContext() >> Stub(SessionContext) {
+                hasSession() >> true
+                hasActiveTransaction() >> false
+                getReadConcern() >> readConcern
+            }
         }
         def callback = new FutureResultCallback()
 
@@ -413,6 +425,11 @@ class OperationFunctionalSpecification extends Specification {
         }
         def writeBinding = Stub(WriteBinding) {
             getWriteConnectionSource() >> connectionSource
+            getSessionContext() >> Stub(SessionContext) {
+                hasSession() >> true
+                hasActiveTransaction() >> false
+                getReadConcern() >> ReadConcern.DEFAULT
+            }
         }
 
         1 * connection.command(*_) >> { throw exception }
@@ -452,6 +469,11 @@ class OperationFunctionalSpecification extends Specification {
 
         def writeBinding = Stub(AsyncWriteBinding) {
             getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+            getSessionContext() >> Stub(SessionContext) {
+                hasSession() >> true
+                hasActiveTransaction() >> false
+                getReadConcern() >> ReadConcern.DEFAULT
+            }
         }
         def callback = new FutureResultCallback()
 

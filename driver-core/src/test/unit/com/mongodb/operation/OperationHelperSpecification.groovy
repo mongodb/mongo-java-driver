@@ -390,15 +390,22 @@ class OperationHelperSpecification extends Specification {
     def 'should check if a valid retryable write'() {
         given:
         def activeTransactionSessionContext = Stub(SessionContext) {
+            hasSession() >> true
             hasActiveTransaction() >> true
         }
         def noTransactionSessionContext = Stub(SessionContext) {
+            hasSession() >> true
+            hasActiveTransaction() >> false
+        }
+        def noOpSessionContext = Stub(SessionContext) {
+            hasSession() >> false
             hasActiveTransaction() >> false
         }
 
         expect:
         isRetryableWrite(retryWrites, writeConcern, serverDescription, connectionDescription, noTransactionSessionContext) == expected
         !isRetryableWrite(retryWrites, writeConcern, serverDescription, connectionDescription, activeTransactionSessionContext)
+        !isRetryableWrite(retryWrites, writeConcern, serverDescription, connectionDescription, noOpSessionContext)
 
         where:
         retryWrites | writeConcern   | serverDescription             | connectionDescription                 | expected

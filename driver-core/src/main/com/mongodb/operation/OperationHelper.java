@@ -260,11 +260,12 @@ final class OperationHelper {
             LOGGER.debug("retryWrites set to true but in an active transaction.");
             return false;
         } else {
-            return canRetryWrite(serverDescription, connectionDescription);
+            return canRetryWrite(serverDescription, connectionDescription, sessionContext);
         }
     }
 
-    static boolean canRetryWrite(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
+    static boolean canRetryWrite(final ServerDescription serverDescription, final ConnectionDescription connectionDescription,
+                                 final SessionContext sessionContext) {
         if (connectionDescription.getServerVersion().compareTo(new ServerVersion(3, 6)) < 0) {
             LOGGER.debug("retryWrites set to true but the server does not support retryable writes.");
             return false;
@@ -273,6 +274,10 @@ final class OperationHelper {
             return false;
         } else if (connectionDescription.getServerType().equals(ServerType.STANDALONE)) {
             LOGGER.debug("retryWrites set to true but the server is a standalone server.");
+            return false;
+        } else if (!sessionContext.hasSession()) {
+            LOGGER.debug("retryWrites set to true but there is no implicit session, likely because the MongoClient was created with " +
+                    "multiple MongoCredential instances and sessions can only be used with a single MongoCredential");
             return false;
         }
         return true;

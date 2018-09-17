@@ -18,6 +18,7 @@ package com.mongodb.operation
 
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoWriteConcernException
+import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.async.SingleResultCallback
@@ -34,6 +35,7 @@ import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
 import com.mongodb.connection.ServerVersion
 import com.mongodb.internal.validator.NoOpFieldNameValidator
+import com.mongodb.session.SessionContext
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -160,6 +162,11 @@ class CommandOperationHelperSpecification extends Specification {
         }
         def writeBinding = Stub(WriteBinding) {
             getWriteConnectionSource() >> connectionSource
+            getSessionContext() >> Stub(SessionContext) {
+                hasSession() >> true
+                hasActiveTransaction() >> false
+                getReadConcern() >> ReadConcern.DEFAULT
+            }
         }
 
         when:
@@ -208,6 +215,11 @@ class CommandOperationHelperSpecification extends Specification {
         }
         def asyncWriteBinding = Stub(AsyncWriteBinding) {
             getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
+            getSessionContext() >> Stub(SessionContext) {
+                hasSession() >> true
+                hasActiveTransaction() >> false
+                getReadConcern() >> ReadConcern.DEFAULT
+            }
         }
 
         when:
