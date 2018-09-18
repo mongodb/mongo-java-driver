@@ -486,13 +486,18 @@ public class JsonPoweredCrudTestHelper {
         }
         FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<Void>();
         if (clientSession == null) {
-            getCollection(collectionOptions).insertMany(documents, new InsertManyOptions().ordered(arguments.getBoolean("ordered",
-                    BsonBoolean.TRUE).getValue()),
-                    futureResultCallback);
+            getCollection(collectionOptions)
+                    .insertMany(documents,
+                                new InsertManyOptions().ordered(arguments.getDocument("options", new BsonDocument())
+                                                                    .getBoolean("ordered", BsonBoolean.TRUE).getValue()),
+                                futureResultCallback);
         } else {
-            getCollection(collectionOptions).insertMany(clientSession, documents,
-                    new InsertManyOptions().ordered(arguments.getBoolean("ordered", BsonBoolean.TRUE).getValue()),
-                    futureResultCallback);
+            getCollection(collectionOptions)
+                    .insertMany(clientSession,
+                                documents,
+                                new InsertManyOptions().ordered(arguments.getDocument("options", new BsonDocument())
+                                                                    .getBoolean("ordered", BsonBoolean.TRUE).getValue()),
+                                futureResultCallback);
         }
         futureResult(futureResultCallback);
 
@@ -585,58 +590,44 @@ public class JsonPoweredCrudTestHelper {
         List<WriteModel<BsonDocument>> writeModels = new ArrayList<WriteModel<BsonDocument>>();
         for (BsonValue bsonValue : arguments.getArray("requests")) {
             BsonDocument cur = bsonValue.asDocument();
-            if (cur.containsKey("name")) {
-                String name = cur.getString("name").getValue();
-                BsonDocument requestArguments = cur.getDocument("arguments");
-                if (name.equals("insertOne")) {
-                    writeModels.add(new InsertOneModel<BsonDocument>(requestArguments.getDocument("document")));
-                } else if (name.equals("updateOne")) {
-                    writeModels.add(new UpdateOneModel<BsonDocument>(requestArguments.getDocument("filter"),
-                            requestArguments.getDocument("update"),
-                            getUpdateOptions(requestArguments)));
-                } else if (name.equals("updateMany")) {
-                    writeModels.add(new UpdateManyModel<BsonDocument>(requestArguments.getDocument("filter"),
-                            requestArguments.getDocument("update"),
-                            getUpdateOptions(requestArguments)));
-                } else if (name.equals("deleteOne")) {
-                    writeModels.add(new DeleteOneModel<BsonDocument>(requestArguments.getDocument("filter")));
-                } else if (name.equals("deleteMany")) {
-                    writeModels.add(new DeleteManyModel<BsonDocument>(requestArguments.getDocument("filter")));
-                } else if (name.equals("replaceOne")) {
-                    writeModels.add(new ReplaceOneModel<BsonDocument>(requestArguments.getDocument("filter"),
-                            requestArguments.getDocument("replacement")));
-                } else {
-                    throw new UnsupportedOperationException(format("Unsupported write request type: %s", name));
-                }
+            String name = cur.getString("name").getValue();
+            BsonDocument requestArguments = cur.getDocument("arguments");
+            if (name.equals("insertOne")) {
+                writeModels.add(new InsertOneModel<BsonDocument>(requestArguments.getDocument("document")));
+            } else if (name.equals("updateOne")) {
+                writeModels.add(new UpdateOneModel<BsonDocument>(requestArguments.getDocument("filter"),
+                        requestArguments.getDocument("update"),
+                        getUpdateOptions(requestArguments)));
+            } else if (name.equals("updateMany")) {
+                writeModels.add(new UpdateManyModel<BsonDocument>(requestArguments.getDocument("filter"),
+                        requestArguments.getDocument("update"),
+                        getUpdateOptions(requestArguments)));
+            } else if (name.equals("deleteOne")) {
+                writeModels.add(new DeleteOneModel<BsonDocument>(requestArguments.getDocument("filter")));
+            } else if (name.equals("deleteMany")) {
+                writeModels.add(new DeleteManyModel<BsonDocument>(requestArguments.getDocument("filter")));
+            } else if (name.equals("replaceOne")) {
+                writeModels.add(new ReplaceOneModel<BsonDocument>(requestArguments.getDocument("filter"),
+                        requestArguments.getDocument("replacement")));
             } else {
-                if (cur.get("insertOne") != null) {
-                    BsonDocument insertOneArguments = cur.getDocument("insertOne");
-                    writeModels.add(new InsertOneModel<BsonDocument>(insertOneArguments.getDocument("document")));
-                } else if (cur.get("updateOne") != null) {
-                    BsonDocument updateOneArguments = cur.getDocument("updateOne");
-                    writeModels.add(new UpdateOneModel<BsonDocument>(updateOneArguments.getDocument("filter"),
-                            updateOneArguments.getDocument("update"),
-                            getUpdateOptions(updateOneArguments)));
-                } else if (cur.get("updateMany") != null) {
-                    BsonDocument updateManyArguments = cur.getDocument("updateMany");
-                    writeModels.add(new UpdateManyModel<BsonDocument>(updateManyArguments.getDocument("filter"),
-                            updateManyArguments.getDocument("update"),
-                            getUpdateOptions(updateManyArguments)));
-                } else {
-                    throw new UnsupportedOperationException(format("Unsupported write request type: %s", cur.toJson()));
-                }
+                throw new UnsupportedOperationException(format("Unsupported write request type: %s", name));
             }
         }
 
         FutureResultCallback<BulkWriteResult> futureResultCallback = new FutureResultCallback<BulkWriteResult>();
         if (clientSession == null) {
-            getCollection(collectionOptions).withWriteConcern(writeConcern).bulkWrite(writeModels,
-                    new BulkWriteOptions().ordered(arguments.getBoolean("ordered", BsonBoolean.TRUE).getValue()),
-                    futureResultCallback);
+            getCollection(collectionOptions).withWriteConcern(writeConcern)
+                    .bulkWrite(writeModels,
+                                new BulkWriteOptions().ordered(arguments.getDocument("options", new BsonDocument())
+                                       .getBoolean("ordered", BsonBoolean.TRUE).getValue()),
+                                futureResultCallback);
         } else {
-            getCollection(collectionOptions).withWriteConcern(writeConcern).bulkWrite(clientSession, writeModels,
-                    new BulkWriteOptions().ordered(arguments.getBoolean("ordered", BsonBoolean.TRUE).getValue()),
-                    futureResultCallback);
+            getCollection(collectionOptions).withWriteConcern(writeConcern)
+                    .bulkWrite(clientSession,
+                                writeModels,
+                                new BulkWriteOptions().ordered(arguments.getDocument("options", new BsonDocument())
+                                        .getBoolean("ordered", BsonBoolean.TRUE).getValue()),
+                                futureResultCallback);
         }
         return toResult(futureResult(futureResultCallback), writeModels);
     }

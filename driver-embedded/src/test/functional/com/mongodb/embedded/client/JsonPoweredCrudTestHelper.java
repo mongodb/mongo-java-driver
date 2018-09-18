@@ -324,7 +324,8 @@ public class JsonPoweredCrudTestHelper {
             documents.add(document.asDocument());
         }
         collection.insertMany(documents,
-                              new InsertManyOptions().ordered(arguments.getBoolean("ordered", BsonBoolean.TRUE).getValue()));
+                              new InsertManyOptions().ordered(arguments.getDocument("options", new BsonDocument())
+                                                                .getBoolean("ordered", BsonBoolean.TRUE).getValue()));
         BsonDocument insertedIds = new BsonDocument();
         for (int i = 0; i < documents.size(); i++) {
             insertedIds.put(Integer.toString(i), documents.get(i).get("_id"));
@@ -385,49 +386,32 @@ public class JsonPoweredCrudTestHelper {
         List<WriteModel<BsonDocument>> writeModels = new ArrayList<WriteModel<BsonDocument>>();
         for (BsonValue bsonValue : arguments.getArray("requests")) {
             BsonDocument cur = bsonValue.asDocument();
-            if (cur.containsKey("name")) {
-                String name = cur.getString("name").getValue();
-                BsonDocument requestArguments = cur.getDocument("arguments");
-                if (name.equals("insertOne")) {
-                    writeModels.add(new InsertOneModel<BsonDocument>(requestArguments.getDocument("document")));
-                } else if (name.equals("updateOne")) {
-                    writeModels.add(new UpdateOneModel<BsonDocument>(requestArguments.getDocument("filter"),
-                                                                            requestArguments.getDocument("update"),
-                                                                            getUpdateOptions(requestArguments)));
-                } else if (name.equals("updateMany")) {
-                    writeModels.add(new UpdateManyModel<BsonDocument>(requestArguments.getDocument("filter"),
-                                                                             requestArguments.getDocument("update"),
-                                                                             getUpdateOptions(requestArguments)));
-                } else if (name.equals("deleteOne")) {
-                    writeModels.add(new DeleteOneModel<BsonDocument>(requestArguments.getDocument("filter")));
-                } else if (name.equals("replaceOne")) {
-                    writeModels.add(new ReplaceOneModel<BsonDocument>(requestArguments.getDocument("filter"),
-                            requestArguments.getDocument("replacement")));
-                } else {
-                    throw new UnsupportedOperationException(format("Unsupported write request type: %s", name));
-                }
+            String name = cur.getString("name").getValue();
+            BsonDocument requestArguments = cur.getDocument("arguments");
+            if (name.equals("insertOne")) {
+                writeModels.add(new InsertOneModel<BsonDocument>(requestArguments.getDocument("document")));
+            } else if (name.equals("updateOne")) {
+                writeModels.add(new UpdateOneModel<BsonDocument>(requestArguments.getDocument("filter"),
+                                                                        requestArguments.getDocument("update"),
+                                                                        getUpdateOptions(requestArguments)));
+            } else if (name.equals("updateMany")) {
+                writeModels.add(new UpdateManyModel<BsonDocument>(requestArguments.getDocument("filter"),
+                                                                         requestArguments.getDocument("update"),
+                                                                         getUpdateOptions(requestArguments)));
+            } else if (name.equals("deleteOne")) {
+                writeModels.add(new DeleteOneModel<BsonDocument>(requestArguments.getDocument("filter")));
+            } else if (name.equals("replaceOne")) {
+                writeModels.add(new ReplaceOneModel<BsonDocument>(requestArguments.getDocument("filter"),
+                        requestArguments.getDocument("replacement")));
             } else {
-                if (cur.get("insertOne") != null) {
-                    BsonDocument insertOneArguments = cur.getDocument("insertOne");
-                    writeModels.add(new InsertOneModel<BsonDocument>(insertOneArguments.getDocument("document")));
-                } else if (cur.get("updateOne") != null) {
-                    BsonDocument updateOneArguments = cur.getDocument("updateOne");
-                    writeModels.add(new UpdateOneModel<BsonDocument>(updateOneArguments.getDocument("filter"),
-                                                                            updateOneArguments.getDocument("update"),
-                                                                            getUpdateOptions(updateOneArguments)));
-                } else if (cur.get("updateMany") != null) {
-                    BsonDocument updateManyArguments = cur.getDocument("updateMany");
-                    writeModels.add(new UpdateManyModel<BsonDocument>(updateManyArguments.getDocument("filter"),
-                                                                             updateManyArguments.getDocument("update"),
-                                                                             getUpdateOptions(updateManyArguments)));
-                } else {
-                    throw new UnsupportedOperationException(format("Unsupported write request type: %s", cur.toJson()));
-                }
+                throw new UnsupportedOperationException(format("Unsupported write request type: %s", name));
             }
         }
 
         return toResult(collection.withWriteConcern(writeConcern)
-                .bulkWrite(writeModels, new BulkWriteOptions().ordered(arguments.getBoolean("ordered", BsonBoolean.TRUE).getValue()))
+                .bulkWrite(writeModels,
+                            new BulkWriteOptions().ordered(arguments.getDocument("options", new BsonDocument())
+                                                                .getBoolean("ordered", BsonBoolean.TRUE).getValue()))
         );
     }
 
