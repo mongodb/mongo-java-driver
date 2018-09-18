@@ -85,18 +85,20 @@ final class MongoIterableSubscription<TResult> extends AbstractSubscription<TRes
             batchCursor.next(new SingleResultCallback<List<TResult>>() {
                 @Override
                 public void onResult(final List<TResult> result, final Throwable t) {
-
                     synchronized (MongoIterableSubscription.this) {
                         isReading = false;
-                        if (t == null && result == null) {
-                            completed = true;
-                        }
                     }
 
                     if (t != null) {
                         onError(t);
                     } else {
                         addToQueue(result);
+                        synchronized (MongoIterableSubscription.this) {
+                            if (result == null) {
+                                completed = true;
+                            }
+                        }
+                        tryProcessResultsQueue();
                     }
                 }
             });
