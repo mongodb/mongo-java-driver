@@ -41,10 +41,11 @@ class SingleResultCallbackSubscription<TResult> extends AbstractSubscription<TRe
                 if (t != null) {
                     onError(t);
                 } else {
+                    addToQueue(result);
                     synchronized (SingleResultCallbackSubscription.this) {
                         completed = true;
                     }
-                    addToQueue(result);
+                    tryProcessResultsQueue();
                 }
             }
         });
