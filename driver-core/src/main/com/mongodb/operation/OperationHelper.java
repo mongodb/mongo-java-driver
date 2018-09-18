@@ -276,8 +276,8 @@ final class OperationHelper {
             LOGGER.debug("retryWrites set to true but the server is a standalone server.");
             return false;
         } else if (!sessionContext.hasSession()) {
-            LOGGER.debug("retryWrites set to true but there is no implicit session, likely because the MongoClient was created with " +
-                    "multiple MongoCredential instances and sessions can only be used with a single MongoCredential");
+            LOGGER.debug("retryWrites set to true but there is no implicit session, likely because the MongoClient was created with "
+                    + "multiple MongoCredential instances and sessions can only be used with a single MongoCredential");
             return false;
         }
         return true;
