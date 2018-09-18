@@ -20,6 +20,9 @@ import com.mongodb.MongoException
 import com.mongodb.async.AsyncBatchCursor
 import spock.lang.Specification
 
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
+
 import static com.mongodb.async.client.Observables.observe
 
 class MongoIterableSubscriptionSpecification extends Specification {
@@ -72,16 +75,22 @@ class MongoIterableSubscriptionSpecification extends Specification {
     def 'should call onComplete after cursor has completed and all onNext values requested'() {
         given:
         def mongoIterable = getMongoIterable()
+        def executor = Executors.newFixedThreadPool(5)
         def observer = new TestObserver()
         observe(mongoIterable).subscribe(observer)
 
         when:
+        100.times { executor.submit { observer.requestMore(1) } }
         observer.requestMore(10)
 
         then:
         observer.assertNoErrors()
         observer.assertReceivedOnNext([1, 2, 3, 4])
         observer.assertTerminalEvent()
+
+        cleanup:
+        executor?.shutdown()
+        executor?.awaitTermination(10, TimeUnit.SECONDS)
     }
 
     def 'should call onError if batchCursor returns an throwable in the callback'() {

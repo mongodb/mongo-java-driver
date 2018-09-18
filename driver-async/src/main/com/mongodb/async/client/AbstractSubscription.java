@@ -109,14 +109,12 @@ abstract class AbstractSubscription<TResult> implements Subscription {
         if (result != null) {
             resultsQueue.add(result);
         }
-        tryProcessResultsQueue();
     }
 
     void addToQueue(@Nullable final List<TResult> results) {
         if (results != null) {
             resultsQueue.addAll(results);
         }
-        tryProcessResultsQueue();
     }
 
     void onError(final Throwable t) {
@@ -156,7 +154,7 @@ abstract class AbstractSubscription<TResult> implements Subscription {
         }
     }
 
-    private void tryProcessResultsQueue() {
+    void tryProcessResultsQueue() {
         try {
             processResultsQueue();
         } catch (Throwable t) {

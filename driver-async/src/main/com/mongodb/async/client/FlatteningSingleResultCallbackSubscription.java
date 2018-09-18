@@ -44,10 +44,11 @@ class FlatteningSingleResultCallbackSubscription<TResult> extends AbstractSubscr
                 if (t != null) {
                     onError(t);
                 } else {
+                    addToQueue(result);
                     synchronized (FlatteningSingleResultCallbackSubscription.this) {
                         completed = true;
                     }
-                    addToQueue(result);
+                    tryProcessResultsQueue();
                 }
             }
         });
