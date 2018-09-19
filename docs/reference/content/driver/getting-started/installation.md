@@ -31,7 +31,7 @@ The `mongodb-driver-sync` artifact is a valid OSGi bundle whose symbolic name is
 
 {{% /note %}}
 
-{{< install artifactId="mongodb-driver-sync" version="3.8.1" dependencies="true">}}
+{{< install artifactId="mongodb-driver-sync" version="3.8.2" dependencies="true">}}
 
 ## MongoDB Driver  
 
@@ -46,7 +46,7 @@ It is also *not* a Java 9 module.
 
 {{% /note %}}
 
-{{< install artifactId="mongodb-driver" version="3.8.1" dependencies="true">}}
+{{< install artifactId="mongodb-driver" version="3.8.2" dependencies="true">}}
 
 
 ## Uber Jar (Legacy)
@@ -61,4 +61,4 @@ This is a Java 9-compliant module with an Automatic-Module-Name of `org.mongodb.
 The `mongo-java-driver` artifact is a valid OSGi bundle whose symbolic name is `org.mongodb.mongo-java-driver`.
 {{% /note %}}
 
-{{< install artifactId="mongo-java-driver" version="3.8.1">}}
+{{< install artifactId="mongo-java-driver" version="3.8.2">}}
