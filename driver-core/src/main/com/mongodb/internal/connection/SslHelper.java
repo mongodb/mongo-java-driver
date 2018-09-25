@@ -16,8 +16,6 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.ServerAddress;
-
 import javax.net.ssl.SSLParameters;
 import java.lang.reflect.InvocationTargetException;
 
@@ -69,12 +67,12 @@ public final class SslHelper {
     /**
      * Enable SNI if running on Java 8 or later.  Otherwise fail silently to enable SNI.
      *
-     * @param address       the server address
+     * @param host          the server host
      * @param sslParameters the SSL parameters
      */
-    public static void enableSni(final ServerAddress address, final SSLParameters sslParameters) {
+    public static void enableSni(final String host, final SSLParameters sslParameters) {
         if (SNI_SSL_HELPER != null) {
-            SNI_SSL_HELPER.enableSni(address, sslParameters);
+            SNI_SSL_HELPER.enableSni(host, sslParameters);
         }
     }
 

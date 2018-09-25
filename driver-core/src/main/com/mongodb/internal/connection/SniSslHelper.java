@@ -16,8 +16,6 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.ServerAddress;
-
 import javax.net.ssl.SSLParameters;
 
 interface SniSslHelper {
@@ -25,8 +23,8 @@ interface SniSslHelper {
     /**
      * Enable SNI.
      *
-     * @param address       the server address
+     * @param host          the server host
      * @param sslParameters the SSL parameters
      */
-    void enableSni(ServerAddress address, SSLParameters sslParameters);
+    void enableSni(String host, SSLParameters sslParameters);
 }

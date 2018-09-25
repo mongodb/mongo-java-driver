@@ -17,13 +17,13 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoInternalException;
-import com.mongodb.ServerAddress;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 
 import javax.net.ssl.SSLParameters;
 import javax.net.ssl.SSLSocket;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
 
 import static com.mongodb.internal.connection.SslHelper.enableHostNameVerification;
@@ -33,8 +33,8 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 final class SocketStreamHelper {
 
     @SuppressWarnings("deprecation")
-    static void initialize(final Socket socket, final ServerAddress address, final SocketSettings settings, final SslSettings sslSettings)
-    throws IOException {
+    static void initialize(final Socket socket, final InetSocketAddress inetSocketAddress, final SocketSettings settings,
+                           final SslSettings sslSettings) throws IOException {
         socket.setTcpNoDelay(true);
         socket.setSoTimeout(settings.getReadTimeout(MILLISECONDS));
         socket.setKeepAlive(settings.isKeepAlive());
@@ -54,14 +54,14 @@ final class SocketStreamHelper {
                 sslParameters = new SSLParameters();
             }
 
-            enableSni(address, sslParameters);
+            enableSni(inetSocketAddress.getHostName(), sslParameters);
 
             if (!sslSettings.isInvalidHostNameAllowed()) {
                 enableHostNameVerification(sslParameters);
             }
             sslSocket.setSSLParameters(sslParameters);
         }
-        socket.connect(address.getSocketAddress(), settings.getConnectTimeout(MILLISECONDS));
+        socket.connect(inetSocketAddress, settings.getConnectTimeout(MILLISECONDS));
     }
 
     private SocketStreamHelper() {

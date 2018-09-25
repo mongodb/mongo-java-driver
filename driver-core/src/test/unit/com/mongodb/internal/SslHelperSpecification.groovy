@@ -47,7 +47,7 @@ class SslHelperSpecification extends Specification {
         def sslParameters = new SSLParameters()
 
         when:
-        SslHelper.enableSni(new ServerAddress(serverName), sslParameters)
+        SslHelper.enableSni(new ServerAddress(serverName).getHost(), sslParameters)
 
         then:
         sslParameters.getServerNames() == [new SNIHostName(serverName)]

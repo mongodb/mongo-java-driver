@@ -16,8 +16,6 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.ServerAddress;
-
 import javax.net.ssl.SNIHostName;
 import javax.net.ssl.SNIServerName;
 import javax.net.ssl.SSLParameters;
@@ -37,9 +35,9 @@ final class Java8SniSslHelper implements SniSslHelper {
     }
 
     @Override
-    public void enableSni(final ServerAddress address, final SSLParameters sslParameters) {
+    public void enableSni(final String host, final SSLParameters sslParameters) {
         try {
-            SNIServerName sniHostName = new SNIHostName(address.getHost());
+            SNIServerName sniHostName = new SNIHostName(host);
             sslParameters.setServerNames(singletonList(sniHostName));
         } catch (IllegalArgumentException e) {
             // ignore because SNIHostName will throw this for some legit host names for connecting to MongoDB, e.g an IPV6 literal
