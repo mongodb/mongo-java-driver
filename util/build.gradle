@@ -14,11 +14,3 @@
  * limitations under the License.
  */
 
-apply plugin: 'java'
-
-sourceCompatibility = JavaVersion.VERSION_1_6
-targetCompatibility = JavaVersion.VERSION_1_6
-
-sourceSets {
-    main { java.srcDirs = ['src/main'] }
-}

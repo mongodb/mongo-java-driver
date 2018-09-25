@@ -14,7 +14,11 @@
  * limitations under the License.
  */
 
-apply plugin: 'osgi'
+archivesBaseName = 'mongodb-driver-embedded'
+description =  'The MongoDB Embedded Driver'
+ext {
+    pomName = 'The MongoDB Embedded Driver'
+}
 
 dependencies {
     compile project(':driver-sync')
@@ -25,22 +29,16 @@ dependencies {
     testCompile project(':driver-sync').sourceSets.test.output
 }
 
-archivesBaseName = 'mongodb-driver-embedded'
+clirr {
+    enabled = false
+}
 
 jar {
     manifest {
         instruction 'Automatic-Module-Name', 'org.mongodb.driver.embedded.client'
-        instruction 'Build-Version', getGitVersion()
+        instruction 'Build-Version', project.gitVersion
         instruction 'Import-Package',
                 'org.bson.*',
                 'com.mongodb.*'
-    }
-}
-
-modifyPom {
-    project {
-        name 'MongoDB Embedded Driver'
-        description 'The MongoDB Embedded Driver'
-        url 'http://www.mongodb.org'
     }
 }

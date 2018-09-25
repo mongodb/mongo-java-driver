@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-apply plugin: 'osgi'
-apply plugin: 'org.kordamp.gradle.clirr'
-
-def configDir = new File(rootDir, 'config')
 archivesBaseName = 'mongodb-driver-async'
+description = 'The MongoDB Asynchronous Driver.'
+
+ext {
+    pomName = 'The MongoDB Asynchronous Driver'
+}
 
 sourceSets {
     test.groovy.srcDirs += 'src/examples'
@@ -46,18 +47,10 @@ tasks.withType(Checkstyle) {
 jar {
     manifest {
         instruction 'Automatic-Module-Name', 'org.mongodb.driver.async.client'
-        instruction 'Build-Version', getGitVersion()
+        instruction 'Build-Version', project.gitVersion
         instruction 'Import-Package',
                 'org.bson.*',
                 'com.mongodb.*',
                 'io.netty.*;resolution:=optional'
-    }
-}
-
-modifyPom {
-    project {
-        name 'MongoDB Asynchronous Driver'
-        description 'The MongoDB Asynchronous Driver'
-        url 'http://www.mongodb.org'
     }
 }

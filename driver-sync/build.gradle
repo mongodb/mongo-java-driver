@@ -14,18 +14,10 @@
  * limitations under the License.
  */
 
-apply plugin: 'osgi'
-apply plugin: 'org.kordamp.gradle.clirr'
-
 archivesBaseName = 'mongodb-driver-sync'
-def configDir = new File(rootDir, 'config')
-
-sourceSets {
-    test.groovy.srcDirs += ['src/examples']
-}
-
-test {
-    exclude 'tour/**'
+description =  'The MongoDB Synchronous Driver'
+ext {
+    pomName = 'MongoDB Driver'
 }
 
 dependencies {
@@ -34,6 +26,14 @@ dependencies {
 
     testCompile project(':bson').sourceSets.test.output
     testCompile project(':driver-core').sourceSets.test.output
+}
+
+sourceSets {
+    test.groovy.srcDirs += ['src/examples']
+}
+
+test {
+    exclude 'tour/**'
 }
 
 clirr {
@@ -50,17 +50,9 @@ tasks.withType(Checkstyle) {
 jar {
     manifest {
         instruction 'Automatic-Module-Name', 'org.mongodb.driver.sync.client'
-        instruction 'Build-Version', getGitVersion()
+        instruction 'Build-Version', project.gitVersion
         instruction 'Import-Package',
                 'org.bson.*',
                 'com.mongodb.*'
-    }
-}
-
-modifyPom {
-    project {
-        name 'MongoDB Driver'
-        description 'The MongoDB Synchronous Driver'
-        url 'http://www.mongodb.org'
     }
 }

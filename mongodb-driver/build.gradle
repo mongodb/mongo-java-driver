@@ -14,10 +14,15 @@
  * limitations under the License.
  */
 
-apply plugin: 'idea'
-apply plugin: 'osgi'
-
 archivesBaseName = 'mongodb-driver'
+description =  'The MongoDB Driver uber-artifact that combines mongodb-driver-sync and the legacy driver'
+ext {
+    pomName = 'MongoDB Java Driver'
+}
+
+clirr {
+    enabled = false
+}
 
 dependencies {
     compile project(':bson')
@@ -35,14 +40,6 @@ sourceSets {
 
 jar {
     manifest {
-        instruction 'Build-Version', getGitVersion()
-    }
-}
-
-modifyPom {
-    project {
-        name 'MongoDB Java Driver'
-        description 'The MongoDB Driver uber-artifact that combines mongodb-driver-sync and the legacy driver'
-        url 'http://www.mongodb.org'
+        instruction 'Build-Version', project.gitVersion
     }
 }

@@ -14,10 +14,13 @@
  * limitations under the License.
  */
 
-apply plugin: 'idea'
-apply plugin: 'osgi'
-
 archivesBaseName = 'mongo-java-driver'
+
+description =  'The MongoDB Java Driver uber-artifact, containing the legacy driver, the mongodb-driver, mongodb-driver-core, and bson'
+ext {
+    pomName = 'MongoDB Java Driver'
+}
+
 
 // dependencies copied from driver-core
 dependencies {
@@ -41,12 +44,10 @@ sourceSets {
     }
 }
 
-compileJava.dependsOn(":driver-core:compileBuildConfig")
-
 // copied from driver-core
 jar {
     manifest {
-        instruction 'Build-Version', getGitVersion()
+        instruction 'Build-Version', project.gitVersion
         instruction 'Import-Package',
                     'javax.xml.bind.*',
                     'javax.crypto.*',
@@ -64,13 +65,5 @@ jar {
                     'org.xerial.snappy.*;resolution:=optional',
                     'org.slf4j;resolution:=optional',
                     'jnr.unixsocket;resolution:=optional'
-    }
-}
-
-modifyPom {
-    project {
-        name 'MongoDB Java Driver'
-        description 'The MongoDB Java Driver uber-artifact, containing the legacy driver, the mongodb-driver, mongodb-driver-core, and bson'
-        url 'http://www.mongodb.org'
     }
 }

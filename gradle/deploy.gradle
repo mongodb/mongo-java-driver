@@ -14,66 +14,22 @@
  * limitations under the License.
  */
 
-/**
- * Configures the nexus plugin - see: https://github.com/bmuschko/gradle-nexus-plugin
- *
- * Ensure you have configured ~/.gradle/gradle.properties for both the nexus and signing plugins
- */
-configure(subprojects - [project(':util'), project(':driver-legacy')]) {
-    apply plugin: 'com.bmuschko.nexus'
-
-    modifyPom {
-        project {
-
-            url 'https://github.com/mongodb/mongo-java-driver'
-
-            scm {
-                url 'https://github.com/mongodb/mongo-java-driver'
-                connection 'scm:https://github.com/mongodb/mongo-java-driver.git'
-                developerConnection 'scm:git@github.com:mongodb/mongo-java-driver.git'
-            }
-
-            licenses {
-                license {
-                    name 'The Apache Software License, Version 2.0'
-                    url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-                    distribution 'repo'
-                }
-            }
-
-            developers {
-                developer {
-                    name 'Various'
-                    organization = 'MongoDB'
-                }
-            }
+def deployedProjects = subprojects.findAll { !['util'].contains(it.name) }
+configure(deployedProjects) {
+    
+    task publishSnapshots {
+        group = 'publishing'
+        description = 'Publishes snapshots to Sonatype'
+        if (version.endsWith('-SNAPSHOT')) {
+            dependsOn tasks.withType(PublishToMavenRepository)
         }
     }
 
-    modifyPom { pom ->
-        pom.dependencies.findAll {
-            dep -> ['io.netty', 'org.slf4j', 'org.xerial.snappy', 'com.github.jnr'].contains(dep.groupId)
-        }.each {
-            it.optional = true
-        }
-        // no need to publish test dependencies
-        pom.dependencies.removeAll { it.scope == "test" }
-    }
-
-    task uploadSnapshotArchives(dependsOn: uploadArchives) {
-        if (!version.endsWith("-SNAPSHOT")) {
-            enabled = false
-            dependsOn = []
-        }
-    }
-
-    task publishArchives(dependsOn: uploadArchives) {
-        String gitVersion = getGitVersion()
-        if (gitVersion != version) {
-           dependsOn = []
-        }
-        doFirst {
-            if (gitVersion != version) {
+    task publishArchives {
+        group = 'publishing'
+        description = 'Publishes a release and uploads to Sonatype / Maven Central'
+        doFirst { 
+            if (project.gitVersion != version) {
                 def cause = """
                 | Version mismatch:
                 | =================
@@ -82,10 +38,21 @@ configure(subprojects - [project(':util'), project(':driver-legacy')]) {
                 |
                 | The project version does not match the git tag.
                 |""".stripMargin()
-                throw new IllegalStateException(cause)
+                throw new GradleException(cause)
+            } else if (System.getenv("ANDROID_HOME") == null) {
+                def cause = """
+                | Android Home missing:
+                | =====================
+                |
+                | The driver-embedded-android project requires the `ANDROID_HOME` environment variable to be set.
+                |""".stripMargin()
+                throw new GradleException(cause)
+            } else {
+                println("Publishing: ${project.name} : ${project.gitVersion}")
             }
-            println("Publishing: ${project.name} : $gitVersion")
+        }
+        if (project.gitVersion == version && System.getenv("ANDROID_HOME") != null) {
+            dependsOn tasks.withType(PublishToMavenRepository)
         }
     }
-
 }

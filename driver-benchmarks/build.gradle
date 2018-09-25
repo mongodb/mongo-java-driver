@@ -34,6 +34,10 @@ dependencies {
     compile 'ch.qos.logback:logback-classic:1.1.1'
 }
 
+javadoc {
+    enabled = false
+}
+
 applicationDefaultJvmArgs = ["-Dorg.mongodb.benchmarks.data=" + System.getProperty('org.mongodb.benchmarks.data'),
                              "-Dorg.mongodb.benchmarks.output=" + System.getProperty('org.mongodb.benchmarks.output')]
 
