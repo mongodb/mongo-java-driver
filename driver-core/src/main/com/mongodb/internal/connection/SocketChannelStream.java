@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoSocketReadException;
 import com.mongodb.ServerAddress;
@@ -27,8 +28,11 @@ import com.mongodb.connection.Stream;
 import org.bson.ByteBuf;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
+import java.util.Iterator;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrue;
@@ -51,14 +55,30 @@ public class SocketChannelStream implements Stream {
     }
 
     @Override
-    public void open() throws IOException {
+    public void open() {
         try {
-            socketChannel = SocketChannel.open();
-            SocketStreamHelper.initialize(socketChannel.socket(), address, settings, sslSettings);
+            socketChannel = initializeSocketChannel();
         } catch (IOException e) {
             close();
             throw new MongoSocketOpenException("Exception opening socket", getAddress(), e);
         }
+    }
+
+    private SocketChannel initializeSocketChannel() throws IOException {
+        Iterator<InetSocketAddress> inetSocketAddresses = address.getSocketAddresses().iterator();
+        while (inetSocketAddresses.hasNext()) {
+            SocketChannel socketChannel = SocketChannel.open();
+            try {
+                SocketStreamHelper.initialize(socketChannel.socket(), inetSocketAddresses.next(), settings, sslSettings);
+                return socketChannel;
+            } catch (SocketTimeoutException e) {
+                if (!inetSocketAddresses.hasNext()) {
+                    throw e;
+                }
+            }
+        }
+
+        throw new MongoSocketException("Exception opening socket", getAddress());
     }
 
     @Override
