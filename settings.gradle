@@ -14,4 +14,18 @@
  * limitations under the License.
  */
 
-include 'util','bson', 'driver-core', 'driver-sync', 'driver-async', 'driver-legacy', 'mongodb-driver', 'driver-embedded', 'mongo-java-driver', 'driver-benchmarks'
+include ':bson'
+include ':driver-async'
+include ':driver-benchmarks'
+include ':driver-core'
+include ':driver-embedded'
+include ':driver-legacy'
+include ':driver-sync'
+include ':mongo-java-driver'
+include ':mongodb-driver'
+include ':util'
+
+// Only include driver-embedded-android if ANDROID_HOME exists
+if (System.getenv("ANDROID_HOME") != null) {
+    include ':driver-embedded-android'
+}

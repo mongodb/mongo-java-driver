@@ -640,6 +640,6 @@ buildvariants:
 
 - name: publish-snapshot
   display_name: "Publish Snapshot"
-  run_on: *hosts
+  run_on: ubuntu1604-test
   tasks:
     - name: "publish-snapshot"

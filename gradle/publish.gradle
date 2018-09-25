@@ -1,0 +1,117 @@
+/*
+ * Copyright 2008-present MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * Configures publishing of the main java projects
+ */
+
+// Publishing helpers
+ext {
+    configurePom = { project ->
+        { ->
+                name = project.hasProperty('pomName') ? project.getProperty('pomName') : project.name
+                description = project.description
+                url = project.hasProperty('pomURL') ? project.getProperty('pomURL') : 'http://www.mongodb.org'
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                scm {
+                    url = 'https://github.com/mongodb/mongo-java-driver'
+                    connection = 'scm:https://github.com/mongodb/mongo-java-driver.git'
+                    developerConnection = 'scm:git@github.com:mongodb/mongo-java-driver.git'
+                }
+                developers {
+                    developer {
+                        name = 'Various'
+                        organization = 'MongoDB'
+                    }
+                }
+            }
+    }
+    configureMavenRepositories = { project ->
+        { ->
+            def snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots/'
+            def releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2/'
+            maven {
+                url = project.version.endsWith('SNAPSHOT') ? snapshotsRepoUrl : releasesRepoUrl
+                credentials {
+                    username project.hasProperty('nexusUsername') ? project.getProperty('nexusUsername') : ''
+                    password project.hasProperty('nexusPassword') ? project.getProperty('nexusPassword') : ''
+                }
+            }
+        }
+    }
+}
+
+def javaMainProjects = subprojects.findAll { !['util', 'driver-benchmarks', 'driver-embedded-android'].contains(it.name) }
+configure(javaMainProjects) { project ->
+    apply plugin: 'maven-publish'
+    apply plugin: 'signing'
+
+    task sourcesJar(type: Jar) {
+        from project.sourceSets.main.allJava
+        classifier = 'sources'
+    }
+
+    task javadocJar(type: Jar) {
+        from javadoc
+        classifier = 'javadoc'
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                artifactId = project.archivesBaseName
+                from project.components.java
+                artifact sourcesJar
+                artifact javadocJar
+
+                pom configurePom(project)
+            }
+        }
+
+        repositories configureMavenRepositories(project)
+    }
+
+    afterEvaluate {
+        signing {
+            sign publishing.publications.mavenJava
+        }
+    }
+}
+
+/*
+For security we allow the signing-related project properties to be passed in as environment variables, which
+Gradle enables if they are prefixed with "ORG_GRADLE_PROJECT_".  But since environment variables can not contain
+the '.' character and the signing-related properties contain '.', here we map signing-related project properties with '_'
+to ones with '.' that are expected by the signing plugin.
+*/
+gradle.taskGraph.whenReady { taskGraph ->
+    if (taskGraph.allTasks.any { it instanceof Sign }) {
+        if (project.hasProperty("signing_keyId")) {
+            allprojects { ext."signing.keyId" = project.property("signing_keyId") }
+        }
+        if (project.hasProperty("signing_secretKeyRingFile")) {
+            allprojects { ext."signing.secretKeyRingFile" = project.property("signing_secretKeyRingFile") }
+        }
+        if (project.hasProperty("signing_password")) {
+            allprojects { ext."signing.password" = project.property("signing_password") }
+        }
+    }
+}

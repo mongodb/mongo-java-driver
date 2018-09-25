@@ -1,0 +1,115 @@
+/*
+ * Copyright 2008-present MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+
+apply plugin: 'com.android.library'
+apply plugin: 'digital.wup.android-maven-publish'
+apply plugin: 'signing'
+
+archivesBaseName = 'mongodb-driver-embedded-android'
+description =  'The MongoDB Embedded Driver for Android'
+ext {
+    pomName = 'The MongoDB Embedded Driver for Android'
+}
+
+buildscript {
+    repositories {
+        jcenter()
+        mavenCentral()
+        google()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.2.0'
+        classpath 'digital.wup:android-maven-publish:3.6.2'
+    }
+}
+
+dependencies {
+    api project(':driver-sync')
+    implementation "org.mongodb:embedded-capi-android:[4.0,4.1)"
+}
+
+android {
+    compileSdkVersion 28
+
+    defaultConfig {
+        minSdkVersion 21
+        targetSdkVersion 28
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+        }
+    }
+
+    sourceSets {
+        main {
+            manifest.srcFile 'AndroidManifest.xml'
+            java.srcDir "$rootDir/driver-embedded/src/main"
+        }
+    }
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from android.sourceSets.main.java.srcDirs
+}
+
+task javadoc(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    classpath += configurations.compile
+    destinationDir = new File(project.buildDir, 'docs')
+    [project(':bson'), project(':driver-core'), project(':driver-sync'), project(':driver-embedded')].each { project ->
+        project.tasks.withType(Javadoc).each { javadocTask ->
+            source += javadocTask.source
+            classpath += javadocTask.classpath
+            excludes += javadocTask.excludes
+            includes += javadocTask.includes
+            dependsOn += javadocTask.dependsOn
+        }
+    }
+    exclude "**/com/mongodb/async/**"
+    exclude "**/com/mongodb/**/netty/**"
+    exclude "**/com/mongodb/**/jndi/**"
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+publishing {
+    publications {
+        mavenAar(MavenPublication) {
+            artifactId = project.archivesBaseName
+            from project.components.android
+
+            artifact sourcesJar
+            artifact javadocJar
+
+            pom configurePom(project)
+        }
+    }
+
+    repositories configureMavenRepositories(project)
+}
+
+signing {
+    sign publishing.publications.mavenAar
+}

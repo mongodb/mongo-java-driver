@@ -14,12 +14,23 @@
  * limitations under the License.
  */
 
+
+archivesBaseName = 'mongodb-driver-legacy'
+description =  'The MongoDB Legacy Driver'
+ext {
+    pomName = 'The Legacy MongoDB Driver'
+}
+
 sourceSets {
     test.groovy.srcDirs += ['src/examples']
 }
 
 test {
     exclude 'tour/**'
+}
+
+clirr {
+    enabled = false
 }
 
 dependencies {
