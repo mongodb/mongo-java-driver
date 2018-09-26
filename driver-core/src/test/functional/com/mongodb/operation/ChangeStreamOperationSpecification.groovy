@@ -607,7 +607,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
         then:
         changeStream.containsKey('resumeAfter')
-        changeStream.getTimestamp('startAtOperationTime') == startAtTime
+        !changeStream.containsKey('startAtOperationTime')
     }
 
     def 'should set the startAtOperationTime on the async cursor'() {
@@ -682,7 +682,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
         then:
         changeStream.containsKey('resumeAfter')
-        changeStream.getTimestamp('startAtOperationTime') == startAtTime
+        !changeStream.containsKey('startAtOperationTime')
     }
 
     private final static CODEC = new BsonDocumentCodec()
