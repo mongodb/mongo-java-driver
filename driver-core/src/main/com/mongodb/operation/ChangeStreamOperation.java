@@ -301,11 +301,9 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
 
                 if (resumeToken != null) {
                     changeStream.append("resumeAfter", resumeToken);
-                }
-
-                if (startAtOperationTime != null) {
+                } else if (startAtOperationTime != null) {
                     changeStream.append("startAtOperationTime", startAtOperationTime);
-                } else if (resumeToken == null && startAtOperationTimeForResume != null && serverIsAtLeastVersionFourDotZero(description)) {
+                } else if (startAtOperationTimeForResume != null && serverIsAtLeastVersionFourDotZero(description)) {
                     changeStream.append("startAtOperationTime", startAtOperationTimeForResume);
                 }
 
