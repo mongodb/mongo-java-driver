@@ -17,8 +17,12 @@
 package com.mongodb.embedded.client
 
 import com.mongodb.embedded.capi.LogLevel
+import spock.lang.IgnoreIf
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.isNotAtLeastJava7
+
+@IgnoreIf({ isNotAtLeastJava7() })
 class MongoEmbeddedLogLevelSpecification extends Specification {
 
     def 'should mirror capi LogLevel'() {
