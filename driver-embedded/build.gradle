@@ -22,6 +22,7 @@ dependencies {
 
     testCompile project(':bson').sourceSets.test.output
     testCompile project(':driver-core').sourceSets.test.output
+    testCompile project(':driver-sync').sourceSets.test.output
 }
 
 archivesBaseName = 'mongodb-driver-embedded'

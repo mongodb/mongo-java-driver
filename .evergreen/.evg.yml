@@ -225,6 +225,15 @@ functions:
           ${PREPARE_SHELL}
           AUTH="${AUTH}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" .evergreen/run-socket-tests.sh
 
+  "run embedded tests":
+  - command: shell.exec
+    type: test
+    params:
+      working_dir: "src"
+      script: |
+        ${PREPARE_SHELL}
+        JDK="${JDK}" .evergreen/run-embedded-tests.sh
+
   "run plain auth test":
     - command: shell.exec
       type: test
@@ -277,7 +286,7 @@ functions:
           elif [ -f venv/Scripts/activate ]; then
             . venv/Scripts/activate
           fi
-          mongo-orchestration stop
+          mongo-orchestration stop || true
           cd -
           rm -rf $DRIVERS_TOOLS || true
 
@@ -401,6 +410,13 @@ tasks:
         - func: "bootstrap mongo-orchestration"
         - func: "run socket tests"
 
+    - name: "embedded-test"
+      depends_on:
+      - variant: "static-checks"
+        name: "static-analysis"
+      commands:
+      - func: "run embedded tests"
+
     - name: "atlas-test"
       depends_on:
         - variant: "static-checks"
@@ -416,6 +432,8 @@ tasks:
           name: "gssapi-auth-test"
         - variant: "plain-auth-test"
           name: "plain-auth-test"
+        - variant: ".test-embedded-variant"
+          name: "embedded-test"
       commands:
         - func: "publish snapshot"
 
@@ -463,6 +481,9 @@ axes:
       - id: "linux"
         display_name: "Linux"
         run_on: *hosts
+      - id: "ubuntu"
+        display_name: "Ubuntu 16.04"
+        run_on: ubuntu1604-test
 
   - id: topology
     display_name: Topology
@@ -556,22 +577,22 @@ buildvariants:
      - name: "test"
 
 - matrix_name: "tests-jdk6-unsecure"
-  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk6", version: "*", topology: "*", os: "*" }
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk6", version: "*", topology: "*", os: "linux" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
      - name: "test"
 
 - matrix_name: "tests-jdk6-secure"
-  matrix_spec:  { auth: "auth", ssl: "ssl", jdk: "jdk6", version: "*", topology: "*", os: "*" }
-  exclude_spec: { auth: "auth", ssl: "ssl", jdk: "jdk6", version: ["4.0", "latest"], topology: "*", os: "*" }
+  matrix_spec:  { auth: "auth", ssl: "ssl", jdk: "jdk6", version: "*", topology: "*", os: "linux" }
+  exclude_spec: { auth: "auth", ssl: "ssl", jdk: "jdk6", version: ["4.0", "latest"], topology: "*", os: "linux" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
      - name: "test"
 
 - matrix_name: "tests-jdk8-secure"
-  matrix_spec: { auth: "auth", ssl: "ssl", jdk: "jdk8", version: ["4.0", "latest"], topology: "*", os: "*" }
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: "jdk8", version: ["4.0", "latest"], topology: "*", os: "linux" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
@@ -612,6 +633,14 @@ buildvariants:
   tags: ["perf-variant"]
   tasks:
      - name: "perf"
+
+- matrix_name: "tests-embedded"
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "*", version: ["4.0"], topology: "standalone", os: "ubuntu" }
+  exclude_spec: { auth: "*", ssl: "*", jdk: "jdk6", version: "*", topology: "*", os: "*" }
+  display_name: "Embedded: ${jdk}"
+  tags: ["test-embedded-variant"]
+  tasks:
+  - name: "embedded-test"
 
 - name: plain-auth-test
   display_name: "PLAIN (LDAP) Auth test"

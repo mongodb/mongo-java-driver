@@ -74,7 +74,7 @@ public class JsonPoweredCrudTestHelper {
         this.baseCollection = collection;
     }
 
-    BsonDocument getOperationResults(final BsonDocument operation) {
+    public BsonDocument getOperationResults(final BsonDocument operation) {
         return getOperationResults(operation, null);
     }
 
