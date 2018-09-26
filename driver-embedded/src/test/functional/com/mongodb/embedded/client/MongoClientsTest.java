@@ -21,14 +21,17 @@ import com.mongodb.embedded.capi.MongoEmbeddedCAPIException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import static com.mongodb.ClusterFixture.isNotAtLeastJava7;
 import static com.mongodb.embedded.client.Fixture.getMongoClientSettings;
 import static com.mongodb.embedded.client.Fixture.getMongoEmbeddedSettings;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeTrue;
 
 public class MongoClientsTest {
 
     @BeforeClass
     public static void beforeAll() {
+        assumeTrue("Is running Java 7+", isNotAtLeastJava7());
         Fixture.close();
     }
 

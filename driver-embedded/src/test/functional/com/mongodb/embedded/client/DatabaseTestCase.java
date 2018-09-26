@@ -18,12 +18,14 @@ package com.mongodb.embedded.client;
 
 import org.junit.BeforeClass;
 
+import static com.mongodb.ClusterFixture.isNotAtLeastJava7;
 import static org.junit.Assume.assumeTrue;
 
 public class DatabaseTestCase {
 
     @BeforeClass
     public static void beforeAll() {
+        assumeTrue("Is running Java 7+", isNotAtLeastJava7());
         assumeTrue("No embedded path set.", Fixture.hasLibraryPath());
         Fixture.getMongoClient();
     }

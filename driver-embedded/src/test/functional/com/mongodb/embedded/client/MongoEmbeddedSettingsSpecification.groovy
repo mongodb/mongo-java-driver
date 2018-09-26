@@ -16,12 +16,14 @@
 
 package com.mongodb.embedded.client
 
-
+import spock.lang.IgnoreIf
 import spock.lang.Specification
 
+import static com.mongodb.ClusterFixture.isNotAtLeastJava7
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static spock.util.matcher.HamcrestSupport.expect
 
+@IgnoreIf({ isNotAtLeastJava7() })
 class MongoEmbeddedSettingsSpecification extends Specification {
 
 
