@@ -31,47 +31,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 public final class MongoEmbeddedSettings {
     private final String libraryPath;
     private final String yamlConfig;
-    private final LogLevel logLevel;
-
-    /**
-     * LogLevel represents the supported logging levels for the embedded mongod
-     */
-    public enum LogLevel {
-        /**
-         * Turn off logging
-         */
-        NONE(0),
-
-        /**
-         * Log to stdout
-         */
-        STDOUT(1),
-
-        /**
-         * Log to stderr
-         */
-        STDERR(2),
-
-        /**
-         * Log via the {@code org.mongodb.embedded.server} logger
-         *
-         * @see com.mongodb.diagnostics.logging.Logger
-         */
-        LOGGER(4);
-
-        private final int level;
-
-        /**
-         * @return the logging level
-         */
-        public int getLevel(){
-            return level;
-        }
-
-        LogLevel(final int level){
-            this.level = level;
-        }
-    }
+    private final MongoEmbeddedLogLevel logLevel;
 
     /**
      * Convenience method to create a Builder.
@@ -100,7 +60,7 @@ public final class MongoEmbeddedSettings {
     public static final class Builder {
         private String libraryPath;
         private String yamlConfig;
-        private LogLevel logLevel = LogLevel.LOGGER;
+        private MongoEmbeddedLogLevel logLevel = MongoEmbeddedLogLevel.LOGGER;
 
         private Builder() {
         }
@@ -141,7 +101,7 @@ public final class MongoEmbeddedSettings {
          * @param logLevel the library path for mongod
          * @return this
          */
-        public Builder logLevel(final LogLevel logLevel) {
+        public Builder logLevel(final MongoEmbeddedLogLevel logLevel) {
             this.logLevel = logLevel;
             return this;
         }
@@ -180,7 +140,7 @@ public final class MongoEmbeddedSettings {
      *
      * @return the logging level
      */
-    public LogLevel getLogLevel() {
+    public MongoEmbeddedLogLevel getLogLevel() {
         return logLevel;
     }
 

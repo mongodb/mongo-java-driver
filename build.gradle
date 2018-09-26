@@ -23,7 +23,6 @@ def configDir = new File(rootDir, 'config')
 ext.jnrUnixsocketVersion = '0.18'
 ext.nettyVersion = '4.1.17.Final'
 ext.snappyVersion = '1.1.4'
-ext.jnaVersion = '4.5.0'
 
 buildscript {
     repositories {
@@ -59,6 +58,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
 
     repositories {
         mavenCentral()
+        jcenter()
         maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
         mavenLocal()
     }

@@ -27,6 +27,8 @@ import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.embedded.capi.MongoEmbeddedInstance;
+import com.mongodb.embedded.capi.MongoEmbeddedLibrary;
 import com.mongodb.event.CommandListener;
 import com.mongodb.internal.connection.ClusterClock;
 import com.mongodb.internal.connection.ClusterClockAdvancingSessionContext;
@@ -38,7 +40,6 @@ import com.mongodb.internal.connection.InternalConnection;
 import com.mongodb.internal.connection.LegacyProtocol;
 import com.mongodb.internal.connection.ProtocolExecutor;
 import com.mongodb.session.SessionContext;
-import com.sun.jna.Pointer;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 
@@ -54,26 +55,25 @@ import static java.lang.String.format;
 class EmbeddedServer implements Server, Closeable {
     private static final Logger LOGGER = Loggers.getLogger("embedded.client");
     private static final MongoDriverInformation MONGO_DRIVER_INFORMATION = MongoDriverInformation.builder().driverName("embedded").build();
+    private final MongoEmbeddedInstance instance;
     private final ClusterClock clusterClock;
     private final CommandListener commandListener;
     private final ServerAddress serverAddress;
     private final ServerDescription serverDescription;
     private final EmbeddedInternalConnectionPool connectionPool;
+
     private volatile boolean isClosed;
-    private volatile Pointer instanceStatusPointer;
-    private volatile Pointer instancePointer;
 
 
-    EmbeddedServer(final MongoClientSettings mongoClientSettings) {
-        this.instanceStatusPointer = MongoDBCAPIHelper.createStatusPointer();
-        this.instancePointer = createInstancePointer(mongoClientSettings);
+    EmbeddedServer(final MongoEmbeddedLibrary mongoEmbeddedLibrary, final MongoClientSettings mongoClientSettings) {
+        this.instance = createInstance(mongoEmbeddedLibrary, mongoClientSettings);
         this.clusterClock = new ClusterClock();
         this.commandListener =  getCommandListener(mongoClientSettings.getCommandListeners());
         this.serverAddress = new ServerAddress();
         this.connectionPool = new EmbeddedInternalConnectionPool(new EmbeddedInternalConnectionFactory() {
             @Override
             public EmbeddedInternalConnection create() {
-                return new EmbeddedInternalConnection(instancePointer, commandListener,
+                return new EmbeddedInternalConnection(instance, commandListener,
                         createClientMetadataDocument(mongoClientSettings.getApplicationName(), MONGO_DRIVER_INFORMATION));
             }
         });
@@ -103,11 +103,12 @@ class EmbeddedServer implements Server, Closeable {
         if (!isClosed) {
             isClosed = true;
             connectionPool.close();
-            destroyInstancePointer();
+            instance.close();
         }
     }
 
-    private Pointer createInstancePointer(final MongoClientSettings mongoClientSettings) {
+    private MongoEmbeddedInstance createInstance(final MongoEmbeddedLibrary mongoEmbeddedLibrary,
+                                                 final MongoClientSettings mongoClientSettings) {
         File directory = new File(mongoClientSettings.getDbPath());
         try {
             if (directory.mkdirs() && LOGGER.isInfoEnabled()) {
@@ -118,14 +119,7 @@ class EmbeddedServer implements Server, Closeable {
         }
 
         String yamlConfig = createYamlConfig(mongoClientSettings);
-        return MongoDBCAPIHelper.instance_create(yamlConfig, instanceStatusPointer);
-    }
-
-    private void destroyInstancePointer() {
-        MongoDBCAPIHelper.instance_destroy(instancePointer, instanceStatusPointer);
-        instancePointer = null;
-        MongoDBCAPIHelper.destroyStatusPointer(instanceStatusPointer);
-        instanceStatusPointer = null;
+        return mongoEmbeddedLibrary.createInstance(yamlConfig);
     }
 
     private String createYamlConfig(final MongoClientSettings mongoClientSettings) {
