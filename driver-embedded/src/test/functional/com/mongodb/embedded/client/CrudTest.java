@@ -18,6 +18,7 @@ package com.mongodb.embedded.client;
 
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.JsonPoweredCrudTestHelper;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
@@ -38,7 +39,6 @@ import java.util.List;
 import static com.mongodb.embedded.client.Fixture.serverVersionGreaterThan;
 import static com.mongodb.embedded.client.Fixture.serverVersionLessThan;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assume.assumeTrue;
 
 // See https://github.com/mongodb/specifications/tree/master/source/crud/tests
 @RunWith(Parameterized.class)
@@ -61,16 +61,16 @@ public class CrudTest extends DatabaseTestCase {
     @Before
     public void setUp() {
         database = Fixture.getDefaultDatabase();
-
         collection = database.getCollection(getClass().getName(), BsonDocument.class);
-        List<BsonDocument> documents = new ArrayList<BsonDocument>();
-        for (BsonValue document: data) {
-            documents.add(document.asDocument());
+        if (!data.isEmpty()) {
+            List<BsonDocument> documents = new ArrayList<BsonDocument>();
+            for (BsonValue document : data) {
+                documents.add(document.asDocument());
+            }
+            collection.insertMany(documents);
         }
-        collection.insertMany(documents);
-        helper = new JsonPoweredCrudTestHelper(description, collection);
+        helper = new JsonPoweredCrudTestHelper(description, database, collection);
     }
-
 
     @After
     public void tearDown() {
@@ -81,14 +81,6 @@ public class CrudTest extends DatabaseTestCase {
 
     @Test
     public void shouldPassAllOutcomes() {
-        if (definition.containsKey("minServerVersion") && serverVersionLessThan(definition.getString("minServerVersion").getValue())) {
-            assumeTrue("Server less than min version", false);
-        }
-        if (definition.containsKey("maxServerVersion") && serverVersionGreaterThan(definition.getString("maxServerVersion").getValue())) {
-            assumeTrue("Server greater than max version", false);
-        }
-
-        assumeTrue(database != null);
         BsonDocument outcome = helper.getOperationResults(definition.getDocument("operation"));
         BsonDocument expectedOutcome = definition.getDocument("outcome");
 
@@ -101,12 +93,6 @@ public class CrudTest extends DatabaseTestCase {
                 && !expectedResult.asDocument().containsKey("upsertedCount")) {
             expectedResult.asDocument().append("upsertedCount", actualResult.asDocument().get("upsertedCount"));
         }
-
-        // Remove insertCount
-        if (actualResult.isDocument() && actualResult.asDocument().containsKey("insertedCount")) {
-            actualResult.asDocument().remove("insertedCount");
-        }
-
         assertEquals(description, expectedResult, actualResult);
 
         if (expectedOutcome.containsKey("collection")) {
@@ -119,6 +105,14 @@ public class CrudTest extends DatabaseTestCase {
         List<Object[]> data = new ArrayList<Object[]>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/crud")) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
+            if (testDocument.containsKey("minServerVersion")
+                    && serverVersionLessThan(testDocument.getString("minServerVersion").getValue())) {
+                continue;
+            }
+            if (testDocument.containsKey("maxServerVersion")
+                    && serverVersionGreaterThan(testDocument.getString("maxServerVersion").getValue())) {
+                continue;
+            }
             for (BsonValue test: testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
                         testDocument.getArray("data"), test.asDocument()});
