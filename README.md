@@ -104,6 +104,8 @@ For binaries containing the asynchronous API, see the [driver-async README](driv
 
 ## Build
 
+- Java 9 or greater is required to build and compile the source.
+
 To build and test the driver:
 
 ```
