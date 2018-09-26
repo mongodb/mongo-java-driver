@@ -25,6 +25,8 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.Stream;
 import com.mongodb.connection.StreamFactory;
+import com.mongodb.embedded.capi.MongoEmbeddedClient;
+import com.mongodb.embedded.capi.MongoEmbeddedInstance;
 import com.mongodb.event.CommandListener;
 import com.mongodb.internal.connection.Authenticator;
 import com.mongodb.internal.connection.CommandMessage;
@@ -33,9 +35,6 @@ import com.mongodb.internal.connection.InternalStreamConnection;
 import com.mongodb.internal.connection.InternalStreamConnectionInitializer;
 import com.mongodb.internal.connection.ResponseBuffers;
 import com.mongodb.session.SessionContext;
-import com.sun.jna.Pointer;
-import com.sun.jna.ptr.IntByReference;
-import com.sun.jna.ptr.PointerByReference;
 import org.bson.BsonDocument;
 import org.bson.ByteBuf;
 import org.bson.ByteBufNIO;
@@ -49,13 +48,11 @@ import java.util.List;
 
 class EmbeddedInternalConnection implements InternalConnection {
     private final InternalConnection wrapped;
-    private volatile Pointer clientStatusPointer;
-    private volatile Pointer clientPointer;
+    private final MongoEmbeddedClient client;
 
-    EmbeddedInternalConnection(final Pointer instancePointer, final CommandListener commandListener,
+    EmbeddedInternalConnection(final MongoEmbeddedInstance instance, final CommandListener commandListener,
                                final BsonDocument clientMetadataDocument) {
-        this.clientStatusPointer = MongoDBCAPIHelper.createStatusPointer();
-        this.clientPointer = MongoDBCAPIHelper.create_client(instancePointer, clientStatusPointer);
+        this.client = instance.createClient();
         this.wrapped = new InternalStreamConnection(new ServerId(new ClusterId(), new ServerAddress()),
                 new StreamFactory() {
                     @Override
@@ -86,10 +83,7 @@ class EmbeddedInternalConnection implements InternalConnection {
     public void close() {
         if (!wrapped.isClosed()) {
             wrapped.close();
-            MongoDBCAPIHelper.client_destroy(clientPointer, clientStatusPointer);
-            clientPointer = null;
-            MongoDBCAPIHelper.destroyStatusPointer(clientStatusPointer);
-            clientStatusPointer = null;
+            client.close();
         }
     }
 
@@ -156,12 +150,7 @@ class EmbeddedInternalConnection implements InternalConnection {
 
         @Override
         public void write(final List<ByteBuf> buffers) {
-            byte[] message = createCompleteMessage(buffers);
-
-            PointerByReference outputBufferReference = new PointerByReference();
-            IntByReference outputSize = new IntByReference();
-            MongoDBCAPIHelper.client_invoke(clientPointer, message, outputBufferReference, outputSize, clientStatusPointer);
-            curResponse = outputBufferReference.getValue().getByteBuffer(0, outputSize.getValue());
+            curResponse = client.write(createMessage(buffers));
         }
 
         @Override
@@ -202,7 +191,7 @@ class EmbeddedInternalConnection implements InternalConnection {
             return new ByteBufNIO(ByteBuffer.wrap(new byte[size]));
         }
 
-        private byte[] createCompleteMessage(final List<ByteBuf> byteBufList) {
+        private ByteBuffer createMessage(final List<ByteBuf> byteBufList) {
             List<ByteBuffer> buffers = asByteBufferList(byteBufList);
             int totalLength = 0;
             for (ByteBuffer cur : buffers) {
@@ -216,7 +205,7 @@ class EmbeddedInternalConnection implements InternalConnection {
                 cur.get(completeMessage, offset, cur.remaining());
                 offset += remaining;
             }
-            return completeMessage;
+            return ByteBuffer.wrap(completeMessage);
         }
 
         private List<ByteBuffer> asByteBufferList(final List<ByteBuf> byteBufList) {

@@ -19,6 +19,8 @@ package com.mongodb.embedded.client;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.internal.MongoClientImpl;
 import com.mongodb.connection.Cluster;
+import com.mongodb.embedded.capi.MongoEmbeddedCAPI;
+import com.mongodb.embedded.capi.MongoEmbeddedLibrary;
 
 /**
  * A factory for {@link MongoClient} instances.
@@ -28,14 +30,20 @@ import com.mongodb.connection.Cluster;
  */
 public final class MongoClients {
 
+    private static MongoEmbeddedLibrary mongoEmbeddedLibrary;
+
     /**
      * Initializes the mongod library for use.
      *
      * <p>The library must be called at most once per process before calling {@link #create(MongoClientSettings)}.</p>
      * @param mongoEmbeddedSettings the settings for the embedded driver.
      */
-    public static void init(final MongoEmbeddedSettings mongoEmbeddedSettings) {
-        MongoDBCAPIHelper.init(mongoEmbeddedSettings);
+    public static synchronized void init(final MongoEmbeddedSettings mongoEmbeddedSettings) {
+        if (mongoEmbeddedLibrary != null) {
+            throw new MongoClientEmbeddedException("The mongo embedded library has already been initialized");
+        }
+        mongoEmbeddedLibrary = MongoEmbeddedCAPI.create(mongoEmbeddedSettings.getYamlConfig(),
+                mongoEmbeddedSettings.getLogLevel().toCapiLogLevel(), mongoEmbeddedSettings.getLibraryPath());
     }
 
     /**
@@ -44,17 +52,22 @@ public final class MongoClients {
      * @param mongoClientSettings the mongoClientSettings
      * @return the client
      */
-    public static MongoClient create(final MongoClientSettings mongoClientSettings) {
-        MongoDBCAPIHelper.checkHasBeenInitialized();
-        Cluster cluster = new EmbeddedCluster(mongoClientSettings);
+    public static synchronized MongoClient create(final MongoClientSettings mongoClientSettings) {
+        if (mongoEmbeddedLibrary == null) {
+            throw new MongoClientEmbeddedException("The mongo embedded library must be initialized first.");
+        }
+        Cluster cluster = new EmbeddedCluster(mongoEmbeddedLibrary, mongoClientSettings);
         return new MongoClientImpl(cluster, mongoClientSettings.getWrappedMongoClientSettings(), null);
     }
 
     /**
      * Closes down the mongod library
      */
-    public static void close() {
-        MongoDBCAPIHelper.fini();
+    public static synchronized void close() {
+        if (mongoEmbeddedLibrary != null) {
+            mongoEmbeddedLibrary.close();
+            mongoEmbeddedLibrary = null;
+        }
     }
 
     private MongoClients() {

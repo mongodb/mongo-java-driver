@@ -17,6 +17,7 @@
 package com.mongodb.embedded.client;
 
 import com.mongodb.client.MongoClient;
+import com.mongodb.embedded.capi.MongoEmbeddedCAPIException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -47,7 +48,7 @@ public class MongoClientsTest {
         MongoClients.create(getMongoClientSettings());
     }
 
-    @Test(expected = MongoClientEmbeddedException.class)
+    @Test(expected = MongoEmbeddedCAPIException.class)
     public void shouldThrowIfLibHandlesStillExist() {
         MongoClients.init(getMongoEmbeddedSettings());
         MongoClient mongoClient = MongoClients.create(getMongoClientSettings());
@@ -60,7 +61,7 @@ public class MongoClientsTest {
         }
     }
 
-    @Test(expected = MongoClientEmbeddedException.class)
+    @Test(expected = MongoEmbeddedCAPIException.class)
     public void shouldThrowWhenTryingToOpenMultipleClients() {
         MongoClients.init(getMongoEmbeddedSettings());
         MongoClient mongoClient = MongoClients.create(getMongoClientSettings());

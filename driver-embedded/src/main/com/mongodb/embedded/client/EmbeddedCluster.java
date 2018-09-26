@@ -28,6 +28,7 @@ import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.embedded.capi.MongoEmbeddedLibrary;
 import com.mongodb.selector.ServerSelector;
 import org.bson.BsonTimestamp;
 
@@ -45,8 +46,8 @@ final class EmbeddedCluster implements Cluster {
     private final EmbeddedServer server;
     private volatile boolean isClosed;
 
-    EmbeddedCluster(final MongoClientSettings mongoClientSettings) {
-        this.server = new EmbeddedServer(mongoClientSettings);
+    EmbeddedCluster(final MongoEmbeddedLibrary mongoEmbeddedLibrary, final MongoClientSettings mongoClientSettings) {
+        this.server = new EmbeddedServer(mongoEmbeddedLibrary, mongoClientSettings);
         this.clusterSettings = ClusterSettings.builder().hosts(singletonList(new ServerAddress())).build();
         this.clusterDescription = new ClusterDescription(ClusterConnectionMode.SINGLE, ClusterType.STANDALONE,
                 singletonList(server.getDescription()));

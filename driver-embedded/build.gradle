@@ -18,7 +18,7 @@ apply plugin: 'osgi'
 
 dependencies {
     compile project(':driver-sync')
-    compile "net.java.dev.jna:jna:$jnaVersion"
+    compile "org.mongodb:embedded-capi:[4.0,4.1)"
 
     testCompile project(':bson').sourceSets.test.output
     testCompile project(':driver-core').sourceSets.test.output
