@@ -22,11 +22,10 @@ import org.bson.codecs.configuration.CodecRegistry
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
-import static com.mongodb.ClusterFixture.isNotAtLeastJava7
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static spock.util.matcher.HamcrestSupport.expect
 
-@IgnoreIf({ isNotAtLeastJava7() })
+@IgnoreIf({ !Fixture.runEmbeddedTests() })
 class MongoClientSettingsSpecification extends Specification {
     private static final String DB_PATH = '/path/to/db'
 
