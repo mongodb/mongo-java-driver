@@ -61,8 +61,13 @@ public final class MongoClients {
         if (mongoEmbeddedLibrary == null) {
             throw new MongoClientEmbeddedException("The mongo embedded library must be initialized first.");
         }
-        Cluster cluster = new EmbeddedCluster(mongoEmbeddedLibrary, mongoClientSettings);
-        return new MongoClientImpl(cluster, mongoClientSettings.getWrappedMongoClientSettings(), null);
+        try {
+            Cluster cluster = new EmbeddedCluster(mongoEmbeddedLibrary, mongoClientSettings);
+            return new MongoClientImpl(cluster, mongoClientSettings.getWrappedMongoClientSettings(), null);
+        } catch (Exception e) {
+            throw new MongoClientEmbeddedException("Could not create a new embedded cluster."
+                    + " Ensure existing MongoClients are fully closed before trying to create a new one.", e);
+        }
     }
 
     /**
@@ -70,8 +75,14 @@ public final class MongoClients {
      */
     public static synchronized void close() {
         if (mongoEmbeddedLibrary != null) {
-            mongoEmbeddedLibrary.close();
+            try {
+                mongoEmbeddedLibrary.close();
+            } catch (Exception e) {
+                throw new MongoClientEmbeddedException("Could not close the mongo embedded library."
+                        + " Ensure that any MongoClient instances have been closed first.", e);
+            }
             mongoEmbeddedLibrary = null;
+
         }
     }
 
