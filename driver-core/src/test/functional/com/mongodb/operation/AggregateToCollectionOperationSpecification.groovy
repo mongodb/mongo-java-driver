@@ -291,7 +291,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) })
+    @IgnoreIf({ !serverVersionAtLeast(3, 6) || (serverVersionAtLeast(4, 1) && isSharded()) })
     def 'should apply $hint'() {
         given:
         def hint = new BsonDocument('a', new BsonInt32(1))
