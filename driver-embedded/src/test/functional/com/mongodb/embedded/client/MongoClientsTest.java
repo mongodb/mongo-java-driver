@@ -17,11 +17,9 @@
 package com.mongodb.embedded.client;
 
 import com.mongodb.client.MongoClient;
-import com.mongodb.embedded.capi.MongoEmbeddedCAPIException;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import static com.mongodb.ClusterFixture.isNotAtLeastJava7;
 import static com.mongodb.embedded.client.Fixture.getMongoClientSettings;
 import static com.mongodb.embedded.client.Fixture.getMongoEmbeddedSettings;
 import static org.junit.Assert.fail;
@@ -31,7 +29,7 @@ public class MongoClientsTest {
 
     @BeforeClass
     public static void beforeAll() {
-        assumeTrue("Is running Java 7+", isNotAtLeastJava7());
+        assumeTrue("Embedded driver tests not run. Requires JDK 7+ & an embedded path.", Fixture.runEmbeddedTests());
         Fixture.close();
     }
 
@@ -51,7 +49,7 @@ public class MongoClientsTest {
         MongoClients.create(getMongoClientSettings());
     }
 
-    @Test(expected = MongoEmbeddedCAPIException.class)
+    @Test(expected = MongoClientEmbeddedException.class)
     public void shouldThrowIfLibHandlesStillExist() {
         MongoClients.init(getMongoEmbeddedSettings());
         MongoClient mongoClient = MongoClients.create(getMongoClientSettings());
@@ -64,7 +62,7 @@ public class MongoClientsTest {
         }
     }
 
-    @Test(expected = MongoEmbeddedCAPIException.class)
+    @Test(expected = MongoClientEmbeddedException.class)
     public void shouldThrowWhenTryingToOpenMultipleClients() {
         MongoClients.init(getMongoEmbeddedSettings());
         MongoClient mongoClient = MongoClients.create(getMongoClientSettings());

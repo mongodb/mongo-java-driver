@@ -16,9 +16,9 @@
 
 package com.mongodb.embedded.client;
 
+import com.mongodb.client.JsonPoweredCrudTestHelper;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.JsonPoweredCrudTestHelper;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
@@ -103,6 +103,10 @@ public class CrudTest extends DatabaseTestCase {
     @Parameterized.Parameters(name = "{1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<Object[]>();
+        if (!Fixture.runEmbeddedTests()) {
+            return data;
+        }
+
         for (File file : JsonPoweredTestHelper.getTestFiles("/crud")) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             if (testDocument.containsKey("minServerVersion")
