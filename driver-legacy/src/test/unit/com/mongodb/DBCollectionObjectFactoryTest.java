@@ -27,6 +27,7 @@ import static java.util.Collections.singletonList;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertThat;
 
+@SuppressWarnings("deprecation")
 public class DBCollectionObjectFactoryTest {
 
     private DBCollectionObjectFactory factory;

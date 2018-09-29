@@ -33,8 +33,10 @@ import static java.util.Collections.synchronizedMap;
 
 /**
  * This class enables to map simple Class fields to a BSON object fields
+ * @deprecated Replaced by {@link org.bson.codecs.pojo.PojoCodecProvider}
  */
 @SuppressWarnings({"unchecked", "rawtypes"})
+@Deprecated
 public abstract class ReflectionDBObject implements DBObject {
 
     @Override
