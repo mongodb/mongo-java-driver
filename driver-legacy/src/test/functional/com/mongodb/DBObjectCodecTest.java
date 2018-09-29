@@ -16,7 +16,6 @@
 
 package com.mongodb;
 
-import org.bson.BSON;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
@@ -42,6 +41,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+@SuppressWarnings("deprecation")
 public class DBObjectCodecTest extends DatabaseTestCase {
 
     @Test
@@ -50,7 +50,7 @@ public class DBObjectCodecTest extends DatabaseTestCase {
             collection.save(new BasicDBObject("_id", 1).append("x", 1.1));
             assertEquals(Double.class, collection.findOne().get("x").getClass());
 
-            BSON.addEncodingHook(Double.class, new Transformer() {
+            org.bson.BSON.addEncodingHook(Double.class, new Transformer() {
                 public Object transform(final Object o) {
                     return o.toString();
                 }
@@ -59,20 +59,20 @@ public class DBObjectCodecTest extends DatabaseTestCase {
             collection.save(new BasicDBObject("_id", 1).append("x", 1.1));
             assertEquals(String.class, collection.findOne().get("x").getClass());
 
-            BSON.clearAllHooks();
+            org.bson.BSON.clearAllHooks();
             collection.save(new BasicDBObject("_id", 1).append("x", 1.1));
             assertEquals(Double.class, collection.findOne().get("x").getClass());
 
-            BSON.addDecodingHook(Double.class, new Transformer() {
+            org.bson.BSON.addDecodingHook(Double.class, new Transformer() {
                 public Object transform(final Object o) {
                     return o.toString();
                 }
             });
             assertEquals(String.class, collection.findOne().get("x").getClass());
-            BSON.clearAllHooks();
+            org.bson.BSON.clearAllHooks();
             assertEquals(Double.class, collection.findOne().get("x").getClass());
         } finally {
-            BSON.clearAllHooks();
+            org.bson.BSON.clearAllHooks();
         }
     }
 

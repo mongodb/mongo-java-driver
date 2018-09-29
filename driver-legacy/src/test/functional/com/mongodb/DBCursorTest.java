@@ -545,6 +545,7 @@ public class DBCursorTest extends DatabaseTestCase {
         }
     }
 
+    @SuppressWarnings("deprecation")
     @Test(expected = UnsupportedOperationException.class)
     public void exhaustOptionShouldThrowUnsupportedOperationException() {
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());

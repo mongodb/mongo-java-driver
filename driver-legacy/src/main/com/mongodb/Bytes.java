@@ -19,7 +19,6 @@
 package com.mongodb;
 
 import com.mongodb.lang.Nullable;
-import org.bson.BSON;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Code;
 import org.bson.types.CodeWScope;
@@ -31,8 +30,11 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Class that hold definitions of the wire protocol
+ * @deprecated there is no replacement for this class
  */
-public class Bytes extends BSON {
+@Deprecated
+@SuppressWarnings("deprecation")
+public class Bytes extends org.bson.BSON {
 
     /**
      * Little-endian

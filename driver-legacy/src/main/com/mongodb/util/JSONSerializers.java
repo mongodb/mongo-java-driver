@@ -17,7 +17,6 @@
 package com.mongodb.util;
 
 import com.mongodb.BasicDBObject;
-import com.mongodb.Bytes;
 import com.mongodb.DBObject;
 import com.mongodb.DBRef;
 import org.bson.BsonUndefined;
@@ -53,6 +52,7 @@ import java.util.regex.Pattern;
  * @deprecated This class has been superseded by to toJson and parse methods on BasicDBObject
  */
 @Deprecated
+@SuppressWarnings("deprecation")
 public class JSONSerializers {
 
     private JSONSerializers() {
@@ -390,7 +390,7 @@ public class JSONSerializers {
             DBObject externalForm = new BasicDBObject();
             externalForm.put("$regex", obj.toString());
             if (((Pattern) obj).flags() != 0) {
-                externalForm.put("$options", Bytes.regexFlags(((Pattern) obj).flags()));
+                externalForm.put("$options", com.mongodb.Bytes.regexFlags(((Pattern) obj).flags()));
             }
             serializer.serialize(externalForm, buf);
         }

@@ -65,6 +65,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * @mongodb.driver.manual core/read-operations Read Operations
  */
 @NotThreadSafe
+@SuppressWarnings("deprecation")
 public class DBCursor implements Cursor, Iterable<DBObject> {
     private final DBCollection collection;
     private final DBObject filter;

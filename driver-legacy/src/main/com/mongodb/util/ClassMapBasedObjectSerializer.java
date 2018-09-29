@@ -16,9 +16,6 @@
 
 package com.mongodb.util;
 
-import com.mongodb.Bytes;
-import org.bson.util.ClassMap;
-
 import java.util.List;
 
 /**
@@ -28,6 +25,7 @@ import java.util.List;
  *
  * @author breinero
  */
+@SuppressWarnings("deprecation")
 class ClassMapBasedObjectSerializer extends AbstractObjectSerializer {
 
     /**
@@ -52,7 +50,7 @@ class ClassMapBasedObjectSerializer extends AbstractObjectSerializer {
     public void serialize(final Object obj, final StringBuilder buf) {
         Object objectToSerialize = obj;
 
-        objectToSerialize = Bytes.applyEncodingHooks(objectToSerialize);
+        objectToSerialize = com.mongodb.Bytes.applyEncodingHooks(objectToSerialize);
 
         if (objectToSerialize == null) {
             buf.append(" null ");
@@ -62,7 +60,7 @@ class ClassMapBasedObjectSerializer extends AbstractObjectSerializer {
         ObjectSerializer serializer = null;
 
         List<Class<?>> ancestors;
-        ancestors = ClassMap.getAncestry(objectToSerialize.getClass());
+        ancestors = org.bson.util.ClassMap.getAncestry(objectToSerialize.getClass());
 
         for (final Class<?> ancestor : ancestors) {
             serializer = _serializers.get(ancestor);
@@ -82,5 +80,5 @@ class ClassMapBasedObjectSerializer extends AbstractObjectSerializer {
         serializer.serialize(objectToSerialize, buf);
     }
 
-    private final ClassMap<ObjectSerializer> _serializers = new ClassMap<ObjectSerializer>();
+    private final org.bson.util.ClassMap<ObjectSerializer> _serializers = new org.bson.util.ClassMap<ObjectSerializer>();
 }
