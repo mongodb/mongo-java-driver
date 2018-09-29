@@ -18,7 +18,6 @@ package com.mongodb.gridfs;
 
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
-import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
 import com.mongodb.util.Util;
 
@@ -34,7 +33,7 @@ public class CLI {
 
     private static String host = "127.0.0.1";
     private static String db = "test";
-    private static Mongo mongo = null;
+    private static com.mongodb.Mongo mongo = null;
     private static GridFS gridFS;
 
     /**
@@ -51,7 +50,7 @@ public class CLI {
     }
     // CHECKSTYLE:ON
 
-    private static Mongo getMongo() throws Exception {
+    private static com.mongodb.Mongo getMongo() throws Exception {
         if (mongo == null) {
             mongo = new MongoClient(host);
         }

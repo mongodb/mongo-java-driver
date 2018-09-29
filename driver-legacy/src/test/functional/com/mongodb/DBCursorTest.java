@@ -228,6 +228,7 @@ public class DBCursorTest extends DatabaseTestCase {
         }
     }
 
+    @SuppressWarnings("deprecation")
     @Test
     public void testGetServerAddress() {
         DBCursor cursor = collection.find().limit(2);

@@ -76,8 +76,11 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * @see MongoClient
  * @see ReadPreference
  * @see WriteConcern
+ * @deprecated Replaced by {@link MongoClient}.  Any non-deprecated methods will be moved to MongoClient. The rest will be removed along
+ * with this class.
  */
 @ThreadSafe
+@Deprecated
 public class Mongo {
     static final String ADMIN_DATABASE_NAME = "admin";
 
@@ -387,6 +390,7 @@ public class Mongo {
      * @return list of server addresses
      * @throws MongoException if there's a failure
      */
+    @Deprecated
     public List<ServerAddress> getAllAddress() {
         return delegate.getCluster().getSettings().getHosts();
     }
@@ -397,6 +401,7 @@ public class Mongo {
      * @return list of server addresses
      * @throws MongoException if there's a failure
      */
+    @Deprecated
     public List<ServerAddress> getServerAddressList() {
         return delegate.getServerAddressList();
     }
@@ -410,6 +415,7 @@ public class Mongo {
      *
      * @return the address
      */
+    @Deprecated
     @SuppressWarnings("deprecation")
     @Nullable
     public ServerAddress getAddress() {
@@ -439,6 +445,7 @@ public class Mongo {
      *
      * @return replica set status information
      */
+    @Deprecated
     @Nullable
     public ReplicaSetStatus getReplicaSetStatus() {
         ClusterDescription clusterDescription = getClusterDescription();
@@ -506,6 +513,7 @@ public class Mongo {
      *
      * @return a collection of database objects
      */
+    @Deprecated
     public Collection<DB> getUsedDatabases() {
         return dbCache.values();
     }
@@ -609,6 +617,7 @@ public class Mongo {
      * @throws MongoException if there's a failure
      * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
+    @Deprecated
     public CommandResult fsync(final boolean async) {
         DBObject command = new BasicDBObject("fsync", 1);
         if (async) {
@@ -625,6 +634,7 @@ public class Mongo {
      * @throws MongoException if there's a failure
      * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
+    @Deprecated
     public CommandResult fsyncAndLock() {
         DBObject command = new BasicDBObject("fsync", 1);
         command.put("lock", 1);
@@ -639,6 +649,7 @@ public class Mongo {
      * @throws MongoException if there's a failure
      * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
+    @Deprecated
     public DBObject unlock() {
         return DBObjects.toDBObject(createOperationExecutor().execute(new FsyncUnlockOperation(), readPreference, readConcern));
     }
@@ -650,6 +661,7 @@ public class Mongo {
      * @throws MongoException if the operation fails
      * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
+    @Deprecated
     public boolean isLocked() {
         return createOperationExecutor().execute(new CurrentOpOperation(), ReadPreference.primary(), readConcern)
                        .getBoolean("fsyncLock", BsonBoolean.FALSE).getValue();
@@ -669,6 +681,7 @@ public class Mongo {
      * @return the maximum size, or 0 if not obtained from servers yet.
      * @throws MongoException if there's a failure
      */
+    @Deprecated
     @SuppressWarnings("deprecation")
     public int getMaxBsonObjectSize() {
         List<ServerDescription> primaries = getClusterDescription().getPrimaries();
@@ -680,6 +693,7 @@ public class Mongo {
      *
      * @return server address in a host:port form
      */
+    @Deprecated
     @Nullable
     public String getConnectPoint() {
         ServerAddress master = getAddress();
@@ -850,6 +864,7 @@ public class Mongo {
      * Mongo.Holder can be used as a static place to hold several instances of Mongo. Security is not enforced at this level, and needs to
      * be done on the application side.
      */
+    @Deprecated
     public static class Holder {
 
         private static final Holder INSTANCE = new Holder();
