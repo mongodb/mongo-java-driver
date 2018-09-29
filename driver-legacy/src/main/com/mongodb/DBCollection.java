@@ -2088,7 +2088,9 @@ public class DBCollection {
      *
      * @param option value to be added
      * @mongodb.driver.manual reference/method/cursor.addOption/#flags Query Flags
+     * @deprecated Replaced with {@link DBCursor#addOption(int)}
      */
+    @Deprecated
     public void addOption(final int option) {
         optionHolder.add(option);
     }
@@ -2097,7 +2099,9 @@ public class DBCollection {
      * Resets the default query options
      *
      * @mongodb.driver.manual reference/method/cursor.addOption/#flags Query Flags
+     * @deprecated Replaced with {@link DBCursor#resetOptions()}
      */
+    @Deprecated
     public void resetOptions() {
         optionHolder.reset();
     }
@@ -2107,7 +2111,9 @@ public class DBCollection {
      *
      * @return bit vector of query options
      * @mongodb.driver.manual reference/method/cursor.addOption/#flags Query Flags
+     * @deprecated Replaced with {@link DBCursor#getOptions()}
      */
+    @Deprecated
     public int getOptions() {
         return optionHolder.get();
     }
@@ -2117,7 +2123,9 @@ public class DBCollection {
      *
      * @param options bit vector of query options
      * @mongodb.driver.manual reference/method/cursor.addOption/#flags Query Flags
+     * @deprecated Replaced with {@link DBCursor#setOptions(int)}
      */
+    @Deprecated
     public void setOptions(final int options) {
         optionHolder.set(options);
     }
