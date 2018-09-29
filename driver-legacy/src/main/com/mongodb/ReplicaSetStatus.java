@@ -20,13 +20,17 @@ package com.mongodb;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.event.ClusterListener;
 import com.mongodb.lang.Nullable;
 
 import java.util.List;
 
 /**
  * Keeps replica set status.
+ *
+ * @deprecated Prefer {@link MongoClientOptions.Builder#addClusterListener(ClusterListener)}
  */
+@Deprecated
 public class ReplicaSetStatus {
 
     private final Cluster cluster;
