@@ -105,7 +105,9 @@ public class DB {
      * Gets the Mongo instance
      *
      * @return the mongo instance that this database was created from.
+     * @deprecated
      */
+    @Deprecated
     public Mongo getMongo() {
         return mongo;
     }
