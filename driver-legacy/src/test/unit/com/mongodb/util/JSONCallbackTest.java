@@ -18,7 +18,6 @@ package com.mongodb.util;
 
 import com.mongodb.DBObject;
 import com.mongodb.DBRef;
-import org.bson.BSON;
 import org.bson.BsonUndefined;
 import org.bson.Transformer;
 import org.bson.types.BSONTimestamp;
@@ -67,7 +66,7 @@ public class JSONCallbackTest {
 
     @Test
     public void encodingHooks() {
-        BSON.addDecodingHook(Date.class, new Transformer() {
+        org.bson.BSON.addDecodingHook(Date.class, new Transformer() {
             @Override
             public Object transform(final Object o) {
                 return ((Date) o).getTime();
@@ -83,7 +82,7 @@ public class JSONCallbackTest {
             DBObject doc = (DBObject) JSON.parse("{ date : { \"$date\" : " + now.getTime() + "} }");
             assertEquals(Long.class, doc.get("date").getClass());
         } finally {
-            BSON.removeDecodingHooks(Date.class);
+            org.bson.BSON.removeDecodingHooks(Date.class);
         }
     }
 

@@ -19,7 +19,6 @@ package com.mongodb.util;
 import com.mongodb.BasicDBObject;
 import com.mongodb.BasicDBObjectBuilder;
 import com.mongodb.DBObject;
-import org.bson.BSON;
 import org.bson.BasicBSONObject;
 import org.bson.types.BSONTimestamp;
 import org.bson.types.Code;
@@ -366,7 +365,7 @@ public class JSONTest {
         format.setCalendar(new GregorianCalendar(new SimpleTimeZone(0, "GMT")));
         assertEquals(format.parse("2011-05-18T18:56:00Z"), a.get("date"));
         Pattern pat = (Pattern) a.get("pat");
-        Pattern pat2 = Pattern.compile(".*", BSON.regexFlags(""));
+        Pattern pat2 = Pattern.compile(".*", org.bson.BSON.regexFlags(""));
         assertEquals(pat.pattern(), pat2.pattern());
         assertEquals(pat.flags(), pat2.flags());
         ObjectId oid = (ObjectId) a.get("oid");

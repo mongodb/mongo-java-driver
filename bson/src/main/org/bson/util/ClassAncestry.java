@@ -22,8 +22,8 @@ import java.util.List;
 import java.util.concurrent.ConcurrentMap;
 
 import static java.util.Collections.unmodifiableList;
-import static org.bson.util.CopyOnWriteMap.newHashMap;
 
+@SuppressWarnings("deprecation")
 class ClassAncestry {
 
     /**
@@ -81,6 +81,6 @@ class ClassAncestry {
         return (_ancestryCache);
     }
 
-    private static final ConcurrentMap<Class<?>, List<Class<?>>> _ancestryCache = newHashMap();
+    private static final ConcurrentMap<Class<?>, List<Class<?>>> _ancestryCache = CopyOnWriteMap.newHashMap();
 }
 

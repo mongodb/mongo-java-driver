@@ -54,6 +54,7 @@ import static org.bson.BsonBinarySubType.OLD_BINARY;
  * An immutable {@code BSONObject} backed by a byte buffer that lazily provides keys and values on request. This is useful for transferring
  * BSON documents between servers when you don't want to pay the performance penalty of encoding or decoding them fully.
  */
+@SuppressWarnings("deprecation")
 public class LazyBSONObject implements BSONObject {
     private final byte[] bytes;
     private final int offset;

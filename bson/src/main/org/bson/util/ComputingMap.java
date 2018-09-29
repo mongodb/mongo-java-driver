@@ -23,6 +23,7 @@ import java.util.concurrent.ConcurrentMap;
 
 import static org.bson.assertions.Assertions.notNull;
 
+@SuppressWarnings("deprecation")
 final class ComputingMap<K, V> implements Map<K, V>, Function<K, V> {
 
     public static <K, V> Map<K, V> create(final Function<K, V> function) {

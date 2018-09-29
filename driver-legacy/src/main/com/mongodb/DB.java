@@ -70,6 +70,7 @@ import static java.util.Arrays.asList;
  * @see MongoClient
  */
 @ThreadSafe
+@SuppressWarnings("deprecation")
 public class DB {
     private final Mongo mongo;
     private final String name;

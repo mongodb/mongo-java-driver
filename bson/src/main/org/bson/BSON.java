@@ -16,8 +16,6 @@
 
 package org.bson;
 
-import org.bson.util.ClassMap;
-
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.regex.Pattern;
@@ -27,7 +25,10 @@ import java.util.regex.Pattern;
  * supports the registration of encoding and decoding hooks to transform BSON types during encoding or decoding.
  *
  * @see org.bson.Transformer
+ * @deprecated there is no replacement for this class
  */
+@Deprecated
+@SuppressWarnings("deprecation")
 public class BSON {
 
     public static final byte EOO = 0;
@@ -85,8 +86,8 @@ public class BSON {
 
     private static volatile boolean encodeHooks = false;
     private static volatile boolean decodeHooks = false;
-    private static final ClassMap<List<Transformer>> encodingHooks = new ClassMap<List<Transformer>>();
-    private static final ClassMap<List<Transformer>> decodingHooks = new ClassMap<List<Transformer>>();
+    private static final org.bson.util.ClassMap<List<Transformer>> encodingHooks = new org.bson.util.ClassMap<List<Transformer>>();
+    private static final org.bson.util.ClassMap<List<Transformer>> decodingHooks = new org.bson.util.ClassMap<List<Transformer>>();
 
     /**
      * Gets whether any encoding transformers have been registered for any classes.

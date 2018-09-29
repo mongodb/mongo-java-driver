@@ -16,7 +16,6 @@
 
 package com.mongodb;
 
-import org.bson.BSON;
 import org.bson.BSONObject;
 import org.bson.BsonBinary;
 import org.bson.BsonBinarySubType;
@@ -62,7 +61,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
  *
  * @since 3.0
  */
-@SuppressWarnings("rawtypes")
+@SuppressWarnings({"rawtypes", "deprecation"})
 public class DBObjectCodec implements CollectibleCodec<DBObject> {
     private static final BsonTypeClassMap DEFAULT_BSON_TYPE_CLASS_MAP = createDefaultBsonTypeClassMap();
     private static final CodecRegistry DEFAULT_REGISTRY =
@@ -208,7 +207,7 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
 
     @SuppressWarnings("unchecked")
     private void writeValue(final BsonWriter bsonWriter, final EncoderContext encoderContext, final Object initialValue) {
-        Object value = BSON.applyEncodingHooks(initialValue);
+        Object value = org.bson.BSON.applyEncodingHooks(initialValue);
         if (value == null) {
             bsonWriter.writeNull();
         } else if (value instanceof DBRef) {
@@ -334,7 +333,7 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
             path.remove(fieldName);
         }
 
-        return BSON.applyDecodingHooks(initialRetVal);
+        return org.bson.BSON.applyDecodingHooks(initialRetVal);
     }
 
     private Object readBinary(final BsonReader reader, final DecoderContext decoderContext) {

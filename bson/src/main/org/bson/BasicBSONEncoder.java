@@ -37,11 +37,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Pattern;
 
-import static org.bson.BSON.regexFlags;
-
 /**
  * This is meant to be pooled or cached. There is some per instance memory for string conversion, etc...
  */
+@SuppressWarnings("deprecation")
 public class BasicBSONEncoder implements BSONEncoder {
 
     private BsonBinaryWriter bsonWriter;
@@ -386,7 +385,7 @@ public class BasicBSONEncoder implements BSONEncoder {
      */
     protected void putPattern(final String name, final Pattern value) {
         putName(name);
-        bsonWriter.writeRegularExpression(new BsonRegularExpression(value.pattern(), regexFlags(value.flags())));
+        bsonWriter.writeRegularExpression(new BsonRegularExpression(value.pattern(), org.bson.BSON.regexFlags(value.flags())));
     }
 
     /**

@@ -22,7 +22,6 @@ import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.DBRef;
-import org.bson.BSON;
 import org.bson.BSONObject;
 import org.bson.BasicBSONCallback;
 import org.bson.BsonUndefined;
@@ -50,6 +49,7 @@ import java.util.regex.Pattern;
  * @deprecated This class has been superseded by to toJson and parse methods on BasicDBObject
  */
 @Deprecated
+@SuppressWarnings("deprecation")
 public class JSONCallback extends BasicBSONCallback {
 
     @Override
@@ -103,7 +103,7 @@ public class JSONCallback extends BasicBSONCallback {
             }
         } else if (b.containsField("$regex")) {
             o = Pattern.compile((String) b.get("$regex"),
-                                BSON.regexFlags((String) b.get("$options")));
+                                org.bson.BSON.regexFlags((String) b.get("$options")));
         } else if (b.containsField("$ts")) { //Legacy timestamp format
             Integer ts = ((Number) b.get("$ts")).intValue();
             Integer inc = ((Number) b.get("$inc")).intValue();
@@ -142,7 +142,7 @@ public class JSONCallback extends BasicBSONCallback {
         if (!isStackEmpty()) {
             _put(name, o);
         } else {
-            o = !BSON.hasDecodeHooks() ? o : BSON.applyDecodingHooks(o);
+            o = !org.bson.BSON.hasDecodeHooks() ? o : org.bson.BSON.applyDecodingHooks(o);
             setRoot(o);
         }
         return o;
