@@ -30,6 +30,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
+@SuppressWarnings("deprecation")
 public class MongoMethodsTest extends DatabaseTestCase {
     @Test
     @SuppressWarnings("deprecation") // This is for testing the old API, so it will use deprecated methods

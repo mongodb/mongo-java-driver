@@ -28,6 +28,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
+@SuppressWarnings("deprecation")
 public class MongoConstructorsTest {
 
     @Test

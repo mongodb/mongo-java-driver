@@ -83,6 +83,7 @@ import static java.util.Collections.singletonList;
  * @see MongoClientURI
  * @since 2.10.0
  */
+@SuppressWarnings("deprecation")
 public class MongoClient extends Mongo implements Closeable {
 
     /**
