@@ -28,7 +28,9 @@ import static com.mongodb.assertions.Assertions.notNull;
  * This class groups the argument for a group operation and can build the underlying command object
  *
  * @mongodb.driver.manual reference/command/group/ Group
+ * @deprecated the group command was deprecated in MongoDB 3.4
  */
+@Deprecated
 public class GroupCommand {
     private final String collectionName;
     private final DBObject keys;
