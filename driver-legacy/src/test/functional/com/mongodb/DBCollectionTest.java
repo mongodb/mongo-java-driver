@@ -69,6 +69,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 
+@SuppressWarnings("deprecation")
 public class DBCollectionTest extends DatabaseTestCase {
 
     @Test

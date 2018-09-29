@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 @Immutable
+@SuppressWarnings("deprecation")
 final class DBCollectionObjectFactory implements DBObjectFactory {
 
     private final Map<List<String>, Class<? extends DBObject>> pathToClassMap;
