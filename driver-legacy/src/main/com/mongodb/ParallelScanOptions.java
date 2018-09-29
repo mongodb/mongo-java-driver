@@ -28,7 +28,9 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @mongodb.driver.manual reference/command/parallelCollectionScan/ Parallel Collection Scan
  * @since 2.12
+ * @deprecated the parallelCollectionScan command will be removed in MongoDB 4.2
  */
+@Deprecated
 @Immutable
 public final class ParallelScanOptions {
     private final int numCursors;
