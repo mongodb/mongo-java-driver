@@ -28,7 +28,10 @@ import java.security.MessageDigest;
 
 /**
  * A simple CLI for GridFS.
+ *
+ * @deprecated there is no replacement for this class
  */
+@Deprecated
 public class CLI {
 
     private static String host = "127.0.0.1";
