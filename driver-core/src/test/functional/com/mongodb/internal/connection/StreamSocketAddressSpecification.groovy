@@ -1,10 +1,12 @@
 package com.mongodb.internal.connection
 
+import category.Slow
 import com.mongodb.MongoSocketOpenException
 import com.mongodb.ServerAddress
 import com.mongodb.connection.BufferProvider
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SslSettings
+import org.junit.experimental.categories.Category
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
@@ -15,6 +17,7 @@ import static com.mongodb.ClusterFixture.getSslSettings
 
 class StreamSocketAddressSpecification extends Specification {
 
+    @Category(Slow)
     @IgnoreIf({ getSslSettings().isEnabled() })
     def 'should successfully connect with working ip address group'() {
         given:
@@ -59,6 +62,7 @@ class StreamSocketAddressSpecification extends Specification {
         socketChannelStream?.close()
     }
 
+    @Category(Slow)
     @IgnoreIf({ getSslSettings().isEnabled() })
     def 'should throw exception when attempting to connect with incorrect ip address group'() {
         given:
