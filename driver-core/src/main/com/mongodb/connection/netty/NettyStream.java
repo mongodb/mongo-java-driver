@@ -20,6 +20,7 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoInterruptedException;
+import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketOpenException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.ServerAddress;
@@ -50,10 +51,12 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLEngine;
 import javax.net.ssl.SSLParameters;
 import java.io.IOException;
+import java.net.SocketAddress;
 import java.security.NoSuchAlgorithmException;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.concurrent.CountDownLatch;
 
 import static com.mongodb.internal.connection.SslHelper.enableHostNameVerification;
@@ -101,64 +104,58 @@ final class NettyStream implements Stream {
         handler.get();
     }
 
-    @SuppressWarnings("deprecation")
     @Override
     public void openAsync(final AsyncCompletionHandler<Void> handler) {
-        Bootstrap bootstrap = new Bootstrap();
-        bootstrap.group(workerGroup);
-        bootstrap.channel(socketChannelClass);
+        initializeChannel(handler, new LinkedList<SocketAddress>(address.getSocketAddresses()));
+    }
 
-        bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, settings.getConnectTimeout(MILLISECONDS));
-        bootstrap.option(ChannelOption.TCP_NODELAY, true);
-        bootstrap.option(ChannelOption.SO_KEEPALIVE, settings.isKeepAlive());
+    @SuppressWarnings("deprecation")
+    private void initializeChannel(final AsyncCompletionHandler<Void> handler, final Queue<SocketAddress> socketAddressQueue) {
+        if (socketAddressQueue.isEmpty()) {
+            handler.failed(new MongoSocketException("Exception opening socket", getAddress()));
+        } else {
+            SocketAddress nextAddress = socketAddressQueue.poll();
 
-        if (settings.getReceiveBufferSize() > 0) {
-            bootstrap.option(ChannelOption.SO_RCVBUF, settings.getReceiveBufferSize());
-        }
-        if (settings.getSendBufferSize() > 0) {
-            bootstrap.option(ChannelOption.SO_SNDBUF, settings.getSendBufferSize());
-        }
-        bootstrap.option(ChannelOption.ALLOCATOR, allocator);
+            Bootstrap bootstrap = new Bootstrap();
+            bootstrap.group(workerGroup);
+            bootstrap.channel(socketChannelClass);
 
-        bootstrap.handler(new ChannelInitializer<SocketChannel>() {
-            @Override
-            public void initChannel(final SocketChannel ch) throws Exception {
-                if (sslSettings.isEnabled()) {
-                    SSLEngine engine = getSslContext().createSSLEngine(address.getHost(), address.getPort());
-                    engine.setUseClientMode(true);
-                    SSLParameters sslParameters = engine.getSSLParameters();
-                    enableSni(address.getHost(), sslParameters);
-                    if (!sslSettings.isInvalidHostNameAllowed()) {
-                        enableHostNameVerification(sslParameters);
-                    }
-                    engine.setSSLParameters(sslParameters);
-                    ch.pipeline().addFirst("ssl", new SslHandler(engine, false));
-                }
-                int readTimeout = settings.getReadTimeout(MILLISECONDS);
-                if (readTimeout > 0) {
-                    ch.pipeline().addLast(READ_HANDLER_NAME, new ReadTimeoutHandler(readTimeout));
-                }
-                ch.pipeline().addLast(new InboundBufferHandler());
+            bootstrap.option(ChannelOption.CONNECT_TIMEOUT_MILLIS, settings.getConnectTimeout(MILLISECONDS));
+            bootstrap.option(ChannelOption.TCP_NODELAY, true);
+            bootstrap.option(ChannelOption.SO_KEEPALIVE, settings.isKeepAlive());
+
+            if (settings.getReceiveBufferSize() > 0) {
+                bootstrap.option(ChannelOption.SO_RCVBUF, settings.getReceiveBufferSize());
             }
-        });
-        final ChannelFuture channelFuture = bootstrap.connect(address.getHost(), address.getPort());
-        channelFuture.addListener(new ChannelFutureListener() {
-            @Override
-            public void operationComplete(final ChannelFuture future) throws Exception {
-                if (future.isSuccess()) {
-                    channel = channelFuture.channel();
-                    channel.closeFuture().addListener(new ChannelFutureListener() {
-                        @Override
-                        public void operationComplete(final ChannelFuture f2) throws Exception {
-                            handleReadResponse(null, new IOException("The connection to the server was closed"));
+            if (settings.getSendBufferSize() > 0) {
+                bootstrap.option(ChannelOption.SO_SNDBUF, settings.getSendBufferSize());
+            }
+            bootstrap.option(ChannelOption.ALLOCATOR, allocator);
+
+            bootstrap.handler(new ChannelInitializer<SocketChannel>() {
+                @Override
+                public void initChannel(final SocketChannel ch) {
+                    if (sslSettings.isEnabled()) {
+                        SSLEngine engine = getSslContext().createSSLEngine(address.getHost(), address.getPort());
+                        engine.setUseClientMode(true);
+                        SSLParameters sslParameters = engine.getSSLParameters();
+                        enableSni(address.getHost(), sslParameters);
+                        if (!sslSettings.isInvalidHostNameAllowed()) {
+                            enableHostNameVerification(sslParameters);
                         }
-                    });
-                    handler.completed(null);
-                } else {
-                    handler.failed(new MongoSocketOpenException("Exception opening socket", getAddress(), future.cause()));
+                        engine.setSSLParameters(sslParameters);
+                        ch.pipeline().addFirst("ssl", new SslHandler(engine, false));
+                    }
+                    int readTimeout = settings.getReadTimeout(MILLISECONDS);
+                    if (readTimeout > 0) {
+                        ch.pipeline().addLast(READ_HANDLER_NAME, new ReadTimeoutHandler(readTimeout));
+                    }
+                    ch.pipeline().addLast(new InboundBufferHandler());
                 }
-            }
-        });
+            });
+            final ChannelFuture channelFuture = bootstrap.connect(nextAddress);
+            channelFuture.addListener(new OpenChannelFutureListener(socketAddressQueue, channelFuture, handler));
+        }
     }
 
     @Override
@@ -381,6 +378,39 @@ final class NettyStream implements Stream {
                 return t;
             } catch (InterruptedException e) {
                 throw new MongoInterruptedException("Interrupted", e);
+            }
+        }
+    }
+
+    private class OpenChannelFutureListener implements ChannelFutureListener {
+        private final Queue<SocketAddress> socketAddressQueue;
+        private final ChannelFuture channelFuture;
+        private final AsyncCompletionHandler<Void> handler;
+
+        OpenChannelFutureListener(final Queue<SocketAddress> socketAddressQueue, final ChannelFuture channelFuture,
+                                  final AsyncCompletionHandler<Void> handler) {
+            this.socketAddressQueue = socketAddressQueue;
+            this.channelFuture = channelFuture;
+            this.handler = handler;
+        }
+
+        @Override
+        public void operationComplete(final ChannelFuture future) {
+            if (future.isSuccess()) {
+                channel = channelFuture.channel();
+                channel.closeFuture().addListener(new ChannelFutureListener() {
+                    @Override
+                    public void operationComplete(final ChannelFuture future) {
+                        handleReadResponse(null, new IOException("The connection to the server was closed"));
+                    }
+                });
+                handler.completed(null);
+            } else {
+                if (socketAddressQueue.isEmpty()) {
+                    handler.failed(new MongoSocketOpenException("Exception opening socket", getAddress(), future.cause()));
+                } else {
+                    initializeChannel(handler, socketAddressQueue);
+                }
             }
         }
     }
