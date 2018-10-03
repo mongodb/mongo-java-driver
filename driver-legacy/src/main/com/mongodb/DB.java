@@ -104,12 +104,27 @@ public class DB {
     /**
      * Gets the Mongo instance
      *
-     * @return the mongo instance that this database was created from.
-     * @deprecated
+     * @return the mongo instance that this database was created from
+     * @deprecated Use {@link #getMongoClient()} instead
      */
     @Deprecated
     public Mongo getMongo() {
         return mongo;
+    }
+
+    /**
+     * Gets the MongoClient instance
+     *
+     * @return the MongoClient instance that this database was constructed from
+     * @throws IllegalStateException if this DB was not created from a MongoClient instance
+     * @since 3.9
+     */
+    public MongoClient getMongoClient() {
+        if (mongo instanceof MongoClient) {
+            return (MongoClient) mongo;
+        } else {
+            throw new IllegalStateException("This DB was not created from a MongoClient.  Use getMongo instead");
+        }
     }
 
     /**

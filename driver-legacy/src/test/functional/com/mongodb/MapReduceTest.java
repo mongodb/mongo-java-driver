@@ -153,7 +153,7 @@ public class MapReduceTest extends DatabaseTestCase {
         MapReduceOutput output = collection.mapReduce(command);
 
 
-        DB db = database.getMongo().getDB(MR_DATABASE);
+        DB db = database.getMongoClient().getDB(MR_DATABASE);
         assertTrue(db.collectionExists(DEFAULT_COLLECTION));
         assertEquals(toList(output.results()), toList(db.getCollection(DEFAULT_COLLECTION).find()));
     }
