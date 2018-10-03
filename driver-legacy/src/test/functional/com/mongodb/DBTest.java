@@ -69,6 +69,21 @@ public class DBTest extends DatabaseTestCase {
     }
 
     @Test
+    public void shouldGetMongoClient() {
+        assertEquals(getMongoClient(), database.getMongoClient());
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void shouldThrowGettingMongoClientIfFromMongo() {
+        Mongo mongo = new Mongo();
+        try {
+            mongo.getDB("test").getMongoClient();
+        } finally {
+            mongo.close();
+        }
+    }
+
+    @Test
     public void shouldReturnCachedCollectionObjectIfExists() {
         DBCollection collection1 = database.getCollection("test");
         DBCollection collection2 = database.getCollection("test");

@@ -340,7 +340,7 @@ class DBCollectionSpecification extends Specification {
         def cannedResult = BasicDBObject.parse('{value: {}}')
         def executor = new TestOperationExecutor([cannedResult, cannedResult, cannedResult])
         def db = new DB(getMongoClient(), 'myDatabase', executor)
-        def retryWrites = db.getMongo().getMongoClientOptions().getRetryWrites()
+        def retryWrites = db.getMongoClient().getMongoClientOptions().getRetryWrites()
         def collection = db.getCollection('test')
 
         when:
@@ -360,7 +360,7 @@ class DBCollectionSpecification extends Specification {
         def cannedResult = BasicDBObject.parse('{value: {}}')
         def executor = new TestOperationExecutor([cannedResult, cannedResult, cannedResult])
         def db = new DB(getMongoClient(), 'myDatabase', executor)
-        def retryWrites = db.getMongo().getMongoClientOptions().getRetryWrites()
+        def retryWrites = db.getMongoClient().getMongoClientOptions().getRetryWrites()
         def collection = db.getCollection('test')
 
         when:
@@ -396,7 +396,7 @@ class DBCollectionSpecification extends Specification {
         def cannedResult = BasicDBObject.parse('{value: {}}')
         def executor = new TestOperationExecutor([cannedResult, cannedResult, cannedResult])
         def db = new DB(getMongoClient(), 'myDatabase', executor)
-        def retryWrites = db.getMongo().getMongoClientOptions().getRetryWrites()
+        def retryWrites = db.getMongoClient().getMongoClientOptions().getRetryWrites()
         def collection = db.getCollection('test')
 
         when:
@@ -751,7 +751,7 @@ class DBCollectionSpecification extends Specification {
         def result = Stub(WriteConcernResult)
         def executor = new TestOperationExecutor([result, result, result])
         def db = new DB(getMongoClient(), 'myDatabase', executor)
-        def retryWrites = db.getMongo().getMongoClientOptions().getRetryWrites()
+        def retryWrites = db.getMongoClient().getMongoClientOptions().getRetryWrites()
         def collection = db.getCollection('test')
         def query = '{a: 1}'
         def update = '{$set: {a: 2}}'
@@ -795,7 +795,7 @@ class DBCollectionSpecification extends Specification {
         def result = Stub(WriteConcernResult)
         def executor = new TestOperationExecutor([result, result, result])
         def db = new DB(getMongoClient(), 'myDatabase', executor)
-        def retryWrites = db.getMongo().getMongoClientOptions().getRetryWrites()
+        def retryWrites = db.getMongoClient().getMongoClientOptions().getRetryWrites()
         def collection = db.getCollection('test')
         def query = '{a: 1}'
 
