@@ -27,6 +27,7 @@ import java.util.EventListener;
  */
 @Beta
 @Deprecated
+@SuppressWarnings("deprecation")
 public interface ConnectionListener extends EventListener {
 
     /**

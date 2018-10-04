@@ -29,6 +29,7 @@ import java.util.List;
  */
 @Immutable
 @Deprecated
+@SuppressWarnings("deprecation")
 public class CommandListenerMulticaster implements CommandListener {
 
     private final CommandEventMulticaster wrapped;

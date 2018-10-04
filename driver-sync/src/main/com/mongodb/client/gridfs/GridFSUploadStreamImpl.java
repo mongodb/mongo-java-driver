@@ -67,7 +67,7 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
     }
 
     @Override
-    @Deprecated
+    @SuppressWarnings("deprecation")
     public ObjectId getFileId() {
         return getObjectId();
     }

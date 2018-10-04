@@ -166,19 +166,14 @@ abstract class CopyOnWriteMap<K, V> extends AbstractCopyOnWriteMap<K, V, Map<K, 
      * Create a new {@link CopyOnWriteMap} with the supplied {@link Map} to initialize the values.
      *
      * @param map the initial map to initialize with
-     * @deprecated since 0.0.12 use the versions that explicitly specify View.Type
      */
-    @Deprecated
     protected CopyOnWriteMap(final Map<? extends K, ? extends V> map) {
         this(map, View.Type.LIVE);
     }
 
     /**
      * Create a new empty {@link CopyOnWriteMap}.
-     *
-     * @deprecated since 0.0.12 use the versions that explicitly specify View.Type
      */
-    @Deprecated
     protected CopyOnWriteMap() {
         this(Collections.<K, V>emptyMap(), View.Type.LIVE);
     }

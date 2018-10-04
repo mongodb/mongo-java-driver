@@ -465,14 +465,12 @@ final class GridFSBucketImpl implements GridFSBucket {
     }
 
     @Override
-    @Deprecated
     @SuppressWarnings("deprecation")
     public GridFSDownloadStream openDownloadStreamByName(final String filename) {
         return openDownloadStreamByName(filename, new com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions());
     }
 
     @Override
-    @Deprecated
     @SuppressWarnings("deprecation")
     public GridFSDownloadStream openDownloadStreamByName(final String filename,
                                                          final com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions options) {
@@ -480,14 +478,12 @@ final class GridFSBucketImpl implements GridFSBucket {
     }
 
     @Override
-    @Deprecated
     @SuppressWarnings("deprecation")
     public void downloadToStreamByName(final String filename, final OutputStream destination) {
         downloadToStreamByName(filename, destination, new com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions());
     }
 
     @Override
-    @Deprecated
     @SuppressWarnings("deprecation")
     public void downloadToStreamByName(final String filename, final OutputStream destination,
                                        final com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions options) {

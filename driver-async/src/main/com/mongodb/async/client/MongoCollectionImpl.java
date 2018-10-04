@@ -160,37 +160,37 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    @Deprecated
+    @SuppressWarnings("deprecation")
     public void count(final SingleResultCallback<Long> callback) {
         count(new BsonDocument(), callback);
     }
 
     @Override
-    @Deprecated
+    @SuppressWarnings("deprecation")
     public void count(final Bson filter, final SingleResultCallback<Long> callback) {
         count(filter, new CountOptions(), callback);
     }
 
     @Override
-    @Deprecated
+    @SuppressWarnings("deprecation")
     public void count(final Bson filter, final CountOptions options, final SingleResultCallback<Long> callback) {
         executeCount(null, filter, options, CountStrategy.COMMAND, callback);
     }
 
     @Override
-    @Deprecated
+    @SuppressWarnings("deprecation")
     public void count(final ClientSession clientSession, final SingleResultCallback<Long> callback) {
         count(clientSession, new BsonDocument(), callback);
     }
 
     @Override
-    @Deprecated
+    @SuppressWarnings("deprecation")
     public void count(final ClientSession clientSession, final Bson filter, final SingleResultCallback<Long> callback) {
         count(clientSession, filter, new CountOptions(), callback);
     }
 
     @Override
-    @Deprecated
+    @SuppressWarnings("deprecation")
     public void count(final ClientSession clientSession, final Bson filter, final CountOptions options,
                       final SingleResultCallback<Long> callback) {
         notNull("clientSession", clientSession);
@@ -601,7 +601,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    @Deprecated
+    @SuppressWarnings("deprecation")
     public void replaceOne(final Bson filter, final TDocument replacement, final UpdateOptions options,
                            final SingleResultCallback<UpdateResult> callback) {
         replaceOne(filter, replacement, createReplaceOptions(options), callback);
@@ -620,7 +620,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    @Deprecated
+    @SuppressWarnings("deprecation")
     public void replaceOne(final ClientSession clientSession, final Bson filter, final TDocument replacement, final UpdateOptions options,
                            final SingleResultCallback<UpdateResult> callback) {
         replaceOne(clientSession, filter, replacement, createReplaceOptions(options), callback);

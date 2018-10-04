@@ -37,6 +37,7 @@ import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
  *
  * @since 3.0
  */
+@SuppressWarnings("deprecation")
 public final class MongoClients {
 
     /**

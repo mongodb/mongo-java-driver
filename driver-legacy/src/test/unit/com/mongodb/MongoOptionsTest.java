@@ -29,10 +29,10 @@ import static org.junit.Assert.assertTrue;
 /**
  * The mongo options test.
  */
+@SuppressWarnings("deprecation")
 public class MongoOptionsTest {
 
     @Test
-    @SuppressWarnings("deprecation")
     public void testCopy() throws Exception {
 
         MongoOptions options = new MongoOptions();
@@ -79,7 +79,6 @@ public class MongoOptionsTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
     public void testGetterSetters() throws Exception {
 
         MongoOptions options = new MongoOptions();
@@ -126,7 +125,6 @@ public class MongoOptionsTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
     public void testGetWriteConcern() {
         MongoOptions options = new MongoOptions();
         assertEquals(WriteConcern.NORMAL, options.getWriteConcern());
@@ -153,7 +151,6 @@ public class MongoOptionsTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
     public void testToClientOptions() throws UnknownHostException {
         MongoOptions options = new MongoOptions();
         options.description = "my client";

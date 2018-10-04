@@ -228,7 +228,7 @@ public interface BSONCallback {
      *
      * @param name the name of the field
      * @param data the field's value
-     * @deprecated
+     * @deprecated this method is no longer called by the decoder
      */
     @Deprecated
     void gotBinaryArray(String name, byte[] data);

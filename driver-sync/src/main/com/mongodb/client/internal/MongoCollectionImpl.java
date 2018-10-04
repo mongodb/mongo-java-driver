@@ -166,37 +166,37 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    @Deprecated
+    @SuppressWarnings("deprecation")
     public long count() {
         return count(new BsonDocument(), new CountOptions());
     }
 
     @Override
-    @Deprecated
+    @SuppressWarnings("deprecation")
     public long count(final Bson filter) {
         return count(filter, new CountOptions());
     }
 
     @Override
-    @Deprecated
+    @SuppressWarnings("deprecation")
     public long count(final Bson filter, final CountOptions options) {
         return executeCount(null, filter, options, CountStrategy.COMMAND);
     }
 
     @Override
-    @Deprecated
+    @SuppressWarnings("deprecation")
     public long count(final ClientSession clientSession) {
         return count(clientSession, new BsonDocument());
     }
 
     @Override
-    @Deprecated
+    @SuppressWarnings("deprecation")
     public long count(final ClientSession clientSession, final Bson filter) {
         return count(clientSession, filter, new CountOptions());
     }
 
     @Override
-    @Deprecated
+    @SuppressWarnings("deprecation")
     public long count(final ClientSession clientSession, final Bson filter, final CountOptions options) {
         notNull("clientSession", clientSession);
         return executeCount(clientSession, filter, options, CountStrategy.COMMAND);
@@ -568,7 +568,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    @Deprecated
+    @SuppressWarnings("deprecation")
     public UpdateResult replaceOne(final Bson filter, final TDocument replacement, final UpdateOptions updateOptions) {
         return replaceOne(filter, replacement, createReplaceOptions(updateOptions));
     }
@@ -584,7 +584,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    @Deprecated
+    @SuppressWarnings("deprecation")
     public UpdateResult replaceOne(final ClientSession clientSession, final Bson filter, final TDocument replacement,
                                    final UpdateOptions updateOptions) {
         return replaceOne(clientSession, filter, replacement, createReplaceOptions(updateOptions));
