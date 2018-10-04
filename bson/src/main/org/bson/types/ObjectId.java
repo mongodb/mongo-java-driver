@@ -455,8 +455,8 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
     /**
      * Gets the time of this ID, in seconds.
      *
-     * @deprecated Use #getTimestamp instead
      * @return the time component of this ID in seconds
+     * @deprecated Use #getTimestamp instead
      */
     @Deprecated
     public int getTimeSecond() {
@@ -466,8 +466,8 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
     /**
      * Gets the time of this instance, in milliseconds.
      *
-     * @deprecated Use #getDate instead
      * @return the time component of this ID in milliseconds
+     * @deprecated Use #getDate instead
      */
     @Deprecated
     public long getTime() {

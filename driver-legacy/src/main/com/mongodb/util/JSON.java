@@ -29,6 +29,7 @@ import org.bson.BSONCallback;
  * @deprecated This class has been superseded by to toJson and parse methods on BasicDBObject
  */
 @Deprecated
+@SuppressWarnings("deprecation")
 public class JSON {
 
     /**

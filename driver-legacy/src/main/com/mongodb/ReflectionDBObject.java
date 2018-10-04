@@ -50,7 +50,7 @@ public abstract class ReflectionDBObject implements DBObject {
         return getWrapper().keySet();
     }
 
-    @Deprecated
+    @SuppressWarnings("deprecation")
     @Override
     public boolean containsKey(final String key) {
         return containsField(key);

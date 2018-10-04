@@ -87,6 +87,7 @@ class ClientSessionHelper {
         }
     }
 
+    @SuppressWarnings("deprecation")
     private ClientSession createClientSession(final ClientSessionOptions options, final OperationExecutor executor) {
         ClientSessionOptions mergedOptions = ClientSessionOptions.builder(options)
                 .defaultTransactionOptions(

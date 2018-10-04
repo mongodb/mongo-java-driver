@@ -171,6 +171,7 @@ public class MongoOptions {
      * @param options the MongoClientOptions to copy values from into the new MongoOptions.
      * @deprecated use {@link com.mongodb.MongoClientOptions}
      */
+    @SuppressWarnings("deprecation")
     @Deprecated
     public MongoOptions(final MongoClientOptions options) {
         connectionsPerHost = options.getConnectionsPerHost();
@@ -245,6 +246,7 @@ public class MongoOptions {
         return m;
     }
 
+    @SuppressWarnings("deprecation")
     MongoClientOptions toClientOptions() {
         Builder builder = MongoClientOptions.builder()
                                             .requiredReplicaSetName(requiredReplicaSetName)
@@ -274,6 +276,7 @@ public class MongoOptions {
      *
      * @return a WriteConcern for the current MongoOptions.
      */
+    @SuppressWarnings("deprecation")
     public WriteConcern getWriteConcern() {
         WriteConcern retVal;
 

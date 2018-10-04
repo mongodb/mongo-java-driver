@@ -39,6 +39,7 @@ public class MongoURI {
     public static final String MONGODB_PREFIX = "mongodb://";
     private final MongoClientURI proxied;
 
+    @SuppressWarnings("deprecation")
     private final MongoOptions options;
 
     /**
@@ -48,6 +49,7 @@ public class MongoURI {
      * @mongodb.driver.manual reference/connection-string Connection String URI Format
      * @deprecated Replaced by {@link MongoClientURI#MongoClientURI(String)}
      */
+    @SuppressWarnings("deprecation")
     @Deprecated
     public MongoURI(final String uri) {
         this.proxied = new MongoClientURI(uri, MongoClientOptions.builder()
@@ -62,6 +64,7 @@ public class MongoURI {
      *
      * @param proxied the MongoClientURI to wrap with this deprecated class. * @deprecated Replaced by {@link MongoClientURI})
      */
+    @SuppressWarnings("deprecation")
     @Deprecated
     public MongoURI(final MongoClientURI proxied) {
         this.proxied = proxied;
@@ -169,6 +172,7 @@ public class MongoURI {
      * @param mongo the Mongo instance to get the database from.
      * @return the database specified in this URI
      */
+    @SuppressWarnings("deprecation")
     public DB connectDB(final Mongo mongo) {
         return mongo.getDB(getDatabaseNonNull());
     }
@@ -189,6 +193,7 @@ public class MongoURI {
      * @param mongo the mongo instance to get the collection from
      * @return the collection specified in this URI
      */
+    @SuppressWarnings("deprecation")
     public DBCollection connectCollection(final Mongo mongo) {
         return connectDB(mongo).getCollection(getCollectionNonNull());
     }

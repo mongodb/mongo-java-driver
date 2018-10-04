@@ -93,6 +93,7 @@ public class Mongo {
     private final MongoClientOptions options;
     private final List<MongoCredential> credentialsList;
 
+    @SuppressWarnings("deprecation")
     private final Bytes.OptionHolder optionHolder;
 
     private final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
@@ -312,6 +313,7 @@ public class Mongo {
                 mongoURI.getCredentials() != null ? asList(mongoURI.getCredentials()) : Collections.<MongoCredential>emptyList());
     }
 
+    @SuppressWarnings("deprecation")
     Mongo(final Cluster cluster, final MongoClientOptions options, final List<MongoCredential> credentialsList) {
         this.options = options;
         this.readPreference = options.getReadPreference();
@@ -435,6 +437,7 @@ public class Mongo {
      * @deprecated Please use {@link MongoClient} class to connect to server and corresponding {@link
      * com.mongodb.MongoClient#getMongoClientOptions()}
      */
+    @SuppressWarnings("deprecation")
     @Deprecated
     public MongoOptions getMongoOptions() {
         return new MongoOptions(getMongoClientOptions());
@@ -445,6 +448,7 @@ public class Mongo {
      *
      * @return replica set status information
      */
+    @SuppressWarnings("deprecation")
     @Deprecated
     @Nullable
     public ReplicaSetStatus getReplicaSetStatus() {
@@ -490,9 +494,11 @@ public class Mongo {
      * @return a DB representing the specified database
      * @throws IllegalArgumentException if the name is invalid
      * @see MongoNamespace#checkDatabaseNameValidity(String)
-     * @deprecated use {@link com.mongodb.MongoClient#getDatabase(String)}
+     * @deprecated This method is not currently scheduled for removal, but prefer {@link com.mongodb.MongoClient#getDatabase(String)} for
+     * new code.  Note that {@link DB} and {@link com.mongodb.client.MongoDatabase} can be used together in the same application, whith the
+     * same {@link MongoClient} instance.
      */
-    @Deprecated
+    @Deprecated // NOT CURRENTLY INTENDED FOR REMOVAL
     public DB getDB(final String dbName) {
         DB db = dbCache.get(dbName);
         if (db != null) {
@@ -546,6 +552,7 @@ public class Mongo {
      * @see ReadPreference#secondaryPreferred()
      * @deprecated Replaced with {@code ReadPreference.secondaryPreferred()}
      */
+    @SuppressWarnings("deprecation")
     @Deprecated
     public void slaveOk() {
         addOption(Bytes.QUERYOPTION_SLAVEOK);
@@ -780,6 +787,7 @@ public class Mongo {
         return delegate.getServerSessionPool();
     }
 
+    @SuppressWarnings("deprecation")
     Bytes.OptionHolder getOptionHolder() {
         return optionHolder;
     }
@@ -888,6 +896,7 @@ public class Mongo {
          * @throws MongoException if there's a failure
          * @deprecated Please use {@link #connect(MongoClientURI)} instead.
          */
+        @SuppressWarnings("deprecation")
         @Deprecated
         public Mongo connect(final MongoURI uri) {
             return connect(uri.toClientURI());

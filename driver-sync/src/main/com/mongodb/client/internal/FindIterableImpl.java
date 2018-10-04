@@ -101,6 +101,7 @@ final class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResu
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public FindIterable<TResult> modifiers(@Nullable final Bson modifiers) {
         findOptions.modifiers(modifiers);
         return this;
@@ -167,7 +168,7 @@ final class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResu
     }
 
     @Override
-    @Deprecated
+    @SuppressWarnings("deprecation")
     public FindIterable<TResult> maxScan(final long maxScan) {
         findOptions.maxScan(maxScan);
         return this;
@@ -186,7 +187,7 @@ final class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResu
     }
 
     @Override
-    @Deprecated
+    @SuppressWarnings("deprecation")
     public FindIterable<TResult> snapshot(final boolean snapshot) {
         findOptions.snapshot(snapshot);
         return this;

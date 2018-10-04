@@ -52,6 +52,7 @@ public final class MongoCredential {
      * @mongodb.driver.manual core/authentication/#mongodb-cr-authentication MONGODB-CR
      * @deprecated This mechanism was replaced by {@link #SCRAM_SHA_1_MECHANISM} in MongoDB 3.0, and is now deprecated
      */
+    @SuppressWarnings("deprecation")
     @Deprecated
     public static final String MONGODB_CR_MECHANISM = AuthenticationMechanism.MONGODB_CR.getMechanismName();
 
@@ -221,6 +222,7 @@ public final class MongoCredential {
      * @deprecated MONGODB-CR was replaced by SCRAM-SHA-1 in MongoDB 3.0, and is now deprecated. Use
      * the {@link #createCredential(String, String, char[])} factory method instead.
      */
+    @SuppressWarnings("deprecation")
     @Deprecated
     public static MongoCredential createMongoCRCredential(final String userName, final String database, final char[] password) {
         return new MongoCredential(MONGODB_CR, userName, database, password);

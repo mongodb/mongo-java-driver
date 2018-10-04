@@ -79,7 +79,7 @@ public class JSONSerializersTest {
         assertEquals("{ \"binary\" : <Binary Data>}", buf.toString());
 
         // test  BOOLEAN
-        testObj = new BasicDBObject("boolean", new Boolean(true));
+        testObj = new BasicDBObject("boolean", Boolean.TRUE);
         buf = new StringBuilder();
         serializer.serialize(testObj, buf);
         assertEquals(buf.toString(), "{ \"boolean\" : true}");
@@ -164,7 +164,7 @@ public class JSONSerializersTest {
         // test  NUMBER
         Random rand = new Random();
         long val = rand.nextLong();
-        Long longVal = new Long(val);
+        Long longVal = val;
         buf = new StringBuilder();
         serializer.serialize(longVal, buf);
         assertEquals(String.valueOf(val), buf.toString());
