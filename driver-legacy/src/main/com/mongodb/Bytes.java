@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * Class that hold definitions of the wire protocol
  * @deprecated there is no replacement for this class
  */
-@Deprecated
+@Deprecated(since = "3.9", forRemoval = true)
 @SuppressWarnings("deprecation")
 public class Bytes extends org.bson.BSON {
 

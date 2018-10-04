@@ -242,7 +242,7 @@ public class ServerAddress implements Serializable {
      * @return if they are the same
      * @deprecated use the {@link #equals(Object)} method instead
      */
-    @Deprecated
+    @Deprecated(since = "3.6", forRemoval = true)
     public boolean sameHost(final String hostName) {
         return equals(new ServerAddress(hostName));
     }

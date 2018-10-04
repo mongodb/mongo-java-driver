@@ -228,7 +228,7 @@ public class DBCursorTest extends DatabaseTestCase {
         }
     }
 
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings("removal")
     @Test
     public void testGetServerAddress() {
         DBCursor cursor = collection.find().limit(2);
@@ -311,7 +311,7 @@ public class DBCursorTest extends DatabaseTestCase {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings("removal")
     public void testMaxScan() {
         assumeFalse(serverVersionAtLeast(4, 1));
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
@@ -545,7 +545,7 @@ public class DBCursorTest extends DatabaseTestCase {
         }
     }
 
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings("removal")
     @Test(expected = UnsupportedOperationException.class)
     public void exhaustOptionShouldThrowUnsupportedOperationException() {
         DBCursor cursor = new DBCursor(collection, new BasicDBObject("x", 1), new BasicDBObject(), ReadPreference.primary());

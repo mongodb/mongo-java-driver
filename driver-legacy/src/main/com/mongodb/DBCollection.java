@@ -122,7 +122,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * @mongodb.driver.manual reference/glossary/#term-collection Collection
  */
 @ThreadSafe
-@SuppressWarnings({"rawtypes", "deprecation"})
+@SuppressWarnings({"rawtypes", "removal"})
 public class DBCollection {
     public static final String ID_FIELD_NAME = "_id";
     private final String name;
@@ -652,7 +652,7 @@ public class DBCollection {
      * com.mongodb.DBCursor#setOptions(int)} on the {@code DBCursor} returned from {@link com.mongodb.DBCollection#find(DBObject,
      * DBObject)}
      */
-    @Deprecated
+    @Deprecated(since = "3.0", forRemoval = true)
     public DBCursor find(final DBObject query, final DBObject projection, final int numToSkip, final int batchSize,
                          final int options) {
         return new DBCursor(this, query, projection, getReadPreference()).batchSize(batchSize).skip(numToSkip).setOptions(options);
@@ -671,7 +671,7 @@ public class DBCollection {
      * @deprecated use {@link com.mongodb.DBCursor#skip(int)} and {@link com.mongodb.DBCursor#batchSize(int)} on the {@code DBCursor}
      * returned from {@link com.mongodb.DBCollection#find(DBObject, DBObject)}
      */
-    @Deprecated
+    @Deprecated(since = "3.0", forRemoval = true)
     public DBCursor find(final DBObject query, final DBObject projection, final int numToSkip, final int batchSize) {
         return new DBCursor(this, query, projection, getReadPreference()).batchSize(batchSize).skip(numToSkip);
     }
@@ -1068,7 +1068,7 @@ public class DBCollection {
      * @mongodb.driver.manual reference/command/group/ Group Command
      * @deprecated The group command was deprecated in MongoDB 3.4
      */
-    @Deprecated
+    @Deprecated(since = "3.9", forRemoval = true)
     public DBObject group(final DBObject key, final DBObject cond, final DBObject initial, final String reduce) {
         return group(key, cond, initial, reduce, null);
     }
@@ -1086,7 +1086,7 @@ public class DBCollection {
      * @mongodb.driver.manual reference/command/group/ Group Command
      * @deprecated The group command was deprecated in MongoDB 3.4
      */
-    @Deprecated
+    @Deprecated(since = "3.9", forRemoval = true)
     public DBObject group(final DBObject key, final DBObject cond, final DBObject initial, final String reduce,
                           @Nullable final String finalize) {
         return group(key, cond, initial, reduce, finalize, getReadPreference());
@@ -1106,7 +1106,7 @@ public class DBCollection {
      * @mongodb.driver.manual reference/command/group/ Group Command
      * @deprecated The group command was deprecated in MongoDB 3.4
      */
-    @Deprecated
+    @Deprecated(since = "3.9", forRemoval = true)
     public DBObject group(final DBObject key, final DBObject cond, final DBObject initial, final String reduce,
                           @Nullable final String finalize, final ReadPreference readPreference) {
         return group(new GroupCommand(this, key, cond, initial, reduce, finalize), readPreference);
@@ -1121,7 +1121,7 @@ public class DBCollection {
      * @mongodb.driver.manual reference/command/group/ Group Command
      * @deprecated The group command was deprecated in MongoDB 3.4
      */
-    @Deprecated
+    @Deprecated(since = "3.9", forRemoval = true)
     public DBObject group(final GroupCommand cmd) {
         return group(cmd, getReadPreference());
     }
@@ -1136,7 +1136,7 @@ public class DBCollection {
      * @mongodb.driver.manual reference/command/group/ Group Command
      * @deprecated The group command was deprecated in MongoDB 3.4
      */
-    @Deprecated
+    @Deprecated(since = "3.9", forRemoval = true)
     public DBObject group(final GroupCommand cmd, final ReadPreference readPreference) {
         return toDBList(executor.execute(cmd.toOperation(getNamespace(), getDefaultDBObjectCodec()), readPreference, getReadConcern()));
     }
@@ -1377,7 +1377,7 @@ public class DBCollection {
      * @mongodb.server.release 2.2
      * @deprecated Use {@link #aggregate(List, AggregationOptions)} instead
      */
-    @Deprecated
+    @Deprecated(since = "3.0", forRemoval = true)
     @SuppressWarnings("unchecked")
     public AggregationOutput aggregate(final DBObject firstOp, final DBObject... additionalOps) {
         List<DBObject> pipeline = new ArrayList<DBObject>();
@@ -1395,7 +1395,7 @@ public class DBCollection {
      * @mongodb.server.release 2.2
      * @deprecated Use {@link #aggregate(List, AggregationOptions)} instead
      */
-    @Deprecated
+    @Deprecated(since = "3.5", forRemoval = true)
     public AggregationOutput aggregate(final List<? extends DBObject> pipeline) {
         return aggregate(pipeline, getReadPreference());
     }
@@ -1410,7 +1410,7 @@ public class DBCollection {
      * @mongodb.server.release 2.2
      * @deprecated Use {@link #aggregate(List, AggregationOptions, ReadPreference)} )} instead
      */
-    @Deprecated
+    @Deprecated(since = "3.9", forRemoval = true)
     @SuppressWarnings("unchecked")
     public AggregationOutput aggregate(final List<? extends DBObject> pipeline, final ReadPreference readPreference) {
         Cursor cursor = aggregate(pipeline, AggregationOptions.builder().build(), readPreference, false);
@@ -1538,7 +1538,7 @@ public class DBCollection {
      * @since 2.12
      * @deprecated the parallelCollectionScan command will be removed in MongoDB 4.2
      */
-    @Deprecated
+    @Deprecated(since = "3.9", forRemoval = true)
     public List<Cursor> parallelScan(final ParallelScanOptions options) {
         List<Cursor> cursors = new ArrayList<Cursor>();
         ParallelCollectionScanOperation<DBObject> operation = new ParallelCollectionScanOperation<DBObject>(getNamespace(),
@@ -2078,7 +2078,7 @@ public class DBCollection {
      *
      * @deprecated Replaced with {@link ReadPreference#secondaryPreferred()}
      */
-    @Deprecated
+    @Deprecated(since = "3.0", forRemoval = true)
     public void slaveOk() {
         addOption(Bytes.QUERYOPTION_SLAVEOK);
     }
@@ -2090,7 +2090,7 @@ public class DBCollection {
      * @mongodb.driver.manual reference/method/cursor.addOption/#flags Query Flags
      * @deprecated Replaced with {@link DBCursor#addOption(int)}
      */
-    @Deprecated
+    @Deprecated(since = "3.9", forRemoval = true)
     public void addOption(final int option) {
         optionHolder.add(option);
     }
@@ -2101,7 +2101,7 @@ public class DBCollection {
      * @mongodb.driver.manual reference/method/cursor.addOption/#flags Query Flags
      * @deprecated Replaced with {@link DBCursor#resetOptions()}
      */
-    @Deprecated
+    @Deprecated(since = "3.9", forRemoval = true)
     public void resetOptions() {
         optionHolder.reset();
     }
@@ -2113,7 +2113,7 @@ public class DBCollection {
      * @mongodb.driver.manual reference/method/cursor.addOption/#flags Query Flags
      * @deprecated Replaced with {@link DBCursor#getOptions()}
      */
-    @Deprecated
+    @Deprecated(since = "3.9", forRemoval = true)
     public int getOptions() {
         return optionHolder.get();
     }
@@ -2125,7 +2125,7 @@ public class DBCollection {
      * @mongodb.driver.manual reference/method/cursor.addOption/#flags Query Flags
      * @deprecated Replaced with {@link DBCursor#setOptions(int)}
      */
-    @Deprecated
+    @Deprecated(since = "3.9", forRemoval = true)
     public void setOptions(final int options) {
         optionHolder.set(options);
     }

@@ -25,7 +25,7 @@ import java.util.List;
  *
  * @author breinero
  */
-@SuppressWarnings("deprecation")
+@SuppressWarnings({"deprecation", "removal"})
 class ClassMapBasedObjectSerializer extends AbstractObjectSerializer {
 
     /**

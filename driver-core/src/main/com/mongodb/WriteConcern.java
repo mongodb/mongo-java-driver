@@ -126,7 +126,7 @@ public class WriteConcern implements Serializable {
      *
      * @deprecated Prefer {@link #JOURNALED}
      */
-    @Deprecated
+    @Deprecated(since = "3.2", forRemoval = true)
     public static final WriteConcern FSYNCED = ACKNOWLEDGED.withFsync(true);
 
     /**
@@ -140,7 +140,7 @@ public class WriteConcern implements Serializable {
      * Exceptions are raised for network issues, and server errors; waits for at least 2 servers for the write operation.
      * @deprecated Prefer WriteConcern#W2
      */
-    @Deprecated
+    @Deprecated(since = "3.2", forRemoval = true)
     public static final WriteConcern REPLICA_ACKNOWLEDGED = new WriteConcern(2);
 
     /**
@@ -152,7 +152,7 @@ public class WriteConcern implements Serializable {
      * @see WriteConcern#UNACKNOWLEDGED
      * @deprecated Prefer {@link #UNACKNOWLEDGED}
      */
-    @Deprecated
+    @Deprecated(since = "3.2", forRemoval = true)
     public static final WriteConcern NORMAL = UNACKNOWLEDGED;
 
     /**
@@ -164,7 +164,7 @@ public class WriteConcern implements Serializable {
      * @see WriteConcern#ACKNOWLEDGED
      * @deprecated Prefer {@link #ACKNOWLEDGED}
      */
-    @Deprecated
+    @Deprecated(since = "3.2", forRemoval = true)
     public static final WriteConcern SAFE = ACKNOWLEDGED;
 
     /**
@@ -181,7 +181,7 @@ public class WriteConcern implements Serializable {
      * @see WriteConcern#FSYNCED
      * @deprecated Prefer {@link #JOURNALED}
      */
-    @Deprecated
+    @Deprecated(since = "3.2", forRemoval = true)
     public static final WriteConcern FSYNC_SAFE = FSYNCED;
 
     /**
@@ -192,7 +192,7 @@ public class WriteConcern implements Serializable {
      *
      * @deprecated Prefer {@link #JOURNALED}
      */
-    @Deprecated
+    @Deprecated(since = "3.2", forRemoval = true)
     public static final WriteConcern JOURNAL_SAFE = JOURNALED;
 
     /**
@@ -203,7 +203,7 @@ public class WriteConcern implements Serializable {
      * @see WriteConcern#W2
      * @deprecated Prefer {@link #W2}
      */
-    @Deprecated
+    @Deprecated(since = "3.2", forRemoval = true)
     public static final WriteConcern REPLICAS_SAFE = REPLICA_ACKNOWLEDGED;
 
     /**
@@ -213,7 +213,7 @@ public class WriteConcern implements Serializable {
      * @see WriteConcern#UNACKNOWLEDGED
      * @deprecated Prefer {@link #UNACKNOWLEDGED}
      */
-    @Deprecated
+    @Deprecated(since = "3.2", forRemoval = true)
     public WriteConcern() {
         this(0);
     }
@@ -259,7 +259,7 @@ public class WriteConcern implements Serializable {
      * @param fsync whether or not to fsync
      * @deprecated prefer {@link #JOURNALED} or {@link #withJournal(Boolean)}
      */
-    @Deprecated
+    @Deprecated(since = "3.2", forRemoval = true)
     public WriteConcern(final boolean fsync) {
         this(null, null, fsync, null);
     }
@@ -274,7 +274,7 @@ public class WriteConcern implements Serializable {
      * @mongodb.driver.manual reference/write-concern/#w-option w option
      * @mongodb.driver.manual reference/write-concern/#wtimeout wtimeout option
      */
-    @Deprecated
+    @Deprecated(since = "3.2", forRemoval = true)
     public WriteConcern(final int w, final int wTimeoutMS, final boolean fsync) {
         this(w, wTimeoutMS, fsync, null);
     }
@@ -291,7 +291,7 @@ public class WriteConcern implements Serializable {
      * @mongodb.driver.manual reference/write-concern/#wtimeout wtimeout option
      * @mongodb.driver.manual reference/write-concern/#j-option j option
      */
-    @Deprecated
+    @Deprecated(since = "3.2", forRemoval = true)
     public WriteConcern(final int w, final int wTimeoutMS, final boolean fsync, final boolean journal) {
         this((Object) w, wTimeoutMS, fsync, journal);
     }
@@ -305,7 +305,7 @@ public class WriteConcern implements Serializable {
      * @param journal    whether writes should wait for a journaling group commit
      * @deprecated Prefer {@link #withW(String)}, {@link #withWTimeout(long, TimeUnit)}, {@link #withJournal(Boolean)}
      */
-    @Deprecated
+    @Deprecated(since = "3.2", forRemoval = true)
     public WriteConcern(final String w, final int wTimeoutMS, final boolean fsync, final boolean journal) {
         this((Object) notNull("w", w), wTimeoutMS, fsync, journal);
     }
@@ -382,7 +382,7 @@ public class WriteConcern implements Serializable {
      * @deprecated Prefer {@link #getWTimeout(TimeUnit)}
      * @mongodb.driver.manual core/write-concern/#timeouts wTimeout
      */
-    @Deprecated
+    @Deprecated(since = "3.2", forRemoval = true)
     public int getWtimeout() {
         return wTimeoutMS == null ? 0 : wTimeoutMS;
     }
@@ -405,7 +405,7 @@ public class WriteConcern implements Serializable {
      * @mongodb.driver.manual core/write-concern/#journaled Journaled
      * @deprecated Prefer {@link #getJournal()}
      */
-    @Deprecated
+    @Deprecated(since = "3.2", forRemoval = true)
     public boolean getJ() {
         return journal == null ? false : journal;
     }
@@ -416,7 +416,7 @@ public class WriteConcern implements Serializable {
      * @return true if fsync is true, false if it false or unspecified
      * @deprecated Prefer {@link #getJournal()}
      */
-    @Deprecated
+    @Deprecated(since = "3.2", forRemoval = true)
     public boolean getFsync() {
         return fsync == null ? false : fsync;
     }
@@ -427,7 +427,7 @@ public class WriteConcern implements Serializable {
      * @return true if fsync is true, false if it false or unspecified
      * @deprecated Prefer {@link #getJournal()}
      */
-    @Deprecated
+    @Deprecated(since = "3.2", forRemoval = true)
     public boolean fsync() {
         return getFsync();
     }
@@ -438,7 +438,7 @@ public class WriteConcern implements Serializable {
      * @return whether this write concern will result in an an acknowledged write
      * @deprecated Prefer {@link #isAcknowledged()}
      */
-    @Deprecated
+    @Deprecated(since = "3.2", forRemoval = true)
     public boolean callGetLastError() {
         return isAcknowledged();
     }
@@ -568,7 +568,7 @@ public class WriteConcern implements Serializable {
      * @return the new WriteConcern
      * @deprecated Prefer {@link #withJournal(Boolean)}
      */
-    @Deprecated
+    @Deprecated(since = "3.2", forRemoval = true)
     public WriteConcern withFsync(final boolean fsync) {
         return new WriteConcern(w, wTimeoutMS, fsync, journal);
     }
@@ -593,7 +593,7 @@ public class WriteConcern implements Serializable {
      * @deprecated Prefer {@link #withJournal(Boolean)}
      * @mongodb.driver.manual reference/write-concern/#j-option j option
      */
-    @Deprecated
+    @Deprecated(since = "3.2", forRemoval = true)
     public WriteConcern withJ(final boolean journal) {
         return withJournal(journal);
     }
@@ -650,7 +650,7 @@ public class WriteConcern implements Serializable {
      * @return Majority, a subclass of WriteConcern that represents the write concern requiring most servers to acknowledge the write
      * @deprecated Prefer {@link #MAJORITY}, {@link #withWTimeout(long, TimeUnit)}, {@link #withJournal(Boolean)}
      */
-    @Deprecated
+    @Deprecated(since = "3.2", forRemoval = true)
     public static Majority majorityWriteConcern(final int wtimeout, final boolean fsync, final boolean j) {
         return new Majority(wtimeout, fsync, j);
     }
@@ -660,7 +660,7 @@ public class WriteConcern implements Serializable {
      *
      * @deprecated Prefer {@link #MAJORITY}, {@link #withWTimeout(long, TimeUnit)}, {@link #withJournal(Boolean)}
      */
-    @Deprecated
+    @Deprecated(since = "3.2", forRemoval = true)
     public static class Majority extends WriteConcern {
 
         private static final long serialVersionUID = -4128295115883875212L;

@@ -45,7 +45,7 @@ public enum AuthenticationMechanism {
      *
      * @deprecated This mechanism was replaced by {@link #SCRAM_SHA_1} in MongoDB 3.0, and is now deprecated
      */
-    @Deprecated
+    @Deprecated(since = "3.7", forRemoval = true)
     MONGODB_CR("MONGODB-CR"),
 
     /**

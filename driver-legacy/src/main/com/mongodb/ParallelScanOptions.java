@@ -30,7 +30,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 2.12
  * @deprecated the parallelCollectionScan command will be removed in MongoDB 4.2
  */
-@Deprecated
+@Deprecated(since = "3.9", forRemoval = true)
 @Immutable
 public final class ParallelScanOptions {
     private final int numCursors;

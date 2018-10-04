@@ -44,7 +44,7 @@ public class MongoNodeIsRecoveringException extends MongoCommandException {
      * @param serverAddress the address of the server
      * @deprecated Prefer {@link #MongoNodeIsRecoveringException(BsonDocument, ServerAddress)}
      */
-    @Deprecated
+    @Deprecated(since = "3.8", forRemoval = true)
     public MongoNodeIsRecoveringException(final ServerAddress serverAddress) {
         super(new BsonDocument(), serverAddress);
     }

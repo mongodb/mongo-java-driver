@@ -26,7 +26,7 @@ import java.util.List;
  * @deprecated Replace with use of aggregate methods in {@link DBCollection} that return instances of {@link Cursor}.
  * @see DBCollection#aggregate(List, AggregationOptions)
  */
-@Deprecated
+@Deprecated(since = "3.5", forRemoval = true)
 public class AggregationOutput {
     private final List<DBObject> results;
 

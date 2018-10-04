@@ -119,7 +119,7 @@ public final class MongoClientSettings {
          * @return this
          * @since 3.7
          */
-        @SuppressWarnings("deprecation")
+        @SuppressWarnings("removal")
         public Builder applyConnectionString(final ConnectionString connectionString) {
             credentialList = new ArrayList<MongoCredential>(connectionString.getCredentialList());
             wrappedBuilder.applyConnectionString(connectionString);

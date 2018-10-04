@@ -39,7 +39,7 @@ public class NativeAuthenticatorUnitTest {
     private NativeAuthenticator subject;
     private ConnectionDescription connectionDescription;
 
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings("removal")
     @Before
     public void before() {
         connection = new TestInternalConnection(new ServerId(new ClusterId(), new ServerAddress("localhost", 27017)));

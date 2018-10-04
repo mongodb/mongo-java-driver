@@ -56,7 +56,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
-@SuppressWarnings("deprecation")
+@SuppressWarnings({"deprecation", "removal"})
 public class DBTest extends DatabaseTestCase {
     @Test
     public void shouldGetDefaultWriteConcern() {

@@ -65,7 +65,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * @mongodb.driver.manual core/read-operations Read Operations
  */
 @NotThreadSafe
-@SuppressWarnings("deprecation")
+@SuppressWarnings("removal")
 public class DBCursor implements Cursor, Iterable<DBObject> {
     private final DBCollection collection;
     private final DBObject filter;
@@ -356,7 +356,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @since 2.12
      * @deprecated Deprecated as of MongoDB 4.0 release
      */
-    @Deprecated
+    @Deprecated(since = "3.8", forRemoval = true)
     public DBCursor maxScan(final int max) {
         findOptions.getModifiers().put("$maxScan", max);
         return this;
@@ -465,7 +465,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @mongodb.driver.manual reference/operator/meta/snapshot/ $snapshot
      * @deprecated Deprecated in MongoDB 3.6 release and removed in MongoDB 4.0 release
      */
-    @Deprecated
+    @Deprecated(since = "3.8", forRemoval = true)
     public DBCursor snapshot() {
         findOptions.getModifiers().put("$snapshot", true);
         return this;
@@ -629,7 +629,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @see ReadPreference#secondaryPreferred()
      * @deprecated Replaced with {@link com.mongodb.ReadPreference#secondaryPreferred()}
      */
-    @Deprecated
+    @Deprecated(since = "3.0", forRemoval = true)
     public DBCursor slaveOk() {
         return addOption(Bytes.QUERYOPTION_SLAVEOK);
     }

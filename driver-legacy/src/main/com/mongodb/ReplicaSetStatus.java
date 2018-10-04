@@ -30,7 +30,7 @@ import java.util.List;
  *
  * @deprecated Prefer {@link MongoClientOptions.Builder#addClusterListener(ClusterListener)}
  */
-@Deprecated
+@Deprecated(since = "3.9", forRemoval = true)
 public class ReplicaSetStatus {
 
     private final Cluster cluster;

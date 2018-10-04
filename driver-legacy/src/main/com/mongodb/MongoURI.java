@@ -30,7 +30,7 @@ import java.util.List;
  * @see MongoClientURI
  * @deprecated Replaced by {@link MongoClientURI}
  */
-@Deprecated
+@Deprecated(since = "3.0", forRemoval = true)
 public class MongoURI {
 
     /**
@@ -39,6 +39,7 @@ public class MongoURI {
     public static final String MONGODB_PREFIX = "mongodb://";
     private final MongoClientURI proxied;
 
+    @SuppressWarnings("removal")
     private final MongoOptions options;
 
     /**
@@ -48,7 +49,8 @@ public class MongoURI {
      * @mongodb.driver.manual reference/connection-string Connection String URI Format
      * @deprecated Replaced by {@link MongoClientURI#MongoClientURI(String)}
      */
-    @Deprecated
+    @SuppressWarnings("removal")
+    @Deprecated(since = "3.0", forRemoval = true)
     public MongoURI(final String uri) {
         this.proxied = new MongoClientURI(uri, MongoClientOptions.builder()
                                                                  .connectionsPerHost(10)
@@ -62,7 +64,8 @@ public class MongoURI {
      *
      * @param proxied the MongoClientURI to wrap with this deprecated class. * @deprecated Replaced by {@link MongoClientURI})
      */
-    @Deprecated
+    @SuppressWarnings("removal")
+    @Deprecated(since = "3.0", forRemoval = true)
     public MongoURI(final MongoClientURI proxied) {
         this.proxied = proxied;
         options = new MongoOptions(proxied.getOptions());
@@ -136,7 +139,7 @@ public class MongoURI {
      *
      * @return the mongo options
      */
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings("removal")
     public MongoOptions getOptions() {
         return options;
     }
@@ -147,7 +150,7 @@ public class MongoURI {
      * @return a new Mongo instance.  There is no caching, so each call will create a new instance, each of which must be closed manually.
      * @throws MongoException if there's a failure
      */
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings("removal")
     public Mongo connect() {
         // Note: we can't change this to new MongoClient(this) as that would silently change the default write concern.
         return new Mongo(this);
@@ -169,6 +172,7 @@ public class MongoURI {
      * @param mongo the Mongo instance to get the database from.
      * @return the database specified in this URI
      */
+    @SuppressWarnings("removal")
     public DB connectDB(final Mongo mongo) {
         return mongo.getDB(getDatabaseNonNull());
     }
@@ -189,6 +193,7 @@ public class MongoURI {
      * @param mongo the mongo instance to get the collection from
      * @return the collection specified in this URI
      */
+    @SuppressWarnings("removal")
     public DBCollection connectCollection(final Mongo mongo) {
         return connectDB(mongo).getCollection(getCollectionNonNull());
     }
