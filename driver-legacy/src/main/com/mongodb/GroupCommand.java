@@ -30,7 +30,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @mongodb.driver.manual reference/command/group/ Group
  * @deprecated the group command was deprecated in MongoDB 3.4
  */
-@Deprecated
+@Deprecated(since = "3.9", forRemoval = true)
 public class GroupCommand {
     private final String collectionName;
     private final DBObject keys;

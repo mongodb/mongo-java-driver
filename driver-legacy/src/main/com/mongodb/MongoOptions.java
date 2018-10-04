@@ -31,7 +31,7 @@ import static com.mongodb.MongoClientOptions.Builder;
  * @see MongoClient
  * @deprecated Please use {@link MongoClientOptions} instead.
  */
-@Deprecated
+@Deprecated(since = "3.0", forRemoval = true)
 public class MongoOptions {
 
     /**
@@ -160,7 +160,7 @@ public class MongoOptions {
      *
      * @deprecated use {@link com.mongodb.MongoClientOptions}
      */
-    @Deprecated
+    @Deprecated(since = "3.0", forRemoval = true)
     public MongoOptions() {
         reset();
     }
@@ -171,7 +171,8 @@ public class MongoOptions {
      * @param options the MongoClientOptions to copy values from into the new MongoOptions.
      * @deprecated use {@link com.mongodb.MongoClientOptions}
      */
-    @Deprecated
+    @SuppressWarnings("removal")
+    @Deprecated(since = "3.0", forRemoval = true)
     public MongoOptions(final MongoClientOptions options) {
         connectionsPerHost = options.getConnectionsPerHost();
         threadsAllowedToBlockForConnectionMultiplier = options.getThreadsAllowedToBlockForConnectionMultiplier();
@@ -245,6 +246,7 @@ public class MongoOptions {
         return m;
     }
 
+    @SuppressWarnings("removal")
     MongoClientOptions toClientOptions() {
         Builder builder = MongoClientOptions.builder()
                                             .requiredReplicaSetName(requiredReplicaSetName)
@@ -274,6 +276,7 @@ public class MongoOptions {
      *
      * @return a WriteConcern for the current MongoOptions.
      */
+    @SuppressWarnings("removal")
     public WriteConcern getWriteConcern() {
         WriteConcern retVal;
 

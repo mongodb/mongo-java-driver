@@ -379,7 +379,7 @@ public class MongoClientOptions {
      * @see <a href="https://docs.mongodb.com/manual/faq/diagnostics/#does-tcp-keepalive-time-affect-mongodb-deployments">
      *     Does TCP keep-alive time affect MongoDB Deployments?</a>
      */
-    @Deprecated
+    @Deprecated(since = "3.5", forRemoval = true)
     public boolean isSocketKeepAlive() {
         return socketKeepAlive;
     }
@@ -1232,7 +1232,7 @@ public class MongoClientOptions {
          * @see <a href="https://docs.mongodb.com/manual/faq/diagnostics/#does-tcp-keepalive-time-affect-mongodb-deployments">
          *     Does TCP keep-alive time affect MongoDB Deployments?</a>
          */
-        @Deprecated
+        @Deprecated(since = "3.5", forRemoval = true)
         public Builder socketKeepAlive(final boolean socketKeepAlive) {
             this.socketKeepAlive = socketKeepAlive;
             return this;

@@ -40,7 +40,7 @@ import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
 import static org.junit.Assume.assumeTrue;
 
-@SuppressWarnings("deprecation")
+@SuppressWarnings("removal")
 public class DBCursorOldTest extends DatabaseTestCase {
 
     @Test

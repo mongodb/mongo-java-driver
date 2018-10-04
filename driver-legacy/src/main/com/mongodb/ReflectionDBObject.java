@@ -36,7 +36,7 @@ import static java.util.Collections.synchronizedMap;
  * @deprecated Replaced by {@link org.bson.codecs.pojo.PojoCodecProvider}
  */
 @SuppressWarnings({"unchecked", "rawtypes"})
-@Deprecated
+@Deprecated(since = "3.9", forRemoval = true)
 public abstract class ReflectionDBObject implements DBObject {
 
     @Override
@@ -50,7 +50,7 @@ public abstract class ReflectionDBObject implements DBObject {
         return getWrapper().keySet();
     }
 
-    @Deprecated
+    @Deprecated(since = "3.8", forRemoval = true)
     @Override
     public boolean containsKey(final String key) {
         return containsField(key);

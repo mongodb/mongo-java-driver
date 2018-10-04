@@ -312,7 +312,7 @@ public final class ClusterFixture {
                 Collections.<MongoCompressor>emptyList());
     }
 
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings("removal")
     private static Cluster createCluster(final ConnectionString connectionString, final StreamFactory streamFactory) {
         return new DefaultClusterFactory().createCluster(ClusterSettings.builder().applyConnectionString(connectionString).build(),
                 ServerSettings.builder().build(),
@@ -383,7 +383,7 @@ public final class ClusterFixture {
         return serverDescriptions.get(0).getAddress();
     }
 
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings("removal")
     public static List<MongoCredential> getCredentialList() {
         return getConnectionString().getCredentialList();
     }

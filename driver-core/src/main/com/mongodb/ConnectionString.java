@@ -643,7 +643,7 @@ public class ConnectionString {
         return credential;
     }
 
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings("removal")
     private MongoCredential createMongoCredentialWithMechanism(final AuthenticationMechanism mechanism, final String userName,
                                                                @Nullable final char[] password,
                                                                @Nullable final String authSource,
@@ -790,7 +790,7 @@ public class ConnectionString {
         return null;
     }
 
-    @SuppressWarnings("deprecation")
+    @SuppressWarnings("removal")
     @Nullable
     private WriteConcern buildWriteConcern(@Nullable final Boolean safe, @Nullable final String w,
                                            @Nullable final Integer wTimeout, @Nullable final Boolean fsync,
@@ -1001,7 +1001,7 @@ public class ConnectionString {
      * @return the connection string
      * deprecated use {@link #getConnectionString()}
      */
-    @Deprecated
+    @Deprecated(since = "3.1", forRemoval = true)
     public String getURI() {
         return getConnectionString();
     }
@@ -1023,7 +1023,7 @@ public class ConnectionString {
      * @return the credentials in an immutable list
      * @deprecated Prefer {@link #getCredential()}
      */
-    @Deprecated
+    @Deprecated(since = "3.6", forRemoval = true)
     public List<MongoCredential> getCredentialList() {
         return credential != null ? singletonList(credential) : Collections.<MongoCredential>emptyList();
     }

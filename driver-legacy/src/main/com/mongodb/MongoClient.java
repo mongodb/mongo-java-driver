@@ -83,7 +83,7 @@ import static java.util.Collections.singletonList;
  * @see MongoClientURI
  * @since 2.10.0
  */
-@SuppressWarnings("deprecation")
+@SuppressWarnings("removal")
 public class MongoClient extends Mongo implements Closeable {
 
     /**
@@ -165,7 +165,7 @@ public class MongoClient extends Mongo implements Closeable {
      * @since 2.11.0
      * @deprecated Prefer {@link #MongoClient(ServerAddress, MongoCredential, MongoClientOptions)}
      */
-    @Deprecated
+    @Deprecated(since = "3.6", forRemoval = true)
     public MongoClient(final ServerAddress addr, final List<MongoCredential> credentialsList) {
         this(addr, credentialsList, MongoClientOptions.builder().build());
     }
@@ -191,7 +191,7 @@ public class MongoClient extends Mongo implements Closeable {
      * @since 2.11.0
      * @deprecated Prefer {@link #MongoClient(ServerAddress, MongoCredential, MongoClientOptions)}
      */
-    @Deprecated
+    @Deprecated(since = "3.6", forRemoval = true)
     public MongoClient(final ServerAddress addr, final List<MongoCredential> credentialsList, final MongoClientOptions options) {
         super(addr, credentialsList, options);
     }
@@ -245,7 +245,7 @@ public class MongoClient extends Mongo implements Closeable {
      * @since 2.11.0
      * @deprecated Prefer {@link #MongoClient(List, MongoCredential, MongoClientOptions)}
      */
-    @Deprecated
+    @Deprecated(since = "3.6", forRemoval = true)
     public MongoClient(final List<ServerAddress> seeds, final List<MongoCredential> credentialsList) {
         this(seeds, credentialsList, new MongoClientOptions.Builder().build());
     }
@@ -289,7 +289,7 @@ public class MongoClient extends Mongo implements Closeable {
      * @since 2.11.0
      * @deprecated Prefer {@link #MongoClient(List, MongoCredential, MongoClientOptions)}
      */
-    @Deprecated
+    @Deprecated(since = "3.6", forRemoval = true)
     public MongoClient(final List<ServerAddress> seeds, final List<MongoCredential> credentialsList, final MongoClientOptions options) {
         super(seeds, credentialsList, options);
     }
@@ -354,7 +354,7 @@ public class MongoClient extends Mongo implements Closeable {
      * @since 3.4
      * @deprecated Prefer {@link #MongoClient(ServerAddress, MongoCredential, MongoClientOptions, MongoDriverInformation)}
      */
-    @Deprecated
+    @Deprecated(since = "3.6", forRemoval = true)
     public MongoClient(final ServerAddress addr, final List<MongoCredential> credentialsList, final MongoClientOptions options,
                        final MongoDriverInformation mongoDriverInformation) {
         super(addr, credentialsList, options, mongoDriverInformation);
@@ -390,7 +390,7 @@ public class MongoClient extends Mongo implements Closeable {
      * @since 3.4
      * @deprecated Prefer {@link #MongoClient(List, MongoCredential, MongoClientOptions, MongoDriverInformation)}
      */
-    @Deprecated
+    @Deprecated(since = "3.6", forRemoval = true)
     public MongoClient(final List<ServerAddress> seeds, final List<MongoCredential> credentialsList, final MongoClientOptions options,
                        final MongoDriverInformation mongoDriverInformation) {
         super(seeds, credentialsList, options, mongoDriverInformation);

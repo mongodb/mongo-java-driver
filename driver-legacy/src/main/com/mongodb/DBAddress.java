@@ -29,7 +29,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @mongodb.driver.manual reference/connection-string/ MongoDB Connection String
  * @deprecated This class is no longer needed, as the driver does not rely on it for anything anymore.  Use {@link ServerAddress} instead.
  */
-@Deprecated
+@Deprecated(since = "3.1", forRemoval = true)
 public class DBAddress extends ServerAddress {
     private static final long serialVersionUID = -813211264765778133L;
     private final String _db;

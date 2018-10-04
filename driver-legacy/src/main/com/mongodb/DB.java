@@ -70,7 +70,7 @@ import static java.util.Arrays.asList;
  * @see MongoClient
  */
 @ThreadSafe
-@SuppressWarnings("deprecation")
+@SuppressWarnings("removal")
 public class DB {
     private final Mongo mongo;
     private final String name;
@@ -108,7 +108,7 @@ public class DB {
      * @return the mongo instance that this database was created from
      * @deprecated Use {@link #getMongoClient()} instead
      */
-    @Deprecated
+    @Deprecated(since = "3.9", forRemoval = true)
     public Mongo getMongo() {
         return mongo;
     }
@@ -584,7 +584,7 @@ public class DB {
      * @mongodb.driver.manual reference/method/db.eval/ db.eval()
      * @deprecated The eval command was deprecated in MongoDB 3.0
      */
-    @Deprecated
+    @Deprecated(since = "3.6", forRemoval = true)
     public CommandResult doEval(final String code, final Object... args) {
         DBObject commandDocument = new BasicDBObject("$eval", code).append("args", asList(args));
         return executeCommand(wrap(commandDocument));
@@ -601,7 +601,7 @@ public class DB {
      * @mongodb.driver.manual reference/method/db.eval/ db.eval()
      * @deprecated The eval command was deprecated in MongoDB 3.0
      */
-    @Deprecated
+    @Deprecated(since = "3.6", forRemoval = true)
     public Object eval(final String code, final Object... args) {
         CommandResult result = doEval(code, args);
         result.throwOnError();
@@ -633,7 +633,7 @@ public class DB {
      * @mongodb.driver.manual reference/command/updateUser updateUser
      * @deprecated Use {@code DB.command} to call either the createUser or updateUser command
      */
-    @Deprecated
+    @Deprecated(since = "3.0", forRemoval = true)
     public WriteResult addUser(final String userName, final char[] password) {
         return addUser(userName, password, false);
     }
@@ -652,7 +652,7 @@ public class DB {
      * @mongodb.driver.manual reference/command/updateUser updateUser
      * @deprecated Use {@code DB.command} to call either the createUser or updateUser command
      */
-    @Deprecated
+    @Deprecated(since = "3.0", forRemoval = true)
     public WriteResult addUser(final String userName, final char[] password, final boolean readOnly) {
         MongoCredential credential = createCredential(userName, getName(), password);
         boolean userExists = false;
@@ -685,7 +685,7 @@ public class DB {
      * @mongodb.driver.manual administration/security-access-control/  Access Control
      * @deprecated Use {@code DB.command} to call the dropUser command
      */
-    @Deprecated
+    @Deprecated(since = "3.0", forRemoval = true)
     public WriteResult removeUser(final String userName) {
         try {
             executor.execute(new com.mongodb.operation.DropUserOperation(getName(), userName, getWriteConcern()), getReadConcern());
@@ -701,7 +701,7 @@ public class DB {
      * @see ReadPreference#secondaryPreferred()
      * @deprecated Replaced with {@code ReadPreference.secondaryPreferred()}
      */
-    @Deprecated
+    @Deprecated(since = "3.0", forRemoval = true)
     public void slaveOk() {
         addOption(Bytes.QUERYOPTION_SLAVEOK);
     }
@@ -713,7 +713,7 @@ public class DB {
      * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
      * @deprecated Replaced with {@link DBCursor#addOption(int)}
      */
-    @Deprecated
+    @Deprecated(since = "3.9", forRemoval = true)
     public void addOption(final int option) {
         optionHolder.add(option);
     }
@@ -725,7 +725,7 @@ public class DB {
      * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
      * @deprecated Replaced with {@link DBCursor#setOptions(int)}
      */
-    @Deprecated
+    @Deprecated(since = "3.9", forRemoval = true)
     public void setOptions(final int options) {
         optionHolder.set(options);
     }
@@ -735,7 +735,7 @@ public class DB {
      * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
      * @deprecated Replaced with {@link DBCursor#resetOptions()}
      */
-    @Deprecated
+    @Deprecated(since = "3.9", forRemoval = true)
     public void resetOptions() {
         optionHolder.reset();
     }
@@ -747,7 +747,7 @@ public class DB {
      * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
      * @deprecated Replaced with {@link DBCursor#getOptions()}
      */
-    @Deprecated
+    @Deprecated(since = "3.9", forRemoval = true)
     public int getOptions() {
         return optionHolder.get();
     }

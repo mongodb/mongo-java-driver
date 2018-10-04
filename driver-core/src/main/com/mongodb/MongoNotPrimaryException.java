@@ -44,7 +44,7 @@ public class MongoNotPrimaryException extends MongoCommandException {
      * @param serverAddress the address of the server
      * @deprecated Prefer {@link #MongoNotPrimaryException(BsonDocument, ServerAddress)}
      */
-    @Deprecated
+    @Deprecated(since = "3.8", forRemoval = true)
     public MongoNotPrimaryException(final ServerAddress serverAddress) {
         super(new BsonDocument(), serverAddress);
     }

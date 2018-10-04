@@ -45,7 +45,7 @@ public class AggregationOptions {
      * that support it (&gt;= 2.6).  The driver will ignore this as of MongoDB 3.6, which does not support inline results for the aggregate
      * command.
      */
-    @Deprecated
+    @Deprecated(since = "3.5", forRemoval = true)
     public enum OutputMode {
         /**
          * The output of the aggregate operation is returned inline.
@@ -99,7 +99,7 @@ public class AggregationOptions {
      * that support it (&gt;= 2.6).  The driver will ignore this as of MongoDB 3.6, which does not support inline results for the aggregate
      * command.
      */
-    @Deprecated
+    @Deprecated(since = "3.5", forRemoval = true)
     public OutputMode getOutputMode() {
         return outputMode;
     }
@@ -212,7 +212,7 @@ public class AggregationOptions {
          * that support it (&gt;= 2.6).  The driver will ignore this as of MongoDB 3.6, which does not support inline results for the
          * aggregate command.
          */
-        @Deprecated
+        @Deprecated(since = "3.5", forRemoval = true)
         public Builder outputMode(final OutputMode mode) {
             outputMode = mode;
             return this;

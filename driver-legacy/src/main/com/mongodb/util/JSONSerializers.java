@@ -52,7 +52,7 @@ import java.util.regex.Pattern;
  * @deprecated This class has been superseded by to toJson and parse methods on BasicDBObject
  */
 @Deprecated
-@SuppressWarnings("deprecation")
+@SuppressWarnings("removal")
 public class JSONSerializers {
 
     private JSONSerializers() {

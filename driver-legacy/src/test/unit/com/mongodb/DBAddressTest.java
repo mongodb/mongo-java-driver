@@ -27,7 +27,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 @Ignore("Doesn't work offline")
-@SuppressWarnings("deprecation")
+@SuppressWarnings("removal")
 public class DBAddressTest {
 
     @Test

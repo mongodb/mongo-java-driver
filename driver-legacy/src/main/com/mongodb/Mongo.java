@@ -80,7 +80,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
  * with this class.
  */
 @ThreadSafe
-@Deprecated
+@Deprecated(since = "3.9", forRemoval = true)
 public class Mongo {
     static final String ADMIN_DATABASE_NAME = "admin";
 
@@ -93,6 +93,7 @@ public class Mongo {
     private final MongoClientOptions options;
     private final List<MongoCredential> credentialsList;
 
+    @SuppressWarnings("removal")
     private final Bytes.OptionHolder optionHolder;
 
     private final BufferProvider bufferProvider = new PowerOfTwoBufferPool();
@@ -107,7 +108,7 @@ public class Mongo {
      * @throws MongoException if there's a failure
      * @deprecated Replaced by {@link MongoClient#MongoClient()})
      */
-    @Deprecated
+    @Deprecated(since = "3.0", forRemoval = true)
     public Mongo() {
         this(new ServerAddress(), createLegacyOptions());
     }
@@ -118,7 +119,7 @@ public class Mongo {
      * @param host server to connect to
      * @deprecated Replaced by {@link MongoClient#MongoClient(String)}
      */
-    @Deprecated
+    @Deprecated(since = "3.0", forRemoval = true)
     public Mongo(final String host) {
         this(new ServerAddress(host), createLegacyOptions());
     }
@@ -131,9 +132,9 @@ public class Mongo {
      * @param options default query options
      * @deprecated Replaced by {@link MongoClient#MongoClient(String, MongoClientOptions)}
      */
-    @Deprecated
+    @Deprecated(since = "3.0", forRemoval = true)
     public Mongo(final String host,
-                 @SuppressWarnings("deprecation")
+                 @SuppressWarnings("removal")
                  final MongoOptions options) {
         this(new ServerAddress(host), options.toClientOptions());
     }
@@ -145,7 +146,7 @@ public class Mongo {
      * @param port the port on which the database is running
      * @deprecated Replaced by {@link MongoClient#MongoClient(String, int)}
      */
-    @Deprecated
+    @Deprecated(since = "3.0", forRemoval = true)
     public Mongo(final String host, final int port) {
         this(new ServerAddress(host, port), createLegacyOptions());
     }
@@ -157,7 +158,7 @@ public class Mongo {
      * @see com.mongodb.ServerAddress
      * @deprecated Replaced by {@link MongoClient#MongoClient(ServerAddress)}
      */
-    @Deprecated
+    @Deprecated(since = "3.0", forRemoval = true)
     public Mongo(final ServerAddress address) {
         this(address, createLegacyOptions());
     }
@@ -170,9 +171,9 @@ public class Mongo {
      * @see com.mongodb.ServerAddress
      * @deprecated Replaced by {@link MongoClient#MongoClient(ServerAddress, MongoClientOptions)}
      */
-    @Deprecated
+    @Deprecated(since = "3.0", forRemoval = true)
     public Mongo(final ServerAddress address,
-                 @SuppressWarnings("deprecation")
+                 @SuppressWarnings("removal")
                  final MongoOptions options) {
         this(address, options.toClientOptions());
     }
@@ -187,7 +188,7 @@ public class Mongo {
      * @see com.mongodb.ServerAddress
      * @deprecated Please use {@link MongoClient#MongoClient(java.util.List)} instead.
      */
-    @Deprecated
+    @Deprecated(since = "3.0", forRemoval = true)
     public Mongo(final ServerAddress left, final ServerAddress right) {
         this(asList(left, right), createLegacyOptions());
     }
@@ -203,9 +204,9 @@ public class Mongo {
      * @see com.mongodb.ServerAddress
      * @deprecated Please use {@link MongoClient#MongoClient(java.util.List, MongoClientOptions)} instead.
      */
-    @Deprecated
+    @Deprecated(since = "3.0", forRemoval = true)
     public Mongo(final ServerAddress left, final ServerAddress right,
-                 @SuppressWarnings("deprecation")
+                 @SuppressWarnings("removal")
                  final MongoOptions options) {
         this(asList(left, right), options.toClientOptions());
     }
@@ -225,7 +226,7 @@ public class Mongo {
      * @see MongoClientOptions#getLocalThreshold()
      * @deprecated Replaced by {@link MongoClient#MongoClient(java.util.List)}
      */
-    @Deprecated
+    @Deprecated(since = "3.0", forRemoval = true)
     public Mongo(final List<ServerAddress> seeds) {
         this(seeds, createLegacyOptions());
     }
@@ -247,9 +248,9 @@ public class Mongo {
      * @see MongoClientOptions#getLocalThreshold()
      * @deprecated Replaced by {@link MongoClient#MongoClient(java.util.List, MongoClientOptions)}
      */
-    @Deprecated
+    @Deprecated(since = "3.0", forRemoval = true)
     public Mongo(final List<ServerAddress> seeds,
-                 @SuppressWarnings("deprecation")
+                 @SuppressWarnings("removal")
                  final MongoOptions options) {
         this(seeds, options.toClientOptions());
     }
@@ -270,9 +271,9 @@ public class Mongo {
      * @see MongoURI
      * @deprecated Replaced by {@link MongoClient#MongoClient(MongoClientURI)}
      */
-    @Deprecated
+    @Deprecated(since = "3.0", forRemoval = true)
     public Mongo(
-                @SuppressWarnings("deprecation")
+                @SuppressWarnings("removal")
                 final MongoURI uri) {
         this(uri.toClientURI());
     }
@@ -312,6 +313,7 @@ public class Mongo {
                 mongoURI.getCredentials() != null ? asList(mongoURI.getCredentials()) : Collections.<MongoCredential>emptyList());
     }
 
+    @SuppressWarnings("removal")
     Mongo(final Cluster cluster, final MongoClientOptions options, final List<MongoCredential> credentialsList) {
         this.options = options;
         this.readPreference = options.getReadPreference();
@@ -335,7 +337,7 @@ public class Mongo {
      * @param writeConcern write concern to use
      * @deprecated Set the default write concern with either {@link MongoClientURI} or {@link MongoClientOptions}
      */
-    @Deprecated
+    @Deprecated(since = "3.3", forRemoval = true)
     public void setWriteConcern(final WriteConcern writeConcern) {
         this.writeConcern = writeConcern;
     }
@@ -370,7 +372,7 @@ public class Mongo {
      * @param readPreference Read Preference to use
      * @deprecated Set the default read preference with either {@link MongoClientURI} or {@link MongoClientOptions}
      */
-    @Deprecated
+    @Deprecated(since = "3.3", forRemoval = true)
     public void setReadPreference(final ReadPreference readPreference) {
         this.readPreference = readPreference;
     }
@@ -390,7 +392,7 @@ public class Mongo {
      * @return list of server addresses
      * @throws MongoException if there's a failure
      */
-    @Deprecated
+    @Deprecated(since = "3.9", forRemoval = true)
     public List<ServerAddress> getAllAddress() {
         return delegate.getCluster().getSettings().getHosts();
     }
@@ -401,7 +403,7 @@ public class Mongo {
      * @return list of server addresses
      * @throws MongoException if there's a failure
      */
-    @Deprecated
+    @Deprecated(since = "3.9", forRemoval = true)
     public List<ServerAddress> getServerAddressList() {
         return delegate.getServerAddressList();
     }
@@ -415,8 +417,8 @@ public class Mongo {
      *
      * @return the address
      */
-    @Deprecated
-    @SuppressWarnings("deprecation")
+    @Deprecated(since = "3.9", forRemoval = true)
+    @SuppressWarnings("removal")
     @Nullable
     public ServerAddress getAddress() {
         ClusterDescription description = getClusterDescription();
@@ -435,7 +437,8 @@ public class Mongo {
      * @deprecated Please use {@link MongoClient} class to connect to server and corresponding {@link
      * com.mongodb.MongoClient#getMongoClientOptions()}
      */
-    @Deprecated
+    @SuppressWarnings("removal")
+    @Deprecated(since = "3.0", forRemoval = true)
     public MongoOptions getMongoOptions() {
         return new MongoOptions(getMongoClientOptions());
     }
@@ -445,7 +448,8 @@ public class Mongo {
      *
      * @return replica set status information
      */
-    @Deprecated
+    @SuppressWarnings("removal")
+    @Deprecated(since = "3.9", forRemoval = true)
     @Nullable
     public ReplicaSetStatus getReplicaSetStatus() {
         ClusterDescription clusterDescription = getClusterDescription();
@@ -461,7 +465,7 @@ public class Mongo {
      * @throws MongoException  if the operation fails
      * @deprecated Replaced with {@link com.mongodb.MongoClient#listDatabaseNames()}
      */
-    @Deprecated
+    @Deprecated(since = "3.0", forRemoval = true)
     public List<String> getDatabaseNames() {
         return new MongoIterableImpl<DBObject>(null, createOperationExecutor(), ReadConcern.DEFAULT, primary()) {
             @Override
@@ -492,7 +496,7 @@ public class Mongo {
      * @see MongoNamespace#checkDatabaseNameValidity(String)
      * @deprecated use {@link com.mongodb.MongoClient#getDatabase(String)}
      */
-    @Deprecated
+    @Deprecated(since = "3.0")
     public DB getDB(final String dbName) {
         DB db = dbCache.get(dbName);
         if (db != null) {
@@ -513,7 +517,7 @@ public class Mongo {
      *
      * @return a collection of database objects
      */
-    @Deprecated
+    @Deprecated(since = "3.9", forRemoval = true)
     public Collection<DB> getUsedDatabases() {
         return dbCache.values();
     }
@@ -546,7 +550,8 @@ public class Mongo {
      * @see ReadPreference#secondaryPreferred()
      * @deprecated Replaced with {@code ReadPreference.secondaryPreferred()}
      */
-    @Deprecated
+    @SuppressWarnings("removal")
+    @Deprecated(since = "3.0", forRemoval = true)
     public void slaveOk() {
         addOption(Bytes.QUERYOPTION_SLAVEOK);
     }
@@ -563,7 +568,7 @@ public class Mongo {
      * @param options value to be set
      * @deprecated Set options on instances of {@link DBCursor}
      */
-    @Deprecated
+    @Deprecated(since = "3.3", forRemoval = true)
     public void setOptions(final int options) {
         optionHolder.set(options);
     }
@@ -574,7 +579,7 @@ public class Mongo {
      *
      * @deprecated Reset options instead on instances of {@link DBCursor}
      */
-    @Deprecated
+    @Deprecated(since = "3.3", forRemoval = true)
     public void resetOptions() {
         optionHolder.reset();
     }
@@ -591,7 +596,7 @@ public class Mongo {
      * @param option value to be added to current options
      * @deprecated Add options instead on instances of {@link DBCursor}
      */
-    @Deprecated
+    @Deprecated(since = "3.3", forRemoval = true)
     public void addOption(final int option) {
         optionHolder.add(option);
     }
@@ -603,7 +608,7 @@ public class Mongo {
      * @return an int representing the options to be used by queries
      * @deprecated Get options instead from instances of {@link DBCursor}
      */
-    @Deprecated
+    @Deprecated(since = "3.3", forRemoval = true)
     public int getOptions() {
         return optionHolder.get();
     }
@@ -617,7 +622,7 @@ public class Mongo {
      * @throws MongoException if there's a failure
      * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
-    @Deprecated
+    @Deprecated(since = "3.9", forRemoval = true)
     public CommandResult fsync(final boolean async) {
         DBObject command = new BasicDBObject("fsync", 1);
         if (async) {
@@ -634,7 +639,7 @@ public class Mongo {
      * @throws MongoException if there's a failure
      * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
-    @Deprecated
+    @Deprecated(since = "3.9", forRemoval = true)
     public CommandResult fsyncAndLock() {
         DBObject command = new BasicDBObject("fsync", 1);
         command.put("lock", 1);
@@ -649,7 +654,7 @@ public class Mongo {
      * @throws MongoException if there's a failure
      * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
-    @Deprecated
+    @Deprecated(since = "3.9", forRemoval = true)
     public DBObject unlock() {
         return DBObjects.toDBObject(createOperationExecutor().execute(new FsyncUnlockOperation(), readPreference, readConcern));
     }
@@ -661,7 +666,7 @@ public class Mongo {
      * @throws MongoException if the operation fails
      * @mongodb.driver.manual reference/command/fsync/ fsync command
      */
-    @Deprecated
+    @Deprecated(since = "3.9", forRemoval = true)
     public boolean isLocked() {
         return createOperationExecutor().execute(new CurrentOpOperation(), ReadPreference.primary(), readConcern)
                        .getBoolean("fsyncLock", BsonBoolean.FALSE).getValue();
@@ -681,8 +686,8 @@ public class Mongo {
      * @return the maximum size, or 0 if not obtained from servers yet.
      * @throws MongoException if there's a failure
      */
-    @Deprecated
-    @SuppressWarnings("deprecation")
+    @Deprecated(since = "3.9", forRemoval = true)
+    @SuppressWarnings("removal")
     public int getMaxBsonObjectSize() {
         List<ServerDescription> primaries = getClusterDescription().getPrimaries();
         return primaries.isEmpty() ? ServerDescription.getDefaultMaxDocumentSize() : primaries.get(0).getMaxDocumentSize();
@@ -693,7 +698,7 @@ public class Mongo {
      *
      * @return server address in a host:port form
      */
-    @Deprecated
+    @Deprecated(since = "3.9", forRemoval = true)
     @Nullable
     public String getConnectPoint() {
         ServerAddress master = getAddress();
@@ -780,6 +785,7 @@ public class Mongo {
         return delegate.getServerSessionPool();
     }
 
+    @SuppressWarnings("removal")
     Bytes.OptionHolder getOptionHolder() {
         return optionHolder;
     }
@@ -864,7 +870,7 @@ public class Mongo {
      * Mongo.Holder can be used as a static place to hold several instances of Mongo. Security is not enforced at this level, and needs to
      * be done on the application side.
      */
-    @Deprecated
+    @Deprecated(since = "3.9", forRemoval = true)
     public static class Holder {
 
         private static final Holder INSTANCE = new Holder();
@@ -888,7 +894,8 @@ public class Mongo {
          * @throws MongoException if there's a failure
          * @deprecated Please use {@link #connect(MongoClientURI)} instead.
          */
-        @Deprecated
+        @SuppressWarnings("removal")
+        @Deprecated(since = "3.9", forRemoval = true)
         public Mongo connect(final MongoURI uri) {
             return connect(uri.toClientURI());
         }

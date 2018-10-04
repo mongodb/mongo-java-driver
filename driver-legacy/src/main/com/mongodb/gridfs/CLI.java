@@ -31,6 +31,7 @@ import java.security.MessageDigest;
  *
  * @deprecated there is no replacement for this class
  */
+@SuppressWarnings("removal")
 @Deprecated
 public class CLI {
 
