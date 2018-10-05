@@ -28,6 +28,7 @@ import java.util.List;
  * @param <T> the type of document to decode query results to
  * @since 3.0
  */
+@Deprecated
 public class QueryResult<T> {
     private final MongoNamespace namespace;
     private final List<T> results;

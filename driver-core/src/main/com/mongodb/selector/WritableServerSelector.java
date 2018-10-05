@@ -26,6 +26,7 @@ import java.util.List;
  *
  * @since 3.1
  */
+@Deprecated
 public final class WritableServerSelector implements ServerSelector {
 
     @Override

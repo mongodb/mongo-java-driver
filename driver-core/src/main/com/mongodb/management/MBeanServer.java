@@ -19,6 +19,7 @@ package com.mongodb.management;
 /**
  * This class is NOT part of the public API.  It may change at any time without notification.
  */
+@Deprecated
 public interface MBeanServer {
     /**
      * Unregister the MBean with the given name.

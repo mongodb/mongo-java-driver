@@ -47,6 +47,7 @@ import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTran
  * @mongodb.driver.manual reference/command/renameCollection renameCollection
  * @since 3.0
  */
+@Deprecated
 public class RenameCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final MongoNamespace originalNamespace;
     private final MongoNamespace newNamespace;

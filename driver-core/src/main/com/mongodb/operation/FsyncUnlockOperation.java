@@ -36,6 +36,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * @mongodb.driver.manual reference/command/fsyncUnlock/ fsyncUnlock command
  * @since 3.2
  */
+@Deprecated
 public class FsyncUnlockOperation implements WriteOperation<BsonDocument>, ReadOperation<BsonDocument> {
     private static final BsonDocument FSYNC_UNLOCK_COMMAND = new BsonDocument("fsyncUnlock", new BsonInt32(1));
 

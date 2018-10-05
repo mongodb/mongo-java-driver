@@ -35,7 +35,7 @@ import java.util.List;
  *
  * @since 3.0
  */
-@SuppressWarnings("deprecation")
+@Deprecated
 public final class DefaultClusterFactory implements ClusterFactory {
 
     @Override

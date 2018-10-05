@@ -25,6 +25,7 @@ import com.mongodb.async.AsyncBatchCursor;
  * @param <T> the type of each result, usually some sort of document.
  * @since 3.0
  */
+@Deprecated
 public interface MapReduceAsyncBatchCursor<T> extends AsyncBatchCursor<T> {
     /**
      * Get the statistics for this map-reduce operation

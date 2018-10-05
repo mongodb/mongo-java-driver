@@ -31,6 +31,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @since 3.0
  */
+@Deprecated
 public class ServerAddressSelector implements ServerSelector {
     private final ServerAddress serverAddress;
 

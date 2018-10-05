@@ -25,6 +25,7 @@ import com.mongodb.async.SingleResultCallback;
  * @since 3.0
  */
 @ThreadSafe
+@Deprecated
 public interface Server {
     /**
      * Gets the description of this server.  Implementations of this method should not block if the server has not yet been successfully

@@ -26,6 +26,7 @@ import com.mongodb.internal.management.jmx.JMXMBeanServer;
  *
  * @since 2.9
  */
+@Deprecated
 public final class MBeanServerFactory {
     private MBeanServerFactory() {
     }

@@ -29,6 +29,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @since 3.2
  */
+@Deprecated
 public class SingleConnectionReadBinding extends AbstractReferenceCounted implements ReadBinding {
 
     private final ReadPreference readPreference;

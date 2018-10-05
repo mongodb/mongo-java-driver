@@ -17,4 +17,5 @@
 /**
  * This package contains classes that manage binding to MongoDB servers for various operations.
  */
+@Deprecated
 package com.mongodb.binding;

@@ -51,6 +51,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * @mongodb.driver.manual reference/command/dropIndexes/ Drop indexes
  * @since 3.0
  */
+@Deprecated
 public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final MongoNamespace namespace;
     private final String indexName;

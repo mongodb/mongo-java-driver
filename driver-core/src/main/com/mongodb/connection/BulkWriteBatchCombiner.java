@@ -37,6 +37,7 @@ import static java.util.Arrays.asList;
 /**
  * This class is not part of the public API.  It may be changed or removed at any time.
  */
+@Deprecated
 public class BulkWriteBatchCombiner {
     private final ServerAddress serverAddress;
     private final boolean ordered;
