@@ -45,6 +45,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * @mongodb.driver.manual reference/command/findAndModify/ findAndModify
  * @since 3.0
  */
+@Deprecated
 public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
     private BsonDocument filter;
     private BsonDocument projection;

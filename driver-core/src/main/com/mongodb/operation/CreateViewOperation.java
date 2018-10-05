@@ -51,6 +51,7 @@ import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTran
  * @mongodb.server.release 3.4
  * @mongodb.driver.manual reference/command/create Create
  */
+@Deprecated
 public class CreateViewOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final String databaseName;
     private final String viewName;

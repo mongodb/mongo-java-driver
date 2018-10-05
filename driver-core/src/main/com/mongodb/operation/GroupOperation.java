@@ -53,6 +53,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * @mongodb.driver.manual reference/command/group Group Command
  * @since 3.0
  */
+@Deprecated
 public class GroupOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;

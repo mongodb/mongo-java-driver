@@ -30,6 +30,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @since 3.2
  */
+@Deprecated
 public class AsyncSingleConnectionReadBinding extends AbstractReferenceCounted implements AsyncReadBinding {
     private final ReadPreference readPreference;
     private final ServerDescription serverDescription;

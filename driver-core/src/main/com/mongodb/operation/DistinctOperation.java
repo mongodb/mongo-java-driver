@@ -61,6 +61,7 @@ import static com.mongodb.operation.OperationReadConcernHelper.appendReadConcern
  * @mongodb.driver.manual reference/command/distinct Distinct Command
  * @since 3.0
  */
+@Deprecated
 public class DistinctOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
     private static final String VALUES = "values";
 

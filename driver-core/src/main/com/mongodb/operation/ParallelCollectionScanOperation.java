@@ -63,6 +63,7 @@ import static com.mongodb.operation.OperationReadConcernHelper.appendReadConcern
  * @mongodb.server.release 2.6
  * @since 3.0
  */
+@Deprecated
 public class
 ParallelCollectionScanOperation<T> implements AsyncReadOperation<List<AsyncBatchCursor<T>>>,
                                                            ReadOperation<List<BatchCursor<T>>> {

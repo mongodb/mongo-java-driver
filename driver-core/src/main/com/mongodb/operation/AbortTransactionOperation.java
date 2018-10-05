@@ -23,6 +23,7 @@ import com.mongodb.WriteConcern;
  *
  * @since 3.8
  */
+@Deprecated
 public class AbortTransactionOperation extends TransactionOperation {
 
     /**

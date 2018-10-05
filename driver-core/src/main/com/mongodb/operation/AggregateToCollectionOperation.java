@@ -59,6 +59,7 @@ import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTran
  * @mongodb.driver.manual reference/command/aggregate/ Aggregation
  * @since 3.0
  */
+@Deprecated
 public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final MongoNamespace namespace;
     private final List<BsonDocument> pipeline;

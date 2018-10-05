@@ -40,6 +40,7 @@ import static com.mongodb.connection.SplittablePayload.Type.UPDATE;
  * com.mongodb.connection.SplittablePayload, org.bson.FieldNameValidator, com.mongodb.async.SingleResultCallback)
  * @since 3.6
  */
+@Deprecated
 public final class SplittablePayload {
     private final Type payloadType;
     private final List<BsonDocument> payload;

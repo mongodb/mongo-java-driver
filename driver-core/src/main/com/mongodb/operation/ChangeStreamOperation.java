@@ -52,6 +52,7 @@ import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeast
  * @mongodb.server.release 2.6
  * @since 3.6
  */
+@Deprecated
 public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
     private static final RawBsonDocumentCodec RAW_BSON_DOCUMENT_CODEC = new RawBsonDocumentCodec();
     private final AggregateOperationImpl<RawBsonDocument> wrapped;

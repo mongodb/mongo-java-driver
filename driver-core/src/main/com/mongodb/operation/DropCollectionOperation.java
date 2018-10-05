@@ -48,6 +48,7 @@ import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTran
  *
  * @since 3.0
  */
+@Deprecated
 public class DropCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final MongoNamespace namespace;
     private final WriteConcern writeConcern;

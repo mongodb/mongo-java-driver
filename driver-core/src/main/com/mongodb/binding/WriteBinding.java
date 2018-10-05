@@ -23,6 +23,7 @@ import com.mongodb.session.SessionContext;
  *
  * @since 3.0
  */
+@Deprecated
 public interface WriteBinding extends ReferenceCounted {
     /**
      * Supply a connection source to a server that can be written to

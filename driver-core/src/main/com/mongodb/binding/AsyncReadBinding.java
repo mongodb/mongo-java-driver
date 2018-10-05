@@ -25,6 +25,7 @@ import com.mongodb.session.SessionContext;
  *
  * @since 3.0
  */
+@Deprecated
 public interface AsyncReadBinding extends ReferenceCounted {
     /**
      * The read preference that all connection sources returned by this instance will satisfy.

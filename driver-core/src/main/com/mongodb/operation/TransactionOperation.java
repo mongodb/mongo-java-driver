@@ -40,6 +40,7 @@ import static com.mongodb.operation.OperationHelper.LOGGER;
  *
  * @since 3.8
  */
+@Deprecated
 public abstract class TransactionOperation implements WriteOperation<Void>, AsyncWriteOperation<Void> {
     private final WriteConcern writeConcern;
 

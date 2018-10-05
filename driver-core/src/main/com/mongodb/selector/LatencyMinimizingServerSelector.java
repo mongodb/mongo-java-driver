@@ -32,6 +32,7 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  *
  * @since 3.0
  */
+@Deprecated
 public class LatencyMinimizingServerSelector implements ServerSelector {
 
     private final long acceptableLatencyDifferenceNanos;

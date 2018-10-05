@@ -67,6 +67,7 @@ import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTran
  * @mongodb.driver.manual reference/command/createIndexes/ Create indexes
  * @since 3.0
  */
+@Deprecated
 public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final MongoNamespace namespace;
     private final List<IndexRequest> requests;

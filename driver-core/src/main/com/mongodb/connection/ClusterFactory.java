@@ -27,6 +27,7 @@ import java.util.List;
  *
  * @since 3.0
  */
+@Deprecated
 public interface ClusterFactory {
 
     // CHECKSTYLE:OFF

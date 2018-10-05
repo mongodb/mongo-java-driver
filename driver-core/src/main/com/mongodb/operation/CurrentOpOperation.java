@@ -34,6 +34,7 @@ import static com.mongodb.operation.OperationHelper.withConnection;
  * @since 3.2
  * @mongodb.driver.manual reference/method/db.currentOp/ Current Op
  */
+@Deprecated
 public class CurrentOpOperation implements ReadOperation<BsonDocument> {
     @Override
     public BsonDocument execute(final ReadBinding binding) {

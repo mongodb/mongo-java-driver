@@ -64,6 +64,7 @@ import static com.mongodb.operation.OperationHelper.withReleasableConnection;
  *
  * @since 3.0
  */
+@Deprecated
 public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteResult>, WriteOperation<BulkWriteResult> {
     private static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator();
     private final MongoNamespace namespace;

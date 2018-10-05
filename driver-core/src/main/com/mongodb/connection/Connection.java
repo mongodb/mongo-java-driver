@@ -42,6 +42,7 @@ import java.util.List;
  * @since 3.0
  */
 @ThreadSafe
+@Deprecated
 public interface Connection extends ReferenceCounted {
 
     @Override

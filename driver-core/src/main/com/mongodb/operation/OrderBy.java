@@ -21,6 +21,7 @@ package com.mongodb.operation;
  *
  * @since 3.0
  */
+@Deprecated
 public enum OrderBy {
     /**
      * Ascending order

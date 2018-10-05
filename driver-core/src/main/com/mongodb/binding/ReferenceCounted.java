@@ -21,6 +21,7 @@ package com.mongodb.binding;
  *
  * @since 3.0
  */
+@Deprecated
 public interface ReferenceCounted {
     /**
      * Gets the current reference count, which starts at 0.

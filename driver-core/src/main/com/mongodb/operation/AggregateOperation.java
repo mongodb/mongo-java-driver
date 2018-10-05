@@ -38,6 +38,7 @@ import java.util.concurrent.TimeUnit;
  * @mongodb.server.release 2.2
  * @since 3.0
  */
+@Deprecated
 public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
     private final AggregateOperationImpl<T> wrapped;
     /**

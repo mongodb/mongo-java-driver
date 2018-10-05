@@ -22,6 +22,7 @@ package com.mongodb.binding;
  *
  * @since 3.0
  */
+@Deprecated
 public interface ReadWriteBinding extends ReadBinding, WriteBinding, ReferenceCounted {
     @Override
     ReadWriteBinding retain();

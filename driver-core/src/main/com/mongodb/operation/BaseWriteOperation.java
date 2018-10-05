@@ -49,6 +49,7 @@ import static com.mongodb.bulk.WriteRequest.Type.UPDATE;
  *
  * @since 3.0
  */
+@Deprecated
 public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteConcernResult>, WriteOperation<WriteConcernResult> {
     private final WriteConcern writeConcern;
     private final MongoNamespace namespace;

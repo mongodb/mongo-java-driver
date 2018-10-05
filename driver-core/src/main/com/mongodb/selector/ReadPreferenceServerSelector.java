@@ -30,6 +30,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @since 3.0
  */
+@Deprecated
 public class ReadPreferenceServerSelector implements ServerSelector {
     private final ReadPreference readPreference;
 

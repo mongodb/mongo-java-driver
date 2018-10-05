@@ -24,6 +24,7 @@ import com.mongodb.binding.ReadBinding;
  * @param <T> the operations result type.
  * @since 3.0
  */
+@Deprecated
 public interface ReadOperation<T> {
     /**
      * General execute which can return anything of type T

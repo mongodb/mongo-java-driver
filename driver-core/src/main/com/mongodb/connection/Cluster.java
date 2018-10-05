@@ -29,6 +29,7 @@ import java.io.Closeable;
  *
  * @since 3.0
  */
+@Deprecated
 public interface Cluster extends Closeable {
 
     /**

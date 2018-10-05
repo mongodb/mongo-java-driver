@@ -75,7 +75,7 @@ configure(subprojects.findAll { it.name != 'util' }) {
         options.encoding = 'ISO-8859-1'
         options.fork = true
         options.debug = true
-        options.compilerArgs = ['-Xlint:all', '-Xlint:-options']
+        options.compilerArgs = ['-Xlint:all', '-Xlint:-options', '-Xlint:-deprecation']
 
         onlyIf { JavaVersion.current().isJava7Compatible() }
     }

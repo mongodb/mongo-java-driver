@@ -19,6 +19,7 @@ package com.mongodb.management;
 /**
  * This class is NOT part of the public API.  It may change at any time without notification.
  */
+@Deprecated
 public class NullMBeanServer implements MBeanServer {
     @Override
     public void unregisterMBean(final String mBeanName) {

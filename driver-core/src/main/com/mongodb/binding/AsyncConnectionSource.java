@@ -26,6 +26,7 @@ import com.mongodb.session.SessionContext;
  *
  * @since 3.0
  */
+@Deprecated
 public interface AsyncConnectionSource extends ReferenceCounted {
 
     /**

@@ -31,6 +31,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @since 3.0
  */
+@Deprecated
 public class DeleteOperation extends BaseWriteOperation {
     private final List<DeleteRequest> deleteRequests;
 

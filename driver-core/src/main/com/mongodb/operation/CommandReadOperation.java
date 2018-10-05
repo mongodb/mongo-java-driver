@@ -32,6 +32,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
  * @param <T> the operations result type.
  * @since 3.0
  */
+@Deprecated
 public class CommandReadOperation<T> implements AsyncReadOperation<T>, ReadOperation<T> {
     private final String databaseName;
     private final BsonDocument command;
