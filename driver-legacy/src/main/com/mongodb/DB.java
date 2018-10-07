@@ -203,7 +203,9 @@ public class DB {
      * @return the collection
      * @throws IllegalArgumentException if the name is invalid
      * @see MongoNamespace#checkCollectionNameValidity(String)
+     * @deprecated there is no replacement for this method
      */
+    @Deprecated
     protected DBCollection doGetCollection(final String name) {
         return getCollection(name);
     }
