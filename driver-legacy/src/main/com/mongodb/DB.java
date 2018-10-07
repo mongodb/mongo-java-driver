@@ -618,7 +618,9 @@ public class DB {
      * @return result of the execution
      * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/dbStats/ Database Stats
+     * @deprecated Prefer {@link #command(DBObject)} to run the dbStats command
      */
+    @Deprecated
     public CommandResult getStats() {
         BsonDocument commandDocument = new BsonDocument("dbStats", new BsonInt32(1)).append("scale", new BsonInt32(1));
         return executeCommand(commandDocument);
