@@ -26,7 +26,9 @@ package com.mongodb.util;
  * { "x" : 3, "y" : 4, some invalid json.... }
  *                     ^
  * </pre>
+ * @deprecated there is no replacement for this class
  */
+@Deprecated
 public class JSONParseException extends RuntimeException {
 
     private static final long serialVersionUID = -4415279469780082174L;
