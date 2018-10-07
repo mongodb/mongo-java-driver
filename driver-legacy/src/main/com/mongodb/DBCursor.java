@@ -440,7 +440,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @param indexName the name of an index
      * @return same DBCursor for chaining operations
      * @mongodb.driver.manual reference/operator/meta/hint/ $hint
+     * @deprecated Prefer {@link #hint(DBObject)}
      */
+    @Deprecated
     public DBCursor hint(final String indexName) {
         findOptions.getModifiers().put("$hint", indexName);
         return this;
