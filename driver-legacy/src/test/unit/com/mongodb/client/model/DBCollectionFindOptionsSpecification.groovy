@@ -46,6 +46,12 @@ class DBCollectionFindOptionsSpecification extends Specification {
         options.getReadPreference() == null
         options.getSkip() == 0
         options.getSort() == null
+        options.getComment() == null
+        options.getHint() == null
+        options.getMax() == null
+        options.getMin() == null
+        !options.isReturnKey()
+        !options.isShowRecordId()
     }
 
     def 'should set and return the expected values'() {
@@ -57,6 +63,10 @@ class DBCollectionFindOptionsSpecification extends Specification {
         def modifiers = BasicDBObject.parse('{$comment: 1}')
         def readConcern = ReadConcern.LOCAL
         def readPreference = ReadPreference.nearest()
+        def comment = 'comment'
+        def hint = BasicDBObject.parse('{x : 1}')
+        def min = BasicDBObject.parse('{y : 1}')
+        def max = BasicDBObject.parse('{y : 100}')
 
         when:
         def options = new DBCollectionFindOptions()
@@ -75,6 +85,12 @@ class DBCollectionFindOptionsSpecification extends Specification {
                 .readPreference(readPreference)
                 .skip(1)
                 .sort(sort)
+                .comment(comment)
+                .hint(hint)
+                .max(max)
+                .min(min)
+                .returnKey(true)
+                .showRecordId(true)
 
         then:
         options.getBatchSize() == 1
@@ -92,6 +108,12 @@ class DBCollectionFindOptionsSpecification extends Specification {
         options.isNoCursorTimeout()
         options.isOplogReplay()
         options.isPartial()
+        options.getComment() == comment
+        options.getHint() == hint
+        options.getMax() == max
+        options.getMin() == min
+        options.isReturnKey()
+        options.isShowRecordId()
     }
 
     def 'it should copy and return the expected values'() {
@@ -103,6 +125,10 @@ class DBCollectionFindOptionsSpecification extends Specification {
         def modifiers = BasicDBObject.parse('{$comment: 1}')
         def readConcern = ReadConcern.LOCAL
         def readPreference = ReadPreference.nearest()
+        def comment = 'comment'
+        def hint = BasicDBObject.parse('{x : 1}')
+        def min = BasicDBObject.parse('{y : 1}')
+        def max = BasicDBObject.parse('{y : 100}')
 
         when:
         def original = new DBCollectionFindOptions()
@@ -121,6 +147,12 @@ class DBCollectionFindOptionsSpecification extends Specification {
                 .readPreference(readPreference)
                 .skip(1)
                 .sort(sort)
+                .comment(comment)
+                .hint(hint)
+                .max(max)
+                .min(min)
+                .returnKey(true)
+                .showRecordId(true)
 
         def options = original.copy()
 
@@ -142,6 +174,12 @@ class DBCollectionFindOptionsSpecification extends Specification {
         options.isNoCursorTimeout()
         options.isOplogReplay()
         options.isPartial()
+        options.getComment() == comment
+        options.getHint() == hint
+        options.getMax() == max
+        options.getMin() == min
+        options.isReturnKey()
+        options.isShowRecordId()
     }
 
 }

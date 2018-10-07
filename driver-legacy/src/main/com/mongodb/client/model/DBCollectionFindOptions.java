@@ -51,6 +51,12 @@ public final class DBCollectionFindOptions {
     private ReadPreference readPreference;
     private ReadConcern readConcern;
     private Collation collation;
+    private String comment;
+    private DBObject hint;
+    private DBObject max;
+    private DBObject min;
+    private boolean returnKey;
+    private boolean showRecordId;
 
     /**
      * Construct a new instance
@@ -80,6 +86,12 @@ public final class DBCollectionFindOptions {
         copiedOptions.readPreference(readPreference);
         copiedOptions.readConcern(readConcern);
         copiedOptions.collation(collation);
+        copiedOptions.comment(comment);
+        copiedOptions.hint(hint);
+        copiedOptions.max(max);
+        copiedOptions.min(min);
+        copiedOptions.returnKey(returnKey);
+        copiedOptions.showRecordId(showRecordId);
         return copiedOptions;
     }
 
@@ -433,6 +445,147 @@ public final class DBCollectionFindOptions {
      */
     public DBCollectionFindOptions collation(@Nullable final Collation collation) {
         this.collation = collation;
+        return this;
+    }
+
+    /**
+     * Returns the comment to send with the query. The default is not to include a comment with the query.
+     *
+     * @return the comment
+     * @since 3.9
+     */
+    @Nullable
+    public String getComment() {
+        return comment;
+    }
+
+    /**
+     * Sets the comment to the query. A null value means no comment is set.
+     *
+     * @param comment the comment
+     * @return this
+     * @since 3.9
+     */
+    public DBCollectionFindOptions comment(@Nullable final String comment) {
+        this.comment = comment;
+        return this;
+    }
+
+    /**
+     * Returns the hint for which index to use. The default is not to set a hint.
+     *
+     * @return the hint
+     * @since 3.9
+     */
+    @Nullable
+    public DBObject getHint() {
+        return hint;
+    }
+
+    /**
+     * Sets the hint for which index to use. A null value means no hint is set.
+     *
+     * @param hint the hint
+     * @return this
+     * @since 3.9
+     */
+    public DBCollectionFindOptions hint(@Nullable final DBObject hint) {
+        this.hint = hint;
+        return this;
+    }
+
+    /**
+     * Returns the exclusive upper bound for a specific index. By default there is no max bound.
+     *
+     * @return the max
+     * @since 3.9
+     */
+    @Nullable
+    public DBObject getMax() {
+        return max;
+    }
+
+    /**
+     * Sets the exclusive upper bound for a specific index. A null value means no max is set.
+     *
+     * @param max the max
+     * @return this
+     * @since 3.9
+     */
+    public DBCollectionFindOptions max(@Nullable final DBObject max) {
+        this.max = max;
+        return this;
+    }
+
+    /**
+     * Returns the minimum inclusive lower bound for a specific index. By default there is no min bound.
+     *
+     * @return the min
+     * @since 3.9
+     */
+    @Nullable
+    public DBObject getMin() {
+        return min;
+    }
+
+    /**
+     * Sets the minimum inclusive lower bound for a specific index. A null value means no max is set.
+     *
+     * @param min the min
+     * @return this
+     * @since 3.9
+     */
+    public DBCollectionFindOptions min(@Nullable final DBObject min) {
+        this.min = min;
+        return this;
+    }
+
+    /**
+     * Returns the returnKey. If true the find operation will return only the index keys in the resulting documents.
+     *
+     * Default value is false. If returnKey is true and the find command does not use an index, the returned documents will be empty.
+     *
+     * @return the returnKey
+     * @since 3.9
+     */
+    public boolean isReturnKey() {
+        return returnKey;
+    }
+
+    /**
+     * Sets the returnKey. If true the find operation will return only the index keys in the resulting documents.
+     *
+     * @param returnKey the returnKey
+     * @return this
+     * @since 3.9
+     */
+    public DBCollectionFindOptions returnKey(final boolean returnKey) {
+        this.returnKey = returnKey;
+        return this;
+    }
+
+    /**
+     * Returns the showRecordId.
+     *
+     * Determines whether to return the record identifier for each document. If true, adds a field $recordId to the returned documents.
+     * The default is false.
+     *
+     * @return the showRecordId
+     * @since 3.9
+     */
+    public boolean isShowRecordId() {
+        return showRecordId;
+    }
+
+    /**
+     * Sets the showRecordId. Set to true to add a field {@code $recordId} to the returned documents.
+     *
+     * @param showRecordId the showRecordId
+     * @return this
+     * @since 3.9
+     */
+    public DBCollectionFindOptions showRecordId(final boolean showRecordId) {
+        this.showRecordId = showRecordId;
         return this;
     }
 }
