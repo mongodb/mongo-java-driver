@@ -1583,7 +1583,9 @@ public class MongoClientOptions {
          *
          * @return {@code this}
          * @see MongoOptions
+         * @deprecated there is no replacement for this method
          */
+        @Deprecated
         public Builder legacyDefaults() {
             this.connectionsPerHost(10).writeConcern(WriteConcern.UNACKNOWLEDGED);
             return this;
