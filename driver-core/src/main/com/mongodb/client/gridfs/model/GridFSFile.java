@@ -56,7 +56,9 @@ public final class GridFSFile {
      * @param uploadDate the upload date of the file
      * @param md5 the hash of the files contents
      * @param metadata the optional metadata for the file
+     * @deprecated there is no replacement for this constructor
      */
+    @Deprecated
     public GridFSFile(final BsonValue id, final String filename, final long length, final int chunkSize, final Date uploadDate,
                       @Nullable final String md5, final Document metadata) {
         this(id, filename, length, chunkSize, uploadDate, md5, metadata, null);
@@ -75,7 +77,9 @@ public final class GridFSFile {
      * @param md5 the hash of the files contents
      * @param metadata the optional metadata for the file
      * @param extraElements any extra data stored in the document
+     * @deprecated there is no replacement for this constructor
      */
+    @Deprecated
     public GridFSFile(final BsonValue id, final String filename, final long length, final int chunkSize, final Date uploadDate,
                       @Nullable final String md5, @Nullable final Document metadata, @Nullable final Document extraElements) {
         this.id = notNull("id", id);
