@@ -1343,6 +1343,7 @@ public class JsonReader extends AbstractBsonReader {
         return new Mark();
     }
 
+    @Deprecated
     @Override
     public void reset() {
         if (mark == null) {

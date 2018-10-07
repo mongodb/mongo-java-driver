@@ -131,7 +131,9 @@ public interface BsonInput extends Closeable {
 
     /**
      * Resets the stream to the current mark. This method obeys the contract as specified in the same method in {@code InputStream}.
+     * @deprecated Prefer {@link #getMark(int)}
      */
+    @Deprecated
     void reset();
 
     /**

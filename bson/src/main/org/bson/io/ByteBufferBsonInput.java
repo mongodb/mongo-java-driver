@@ -200,6 +200,7 @@ public class ByteBufferBsonInput implements BsonInput {
         };
     }
 
+    @Deprecated
     @Override
     public void reset() {
         ensureOpen();

@@ -403,7 +403,9 @@ public interface BsonReader extends Closeable {
      * Go back to the state at the last mark and removes the mark
      *
      * @throws org.bson.BSONException if no mark has been set
+     * @deprecated Prefer {@link #getMark()}
      */
+    @Deprecated
     void reset();
 
     @Override
