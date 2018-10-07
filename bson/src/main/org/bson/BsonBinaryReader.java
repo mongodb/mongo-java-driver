@@ -404,6 +404,7 @@ public class BsonBinaryReader extends AbstractBsonReader {
         return new Mark();
     }
 
+    @Deprecated
     @Override
     public void reset() {
         if (mark == null) {
