@@ -349,7 +349,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @since 2.12
      */
     public DBCursor comment(final String comment) {
-        findOptions.getModifiers().put("$comment", comment);
+        findOptions.comment(comment);
         return this;
     }
 
@@ -378,7 +378,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @since 2.12
      */
     public DBCursor max(final DBObject max) {
-        findOptions.getModifiers().put("$max", max);
+        findOptions.max(max);
         return this;
     }
 
@@ -391,7 +391,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @since 2.12
      */
     public DBCursor min(final DBObject min) {
-        findOptions.getModifiers().put("$min", min);
+        findOptions.min(min);
         return this;
     }
 
@@ -403,7 +403,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @since 2.12
      */
     public DBCursor returnKey() {
-        findOptions.getModifiers().put("$returnKey", true);
+        findOptions.returnKey(true);
         return this;
     }
 
@@ -428,7 +428,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @mongodb.driver.manual reference/operator/meta/hint/ $hint
      */
     public DBCursor hint(final DBObject indexKeys) {
-        findOptions.getModifiers().put("$hint", indexKeys);
+        findOptions.hint(indexKeys);
         return this;
     }
 
@@ -559,7 +559,13 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
                                                 .modifiers(collection.wrapAllowNull(findOptions.getModifiers()))
                                                 .projection(collection.wrapAllowNull(findOptions.getProjection()))
                                                 .sort(collection.wrapAllowNull(findOptions.getSort()))
-                                                .collation(findOptions.getCollation());
+                                                .collation(findOptions.getCollation())
+                                                .comment(findOptions.getComment())
+                                                .hint(collection.wrapAllowNull(findOptions.getHint()))
+                                                .min(collection.wrapAllowNull(findOptions.getMin()))
+                                                .max(collection.wrapAllowNull(findOptions.getMax()))
+                                                .returnKey(findOptions.isReturnKey())
+                                                .showRecordId(findOptions.isShowRecordId());
 
         if ((this.options & Bytes.QUERYOPTION_TAILABLE) != 0) {
             if ((this.options & Bytes.QUERYOPTION_AWAITDATA) != 0) {
@@ -1080,7 +1086,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
                 .collation(getCollation())
                 .maxTime(findOptions.getMaxTime(MILLISECONDS), MILLISECONDS);
 
-        Object hint = findOptions.getModifiers().get("$hint");
+        Object hint = findOptions.getHint() != null ? findOptions.getHint() : findOptions.getModifiers().get("$hint");
         if (hint != null) {
             if (hint instanceof String) {
                 countOptions.hintString((String) hint);

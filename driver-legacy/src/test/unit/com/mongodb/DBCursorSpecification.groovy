@@ -211,6 +211,13 @@ class DBCursorSpecification extends Specification {
         def bsonModifiers = BsonDocument.parse(modifiers.toJson())
         def bsonProjection = BsonDocument.parse(projection.toJson())
         def bsonSort = BsonDocument.parse(sort.toJson())
+        def comment = 'comment'
+        def hint = BasicDBObject.parse('{x : 1}')
+        def min = BasicDBObject.parse('{y : 1}')
+        def max = BasicDBObject.parse('{y : 100}')
+        def bsonHint = BsonDocument.parse(hint.toJson())
+        def bsonMin = BsonDocument.parse(min.toJson())
+        def bsonMax = BsonDocument.parse(max.toJson())
         def readConcern = ReadConcern.LOCAL
         def readPreference = ReadPreference.nearest()
         def findOptions = new DBCollectionFindOptions()
@@ -229,6 +236,13 @@ class DBCursorSpecification extends Specification {
                 .readPreference(readPreference)
                 .skip(1)
                 .sort(sort)
+                .comment(comment)
+                .hint(hint)
+                .max(max)
+                .min(min)
+                .returnKey(true)
+                .showRecordId(true)
+
         def cursor = new DBCursor(collection, filter, findOptions)
 
         when:
@@ -250,6 +264,12 @@ class DBCursorSpecification extends Specification {
                 .projection(bsonProjection)
                 .skip(1)
                 .sort(bsonSort)
+                .comment(comment)
+                .hint(bsonHint)
+                .max(bsonMax)
+                .min(bsonMin)
+                .returnKey(true)
+                .showRecordId(true)
         )
 
         executor.getReadPreference() == findOptions.getReadPreference()
