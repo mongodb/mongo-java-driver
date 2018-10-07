@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import com.mongodb.client.ChangeStreamIterable;
+import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
@@ -25,7 +26,6 @@ import com.mongodb.client.internal.ListDatabasesIterableImpl;
 import com.mongodb.client.internal.MongoDatabaseImpl;
 import com.mongodb.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.lang.Nullable;
-import com.mongodb.client.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -425,11 +425,30 @@ public class MongoClient extends Mongo implements Closeable {
     }
 
     /**
+     * Gets the credential that this client authenticates all connections with
+     *
+     * @return the credential, which may be null in unsecured deployments
+     * @since 3.9
+     */
+    @Nullable
+    public MongoCredential getCredential() {
+        if (getCredentialsList().size() > 1) {
+            throw new IllegalStateException("Instance constructed with more than one MongoCredential");
+        } else if (getCredentialsList().isEmpty()) {
+            return null;
+        } else {
+            return getCredentialsList().get(0);
+        }
+    }
+
+    /**
      * Gets the list of credentials that this client authenticates all connections with
      *
      * @return the list of credentials
      * @since 2.11.0
+     * @deprecated Prefer {@link #getCredential()}
      */
+    @Deprecated
     public List<MongoCredential> getCredentialsList() {
         return super.getCredentialsList();
     }
