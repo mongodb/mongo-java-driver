@@ -254,7 +254,9 @@ public class DB {
      *
      * @param collectionName the name of the collection
      * @return the collection
+     * @deprecated Prefer {@link #getCollection(String)}
      */
+    @Deprecated
     public DBCollection getCollectionFromString(final String collectionName) {
         return getCollection(collectionName);
     }
