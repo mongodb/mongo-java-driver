@@ -1669,7 +1669,9 @@ public class DBCollection {
      *
      * @return a list of {@code DBObject} to be used as hints.
      * @mongodb.driver.manual reference/operator/meta/hint/ $hint
+     * @deprecated Prefer {@link DBCursor#hint(DBObject)}
      */
+    @Deprecated
     @Nullable
     public List<DBObject> getHintFields() {
         return hintFields;
@@ -1680,7 +1682,9 @@ public class DBCollection {
      *
      * @param indexes list of indexes to "hint" or force MongoDB to use when performing the query.
      * @mongodb.driver.manual reference/operator/meta/hint/ $hint
+     * @deprecated Prefer {@link DBCursor#hint(DBObject)}
      */
+    @Deprecated
     public void setHintFields(final List<? extends DBObject> indexes) {
         this.hintFields = new ArrayList<DBObject>(indexes);
     }
