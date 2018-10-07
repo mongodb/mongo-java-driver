@@ -414,7 +414,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return {@code this} so calls can be chained
      * @mongodb.driver.manual reference/operator/meta/showDiskLoc/ $showDiskLoc
      * @since 2.12
+     * @deprecated showDiskLoc has been deprecated in the MongoDB server.  There is no replacement for it.
      */
+    @Deprecated
     public DBCursor showDiskLoc() {
         findOptions.getModifiers().put("$showDiskLoc", true);
         return this;
