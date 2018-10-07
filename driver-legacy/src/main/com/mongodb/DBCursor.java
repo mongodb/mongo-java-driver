@@ -292,8 +292,10 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @param value the value of the special query operator
      * @return {@code this} so calls can be chained
      * @mongodb.driver.manual reference/operator Special Operators
+     * @deprecated Prefer per-operator methods, e.g. {@link #comment(String)}, {@link #explain()}, etc.
      */
     @SuppressWarnings("deprecation")
+    @Deprecated
     public DBCursor addSpecial(@Nullable final String name, @Nullable final Object value) {
         if (name == null || value == null) {
             return this;
