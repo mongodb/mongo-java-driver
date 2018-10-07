@@ -20,11 +20,13 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.net.UnknownHostException;
-import java.util.Arrays;
 import java.util.List;
 
+import static com.mongodb.MongoCredential.createCredential;
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
@@ -36,7 +38,7 @@ public class MongoConstructorsTest {
     public void shouldDefaultToLocalhost() throws UnknownHostException {
         Mongo mongo = new MongoClient();
         try {
-            assertEquals(Arrays.asList(new ServerAddress()), mongo.getServerAddressList());
+            assertEquals(asList(new ServerAddress()), mongo.getServerAddressList());
         } finally {
             mongo.close();
         }
@@ -47,7 +49,7 @@ public class MongoConstructorsTest {
     public void shouldUseGivenHost() throws UnknownHostException {
         Mongo mongo = new MongoClient("localhost");
         try {
-            assertEquals(Arrays.asList(new ServerAddress("localhost")), mongo.getServerAddressList());
+            assertEquals(asList(new ServerAddress("localhost")), mongo.getServerAddressList());
         } finally {
             mongo.close();
         }
@@ -55,7 +57,7 @@ public class MongoConstructorsTest {
 
     @Test
     public void shouldGetSeedList() throws UnknownHostException {
-        List<ServerAddress> seedList = Arrays.asList(new ServerAddress("localhost"), new ServerAddress("localhost:27018"));
+        List<ServerAddress> seedList = asList(new ServerAddress("localhost"), new ServerAddress("localhost:27018"));
         Mongo mongo = new MongoClient(seedList);
         try {
             assertEquals(seedList, mongo.getAllAddress());
@@ -147,4 +149,33 @@ public class MongoConstructorsTest {
         }
     }
 
+    @Test
+    public void shouldGetCredential() {
+        MongoClient mongoClient = new MongoClient();
+        try {
+            assertNull(mongoClient.getCredential());
+        } finally {
+            mongoClient.close();
+        }
+
+        mongoClient = new MongoClient(new ServerAddress(),
+                asList(createCredential("u1", "test1", "p1".toCharArray()),
+                        createCredential("u2", "test2", "p2".toCharArray())));
+        try {
+            mongoClient.getCredential();
+            fail();
+        } catch (IllegalStateException e) {
+            // ignore
+        } finally {
+            mongoClient.close();
+        }
+
+        MongoCredential credential = createCredential("u1", "test1", "p1".toCharArray());
+        mongoClient = new MongoClient(new ServerAddress(), credential, MongoClientOptions.builder().build());
+        try {
+            assertEquals(credential, mongoClient.getCredential());
+        } finally {
+            mongoClient.close();
+        }
+    }
 }
