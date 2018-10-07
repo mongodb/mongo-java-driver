@@ -73,7 +73,9 @@ public abstract class GridFSFile implements DBObject {
      * Verifies that the MD5 matches between the database and the local file. This should be called after transferring a file.
      *
      * @throws MongoException if there's a failure
+     * @deprecated there is no replacement for this method
      */
+    @Deprecated
     public void validate() {
         if (fs == null) {
             throw new MongoException("no fs");
@@ -195,7 +197,9 @@ public abstract class GridFSFile implements DBObject {
      * Gets the observed MD5 during transfer
      *
      * @return md5
+     * @deprecated there is no replacement for this method
      */
+    @Deprecated
     public String getMD5() {
         return md5;
     }
