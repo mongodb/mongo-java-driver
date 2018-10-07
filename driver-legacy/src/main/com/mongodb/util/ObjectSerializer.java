@@ -18,7 +18,9 @@ package com.mongodb.util;
 
 /**
  * Interface describing methods for serializing an object to a string.
+ * @deprecated there is no replacement for this interface
  */
+@Deprecated
 public interface ObjectSerializer {
     /**
      * Serializes {@code obj} into {@code buf}.

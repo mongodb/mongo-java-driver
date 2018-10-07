@@ -22,7 +22,9 @@ import java.nio.ByteBuffer;
 
 /**
  * General utilities that are useful throughout the driver.
+ * @deprecated there is no replacement for this class
  */
+@Deprecated
 public class Util {
     /**
      * Converts the given byte buffer to a hexadecimal string using {@link java.lang.Integer#toHexString(int)}.
