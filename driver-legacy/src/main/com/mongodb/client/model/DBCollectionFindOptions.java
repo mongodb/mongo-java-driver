@@ -219,7 +219,9 @@ public final class DBCollectionFindOptions {
      *
      * @return the query modifiers, which may be null
      * @mongodb.driver.manual reference/operator/query-modifier/ Query Modifiers
+     * @deprecated use the individual setters instead
      */
+    @Deprecated
     public DBObject getModifiers() {
         return modifiers;
     }
@@ -230,7 +232,9 @@ public final class DBCollectionFindOptions {
      * @param modifiers the query modifiers to apply, which may be null.
      * @return this
      * @mongodb.driver.manual reference/operator/query-modifier/ Query Modifiers
+     * @deprecated use the individual setters instead
      */
+    @Deprecated
     public DBCollectionFindOptions modifiers(@Nullable final DBObject modifiers) {
         this.modifiers = notNull("modifiers", modifiers);
         return this;

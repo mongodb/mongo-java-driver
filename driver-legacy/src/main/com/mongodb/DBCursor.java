@@ -220,7 +220,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return {@code this} so calls can be chained
      * @see Bytes
      * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
+     * @deprecated Prefer per-option methods, e.g. {@link #cursorType(CursorType)}, {@link #noCursorTimeout(boolean)}, etc.
      */
+    @Deprecated
     public DBCursor addOption(final int option) {
         setOptions(this.options |= option);
         return this;
@@ -234,6 +236,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @see Bytes
      * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
      */
+    @Deprecated
     public DBCursor setOptions(final int options) {
         if ((options & Bytes.QUERYOPTION_EXHAUST) != 0) {
             throw new UnsupportedOperationException("exhaust query option is not supported");
@@ -248,6 +251,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return {@code this} so calls can be chained
      * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
      */
+    @Deprecated
     public DBCursor resetOptions() {
         this.options = 0;
         return this;
@@ -259,6 +263,7 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      * @return the bitmask of options
      * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
      */
+    @Deprecated
     public int getOptions() {
         return options;
     }
@@ -491,6 +496,55 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         return toDBObject(executor.execute(getQueryOperation(collection.getObjectCodec())
                                            .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER),
                                            getReadPreference(), getReadConcern()));
+    }
+
+    /**
+     * Sets the cursor type.
+     *
+     * @param cursorType the cursor type, which may not be null
+     * @return this
+     * @since 3.9
+     */
+    public DBCursor cursorType(final CursorType cursorType) {
+        findOptions.cursorType(cursorType);
+        return this;
+    }
+
+    /**
+     * Users should not set this under normal circumstances.
+     *
+     * @param oplogReplay if oplog replay is enabled
+     * @return this
+     * @since 3.9
+     */
+    public DBCursor oplogReplay(final boolean oplogReplay) {
+        findOptions.oplogReplay(oplogReplay);
+        return this;
+    }
+
+    /**
+     * The server normally times out idle cursors after an inactivity period (10 minutes)
+     * to prevent excess memory use. Set this option to prevent that.
+     *
+     * @param noCursorTimeout true if cursor timeout is disabled
+     * @return this
+     * @since 3.9
+     */
+    public DBCursor noCursorTimeout(final boolean noCursorTimeout) {
+        findOptions.noCursorTimeout(noCursorTimeout);
+        return this;
+    }
+
+    /**
+     * Get partial results from a sharded cluster if one or more shards are unreachable (instead of throwing an error).
+     *
+     * @param partial if partial results for sharded clusters is enabled
+     * @return this
+     * @since 3.9
+     */
+    public DBCursor partial(final boolean partial) {
+        findOptions.partial(partial);
+        return this;
     }
 
     @SuppressWarnings("deprecation")
