@@ -381,51 +381,35 @@ tasks:
         - func: "upload build"
 
     - name: "test"
-      depends_on:
-        - variant: "static-checks"
-          name: "static-analysis"
       commands:
         - func: "bootstrap mongo-orchestration"
         - func: "run tests"
 
     - name: "plain-auth-test"
-      depends_on:
-        - variant: "static-checks"
-          name: "static-analysis"
       commands:
         - func: "run plain auth test"
 
     - name: "gssapi-auth-test"
-      depends_on:
-        - variant: "static-checks"
-          name: "static-analysis"
       commands:
         - func: "run gssapi auth test"
 
     - name: "socket-test"
-      depends_on:
-        - variant: "static-checks"
-          name: "static-analysis"
       commands:
         - func: "bootstrap mongo-orchestration"
         - func: "run socket tests"
 
     - name: "embedded-test"
-      depends_on:
-      - variant: "static-checks"
-        name: "static-analysis"
       commands:
       - func: "run embedded tests"
 
     - name: "atlas-test"
-      depends_on:
-        - variant: "static-checks"
-          name: "static-analysis"
       commands:
         - func: "run atlas test"
 
     - name: publish-snapshot
       depends_on:
+        - variant: "static-checks"
+          name: "static-analysis"
         - variant: ".tests-variant"
           name: "test"
         - variant: ".test-gssapi-variant"
