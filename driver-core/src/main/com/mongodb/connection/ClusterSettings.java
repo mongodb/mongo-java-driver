@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
@@ -125,7 +126,9 @@ public final class ClusterSettings {
          *
          * @param description the user defined description of the MongoClient
          * @return this
+         * @deprecated Prefer {@link com.mongodb.MongoClientSettings.Builder#applicationName(String)}
          */
+        @Deprecated
         public Builder description(final String description) {
             this.description = description;
             return this;
@@ -322,7 +325,9 @@ public final class ClusterSettings {
      * Gets the user defined description of the MongoClient.
      *
      * @return the user defined description of the MongoClient
+     * @deprecated Prefer {@link MongoClientSettings#getApplicationName()}
      */
+    @Deprecated
     public String getDescription() {
         return description;
     }
