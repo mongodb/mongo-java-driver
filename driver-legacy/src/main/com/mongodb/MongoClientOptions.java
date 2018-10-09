@@ -693,7 +693,9 @@ public class MongoClientOptions {
      * <p>Default is SocketFactory.getDefault()</p>
      *
      * @return the socket factory
+     * @deprecated Prefer {@link #isSslEnabled()} and {@link #getSslContext()}
      */
+    @Deprecated
     public SocketFactory getSocketFactory() {
         if (socketFactory != null) {
             return socketFactory;
@@ -1437,7 +1439,9 @@ public class MongoClientOptions {
          * @param socketFactory the socket factory
          * @return {@code this}
          * @see MongoClientOptions#getSocketFactory()
+         * @deprecated Prefer {@link #sslEnabled(boolean)} and {@link #sslContext(SSLContext)}
          */
+        @Deprecated
         public Builder socketFactory(final SocketFactory socketFactory) {
             this.socketFactory = socketFactory;
             return this;
