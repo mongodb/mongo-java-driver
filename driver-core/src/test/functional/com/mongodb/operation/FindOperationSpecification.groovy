@@ -636,6 +636,9 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                 .projection(new BsonDocument('x', new BsonInt32(1)))
                 .sort(new BsonDocument('y', new BsonInt32(-1)))
                 .filter(new BsonDocument('z', new BsonString('val')))
+                .hint(new BsonDocument('a', new BsonInt32(1)))
+                .min(new BsonDocument('min', new BsonInt32(1)))
+                .max(new BsonDocument('max', new BsonInt32(1)))
         def binding = Stub(ReadBinding)
         def source = Stub(ConnectionSource)
         def connection = Mock(Connection)
@@ -652,7 +655,10 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                 new ServerVersion(2, 6), STANDALONE, 1000, 100000, 100000, [])
 
         1 * connection.query(getNamespace(), new BsonDocument('$query', operation.filter)
-                .append('$explain', BsonBoolean.TRUE).append('$orderby', operation.sort),
+                .append('$explain', BsonBoolean.TRUE).append('$orderby', operation.sort)
+                .append('$hint', operation.hint)
+                .append('$min', operation.min)
+                .append('$max', operation.max),
                 operation.projection, 0, -20, 0, false, false, false, false, false, false, _) >>
                 new QueryResult(getNamespace(), [new BsonDocument('n', new BsonInt32(1))], 0, new ServerAddress())
 
