@@ -223,7 +223,9 @@ public class MongoClientOptions {
      * <p>Default is null.</p>
      *
      * @return the description
+     * @deprecated Prefer {@link #getApplicationName()}
      */
+    @Deprecated
     public String getDescription() {
         return description;
     }
@@ -1053,7 +1055,9 @@ public class MongoClientOptions {
          * @param description the description of this MongoClient
          * @return {@code this}
          * @see com.mongodb.MongoClientOptions#getDescription()
+         * @deprecated Prefer {@link MongoClientOptions.Builder#applicationName(String)}
          */
+        @Deprecated
         public Builder description(final String description) {
             this.description = description;
             return this;
