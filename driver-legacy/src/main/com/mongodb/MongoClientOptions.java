@@ -680,7 +680,9 @@ public class MongoClientOptions {
      * <p>Default is {@code false}.</p>
      *
      * @return true if JMX beans should always be MBeans
+     * @deprecated there is no replacement for this property
      */
+    @Deprecated
     public boolean isAlwaysUseMBeans() {
         return alwaysUseMBeans;
     }
@@ -1460,7 +1462,9 @@ public class MongoClientOptions {
          * @param alwaysUseMBeans true if driver should always use MBeans, regardless of VM version
          * @return this
          * @see MongoClientOptions#isAlwaysUseMBeans()
+         * @deprecated there is no replacement for this property
          */
+        @Deprecated
         public Builder alwaysUseMBeans(final boolean alwaysUseMBeans) {
             this.alwaysUseMBeans = alwaysUseMBeans;
             return this;
