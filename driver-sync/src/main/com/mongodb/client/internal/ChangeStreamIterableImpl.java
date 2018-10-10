@@ -46,8 +46,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 /**
  * This class is NOT part of the public API. It may change at any time without notification.
  */
-public final class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeStreamDocument<TResult>>
-        implements ChangeStreamIterable<TResult> {
+class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeStreamDocument<TResult>> implements ChangeStreamIterable<TResult> {
     private final MongoNamespace namespace;
     private final CodecRegistry codecRegistry;
     private final List<? extends Bson> pipeline;
@@ -60,18 +59,18 @@ public final class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<C
     private Collation collation;
     private BsonTimestamp startAtOperationTime;
 
-    public ChangeStreamIterableImpl(@Nullable final ClientSession clientSession, final String databaseName,
-                                    final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
-                                    final OperationExecutor executor, final List<? extends Bson> pipeline, final Class<TResult> resultClass,
-                                    final ChangeStreamLevel changeStreamLevel) {
+    ChangeStreamIterableImpl(@Nullable final ClientSession clientSession, final String databaseName,
+                             final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
+                             final OperationExecutor executor, final List<? extends Bson> pipeline, final Class<TResult> resultClass,
+                             final ChangeStreamLevel changeStreamLevel) {
         this(clientSession, new MongoNamespace(databaseName, "ignored"), codecRegistry, readPreference, readConcern, executor, pipeline,
                 resultClass, changeStreamLevel);
     }
 
-    public ChangeStreamIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace,
-                                    final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
-                                    final OperationExecutor executor, final List<? extends Bson> pipeline, final Class<TResult> resultClass,
-                                    final ChangeStreamLevel changeStreamLevel) {
+    ChangeStreamIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace,
+                             final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
+                             final OperationExecutor executor, final List<? extends Bson> pipeline, final Class<TResult> resultClass,
+                             final ChangeStreamLevel changeStreamLevel) {
         super(clientSession, executor, readConcern, readPreference);
         this.namespace = notNull("namespace", namespace);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
