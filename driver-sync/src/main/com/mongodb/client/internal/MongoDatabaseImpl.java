@@ -243,7 +243,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
     private <TResult> ListCollectionsIterable<TResult> createListCollectionsIterable(@Nullable final ClientSession clientSession,
                                                                                      final Class<TResult> resultClass,
                                                                                      final boolean collectionNamesOnly) {
-        return new ListCollectionsIterableImpl<TResult>(clientSession, name, collectionNamesOnly, resultClass, codecRegistry,
+        return MongoIterables.listCollectionsOf(clientSession, name, collectionNamesOnly, resultClass, codecRegistry,
                 ReadPreference.primary(), executor);
     }
 
@@ -369,7 +369,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
     private <TResult> ChangeStreamIterable<TResult> createChangeStreamIterable(@Nullable final ClientSession clientSession,
                                                                                final List<? extends Bson> pipeline,
                                                                                final Class<TResult> resultClass) {
-        return new ChangeStreamIterableImpl<TResult>(clientSession, name, codecRegistry, readPreference,
+        return MongoIterables.changeStreamOf(clientSession, name, codecRegistry, readPreference,
                 readConcern, executor, pipeline, resultClass, ChangeStreamLevel.DATABASE);
     }
 

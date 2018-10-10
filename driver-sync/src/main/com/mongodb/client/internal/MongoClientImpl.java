@@ -173,7 +173,7 @@ public final class MongoClientImpl implements MongoClient {
     private <TResult> ChangeStreamIterable<TResult> createChangeStreamIterable(@Nullable final ClientSession clientSession,
                                                                                final List<? extends Bson> pipeline,
                                                                                final Class<TResult> resultClass) {
-        return new ChangeStreamIterableImpl<TResult>(clientSession, "admin", settings.getCodecRegistry(),
+        return MongoIterables.changeStreamOf(clientSession, "admin", settings.getCodecRegistry(),
                 settings.getReadPreference(), settings.getReadConcern(), delegate.getOperationExecutor(), pipeline, resultClass,
                 ChangeStreamLevel.CLIENT);
     }
@@ -204,7 +204,7 @@ public final class MongoClientImpl implements MongoClient {
     }
 
     private <T> ListDatabasesIterable<T> createListDatabasesIterable(@Nullable final ClientSession clientSession, final Class<T> clazz) {
-        return new ListDatabasesIterableImpl<T>(clientSession, clazz, settings.getCodecRegistry(),
+        return MongoIterables.listDatabasesOf(clientSession, clazz, settings.getCodecRegistry(),
                 ReadPreference.primary(), delegate.getOperationExecutor());
     }
 
