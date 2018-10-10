@@ -21,6 +21,7 @@ import com.mongodb.Function;
 import com.mongodb.lang.Nullable;
 
 import java.util.Collection;
+import java.util.function.Consumer;
 
 /**
  *The MongoIterable is the results from an operation, such as a query.
@@ -56,7 +57,9 @@ public interface MongoIterable<TResult> extends Iterable<TResult> {
      * <p>Similar to {@code map} but the function is fully encapsulated with no returned result.</p>
      *
      * @param block the block to apply to each document of type T.
+     * @deprecated Prefer {@link Iterable#forEach(Consumer)}, which was added in Java 8
      */
+    @Deprecated
     void forEach(Block<? super TResult> block);
 
     /**
