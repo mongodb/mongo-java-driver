@@ -69,8 +69,13 @@ public class CrudTest extends DatabaseTestCase {
 
     @Test
     public void shouldPassAllOutcomes() {
-        BsonDocument outcome = helper.getOperationResults(definition.getDocument("operation"));
         BsonDocument expectedOutcome = definition.getDocument("outcome");
+
+        BsonDocument outcome = helper.getOperationResults(definition.getDocument("operation"));
+
+        if (expectedOutcome.containsKey("error")) {
+            assertEquals("Expected error", expectedOutcome.getBoolean("error"), outcome.get("error"));
+        }
 
         // Hack to workaround the lack of upsertedCount
         BsonValue expectedResult = expectedOutcome.get("result");
@@ -81,6 +86,12 @@ public class CrudTest extends DatabaseTestCase {
                     && !expectedResult.asDocument().containsKey("upsertedCount")) {
             expectedResult.asDocument().append("upsertedCount", actualResult.asDocument().get("upsertedCount"));
         }
+        // Hack to workaround the lack of insertedIds
+        if (expectedResult.isDocument()
+                && !expectedResult.asDocument().containsKey("insertedIds")) {
+            actualResult.asDocument().remove("insertedIds");
+        }
+
         assertEquals(description, expectedResult, actualResult);
 
         if (expectedOutcome.containsKey("collection")) {
@@ -98,10 +109,10 @@ public class CrudTest extends DatabaseTestCase {
                 continue;
             }
             if (testDocument.containsKey("maxServerVersion")
-                        && serverVersionGreaterThan(testDocument.getString("maxServerVersion").getValue())) {
+                    && serverVersionGreaterThan(testDocument.getString("maxServerVersion").getValue())) {
                 continue;
             }
-            for (BsonValue test: testDocument.getArray("tests")) {
+            for (BsonValue test : testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
                         testDocument.getArray("data"), test.asDocument()});
             }
