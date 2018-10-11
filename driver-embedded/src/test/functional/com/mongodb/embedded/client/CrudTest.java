@@ -84,6 +84,10 @@ public class CrudTest extends DatabaseTestCase {
         BsonDocument outcome = helper.getOperationResults(definition.getDocument("operation"));
         BsonDocument expectedOutcome = definition.getDocument("outcome");
 
+        if (expectedOutcome.containsKey("error")) {
+            assertEquals("Expected error", expectedOutcome.getBoolean("error"), outcome.get("error"));
+        }
+
         // Hack to workaround the lack of upsertedCount
         BsonValue expectedResult = expectedOutcome.get("result");
         BsonValue actualResult = outcome.get("result");
@@ -93,6 +97,13 @@ public class CrudTest extends DatabaseTestCase {
                 && !expectedResult.asDocument().containsKey("upsertedCount")) {
             expectedResult.asDocument().append("upsertedCount", actualResult.asDocument().get("upsertedCount"));
         }
+
+        // Hack to workaround the lack of insertedIds
+        if (expectedResult.isDocument()
+                && !expectedResult.asDocument().containsKey("insertedIds")) {
+            actualResult.asDocument().remove("insertedIds");
+        }
+
         assertEquals(description, expectedResult, actualResult);
 
         if (expectedOutcome.containsKey("collection")) {

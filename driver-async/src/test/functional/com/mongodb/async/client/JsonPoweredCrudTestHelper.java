@@ -17,12 +17,14 @@
 package com.mongodb.async.client;
 
 
+import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadConcernLevel;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.FutureResultCallback;
+import com.mongodb.bulk.BulkWriteError;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.BulkWriteUpsert;
 import com.mongodb.client.model.BulkWriteOptions;
@@ -61,6 +63,7 @@ import org.junit.AssumptionViolatedException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import static java.lang.String.format;
@@ -145,7 +148,8 @@ public class JsonPoweredCrudTestHelper {
         return toResult(resultDoc);
     }
 
-    BsonDocument toResult(final BulkWriteResult bulkWriteResult, final List<WriteModel<BsonDocument>> writeModels) {
+    BsonDocument toResult(final BulkWriteResult bulkWriteResult, final List<? extends WriteModel<BsonDocument>> writeModels,
+                          final List<BulkWriteError> writeErrors) {
 
         BsonDocument resultDoc = new BsonDocument();
         if (bulkWriteResult.wasAcknowledged()) {
@@ -155,8 +159,7 @@ public class JsonPoweredCrudTestHelper {
             BsonDocument insertedIds = new BsonDocument();
             for (int i = 0; i < writeModels.size(); i++) {
                 WriteModel<BsonDocument> cur = writeModels.get(i);
-                // TODO: Any need to suport InsertManyModel, and if so, how to represent it?
-                if (cur instanceof InsertOneModel) {
+                if (cur instanceof InsertOneModel && writeSuccessful(i, writeErrors)) {
                     InsertOneModel<BsonDocument> insertOneModel = (InsertOneModel<BsonDocument>) cur;
                     insertedIds.put(Integer.toString(i), insertOneModel.getDocument().get("_id"));
                 }
@@ -177,6 +180,15 @@ public class JsonPoweredCrudTestHelper {
             resultDoc.append("upsertedIds", upserts);
         }
         return toResult(resultDoc);
+    }
+
+    private boolean writeSuccessful(final int index, final List<BulkWriteError> writeErrors) {
+        for (BulkWriteError cur : writeErrors) {
+            if (cur.getIndex() == index) {
+                return false;
+            }
+        }
+        return true;
     }
 
     BsonDocument toResult(@Nullable final BsonValue results) {
@@ -485,27 +497,40 @@ public class JsonPoweredCrudTestHelper {
             documents.add(document.asDocument());
         }
         FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<Void>();
-        if (clientSession == null) {
-            getCollection(collectionOptions)
-                    .insertMany(documents,
-                                new InsertManyOptions().ordered(arguments.getDocument("options", new BsonDocument())
-                                                                    .getBoolean("ordered", BsonBoolean.TRUE).getValue()),
-                                futureResultCallback);
-        } else {
-            getCollection(collectionOptions)
-                    .insertMany(clientSession,
-                                documents,
-                                new InsertManyOptions().ordered(arguments.getDocument("options", new BsonDocument())
-                                                                    .getBoolean("ordered", BsonBoolean.TRUE).getValue()),
-                                futureResultCallback);
-        }
-        futureResult(futureResultCallback);
 
-        BsonDocument insertedIds = new BsonDocument();
-        for (int i = 0; i < documents.size(); i++) {
-            insertedIds.put(Integer.toString(i), documents.get(i).get("_id"));
+        try {
+            if (clientSession == null) {
+                getCollection(collectionOptions)
+                        .insertMany(documents,
+                                    new InsertManyOptions().ordered(arguments.getDocument("options", new BsonDocument())
+                                                                        .getBoolean("ordered", BsonBoolean.TRUE).getValue()),
+                                    futureResultCallback);
+            } else {
+                getCollection(collectionOptions)
+                        .insertMany(clientSession,
+                                    documents,
+                                    new InsertManyOptions().ordered(arguments.getDocument("options", new BsonDocument())
+                                                                        .getBoolean("ordered", BsonBoolean.TRUE).getValue()),
+                                    futureResultCallback);
+            }
+            futureResult(futureResultCallback);
+
+            BsonDocument insertedIds = new BsonDocument();
+            for (int i = 0; i < documents.size(); i++) {
+                insertedIds.put(Integer.toString(i), documents.get(i).get("_id"));
+            }
+            return toResult(new BsonDocument("insertedIds", insertedIds));
+        } catch (MongoBulkWriteException e) {
+                // Test results are expecting this to look just like bulkWrite error, so translate to InsertOneModel so the result
+                // translation code can be reused.
+                List<InsertOneModel<BsonDocument>> writeModels = new ArrayList<InsertOneModel<BsonDocument>>();
+                for (BsonValue document : arguments.getArray("documents")) {
+                    writeModels.add(new InsertOneModel<BsonDocument>(document.asDocument()));
+                }
+                BsonDocument result = toResult(e.getWriteResult(), writeModels, e.getWriteErrors());
+                result.put("error", BsonBoolean.TRUE);
+                return result;
         }
-        return toResult(new BsonDocument("insertedIds", insertedIds));
     }
 
     BsonDocument getReplaceOneResult(final BsonDocument collectionOptions, final BsonDocument arguments,
@@ -603,33 +628,41 @@ public class JsonPoweredCrudTestHelper {
                         requestArguments.getDocument("update"),
                         getUpdateOptions(requestArguments)));
             } else if (name.equals("deleteOne")) {
-                writeModels.add(new DeleteOneModel<BsonDocument>(requestArguments.getDocument("filter")));
+                writeModels.add(new DeleteOneModel<BsonDocument>(requestArguments.getDocument("filter"),
+                        getDeleteOptions(requestArguments)));
             } else if (name.equals("deleteMany")) {
-                writeModels.add(new DeleteManyModel<BsonDocument>(requestArguments.getDocument("filter")));
+                writeModels.add(new DeleteManyModel<BsonDocument>(requestArguments.getDocument("filter"),
+                        getDeleteOptions(requestArguments)));
             } else if (name.equals("replaceOne")) {
                 writeModels.add(new ReplaceOneModel<BsonDocument>(requestArguments.getDocument("filter"),
-                        requestArguments.getDocument("replacement")));
+                        requestArguments.getDocument("replacement"), getReplaceOptions(requestArguments)));
             } else {
                 throw new UnsupportedOperationException(format("Unsupported write request type: %s", name));
             }
         }
 
-        FutureResultCallback<BulkWriteResult> futureResultCallback = new FutureResultCallback<BulkWriteResult>();
-        if (clientSession == null) {
-            getCollection(collectionOptions).withWriteConcern(writeConcern)
-                    .bulkWrite(writeModels,
-                                new BulkWriteOptions().ordered(arguments.getDocument("options", new BsonDocument())
-                                       .getBoolean("ordered", BsonBoolean.TRUE).getValue()),
-                                futureResultCallback);
-        } else {
-            getCollection(collectionOptions).withWriteConcern(writeConcern)
-                    .bulkWrite(clientSession,
-                                writeModels,
-                                new BulkWriteOptions().ordered(arguments.getDocument("options", new BsonDocument())
-                                        .getBoolean("ordered", BsonBoolean.TRUE).getValue()),
-                                futureResultCallback);
+        try {
+            FutureResultCallback<BulkWriteResult> futureResultCallback = new FutureResultCallback<BulkWriteResult>();
+            if (clientSession == null) {
+                getCollection(collectionOptions).withWriteConcern(writeConcern)
+                        .bulkWrite(writeModels,
+                                    new BulkWriteOptions().ordered(arguments.getDocument("options", new BsonDocument())
+                                           .getBoolean("ordered", BsonBoolean.TRUE).getValue()),
+                                    futureResultCallback);
+            } else {
+                getCollection(collectionOptions).withWriteConcern(writeConcern)
+                        .bulkWrite(clientSession,
+                                    writeModels,
+                                    new BulkWriteOptions().ordered(arguments.getDocument("options", new BsonDocument())
+                                            .getBoolean("ordered", BsonBoolean.TRUE).getValue()),
+                                    futureResultCallback);
+            }
+            return toResult(futureResult(futureResultCallback), writeModels, Collections.<BulkWriteError>emptyList());
+        } catch (MongoBulkWriteException e) {
+            BsonDocument result = toResult(e.getWriteResult(), writeModels, e.getWriteErrors());
+            result.put("error", BsonBoolean.TRUE);
+            return result;
         }
-        return toResult(futureResult(futureResultCallback), writeModels);
     }
 
     Collation getCollation(final BsonDocument bsonCollation) {
@@ -674,6 +707,28 @@ public class JsonPoweredCrudTestHelper {
         }
         if (requestArguments.containsKey("arrayFilters")) {
             options.arrayFilters(getArrayFilters(requestArguments.getArray("arrayFilters")));
+        }
+        if (requestArguments.containsKey("collation")) {
+            options.collation(getCollation(requestArguments.getDocument("collation")));
+        }
+        return options;
+    }
+
+    private DeleteOptions getDeleteOptions(final BsonDocument requestArguments) {
+        DeleteOptions options = new DeleteOptions();
+        if (requestArguments.containsKey("collation")) {
+            options.collation(getCollation(requestArguments.getDocument("collation")));
+        }
+        return options;
+    }
+
+    private ReplaceOptions getReplaceOptions(final BsonDocument requestArguments) {
+        ReplaceOptions options = new ReplaceOptions();
+        if (requestArguments.containsKey("upsert")) {
+            options.upsert(true);
+        }
+        if (requestArguments.containsKey("collation")) {
+            options.collation(getCollation(requestArguments.getDocument("collation")));
         }
         return options;
     }
