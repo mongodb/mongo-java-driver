@@ -25,7 +25,9 @@ import java.util.concurrent.TimeUnit;
  * Iterable for ListDatabases.
  *
  * @param <T> The type of the result.
+ * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
+@Deprecated
 public interface ListDatabasesIterable<T> extends MongoIterable<T> {
 
     /**

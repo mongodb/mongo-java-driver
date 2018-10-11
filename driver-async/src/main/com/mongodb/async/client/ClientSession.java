@@ -23,7 +23,9 @@ import com.mongodb.async.SingleResultCallback;
  * A client session that supports transactions.
  *
  * @since 3.8
+ * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
+@Deprecated
 public interface ClientSession extends com.mongodb.session.ClientSession {
     /**
      * Returns true if there is an active transaction on this session, and false otherwise

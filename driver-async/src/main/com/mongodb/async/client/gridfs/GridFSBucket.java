@@ -32,8 +32,10 @@ import org.bson.types.ObjectId;
  * Represents a GridFS Bucket
  *
  * @since 3.3
+ * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
 @ThreadSafe
+@Deprecated
 public interface GridFSBucket {
 
     /**

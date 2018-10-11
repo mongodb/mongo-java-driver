@@ -19,6 +19,7 @@
  * @mongodb.driver.manual core/gridfs/ GridFS
  */
 @NonNullApi
+@Deprecated
 package com.mongodb.async.client.gridfs;
 
 import com.mongodb.lang.NonNullApi;

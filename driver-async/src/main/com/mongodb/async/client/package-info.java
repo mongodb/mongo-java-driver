@@ -17,6 +17,7 @@
 /**
  * This packages contains classes for the new async client
  */
+@Deprecated
 @NonNullApi
 package com.mongodb.async.client;
 

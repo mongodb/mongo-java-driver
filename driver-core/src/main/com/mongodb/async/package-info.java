@@ -17,4 +17,5 @@
 /**
  * This package contains async interfaces
  */
+@Deprecated
 package com.mongodb.async;

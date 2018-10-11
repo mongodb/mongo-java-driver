@@ -34,7 +34,9 @@ import java.util.concurrent.TimeUnit;
  * @param <TResult> The type of the result.
  * @mongodb.server.release 3.6
  * @since 3.6
+ * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
+@Deprecated
 public interface ChangeStreamIterable<TResult> extends MongoIterable<ChangeStreamDocument<TResult>> {
 
     /**
