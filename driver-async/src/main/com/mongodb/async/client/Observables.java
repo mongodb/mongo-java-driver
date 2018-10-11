@@ -28,7 +28,9 @@ import java.util.List;
  * <p>Allows async methods to be converted into event-based {@link Observable}s.</p>
  *
  * @since 3.1
+ * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
+@Deprecated
 public final class Observables {
 
     /**

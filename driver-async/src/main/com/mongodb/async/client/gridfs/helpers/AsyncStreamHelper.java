@@ -40,7 +40,9 @@ import static com.mongodb.assertions.Assertions.notNull;
  * </ul>
  *
  * @since 3.3
+ * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
+@Deprecated
 public final class AsyncStreamHelper {
 
     /**

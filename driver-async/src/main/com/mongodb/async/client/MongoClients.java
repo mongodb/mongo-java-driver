@@ -36,8 +36,10 @@ import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
  * A factory for MongoClient instances.
  *
  * @since 3.0
+ * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
 @SuppressWarnings("deprecation")
+@Deprecated
 public final class MongoClients {
 
     /**

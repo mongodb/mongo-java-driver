@@ -34,7 +34,9 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * <p>Requires Java 7 or greater.</p>
  * @since 3.3
+ * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
+@Deprecated
 public final class AsynchronousChannelHelper {
 
     /**

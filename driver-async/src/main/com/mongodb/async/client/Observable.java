@@ -26,7 +26,9 @@ package com.mongodb.async.client;
  *
  * @param <TResult> the type of element signaled.
  * @see Observables
+ * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
+@Deprecated
 public interface Observable<TResult> {
 
     /**

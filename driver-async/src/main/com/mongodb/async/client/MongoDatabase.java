@@ -35,8 +35,10 @@ import java.util.List;
  * Note: Additions to this interface will not be considered to break binary compatibility.</p>
  *
  * @since 3.0
+ * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
 @ThreadSafe
+@Deprecated
 public interface MongoDatabase {
 
     /**

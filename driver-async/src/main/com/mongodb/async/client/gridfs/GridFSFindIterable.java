@@ -28,7 +28,9 @@ import java.util.concurrent.TimeUnit;
  * Iterable for the GridFS Files Collection.
  *
  * @since 3.3
+ * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
+@Deprecated
 public interface GridFSFindIterable extends MongoIterable<GridFSFile> {
 
     /**

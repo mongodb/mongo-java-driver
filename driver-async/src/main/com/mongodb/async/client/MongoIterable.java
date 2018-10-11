@@ -29,7 +29,9 @@ import java.util.Collection;
  *
  * @param <TResult> the result type
  * @since 3.0
+ * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
+@Deprecated
 public interface MongoIterable<TResult> {
 
     /**
