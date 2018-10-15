@@ -938,7 +938,9 @@ public class DBCollection {
      * @return the number of documents that matches selection criteria
      * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/count/ Count
+     * @deprecated Prefer {@link #count(DBObject, DBCollectionCountOptions)}
      */
+    @Deprecated
     public long getCount(@Nullable final DBObject query, final DBObject projection) {
         return getCount(query, projection, 0, 0);
     }
@@ -952,7 +954,9 @@ public class DBCollection {
      * @return the number of documents that matches selection criteria
      * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/count/ Count
+     * @deprecated Prefer {@link #count(DBObject, DBCollectionCountOptions)}
      */
+    @Deprecated
     public long getCount(@Nullable final DBObject query, @Nullable final DBObject projection, final ReadPreference readPreference) {
         return getCount(query, projection, 0, 0, readPreference);
     }
@@ -967,7 +971,9 @@ public class DBCollection {
      * @return the number of documents that matches selection criteria
      * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/count/ Count
+     * @deprecated Prefer {@link #count(DBObject, DBCollectionCountOptions)}
      */
+    @Deprecated
     public long getCount(@Nullable final DBObject query, @Nullable final DBObject projection, final long limit, final long skip) {
         return getCount(query, projection, limit, skip, getReadPreference());
     }
@@ -983,7 +989,9 @@ public class DBCollection {
      * @return the number of documents that matches selection criteria
      * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/count/ Count
+     * @deprecated Prefer {@link #count(DBObject, DBCollectionCountOptions)}
      */
+    @Deprecated
     public long getCount(@Nullable final DBObject query, @Nullable final DBObject projection, final long limit, final long skip,
                          final ReadPreference readPreference) {
         return getCount(query, new DBCollectionCountOptions().limit(limit).skip(skip).readPreference(readPreference));
