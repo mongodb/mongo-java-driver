@@ -22,7 +22,9 @@ import java.io.InputStream;
 
 /**
  * Utility class for reading values from an input stream.
+ * @deprecated there is no replacement for this utility class
  */
+@Deprecated
 public class Bits {
 
     /**
