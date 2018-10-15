@@ -24,7 +24,9 @@ import static com.mongodb.assertions.Assertions.notNull;
  * An event for opening a new connection.
  *
  * @since 3.5
+ * @deprecated there is no replacement for this class
  */
+@Deprecated
 public final class ConnectionOpenedEvent {
     private final ConnectionId connectionId;
 
