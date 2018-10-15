@@ -24,7 +24,9 @@ import static org.bson.assertions.Assertions.notNull;
  * A connection closed event.
  *
  * @since 3.5
+ * @deprecated there is no replacement for this class
  */
+@Deprecated
 public final class ConnectionClosedEvent {
 
     private final ConnectionId connectionId;
