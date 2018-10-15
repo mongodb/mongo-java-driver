@@ -57,7 +57,9 @@ public class SocketStreamFactory implements StreamFactory {
      * @param settings      the SocketSettings for connecting to a MongoDB server
      * @param sslSettings   the SSL for connecting to a MongoDB server
      * @param socketFactory a SocketFactory for creating connections to servers.
+     * @deprecated Prefer {@link #SocketStreamFactory(SocketSettings, SslSettings)}
      */
+    @Deprecated
     public SocketStreamFactory(final SocketSettings settings, final SslSettings sslSettings, final SocketFactory socketFactory) {
         this.settings = notNull("settings", settings);
         this.sslSettings = notNull("sslSettings", sslSettings);
