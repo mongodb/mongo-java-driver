@@ -97,7 +97,9 @@ public class DB {
      *
      * @param mongo the mongo instance
      * @param name  the database name - must not be empty and cannot contain spaces
+     * @deprecated Prefer {@link MongoClient#getDB(String)}
      */
+    @Deprecated
     public DB(final Mongo mongo, final String name) {
         this(mongo, name, mongo.createOperationExecutor());
     }
