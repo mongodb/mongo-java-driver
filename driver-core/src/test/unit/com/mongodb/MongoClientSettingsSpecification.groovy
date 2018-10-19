@@ -330,6 +330,67 @@ class MongoClientSettingsSpecification extends Specification {
         expect expected, isTheSameAs(settings)
     }
 
+    @IgnoreIf({ isNotAtLeastJava7() })
+    def 'should build settings from a connection string with default values'() {
+        when:
+        def builder = MongoClientSettings.builder()
+                .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
+            @Override
+            void apply(final ClusterSettings.Builder builder) {
+                builder.hosts([new ServerAddress('localhost', 27017)])
+                        .mode(ClusterConnectionMode.SINGLE)
+                        .serverSelectionTimeout(25000, TimeUnit.MILLISECONDS)
+                        .localThreshold(30, TimeUnit.MILLISECONDS)
+            }
+        })
+                .applyToConnectionPoolSettings(new Block<ConnectionPoolSettings.Builder>() {
+            @Override
+            void apply(final ConnectionPoolSettings.Builder builder) {
+                builder.minSize(5)
+                        .maxSize(10)
+                        .maxWaitQueueSize(10 * 7) // maxPoolSize * waitQueueMultiple
+                        .maxWaitTime(150, TimeUnit.MILLISECONDS)
+                        .maxConnectionLifeTime(300, TimeUnit.MILLISECONDS)
+                        .maxConnectionIdleTime(200, TimeUnit.MILLISECONDS)
+            }
+        })
+                .applyToServerSettings(new Block<ServerSettings.Builder>() {
+            @Override
+            void apply(final ServerSettings.Builder builder) {
+                builder.heartbeatFrequency(20000, TimeUnit.MILLISECONDS)
+            }
+        })
+                .applyToSocketSettings(new Block<SocketSettings.Builder>() {
+            @Override
+            void apply(final SocketSettings.Builder builder) {
+                builder.connectTimeout(2500, TimeUnit.MILLISECONDS)
+                        .readTimeout(5500, TimeUnit.MILLISECONDS)
+            }
+        })
+                .applyToSslSettings(new Block<SslSettings.Builder>() {
+            @Override
+            void apply(final SslSettings.Builder builder) {
+                builder.enabled(true)
+                        .invalidHostNameAllowed(true)
+            }
+        })
+                .readConcern(ReadConcern.MAJORITY)
+                .readPreference(ReadPreference.secondary())
+                .writeConcern(WriteConcern.MAJORITY.withWTimeout(2500, TimeUnit.MILLISECONDS))
+                .applicationName('MyApp')
+                .credential(MongoCredential.createScramSha1Credential('user', 'test', 'pass'.toCharArray()))
+                .compressorList([MongoCompressor.createZlibCompressor().withProperty(MongoCompressor.LEVEL, 5)])
+                .retryWrites(true)
+
+        def expectedSettings = builder.build()
+        def settingsWithDefaultConnectionStringApplied = builder
+                .applyConnectionString(new ConnectionString('mongodb://localhost'))
+                .build()
+
+        then:
+        expect expectedSettings, isTheSameAs(settingsWithDefaultConnectionStringApplied)
+    }
+
     def 'should use the socket settings connectionTime out for the heartbeat settings'() {
         when:
         def settings = MongoClientSettings.builder().applyToSocketSettings(new Block<SocketSettings.Builder>() {
