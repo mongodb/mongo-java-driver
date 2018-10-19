@@ -16,9 +16,12 @@
 
 package com.mongodb
 
+
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 import spock.lang.Unroll
+
+import javax.net.ssl.SSLContext
 
 import static com.mongodb.ClusterFixture.isNotAtLeastJava7
 import static com.mongodb.MongoCredential.createCredential
@@ -135,6 +138,7 @@ class MongoClientURISpecification extends Specification {
                 + 'serverSelectionTimeoutMS=25000&'
                 + 'localThresholdMS=30&'
                 + 'heartbeatFrequencyMS=20000&'
+                + 'retryWrites=true&'
                 + 'appName=app1')
 
         when:
@@ -157,6 +161,7 @@ class MongoClientURISpecification extends Specification {
         options.getServerSelectionTimeout() == 25000
         options.getLocalThreshold() == 30
         options.getHeartbeatFrequency() == 20000
+        options.getRetryWrites()
         options.getApplicationName() == 'app1'
     }
 
@@ -174,6 +179,68 @@ class MongoClientURISpecification extends Specification {
         options.getReadPreference() == ReadPreference.primary()
         options.getRequiredReplicaSetName() == null
         !options.isSslEnabled()
+        !options.getRetryWrites()
+    }
+
+    def 'should apply default uri to options'() {
+        given:
+        def optionsBuilder = MongoClientOptions.builder()
+                .description('test')
+                .applicationName('appName')
+                .readPreference(ReadPreference.secondary())
+                .retryWrites(true)
+                .writeConcern(WriteConcern.JOURNALED)
+                .minConnectionsPerHost(30)
+                .connectionsPerHost(500)
+                .connectTimeout(100)
+                .socketTimeout(700)
+                .serverSelectionTimeout(150)
+                .maxWaitTime(200)
+                .maxConnectionIdleTime(300)
+                .maxConnectionLifeTime(400)
+                .threadsAllowedToBlockForConnectionMultiplier(2)
+                .socketKeepAlive(false)
+                .sslEnabled(true)
+                .sslInvalidHostNameAllowed(true)
+                .sslContext(SSLContext.getDefault())
+                .heartbeatFrequency(5)
+                .minHeartbeatFrequency(11)
+                .heartbeatConnectTimeout(15)
+                .heartbeatSocketTimeout(20)
+                .localThreshold(25)
+                .requiredReplicaSetName('test')
+                .compressorList([MongoCompressor.createZlibCompressor()])
+
+        when:
+        def options = new MongoClientURI('mongodb://localhost', optionsBuilder).getOptions()
+
+        then:
+        options.getDescription() == 'test'
+        options.getApplicationName() == 'appName'
+        options.getReadPreference() == ReadPreference.secondary()
+        options.getWriteConcern() == WriteConcern.JOURNALED
+        options.getRetryWrites()
+        options.getServerSelectionTimeout() == 150
+        options.getMaxWaitTime() == 200
+        options.getMaxConnectionIdleTime() == 300
+        options.getMaxConnectionLifeTime() == 400
+        options.getMinConnectionsPerHost() == 30
+        options.getConnectionsPerHost() == 500
+        options.getConnectTimeout() == 100
+        options.getSocketTimeout() == 700
+        options.getThreadsAllowedToBlockForConnectionMultiplier() == 2
+        !options.isSocketKeepAlive()
+        options.isSslEnabled()
+        options.isSslInvalidHostNameAllowed()
+        options.getHeartbeatFrequency() == 5
+        options.getMinHeartbeatFrequency() == 11
+        options.getHeartbeatConnectTimeout() == 15
+        options.getHeartbeatSocketTimeout() == 20
+        options.getLocalThreshold() == 25
+        options.getRequiredReplicaSetName() == 'test'
+        options.getServerSettings().getHeartbeatFrequency(MILLISECONDS) == 5
+        options.getServerSettings().getMinHeartbeatFrequency(MILLISECONDS) == 11
+        options.compressorList == [MongoCompressor.createZlibCompressor()]
     }
 
     @Unroll
