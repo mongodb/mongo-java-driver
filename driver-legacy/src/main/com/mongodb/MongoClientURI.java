@@ -327,8 +327,8 @@ public class MongoClientURI {
         if (writeConcern != null) {
             builder.writeConcern(writeConcern);
         }
-        if (proxied.getRetryWrites()) {
-            builder.retryWrites(proxied.getRetryWrites());
+        if (proxied.getRetryWritesValue() != null) {
+            builder.retryWrites(proxied.getRetryWritesValue());
         }
         Integer maxConnectionPoolSize = proxied.getMaxConnectionPoolSize();
         if (maxConnectionPoolSize != null) {
@@ -390,8 +390,9 @@ public class MongoClientURI {
         if (applicationName != null) {
             builder.applicationName(applicationName);
         }
-        builder.compressorList(proxied.getCompressorList());
-
+        if (!proxied.getCompressorList().isEmpty()) {
+            builder.compressorList(proxied.getCompressorList());
+        }
         return builder.build();
     }
 

@@ -238,7 +238,7 @@ public class ConnectionString {
 
     private ReadPreference readPreference;
     private WriteConcern writeConcern;
-    private boolean retryWrites;
+    private Boolean retryWrites;
     private ReadConcern readConcern;
 
     private Integer minConnectionPoolSize;
@@ -1067,13 +1067,30 @@ public class ConnectionString {
     }
 
     /**
-     * Returns true if writes should be retried if they fail due to a network error.
+     * Returns true if writes should be retried if they fail due to a network error, and false otherwise
      *
-     * @return the retryWrites value
+     * @return the retryWrites value, or false if unset
      * @since 3.6
      * @mongodb.server.release 3.6
+     * @deprecated Prefer {@link #getRetryWritesValue()}
      */
+    @Deprecated
     public boolean getRetryWrites() {
+        return retryWrites == null ? false : retryWrites;
+    }
+
+    /**
+     * <p>Gets whether writes should be retried if they fail due to a network error</p>
+     *
+     * The name of this method differs from others in this class so as not to conflict with the deprecated (and soon to be removed)
+     * {@link #getRetryWrites()} method, which returns a primitive {@code boolean} value, which doesn't allow callers to differentiate
+     * between a false value and an unset value.
+     *
+     * @return the retryWrites value, or null if unset
+     * @since 3.9
+     * @mongodb.server.release 3.6
+     */
+    public Boolean getRetryWritesValue() {
         return retryWrites;
     }
 

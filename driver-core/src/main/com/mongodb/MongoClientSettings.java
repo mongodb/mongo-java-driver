@@ -195,7 +195,9 @@ public final class MongoClientSettings {
             if (connectionString.getReadPreference() != null) {
                 readPreference = connectionString.getReadPreference();
             }
-            retryWrites = connectionString.getRetryWrites();
+            if (connectionString.getRetryWritesValue() != null) {
+                retryWrites = connectionString.getRetryWrites();
+            }
             serverSettingsBuilder.applyConnectionString(connectionString);
             socketSettingsBuilder.applyConnectionString(connectionString);
             sslSettingsBuilder.applyConnectionString(connectionString);
@@ -452,7 +454,7 @@ public final class MongoClientSettings {
     }
 
     /**
-     * Returns true if writes should be retried if they fail due to a network error.
+     * Returns true if writes should be retried if they fail due to a network error.  The default is false.
      *
      * @return the retryWrites value
      * @mongodb.server.release 3.6

@@ -129,12 +129,14 @@ class ConnectionStringSpecification extends Specification {
     def 'should correct parse retryWrites'() {
         expect:
         uri.getRetryWrites() == retryWrites
+        uri.getRetryWritesValue() == retryWritesValue
 
         where:
-        uri                                                             | retryWrites
-        new ConnectionString('mongodb://localhost/')                    | false
-        new ConnectionString('mongodb://localhost/?retryWrites=false')  | false
-        new ConnectionString('mongodb://localhost/?retryWrites=true')   | true
+        uri                                                                            | retryWrites | retryWritesValue
+        new ConnectionString('mongodb://localhost/')                    | false       | null
+        new ConnectionString('mongodb://localhost/?retryWrites=false')  | false       | false
+        new ConnectionString('mongodb://localhost/?retryWrites=true')   | true        | true
+        new ConnectionString('mongodb://localhost/?retryWrites=foos')   | false       | false
     }
 
     @Unroll
@@ -248,6 +250,8 @@ class ConnectionStringSpecification extends Specification {
         connectionString.getStreamType() == null
         connectionString.getApplicationName() == null
         connectionString.getCompressorList() == []
+        !connectionString.getRetryWrites()
+        connectionString.getRetryWritesValue() == null
     }
 
     @Unroll
