@@ -14,6 +14,9 @@
  * limitations under the License.
  */
 
+/**
+ * This package contains the synchronous CRUD API.
+ */
 @NonNullApi
 package com.mongodb.client;
 
