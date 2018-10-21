@@ -187,7 +187,7 @@ public final class Projections {
      * @return the combined projection
      */
     public static Bson fields(final List<? extends Bson> projections) {
-        notNull("sorts", projections);
+        notNull("projections", projections);
         return new FieldsProjection(projections);
     }
 
