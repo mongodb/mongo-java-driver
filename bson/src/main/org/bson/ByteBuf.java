@@ -232,18 +232,18 @@ public interface ByteBuf  {
      * <p> This method transfers bytes from this buffer into the given
      * destination array.  If there are fewer bytes remaining in the
      * buffer than are required to satisfy the request, that is, if
-     * <tt>length</tt>&nbsp;<tt>&gt;</tt>&nbsp;<tt>remaining()</tt>, then no
+     * <code style="white-space:nowrap">length &gt; remaining()</code>, then no
      * bytes are transferred and a {@link java.nio.BufferUnderflowException} is
      * thrown.
      *
-     * <p> Otherwise, this method copies <tt>length</tt> bytes from this
+     * <p> Otherwise, this method copies {@code length} bytes from this
      * buffer into the given array, starting at the current position of this
      * buffer and at the given offset in the array.  The position of this
-     * buffer is then incremented by <tt>length</tt>.
+     * buffer is then incremented by {@code length}.
      *
      * <p> In other words, an invocation of this method of the form
-     * <tt>src.get(dst,&nbsp;off,&nbsp;len)</tt> has exactly the same effect as
-     * the loop
+     * <code style="white-space:nowrap">src.get(dst, off, len)</code>
+     * has exactly the same effect as the loop
      *
      * <pre>
      * {@code
@@ -261,21 +261,21 @@ public interface ByteBuf  {
      * @param  offset
      *         The offset within the array of the first byte to be
      *         written; must be non-negative and no larger than
-     *         <tt>dst.length</tt>
+     *         {@code dst.length}
      *
      * @param  length
      *         The maximum number of bytes to be written to the given
      *         array; must be non-negative and no larger than
-     *         <tt>dst.length - offset</tt>
+     *         {@code dst.length - offset}
      *
      * @return  This buffer
      *
      * @throws java.nio.BufferUnderflowException
-     *          If there are fewer than <tt>length</tt> bytes
+     *          If there are fewer than {@code length} bytes
      *          remaining in this buffer
      *
      * @throws  IndexOutOfBoundsException
-     *          If the preconditions on the <tt>offset</tt> and <tt>length</tt>
+     *          If the preconditions on the {@code offset} and {@code length}
      *          parameters do not hold
      */
     ByteBuf get(byte[] bytes, int offset, int length);

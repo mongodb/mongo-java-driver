@@ -50,7 +50,7 @@ allprojects {
                 encoding = 'UTF-8'
                 charSet 'UTF-8'
                 docEncoding 'UTF-8'
-                addBooleanOption("html4", true)
+                addBooleanOption("html5", true)
                 addBooleanOption("-allow-script-in-comments", true)
                 header = '''
             | <script type="text/javascript">
