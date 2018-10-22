@@ -38,7 +38,7 @@ test {
 
 clirr {
     excludeFilter = new File("$configDir/clirr-exclude.yml")
-    baseline 'org.mongodb:mongodb-driver:3.6.0'
+    baseline 'org.mongodb:mongodb-driver-sync:3.8.0'
     failOnErrors = false
 }
 
