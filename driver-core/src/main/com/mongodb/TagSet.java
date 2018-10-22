@@ -82,10 +82,10 @@ public final class TagSet implements Iterable<Tag> {
     }
 
     /**
-     * Returns <tt>true</tt> if this tag set contains all of the elements of the specified tag set.
+     * Returns {@code true} if this tag set contains all of the elements of the specified tag set.
      *
      * @param tagSet tag set to be checked for containment in this tag set
-     * @return <tt>true</tt> if this tag set contains all of the elements of the specified tag set
+     * @return {@code true} if this tag set contains all of the elements of the specified tag set
      */
     public boolean containsAll(final TagSet tagSet) {
         return wrapped.containsAll(tagSet.wrapped);

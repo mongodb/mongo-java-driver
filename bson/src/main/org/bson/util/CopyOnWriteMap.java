@@ -30,7 +30,7 @@ import java.util.Map;
  * mutations, and is useful when you cannot or don't want to synchronize traversals, yet need to preclude interference among concurrent
  * threads. The "snapshot" style iterators on the collections returned by {@link #entrySet()}, {@link #keySet()} and {@link #values()} use a
  * reference to the internal map at the point that the iterator was created. This map never changes during the lifetime of the iterator, so
- * interference is impossible and the iterator is guaranteed not to throw <tt>ConcurrentModificationException</tt>. The iterators will not
+ * interference is impossible and the iterator is guaranteed not to throw {@code ConcurrentModificationException}. The iterators will not
  * reflect additions, removals, or changes to the list since the iterator was created. Removing elements via these iterators is not
  * supported. The mutable operations on these collections (remove, retain etc.) are supported but as with the {@link java.util.Map}
  * interface, add and addAll are not and throw {@link UnsupportedOperationException}.</p> <p>The actual copy is performed by an abstract

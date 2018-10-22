@@ -30,8 +30,8 @@ public interface BSONObject {
      *
      * @param key Name to set
      * @param v   Corresponding value
-     * @return the previous value associated with <tt>key</tt>, or <tt>null</tt> if there was no mapping for <tt>key</tt>. (A <tt>null</tt>
-     * return can also indicate that the map previously associated <tt>null</tt> with <tt>key</tt>.)
+     * @return the previous value associated with {@code key}, or {@code null} if there was no mapping for {@code key}. (A
+     * {@code null} return can also indicate that the map previously associated {@code null} with {@code key}.)
      */
     Object put(String key, Object v);
 
