@@ -59,7 +59,7 @@ ext {
     }
 }
 
-def javaMainProjects = subprojects.findAll { !['util', 'driver-benchmarks', 'driver-embedded-android'].contains(it.name) }
+def javaMainProjects = subprojects.findAll { !['util', 'driver-benchmarks', 'driver-embedded', 'driver-embedded-android'].contains(it.name) }
 configure(javaMainProjects) { project ->
     apply plugin: 'maven-publish'
     apply plugin: 'signing'

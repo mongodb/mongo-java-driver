@@ -32,13 +32,3 @@ dependencies {
 clirr {
     enabled = false
 }
-
-jar {
-    manifest {
-        instruction 'Automatic-Module-Name', 'org.mongodb.driver.embedded.client'
-        instruction 'Build-Version', project.gitVersion
-        instruction 'Import-Package',
-                'org.bson.*',
-                'com.mongodb.*'
-    }
-}
