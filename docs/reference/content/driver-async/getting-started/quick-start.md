@@ -83,7 +83,7 @@ SingleResultCallback<Void> callbackWhenFinished = new SingleResultCallback<Void>
 
 ```
 
-- The following `Block` code which the exexamples will use used to print the results of the find operations:
+- The following `Block` code which the examples will use to print the results of the find operations:
 
 ```java
 Block<Document> printDocumentBlock = new Block<Document>() {
