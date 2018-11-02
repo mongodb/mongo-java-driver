@@ -7,6 +7,7 @@ import com.mongodb.connection.BufferProvider
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SslSettings
 import org.junit.experimental.categories.Category
+import spock.lang.Ignore
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
@@ -18,7 +19,7 @@ import static com.mongodb.ClusterFixture.getSslSettings
 class StreamSocketAddressSpecification extends Specification {
 
     @Category(Slow)
-    @IgnoreIf({ getSslSettings().isEnabled() })
+    @Ignore
     def 'should successfully connect with working ip address group'() {
         given:
         def port = 27017
