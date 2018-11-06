@@ -48,10 +48,6 @@ public final class DnsResolver {
     // It's required that the srvHost has at least three parts (e.g. foo.bar.baz) and that all of the resolved hosts have a parent
     // domain equal to the domain of the srvHost.
     public static List<String> resolveHostFromSrvRecords(final String srvHost) {
-        if (srvHost.split("\\.").length < 3) {
-            throw new IllegalArgumentException(format("An SRV host name '%s' was provided that does not contain at least three parts. "
-                    + "It must contain a hostname, domain name and a top level domain.", srvHost));
-        }
         String srvHostDomain = srvHost.substring(srvHost.indexOf('.') + 1);
         List<String> srvHostDomainParts = asList(srvHostDomain.split("\\."));
         List<String> hosts = new ArrayList<String>();

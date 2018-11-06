@@ -33,7 +33,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.internal.dns.DnsResolver.resolveAdditionalQueryParametersFromTxtRecords;
-import static com.mongodb.internal.dns.DnsResolver.resolveHostFromSrvRecords;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -234,6 +233,7 @@ public class ConnectionString {
     private static final Logger LOGGER = Loggers.getLogger("uri");
 
     private final MongoCredential credential;
+    private final boolean isSrvProtocol;
     private final List<String> hosts;
     private final String database;
     private final String collection;
@@ -271,8 +271,8 @@ public class ConnectionString {
     public ConnectionString(final String connectionString) {
         this.connectionString = connectionString;
         boolean isMongoDBProtocol = connectionString.startsWith(MONGODB_PREFIX);
-        boolean isSRVProtocol = connectionString.startsWith(MONGODB_SRV_PREFIX);
-        if (!isMongoDBProtocol && !isSRVProtocol) {
+        isSrvProtocol = connectionString.startsWith(MONGODB_SRV_PREFIX);
+        if (!isMongoDBProtocol && !isSrvProtocol) {
             throw new IllegalArgumentException(format("The connection string is invalid. "
                     + "Connection strings must start with either '%s' or '%s", MONGODB_PREFIX, MONGODB_SRV_PREFIX));
         }
@@ -324,8 +324,16 @@ public class ConnectionString {
         }
 
         // Validate the hosts
-        List<String> unresolvedHosts = unmodifiableList(parseHosts(asList(hostIdentifier.split(",")), isSRVProtocol));
-        this.hosts = isSRVProtocol ? resolveHostFromSrvRecords(unresolvedHosts.get(0)) : unresolvedHosts;
+        List<String> unresolvedHosts = unmodifiableList(parseHosts(asList(hostIdentifier.split(","))));
+        if (isSrvProtocol) {
+            if (unresolvedHosts.size() > 1) {
+                throw new IllegalArgumentException("Only one host allowed when using mongodb+srv protocol");
+            }
+            if (unresolvedHosts.get(0).contains(":")) {
+                throw new IllegalArgumentException("Host for when using mongodb+srv protocol can not contain a port");
+            }
+        }
+        this.hosts = unresolvedHosts;
 
         // Process the authDB section
         String nsPart;
@@ -353,7 +361,7 @@ public class ConnectionString {
             collection = null;
         }
 
-        String txtRecordsQueryParameters = isSRVProtocol ? resolveAdditionalQueryParametersFromTxtRecords(unresolvedHosts.get(0)) : "";
+        String txtRecordsQueryParameters = isSrvProtocol ? resolveAdditionalQueryParametersFromTxtRecords(unresolvedHosts.get(0)) : "";
         String connectionStringQueryParamenters = unprocessedConnectionString;
 
         Map<String, List<String>> connectionStringOptionsMap = parseOptions(connectionStringQueryParamenters);
@@ -363,7 +371,7 @@ public class ConnectionString {
             + "'%s' contains the keys %s", ALLOWED_OPTIONS_IN_TXT_RECORD, unresolvedHosts.get(0), txtRecordsOptionsMap.keySet()));
         }
         Map<String, List<String>> combinedOptionsMaps = combineOptionsMaps(txtRecordsOptionsMap, connectionStringOptionsMap);
-        if (isSRVProtocol && !combinedOptionsMaps.containsKey("ssl")) {
+        if (isSrvProtocol && !combinedOptionsMaps.containsKey("ssl")) {
             combinedOptionsMaps.put("ssl", singletonList("true"));
         }
         translateOptions(combinedOptionsMaps);
@@ -867,7 +875,7 @@ public class ConnectionString {
         }
     }
 
-    private List<String> parseHosts(final List<String> rawHosts, final boolean isSRVProtocol) {
+    private List<String> parseHosts(final List<String> rawHosts) {
         if (rawHosts.size() == 0){
             throw new IllegalArgumentException("The connection string must contain at least one host");
         }
@@ -893,19 +901,10 @@ public class ConnectionString {
                             + "Reserved characters such as ':' must be escaped according RFC 2396. "
                             + "Any IPv6 address literal must be enclosed in '[' and ']' according to RFC 2732.", host));
                 } else if (colonCount == 1) {
-                    if (isSRVProtocol) {
-                        throw new IllegalArgumentException("A connection string using the mongodb+srv protocol can not"
-                                + "contain a host name that specifies a port");
-                    }
-
                     validatePort(host, host.substring(host.indexOf(":") + 1));
                 }
             }
             hosts.add(host);
-        }
-        if (isSRVProtocol && hosts.size() > 1) {
-            throw new IllegalArgumentException("The mongodb+srv protocol requires a single host name but this connection string has more "
-                    + "than one: " + connectionString);
         }
         Collections.sort(hosts);
         return hosts;
@@ -968,6 +967,15 @@ public class ConnectionString {
     @Nullable
     public char[] getPassword() {
         return credential != null ? credential.getPassword() : null;
+    }
+
+    /**
+     * Returns true if the connection string requires SRV protocol to resolve the host lists from the configured host.
+     *
+     * @return true if SRV protocol is required to resolve hosts.
+     */
+    public boolean isSrvProtocol() {
+        return isSrvProtocol;
     }
 
     /**
