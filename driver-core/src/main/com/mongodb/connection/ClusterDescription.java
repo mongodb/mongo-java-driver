@@ -16,6 +16,7 @@
 
 package com.mongodb.connection;
 
+import com.mongodb.MongoConfigurationException;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.TagSet;
@@ -45,6 +46,7 @@ public class ClusterDescription {
     private final List<ServerDescription> serverDescriptions;
     private final ClusterSettings clusterSettings;
     private final ServerSettings serverSettings;
+    private final MongoConfigurationException srvResolutionException;
 
     /**
      * Creates a new ClusterDescription.
@@ -72,9 +74,29 @@ public class ClusterDescription {
                               final List<ServerDescription> serverDescriptions,
                               final ClusterSettings clusterSettings,
                               final ServerSettings serverSettings) {
+        this(connectionMode, type, null, serverDescriptions, clusterSettings, serverSettings);
+    }
+
+    /**
+     * Creates a new ClusterDescription.
+     *
+     * @param connectionMode     whether to connect directly to a single server or to multiple servers
+     * @param type               what sort of cluster this is
+     * @param srvResolutionException an exception resolving the SRV record
+     * @param serverDescriptions the descriptions of all the servers currently in this cluster
+     * @param clusterSettings    the cluster settings
+     * @param serverSettings     the server settings
+     * @since 3.10
+     */
+    public ClusterDescription(final ClusterConnectionMode connectionMode, final ClusterType type,
+                              final MongoConfigurationException srvResolutionException,
+                              final List<ServerDescription> serverDescriptions,
+                              final ClusterSettings clusterSettings,
+                              final ServerSettings serverSettings) {
         notNull("all", serverDescriptions);
         this.connectionMode = notNull("connectionMode", connectionMode);
         this.type = notNull("type", type);
+        this.srvResolutionException = srvResolutionException;
         this.serverDescriptions = new ArrayList<ServerDescription>(serverDescriptions);
         this.clusterSettings = clusterSettings;
         this.serverSettings = serverSettings;
@@ -184,6 +206,16 @@ public class ClusterDescription {
      */
     public ClusterType getType() {
         return type;
+    }
+
+    /**
+     * Gets any exception encountered while resolving the SRV record for the initial host.
+     *
+     * @return any exception encountered while resolving the SRV record for the initial host, or null if none
+     * @since 3.10
+     */
+    public MongoConfigurationException getSrvResolutionException() {
+        return srvResolutionException;
     }
 
     /**
@@ -384,6 +416,19 @@ public class ClusterDescription {
             return false;
         }
 
+        // Compare class equality and message as exceptions rarely override equals
+        Class<?> thisExceptionClass = srvResolutionException != null ? srvResolutionException.getClass() : null;
+        Class<?> thatExceptionClass = that.srvResolutionException != null ? that.srvResolutionException.getClass() : null;
+        if (thisExceptionClass != null ? !thisExceptionClass.equals(thatExceptionClass) : thatExceptionClass != null) {
+            return false;
+        }
+
+        String thisExceptionMessage = srvResolutionException != null ? srvResolutionException.getMessage() : null;
+        String thatExceptionMessage = that.srvResolutionException != null ? that.srvResolutionException.getMessage() : null;
+        if (thisExceptionMessage != null ? !thisExceptionMessage.equals(thatExceptionMessage) : thatExceptionMessage != null) {
+            return false;
+        }
+
         return true;
     }
 
@@ -391,6 +436,7 @@ public class ClusterDescription {
     public int hashCode() {
         int result = connectionMode.hashCode();
         result = 31 * result + type.hashCode();
+        result = 31 * result + (srvResolutionException == null ? 0 : srvResolutionException.hashCode());
         result = 31 * result + serverDescriptions.hashCode();
         return result;
     }
@@ -399,6 +445,7 @@ public class ClusterDescription {
     public String toString() {
         return "ClusterDescription{"
                + "type=" + getType()
+               + (srvResolutionException == null ? "" : ", srvResolutionException=" + srvResolutionException)
                + ", connectionMode=" + connectionMode
                + ", serverDescriptions=" + serverDescriptions
                + '}';
@@ -416,7 +463,11 @@ public class ClusterDescription {
             serverDescriptions.append(delimiter).append(cur.getShortDescription());
             delimiter = ", ";
         }
-        return format("{type=%s, servers=[%s]", type, serverDescriptions);
+        if (srvResolutionException == null) {
+            return format("{type=%s, servers=[%s]", type, serverDescriptions);
+        }  else {
+            return format("{type=%s, srvResolutionException=%s, servers=[%s]", type, srvResolutionException, serverDescriptions);
+        }
     }
 
     private interface Predicate {

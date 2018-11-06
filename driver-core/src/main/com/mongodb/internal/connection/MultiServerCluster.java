@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.MongoConfigurationException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
@@ -46,6 +47,8 @@ import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.connection.ServerType.REPLICA_SET_GHOST;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.connection.ServerType.STANDALONE;
+import static com.mongodb.internal.connection.ServerAddressHelper.createServerAddress;
+import static com.mongodb.internal.dns.DnsResolver.resolveHostFromSrvRecords;
 import static java.lang.String.format;
 
 /**
@@ -61,6 +64,7 @@ public final class MultiServerCluster extends BaseCluster {
 
     private final ConcurrentMap<ServerAddress, ServerTuple> addressToServerTupleMap =
     new ConcurrentHashMap<ServerAddress, ServerTuple>();
+    private volatile MongoConfigurationException srvResolutionException;
 
     private static final class ServerTuple {
         private final ClusterableServer server;
@@ -82,19 +86,45 @@ public final class MultiServerCluster extends BaseCluster {
             LOGGER.info(format("Cluster created with settings %s", settings.getShortDescription()));
         }
 
+        if (settings.getSrvHost() != null) {
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    List<ServerAddress> hosts = new ArrayList<ServerAddress>();
+                    try {
+                        List<String> resolvedHostNames = resolveHostFromSrvRecords(settings.getSrvHost());
+                        for (String host : resolvedHostNames) {
+                            hosts.add(createServerAddress(host));
+                        }
+                    } catch (MongoConfigurationException e) {
+                        srvResolutionException = e;
+                    } catch (RuntimeException e) {
+                        LOGGER.warn("Unexpected runtime exception while resolving SRV record", e);
+                        return;
+                    }
+                    initialize(clusterId, settings, hosts, serverFactory);
+                }
+            }).start();
+        } else {
+            initialize(clusterId, settings, settings.getHosts(), serverFactory);
+        }
+    }
+
+    private void initialize(final ClusterId clusterId, final ClusterSettings settings, final List<ServerAddress> serverAddresses,
+                            final ClusterableServerFactory serverFactory) {
         ClusterDescription newDescription;
 
         // synchronizing this code because addServer registers a callback which is re-entrant to this instance.
         // In other words, we are leaking a reference to "this" from the constructor.
         synchronized (this) {
-            for (final ServerAddress serverAddress : settings.getHosts()) {
+            for (final ServerAddress serverAddress : serverAddresses) {
                 addServer(serverAddress);
             }
             newDescription = updateDescription();
         }
         fireChangeEvent(new ClusterDescriptionChangedEvent(clusterId, newDescription,
                 new ClusterDescription(settings.getMode(), ClusterType.UNKNOWN, Collections.<ServerDescription>emptyList(),
-                                              settings, serverFactory.getSettings())));
+                        settings, serverFactory.getSettings())));
     }
 
     @Override
@@ -339,8 +369,8 @@ public final class MultiServerCluster extends BaseCluster {
     }
 
     private ClusterDescription updateDescription() {
-        ClusterDescription newDescription = new ClusterDescription(MULTIPLE, clusterType, getNewServerDescriptionList(),
-                                                                          getSettings(), getServerFactory().getSettings());
+        ClusterDescription newDescription = new ClusterDescription(MULTIPLE, clusterType, srvResolutionException,
+                getNewServerDescriptionList(), getSettings(), getServerFactory().getSettings());
         updateDescription(newDescription);
         return newDescription;
     }

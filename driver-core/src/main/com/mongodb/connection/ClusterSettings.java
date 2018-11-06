@@ -17,6 +17,7 @@
 package com.mongodb.connection;
 
 import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.Immutable;
@@ -35,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.connection.ServerAddressHelper.createServerAddress;
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
@@ -47,6 +49,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  */
 @Immutable
 public final class ClusterSettings {
+    private final String srvHost;
     private final List<ServerAddress> hosts;
     private final ClusterConnectionMode mode;
     private final ClusterType requiredClusterType;
@@ -83,7 +86,9 @@ public final class ClusterSettings {
      */
     @NotThreadSafe
     public static final class Builder {
-        private List<ServerAddress> hosts = singletonList(new ServerAddress());
+        private static final List<ServerAddress> DEFAULT_HOSTS = singletonList(new ServerAddress());
+        private String srvHost;
+        private List<ServerAddress> hosts = DEFAULT_HOSTS;
         private ClusterConnectionMode mode;
         private ClusterType requiredClusterType = ClusterType.UNKNOWN;
         private String requiredReplicaSetName;
@@ -109,6 +114,7 @@ public final class ClusterSettings {
         public Builder applySettings(final ClusterSettings clusterSettings) {
             notNull("clusterSettings", clusterSettings);
             description = clusterSettings.description;
+            srvHost = clusterSettings.srvHost;
             hosts = clusterSettings.hosts;
             mode = clusterSettings.mode;
             requiredReplicaSetName = clusterSettings.requiredReplicaSetName;
@@ -135,6 +141,20 @@ public final class ClusterSettings {
         }
 
         /**
+         * Sets the host name to use in order to look up an SRV DNS record to find the MongoDB hosts.
+         *
+         * @param srvHost the SRV host name
+         * @return this
+         */
+        public Builder srvHost(final String srvHost) {
+            if (this.hosts != DEFAULT_HOSTS) {
+                throw new IllegalArgumentException("Can not set both hosts and srvHost");
+            }
+            this.srvHost = srvHost;
+            return this;
+        }
+
+        /**
          * Sets the hosts for the cluster. Any duplicate server addresses are removed from the list.
          *
          * @param hosts the seed list of hosts
@@ -144,6 +164,9 @@ public final class ClusterSettings {
             notNull("hosts", hosts);
             if (hosts.isEmpty()) {
                 throw new IllegalArgumentException("hosts list may not be empty");
+            }
+            if (srvHost != null) {
+                throw new IllegalArgumentException("srvHost must be null");
             }
             Set<ServerAddress> hostsSet = new LinkedHashSet<ServerAddress>(hosts.size());
             for (ServerAddress serverAddress : hosts) {
@@ -264,7 +287,11 @@ public final class ClusterSettings {
          * @return this
          */
         public Builder applyConnectionString(final ConnectionString connectionString) {
-            if (connectionString.getHosts().size() == 1 && connectionString.getRequiredReplicaSetName() == null) {
+            if (connectionString.isSrvProtocol()) {
+                mode(ClusterConnectionMode.MULTIPLE);
+                srvHost(connectionString.getHosts().get(0));
+            }
+            else if (connectionString.getHosts().size() == 1 && connectionString.getRequiredReplicaSetName() == null) {
                 mode(ClusterConnectionMode.SINGLE)
                 .hosts(singletonList(createServerAddress(connectionString.getHosts().get(0))));
             } else {
@@ -330,6 +357,15 @@ public final class ClusterSettings {
     @Deprecated
     public String getDescription() {
         return description;
+    }
+
+    /**
+     * Gets the host name from which to lookup SRV record for the seed list
+     * @return the SRV host, or null if none specified
+     * @since 3.10
+     */
+    public String getSrvHost() {
+        return srvHost;
     }
 
     /**
@@ -478,6 +514,9 @@ public final class ClusterSettings {
         if (description != null ? !description.equals(that.description) : that.description != null) {
             return false;
         }
+        if (srvHost != null ? !srvHost.equals(that.srvHost) : that.srvHost != null) {
+            return false;
+        }
         if (!hosts.equals(that.hosts)) {
             return false;
         }
@@ -504,6 +543,7 @@ public final class ClusterSettings {
     @Override
     public int hashCode() {
         int result = hosts.hashCode();
+        result = 31 * result + (srvHost != null ? srvHost.hashCode() : 0);
         result = 31 * result + mode.hashCode();
         result = 31 * result + requiredClusterType.hashCode();
         result = 31 * result + (requiredReplicaSetName != null ? requiredReplicaSetName.hashCode() : 0);
@@ -519,7 +559,8 @@ public final class ClusterSettings {
     @Override
     public String toString() {
         return "{"
-               + "hosts=" + hosts
+               + (hosts.isEmpty() ? "" : "hosts=" + hosts)
+               + (srvHost == null ? "" : ", srvHost=" + srvHost)
                + ", mode=" + mode
                + ", requiredClusterType=" + requiredClusterType
                + ", requiredReplicaSetName='" + requiredReplicaSetName + '\''
@@ -539,7 +580,8 @@ public final class ClusterSettings {
      */
     public String getShortDescription() {
         return "{"
-               + "hosts=" + hosts
+                + (hosts.isEmpty() ? "" : "hosts=" + hosts)
+                + (srvHost == null ? "" : ", srvHost=" + srvHost)
                + ", mode=" + mode
                + ", requiredClusterType=" + requiredClusterType
                + ", serverSelectionTimeout='" + serverSelectionTimeoutMS + " ms" + '\''
@@ -550,6 +592,18 @@ public final class ClusterSettings {
     }
 
     private ClusterSettings(final Builder builder) {
+        // TODO: Unit test this
+        if (builder.srvHost != null) {
+            if (builder.srvHost.contains(":")) {
+                throw new IllegalArgumentException("The srvHost can not contain a host name that specifies a port");
+            }
+
+            if (builder.hosts.get(0).getHost().split("\\.").length < 3) {
+                throw new MongoClientException(format("An SRV host name '%s' was provided that does not contain at least three parts. "
+                        + "It must contain a hostname, domain name and a top level domain.", builder.hosts.get(0).getHost()));
+            }
+        }
+
         if (builder.hosts.size() > 1 && builder.requiredClusterType == ClusterType.STANDALONE) {
             throw new IllegalArgumentException("Multiple hosts cannot be specified when using ClusterType.STANDALONE.");
         }
@@ -568,6 +622,7 @@ public final class ClusterSettings {
         }
 
         description = builder.description;
+        srvHost = builder.srvHost;
         hosts = builder.hosts;
         mode = builder.mode != null ? builder.mode : hosts.size() == 1 ? ClusterConnectionMode.SINGLE : ClusterConnectionMode.MULTIPLE;
         requiredReplicaSetName = builder.requiredReplicaSetName;

@@ -493,6 +493,16 @@ class ConnectionStringSpecification extends Specification {
                                                                                           + 'authMechanism=GSSAPI')
     }
 
+    def 'should recognize SRV protocol'() {
+        when:
+        def connectionString = new ConnectionString('mongodb+srv://test5.test.build.10gen.cc')
+
+        then:
+        connectionString.isSrvProtocol()
+        connectionString.hosts == ['test5.test.build.10gen.cc']
+    }
+
+
     // these next two tests are functionally part of the initial-dns-seedlist-discovery specification tests, but since those
     // tests require that the driver connects to an actual replica set, it isn't possible to create specification tests
     // with URIs containing user names, since connection to a replica set that doesn't have that user defined would fail.

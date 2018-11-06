@@ -20,6 +20,7 @@ import com.mongodb.Block;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoConfigurationException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ServerDescription;
@@ -47,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.mongodb.ClusterFixture.getSslSettings;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
@@ -77,22 +79,61 @@ public class InitialDnsSeedlistDiscoveryTest {
     }
 
     @Test
-    public void shouldResolve() {
-
+    public void shouldResolveTxtRecord() throws InterruptedException {
         if (isError) {
+            MongoClient client = null;
             try {
-                MongoClientSettings.builder().applyConnectionString(new ConnectionString(uri)).build();
-                fail();
+                final AtomicReference<MongoConfigurationException> exceptionReference = new AtomicReference<MongoConfigurationException>();
+                final CountDownLatch latch = new CountDownLatch(1);
+
+                ConnectionString connectionString = new ConnectionString(uri);
+                final SslSettings sslSettings = getSslSettings(connectionString);
+                MongoClientSettings settings = MongoClientSettings.builder().applyConnectionString(connectionString)
+                        .applyToSslSettings(new Block<SslSettings.Builder>() {
+                            @Override
+                            public void apply(final SslSettings.Builder builder) {
+                                builder.applySettings(sslSettings);
+                            }
+                        })
+                        .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
+                            @Override
+                            public void apply(final ClusterSettings.Builder builder) {
+                                builder.addClusterListener(new ClusterListener() {
+                                    @Override
+                                    public void clusterOpening(final ClusterOpeningEvent event) {
+                                    }
+
+                                    @Override
+                                    public void clusterClosed(final ClusterClosedEvent event) {
+                                    }
+
+                                    @Override
+                                    public void clusterDescriptionChanged(final ClusterDescriptionChangedEvent event) {
+                                        if (event.getNewDescription().getSrvResolutionException() != null) {
+                                            exceptionReference.set(event.getNewDescription().getSrvResolutionException());
+                                            latch.countDown();
+                                        }
+                                    }
+                                });
+                            }
+                        })
+                        .build();
+                    client = MongoClients.create(settings);
+                    if (!latch.await(5, TimeUnit.SECONDS)) {
+                        fail("");
+                    }
+                    throw exceptionReference.get();
             } catch (IllegalArgumentException e) {
                // all good
             } catch (MongoClientException e) {
                 // all good
+            } finally {
+                if (client != null) {
+                    client.close();
+                }
             }
         } else {
             ConnectionString connectionString = new ConnectionString(this.uri);
-
-            assertEquals(seeds.size(), connectionString.getHosts().size());
-            assertTrue(connectionString.getHosts().containsAll(seeds));
 
             for (Map.Entry<String, BsonValue> entry : options.entrySet()) {
                 if (entry.getKey().equals("replicaSet")) {
@@ -112,7 +153,7 @@ public class InitialDnsSeedlistDiscoveryTest {
     }
 
     @Test
-    public void shouldDiscover() throws InterruptedException {
+    public void shouldDiscoverSrvRecord() throws InterruptedException {
         if (seeds.isEmpty()) {
             return;
         }
@@ -148,7 +189,6 @@ public class InitialDnsSeedlistDiscoveryTest {
                                         if (hosts.size() == curHostList.size() && curHostList.containsAll(hosts)) {
                                             latch.countDown();
                                         }
-
                                     }
                                 });
                     }
