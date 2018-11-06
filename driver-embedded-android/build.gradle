@@ -40,7 +40,7 @@ buildscript {
 
 dependencies {
     api project(':driver-sync')
-    implementation "org.mongodb:embedded-capi-android:[4.0,4.1)"
+    implementation "org.mongodb:embedded-android:[4.0,4.1)"
 }
 
 android {
