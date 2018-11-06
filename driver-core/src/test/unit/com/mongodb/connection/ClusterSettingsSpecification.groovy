@@ -28,6 +28,7 @@ import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
 
+// TODO: add SRV tests
 class ClusterSettingsSpecification extends Specification {
     def hosts = [new ServerAddress('localhost'), new ServerAddress('localhost', 30000)]
     def serverSelector = new WritableServerSelector()
