@@ -138,7 +138,7 @@ final class Operations<TDocument> {
     private <TResult> FindOperation<TResult> createFindOperation(final MongoNamespace findNamespace, final Bson filter,
                                                                  final Class<TResult> resultClass, final FindOptions options) {
         return new FindOperation<TResult>(findNamespace, codecRegistry.get(resultClass))
-                .filter(filter.toBsonDocument(documentClass, codecRegistry))
+                .filter(filter == null ? new BsonDocument() : filter.toBsonDocument(documentClass, codecRegistry))
                 .batchSize(options.getBatchSize())
                 .skip(options.getSkip())
                 .limit(options.getLimit())

@@ -32,6 +32,7 @@ import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodec
 import org.bson.codecs.DocumentCodecProvider
 import org.bson.codecs.ValueCodecProvider
+import org.bson.conversions.Bson
 import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.isTheSameAs
@@ -53,7 +54,7 @@ class FindIterableSpecification extends Specification {
     @SuppressWarnings('deprecation')
     def 'should build the expected findOperation'() {
         given:
-        def executor = new TestOperationExecutor([null, null])
+        def executor = new TestOperationExecutor([null, null, null])
         def findIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
                 executor, new Document('filter', 1))
                 .sort(new Document('sort', 1))
@@ -161,6 +162,26 @@ class FindIterableSpecification extends Specification {
                 .showRecordId(true)
                 .snapshot(true)
         )
+
+        when: 'passing nulls to nullable methods'
+        new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
+                executor, new Document('filter', 1))
+                .filter(null as Bson)
+                .collation(null)
+                .modifiers(null)
+                .projection(null)
+                .sort(null as Bson)
+                .comment(null)
+                .hint(null)
+                .max(null as Bson)
+                .min(null as Bson)
+                .iterator()
+
+        operation = executor.getReadOperation() as FindOperation<Document>
+
+        then: 'should set an empty doc for the filter'
+        expect operation, isTheSameAs(new FindOperation<Document>(namespace, new DocumentCodec())
+                .filter(new BsonDocument()).slaveOk(true))
     }
 
     def 'should use ClientSession'() {
