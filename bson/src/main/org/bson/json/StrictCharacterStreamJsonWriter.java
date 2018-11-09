@@ -98,7 +98,6 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
     @Override
     public void writeBoolean(final String name, final boolean value) {
         notNull("name", name);
-        notNull("value", value);
         writeName(name);
         writeBoolean(value);
     }
@@ -148,7 +147,7 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
             write(" ");
         }
         writeStringHelper(name);
-        write(" : ");
+        write(settings.getPropertySeparator().getSeparator());
 
         state = State.VALUE;
     }
@@ -240,6 +239,11 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
             throw new BsonInvalidOperationException("Can't end an array if not in an array");
         }
 
+        if (settings.isIndent() && settings.isOneArrayElementPerLine()) {
+            write(settings.getNewLineCharacters());
+            write(context.parentContext.indentation);
+        }
+
         write("]");
         context = context.parentContext;
         if (context.contextType == JsonContextType.TOP_LEVEL) {
@@ -257,6 +261,7 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
      * @since 3.7
      * @see StrictCharacterStreamJsonWriterSettings#maxLength
      */
+    @Override
     public boolean isTruncated() {
         return isTruncated;
     }
@@ -275,7 +280,13 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
 
     private void preWriteValue() {
         if (context.contextType == JsonContextType.ARRAY) {
-            if (context.hasElements) {
+            if (settings.isIndent() && settings.isOneArrayElementPerLine()) {
+                if (context.hasElements) {
+                    write(",");
+                }
+                write(settings.getNewLineCharacters());
+                write(context.indentation);
+            } else if (context.hasElements) {
                 write(", ");
             }
         }
@@ -381,20 +392,16 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
         }
     }
 
-    private void checkPreconditions(final State... validStates) {
-        if (!checkState(validStates)) {
+    private void checkPreconditions(final State validState) {
+        if (validState != state) {
             throw new BsonInvalidOperationException("Invalid state " + state);
         }
     }
 
-    private boolean checkState(final State... validStates) {
-        for (State cur : validStates) {
-            if (cur == state) {
-                return true;
-            }
+    private void checkPreconditions(final State validState1, final State validState2) {
+        if (validState1 != state && validState2 != state) {
+            throw new BsonInvalidOperationException("Invalid state " + state);
         }
-        return false;
-
     }
 
     private void throwBSONException(final IOException e) {

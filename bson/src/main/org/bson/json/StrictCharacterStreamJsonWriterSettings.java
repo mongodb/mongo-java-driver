@@ -30,6 +30,8 @@ public final class StrictCharacterStreamJsonWriterSettings {
     private final String newLineCharacters;
     private final String indentCharacters;
     private final int maxLength;
+    private final boolean oneArrayElementPerLine;
+    private final PropertySeparator propertySeparator;
 
     /**
      * Create a builder for StrictCharacterStreamJsonWriterSettings, which are immutable.
@@ -45,6 +47,8 @@ public final class StrictCharacterStreamJsonWriterSettings {
         newLineCharacters = builder.newLineCharacters != null ? builder.newLineCharacters : System.getProperty("line.separator");
         indentCharacters = builder.indentCharacters;
         maxLength = builder.maxLength;
+        oneArrayElementPerLine = builder.oneArrayElementPerLine;
+        propertySeparator = builder.propertySeparator;
     }
 
     /**
@@ -86,6 +90,52 @@ public final class StrictCharacterStreamJsonWriterSettings {
     }
 
     /**
+     * If each array element should be formatted to have its own line when indent mode is enabled.  The default value is {@code false}.
+     *
+     * @return if each array element should have its own line
+     * @since 3.10
+     */
+    public boolean isOneArrayElementPerLine() {
+        return oneArrayElementPerLine;
+    }
+
+    /**
+     * The format of the separator between property name's and property value's.
+     *
+     * @return the property separator to use.
+     * @since 3.10
+     */
+    public PropertySeparator getPropertySeparator() {
+        return propertySeparator;
+    }
+
+    /**
+     * The format of the separator between property name's and property value's.
+     *
+     * @since 3.10
+     */
+    public enum PropertySeparator {
+        NO_SPACES(":"),
+        SPACE_BEFORE(" :"),
+        SPACE_AFTER(": "),
+        SPACE_BEFORE_AND_AFTER(" : ");
+
+        private String separator;
+
+        PropertySeparator(final String separator) {
+            this.separator = separator;
+        }
+
+        /**
+         * The character(s) to use as a separator between property name's and property value's.
+         * @return the separator character(s)
+         */
+        public String getSeparator() {
+            return separator;
+        }
+    }
+
+    /**
      * A builder for StrictCharacterStreamJsonWriterSettings
      *
      * @since 3.4
@@ -95,6 +145,8 @@ public final class StrictCharacterStreamJsonWriterSettings {
         private String newLineCharacters = System.getProperty("line.separator");
         private String indentCharacters = "  ";
         private int maxLength;
+        private boolean oneArrayElementPerLine;
+        private PropertySeparator propertySeparator = PropertySeparator.SPACE_BEFORE_AND_AFTER;
 
         /**
          * Build a JsonWriterSettings instance.
@@ -149,6 +201,31 @@ public final class StrictCharacterStreamJsonWriterSettings {
          */
         public Builder maxLength(final int maxLength) {
             this.maxLength = maxLength;
+            return this;
+        }
+
+        /**
+         * Sets if each array element should be formatted to have its own line if indent mode is enabled.
+         *
+         * @param oneArrayElementPerLine if each array element should be formatted to have its own line
+         * @return this
+         * @since 3.10
+         */
+        public Builder oneArrayElementPerLine(final boolean oneArrayElementPerLine) {
+            this.oneArrayElementPerLine = oneArrayElementPerLine;
+            return this;
+        }
+
+        /**
+         * Sets the format to use for the separator between property name's and property value's.
+         *
+         * @param propertySeparator the property separator type
+         * @return this
+         * @since 3.10
+         */
+        public Builder propertySeparator(final PropertySeparator propertySeparator) {
+            notNull("propertySeparator", propertySeparator);
+            this.propertySeparator = propertySeparator;
             return this;
         }
 

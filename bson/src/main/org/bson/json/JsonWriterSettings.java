@@ -78,10 +78,7 @@ public class JsonWriterSettings extends BsonWriterSettings {
             new LegacyExtendedJsonRegularExpressionConverter();
     private static final ShellRegularExpressionConverter SHELL_REGULAR_EXPRESSION_CONVERTER = new ShellRegularExpressionConverter();
 
-    private final boolean indent;
-    private final String newLineCharacters;
-    private final String indentCharacters;
-    private final int maxLength;
+    private final StrictCharacterStreamJsonWriterSettings writerSettings;
     private final JsonMode outputMode;
     private final Converter<BsonNull> nullConverter;
     private final Converter<String> stringConverter;
@@ -189,11 +186,12 @@ public class JsonWriterSettings extends BsonWriterSettings {
 
     @SuppressWarnings("deprecation")
     private JsonWriterSettings(final Builder builder) {
-        indent = builder.indent;
-        newLineCharacters = builder.newLineCharacters != null ? builder.newLineCharacters : System.getProperty("line.separator");
-        indentCharacters = builder.indentCharacters;
+        if (builder.writerSettings != null) {
+            writerSettings = builder.writerSettings.build();
+        } else {
+            writerSettings = StrictCharacterStreamJsonWriterSettings.builder().build();
+        }
         outputMode = builder.outputMode;
-        maxLength = builder.maxLength;
 
         if (builder.nullConverter != null) {
             nullConverter = builder.nullConverter;
@@ -336,35 +334,51 @@ public class JsonWriterSettings extends BsonWriterSettings {
     }
 
     /**
+     * The character stream writer settings that are used
+     *
+     * @return the character stream writer settings
+     * @since 3.10
+     */
+    public StrictCharacterStreamJsonWriterSettings getWriterSettings() {
+        return writerSettings;
+    }
+
+    /**
      * The indentation mode.  If true, output will be indented.  Otherwise, it will all be on the same line. The default value is {@code
      * false}.
      *
      * @return whether output should be indented.
+     * @deprecated Use {@code getWriterSettings().isIndent()} instead.
      */
+    @Deprecated
     public boolean isIndent() {
-        return indent;
+        return writerSettings.isIndent();
     }
 
     /**
      * The new line character(s) to use if indent mode is enabled.  The default value is {@code System.getProperty("line.separator")}.
      *
      * @return the new line character(s) to use.
+     * @deprecated Use {@code getWriterSettings().getNewLineCharacters()} instead.
      */
+    @Deprecated
     public String getNewLineCharacters() {
-        return newLineCharacters;
+        return writerSettings.getNewLineCharacters();
     }
 
     /**
      * The indent characters to use if indent mode is enabled.  The default value is two spaces.
      *
      * @return the indent character(s) to use.
+     * @deprecated Use {@code getWriterSettings().getIndentCharacters()} instead.
      */
+    @Deprecated
     public String getIndentCharacters() {
-        return indentCharacters;
+        return writerSettings.getIndentCharacters();
     }
 
     /**
-     * The output mode to use.  The default value is {@code }JSONMode.STRICT}.
+     * The output mode to use.  The default value is {@code JSONMode.STRICT}.
      *
      * @return the output mode.
      */
@@ -377,9 +391,11 @@ public class JsonWriterSettings extends BsonWriterSettings {
      *
      * @return the maximum length of the JSON string
      * @since 3.7
+     * @deprecated Use {@code getWriterSettings().getMaxLength()} instead.
      */
+    @Deprecated
     public int getMaxLength() {
-        return maxLength;
+        return writerSettings.getMaxLength();
     }
 
     /**
@@ -557,13 +573,9 @@ public class JsonWriterSettings extends BsonWriterSettings {
      *
      * @since 3.5
      */
-    @SuppressWarnings("deprecation")
     public static final class Builder {
-        private boolean indent;
-        private String newLineCharacters = System.getProperty("line.separator");
-        private String indentCharacters = "  ";
+        private StrictCharacterStreamJsonWriterSettings.Builder writerSettings;
         private JsonMode outputMode = JsonMode.RELAXED;
-        private int maxLength;
         private Converter<BsonNull> nullConverter;
         private Converter<String> stringConverter;
         private Converter<Long> dateTimeConverter;
@@ -592,13 +604,32 @@ public class JsonWriterSettings extends BsonWriterSettings {
         }
 
         /**
+         * Sets the character stream writer settings to use with this {@link JsonWriterSettings}.
+         *
+         * @param writerSettings the character stream writer settings
+         * @return this
+         * @since 3.10
+         */
+        public Builder writerSettings(final StrictCharacterStreamJsonWriterSettings.Builder writerSettings) {
+            notNull("writerSettings", writerSettings);
+            this.writerSettings = writerSettings;
+            return this;
+        }
+
+        /**
          * Sets whether indentation is enabled, which defaults to false.
          *
          * @param indent whether indentation is enabled
          * @return this
+         * @deprecated Use {@link #writerSettings(StrictCharacterStreamJsonWriterSettings.Builder)} and
+         * {@link StrictCharacterStreamJsonWriterSettings.Builder#indent(boolean)}
          */
+        @Deprecated
         public Builder indent(final boolean indent) {
-            this.indent = indent;
+            if (writerSettings == null) {
+                writerSettings = StrictCharacterStreamJsonWriterSettings.builder();
+            }
+            this.writerSettings.indent(indent);
             return this;
         }
 
@@ -608,10 +639,16 @@ public class JsonWriterSettings extends BsonWriterSettings {
          *
          * @param newLineCharacters the non-null new line character string
          * @return this
+         * @deprecated Use {@link #writerSettings(StrictCharacterStreamJsonWriterSettings.Builder)} and
+         * {@link StrictCharacterStreamJsonWriterSettings.Builder#newLineCharacters(String)}
          */
+        @Deprecated
         public Builder newLineCharacters(final String newLineCharacters) {
             notNull("newLineCharacters", newLineCharacters);
-            this.newLineCharacters = newLineCharacters;
+            if (writerSettings == null) {
+                writerSettings = StrictCharacterStreamJsonWriterSettings.builder();
+            }
+            this.writerSettings.newLineCharacters(newLineCharacters);
             return this;
         }
 
@@ -620,10 +657,16 @@ public class JsonWriterSettings extends BsonWriterSettings {
          *
          * @param indentCharacters the non-null indent character string
          * @return this
+         * @deprecated Use {@link #writerSettings(StrictCharacterStreamJsonWriterSettings.Builder)} and
+         * {@link StrictCharacterStreamJsonWriterSettings.Builder#indentCharacters(String)}
          */
+        @Deprecated
         public Builder indentCharacters(final String indentCharacters) {
             notNull("indentCharacters", indentCharacters);
-            this.indentCharacters = indentCharacters;
+            if (writerSettings == null) {
+                writerSettings = StrictCharacterStreamJsonWriterSettings.builder();
+            }
+            this.writerSettings.indentCharacters(indentCharacters);
             return this;
         }
 
@@ -645,10 +688,16 @@ public class JsonWriterSettings extends BsonWriterSettings {
          * @param maxLength the maximum length, which must be &gt;= 0 where 0 indicate no maximum length
          * @return the maximum length of the JSON string
          * @since 3.7
+         * @deprecated Use {@link #writerSettings(StrictCharacterStreamJsonWriterSettings.Builder)} and
+         * {@link StrictCharacterStreamJsonWriterSettings.Builder#maxLength(int)}
          */
+        @Deprecated
         public Builder maxLength(final int maxLength) {
             isTrueArgument("maxLength >= 0", maxLength >= 0);
-            this.maxLength = maxLength;
+            if (writerSettings == null) {
+                writerSettings = StrictCharacterStreamJsonWriterSettings.builder();
+            }
+            this.writerSettings.maxLength(maxLength);
             return this;
         }
 

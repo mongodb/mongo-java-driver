@@ -227,6 +227,125 @@ class StrictCharacterStreamJsonWriterSpecification extends Specification {
         stringWriter.toString() == format('{%n  "doc" : {%n    "a" : 1,%n    "b" : 2%n  }%n}')
     }
 
+    def 'should indent embedded array'() {
+        given:
+        writer = new StrictCharacterStreamJsonWriter(stringWriter, StrictCharacterStreamJsonWriterSettings.builder().indent(true).build())
+
+        when:
+        writer.writeStartObject()
+        writer.writeStartArray('arr')
+        writer.writeNumber('1')
+        writer.writeNumber('2')
+        writer.writeEndArray()
+        writer.writeEndObject()
+
+        then:
+        stringWriter.toString() == format('{%n  "arr" : [1, 2]%n}')
+    }
+
+    def 'should indent embedded document in array'() {
+        given:
+        writer = new StrictCharacterStreamJsonWriter(stringWriter, StrictCharacterStreamJsonWriterSettings.builder().indent(true).build())
+
+        when:
+        writer.writeStartObject()
+        writer.writeStartArray('arr')
+        writer.writeStartObject()
+        writer.writeNumber('a', '1')
+        writer.writeNumber('b', '2')
+        writer.writeEndObject()
+        writer.writeStartObject()
+        writer.writeNumber('c', '3')
+        writer.writeNumber('d', '4')
+        writer.writeEndObject()
+        writer.writeEndArray()
+        writer.writeEndObject()
+
+        then:
+        stringWriter.toString() == format('{%n  "arr" : [{%n      "a" : 1,%n      "b" : 2%n    },' +
+                ' {%n      "c" : 3,%n      "d" : 4%n    }]%n}')
+    }
+
+    def 'should indent embedded document in array with one element per line'() {
+        given:
+        writer = new StrictCharacterStreamJsonWriter(stringWriter, StrictCharacterStreamJsonWriterSettings.builder()
+                .indent(true).oneArrayElementPerLine(true).build())
+
+        when:
+        writer.writeStartObject()
+        writer.writeStartArray('arr')
+        writer.writeStartObject()
+        writer.writeNumber('a', '1')
+        writer.writeNumber('b', '2')
+        writer.writeEndObject()
+        writer.writeStartObject()
+        writer.writeNumber('c', '3')
+        writer.writeNumber('d', '4')
+        writer.writeEndObject()
+        writer.writeEndArray()
+        writer.writeEndObject()
+
+        then:
+        stringWriter.toString() == format('{%n  "arr" : [%n    {%n      "a" : 1,%n      "b" : 2%n    },' +
+                '%n    {%n      "c" : 3,%n      "d" : 4%n    }%n  ]%n}')
+    }
+
+    def 'property separator with no spaces'() {
+        given:
+        writer = new StrictCharacterStreamJsonWriter(stringWriter, StrictCharacterStreamJsonWriterSettings.builder()
+                 .propertySeparator(StrictCharacterStreamJsonWriterSettings.PropertySeparator.NO_SPACES).build())
+
+        when:
+        writer.writeStartObject()
+        writer.writeString('name', 'value')
+        writer.writeEndObject()
+
+        then:
+        stringWriter.toString() == format('{ "name":"value" }')
+    }
+
+    def 'property separator with space after'() {
+        given:
+        writer = new StrictCharacterStreamJsonWriter(stringWriter, StrictCharacterStreamJsonWriterSettings.builder()
+                 .propertySeparator(StrictCharacterStreamJsonWriterSettings.PropertySeparator.SPACE_AFTER).build())
+
+        when:
+        writer.writeStartObject()
+        writer.writeString('name', 'value')
+        writer.writeEndObject()
+
+        then:
+        stringWriter.toString() == format('{ "name": "value" }')
+    }
+
+    def 'property separator with space before '() {
+        given:
+        writer = new StrictCharacterStreamJsonWriter(stringWriter, StrictCharacterStreamJsonWriterSettings.builder()
+                 .propertySeparator(StrictCharacterStreamJsonWriterSettings.PropertySeparator.SPACE_BEFORE).build())
+
+        when:
+        writer.writeStartObject()
+        writer.writeString('name', 'value')
+        writer.writeEndObject()
+
+        then:
+        stringWriter.toString() == format('{ "name" :"value" }')
+    }
+
+    def 'property separator with space before and after'() {
+        given:
+        writer = new StrictCharacterStreamJsonWriter(stringWriter, StrictCharacterStreamJsonWriterSettings.builder()
+                 .propertySeparator(StrictCharacterStreamJsonWriterSettings.PropertySeparator.SPACE_BEFORE_AND_AFTER).build())
+
+        when:
+        writer.writeStartObject()
+        writer.writeString('name', 'value')
+        writer.writeEndObject()
+
+        then:
+        stringWriter.toString() == format('{ "name" : "value" }')
+    }
+
     def shouldThrowExceptionForBooleanWhenWritingBeforeStartingDocument() {
         when:
         writer.writeBoolean('b1', true)

@@ -56,12 +56,7 @@ public class JsonWriter extends AbstractBsonWriter {
         super(settings);
         this.settings = settings;
         setContext(new Context(null, BsonContextType.TOP_LEVEL));
-        strictJsonWriter = new StrictCharacterStreamJsonWriter(writer, StrictCharacterStreamJsonWriterSettings.builder()
-                                                                               .indent(settings.isIndent())
-                                                                               .newLineCharacters(settings.getNewLineCharacters())
-                                                                               .indentCharacters(settings.getIndentCharacters())
-                                                                               .maxLength(settings.getMaxLength())
-                                                                               .build());
+        strictJsonWriter = new StrictCharacterStreamJsonWriter(writer, settings.getWriterSettings());
     }
 
     /**
@@ -242,11 +237,12 @@ public class JsonWriter extends AbstractBsonWriter {
     }
 
     /**
-     * Return true if the output has been truncated due to exceeding the length specified in {@link JsonWriterSettings#maxLength}.
+     * Return true if the output has been truncated due to exceeding the length
+     * specified in {@link StrictCharacterStreamJsonWriterSettings#getMaxLength()}.
      *
      * @return true if the output has been truncated
      * @since 3.7
-     * @see JsonWriterSettings#maxLength
+     * @see StrictCharacterStreamJsonWriterSettings#getMaxLength()
      */
     public boolean isTruncated() {
         return strictJsonWriter.isTruncated();
