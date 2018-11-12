@@ -264,23 +264,29 @@ public class InternalStreamConnection implements InternalConnection {
     }
     private void sendCommandMessage(final CommandMessage message,
                                     final ByteBufferBsonOutput bsonOutput, final SessionContext sessionContext) {
-        try {
-            if (sendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandDocument(bsonOutput).getFirstKey())) {
+        if (sendCompressor == null || SECURITY_SENSITIVE_COMMANDS.contains(message.getCommandDocument(bsonOutput).getFirstKey())) {
+            try {
                 sendMessage(bsonOutput.getByteBuffers(), message.getId());
-            } else {
-                CompressedMessage compressedMessage = new CompressedMessage(message.getOpCode(), bsonOutput.getByteBuffers(),
-                        sendCompressor,
-                        getMessageSettings(description));
-                ByteBufferBsonOutput compressedBsonOutput = new ByteBufferBsonOutput(this);
-                compressedMessage.encode(compressedBsonOutput, sessionContext);
-                try {
-                    sendMessage(compressedBsonOutput.getByteBuffers(), message.getId());
-                } finally {
-                    compressedBsonOutput.close();
-                }
+            } finally {
+                bsonOutput.close();
             }
-        } finally {
-            bsonOutput.close();
+        } else {
+            List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
+            ByteBufferBsonOutput compressedBsonOutput;
+            try {
+                CompressedMessage compressedMessage = new CompressedMessage(message.getOpCode(), byteBuffers, sendCompressor,
+                        getMessageSettings(description));
+                compressedBsonOutput = new ByteBufferBsonOutput(this);
+                compressedMessage.encode(compressedBsonOutput, sessionContext);
+            } finally {
+                releaseAllBuffers(byteBuffers);
+                bsonOutput.close();
+            }
+            try {
+                sendMessage(compressedBsonOutput.getByteBuffers(), message.getId());
+            } finally {
+                compressedBsonOutput.close();
+            }
         }
     }
 
@@ -324,11 +330,15 @@ public class InternalStreamConnection implements InternalConnection {
                 sendCommandMessageAsync(message.getId(), decoder, sessionContext, callback, bsonOutput, commandEventSender,
                         message.isResponseExpected());
             } else {
-                CompressedMessage compressedMessage = new CompressedMessage(message.getOpCode(), bsonOutput.getByteBuffers(),
-                        sendCompressor,
-                        getMessageSettings(description));
-                compressedMessage.encode(compressedBsonOutput, sessionContext);
-                bsonOutput.close();
+                List<ByteBuf> byteBuffers = bsonOutput.getByteBuffers();
+                try {
+                    CompressedMessage compressedMessage = new CompressedMessage(message.getOpCode(), byteBuffers, sendCompressor,
+                            getMessageSettings(description));
+                    compressedMessage.encode(compressedBsonOutput, sessionContext);
+                } finally {
+                    releaseAllBuffers(byteBuffers);
+                    bsonOutput.close();
+                }
                 sendCommandMessageAsync(message.getId(), decoder, sessionContext, callback, compressedBsonOutput, commandEventSender,
                         message.isResponseExpected());
             }
@@ -336,6 +346,12 @@ public class InternalStreamConnection implements InternalConnection {
             bsonOutput.close();
             compressedBsonOutput.close();
             callback.onResult(null, t);
+        }
+    }
+
+    private void releaseAllBuffers(final List<ByteBuf> byteBuffers) {
+        for (ByteBuf cur : byteBuffers) {
+            cur.release();
         }
     }
 
