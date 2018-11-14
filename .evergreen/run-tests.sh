@@ -12,13 +12,14 @@ set -o errexit  # Exit the script with error if any of the commands fail
 #       COMPRESSOR              Set to enable compression. Values are "snappy" and "zlib" (default is no compression)
 #       JDK                     Set the version of java to be used.  Java versions can be set from the java toolchain /opt/java
 #                               "jdk5", "jdk6", "jdk7", "jdk8", "jdk9"
-
+#       SLOW_TESTS_ONLY         Set to true to only run the slow tests
 AUTH=${AUTH:-noauth}
 SSL=${SSL:-nossl}
 MONGODB_URI=${MONGODB_URI:-}
 JDK=${JDK:-jdk}
 TOPOLOGY=${TOPOLOGY:-server}
 COMPRESSOR=${COMPRESSOR:-}
+SLOW_TESTS_ONLY=${SLOW_TESTS_ONLY:-false}
 
 # JDK6 needs async.type=netty
 if [ "$JDK" == "jdk6" ]; then
@@ -87,4 +88,9 @@ echo "Running $AUTH tests over $SSL for $TOPOLOGY and connecting to $MONGODB_URI
 
 echo "Running tests with ${JDK}"
 ./gradlew -version
-./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} --stacktrace --info test
+
+if [ "$SLOW_TESTS_ONLY" == "true" ]; then
+    ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} --stacktrace --info testSlowOnly
+else
+    ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} --stacktrace --info test
+fi

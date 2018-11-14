@@ -160,15 +160,7 @@ configure(javaCodeCheckedProjects) {
         }
 
         useJUnit {
-            if (!project.buildingWith('rs.enabled')) {
-                excludeCategories 'category.ReplicaSet'
-            }
-            if (project.buildingWith('quicktest')) {
-                excludeCategories 'category.SlowUnit'
-            }
-            if (project.buildingWith('travistest')) {
-                excludeCategories 'category.SlowUnit', 'category.Slow'
-            }
+            excludeCategories 'category.Slow'
         }
 
         jacoco { enabled = false }
@@ -176,9 +168,9 @@ configure(javaCodeCheckedProjects) {
         testLogging { exceptionFormat = 'full' }
     }
 
-    task testSlowUnit(type: Test) {
+    task testSlowOnly(type: Test) {
         useJUnit {
-            includeCategories 'category.SlowUnit'
+            includeCategories 'category.Slow'
         }
     }
 
