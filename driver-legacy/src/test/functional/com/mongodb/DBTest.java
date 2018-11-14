@@ -16,7 +16,6 @@
 
 package com.mongodb;
 
-import category.ReplicaSet;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CollationAlternate;
 import com.mongodb.client.model.CollationCaseFirst;
@@ -27,7 +26,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 import java.net.UnknownHostException;
 
@@ -296,9 +294,8 @@ public class DBTest extends DatabaseTestCase {
     }
 
     @Test
-    @Category(ReplicaSet.class)
     public void shouldExecuteCommandWithReadPreference() {
-        assumeThat(isSharded(), is(false));
+        assumeTrue(isDiscoverableReplicaSet());
         CommandResult commandResult = database.command(new BasicDBObject("dbStats", 1).append("scale", 1), secondary());
         assertThat(commandResult, hasFields(new String[]{"collections", "avgObjSize", "indexes", "db", "indexSize", "storageSize"}));
     }
@@ -413,7 +410,6 @@ public class DBTest extends DatabaseTestCase {
     }
 
     @Test
-    @Category(ReplicaSet.class)
     public void shouldRunCommandAgainstSecondaryWhenOnlySecondaryReadPreferenceSpecified() throws UnknownHostException {
         assumeTrue(isDiscoverableReplicaSet());
 
@@ -426,7 +422,6 @@ public class DBTest extends DatabaseTestCase {
     }
 
     @Test
-    @Category(ReplicaSet.class)
     public void shouldRunStringCommandAgainstSecondaryWhenSecondaryReadPreferenceSpecified() throws UnknownHostException {
         assumeTrue(isDiscoverableReplicaSet());
 
@@ -439,7 +434,6 @@ public class DBTest extends DatabaseTestCase {
     }
 
     @Test
-    @Category(ReplicaSet.class)
     public void shouldRunCommandAgainstSecondaryWhenOnlySecondaryReadPreferenceSpecifiedAlongWithEncoder() throws UnknownHostException {
         assumeTrue(isDiscoverableReplicaSet());
 
