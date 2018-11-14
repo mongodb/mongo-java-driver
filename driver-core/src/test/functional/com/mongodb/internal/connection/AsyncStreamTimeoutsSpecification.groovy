@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.connection
 
-import category.SlowUnit
+import category.Slow
 import com.mongodb.MongoSocketOpenException
 import com.mongodb.MongoSocketReadTimeoutException
 import com.mongodb.OperationFunctionalSpecification
@@ -41,7 +41,7 @@ import static com.mongodb.connection.ConnectionFixture.getCredentialListWithCach
 import static com.mongodb.internal.connection.CommandHelper.executeCommand
 
 @IgnoreIf({ System.getProperty('ignoreSlowUnitTests') == 'true' })
-@Category(SlowUnit)
+@Category(Slow)
 class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification {
 
     static SocketSettings openSocketSettings = SocketSettings.builder().connectTimeout(1, TimeUnit.MILLISECONDS).build()
