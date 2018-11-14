@@ -216,6 +216,15 @@ functions:
           ${PREPARE_SHELL}
           AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" .evergreen/run-tests.sh
 
+  "run slow tests":
+  - command: shell.exec
+    type: test
+    params:
+      working_dir: "src"
+      script: |
+        ${PREPARE_SHELL}
+        AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" SLOW_TESTS_ONLY=true .evergreen/run-tests.sh
+
   "run socket tests":
     - command: shell.exec
       type: test
@@ -393,6 +402,11 @@ tasks:
       commands:
         - func: "run gssapi auth test"
 
+    - name: "slow-test"
+      commands:
+      - func: "bootstrap mongo-orchestration"
+      - func: "run slow tests"
+
     - name: "socket-test"
       commands:
         - func: "bootstrap mongo-orchestration"
@@ -412,6 +426,8 @@ tasks:
           name: "static-analysis"
         - variant: ".tests-variant"
           name: "test"
+        - variant: ".tests-slow-variant"
+          name: "slow-test"
         - variant: ".test-gssapi-variant"
           name: "gssapi-auth-test"
         - variant: "plain-auth-test"
@@ -588,6 +604,13 @@ buildvariants:
   tags: ["tests-variant"]
   tasks:
      - name: "test"
+
+- matrix_name: "tests-slow"
+  matrix_spec: { auth: "noauth", ssl: "*", jdk: "jdk8", version: ["4.0"], topology: "*", os: "linux" }
+  display_name: "Slow: ${version} ${topology} ${ssl} ${jdk} ${os} "
+  tags: ["tests-slow-variant"]
+  tasks:
+  - name: "slow-test"
 
 - matrix_name: "tests-socket"
   matrix_spec: { auth: "*", ssl: "nossl", jdk: "jdk8", version: ["4.0"], topology: "standalone", os: "linux" }
