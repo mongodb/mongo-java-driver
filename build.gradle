@@ -261,7 +261,7 @@ task wrapper(type: Wrapper) {
 if (!JavaVersion.current().isJava9Compatible()) {
     throw new GradleException("""
         | ERROR:
-        | JDK ${JavaVersion.VERSION_1_9} is required to build the driver: You are using JDK ${JavaVersion.current()}.
+        | JDK ${JavaVersion.VERSION_1_9.getMajorVersion()} is required to build the driver: You are using JDK ${JavaVersion.current().getMajorVersion()}.
         |""".stripMargin()
     )
 }
