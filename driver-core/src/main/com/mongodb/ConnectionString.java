@@ -438,7 +438,7 @@ public class ConnectionString {
         for (final String key : optionsMap.keySet()) {
             if (!ALL_KEYS.contains(key)) {
                 if (LOGGER.isWarnEnabled()) {
-                    LOGGER.warn(format("Unsupported option '%s' in the connection string '%s'.", key, connectionString));
+                    LOGGER.warn(format("Connection string contains unsupported option '%s'.", key));
                 }
             }
         }
