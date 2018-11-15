@@ -24,9 +24,10 @@ import org.bson.BsonString
 import org.junit.Test
 import spock.lang.IgnoreIf
 
+import static Fixture.getMongoClient
+import static com.mongodb.ClusterFixture.configureFailPoint
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static Fixture.getMongoClient
 
 class DBFunctionalSpecification extends FunctionalSpecification {
 
@@ -87,11 +88,20 @@ class DBFunctionalSpecification extends FunctionalSpecification {
     }
 
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || serverVersionAtLeast(4, 0) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
     def 'should throw WriteConcernException on write concern error for drop'() {
         given:
         database.createCollection('ctest', new BasicDBObject())
-        database.setWriteConcern(new WriteConcern(5))
+
+        // On servers older than 4.0 that don't support this failpoint, use a crazy w value instead
+        def w = serverVersionAtLeast(4, 0) ? 2 : 5
+        database.setWriteConcern(new WriteConcern(w))
+        if (serverVersionAtLeast(4, 0)) {
+            configureFailPoint(BsonDocument.parse('{ configureFailPoint: "failCommand", ' +
+                    'mode : {times : 1}, ' +
+                    'data : {failCommands : ["dropDatabase"], ' +
+                    'writeConcernError : {code : 100, errmsg : "failed"}}}'))
+        }
 
         when:
         database.dropDatabase()
@@ -153,7 +163,7 @@ class DBFunctionalSpecification extends FunctionalSpecification {
         database.removeUser('writeConcernUser')
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
+    @IgnoreIf({ !serverVersionAtLeast(4, 0) || !isDiscoverableReplicaSet() })
     def 'should throw WriteConcernException on write concern error for remove user'() {
         given:
         database.addUser('writeConcernUser', 'foo'.toCharArray())
