@@ -46,6 +46,7 @@ public class IndexOptions {
     private Bson storageEngine;
     private Bson partialFilterExpression;
     private Collation collation;
+    private Bson wildcardProjection;
 
     /**
      * Create the index in the background
@@ -466,6 +467,30 @@ public class IndexOptions {
         return this;
     }
 
+    /**
+     * Gets the wildcard projection of a wildcard index
+     *
+     * @return the wildcard projection
+     * @mongodb.server.release 4.2
+     * @since 3.10
+     */
+    public Bson getWildcardProjection() {
+        return wildcardProjection;
+    }
+
+    /**
+     * Sets the wildcard projection of a wildcard index
+     *
+     * @param wildcardProjection the wildcard projection
+     * @return this
+     * @mongodb.server.release 4.2
+     * @since 3.10
+     */
+    public IndexOptions wildcardProjection(final Bson wildcardProjection) {
+        this.wildcardProjection = wildcardProjection;
+        return this;
+    }
+
     @Override
     public String toString() {
         return "IndexOptions{"
@@ -487,6 +512,7 @@ public class IndexOptions {
                 + ", storageEngine=" + storageEngine
                 + ", partialFilterExpression=" + partialFilterExpression
                 + ", collation=" + collation
+                + ", wildcardProjection=" + wildcardProjection
                 + '}';
     }
 }

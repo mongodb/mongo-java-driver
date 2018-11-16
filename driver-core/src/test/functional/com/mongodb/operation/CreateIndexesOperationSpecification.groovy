@@ -481,6 +481,42 @@ class CreateIndexesOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(4, 1) })
+    def 'should be able to create wildcard indexes'() {
+        given:
+        def operation = new CreateIndexesOperation(getNamespace(),
+                [new IndexRequest(new BsonDocument('$**', new BsonInt32(1))),
+                 new IndexRequest(new BsonDocument('tags.$**', new BsonInt32(1)))])
+
+        when:
+        execute(operation, async)
+
+        then:
+        getUserCreatedIndexes('key').contains(['$**': 1])
+        getUserCreatedIndexes('key').contains(['tags.$**': 1])
+
+        where:
+        async << [true, false]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(4, 1) })
+    def 'should be able to create wildcard index with projection'() {
+        given:
+        def operation = new CreateIndexesOperation(getNamespace(),
+                [new IndexRequest(new BsonDocument('$**', new BsonInt32(1)))
+                        .wildcardProjection(new BsonDocument('a', new BsonInt32(1)).append('b.c', new BsonInt32(1)))])
+
+        when:
+        execute(operation, async)
+
+        then:
+        getUserCreatedIndexes('key').contains(['$**': 1])
+        getUserCreatedIndexes('wildcardProjection').contains(['a': 1, 'b.c': 1])
+
+        where:
+        async << [true, false]
+    }
+
     Document getIndex(final String indexName) {
         getIndexes().find {
             it -> it.getString('name') == indexName

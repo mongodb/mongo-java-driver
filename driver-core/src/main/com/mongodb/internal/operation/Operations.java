@@ -437,6 +437,7 @@ final class Operations<TDocument> {
                     .storageEngine(toBsonDocument(model.getOptions().getStorageEngine()))
                     .partialFilterExpression(toBsonDocument(model.getOptions().getPartialFilterExpression()))
                     .collation(model.getOptions().getCollation())
+                    .wildcardProjection(toBsonDocument(model.getOptions().getWildcardProjection()))
             );
         }
         return new CreateIndexesOperation(namespace, indexRequests, writeConcern)

@@ -46,6 +46,8 @@ class IndexOptionsSpecification extends Specification {
         options.getStorageEngine() == null
         options.getPartialFilterExpression() == null
         options.getCollation() == null
+        options.getWildcardProjection() == null
+        def wildcardProjection = BsonDocument.parse('{a  : 1}')
 
         when:
         def weights = BsonDocument.parse('{ a: 1000 }')
@@ -70,6 +72,7 @@ class IndexOptionsSpecification extends Specification {
                 .storageEngine(storageEngine)
                 .partialFilterExpression(partialFilterExpression)
                 .collation(collation)
+                .wildcardProjection(wildcardProjection)
 
         then:
         options.isBackground()
@@ -90,6 +93,7 @@ class IndexOptionsSpecification extends Specification {
         options.getStorageEngine() == storageEngine
         options.getPartialFilterExpression() == partialFilterExpression
         options.getCollation() == collation
+        options.getWildcardProjection() == wildcardProjection
     }
 
     def 'should convert expireAfter'() {

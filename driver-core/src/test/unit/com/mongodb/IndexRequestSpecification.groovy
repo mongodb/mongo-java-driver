@@ -55,6 +55,7 @@ class IndexRequestSpecification extends Specification {
         request.getStorageEngine() == null
         request.getPartialFilterExpression() == null
         request.getCollation() == null
+        request.getWildcardProjection() == null
 
         when:
         def keys = BsonDocument.parse('{ a: 1 }')
@@ -71,6 +72,7 @@ class IndexRequestSpecification extends Specification {
                 .collationMaxVariable(CollationMaxVariable.SPACE)
                 .backwards(true)
                 .build()
+        def wildcardProjection = BsonDocument.parse('{a  : 1}')
         def request2 = new IndexRequest(keys)
                 .background(true)
                 .unique(true)
@@ -91,6 +93,7 @@ class IndexRequestSpecification extends Specification {
                 .storageEngine(storageEngine)
                 .partialFilterExpression(partialFilterExpression)
                 .collation(collation)
+                .wildcardProjection(wildcardProjection)
 
         then:
         request2.getKeys() == keys
@@ -113,6 +116,7 @@ class IndexRequestSpecification extends Specification {
         request2.getStorageEngine() == storageEngine
         request2.getPartialFilterExpression() == partialFilterExpression
         request2.getCollation() == collation
+        request2.getWildcardProjection() == wildcardProjection
     }
 
 

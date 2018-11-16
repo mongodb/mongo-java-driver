@@ -56,6 +56,7 @@ public class IndexRequest {
     private BsonDocument storageEngine;
     private BsonDocument partialFilterExpression;
     private Collation collation;
+    private BsonDocument wildcardProjection;
 
     /**
      * Construct a new instance with the given keys
@@ -510,6 +511,30 @@ public class IndexRequest {
      */
     public IndexRequest collation(final Collation collation) {
         this.collation = collation;
+        return this;
+    }
+
+    /**
+     * Gets the wildcard projection of a wildcard index
+     *
+     * @return the wildcard projection
+     * @mongodb.server.release 4.2
+     * @since 3.10
+     */
+    public BsonDocument getWildcardProjection() {
+        return wildcardProjection;
+    }
+
+    /**
+     * Sets the wildcard projection of a wildcard index
+     *
+     * @param wildcardProjection the wildcard projection
+     * @return this
+     * @mongodb.server.release 4.2
+     * @since 3.10
+     */
+    public IndexRequest wildcardProjection(final BsonDocument wildcardProjection) {
+        this.wildcardProjection = wildcardProjection;
         return this;
     }
 }

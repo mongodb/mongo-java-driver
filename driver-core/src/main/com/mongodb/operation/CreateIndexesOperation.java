@@ -273,6 +273,9 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
         if (request.getCollation() != null) {
             index.append("collation", request.getCollation().asDocument());
         }
+        if (request.getWildcardProjection() != null) {
+            index.append("wildcardProjection", request.getWildcardProjection());
+        }
         return index;
     }
 
