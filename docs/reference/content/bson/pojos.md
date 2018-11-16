@@ -85,10 +85,11 @@ import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry;
 
 // Create a CodecRegistry containing the PojoCodecProvider instance.
 CodecProvider pojoCodecProvider = PojoCodecProvider.builder().register("org.example.pojos").build();
-CodecRegistry pojoCodecRegistry = fromRegistries(defaultCodecRegistry, fromProviders(pojoCodecProvider));
+CodecRegistry pojoCodecRegistry = fromRegistries(getDefaultCodecRegistry(), fromProviders(pojoCodecProvider));
 ```
 
 {{% note class="tip" %}}
@@ -418,7 +419,7 @@ ClassModel<SubscriberUser> subscriberUserModel = ClassModel.builder(SubscriberUs
 
 PojoCodecProvider pojoCodecProvider = PojoCodecProvider.builder().register(userModel, freeUserModel, subscriberUserModel).build();
 
-CodecRegistry pojoCodecRegistry = fromRegistries(defaultCodecRegistry, fromProviders(pojoCodecProvider));
+CodecRegistry pojoCodecRegistry = fromRegistries(getDefaultCodecRegistry(), fromProviders(pojoCodecProvider));
 ```
 
 ### Supporting POJOs without no args constructors
