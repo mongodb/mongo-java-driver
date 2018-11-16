@@ -1215,6 +1215,7 @@ class MongoCollectionSpecification extends Specification {
                          .storageEngine(BsonDocument.parse('{wiredTiger: {configString: "block_compressor=zlib"}}'))
                          .partialFilterExpression(BsonDocument.parse('{status: "active"}'))
                          .collation(collation)
+                         .wildcardProjection(new BsonDocument('a', new BsonInt32(1)))
                 ], ACKNOWLEDGED)
         indexName = execute(createIndexMethod, session, new Document('key', 1), new IndexOptions()
                 .background(true)
@@ -1234,7 +1235,8 @@ class MongoCollectionSpecification extends Specification {
                 .bucketSize(200.0)
                 .storageEngine(BsonDocument.parse('{wiredTiger: {configString: "block_compressor=zlib"}}'))
                 .partialFilterExpression(BsonDocument.parse('{status: "active"}'))
-                .collation(collation))
+                .collation(collation)
+                .wildcardProjection(new BsonDocument('a', new BsonInt32(1))))
         operation = executor.getWriteOperation() as CreateIndexesOperation
 
         then:
