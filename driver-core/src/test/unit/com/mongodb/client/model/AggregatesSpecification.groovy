@@ -39,6 +39,9 @@ import static com.mongodb.client.model.Accumulators.push
 import static com.mongodb.client.model.Accumulators.stdDevPop
 import static com.mongodb.client.model.Accumulators.stdDevSamp
 import static com.mongodb.client.model.Accumulators.sum
+import static com.mongodb.client.model.AggregateOutStageOptions.Mode.INSERT_DOCUMENTS
+import static com.mongodb.client.model.AggregateOutStageOptions.Mode.REPLACE_COLLECTION
+import static com.mongodb.client.model.AggregateOutStageOptions.Mode.REPLACE_DOCUMENTS
 import static com.mongodb.client.model.Aggregates.addFields
 import static com.mongodb.client.model.Aggregates.bucket
 import static com.mongodb.client.model.Aggregates.bucketAuto
@@ -306,6 +309,15 @@ class AggregatesSpecification extends Specification {
     def 'should render $out'() {
         expect:
         toBson(out('authors')) == parse('{ $out : "authors" }')
+        toBson(out('authors', new AggregateOutStageOptions().mode(REPLACE_COLLECTION))) == parse('{ $out : "authors" }')
+        toBson(out('authors', new AggregateOutStageOptions().mode(REPLACE_DOCUMENTS))) ==
+                parse('{ $out : {mode : "replaceDocuments", to : "authors" } }')
+        toBson(out('authors', new AggregateOutStageOptions().mode(INSERT_DOCUMENTS))) ==
+                parse('{ $out : {mode : "insertDocuments", to : "authors" } }')
+        toBson(out('authors', new AggregateOutStageOptions().databaseName('db1'))) ==
+                parse('{ $out : {mode : "replaceCollection", to : "authors", db : "db1" } }')
+        toBson(out('authors', new AggregateOutStageOptions().uniqueKey(new BsonDocument('x', new BsonInt32(1))))) ==
+                parse('{ $out : {mode : "replaceCollection", to : "authors", uniqueKey : {x : 1 } } }')
     }
 
     def 'should render $group'() {
