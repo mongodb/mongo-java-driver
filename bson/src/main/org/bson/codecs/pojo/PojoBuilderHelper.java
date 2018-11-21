@@ -157,13 +157,17 @@ final class PojoBuilderHelper {
                                                                   final List<String> genericTypeNames,
                                                                   final Type genericType) {
         PropertyMetadata<T> propertyMetadata = getOrCreatePropertyMetadata(propertyName, declaringClassName, propertyNameMap, typeData);
-        if (!propertyMetadata.getTypeData().getType().isAssignableFrom(typeData.getType())) {
+        if (!isAssignableClass(propertyMetadata.getTypeData().getType(), typeData.getType())) {
             throw new CodecConfigurationException(format("Property '%s' in %s, has differing data types: %s and %s", propertyName,
                     declaringClassName, propertyMetadata.getTypeData(), typeData));
         }
         cachePropertyTypeData(propertyMetadata, propertyTypeParameterMap, parentClassTypeData, genericTypeNames,
                 genericType);
         return propertyMetadata;
+    }
+
+    private static boolean isAssignableClass(final Class<?> propertyTypeClass, final Class<?> typeDataClass) {
+        return propertyTypeClass.isAssignableFrom(typeDataClass) || typeDataClass.isAssignableFrom(propertyTypeClass);
     }
 
     private static <T, S> PropertyMetadata<T> getOrCreateFieldPropertyMetadata(final String propertyName,
