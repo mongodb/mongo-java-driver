@@ -62,6 +62,12 @@ class UpdatesSpecification extends Specification {
         toBson(setOnInsert('x', 1)) == parse('{$setOnInsert : { x : 1} }')
         toBson(setOnInsert('x', null)) == parse('{$setOnInsert : { x : null } }')
         toBson(setOnInsert(parse('{ a : 1, b: "two"}'))) == parse('{$setOnInsert : {a: 1, b: "two"} }')
+
+        when:
+        toBson(setOnInsert(null))
+
+        then:
+        thrown IllegalArgumentException
     }
 
     def 'should render $unset'() {

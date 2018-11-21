@@ -441,7 +441,7 @@ public final class Updates {
 
         SimpleBsonKeyValue(final String fieldName, final Bson value) {
             this.fieldName = notNull("fieldName", fieldName);
-            this.value = value;
+            this.value = notNull("value", value);
         }
 
         @Override
