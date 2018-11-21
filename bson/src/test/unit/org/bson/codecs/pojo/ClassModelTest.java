@@ -20,6 +20,10 @@ import org.bson.codecs.pojo.entities.CollectionNestedPojoModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.bson.codecs.pojo.entities.NestedGenericHolderMapModel;
 import org.bson.codecs.pojo.entities.PropertySelectionModel;
+import org.bson.codecs.pojo.entities.ShapeHolderCircleModel;
+import org.bson.codecs.pojo.entities.ShapeHolderModel;
+import org.bson.codecs.pojo.entities.ShapeModelAbstract;
+import org.bson.codecs.pojo.entities.ShapeModelCircle;
 import org.bson.codecs.pojo.entities.SimpleGenericsModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationInheritedModel;
@@ -157,6 +161,17 @@ public final class ClassModelTest {
 
         propertyModel = classModel.getPropertyModel("child");
         assertTrue(propertyModel.useDiscriminator());
+    }
+
+    @Test
+    public void testOverridePropertyWithSubclass() {
+        ClassModel<?> classModel = ClassModel.builder(ShapeHolderModel.class).build();
+        assertEquals(1, classModel.getPropertyModels().size());
+        assertEquals(ShapeModelAbstract.class, classModel.getPropertyModels().get(0).getTypeData().getType());
+
+        ClassModel<?> overriddenImplementationClassModel = ClassModel.builder(ShapeHolderCircleModel.class).build();
+        assertEquals(1, classModel.getPropertyModels().size());
+        assertEquals(ShapeModelCircle.class, overriddenImplementationClassModel.getPropertyModels().get(0).getTypeData().getType());
     }
 
 }
