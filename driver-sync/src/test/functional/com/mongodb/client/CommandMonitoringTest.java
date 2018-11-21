@@ -47,6 +47,7 @@ import java.util.List;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.isStandalone;
+import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static org.junit.Assume.assumeFalse;
@@ -91,6 +92,10 @@ public class CommandMonitoringTest {
 
     @Before
     public void setUp() {
+        if (serverVersionAtLeast(4, 1)) {
+            assumeFalse(description.equals("A successful insert one command with write errors"));
+            assumeFalse(description.equals("A successful insert many command with write errors"));
+        }
 
         ServerVersion serverVersion = ClusterFixture.getServerVersion();
         if (definition.containsKey("ignore_if_server_version_less_than")) {
