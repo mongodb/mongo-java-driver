@@ -70,7 +70,6 @@ import static com.mongodb.client.model.Filters.size
 import static com.mongodb.client.model.Filters.text
 import static com.mongodb.client.model.Filters.type
 import static com.mongodb.client.model.Filters.where
-import static java.util.Arrays.asList
 import static org.bson.BsonDocument.parse
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
@@ -106,7 +105,11 @@ class FiltersSpecification extends Specification {
         toBson(not(or(eq('x', 1), eq('x', 2)))) == parse('{$not: {$or: [{x: 1}, {x: 2}]}}')
         toBson(not(or(Filters.in('x', 1, 2), eq('x', 3)))) == parse('{$not: {$or: [{x: {$in: [1, 2]}}, {x: 3}]}}')
 
-        toBson(not(new BsonDocument('$in', new BsonArray(asList(new BsonInt32(1)))))) == parse('{$not: {$in: [1]}}')
+        toBson(not(parse('{$in: [1]}'))) == parse('{$not: {$in: [1]}}')
+
+        toBson(not(eq('x', parse('{a: 1, b: 1}')))) == parse('{x: {$not: {$eq: {"a": 1, "b": 1}}}}')
+        toBson(not(eq('x', parse('{$ref: "1", $id: "1"}')))) == parse('{x: {$not: {$eq: {"$ref": "1", "$id": "1"}}}}')
+        toBson(not(eq('x', parse('{$ref: "1", $id: "1", $db: "db"}')))) == parse('{x: {$not: {$eq: {"$ref": "1", "$id": "1", $db: "db"}}}}')
     }
 
     def 'should render $nor'() {
