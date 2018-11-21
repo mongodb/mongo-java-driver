@@ -94,7 +94,31 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
         find(not(regex('y', 'a.*'))) == [b, c]
 
         when:
-        find(not(and(eq('x', 1), eq('x', 1)))) == [b, c]
+        def dbref = Document.parse('{$ref: "1", $id: "1"}')
+        def dbrefDoc = new Document('_id', 4).append('dbref', dbref)
+        getCollectionHelper().insertDocuments(dbrefDoc)
+
+        then:
+        find(not(eq('dbref', dbref))) == [a, b, c]
+
+        when:
+        getCollectionHelper().deleteOne(dbrefDoc)
+        dbref.put('$db', '1')
+        dbrefDoc.put('dbref', dbref)
+        getCollectionHelper().insertDocuments(dbrefDoc)
+
+        then:
+        find(not(eq('dbref', dbref))) == [a, b, c]
+
+        when:
+        def subDoc = Document.parse('{x: 1, b: 1}')
+        getCollectionHelper().insertDocuments(new Document('subDoc', subDoc))
+
+        then:
+        find(not(eq('subDoc', subDoc))) == [a, b, c, dbrefDoc]
+
+        when:
+        find(not(and(eq('x', 1), eq('x', 1))))
 
         then:
         thrown MongoQueryException
