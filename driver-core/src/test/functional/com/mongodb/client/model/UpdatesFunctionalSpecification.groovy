@@ -83,6 +83,12 @@ class UpdatesFunctionalSpecification extends OperationFunctionalSpecification {
 
         then:
         find(new Document('_id', 3)) == [Document.parse('{_id: 3, a: 1, b: "two"}')]
+
+        when:
+        updateOne(new Document('_id', 3), setOnInsert(null), true)
+
+        then:
+        thrown IllegalArgumentException
     }
 
     def 'unset'() {
