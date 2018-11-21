@@ -34,13 +34,16 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Pattern;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.client.model.BuildersHelper.encodeValue;
 import static java.util.Arrays.asList;
+import static java.util.Collections.unmodifiableSet;
 
 /**
  * A factory for query filters. A convenient way to use this class is to statically import all of its methods, which allows usage like:
@@ -1119,6 +1122,8 @@ public final class Filters {
     }
 
     private static class NotFilter implements Bson {
+        private static final Set<String> DBREF_KEYS = unmodifiableSet(new HashSet<String>(asList("$ref", "$id")));
+        private static final Set<String> DBREF_KEYS_WITH_DB =  unmodifiableSet(new HashSet<String>(asList("$ref", "$id", "$db")));
         private final Bson filter;
 
         NotFilter(final Bson filter) {
@@ -1140,10 +1145,25 @@ public final class Filters {
             }
         }
 
+        private boolean containsOperator(final BsonDocument value) {
+            Set<String> keys = value.keySet();
+            if (keys.equals(DBREF_KEYS) || keys.equals(DBREF_KEYS_WITH_DB)) {
+                return false;
+            }
+
+            for (String key : keys) {
+                if (key.startsWith("$")) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
         private BsonDocument createFilter(final String fieldName, final BsonValue value) {
             if (fieldName.startsWith("$")) {
                 return new BsonDocument("$not", new BsonDocument(fieldName, value));
-            } else if (value.isDocument() || value.isRegularExpression()) {
+            } else if ((value.isDocument() && containsOperator(value.asDocument())) || value.isRegularExpression()) {
                 return new BsonDocument(fieldName, new BsonDocument("$not", value));
             }
             return new BsonDocument(fieldName, new BsonDocument("$not", new BsonDocument("$eq", value)));
