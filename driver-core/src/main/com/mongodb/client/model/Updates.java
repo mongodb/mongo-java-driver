@@ -90,6 +90,19 @@ public final class Updates {
     }
 
     /**
+     * Creates an update that sets the values for the document, but only if the update is an upsert that results in an insert of a document.
+     *
+     * @param value     the value, which may be null
+     * @return the update
+     * @mongodb.driver.manual reference/operator/update/setOnInsert/ $setOnInsert
+     * @since 3.10.0
+     * @see UpdateOptions#upsert(boolean)
+     */
+    public static Bson setOnInsert(final Bson value) {
+        return new SimpleBsonKeyValue("$setOnInsert", value);
+    }
+
+    /**
      * Creates an update that sets the value of the field with the given name to the given value, but only if the update is an upsert that
      * results in an insert of a document.
      *
@@ -420,6 +433,35 @@ public final class Updates {
 
     private static Bson createBitUpdateDocument(final String fieldName, final String bitwiseOperator, final BsonValue value) {
         return new BsonDocument("$bit", new BsonDocument(fieldName, new BsonDocument(bitwiseOperator, value)));
+    }
+
+    private static class SimpleBsonKeyValue implements Bson {
+        private final String fieldName;
+        private final Bson value;
+
+        SimpleBsonKeyValue(final String fieldName, final Bson value) {
+            this.fieldName = notNull("fieldName", fieldName);
+            this.value = value;
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
+            BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+            writer.writeStartDocument();
+            writer.writeName(fieldName);
+            encodeValue(writer, value, codecRegistry);
+            writer.writeEndDocument();
+
+            return writer.getDocument();
+        }
+
+        @Override
+        public String toString() {
+            return "SimpleBsonKeyValue{"
+                    + "fieldName='" + fieldName + '\''
+                    + ", value=" + value
+                    + '}';
+        }
     }
 
     private static class SimpleUpdate<TItem> implements Bson {
