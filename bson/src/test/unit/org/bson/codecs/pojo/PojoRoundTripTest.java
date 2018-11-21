@@ -51,6 +51,7 @@ import org.bson.codecs.pojo.entities.PropertySelectionModel;
 import org.bson.codecs.pojo.entities.PropertyWithMultipleTypeParamsModel;
 import org.bson.codecs.pojo.entities.ReusedGenericsModel;
 import org.bson.codecs.pojo.entities.SelfReferentialGenericModel;
+import org.bson.codecs.pojo.entities.ShapeHolderCircleModel;
 import org.bson.codecs.pojo.entities.ShapeHolderModel;
 import org.bson.codecs.pojo.entities.ShapeModelAbstract;
 import org.bson.codecs.pojo.entities.ShapeModelCircle;
@@ -379,6 +380,11 @@ public final class PojoRoundTripTest extends PojoTestCase {
         data.add(new TestData("AnnotationBsonPropertyIdModel", new AnnotationBsonPropertyIdModel(99L),
                 getPojoCodecProviderBuilder(AnnotationBsonPropertyIdModel.class),
                 "{'id': {'$numberLong': '99' }}"));
+
+        data.add(new TestData("Shape model - circle",
+                new ShapeHolderCircleModel(getShapeModelCircle()),
+                getPojoCodecProviderBuilder(ShapeModelCircle.class, ShapeHolderCircleModel.class),
+                "{'shape': {'_t': 'org.bson.codecs.pojo.entities.ShapeModelCircle', 'color': 'orange', 'radius': 4.2}}"));
         return data;
     }
 

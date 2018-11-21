@@ -16,7 +16,7 @@
 
 package org.bson.codecs.pojo.entities;
 
-public final class ShapeHolderModel {
+public class ShapeHolderModel {
 
     private ShapeModelAbstract shape;
 
