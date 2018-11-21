@@ -61,6 +61,7 @@ class UpdatesSpecification extends Specification {
         expect:
         toBson(setOnInsert('x', 1)) == parse('{$setOnInsert : { x : 1} }')
         toBson(setOnInsert('x', null)) == parse('{$setOnInsert : { x : null } }')
+        toBson(setOnInsert(parse('{ a : 1, b: "two"}'))) == parse('{$setOnInsert : {a: 1, b: "two"} }')
     }
 
     def 'should render $unset'() {
