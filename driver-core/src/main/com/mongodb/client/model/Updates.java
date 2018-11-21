@@ -92,7 +92,7 @@ public final class Updates {
     /**
      * Creates an update that sets the values for the document, but only if the update is an upsert that results in an insert of a document.
      *
-     * @param value     the value, which may be null
+     * @param value     the value
      * @return the update
      * @mongodb.driver.manual reference/operator/update/setOnInsert/ $setOnInsert
      * @since 3.10.0
