@@ -695,6 +695,14 @@ public class MongoClient extends Mongo implements Closeable {
         return createChangeStreamIterable(clientSession, pipeline, resultClass);
     }
 
+    /**
+     * Closes all resources associated with this instance, in particular any open network connections. Once called, this instance and any
+     * databases obtained from it can no longer be used.
+     */
+    public void close() {
+        super.close();
+    }
+
     private <TResult> ChangeStreamIterable<TResult> createChangeStreamIterable(@Nullable final ClientSession clientSession,
                                                                                final List<? extends Bson> pipeline,
                                                                                final Class<TResult> resultClass) {
