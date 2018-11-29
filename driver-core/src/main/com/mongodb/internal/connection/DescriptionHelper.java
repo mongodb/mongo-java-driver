@@ -61,9 +61,9 @@ public final class DescriptionHelper {
     static ConnectionDescription createConnectionDescription(final ConnectionId connectionId,
                                                              final BsonDocument isMasterResult,
                                                              final BsonDocument buildInfoResult) {
-        return new ConnectionDescription(connectionId, getVersion(buildInfoResult), getServerType(isMasterResult),
-                                         getMaxWriteBatchSize(isMasterResult), getMaxBsonObjectSize(isMasterResult),
-                                         getMaxMessageSizeBytes(isMasterResult), getCompressors(isMasterResult));
+        return new ConnectionDescription(connectionId, getVersion(buildInfoResult), getMaxWireVersion(isMasterResult),
+                getServerType(isMasterResult), getMaxWriteBatchSize(isMasterResult), getMaxBsonObjectSize(isMasterResult),
+                getMaxMessageSizeBytes(isMasterResult), getCompressors(isMasterResult));
     }
 
     public static ServerDescription createServerDescription(final ServerAddress serverAddress, final BsonDocument isMasterResult,
@@ -81,16 +81,22 @@ public final class DescriptionHelper {
                                 .maxDocumentSize(getMaxBsonObjectSize(isMasterResult))
                                 .tagSet(getTagSetFromDocument(isMasterResult.getDocument("tags", new BsonDocument())))
                                 .setName(getString(isMasterResult, "setName"))
-                                .minWireVersion(isMasterResult.getInt32("minWireVersion",
-                                                                        new BsonInt32(getDefaultMinWireVersion())).getValue())
-                                .maxWireVersion(isMasterResult.getInt32("maxWireVersion",
-                                                                        new BsonInt32(getDefaultMaxWireVersion())).getValue())
+                                .minWireVersion(getMinWireVersion(isMasterResult))
+                                .maxWireVersion(getMaxWireVersion(isMasterResult))
                                 .electionId(getElectionId(isMasterResult))
                                 .setVersion(getSetVersion(isMasterResult))
                                 .lastWriteDate(getLastWriteDate(isMasterResult))
                                 .roundTripTime(roundTripTime, NANOSECONDS)
                                 .logicalSessionTimeoutMinutes(getLogicalSessionTimeoutMinutes(isMasterResult))
                                 .ok(CommandHelper.isCommandOk(isMasterResult)).build();
+    }
+
+    private static int getMinWireVersion(final BsonDocument isMasterResult) {
+        return isMasterResult.getInt32("minWireVersion", new BsonInt32(getDefaultMinWireVersion())).getValue();
+    }
+
+    private static int getMaxWireVersion(final BsonDocument isMasterResult) {
+        return isMasterResult.getInt32("maxWireVersion", new BsonInt32(getDefaultMaxWireVersion())).getValue();
     }
 
     private static Date getLastWriteDate(final BsonDocument isMasterResult) {
@@ -133,7 +139,6 @@ public final class DescriptionHelper {
         }
     }
 
-    @SuppressWarnings("unchecked")
     static ServerVersion getVersion(final BsonDocument buildInfoResult) {
         List<BsonValue> versionArray = buildInfoResult.getArray("versionArray").subList(0, 3);
 

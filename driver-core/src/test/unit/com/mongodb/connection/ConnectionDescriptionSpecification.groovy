@@ -22,13 +22,14 @@ import spock.lang.Specification
 class ConnectionDescriptionSpecification extends Specification {
     private final id = new ConnectionId(new ServerId(new ClusterId(), new ServerAddress()))
     private final version = new ServerVersion(3, 0)
-    private final description = new ConnectionDescription(id, version, ServerType.STANDALONE, 1, 2, 3,
+    private final description = new ConnectionDescription(id, version, 5, ServerType.STANDALONE, 1, 2, 3,
     ['zlib'])
 
     def 'should initialize all values'() {
         expect:
         description.connectionId == id
         description.serverVersion == version
+        description.maxWireVersion == 5
         description.serverType == ServerType.STANDALONE
         description.maxBatchCount == 1
         description.maxDocumentSize == 2
@@ -45,6 +46,7 @@ class ConnectionDescriptionSpecification extends Specification {
         !newDescription.is(description)
         newDescription.connectionId == newId
         newDescription.serverVersion == version
+        newDescription.maxWireVersion == 5
         newDescription.serverType == ServerType.STANDALONE
         newDescription.maxBatchCount == 1
         newDescription.maxDocumentSize == 2

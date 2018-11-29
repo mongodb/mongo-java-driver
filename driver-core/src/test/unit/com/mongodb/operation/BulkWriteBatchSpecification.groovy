@@ -50,7 +50,7 @@ class BulkWriteBatchSpecification extends Specification {
             .logicalSessionTimeoutMinutes(30)
             .build()
     def connectionDescription = new ConnectionDescription(
-            new ConnectionId(new ServerId(new ClusterId(), serverDescription.getAddress())), new ServerVersion(3, 6),
+            new ConnectionId(new ServerId(new ClusterId(), serverDescription.getAddress())), new ServerVersion(3, 6), 6,
             ServerType.REPLICA_SET_PRIMARY, 1000, 16000, 48000, [])
     def sessionContext = new ReadConcernAwareNoOpSessionContext(ReadConcern.DEFAULT)
 

@@ -60,6 +60,7 @@ import static com.mongodb.ReadPreference.primary
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxMessageSize
 import static com.mongodb.connection.ConnectionDescription.getDefaultMaxWriteBatchSize
 import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize
+import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION
 import static java.util.concurrent.TimeUnit.SECONDS
 
 @SuppressWarnings(['UnusedVariable'])
@@ -72,9 +73,9 @@ class InternalStreamConnectionSpecification extends Specification {
     def serverAddress = new ServerAddress()
     def connectionId = new ConnectionId(SERVER_ID, 1, 1)
     def commandListener = new TestCommandListener()
-    def messageSettings = MessageSettings.builder().serverVersion(new ServerVersion(3, 6)).build()
+    def messageSettings = MessageSettings.builder().maxWireVersion(THREE_DOT_SIX_WIRE_VERSION).build()
 
-    def connectionDescription = new ConnectionDescription(connectionId, new ServerVersion(3, 6),
+    def connectionDescription = new ConnectionDescription(connectionId, new ServerVersion(3, 6), 3,
             ServerType.STANDALONE, getDefaultMaxWriteBatchSize(), getDefaultMaxDocumentSize(), getDefaultMaxMessageSize(), [])
     def stream = Mock(Stream) {
         openAsync(_) >> { it[0].completed(null) }

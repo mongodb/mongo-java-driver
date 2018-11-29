@@ -24,7 +24,6 @@ import com.mongodb.binding.ConnectionSource
 import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.QueryResult
-import com.mongodb.connection.ServerVersion
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonInt64
@@ -38,7 +37,7 @@ class QueryBatchCursorSpecification extends Specification {
         given:
         def connection = Mock(Connection) {
             _ * getDescription() >> Stub(ConnectionDescription) {
-                getServerVersion() >> new ServerVersion([3, 2, 0])
+                getMaxWireVersion() >> 4
             }
         }
         def connectionSource = Stub(ConnectionSource) {
@@ -90,7 +89,7 @@ class QueryBatchCursorSpecification extends Specification {
         def serverAddress = new ServerAddress()
         def connection = Mock(Connection) {
             _ * getDescription() >> Stub(ConnectionDescription) {
-                getServerVersion() >> new ServerVersion([3, 2, 0])
+                getMaxWireVersion() >> 4
             }
             _ * killCursor(_, _) >> { throw new MongoSocketException('No MongoD', serverAddress) }
             _ * command(_, _, _, _, _) >> { throw new MongoSocketException('No MongoD', serverAddress) }

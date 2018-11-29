@@ -59,7 +59,7 @@ class CommandHelperSpecification extends Specification {
         given:
         def connection = Mock(InternalStreamConnection) {
             getDescription() >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                    new ServerVersion(3, 6), ServerType.REPLICA_SET_PRIMARY, 1000, 1000, 1000)
+                    new ServerVersion(3, 6), 6, ServerType.REPLICA_SET_PRIMARY, 1000, 1000, 1000, [])
         }
         def clusterClock = new ClusterClock()
         clusterClock.advance(new BsonDocument('clusterTime', new BsonTimestamp(42L)))
