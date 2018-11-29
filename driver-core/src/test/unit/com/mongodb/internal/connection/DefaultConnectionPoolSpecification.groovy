@@ -27,7 +27,6 @@ import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerId
-import com.mongodb.connection.ServerVersion
 import com.mongodb.event.ConnectionPoolListener
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
@@ -185,7 +184,7 @@ class DefaultConnectionPoolSpecification extends Specification {
 
         and:
         c2.sendAndReceive(new CommandMessage(new MongoNamespace('test.coll'), new BsonDocument('ping', new BsonInt32(1)),
-                new NoOpFieldNameValidator(), primary(), MessageSettings.builder().serverVersion(new ServerVersion(0, 0)).build()),
+                new NoOpFieldNameValidator(), primary(), MessageSettings.builder().build()),
                 new BsonDocumentCodec(), NoOpSessionContext.INSTANCE)
 
         then:
@@ -273,7 +272,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         and:
         c2.sendAndReceiveAsync(new CommandMessage(new MongoNamespace('test.coll'),
                 new BsonDocument('ping', new BsonInt32(1)), new NoOpFieldNameValidator(), primary(),
-                MessageSettings.builder().serverVersion(new ServerVersion(0, 0)).build()),
+                MessageSettings.builder().build()),
                 new BsonDocumentCodec(), NoOpSessionContext.INSTANCE) {
             result, t -> e = t
         }

@@ -35,7 +35,6 @@ import com.mongodb.connection.AsyncConnection
 import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.QueryResult
-import com.mongodb.connection.ServerVersion
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonDouble
@@ -497,10 +496,10 @@ class ListCollectionsOperationSpecification extends OperationFunctionalSpecifica
         dbName: 'db',
         decoder: Stub(Decoder),
         twoSixConnectionDescription : Stub(ConnectionDescription) {
-            getServerVersion() >> new ServerVersion([2, 6, 0])
+            getMaxWireVersion() >> 2
         },
         threeZeroConnectionDescription : Stub(ConnectionDescription) {
-            getServerVersion() >> new ServerVersion([3, 0, 0])
+            getMaxWireVersion() >> 3
         },
         queryResult: Stub(QueryResult) {
             getNamespace() >> new MongoNamespace('db', 'coll')

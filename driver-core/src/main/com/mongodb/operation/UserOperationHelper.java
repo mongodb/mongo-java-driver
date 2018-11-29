@@ -20,10 +20,10 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoInternalException;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.internal.operation.WriteConcernHelper;
-import com.mongodb.lang.NonNull;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerVersion;
+import com.mongodb.internal.operation.WriteConcernHelper;
+import com.mongodb.lang.NonNull;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -33,6 +33,7 @@ import org.bson.BsonValue;
 import java.util.Collections;
 
 import static com.mongodb.internal.authentication.NativeAuthenticationHelper.createAuthenticationHash;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionFourDotZero;
 import static com.mongodb.internal.operation.WriteConcernHelper.hasWriteConcernError;
 
 final class UserOperationHelper {
@@ -40,7 +41,7 @@ final class UserOperationHelper {
 
     static BsonDocument asCommandDocument(final MongoCredential credential, final ConnectionDescription connectionDescription,
                                           final boolean readOnly, final String commandName) {
-        boolean serverDigestPassword = connectionDescription.getServerVersion().compareTo(FOUR_ZERO) >= 0;
+        boolean serverDigestPassword = serverIsAtLeastVersionFourDotZero(connectionDescription);
         BsonDocument document = new BsonDocument();
         document.put(commandName, new BsonString(getUserNameNonNull(credential)));
         if (serverDigestPassword) {

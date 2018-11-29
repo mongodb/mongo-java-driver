@@ -19,7 +19,6 @@ package com.mongodb.internal.connection
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadPreference
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.connection.ServerVersion
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonBinaryWriter
 import org.bson.BsonDocument
@@ -165,7 +164,7 @@ class StreamHelper {
     static isMaster() {
         CommandMessage command = new CommandMessage(new MongoNamespace('admin', COMMAND_COLLECTION_NAME),
                 new BsonDocument('ismaster', new BsonInt32(1)), new NoOpFieldNameValidator(), ReadPreference.primary(),
-                MessageSettings.builder().serverVersion(new ServerVersion(0, 0)).build())
+                MessageSettings.builder().build())
         OutputBuffer outputBuffer = new BasicOutputBuffer()
         command.encode(outputBuffer, NoOpSessionContext.INSTANCE)
         nextMessageId++

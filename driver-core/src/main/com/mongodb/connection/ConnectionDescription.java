@@ -35,6 +35,7 @@ import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize
 public class ConnectionDescription {
     private final ConnectionId connectionId;
     private final ServerVersion serverVersion;
+    private final int maxWireVersion;
     private final ServerType serverType;
     private final int maxBatchCount;
     private final int maxDocumentSize;
@@ -50,7 +51,7 @@ public class ConnectionDescription {
      * @param serverId   the server address
      */
     public ConnectionDescription(final ServerId serverId) {
-        this(new ConnectionId(serverId), new ServerVersion(), ServerType.UNKNOWN, DEFAULT_MAX_WRITE_BATCH_SIZE,
+        this(new ConnectionId(serverId), new ServerVersion(), 0, ServerType.UNKNOWN, DEFAULT_MAX_WRITE_BATCH_SIZE,
              getDefaultMaxDocumentSize(), DEFAULT_MAX_MESSAGE_SIZE, Collections.<String>emptyList());
     }
 
@@ -63,12 +64,14 @@ public class ConnectionDescription {
      * @param maxBatchCount   the max batch count
      * @param maxDocumentSize the max document size in bytes
      * @param maxMessageSize  the max message size in bytes
+     * @deprecated Prefer {@link #ConnectionDescription(ConnectionId, ServerVersion, int, ServerType, int, int, int, List)}
      */
+    @Deprecated
     public ConnectionDescription(final ConnectionId connectionId, final ServerVersion serverVersion,
                                  final ServerType serverType, final int maxBatchCount, final int maxDocumentSize,
                                  final int maxMessageSize) {
 
-        this(connectionId, serverVersion, serverType, maxBatchCount, maxDocumentSize, maxMessageSize, Collections.<String>emptyList());
+        this(connectionId, serverVersion, 0, serverType, maxBatchCount, maxDocumentSize, maxMessageSize, Collections.<String>emptyList());
     }
 
     /**
@@ -82,8 +85,29 @@ public class ConnectionDescription {
      * @param maxMessageSize  the max message size in bytes
      * @param compressors     the available compressors on the connection
      * @since 3.5
+     * @deprecated Prefer {@link #ConnectionDescription(ConnectionId, ServerVersion, int, ServerType, int, int, int, List)}
      */
+    @Deprecated
     public ConnectionDescription(final ConnectionId connectionId, final ServerVersion serverVersion,
+                                 final ServerType serverType, final int maxBatchCount, final int maxDocumentSize,
+                                 final int maxMessageSize, final List<String> compressors) {
+        this(connectionId, serverVersion, 0, serverType, maxBatchCount, maxDocumentSize, maxMessageSize, compressors);
+    }
+
+    /**
+     * Construct an instance.
+     *
+     * @param connectionId    the connection id
+     * @param serverVersion   the server version
+     * @param maxWireVersion  the max wire version
+     * @param serverType      the server type
+     * @param maxBatchCount   the max batch count
+     * @param maxDocumentSize the max document size in bytes
+     * @param maxMessageSize  the max message size in bytes
+     * @param compressors     the available compressors on the connection
+     * @since 3.10
+     */
+    public ConnectionDescription(final ConnectionId connectionId, final ServerVersion serverVersion, final int maxWireVersion,
                                  final ServerType serverType, final int maxBatchCount, final int maxDocumentSize,
                                  final int maxMessageSize, final List<String> compressors) {
         this.connectionId = connectionId;
@@ -92,6 +116,7 @@ public class ConnectionDescription {
         this.maxDocumentSize = maxDocumentSize;
         this.maxMessageSize = maxMessageSize;
         this.serverVersion = serverVersion;
+        this.maxWireVersion = maxWireVersion;
         this.compressors = notNull("compressors", Collections.unmodifiableList(new ArrayList<String>(compressors)));
     }
 
@@ -105,8 +130,8 @@ public class ConnectionDescription {
      */
     public ConnectionDescription withConnectionId(final ConnectionId connectionId) {
         notNull("connectionId", connectionId);
-        return new ConnectionDescription(connectionId, serverVersion, serverType, maxBatchCount, maxDocumentSize, maxMessageSize,
-                                                compressors);
+        return new ConnectionDescription(connectionId, serverVersion, maxWireVersion, serverType, maxBatchCount, maxDocumentSize,
+                maxMessageSize, compressors);
     }
 
     /**
@@ -134,6 +159,17 @@ public class ConnectionDescription {
      */
     public ServerVersion getServerVersion() {
         return serverVersion;
+    }
+
+    /**
+     * The latest version of the wire protocol that this MongoDB server is capable of using to communicate with clients.
+     *
+     * @return the maximum protocol version supported by this server
+     * @since 3.10
+     * @mongodb.server.release 2.6
+     */
+    public int getMaxWireVersion() {
+        return maxWireVersion;
     }
 
     /**
@@ -229,6 +265,9 @@ public class ConnectionDescription {
         if (!serverVersion.equals(that.serverVersion)) {
             return false;
         }
+        if (maxWireVersion != that.maxWireVersion) {
+            return false;
+        }
         if (!compressors.equals(that.compressors)) {
             return false;
         }
@@ -240,12 +279,27 @@ public class ConnectionDescription {
     public int hashCode() {
         int result = connectionId.hashCode();
         result = 31 * result + serverVersion.hashCode();
+        result = 31 * result + maxBatchCount;
         result = 31 * result + serverType.hashCode();
         result = 31 * result + maxBatchCount;
         result = 31 * result + maxDocumentSize;
         result = 31 * result + maxMessageSize;
         result = 31 * result + compressors.hashCode();
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "ConnectionDescription{"
+                + "connectionId=" + connectionId
+                + ", serverVersion=" + serverVersion
+                + ", maxWireVersion=" + maxWireVersion
+                + ", serverType=" + serverType
+                + ", maxBatchCount=" + maxBatchCount
+                + ", maxDocumentSize=" + maxDocumentSize
+                + ", maxMessageSize=" + maxMessageSize
+                + ", compressors=" + compressors
+                + '}';
     }
 }
 

@@ -34,7 +34,6 @@ import com.mongodb.client.model.CollationStrength
 import com.mongodb.connection.AsyncConnection
 import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
-import com.mongodb.connection.ServerVersion
 import com.mongodb.session.SessionContext
 import org.bson.BsonDocument
 import spock.lang.Shared
@@ -43,6 +42,28 @@ import spock.lang.Specification
 import java.util.concurrent.TimeUnit
 
 class OperationUnitSpecification extends Specification {
+
+    // Have to add to this map for every server release
+    private static final SERVER_TO_WIRE_VERSION_MAP = [
+            [2, 6]: 2,
+            [3, 0]: 3,
+            [3, 2]: 4,
+            [3, 4]: 5,
+            [3, 6]: 6,
+            [4, 0]: 7,
+            [4, 1]: 8
+    ]
+
+    static int getMaxWireVersionForServerVersion(List<Integer> serverVersion) {
+        def maxWireVersion = SERVER_TO_WIRE_VERSION_MAP[serverVersion.subList(0, 2)]
+
+        if (maxWireVersion == null) {
+            throw new IllegalArgumentException('Unknown server version ' + serverVersion.subList(0, 2) + '.  Check if it has been added ' +
+                    'to SERVER_TO_WIRE_VERSION_MAP')
+        }
+
+        maxWireVersion
+    }
 
     void testOperation(operation, List<Integer> serverVersion, BsonDocument expectedCommand, boolean async, BsonDocument result) {
         def test = async ? this.&testAsyncOperation : this.&testSyncOperation
@@ -64,7 +85,7 @@ class OperationUnitSpecification extends Specification {
                           Boolean checkSlaveOk=false, ReadPreference readPreference=ReadPreference.primary()) {
         def connection = Mock(Connection) {
             _ * getDescription() >> Stub(ConnectionDescription) {
-                getServerVersion() >> new ServerVersion(serverVersion)
+                getMaxWireVersion() >> getMaxWireVersionForServerVersion(serverVersion)
             }
         }
 
@@ -114,7 +135,7 @@ class OperationUnitSpecification extends Specification {
                            Boolean checkSlaveOk=false, ReadPreference readPreference=ReadPreference.primary()) {
         def connection = Mock(AsyncConnection) {
             _ * getDescription() >> Stub(ConnectionDescription) {
-                getServerVersion() >> new ServerVersion(serverVersion)
+                getMaxWireVersion() >> getMaxWireVersionForServerVersion(serverVersion)
             }
         }
 

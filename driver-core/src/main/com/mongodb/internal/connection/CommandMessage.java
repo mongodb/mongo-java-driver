@@ -20,7 +20,6 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.connection.ByteBufferBsonOutput;
 import com.mongodb.connection.ClusterConnectionMode;
-import com.mongodb.connection.ServerVersion;
 import com.mongodb.connection.SplittablePayload;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
 import com.mongodb.session.SessionContext;
@@ -50,6 +49,7 @@ import static com.mongodb.connection.ClusterConnectionMode.SINGLE;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.internal.connection.BsonWriterHelper.writePayload;
 import static com.mongodb.internal.connection.ReadConcernHelper.getReadConcernDocument;
+import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION;
 
 /**
  * A command message that uses OP_MSG or OP_QUERY to send the command.
@@ -271,7 +271,7 @@ public final class CommandMessage extends RequestMessage {
     }
 
     private static boolean isServerVersionAtLeastThreeDotSix(final MessageSettings settings) {
-        return settings.getServerVersion().compareTo(new ServerVersion(3, 6)) >= 0;
+          return settings.getMaxWireVersion() >= THREE_DOT_SIX_WIRE_VERSION;
     }
 
 }

@@ -21,13 +21,13 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.connection.ServerVersion;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
 
 import static com.mongodb.internal.connection.CommandHelper.executeCommand;
 import static com.mongodb.internal.connection.CommandHelper.executeCommandAsync;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionThreeDotFour;
 
 class X509Authenticator extends Authenticator {
     X509Authenticator(final MongoCredentialWithCache credential) {
@@ -87,7 +87,7 @@ class X509Authenticator extends Authenticator {
     }
 
     private void validateUserName(final ConnectionDescription connectionDescription) {
-        if (getMongoCredential().getUserName() == null && connectionDescription.getServerVersion().compareTo(new ServerVersion(3, 4)) < 0) {
+        if (getMongoCredential().getUserName() == null && serverIsLessThanVersionThreeDotFour(connectionDescription)) {
             throw new MongoSecurityException(getMongoCredential(), "User name is required for the MONGODB-X509 authentication mechanism "
                                                                       + "on server versions less than 3.4");
         }

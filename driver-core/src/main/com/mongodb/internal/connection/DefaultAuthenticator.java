@@ -32,6 +32,8 @@ import static com.mongodb.AuthenticationMechanism.SCRAM_SHA_256;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.internal.connection.CommandHelper.executeCommand;
 import static com.mongodb.internal.connection.CommandHelper.executeCommandAsync;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotZero;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionFourDotZero;
 import static java.lang.String.format;
 
 class DefaultAuthenticator extends Authenticator {
@@ -47,13 +49,13 @@ class DefaultAuthenticator extends Authenticator {
 
     @Override
     void authenticate(final InternalConnection connection, final ConnectionDescription connectionDescription) {
-        if (connectionDescription.getServerVersion().compareTo(FOUR_ZERO) < 0) {
-            getLegacyDefaultAuthenticator(connectionDescription.getServerVersion())
+        if (serverIsLessThanVersionFourDotZero(connectionDescription)) {
+            getLegacyDefaultAuthenticator(connectionDescription)
                     .authenticate(connection, connectionDescription);
         } else {
             try {
                 BsonDocument isMasterResult = executeCommand("admin", createIsMasterCommand(), connection);
-                getAuthenticatorFromIsMasterResult(isMasterResult, connectionDescription.getServerVersion())
+                getAuthenticatorFromIsMasterResult(isMasterResult, connectionDescription)
                         .authenticate(connection, connectionDescription);
             } catch (Exception e) {
                 throw wrapException(e);
@@ -64,8 +66,8 @@ class DefaultAuthenticator extends Authenticator {
     @Override
     void authenticateAsync(final InternalConnection connection, final ConnectionDescription connectionDescription,
                            final SingleResultCallback<Void> callback) {
-        if (connectionDescription.getServerVersion().compareTo(FOUR_ZERO) < 0) {
-            getLegacyDefaultAuthenticator(connectionDescription.getServerVersion())
+        if (serverIsLessThanVersionFourDotZero(connectionDescription)) {
+            getLegacyDefaultAuthenticator(connectionDescription)
                     .authenticateAsync(connection, connectionDescription, callback);
         } else {
             executeCommandAsync("admin", createIsMasterCommand(), connection, new SingleResultCallback<BsonDocument>() {
@@ -74,7 +76,7 @@ class DefaultAuthenticator extends Authenticator {
                     if (t != null) {
                         callback.onResult(null, wrapException(t));
                     } else {
-                        getAuthenticatorFromIsMasterResult(result, connectionDescription.getServerVersion())
+                        getAuthenticatorFromIsMasterResult(result, connectionDescription)
                                 .authenticateAsync(connection, connectionDescription, callback);
                     }
                 }
@@ -82,18 +84,18 @@ class DefaultAuthenticator extends Authenticator {
         }
     }
 
-    Authenticator getAuthenticatorFromIsMasterResult(final BsonDocument isMasterResult, final ServerVersion serverVersion) {
+    Authenticator getAuthenticatorFromIsMasterResult(final BsonDocument isMasterResult, final ConnectionDescription connectionDescription) {
         if (isMasterResult.containsKey("saslSupportedMechs")) {
             BsonArray saslSupportedMechs = isMasterResult.getArray("saslSupportedMechs");
             AuthenticationMechanism mechanism = saslSupportedMechs.contains(DEFAULT_MECHANISM_NAME) ? SCRAM_SHA_256 : SCRAM_SHA_1;
             return new ScramShaAuthenticator(getMongoCredentialWithCache().withMechanism(mechanism));
         } else {
-            return getLegacyDefaultAuthenticator(serverVersion);
+            return getLegacyDefaultAuthenticator(connectionDescription);
         }
     }
 
-    private Authenticator getLegacyDefaultAuthenticator(final ServerVersion serverVersion) {
-        if (serverVersion.compareTo(THREE_ZERO) >= 0) {
+    private Authenticator getLegacyDefaultAuthenticator(final ConnectionDescription connectionDescription) {
+        if (serverIsAtLeastVersionThreeDotZero(connectionDescription)) {
             return new ScramShaAuthenticator(getMongoCredentialWithCache().withMechanism(SCRAM_SHA_1));
         } else {
             return new NativeAuthenticator(getMongoCredentialWithCache());

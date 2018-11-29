@@ -43,10 +43,10 @@ import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
-import com.mongodb.internal.connection.ServerHelper
 import com.mongodb.connection.ServerType
 import com.mongodb.connection.ServerVersion
 import com.mongodb.connection.SplittablePayload
+import com.mongodb.internal.connection.ServerHelper
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import com.mongodb.operation.AsyncReadOperation
 import com.mongodb.operation.AsyncWriteOperation
@@ -64,13 +64,14 @@ import spock.lang.Specification
 import java.util.concurrent.TimeUnit
 
 import static com.mongodb.ClusterFixture.TIMEOUT
+import static com.mongodb.ClusterFixture.checkReferenceCountReachesTarget
 import static com.mongodb.ClusterFixture.executeAsync
 import static com.mongodb.ClusterFixture.getAsyncBinding
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.loopCursor
-import static com.mongodb.ClusterFixture.checkReferenceCountReachesTarget
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
+import static com.mongodb.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion
 
 class OperationFunctionalSpecification extends Specification {
 
@@ -243,7 +244,7 @@ class OperationFunctionalSpecification extends Specification {
                           ServerType serverType = ServerType.STANDALONE) {
         def connection = Mock(Connection) {
             _ * getDescription() >> Stub(ConnectionDescription) {
-                getServerVersion() >> new ServerVersion(serverVersion)
+                getMaxWireVersion() >> getMaxWireVersionForServerVersion(serverVersion)
                 getServerType() >> serverType
             }
         }
@@ -321,7 +322,7 @@ class OperationFunctionalSpecification extends Specification {
                            ServerType serverType = ServerType.STANDALONE) {
         def connection = Mock(AsyncConnection) {
             _ * getDescription() >> Stub(ConnectionDescription) {
-                getServerVersion() >> new ServerVersion(serverVersion)
+                getMaxWireVersion() >> getMaxWireVersionForServerVersion(serverVersion)
                 getServerType() >> serverType
             }
         }
@@ -405,8 +406,8 @@ class OperationFunctionalSpecification extends Specification {
         def serverVersionSize = serverVersions.size()
         def connection = Mock(Connection) {
             _ * getDescription() >> Stub(ConnectionDescription) {
-                getServerVersion() >> {
-                    new ServerVersion(serverVersions.poll())
+                getMaxWireVersion() >> {
+                    getMaxWireVersionForServerVersion(serverVersions.poll())
                 }
                 getServerType() >> {
                     serverTypes.poll()
@@ -447,8 +448,8 @@ class OperationFunctionalSpecification extends Specification {
         def serverVersionSize = serverVersions.size()
         def connection = Mock(AsyncConnection) {
             _ * getDescription() >> Stub(ConnectionDescription) {
-                getServerVersion() >> {
-                    new ServerVersion(serverVersions.poll())
+                getMaxWireVersion() >> {
+                    getMaxWireVersionForServerVersion(serverVersions.poll())
                 }
                 getServerType() >> {
                     serverTypes.poll()

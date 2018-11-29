@@ -419,15 +419,15 @@ class OperationHelperSpecification extends Specification {
 
 
     static ConnectionId connectionId = new ConnectionId(new ServerId(new ClusterId(), new ServerAddress()))
-    static ConnectionDescription threeSixConnectionDescription = new ConnectionDescription(connectionId, new ServerVersion(3, 6),
+    static ConnectionDescription threeSixConnectionDescription = new ConnectionDescription(connectionId, new ServerVersion(3, 6), 6,
             STANDALONE, 1000, 100000, 100000, [])
-    static ConnectionDescription threeSixPrimaryConnectionDescription = new ConnectionDescription(connectionId, new ServerVersion(3, 6),
+    static ConnectionDescription threeSixPrimaryConnectionDescription = new ConnectionDescription(connectionId, new ServerVersion(3, 6), 6,
             REPLICA_SET_PRIMARY, 1000, 100000, 100000, [])
-    static ConnectionDescription threeFourConnectionDescription = new ConnectionDescription(connectionId, new ServerVersion(3, 4),
+    static ConnectionDescription threeFourConnectionDescription = new ConnectionDescription(connectionId, new ServerVersion(3, 4), 5,
             STANDALONE, 1000, 100000, 100000, [])
-    static ConnectionDescription threeTwoConnectionDescription = new ConnectionDescription(connectionId, new ServerVersion(3, 2),
+    static ConnectionDescription threeTwoConnectionDescription = new ConnectionDescription(connectionId, new ServerVersion(3, 2), 4,
             STANDALONE, 1000, 100000, 100000, [])
-    static ConnectionDescription threeConnectionDescription = new ConnectionDescription(connectionId, new ServerVersion(3, 0),
+    static ConnectionDescription threeConnectionDescription = new ConnectionDescription(connectionId, new ServerVersion(3, 0), 3,
             STANDALONE, 1000, 100000, 100000, [])
 
     static ServerDescription retryableServerDescription = ServerDescription.builder().address(new ServerAddress()).state(CONNECTED)

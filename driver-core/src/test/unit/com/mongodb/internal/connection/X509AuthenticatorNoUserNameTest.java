@@ -47,10 +47,10 @@ public class X509AuthenticatorNoUserNameTest {
     public void before() {
         connection = new TestInternalConnection(new ServerId(new ClusterId(), new ServerAddress("localhost", 27017)));
         connectionDescriptionThreeTwo = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                                                                         new ServerVersion(3, 2), ServerType.STANDALONE, 1000, 16000,
+                                                                         new ServerVersion(3, 2), 4, ServerType.STANDALONE, 1000, 16000,
                                                                          48000, Collections.<String>emptyList());
         connectionDescriptionThreeFour = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                                                                          new ServerVersion(3, 4), ServerType.STANDALONE, 1000, 16000,
+                                                                          new ServerVersion(3, 4), 5, ServerType.STANDALONE, 1000, 16000,
                                                                           48000, Collections.<String>emptyList());
     }
 

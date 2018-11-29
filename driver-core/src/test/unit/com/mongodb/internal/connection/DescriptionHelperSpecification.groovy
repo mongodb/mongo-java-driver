@@ -59,7 +59,7 @@ class DescriptionHelperSpecification extends Specification {
                                           maxMessageSizeBytes : 48000000,
                                           maxWriteBatchSize : 1000,
                                           localTime : ISODate("2015-03-04T23:03:45.848Z"),
-                                          maxWireVersion : 3,
+                                          maxWireVersion : 6,
                                           minWireVersion : 0,
                                           ok : 1
                                           }'''),
@@ -70,18 +70,18 @@ class DescriptionHelperSpecification extends Specification {
                                           "loaderFlags" : "-fPIC -pthread -Wl,-bind_at_load -m64 -mmacosx-version-min=10.9",
                                           "allocator" : "tcmalloc",
                                           "versionArray" : [
-                                          2,
-                                          6,
-                                          1,
-                                          0
+                                          3,
+                                          0,
+                                          0,
+                                          1
                                           ],
                                           "javascriptEngine" : "V8",
                                           "bits" : 64,
                                           "debug" : false,
                                           "maxBsonObjectSize" : 16777216,
                                           "ok" : 1
-                                          }'''))
-        new ConnectionDescription(connectionId, serverVersion, ServerType.STANDALONE, 1000, 16777216, 48000000, [])
+                                          }''')) ==
+        new ConnectionDescription(connectionId, serverVersion, 6, ServerType.STANDALONE, 1000, 16777216, 48000000, [])
     }
 
     def 'connection description should reflect ismaster result with compressors'() {
@@ -94,9 +94,9 @@ class DescriptionHelperSpecification extends Specification {
                                           maxMessageSizeBytes : 48000000,
                                           maxWriteBatchSize : 1000,
                                           localTime : ISODate("2015-03-04T23:03:45.848Z"),
-                                          maxWireVersion : 3,
+                                          maxWireVersion : 6,
                                           minWireVersion : 0,
-                                          compressors : ["zlib", "snappy"],
+                                          compression : ["zlib", "snappy"],
                                           ok : 1
                                           }'''),
                 parse('''{
@@ -106,18 +106,18 @@ class DescriptionHelperSpecification extends Specification {
                                           "loaderFlags" : "-fPIC -pthread -Wl,-bind_at_load -m64 -mmacosx-version-min=10.9",
                                           "allocator" : "tcmalloc",
                                           "versionArray" : [
-                                          2,
-                                          6,
-                                          1,
-                                          0
+                                          3,
+                                          0,
+                                          0,
+                                          1
                                           ],
                                           "javascriptEngine" : "V8",
                                           "bits" : 64,
                                           "debug" : false,
                                           "maxBsonObjectSize" : 16777216,
                                           "ok" : 1
-                                          }'''))
-        new ConnectionDescription(connectionId, serverVersion, ServerType.STANDALONE, 1000, 16777216, 48000000,
+                                          }''')) ==
+        new ConnectionDescription(connectionId, serverVersion, 6, ServerType.STANDALONE, 1000, 16777216, 48000000,
                 ['zlib', 'snappy'])
     }
 
