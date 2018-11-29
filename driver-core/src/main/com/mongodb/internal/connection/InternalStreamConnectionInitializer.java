@@ -39,7 +39,6 @@ import static com.mongodb.internal.connection.CommandHelper.executeCommandAsync;
 import static com.mongodb.internal.connection.CommandHelper.executeCommandWithoutCheckingForFailure;
 import static com.mongodb.internal.connection.DefaultAuthenticator.USER_NOT_FOUND_CODE;
 import static com.mongodb.internal.connection.DescriptionHelper.createConnectionDescription;
-import static com.mongodb.internal.connection.DescriptionHelper.getVersion;
 import static java.lang.String.format;
 
 public class InternalStreamConnectionInitializer implements InternalConnectionInitializer {
@@ -113,8 +112,10 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
         }
         BsonDocument buildInfoResult = executeCommand("admin", new BsonDocument("buildinfo", new BsonInt32(1)), internalConnection);
 
-        setFirstAuthenticator(isMasterResult, buildInfoResult);
-        return createConnectionDescription(internalConnection.getDescription().getConnectionId(), isMasterResult, buildInfoResult);
+        ConnectionDescription connectionDescription = createConnectionDescription(internalConnection.getDescription().getConnectionId(),
+                isMasterResult, buildInfoResult);
+        setFirstAuthenticator(isMasterResult, connectionDescription);
+        return connectionDescription;
     }
 
     private BsonDocument createIsMasterCommand() {
@@ -179,11 +180,11 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
                                                                     } else {
                                                                         ConnectionId connectionId = internalConnection.getDescription()
                                                                                                                       .getConnectionId();
-                                                                        setFirstAuthenticator(isMasterResult, buildInfoResult);
-                                                                        callback.onResult(createConnectionDescription(connectionId,
-                                                                                                                      isMasterResult,
-                                                                                                                      buildInfoResult),
-                                                                                          null);
+                                                                        ConnectionDescription connectionDescription =
+                                                                                createConnectionDescription(connectionId, isMasterResult,
+                                                                                        buildInfoResult);
+                                                                        setFirstAuthenticator(isMasterResult, connectionDescription);
+                                                                        callback.onResult(connectionDescription, null);
                                                                     }
                                                                 }
                                                             });
@@ -193,10 +194,10 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
     }
 
     @SuppressWarnings("unchecked")
-    private void setFirstAuthenticator(final BsonDocument isMasterResult, final BsonDocument buildInfoResult) {
+    private void setFirstAuthenticator(final BsonDocument isMasterResult, final ConnectionDescription connectionDescription) {
         if (checkSaslSupportedMechs) {
             authenticators.set(0, ((DefaultAuthenticator) authenticators.get(0))
-                    .getAuthenticatorFromIsMasterResult(isMasterResult, getVersion(buildInfoResult)));
+                    .getAuthenticatorFromIsMasterResult(isMasterResult, connectionDescription));
         }
     }
 

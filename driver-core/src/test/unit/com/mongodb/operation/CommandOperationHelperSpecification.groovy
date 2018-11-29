@@ -33,7 +33,6 @@ import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
-import com.mongodb.connection.ServerVersion
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import com.mongodb.session.SessionContext
 import org.bson.BsonBoolean
@@ -50,6 +49,7 @@ import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommand
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync
 import static com.mongodb.operation.CommandOperationHelper.isNamespaceError
 import static com.mongodb.operation.CommandOperationHelper.rethrowIfNotNamespaceError
+import static com.mongodb.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion
 
 class CommandOperationHelperSpecification extends Specification {
 
@@ -150,7 +150,7 @@ class CommandOperationHelperSpecification extends Specification {
         def connection = Mock(Connection) {
             _ * release()
             _ * getDescription() >> Stub(ConnectionDescription) {
-                getServerVersion() >> new ServerVersion([4, 0, 0])
+                getMaxWireVersion() >> getMaxWireVersionForServerVersion([4, 0, 0])
                 getServerType() >> ServerType.REPLICA_SET_PRIMARY
             }
         }
@@ -202,7 +202,7 @@ class CommandOperationHelperSpecification extends Specification {
 
         def connection = Mock(AsyncConnection) {
             _ * getDescription() >> Stub(ConnectionDescription) {
-                getServerVersion() >> new ServerVersion([4, 0, 0])
+                getMaxWireVersion() >> getMaxWireVersionForServerVersion([4, 0, 0])
                 getServerType() >> ServerType.REPLICA_SET_PRIMARY
             }
         }

@@ -22,7 +22,6 @@ import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ServerId
-import com.mongodb.connection.ServerVersion
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -179,7 +178,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         when:
         connection.sendAndReceive(new CommandMessage(new MongoNamespace('test.coll'),
                 new BsonDocument('ping', new BsonInt32(1)), new NoOpFieldNameValidator(), primary(),
-                MessageSettings.builder().serverVersion(new ServerVersion(0, 0)).build()),
+                MessageSettings.builder().build()),
                 new BsonDocumentCodec(), NoOpSessionContext.INSTANCE)
 
         then:
@@ -197,7 +196,7 @@ class UsageTrackingConnectionSpecification extends Specification {
         when:
         connection.sendAndReceiveAsync(new CommandMessage(new MongoNamespace('test.coll'),
                 new BsonDocument('ping', new BsonInt32(1)), new NoOpFieldNameValidator(), primary(),
-                MessageSettings.builder().serverVersion(new ServerVersion(0, 0)).build()),
+                MessageSettings.builder().build()),
                 new BsonDocumentCodec(), NoOpSessionContext.INSTANCE, futureResultCallback)
         futureResultCallback.get(60, SECONDS)
 

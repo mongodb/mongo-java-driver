@@ -19,7 +19,6 @@ package com.mongodb.internal.connection;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.connection.ServerType;
-import com.mongodb.connection.ServerVersion;
 
 /**
  * The message settings
@@ -35,7 +34,7 @@ final class MessageSettings {
     private final int maxDocumentSize;
     private final int maxMessageSize;
     private final int maxBatchCount;
-    private final ServerVersion serverVersion;
+    private final int maxWireVersion;
     private final ServerType serverType;
 
     /**
@@ -55,7 +54,7 @@ final class MessageSettings {
         private int maxDocumentSize = DEFAULT_MAX_DOCUMENT_SIZE;
         private int maxMessageSize = DEFAULT_MAX_MESSAGE_SIZE;
         private int maxBatchCount = DEFAULT_MAX_BATCH_COUNT;
-        private ServerVersion serverVersion;
+        private int maxWireVersion;
         private ServerType serverType;
 
         /**
@@ -100,8 +99,8 @@ final class MessageSettings {
             return this;
         }
 
-        public Builder serverVersion(final ServerVersion serverVersion) {
-            this.serverVersion = serverVersion;
+        public Builder maxWireVersion(final int maxWireVersion) {
+            this.maxWireVersion = maxWireVersion;
             return this;
         }
 
@@ -138,8 +137,8 @@ final class MessageSettings {
         return maxBatchCount;
     }
 
-    public ServerVersion getServerVersion() {
-        return serverVersion;
+    public int getMaxWireVersion() {
+        return maxWireVersion;
     }
 
     public ServerType getServerType() {
@@ -150,7 +149,7 @@ final class MessageSettings {
         this.maxDocumentSize = builder.maxDocumentSize;
         this.maxMessageSize = builder.maxMessageSize;
         this.maxBatchCount = builder.maxBatchCount;
-        this.serverVersion = builder.serverVersion;
+        this.maxWireVersion = builder.maxWireVersion;
         this.serverType = builder.serverType;
     }
 }

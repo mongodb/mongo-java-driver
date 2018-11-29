@@ -42,7 +42,6 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.QueryResult;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerType;
-import com.mongodb.connection.ServerVersion;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.operation.ServerVersionHelper;
@@ -56,6 +55,7 @@ import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsLessThanVersionThreeDotSix;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -266,7 +266,7 @@ final class OperationHelper {
 
     static boolean canRetryWrite(final ServerDescription serverDescription, final ConnectionDescription connectionDescription,
                                  final SessionContext sessionContext) {
-        if (connectionDescription.getServerVersion().compareTo(new ServerVersion(3, 6)) < 0) {
+        if (serverIsLessThanVersionThreeDotSix(connectionDescription)) {
             LOGGER.debug("retryWrites set to true but the server does not support retryable writes.");
             return false;
         } else if (serverDescription.getLogicalSessionTimeoutMinutes() == null) {

@@ -52,10 +52,10 @@ class DefaultServerConnectionSpecification extends Specification {
     def callback = errorHandlingCallback(Mock(SingleResultCallback), Mock(Logger))
     @Shared
     def standaloneConnectionDescription = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-            new ServerVersion(3, 0), STANDALONE, 100, 100, 100, [])
+            new ServerVersion(3, 0), 3, STANDALONE, 100, 100, 100, [])
     @Shared
     def mongosConnectionDescription = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-            new ServerVersion(3, 0), SHARD_ROUTER, 100, 100, 100, [])
+            new ServerVersion(3, 0), 3, SHARD_ROUTER, 100, 100, 100, [])
 
     def 'should execute insert protocol'() {
         given:

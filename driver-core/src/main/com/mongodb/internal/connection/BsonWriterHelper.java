@@ -108,7 +108,7 @@ final class BsonWriterHelper {
                 .maxBatchCount(settings.getMaxBatchCount())
                 .maxMessageSize(settings.getMaxMessageSize())
                 .maxDocumentSize(settings.getMaxDocumentSize())
-                .serverVersion(settings.getServerVersion());
+                .maxWireVersion(settings.getMaxWireVersion());
     }
 
     private static boolean exceedsLimits(final MessageSettings settings, final int messageSize, final int documentSize,
