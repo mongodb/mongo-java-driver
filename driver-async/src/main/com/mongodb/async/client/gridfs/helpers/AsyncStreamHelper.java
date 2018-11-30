@@ -80,6 +80,12 @@ public final class AsyncStreamHelper {
             }
 
             @Override
+            public void skip(final long bytesToSkip, final SingleResultCallback<Long> callback) {
+                notNull("callback", callback);
+                callback.onResult(0L, null);
+            }
+
+            @Override
             public void close(final SingleResultCallback<Void> callback) {
                 callback.onResult(null, null);
             }
@@ -148,6 +154,17 @@ public final class AsyncStreamHelper {
             }
 
             @Override
+            public void skip(final long bytesToSkip, final SingleResultCallback<Long> callback) {
+                notNull("callback", callback);
+                try {
+                    long skipped = inputStream.skip(bytesToSkip);
+                    callback.onResult(skipped, null);
+                } catch (Throwable t) {
+                    callback.onResult(null, t);
+                }
+            }
+
+            @Override
             public void close(final SingleResultCallback<Void> callback) {
                 try {
                     inputStream.close();
@@ -204,7 +221,7 @@ public final class AsyncStreamHelper {
     }
 
     private static void transferDataFromByteBuffers(final ByteBuffer srcByteBuffer, final ByteBuffer dstByteBuffer,
-                                             final SingleResultCallback<Integer> callback) {
+                                                    final SingleResultCallback<Integer> callback) {
         if (!srcByteBuffer.hasRemaining()) {
             callback.onResult(-1, null);
             return;
