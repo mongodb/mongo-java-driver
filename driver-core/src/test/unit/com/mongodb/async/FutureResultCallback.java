@@ -20,10 +20,8 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoTimeoutException;
 
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 
 /**
  * A SingleResultCallback Future implementation.
@@ -69,12 +67,18 @@ public class FutureResultCallback<T> implements SingleResultCallback<T>, Future<
     }
 
     @Override
-    public T get(final long timeout, final TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
+    public T get(final long timeout, final TimeUnit unit) throws InterruptedException {
         if (!latch.await(timeout, unit)) {
             throw new MongoTimeoutException("Callback timed out");
         }
         if (result.hasError()) {
-            throw (RuntimeException) result.getError();
+            if (result.getError() instanceof RuntimeException) {
+                throw (RuntimeException) result.getError();
+            } else if (result.getError() instanceof Error) {
+                throw (Error) result.getError();
+            } else {
+                throw new RuntimeException("Wrapping unexpected Throwable", result.getError());
+            }
         } else {
             return result.getResult();
         }
