@@ -144,6 +144,48 @@ final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
         });
     }
 
+    @Override
+    public void skip(final long bytesToSkip, final SingleResultCallback<Long> callback) {
+        notNull("callback", callback);
+        final SingleResultCallback<Long> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
+        if (checkClosed()) {
+            errHandlingCallback.onResult(null, null);
+        } else if (!hasFileInfo()) {
+            getGridFSFile(new SingleResultCallback<GridFSFile>() {
+                @Override
+                public void onResult(final GridFSFile result, final Throwable t) {
+                    if (t != null) {
+                        errHandlingCallback.onResult(null, t);
+                    } else {
+                        skip(bytesToSkip, errHandlingCallback);
+                    }
+                }
+            });
+        } else if (bytesToSkip <= 0) {
+            callback.onResult(0L, null);
+        } else {
+            long skippedPosition = currentPosition + bytesToSkip;
+            bufferOffset = (int) (skippedPosition % fileInfo.getChunkSize());
+            if (skippedPosition >= fileInfo.getLength()) {
+                long skipped = fileInfo.getLength() - currentPosition;
+                chunkIndex = numberOfChunks - 1;
+                currentPosition = fileInfo.getLength();
+                buffer = null;
+                discardCursor();
+                callback.onResult(skipped, null);
+            } else {
+                int newChunkIndex = (int) Math.floor(skippedPosition / (double) fileInfo.getChunkSize());
+                if (chunkIndex != newChunkIndex) {
+                    chunkIndex = newChunkIndex;
+                    buffer = null;
+                    discardCursor();
+                }
+                currentPosition += bytesToSkip;
+                callback.onResult(bytesToSkip, null);
+            }
+        }
+    }
+
     private void checkAndFetchResults(final int amountRead, final ByteBuffer dst, final SingleResultCallback<Integer> callback) {
         if (currentPosition == fileInfo.getLength() || dst.remaining() == 0) {
             callback.onResult(amountRead, null);
@@ -198,9 +240,13 @@ final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
             while (currentPosition < fileInfo.getLength() && amountToCopy > 0) {
 
                 if (getBufferFromResultsQueue()) {
+
+                    boolean wasEndOfBuffer = (buffer != null && bufferOffset == buffer.length);
                     buffer = getBufferFromChunk(resultsQueue.poll(), chunkIndex);
-                    bufferOffset = 0;
                     chunkIndex += 1;
+                    if (wasEndOfBuffer) {
+                        bufferOffset = 0;
+                    }
                 }
 
                 if (amountToCopy > buffer.length - bufferOffset) {
