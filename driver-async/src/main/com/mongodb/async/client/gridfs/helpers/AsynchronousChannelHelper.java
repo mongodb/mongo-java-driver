@@ -64,6 +64,12 @@ public final class AsynchronousChannelHelper {
             }
 
             @Override
+            public void skip(final long bytesToSkip, final SingleResultCallback<Long> callback) {
+                notNull("callback", callback);
+                callback.onResult(0L, null);
+            }
+
+            @Override
             public void close(final SingleResultCallback<Void> callback) {
                 try {
                     asynchronousByteChannel.close();
@@ -100,6 +106,12 @@ public final class AsynchronousChannelHelper {
                         callback.onResult(null, exc);
                     }
                 });
+            }
+
+            @Override
+            public void skip(final long bytesToSkip, final SingleResultCallback<Long> callback) {
+                notNull("callback", callback);
+                callback.onResult(0L, null);
             }
 
             @Override

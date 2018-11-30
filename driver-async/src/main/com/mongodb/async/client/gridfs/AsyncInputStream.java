@@ -40,6 +40,15 @@ public interface AsyncInputStream {
     void read(ByteBuffer dst, SingleResultCallback<Integer> callback);
 
     /**
+     * Skips over and discards n bytes of data from this input stream.
+     * @param bytesToSkip the number of bytes to skip
+     * @param callback the callback returning the actual number of bytes skipped
+     *
+     * @since 3.10
+     */
+    void skip(long bytesToSkip, SingleResultCallback<Long> callback);
+
+    /**
      * Closes the input stream
      *
      * @param callback the callback that indicates when the stream has been closed

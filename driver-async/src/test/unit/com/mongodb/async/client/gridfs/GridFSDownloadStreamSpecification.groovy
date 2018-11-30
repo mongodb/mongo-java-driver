@@ -234,6 +234,97 @@ class GridFSDownloadStreamSpecification extends Specification {
         clientSession << [null, Stub(ClientSession)]
     }
 
+    def 'should skip to the correct point'() {
+        given:
+        def fileInfo = new GridFSFile(new BsonObjectId(new ObjectId()), 'filename', 4194297L, 32,
+                new Date(), 'abc', new Document())
+
+        def firstChunkBytes = 1..32 as byte[]
+        def lastChunkBytes = 33 .. 57 as byte[]
+
+        def sort = new Document('n', 1)
+
+        def findQueries = [new Document('files_id', fileInfo.getId()).append('n', new Document('$gte', 0)),
+                           new Document('files_id', fileInfo.getId()).append('n', new Document('$gte', 131071))]
+        def chunkDocuments =
+                [new Document('files_id', fileInfo.getId()).append('n', 0).append('data', new Binary(firstChunkBytes)),
+                 new Document('files_id', fileInfo.getId()).append('n', 131071).append('data', new Binary(lastChunkBytes))]
+
+        def gridFSFindIterable = Mock(GridFSFindIterable)
+        def batchCursor = Mock(AsyncBatchCursor)
+        def findIterable = Mock(FindIterable)
+        def chunksCollection = Mock(MongoCollection)
+        def downloadStream = new GridFSDownloadStreamImpl(clientSession, gridFSFindIterable, chunksCollection)
+
+        when:
+        def futureResult = new FutureResultCallback()
+        downloadStream.skip(15, futureResult)
+
+        then:
+        1 * gridFSFindIterable.first(_) >> { it.last().onResult(fileInfo, null) }
+
+        then:
+        futureResult.get() == 15L
+        0 * chunksCollection.find(*_)
+
+        when:
+        futureResult = new FutureResultCallback()
+        def readByteBuffer = ByteBuffer.allocate(5)
+        downloadStream.read(readByteBuffer, futureResult)
+
+        then:
+        if (clientSession != null) {
+            1 * chunksCollection.find(clientSession, findQueries[0]) >> findIterable
+        } else {
+            1 * chunksCollection.find(findQueries[0]) >> findIterable
+        }
+        1 * findIterable.sort(sort) >> findIterable
+        1 * findIterable.batchSize(0) >> findIterable
+        1 * findIterable.batchCursor(_) >> { it.last().onResult(batchCursor, null) }
+        1 * batchCursor.next(_) >> { it.last().onResult([chunkDocuments[0]], null) }
+
+        then:
+        readByteBuffer.flip() == ByteBuffer.wrap([16, 17, 18, 19, 20] as byte[])
+
+        when:
+        futureResult = new FutureResultCallback()
+        downloadStream.skip(4194272L, futureResult)
+
+        then:
+        futureResult.get() == 4194272L
+        0 * chunksCollection.find(*_)
+
+        when:
+        futureResult = new FutureResultCallback()
+        readByteBuffer = ByteBuffer.allocate(5)
+        downloadStream.read(readByteBuffer, futureResult)
+
+        then:
+        if (clientSession != null) {
+            1 * chunksCollection.find(clientSession, findQueries[1]) >> findIterable
+        } else {
+            1 * chunksCollection.find(findQueries[1]) >> findIterable
+        }
+        1 * findIterable.sort(sort) >> findIterable
+        1 * findIterable.batchSize(0) >> findIterable
+        1 * findIterable.batchCursor(_) >> { it.last().onResult(batchCursor, null) }
+        1 * batchCursor.next(_) >> { it.last().onResult([chunkDocuments[1]], null) }
+
+        then:
+        readByteBuffer.flip() == ByteBuffer.wrap([53, 54, 55, 56, 57] as byte[])
+
+        when:
+        futureResult = new FutureResultCallback()
+        downloadStream.skip(1L, futureResult)
+
+        then:
+        futureResult.get() == 0L
+        0 * chunksCollection.find(*_)
+
+        where:
+        clientSession << [null, Stub(ClientSession)]
+    }
+
     def 'should throw if trying to pass negative batchSize'() {
         given:
         def downloadStream = new GridFSDownloadStreamImpl(clientSession, Stub(GridFSFindIterable), Stub(MongoCollection))
