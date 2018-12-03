@@ -152,10 +152,10 @@ public class BasicBSONEncoder implements BSONEncoder {
             putNull(name);
         } else if (value instanceof Date) {
             putDate(name, (Date) value);
-        } else if (value instanceof Number) {
-            putNumber(name, (Number) value);
         } else if (value instanceof Decimal128) {
             putDecimal128(name, (Decimal128) value);
+        } else if (value instanceof Number) {
+            putNumber(name, (Number) value);
         } else if (value instanceof Character) {
             putString(name, value.toString());
         } else if (value instanceof String) {
