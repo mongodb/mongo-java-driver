@@ -16,7 +16,6 @@
 
 package org.bson.types;
 
-import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.HashSet;
@@ -36,7 +35,7 @@ import static java.util.Arrays.asList;
  * @see <a href="https://en.wikipedia.org/wiki/Decimal128_floating-point_format">decimal128 floating-point format</a>
  * @see <a href="http://ieeexplore.ieee.org/document/4610935/">754-2008 - IEEE Standard for Floating-Point Arithmetic</a>
  */
-public final class Decimal128 implements Serializable {
+public final class Decimal128 extends Number {
 
     private static final long serialVersionUID = 4570973266503637887L;
 
@@ -372,6 +371,84 @@ public final class Decimal128 implements Serializable {
      */
     public boolean isNaN() {
         return (high & NaN_MASK) == NaN_MASK;
+    }
+
+
+    /**
+     * Converts this {@code Decimal128} to a {@code int}. This conversion is analogous to the <i>narrowing primitive conversion</i> from
+     * {@code double} to {@code int} as defined in <cite>The Java&trade; Language Specification</cite>: any fractional part of this
+     * {@code Decimal128} will be discarded, and if the resulting integral value is too big to fit in a {@code int}, only the
+     * low-order 32 bits are returned. Note that this conversion can lose information about the overall magnitude and precision of this
+     * {@code Decimal128} value as well as return a result with the opposite sign. Note that {@code #NEGATIVE_ZERO} is converted to
+     * {@code 0}.
+     *
+     * @return this {@code Decimal128} converted to a {@code int}.
+     * @since 3.10
+     */
+    @Override
+    public int intValue() {
+        return (int) doubleValue();
+    }
+
+    /**
+     * Converts this {@code Decimal128} to a {@code long}. This conversion is analogous to the <i>narrowing primitive conversion</i> from
+     * {@code double} to {@code long} as defined in <cite>The Java&trade; Language Specification</cite>: any fractional part of this
+     * {@code Decimal128} will be discarded, and if the resulting integral value is too big to fit in a {@code long}, only the
+     * low-order 64 bits are returned. Note that this conversion can lose information about the overall magnitude and precision of this
+     * {@code Decimal128} value as well as return a result with the opposite sign. Note that {@code #NEGATIVE_ZERO} is converted to
+     * {@code 0L}.
+     *
+     * @return this {@code Decimal128} converted to a {@code long}.
+     * @since 3.10
+     */
+    @Override
+    public long longValue() {
+        return (long) doubleValue();
+    }
+
+    /**
+     * Converts this {@code Decimal128} to a {@code float}. This conversion is similar to the <i>narrowing primitive conversion</i> from
+     * {@code double} to {@code float} as defined in <cite>The Java&trade; Language Specification</cite>: if this {@code Decimal128} has
+     * too great a magnitude to represent as a {@code float}, it will be converted to {@link Float#NEGATIVE_INFINITY} or
+     * {@link Float#POSITIVE_INFINITY} as appropriate.  Note that even when the return value is finite, this conversion can lose
+     * information about the precision of the {@code Decimal128} value. Note that {@code #NEGATIVE_ZERO} is converted to {@code 0.0f}.
+     *
+     * @return this {@code Decimal128} converted to a {@code float}.
+     * @since 3.10
+     */
+    @Override
+    public float floatValue() {
+        return (float) doubleValue();
+    }
+
+    /**
+     * Converts this {@code Decimal128} to a {@code double}. This conversion is similar to the <i>narrowing primitive conversion</i> from
+     * {@code double} to {@code float} as defined in <cite>The Java&trade; Language Specification</cite>: if this {@code Decimal128} has
+     * too great a magnitude to represent as a {@code double}, it will be converted to {@link Double#NEGATIVE_INFINITY} or
+     * {@link Double#POSITIVE_INFINITY} as appropriate.  Note that even when the return value is finite, this conversion can lose
+     * information about the precision of the {@code Decimal128} value. Note that {@code #NEGATIVE_ZERO} is converted to {@code 0.0d}.
+     *
+     * @return this {@code Decimal128} converted to a {@code double}.
+     * @since 3.10
+     */
+    @Override
+    public double doubleValue() {
+        if (isNaN()) {
+            return Double.NaN;
+        }
+        if (isInfinite()) {
+            if (isNegative()) {
+                return Double.NEGATIVE_INFINITY;
+            } else {
+                return Double.POSITIVE_INFINITY;
+            }
+        }
+
+        if (equals(NEGATIVE_ZERO)) {
+            return 0.0;
+        }
+
+        return bigDecimalValue().doubleValue();
     }
 
     /**
