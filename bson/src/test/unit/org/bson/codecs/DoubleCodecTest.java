@@ -18,6 +18,7 @@ package org.bson.codecs;
 
 import org.bson.BsonInvalidOperationException;
 import org.bson.Document;
+import org.bson.types.Decimal128;
 import org.junit.Test;
 
 public final class DoubleCodecTest extends CodecTestCase {
@@ -33,6 +34,7 @@ public final class DoubleCodecTest extends CodecTestCase {
         Document expected = new Document("a", 10.00);
         roundTrip(new Document("a", 10), expected);
         roundTrip(new Document("a", 10L), expected);
+        roundTrip(new Document("a", Decimal128.parse("10")), expected);
     }
 
     @Test(expected = BsonInvalidOperationException.class)
@@ -43,6 +45,16 @@ public final class DoubleCodecTest extends CodecTestCase {
     @Test(expected = BsonInvalidOperationException.class)
     public void shouldThrowWhenHandlingLossyLongValues2() {
         roundTrip(new Document("a", Long.MIN_VALUE + 1));
+    }
+
+    @Test(expected = BsonInvalidOperationException.class)
+    public void shouldThrowWhenHandlingLossyDecimal128Values() {
+        roundTrip(new Document("a", Decimal128.parse("10.0")));
+    }
+
+    @Test(expected = BsonInvalidOperationException.class)
+    public void shouldThrowWhenHandlingNonExpressibleDecimal128Values() {
+        roundTrip(new Document("a", Decimal128.parse("NaN")));
     }
 
     @Override
