@@ -19,6 +19,9 @@ package org.bson.codecs;
 import org.bson.BsonInvalidOperationException;
 import org.bson.BsonReader;
 import org.bson.BsonType;
+import org.bson.types.Decimal128;
+
+import java.math.BigDecimal;
 
 import static java.lang.String.format;
 
@@ -45,6 +48,13 @@ final class NumberCodecHelper {
                     throw invalidConversion(Integer.class, doubleValue);
                 }
                 break;
+            case DECIMAL128:
+                Decimal128 decimal128 = reader.readDecimal128();
+                intValue = decimal128.intValue();
+                if (!decimal128.equals(new Decimal128(intValue))) {
+                    throw invalidConversion(Integer.class, decimal128);
+                }
+                break;
             default:
                 throw new BsonInvalidOperationException(format("Invalid numeric type, found: %s", bsonType));
         }
@@ -66,6 +76,13 @@ final class NumberCodecHelper {
                 longValue = (long) doubleValue;
                 if (doubleValue != (double) longValue) {
                     throw invalidConversion(Long.class, doubleValue);
+                }
+                break;
+            case DECIMAL128:
+                Decimal128 decimal128 = reader.readDecimal128();
+                longValue = decimal128.longValue();
+                if (!decimal128.equals(new Decimal128(longValue))) {
+                    throw invalidConversion(Long.class, decimal128);
                 }
                 break;
             default:
@@ -90,6 +107,17 @@ final class NumberCodecHelper {
                 break;
             case DOUBLE:
                 doubleValue = reader.readDouble();
+                break;
+            case DECIMAL128:
+                Decimal128 decimal128 = reader.readDecimal128();
+                try {
+                    doubleValue = decimal128.doubleValue();
+                    if (!decimal128.equals(new Decimal128(new BigDecimal(doubleValue)))) {
+                        throw invalidConversion(Double.class, decimal128);
+                    }
+                } catch (NumberFormatException e) {
+                    throw invalidConversion(Double.class, decimal128);
+                }
                 break;
             default:
                 throw new BsonInvalidOperationException(format("Invalid numeric type, found: %s", bsonType));
