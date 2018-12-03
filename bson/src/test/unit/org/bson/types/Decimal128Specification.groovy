@@ -71,19 +71,19 @@ class Decimal128Specification extends Specification {
 
     def 'should clamp positive exponents'() {
         expect:
-        parse('1E6112')  == parse('10E6111')
-        parse('1E6113')  == parse('100E6111')
-        parse('1E6143')  == parse('100000000000000000000000000000000E+6111')
-        parse('1E6144')  == parse('1000000000000000000000000000000000E+6111')
-        parse('11E6143')  == parse('1100000000000000000000000000000000E+6111')
+        parse('1E6112') == parse('10E6111')
+        parse('1E6113') == parse('100E6111')
+        parse('1E6143') == parse('100000000000000000000000000000000E+6111')
+        parse('1E6144') == parse('1000000000000000000000000000000000E+6111')
+        parse('11E6143') == parse('1100000000000000000000000000000000E+6111')
         parse('0E8000') == parse('0E6111')
         parse('0E2147483647') == parse('0E6111')
 
-        parse('-1E6112')  == parse('-10E6111')
-        parse('-1E6113')  == parse('-100E6111')
-        parse('-1E6143')  == parse('-100000000000000000000000000000000E+6111')
-        parse('-1E6144')  == parse('-1000000000000000000000000000000000E+6111')
-        parse('-11E6143')  == parse('-1100000000000000000000000000000000E+6111')
+        parse('-1E6112') == parse('-10E6111')
+        parse('-1E6113') == parse('-100E6111')
+        parse('-1E6143') == parse('-100000000000000000000000000000000E+6111')
+        parse('-1E6144') == parse('-1000000000000000000000000000000000E+6111')
+        parse('-11E6143') == parse('-1100000000000000000000000000000000E+6111')
         parse('-0E8000') == parse('-0E6111')
         parse('-0E2147483647') == parse('-0E6111')
     }
@@ -376,5 +376,53 @@ class Decimal128Specification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+    }
+
+    def 'should implement java.lang.Number'() {
+        expect:
+        POSITIVE_INFINITY.doubleValue() == Double.POSITIVE_INFINITY
+        POSITIVE_INFINITY.floatValue() == Float.POSITIVE_INFINITY
+        POSITIVE_INFINITY.longValue() == Long.MAX_VALUE
+        POSITIVE_INFINITY.intValue() == Integer.MAX_VALUE
+
+        NEGATIVE_INFINITY.doubleValue() == Double.NEGATIVE_INFINITY
+        NEGATIVE_INFINITY.floatValue() == Float.NEGATIVE_INFINITY
+        NEGATIVE_INFINITY.longValue() == Long.MIN_VALUE
+        NEGATIVE_INFINITY.intValue() == Integer.MIN_VALUE
+
+        NaN.doubleValue() == Double.NaN
+        NaN.floatValue() == Double.NaN
+        NaN.longValue() == 0
+        NaN.intValue() == 0
+
+        NEGATIVE_NaN.doubleValue() == Double.NaN
+        NEGATIVE_NaN.floatValue() == Float.NaN
+        NEGATIVE_NaN.longValue() == 0
+        NEGATIVE_NaN.intValue() == 0
+
+        POSITIVE_ZERO.doubleValue() == 0.0d
+        POSITIVE_ZERO.floatValue() == 0.0f
+        POSITIVE_ZERO.longValue() == 0L
+        POSITIVE_ZERO.intValue() == 0
+
+        NEGATIVE_ZERO.doubleValue() == 0.0d
+        NEGATIVE_ZERO.floatValue() == 0.0f
+        NEGATIVE_ZERO.longValue() == 0L
+        NEGATIVE_ZERO.intValue() == 0
+
+        parse('5.4').doubleValue() == 5.4d
+        parse('5.4').floatValue() == 5.4f
+        parse('5.4').longValue() == 5L
+        parse('5.4').intValue() == 5
+
+        parse('1234567890123456789012345678901234').doubleValue() == 1.2345678901234568E33d
+        parse('1234567890123456789012345678901234').floatValue() == 1.2345679E33f
+        parse('1234567890123456789012345678901234').longValue() == Long.MAX_VALUE
+        parse('1234567890123456789012345678901234').intValue() == Integer.MAX_VALUE
+
+        parse('-1234567890123456789012345678901234').doubleValue() == -1.2345678901234568E33d
+        parse('-1234567890123456789012345678901234').floatValue() == -1.2345679E33f
+        parse('-1234567890123456789012345678901234').longValue() == Long.MIN_VALUE
+        parse('-1234567890123456789012345678901234').intValue() == Integer.MIN_VALUE
     }
 }
