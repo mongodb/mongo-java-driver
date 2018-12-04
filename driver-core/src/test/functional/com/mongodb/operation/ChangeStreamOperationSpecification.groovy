@@ -36,7 +36,6 @@ import com.mongodb.client.test.CollectionHelper
 import com.mongodb.connection.AsyncConnection
 import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
-import com.mongodb.connection.ServerVersion
 import com.mongodb.session.SessionContext
 import org.bson.BsonArray
 import org.bson.BsonBoolean
@@ -57,6 +56,7 @@ import static com.mongodb.ClusterFixture.getCluster
 import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.internal.connection.ServerHelper.waitForLastRelease
+import static com.mongodb.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
@@ -556,7 +556,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
                                  .append('firstBatch', new BsonArrayWrapper([])))
                      }
                     getDescription() >> Stub(ConnectionDescription) {
-                        getServerVersion() >> new ServerVersion([4, 0, 0])
+                        getMaxWireVersion() >> getMaxWireVersionForServerVersion([4, 0])
                     }
                 }
             }
@@ -629,7 +629,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
                                         .append('firstBatch', new BsonArrayWrapper([]))), null)
                             }
                             getDescription() >> Stub(ConnectionDescription) {
-                                getServerVersion() >> new ServerVersion([4, 0, 0])
+                                getMaxWireVersion() >> getMaxWireVersionForServerVersion([4, 0])
                             }
                         }, null)
                     }
