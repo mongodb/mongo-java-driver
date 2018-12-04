@@ -23,6 +23,7 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Field;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.model.Indexes;
@@ -47,6 +48,7 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClient;
 import static com.mongodb.client.model.Accumulators.sum;
+import static com.mongodb.client.model.Aggregates.addFields;
 import static com.mongodb.client.model.Aggregates.group;
 import static com.mongodb.client.model.Aggregates.lookup;
 import static com.mongodb.client.model.Aggregates.match;
@@ -710,13 +712,13 @@ public final class DocumentationSamples extends DatabaseTestCase {
             @Override
             public void run() {
                 while (!stop.get()) {
-                    collection.insertMany(asList(new Document("_id", 1), new Document()));
+                    collection.insertMany(asList(new Document("username", "alice"), new Document()));
                     try {
                         Thread.sleep(10);
                     } catch (InterruptedException e) {
                         // ignore
                     }
-                    collection.deleteOne(new Document("_id", 1));
+                    collection.deleteOne(new Document("username", "alice"));
                 }
             }
         }).start();
@@ -745,8 +747,8 @@ public final class DocumentationSamples extends DatabaseTestCase {
         cursor.close();
 
         // Start Changestream Example 4
-        List<Bson> pipeline = singletonList(match(
-                or(Document.parse("{'fullDocument.username': 'alice'}"), in("operationType", singletonList("delete")))));
+        List<Bson> pipeline = asList(match(Document.parse("{'fullDocument.username': 'alice'}")),
+                addFields(new Field<String>("newField", "this is an added field!")));
         cursor = inventory.watch(pipeline).iterator();
         next = cursor.next();
         // End Changestream Example 4
