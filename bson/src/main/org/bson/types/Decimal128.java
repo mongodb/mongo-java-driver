@@ -36,7 +36,7 @@ import static java.util.Collections.singletonList;
  * @see <a href="https://en.wikipedia.org/wiki/Decimal128_floating-point_format">decimal128 floating-point format</a>
  * @see <a href="http://ieeexplore.ieee.org/document/4610935/">754-2008 - IEEE Standard for Floating-Point Arithmetic</a>
  */
-public final class Decimal128 extends Number {
+public final class Decimal128 extends Number implements Comparable<Decimal128> {
 
     private static final long serialVersionUID = 4570973266503637887L;
 
@@ -294,6 +294,15 @@ public final class Decimal128 extends Number {
         return bigDecimal;
     }
 
+    // Make sure that the argument comes from a call to bigDecimalValueNoNegativeZeroCheck on this instance
+    private boolean hasDifferentSign(final BigDecimal bigDecimal) {
+        return isNegative() && bigDecimal.signum() == 0;
+    }
+
+    private boolean isZero(final BigDecimal bigDecimal) {
+        return !isNaN() && !isInfinite() && bigDecimal.compareTo(BigDecimal.ZERO) == 0;
+    }
+
     private BigDecimal bigDecimalValueNoNegativeZeroCheck() {
         int scale = -getExponent();
 
@@ -373,6 +382,57 @@ public final class Decimal128 extends Number {
         return (high & NaN_MASK) == NaN_MASK;
     }
 
+
+    @Override
+    public int compareTo(final Decimal128 o) {
+        if (isNaN()) {
+            return o.isNaN() ? 0 : 1;
+        }
+        if (isInfinite()) {
+            if (isNegative()) {
+                if (o.isInfinite() && o.isNegative()) {
+                    return 0;
+                } else {
+                    return -1;
+                }
+            } else {
+                if (o.isNaN()) {
+                    return -1;
+                } else if (o.isInfinite() && !o.isNegative()) {
+                    return 0;
+                } else {
+                    return 1;
+                }
+            }
+        }
+        BigDecimal bigDecimal = bigDecimalValueNoNegativeZeroCheck();
+        BigDecimal otherBigDecimal = o.bigDecimalValueNoNegativeZeroCheck();
+
+        if (isZero(bigDecimal) && o.isZero(otherBigDecimal)) {
+            if (hasDifferentSign(bigDecimal)) {
+                if (o.hasDifferentSign(otherBigDecimal)) {
+                    return 0;
+                }
+                else {
+                    return -1;
+                }
+            } else if (o.hasDifferentSign(otherBigDecimal)) {
+                return 1;
+            }
+        }
+
+        if (o.isNaN()) {
+            return -1;
+        } else if (o.isInfinite()) {
+            if (o.isNegative()) {
+                return 1;
+            } else {
+                return -1;
+            }
+        } else {
+            return bigDecimal.compareTo(otherBigDecimal);
+        }
+    }
 
     /**
      * Converts this {@code Decimal128} to a {@code int}. This conversion is analogous to the <i>narrowing primitive conversion</i> from

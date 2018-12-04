@@ -17,6 +17,7 @@
 package org.bson.types
 
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import static org.bson.types.Decimal128.NEGATIVE_INFINITY
 import static org.bson.types.Decimal128.NEGATIVE_NaN
@@ -31,11 +32,11 @@ class Decimal128Specification extends Specification {
 
     def 'should have correct constants'() {
         expect:
-        POSITIVE_ZERO == fromIEEE754BIDEncoding(0x3040000000000000L, 0x0000000000000000L)
-        NEGATIVE_ZERO == fromIEEE754BIDEncoding(0xb040000000000000L, 0x0000000000000000L)
-        POSITIVE_INFINITY == fromIEEE754BIDEncoding(0x7800000000000000L, 0x0000000000000000L)
-        NEGATIVE_INFINITY == fromIEEE754BIDEncoding(0xf800000000000000L, 0x0000000000000000L)
-        NaN == fromIEEE754BIDEncoding(0x7c00000000000000L, 0x0000000000000000L)
+        POSITIVE_ZERO.equals(fromIEEE754BIDEncoding(0x3040000000000000L, 0x0000000000000000L))
+        NEGATIVE_ZERO.equals(fromIEEE754BIDEncoding(0xb040000000000000L, 0x0000000000000000L))
+        POSITIVE_INFINITY.equals(fromIEEE754BIDEncoding(0x7800000000000000L, 0x0000000000000000L))
+        NEGATIVE_INFINITY.equals(fromIEEE754BIDEncoding(0xf800000000000000L, 0x0000000000000000L))
+        NaN.equals(fromIEEE754BIDEncoding(0x7c00000000000000L, 0x0000000000000000L))
     }
 
     def 'should construct from high and low'() {
@@ -49,87 +50,87 @@ class Decimal128Specification extends Specification {
 
     def 'should construct from simple string'() {
         expect:
-        parse('0') == fromIEEE754BIDEncoding(0x3040000000000000L, 0x0000000000000000L)
-        parse('-0') == fromIEEE754BIDEncoding(0xb040000000000000L, 0x0000000000000000L)
-        parse('1') == fromIEEE754BIDEncoding(0x3040000000000000L, 0x0000000000000001L)
-        parse('-1') == fromIEEE754BIDEncoding(0xb040000000000000L, 0x0000000000000001L)
-        parse('12345678901234567') == fromIEEE754BIDEncoding(0x3040000000000000L, 0x002bdc545d6b4b87L)
-        parse('989898983458') == fromIEEE754BIDEncoding(0x3040000000000000L, 0x000000e67a93c822L)
-        parse('-12345678901234567') == fromIEEE754BIDEncoding(0xb040000000000000L, 0x002bdc545d6b4b87L)
-        parse('0.12345') == fromIEEE754BIDEncoding(0x3036000000000000L, 0x0000000000003039L)
-        parse('0.0012345') == fromIEEE754BIDEncoding(0x3032000000000000L, 0x0000000000003039L)
-        parse('00012345678901234567') == fromIEEE754BIDEncoding(0x3040000000000000L, 0x002bdc545d6b4b87L)
+        parse('0').equals(fromIEEE754BIDEncoding(0x3040000000000000L, 0x0000000000000000L))
+        parse('-0').equals(fromIEEE754BIDEncoding(0xb040000000000000L, 0x0000000000000000L))
+        parse('1').equals(fromIEEE754BIDEncoding(0x3040000000000000L, 0x0000000000000001L))
+        parse('-1').equals(fromIEEE754BIDEncoding(0xb040000000000000L, 0x0000000000000001L))
+        parse('12345678901234567').equals(fromIEEE754BIDEncoding(0x3040000000000000L, 0x002bdc545d6b4b87L))
+        parse('989898983458').equals(fromIEEE754BIDEncoding(0x3040000000000000L, 0x000000e67a93c822L))
+        parse('-12345678901234567').equals(fromIEEE754BIDEncoding(0xb040000000000000L, 0x002bdc545d6b4b87L))
+        parse('0.12345').equals(fromIEEE754BIDEncoding(0x3036000000000000L, 0x0000000000003039L))
+        parse('0.0012345').equals(fromIEEE754BIDEncoding(0x3032000000000000L, 0x0000000000003039L))
+        parse('00012345678901234567').equals(fromIEEE754BIDEncoding(0x3040000000000000L, 0x002bdc545d6b4b87L))
     }
 
     def 'should round exactly'() {
         expect:
-        parse('1.234567890123456789012345678901234') == parse('1.234567890123456789012345678901234')
-        parse('1.2345678901234567890123456789012340') == parse('1.234567890123456789012345678901234')
-        parse('1.23456789012345678901234567890123400') == parse('1.234567890123456789012345678901234')
-        parse('1.234567890123456789012345678901234000') == parse('1.234567890123456789012345678901234')
+        parse('1.234567890123456789012345678901234').equals(parse('1.234567890123456789012345678901234'))
+        parse('1.2345678901234567890123456789012340').equals(parse('1.234567890123456789012345678901234'))
+        parse('1.23456789012345678901234567890123400').equals(parse('1.234567890123456789012345678901234'))
+        parse('1.234567890123456789012345678901234000').equals(parse('1.234567890123456789012345678901234'))
     }
 
     def 'should clamp positive exponents'() {
         expect:
-        parse('1E6112') == parse('10E6111')
-        parse('1E6113') == parse('100E6111')
-        parse('1E6143') == parse('100000000000000000000000000000000E+6111')
-        parse('1E6144') == parse('1000000000000000000000000000000000E+6111')
-        parse('11E6143') == parse('1100000000000000000000000000000000E+6111')
-        parse('0E8000') == parse('0E6111')
-        parse('0E2147483647') == parse('0E6111')
+        parse('1E6112').equals(parse('10E6111'))
+        parse('1E6113').equals(parse('100E6111'))
+        parse('1E6143').equals(parse('100000000000000000000000000000000E+6111'))
+        parse('1E6144').equals(parse('1000000000000000000000000000000000E+6111'))
+        parse('11E6143').equals(parse('1100000000000000000000000000000000E+6111'))
+        parse('0E8000').equals(parse('0E6111'))
+        parse('0E2147483647').equals(parse('0E6111'))
 
-        parse('-1E6112') == parse('-10E6111')
-        parse('-1E6113') == parse('-100E6111')
-        parse('-1E6143') == parse('-100000000000000000000000000000000E+6111')
-        parse('-1E6144') == parse('-1000000000000000000000000000000000E+6111')
-        parse('-11E6143') == parse('-1100000000000000000000000000000000E+6111')
-        parse('-0E8000') == parse('-0E6111')
-        parse('-0E2147483647') == parse('-0E6111')
+        parse('-1E6112').equals(parse('-10E6111'))
+        parse('-1E6113').equals(parse('-100E6111'))
+        parse('-1E6143').equals(parse('-100000000000000000000000000000000E+6111'))
+        parse('-1E6144').equals(parse('-1000000000000000000000000000000000E+6111'))
+        parse('-11E6143').equals(parse('-1100000000000000000000000000000000E+6111'))
+        parse('-0E8000').equals(parse('-0E6111'))
+        parse('-0E2147483647').equals(parse('-0E6111'))
     }
 
     def 'should clamp negative exponents'() {
         expect:
-        parse('0E-8000') == parse('0E-6176')
-        parse('0E-2147483647') == parse('0E-6176')
-        parse('10E-6177') == parse('1E-6176')
-        parse('100E-6178') == parse('1E-6176')
-        parse('110E-6177') == parse('11E-6176')
+        parse('0E-8000').equals(parse('0E-6176'))
+        parse('0E-2147483647').equals(parse('0E-6176'))
+        parse('10E-6177').equals(parse('1E-6176'))
+        parse('100E-6178').equals(parse('1E-6176'))
+        parse('110E-6177').equals(parse('11E-6176'))
 
-        parse('-0E-8000') == parse('-0E-6176')
-        parse('-0E-2147483647') == parse('-0E-6176')
-        parse('-10E-6177') == parse('-1E-6176')
-        parse('-100E-6178') == parse('-1E-6176')
-        parse('-110E-6177') == parse('-11E-6176')
+        parse('-0E-8000').equals(parse('-0E-6176'))
+        parse('-0E-2147483647').equals(parse('-0E-6176'))
+        parse('-10E-6177').equals(parse('-1E-6176'))
+        parse('-100E-6178').equals(parse('-1E-6176'))
+        parse('-110E-6177').equals(parse('-11E-6176'))
     }
 
     def 'should construct from long'() {
         expect:
-        new Decimal128(1L) == new Decimal128(new BigDecimal('1'))
-        new Decimal128(Long.MIN_VALUE) == new Decimal128(new BigDecimal(Long.MIN_VALUE))
-        new Decimal128(Long.MAX_VALUE) == new Decimal128(new BigDecimal(Long.MAX_VALUE))
+        new Decimal128(1L).equals(new Decimal128(new BigDecimal('1')))
+        new Decimal128(Long.MIN_VALUE).equals(new Decimal128(new BigDecimal(Long.MIN_VALUE)))
+        new Decimal128(Long.MAX_VALUE).equals(new Decimal128(new BigDecimal(Long.MAX_VALUE)))
     }
 
     def 'should construct from large BigDecimal'() {
         expect:
-        parse('12345689012345789012345') == fromIEEE754BIDEncoding(0x304000000000029dL, 0x42da3a76f9e0d979L)
-        parse('1234567890123456789012345678901234') == fromIEEE754BIDEncoding(0x30403cde6fff9732L, 0xde825cd07e96aff2L)
-        parse('9.999999999999999999999999999999999E+6144') == fromIEEE754BIDEncoding(0x5fffed09bead87c0L, 0x378d8e63ffffffffL)
-        parse('9.999999999999999999999999999999999E-6143') == fromIEEE754BIDEncoding(0x0001ed09bead87c0L, 0x378d8e63ffffffffL)
-        parse('5.192296858534827628530496329220095E+33') == fromIEEE754BIDEncoding(0x3040ffffffffffffL, 0xffffffffffffffffL)
+        parse('12345689012345789012345').equals(fromIEEE754BIDEncoding(0x304000000000029dL, 0x42da3a76f9e0d979L))
+        parse('1234567890123456789012345678901234').equals(fromIEEE754BIDEncoding(0x30403cde6fff9732L, 0xde825cd07e96aff2L))
+        parse('9.999999999999999999999999999999999E+6144').equals(fromIEEE754BIDEncoding(0x5fffed09bead87c0L, 0x378d8e63ffffffffL))
+        parse('9.999999999999999999999999999999999E-6143').equals(fromIEEE754BIDEncoding(0x0001ed09bead87c0L, 0x378d8e63ffffffffL))
+        parse('5.192296858534827628530496329220095E+33').equals(fromIEEE754BIDEncoding(0x3040ffffffffffffL, 0xffffffffffffffffL))
     }
 
     def 'should convert to simple BigDecimal'() {
         expect:
-        fromIEEE754BIDEncoding(0x3040000000000000L, 0x0000000000000000L).bigDecimalValue() == new BigDecimal('0')
-        fromIEEE754BIDEncoding(0x3040000000000000L, 0x0000000000000001L).bigDecimalValue() == new BigDecimal('1')
-        fromIEEE754BIDEncoding(0xb040000000000000L, 0x0000000000000001L).bigDecimalValue() == new BigDecimal('-1')
-        fromIEEE754BIDEncoding(0x3040000000000000L, 0x002bdc545d6b4b87L).bigDecimalValue() == new BigDecimal('12345678901234567')
-        fromIEEE754BIDEncoding(0x3040000000000000L, 0x000000e67a93c822L).bigDecimalValue() == new BigDecimal('989898983458')
-        fromIEEE754BIDEncoding(0xb040000000000000L, 0x002bdc545d6b4b87L).bigDecimalValue() == new BigDecimal('-12345678901234567')
-        fromIEEE754BIDEncoding(0x3036000000000000L, 0x0000000000003039L).bigDecimalValue() == new BigDecimal('0.12345')
-        fromIEEE754BIDEncoding(0x3032000000000000L, 0x0000000000003039L).bigDecimalValue() == new BigDecimal('0.0012345')
-        fromIEEE754BIDEncoding(0x3040000000000000L, 0x002bdc545d6b4b87L).bigDecimalValue() == new BigDecimal('00012345678901234567')
+        fromIEEE754BIDEncoding(0x3040000000000000L, 0x0000000000000000L).bigDecimalValue().equals(new BigDecimal('0'))
+        fromIEEE754BIDEncoding(0x3040000000000000L, 0x0000000000000001L).bigDecimalValue().equals(new BigDecimal('1'))
+        fromIEEE754BIDEncoding(0xb040000000000000L, 0x0000000000000001L).bigDecimalValue().equals(new BigDecimal('-1'))
+        fromIEEE754BIDEncoding(0x3040000000000000L, 0x002bdc545d6b4b87L).bigDecimalValue().equals(new BigDecimal('12345678901234567'))
+        fromIEEE754BIDEncoding(0x3040000000000000L, 0x000000e67a93c822L).bigDecimalValue().equals(new BigDecimal('989898983458'))
+        fromIEEE754BIDEncoding(0xb040000000000000L, 0x002bdc545d6b4b87L).bigDecimalValue().equals(new BigDecimal('-12345678901234567'))
+        fromIEEE754BIDEncoding(0x3036000000000000L, 0x0000000000003039L).bigDecimalValue().equals(new BigDecimal('0.12345'))
+        fromIEEE754BIDEncoding(0x3032000000000000L, 0x0000000000003039L).bigDecimalValue().equals(new BigDecimal('0.0012345'))
+        fromIEEE754BIDEncoding(0x3040000000000000L, 0x002bdc545d6b4b87L).bigDecimalValue().equals(new BigDecimal('00012345678901234567'))
     }
 
     def 'should convert to large BigDecimal'() {
@@ -188,12 +189,12 @@ class Decimal128Specification extends Specification {
 
     def 'should convert NaN from string'() {
         expect:
-        parse('NaN') == NaN
-        parse('nan') == NaN
-        parse('nAn') == NaN
-        parse('-NaN') == NEGATIVE_NaN
-        parse('-nan') == NEGATIVE_NaN
-        parse('-nAn') == NEGATIVE_NaN
+        parse('NaN').equals(NaN)
+        parse('nan').equals(NaN)
+        parse('nAn').equals(NaN)
+        parse('-NaN').equals(NEGATIVE_NaN)
+        parse('-nan').equals(NEGATIVE_NaN)
+        parse('-nAn').equals(NEGATIVE_NaN)
     }
 
     def 'should not convert NaN to BigDecimal'() {
@@ -212,24 +213,24 @@ class Decimal128Specification extends Specification {
 
     def 'should convert infinity from string'() {
         expect:
-        parse('Inf') == POSITIVE_INFINITY
-        parse('inf') == POSITIVE_INFINITY
-        parse('inF') == POSITIVE_INFINITY
-        parse('+Inf') == POSITIVE_INFINITY
-        parse('+inf') == POSITIVE_INFINITY
-        parse('+inF') == POSITIVE_INFINITY
-        parse('Infinity') == POSITIVE_INFINITY
-        parse('infinity') == POSITIVE_INFINITY
-        parse('infiniTy') == POSITIVE_INFINITY
-        parse('+Infinity') == POSITIVE_INFINITY
-        parse('+infinity') == POSITIVE_INFINITY
-        parse('+infiniTy') == POSITIVE_INFINITY
-        parse('-Inf') == NEGATIVE_INFINITY
-        parse('-inf') == NEGATIVE_INFINITY
-        parse('-inF') == NEGATIVE_INFINITY
-        parse('-Infinity') == NEGATIVE_INFINITY
-        parse('-infinity') == NEGATIVE_INFINITY
-        parse('-infiniTy') == NEGATIVE_INFINITY
+        parse('Inf').equals(POSITIVE_INFINITY)
+        parse('inf').equals(POSITIVE_INFINITY)
+        parse('inF').equals(POSITIVE_INFINITY)
+        parse('+Inf').equals(POSITIVE_INFINITY)
+        parse('+inf').equals(POSITIVE_INFINITY)
+        parse('+inF').equals(POSITIVE_INFINITY)
+        parse('Infinity').equals(POSITIVE_INFINITY)
+        parse('infinity').equals(POSITIVE_INFINITY)
+        parse('infiniTy').equals(POSITIVE_INFINITY)
+        parse('+Infinity').equals(POSITIVE_INFINITY)
+        parse('+infinity').equals(POSITIVE_INFINITY)
+        parse('+infiniTy').equals(POSITIVE_INFINITY)
+        parse('-Inf').equals(NEGATIVE_INFINITY)
+        parse('-inf').equals(NEGATIVE_INFINITY)
+        parse('-inF').equals(NEGATIVE_INFINITY)
+        parse('-Infinity').equals(NEGATIVE_INFINITY)
+        parse('-infinity').equals(NEGATIVE_INFINITY)
+        parse('-infiniTy').equals(NEGATIVE_INFINITY)
     }
 
     def 'should convert finite to string'() {
@@ -378,7 +379,7 @@ class Decimal128Specification extends Specification {
         thrown(IllegalArgumentException)
     }
 
-    def 'should implement java.lang.Number'() {
+    def 'should implement Number'() {
         expect:
         POSITIVE_INFINITY.doubleValue() == Double.POSITIVE_INFINITY
         POSITIVE_INFINITY.floatValue() == Float.POSITIVE_INFINITY
@@ -429,5 +430,44 @@ class Decimal128Specification extends Specification {
         parse('-1234567890123456789012345678901234').floatValue() == -1.2345679E33f
         parse('-1234567890123456789012345678901234').longValue() == Long.MIN_VALUE
         parse('-1234567890123456789012345678901234').intValue() == Integer.MIN_VALUE
+    }
+
+    @Unroll
+    def '#first compareTo #second should equal #expectedValue'() {
+        expect:
+        first.compareTo(second) == expectedValue
+
+        where:
+        first             | second            | expectedValue
+        NaN               | NEGATIVE_ZERO     | 1
+        NaN               | NaN               | 0
+        NaN               | POSITIVE_INFINITY | 1
+        NaN               | NEGATIVE_INFINITY | 1
+        NaN               | parse('1')        | 1
+        POSITIVE_INFINITY | NEGATIVE_INFINITY | 1
+        POSITIVE_INFINITY | POSITIVE_INFINITY | 0
+        POSITIVE_INFINITY | NaN               | -1
+        POSITIVE_INFINITY | NEGATIVE_ZERO     | 1
+        POSITIVE_INFINITY | parse('1')        | 1
+        NEGATIVE_INFINITY | POSITIVE_INFINITY | -1
+        NEGATIVE_INFINITY | NEGATIVE_INFINITY | 0
+        NEGATIVE_INFINITY | NaN               | -1
+        NEGATIVE_INFINITY | NEGATIVE_ZERO     | -1
+        NEGATIVE_INFINITY | parse('1')        | -1
+        parse('1')        | NaN               | -1
+        parse('1')        | POSITIVE_INFINITY | -1
+        parse('1')        | NEGATIVE_INFINITY | 1
+        parse('1')        | NEGATIVE_ZERO     | 1
+        parse('-0')       | parse('0')        | -1
+        parse('-0')       | parse('-0')       | 0
+        parse('-0')       | NaN               | -1
+        parse('-0')       | POSITIVE_INFINITY | -1
+        parse('-0')       | NEGATIVE_INFINITY | 1
+        parse('0')        | parse('-0')       | 1
+        parse('0')        | parse('0')        | 0
+        parse('5.4')      | parse('5.4')      | 0
+        parse('5.4')      | parse('5.3')      | 1
+        parse('5.3')      | parse('5.4')      | -1
+        parse('5.4')      | parse('5.40')     | 0
     }
 }
