@@ -405,10 +405,15 @@ class Decimal128Specification extends Specification {
         POSITIVE_ZERO.longValue() == 0L
         POSITIVE_ZERO.intValue() == 0
 
-        NEGATIVE_ZERO.doubleValue() == 0.0d
-        NEGATIVE_ZERO.floatValue() == 0.0f
+        Double.compare(NEGATIVE_ZERO.doubleValue(), Double.valueOf('-0')) == 0
+        Float.compare(NEGATIVE_ZERO.floatValue(), Float.valueOf('-0')) == 0
         NEGATIVE_ZERO.longValue() == 0L
         NEGATIVE_ZERO.intValue() == 0
+
+        Double.compare(parse('-0.0').doubleValue(), Double.valueOf('-0')) == 0
+        Float.compare(parse('-0.0').floatValue(), Float.valueOf('-0')) == 0
+        parse('-0.0').longValue() == 0L
+        parse('-0.0').intValue() == 0
 
         parse('5.4').doubleValue() == 5.4d
         parse('5.4').floatValue() == 5.4f
