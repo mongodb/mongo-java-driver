@@ -22,8 +22,6 @@ import com.mongodb.connection.Cluster;
 import com.mongodb.embedded.capi.MongoEmbeddedCAPI;
 import com.mongodb.embedded.capi.MongoEmbeddedLibrary;
 
-import java.io.File;
-
 import static java.lang.String.format;
 
 /**
