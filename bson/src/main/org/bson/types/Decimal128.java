@@ -23,6 +23,7 @@ import java.util.Set;
 
 import static java.math.MathContext.DECIMAL128;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 
 /**
  * A binary integer decimal representation of a 128-bit decimal value, supporting 34 decimal digits of significand and an exponent range
@@ -52,8 +53,8 @@ public final class Decimal128 extends Number {
     private static final BigInteger BIG_INT_ONE = new BigInteger("1");
     private static final BigInteger BIG_INT_ZERO = new BigInteger("0");
 
-    private static final Set<String> NaN_STRINGS = new HashSet<String>(asList("nan"));
-    private static final Set<String> NEGATIVE_NaN_STRINGS = new HashSet<String>(asList("-nan"));
+    private static final Set<String> NaN_STRINGS = new HashSet<String>(singletonList("nan"));
+    private static final Set<String> NEGATIVE_NaN_STRINGS = new HashSet<String>(singletonList("-nan"));
     private static final Set<String> POSITIVE_INFINITY_STRINGS = new HashSet<String>(asList("inf", "+inf", "infinity", "+infinity"));
     private static final Set<String> NEGATIVE_INFINITY_STRINGS = new HashSet<String>(asList("-inf", "-infinity"));
 
@@ -324,8 +325,7 @@ public final class Decimal128 extends Number {
         return bytes;
     }
 
-    // Consider making this method public
-    int getExponent() {
+    private int getExponent() {
         if (twoHighestCombinationBitsAreSet()) {
             return (int) ((high & 0x1fffe00000000000L) >>> 47) - EXPONENT_OFFSET;
         } else {
