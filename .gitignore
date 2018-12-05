@@ -28,11 +28,16 @@ atlassian-ide-plugin.xml
 # gradle
 .gradle
 
+# android
+.android/
+android/
+
 # code review
 codereview.rc
 
 # local settings
 **/gradle.properties
+local.properties
 
 # doc settings
 docs/reference/public

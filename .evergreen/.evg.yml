@@ -195,6 +195,9 @@ functions:
     - command: attach.xunit_results
       params:
         file: ./src/*/build/test-results/test/TEST-*.xml
+    - command: attach.xunit_results
+      params:
+        file: ./src/*/build/outputs/androidTest-results/connected/TEST-*.xml
 
   "bootstrap mongo-orchestration":
     - command: shell.exec
@@ -242,6 +245,15 @@ functions:
       script: |
         ${PREPARE_SHELL}
         JDK="${JDK}" .evergreen/run-embedded-tests.sh
+
+  "run embedded tests android":
+  - command: shell.exec
+    type: test
+    params:
+      working_dir: "src"
+      script: |
+        ${PREPARE_SHELL}
+        .evergreen/run-embedded-tests-android.sh
 
   "run plain auth test":
     - command: shell.exec
@@ -416,6 +428,10 @@ tasks:
       commands:
       - func: "run embedded tests"
 
+    - name: "embedded-test-android"
+      commands:
+      - func: "run embedded tests android"
+
     - name: "atlas-test"
       commands:
         - func: "run atlas test"
@@ -434,6 +450,8 @@ tasks:
           name: "plain-auth-test"
         - variant: ".test-embedded-variant"
           name: "embedded-test"
+        - variant: "embedded-test-android"
+          name: "embedded-test-android"
       commands:
         - func: "publish snapshot"
 
@@ -482,8 +500,8 @@ axes:
         display_name: "Linux"
         run_on: *hosts
       - id: "ubuntu"
-        display_name: "Ubuntu 16.04"
-        run_on: ubuntu1604-test
+        display_name: "Ubuntu 18.04"
+        run_on: ubuntu1804-test
 
   - id: topology
     display_name: Topology
@@ -649,6 +667,12 @@ buildvariants:
   tasks:
   - name: "embedded-test"
 
+- name: embedded-test-android
+  display_name: "Embedded: Android"
+  run_on: ubuntu1804-test
+  tasks:
+  - name: "embedded-test-android"
+
 - name: plain-auth-test
   display_name: "PLAIN (LDAP) Auth test"
   run_on: *hosts
@@ -663,6 +687,6 @@ buildvariants:
 
 - name: publish-snapshot
   display_name: "Publish Snapshot"
-  run_on: ubuntu1604-test
+  run_on: ubuntu1804-test
   tasks:
     - name: "publish-snapshot"

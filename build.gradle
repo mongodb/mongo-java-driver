@@ -56,10 +56,10 @@ configure(coreProjects) {
     version = '3.10.0-SNAPSHOT'
 
     repositories {
+        google()
         mavenCentral()
         jcenter()
         maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
-        google()
         mavenLocal()
     }
 }
