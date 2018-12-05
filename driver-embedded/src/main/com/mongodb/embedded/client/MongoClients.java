@@ -22,6 +22,10 @@ import com.mongodb.connection.Cluster;
 import com.mongodb.embedded.capi.MongoEmbeddedCAPI;
 import com.mongodb.embedded.capi.MongoEmbeddedLibrary;
 
+import java.io.File;
+
+import static java.lang.String.format;
+
 /**
  * A factory for {@link MongoClient} instances.
  *
@@ -46,7 +50,8 @@ public final class MongoClients {
             mongoEmbeddedLibrary = MongoEmbeddedCAPI.create(mongoEmbeddedSettings.getYamlConfig(),
                     mongoEmbeddedSettings.getLogLevel().toCapiLogLevel(), mongoEmbeddedSettings.getLibraryPath());
         } catch (Exception e) {
-            throw new MongoClientEmbeddedException("The mongo embedded library could not be initialized", e);
+            throw new MongoClientEmbeddedException(format("The mongo embedded library could not be initialized%n"
+                    + "Server error message: %s", e.getMessage()), e);
         }
 
     }
@@ -65,8 +70,9 @@ public final class MongoClients {
             Cluster cluster = new EmbeddedCluster(mongoEmbeddedLibrary, mongoClientSettings);
             return new MongoClientImpl(cluster, mongoClientSettings.getWrappedMongoClientSettings(), null);
         } catch (Exception e) {
-            throw new MongoClientEmbeddedException("Could not create a new embedded cluster."
-                    + " Ensure existing MongoClients are fully closed before trying to create a new one.", e);
+            throw new MongoClientEmbeddedException(format("Could not create a new embedded cluster.%n"
+                    + "Please ensure any existing MongoClients are fully closed before trying to create a new one.%n"
+                    + "Server error message: %s", e.getMessage()), e);
         }
     }
 
@@ -78,8 +84,9 @@ public final class MongoClients {
             try {
                 mongoEmbeddedLibrary.close();
             } catch (Exception e) {
-                throw new MongoClientEmbeddedException("Could not close the mongo embedded library."
-                        + " Ensure that any MongoClient instances have been closed first.", e);
+                throw new MongoClientEmbeddedException(format("Could not close the mongo embedded library.%n"
+                        + "Please ensure that any MongoClient instances have been closed first.%n"
+                        + "Server error message: %s", e.getMessage()), e);
             }
             mongoEmbeddedLibrary = null;
 
