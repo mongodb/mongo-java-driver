@@ -444,11 +444,13 @@ public final class Decimal128 extends Number {
             }
         }
 
-        if (equals(NEGATIVE_ZERO)) {
-            return 0.0;
+        BigDecimal bigDecimal = bigDecimalValueNoNegativeZeroCheck();
+
+        if (hasDifferentSign(bigDecimal)) {
+            return -0.0d;
         }
 
-        return bigDecimalValue().doubleValue();
+        return bigDecimal.doubleValue();
     }
 
     /**
