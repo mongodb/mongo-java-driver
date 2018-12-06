@@ -535,31 +535,6 @@ class QueryBatchCursorFunctionalSpecification extends OperationFunctionalSpecifi
         }
     }
 
-    // More of an integration test to ensure proper server behavior, as there is no specific driver code in the cursor implementation to
-    // enable reading from a secondary.  But since the cursor, as per spec, does not set the slaveOk flag for the getMore command, this
-    // test ensures that the server does not require it.
-    @IgnoreIf({ !isDiscoverableReplicaSet() })
-    def 'should get more from a secondary'() {
-        given:
-        connectionSource.release() // release the connection source established in setup, since we're substituting our own here
-        connectionSource = getBinding(ReadPreference.secondary()).getReadConnectionSource()
-
-        def firstBatch = executeQuery(2, ReadPreference.secondary())
-
-        // wait for replication
-        while (firstBatch.cursor == null ) {
-            firstBatch = executeQuery(2, ReadPreference.secondary())
-        }
-
-        when:
-        cursor = new QueryBatchCursor<Document>(firstBatch, 0, 2, new DocumentCodec(), connectionSource)
-        cursor.next()
-
-        then:
-        cursor.next()
-    }
-
-
     private QueryResult<Document> executeQuery() {
         executeQuery(0)
     }
