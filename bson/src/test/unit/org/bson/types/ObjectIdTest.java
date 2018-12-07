@@ -18,6 +18,7 @@ package org.bson.types;
 
 import org.junit.Test;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Random;
 import java.nio.ByteBuffer;
@@ -142,7 +143,36 @@ public class ObjectIdTest {
     public void testToHexString() {
         assertEquals("000000000000000000000000", new ObjectId(0, 0, (short) 0, 0).toHexString());
         assertEquals("7fffffff007fff7fff007fff",
-                     new ObjectId(Integer.MAX_VALUE, Short.MAX_VALUE, Short.MAX_VALUE, Short.MAX_VALUE).toHexString());
+                new ObjectId(Integer.MAX_VALUE, Short.MAX_VALUE, Short.MAX_VALUE, Short.MAX_VALUE).toHexString());
+    }
+
+    private void checkDates(final String dateInTime, final ObjectId oid) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ssZ");
+        try {
+            Date d = dateFormat.parse(dateInTime);
+            assertEquals(oid.getDate(), d);
+        } catch (Exception e) {
+        }
+    }
+
+    @Test
+    public void testTimeZero() {
+        checkDates("01-Jan-1970 00:00:00", new ObjectId(0, 0));
+    }
+
+    @Test
+    public void testTimeMaxSignedInt() {
+        checkDates("19-Jan-2038 03:14:07", new ObjectId(0x7FFFFFFF, 0));
+    }
+
+    @Test
+    public void testTimeMaxSignedIntPlusOne() {
+        checkDates("19-Jan-2038 03:14:08", new ObjectId(0x80000000, 0));
+    }
+
+    @Test
+    public void testTimeMaxInt() {
+        checkDates("07-Feb-2106 06:28:15", new ObjectId(0xFFFFFFFF, 0));
     }
 
     @SuppressWarnings("deprecation")
@@ -154,14 +184,13 @@ public class ObjectIdTest {
         assertEquals(id.getDate().getTime(), id.getTime());
         assertEquals(id.toHexString(), id.toStringMongod());
         assertArrayEquals(new byte[]{0x12, 0x34, 0x56, 0x78, 0x43, 0x21, 0xffffff87, 0x65, 0x74, 0xffffff92, 0xffffff87, 0x56},
-                          new ObjectId(0x12345678, 0x43218765, 0x74928756).toByteArray());
+                new ObjectId(0x12345678, 0x43218765, 0x74928756).toByteArray());
     }
 
     // Got these values from 2.12.0 driver.  This test is ensuring that we properly round-trip old and new format ObjectIds.
     @Test
     public void testCreateFromLegacy() {
         assertArrayEquals(new byte[]{82, 23, -82, -78, -80, -58, -95, -92, -75, -38, 118, -16},
-                          ObjectId.createFromLegacyFormat(1377283762, -1329159772, -1243973904).toByteArray());
+                ObjectId.createFromLegacyFormat(1377283762, -1329159772, -1243973904).toByteArray());
     }
 }
-
