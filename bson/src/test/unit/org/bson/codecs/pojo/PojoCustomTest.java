@@ -411,8 +411,7 @@ public final class PojoCustomTest extends PojoTestCase {
         try {
             decodingShouldFail(getCodec(InvalidMapModel.class), "{'invalidMap': {'1': 1, '2': 2}}");
         } catch (CodecConfigurationException e) {
-            assertTrue(e.getMessage().startsWith("Could not create a PojoCodec for 'InvalidMapModel'."
-                    + " Property 'invalidMap' errored with:"));
+            assertTrue(e.getMessage().startsWith("Failed to decode 'InvalidMapModel'. Decoding 'invalidMap' errored with:"));
             throw e;
         }
     }
@@ -423,8 +422,7 @@ public final class PojoCustomTest extends PojoTestCase {
             encodesTo(getPojoCodecProviderBuilder(InvalidCollectionModel.class), new InvalidCollectionModel(asList(1, 2, 3)),
                 "{collectionField: [1, 2, 3]}");
         } catch (CodecConfigurationException e) {
-            assertTrue(e.getMessage().startsWith("Could not create a PojoCodec for 'InvalidCollectionModel'."
-                    + " Property 'collectionField' errored with:"));
+            assertTrue(e.getMessage().startsWith("Failed to encode 'InvalidCollectionModel'. Encoding 'collectionField' errored with:"));
             throw e;
         }
     }
