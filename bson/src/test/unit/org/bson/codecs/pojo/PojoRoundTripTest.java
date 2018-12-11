@@ -64,6 +64,7 @@ import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;
 import org.bson.codecs.pojo.entities.UpperBoundsConcreteModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationBsonPropertyIdModel;
 import org.bson.codecs.pojo.entities.conventions.BsonIgnoreInvalidMapModel;
+import org.bson.codecs.pojo.entities.conventions.BsonIgnoreSyntheticProperty;
 import org.bson.codecs.pojo.entities.conventions.CollectionDiscriminatorAbstractClassesModel;
 import org.bson.codecs.pojo.entities.conventions.CollectionDiscriminatorInterfacesModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorAllFinalFieldsModel;
@@ -385,6 +386,11 @@ public final class PojoRoundTripTest extends PojoTestCase {
                 new ShapeHolderCircleModel(getShapeModelCircle()),
                 getPojoCodecProviderBuilder(ShapeModelCircle.class, ShapeHolderCircleModel.class),
                 "{'shape': {'_t': 'org.bson.codecs.pojo.entities.ShapeModelCircle', 'color': 'orange', 'radius': 4.2}}"));
+
+        data.add(new TestData("BsonIgnore synthentic property",
+                new BsonIgnoreSyntheticProperty("string value"),
+                getPojoCodecProviderBuilder(BsonIgnoreSyntheticProperty.class).conventions(Conventions.DEFAULT_CONVENTIONS),
+                "{stringField: 'string value'}"));
         return data;
     }
 
