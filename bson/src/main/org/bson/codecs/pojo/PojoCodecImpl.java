@@ -75,14 +75,9 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
     private void specialize() {
         if (specialized) {
             codecCache.put(classModel, this);
-                for (PropertyModel<?> propertyModel : classModel.getPropertyModels()) {
-                    try {
-                        addToCache(propertyModel);
-                    } catch (Exception e) {
-                        throw new CodecConfigurationException(format("Could not create a PojoCodec for '%s'."
-                                + " Property '%s' errored with: %s", classModel.getName(), propertyModel.getName(), e.getMessage()), e);
-                    }
-                }
+            for (PropertyModel<?> propertyModel : classModel.getPropertyModels()) {
+                addToCache(propertyModel);
+            }
         }
     }
 
@@ -156,7 +151,12 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
                 if (propertyValue == null) {
                     writer.writeNull();
                 } else {
-                    propertyModel.getCachedCodec().encode(writer, propertyValue, encoderContext);
+                    try {
+                        propertyModel.getCachedCodec().encode(writer, propertyValue, encoderContext);
+                    } catch (CodecConfigurationException e) {
+                        throw new CodecConfigurationException(format("Failed to encode '%s'. Encoding '%s' errored with: %s",
+                                classModel.getName(), propertyModel.getReadName(), e.getMessage()), e);
+                    }
                 }
             }
         }
@@ -207,8 +207,7 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
     }
 
     private <S> void addToCache(final PropertyModel<S> propertyModel) {
-        Codec<S> codec = propertyModel.getCodec() != null ? propertyModel.getCodec()
-                : specializePojoCodec(propertyModel, propertyCodecRegistry.get(propertyModel.getTypeData()));
+        Codec<S> codec = propertyModel.getCodec() != null ? propertyModel.getCodec() : specializePojoCodec(propertyModel);
         propertyModel.cachedCodec(codec);
     }
 
@@ -223,10 +222,12 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
         return false;
     }
 
+
+
     @SuppressWarnings("unchecked")
-    private <S> Codec<S> specializePojoCodec(final PropertyModel<S> propertyModel, final Codec<S> defaultCodec) {
-        Codec<S> codec = defaultCodec;
-        if (codec != null && codec instanceof PojoCodec) {
+    private <S> Codec<S> specializePojoCodec(final PropertyModel<S> propertyModel) {
+        Codec<S> codec = getCodecFromPropertyRegistry(propertyModel);
+        if (codec instanceof PojoCodec) {
             PojoCodec<S> pojoCodec = (PojoCodec<S>) codec;
             ClassModel<S> specialized = getSpecializedClassModel(pojoCodec.getClassModel(), propertyModel);
             if (codecCache.containsKey(specialized)) {
@@ -236,6 +237,14 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
             }
         }
         return codec;
+    }
+
+    private <S> Codec<S> getCodecFromPropertyRegistry(final PropertyModel<S> propertyModel) {
+        try {
+            return propertyCodecRegistry.get(propertyModel.getTypeData());
+        } catch (CodecConfigurationException e) {
+            return new LazyMissingCodec<S>(propertyModel.getTypeData().getType(), e);
+        }
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
