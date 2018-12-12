@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.lang.Nullable;
@@ -107,7 +108,9 @@ import static java.util.Collections.unmodifiableList;
  * <p>Connection Configuration:</p>
  * <p>Connection Configuration:</p>
  * <ul>
- * <li>{@code streamType=nio2|netty}: The stream type to use for connections. If unspecified, nio2 will be used.</li>
+ * <li>{@code streamType=nio2|netty}: The stream type to use for connections. If unspecified, nio2 will be used for asynchronous
+ * clients.  Note that this query parameter has been deprecated and applications should use
+ * {@link MongoClientSettings.Builder#streamFactoryFactory(StreamFactoryFactory)} instead.</li>
  * <li>{@code ssl=true|false}: Whether to connect using SSL.</li>
  * <li>{@code sslInvalidHostNameAllowed=true|false}: Whether to allow invalid host names for SSL connections.</li>
  * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
@@ -473,6 +476,8 @@ public class ConnectionString {
                 sslEnabled = parseBoolean(value, "ssl");
             } else if (key.equals("streamtype")) {
                 streamType = value;
+                LOGGER.warn("The streamType query parameter is deprecated and support for it will be removed"
+                        + " in the next major release.");
             } else if (key.equals("replicaset")) {
                 requiredReplicaSetName = value;
             } else if (key.equals("readconcernlevel")) {
@@ -1179,7 +1184,10 @@ public class ConnectionString {
      * Gets the stream type value specified in the connection string.
      * @return the stream type value
      * @since 3.3
+     * @deprecated Use {@link MongoClientSettings.Builder#streamFactoryFactory(StreamFactoryFactory)} to configure the stream type
+     * programmatically
      */
+    @Deprecated
     @Nullable
     public String getStreamType() {
         return streamType;

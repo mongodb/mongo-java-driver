@@ -240,7 +240,7 @@ in Java 7.  However, an application must use [Netty](http://netty.io/) instead i
 
 To configure the driver to use Netty,  
 
-- Include the `streamType` option set to `netty`  in the connection string
+- Include the `streamType` option set to `netty` in the connection string
 
     ```java
     MongoClient client = MongoClients.create("mongodb://localhost/?streamType=netty");
@@ -250,16 +250,17 @@ To configure the driver to use Netty,
 
     ```java
     MongoClient client = MongoClients.create(MongoClientSettings.builder()
-                              .clusterSettings(ClusterSettings.builder()
-                                                  .hosts(Arrays.asList(new ServerAddress()))
-                                                  .build())
-                              .streamFactoryFactory(NettyStreamFactoryFactory.builder()
-                                                  .build())
-                              .build());
+            .applyConnectionString(new ConnectionString("mongodb://localhost"))
+            .streamFactoryFactory(NettyStreamFactoryFactory.builder().build())
+            .build());
 
     ```
 
 {{% note %}}
+The streamType connection string query parameter is deprecated as of the 3.10 release and will be removed in the next major release.
+{{% /note %}}
+
+{{% note %}}
 Netty may also be configured by setting the `org.mongodb.async.type` system property to `netty`, but this should be considered as
-deprecated as of the 3.1 driver release.
+deprecated as of the 3.1 driver release, and will be removed in the next major release.
 {{% /note %}}
