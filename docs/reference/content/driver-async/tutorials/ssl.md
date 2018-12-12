@@ -24,14 +24,14 @@ Netty artifacts.  The driver is currently tested against Netty 4.1.
 
 ### Via Connection String
 
-To configure the driver to use Netty, include the  `ssl=true`  and  `streamType=netty` options in the connection string, as in:
+To configure the driver to use Netty, include the `ssl=true` and `streamType=netty` options in the connection string, as in:
 
 ```java
 MongoClient client = MongoClients.create("mongodb://localhost/?streamType=netty&ssl=true");
 ```
 
 {{% note %}}
-You can also specify the connection string via the [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString" >}}) object.
+The streamType connection string query parameter is deprecated as of the 3.10 release and will be removed in the next major release.
 {{% /note %}}
 
 ### Via `MongoClientSettings`
@@ -44,39 +44,30 @@ set the ``sslEnabled`` property to ``true``, and the stream factory to
 
 EventLoopGroup eventLoopGroup = new NioEventLoopGroup();  // make sure application shuts this down
 
-
 MongoClient client = MongoClients.create(MongoClientSettings.builder()
-                        .clusterSettings(ClusterSettings.builder()
-                                          .hosts(Arrays.asList(new ServerAddress()))
-                                          .build())
-                        .streamFactoryFactory(NettyStreamFactoryFactory.builder()
-                                          .eventLoopGroup(eventLoopGroup).build())
-                        .sslSettings(SslSettings.builder()
-                                          .enabled(true)
-                                          .build())
-                        .build());
+        .applyToClusterSettings(builder -> builder.hosts(Arrays.asList(new ServerAddress())))
+        .applyToSslSettings(builder -> builder.enabled(true))
+        .streamFactoryFactory(NettyStreamFactoryFactory.builder()
+                .eventLoopGroup(eventLoopGroup).build())
+        .build());
 ```
 
 By default, the Netty-based streams will use the [NioEventLoopGroup](http://netty.io/4.0/api/io/netty/channel/nio/NioEventLoopGroup.html)
 and Netty's [default `ByteBufAllocator`](http://netty.io/4.0/api/io/netty/buffer/ByteBufAllocator.html#DEFAULT), but these are
 configurable via the [`NettyStreamFactoryFactory`]({{< apiref "com/mongodb/connection/netty/NettyStreamFactoryFactory" >}}) constructor.   
 
-
-{{% note %}}
-Netty may also be configured by setting the `org.mongodb.async.type` system property to `netty`, but this should be considered as
-deprecated as of the 3.1 driver release.
-{{% /note %}}
-
 To override the default [`javax.net.ssl.SSLContext`](https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLContext.html) used for SSL
 connections, set the `sslContext` property on the `SslSettings`, as in:
 
 ```java
- SSLContext sslContext = ...
- SslSettings sslSettings = SslSettings.builder()
-                                      .enabled(true)
-                                      .sslContext(sslContext)
-                                      .build();
- // Pass sslSettings to the MongoClientSettings.Builder
+MongoClient client = MongoClients.create(MongoClientSettings.builder()
+        .applyToClusterSettings(builder -> builder.hosts(Arrays.asList(new ServerAddress())))
+        .applyToSslSettings(builder ->
+                builder.enabled(true)
+                       .context(sslContext))
+        .streamFactoryFactory(NettyStreamFactoryFactory.builder()
+                .eventLoopGroup(eventLoopGroup).build())
+        .build());
 ```
 
 
@@ -93,20 +84,15 @@ If your application must run on Java 6, or for some other reason you need
 to disable host name verification, you must explicitly indicate this using the `invalidHostNameAllowed` property:
 
 ```java
-
 EventLoopGroup eventLoopGroup = new NioEventLoopGroup();  // make sure application shuts this down
 
 MongoClient client = MongoClients.create(MongoClientSettings.builder()
-                                                 .clusterSettings(ClusterSettings.builder()
-                                                                          .hosts(Arrays.asList(new ServerAddress()))
-                                                                          .build())
-                                                  .sslSettings(SslSettings.builder()
-                                                                       .enabled(true)
-                                                                       .invalidHostNameAllowed(true)
-                                                                       .build())
-                                                  .streamFactoryFactory(NettyStreamFactoryFactory.builder()
-                                                                            .eventLoopGroup(eventLoopGroup).build())
-                                                  .build());
+        .applyToSslSettings(builder -> 
+                builder.enabled(true)
+                       .invalidHostNameAllowed(true))
+        .streamFactoryFactory(NettyStreamFactoryFactory.builder()
+                .eventLoopGroup(eventLoopGroup).build())
+        .build());
 ```
 
 Or via the connection string:
@@ -114,6 +100,10 @@ Or via the connection string:
 ```java
 MongoClient client = MongoClients.create("mongodb://localhost/?ssl=true&sslInvalidHostNameAllowed=true&streamType=netty");
 ```
+
+{{% note %}}
+The streamType connection string query parameter is deprecated as of the 3.10 release and will be removed in the next major release.
+{{% /note %}}
 
 ## JVM System Properties for TLS/SSL
 
