@@ -14,18 +14,18 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.dns;
+package com.mongodb.internal.connection;
 
-import java.util.List;
+import com.mongodb.MongoException;
+import com.mongodb.ServerAddress;
+import com.mongodb.connection.ClusterType;
 
-/**
- * Utility interface for resolving SRV and TXT records.
- *
- * <p>This class should not be considered a part of the public API.</p>
- */
-public interface DnsResolver {
+import java.util.Collection;
 
-    List<String> resolveHostFromSrvRecords(String srvHost);
+interface DnsSrvRecordInitializer {
+    void initialize(Collection<ServerAddress> hosts);
 
-    String resolveAdditionalQueryParametersFromTxtRecords(String host);
+    void initialize(MongoException initializationException);
+
+    ClusterType getClusterType();
 }

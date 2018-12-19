@@ -130,15 +130,15 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
             assertEquals(getClusterType(topologyType, getCluster().getCurrentDescription().getServerDescriptions()),
                     getCluster().getCurrentDescription().getType());
         } else if (topologyType.equals("ReplicaSetWithPrimary")) {
-            assertEquals(MultiServerCluster.class, getCluster().getClass());
+            assertEquals(StableMultiServerCluster.class, getCluster().getClass());
             assertEquals(getClusterType(topologyType), getCluster().getCurrentDescription().getType());
             assertEquals(1, getCluster().getCurrentDescription().getPrimaries().size());
         } else if (topologyType.equals("ReplicaSetNoPrimary")) {
-            assertEquals(MultiServerCluster.class, getCluster().getClass());
+            assertEquals(StableMultiServerCluster.class, getCluster().getClass());
             assertEquals(getClusterType(topologyType), getCluster().getCurrentDescription().getType());
             assertEquals(0, getCluster().getCurrentDescription().getPrimaries().size());
         } else if (topologyType.equals("Sharded")) {
-            assertEquals(MultiServerCluster.class, getCluster().getClass());
+            assertEquals(StableMultiServerCluster.class, getCluster().getClass());
             assertEquals(getClusterType(topologyType), getCluster().getCurrentDescription().getType());
         } else if (topologyType.equals("Unknown")) {
             assertEquals(getClusterType(topologyType), getCluster().getCurrentDescription().getType());

@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.MongoConfigurationException;
+import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
@@ -32,6 +32,7 @@ import com.mongodb.event.ServerListenerAdapter;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -47,14 +48,9 @@ import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.connection.ServerType.REPLICA_SET_GHOST;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.connection.ServerType.STANDALONE;
-import static com.mongodb.internal.connection.ServerAddressHelper.createServerAddress;
-import static com.mongodb.internal.dns.DnsResolver.resolveHostFromSrvRecords;
 import static java.lang.String.format;
 
-/**
- * This class needs to be final because we are leaking a reference to "this" from the constructor
- */
-public final class MultiServerCluster extends BaseCluster {
+public abstract class AbstractMultiServerCluster extends BaseCluster {
     private static final Logger LOGGER = Loggers.getLogger("cluster");
 
     private ClusterType clusterType;
@@ -64,7 +60,6 @@ public final class MultiServerCluster extends BaseCluster {
 
     private final ConcurrentMap<ServerAddress, ServerTuple> addressToServerTupleMap =
     new ConcurrentHashMap<ServerAddress, ServerTuple>();
-    private volatile MongoConfigurationException srvResolutionException;
 
     private static final class ServerTuple {
         private final ClusterableServer server;
@@ -76,7 +71,7 @@ public final class MultiServerCluster extends BaseCluster {
         }
     }
 
-    public MultiServerCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
+    AbstractMultiServerCluster(final ClusterId clusterId, final ClusterSettings settings, final ClusterableServerFactory serverFactory) {
         super(clusterId, settings, serverFactory);
         isTrue("connection mode is multiple", settings.getMode() == ClusterConnectionMode.MULTIPLE);
         clusterType = settings.getRequiredClusterType();
@@ -85,33 +80,17 @@ public final class MultiServerCluster extends BaseCluster {
         if (LOGGER.isInfoEnabled()) {
             LOGGER.info(format("Cluster created with settings %s", settings.getShortDescription()));
         }
-
-        if (settings.getSrvHost() != null) {
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    List<ServerAddress> hosts = new ArrayList<ServerAddress>();
-                    try {
-                        List<String> resolvedHostNames = resolveHostFromSrvRecords(settings.getSrvHost());
-                        for (String host : resolvedHostNames) {
-                            hosts.add(createServerAddress(host));
-                        }
-                    } catch (MongoConfigurationException e) {
-                        srvResolutionException = e;
-                    } catch (RuntimeException e) {
-                        LOGGER.warn("Unexpected runtime exception while resolving SRV record", e);
-                        return;
-                    }
-                    initialize(clusterId, settings, hosts, serverFactory);
-                }
-            }).start();
-        } else {
-            initialize(clusterId, settings, settings.getHosts(), serverFactory);
-        }
     }
 
-    private void initialize(final ClusterId clusterId, final ClusterSettings settings, final List<ServerAddress> serverAddresses,
-                            final ClusterableServerFactory serverFactory) {
+    ClusterType getClusterType() {
+        return clusterType;
+    }
+
+    MongoException getSrvResolutionException() {
+        return null;
+    }
+
+    protected void initialize(final Collection<ServerAddress> serverAddresses) {
         ClusterDescription newDescription;
 
         // synchronizing this code because addServer registers a callback which is re-entrant to this instance.
@@ -122,9 +101,12 @@ public final class MultiServerCluster extends BaseCluster {
             }
             newDescription = updateDescription();
         }
-        fireChangeEvent(new ClusterDescriptionChangedEvent(clusterId, newDescription,
-                new ClusterDescription(settings.getMode(), ClusterType.UNKNOWN, Collections.<ServerDescription>emptyList(),
-                        settings, serverFactory.getSettings())));
+        fireChangeEvent(new ClusterDescriptionChangedEvent(getClusterId(), newDescription, createInitialDescription()));
+    }
+
+    private ClusterDescription createInitialDescription() {
+        return new ClusterDescription(getSettings().getMode(), ClusterType.UNKNOWN, Collections.<ServerDescription>emptyList(),
+                getSettings(), getServerFactory().getSettings());
     }
 
     @Override
@@ -162,6 +144,34 @@ public final class MultiServerCluster extends BaseCluster {
         @Override
         public void serverDescriptionChanged(final ServerDescriptionChangedEvent event) {
             onChange(event);
+        }
+    }
+
+    void onChange(final Collection<ServerAddress> newHosts) {
+        synchronized (this) {
+            if (isClosed()) {
+                return;
+            }
+
+            for (ServerAddress cur : newHosts) {
+                addServer(cur);
+            }
+
+            for (Iterator<ServerTuple> iterator = addressToServerTupleMap.values().iterator(); iterator.hasNext();) {
+                ServerTuple cur = iterator.next();
+                if (!newHosts.contains(cur.description.getAddress())) {
+                    if (LOGGER.isInfoEnabled()) {
+                        LOGGER.info(format("Removing %s from client view of cluster.", cur.description.getAddress()));
+                    }
+                    iterator.remove();
+                    cur.server.close();
+                }
+            }
+
+            ClusterDescription oldClusterDescription = getCurrentDescription();
+            ClusterDescription newClusterDescription = updateDescription();
+
+            fireChangeEvent(new ClusterDescriptionChangedEvent(getClusterId(), newClusterDescription, oldClusterDescription));
         }
     }
 
@@ -369,7 +379,7 @@ public final class MultiServerCluster extends BaseCluster {
     }
 
     private ClusterDescription updateDescription() {
-        ClusterDescription newDescription = new ClusterDescription(MULTIPLE, clusterType, srvResolutionException,
+        ClusterDescription newDescription = new ClusterDescription(MULTIPLE, clusterType, getSrvResolutionException(),
                 getNewServerDescriptionList(), getSettings(), getServerFactory().getSettings());
         updateDescription(newDescription);
         return newDescription;

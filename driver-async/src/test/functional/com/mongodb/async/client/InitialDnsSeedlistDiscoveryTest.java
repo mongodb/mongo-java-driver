@@ -20,7 +20,7 @@ import com.mongodb.Block;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoConfigurationException;
+import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.connection.ClusterSettings;
@@ -86,7 +86,7 @@ public class InitialDnsSeedlistDiscoveryTest {
         if (isError) {
             MongoClient client = null;
             try {
-                final AtomicReference<MongoConfigurationException> exceptionReference = new AtomicReference<MongoConfigurationException>();
+                final AtomicReference<MongoException> exceptionReference = new AtomicReference<MongoException>();
                 final CountDownLatch latch = new CountDownLatch(1);
 
                 ConnectionString connectionString = new ConnectionString(uri);

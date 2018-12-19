@@ -16,7 +16,7 @@
 
 package com.mongodb.connection;
 
-import com.mongodb.MongoConfigurationException;
+import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.TagSet;
@@ -46,7 +46,7 @@ public class ClusterDescription {
     private final List<ServerDescription> serverDescriptions;
     private final ClusterSettings clusterSettings;
     private final ServerSettings serverSettings;
-    private final MongoConfigurationException srvResolutionException;
+    private final MongoException srvResolutionException;
 
     /**
      * Creates a new ClusterDescription.
@@ -89,7 +89,7 @@ public class ClusterDescription {
      * @since 3.10
      */
     public ClusterDescription(final ClusterConnectionMode connectionMode, final ClusterType type,
-                              final MongoConfigurationException srvResolutionException,
+                              final MongoException srvResolutionException,
                               final List<ServerDescription> serverDescriptions,
                               final ClusterSettings clusterSettings,
                               final ServerSettings serverSettings) {
@@ -214,7 +214,7 @@ public class ClusterDescription {
      * @return any exception encountered while resolving the SRV record for the initial host, or null if none
      * @since 3.10
      */
-    public MongoConfigurationException getSrvResolutionException() {
+    public MongoException getSrvResolutionException() {
         return srvResolutionException;
     }
 
