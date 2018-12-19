@@ -147,7 +147,7 @@ public class AbstractServerDiscoveryAndMonitoringTest {
         if (settings.getMode() == ClusterConnectionMode.SINGLE) {
             cluster = new SingleServerCluster(clusterId, clusterSettings, factory);
         } else {
-            cluster = new MultiServerCluster(clusterId, clusterSettings, factory);
+            cluster = new StableMultiServerCluster(clusterId, clusterSettings, factory);
         }
     }
 

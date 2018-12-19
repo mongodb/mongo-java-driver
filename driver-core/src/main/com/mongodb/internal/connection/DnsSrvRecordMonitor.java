@@ -14,18 +14,11 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.dns;
+package com.mongodb.internal.connection;
 
-import java.util.List;
+// Not for public use.
+public interface DnsSrvRecordMonitor {
+    void start();
 
-/**
- * Utility interface for resolving SRV and TXT records.
- *
- * <p>This class should not be considered a part of the public API.</p>
- */
-public interface DnsResolver {
-
-    List<String> resolveHostFromSrvRecords(String srvHost);
-
-    String resolveAdditionalQueryParametersFromTxtRecords(String host);
+    void close();
 }
