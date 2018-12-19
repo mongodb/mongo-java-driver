@@ -20,7 +20,7 @@ import com.mongodb.Block;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoConfigurationException;
+import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ServerDescription;
@@ -83,7 +83,7 @@ public class InitialDnsSeedlistDiscoveryTest {
         if (isError) {
             MongoClient client = null;
             try {
-                final AtomicReference<MongoConfigurationException> exceptionReference = new AtomicReference<MongoConfigurationException>();
+                final AtomicReference<MongoException> exceptionReference = new AtomicReference<MongoException>();
                 final CountDownLatch latch = new CountDownLatch(1);
 
                 ConnectionString connectionString = new ConnectionString(uri);
@@ -205,7 +205,7 @@ public class InitialDnsSeedlistDiscoveryTest {
         MongoClient client = MongoClients.create(settings);
 
         try {
-            assertTrue(latch.await(5, TimeUnit.SECONDS));
+            assertTrue(latch.await(500, TimeUnit.SECONDS));
             assertTrue(client.getDatabase("admin").runCommand(new Document("ping", 1)).containsKey("ok"));
         } finally {
             client.close();

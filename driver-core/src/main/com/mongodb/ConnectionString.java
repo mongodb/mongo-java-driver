@@ -19,6 +19,7 @@ package com.mongodb;
 import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.internal.dns.DefaultDnsResolver;
 import com.mongodb.lang.Nullable;
 
 import java.io.UnsupportedEncodingException;
@@ -32,7 +33,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.internal.dns.DnsResolver.resolveAdditionalQueryParametersFromTxtRecords;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -361,7 +361,8 @@ public class ConnectionString {
             collection = null;
         }
 
-        String txtRecordsQueryParameters = isSrvProtocol ? resolveAdditionalQueryParametersFromTxtRecords(unresolvedHosts.get(0)) : "";
+        String txtRecordsQueryParameters = isSrvProtocol
+                ? new DefaultDnsResolver().resolveAdditionalQueryParametersFromTxtRecords(unresolvedHosts.get(0)) : "";
         String connectionStringQueryParamenters = unprocessedConnectionString;
 
         Map<String, List<String>> connectionStringOptionsMap = parseOptions(connectionStringQueryParamenters);

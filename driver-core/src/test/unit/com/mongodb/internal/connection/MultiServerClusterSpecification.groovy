@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection
 
+import com.mongodb.MongoConfigurationException
 import com.mongodb.MongoTimeoutException
 import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterDescription
@@ -62,7 +63,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should include settings in cluster description'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(MULTIPLE)
+        def cluster = new StableMultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(MULTIPLE)
                 .serverSelectionTimeout(1, MILLISECONDS)
                 .hosts([firstServer]).build(), factory)
         sendNotification(firstServer, REPLICA_SET_PRIMARY)
@@ -74,7 +75,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should timeout waiting for description if no servers connect'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(MULTIPLE)
+        def cluster = new StableMultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(MULTIPLE)
                 .serverSelectionTimeout(1, MILLISECONDS)
                 .hosts([firstServer]).build(), factory)
 
@@ -87,7 +88,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should correct report description when connected to a primary'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(MULTIPLE).hosts([firstServer]).build(),
+        def cluster = new StableMultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(MULTIPLE).hosts([firstServer]).build(),
                 factory)
 
         when:
@@ -100,7 +101,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should not get server when closed'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts(Arrays.asList(firstServer)).mode(MULTIPLE).build(),
+        def cluster = new StableMultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts(Arrays.asList(firstServer)).mode(MULTIPLE).build(),
                 factory)
         cluster.close()
 
@@ -113,7 +114,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should discover all hosts in the cluster when notified by the primary'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(MULTIPLE).hosts([firstServer]).build(),
+        def cluster = new StableMultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(MULTIPLE).hosts([firstServer]).build(),
                 factory)
 
         when:
@@ -125,7 +126,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should discover all hosts in the cluster when notified by a secondary and there is no primary'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(MULTIPLE).hosts([firstServer]).build(),
+        def cluster = new StableMultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(MULTIPLE).hosts([firstServer]).build(),
                 factory)
 
         when:
@@ -137,7 +138,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should discover all passives in the cluster'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(MULTIPLE).hosts([firstServer]).build(),
+        def cluster = new StableMultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(MULTIPLE).hosts([firstServer]).build(),
                 factory)
 
         when:
@@ -150,7 +151,7 @@ class MultiServerClusterSpecification extends Specification {
     def 'should remove a secondary server whose reported host name does not match the address connected to'() {
         given:
         def seedListAddress = new ServerAddress('127.0.0.1:27017')
-        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts([seedListAddress]).mode(MULTIPLE).build(),
+        def cluster = new StableMultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts([seedListAddress]).mode(MULTIPLE).build(),
                 factory)
 
         when:
@@ -163,7 +164,7 @@ class MultiServerClusterSpecification extends Specification {
     def 'should remove a primary server whose reported host name does not match the address connected to'() {
         given:
         def seedListAddress = new ServerAddress('127.0.0.1:27017')
-        def cluster = new MultiServerCluster(CLUSTER_ID,
+        def cluster = new StableMultiServerCluster(CLUSTER_ID,
                 ClusterSettings.builder().hosts([seedListAddress]).mode(MULTIPLE).build(), factory)
 
         when:
@@ -175,7 +176,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should remove a server when it no longer appears in hosts reported by the primary'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID,
+        def cluster = new StableMultiServerCluster(CLUSTER_ID,
                 ClusterSettings.builder().hosts([firstServer, secondServer, thirdServer]).build(), factory)
         sendNotification(firstServer, REPLICA_SET_PRIMARY)
         sendNotification(secondServer, REPLICA_SET_SECONDARY)
@@ -191,7 +192,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should remove a server of the wrong type when type is replica set'() {
         given:
-        def cluster = new MultiServerCluster(
+        def cluster = new StableMultiServerCluster(
                 CLUSTER_ID, ClusterSettings.builder().requiredClusterType(REPLICA_SET).hosts([firstServer, secondServer]).build(),
                 factory)
 
@@ -206,7 +207,7 @@ class MultiServerClusterSpecification extends Specification {
     @SuppressWarnings('deprecation')
     def 'should ignore an empty list of hosts when type is replica set'() {
         given:
-        def cluster = new MultiServerCluster(
+        def cluster = new StableMultiServerCluster(
                 CLUSTER_ID, ClusterSettings.builder().requiredClusterType(REPLICA_SET).hosts([firstServer, secondServer]).build(),
                 factory)
 
@@ -222,7 +223,7 @@ class MultiServerClusterSpecification extends Specification {
     @SuppressWarnings('deprecation')
     def 'should ignore a host without a replica set name when type is replica set'() {
         given:
-        def cluster = new MultiServerCluster(
+        def cluster = new StableMultiServerCluster(
                 CLUSTER_ID, ClusterSettings.builder().requiredClusterType(REPLICA_SET).hosts([firstServer, secondServer]).build(),
                 factory)
 
@@ -237,7 +238,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should remove a server of the wrong type when type is sharded'() {
         given:
-        def cluster = new MultiServerCluster(
+        def cluster = new StableMultiServerCluster(
                 CLUSTER_ID, ClusterSettings.builder().requiredClusterType(SHARDED).hosts([firstServer, secondServer]).build(),
                 factory)
         sendNotification(firstServer, SHARD_ROUTER)
@@ -252,7 +253,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should remove a server of wrong type from discovered replica set'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID,
+        def cluster = new StableMultiServerCluster(CLUSTER_ID,
                 ClusterSettings.builder().mode(MULTIPLE).hosts([firstServer, secondServer]).build(), factory)
         sendNotification(firstServer, REPLICA_SET_PRIMARY)
 
@@ -266,7 +267,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should not set cluster type when connected to a standalone when seed list size is greater than one'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID,
+        def cluster = new StableMultiServerCluster(CLUSTER_ID,
                 ClusterSettings.builder()
                         .serverSelectionTimeout(1, MILLISECONDS)
                         .mode(MULTIPLE).hosts([firstServer, secondServer]).build(),
@@ -282,7 +283,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should not set cluster type when connected to a replica set ghost until a valid replica set member connects'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID,
+        def cluster = new StableMultiServerCluster(CLUSTER_ID,
                 ClusterSettings.builder()
                         .serverSelectionTimeout(1, MILLISECONDS)
                         .mode(MULTIPLE).hosts([firstServer, secondServer]).build(),
@@ -305,7 +306,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should invalidate existing primary when a new primary notifies'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts([firstServer, secondServer]).build(),
+        def cluster = new StableMultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts([firstServer, secondServer]).build(),
                 factory)
         sendNotification(firstServer, REPLICA_SET_PRIMARY)
 
@@ -319,7 +320,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should invalidate new primary if its electionId is less than the previously reported electionId'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts([firstServer, secondServer]).build(),
+        def cluster = new StableMultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts([firstServer, secondServer]).build(),
                 factory)
         factory.sendNotification(firstServer, REPLICA_SET_PRIMARY, [firstServer, secondServer, thirdServer], new ObjectId(new Date(1000)))
 
@@ -335,7 +336,7 @@ class MultiServerClusterSpecification extends Specification {
     def 'should remove a server when a server in the seed list is not in hosts list, it should be removed'() {
         given:
         def serverAddressAlias = new ServerAddress('alternate')
-        def cluster = new MultiServerCluster(CLUSTER_ID,
+        def cluster = new StableMultiServerCluster(CLUSTER_ID,
                 ClusterSettings.builder().mode(MULTIPLE).hosts([serverAddressAlias]).build(), factory)
 
         when:
@@ -347,7 +348,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should retain a Standalone server given a hosts list of size 1'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(MULTIPLE).hosts([firstServer]).build(),
+        def cluster = new StableMultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(MULTIPLE).hosts([firstServer]).build(),
                 factory)
 
         when:
@@ -360,7 +361,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should remove any Standalone server given a hosts list of size greater than one'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts([firstServer, secondServer]).build(),
+        def cluster = new StableMultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts([firstServer, secondServer]).build(),
                 factory)
 
         when:
@@ -375,7 +376,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should remove a member whose replica set name does not match the required one'() {
         given:
-        def cluster = new MultiServerCluster(
+        def cluster = new StableMultiServerCluster(
                 CLUSTER_ID, ClusterSettings.builder().hosts([secondServer]).mode(MULTIPLE).requiredReplicaSetName('test1').build(),
                 factory)
         when:
@@ -388,7 +389,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should throw from getServer if cluster is closed'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID,
+        def cluster = new StableMultiServerCluster(CLUSTER_ID,
                 ClusterSettings.builder().serverSelectionTimeout(100, MILLISECONDS).hosts([firstServer]).mode(MULTIPLE).build(),
                 factory)
         cluster.close()
@@ -402,7 +403,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should ignore a notification from a server that has been removed'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts([firstServer, secondServer]).build(),
+        def cluster = new StableMultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts([firstServer, secondServer]).build(),
                 factory)
         factory.sendNotification(firstServer, REPLICA_SET_PRIMARY, [firstServer, thirdServer])
 
@@ -415,7 +416,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should add servers from a secondary host list when there is no primary'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID,
+        def cluster = new StableMultiServerCluster(CLUSTER_ID,
                 ClusterSettings.builder().hosts([firstServer, secondServer, thirdServer]).build(), factory)
         factory.sendNotification(firstServer, REPLICA_SET_SECONDARY, [firstServer, secondServer])
 
@@ -428,7 +429,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should add and removes servers from a primary host list when there is a primary'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID,
+        def cluster = new StableMultiServerCluster(CLUSTER_ID,
                 ClusterSettings.builder().hosts([firstServer, secondServer, thirdServer]).build(), factory)
         factory.sendNotification(firstServer, REPLICA_SET_PRIMARY, [firstServer, secondServer])
 
@@ -447,7 +448,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should ignore a secondary host list when there is a primary'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID,
+        def cluster = new StableMultiServerCluster(CLUSTER_ID,
                 ClusterSettings.builder().hosts([firstServer, secondServer, thirdServer]).build(), factory)
         factory.sendNotification(firstServer, REPLICA_SET_PRIMARY, [firstServer, secondServer])
 
@@ -460,7 +461,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should ignore a notification from a server that is not ok'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts([firstServer, secondServer]).build(),
+        def cluster = new StableMultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts([firstServer, secondServer]).build(),
                 factory)
         factory.sendNotification(firstServer, REPLICA_SET_PRIMARY, [firstServer, secondServer, thirdServer])
 
@@ -485,7 +486,7 @@ class MultiServerClusterSpecification extends Specification {
                 .build()
 
         when:
-        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(MULTIPLE).hosts([firstServer])
+        def cluster = new StableMultiServerCluster(CLUSTER_ID, ClusterSettings.builder().mode(MULTIPLE).hosts([firstServer])
                 .addClusterListener(clusterListener).build(), factory)
 
         then:
@@ -518,7 +519,7 @@ class MultiServerClusterSpecification extends Specification {
 
     def 'should connect to all servers'() {
         given:
-        def cluster = new MultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts([firstServer, secondServer]).build(),
+        def cluster = new StableMultiServerCluster(CLUSTER_ID, ClusterSettings.builder().hosts([firstServer, secondServer]).build(),
                 factory)
 
         when:
