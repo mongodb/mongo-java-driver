@@ -175,7 +175,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
             CommandEvent event = events.get(i);
 
             if (event instanceof CommandFailedEvent) {
-                MongoException ex = MongoException.fromThrowable(((CommandFailedEvent)event).getThrowable());
+                MongoException ex = MongoException.fromThrowable(((CommandFailedEvent) event).getThrowable());
                 if (ex.getCode() == 10107) {
                     notMasterErrorFound = true;
                 }
