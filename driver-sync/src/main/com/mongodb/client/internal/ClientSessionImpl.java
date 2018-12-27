@@ -99,6 +99,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         if (!writeConcern.isAcknowledged()) {
             throw new MongoClientException("Transactions do not support unacknowledged write concern");
         }
+        setPinnedMongosAddress(null);
     }
 
     @Override

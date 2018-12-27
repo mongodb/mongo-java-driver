@@ -48,6 +48,7 @@ import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.TlsChannelStreamFactoryFactory;
 import com.mongodb.connection.netty.NettyStreamFactory;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
 import com.mongodb.operation.BatchCursor;
@@ -90,6 +91,7 @@ import static org.junit.Assume.assumeTrue;
 public final class ClusterFixture {
     public static final String DEFAULT_URI = "mongodb://localhost:27017";
     public static final String MONGODB_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.uri";
+    public static final String MONGODB_TRANSACTION_URI_SYSTEM_PROPERTY_NAME = "org.mongodb.test.transaction.uri";
     private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
     private static final int COMMAND_NOT_FOUND_ERROR_CODE = 59;
     public static final long TIMEOUT = 60L;
@@ -186,15 +188,23 @@ public final class ClusterFixture {
         }
     }
 
+    public static synchronized ConnectionString getMultiMongosConnectionString() {
+        ConnectionString mongoTransactionURIProperty =
+                getConnectionStringFromSystemProperty(MONGODB_TRANSACTION_URI_SYSTEM_PROPERTY_NAME);
+        if (mongoTransactionURIProperty != null) {
+            return mongoTransactionURIProperty;
+        }
+        return getConnectionString();
+    }
+
     public static synchronized ConnectionString getConnectionString() {
         if (connectionString != null) {
             return connectionString;
         }
 
-        String mongoURIProperty = System.getProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
-        if (mongoURIProperty != null && !mongoURIProperty.isEmpty()) {
-            connectionString = new ConnectionString(mongoURIProperty);
-            return connectionString;
+        ConnectionString mongoURIProperty = getConnectionStringFromSystemProperty(MONGODB_URI_SYSTEM_PROPERTY_NAME);
+        if (mongoURIProperty != null) {
+            return mongoURIProperty;
         }
 
         // Figure out what the connection string should be
@@ -218,6 +228,15 @@ public final class ClusterFixture {
                 cluster.close();
             }
         }
+    }
+
+    @Nullable
+    private static ConnectionString getConnectionStringFromSystemProperty(final String property) {
+        String mongoURIProperty = System.getProperty(property);
+        if (mongoURIProperty != null && !mongoURIProperty.isEmpty()) {
+            return new ConnectionString(mongoURIProperty);
+        }
+        return null;
     }
 
     public static ReadWriteBinding getBinding(final Cluster cluster) {

@@ -212,6 +212,9 @@ public final class CommandMonitoringTestHelper {
         if (command.containsKey("readConcern") && (command.getDocument("readConcern").containsKey("afterClusterTime"))) {
             command.getDocument("readConcern").put("afterClusterTime", new BsonInt32(42));
         }
+        if (command.containsKey("recoveryToken")) {
+            command.remove("recoveryToken");
+        }
 
         return new CommandStartedEvent(event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),
                 event.getCommandName(), command);
