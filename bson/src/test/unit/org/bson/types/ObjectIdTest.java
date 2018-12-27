@@ -27,7 +27,9 @@ import java.nio.ByteBuffer;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+@SuppressWarnings("deprecation")
 public class ObjectIdTest {
     @Test
     public void testToBytes() {
@@ -43,6 +45,28 @@ public class ObjectIdTest {
 
     @Test
     public void testFromBytes() {
+
+        try {
+            new ObjectId((byte[]) null);
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertEquals("bytes can not be null", e.getMessage());
+        }
+
+        try {
+            new ObjectId(new byte[11]);
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertEquals("state should be: bytes has length of 12", e.getMessage());
+        }
+
+        try {
+            new ObjectId(new byte[13]);
+            fail("Expected IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertEquals("state should be: bytes has length of 12", e.getMessage());
+        }
+
         byte[] bytes = new byte[]{81, 6, -4, -102, -68, -126, 55, 85, -127, 54, -46, -119};
 
         ObjectId objectId1 = new ObjectId(bytes);
