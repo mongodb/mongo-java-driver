@@ -314,7 +314,7 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
      * @return the Date
      */
     public Date getDate() {
-        return new Date(timestamp * 1000L);
+        return new Date((timestamp & 0xFFFFFFFFL) * 1000L);
     }
 
     /**
@@ -501,7 +501,7 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
      */
     @Deprecated
     public long getTime() {
-        return timestamp * 1000L;
+        return (timestamp & 0xFFFFFFFFL) * 1000L;
     }
 
     /**
