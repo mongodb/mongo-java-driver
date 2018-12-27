@@ -16,7 +16,9 @@
 
 package com.mongodb.client;
 
+import com.mongodb.ServerAddress;
 import com.mongodb.TransactionOptions;
+import com.mongodb.lang.Nullable;
 
 /**
  * A client session that supports transactions.
@@ -24,6 +26,23 @@ import com.mongodb.TransactionOptions;
  * @since 3.8
  */
 public interface ClientSession extends com.mongodb.session.ClientSession {
+    /**
+     * Returns the server address of the pinned mongos on this session.
+     *
+     * @return the server address of the pinned mongos.
+     * @mongodb.server.release 4.0
+     */
+    @Nullable
+    ServerAddress getPinnedMongosAddress();
+
+    /**
+     * Pin the server address of the mongos on this session.
+     *
+     * @param address the server address to pin to this session
+     * @mongodb.server.release 4.0
+     */
+    void setPinnedMongosAddress(@Nullable ServerAddress address);
+
     /**
      * Returns true if there is an active transaction on this session, and false otherwise
      *

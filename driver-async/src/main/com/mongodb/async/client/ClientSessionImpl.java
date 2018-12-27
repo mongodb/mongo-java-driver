@@ -41,14 +41,13 @@ class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
     private TransactionState transactionState = TransactionState.NONE;
     private boolean messageSentInCurrentTransaction;
     private boolean commitInProgress;
-
     private TransactionOptions transactionOptions;
 
     ClientSessionImpl(final ServerSessionPool serverSessionPool, final MongoClient mongoClient, final ClientSessionOptions options,
                       final OperationExecutor executor) {
         super(serverSessionPool, mongoClient, options);
         this.executor = executor;
-   }
+    }
 
     @Override
     public boolean hasActiveTransaction() {
@@ -100,6 +99,7 @@ class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
         if (!writeConcern.isAcknowledged()) {
             throw new MongoClientException("Transactions do not support unacknowledged write concern");
         }
+        setPinnedMongosAddress(null);
     }
 
     @Override

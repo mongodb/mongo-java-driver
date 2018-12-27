@@ -217,7 +217,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" .evergreen/run-tests.sh
+          AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" SAFE_FOR_MULTI_MONGOS="${SAFE_FOR_MULTI_MONGOS}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" .evergreen/run-tests.sh
 
   "run slow tests":
   - command: shell.exec
@@ -469,6 +469,9 @@ axes:
         display_name: "latest"
         variables:
            VERSION: "latest"
+           # Multiple mongos instances can be specified in the connection string
+           # for this version.
+           SAFE_FOR_MULTI_MONGOS: true
       - id: "4.0"
         display_name: "4.0"
         variables:

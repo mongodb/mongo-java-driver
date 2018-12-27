@@ -18,6 +18,7 @@ package com.mongodb.async.client;
 
 import com.mongodb.Block;
 import com.mongodb.ClientSessionOptions;
+import com.mongodb.ConnectionString;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
@@ -30,6 +31,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.connection.SocketSettings;
+import com.mongodb.connection.SslSettings;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.lang.Nullable;
@@ -60,9 +62,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.async.client.Fixture.getConnectionString;
 import static com.mongodb.async.client.Fixture.getDefaultDatabaseName;
+import static com.mongodb.async.client.Fixture.isSharded;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
 import static org.junit.Assert.assertEquals;
@@ -130,7 +135,22 @@ public class TransactionsTest {
 
         BsonDocument clientOptions = definition.getDocument("clientOptions", new BsonDocument());
 
-        mongoClient = MongoClients.create(Fixture.getMongoClientBuilderFromConnectionString()
+        ConnectionString connectionString = getConnectionString();
+        if (this.filename.equals("pin-mongos.json")) {
+            connectionString = getMultiMongosConnectionString();
+        }
+        MongoClientSettings.Builder builder = MongoClientSettings.builder()
+                .applyConnectionString(connectionString);
+        if (System.getProperty("java.version").startsWith("1.6.")) {
+            builder.applyToSslSettings(new Block<SslSettings.Builder>() {
+                @Override
+                public void apply(final SslSettings.Builder builder) {
+                    builder.invalidHostNameAllowed(true);
+                }
+            });
+        }
+
+        mongoClient = MongoClients.create(builder
                 .addCommandListener(commandListener)
                 .applyToSocketSettings(new Block<SocketSettings.Builder>() {
                     @Override
@@ -285,6 +305,11 @@ public class TransactionsTest {
                         BsonDocument actualOutcome = helper.getOperationResults(operation, clientSession);
                         if (expectedResult != null) {
                             BsonValue actualResult = actualOutcome.get("result");
+                            if (actualResult.isDocument()) {
+                                if (((BsonDocument) actualResult).containsKey("recoveryToken")) {
+                                    ((BsonDocument) actualResult).remove("recoveryToken");
+                                }
+                            }
 
                             assertEquals("Expected operation result differs from actual", expectedResult, actualResult);
                         }
@@ -432,6 +457,12 @@ public class TransactionsTest {
     }
 
     private boolean canRunTests() {
-        return serverVersionAtLeast(4, 0) && isDiscoverableReplicaSet();
+        if (isSharded()) {
+            return serverVersionAtLeast(4, 1);
+        } else if (isDiscoverableReplicaSet()) {
+            return serverVersionAtLeast(4, 0);
+        } else {
+            return false;
+        }
     }
 }

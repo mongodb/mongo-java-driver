@@ -52,8 +52,14 @@ provision_ssl () {
   # Arguments for auth + SSL
   if [ "$AUTH" != "noauth" ] || [ "$TOPOLOGY" == "replica_set" ]; then
     export MONGODB_URI="${MONGODB_URI}&ssl=true&sslInvalidHostNameAllowed=true"
+    if [ "$SAFE_FOR_MULTI_MONGOS" == "true" ]; then
+        export TRANSACTION_URI="${TRANSACTION_URI}&ssl=true&sslInvalidHostNameAllowed=true"
+    fi
   else
     export MONGODB_URI="${MONGODB_URI}/?ssl=true&sslInvalidHostNameAllowed=true"
+    if [ "$SAFE_FOR_MULTI_MONGOS" == "true" ]; then
+        export TRANSACTION_URI="${TRANSACTION_URI}/?ssl=true&sslInvalidHostNameAllowed=true"
+    fi
   fi
 }
 
@@ -63,7 +69,10 @@ provision_ssl () {
 
 # Provision the correct connection string and set up SSL if needed
 if [ "$TOPOLOGY" == "sharded_cluster" ]; then
-
+    if [ "$SAFE_FOR_MULTI_MONGOS" == "true" ]; then
+        export TRANSACTION_URI="${MONGODB_URI}"
+    fi
+    
      if [ "$AUTH" = "auth" ]; then
        export MONGODB_URI="mongodb://bob:pwd123@localhost:27017/?authSource=admin"
      else
@@ -77,18 +86,33 @@ if [ "$COMPRESSOR" != "" ]; then
      else
        export MONGODB_URI="${MONGODB_URI}/?compressors=${COMPRESSOR}"
      fi
+
+     if [ "$SAFE_FOR_MULTI_MONGOS" == "true" ]; then
+         if [[ "$TRANSACTION_URI" == *"?"* ]]; then
+             export TRANSACTION_URI="${TRANSACTION_URI}&compressors=${COMPRESSOR}"
+         else
+             export TRANSACTION_URI="${TRANSACTION_URI}/?compressors=${COMPRESSOR}"
+         fi
+     fi
 fi
 
 if [ "$SSL" != "nossl" ]; then
    provision_ssl
 fi
+
+if [ "$SAFE_FOR_MULTI_MONGOS" == "true" ]; then
+    export TRANSACTION_URI="-Dorg.mongodb.test.transaction.uri=${TRANSACTION_URI}"
+fi
+
 echo "Running $AUTH tests over $SSL for $TOPOLOGY and connecting to $MONGODB_URI"
 
 echo "Running tests with ${JDK}"
 ./gradlew -version
 
 if [ "$SLOW_TESTS_ONLY" == "true" ]; then
-    ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} --stacktrace --info testSlowOnly
+    ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} \
+              ${TRANSACTION_URI} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} --stacktrace --info testSlowOnly
 else
-    ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} --stacktrace --info test
+    ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} \
+              ${TRANSACTION_URI} ${GRADLE_EXTRA_VARS} ${ASYNC_TYPE} --stacktrace --info test
 fi
