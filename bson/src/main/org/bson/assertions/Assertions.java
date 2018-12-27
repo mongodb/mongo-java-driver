@@ -64,6 +64,25 @@ public final class Assertions {
     }
 
     /**
+     * Throw IllegalArgumentException if the condition if false, otherwise return the value.  This is useful when arguments must be checked
+     * within an expression, as when using {@code this} to call another constructor, which must be the first line of the calling
+     * constructor.
+     *
+     * @param <T>       the value type
+     * @param name      the name of the state that is being checked
+     * @param value     the value of the argument
+     * @param condition the condition about the parameter to check
+     * @return          the value
+     * @throws java.lang.IllegalArgumentException if the condition is false
+     */
+    public static <T> T isTrueArgument(final String name, final T value, final boolean condition) {
+        if (!condition) {
+            throw new IllegalArgumentException("state should be: " + name);
+        }
+        return value;
+    }
+
+    /**
      * Cast an object to the given class and return it, or throw IllegalArgumentException if it's not assignable to that class.
      *
      * @param clazz        the class to cast to
