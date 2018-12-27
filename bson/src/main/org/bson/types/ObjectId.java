@@ -212,7 +212,7 @@ public final class ObjectId implements Comparable<ObjectId>, Serializable {
      * @throws IllegalArgumentException if array is null or not of length 12
      */
     public ObjectId(final byte[] bytes) {
-        this(ByteBuffer.wrap(notNull("bytes", bytes)));
+        this(ByteBuffer.wrap(isTrueArgument("bytes has length of 12", bytes, notNull("bytes", bytes).length == 12)));
     }
 
     /**
