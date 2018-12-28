@@ -85,8 +85,7 @@ public class ReadConcernTest {
             commandDocument.put("$readPreference", ReadPreference.primaryPreferred().toDocument());
         }
         assertEventsEquality(Arrays.<CommandEvent>asList(new CommandStartedEvent(1, null, getDefaultDatabaseName(),
-                        "count", commandDocument)), events,
-                commandListener.getSessions());
+                        "count", commandDocument)), events);
     }
 
     private boolean canRunTests() {

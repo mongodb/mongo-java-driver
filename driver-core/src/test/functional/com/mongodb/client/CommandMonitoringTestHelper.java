@@ -42,6 +42,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
@@ -114,28 +115,21 @@ public final class CommandMonitoringTestHelper {
     }
 
     public static void assertEventsEquality(final List<CommandEvent> expectedEvents, final List<CommandEvent> events,
-                                            @Nullable final List<BsonDocument> expectedSessionIdentifiers) {
+                                            @Nullable final Map<String, BsonDocument> lsidMap) {
         assertEquals(expectedEvents.size(), events.size());
-        if (expectedSessionIdentifiers != null) {
-            assertEquals(events.size(), expectedSessionIdentifiers.size());
-        }
 
         for (int i = 0; i < events.size(); i++) {
             CommandEvent actual = events.get(i);
             CommandEvent expected = expectedEvents.get(i);
-            BsonDocument sessionIdentifier = null;
-            if (expectedSessionIdentifiers != null) {
-                sessionIdentifier = expectedSessionIdentifiers.get(i);
-            }
 
             assertEquals(expected.getClass(), actual.getClass());
             assertEquals(expected.getCommandName().toLowerCase(), actual.getCommandName().toLowerCase());
 
             if (actual.getClass().equals(CommandStartedEvent.class)) {
                 CommandStartedEvent actualCommandStartedEvent = massageActualCommandStartedEvent((CommandStartedEvent) actual,
-                        sessionIdentifier);
+                        lsidMap);
                 CommandStartedEvent expectedCommandStartedEvent = massageExpectedCommandStartedEvent((CommandStartedEvent) expected,
-                        sessionIdentifier);
+                        lsidMap);
 
                 assertEquals(expectedCommandStartedEvent.getDatabaseName(), actualCommandStartedEvent.getDatabaseName());
                 assertEquals(expectedCommandStartedEvent.getCommand(), actualCommandStartedEvent.getCommand());
@@ -207,12 +201,12 @@ public final class CommandMonitoringTestHelper {
     }
 
     private static CommandStartedEvent massageActualCommandStartedEvent(final CommandStartedEvent event,
-                                                                        @Nullable final BsonDocument sessionIdentifier) {
+                                                                        @Nullable final Map<String, BsonDocument> lsidMap) {
         BsonDocument command = getWritableCloneOfCommand(event.getCommand());
 
         massageCommand(event, command);
 
-        if (sessionIdentifier == null) {
+        if (lsidMap == null) {
             command.remove("lsid");
         }
         if (command.containsKey("readConcern") && (command.getDocument("readConcern").containsKey("afterClusterTime"))) {
@@ -224,15 +218,15 @@ public final class CommandMonitoringTestHelper {
     }
 
     private static CommandStartedEvent massageExpectedCommandStartedEvent(final CommandStartedEvent event,
-                                                                          @Nullable final BsonDocument sessionIdentifier) {
+                                                                          @Nullable final Map<String, BsonDocument> lsidMap) {
         BsonDocument command = getWritableCloneOfCommand(event.getCommand());
 
         massageCommand(event, command);
 
-        if (sessionIdentifier == null) {
+        if (lsidMap == null) {
             command.remove("lsid");
         } else {
-            command.put("lsid", sessionIdentifier);
+            command.put("lsid", lsidMap.get(command.getString("lsid").getValue()));
         }
 
         if (command.containsKey("txnNumber") && command.isNull("txnNumber")) {
