@@ -106,7 +106,9 @@ public class ConnectionDescription {
      * @param maxMessageSize  the max message size in bytes
      * @param compressors     the available compressors on the connection
      * @since 3.10
+     * @deprecated
      */
+    @Deprecated
     public ConnectionDescription(final ConnectionId connectionId, final ServerVersion serverVersion, final int maxWireVersion,
                                  final ServerType serverType, final int maxBatchCount, final int maxDocumentSize,
                                  final int maxMessageSize, final List<String> compressors) {
@@ -120,6 +122,23 @@ public class ConnectionDescription {
         this.compressors = notNull("compressors", Collections.unmodifiableList(new ArrayList<String>(compressors)));
     }
 
+    /**
+     * Construct an instance.
+     *
+     * @param connectionId    the connection id
+     * @param maxWireVersion  the max wire version
+     * @param serverType      the server type
+     * @param maxBatchCount   the max batch count
+     * @param maxDocumentSize the max document size in bytes
+     * @param maxMessageSize  the max message size in bytes
+     * @param compressors     the available compressors on the connection
+     * @since 3.10
+     */
+    public ConnectionDescription(final ConnectionId connectionId, final int maxWireVersion,
+                                 final ServerType serverType, final int maxBatchCount, final int maxDocumentSize,
+                                 final int maxMessageSize, final List<String> compressors) {
+        this(connectionId, new ServerVersion(), maxWireVersion, serverType, maxBatchCount, maxDocumentSize, maxMessageSize, compressors);
+    }
 
     /**
      * Creates a new connection description with the set connection id
@@ -156,7 +175,9 @@ public class ConnectionDescription {
      * Gets the version of the server.
      *
      * @return the server version
+     * @deprecated Use {@link #getMaxWireVersion()} instead
      */
+    @Deprecated
     public ServerVersion getServerVersion() {
         return serverVersion;
     }

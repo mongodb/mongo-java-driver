@@ -306,7 +306,9 @@ public class ServerDescription {
          *
          * @param version a ServerVersion representing which version of MongoDB is running on this server
          * @return this
+         * @deprecated Use {@link #maxWireVersion} instead
          */
+        @Deprecated
         public Builder version(final ServerVersion version) {
             notNull("version", version);
             this.version = version;
@@ -728,7 +730,9 @@ public class ServerDescription {
      * Gets the server version
      *
      * @return a ServerVersion representing which version of MongoDB is running on this server
+     * @deprecated Use {@link #getMaxWireVersion()} instead
      */
+    @Deprecated
     public ServerVersion getVersion() {
         return version;
     }
