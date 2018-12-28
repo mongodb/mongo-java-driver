@@ -83,6 +83,7 @@ public class TransactionsTest {
     private MongoClient mongoClient;
     private CollectionHelper<Document> collectionHelper;
     private Map<String, ClientSession> sessionsMap;
+    private HashMap<String, BsonDocument> lsidMap;
 
     @BeforeClass
     public static void beforeClass() {
@@ -152,6 +153,9 @@ public class TransactionsTest {
         sessionsMap = new HashMap<String, ClientSession>();
         sessionsMap.put("session0", sessionZero);
         sessionsMap.put("session1", sessionOne);
+        lsidMap = new HashMap<String, BsonDocument>();
+        lsidMap.put("session0", sessionZero.getServerSession().getIdentifier());
+        lsidMap.put("session1", sessionOne.getServerSession().getIdentifier());
     }
 
     private ReadConcern getReadConcern(final BsonDocument clientOptions) {
@@ -244,8 +248,6 @@ public class TransactionsTest {
                 final ClientSession clientSession = receiver.startsWith("session") ? sessionsMap.get(receiver)
                         : (operation.getDocument("arguments").containsKey("session")
                                 ? sessionsMap.get(operation.getDocument("arguments").getString("session").getValue()) : null);
-                BsonDocument sessionIdentifier = (clientSession == null) ? null : clientSession.getServerSession().getIdentifier();
-                commandListener.addExpectedSessionNextStartedEvent(sessionIdentifier);
                 try {
                     if (operationName.equals("startTransaction")) {
                         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
@@ -346,7 +348,7 @@ public class TransactionsTest {
             List<CommandEvent> expectedEvents = getExpectedEvents(definition.getArray("expectations"), databaseName, null);
             List<CommandEvent> events = commandListener.getCommandStartedEvents();
 
-            assertEventsEquality(expectedEvents, events, commandListener.getSessions());
+            assertEventsEquality(expectedEvents, events, lsidMap);
         }
 
         BsonDocument expectedOutcome = definition.getDocument("outcome", new BsonDocument());
