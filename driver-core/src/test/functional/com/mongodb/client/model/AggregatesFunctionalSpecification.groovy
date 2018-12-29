@@ -732,7 +732,6 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper.drop()
 
         helper.insertDocuments(Document.parse('{_id: 0, x: 1}'))
-        helper.insertDocuments(Document.parse('{_id: 1, x: 2}'))
         helper.insertDocuments(Document.parse('{_id: 2, x: 1}'))
         helper.insertDocuments(Document.parse('{_id: 3, x: 0}'))
 
@@ -740,14 +739,12 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
         then:
         results == [Document.parse('{_id: 1, count: 2}'),
-                    Document.parse('{_id: 0, count: 1}'),
-                    Document.parse('{_id: 2, count: 1}')]
+                    Document.parse('{_id: 0, count: 1}')]
 
         when:
         helper.drop()
 
         helper.insertDocuments(Document.parse('{_id: 0, x: 1.4}'))
-        helper.insertDocuments(Document.parse('{_id: 1, x: 2.3}'))
         helper.insertDocuments(Document.parse('{_id: 2, x: 1.1}'))
         helper.insertDocuments(Document.parse('{_id: 3, x: 0.5}'))
 
@@ -755,8 +752,7 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
         then:
         results == [Document.parse('{_id: 1, count: 2}'),
-                    Document.parse('{_id: 0, count: 1}'),
-                    Document.parse('{_id: 2, count: 1}')]
+                    Document.parse('{_id: 0, count: 1}')]
 
         cleanup:
         helper?.drop()
