@@ -27,6 +27,7 @@ import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.Document;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.List;
@@ -117,6 +118,7 @@ public class RetryableWritesProseTest extends DatabaseTestCase {
      * Using the fail point client, deactivate the fail point by setting mode to "off".
      */
     @Test
+    @Ignore
     public void testRetryableWriteOnFailover() {
         insertDocument();
         assertFalse(notMasterErrorFound);
