@@ -406,6 +406,29 @@ class StrictCharacterStreamJsonWriterSpecification extends Specification {
         thrown(BsonInvalidOperationException)
     }
 
+    def shouldThrowAnExceptionWhenStartingAnObjectWhenDone() {
+        given:
+        writer.writeStartObject()
+        writer.writeEndObject()
+
+        when:
+        writer.writeStartObject()
+
+        then:
+        thrown(BsonInvalidOperationException)
+    }
+
+    def shouldThrowAnExceptionWhenStartingAnObjectWhenNameIsExpected() {
+        given:
+        writer.writeStartObject()
+
+        when:
+        writer.writeStartObject()
+
+        then:
+        thrown(BsonInvalidOperationException)
+    }
+
     def shouldThrowAnExceptionWhenAttemptingToEndAnArrayThatWasNotStarted() {
         given:
         writer.writeStartObject()
