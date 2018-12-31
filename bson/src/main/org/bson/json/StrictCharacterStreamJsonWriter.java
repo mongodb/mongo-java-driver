@@ -144,11 +144,11 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
         if (settings.isIndent()) {
             write(settings.getNewLineCharacters());
             write(context.indentation);
-        } else {
+        } else if (context.hasElements){
             write(" ");
         }
         writeStringHelper(name);
-        write(" : ");
+        write(": ");
 
         state = State.VALUE;
     }
@@ -220,8 +220,6 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
         if (settings.isIndent() && context.hasElements) {
             write(settings.getNewLineCharacters());
             write(context.parentContext.indentation);
-        } else {
-            write(" ");
         }
         write("}");
         context = context.parentContext;
@@ -240,6 +238,10 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
             throw new BsonInvalidOperationException("Can't end an array if not in an array");
         }
 
+        if (settings.isIndent() && context.hasElements) {
+            write(settings.getNewLineCharacters());
+            write(context.parentContext.indentation);
+        }
         write("]");
         context = context.parentContext;
         if (context.contextType == JsonContextType.TOP_LEVEL) {
@@ -276,7 +278,13 @@ public final class StrictCharacterStreamJsonWriter implements StrictJsonWriter {
     private void preWriteValue() {
         if (context.contextType == JsonContextType.ARRAY) {
             if (context.hasElements) {
-                write(", ");
+                write(",");
+            }
+            if (settings.isIndent()) {
+                write(settings.getNewLineCharacters());
+                write(context.indentation);
+            } else if (context.hasElements) {
+                write(" ");
             }
         }
         context.hasElements = true;

@@ -61,15 +61,15 @@ class SortsSpecification extends Specification {
 
     def 'should create string representation for simple sorts'() {
         expect:
-        ascending('x', 'y').toString() == '{ "x" : 1, "y" : 1 }'
-        descending('x', 'y').toString() == '{ "x" : -1, "y" : -1 }'
-        metaTextScore('x').toString() == '{ "x" : { "$meta" : "textScore" } }'
+        ascending('x', 'y').toString() == '{"x": 1, "y": 1}'
+        descending('x', 'y').toString() == '{"x": -1, "y": -1}'
+        metaTextScore('x').toString() == '{"x": {"$meta": "textScore"}}'
     }
 
     def 'should create string representation for compound sorts'() {
         expect:
         orderBy(ascending('x', 'y'), descending('a', 'b')).toString() ==
-                'Compound Sort{sorts=[{ "x" : 1, "y" : 1 }, { "a" : -1, "b" : -1 }]}'
+                'Compound Sort{sorts=[{"x": 1, "y": 1}, {"a": -1, "b": -1}]}'
     }
 
     def toBson(Bson bson) {
