@@ -57,10 +57,10 @@ class MongoCommandExceptionSpecification extends Specification {
                 .append('codeName', new BsonString('TimeoutError')).append('errmsg', new BsonString('the error message')),
                 new ServerAddress())
                 .getMessage() == 'Command failed with error 26 (TimeoutError): \'the error message\' on server 127.0.0.1:27017. ' +
-                'The full response is { "ok" : false, "code" : 26, "codeName" : "TimeoutError", "errmsg" : "the error message" }'
+                'The full response is {"ok": false, "code": 26, "codeName": "TimeoutError", "errmsg": "the error message"}'
         new MongoCommandException(new BsonDocument('ok', BsonBoolean.FALSE).append('code', new BsonInt32(26))
                 .append('errmsg', new BsonString('the error message')), new ServerAddress())
                 .getMessage() == 'Command failed with error 26: \'the error message\' on server 127.0.0.1:27017. ' +
-                'The full response is { "ok" : false, "code" : 26, "errmsg" : "the error message" }'
+                'The full response is {"ok": false, "code": 26, "errmsg": "the error message"}'
     }
 }

@@ -93,9 +93,9 @@ class ProjectionsSpecification extends Specification {
 
     def 'should create string representation for include and exclude'() {
         expect:
-        include(['x', 'y', 'x']).toString() == '{ "y" : 1, "x" : 1 }'
-        exclude(['x', 'y', 'x']).toString() == '{ "y" : 0, "x" : 0 }'
-        excludeId().toString() == '{ "_id" : 0 }'
+        include(['x', 'y', 'x']).toString() == '{"y": 1, "x": 1}'
+        exclude(['x', 'y', 'x']).toString() == '{"y": 0, "x": 0}'
+        excludeId().toString() == '{"_id": 0}'
     }
 
     def 'should create string representation for computed'() {
@@ -112,7 +112,7 @@ class ProjectionsSpecification extends Specification {
 
     def 'should create string representation for fields'() {
         expect:
-        fields(include('x', 'y'), exclude('_id')).toString() == 'Projections{projections=[{ "x" : 1, "y" : 1 }, { "_id" : 0 }]}'
+        fields(include('x', 'y'), exclude('_id')).toString() == 'Projections{projections=[{"x": 1, "y": 1}, {"_id": 0}]}'
     }
 
     def toBson(Bson bson) {

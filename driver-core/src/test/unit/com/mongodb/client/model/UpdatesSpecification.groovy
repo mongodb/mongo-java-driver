@@ -195,7 +195,7 @@ class UpdatesSpecification extends Specification {
                 'options=Push Options{position=0, slice=3, sort=-1}}'
         pushEach('x', [89, 65], new PushOptions().position(0).slice(3).sortDocument(parse('{x : 1}'))).toString() ==
                 'Each Update{fieldName=\'x\', operator=\'$push\', values=[89, 65], ' +
-                'options=Push Options{position=0, slice=3, sortDocument={ "x" : 1 }}}'
+                'options=Push Options{position=0, slice=3, sortDocument={"x": 1}}}'
     }
 
     def 'should create string representation for pull all update'() {

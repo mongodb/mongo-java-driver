@@ -117,9 +117,9 @@ public class NativeAuthenticatorUnitTest {
 
         String secondCommand = MessageHelper.decodeCommandAsJson(sent.get(1));
 
-        assertEquals("{ \"getnonce\" : 1 }", firstCommand);
-        assertEquals("{ \"authenticate\" : 1, \"user\" : \"\u53f0\u5317\", "
-                     + "\"nonce\" : \"2375531c32080ae8\", "
-                     + "\"key\" : \"4fb55df196e38eea50d2b8b200acfa8b\" }", secondCommand);
+        assertEquals("{\"getnonce\": 1}", firstCommand);
+        assertEquals("{\"authenticate\": 1, \"user\": \"\u53f0\u5317\", "
+                     + "\"nonce\": \"2375531c32080ae8\", "
+                     + "\"key\": \"4fb55df196e38eea50d2b8b200acfa8b\"}", secondCommand);
     }
 }

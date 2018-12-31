@@ -37,7 +37,7 @@ class StrictCharacterStreamJsonWriterSpecification extends Specification {
         writer.writeEndObject()
 
         then:
-        stringWriter.toString() == '{ }'
+        stringWriter.toString() == '{}'
     }
 
     def 'should write empty array'() {
@@ -56,18 +56,17 @@ class StrictCharacterStreamJsonWriterSpecification extends Specification {
         writer.writeEndObject()
 
         then:
-        stringWriter.toString() == '{ "n" : null }'
+        stringWriter.toString() == '{"n": null}'
     }
 
     def 'should write boolean'() {
         when:
         writer.writeStartObject()
         writer.writeBoolean('b1', true)
-        writer.writeBoolean('b2', false)
         writer.writeEndObject()
 
         then:
-        stringWriter.toString() == '{ "b1" : true, "b2" : false }'
+        stringWriter.toString() == '{"b1": true}'
     }
 
     def 'should write number'() {
@@ -77,7 +76,7 @@ class StrictCharacterStreamJsonWriterSpecification extends Specification {
         writer.writeEndObject()
 
         then:
-        stringWriter.toString() == '{ "n" : 42 }'
+        stringWriter.toString() == '{"n": 42}'
     }
 
     def 'should write string'() {
@@ -87,7 +86,7 @@ class StrictCharacterStreamJsonWriterSpecification extends Specification {
         writer.writeEndObject()
 
         then:
-        stringWriter.toString() == '{ "n" : "42" }'
+        stringWriter.toString() == '{"n": "42"}'
     }
 
     def 'should write unquoted string'() {
@@ -97,7 +96,7 @@ class StrictCharacterStreamJsonWriterSpecification extends Specification {
         writer.writeEndObject()
 
         then:
-        stringWriter.toString() == '{ "s" : NumberDecimal("42.0") }'
+        stringWriter.toString() == '{"s": NumberDecimal("42.0")}'
     }
 
     def 'should write document'() {
@@ -108,7 +107,7 @@ class StrictCharacterStreamJsonWriterSpecification extends Specification {
         writer.writeEndObject()
 
         then:
-        stringWriter.toString() == '{ "d" : { } }'
+        stringWriter.toString() == '{"d": {}}'
     }
 
     def 'should write array'() {
@@ -119,7 +118,7 @@ class StrictCharacterStreamJsonWriterSpecification extends Specification {
         writer.writeEndObject()
 
         then:
-        stringWriter.toString() == '{ "a" : [] }'
+        stringWriter.toString() == '{"a": []}'
     }
 
     def 'should write array of values'() {
@@ -133,7 +132,7 @@ class StrictCharacterStreamJsonWriterSpecification extends Specification {
         writer.writeEndObject()
 
         then:
-        stringWriter.toString() == '{ "a" : [1, null, "str"] }'
+        stringWriter.toString() == '{"a": [1, null, "str"]}'
     }
 
     def 'should write strings'() {
@@ -143,7 +142,7 @@ class StrictCharacterStreamJsonWriterSpecification extends Specification {
         writer.writeEndObject()
 
         then:
-        stringWriter.toString() == '{ "str" : ' + expected + ' }'
+        stringWriter.toString() == '{"str": ' + expected + '}'
 
         where:
         value                | expected
@@ -167,6 +166,17 @@ class StrictCharacterStreamJsonWriterSpecification extends Specification {
         '\u0080\u0081\u0082' | '"\\u0080\\u0081\\u0082"'
     }
 
+    def 'should write two object elements'() {
+        when:
+        writer.writeStartObject()
+        writer.writeBoolean('b1', true)
+        writer.writeBoolean('b2', false)
+        writer.writeEndObject()
+
+        then:
+        stringWriter.toString() == '{"b1": true, "b2": false}'
+    }
+
     def 'should indent one element'() {
         given:
         writer = new StrictCharacterStreamJsonWriter(stringWriter, StrictCharacterStreamJsonWriterSettings.builder().indent(true).build())
@@ -177,7 +187,7 @@ class StrictCharacterStreamJsonWriterSpecification extends Specification {
         writer.writeEndObject()
 
         then:
-        stringWriter.toString() == format('{%n  "name" : "value"%n}')
+        stringWriter.toString() == format('{%n  "name": "value"%n}')
     }
 
     def 'should indent one element with indent and newline characters'() {
@@ -194,7 +204,7 @@ class StrictCharacterStreamJsonWriterSpecification extends Specification {
         writer.writeEndObject()
 
         then:
-        stringWriter.toString() == format('{\r\t"name" : "value"\r}')
+        stringWriter.toString() == format('{\r\t"name": "value"\r}')
     }
 
     def 'should indent two elements'() {
@@ -208,7 +218,43 @@ class StrictCharacterStreamJsonWriterSpecification extends Specification {
         writer.writeEndObject()
 
         then:
-        stringWriter.toString() == format('{%n  "a" : "x",%n  "b" : "y"%n}')
+        stringWriter.toString() == format('{%n  "a": "x",%n  "b": "y"%n}')
+    }
+
+    def 'should indent two array elements'() {
+        given:
+        writer = new StrictCharacterStreamJsonWriter(stringWriter, StrictCharacterStreamJsonWriterSettings.builder().indent(true).build())
+
+        when:
+        writer.writeStartObject()
+        writer.writeStartArray('a')
+        writer.writeNull()
+        writer.writeNumber('4')
+        writer.writeEndArray()
+        writer.writeEndObject()
+
+        then:
+        stringWriter.toString() == format('{%n  "a": [%n    null,%n    4%n  ]%n}')
+    }
+
+    def 'should indent two document elements'() {
+        given:
+        writer = new StrictCharacterStreamJsonWriter(stringWriter, StrictCharacterStreamJsonWriterSettings.builder().indent(true).build())
+
+        when:
+        writer.writeStartObject()
+        writer.writeStartArray('a')
+        writer.writeStartObject()
+        writer.writeNull('a')
+        writer.writeEndObject()
+        writer.writeStartObject()
+        writer.writeNull('a')
+        writer.writeEndObject()
+        writer.writeEndArray()
+        writer.writeEndObject()
+
+        then:
+        stringWriter.toString() == format('{%n  "a": [%n    {%n      "a": null%n    },%n    {%n      "a": null%n    }%n  ]%n}')
     }
 
     def 'should indent embedded document'() {
@@ -224,7 +270,7 @@ class StrictCharacterStreamJsonWriterSpecification extends Specification {
         writer.writeEndObject()
 
         then:
-        stringWriter.toString() == format('{%n  "doc" : {%n    "a" : 1,%n    "b" : 2%n  }%n}')
+        stringWriter.toString() == format('{%n  "doc": {%n    "a": 1,%n    "b": 2%n  }%n}')
     }
 
     def shouldThrowExceptionForBooleanWhenWritingBeforeStartingDocument() {
@@ -480,7 +526,7 @@ class StrictCharacterStreamJsonWriterSpecification extends Specification {
 
     def shouldStopAtMaxLength() {
         given:
-        def fullJsonText = '{ "n" : null }'
+        def fullJsonText = '{"n": null}'
         writer = new StrictCharacterStreamJsonWriter(stringWriter,
                 StrictCharacterStreamJsonWriterSettings.builder().maxLength(maxLength).build())
 

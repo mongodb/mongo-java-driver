@@ -104,7 +104,7 @@ class LoggingCommandEventSenderSpecification extends Specification {
 
         then:
         1 * logger.debug {
-            it == "Sending command \'{ \"ping\" : 1, \"\$db\" : \"test\" }\' with request id ${message.getId()} to database test " +
+            it == "Sending command \'{\"ping\": 1, \"\$db\": \"test\"}\' with request id ${message.getId()} to database test " +
                     "on connection [connectionId{localValue:${connectionDescription.connectionId.localValue}}] " +
                     'to server 127.0.0.1:27017'
         }
@@ -148,7 +148,7 @@ class LoggingCommandEventSenderSpecification extends Specification {
 
         then:
         1 * logger.debug {
-            it == "Sending command \'{ \"fake\" : { \"\$binary\" : { \"base64\" : \"${'A' * 961} ...\' " +
+            it == "Sending command \'{\"fake\": {\"\$binary\": {\"base64\": \"${'A' * 967} ...\' " +
                     "with request id ${message.getId()} to database test " +
                     "on connection [connectionId{localValue:${connectionDescription.connectionId.localValue}}] " +
                     'to server 127.0.0.1:27017'

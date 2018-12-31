@@ -118,7 +118,7 @@ public class DocumentTest {
             // noop
         }
 
-        assertEquals("{ \"database\" : { \"name\" : \"MongoDB\" } }", customDocument.toJson(customDocumentCodec));
+        assertEquals("{\"database\": {\"name\": \"MongoDB\"}}", customDocument.toJson(customDocumentCodec));
     }
 
     public class Name {

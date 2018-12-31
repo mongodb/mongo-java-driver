@@ -111,9 +111,9 @@ public class X509AuthenticatorUnitTest {
     private void validateMessages() {
         List<BsonInput> sent = connection.getSent();
         String command = MessageHelper.decodeCommandAsJson(sent.get(0));
-        String expectedCommand = "{ \"authenticate\" : 1, "
-                + "\"user\" : \"CN=client,OU=kerneluser,O=10Gen,L=New York City,ST=New York,C=US\", "
-                + "\"mechanism\" : \"MONGODB-X509\" }";
+        String expectedCommand = "{\"authenticate\": 1, "
+                + "\"user\": \"CN=client,OU=kerneluser,O=10Gen,L=New York City,ST=New York,C=US\", "
+                + "\"mechanism\": \"MONGODB-X509\"}";
 
         assertEquals(expectedCommand, command);
     }
