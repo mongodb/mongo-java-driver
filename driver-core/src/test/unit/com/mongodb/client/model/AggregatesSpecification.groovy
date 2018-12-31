@@ -360,7 +360,7 @@ class AggregatesSpecification extends Specification {
 
     def 'should create string representation for simple stages'() {
         expect:
-        match(new BsonDocument('x', new BsonInt32(1))).toString() == 'Stage{name=\'$match\', value={ "x" : 1 }}'
+        match(new BsonDocument('x', new BsonInt32(1))).toString() == 'Stage{name=\'$match\', value={"x": 1}}'
     }
 
     def 'should create string representation for group stage'() {
