@@ -554,6 +554,10 @@ axes:
   - id: jdk
     display_name: JDK
     values:
+      - id: "jdk11"
+        display_name: JDK11
+        variables:
+          JDK: "jdk11"
       - id: "jdk9"
         display_name: JDK9
         variables:
@@ -609,8 +613,8 @@ buildvariants:
   tasks:
      - name: "test"
 
-- matrix_name: "tests-jdk8-secure"
-  matrix_spec: { auth: "auth", ssl: "ssl", jdk: "jdk8", version: ["4.0", "latest"], topology: "*", os: "linux" }
+- matrix_name: "tests-jdk-newer-secure"
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk8", "jdk11"], version: ["4.0", "latest"], topology: "*", os: "linux" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
