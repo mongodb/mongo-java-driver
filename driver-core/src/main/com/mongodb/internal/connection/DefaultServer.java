@@ -122,14 +122,14 @@ class DefaultServer implements ClusterableServer {
 
     @Override
     public void invalidate() {
-        isTrue("open", !isClosed());
-
-        serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(description, ServerDescription.builder()
-                                                                                                          .state(CONNECTING)
-                                                                                                          .address(serverId.getAddress())
-                .build()));
-        connectionPool.invalidate();
-        connect();
+        if (!isClosed()) {
+            serverStateListener.stateChanged(new ChangeEvent<ServerDescription>(description, ServerDescription.builder()
+                    .state(CONNECTING)
+                    .address(serverId.getAddress())
+                    .build()));
+            connectionPool.invalidate();
+            connect();
+        }
     }
 
     @Override

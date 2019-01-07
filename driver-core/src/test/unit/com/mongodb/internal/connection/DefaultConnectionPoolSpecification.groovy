@@ -466,6 +466,19 @@ class DefaultConnectionPoolSpecification extends Specification {
         thrown(MongoWaitQueueFullException)
     }
 
+    def 'invalidate should do nothing when pool is closed'() {
+        given:
+        pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
+                builder().maxSize(1).maxWaitQueueSize(1).build())
+        pool.close()
+
+        when:
+        pool.invalidate()
+
+        then:
+        noExceptionThrown()
+    }
+
     def selectConnectionAsyncAndGet(DefaultConnectionPool pool) {
         selectConnectionAsync(pool).get()
     }
