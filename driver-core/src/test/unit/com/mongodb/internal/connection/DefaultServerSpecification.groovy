@@ -136,6 +136,28 @@ class DefaultServerSpecification extends Specification {
         server?.close()
     }
 
+    def 'invalidate should do nothing when server is closed'() {
+        given:
+        def clusterTime = new ClusterClock()
+        def connectionPool = Mock(ConnectionPool)
+        def connectionFactory = Mock(ConnectionFactory)
+        def serverMonitorFactory = Stub(ServerMonitorFactory)
+        def serverMonitor = Mock(ServerMonitor)
+        connectionPool.get() >> { throw exceptionToThrow }
+        serverMonitorFactory.create(_) >> { serverMonitor }
+
+        def server = new DefaultServer(serverId, SINGLE, connectionPool, connectionFactory, serverMonitorFactory,
+                NO_OP_SERVER_LISTENER, null, clusterTime)
+        server.close()
+
+        when:
+        server.invalidate()
+
+        then:
+        0 * connectionPool.invalidate()
+        0 * serverMonitor.connect()
+    }
+
     def 'failed open should invalidate the server'() {
         given:
         def clusterTime = new ClusterClock()
