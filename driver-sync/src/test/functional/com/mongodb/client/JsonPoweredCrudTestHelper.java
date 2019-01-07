@@ -18,6 +18,7 @@ package com.mongodb.client;
 
 import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoException;
+import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadConcernLevel;
 import com.mongodb.ReadPreference;
@@ -84,7 +85,7 @@ public class JsonPoweredCrudTestHelper {
     BsonDocument getOperationResults(final BsonDocument operation, @Nullable final ClientSession clientSession) {
         String name = operation.getString("name").getValue();
         BsonDocument collectionOptions = operation.getDocument("collectionOptions", new BsonDocument());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
 
         String methodName = "get" + name.substring(0, 1).toUpperCase() + name.substring(1) + "Result";
         try {
@@ -630,6 +631,27 @@ public class JsonPoweredCrudTestHelper {
             result.put("error", BsonBoolean.TRUE);
             return result;
         }
+    }
+
+    BsonDocument getRenameResult(final BsonDocument collectionOptions, final BsonDocument arguments,
+                                 @Nullable final ClientSession clientSession) {
+        MongoNamespace toNamespace = new MongoNamespace(database.getName(), arguments.getString("to").getValue());
+        if (clientSession == null) {
+            getCollection(collectionOptions).renameCollection(toNamespace);
+        } else {
+            getCollection(collectionOptions).renameCollection(clientSession, toNamespace);
+        }
+        return new BsonDocument("ok", new BsonInt32(1));
+    }
+
+    BsonDocument getDropResult(final BsonDocument collectionOptions, final BsonDocument arguments,
+                                 @Nullable final ClientSession clientSession) {
+        if (clientSession == null) {
+            getCollection(collectionOptions).drop();
+        } else {
+            getCollection(collectionOptions).drop(clientSession);
+        }
+        return new BsonDocument("ok", new BsonInt32(1));
     }
 
     Collation getCollation(final BsonDocument bsonCollation) {

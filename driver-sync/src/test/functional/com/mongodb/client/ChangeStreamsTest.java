@@ -19,6 +19,7 @@ package com.mongodb.client;
 import com.mongodb.ClusterFixture;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
+import com.mongodb.WriteConcern;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.OperationType;
 import com.mongodb.client.test.CollectionHelper;
@@ -29,7 +30,6 @@ import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
-import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 import org.junit.After;
@@ -110,10 +110,12 @@ public class ChangeStreamsTest {
             }
         }
 
+        CollectionHelper.dropDatabase(namespace.getDatabaseName(), WriteConcern.MAJORITY);
         CollectionHelper<BsonDocument> collectionHelper = new CollectionHelper<BsonDocument>(new BsonDocumentCodec(), namespace);
         collectionHelper.drop();
         collectionHelper.create();
 
+        CollectionHelper.dropDatabase(namespace2.getDatabaseName(), WriteConcern.MAJORITY);
         CollectionHelper<BsonDocument> collectionHelper2 = new CollectionHelper<BsonDocument>(new BsonDocumentCodec(), namespace2);
         collectionHelper2.drop();
         collectionHelper2.create();
@@ -155,14 +157,18 @@ public class ChangeStreamsTest {
             BsonDocument expected = success.asDocument();
             ChangeStreamDocument<BsonDocument> actual = cursor.next();
 
-            BsonDocument ns = expected.getDocument("ns", new BsonDocument());
-            MongoNamespace expectedNamespace = new MongoNamespace(
-                    ns.getString("db", new BsonString("db")).getValue(),
-                    ns.getString("coll", new BsonString("coll")).getValue());
+            MongoNamespace expectedNamespace = null;
+            if (expected.containsKey("ns")) {
+                BsonDocument nsDocument = expected.getDocument("ns");
+                expectedNamespace = nsDocument != null
+                        ? new MongoNamespace(nsDocument.getString("db").getValue(), nsDocument.getString("coll").getValue())
+                        : null;
+            }
             assertEquals(expectedNamespace, actual.getNamespace());
             assertEquals(OperationType.fromString(expected.getString("operationType").getValue()), actual.getOperationType());
-            actual.getFullDocument().remove("_id");
-
+            if (actual.getFullDocument() != null) {
+                actual.getFullDocument().remove("_id");
+            }
 
             assertEquals(expected.get("fullDocument"), actual.getFullDocument());
         }
@@ -235,8 +241,9 @@ public class ChangeStreamsTest {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             MongoNamespace namespace = new MongoNamespace(testDocument.getString("database_name").getValue(),
                     testDocument.getString("collection_name").getValue());
-            MongoNamespace namespace2 = new MongoNamespace(testDocument.getString("database_name").getValue(),
-                    testDocument.getString("collection_name").getValue());
+            MongoNamespace namespace2 = new MongoNamespace(testDocument.getString("database2_name").getValue(),
+                    testDocument.getString("collection2_name").getValue());
+
             for (BsonValue test : testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
                         namespace, namespace2, test.asDocument()});

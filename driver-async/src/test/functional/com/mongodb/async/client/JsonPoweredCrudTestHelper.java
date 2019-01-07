@@ -19,6 +19,7 @@ package com.mongodb.async.client;
 
 import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoException;
+import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadConcernLevel;
 import com.mongodb.ReadPreference;
@@ -87,7 +88,7 @@ public class JsonPoweredCrudTestHelper {
     BsonDocument getOperationResults(final BsonDocument operation, @Nullable final ClientSession clientSession) {
         String name = operation.getString("name").getValue();
         BsonDocument collectionOptions = operation.getDocument("collectionOptions", new BsonDocument());
-        BsonDocument arguments = operation.getDocument("arguments");
+        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
 
         String methodName = "get" + name.substring(0, 1).toUpperCase() + name.substring(1) + "Result";
         try {
@@ -664,6 +665,37 @@ public class JsonPoweredCrudTestHelper {
             return result;
         }
     }
+
+
+    BsonDocument getRenameResult(final BsonDocument collectionOptions, final BsonDocument arguments,
+                                 @Nullable final ClientSession clientSession) {
+
+        FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<Void>();
+
+        MongoNamespace toNamespace = new MongoNamespace(database.getName(), arguments.getString("to").getValue());
+        if (clientSession == null) {
+            getCollection(collectionOptions).renameCollection(toNamespace, futureResultCallback);
+        } else {
+            getCollection(collectionOptions).renameCollection(clientSession, toNamespace, futureResultCallback);
+        }
+        futureResult(futureResultCallback);
+        return new BsonDocument("ok", new BsonInt32(1));
+    }
+
+    BsonDocument getDropResult(final BsonDocument collectionOptions, final BsonDocument arguments,
+                               @Nullable final ClientSession clientSession) {
+
+        FutureResultCallback<Void> futureResultCallback = new FutureResultCallback<Void>();
+
+        if (clientSession == null) {
+            getCollection(collectionOptions).drop(futureResultCallback);
+        } else {
+            getCollection(collectionOptions).drop(clientSession, futureResultCallback);
+        }
+        futureResult(futureResultCallback);
+        return new BsonDocument("ok", new BsonInt32(1));
+    }
+
 
     Collation getCollation(final BsonDocument bsonCollation) {
         Collation.Builder builder = Collation.builder();
