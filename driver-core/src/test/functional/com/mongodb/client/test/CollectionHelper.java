@@ -99,11 +99,15 @@ public final class CollectionHelper<T> {
     }
 
     public static void dropDatabase(final String name) {
+        dropDatabase(name, WriteConcern.ACKNOWLEDGED);
+    }
+
+    public static void dropDatabase(final String name, final WriteConcern writeConcern) {
         if (name == null) {
             return;
         }
         try {
-            new DropDatabaseOperation(name, WriteConcern.ACKNOWLEDGED).execute(getBinding());
+            new DropDatabaseOperation(name, writeConcern).execute(getBinding());
         } catch (MongoCommandException e) {
             if (!e.getErrorMessage().contains("ns not found")) {
                 throw e;
