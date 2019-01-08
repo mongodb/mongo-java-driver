@@ -61,7 +61,7 @@ class BaseClusterSpecification extends Specification {
                 .serverSelectionTimeout(1, SECONDS)
                 .serverSelector(new ServerAddressSelector(firstServer))
                 .build()
-        def cluster = new StableMultiServerCluster(new ClusterId(), clusterSettings, factory)
+        def cluster = new MultiServerCluster(new ClusterId(), clusterSettings, factory)
 
         expect:
         cluster.getSettings() == clusterSettings
@@ -69,7 +69,7 @@ class BaseClusterSpecification extends Specification {
 
     def 'should compose server selector passed to selectServer with server selector in cluster settings'() {
         given:
-        def cluster = new StableMultiServerCluster(new ClusterId(),
+        def cluster = new MultiServerCluster(new ClusterId(),
                 builder().mode(MULTIPLE)
                         .hosts([firstServer, secondServer, thirdServer])
                         .serverSelectionTimeout(1, SECONDS)
@@ -86,7 +86,7 @@ class BaseClusterSpecification extends Specification {
 
     def 'should use server selector passed to selectServer if server selector in cluster settings is null'() {
         given:
-        def cluster = new StableMultiServerCluster(new ClusterId(),
+        def cluster = new MultiServerCluster(new ClusterId(),
                 builder().mode(MULTIPLE)
                         .serverSelectionTimeout(1, SECONDS)
                         .hosts([firstServer, secondServer, thirdServer])
@@ -102,7 +102,7 @@ class BaseClusterSpecification extends Specification {
 
     def 'should timeout with useful message'() {
         given:
-        def cluster = new StableMultiServerCluster(new ClusterId(),
+        def cluster = new MultiServerCluster(new ClusterId(),
                 builder().mode(MULTIPLE)
                         .hosts([firstServer, secondServer])
                         .serverSelectionTimeout(serverSelectionTimeoutMS, MILLISECONDS)
@@ -143,7 +143,7 @@ class BaseClusterSpecification extends Specification {
 
     def 'should select server'() {
         given:
-        def cluster = new StableMultiServerCluster(new ClusterId(),
+        def cluster = new MultiServerCluster(new ClusterId(),
                 builder().mode(MULTIPLE)
                         .hosts([firstServer, secondServer, thirdServer])
                         .serverSelectionTimeout(serverSelectionTimeoutMS, SECONDS)
@@ -166,7 +166,7 @@ class BaseClusterSpecification extends Specification {
     @Category(Slow)
     def 'should wait indefinitely for a server until interrupted'() {
         given:
-        def cluster = new StableMultiServerCluster(new ClusterId(),
+        def cluster = new MultiServerCluster(new ClusterId(),
                 builder().mode(MULTIPLE)
                         .hosts([firstServer, secondServer, thirdServer])
                         .serverSelectionTimeout(-1, SECONDS)
@@ -197,7 +197,7 @@ class BaseClusterSpecification extends Specification {
     @Category(Slow)
     def 'should wait indefinitely for a cluster description until interrupted'() {
         given:
-        def cluster = new StableMultiServerCluster(new ClusterId(),
+        def cluster = new MultiServerCluster(new ClusterId(),
                 builder().mode(MULTIPLE)
                         .hosts([firstServer, secondServer, thirdServer])
                         .serverSelectionTimeout(-1, SECONDS)
@@ -227,7 +227,7 @@ class BaseClusterSpecification extends Specification {
 
     def 'should select server asynchronously when server is already available'() {
         given:
-        def cluster = new StableMultiServerCluster(new ClusterId(),
+        def cluster = new MultiServerCluster(new ClusterId(),
                 builder().mode(MULTIPLE)
                         .serverSelectionTimeout(serverSelectionTimeoutMS, MILLISECONDS)
                         .hosts([firstServer, secondServer, thirdServer])
@@ -250,7 +250,7 @@ class BaseClusterSpecification extends Specification {
 
     def 'should select server asynchronously when server is not yet available'() {
         given:
-        def cluster = new StableMultiServerCluster(new ClusterId(),
+        def cluster = new MultiServerCluster(new ClusterId(),
                 builder().mode(MULTIPLE)
                         .serverSelectionTimeout(serverSelectionTimeoutMS, MILLISECONDS)
                         .hosts([firstServer, secondServer, thirdServer])
@@ -276,7 +276,7 @@ class BaseClusterSpecification extends Specification {
 
     def 'when selecting server asynchronously should send MongoClientException to callback if cluster is closed before success'() {
         given:
-        def cluster = new StableMultiServerCluster(new ClusterId(),
+        def cluster = new MultiServerCluster(new ClusterId(),
                 builder().mode(MULTIPLE)
                         .hosts([firstServer, secondServer, thirdServer])
                         .build(),
@@ -296,7 +296,7 @@ class BaseClusterSpecification extends Specification {
 
     def 'when selecting server asynchronously should send MongoTimeoutException to callback after timeout period'() {
         given:
-        def cluster = new StableMultiServerCluster(new ClusterId(),
+        def cluster = new MultiServerCluster(new ClusterId(),
                 builder().mode(MULTIPLE)
                         .hosts([firstServer, secondServer, thirdServer])
                         .serverSelectionTimeout(serverSelectionTimeoutMS, MILLISECONDS)
@@ -319,7 +319,7 @@ class BaseClusterSpecification extends Specification {
 
     def 'when selecting server asynchronously should send MongoWaitQueueFullException to callback if there are too many waiters'() {
         given:
-        def cluster = new StableMultiServerCluster(new ClusterId(),
+        def cluster = new MultiServerCluster(new ClusterId(),
                 builder().mode(MULTIPLE)
                         .hosts([firstServer, secondServer, thirdServer])
                         .serverSelectionTimeout(1, SECONDS)
