@@ -27,7 +27,7 @@ import com.mongodb.internal.connection.DefaultClusterableServerFactory;
 import com.mongodb.internal.connection.DefaultDnsSrvRecordMonitorFactory;
 import com.mongodb.internal.connection.DnsMultiServerCluster;
 import com.mongodb.internal.connection.DnsSrvRecordMonitorFactory;
-import com.mongodb.internal.connection.StableMultiServerCluster;
+import com.mongodb.internal.connection.MultiServerCluster;
 import com.mongodb.internal.connection.SingleServerCluster;
 
 import java.util.Collections;
@@ -192,7 +192,7 @@ public final class DefaultClusterFactory implements ClusterFactory {
             return new SingleServerCluster(clusterId, clusterSettings, serverFactory);
         } else if (clusterSettings.getMode() == ClusterConnectionMode.MULTIPLE) {
             if (clusterSettings.getSrvHost() == null) {
-                return new StableMultiServerCluster(clusterId, clusterSettings, serverFactory);
+                return new MultiServerCluster(clusterId, clusterSettings, serverFactory);
             } else {
                 return new DnsMultiServerCluster(clusterId, clusterSettings, serverFactory, dnsSrvRecordMonitorFactory);
             }
