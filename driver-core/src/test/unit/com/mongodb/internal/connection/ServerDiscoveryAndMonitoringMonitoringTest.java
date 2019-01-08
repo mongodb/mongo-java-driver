@@ -102,7 +102,7 @@ public class ServerDiscoveryAndMonitoringMonitoringTest extends AbstractServerDi
                 if (newDescription.getString("topologyType").getValue().equals("Single")) {
                     assertEquals(SingleServerCluster.class, getCluster().getClass());
                 } else {
-                    assertEquals(StableMultiServerCluster.class, getCluster().getClass());
+                    assertEquals(MultiServerCluster.class, getCluster().getClass());
                 }
 
             } else if (eventDocument.containsKey("server_opening_event")) {
