@@ -21,6 +21,7 @@ import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.WriteConcern
 import com.mongodb.client.ClientSession
+import com.mongodb.client.model.AggregationLevel
 import com.mongodb.client.model.changestream.ChangeStreamLevel
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -55,12 +56,22 @@ class MongoIterablesSpecification extends Specification {
                 BsonDocument, codecRegistry, readPreference, readConcern, executor, filter))
 
         when:
-        def aggregateIterable = MongoIterables.aggregateOf(clientSession, namespace, Document, BsonDocument, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, pipeline)
+        def aggregateIterable = MongoIterables.aggregateOf(clientSession, namespace, Document, BsonDocument, codecRegistry,
+                readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION)
 
         then:
-        expect aggregateIterable, isTheSameAs(new Java8AggregateIterableImpl<Document, BsonDocument>(clientSession, namespace, Document,
-                BsonDocument, codecRegistry, readPreference, readConcern, writeConcern, executor, pipeline))
+        expect aggregateIterable, isTheSameAs(new Java8AggregateIterableImpl<Document, BsonDocument>(clientSession, namespace,
+                Document, BsonDocument, codecRegistry, readPreference, readConcern, writeConcern, executor, pipeline,
+                AggregationLevel.COLLECTION))
+
+        when:
+        aggregateIterable = MongoIterables.aggregateOf(clientSession, namespace.databaseName, Document, BsonDocument, codecRegistry,
+                readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.DATABASE)
+
+        then:
+        expect aggregateIterable, isTheSameAs(new Java8AggregateIterableImpl<Document, BsonDocument>(clientSession, namespace.databaseName,
+                Document, BsonDocument, codecRegistry, readPreference, readConcern, writeConcern, executor, pipeline,
+                AggregationLevel.DATABASE))
 
         when:
         def changeStreamIterable = MongoIterables.changeStreamOf(clientSession, namespace, codecRegistry,
@@ -128,12 +139,22 @@ class MongoIterablesSpecification extends Specification {
                 BsonDocument, codecRegistry, readPreference, readConcern, executor, filter))
 
         when:
-        def aggregateIterable = MongoIterables.aggregateOf(clientSession, namespace, Document, BsonDocument, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, pipeline)
+        def aggregateIterable = MongoIterables.aggregateOf(clientSession, namespace, Document, BsonDocument, codecRegistry,
+                readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION)
 
         then:
-        expect aggregateIterable, isTheSameAs(new AggregateIterableImpl<Document, BsonDocument>(clientSession, namespace, Document,
-                BsonDocument, codecRegistry, readPreference, readConcern, writeConcern, executor, pipeline))
+        expect aggregateIterable, isTheSameAs(new AggregateIterableImpl<Document, BsonDocument>(clientSession, namespace,
+                Document, BsonDocument, codecRegistry, readPreference, readConcern, writeConcern, executor, pipeline,
+                AggregationLevel.COLLECTION))
+
+        when:
+        aggregateIterable = MongoIterables.aggregateOf(clientSession, namespace.databaseName, Document, BsonDocument, codecRegistry,
+                readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.DATABASE)
+
+        then:
+        expect aggregateIterable, isTheSameAs(new AggregateIterableImpl<Document, BsonDocument>(clientSession, namespace.databaseName,
+                Document, BsonDocument, codecRegistry, readPreference, readConcern, writeConcern, executor, pipeline,
+                AggregationLevel.DATABASE))
 
         when:
         def changeStreamIterable = MongoIterables.changeStreamOf(clientSession, namespace, codecRegistry,

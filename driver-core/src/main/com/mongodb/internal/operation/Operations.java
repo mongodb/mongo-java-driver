@@ -24,6 +24,7 @@ import com.mongodb.bulk.IndexRequest;
 import com.mongodb.bulk.InsertRequest;
 import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.bulk.WriteRequest;
+import com.mongodb.client.model.AggregationLevel;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CountOptions;
@@ -175,11 +176,11 @@ final class Operations<TDocument> {
 
     @SuppressWarnings("deprecation")
     <TResult> AggregateOperation<TResult> aggregate(final List<? extends Bson> pipeline, final Class<TResult> resultClass,
-                                                           final long maxTimeMS, final long maxAwaitTimeMS, final Integer batchSize,
-                                                           final Collation collation,
-                                                           final Bson hint, final String comment, final Boolean allowDiskUse,
-                                                           final Boolean useCursor) {
-        return new AggregateOperation<TResult>(namespace, toBsonDocumentList(pipeline), codecRegistry.get(resultClass))
+                                                    final long maxTimeMS, final long maxAwaitTimeMS, final Integer batchSize,
+                                                    final Collation collation, final Bson hint, final String comment,
+                                                    final Boolean allowDiskUse, final Boolean useCursor,
+                                                    final AggregationLevel aggregationLevel) {
+        return new AggregateOperation<TResult>(namespace, toBsonDocumentList(pipeline), codecRegistry.get(resultClass), aggregationLevel)
                 .maxTime(maxTimeMS, MILLISECONDS)
                 .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
                 .allowDiskUse(allowDiskUse)
@@ -192,9 +193,10 @@ final class Operations<TDocument> {
     }
 
     AggregateToCollectionOperation aggregateToCollection(final List<? extends Bson> pipeline, final long maxTimeMS,
-                                                                final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
-                                                                final Collation collation, final Bson hint, final String comment) {
-        return new AggregateToCollectionOperation(namespace, toBsonDocumentList(pipeline), writeConcern)
+                                                         final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
+                                                         final Collation collation, final Bson hint, final String comment,
+                                                         final AggregationLevel aggregationLevel) {
+        return new AggregateToCollectionOperation(namespace, toBsonDocumentList(pipeline), writeConcern, aggregationLevel)
                 .maxTime(maxTimeMS, MILLISECONDS)
                 .allowDiskUse(allowDiskUse)
                 .bypassDocumentValidation(bypassDocumentValidation)

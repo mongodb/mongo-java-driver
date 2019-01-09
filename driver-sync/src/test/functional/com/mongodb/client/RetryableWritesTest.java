@@ -68,10 +68,11 @@ public class RetryableWritesTest {
     private MongoCollection<BsonDocument> collection;
     private JsonPoweredCrudTestHelper helper;
 
-    public RetryableWritesTest(final String filename, final String description, final BsonArray data, final BsonDocument definition) {
+    public RetryableWritesTest(final String filename, final String description, final String databaseName, final BsonArray data,
+                               final BsonDocument definition) {
         this.filename = filename;
         this.description = description;
-        this.databaseName = getDefaultDatabaseName();
+        this.databaseName = databaseName;
         this.collectionName = filename.substring(0, filename.lastIndexOf("."));
         this.data = data;
         this.definition = definition;
@@ -182,6 +183,7 @@ public class RetryableWritesTest {
             }
             for (BsonValue test : testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
+                        testDocument.getString("database_name", new BsonString(getDefaultDatabaseName())).getValue(),
                         testDocument.getArray("data"), test.asDocument()});
             }
         }

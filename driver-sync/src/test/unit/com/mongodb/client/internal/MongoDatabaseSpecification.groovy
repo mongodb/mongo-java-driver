@@ -20,6 +20,7 @@ import com.mongodb.MongoClientSettings
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.WriteConcern
+import com.mongodb.client.model.AggregationLevel
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.CreateViewOptions
@@ -394,6 +395,61 @@ class MongoDatabaseSpecification extends Specification {
 
         when:
         database.watch([null]).into([])
+
+        then:
+        thrown(IllegalArgumentException)
+    }
+
+    def 'should create AggregateIterable correctly'() {
+        given:
+        def executor = new TestOperationExecutor([])
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, readConcern, executor)
+        def aggregateMethod = database.&aggregate
+
+        when:
+        def aggregateIterable = execute(aggregateMethod, session, [])
+
+        then:
+        expect aggregateIterable, isTheSameAs(MongoIterables.aggregateOf(session, name, Document, Document, codecRegistry, readPreference,
+                readConcern, writeConcern, executor, [], AggregationLevel.DATABASE), ['codec'])
+
+        when:
+        aggregateIterable = execute(aggregateMethod, session, [new Document('$match', 1)])
+
+        then:
+        expect aggregateIterable, isTheSameAs(MongoIterables.aggregateOf(session, name, Document, Document, codecRegistry, readPreference,
+                readConcern, writeConcern, executor, [new Document('$match', 1)], AggregationLevel.DATABASE), ['codec'])
+
+        when:
+        aggregateIterable = execute(aggregateMethod, session, [new Document('$match', 1)], BsonDocument)
+
+        then:
+        expect aggregateIterable, isTheSameAs(MongoIterables.aggregateOf(session, name, Document, BsonDocument, codecRegistry,
+                readPreference, readConcern, writeConcern, executor, [new Document('$match', 1)], AggregationLevel.DATABASE), ['codec'])
+
+        where:
+        session << [null, Stub(ClientSession)]
+    }
+
+    def 'should validate the AggregationIterable pipeline data correctly'() {
+        given:
+        def executor = new TestOperationExecutor([])
+        def database = new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, false, readConcern, executor)
+
+        when:
+        database.aggregate(null, [])
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        database.aggregate((List) null)
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        database.aggregate([null]).into([])
 
         then:
         thrown(IllegalArgumentException)
