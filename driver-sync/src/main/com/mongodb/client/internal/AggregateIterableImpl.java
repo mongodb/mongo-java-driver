@@ -23,6 +23,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.FindOptions;
+import com.mongodb.client.model.AggregationLevel;
 import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.lang.Nullable;
 import com.mongodb.operation.BatchCursor;
@@ -45,6 +46,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     private final Class<TResult> resultClass;
     private final CodecRegistry codecRegistry;
     private final List<? extends Bson> pipeline;
+    private final AggregationLevel aggregationLevel;
 
     private Boolean allowDiskUse;
     private long maxTimeMS;
@@ -55,10 +57,18 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     private String comment;
     private Bson hint;
 
+    AggregateIterableImpl(@Nullable final ClientSession clientSession, final String databaseName, final Class<TDocument> documentClass,
+                          final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
+                          final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
+                          final List<? extends Bson> pipeline, final AggregationLevel aggregationLevel) {
+        this(clientSession, new MongoNamespace(databaseName, "ignored"), documentClass, resultClass, codecRegistry, readPreference,
+                readConcern, writeConcern, executor, pipeline, aggregationLevel);
+    }
+
     AggregateIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace, final Class<TDocument> documentClass,
                           final Class<TResult> resultClass, final CodecRegistry codecRegistry, final ReadPreference readPreference,
                           final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
-                          final List<? extends Bson> pipeline) {
+                          final List<? extends Bson> pipeline, final AggregationLevel aggregationLevel) {
         super(clientSession, executor, readConcern, readPreference);
         this.operations = new SyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry, writeConcern, false);
         this.namespace = notNull("namespace", namespace);
@@ -66,17 +76,17 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
         this.resultClass = notNull("resultClass", resultClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.pipeline = notNull("pipeline", pipeline);
+        this.aggregationLevel = notNull("aggregationLevel", aggregationLevel);
     }
 
     @Override
     public void toCollection() {
-
         if (getOutCollection() == null) {
             throw new IllegalStateException("The last stage of the aggregation pipeline must be $out");
         }
 
         getExecutor().execute(operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint,
-                comment), getReadConcern(), getClientSession());
+                comment, aggregationLevel), getReadConcern(), getClientSession());
     }
 
     @Override
@@ -143,7 +153,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
         if (outCollection != null) {
             getExecutor().execute(operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation,
-                    hint, comment), getReadConcern(), getClientSession());
+                    hint, comment, aggregationLevel), getReadConcern(), getClientSession());
 
             FindOptions findOptions = new FindOptions().collation(collation);
             Integer batchSize = getBatchSize();
@@ -154,7 +164,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
                     resultClass, findOptions);
         } else {
             return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, getBatchSize(), collation,
-                    hint, comment, allowDiskUse, useCursor);
+                    hint, comment, allowDiskUse, useCursor, aggregationLevel);
         }
     }
 

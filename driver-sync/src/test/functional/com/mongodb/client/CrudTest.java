@@ -18,6 +18,7 @@ package com.mongodb.client;
 
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.serverVersionGreaterThan;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static org.junit.Assert.assertEquals;
@@ -41,14 +43,17 @@ import static org.junit.Assert.assertEquals;
 public class CrudTest extends DatabaseTestCase {
     private final String filename;
     private final String description;
+    private final String databaseName;
     private final BsonArray data;
     private final BsonDocument definition;
     private MongoCollection<BsonDocument> collection;
     private JsonPoweredCrudTestHelper helper;
 
-    public CrudTest(final String filename, final String description, final BsonArray data, final BsonDocument definition) {
+    public CrudTest(final String filename, final String description, final String databaseName, final BsonArray data,
+                    final BsonDocument definition) {
         this.filename = filename;
         this.description = description;
+        this.databaseName = databaseName;
         this.data = data;
         this.definition = definition;
     }
@@ -63,6 +68,7 @@ public class CrudTest extends DatabaseTestCase {
             }
             getCollectionHelper().insertDocuments(documents);
         }
+        database = client.getDatabase(databaseName);
         collection = database.getCollection(getClass().getName(), BsonDocument.class);
         helper = new JsonPoweredCrudTestHelper(description, database, collection);
     }
@@ -70,7 +76,6 @@ public class CrudTest extends DatabaseTestCase {
     @Test
     public void shouldPassAllOutcomes() {
         BsonDocument expectedOutcome = definition.getDocument("outcome");
-
         BsonDocument outcome = helper.getOperationResults(definition.getDocument("operation"));
 
         if (expectedOutcome.containsKey("error")) {
@@ -114,6 +119,7 @@ public class CrudTest extends DatabaseTestCase {
             }
             for (BsonValue test : testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
+                        testDocument.getString("database_name", new BsonString(getDefaultDatabaseName())).getValue(),
                         testDocument.getArray("data"), test.asDocument()});
             }
         }

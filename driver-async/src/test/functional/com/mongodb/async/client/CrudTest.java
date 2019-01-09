@@ -19,6 +19,7 @@ package com.mongodb.async.client;
 import com.mongodb.MongoNamespace;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.junit.Before;
 import org.junit.Test;
@@ -37,6 +38,7 @@ import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.serverVersionGreaterThan;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.async.client.Fixture.getDefaultDatabase;
+import static com.mongodb.async.client.Fixture.getMongoClient;
 import static org.junit.Assert.assertEquals;
 
 // See https://github.com/mongodb/specifications/tree/master/source/crud/tests
@@ -44,14 +46,17 @@ import static org.junit.Assert.assertEquals;
 public class CrudTest extends DatabaseTestCase {
     private final String filename;
     private final String description;
+    private final String databaseName;
     private final BsonArray data;
     private final BsonDocument definition;
     private MongoCollection<BsonDocument> collection;
     private JsonPoweredCrudTestHelper helper;
 
-    public CrudTest(final String filename, final String description, final BsonArray data, final BsonDocument definition) {
+    public CrudTest(final String filename, final String description, final String databaseName,
+                    final BsonArray data, final BsonDocument definition) {
         this.filename = filename;
         this.description = description;
+        this.databaseName = databaseName;
         this.data = data;
         this.definition = definition;
     }
@@ -60,9 +65,9 @@ public class CrudTest extends DatabaseTestCase {
     @Override
     public void setUp() {
         super.setUp();
-        collection = Fixture.initializeCollection(new MongoNamespace(getDefaultDatabaseName(), getClass().getName()))
+        collection = Fixture.initializeCollection(new MongoNamespace(databaseName, getClass().getName()))
                 .withDocumentClass(BsonDocument.class);
-        helper = new JsonPoweredCrudTestHelper(description, getDefaultDatabase(), collection);
+        helper = new JsonPoweredCrudTestHelper(description, getMongoClient().getDatabase(databaseName), collection);
         if (!data.isEmpty()) {
             new MongoOperation<Void>() {
                 @Override
@@ -124,6 +129,7 @@ public class CrudTest extends DatabaseTestCase {
             }
             for (BsonValue test : testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
+                        testDocument.getString("database_name", new BsonString(getDefaultDatabaseName())).getValue(),
                         testDocument.getArray("data"), test.asDocument()});
             }
         }

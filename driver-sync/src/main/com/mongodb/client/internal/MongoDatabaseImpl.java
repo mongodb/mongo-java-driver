@@ -22,6 +22,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListCollectionsIterable;
@@ -33,6 +34,7 @@ import com.mongodb.client.model.CreateViewOptions;
 import com.mongodb.client.model.IndexOptionDefaults;
 import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.model.changestream.ChangeStreamLevel;
+import com.mongodb.client.model.AggregationLevel;
 import com.mongodb.lang.Nullable;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CreateCollectionOperation;
@@ -364,6 +366,35 @@ public class MongoDatabaseImpl implements MongoDatabase {
                                                          final Class<TResult> resultClass) {
         notNull("clientSession", clientSession);
         return createChangeStreamIterable(clientSession, pipeline, resultClass);
+    }
+
+    @Override
+    public AggregateIterable<Document> aggregate(final List<? extends Bson> pipeline) {
+        return aggregate(pipeline, Document.class);
+    }
+
+    @Override
+    public <TResult> AggregateIterable<TResult> aggregate(final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
+        return createAggregateIterable(null, pipeline, resultClass);
+    }
+
+    @Override
+    public AggregateIterable<Document> aggregate(final ClientSession clientSession, final List<? extends Bson> pipeline) {
+        return aggregate(clientSession, pipeline, Document.class);
+    }
+
+    @Override
+    public <TResult> AggregateIterable<TResult> aggregate(final ClientSession clientSession, final List<? extends Bson> pipeline,
+                                                          final Class<TResult> resultClass) {
+        notNull("clientSession", clientSession);
+        return createAggregateIterable(clientSession, pipeline, resultClass);
+    }
+
+    private <TResult> AggregateIterable<TResult> createAggregateIterable(@Nullable final ClientSession clientSession,
+                                                                         final List<? extends Bson> pipeline,
+                                                                         final Class<TResult> resultClass) {
+        return MongoIterables.aggregateOf(clientSession, name, Document.class, resultClass, codecRegistry,
+                readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.DATABASE);
     }
 
     private <TResult> ChangeStreamIterable<TResult> createChangeStreamIterable(@Nullable final ClientSession clientSession,

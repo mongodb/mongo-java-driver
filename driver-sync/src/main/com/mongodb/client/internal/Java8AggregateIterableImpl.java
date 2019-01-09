@@ -21,6 +21,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
+import com.mongodb.client.model.AggregationLevel;
 import com.mongodb.lang.Nullable;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -29,12 +30,23 @@ import java.util.List;
 import java.util.function.Consumer;
 
 class Java8AggregateIterableImpl<TDocument, TResult> extends AggregateIterableImpl<TDocument, TResult> {
+
+    Java8AggregateIterableImpl(@Nullable final ClientSession clientSession, final String databaseName,
+                               final Class<TDocument> documentClass, final Class<TResult> resultClass, final CodecRegistry codecRegistry,
+                               final ReadPreference readPreference, final ReadConcern readConcern, final WriteConcern writeConcern,
+                               final OperationExecutor executor, final List<? extends Bson> pipeline,
+                               final AggregationLevel aggregationLevel) {
+        super(clientSession, databaseName, documentClass, resultClass, codecRegistry, readPreference, readConcern, writeConcern, executor,
+                pipeline, aggregationLevel);
+    }
+
     Java8AggregateIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace,
                                final Class<TDocument> documentClass, final Class<TResult> resultClass, final CodecRegistry codecRegistry,
                                final ReadPreference readPreference, final ReadConcern readConcern, final WriteConcern writeConcern,
-                               final OperationExecutor executor, final List<? extends Bson> pipeline) {
+                               final OperationExecutor executor, final List<? extends Bson> pipeline,
+                               final AggregationLevel aggregationLevel) {
         super(clientSession, namespace, documentClass, resultClass, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                pipeline);
+                pipeline, aggregationLevel);
     }
 
     @Override
