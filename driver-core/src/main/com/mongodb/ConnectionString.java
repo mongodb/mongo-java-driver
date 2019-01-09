@@ -105,17 +105,22 @@ import static java.util.Collections.unmodifiableList;
  * all members of the set.</li>
  * </ul>
  * <p>Connection Configuration:</p>
- * <p>Connection Configuration:</p>
  * <ul>
- * <li>{@code streamType=nio2|netty}: The stream type to use for connections. If unspecified, nio2 will be used for asynchronous
- * clients.  Note that this query parameter has been deprecated and applications should use
- * {@link MongoClientSettings.Builder#streamFactoryFactory(StreamFactoryFactory)} instead.</li>
- * <li>{@code ssl=true|false}: Whether to connect using SSL.</li>
- * <li>{@code sslInvalidHostNameAllowed=true|false}: Whether to allow invalid host names for SSL connections.</li>
+ * <li>{@code ssl=true|false}: Whether to connect using TLS.</li>
+ * <li>{@code tls=true|false}: Whether to connect using TLS. Supersedes the ssl option</li>
+ * <li>{@code tlsInsecure=true|false}: If connecting with TLS, this option enables insecure TLS connections. Currently this has the
+ * same effect of setting tlsAllowInvalidHostnames to true. Other mechanism for relaxing TLS security constraints must be handled in
+ * the application by customizing the {@link javax.net.ssl.SSLContext}</li>
+ * <li>{@code sslInvalidHostNameAllowed=true|false}: Whether to allow invalid host names for TLS connections.</li>
+ * <li>{@code tlsAllowInvalidHostnames=true|false}: Whether to allow invalid host names for TLS connections. Supersedes the
+ * sslInvalidHostNameAllowed option</li>
  * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
  * <li>{@code socketTimeoutMS=ms}: How long a send or receive on a socket can take before timing out.</li>
  * <li>{@code maxIdleTimeMS=ms}: Maximum idle time of a pooled connection. A connection that exceeds this limit will be closed</li>
  * <li>{@code maxLifeTimeMS=ms}: Maximum life time of a pooled connection. A connection that exceeds this limit will be closed</li>
+ * <li>{@code streamType=nio2|netty}: The stream type to use for connections. If unspecified, nio2 will be used for asynchronous
+ * clients.  Note that this query parameter has been deprecated and applications should use
+ * {@link MongoClientSettings.Builder#streamFactoryFactory(StreamFactoryFactory)} instead.</li>
  * </ul>
  * <p>Connection pool configuration:</p>
  * <ul>
@@ -396,11 +401,23 @@ public class ConnectionString {
         GENERAL_OPTIONS_KEYS.add("maxidletimems");
         GENERAL_OPTIONS_KEYS.add("maxlifetimems");
         GENERAL_OPTIONS_KEYS.add("sockettimeoutms");
+
+        // Order matters here: Having tls after ssl means than the tls option will supersede the ssl option when both are set
         GENERAL_OPTIONS_KEYS.add("ssl");
-        GENERAL_OPTIONS_KEYS.add("streamtype");
+        GENERAL_OPTIONS_KEYS.add("tls");
+
+        // Order matters here: Having tlsinsecure before sslinvalidhostnameallowed and tlsallowinvalidhostnames means that those options
+        // will supersede this one when both are set.
+        GENERAL_OPTIONS_KEYS.add("tlsinsecure");
+
+        // Order matters here: Having tlsallowinvalidhostnames after sslinvalidhostnameallowed means than the tlsallowinvalidhostnames
+        // option will supersede the sslinvalidhostnameallowed option when both are set
         GENERAL_OPTIONS_KEYS.add("sslinvalidhostnameallowed");
+        GENERAL_OPTIONS_KEYS.add("tlsallowinvalidhostnames");
+
         GENERAL_OPTIONS_KEYS.add("replicaset");
         GENERAL_OPTIONS_KEYS.add("readconcernlevel");
+        GENERAL_OPTIONS_KEYS.add("streamtype");
 
         GENERAL_OPTIONS_KEYS.add("serverselectiontimeoutms");
         GENERAL_OPTIONS_KEYS.add("localthresholdms");
@@ -479,10 +496,16 @@ public class ConnectionString {
                 connectTimeout = parseInteger(value, "connecttimeoutms");
             } else if (key.equals("sockettimeoutms")) {
                 socketTimeout = parseInteger(value, "sockettimeoutms");
+            } else if (key.equals("tlsallowinvalidhostnames")) {
+                sslInvalidHostnameAllowed = parseBoolean(value, "tlsAllowInvalidHostnames");
             } else if (key.equals("sslinvalidhostnameallowed")) {
                 sslInvalidHostnameAllowed = parseBoolean(value, "sslinvalidhostnameallowed");
+            } else if (key.equals("tlsinsecure")) {
+                sslInvalidHostnameAllowed = parseBoolean(value, "tlsinsecure");
             } else if (key.equals("ssl")) {
                 sslEnabled = parseBoolean(value, "ssl");
+            } else if (key.equals("tls")) {
+                sslEnabled = parseBoolean(value, "tls");
             } else if (key.equals("streamtype")) {
                 streamType = value;
                 LOGGER.warn("The streamType query parameter is deprecated and support for it will be removed"

@@ -89,8 +89,14 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * <p>Connection Configuration:</p>
  * <ul>
- * <li>{@code ssl=true|false}: Whether to connect using SSL.</li>
- * <li>{@code sslInvalidHostNameAllowed=true|false}: Whether to allow invalid host names for SSL connections.</li>
+ * <li>{@code ssl=true|false}: Whether to connect using TLS.</li>
+ * <li>{@code tls=true|false}: Whether to connect using TLS. Supersedes the ssl option</li>
+ * <li>{@code tlsInsecure=true|false}: If connecting with TLS, this option enables insecure TLS connections. Currently this has the
+ * same effect of setting tlsAllowInvalidHostnames to true. Other mechanism for relaxing TLS security constraints must be handled in
+ * the application by customizing the {@link javax.net.ssl.SSLContext}</li>
+ * <li>{@code sslInvalidHostNameAllowed=true|false}: Whether to allow invalid host names for TLS connections.</li>
+ * <li>{@code tlsAllowInvalidHostnames=true|false}: Whether to allow invalid host names for TLS connections. Supersedes the
+ * sslInvalidHostNameAllowed option</li>
  * <li>{@code connectTimeoutMS=ms}: How long a connection can take to be opened before timing out.</li>
  * <li>{@code socketTimeoutMS=ms}: How long a send or receive on a socket can take before timing out.</li>
  * <li>{@code maxIdleTimeMS=ms}: Maximum idle time of a pooled connection. A connection that exceeds this limit will be closed</li>
