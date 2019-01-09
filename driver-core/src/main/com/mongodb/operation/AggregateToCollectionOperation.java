@@ -22,6 +22,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.client.model.AggregationLevel;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
@@ -29,8 +30,10 @@ import com.mongodb.connection.ConnectionDescription;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
+import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
+import org.bson.BsonValue;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -38,18 +41,18 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotSix;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
+import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
 import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTransformer;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.CallableWithConnection;
 import static com.mongodb.operation.OperationHelper.LOGGER;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotSix;
-import static com.mongodb.operation.OperationHelper.validateCollation;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
+import static com.mongodb.operation.OperationHelper.validateCollation;
 import static com.mongodb.operation.OperationHelper.withConnection;
-import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
-import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTransformer;
 
 /**
  * An operation that executes an aggregation that writes its results to a collection (which is what makes this a write operation rather than
@@ -64,6 +67,8 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     private final MongoNamespace namespace;
     private final List<BsonDocument> pipeline;
     private final WriteConcern writeConcern;
+    private final AggregationLevel aggregationLevel;
+
     private Boolean allowDiskUse;
     private long maxTimeMS;
     private Boolean bypassDocumentValidation;
@@ -94,9 +99,24 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
      */
     public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
                                           final WriteConcern writeConcern) {
+        this(namespace, pipeline, writeConcern, AggregationLevel.COLLECTION);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param namespace the database and collection namespace for the operation.
+     * @param pipeline the aggregation pipeline.
+     * @param writeConcern the write concern to apply
+     * @param aggregationLevel the aggregation level
+     * @since 3.10
+     */
+    public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
+                                          final WriteConcern writeConcern, final AggregationLevel aggregationLevel) {
         this.namespace = notNull("namespace", namespace);
         this.pipeline = notNull("pipeline", pipeline);
         this.writeConcern = writeConcern;
+        this.aggregationLevel = notNull("aggregationLevel", aggregationLevel);
 
         isTrueArgument("pipeline is not empty", !pipeline.isEmpty());
         isTrueArgument("last stage of pipeline contains an output collection",
@@ -325,7 +345,10 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     }
 
     private BsonDocument getCommand(final ConnectionDescription description) {
-        BsonDocument commandDocument = new BsonDocument("aggregate", new BsonString(namespace.getCollectionName()));
+        BsonValue aggregationTarget = (aggregationLevel == AggregationLevel.DATABASE)
+                ? new BsonInt32(1) : new BsonString(namespace.getCollectionName());
+
+        BsonDocument commandDocument = new BsonDocument("aggregate", aggregationTarget);
         commandDocument.put("pipeline", new BsonArray(pipeline));
         if (maxTimeMS > 0) {
             commandDocument.put("maxTimeMS", new BsonInt64(maxTimeMS));
@@ -353,5 +376,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
         }
         return commandDocument;
     }
+
+
 
 }

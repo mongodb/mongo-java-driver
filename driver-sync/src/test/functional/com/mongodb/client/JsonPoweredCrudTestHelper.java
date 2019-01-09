@@ -54,7 +54,9 @@ import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonNull;
+import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.Document;
 import org.junit.AssumptionViolatedException;
 
 import java.lang.reflect.InvocationTargetException;
@@ -64,6 +66,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static java.lang.String.format;
+import static org.junit.Assume.assumeTrue;
 
 public class JsonPoweredCrudTestHelper {
     private final String description;
@@ -82,11 +85,11 @@ public class JsonPoweredCrudTestHelper {
     }
 
     BsonDocument getOperationResults(final BsonDocument operation, @Nullable final ClientSession clientSession) {
-        String name = operation.getString("name").getValue();
         BsonDocument collectionOptions = operation.getDocument("collectionOptions", new BsonDocument());
         BsonDocument arguments = operation.getDocument("arguments");
 
-        String methodName = "get" + name.substring(0, 1).toUpperCase() + name.substring(1) + "Result";
+        String methodName = createMethodName(operation.getString("name").getValue(),
+                operation.getString("object", new BsonString("")).getValue());
         try {
             Method method = getClass().getDeclaredMethod(methodName, BsonDocument.class, BsonDocument.class, ClientSession.class);
             return (BsonDocument) method.invoke(this, collectionOptions, arguments, clientSession);
@@ -103,6 +106,19 @@ public class JsonPoweredCrudTestHelper {
         } catch (IllegalAccessException e) {
             throw new UnsupportedOperationException("Invalid handler access for operation " + methodName);
         }
+    }
+
+    private String createMethodName(final String name, final String object) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("get");
+        if (!object.isEmpty() && !object.equals("collection")) {
+            builder.append(object.substring(0, 1).toUpperCase());
+            builder.append(object.substring(1));
+        }
+        builder.append(name.substring(0, 1).toUpperCase());
+        builder.append(name.substring(1));
+        builder.append("Result");
+        return builder.toString();
     }
 
     BsonDocument toResult(final int count) {
@@ -177,6 +193,11 @@ public class JsonPoweredCrudTestHelper {
         return new BsonDocument("result", results != null ? results : BsonNull.VALUE);
     }
 
+    BsonDocument getDatabaseRunCommandResult(final BsonDocument collectionOptions, final BsonDocument arguments,
+                                             @Nullable final ClientSession clientSession) {
+        return getRunCommandResult(collectionOptions, arguments, clientSession);
+    }
+
     BsonDocument getRunCommandResult(final BsonDocument collectionOptions, final BsonDocument arguments,
                                      @Nullable final ClientSession clientSession) {
         BsonDocument response;
@@ -225,6 +246,44 @@ public class JsonPoweredCrudTestHelper {
             iterable.collation(getCollation(arguments.getDocument("collation")));
         }
         return toResult(iterable);
+    }
+
+    BsonDocument getDatabaseAggregateResult(final BsonDocument operationOptions, final BsonDocument arguments,
+                                            @Nullable final ClientSession clientSession) {
+        assumeTrue(!isSharded());
+        List<BsonDocument> pipeline = new ArrayList<BsonDocument>();
+        for (BsonValue stage : arguments.getArray("pipeline")) {
+            pipeline.add(stage.asDocument());
+        }
+
+        AggregateIterable<BsonDocument> iterable;
+        if (clientSession == null) {
+            iterable = database.aggregate(pipeline, BsonDocument.class);
+        } else {
+            iterable = database.aggregate(clientSession, pipeline, BsonDocument.class);
+        }
+
+        if (arguments.containsKey("allowDiskUse")) {
+            iterable.allowDiskUse(arguments.getBoolean("allowDiskUse").getValue());
+        }
+        if (arguments.containsKey("batchSize")) {
+            iterable.batchSize(arguments.getNumber("batchSize").intValue());
+        }
+        if (arguments.containsKey("collation")) {
+            iterable.collation(getCollation(arguments.getDocument("collation")));
+        }
+
+        BsonDocument results = toResult(iterable);
+        for (BsonValue result : results.getArray("result", new BsonArray())) {
+            if (result.isDocument()) {
+                BsonDocument command = result.asDocument().getDocument("command", new BsonDocument());
+                command.remove("$readPreference");
+                command.remove("$clusterTime");
+                command.remove("signature");
+                command.remove("keyId");
+            }
+        }
+        return results;
     }
 
     @SuppressWarnings("deprecation")
@@ -750,5 +809,9 @@ public class JsonPoweredCrudTestHelper {
 
     ReadConcern getReadConcern(final BsonDocument arguments) {
         return new ReadConcern(ReadConcernLevel.fromString(arguments.getDocument("readConcern").getString("level").getValue()));
+    }
+
+    boolean isSharded() {
+        return database.runCommand(Document.parse("{isMaster: 1}")).get("msg", "").equals("isdbgrid");
     }
 }

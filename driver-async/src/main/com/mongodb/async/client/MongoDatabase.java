@@ -502,4 +502,58 @@ public interface MongoDatabase {
      */
     <TResult> ChangeStreamIterable<TResult> watch(ClientSession clientSession, List<? extends Bson> pipeline, Class<TResult> resultClass);
 
+    /**
+     * Runs an aggregation framework pipeline on the database for pipeline stages
+     * that do not require an underlying collection, such as {@code $currentOp} and {@code $listLocalSessions}.
+     *
+     * @param pipeline the aggregation pipeline
+     * @return an iterable containing the result of the aggregation operation
+     * @since 3.10
+     * @mongodb.driver.manual reference/command/aggregate/#dbcmd.aggregate Aggregate Command
+     * @mongodb.server.release 3.6
+     */
+    AggregateIterable<Document> aggregate(List<? extends Bson> pipeline);
+
+    /**
+     * Runs an aggregation framework pipeline on the database for pipeline stages
+     * that do not require an underlying collection, such as {@code $currentOp} and {@code $listLocalSessions}.
+     *
+     * @param pipeline    the aggregation pipeline
+     * @param resultClass the class to decode each document into
+     * @param <TResult>   the target document type of the iterable.
+     * @return an iterable containing the result of the aggregation operation
+     * @since 3.10
+     * @mongodb.driver.manual reference/command/aggregate/#dbcmd.aggregate Aggregate Command
+     * @mongodb.server.release 3.6
+     */
+    <TResult> AggregateIterable<TResult> aggregate(List<? extends Bson> pipeline, Class<TResult> resultClass);
+
+    /**
+     * Runs an aggregation framework pipeline on the database for pipeline stages
+     * that do not require an underlying collection, such as {@code $currentOp} and {@code $listLocalSessions}.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param pipeline the aggregation pipeline
+     * @return an iterable containing the result of the aggregation operation
+     * @since 3.10
+     * @mongodb.driver.manual reference/command/aggregate/#dbcmd.aggregate Aggregate Command
+     * @mongodb.server.release 3.6
+     */
+    AggregateIterable<Document> aggregate(ClientSession clientSession, List<? extends Bson> pipeline);
+
+    /**
+     * Runs an aggregation framework pipeline on the database for pipeline stages
+     * that do not require an underlying collection, such as {@code $currentOp} and {@code $listLocalSessions}.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param pipeline    the aggregation pipeline
+     * @param resultClass the class to decode each document into
+     * @param <TResult>   the target document type of the iterable.
+     * @return an iterable containing the result of the aggregation operation
+     * @since 3.10
+     * @mongodb.driver.manual reference/command/aggregate/#dbcmd.aggregate Aggregate Command
+     * @mongodb.server.release 3.6
+     */
+    <TResult> AggregateIterable<TResult> aggregate(ClientSession clientSession, List<? extends Bson> pipeline, Class<TResult> resultClass);
+
 }

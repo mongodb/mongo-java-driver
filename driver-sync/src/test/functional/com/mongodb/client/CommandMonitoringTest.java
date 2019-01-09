@@ -22,10 +22,11 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.connection.ServerVersion;
-import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.event.CommandEvent;
+import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
@@ -49,6 +50,7 @@ import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.isStandalone;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
+import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static org.junit.Assume.assumeFalse;
 
@@ -171,9 +173,8 @@ public class CommandMonitoringTest {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             for (BsonValue test : testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
-                                      testDocument.getString("database_name").getValue(),
-                                      testDocument.getString("collection_name").getValue(),
-                                      testDocument.getArray("data"), test.asDocument()});
+                        testDocument.getString("database_name", new BsonString(getDefaultDatabaseName())).getValue(),
+                        testDocument.getString("collection_name").getValue(), testDocument.getArray("data"), test.asDocument()});
             }
         }
         return data;

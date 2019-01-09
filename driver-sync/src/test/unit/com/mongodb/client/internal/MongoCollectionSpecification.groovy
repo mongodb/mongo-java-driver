@@ -34,6 +34,7 @@ import com.mongodb.bulk.UpdateRequest
 import com.mongodb.client.ClientSession
 import com.mongodb.client.ImmutableDocument
 import com.mongodb.client.ImmutableDocumentCodecProvider
+import com.mongodb.client.model.AggregationLevel
 import com.mongodb.client.model.BulkWriteOptions
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CountOptions
@@ -388,14 +389,14 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         expect aggregateIterable, isTheSameAs(MongoIterables.aggregateOf(session, namespace, Document, Document, codecRegistry,
-                readPreference, readConcern,  ACKNOWLEDGED, executor, [new Document('$match', 1)]))
+                readPreference, readConcern,  ACKNOWLEDGED, executor, [new Document('$match', 1)], AggregationLevel.COLLECTION))
 
         when:
         aggregateIterable = execute(aggregateMethod, session, [new Document('$match', 1)], BsonDocument)
 
         then:
         expect aggregateIterable, isTheSameAs(MongoIterables.aggregateOf(session, namespace, Document, BsonDocument, codecRegistry,
-                readPreference, readConcern,  ACKNOWLEDGED, executor, [new Document('$match', 1)]))
+                readPreference, readConcern,  ACKNOWLEDGED, executor, [new Document('$match', 1)], AggregationLevel.COLLECTION))
 
         where:
         session << [null, Stub(ClientSession)]

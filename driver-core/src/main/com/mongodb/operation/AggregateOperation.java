@@ -23,6 +23,7 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.client.model.Collation;
+import com.mongodb.client.model.AggregationLevel;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.codecs.Decoder;
@@ -49,7 +50,21 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      * @param decoder the decoder for the result documents.
      */
     public AggregateOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder) {
-        this.wrapped = new AggregateOperationImpl<T>(namespace, pipeline, decoder);
+        this(namespace, pipeline, decoder, AggregationLevel.COLLECTION);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param namespace the database and collection namespace for the operation.
+     * @param pipeline the aggregation pipeline.
+     * @param decoder the decoder for the result documents.
+     * @param aggregationLevel the aggregation level
+     * @since 3.10
+     */
+    public AggregateOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder,
+                              final AggregationLevel aggregationLevel) {
+        this.wrapped = new AggregateOperationImpl<T>(namespace, pipeline, decoder, aggregationLevel);
     }
 
     /**

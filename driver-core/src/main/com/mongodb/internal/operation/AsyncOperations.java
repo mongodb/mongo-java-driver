@@ -21,6 +21,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.bulk.BulkWriteResult;
+import com.mongodb.client.model.AggregationLevel;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CountOptions;
@@ -100,15 +101,18 @@ public final class AsyncOperations<TDocument> {
                                                                              final long maxTimeMS, final long maxAwaitTimeMS,
                                                                              final Integer batchSize, final Collation collation,
                                                                              final Bson hint, final String comment,
-                                                                             final Boolean allowDiskUse, final Boolean useCursor) {
+                                                                             final Boolean allowDiskUse, final Boolean useCursor,
+                                                                             final AggregationLevel aggregationLevel) {
         return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, batchSize, collation, hint, comment, allowDiskUse,
-                useCursor);
+                useCursor, aggregationLevel);
     }
 
     public AsyncWriteOperation<Void> aggregateToCollection(final List<? extends Bson> pipeline, final long maxTimeMS,
                                                            final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
-                                                           final Collation collation, final Bson hint, final String comment) {
-        return operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint, comment);
+                                                           final Collation collation, final Bson hint, final String comment,
+                                                           final AggregationLevel aggregationLevel) {
+        return operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint, comment,
+                aggregationLevel);
     }
 
     public AsyncWriteOperation<MapReduceStatistics> mapReduceToCollection(final String databaseName, final String collectionName,

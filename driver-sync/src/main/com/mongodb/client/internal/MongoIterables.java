@@ -30,6 +30,7 @@ import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.ListIndexesIterable;
 import com.mongodb.client.MapReduceIterable;
 import com.mongodb.client.model.changestream.ChangeStreamLevel;
+import com.mongodb.client.model.AggregationLevel;
 import com.mongodb.lang.Nullable;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -72,9 +73,19 @@ public final class MongoIterables {
                                            final Class<TDocument> documentClass, final Class<TResult> resultClass,
                                            final CodecRegistry codecRegistry, final ReadPreference readPreference,
                                            final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
-                                           final List<? extends Bson> pipeline) {
+                                           final List<? extends Bson> pipeline, final AggregationLevel aggregationLevel) {
         return factory.aggregateOf(clientSession, namespace, documentClass, resultClass, codecRegistry,
-                readPreference, readConcern, writeConcern, executor, pipeline);
+                readPreference, readConcern, writeConcern, executor, pipeline, aggregationLevel);
+    }
+
+    public static <TDocument, TResult>
+    AggregateIterable<TResult> aggregateOf(final @Nullable ClientSession clientSession, final String databaseName,
+                                           final Class<TDocument> documentClass, final Class<TResult> resultClass,
+                                           final CodecRegistry codecRegistry, final ReadPreference readPreference,
+                                           final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
+                                           final List<? extends Bson> pipeline, final AggregationLevel aggregationLevel) {
+        return factory.aggregateOf(clientSession, databaseName, documentClass, resultClass, codecRegistry,
+                readPreference, readConcern, writeConcern, executor, pipeline, aggregationLevel);
     }
 
     public static <TResult>

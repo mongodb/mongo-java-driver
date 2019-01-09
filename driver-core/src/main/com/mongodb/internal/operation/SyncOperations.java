@@ -23,6 +23,7 @@ import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CountOptions;
+import com.mongodb.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.CountStrategy;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteOptions;
@@ -98,15 +99,18 @@ public final class SyncOperations<TDocument> {
     public <TResult> ReadOperation<BatchCursor<TResult>> aggregate(final List<? extends Bson> pipeline, final Class<TResult> resultClass,
                                                                    final long maxTimeMS, final long maxAwaitTimeMS, final Integer batchSize,
                                                                    final Collation collation, final Bson hint, final String comment,
-                                                                   final Boolean allowDiskUse, final Boolean useCursor) {
+                                                                   final Boolean allowDiskUse, final Boolean useCursor,
+                                                                   final AggregationLevel aggregationLevel) {
         return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, batchSize, collation, hint, comment, allowDiskUse,
-                useCursor);
+                useCursor, aggregationLevel);
     }
 
     public WriteOperation<Void> aggregateToCollection(final List<? extends Bson> pipeline, final long maxTimeMS,
                                                       final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
-                                                      final Collation collation, final Bson hint, final String comment) {
-        return operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint, comment);
+                                                      final Collation collation, final Bson hint, final String comment,
+                                                      final AggregationLevel aggregationLevel) {
+        return operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint, comment,
+                aggregationLevel);
     }
 
     public WriteOperation<MapReduceStatistics> mapReduceToCollection(final String databaseName, final String collectionName,

@@ -30,6 +30,7 @@ import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.ListIndexesIterable;
 import com.mongodb.client.MapReduceIterable;
 import com.mongodb.client.model.changestream.ChangeStreamLevel;
+import com.mongodb.client.model.AggregationLevel;
 import com.mongodb.lang.Nullable;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -46,7 +47,13 @@ interface MongoIterableFactory {
     AggregateIterable<TResult> aggregateOf(@Nullable ClientSession clientSession, MongoNamespace namespace, Class<TDocument> documentClass,
                                            Class<TResult> resultClass, CodecRegistry codecRegistry, ReadPreference readPreference,
                                            ReadConcern readConcern, WriteConcern writeConcern, OperationExecutor executor,
-                                           List<? extends Bson> pipeline);
+                                           List<? extends Bson> pipeline, AggregationLevel aggregationLevel);
+
+    <TDocument, TResult>
+    AggregateIterable<TResult> aggregateOf(@Nullable ClientSession clientSession, String databaseName, Class<TDocument> documentClass,
+                                           Class<TResult> resultClass, CodecRegistry codecRegistry, ReadPreference readPreference,
+                                           ReadConcern readConcern, WriteConcern writeConcern, OperationExecutor executor,
+                                           List<? extends Bson> pipeline, AggregationLevel aggregationLevel);
 
     <TResult>
     ChangeStreamIterable<TResult> changeStreamOf(@Nullable ClientSession clientSession, String databaseName, CodecRegistry codecRegistry,

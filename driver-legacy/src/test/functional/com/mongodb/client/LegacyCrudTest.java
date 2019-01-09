@@ -18,6 +18,7 @@ package com.mongodb.client;
 
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
+import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.junit.Before;
 import org.junit.Test;
@@ -34,6 +35,7 @@ import java.util.List;
 
 import static com.mongodb.ClusterFixture.serverVersionGreaterThan;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
+import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static org.junit.Assert.assertEquals;
 
 // See https://github.com/mongodb/specifications/tree/master/source/crud/tests
@@ -41,14 +43,17 @@ import static org.junit.Assert.assertEquals;
 public class LegacyCrudTest extends LegacyDatabaseTestCase {
     private final String filename;
     private final String description;
+    private final String databaseName;
     private final BsonArray data;
     private final BsonDocument definition;
     private MongoCollection<BsonDocument> collection;
     private JsonPoweredCrudTestHelper helper;
 
-    public LegacyCrudTest(final String filename, final String description, final BsonArray data, final BsonDocument definition) {
+    public LegacyCrudTest(final String filename, final String description, final String databaseName, final BsonArray data,
+                          final BsonDocument definition) {
         this.filename = filename;
         this.description = description;
+        this.databaseName = databaseName;
         this.data = data;
         this.definition = definition;
     }
@@ -63,6 +68,7 @@ public class LegacyCrudTest extends LegacyDatabaseTestCase {
             }
             getCollectionHelper().insertDocuments(documents);
         }
+        database = client.getDatabase(databaseName);
         collection = database.getCollection(getClass().getName(), BsonDocument.class);
         helper = new JsonPoweredCrudTestHelper(description, database, collection);
     }
@@ -114,6 +120,7 @@ public class LegacyCrudTest extends LegacyDatabaseTestCase {
             }
             for (BsonValue test: testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
+                        testDocument.getString("database_name", new BsonString(getDefaultDatabaseName())).getValue(),
                         testDocument.getArray("data"), test.asDocument()});
             }
         }

@@ -29,6 +29,7 @@ import com.mongodb.WriteError;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.WriteRequest;
+import com.mongodb.client.model.AggregationLevel;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
 import com.mongodb.internal.client.model.CountStrategy;
@@ -346,7 +347,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
                                                                          final List<? extends Bson> pipeline,
                                                                          final Class<TResult> resultClass) {
         return new AggregateIterableImpl<TDocument, TResult>(clientSession, namespace, documentClass, resultClass, codecRegistry,
-                readPreference, readConcern, writeConcern, executor, pipeline);
+                readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION);
     }
 
     @Override

@@ -95,10 +95,11 @@ public class TransactionsTest {
     public static void afterClass() {
     }
 
-    public TransactionsTest(final String filename, final String description, final BsonArray data, final BsonDocument definition) {
+    public TransactionsTest(final String filename, final String description, final String databaseName, final BsonArray data,
+                            final BsonDocument definition) {
         this.filename = filename;
         this.description = description;
-        this.databaseName = getDefaultDatabaseName();
+        this.databaseName = databaseName;
         this.data = data;
         this.definition = definition;
         this.commandListener = new TestCommandListener();
@@ -413,6 +414,7 @@ public class TransactionsTest {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             for (BsonValue test : testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
+                        testDocument.getString("database_name", new BsonString(getDefaultDatabaseName())).getValue(),
                         testDocument.getArray("data"), test.asDocument()});
             }
         }

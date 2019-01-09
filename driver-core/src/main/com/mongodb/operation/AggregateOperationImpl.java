@@ -24,6 +24,7 @@ import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
+import com.mongodb.client.model.AggregationLevel;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
@@ -80,12 +81,14 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
     private long maxTimeMS;
     private Boolean useCursor;
 
-    AggregateOperationImpl(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder) {
-        this(namespace, pipeline, decoder, defaultAggregateTarget(namespace.getCollectionName()), defaultPipelineCreator(pipeline));
+    AggregateOperationImpl(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder,
+                           final AggregationLevel aggregationLevel) {
+        this(namespace, pipeline, decoder, defaultAggregateTarget(notNull("aggregationLevel", aggregationLevel),
+                notNull("namespace", namespace).getCollectionName()), defaultPipelineCreator(pipeline));
     }
 
     AggregateOperationImpl(final MongoNamespace namespace, final List<BsonDocument> pipeline, final Decoder<T> decoder,
-                                  final AggregateTarget aggregateTarget, final PipelineCreator pipelineCreator) {
+                           final AggregateTarget aggregateTarget, final PipelineCreator pipelineCreator) {
         this.namespace = notNull("namespace", namespace);
         this.pipeline = notNull("pipeline", pipeline);
         this.decoder = notNull("decoder", decoder);
@@ -303,11 +306,15 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
         BsonArray create(ConnectionDescription connectionDescription, SessionContext sessionContext);
     }
 
-    private static AggregateTarget defaultAggregateTarget(final String collectionName) {
+    private static AggregateTarget defaultAggregateTarget(final AggregationLevel aggregationLevel, final String collectionName) {
         return new AggregateTarget() {
             @Override
             public BsonValue create() {
-                return new BsonString(collectionName);
+                if (aggregationLevel == AggregationLevel.DATABASE) {
+                    return new BsonInt32(1);
+                } else {
+                    return new BsonString(collectionName);
+                }
             }
         };
     }
