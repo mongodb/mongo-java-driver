@@ -195,6 +195,110 @@ class ConnectionStringSpecification extends Specification {
         type << ['amp', 'semi', 'mixed']
     }
 
+    def 'should parse options to enable TLS'() {
+        when:
+        def connectionString = new ConnectionString('mongodb://localhost/?ssl=false')
+
+        then:
+        connectionString.getSslEnabled() == false
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?ssl=true')
+
+        then:
+        connectionString.getSslEnabled()
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?tls=false')
+
+        then:
+        connectionString.getSslEnabled() == false
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?tls=true')
+
+        then:
+        connectionString.getSslEnabled()
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?tls=true&ssl=false')
+
+        then:
+        connectionString.getSslEnabled()
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?tls=false&ssl=true')
+
+        then:
+        connectionString.getSslEnabled() == false
+    }
+
+    def 'should parse options to enable TLS invalid host names'() {
+        when:
+        def connectionString = new ConnectionString('mongodb://localhost/?ssl=true&sslInvalidHostNameAllowed=false')
+
+        then:
+        connectionString.getSslInvalidHostnameAllowed() == false
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?ssl=true&sslInvalidHostNameAllowed=true')
+
+        then:
+        connectionString.getSslInvalidHostnameAllowed()
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?tls=true&tlsAllowInvalidHostnames=false')
+
+        then:
+        connectionString.getSslInvalidHostnameAllowed() == false
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?tls=true&tlsAllowInvalidHostnames=true')
+
+        then:
+        connectionString.getSslInvalidHostnameAllowed()
+
+        when:
+        connectionString = new ConnectionString(
+                'mongodb://localhost/?tls=true&tlsAllowInvalidHostnames=false&sslInvalidHostNameAllowed=true')
+
+        then:
+        connectionString.getSslInvalidHostnameAllowed() == false
+
+        when:
+        connectionString = new ConnectionString(
+                'mongodb://localhost/?tls=true&tlsAllowInvalidHostnames=true&sslInvalidHostNameAllowed=false')
+
+        then:
+        connectionString.getSslInvalidHostnameAllowed()
+    }
+
+    def 'should parse options to enable unsecured TLS'() {
+        when:
+        def connectionString = new ConnectionString('mongodb://localhost/?tls=true&tlsInsecure=true')
+
+        then:
+        connectionString.getSslInvalidHostnameAllowed()
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?tls=true&tlsInsecure=false')
+
+        then:
+        connectionString.getSslInvalidHostnameAllowed() == false
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?tls=true&tlsInsecure=true&tlsAllowInvalidHostnames=false')
+
+        then:
+        connectionString.getSslInvalidHostnameAllowed() == false
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?tls=true&tlsInsecure=false&tlsAllowInvalidHostnames=true')
+
+        then:
+        connectionString.getSslInvalidHostnameAllowed()
+    }
+
     @Unroll
     def 'should throw IllegalArgumentException when the string #cause'() {
         when:
@@ -247,6 +351,7 @@ class ConnectionStringSpecification extends Specification {
         connectionString.getReadPreference() == null;
         connectionString.getRequiredReplicaSetName() == null
         connectionString.getSslEnabled() == null
+        connectionString.getSslInvalidHostnameAllowed() == null
         connectionString.getStreamType() == null
         connectionString.getApplicationName() == null
         connectionString.getCompressorList() == []
