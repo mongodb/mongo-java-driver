@@ -17,25 +17,32 @@
 package com.mongodb;
 
 import junit.framework.TestCase;
+import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
-import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import util.JsonPoweredTestHelper;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+
+import static java.util.Arrays.asList;
 
 @RunWith(Parameterized.class)
 public abstract class AbstractConnectionStringTest extends TestCase {
+    private static final Set<String> UNSUPPORTED_OPTIONS =
+            new HashSet<String>(asList(
+                    "tlsallowinvalidcertificates",
+                    "tlsallowinvalidhostnames",
+                    "tlscafile",
+                    "tlscertificatekeyfile",
+                    "tlscertificatekeyfilepassword",
+                    "serverselectiontryonce"));
     private final String filename;
     private final String description;
     private final String input;
@@ -55,6 +62,10 @@ public abstract class AbstractConnectionStringTest extends TestCase {
 
     protected BsonDocument getDefinition() {
         return definition;
+    }
+
+    protected String getDescription() {
+        return description;
     }
 
     protected void testInvalidUris() {
@@ -91,16 +102,103 @@ public abstract class AbstractConnectionStringTest extends TestCase {
         }
 
         for (Map.Entry<String, BsonValue> option : definition.getDocument("options").entrySet()) {
+            if (UNSUPPORTED_OPTIONS.contains(option.getKey().toLowerCase())) {
+                continue;
+            }
+
             if (option.getKey().equals("authmechanism")) {
                 String expected = option.getValue().asString().getValue();
                 String actual = connectionString.getCredential().getAuthenticationMechanism().getMechanismName();
                 assertEquals(expected, actual);
-            } else if (option.getKey().equals("replicaset")) {
+            } else if (option.getKey().toLowerCase().equals("retrywrites")) {
+                boolean expected = option.getValue().asBoolean().getValue();
+                assertEquals(expected, connectionString.getRetryWritesValue().booleanValue());
+            } else if (option.getKey().toLowerCase().equals("replicaset")) {
                 String expected = option.getValue().asString().getValue();
                 assertEquals(expected, connectionString.getRequiredReplicaSetName());
+            } else if (option.getKey().toLowerCase().equals("serverselectiontimeoutms")) {
+                int expected = option.getValue().asInt32().getValue();
+                assertEquals(expected, connectionString.getServerSelectionTimeout().intValue());
+            } else if (option.getKey().toLowerCase().equals("sockettimeoutms")) {
+                int expected = option.getValue().asInt32().getValue();
+                assertEquals(expected, connectionString.getSocketTimeout().intValue());
             } else if (option.getKey().equals("wtimeoutms")) {
                 int expected = option.getValue().asInt32().getValue();
                 assertEquals(expected, connectionString.getWriteConcern().getWTimeout(TimeUnit.MILLISECONDS).intValue());
+            } else if (option.getKey().toLowerCase().equals("connecttimeoutms")) {
+                int expected = option.getValue().asInt32().getValue();
+                assertEquals(expected, connectionString.getConnectTimeout().intValue());
+            } else if (option.getKey().toLowerCase().equals("heartbeatfrequencyms")) {
+                int expected = option.getValue().asInt32().getValue();
+                assertEquals(expected, connectionString.getHeartbeatFrequency().intValue());
+            } else if (option.getKey().toLowerCase().equals("localthresholdms")) {
+                int expected = option.getValue().asInt32().getValue();
+                assertEquals(expected, connectionString.getLocalThreshold().intValue());
+            } else if (option.getKey().toLowerCase().equals("maxidletimems")) {
+                int expected = option.getValue().asInt32().getValue();
+                assertEquals(expected, connectionString.getMaxConnectionIdleTime().intValue());
+            } else if (option.getKey().toLowerCase().equals("tls")) {
+                boolean expected = option.getValue().asBoolean().getValue();
+                assertEquals(expected, connectionString.getSslEnabled().booleanValue());
+            } else if (option.getKey().toLowerCase().equals("tlsinsecure")) {
+                boolean expected = option.getValue().asBoolean().getValue();
+                assertEquals(expected, connectionString.getSslInvalidHostnameAllowed().booleanValue());
+            } else if (option.getKey().toLowerCase().equals("readconcernlevel")) {
+                String expected = option.getValue().asString().getValue();
+                assertEquals(expected, connectionString.getReadConcern().getLevel().getValue());
+            } else if (option.getKey().toLowerCase().equals("w")) {
+                if (option.getValue().isString()) {
+                    String expected = option.getValue().asString().getValue();
+                    assertEquals(expected, connectionString.getWriteConcern().getWString());
+                } else {
+                    int expected = option.getValue().asNumber().intValue();
+                    assertEquals(expected, connectionString.getWriteConcern().getW());
+                }
+            } else if (option.getKey().toLowerCase().equals("wtimeoutms")) {
+                int expected = option.getValue().asInt32().getValue();
+                assertEquals(expected, connectionString.getWriteConcern().getWTimeout(TimeUnit.MILLISECONDS).intValue());
+            } else if (option.getKey().toLowerCase().equals("journal")) {
+                boolean expected = option.getValue().asBoolean().getValue();
+                assertEquals(expected, connectionString.getWriteConcern().getJournal().booleanValue());
+            } else if (option.getKey().toLowerCase().equals("readpreference")) {
+                String expected = option.getValue().asString().getValue();
+                assertEquals(expected, connectionString.getReadPreference().getName());
+            } else if (option.getKey().toLowerCase().equals("readpreferencetags")) {
+                BsonArray expected = option.getValue().asArray();
+                assertEquals(expected, connectionString.getReadPreference().toDocument().getArray("tags"));
+            } else if (option.getKey().toLowerCase().equals("maxstalenessseconds")) {
+                int expected = option.getValue().asNumber().intValue();
+                assertEquals(expected, connectionString.getReadPreference().toDocument().getNumber("maxStalenessSeconds").intValue());
+            } else if (option.getKey().equals("compressors")) {
+                BsonArray expectedCompressorList = option.getValue().asArray();
+                assertEquals(expectedCompressorList.size(), connectionString.getCompressorList().size());
+                for (int i = 0; i < expectedCompressorList.size(); i++) {
+                    String expected = expectedCompressorList.get(i).asString().getValue();
+                    assertEquals(expected, connectionString.getCompressorList().get(i).getName());
+                }
+            } else if (option.getKey().toLowerCase().equals("zlibcompressionlevel")) {
+                int expected = option.getValue().asNumber().intValue();
+                assertEquals(expected, connectionString.getCompressorList().get(0).getProperty("level", 0).intValue());
+            } else if (option.getKey().toLowerCase().equals("appname")) {
+                String expected = option.getValue().asString().getValue();
+                assertEquals(expected, connectionString.getApplicationName());
+            } else if (option.getKey().toLowerCase().equals("authmechanism")) {
+                String expected = option.getValue().asString().getValue();
+                assertEquals(expected, connectionString.getCredential().getMechanism());
+            } else if (option.getKey().toLowerCase().equals("authsource")) {
+                String expected = option.getValue().asString().getValue();
+                assertEquals(expected, connectionString.getCredential().getSource());
+            } else if (option.getKey().toLowerCase().equals("authmechanismproperties")) {
+                BsonDocument properties = option.getValue().asDocument();
+                for (String cur : properties.keySet()) {
+                    if (properties.get(cur).isString()) {
+                        String expected = properties.getString(cur).getValue();
+                        assertEquals(expected, connectionString.getCredential().getMechanismProperty(cur, null));
+                    } else {
+                        boolean expected = properties.getBoolean(cur).getValue();
+                        assertEquals(expected, connectionString.getCredential().getMechanismProperty(cur, (Boolean) null).booleanValue());
+                    }
+                }
             } else {
                 assertTrue(String.format("Unsupported option '%s' in '%s'", option.getKey(), input), false);
             }
