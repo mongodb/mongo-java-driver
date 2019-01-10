@@ -34,9 +34,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-// See https://github.com/mongodb/specifications/tree/master/source/connection-string/tests
 @RunWith(Parameterized.class)
-public class AbstractConnectionStringTest extends TestCase {
+public abstract class AbstractConnectionStringTest extends TestCase {
     private final String filename;
     private final String description;
     private final String input;
@@ -50,47 +49,15 @@ public class AbstractConnectionStringTest extends TestCase {
         this.definition = definition;
     }
 
-    @Test
-    public void shouldPassAllOutcomes() {
-        if (filename.equals("invalid-uris.json")) {
-            testInvalidUris();
-        } else if (filename.equals("valid-auth.json")) {
-            testValidAuth();
-        } else if (filename.equals("valid-db-with-dotted-name.json")) {
-            testValidHostIdentifiers();
-            testValidAuth();
-        } else if (filename.equals("valid-host_identifiers.json")) {
-            testValidHostIdentifiers();
-        } else if (filename.equals("valid-options.json")) {
-            testValidOptions();
-        } else if (filename.equals("valid-unix_socket-absolute.json")) {
-            testValidHostIdentifiers();
-        } else if (filename.equals("valid-unix_socket-relative.json")) {
-            testValidHostIdentifiers();
-        } else if (filename.equals("valid-warnings.json")) {
-            testValidHostIdentifiers();
-            if (!definition.get("options").isNull()) {
-                testValidOptions();
-            }
-        } else {
-            throw new IllegalArgumentException("Unsupported file: " + filename);
-        }
+    protected String getFilename() {
+        return filename;
     }
 
-    @Parameterized.Parameters(name = "{1}")
-    public static Collection<Object[]> data() throws URISyntaxException, IOException {
-        List<Object[]> data = new ArrayList<Object[]>();
-        for (File file : JsonPoweredTestHelper.getTestFiles("/connection-string")) {
-            BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
-            for (BsonValue test : testDocument.getArray("tests")) {
-                data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
-                        test.asDocument().getString("uri").getValue(), test.asDocument()});
-            }
-        }
-        return data;
+    protected BsonDocument getDefinition() {
+        return definition;
     }
 
-    private void testInvalidUris() {
+    protected void testInvalidUris() {
         Throwable expectedError = null;
 
         try {
@@ -103,7 +70,7 @@ public class AbstractConnectionStringTest extends TestCase {
                 expectedError instanceof IllegalArgumentException);
     }
 
-    private void testValidHostIdentifiers() {
+    protected void testValidHostIdentifiers() {
         ConnectionString connectionString = null;
         try {
             connectionString = new ConnectionString(input);
@@ -114,7 +81,7 @@ public class AbstractConnectionStringTest extends TestCase {
         assertExpectedHosts(connectionString.getHosts());
     }
 
-    private void testValidOptions() {
+    protected void testValidOptions() {
         ConnectionString connectionString = null;
 
         try {
@@ -140,7 +107,7 @@ public class AbstractConnectionStringTest extends TestCase {
         }
     }
 
-    private void testValidAuth() {
+    protected void testValidAuth() {
         ConnectionString connectionString = null;
 
         try {
