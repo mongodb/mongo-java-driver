@@ -53,6 +53,7 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static com.mongodb.async.client.Fixture.getMongoClientBuilderFromConnectionString;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
@@ -153,10 +154,21 @@ public class RetryableWritesTest extends DatabaseTestCase {
 
         BsonDocument result = new BsonDocument();
         boolean wasException = false;
+        Exception raisedException = null;
         try {
             result = helper.getOperationResults(operation);
         } catch (Exception e) {
             wasException = true;
+            raisedException = e;
+        }
+
+        if (outcome.getBoolean("error", BsonBoolean.FALSE).getValue()) {
+            assertEquals(outcome.containsKey("error"), wasException);
+        } else if (wasException) {
+            fail("Unexpected exception: " + raisedException);
+        } else {
+            BsonDocument fixedExpectedResult = outcome.getDocument("result", new BsonDocument());
+            assertEquals(fixedExpectedResult, result.getDocument("result", new BsonDocument()));
         }
 
         if (outcome.containsKey("collection")) {
@@ -165,12 +177,6 @@ public class RetryableWritesTest extends DatabaseTestCase {
             assertEquals(outcome.getDocument("collection").getArray("data").getValues(), futureResult(futureResultCallback));
         }
 
-        if (outcome.getBoolean("error", BsonBoolean.FALSE).getValue()) {
-            assertEquals(outcome.containsKey("error"), wasException);
-        } else {
-            BsonDocument fixedExpectedResult = outcome.getDocument("result", new BsonDocument());
-            assertEquals(fixedExpectedResult, result.getDocument("result", new BsonDocument()));
-        }
     }
 
     @Parameterized.Parameters(name = "{1}")
