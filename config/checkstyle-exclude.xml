@@ -43,6 +43,9 @@
     <suppress checks="AvoidStarImportCheck" files=".*primer.*"/>
     <suppress checks="VisibilityModifierCheck" files=".*primer.*"/>
 
+    <!-- Allow printStackTrace in this file -->
+    <suppress checks="Regexp" files="CallbackResultHolder"/>
+
     <!--Do not check documentation tests classes -->
     <suppress checks="Javadoc*" files=".*documentation.*"/>
     <suppress checks="Regexp" files=".*documentation.*"/>
