@@ -19,14 +19,22 @@ package com.mongodb.async.client;
 import com.mongodb.Block;
 import com.mongodb.ClusterFixture;
 import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.async.FutureResultCallback;
+import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory;
 import com.mongodb.connection.SslSettings;
+import com.mongodb.connection.StreamFactoryFactory;
+import com.mongodb.connection.TlsChannelStreamFactoryFactory;
+import com.mongodb.connection.netty.NettyStreamFactoryFactory;
 import org.bson.Document;
 
+import static com.mongodb.ClusterFixture.getSslSettings;
+import static com.mongodb.ClusterFixture.isNotAtLeastJava7;
+import static com.mongodb.ClusterFixture.isNotAtLeastJava8;
 import static com.mongodb.connection.ClusterType.SHARDED;
 import static java.lang.Thread.sleep;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -51,6 +59,10 @@ public final class Fixture {
         return mongoClient;
     }
 
+    public static MongoClientSettings getMongoClientSettings() {
+        return getMongoClientBuilderFromConnectionString().build();
+    }
+
     public static com.mongodb.MongoClientSettings.Builder getMongoClientBuilderFromConnectionString() {
         com.mongodb.MongoClientSettings.Builder builder = com.mongodb.MongoClientSettings.builder()
                 .applyConnectionString(getConnectionString());
@@ -62,7 +74,24 @@ public final class Fixture {
                 }
             });
         }
+        builder.streamFactoryFactory(getStreamFactoryFactory());
         return builder;
+    }
+
+    public static StreamFactoryFactory getStreamFactoryFactory() {
+        if (getSslSettings().isEnabled()) {
+            if (isNotAtLeastJava8()) {
+                return NettyStreamFactoryFactory.builder().build();
+            } else {
+                return new TlsChannelStreamFactoryFactory();
+            }
+        } else {
+            if (isNotAtLeastJava7()) {
+                return NettyStreamFactoryFactory.builder().build();
+            } else {
+                return AsynchronousSocketChannelStreamFactoryFactory.builder().build();
+            }
+        }
     }
 
     public static synchronized ConnectionString getConnectionString() {
