@@ -46,6 +46,7 @@ import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactory;
+import com.mongodb.connection.TlsChannelStreamFactoryFactory;
 import com.mongodb.connection.netty.NettyStreamFactory;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
@@ -330,10 +331,22 @@ public final class ClusterFixture {
     public static StreamFactory getAsyncStreamFactory() {
         String streamType = System.getProperty("org.mongodb.async.type", "nio2");
 
-        if (streamType.equals("netty") || getSslSettings().isEnabled()) {
+        if (streamType.equals("netty")) {
             return new NettyStreamFactory(getSocketSettings(), getSslSettings());
         } else if (streamType.equals("nio2")) {
-            return new AsynchronousSocketChannelStreamFactory(getSocketSettings(), getSslSettings());
+            if (getSslSettings().isEnabled()) {
+                if (isNotAtLeastJava8()) {
+                    return new NettyStreamFactory(getSocketSettings(), getSslSettings());
+                } else {
+                    return new TlsChannelStreamFactoryFactory().create(getSocketSettings(), getSslSettings());
+                }
+            } else {
+                if (isNotAtLeastJava7()) {
+                    return new NettyStreamFactory(getSocketSettings(), getSslSettings());
+                } else {
+                    return new AsynchronousSocketChannelStreamFactory(getSocketSettings(), getSslSettings());
+                }
+            }
         } else {
             throw new IllegalArgumentException("Unsupported stream type " + streamType);
         }

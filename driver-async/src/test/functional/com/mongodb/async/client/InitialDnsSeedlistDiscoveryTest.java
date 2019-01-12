@@ -54,6 +54,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.mongodb.ClusterFixture.getSslSettings;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
+import static com.mongodb.async.client.Fixture.getStreamFactoryFactory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -170,11 +171,11 @@ public class InitialDnsSeedlistDiscoveryTest {
         assumeTrue("SSL settings don't match", getSslSettings().isEnabled() == sslSettings.isEnabled());
 
         com.mongodb.MongoClientSettings settings = com.mongodb.MongoClientSettings.builder()
-                .streamFactoryFactory(NettyStreamFactoryFactory.builder().build())  // TODO: why wasn't this necessary before?  Is it now?
+                .streamFactoryFactory(getStreamFactoryFactory())
                 .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
-            @Override
-            public void apply(final ClusterSettings.Builder builder) {
-                builder.applyConnectionString(connectionString)
+                    @Override
+                    public void apply(final ClusterSettings.Builder builder) {
+                        builder.applyConnectionString(connectionString)
                         .addClusterListener(new ClusterListener() {
                             @Override
                             public void clusterOpening(final ClusterOpeningEvent event) {
