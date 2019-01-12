@@ -18,14 +18,19 @@ package com.mongodb.async.client
 
 import com.mongodb.MongoCompressor
 import com.mongodb.MongoCredential
+import com.mongodb.MongoDriverInformation
 import com.mongodb.ReadConcern
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcern
-import com.mongodb.MongoDriverInformation
+import com.mongodb.async.FutureResultCallback
 import org.bson.Document
 import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
+import static com.mongodb.ClusterFixture.connectionString
+import static com.mongodb.ClusterFixture.getCredentialList
+import static com.mongodb.ClusterFixture.getSslSettings
+import static com.mongodb.ClusterFixture.isNotAtLeastJava8
 import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.ReadPreference.primary
@@ -35,6 +40,34 @@ import static com.mongodb.async.client.TestHelper.run
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class MongoClientsSpecification extends FunctionalSpecification {
+
+    @IgnoreIf({ isNotAtLeastJava8() })
+    def 'should connect'() {
+        given:
+        def connectionString = 'mongodb://'
+        if (!getCredentialList().isEmpty()) {
+           connectionString += (getCredentialList()[0].getUserName() + ':' + String.valueOf(getCredentialList()[0].getPassword()) + '@')
+        }
+        connectionString += getConnectionString().getHosts()[0] + '/?'
+        connectionString += 'ssl=' + getSslSettings().isEnabled() + '&'
+        connectionString += 'sslInvalidHostNameAllowed=' + getSslSettings().isInvalidHostNameAllowed() + '&'
+        connectionString += 'streamType=' + streamType
+
+        when:
+        def client = MongoClients.create(connectionString)
+        def callback = new FutureResultCallback()
+        client.getDatabase('admin').runCommand(new Document('ping', 1), callback)
+        callback.get()
+
+        then:
+        noExceptionThrown()
+
+        cleanup:
+        client?.close()
+
+        where:
+        streamType << ['netty', 'nio2']
+    }
 
     def 'should apply connection string to cluster settings'() {
         when:
