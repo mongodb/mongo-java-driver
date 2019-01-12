@@ -21,6 +21,9 @@
         "http://www.puppycrawl.com/dtds/suppressions_1_1.dtd">
 
 <suppressions>
+
+    <suppress checks="VisibilityModifier" files="com[\\/]mongodb[\\/]internal[\\/]connection[\\/]tlschannel[\\/]"/>
+
     <suppress checks="MethodLength" files="QuickTour"/>
     <suppress checks="Regexp" files="QuickTour"/>
 
