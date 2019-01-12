@@ -17,13 +17,15 @@
 package com.mongodb.async.client;
 
 import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoDriverInformation;
-import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
+import com.mongodb.MongoInternalException;
+import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.DefaultClusterFactory;
-import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.StreamFactoryFactory;
+import com.mongodb.connection.TlsChannelStreamFactoryFactory;
 import com.mongodb.lang.Nullable;
 import org.bson.codecs.configuration.CodecRegistry;
 
@@ -38,7 +40,6 @@ import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
  * @since 3.0
  * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
-@SuppressWarnings("deprecation")
 @Deprecated
 public final class MongoClients {
 
@@ -129,7 +130,6 @@ public final class MongoClients {
      * @throws IllegalArgumentException if the connection string's stream type is not one of "netty" or "nio2"
      * @see MongoClients#create(ConnectionString)
      */
-    @SuppressWarnings("deprecation")
     public static MongoClient create(final ConnectionString connectionString,
                                      @Nullable final MongoDriverInformation mongoDriverInformation) {
 
@@ -158,26 +158,33 @@ public final class MongoClients {
      * @return the client
      * @since 3.7
      */
-    @SuppressWarnings("deprecation")
     public static MongoClient create(final com.mongodb.MongoClientSettings settings,
                                      @Nullable final MongoDriverInformation mongoDriverInformation) {
         return create(MongoClientSettings.createFromClientSettings(settings), mongoDriverInformation, null);
     }
 
-    @SuppressWarnings("deprecation")
     private static MongoClient create(final MongoClientSettings settings,
                                       @Nullable final MongoDriverInformation mongoDriverInformation,
                                       @Nullable final String requestedStreamType) {
         String streamType = getStreamType(requestedStreamType);
-        if (isNetty(streamType) && settings.getStreamFactoryFactory() == null) {
-            return NettyMongoClients.create(settings, mongoDriverInformation);
+        if (settings.getStreamFactoryFactory() == null) {
+           if (isNetty(streamType)) {
+               return NettyMongoClients.create(settings, mongoDriverInformation);
+           } else if (isNio(streamType)) {
+               if (settings.getSslSettings().isEnabled()) {
+                   return createWithTlsChannel(settings, mongoDriverInformation);
+               } else {
+                   return createWithAsynchronousSocketChannel(settings, mongoDriverInformation);
+               }
+           } else {
+               throw new IllegalArgumentException("Unsupported stream type: " + streamType);
+           }
         } else {
-            return new MongoClientImpl(settings, createCluster(settings, mongoDriverInformation,
-                    getStreamFactory(settings, streamType, false), getStreamFactory(settings, streamType, true)), (Closeable) null);
+            return createMongoClient(settings, mongoDriverInformation, getStreamFactory(settings, false),
+                    getStreamFactory(settings, true), null);
         }
     }
 
-    @SuppressWarnings("deprecation")
     static MongoClient createMongoClient(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation,
                                          final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory,
                                          @Nullable final Closeable externalResourceCloser) {
@@ -185,7 +192,6 @@ public final class MongoClients {
                 externalResourceCloser);
     }
 
-    @SuppressWarnings("deprecation")
     private static Cluster createCluster(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation,
                                          final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory) {
         notNull("settings", settings);
@@ -218,25 +224,57 @@ public final class MongoClients {
         return com.mongodb.MongoClientSettings.getDefaultCodecRegistry();
     }
 
-    @SuppressWarnings("deprecation")
-    private static StreamFactory getStreamFactory(final MongoClientSettings settings, final String streamType,
-                                                  final boolean isHeartbeat) {
-        StreamFactoryFactory streamFactoryFactory = settings.getStreamFactoryFactory();
-        SocketSettings socketSettings = isHeartbeat ? settings.getHeartbeatSocketSettings() : settings.getSocketSettings();
-        if (streamFactoryFactory != null) {
-            return streamFactoryFactory.create(socketSettings, settings.getSslSettings());
-        } else if (isNio2(streamType)) {
-            return new AsynchronousSocketChannelStreamFactory(socketSettings, settings.getSslSettings());
-        } else {
-            throw new IllegalArgumentException("Unsupported stream type: " + streamType);
+
+    private static MongoClient createWithTlsChannel(final MongoClientSettings settings,
+                                                    @Nullable final MongoDriverInformation mongoDriverInformation) {
+        if (!isJava8()) {
+            throw new MongoClientException("TLS is only supported natively with Java 8 and above. Please use Netty instead");
         }
+        final TlsChannelStreamFactoryFactory streamFactoryFactory = new TlsChannelStreamFactoryFactory();
+        StreamFactory streamFactory = streamFactoryFactory.create(settings.getSocketSettings(), settings.getSslSettings());
+        StreamFactory heartbeatStreamFactory = streamFactoryFactory.create(settings.getHeartbeatSocketSettings(),
+                settings.getSslSettings());
+        return createMongoClient(settings, mongoDriverInformation, streamFactory, heartbeatStreamFactory,
+                new Closeable() {
+                    @Override
+                    public void close() {
+                        streamFactoryFactory.close();
+                    }
+                });
+    }
+
+    private static boolean isJava8() {
+        try {
+            Class.forName("java.time.Instant");
+            return true;
+        } catch (ClassNotFoundException e) {
+            return false;
+        }
+    }
+
+    private static MongoClient createWithAsynchronousSocketChannel(final MongoClientSettings settings,
+                                                                   @Nullable final MongoDriverInformation mongoDriverInformation) {
+        StreamFactoryFactory streamFactoryFactory = new AsynchronousSocketChannelStreamFactoryFactory();
+        StreamFactory streamFactory = streamFactoryFactory.create(settings.getSocketSettings(), settings.getSslSettings());
+        StreamFactory heartbeatStreamFactory = streamFactoryFactory.create(settings.getHeartbeatSocketSettings(),
+                settings.getSslSettings());
+        return createMongoClient(settings, mongoDriverInformation, streamFactory, heartbeatStreamFactory, null);
+    }
+
+    private static StreamFactory getStreamFactory(final MongoClientSettings settings, final boolean isHeartbeat) {
+        StreamFactoryFactory streamFactoryFactory = settings.getStreamFactoryFactory();
+        if (streamFactoryFactory == null) {
+            throw new MongoInternalException("should not happen");
+        }
+        return streamFactoryFactory.create(isHeartbeat ? settings.getHeartbeatSocketSettings() : settings.getSocketSettings(),
+                settings.getSslSettings());
     }
 
     private static boolean isNetty(final String streamType) {
         return streamType.toLowerCase().equals("netty");
     }
 
-    private static boolean isNio2(final String streamType) {
+    private static boolean isNio(final String streamType) {
         return streamType.toLowerCase().equals("nio2");
     }
 
