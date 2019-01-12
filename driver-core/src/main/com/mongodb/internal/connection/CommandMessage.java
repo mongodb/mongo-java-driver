@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.MongoClientException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.connection.ByteBufferBsonOutput;
@@ -49,6 +50,8 @@ import static com.mongodb.connection.ClusterConnectionMode.SINGLE;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.internal.connection.BsonWriterHelper.writePayload;
 import static com.mongodb.internal.connection.ReadConcernHelper.getReadConcernDocument;
+import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_TWO_WIRE_VERSION;
+import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_ZERO_WIRE_VERSION;
 import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION;
 
 /**
@@ -242,6 +245,7 @@ public final class CommandMessage extends RequestMessage {
         }
         boolean firstMessageInTransaction = sessionContext.notifyMessageSent();
         if (sessionContext.hasActiveTransaction()) {
+            checkServerVersionForTransactionSupport();
             extraElements.add(new BsonElement("txnNumber", new BsonInt64(sessionContext.getTransactionNumber())));
             if (firstMessageInTransaction) {
                 extraElements.add(new BsonElement("startTransaction", BsonBoolean.TRUE));
@@ -258,6 +262,15 @@ public final class CommandMessage extends RequestMessage {
         }
         return extraElements;
     }
+
+    private void checkServerVersionForTransactionSupport() {
+        int wireVersion = getSettings().getMaxWireVersion();
+        if (wireVersion < FOUR_DOT_ZERO_WIRE_VERSION
+                || (wireVersion < FOUR_DOT_TWO_WIRE_VERSION && getSettings().getServerType() == SHARD_ROUTER)) {
+            throw new MongoClientException("Transactions are not supported by the MongoDB cluster to which this client is connected.");
+        }
+    }
+
 
     private void addReadConcernDocument(final List<BsonElement> extraElements, final SessionContext sessionContext) {
         BsonDocument readConcernDocument = getReadConcernDocument(sessionContext);
