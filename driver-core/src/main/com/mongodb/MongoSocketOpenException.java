@@ -34,4 +34,15 @@ public class MongoSocketOpenException extends MongoSocketException {
     public MongoSocketOpenException(final String message, final ServerAddress address, final Throwable cause) {
         super(message, address, cause);
     }
+
+    /**
+     * Construct an instance.
+     *
+     * @param message the message
+     * @param address the server address
+     * @since 3.10
+     */
+    public MongoSocketOpenException(final String message, final ServerAddress address) {
+        super(message, address);
+    }
 }
