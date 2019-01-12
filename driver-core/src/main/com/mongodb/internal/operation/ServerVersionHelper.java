@@ -29,6 +29,7 @@ public final class ServerVersionHelper {
     public static final int THREE_DOT_FOUR_WIRE_VERSION = 5;
     public static final int THREE_DOT_SIX_WIRE_VERSION = 6;
     public static final int FOUR_DOT_ZERO_WIRE_VERSION = 7;
+    public static final int FOUR_DOT_TWO_WIRE_VERSION = 8;
 
     public static boolean serverIsAtLeastVersionThreeDotZero(final ConnectionDescription description) {
         return description.getMaxWireVersion() >= THREE_DOT_ZERO_WIRE_VERSION;
@@ -68,6 +69,10 @@ public final class ServerVersionHelper {
 
     public static boolean serverIsLessThanVersionFourDotZero(final ConnectionDescription description) {
         return description.getMaxWireVersion() < FOUR_DOT_ZERO_WIRE_VERSION;
+    }
+
+    public static boolean serverIsLessThanVersionFourDotTwo(final ConnectionDescription description) {
+        return description.getMaxWireVersion() < FOUR_DOT_TWO_WIRE_VERSION;
     }
 
     private ServerVersionHelper() {
