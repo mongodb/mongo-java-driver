@@ -139,14 +139,20 @@ configure(javaCodeCheckedProjects) {
         }
 
         if (project.buildingWith('ssl.enabled')) {
-            systemProperties(
-                    'javax.net.ssl.keyStoreType': project.property('ssl.keyStoreType'),
-                    'javax.net.ssl.keyStore': project.property('ssl.keyStore'),
-                    'javax.net.ssl.keyStorePassword': project.property('ssl.keyStorePassword'),
-                    'javax.net.ssl.trustStoreType': project.property('ssl.trustStoreType'),
-                    'javax.net.ssl.trustStore': project.property('ssl.trustStore'),
-                    'javax.net.ssl.trustStorePassword': project.property('ssl.trustStorePassword')
-            )
+            if (project.hasProperty('ssl.keyStoreType')) {
+                systemProperties(
+                        'javax.net.ssl.keyStoreType': project.property('ssl.keyStoreType'),
+                        'javax.net.ssl.keyStore': project.property('ssl.keyStore'),
+                        'javax.net.ssl.keyStorePassword': project.property('ssl.keyStorePassword'),
+                )
+            }
+            if (project.hasProperty('ssl.trustStoreType')) {
+                systemProperties(
+                        'javax.net.ssl.trustStoreType': project.property('ssl.trustStoreType'),
+                        'javax.net.ssl.trustStore': project.property('ssl.trustStore'),
+                        'javax.net.ssl.trustStorePassword': project.property('ssl.trustStorePassword')
+                )
+            }
         }
 
         if (project.buildingWith('gssapi.enabled')) {
