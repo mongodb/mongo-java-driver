@@ -16,6 +16,7 @@
 
 package com.mongodb.internal.connection
 
+import com.mongodb.MongoClientException
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
@@ -45,6 +46,7 @@ import spock.lang.Specification
 import java.nio.ByteBuffer
 
 import static com.mongodb.connection.SplittablePayload.Type.INSERT
+import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_ZERO_WIRE_VERSION
 import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_FOUR_WIRE_VERSION
 import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION
 
@@ -385,6 +387,45 @@ class CommandMessageSpecification extends Specification {
 
         then:
         thrown(BsonMaximumSizeExceededException)
+    }
+
+    def 'should throw if wire version does not support transactions'() {
+        given:
+        def messageSettings = MessageSettings.builder().maxWireVersion(THREE_DOT_SIX_WIRE_VERSION).build()
+        def payload = new SplittablePayload(INSERT, [new BsonDocument('a', new BsonInt32(1))])
+        def message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
+                false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE)
+        def output = new BasicOutputBuffer()
+        def sessionContext = Stub(SessionContext) {
+            getReadConcern() >> ReadConcern.DEFAULT
+            hasActiveTransaction() >> true
+        }
+
+        when:
+        message.encode(output, sessionContext)
+
+        then:
+        thrown(MongoClientException)
+    }
+
+    def 'should throw if wire version and sharded cluster does not support transactions'() {
+        given:
+        def messageSettings = MessageSettings.builder().serverType(ServerType.SHARD_ROUTER)
+                .maxWireVersion(FOUR_DOT_ZERO_WIRE_VERSION).build()
+        def payload = new SplittablePayload(INSERT, [new BsonDocument('a', new BsonInt32(1))])
+        def message = new CommandMessage(namespace, command, fieldNameValidator, ReadPreference.primary(), messageSettings,
+                false, payload, fieldNameValidator, ClusterConnectionMode.MULTIPLE)
+        def output = new BasicOutputBuffer()
+        def sessionContext = Stub(SessionContext) {
+            getReadConcern() >> ReadConcern.DEFAULT
+            hasActiveTransaction() >> true
+        }
+
+        when:
+        message.encode(output, sessionContext)
+
+        then:
+        thrown(MongoClientException)
     }
 
     private static BsonDocument getCommandDocument(ByteBufNIO byteBuf, ReplyHeader replyHeader) {
