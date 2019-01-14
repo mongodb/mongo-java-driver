@@ -18,7 +18,7 @@
 </head>
 
   <body>
-  
+
   <section id="container" class="">
       <header id="header-db" class="row" role="navigation">
   <div class="header-content">
@@ -26,13 +26,13 @@
         <i class="fa fa-bars"></i>
         <div class="icon-reorder tooltips" data-original-title="Toggle Navigation" data-placement="bottom"></div>
     </div>
-    
+
     <div class="logo pull-left">
       <a href="/mongo-java-driver/3.9/../">
         <img src="/mongo-java-driver/3.9/img/logo-mongodb-header.png", alt="MongoDB.org" />
       </a>
     </div>
-    
+
     <div>
 <div class="nav-items pull-right">
   <a href="https://university.mongodb.com" data-toggle="tooltip" data-placement="bottom" title="Free Online Classes">MongoDB University</a>
@@ -63,7 +63,7 @@
           <a class="version pull-right" href="/mongo-java-driver/3.9">3.9</a>
         </h3>
 
-        
+
         <ul class="sidebar-menu"><li class="toctree-l1">
     <a href="/mongo-java-driver/3.9/whats-new/"><i class='fa fa-level-up'></i>What&#39;s New</a>
   </li><li class="toctree-l1">
@@ -211,7 +211,7 @@
   </li><li class="toctree-l1">
     <a href="/mongo-java-driver/3.9/issues-help/"><i class='fa fa-life-ring'></i>Issues &amp; Help</a>
   </li></ul>
-        
+
     </div>
   </div></aside>
 <div class="option-popup closed hidden" id="optionsVersionsPopup">
@@ -222,7 +222,7 @@
 </div>
 <div class="option-body">
   <ul>
-      
+
       <li>
         <label>Version</label>
         <div class="btn-group btn-group-xs pull-right">
@@ -234,10 +234,10 @@
         </div>
       </li>
 
-   
 
 
-    
+
+
 
   </ul>
 </div>
@@ -249,8 +249,8 @@
               <div class="documentwrapper">
                 <div class="bodywrapper">
                   <div class="body">
- 
-<a class="edit-link" href="https://github.com/mongodb/mongo-java-driver/blob/master/docs/reference/content/bson/codecs.md" target="_blank" title="Edit bson/codecs.md on GitHub"><i class="fa fa-pencil-square-o"></i></a><div class="bc">
+
+<a class="edit-link" href="https://github.com/mongodb/mongo-java-driver/blob/3.9.x/docs/reference/content/bson/codecs.md" target="_blank" title="Edit bson/codecs.md on GitHub"><i class="fa fa-pencil-square-o"></i></a><div class="bc">
 <ul><li><a href="/mongo-java-driver/3.9/bson/">BSON</a> <i class="fa fa-angle-right"></i></li><li>Codec and CodecRegistry</li>
 </ul>
 </div>
@@ -331,16 +331,16 @@ construct <code>Codec</code> instances that require a <code>CodecRegistry</code>
 <code>CodecProvider</code> for the <code>Document</code> class:</p>
 
 <pre><code class="language-java">public class DocumentCodecProvider implements CodecProvider {
-    @Override                                                                                          
-    public &lt;T&gt; Codec&lt;T&gt; get(final Class&lt;T&gt; clazz, final CodecRegistry registry) {                      
-        if (clazz == Document.class) {                      
+    @Override
+    public &lt;T&gt; Codec&lt;T&gt; get(final Class&lt;T&gt; clazz, final CodecRegistry registry) {
+        if (clazz == Document.class) {
             // construct DocumentCodec with a CodecRegistry
-            return (Codec&lt;T&gt;) new DocumentCodec(registry);           
-        }                                                                                              
-                                                                                                       
-        // CodecProvider returns null if it's not a provider for the requresed Class 
-        return null;                                          
-    }                                                                                                  
+            return (Codec&lt;T&gt;) new DocumentCodec(registry);
+        }
+
+        // CodecProvider returns null if it's not a provider for the requresed Class
+        return null;
+    }
 }
 </code></pre>
 
@@ -357,7 +357,7 @@ abstracted via the <code>BsonTypeClassMap</code> class.</p>
 
 <p>The <a href="/mongo-java-driver/3.9/javadoc?org/bson/codecs/BsonTypeClassMap.html
 "><code>BsonTypeClassMap</code></a> class simply maps each value in the <code>BsonType</code>
-enumeration to a Java class.  It contains a sensible set of default mappings that can easily be changed by passing an a <code>Map&lt;BsonType, 
+enumeration to a Java class.  It contains a sensible set of default mappings that can easily be changed by passing an a <code>Map&lt;BsonType,
 Class&lt;?&gt;&gt;</code> instance to the constructor with any replacement mappings to apply.  Consider the case where an application wants to decode
 all BSON DateTime values to a Java 8 <code>Instant</code> instead of the default <code>Date</code>:</p>
 
@@ -372,20 +372,20 @@ BsonTypeClassMap bsonTypeClassMap = new BsonTypeClassMap(replacements);
 
 <pre><code class="language-java">public class DocumentCodecProvider implements CodecProvider {
     private final BsonTypeClassMap bsonTypeClassMap;
-    
-    public DocumentCodecProvider(final BsonTypeClassMap bsonTypeClassMap) { 
-        this.bsonTypeClassMap = bsonTypeClassMap;                                       
-    }                                                                       
-    
-    @Override                                                                                          
-    public &lt;T&gt; Codec&lt;T&gt; get(final Class&lt;T&gt; clazz, final CodecRegistry registry) {                      
-        if (clazz == Document.class) {                      
+
+    public DocumentCodecProvider(final BsonTypeClassMap bsonTypeClassMap) {
+        this.bsonTypeClassMap = bsonTypeClassMap;
+    }
+
+    @Override
+    public &lt;T&gt; Codec&lt;T&gt; get(final Class&lt;T&gt; clazz, final CodecRegistry registry) {
+        if (clazz == Document.class) {
             // construct DocumentCodec with a CodecRegistry and a BsonTypeClassMap
-            return (Codec&lt;T&gt;) new DocumentCodec(registry, bsonTypeClassMap);           
-        }                                                                                              
-                                                                                                       
-        return null;                                                                                   
-    }                                                                                                  
+            return (Codec&lt;T&gt;) new DocumentCodec(registry, bsonTypeClassMap);
+        }
+
+        return null;
+    }
 }
 </code></pre>
 
@@ -394,9 +394,9 @@ to determine with type to decode each BSON value to, then use the <code>CodecReg
 
 <p>Finally, we create a <code>CodecRegistry</code> instance</p>
 
-<pre><code class="language-bash">CodecRegistry defaultCodecRegistry = ... 
-DocumentCodecProvider documentCodecProvider = ... 
-Codec&lt;Instant&gt; instantCodec = ...   
+<pre><code class="language-bash">CodecRegistry defaultCodecRegistry = ...
+DocumentCodecProvider documentCodecProvider = ...
+Codec&lt;Instant&gt; instantCodec = ...
 codecRegistry = CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(instantCodec),
                                                CodecRegistries.fromProviders(documentCodecProvider),
                                                defaultCodecRegistry);

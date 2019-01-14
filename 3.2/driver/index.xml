@@ -8,12 +8,12 @@
     <language>en-us</language>
     <lastBuildDate>Wed, 05 Aug 2015 12:00:00 +0000</lastBuildDate>
     <atom:link href="/mongo-java-driver/3.2/driver/index.xml" rel="self" type="application/rss+xml" />
-    
+
     <item>
       <title>GridFS</title>
       <link>/mongo-java-driver/3.2/driver/reference/gridfs/</link>
       <pubDate>Wed, 05 Aug 2015 12:00:00 +0000</pubDate>
-      
+
       <guid>/mongo-java-driver/3.2/driver/reference/gridfs/</guid>
       <description>
 
@@ -33,7 +33,7 @@
 &lt;/p&gt;
 
 &lt;p&gt;The following code snippets come from the &lt;code&gt;GridFSTour.java&lt;/code&gt; example code
-that can be found with the &lt;a href=&#34;https://github.com/mongodb/mongo-java-driver/blob/master/driver/src/examples/gridfs/GridFSTour.java
+that can be found with the &lt;a href=&#34;https://github.com/mongodb/mongo-java-driver/blob/3.2.x/driver/src/examples/gridfs/GridFSTour.java
 &#34;&gt;driver source&lt;/a&gt;.&lt;/p&gt;
 
 &lt;h2 id=&#34;connecting-to-gridfs&#34;&gt;Connecting to GridFS&lt;/h2&gt;
@@ -225,12 +225,12 @@ System.out.println(new String(bytesToWriteTo, StandardCharsets.UTF_8));
 &lt;/code&gt;&lt;/pre&gt;
 </description>
     </item>
-    
+
     <item>
       <title>Authenticating</title>
       <link>/mongo-java-driver/3.2/driver/reference/connecting/authenticating/</link>
       <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
-      
+
       <guid>/mongo-java-driver/3.2/driver/reference/connecting/authenticating/</guid>
       <description>
 
@@ -411,12 +411,12 @@ MongoCredential credential = MongoCredential.createPlainCredential(user, &amp;qu
 &lt;/p&gt;
 </description>
     </item>
-    
+
     <item>
       <title>Management</title>
       <link>/mongo-java-driver/3.2/driver/reference/management/</link>
       <pubDate>Thu, 19 Mar 2015 14:27:51 -0400</pubDate>
-      
+
       <guid>/mongo-java-driver/3.2/driver/reference/management/</guid>
       <description>
 
@@ -430,12 +430,12 @@ MongoCredential credential = MongoCredential.createPlainCredential(user, &amp;qu
 &lt;/ul&gt;
 </description>
     </item>
-    
+
     <item>
       <title>CRUD Operations</title>
       <link>/mongo-java-driver/3.2/driver/reference/crud/</link>
       <pubDate>Thu, 19 Mar 2015 12:53:30 -0400</pubDate>
-      
+
       <guid>/mongo-java-driver/3.2/driver/reference/crud/</guid>
       <description>
 
@@ -531,14 +531,14 @@ possible for new applications that require interoperability across multiple driv
 that with a &lt;code&gt;CodecRegistry&lt;/code&gt;.&lt;/p&gt;
 
 &lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;// Replaces the default UuidCodec with one that uses the new standard UUID representation
-CodecRegistry codecRegistry = 
+CodecRegistry codecRegistry =
 CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(new UuidCodec(UuidRepresentation.STANDARD)),
                                MongoClient.getDefaultCodecRegistry());
 
 // globally
 MongoClientOptions options = MongoClientOptions.builder()
                                                 .codecRegistry(codecRegistry).build();
-MongoClient client = new MongoClient(new ServerAddress(), options);  
+MongoClient client = new MongoClient(new ServerAddress(), options);
 
 // or per database
 MongoDatabase database = client.getDatabase(&amp;quot;mydb&amp;quot;)
@@ -577,8 +577,8 @@ MongoCollection&amp;lt;Document&amp;gt; collection = database.getCollection(&amp
 are invoked, the three methods discussed above return new instances.  Applications should therefore be sure to store the result of the
 method call.  For example:&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;// CORRECT: The results of the method calls are chained and the final one is referenced 
-// by collection 
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;// CORRECT: The results of the method calls are chained and the final one is referenced
+// by collection
 MongoCollection&amp;lt;Document&amp;gt; collection = database.getCollection(&amp;quot;mycoll&amp;quot;)
                                                 .withWriteConcern(WriteConcern.JOURNALED)
                                                 .withReadPreference(ReadPreference.primary())
@@ -591,12 +591,12 @@ collection.withReadPreference(ReadPreference.secondary());
 &lt;/code&gt;&lt;/pre&gt;
 </description>
     </item>
-    
+
     <item>
       <title>Connecting</title>
       <link>/mongo-java-driver/3.2/driver/reference/connecting/</link>
       <pubDate>Thu, 19 Mar 2015 12:53:30 -0400</pubDate>
-      
+
       <guid>/mongo-java-driver/3.2/driver/reference/connecting/</guid>
       <description>
 
@@ -611,12 +611,12 @@ collection.withReadPreference(ReadPreference.secondary());
 &lt;/ul&gt;
 </description>
     </item>
-    
+
     <item>
       <title>Connection Settings</title>
       <link>/mongo-java-driver/3.2/driver/reference/connecting/connection-settings/</link>
       <pubDate>Thu, 19 Mar 2015 12:53:30 -0400</pubDate>
-      
+
       <guid>/mongo-java-driver/3.2/driver/reference/connecting/connection-settings/</guid>
       <description>
 
@@ -719,12 +719,12 @@ MongoClient client = new MongoClient(uri);
 &lt;/code&gt;&lt;/pre&gt;
 </description>
     </item>
-    
+
     <item>
       <title>Monitoring</title>
       <link>/mongo-java-driver/3.2/driver/reference/management/monitoring/</link>
       <pubDate>Thu, 19 Mar 2015 12:53:26 -0400</pubDate>
-      
+
       <guid>/mongo-java-driver/3.2/driver/reference/management/monitoring/</guid>
       <description>
 
@@ -768,62 +768,62 @@ instances of a class that implements the &lt;a href=&#34;http://api.mongodb.org/
 &#34;&gt;&lt;code&gt;CommandListener&lt;/code&gt;&lt;/a&gt; interface.   Consider
 the following, obviously simplistic, implementation of the &lt;code&gt;CommandListener&lt;/code&gt; interface:&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public class TestCommandListener implements CommandListener {                        
-    @Override                                                                                                        
-    public void commandStarted(final CommandStartedEvent event) {                                                    
-        System.out.println(String.format(&amp;quot;Sent command &#39;%s:%s&#39; with id %s to database &#39;%s&#39; &amp;quot;                         
-                                         + &amp;quot;on connection &#39;%s&#39; to server &#39;%s&#39;&amp;quot;,                                      
-                                         event.getCommandName(),                                                     
-                                         event.getCommand().get(event.getCommandName()),                             
-                                         event.getRequestId(),                                                       
-                                         event.getDatabaseName(),                                                    
-                                         event.getConnectionDescription()                                            
-                                              .getConnectionId(),                                                    
-                                         event.getConnectionDescription().getServerAddress()));                      
-    }                                                                                                                
-                                                                                                                     
-    @Override                                                                                                        
-    public void commandSucceeded(final CommandSucceededEvent event) {                                                
-        System.out.println(String.format(&amp;quot;Successfully executed command &#39;%s&#39; with id %s &amp;quot;                            
-                                         + &amp;quot;on connection &#39;%s&#39; to server &#39;%s&#39;&amp;quot;,                                      
-                                         event.getCommandName(),                                                     
-                                         event.getRequestId(),                                                       
-                                         event.getConnectionDescription()                                            
-                                              .getConnectionId(),                                                    
-                                         event.getConnectionDescription().getServerAddress()));                      
-    }                                                                                                                
-                                                                                                                     
-    @Override                                                                                                        
-    public void commandFailed(final CommandFailedEvent event) {                                                      
-        System.out.println(String.format(&amp;quot;Failed execution of command &#39;%s&#39; with id %s &amp;quot;                              
-                                         + &amp;quot;on connection &#39;%s&#39; to server &#39;%s&#39; with exception &#39;%s&#39;&amp;quot;,                  
-                                         event.getCommandName(),                                                     
-                                         event.getRequestId(),                                                       
-                                         event.getConnectionDescription()                                            
-                                              .getConnectionId(),                                                    
-                                         event.getConnectionDescription().getServerAddress(),                        
-                                         event.getThrowable()));                                                     
-    }                                                                                                                
-}                                                                                                                            
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;public class TestCommandListener implements CommandListener {
+    @Override
+    public void commandStarted(final CommandStartedEvent event) {
+        System.out.println(String.format(&amp;quot;Sent command &#39;%s:%s&#39; with id %s to database &#39;%s&#39; &amp;quot;
+                                         + &amp;quot;on connection &#39;%s&#39; to server &#39;%s&#39;&amp;quot;,
+                                         event.getCommandName(),
+                                         event.getCommand().get(event.getCommandName()),
+                                         event.getRequestId(),
+                                         event.getDatabaseName(),
+                                         event.getConnectionDescription()
+                                              .getConnectionId(),
+                                         event.getConnectionDescription().getServerAddress()));
+    }
+
+    @Override
+    public void commandSucceeded(final CommandSucceededEvent event) {
+        System.out.println(String.format(&amp;quot;Successfully executed command &#39;%s&#39; with id %s &amp;quot;
+                                         + &amp;quot;on connection &#39;%s&#39; to server &#39;%s&#39;&amp;quot;,
+                                         event.getCommandName(),
+                                         event.getRequestId(),
+                                         event.getConnectionDescription()
+                                              .getConnectionId(),
+                                         event.getConnectionDescription().getServerAddress()));
+    }
+
+    @Override
+    public void commandFailed(final CommandFailedEvent event) {
+        System.out.println(String.format(&amp;quot;Failed execution of command &#39;%s&#39; with id %s &amp;quot;
+                                         + &amp;quot;on connection &#39;%s&#39; to server &#39;%s&#39; with exception &#39;%s&#39;&amp;quot;,
+                                         event.getCommandName(),
+                                         event.getRequestId(),
+                                         event.getConnectionDescription()
+                                              .getConnectionId(),
+                                         event.getConnectionDescription().getServerAddress(),
+                                         event.getThrowable()));
+    }
+}
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;and an instance of &lt;code&gt;MongoClientOptions&lt;/code&gt; configured with an instance of &lt;code&gt;TestCommandListener&lt;/code&gt;:&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClientOptions options = MongoClientOptions.builder()                            
-                                               .addCommandListener(new TestCommandListener())  
-                                               .build();                             
+&lt;pre&gt;&lt;code class=&#34;language-java&#34;&gt;MongoClientOptions options = MongoClientOptions.builder()
+                                               .addCommandListener(new TestCommandListener())
+                                               .build();
 &lt;/code&gt;&lt;/pre&gt;
 
 &lt;p&gt;A &lt;code&gt;MongoClient&lt;/code&gt; configured with these options will print a message to &lt;code&gt;System.out&lt;/code&gt; before sending each command to a MongoDB server, and
 another message upon either successful completion or failure of each command.&lt;/p&gt;
 </description>
     </item>
-    
+
     <item>
       <title>SSL</title>
       <link>/mongo-java-driver/3.2/driver/reference/connecting/ssl/</link>
       <pubDate>Thu, 19 Mar 2015 12:53:26 -0400</pubDate>
-      
+
       <guid>/mongo-java-driver/3.2/driver/reference/connecting/ssl/</guid>
       <description>
 
@@ -865,7 +865,7 @@ presented by the server:&lt;/p&gt;
 &lt;p&gt;The trust store is typically created with the &lt;a href=&#34;http://docs.oracle.com/javase/8/docs/technotes/tools/unix/keytool.html&#34;&gt;keytool&lt;/a&gt;
 command line program provided as part of the JDK.  For example:&lt;/p&gt;
 
-&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;    keytool -importcert -trustcacerts -file &amp;lt;path to certificate authority file&amp;gt; 
+&lt;pre&gt;&lt;code class=&#34;language-bash&#34;&gt;    keytool -importcert -trustcacerts -file &amp;lt;path to certificate authority file&amp;gt;
         -keystore &amp;lt;path to trust store&amp;gt; -storepass &amp;lt;password&amp;gt;
 &lt;/code&gt;&lt;/pre&gt;
 
@@ -884,12 +884,12 @@ MongoDB server:&lt;/p&gt;
 &lt;a href=&#34;http://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/JSSERefGuide.html&#34;&gt;JSSE Reference Guide&lt;/a&gt;.&lt;/p&gt;
 </description>
     </item>
-    
+
     <item>
       <title>Logging</title>
       <link>/mongo-java-driver/3.2/driver/reference/management/logging/</link>
       <pubDate>Wed, 18 Mar 2015 21:14:20 -0400</pubDate>
-      
+
       <guid>/mongo-java-driver/3.2/driver/reference/management/logging/</guid>
       <description>
 
@@ -924,12 +924,12 @@ JUL (&lt;code&gt;java.util.logging&lt;/code&gt;).&lt;/p&gt;
 &lt;/ul&gt;
 </description>
     </item>
-    
+
     <item>
       <title>Admin Quick Tour</title>
       <link>/mongo-java-driver/3.2/driver/getting-started/quick-tour-admin/</link>
       <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
-      
+
       <guid>/mongo-java-driver/3.2/driver/getting-started/quick-tour-admin/</guid>
       <description>
 
@@ -941,7 +941,7 @@ use the Java driver to execute basic CRUD operations.  In this section we&amp;rs
 administrative features available in the driver.&lt;/p&gt;
 
 &lt;p&gt;The following code snippets come from the &lt;code&gt;QuickTourAdmin.java&lt;/code&gt; example code
-that can be found with the &lt;a href=&#34;https://github.com/mongodb/mongo-java-driver/blob/master/driver/src/examples/tour/QuickTourAdmin.java
+that can be found with the &lt;a href=&#34;https://github.com/mongodb/mongo-java-driver/blob/3.2.x/driver/src/examples/tour/QuickTourAdmin.java
 &#34;&gt;driver
 source&lt;/a&gt;.&lt;/p&gt;
 
@@ -1099,12 +1099,12 @@ System.out.println(buildInfo);
 &lt;/code&gt;&lt;/pre&gt;
 </description>
     </item>
-    
+
     <item>
       <title>Getting Started</title>
       <link>/mongo-java-driver/3.2/driver/getting-started/</link>
       <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
-      
+
       <guid>/mongo-java-driver/3.2/driver/getting-started/</guid>
       <description>
 
@@ -1126,12 +1126,12 @@ System.out.println(buildInfo);
 &lt;/ul&gt;
 </description>
     </item>
-    
+
     <item>
       <title>Installation Guide</title>
       <link>/mongo-java-driver/3.2/driver/getting-started/installation-guide/</link>
       <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
-      
+
       <guid>/mongo-java-driver/3.2/driver/getting-started/installation-guide/</guid>
       <description>
 
@@ -1188,13 +1188,13 @@ jar (described below) instead.&lt;/p&gt;
     &lt;p&gt;You can also download the jars
         &lt;a href=&#34;https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongodb-driver/3.2.2&#34; target=&#34;_blank&#34;&gt;directly&lt;/a&gt;
         from sonatype.&lt;/a&gt;&lt;/p&gt;
-    
+
     &lt;p&gt;
         &lt;strong&gt;Note:&lt;/strong&gt; &lt;code&gt;mongodb-driver&lt;/code&gt; requires the following dependencies:
         &lt;a href=&#34;https://oss.sonatype.org/content/repositories/releases/org/mongodb/bson/3.2.2&#34; target=&#34;_blank&#34;&gt;&lt;code&gt;bson&lt;/code&gt;&lt;/a&gt; and
         &lt;a href=&#34;https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongodb-driver-core/3.2.2&#34; target=&#34;_blank&#34;&gt;&lt;code&gt;mongodb-driver-core&lt;/code&gt;&lt;/a&gt;
     &lt;/p&gt;
-    
+
 &lt;/section&gt;
 
 &lt;/p&gt;
@@ -1237,18 +1237,18 @@ jar (described below) instead.&lt;/p&gt;
     &lt;p&gt;You can also download the jars
         &lt;a href=&#34;https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongo-java-driver/3.2.2&#34; target=&#34;_blank&#34;&gt;directly&lt;/a&gt;
         from sonatype.&lt;/a&gt;&lt;/p&gt;
-    
+
 &lt;/section&gt;
 
 &lt;/p&gt;
 </description>
     </item>
-    
+
     <item>
       <title>MongoDB Driver</title>
       <link>/mongo-java-driver/3.2/driver/</link>
       <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
-      
+
       <guid>/mongo-java-driver/3.2/driver/</guid>
       <description>
 
@@ -1273,19 +1273,19 @@ and a simple tutorial to get up and running quickly.&lt;/p&gt;
 &lt;p&gt;For more detailed documentation, see the &lt;a href=&#34;/mongo-java-driver/3.2/mongo-java-driver/3.2/driver/reference/&#34;&gt;Reference&lt;/a&gt; guide.&lt;/p&gt;
 </description>
     </item>
-    
+
     <item>
       <title>Quick Tour</title>
       <link>/mongo-java-driver/3.2/driver/getting-started/quick-tour/</link>
       <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
-      
+
       <guid>/mongo-java-driver/3.2/driver/getting-started/quick-tour/</guid>
       <description>
 
 &lt;h1 id=&#34;mongodb-driver-quick-tour&#34;&gt;MongoDB Driver Quick Tour&lt;/h1&gt;
 
 &lt;p&gt;The following code snippets come from the &lt;code&gt;QuickTour.java&lt;/code&gt; example code
-that can be found with the &lt;a href=&#34;https://github.com/mongodb/mongo-java-driver/blob/master/driver/src/examples/tour/QuickTour.java
+that can be found with the &lt;a href=&#34;https://github.com/mongodb/mongo-java-driver/blob/3.2.x/driver/src/examples/tour/QuickTour.java
 &#34;&gt;driver source&lt;/a&gt;.&lt;/p&gt;
 
 &lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
@@ -1708,12 +1708,12 @@ collection.bulkWrite(
 &lt;/p&gt;
 </description>
     </item>
-    
+
     <item>
       <title>Reference</title>
       <link>/mongo-java-driver/3.2/driver/reference/</link>
       <pubDate>Tue, 17 Mar 2015 15:36:56 +0000</pubDate>
-      
+
       <guid>/mongo-java-driver/3.2/driver/reference/</guid>
       <description>
 
@@ -1730,6 +1730,6 @@ internal state&lt;/li&gt;
 &lt;/ul&gt;
 </description>
     </item>
-    
+
   </channel>
 </rss>

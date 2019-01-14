@@ -24,7 +24,7 @@
 
 &lt;p&gt;When you query a GridFS store for a file, the Java driver will reassemble the chunks as needed.&lt;/p&gt;
 
-&lt;p&gt;The following code snippets come from the &lt;a href=&#34;https://github.com/mongodb/mongo-java-driver/blob/master/driver/src/examples/gridfs/GridFSTour.java
+&lt;p&gt;The following code snippets come from the &lt;a href=&#34;https://github.com/mongodb/mongo-java-driver/blob/3.4.x/driver/src/examples/gridfs/GridFSTour.java
 &#34;&gt;&lt;code&gt;GridFSTour.java&lt;/code&gt;&lt;/a&gt; example code
 that can be found with the driver source on github.&lt;/p&gt;
 

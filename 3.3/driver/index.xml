@@ -33,7 +33,7 @@
 &lt;/p&gt;
 
 &lt;p&gt;The following code snippets come from the &lt;code&gt;GridFSTour.java&lt;/code&gt; example code
-that can be found with the &lt;a href=&#34;https://github.com/mongodb/mongo-java-driver/blob/master/driver/src/examples/gridfs/GridFSTour.java
+that can be found with the &lt;a href=&#34;https://github.com/mongodb/mongo-java-driver/blob/3.3.x/driver/src/examples/gridfs/GridFSTour.java
 &#34;&gt;driver source&lt;/a&gt;.&lt;/p&gt;
 
 &lt;h2 id=&#34;connecting-to-gridfs&#34;&gt;Connecting to GridFS&lt;/h2&gt;
@@ -1176,7 +1176,7 @@ use the Java driver to execute basic CRUD operations.  In this section we&amp;rs
 administrative features available in the driver.&lt;/p&gt;
 
 &lt;p&gt;The following code snippets come from the &lt;code&gt;QuickTourAdmin.java&lt;/code&gt; example code
-that can be found with the &lt;a href=&#34;https://github.com/mongodb/mongo-java-driver/blob/master/driver/src/examples/tour/QuickTourAdmin.java
+that can be found with the &lt;a href=&#34;https://github.com/mongodb/mongo-java-driver/blob/3.3.x/driver/src/examples/tour/QuickTourAdmin.java
 &#34;&gt;driver
 source&lt;/a&gt;.&lt;/p&gt;
 
@@ -1520,7 +1520,7 @@ and a simple tutorial to get up and running quickly.&lt;/p&gt;
 &lt;h1 id=&#34;mongodb-driver-quick-tour&#34;&gt;MongoDB Driver Quick Tour&lt;/h1&gt;
 
 &lt;p&gt;The following code snippets come from the &lt;code&gt;QuickTour.java&lt;/code&gt; example code
-that can be found with the &lt;a href=&#34;https://github.com/mongodb/mongo-java-driver/blob/master/driver/src/examples/tour/QuickTour.java
+that can be found with the &lt;a href=&#34;https://github.com/mongodb/mongo-java-driver/blob/3.3.x/driver/src/examples/tour/QuickTour.java
 &#34;&gt;driver source&lt;/a&gt;.&lt;/p&gt;
 
 &lt;p&gt;&lt;div class=&#34;admonition note&#34;&gt;
