@@ -21,7 +21,9 @@ package com.mongodb.client.model.changestream;
  *
  * @since 3.8
  * @mongodb.server.release 4.0
+ *
  */
+@Deprecated
 public enum ChangeStreamLevel {
     /**
      * Observing all changes on the Client
