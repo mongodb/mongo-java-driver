@@ -18,14 +18,12 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketOpenException;
-import com.mongodb.MongoSocketReadException;
-import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.Stream;
-import org.bson.ByteBuf;
+import com.mongodb.internal.connection.tlschannel.async.ExtendedAsynchronousByteChannel;
 
 import java.io.IOException;
 import java.net.SocketAddress;
@@ -34,47 +32,30 @@ import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
-import java.nio.channels.InterruptedByTimeoutException;
-import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Queue;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.mongodb.assertions.Assertions.isTrue;
-import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
-public final class AsynchronousSocketChannelStream implements Stream {
+public final class AsynchronousSocketChannelStream extends AsynchronousChannelStream implements Stream {
     private final ServerAddress serverAddress;
     private final SocketSettings settings;
-    private final BufferProvider bufferProvider;
     private final AsynchronousChannelGroup group;
-    private volatile AsynchronousSocketChannel channel;
-    private volatile boolean isClosed;
 
     public AsynchronousSocketChannelStream(final ServerAddress serverAddress, final SocketSettings settings,
                                     final BufferProvider bufferProvider, final AsynchronousChannelGroup group) {
+        super(serverAddress, settings, bufferProvider);
         this.serverAddress = serverAddress;
         this.settings = settings;
-        this.bufferProvider = bufferProvider;
         this.group = group;
     }
 
     @Override
-    public ByteBuf getBuffer(final int size) {
-        return bufferProvider.getBuffer(size);
-    }
-
-    @Override
-    public void open() throws IOException {
-        FutureAsyncCompletionHandler<Void> handler = new FutureAsyncCompletionHandler<Void>();
-        openAsync(handler);
-        handler.getOpen();
-    }
-
-    @Override
     public void openAsync(final AsyncCompletionHandler<Void> handler) {
-        isTrue("unopened", channel == null);
+        isTrue("unopened", getChannel() == null);
         initializeSocketChannel(handler, new LinkedList<SocketAddress>(serverAddress.getSocketAddresses()));
     }
 
@@ -106,190 +87,31 @@ public final class AsynchronousSocketChannelStream implements Stream {
         }
     }
 
-    @Override
-    public void write(final List<ByteBuf> buffers) throws IOException {
-        FutureAsyncCompletionHandler<Void> handler = new FutureAsyncCompletionHandler<Void>();
-        writeAsync(buffers, handler);
-        handler.getWrite();
-    }
-
-    @Override
-    public ByteBuf read(final int numBytes) throws IOException {
-        FutureAsyncCompletionHandler<ByteBuf> handler = new FutureAsyncCompletionHandler<ByteBuf>();
-        readAsync(numBytes, handler);
-        return handler.getRead();
-    }
-
-    @Override
-    public void writeAsync(final List<ByteBuf> buffers, final AsyncCompletionHandler<Void> handler) {
-        final AsyncWritableByteChannel byteChannel = new AsyncWritableByteChannelAdapter();
-        final Iterator<ByteBuf> iter = buffers.iterator();
-        pipeOneBuffer(byteChannel, iter.next(), new AsyncCompletionHandler<Void>() {
-            @Override
-            public void completed(final Void t) {
-                if (iter.hasNext()) {
-                    pipeOneBuffer(byteChannel, iter.next(), this);
-                } else {
-                    handler.completed(null);
-                }
-            }
-
-            @Override
-            public void failed(final Throwable t) {
-                handler.failed(t);
-            }
-        });
-    }
-
-    @Override
-    public void readAsync(final int numBytes, final AsyncCompletionHandler<ByteBuf> handler) {
-        ByteBuf buffer = bufferProvider.getBuffer(numBytes);
-        channel.read(buffer.asNIO(), settings.getReadTimeout(MILLISECONDS), MILLISECONDS, null,
-                     new BasicCompletionHandler(buffer, handler));
-    }
-
-    @Override
-    public ServerAddress getAddress() {
-        return serverAddress;
-    }
-
-    /**
-     * Closes the connection.
-     */
-    @Override
-    public void close() {
-        try {
-            if (channel != null) {
-                channel.close();
-            }
-        } catch (IOException e) { // NOPMD
-            // ignore
-        } finally {
-            channel = null;
-            isClosed = true;
-        }
-    }
-
-    @Override
-    public boolean isClosed() {
-        return isClosed;
-    }
-
-    public ServerAddress getServerAddress() {
-        return serverAddress;
-    }
-
-    public SocketSettings getSettings() {
-        return settings;
-    }
-
     public AsynchronousChannelGroup getGroup() {
         return group;
     }
 
-    private void pipeOneBuffer(final AsyncWritableByteChannel byteChannel, final ByteBuf byteBuffer,
-                               final AsyncCompletionHandler<Void> outerHandler) {
-        byteChannel.write(byteBuffer.asNIO(), new AsyncCompletionHandler<Void>() {
-            @Override
-            public void completed(final Void t) {
-                if (byteBuffer.hasRemaining()) {
-                    byteChannel.write(byteBuffer.asNIO(), this);
-                } else {
-                    outerHandler.completed(null);
-                }
-            }
-
-            @Override
-            public void failed(final Throwable t) {
-                outerHandler.failed(t);
-            }
-        });
-    }
-
-    private class AsyncWritableByteChannelAdapter implements AsyncWritableByteChannel {
-        @Override
-        public void write(final ByteBuffer src, final AsyncCompletionHandler<Void> handler) {
-            channel.write(src, null, new WriteCompletionHandler(handler));
-        }
-
-        private class WriteCompletionHandler extends BaseCompletionHandler<Void, Integer, Object> {
-
-            WriteCompletionHandler(final AsyncCompletionHandler<Void> handler) {
-                super(handler);
-            }
-
-            @Override
-            public void completed(final Integer result, final Object attachment) {
-                AsyncCompletionHandler<Void> localHandler = getHandlerAndClear();
-                localHandler.completed(null);
-            }
-
-            @Override
-            public void failed(final Throwable exc, final Object attachment) {
-                AsyncCompletionHandler<Void> localHandler = getHandlerAndClear();
-                localHandler.failed(exc);
-            }
-        }
-    }
-
-    private final class BasicCompletionHandler extends BaseCompletionHandler<ByteBuf, Integer, Void> {
-        private final AtomicReference<ByteBuf> byteBufReference;
-
-        private BasicCompletionHandler(final ByteBuf dst, final AsyncCompletionHandler<ByteBuf> handler) {
-            super(handler);
-            this.byteBufReference = new AtomicReference<ByteBuf>(dst);
-        }
-
-        @Override
-        public void completed(final Integer result, final Void attachment) {
-            AsyncCompletionHandler<ByteBuf> localHandler = getHandlerAndClear();
-            ByteBuf localByteBuf = byteBufReference.getAndSet(null);
-            if (result == -1) {
-                localByteBuf.release();
-                localHandler.failed(new MongoSocketReadException("Prematurely reached end of stream", serverAddress));
-            } else if (!localByteBuf.hasRemaining()) {
-                localByteBuf.flip();
-                localHandler.completed(localByteBuf);
-            } else {
-                channel.read(localByteBuf.asNIO(), settings.getReadTimeout(MILLISECONDS), MILLISECONDS, null,
-                             new BasicCompletionHandler(localByteBuf, localHandler));
-            }
-        }
-
-        @Override
-        public void failed(final Throwable t, final Void attachment) {
-            AsyncCompletionHandler<ByteBuf> localHandler = getHandlerAndClear();
-            ByteBuf localByteBuf = byteBufReference.getAndSet(null);
-            localByteBuf.release();
-            if (t instanceof InterruptedByTimeoutException) {
-                localHandler.failed(new MongoSocketReadTimeoutException("Timeout while receiving message", serverAddress, t));
-            } else {
-                localHandler.failed(t);
-            }
-        }
-    }
-
-    private class OpenCompletionHandler extends BaseCompletionHandler<Void, Void, Object> {
+    private class OpenCompletionHandler implements CompletionHandler<Void, Object>  {
+        private AtomicReference<AsyncCompletionHandler<Void>> handlerReference;
         private final Queue<SocketAddress> socketAddressQueue;
         private final AsynchronousSocketChannel attemptConnectionChannel;
 
         OpenCompletionHandler(final AsyncCompletionHandler<Void> handler, final Queue<SocketAddress> socketAddressQueue,
                               final AsynchronousSocketChannel attemptConnectionChannel) {
-            super(handler);
+            this.handlerReference = new AtomicReference<AsyncCompletionHandler<Void>>(handler);
             this.socketAddressQueue = socketAddressQueue;
             this.attemptConnectionChannel = attemptConnectionChannel;
         }
 
         @Override
         public void completed(final Void result, final Object attachment) {
-            channel = attemptConnectionChannel;
-            AsyncCompletionHandler<Void> localHandler = getHandlerAndClear();
-            localHandler.completed(null);
+            setChannel(new AsynchronousSocketChannelAdapter(attemptConnectionChannel));
+            handlerReference.getAndSet(null).completed(null);
         }
 
         @Override
         public void failed(final Throwable exc, final Object attachment) {
-            AsyncCompletionHandler<Void> localHandler = getHandlerAndClear();
+            AsyncCompletionHandler<Void> localHandler = handlerReference.getAndSet(null);
 
             if (socketAddressQueue.isEmpty()) {
                 if (exc instanceof IOException) {
@@ -303,19 +125,65 @@ public final class AsynchronousSocketChannelStream implements Stream {
         }
     }
 
-    // Private base class for all CompletionHandler implementors that ensures the upstream handler is
-    // set to null before it is used.  This is to work around an observed issue with implementations of
-    // AsynchronousSocketChannel that fail to clear references to handlers stored in instance fields of
-    // the class.
-    private abstract static class BaseCompletionHandler<T, V, A> implements CompletionHandler<V, A> {
-        private final AtomicReference<AsyncCompletionHandler<T>> handlerReference;
+    private static final class AsynchronousSocketChannelAdapter implements ExtendedAsynchronousByteChannel {
+        private final AsynchronousSocketChannel channel;
 
-        BaseCompletionHandler(final AsyncCompletionHandler<T> handler) {
-            this.handlerReference = new AtomicReference<AsyncCompletionHandler<T>>(handler);
+        private AsynchronousSocketChannelAdapter(final AsynchronousSocketChannel channel) {
+            this.channel = channel;
         }
 
-        protected AsyncCompletionHandler<T> getHandlerAndClear() {
-            return handlerReference.getAndSet(null);
+        @Override
+        public <A> void read(final ByteBuffer dst, final long timeout, final TimeUnit unit, final A attach,
+                             final CompletionHandler<Integer, ? super A> handler) {
+            channel.read(dst, timeout, unit, attach, handler);
+        }
+
+        @Override
+        public <A> void read(final ByteBuffer[] dsts, final int offset, final int length, final long timeout, final TimeUnit unit,
+                             final A attach, final CompletionHandler<Long, ? super A> handler) {
+            channel.read(dsts, offset, length, timeout, unit, attach, handler);
+        }
+
+        @Override
+        public <A> void write(final ByteBuffer src, final long timeout, final TimeUnit unit, final A attach,
+                              final CompletionHandler<Integer, ? super A> handler) {
+            channel.write(src, timeout, unit, attach, handler);
+        }
+
+        @Override
+        public <A> void write(final ByteBuffer[] srcs, final int offset, final int length, final long timeout, final TimeUnit unit,
+                              final A attach, final CompletionHandler<Long, ? super A> handler) {
+            channel.write(srcs, offset, length, timeout, unit, attach, handler);
+        }
+
+        @Override
+        public <A> void read(final ByteBuffer dst, final A attachment, final CompletionHandler<Integer, ? super A> handler) {
+            channel.read(dst, attachment, handler);
+        }
+
+        @Override
+        public Future<Integer> read(final ByteBuffer dst) {
+            return channel.read(dst);
+        }
+
+        @Override
+        public <A> void write(final ByteBuffer src, final A attachment, final CompletionHandler<Integer, ? super A> handler) {
+            channel.write(src, attachment, handler);
+        }
+
+        @Override
+        public Future<Integer> write(final ByteBuffer src) {
+            return channel.write(src);
+        }
+
+        @Override
+        public boolean isOpen() {
+            return channel.isOpen();
+        }
+
+        @Override
+        public void close() throws IOException {
+            channel.close();
         }
     }
 }
