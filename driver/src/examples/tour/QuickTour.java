@@ -54,7 +54,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
 /**
- * The QuickTour code example see: https://mongodb.github.io/mongo-java-driver/3.0/getting-started
+ * The QuickTour code example see: https://mongodb.github.io/mongo-java-driver/3.1/driver/getting-started/quick-tour/
  */
 public class QuickTour {
     /**
