@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -385,7 +386,7 @@ public class ConnectionString {
         warnOnUnsupportedOptions(combinedOptionsMaps);
     }
 
-    private static final Set<String> GENERAL_OPTIONS_KEYS = new HashSet<String>();
+    private static final Set<String> GENERAL_OPTIONS_KEYS = new LinkedHashSet<String>();
     private static final Set<String> AUTH_KEYS = new HashSet<String>();
     private static final Set<String> READ_PREFERENCE_KEYS = new HashSet<String>();
     private static final Set<String> WRITE_CONCERN_KEYS = new HashSet<String>();
