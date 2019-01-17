@@ -109,7 +109,9 @@ public final class MongoClients {
      * @return the client
      */
     public static MongoClient create(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation) {
-        return new MongoClientImpl(settings, mongoDriverInformation);
+        MongoDriverInformation.Builder builder = mongoDriverInformation == null ? MongoDriverInformation.builder()
+                : MongoDriverInformation.builder(mongoDriverInformation);
+        return new MongoClientImpl(settings, builder.driverName("sync").build());
     }
 
     private MongoClients() {

@@ -34,7 +34,9 @@ final class NettyMongoClients {
         StreamFactory streamFactory = new NettyStreamFactory(settings.getSocketSettings(), settings.getSslSettings(), eventLoopGroup);
         StreamFactory heartbeatStreamFactory = new NettyStreamFactory(settings.getHeartbeatSocketSettings(), settings.getSslSettings(),
                                                                              eventLoopGroup);
-        return MongoClients.createMongoClient(settings, mongoDriverInformation, streamFactory, heartbeatStreamFactory,
+        MongoDriverInformation.Builder builder = mongoDriverInformation == null ? MongoDriverInformation.builder()
+                : MongoDriverInformation.builder(mongoDriverInformation);
+        return MongoClients.createMongoClient(settings, builder.driverName("netty").build(), streamFactory, heartbeatStreamFactory,
                 new Closeable() {
                     @Override
                     public void close() {
