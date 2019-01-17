@@ -746,6 +746,8 @@ public class Mongo {
 
     private static Cluster createCluster(final ClusterSettings clusterSettings, final List<MongoCredential> credentialsList,
                                          final MongoClientOptions options, @Nullable final MongoDriverInformation mongoDriverInformation) {
+        MongoDriverInformation.Builder builder = mongoDriverInformation == null ? MongoDriverInformation.builder()
+                    : MongoDriverInformation.builder(mongoDriverInformation);
         return new DefaultClusterFactory().createCluster(clusterSettings,
                 options.getServerSettings(),
                 options.getConnectionPoolSettings(),
@@ -758,7 +760,7 @@ public class Mongo {
                 credentialsList,
                 getCommandListener(options.getCommandListeners()),
                 options.getApplicationName(),
-                mongoDriverInformation,
+                builder.driverName("legacy").build(),
                 options.getCompressorList());
     }
 
