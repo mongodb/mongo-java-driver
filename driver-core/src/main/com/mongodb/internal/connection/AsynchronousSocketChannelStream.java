@@ -23,7 +23,6 @@ import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.Stream;
-import com.mongodb.internal.connection.tlschannel.async.ExtendedAsynchronousByteChannel;
 
 import java.io.IOException;
 import java.net.SocketAddress;
