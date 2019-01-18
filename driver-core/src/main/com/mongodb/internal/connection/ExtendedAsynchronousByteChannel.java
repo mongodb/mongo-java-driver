@@ -17,7 +17,7 @@
  * https://github.com/marianobarrios/tls-channel
  */
 
-package com.mongodb.internal.connection.tlschannel.async;
+package com.mongodb.internal.connection;
 
 import java.nio.ByteBuffer;
 import java.nio.channels.AsynchronousByteChannel;

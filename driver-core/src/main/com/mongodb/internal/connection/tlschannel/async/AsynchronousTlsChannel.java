@@ -19,6 +19,7 @@
 
 package com.mongodb.internal.connection.tlschannel.async;
 
+import com.mongodb.internal.connection.ExtendedAsynchronousByteChannel;
 import com.mongodb.internal.connection.tlschannel.TlsChannel;
 import com.mongodb.internal.connection.tlschannel.impl.ByteBufferSet;
 
