@@ -16,44 +16,16 @@
 
 package com.mongodb.internal.connection;
 
+import javax.net.ssl.SNIHostName;
+import javax.net.ssl.SNIServerName;
 import javax.net.ssl.SSLParameters;
-import java.lang.reflect.InvocationTargetException;
+
+import static java.util.Collections.singletonList;
 
 /**
  * <p>This class should not be considered a part of the public API.</p>
  */
 public final class SslHelper {
-
-    // this will end up as null if running on a release prior to Java 8, in which case SNI will be silently disabled
-    private static final SniSslHelper SNI_SSL_HELPER;
-
-    static {
-        SniSslHelper sniSslHelper;
-        try {
-            sniSslHelper = (SniSslHelper) Class.forName("com.mongodb.internal.connection.Java8SniSslHelper")
-                                                  .getDeclaredConstructor().newInstance();
-        } catch (ClassNotFoundException e) {
-            // this is unexpected as it means the Java8SniSslHelper class itself is not found
-            throw new ExceptionInInitializerError(e);
-        } catch (InstantiationException e) {
-            // this is unexpected as it means Java8SniSslHelper can't be instantiated
-            throw new ExceptionInInitializerError(e);
-        } catch (IllegalAccessException e) {
-            // this is unexpected as it means Java8SniSslHelper's constructor isn't accessible
-            throw new ExceptionInInitializerError(e);
-        } catch (NoSuchMethodException e) {
-            // this is unexpected as it means Java8SniSslHelper has no no-args constructor
-            throw new ExceptionInInitializerError(e);
-        } catch (InvocationTargetException e) {
-            // this is unexpected as it means Java8SniSslHelper's constructor threw an exception
-            throw new ExceptionInInitializerError(e.getTargetException());
-        } catch (LinkageError t) {
-            // this is expected if running on a release prior to Java 8.  We want to just fail silently here
-            sniSslHelper = null;
-        }
-
-        SNI_SSL_HELPER = sniSslHelper;
-    }
 
     /**
      * Enable HTTP endpoint verification on the given SSL parameters.
@@ -71,8 +43,11 @@ public final class SslHelper {
      * @param sslParameters the SSL parameters
      */
     public static void enableSni(final String host, final SSLParameters sslParameters) {
-        if (SNI_SSL_HELPER != null) {
-            SNI_SSL_HELPER.enableSni(host, sslParameters);
+        try {
+            SNIServerName sniHostName = new SNIHostName(host);
+            sslParameters.setServerNames(singletonList(sniHostName));
+        } catch (IllegalArgumentException e) {
+            // ignore because SNIHostName will throw this for some legit host names for connecting to MongoDB, e.g an IPV6 literal
         }
     }
 
