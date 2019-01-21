@@ -17,7 +17,6 @@
 package com.mongodb.async.client;
 
 import com.mongodb.ConnectionString;
-import com.mongodb.MongoClientException;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.MongoInternalException;
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory;
@@ -231,9 +230,6 @@ public final class MongoClients {
 
     private static MongoClient createWithTlsChannel(final MongoClientSettings settings,
                                                     @Nullable final MongoDriverInformation mongoDriverInformation) {
-        if (!isJava8()) {
-            throw new MongoClientException("TLS is only supported natively with Java 8 and above. Please use Netty instead");
-        }
         final TlsChannelStreamFactoryFactory streamFactoryFactory = new TlsChannelStreamFactoryFactory();
         StreamFactory streamFactory = streamFactoryFactory.create(settings.getSocketSettings(), settings.getSslSettings());
         StreamFactory heartbeatStreamFactory = streamFactoryFactory.create(settings.getHeartbeatSocketSettings(),
@@ -245,15 +241,6 @@ public final class MongoClients {
                         streamFactoryFactory.close();
                     }
                 });
-    }
-
-    private static boolean isJava8() {
-        try {
-            Class.forName("java.time.Instant");
-            return true;
-        } catch (ClassNotFoundException e) {
-            return false;
-        }
     }
 
     private static MongoClient createWithAsynchronousSocketChannel(final MongoClientSettings settings,
