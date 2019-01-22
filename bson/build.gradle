@@ -25,7 +25,7 @@ ext {
 clirr {
     excludeFilter = new File("$configDir/clirr-exclude.yml")
     baseline 'org.mongodb:bson:3.8.0'
-    failOnErrors = true
+    failOnErrors = false
 }
 
 jar {
