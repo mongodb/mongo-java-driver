@@ -36,7 +36,7 @@ public class BsonDateTime extends BsonValue implements Comparable<BsonDateTime> 
 
     @Override
     public int compareTo(final BsonDateTime o) {
-        return Long.valueOf(value).compareTo(o.value);
+        return Long.compare(value, o.value);
     }
 
     @Override
