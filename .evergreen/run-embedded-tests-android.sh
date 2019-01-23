@@ -15,6 +15,10 @@ if [ ! -e  $SDK_HOME ]; then
     mkdir -p $DOWNLOAD_LOGS
     (
         cd $SDK_HOME
+
+        mkdir -p "$SDK_HOME/licenses"
+        echo "24333f8a63b6825ea9c5514f83c2829b004d1fee" > "$SDK_HOME/licenses/android-sdk-license"
+
         export JAVA_HOME="/opt/java/jdk8"
 
         export ANDROID_HOME=${SDK_HOME}
