@@ -53,9 +53,11 @@ import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionA
 import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.canRetryWrite;
+import static com.mongodb.operation.OperationHelper.isRetryableWrite;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static com.mongodb.operation.OperationHelper.withReleasableConnection;
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
 final class CommandOperationHelper {
@@ -454,6 +456,9 @@ final class CommandOperationHelper {
                 } catch (MongoException e) {
                     exception = e;
                     if (!shouldAttemptToRetry(command, e)) {
+                        if (isRetryWritesEnabled(command)) {
+                            logUnableToRetry(command.getFirstKey(), e);
+                        }
                         throw exception;
                     }
                 } finally {
@@ -469,6 +474,7 @@ final class CommandOperationHelper {
                             if (!canRetryWrite(source.getServerDescription(), connection.getDescription(), binding.getSessionContext())) {
                                 throw originalException;
                             }
+                            logRetryExecute(originalCommand.getFirstKey(), originalException);
                             return transformer.apply(connection.command(database, originalCommand, fieldNameValidator,
                                     readPreference, commandResultDecoder, binding.getSessionContext()),
                                     connection.getDescription().getServerAddress());
@@ -545,6 +551,9 @@ final class CommandOperationHelper {
 
             private void checkRetryableException(final Throwable originalError, final SingleResultCallback<R> releasingCallback) {
                 if (!shouldAttemptToRetry(command, originalError)) {
+                    if (isRetryWritesEnabled(command)) {
+                        logUnableToRetry(command.getFirstKey(), originalError);
+                    }
                     releasingCallback.onResult(null, originalError);
                 } else {
                     oldConnection.release();
@@ -554,6 +563,7 @@ final class CommandOperationHelper {
             }
 
             private void retryableCommand(final Throwable originalError) {
+                logRetryExecute(command.getFirstKey(), originalError);
                 withConnection(binding, new AsyncCallableWithConnectionAndSource() {
                     @Override
                     public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
@@ -702,14 +712,28 @@ final class CommandOperationHelper {
     }
 
     private static boolean shouldAttemptToRetry(@Nullable final BsonDocument command, final Throwable exception) {
-        return shouldAttemptToRetry(command != null
-                        && (command.containsKey("txnNumber")
-                        || command.getFirstKey().equals("commitTransaction") || command.getFirstKey().equals("abortTransaction")),
-                exception);
+        return isRetryWritesEnabled(command) && isRetryableException(exception);
+    }
+
+    private static boolean isRetryWritesEnabled(@Nullable final BsonDocument command) {
+        return (command != null && (command.containsKey("txnNumber")
+                || command.getFirstKey().equals("commitTransaction") || command.getFirstKey().equals("abortTransaction")));
     }
 
     static boolean shouldAttemptToRetry(final boolean retryWritesEnabled, final Throwable exception) {
         return retryWritesEnabled && isRetryableException(exception);
+    }
+
+    static void logRetryExecute(final String operation, final Throwable originalError) {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(format("Retrying operation %s due to an error \"%s\"", operation, originalError));
+        }
+    }
+
+    static void logUnableToRetry(final String operation, final Throwable originalError) {
+        if (LOGGER.isDebugEnabled()) {
+            LOGGER.debug(format("Unable to retry operation %s due to error \"%s\"", operation, originalError));
+        }
     }
 
     private CommandOperationHelper() {
