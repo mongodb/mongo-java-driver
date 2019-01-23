@@ -13,7 +13,6 @@ JDK=${JDK:-jdk}
 #            Main Program                  #
 ############################################
 
-# We always compile with the latest version of java
 export JAVA_HOME="/opt/java/jdk11"
 
 export EMBEDDED_PATH="${PROJECT_DIRECTORY}/tmp/mongo-embedded-java"

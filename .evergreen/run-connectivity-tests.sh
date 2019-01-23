@@ -17,7 +17,6 @@ JDK=${JDK:-jdk}
 
 echo "Running connectivity tests with ${JDK}"
 
-# We always compile with the latest version of java
 export JAVA_HOME="/opt/java/jdk11"
 
 ./gradlew -version

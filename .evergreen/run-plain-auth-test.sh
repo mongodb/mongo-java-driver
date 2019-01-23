@@ -16,7 +16,6 @@ JDK=${JDK:-jdk}
 
 echo "Running PLAIN authentication tests"
 
-# We always compile with the latest version of java
 export JAVA_HOME="/opt/java/jdk11"
 
 echo "Running tests with ${JDK}"
