@@ -47,7 +47,6 @@ fi
 
 echo "Running $AUTH tests over for $TOPOLOGY and connecting to $MONGODB_URI"
 
-# We always compile with the latest version of java
 export JAVA_HOME="/opt/java/jdk11"
 
 echo "Running tests with ${JDK}"
