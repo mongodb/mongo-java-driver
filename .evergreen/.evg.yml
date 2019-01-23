@@ -121,6 +121,26 @@ functions:
         permissions: public-read
         content_type: ${content_type|application/x-gzip}
 
+  "upload android logs":
+    # Compress and upload the entire build directory
+    - command: archive.targz_pack
+      params:
+        # Example: mongo_c_driver_releng_9dfb7d741efbca16faa7859b9349d7a942273e43_16_11_08_19_29_52.tar.gz
+        target: "${build_id}.tar.gz"
+        source_dir: ${PROJECT_DIRECTORY}/.android/download_logs
+        include:
+          - "./**"
+    - command: s3.put
+      params:
+        aws_key: ${aws_key}
+        aws_secret: ${aws_secret}
+        local_file: ${build_id}.tar.gz
+        # Example: /mciuploads/${UPLOAD_BUCKET}/gcc49/9dfb7d741efbca16faa7859b9349d7a942273e43/debug-compile-nosasl-nossl/mongo_c_driver_releng_9dfb7d741efbca16faa7859b9349d7a942273e43_16_11_08_19_29_52.tar.gz
+        remote_file: ${UPLOAD_BUCKET}/${build_variant}/${revision}/${task_name}/${build_id}.tar.gz
+        bucket: mciuploads
+        permissions: public-read
+        content_type: ${content_type|application/x-gzip}
+
   "exec script" :
     - command: shell.exec
       type: test
@@ -431,6 +451,7 @@ tasks:
     - name: "embedded-test-android"
       commands:
       - func: "run embedded tests android"
+      - func: "upload android logs"
 
     - name: "atlas-test"
       commands:
