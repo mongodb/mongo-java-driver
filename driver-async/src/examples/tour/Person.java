@@ -41,7 +41,6 @@ public final class Person {
      * @param address the address
      */
     public Person(final String name, final int age, final Address address) {
-        this.id = new ObjectId();
         this.name = name;
         this.age = age;
         this.address = address;

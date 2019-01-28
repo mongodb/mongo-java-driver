@@ -48,15 +48,15 @@ final class ConventionUseGettersAsSettersImpl implements Convention {
 
     @SuppressWarnings("unchecked")
     private <T> void setPropertyAccessor(final PropertyModelBuilder<T> propertyModelBuilder) {
-        propertyModelBuilder.propertyAccessor(new PrivateProperyAccessor<T>(
+        propertyModelBuilder.propertyAccessor(new PrivatePropertyAccessor<T>(
                 (PropertyAccessorImpl<T>) propertyModelBuilder.getPropertyAccessor()));
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private static final class PrivateProperyAccessor<T> implements PropertyAccessor<T> {
+    private static final class PrivatePropertyAccessor<T> implements PropertyAccessor<T> {
         private final PropertyAccessorImpl<T> wrapped;
 
-        private PrivateProperyAccessor(final PropertyAccessorImpl<T> wrapped) {
+        private PrivatePropertyAccessor(final PropertyAccessorImpl<T> wrapped) {
             this.wrapped = wrapped;
         }
 

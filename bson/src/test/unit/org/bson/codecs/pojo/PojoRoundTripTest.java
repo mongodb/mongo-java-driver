@@ -45,6 +45,7 @@ import org.bson.codecs.pojo.entities.NestedMultipleLevelGenericModel;
 import org.bson.codecs.pojo.entities.NestedReusedGenericsModel;
 import org.bson.codecs.pojo.entities.NestedSelfReferentialGenericHolderModel;
 import org.bson.codecs.pojo.entities.NestedSelfReferentialGenericModel;
+import org.bson.codecs.pojo.entities.NestedSimpleIdModel;
 import org.bson.codecs.pojo.entities.PrimitivesModel;
 import org.bson.codecs.pojo.entities.PropertyReusingClassTypeParameter;
 import org.bson.codecs.pojo.entities.PropertySelectionModel;
@@ -59,8 +60,11 @@ import org.bson.codecs.pojo.entities.ShapeModelRectangle;
 import org.bson.codecs.pojo.entities.SimpleEnum;
 import org.bson.codecs.pojo.entities.SimpleEnumModel;
 import org.bson.codecs.pojo.entities.SimpleGenericsModel;
+import org.bson.codecs.pojo.entities.SimpleIdImmutableModel;
+import org.bson.codecs.pojo.entities.SimpleIdModel;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;
+import org.bson.codecs.pojo.entities.TreeWithIdModel;
 import org.bson.codecs.pojo.entities.UpperBoundsConcreteModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationBsonPropertyIdModel;
 import org.bson.codecs.pojo.entities.conventions.BsonIgnoreInvalidMapModel;
@@ -83,6 +87,7 @@ import org.bson.codecs.pojo.entities.conventions.InterfaceModelImplB;
 import org.bson.codecs.pojo.entities.conventions.Subclass1Model;
 import org.bson.codecs.pojo.entities.conventions.Subclass2Model;
 import org.bson.codecs.pojo.entities.conventions.SuperClassModel;
+import org.bson.types.ObjectId;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -391,6 +396,31 @@ public final class PojoRoundTripTest extends PojoTestCase {
                 new BsonIgnoreSyntheticProperty("string value"),
                 getPojoCodecProviderBuilder(BsonIgnoreSyntheticProperty.class).conventions(Conventions.DEFAULT_CONVENTIONS),
                 "{stringField: 'string value'}"));
+
+        data.add(new TestData("SimpleIdModel with existing id",
+                new SimpleIdModel(new ObjectId("123412341234123412341234"), 42, "myString"),
+                getPojoCodecProviderBuilder(SimpleIdModel.class).conventions(Conventions.DEFAULT_CONVENTIONS),
+                "{'_id': {'$oid': '123412341234123412341234'}, 'integerField': 42, 'stringField': 'myString'}"));
+
+
+        data.add(new TestData("SimpleIdImmutableModel with existing id",
+                new SimpleIdImmutableModel(new ObjectId("123412341234123412341234"), 42, "myString"),
+                getPojoCodecProviderBuilder(SimpleIdImmutableModel.class).conventions(Conventions.DEFAULT_CONVENTIONS),
+                "{'_id': {'$oid': '123412341234123412341234'}, 'integerField': 42, 'stringField': 'myString'}"));
+
+        data.add(new TestData("NestedSimpleIdModel",
+                new NestedSimpleIdModel(new SimpleIdModel(42, "myString")),
+                getPojoCodecProviderBuilder(NestedSimpleIdModel.class, SimpleIdModel.class).conventions(Conventions.DEFAULT_CONVENTIONS),
+                "{'nestedSimpleIdModel': {'integerField': 42, 'stringField': 'myString'}}"));
+
+        data.add(new TestData("TreeWithIdModel",
+                new TreeWithIdModel(new ObjectId("123412341234123412341234"), "top",
+                        new TreeWithIdModel("left-1", new TreeWithIdModel("left-2"), null), new TreeWithIdModel("right-1")),
+                getPojoCodecProviderBuilder(TreeWithIdModel.class).conventions(Conventions.DEFAULT_CONVENTIONS),
+                "{'_id': {'$oid': '123412341234123412341234'}, 'level': 'top',"
+                        + "'left': {'level': 'left-1', 'left': {'level': 'left-2'}},"
+                        + "'right': {'level': 'right-1'}}"));
+
         return data;
     }
 

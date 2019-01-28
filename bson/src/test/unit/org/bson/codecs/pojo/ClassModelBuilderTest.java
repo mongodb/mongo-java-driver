@@ -22,6 +22,7 @@ import org.bson.codecs.pojo.entities.ConcreteCollectionsModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
 import org.bson.codecs.pojo.entities.NestedGenericHolderModel;
 import org.bson.codecs.pojo.entities.SimpleGenericsModel;
+import org.bson.codecs.pojo.entities.SimpleIdModel;
 import org.bson.codecs.pojo.entities.UpperBoundsModel;
 import org.bson.codecs.pojo.entities.UpperBoundsConcreteModel;
 import org.junit.Test;
@@ -60,7 +61,7 @@ public final class ClassModelBuilderTest {
         fieldNameToTypeParameterMap.put("myMapField", TypeParameterMap.builder().addIndex(1, 2).build());
 
         assertEquals(fieldNameToTypeParameterMap, builder.getPropertyNameToTypeParameterMap());
-        assertEquals(2, builder.getConventions().size());
+        assertEquals(3, builder.getConventions().size());
         assertTrue(builder.getAnnotations().isEmpty());
         assertEquals(clazz, builder.getType());
         assertNull(builder.getIdPropertyName());
@@ -75,7 +76,7 @@ public final class ClassModelBuilderTest {
 
         assertEquals(0, builder.getPropertyModelBuilders().size());
         assertTrue(builder.getPropertyNameToTypeParameterMap().isEmpty());
-        assertEquals(2, builder.getConventions().size());
+        assertEquals(3, builder.getConventions().size());
         assertTrue(builder.getAnnotations().isEmpty());
         assertEquals(clazz, builder.getType());
         assertNull(builder.getIdPropertyName());
@@ -156,6 +157,22 @@ public final class ClassModelBuilderTest {
         ClassModelBuilder<SimpleGenericsModel> builder = ClassModel.builder(SimpleGenericsModel.class);
         builder.getProperty("myIntegerField").writeName("myGenericField");
         builder.build();
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testDifferentTypeIdGenerator() {
+        ClassModel.builder(SimpleIdModel.class)
+                .idGenerator(new IdGenerator<String>() {
+                    @Override
+                    public String generate() {
+                        return "id";
+                    }
+
+                    @Override
+                    public Class<String> getType() {
+                        return String.class;
+                    }
+                }).build();
     }
 
     private static final List<Annotation> TEST_ANNOTATIONS = Collections.<Annotation>singletonList(
