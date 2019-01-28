@@ -72,7 +72,11 @@ public class PojoQuickTour {
 
         // make a document and insert it
         Person ada = new Person("Ada Byron", 20, new Address("St James Square", "London", "W1"));
+        System.out.println("Original Person Model: " + ada);
         collection.insertOne(ada);
+
+        // Person will now have an ObjectId
+        System.out.println("Mutated Person Model: " + ada);
 
         // get it (since it's the only one in there since we dropped the rest earlier on)
         Person somebody = collection.find().first();

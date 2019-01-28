@@ -80,11 +80,11 @@ public final class PojoCodecProvider implements CodecProvider {
         } else if (automatic || (clazz.getPackage() != null && packages.contains(clazz.getPackage().getName()))) {
             try {
                 classModel = createClassModel(clazz, conventions);
-                if (!clazz.isInterface() && classModel.getPropertyModels().isEmpty()) {
-                    return null;
+                if (clazz.isInterface() || !classModel.getPropertyModels().isEmpty()) {
+                    discriminatorLookup.addClassModel(classModel);
+                    return new AutomaticPojoCodec<T>(new PojoCodecImpl<T>(classModel, registry, propertyCodecProviders,
+                            discriminatorLookup));
                 }
-                discriminatorLookup.addClassModel(classModel);
-                return new AutomaticPojoCodec<T>(new PojoCodecImpl<T>(classModel, registry, propertyCodecProviders, discriminatorLookup));
             } catch (Exception e) {
                 LOGGER.warn(format("Cannot use '%s' with the PojoCodec.", clazz.getSimpleName()), e);
                 return null;
@@ -123,12 +123,12 @@ public final class PojoCodecProvider implements CodecProvider {
         }
 
         /**
-         * Sets whether the provider should automatically try to create a {@link ClassModel} for any class that is requested.
+         * Sets whether the provider should automatically try to wrap a {@link ClassModel} for any class that is requested.
          *
          * <p>Note: As Java Beans are convention based, when using automatic settings the provider should be the last provider in the
          * registry.</p>
          *
-         * @param automatic whether to automatically create {@code ClassModels} or not.
+         * @param automatic whether to automatically wrap {@code ClassModels} or not.
          * @return this
          */
         public Builder automatic(final boolean automatic) {
