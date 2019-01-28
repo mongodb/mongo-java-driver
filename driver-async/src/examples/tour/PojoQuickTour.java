@@ -80,10 +80,14 @@ public class PojoQuickTour {
         dropLatch.await();
 
         // make a document and insert it
-        Person ada = new Person("Ada Byron", 20, new Address("St James Square", "London", "W1"));
+        final Person ada = new Person("Ada Byron", 20, new Address("St James Square", "London", "W1"));
+        System.out.println("Original Person Model: " + ada);
+
         collection.insertOne(ada, new SingleResultCallback<Void>() {
             @Override
             public void onResult(final Void result, final Throwable t) {
+                // Person will now have an ObjectId
+                System.out.println("Mutated Person Model: " + ada);
                 System.out.println("Inserted!");
             }
         });

@@ -33,13 +33,14 @@ public final class ClassModel<T> {
     private final boolean discriminatorEnabled;
     private final String discriminatorKey;
     private final String discriminator;
-    private final PropertyModel<?> idProperty;
+    private final IdPropertyModelHolder<?> idPropertyModelHolder;
     private final List<PropertyModel<?>> propertyModels;
     private final Map<String, TypeParameterMap> propertyNameToTypeParameterMap;
 
     ClassModel(final Class<T> clazz, final Map<String, TypeParameterMap> propertyNameToTypeParameterMap,
                final InstanceCreatorFactory<T> instanceCreatorFactory, final Boolean discriminatorEnabled, final String discriminatorKey,
-               final String discriminator, final PropertyModel<?> idProperty, final List<PropertyModel<?>> propertyModels) {
+               final String discriminator, final IdPropertyModelHolder<?> idPropertyModelHolder,
+               final List<PropertyModel<?>> propertyModels) {
         this.name = clazz.getSimpleName();
         this.type = clazz;
         this.hasTypeParameters = clazz.getTypeParameters().length > 0;
@@ -48,7 +49,7 @@ public final class ClassModel<T> {
         this.discriminatorEnabled = discriminatorEnabled;
         this.discriminatorKey = discriminatorKey;
         this.discriminator = discriminator;
-        this.idProperty = idProperty;
+        this.idPropertyModelHolder = idPropertyModelHolder;
         this.propertyModels = propertyModels;
     }
 
@@ -139,7 +140,11 @@ public final class ClassModel<T> {
      * @return the PropertyModel for the id
      */
     public PropertyModel<?> getIdPropertyModel() {
-        return idProperty;
+        return idPropertyModelHolder != null ? idPropertyModelHolder.getPropertyModel() : null;
+    }
+
+    IdPropertyModelHolder<?> getIdPropertyModelHolder() {
+        return idPropertyModelHolder;
     }
 
     /**
@@ -185,7 +190,8 @@ public final class ClassModel<T> {
         if (getDiscriminator() != null ? !getDiscriminator().equals(that.getDiscriminator()) : that.getDiscriminator() != null) {
             return false;
         }
-        if (idProperty != null ? !idProperty.equals(that.idProperty) : that.idProperty != null) {
+        if (idPropertyModelHolder != null ? !idPropertyModelHolder.equals(that.idPropertyModelHolder)
+                : that.idPropertyModelHolder != null) {
             return false;
         }
         if (!getPropertyModels().equals(that.getPropertyModels())) {
@@ -205,7 +211,7 @@ public final class ClassModel<T> {
         result = 31 * result + (discriminatorEnabled ? 1 : 0);
         result = 31 * result + (getDiscriminatorKey() != null ? getDiscriminatorKey().hashCode() : 0);
         result = 31 * result + (getDiscriminator() != null ? getDiscriminator().hashCode() : 0);
-        result = 31 * result + (idProperty != null ? idProperty.hashCode() : 0);
+        result = 31 * result + (getIdPropertyModelHolder() != null ? getIdPropertyModelHolder().hashCode() : 0);
         result = 31 * result + getPropertyModels().hashCode();
         result = 31 * result + getPropertyNameToTypeParameterMap().hashCode();
         return result;

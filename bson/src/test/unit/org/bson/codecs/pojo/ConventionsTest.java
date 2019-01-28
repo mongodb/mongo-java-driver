@@ -20,8 +20,8 @@ import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.pojo.entities.SimpleModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationBsonPropertyIdModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationDefaultsModel;
-import org.bson.codecs.pojo.entities.conventions.AnnotationModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationNameCollision;
+import org.bson.codecs.pojo.entities.conventions.AnnotationWithObjectIdModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidConstructorModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidMethodModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidMethodReturnTypeModel;
@@ -46,7 +46,7 @@ public final class ConventionsTest {
 
     @Test
     public void testDefaultConventions() {
-        ClassModel<AnnotationModel> classModel = ClassModel.builder(AnnotationModel.class)
+        ClassModel<AnnotationWithObjectIdModel> classModel = ClassModel.builder(AnnotationWithObjectIdModel.class)
                 .conventions(DEFAULT_CONVENTIONS).build();
 
         assertTrue(classModel.useDiscriminator());
@@ -58,6 +58,7 @@ public final class ConventionsTest {
         assertNotNull(idPropertyModel);
         assertEquals("customId", idPropertyModel.getName());
         assertEquals("_id", idPropertyModel.getWriteName());
+        assertEquals(classModel.getIdPropertyModelHolder().getIdGenerator(), IdGenerators.OBJECT_ID_GENERATOR);
 
         PropertyModel<?> childPropertyModel = classModel.getPropertyModel("child");
         assertNotNull(childPropertyModel);

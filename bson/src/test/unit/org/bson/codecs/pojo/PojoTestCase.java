@@ -97,18 +97,31 @@ abstract class PojoTestCase {
     }
 
     <T> void encodesTo(final PojoCodecProvider.Builder builder, final T value, final String json) {
-        encodesTo(getCodecRegistry(builder), value, json);
+        encodesTo(builder, value, json, false);
+    }
+
+    <T> void encodesTo(final PojoCodecProvider.Builder builder, final T value, final String json, final boolean collectible) {
+        encodesTo(getCodecRegistry(builder), value, json, collectible);
+    }
+
+    <T> void encodesTo(final CodecRegistry registry, final T value, final String json) {
+        encodesTo(registry, value, json, false);
     }
 
     @SuppressWarnings("unchecked")
-    <T> void encodesTo(final CodecRegistry registry, final T value, final String json) {
+    <T> void encodesTo(final CodecRegistry registry, final T value, final String json, final boolean collectible) {
         Codec<T> codec = (Codec<T>) registry.get(value.getClass());
-        encodesTo(codec, value, json);
+        encodesTo(codec, value, json, collectible);
     }
 
     @SuppressWarnings("unchecked")
     <T> void encodesTo(final Codec<T> codec, final T value, final String json) {
-        OutputBuffer encoded = encode(codec, value);
+       encodesTo(codec, value, json, false);
+    }
+
+    @SuppressWarnings("unchecked")
+    <T> void encodesTo(final Codec<T> codec, final T value, final String json, final boolean collectible) {
+        OutputBuffer encoded = encode(codec, value, collectible);
 
         BsonDocument asBsonDocument = decode(DOCUMENT_CODEC, encoded);
         assertEquals("Encoded value", BsonDocument.parse(json), asBsonDocument);
@@ -125,7 +138,7 @@ abstract class PojoTestCase {
     }
 
     <T> void decodesTo(final Codec<T> codec, final String json, final T expected) {
-        OutputBuffer encoded = encode(DOCUMENT_CODEC, BsonDocument.parse(json));
+        OutputBuffer encoded = encode(DOCUMENT_CODEC, BsonDocument.parse(json), false);
         T result = decode(codec, encoded);
         assertEquals("Decoded value", expected, result);
     }
@@ -134,10 +147,10 @@ abstract class PojoTestCase {
         decodesTo(codec, json, null);
     }
 
-    <T> OutputBuffer encode(final Codec<T> codec, final T value) {
+    <T> OutputBuffer encode(final Codec<T> codec, final T value, final boolean collectible) {
         OutputBuffer buffer = new BasicOutputBuffer();
         BsonWriter writer = new BsonBinaryWriter(buffer);
-        codec.encode(writer, value, EncoderContext.builder().build());
+        codec.encode(writer, value, EncoderContext.builder().isEncodingCollectibleDocument(collectible).build());
         return buffer;
     }
 
