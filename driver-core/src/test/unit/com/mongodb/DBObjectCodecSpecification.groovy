@@ -16,12 +16,17 @@
 
 package com.mongodb
 
+import org.bson.BsonArray
 import org.bson.BsonBinary
 import org.bson.BsonBinarySubType
 import org.bson.BsonDocument
 import org.bson.BsonDocumentReader
 import org.bson.BsonDocumentWriter
 import org.bson.BsonInt32
+import org.bson.BsonJavaScriptWithScope
+import org.bson.BsonNull
+import org.bson.BsonObjectId
+import org.bson.BsonString
 import org.bson.BsonSymbol
 import org.bson.BsonTimestamp
 import org.bson.codecs.BsonValueCodecProvider
@@ -31,6 +36,8 @@ import org.bson.codecs.UuidCodec
 import org.bson.codecs.ValueCodecProvider
 import org.bson.types.BSONTimestamp
 import org.bson.types.Binary
+import org.bson.types.CodeWScope
+import org.bson.types.ObjectId
 import org.bson.types.Symbol
 import spock.lang.Specification
 
@@ -209,5 +216,58 @@ class DBObjectCodecSpecification extends Specification {
 
         then:
         ((Date) decodededDoc.get('d')).getTime() == sqlTimestamp.getTime()
+    }
+
+    def 'should encode collectible document with _id'() {
+        given:
+        def doc = new BasicDBObject('y', 1).append('_id', new BasicDBObject('x', 1))
+
+        when:
+        dbObjectCodec.encode(new BsonDocumentWriter(bsonDoc), doc,
+                EncoderContext.builder().isEncodingCollectibleDocument(true).build())
+
+        then:
+        bsonDoc == new BsonDocument('_id', new BsonDocument('x', new BsonInt32(1))).append('y', new BsonInt32(1))
+    }
+
+    def 'should encode collectible document without _id'() {
+        given:
+        def doc = new BasicDBObject('y', 1)
+
+        when:
+        dbObjectCodec.encode(new BsonDocumentWriter(bsonDoc), doc,
+                EncoderContext.builder().isEncodingCollectibleDocument(true).build())
+
+        then:
+        bsonDoc == new BsonDocument('y', new BsonInt32(1))
+    }
+
+    def 'should encode all types'() {
+        given:
+        def id = new ObjectId();
+        def dbRef = new DBRef('c', 1)
+        def doc = new BasicDBObject('_id', id)
+                .append('n', null)
+                .append('r', dbRef)
+                .append('m', ['f': 1])
+                .append('i', [1, 2])
+                .append('c', new CodeWScope('c', new BasicDBObject('f', 1)))
+                .append('b', new byte[0])
+                .append('a', [1, 2].toArray())
+                .append('s', new Symbol('s'))
+
+        when:
+        dbObjectCodec.encode(new BsonDocumentWriter(bsonDoc), doc, EncoderContext.builder().build());
+
+        then:
+        bsonDoc == new BsonDocument('_id', new BsonObjectId(id))
+                .append('n', new BsonNull())
+                .append('r', new BsonDocument('$ref', new BsonString('c')).append('$id', new BsonInt32(1)))
+                .append('m', new BsonDocument('f', new BsonInt32(1)))
+                .append('i', new BsonArray([new BsonInt32(1), new BsonInt32(2)]))
+                .append('c', new BsonJavaScriptWithScope('c', new BsonDocument('f', new BsonInt32(1))))
+                .append('b', new BsonBinary(new byte[0]))
+                .append('a', new BsonArray([new BsonInt32(1), new BsonInt32(2)]))
+                .append('s', new BsonSymbol('s'))
     }
 }
