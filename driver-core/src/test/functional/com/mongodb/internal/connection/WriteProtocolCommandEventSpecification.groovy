@@ -37,6 +37,7 @@ import spock.lang.Shared
 
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
+import static com.mongodb.bulk.WriteRequest.Type.REPLACE
 import static com.mongodb.bulk.WriteRequest.Type.UPDATE
 import static com.mongodb.connection.ConnectionFixture.getCredentialListWithCache
 import static com.mongodb.internal.connection.ProtocolTestHelper.execute
@@ -119,6 +120,42 @@ class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecific
                                                                                       .append('upsert', BsonBoolean.TRUE)]))),
                                              new CommandSucceededEvent(1, connection.getDescription(), 'update',
                                                                        new BsonDocument('ok', new BsonInt32(1)), 0)])
+
+        cleanup:
+        // force acknowledgement
+        new CommandProtocolImpl(getDatabaseName(), new BsonDocument('drop', new BsonString(getCollectionName())),
+                NO_OP_FIELD_NAME_VALIDATOR, ReadPreference.primary(), new BsonDocumentCodec())
+                .sessionContext(NoOpSessionContext.INSTANCE)
+                .execute(connection)
+
+        where:
+        async << [false, true]
+    }
+
+    def 'should deliver started and completed command events for a replace'() {
+        given:
+        def filter = new BsonDocument('_id', new BsonInt32(1))
+        def update = new BsonDocument('x', new BsonInt32(1))
+        def updateRequest = new UpdateRequest(filter, update, REPLACE).multi(false).upsert(true)
+        def protocol = new UpdateProtocol(getNamespace(), true, updateRequest)
+        def commandListener = new TestCommandListener()
+        protocol.commandListener = commandListener
+
+        when:
+        execute(protocol, connection, async)
+
+        then:
+        commandListener.eventsWereDelivered([new CommandStartedEvent(1, connection.getDescription(), getDatabaseName(), 'update',
+                new BsonDocument('update', new BsonString(getCollectionName()))
+                        .append('ordered', BsonBoolean.TRUE)
+                        .append('writeConcern',
+                        new BsonDocument('w', new BsonInt32(0)))
+                        .append('updates', new BsonArray(
+                        [new BsonDocument('q', filter)
+                                 .append('u', update)
+                                 .append('upsert', BsonBoolean.TRUE)]))),
+                                             new CommandSucceededEvent(1, connection.getDescription(), 'update',
+                                                     new BsonDocument('ok', new BsonInt32(1)), 0)])
 
         cleanup:
         // force acknowledgement
