@@ -45,6 +45,7 @@ public final class CausalConsistencyExamples {
         setupDatabase();
         MongoClient client = MongoClients.create();
 
+        // Start Causal Consistency Example 1
         // Example 1: Use a causally consistent session to ensure that the update occurs before the insert.
         ClientSession session1 = client.startSession(ClientSessionOptions.builder().causallyConsistent(true).build());
         Date currentDate = new Date();
@@ -59,7 +60,9 @@ public final class CausalConsistencyExamples {
                 .append("name", "Pecans")
                 .append("start", currentDate);
         items.insertOne(session1, document);
+        // End Causal Consistency Example 1
 
+        // Start Causal Consistency Example 2
         // Example 2: Advance the cluster time and the operation time to that of the other session to ensure that
         // this client is causally consistent with the other session and read after the two writes.
         ClientSession session2 = client.startSession(ClientSessionOptions.builder().causallyConsistent(true).build());
@@ -75,6 +78,7 @@ public final class CausalConsistencyExamples {
         for (Document item: items.find(session2, eq("end", BsonNull.VALUE))) {
             System.out.println(item);
         }
+        // End Causal Consistency Example 2
     }
 
     private static void setupDatabase() {
