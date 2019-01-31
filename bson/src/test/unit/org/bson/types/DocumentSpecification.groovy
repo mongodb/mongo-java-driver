@@ -126,6 +126,102 @@ class DocumentSpecification extends Specification {
         thrown(ClassCastException)
     }
 
+    def 'should return null when getting embedded value'() {
+        when:
+        Document document = Document.parse("{a: 1, b: {x: [2, 3, 4], y: {m: 'one', len: 3}}, 'a.b': 'two'}")
+
+        then:
+        document.getEmbedded(List.of('notAKey'), String) == null
+        document.getEmbedded(List.of('b', 'y', 'notAKey'), String) == null
+        document.getEmbedded(List.of('b', 'b', 'm'), String) == null
+        Document.parse('{}').getEmbedded(List.of('a', 'b'), Integer) == null
+        Document.parse('{b: 1}').getEmbedded(['a'], Integer) == null
+        Document.parse('{b: 1}').getEmbedded(['a', 'b'], Integer) == null
+        Document.parse('{a: {c: 1}}').getEmbedded(['a', 'b'], Integer) == null
+        Document.parse('{a: {c: 1}}').getEmbedded(['a', 'b', 'c'], Integer) == null
+    }
+
+    def 'should return embedded value'() {
+        given:
+        Date date = new Date();
+        ObjectId objectId = new ObjectId();
+
+        when:
+        Document document = Document.parse("{a: 1, b: {x: [2, 3, 4], y: {m: 'one', len: 3}}, 'a.b': 'two'}")
+                .append('l', new Document('long', 2L))
+                .append('d', new Document('double', 3.0 as double))
+                .append('t', new Document('boolean', true))
+                .append('o', new Document('objectId', objectId))
+                .append('n', new Document('date', date))
+
+        then:
+        document.getEmbedded(List.of('a'), Integer) == 1
+        document.getEmbedded(List.of('b', 'x'), List).get(0) == 2
+        document.getEmbedded(List.of('b', 'x'), List).get(1) == 3
+        document.getEmbedded(List.of('b', 'x'), List).get(2) == 4
+        document.getEmbedded(List.of('b', 'y', 'm'), String) == 'one'
+        document.getEmbedded(List.of('b', 'y', 'len'), Integer) == 3
+        document.getEmbedded(List.of('a.b'), String) == 'two'
+        document.getEmbedded(List.of('b', 'y'), Document).getString('m') == 'one'
+        document.getEmbedded(List.of('b', 'y'), Document).getInteger('len') == 3
+
+        document.getEmbedded(Arrays.asList('l', 'long'), Long) == 2L
+        document.getEmbedded(Arrays.asList('d', 'double'), Double) == 3.0d
+        document.getEmbedded(Arrays.asList('l', 'long'), Number) == 2L
+        document.getEmbedded(Arrays.asList('d', 'double'), Number) == 3.0d
+        document.getEmbedded(Arrays.asList('t', 'boolean'), Boolean) == true
+        document.getEmbedded(Arrays.asList('t', 'x'), false) == false
+        document.getEmbedded(Arrays.asList('o', 'objectId'), ObjectId) == objectId
+        document.getEmbedded(Arrays.asList('n', 'date'), Date) == date
+    }
+
+    def 'should throw an exception getting an embedded value'() {
+        given:
+        Document document = Document.parse("{a: 1, b: {x: [2, 3, 4], y: {m: 'one', len: 3}}, 'a.b': 'two'}")
+
+        when:
+        document.getEmbedded(null, String) == null
+
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        document.getEmbedded(List.of(), String) == null
+
+        then:
+        thrown(IllegalStateException)
+
+        when:
+        document.getEmbedded(['a', 'b'], Integer)
+
+        then:
+        thrown(ClassCastException)
+
+        when:
+        document.getEmbedded(List.of('b', 'y', 'm'), Integer)
+
+        then:
+        thrown(ClassCastException)
+
+        when:
+        document.getEmbedded(List.of('b', 'x'), Document)
+
+        then:
+        thrown(ClassCastException)
+
+        when:
+        document.getEmbedded(List.of('b', 'x', 'm'), String)
+
+        then:
+        thrown(ClassCastException)
+
+        when:
+        document.getEmbedded(Arrays.asList('b', 'x', 'm'), 'invalid')
+
+        then:
+        thrown(ClassCastException)
+    }
+
     def 'should parse a valid JSON string to a Document'() {
         when:
         Document document = Document.parse("{ 'int' : 1, 'string' : 'abc' }");
