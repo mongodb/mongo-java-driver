@@ -7,6 +7,42 @@ title = "What's New"
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
+## What's new in 3.10
+
+Key new features of the 3.10 Java driver release:
+
+### Native asynchronous TLS/SSL support
+
+Previously, any use of our asynchronous drivers with TLS/SSl required the use of Netty.  In 3.10, the driver supports asynchronous
+TLS/SSL natively, so no third-party dependency is required. To accomplish this, the driver contains code vendored from
+[https://github.com/marianobarrios/tls-channel](https://github.com/marianobarrios/tls-channel).
+
+### Operational improvements
+
+When connecting with the `mongodb+srv` protocol, the driver now polls DNS for changes to the SRV records when connected to a sharded 
+cluster.  See 
+[Polling SRV Records for Mongos Discovery](https://github.com/mongodb/specifications/blob/master/source/polling-srv-records-for-mongos-discovery/polling-srv-records-for-mongos-discovery.rst) 
+for more details.
+
+When retryable writes are enabled, the driver now outputs log messages at DEBUG level when a retryable write is attempted.  See
+[JAVA-2964](https://jira.mongodb.org/browse/JAVA-2964) for more details.
+
+### Codec Improvements
+
+The driver now mutates the id property of a POJO, when inserting a document via a POJO with a `null` id property of type `ObjectId`. See
+[JAVA-2674](https://jira.mongodb.org/browse/JAVA-2674) for more details.
+
+### JNDI
+
+The driver now offers a JNDI `ObjectFactory` implementation for creating instances of `com.mongodb.client.MongoClient`, the interface
+introduced in version 3.7 of the driver. See [JAVA-2883](https://jira.mongodb.org/browse/JAVA-2883) for more details.
+
+### Full list of changes
+
+* [New Features](https://jira.mongodb.org/issues/?jql=project%20%3D%20JAVA%20AND%20issuetype%20%3D%20%22New%20Feature%22%20AND%20fixVersion%20%3D%203.10.0%20ORDER%20BY%20component%20DESC%2C%20key%20ASC)
+* [Improvements](https://jira.mongodb.org/issues/?jql=project%20%3D%20JAVA%20AND%20issuetype%20%3D%20Improvement%20AND%20fixVersion%20%3D%203.10.0%20ORDER%20BY%20component%20DESC%2C%20key%20ASC)
+* [Bug Fixes](https://jira.mongodb.org/issues/?jql=project%20%3D%20JAVA%20AND%20issuetype%20%3D%20Bug%20AND%20fixVersion%20%3D%203.10.0%20ORDER%20BY%20component%20DESC%2C%20key%20ASC)
+
 ## What's new in 3.9
 
 Key new features of the 3.9 Java driver release:

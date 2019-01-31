@@ -14,7 +14,8 @@ title = "Installation"
 The recommended way to get started using one of the drivers in your project is with a dependency management system.
 
 {{% note class="important" %}}
-The MongoDB Async Driver requires either [Netty](http://netty.io/) or Java 7.
+When TLS/SSL is disabled, the MongoDB Async Driver requires either [Netty](http://netty.io/) or Java 7+.
+When TLS/SSL is enabled, the MongoDB Async Driver requires either [Netty](http://netty.io/) or Java 8+. 
 {{% /note %}}
 
 {{< distroPicker >}}
@@ -23,4 +24,4 @@ The MongoDB Async Driver requires either [Netty](http://netty.io/) or Java 7.
 
 The MongoDB Async Driver provides asynchronous API that can leverage either Netty or Java 7's AsynchronousSocketChannel for fast and non-blocking I/O.
 
-{{< install artifactId="mongodb-driver-async" version="3.9.0" dependencies="true">}}
+{{< install artifactId="mongodb-driver-async" version="3.10.0" dependencies="true">}}
