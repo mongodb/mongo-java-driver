@@ -9,12 +9,16 @@ title = "MongoDB Async Driver"
 
 ## MongoDB Async Java Driver Documentation
 
-The following guide provides information on using the callback-based MongoDB Async Java Driver 3.9.
+The following guide provides information on using the callback-based MongoDB Async Java Driver 3.10.
 
 {{% note %}}
 The callback-based Async Java Driver has been deprecated in favor of the 
 [MongoDB Reactive Streams Java Driver](http://mongodb.github.io/mongo-java-driver-reactivestreams/).
 {{% /note %}}
+
+### What's New in 3.19
+
+The driver now natively supports TLS/SSL when used with Java 8+.  
 
 ### What's New in 3.9
 
