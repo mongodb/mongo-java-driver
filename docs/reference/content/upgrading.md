@@ -7,11 +7,10 @@ title = "Upgrade Considerations"
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
-## Upgrading from 3.8.x
+## Upgrading from 3.9.x
 
-Numerous classes and methods have been deprecated in the 3.9 release in preparation for a major 4.0 release, in which all deprecated
-API elements except those documented as "not currently scheduled for removal" will be removed. Currently the only API elements _not_ 
-scheduled for removal are:
+In the upcoming 4.0 release, all deprecated API elements except those documented as "not currently scheduled for removal" will be removed. 
+Currently the only API elements _not_ scheduled for removal are:
 
 * [`Mongo.getDB`]({{<apiref "com/mongodb/Mongo.html#getDB-java.lang.String-">}})
 * [`JsonMode.STRICT`]({{<apiref "org/bson/json/JsonMode.html#STRICT">}}) 
@@ -19,11 +18,11 @@ scheduled for removal are:
 To prepare for the 4.0 release, please compile with deprecation warnings enabled and replace all usage of deprecated API elements with their
 recommended replacements.
 
-Also, note that the 3.10 release (which will include support for MongoDB 4.2) will be the last release that is compatible with *Java 6
-or Java 7*.  The 4.0 Java driver will require a minimum of Java 8. The 3.10 release will also be the last non-patch release in the 3.x 
+Also, note that the 3.11 release (which will include support for MongoDB 4.2) will be the last release that is compatible with *Java 6
+or Java 7*.  The 4.0 Java driver will require a minimum of Java 8. The 3.11 release will also be the last non-patch release in the 3.x 
 line. In particular, support for MongoDB 4.4 will only be made available via a 4.x driver release.
 
-The 3.9 release is binary and source compatible with the 3.8 release, except for methods that have been added to interfaces that
+The 3.10 release is binary and source compatible with the 3.9 release, except for methods that have been added to interfaces that
 have been marked as unstable, and changes to classes or interfaces that have been marked as internal or annotated as Beta.
 
 ## Upgrading from 2.x
@@ -38,10 +37,12 @@ The minimum JVM is Java 6. However, specific features require more recent versio
 its reliance on TLS Server Name Indication (SNI).
 - SSL support requires Java 7 or greater in order to perform host name verification, which is enabled by default.  See
 [SSL]({{< relref "driver/tutorials/ssl.md" >}}) for details on how to disable host name verification.
-- The asynchronous API requires Java 7, as by default it relies on
+- The asynchronous API requires Java 7 when TLS/SSL is disabled, as by default it relies on
 [`AsynchronousSocketChannel`](http://docs.oracle.com/javase/7/docs/api/java/nio/channels/AsynchronousSocketChannel.html) for
 its implementation.  See [Async]({{< ref "driver-async/index.md" >}}) for details on configuring the driver to use 
 [Netty](http://netty.io/) instead.
+- The asynchronous API requires Java 8 when TLS/SSL is enabled. See [Async]({{< ref "driver-async/index.md" >}}) for details on configuring 
+the driver to use [Netty](http://netty.io/) instead.
 
 ## Compatibility
 

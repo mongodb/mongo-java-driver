@@ -47,7 +47,6 @@ documentation for more information.
     import com.mongodb.ServerAddress;
     import com.mongodb.async.client.*;
     import com.mongodb.connection.ClusterSettings;
-    import com.mongodb.connection.netty.NettyStreamFactoryFactory;
     import java.util.Arrays;
     import static java.util.Arrays.asList;
     ```
@@ -227,16 +226,11 @@ connection string (or `ConnectionString` object) or the `MongoClientSettings` or
 
 {{% note %}}
 Netty is an optional dependency of the asynchronous driver. If your application requires Netty, it must explicitly add a dependency to
-Netty artifacts.  The driver is currently tested against Netty 4.0.
+Netty artifacts.  The driver is currently tested against Netty 4.1.
 {{% /note %}}
 
-By default, the async driver relies on the
-[`AsynchronousSocketChannel`](http://docs.oracle.com/javase/7/docs/api/java/nio/channels/AsynchronousSocketChannel.html) class, introduced
-in Java 7.  However, an application must use [Netty](http://netty.io/) instead if:
-
-* The application is configured to use SSL to communicate with the MongoDB server, or
-
-* The application runs on Java 6.
+In its default configuration, the async driver is supported on Java 7+ when TLS/SSL is disabled, and on Java 8+ when TLS/SSL is enabled.  
+Otherwise, applications must use [Netty](http://netty.io/).
 
 To configure the driver to use Netty,  
 
