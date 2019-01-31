@@ -28,9 +28,6 @@ import org.bson.conversions.Bson;
 
 import static com.mongodb.client.model.Filters.text;
 
-/**
- * The QuickTourAdmin code example see: https://mongodb.github.io/mongo-java-driver/3.0/getting-started
- */
 public class QuickTourAdmin {
     /**
      * Run this main method to see the output of this quick example.
