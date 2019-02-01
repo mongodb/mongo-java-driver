@@ -48,7 +48,7 @@ import static com.mongodb.async.client.gridfs.helpers.AsynchronousChannelHelper.
 import static com.mongodb.client.model.Filters.eq;
 
 /**
- * The GridFS code example see: https://mongodb.github.io/mongo-java-driver/3.1/driver/reference/gridfs
+ * The GridFS code example see: https://mongodb.github.io/mongo-java-driver/3.8/driver-async/tutorials/gridfs/
  */
 public final class GridFSTour {
 

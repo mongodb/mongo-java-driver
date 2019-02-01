@@ -40,7 +40,7 @@ import java.nio.charset.StandardCharsets;
 import static com.mongodb.client.model.Filters.eq;
 
 /**
- * The GridFS code example see: https://mongodb.github.io/mongo-java-driver/3.1/driver/reference/gridfs
+ * The GridFS code example see: https://mongodb.github.io/mongo-java-driver/3.8/driver/tutorials/gridfs/
  */
 public final class GridFSTour {
 
