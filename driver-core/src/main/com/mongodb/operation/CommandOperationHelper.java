@@ -53,7 +53,6 @@ import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionA
 import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.canRetryWrite;
-import static com.mongodb.operation.OperationHelper.isRetryableWrite;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static com.mongodb.operation.OperationHelper.withReleasableConnection;
