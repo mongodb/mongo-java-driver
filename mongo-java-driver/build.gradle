@@ -29,6 +29,7 @@ dependencies {
     compile "io.netty:netty-transport:$nettyVersion", optional
     compile "io.netty:netty-handler:$nettyVersion", optional
     compile "org.xerial.snappy:snappy-java:$snappyVersion", optional
+    compile "com.github.luben:zstd-jni:$zstdVersion", optional
 }
 
 // srcDirs copied as well, so everything is compiled twice
@@ -63,6 +64,7 @@ jar {
                     'org.ietf.jgss.*',
                     'io.netty.*;resolution:=optional',
                     'org.xerial.snappy.*;resolution:=optional',
+                    'com.github.luben.zstd.*;resolution:=optional',
                     'org.slf4j;resolution:=optional',
                     'jnr.unixsocket;resolution:=optional'
     }

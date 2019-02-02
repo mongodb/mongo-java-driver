@@ -21,6 +21,7 @@ import spock.lang.Unroll
 
 import static com.mongodb.MongoCompressor.LEVEL
 import static com.mongodb.MongoCompressor.createZlibCompressor
+import static com.mongodb.MongoCompressor.createZstdCompressor
 import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.MongoCredential.createGSSAPICredential
 import static com.mongodb.MongoCredential.createMongoCRCredential
@@ -522,6 +523,7 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://localhost/?compressors=zlib') | createZlibCompressor()
         new ConnectionString('mongodb://localhost/?compressors=zlib' +
                 '&zlibCompressionLevel=5')                                           | createZlibCompressor().withProperty(LEVEL, 5)
+        new ConnectionString('mongodb://localhost/?compressors=zstd') | createZstdCompressor()
     }
 
     def 'should be equal to another instance with the same string values'() {
