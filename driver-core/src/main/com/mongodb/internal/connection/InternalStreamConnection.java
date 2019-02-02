@@ -207,6 +207,8 @@ public class InternalStreamConnection implements InternalConnection {
             return new ZlibCompressor(mongoCompressor);
         } else if (mongoCompressor.getName().equals("snappy")) {
             return new SnappyCompressor();
+        } else if (mongoCompressor.getName().equals("zstd")) {
+            return new ZstdCompressor();
         } else {
             throw new MongoClientException("Unsupported compressor " + mongoCompressor.getName());
         }

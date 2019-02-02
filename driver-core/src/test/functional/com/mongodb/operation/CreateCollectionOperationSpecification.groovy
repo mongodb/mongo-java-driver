@@ -126,6 +126,28 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         async << [true, false]
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(4, 0) })
+    def 'should pass through storage engine options- zstd compression'() {
+        given:
+        def storageEngineOptions = new BsonDocument('wiredTiger', new BsonDocument('configString', new BsonString('block_compressor=zstd')))
+        if (!serverVersionAtLeast(4, 1)) {
+            storageEngineOptions.append('mmapv1', new BsonDocument())
+        }
+        def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
+                .storageEngineOptions(storageEngineOptions)
+
+        when:
+        execute(operation, async)
+
+        then:
+        new ListCollectionsOperation(getDatabaseName(), new BsonDocumentCodec()).execute(getBinding()).next().find {
+            it -> it.getString('name').value == getCollectionName()
+        }.getDocument('options').getDocument('storageEngine') == operation.storageEngineOptions
+
+        where:
+        async << [true, false]
+    }
+
     def 'should set flags for use power of two sizes'() {
         given:
         assert !collectionNameExists(getCollectionName())
