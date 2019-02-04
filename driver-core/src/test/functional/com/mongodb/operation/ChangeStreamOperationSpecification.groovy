@@ -16,7 +16,7 @@
 
 package com.mongodb.operation
 
-import com.mongodb.MongoChangeStreamException
+
 import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
