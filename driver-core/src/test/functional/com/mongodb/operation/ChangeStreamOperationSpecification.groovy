@@ -17,6 +17,7 @@
 package com.mongodb.operation
 
 import com.mongodb.MongoChangeStreamException
+import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadConcern
@@ -413,7 +414,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         nextAndClean(cursor, async)
 
         then:
-        thrown(MongoChangeStreamException)
+        thrown(MongoException)
 
         cleanup:
         cursor?.close()
