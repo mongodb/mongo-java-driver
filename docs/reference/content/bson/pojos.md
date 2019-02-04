@@ -24,6 +24,7 @@ A `ClassModel` for a POJO includes:
   * An optional discriminator value. The discriminator is the value used to represent the POJO class being stored.
   * An optional discriminator key. The document key name for the discriminator.
   * The use discriminator flag. This determines if the discriminator should be serialized. By default it is off.
+  * An optional IdGenerator used to generate the `id` value, when inserting the POJO. (New in 3.10)
   
 Each `PropertyModel` includes:
 
@@ -318,10 +319,12 @@ The following Conventions are available from the [`Conventions`]({{<apiref "org/
         the PropertyModels. If the `idProperty` isn't set and there is a property named `_id` or `id` then it will be marked as the `idProperty`.
   * The [`SET_PRIVATE_FIELDS_CONVENTION`]({{<apiref "org/bson/codecs/pojo/Conventions.html#SET_PRIVATE_FIELDS_CONVENTION">}}).  Enables 
         private fields to be set directly using reflection, without the need of a setter method. Note this convention is not enabled by default.
-  * The [`USE_GETTERS_FOR_SETTERS`]({{<apiref "org/bson/codecs/pojo/Conventions.html#USE_GETTERS_FOR_SETTERS">}}). Allows getters to be used
+  * The [`USE_GETTERS_FOR_SETTERS`]({{<apiref "org/bson/codecs/pojo/Conventions.html#USE_GETTERS_FOR_SETTERS">}}) convention. Allows getters to be used
         for Map and Collection properties without setters, the collection/map is then mutated. Note this convention is not enabled by default.
+  * The [`OBJECT_ID_GENERATORS`]({{<apiref "org/bson/codecs/pojo/Conventions.html#OBJECT_ID_GENERATORS">}}) convention. Adds an `IdGenerator` that
+        generates new `ObjectId` for ClassModels that have an `ObjectId` value for the `id` property.
   * The [`DEFAULT_CONVENTIONS`]({{<apiref "org/bson/codecs/pojo/Conventions.html#DEFAULT_CONVENTIONS">}}), a list containing the 
-    `ANNOTATION_CONVENTION` and the `CLASS_AND_PROPERTY_CONVENTION`.
+    `ANNOTATION_CONVENTION`, the `CLASS_AND_PROPERTY_CONVENTION` and the `OBJECT_ID_GENERATORS` convention.
   * The [`NO_CONVENTIONS`]({{<apiref "org/bson/codecs/pojo/Conventions.html#NO_CONVENTIONS">}}) an empty list.
 
 Custom Conventions can either be set globally via the 
