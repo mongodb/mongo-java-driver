@@ -30,7 +30,8 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
      * Returns the server address of the pinned mongos on this session.
      *
      * @return the server address of the pinned mongos.
-     * @mongodb.server.release 4.0
+     * @mongodb.server.release 4.2
+     * @since 3.11
      */
     @Nullable
     ServerAddress getPinnedMongosAddress();
@@ -39,7 +40,8 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
      * Pin the server address of the mongos on this session.
      *
      * @param address the server address to pin to this session
-     * @mongodb.server.release 4.0
+     * @mongodb.server.release 4.2
+     * @since 3.11
      */
     void setPinnedMongosAddress(@Nullable ServerAddress address);
 

@@ -16,7 +16,11 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.Function;
 import com.mongodb.WriteConcern;
+import org.bson.BsonDocument;
+
+import static com.mongodb.operation.CommandOperationHelper.noOpRetryCommandModifier;
 
 /**
  * An operation that aborts a transaction.
@@ -38,5 +42,10 @@ public class AbortTransactionOperation extends TransactionOperation {
     @Override
     protected String getCommandName() {
         return "abortTransaction";
+    }
+
+    @Override
+    protected Function<BsonDocument, BsonDocument> getRetryCommandModifier() {
+        return noOpRetryCommandModifier();
     }
 }

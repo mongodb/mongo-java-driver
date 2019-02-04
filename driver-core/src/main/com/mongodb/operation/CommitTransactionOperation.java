@@ -16,6 +16,7 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.Function;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNodeIsRecoveringException;
 import com.mongodb.MongoNotPrimaryException;
@@ -26,8 +27,13 @@ import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
+import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.connection.ServerDescription;
+import com.mongodb.operation.CommandOperationHelper.CommandCreator;
+import org.bson.BsonDocument;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
 import static java.util.Arrays.asList;
@@ -39,6 +45,7 @@ import static java.util.Arrays.asList;
  */
 @Deprecated
 public class CommitTransactionOperation extends TransactionOperation {
+    private final boolean alreadyCommitted;
 
     /**
      * Construct an instance.
@@ -46,7 +53,19 @@ public class CommitTransactionOperation extends TransactionOperation {
      * @param writeConcern the write concern
      */
     public CommitTransactionOperation(final WriteConcern writeConcern) {
+        this(writeConcern, false);
+    }
+
+    /**
+     * Construct an instance.
+     *
+     * @param writeConcern the write concern
+     * @param alreadyCommitted if the transaction has already been committed.
+     * @since 3.11
+     */
+    public CommitTransactionOperation(final WriteConcern writeConcern, final boolean alreadyCommitted) {
         super(writeConcern);
+        this.alreadyCommitted = alreadyCommitted;
     }
 
     @Override
@@ -103,5 +122,35 @@ public class CommitTransactionOperation extends TransactionOperation {
     @Override
     protected String getCommandName() {
         return "commitTransaction";
+    }
+
+    @Override
+    CommandCreator getCommandCreator() {
+        final CommandCreator creator = super.getCommandCreator();
+        if (alreadyCommitted) {
+            return new CommandCreator() {
+                @Override
+                public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
+                    return getRetryCommandModifier().apply(creator.create(serverDescription, connectionDescription));
+                }
+            };
+        } else {
+            return creator;
+        }
+    }
+
+    @Override
+    protected Function<BsonDocument, BsonDocument> getRetryCommandModifier() {
+        return new Function<BsonDocument, BsonDocument>() {
+            @Override
+            public BsonDocument apply(final BsonDocument command) {
+                WriteConcern retryWriteConcern = getWriteConcern().withW("majority");
+                if (retryWriteConcern.getWTimeout(TimeUnit.MILLISECONDS) == null) {
+                    retryWriteConcern = retryWriteConcern.withWTimeout(10000, TimeUnit.MILLISECONDS);
+                }
+                command.put("writeConcern", retryWriteConcern.asDocument());
+                return command;
+            }
+        };
     }
 }

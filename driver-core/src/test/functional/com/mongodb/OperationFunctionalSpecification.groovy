@@ -197,25 +197,34 @@ class OperationFunctionalSpecification extends Specification {
                 params.checkSlaveOk, params.readPreference, params.retryable, params.serverType)
     }
 
+    void testOperationInTransaction(operation, List<Integer> serverVersion, BsonDocument expectedCommand, boolean async, result = null,
+                                    boolean checkCommand = true, boolean checkSlaveOk = false,
+                                    ReadPreference readPreference = ReadPreference.primary(), boolean retryable = false,
+                                    ServerType serverType = ServerType.STANDALONE) {
+        testOperation(operation, serverVersion, ReadConcern.DEFAULT, expectedCommand, async, result, checkCommand, checkSlaveOk,
+                readPreference, retryable, serverType, true)
+    }
+
     void testOperation(operation, List<Integer> serverVersion, BsonDocument expectedCommand, boolean async, result = null,
                        boolean checkCommand = true, boolean checkSlaveOk = false, ReadPreference readPreference = ReadPreference.primary(),
-                       boolean retryable = false, ServerType serverType = ServerType.STANDALONE) {
+                       boolean retryable = false, ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false) {
         testOperation(operation, serverVersion, ReadConcern.DEFAULT, expectedCommand, async, result, checkCommand, checkSlaveOk,
-        readPreference, retryable, serverType)
+        readPreference, retryable, serverType, activeTransaction)
     }
 
     void testOperation(operation, List<Integer> serverVersion, ReadConcern readConcern, BsonDocument expectedCommand, boolean async,
                        result = null, boolean checkCommand = true, boolean checkSlaveOk = false,
                        ReadPreference readPreference = ReadPreference.primary(), boolean retryable = false,
-                       ServerType serverType = ServerType.STANDALONE) {
+                       ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false) {
         def test = async ? this.&testAsyncOperation : this.&testSyncOperation
         test(operation, serverVersion, readConcern, result, checkCommand, expectedCommand, checkSlaveOk, readPreference, retryable,
-                serverType)
+                serverType, activeTransaction)
     }
 
-    void testOperationRetries(operation, List<Integer> serverVersion, BsonDocument expectedCommand, boolean async, result = null) {
+    void testOperationRetries(operation, List<Integer> serverVersion, BsonDocument expectedCommand, boolean async, result = null,
+                              Boolean activeTransaction = false) {
         testOperation(operation, serverVersion, expectedCommand, async, result, true, false, ReadPreference.primary(), true,
-             ServerType.REPLICA_SET_PRIMARY)
+             ServerType.REPLICA_SET_PRIMARY, activeTransaction)
     }
 
     void testRetryableOperationThrowsOriginalError(operation, List<List<Integer>> serverVersions, List<ServerType> serverTypes,
@@ -241,7 +250,7 @@ class OperationFunctionalSpecification extends Specification {
     def testSyncOperation(operation, List<Integer> serverVersion, ReadConcern readConcern, result, Boolean checkCommand=true,
                           BsonDocument expectedCommand=null, Boolean checkSlaveOk=false,
                           ReadPreference readPreference=ReadPreference.primary(), Boolean retryable = false,
-                          ServerType serverType = ServerType.STANDALONE) {
+                          ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false) {
         def connection = Mock(Connection) {
             _ * getDescription() >> Stub(ConnectionDescription) {
                 getMaxWireVersion() >> getMaxWireVersionForServerVersion(serverVersion)
@@ -266,7 +275,7 @@ class OperationFunctionalSpecification extends Specification {
             getReadPreference() >> readPreference
             getSessionContext() >> Stub(SessionContext) {
                 hasSession() >> true
-                hasActiveTransaction() >> false
+                hasActiveTransaction() >> activeTransaction
                 getReadConcern() >> readConcern
             }
         }
@@ -274,7 +283,7 @@ class OperationFunctionalSpecification extends Specification {
             getWriteConnectionSource() >> connectionSource
             getSessionContext() >> Stub(SessionContext) {
                 hasSession() >> true
-                hasActiveTransaction() >> false
+                hasActiveTransaction() >> activeTransaction
                 getReadConcern() >> readConcern
             }
         }
@@ -319,7 +328,7 @@ class OperationFunctionalSpecification extends Specification {
     def testAsyncOperation(operation = operation, List<Integer> serverVersion = serverVersion, ReadConcern readConcern, result = null,
                            Boolean checkCommand = true, BsonDocument expectedCommand = null, Boolean checkSlaveOk = false,
                            ReadPreference readPreference = ReadPreference.primary(), Boolean retryable = false,
-                           ServerType serverType = ServerType.STANDALONE) {
+                           ServerType serverType = ServerType.STANDALONE, Boolean activeTransaction = false) {
         def connection = Mock(AsyncConnection) {
             _ * getDescription() >> Stub(ConnectionDescription) {
                 getMaxWireVersion() >> getMaxWireVersionForServerVersion(serverVersion)
@@ -342,7 +351,7 @@ class OperationFunctionalSpecification extends Specification {
             getReadPreference() >> readPreference
             getSessionContext() >> Stub(SessionContext) {
                 hasSession() >> true
-                hasActiveTransaction() >> false
+                hasActiveTransaction() >> activeTransaction
                 getReadConcern() >> readConcern
             }
         }
@@ -350,7 +359,7 @@ class OperationFunctionalSpecification extends Specification {
             getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
             getSessionContext() >> Stub(SessionContext) {
                 hasSession() >> true
-                hasActiveTransaction() >> false
+                hasActiveTransaction() >> activeTransaction
                 getReadConcern() >> readConcern
             }
         }
