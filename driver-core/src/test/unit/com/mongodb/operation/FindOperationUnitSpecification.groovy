@@ -188,7 +188,6 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
                 .append('oplogReplay', BsonBoolean.TRUE)
                 .append('snapshot', BsonBoolean.TRUE)
                 .append('maxTimeMS', new BsonInt64(operation.getMaxTime(MILLISECONDS)))
-                .append('readConcern', new BsonDocument('level', new BsonString('majority')))
                 .append('comment', new BsonString(operation.getComment()))
                 .append('hint', operation.getHint())
                 .append('min', operation.getMin())
