@@ -32,6 +32,7 @@ import com.mongodb.client.model.changestream.FullDocument
 import com.mongodb.operation.ChangeStreamOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
+import org.bson.BsonTimestamp
 import org.bson.Document
 import org.bson.RawBsonDocument
 import org.bson.codecs.BsonValueCodecProvider
@@ -47,7 +48,6 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
 
 class ChangeStreamIterableSpecification extends Specification {
-
     def namespace = new MongoNamespace('db', 'coll')
     def codecRegistry = fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()])
     def readPreference = secondary()
@@ -80,8 +80,10 @@ class ChangeStreamIterableSpecification extends Specification {
 
         when: 'overriding initial options'
         def resumeToken = RawBsonDocument.parse('{_id: {a: 1}}')
+        def startAtOperationTime = new BsonTimestamp(99)
         changeStreamIterable.collation(collation).maxAwaitTime(99, MILLISECONDS)
-                .fullDocument(FullDocument.UPDATE_LOOKUP).resumeAfter(resumeToken).into([]) { result, t -> }
+                .fullDocument(FullDocument.UPDATE_LOOKUP).resumeAfter(resumeToken).startAtOperationTime(startAtOperationTime)
+                .startAfter(resumeToken).into([]) { result, t -> }
 
         operation = executor.getReadOperation() as ChangeStreamOperation<Document>
 
@@ -89,7 +91,8 @@ class ChangeStreamIterableSpecification extends Specification {
         expect operation, isTheSameAs(new ChangeStreamOperation<Document>(namespace, FullDocument.UPDATE_LOOKUP,
                 [BsonDocument.parse('{$match: 1}')], codec, ChangeStreamLevel.COLLECTION)
                 .collation(collation).maxAwaitTime(99, MILLISECONDS)
-                .resumeAfter(resumeToken))
+                .resumeAfter(resumeToken).startAtOperationTime(startAtOperationTime)
+                .startAfter(resumeToken))
     }
 
     def 'should handle exceptions correctly'() {

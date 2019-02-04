@@ -48,14 +48,12 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
 
 class ChangeStreamIterableSpecification extends Specification {
-
     def namespace = new MongoNamespace('db', 'coll')
     def codecRegistry = fromProviders([new ValueCodecProvider(), new DocumentCodecProvider(), new BsonValueCodecProvider()])
     def readPreference = secondary()
     def readConcern = ReadConcern.MAJORITY
     def writeConcern = WriteConcern.MAJORITY
     def collation = Collation.builder().locale('en').build()
-    def startAtOperationTime = new BsonTimestamp(99)
 
     def 'should build the expected ChangeStreamOperation'() {
         given:
@@ -78,8 +76,10 @@ class ChangeStreamIterableSpecification extends Specification {
 
         when: 'overriding initial options'
         def resumeToken = RawBsonDocument.parse('{_id: {a: 1}}')
+        def startAtOperationTime = new BsonTimestamp(99)
         changeStreamIterable.collation(collation).maxAwaitTime(99, MILLISECONDS)
-                .fullDocument(FullDocument.UPDATE_LOOKUP).resumeAfter(resumeToken).startAtOperationTime(startAtOperationTime).iterator()
+                .fullDocument(FullDocument.UPDATE_LOOKUP).resumeAfter(resumeToken).startAtOperationTime(startAtOperationTime)
+                .startAfter(resumeToken).iterator()
 
         operation = executor.getReadOperation() as ChangeStreamOperation<Document>
 
@@ -87,7 +87,7 @@ class ChangeStreamIterableSpecification extends Specification {
         expect operation, isTheSameAs(new ChangeStreamOperation<Document>(namespace, FullDocument.UPDATE_LOOKUP,
                 [BsonDocument.parse('{$match: 1}')], codec, ChangeStreamLevel.COLLECTION)
                 .collation(collation).maxAwaitTime(99, MILLISECONDS)
-                .resumeAfter(resumeToken).startAtOperationTime(startAtOperationTime))
+                .resumeAfter(resumeToken).startAtOperationTime(startAtOperationTime).startAfter(resumeToken))
     }
 
     def 'should use ClientSession'() {

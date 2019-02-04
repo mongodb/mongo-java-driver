@@ -55,6 +55,7 @@ class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeStreamDo
 
     private FullDocument fullDocument = FullDocument.DEFAULT;
     private BsonDocument resumeToken;
+    private BsonDocument startAfter;
     private long maxAwaitTimeMS;
     private Collation collation;
     private BsonTimestamp startAtOperationTime;
@@ -129,6 +130,12 @@ class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeStreamDo
     }
 
     @Override
+    public ChangeStreamIterableImpl<TResult> startAfter(final BsonDocument startAfter) {
+        this.startAfter = notNull("startAfter", startAfter);
+        return this;
+    }
+
+    @Override
     public ReadOperation<BatchCursor<ChangeStreamDocument<TResult>>> asReadOperation() {
         return createChangeStreamOperation(codec);
     }
@@ -139,7 +146,8 @@ class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeStreamDo
                         .collation(collation)
                         .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
                         .resumeAfter(resumeToken)
-                        .startAtOperationTime(startAtOperationTime);
+                        .startAtOperationTime(startAtOperationTime)
+                        .startAfter(startAfter);
     }
 
     private List<BsonDocument> createBsonDocumentList(final List<? extends Bson> pipeline) {
