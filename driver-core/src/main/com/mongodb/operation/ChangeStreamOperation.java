@@ -61,6 +61,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
     private final ChangeStreamLevel changeStreamLevel;
 
     private BsonDocument resumeToken;
+    private BsonDocument startAfter;
     private BsonTimestamp startAtOperationTime;
     private BsonTimestamp startAtOperationTimeForResume;
 
@@ -139,6 +140,39 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
      */
     public ChangeStreamOperation<T> resumeAfter(final BsonDocument resumeToken) {
         this.resumeToken = resumeToken;
+        return this;
+    }
+
+    /**
+     * Returns the logical starting point for the new change stream returning the first notification after the token.
+     *
+     * <p>A null value represents the server default.</p>
+     *
+     * @return the startAfter resumeToken
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     */
+    public BsonDocument getStartAfter() {
+        return startAfter;
+    }
+
+    /**
+     * Similar to {@code resumeAfter}, this option takes a resume token and starts a
+     * new change stream returning the first notification after the token.
+     *
+     * <p>This will allow users to watch collections that have been dropped and recreated
+     * or newly renamed collections without missing any notifications.</p>
+     *
+     * <p>Note: The server will report an error if both {@code startAfter} and {@code resumeAfter} are specified.</p>
+     *
+     * @param startAfter the startAfter resumeToken
+     * @return this
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     * @mongodb.driver.manual changeStreams/#change-stream-start-after
+     */
+    public ChangeStreamOperation<T> startAfter(final BsonDocument startAfter) {
+        this.startAfter = startAfter;
         return this;
     }
 
@@ -300,11 +334,21 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
                     changeStream.append("allChangesForCluster", BsonBoolean.TRUE);
                 }
 
+                boolean hasResumeSetting = false;
                 if (resumeToken != null) {
+                    hasResumeSetting = true;
                     changeStream.append("resumeAfter", resumeToken);
-                } else if (startAtOperationTime != null) {
+                }
+                if (startAfter != null) {
+                    hasResumeSetting = true;
+                    changeStream.append("startAfter", startAfter);
+                }
+                if (startAtOperationTime != null) {
+                    hasResumeSetting = true;
                     changeStream.append("startAtOperationTime", startAtOperationTime);
-                } else if (startAtOperationTimeForResume != null && serverIsAtLeastVersionFourDotZero(description)) {
+                }
+
+                if (!hasResumeSetting && startAtOperationTimeForResume != null && serverIsAtLeastVersionFourDotZero(description)) {
                     changeStream.append("startAtOperationTime", startAtOperationTimeForResume);
                 }
 

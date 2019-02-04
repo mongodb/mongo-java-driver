@@ -96,15 +96,15 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
     def 'should create the expected command'() {
         given:
         def aggregate = changeStreamLevel == ChangeStreamLevel.COLLECTION ? new BsonString(namespace.getCollectionName()) : new BsonInt32(1)
+        def pipeline = [BsonDocument.parse('{$match: {a: "A"}}')]
+        def resumeToken = BsonDocument.parse('{_id: 1}')
 
         when:
-        def pipeline = [BsonDocument.parse('{$match: {a: "A"}}')]
         def changeStream = BsonDocument.parse('''{$changeStream: {fullDocument: "default", startAtOperationTime:
                     { "$timestamp" : { "t" : 0, "i" : 0 }}}}''')
         if (changeStreamLevel == ChangeStreamLevel.CLIENT) {
             changeStream.getDocument('$changeStream').put('allChangesForCluster', BsonBoolean.TRUE)
         }
-
 
         def cursorResult = BsonDocument.parse('{ok: 1.0}')
                 .append('cursor', new BsonDocument('id', new BsonInt64(0)).append('ns', new BsonString('db.coll'))
@@ -122,6 +122,17 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
                 .append('cursor', new BsonDocument('batchSize', new BsonInt32(5)))
                 .append('pipeline', new BsonArray([changeStream, *pipeline]))
                 .append('readConcern', new BsonDocument('level', new BsonString('majority')))
+
+        then:
+        testOperation(operation, [4, 0, 0], ReadConcern.MAJORITY, expectedCommand, async, cursorResult)
+
+        when: 'resumeAfter & startAfter & startAtOperationTime'
+        def changeStreamDoc = changeStream.getDocument('$changeStream')
+        changeStreamDoc.put('resumeAfter', resumeToken)
+        changeStreamDoc.put('startAfter', resumeToken)
+
+        operation.resumeAfter(resumeToken)
+                .startAfter(resumeToken)
 
         then:
         testOperation(operation, [4, 0, 0], ReadConcern.MAJORITY, expectedCommand, async, cursorResult)
@@ -487,7 +498,8 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         async << [true, false]
     }
 
-    def 'should work with a resumeToken'() {
+    @IgnoreIf({ !serverVersionAtLeast([4, 0, 0]) })
+    def 'should work with a startAtOperationTime'() {
         given:
         def helper = getHelper()
 
@@ -507,8 +519,78 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         cursor.close()
         waitForLastRelease(async ? getAsyncCluster() : getCluster())
 
-        operation.startAtOperationTime(null).resumeAfter(result.head().getDocument('_id'))
+        operation.startAtOperationTime(result.last().getTimestamp('clusterTime'))
         cursor = execute(operation, async)
+        result = nextAndClean(cursor, async)
+
+        then:
+        result == expected.tail()
+
+        cleanup:
+        cursor?.close()
+        waitForLastRelease(async ? getAsyncCluster() : getCluster())
+
+        where:
+        async << [true, false]
+    }
+
+    def 'should work with a resumeAfter resumeToken'() {
+        given:
+        def helper = getHelper()
+
+        def pipeline = [BsonDocument.parse('{$match: {operationType: "insert"}}')]
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, pipeline, CODEC)
+
+        def cursor = execute(operation, async)
+
+        when:
+        def expected = insertDocuments(helper, [1, 2])
+        def result = next(cursor, async)
+
+        then:
+        result.size() == 2
+
+        when:
+        cursor.close()
+        waitForLastRelease(async ? getAsyncCluster() : getCluster())
+
+        operation.resumeAfter(result.head().getDocument('_id'))
+        cursor = execute(operation, async)
+        result = nextAndClean(cursor, async)
+
+        then:
+        result == expected.tail()
+
+        cleanup:
+        cursor?.close()
+        waitForLastRelease(async ? getAsyncCluster() : getCluster())
+
+        where:
+        async << [true, false]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast([4, 1, 0]) })
+    def 'should work with a startAfter resumeToken'() {
+        given:
+        def helper = getHelper()
+
+        def pipeline = [BsonDocument.parse('{$match: {operationType: "insert"}}')]
+        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, pipeline, CODEC)
+
+        def cursor = execute(operation, async)
+
+        when:
+        def expected = insertDocuments(helper, [1, 2])
+        def result = next(cursor, async)
+
+        then:
+        result.size() == 2
+
+        when:
+        cursor.close()
+        waitForLastRelease(async ? getAsyncCluster() : getCluster())
+
+        cursor = execute(operation.startAfter(result.head().getDocument('_id')), async)
         result = nextAndClean(cursor, async)
 
         then:
@@ -562,7 +644,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
             }
         }
 
-        when: 'Resume token'
+        when: 'set resumeAfter'
         new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
                 .resumeAfter(new BsonDocument())
                 .execute(binding)
@@ -571,7 +653,16 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         changeStream.containsKey('resumeAfter')
         !changeStream.containsKey('startAtOperationTime')
 
-        when: 'Set startAtOperationTime'
+        when: 'set startAfter'
+        new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
+                .startAfter(new BsonDocument())
+                .execute(binding)
+
+        then:
+        changeStream.containsKey('startAfter')
+        !changeStream.containsKey('startAtOperationTime')
+
+        when: 'set startAtOperationTime'
         def startAtTime = new BsonTimestamp(42)
         new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
                 .startAtOperationTime(startAtTime)
@@ -598,15 +689,24 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         then:
         changeStream.getTimestamp('startAtOperationTime') == startAtTime
 
-        when: 'set resumeToken && startAtOperationTime && startAtOperationTimeForResume'
+        when: 'set resumeAfter && startAtOperationTimeForResume'
         new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
                 .resumeAfter(new BsonDocument())
-                .startAtOperationTime(startAtTime)
                 .startOperationTimeForResume(resumeStartAt)
                 .execute(binding)
 
         then:
         changeStream.containsKey('resumeAfter')
+        !changeStream.containsKey('startAtOperationTime')
+
+        when: 'set startAfter && startAtOperationTimeForResume'
+        new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
+                .startAfter(new BsonDocument())
+                .startOperationTimeForResume(resumeStartAt)
+                .execute(binding)
+
+        then:
+        changeStream.containsKey('startAfter')
         !changeStream.containsKey('startAtOperationTime')
     }
 
@@ -637,7 +737,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
             }
         }
 
-        when: 'Resume Token'
+        when: 'set resumeAfter'
         new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
                 .resumeAfter(new BsonDocument())
                 .executeAsync(binding, Stub(SingleResultCallback))
@@ -646,7 +746,16 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         changeStream.containsKey('resumeAfter')
         !changeStream.containsKey('startAtOperationTime')
 
-        when: 'Set startAtOperationTime'
+        when: 'set startAfter'
+        new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
+                .startAfter(new BsonDocument())
+                .executeAsync(binding, Stub(SingleResultCallback))
+
+        then:
+        changeStream.containsKey('startAfter')
+        !changeStream.containsKey('startAtOperationTime')
+
+        when: 'set startAtOperationTime'
         def startAtTime = new BsonTimestamp(42)
         new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
                 .startAtOperationTime(startAtTime)
@@ -673,15 +782,24 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         then:
         changeStream.getTimestamp('startAtOperationTime') == startAtTime
 
-        when: 'set resumeToken && startAtOperationTime && startAtOperationTimeForResume'
+        when: 'set resumeAfter && startAtOperationTimeForResume'
         new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
                 .resumeAfter(new BsonDocument())
-                .startAtOperationTime(startAtTime)
                 .startOperationTimeForResume(resumeStartAt)
                 .executeAsync(binding, Stub(SingleResultCallback))
 
         then:
         changeStream.containsKey('resumeAfter')
+        !changeStream.containsKey('startAtOperationTime')
+
+        when: 'set startAfter && startAtOperationTimeForResume'
+        new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
+                .startAfter(new BsonDocument())
+                .startOperationTimeForResume(resumeStartAt)
+                .executeAsync(binding, Stub(SingleResultCallback))
+
+        then:
+        changeStream.containsKey('startAfter')
         !changeStream.containsKey('startAtOperationTime')
     }
 

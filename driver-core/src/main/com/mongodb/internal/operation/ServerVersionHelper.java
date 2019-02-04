@@ -51,6 +51,10 @@ public final class ServerVersionHelper {
         return description.getMaxWireVersion() >= FOUR_DOT_ZERO_WIRE_VERSION;
     }
 
+    public static boolean serverIsAtLeastVersionFourDotTwo(final ConnectionDescription description) {
+        return description.getMaxWireVersion() >= FOUR_DOT_TWO_WIRE_VERSION;
+    }
+
     public static boolean serverIsLessThanVersionThreeDotZero(final ConnectionDescription description) {
         return description.getMaxWireVersion() < THREE_DOT_ZERO_WIRE_VERSION;
     }
