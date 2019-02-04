@@ -16,6 +16,7 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.Function;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
@@ -49,7 +50,7 @@ public abstract class TransactionOperation implements WriteOperation<Void>, Asyn
      *
      * @param writeConcern the write concern
      */
-    protected TransactionOperation(final WriteConcern writeConcern) {
+    TransactionOperation(final WriteConcern writeConcern) {
         this.writeConcern = notNull("writeConcern", writeConcern);
     }
 
@@ -66,32 +67,28 @@ public abstract class TransactionOperation implements WriteOperation<Void>, Asyn
     public Void execute(final WriteBinding binding) {
         isTrue("in transaction", binding.getSessionContext().hasActiveTransaction());
         return executeRetryableCommand(binding, "admin", null, new NoOpFieldNameValidator(),
-                new BsonDocumentCodec(), getCommandCreator(), writeConcernErrorTransformer());
+                new BsonDocumentCodec(), getCommandCreator(), writeConcernErrorTransformer(), getRetryCommandModifier());
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
         isTrue("in transaction", binding.getSessionContext().hasActiveTransaction());
         executeRetryableCommand(binding, "admin", null, new NoOpFieldNameValidator(),
-                new BsonDocumentCodec(), getCommandCreator(), writeConcernErrorTransformer(),
+                new BsonDocumentCodec(), getCommandCreator(), writeConcernErrorTransformer(), getRetryCommandModifier(),
                 errorHandlingCallback(callback, LOGGER));
     }
 
-    private CommandCreator getCommandCreator() {
+    CommandCreator getCommandCreator() {
         return new CommandCreator() {
             @Override
             public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
-                return getCommand();
+                BsonDocument command = new BsonDocument(getCommandName(), new BsonInt32(1));
+                if (!writeConcern.isServerDefault()) {
+                    command.put("writeConcern", writeConcern.asDocument());
+                }
+                return command;
             }
         };
-    }
-
-    private BsonDocument getCommand() {
-        BsonDocument command = new BsonDocument(getCommandName(), new BsonInt32(1));
-        if (!getWriteConcern().isServerDefault()) {
-            command.put("writeConcern", getWriteConcern().asDocument());
-        }
-        return command;
     }
 
     /**
@@ -100,4 +97,6 @@ public abstract class TransactionOperation implements WriteOperation<Void>, Asyn
      * @return the command name
      */
     protected abstract String getCommandName();
+
+    protected abstract Function<BsonDocument, BsonDocument> getRetryCommandModifier();
 }

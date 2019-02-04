@@ -65,6 +65,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static java.lang.String.format;
 import static org.junit.Assume.assumeTrue;
@@ -819,14 +820,24 @@ public class JsonPoweredCrudTestHelper {
 
     WriteConcern getWriteConcern(final BsonDocument arguments) {
         BsonDocument writeConcernDocument = arguments.getDocument("writeConcern");
-        if (writeConcernDocument.size() > 1) {
+        if (!writeConcernDocument.containsKey("w")) {
             throw new UnsupportedOperationException("Write concern document contains unexpected keys: " + writeConcernDocument.keySet());
         }
+
+        WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
         if (writeConcernDocument.isNumber("w")) {
-            return new WriteConcern(writeConcernDocument.getNumber("w").intValue());
+            writeConcern = writeConcern.withW(writeConcernDocument.getNumber("w").intValue());
         } else {
-            return new WriteConcern(writeConcernDocument.getString("w").getValue());
+            writeConcern = writeConcern.withW(writeConcernDocument.getString("w").getValue());
         }
+
+        if (writeConcernDocument.containsKey("wtimeout")) {
+            writeConcern = writeConcern.withWTimeout(writeConcernDocument.getNumber("wtimeout").longValue(), TimeUnit.MILLISECONDS);
+        }
+        if (writeConcernDocument.containsKey("j")) {
+            writeConcern = writeConcern.withJ(writeConcernDocument.getBoolean("j").getValue());
+        }
+        return writeConcern;
     }
 
     ReadConcern getReadConcern(final BsonDocument arguments) {

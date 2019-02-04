@@ -16,6 +16,7 @@
 
 package com.mongodb.operation;
 
+import com.mongodb.Function;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNodeIsRecoveringException;
@@ -85,6 +86,15 @@ final class CommandOperationHelper {
             public Void apply(final BsonDocument result, final ServerAddress serverAddress) {
                 WriteConcernHelper.throwOnWriteConcernError(result, serverAddress);
                 return null;
+            }
+        };
+    }
+
+    static Function<BsonDocument, BsonDocument> noOpRetryCommandModifier() {
+        return new Function<BsonDocument, BsonDocument>() {
+            @Override
+            public BsonDocument apply(final BsonDocument command) {
+                return command;
             }
         };
     }
@@ -441,8 +451,15 @@ final class CommandOperationHelper {
     /* Retryable write helpers */
     static <T, R> R executeRetryableCommand(final WriteBinding binding, final String database, final ReadPreference readPreference,
                                             final FieldNameValidator fieldNameValidator, final Decoder<T> commandResultDecoder,
-                                            final CommandCreator commandCreator,
-                                            final CommandTransformer<T, R> transformer) {
+                                            final CommandCreator commandCreator, final CommandTransformer<T, R> transformer) {
+        return executeRetryableCommand(binding, database, readPreference, fieldNameValidator, commandResultDecoder, commandCreator,
+                transformer, noOpRetryCommandModifier());
+    }
+
+    static <T, R> R executeRetryableCommand(final WriteBinding binding, final String database, final ReadPreference readPreference,
+                                            final FieldNameValidator fieldNameValidator, final Decoder<T> commandResultDecoder,
+                                            final CommandCreator commandCreator, final CommandTransformer<T, R> transformer,
+                                            final Function<BsonDocument, BsonDocument> retryCommandModifier) {
         return withReleasableConnection(binding, new CallableWithConnectionAndSource<R>() {
             @Override
             public R call(final ConnectionSource source, final Connection connection) {
@@ -473,8 +490,9 @@ final class CommandOperationHelper {
                             if (!canRetryWrite(source.getServerDescription(), connection.getDescription(), binding.getSessionContext())) {
                                 throw originalException;
                             }
-                            logRetryExecute(originalCommand.getFirstKey(), originalException);
-                            return transformer.apply(connection.command(database, originalCommand, fieldNameValidator,
+                            BsonDocument retryCommand = retryCommandModifier.apply(originalCommand);
+                            logRetryExecute(retryCommand.getFirstKey(), originalException);
+                            return transformer.apply(connection.command(database, retryCommand, fieldNameValidator,
                                     readPreference, commandResultDecoder, binding.getSessionContext()),
                                     connection.getDescription().getServerAddress());
                         } catch (MongoException e) {
@@ -491,6 +509,15 @@ final class CommandOperationHelper {
     static <T, R> void executeRetryableCommand(final AsyncWriteBinding binding, final String database, final ReadPreference readPreference,
                                                final FieldNameValidator fieldNameValidator, final Decoder<T> commandResultDecoder,
                                                final CommandCreator commandCreator, final CommandTransformer<T, R> transformer,
+                                               final SingleResultCallback<R> originalCallback) {
+        executeRetryableCommand(binding, database, readPreference, fieldNameValidator, commandResultDecoder, commandCreator, transformer,
+                noOpRetryCommandModifier(), originalCallback);
+    }
+
+    static <T, R> void executeRetryableCommand(final AsyncWriteBinding binding, final String database, final ReadPreference readPreference,
+                                               final FieldNameValidator fieldNameValidator, final Decoder<T> commandResultDecoder,
+                                               final CommandCreator commandCreator, final CommandTransformer<T, R> transformer,
+                                               final Function<BsonDocument, BsonDocument> retryCommandModifier,
                                                final SingleResultCallback<R> originalCallback) {
         final SingleResultCallback<R> errorHandlingCallback = errorHandlingCallback(originalCallback, LOGGER);
         binding.getWriteConnectionSource(new SingleResultCallback<AsyncConnectionSource>() {
@@ -511,7 +538,8 @@ final class CommandOperationHelper {
                                     connection.commandAsync(database, command, fieldNameValidator, readPreference,
                                             commandResultDecoder, binding.getSessionContext(),
                                             createCommandCallback(binding, source, connection, database, readPreference, command,
-                                                    fieldNameValidator, commandResultDecoder, transformer, errorHandlingCallback));
+                                                    fieldNameValidator, commandResultDecoder, transformer, retryCommandModifier,
+                                                    errorHandlingCallback));
                                 } catch (Throwable t1) {
                                     releasingCallback(errorHandlingCallback, source, connection).onResult(null, t1);
                                 }
@@ -532,6 +560,7 @@ final class CommandOperationHelper {
                                                                         final FieldNameValidator fieldNameValidator,
                                                                         final Decoder<T> commandResultDecoder,
                                                                         final CommandTransformer<T, R> transformer,
+                                                                        final Function<BsonDocument, BsonDocument> retryCommandModifier,
                                                                         final SingleResultCallback<R> callback) {
         return new SingleResultCallback<T>() {
             @Override
@@ -562,7 +591,8 @@ final class CommandOperationHelper {
             }
 
             private void retryableCommand(final Throwable originalError) {
-                logRetryExecute(command.getFirstKey(), originalError);
+                final BsonDocument retryCommand = retryCommandModifier.apply(command);
+                logRetryExecute(retryCommand.getFirstKey(), originalError);
                 withConnection(binding, new AsyncCallableWithConnectionAndSource() {
                     @Override
                     public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
@@ -572,7 +602,7 @@ final class CommandOperationHelper {
                                 binding.getSessionContext())) {
                             releasingCallback(callback, source, connection).onResult(null, originalError);
                         } else {
-                            connection.commandAsync(database, command, fieldNameValidator, readPreference,
+                            connection.commandAsync(database, retryCommand, fieldNameValidator, readPreference,
                                     commandResultDecoder, binding.getSessionContext(),
                                     new TransformingResultCallback<T, R>(transformer,
                                             connection.getDescription().getServerAddress(),

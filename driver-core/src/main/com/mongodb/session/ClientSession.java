@@ -41,6 +41,7 @@ public interface ClientSession extends Closeable {
      *
      * @return the server address of the pinned mongos
      * @mongodb.server.release 4.2
+     * @since 3.11
      */
     @Nullable
     ServerAddress getPinnedMongosAddress();
@@ -51,6 +52,7 @@ public interface ClientSession extends Closeable {
      *
      * @param address the server address to pin
      * @mongodb.server.release 4.2
+     * @since 3.11
      */
     void setPinnedMongosAddress(ServerAddress address);
 
