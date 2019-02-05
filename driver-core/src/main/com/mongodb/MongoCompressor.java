@@ -64,7 +64,7 @@ public final class MongoCompressor {
     /**
      * Create an instance for zstd compression.
      *
-     * @return A compressor based on the zlib compression algorithm
+     * @return A compressor based on the zstd compression algorithm
      * @mongodb.server.release 4.2
      */
     public static MongoCompressor createZstdCompressor() {
