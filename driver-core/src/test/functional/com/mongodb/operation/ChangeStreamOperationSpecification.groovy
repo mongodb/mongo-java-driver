@@ -402,6 +402,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         waitForLastRelease(getCluster())
     }
 
+    @IgnoreIf({ isSharded() })
     def 'should throw if the _id field is projected out'() {
         given:
         def helper = getHelper()
