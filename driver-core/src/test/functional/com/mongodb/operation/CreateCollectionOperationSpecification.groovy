@@ -126,7 +126,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(4, 0) })
+    @IgnoreIf({ !serverVersionAtLeast(4, 1) })
     def 'should pass through storage engine options- zstd compression'() {
         given:
         def storageEngineOptions = new BsonDocument('wiredTiger', new BsonDocument('configString', new BsonString('block_compressor=zstd')))
