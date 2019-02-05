@@ -10,12 +10,13 @@ title = "Compression"
 
 ## Compression
 
-The Java driver supports compression of messages to and from MongoDB servers.  The driver implements the two algorithms that are 
+The Java driver supports compression of messages to and from MongoDB servers.  The driver implements the three algorithms that are 
 supported by MongoDB servers:
 
 * [Snappy](https://google.github.io/snappy/): Snappy compression can be used when connecting to MongoDB servers starting with the 3.4 
 release.
 * [Zlib](https://zlib.net/): Zlib compression can be used when connecting to MongoDB servers starting with the 3.6 release.
+* [Zstandard](https://github.com/facebook/zstd/): Zstandard compression can be used when connecting to MongoDB servers starting with the 4.2 release.
 
 The driver will negotiate which, if any, compression algorithm is used based on capabilities advertised by the server in
 the [ismaster]({{<docsref "reference/command/isMaster/">}}) command response. 
@@ -45,9 +46,15 @@ MongoClient mongoClient = MongoClients.create(connectionString);
 
 for zlib compression, or 
 
+```java
+ConnectionString connectionString = new ConnectionString("mongodb://localhost/?compressors=zstd");
+MongoClient mongoClient = MongoClients.create(connectionString);
+```
+
+for Zstandard compression, or 
 
 ```java
-ConnectionString connectionString = new ConnectionString("mongodb://localhost/?compressors=snappy,zlib");
+ConnectionString connectionString = new ConnectionString("mongodb://localhost/?compressors=snappy,zlib,zstd");
 MongoClient mongoClient = MongoClients.create(connectionString);
 ```
 
@@ -86,8 +93,18 @@ for zlib compression, or
 
 ```java
 MongoClientSettings settings = MongoClientSettings.builder()
+        .compressorList(Arrays.asList(MongoCompressor.createZstdCompressor()))
+        .build();
+MongoClient client = MongoClients.create(settings);
+```
+
+for Zstandard compression, or
+
+```java
+MongoClientSettings settings = MongoClientSettings.builder()
         .compressorList(Arrays.asList(MongoCompressor.createSnappyCompressor(),
-                                      MongoCompressor.createZlibCompressor()))
+                                      MongoCompressor.createZlibCompressor(),
+                                      MongoCompressor.createZstdCompressor()))
         .build();
 MongoClient client = MongoClients.create(settings);
 ```
@@ -98,7 +115,8 @@ As with configuration with a URI, the driver will use the first compressor in th
 
 ### Dependencies
 
-As the JDK has no built-in support for Snappy, the driver takes a dependency on an existing open-source Snappy implementation.  See the
-[snappy-java Github repository](https://github.com/xerial/snappy-java) for details.
+As the JDK has no built-in support for Snappy or Zstandard, the driver takes a dependency on existing open-source Snappy and Zstandard implementations.  See the
+[snappy-java Github repository](https://github.com/xerial/snappy-java) and the
+[zstd-java Github repository](https://github.com/luben/zstd-jni) for details.
 
  

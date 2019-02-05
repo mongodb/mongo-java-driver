@@ -201,7 +201,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <p>Compressor configuration:</p>
  * <ul>
  * <li>{@code compressors=string}: A comma-separated list of compressors to request from the server.  The supported compressors
- * currently are 'zlib' and 'snappy'.</li>
+ * currently are 'zlib', 'snappy' and 'zstd'.</li>
  * <li>{@code zlibCompressionLevel=integer}: Integer value from -1 to 9 representing the zlib compression level. Lower values will make
  * compression faster, while higher values will make compression better.</li>
  * </ul>
