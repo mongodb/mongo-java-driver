@@ -84,6 +84,30 @@ public class BucketOptions {
     }
 
     @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        BucketOptions that = (BucketOptions) o;
+
+        if (defaultBucket != null ? !defaultBucket.equals(that.defaultBucket) : that.defaultBucket != null) {
+            return false;
+        }
+        return output != null ? output.equals(that.output) : that.output == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = defaultBucket != null ? defaultBucket.hashCode() : 0;
+        result = 31 * result + (output != null ? output.hashCode() : 0);
+        return result;
+    }
+
+    @Override
     public String toString() {
         return "BucketOptions{"
                 + "defaultBucket=" + defaultBucket

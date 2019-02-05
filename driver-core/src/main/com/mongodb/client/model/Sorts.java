@@ -149,6 +149,25 @@ public final class Sorts {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            CompoundSort that = (CompoundSort) o;
+
+            return sorts != null ? sorts.equals(that.sorts) : that.sorts == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return sorts != null ? sorts.hashCode() : 0;
+        }
+
+        @Override
         public String toString() {
             return "Compound Sort{"
                            + "sorts=" + sorts

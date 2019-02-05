@@ -212,6 +212,25 @@ public final class Projections {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            FieldsProjection that = (FieldsProjection) o;
+
+            return projections != null ? projections.equals(that.projections) : that.projections == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return projections != null ? projections.hashCode() : 0;
+        }
+
+        @Override
         public String toString() {
             return "Projections{"
                            + "projections=" + projections
@@ -232,6 +251,30 @@ public final class Projections {
         @Override
         public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
             return new BsonDocument(fieldName, new BsonDocument("$elemMatch", filter.toBsonDocument(documentClass, codecRegistry)));
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            ElemMatchFilterProjection that = (ElemMatchFilterProjection) o;
+
+            if (fieldName != null ? !fieldName.equals(that.fieldName) : that.fieldName != null) {
+                return false;
+            }
+            return filter != null ? filter.equals(that.filter) : that.filter == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = fieldName != null ? fieldName.hashCode() : 0;
+            result = 31 * result + (filter != null ? filter.hashCode() : 0);
+            return result;
         }
 
         @Override

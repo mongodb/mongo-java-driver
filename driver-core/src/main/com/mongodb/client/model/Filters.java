@@ -894,6 +894,30 @@ public final class Filters {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            SimpleFilter that = (SimpleFilter) o;
+
+            if (!fieldName.equals(that.fieldName)) {
+                return false;
+            }
+            return value.equals(that.value);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = fieldName.hashCode();
+            result = 31 * result + value.hashCode();
+            return result;
+        }
+
+        @Override
         public String toString() {
             return operatorFilterToString(fieldName, "$eq", value);
         }
@@ -923,6 +947,34 @@ public final class Filters {
             writer.writeEndDocument();
 
             return writer.getDocument();
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            OperatorFilter<?> that = (OperatorFilter<?>) o;
+
+            if (!operatorName.equals(that.operatorName)) {
+                return false;
+            }
+            if (!fieldName.equals(that.fieldName)) {
+                return false;
+            }
+            return value != null ? value.equals(that.value) : that.value == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = operatorName.hashCode();
+            result = 31 * result + fieldName.hashCode();
+            result = 31 * result + (value != null ? value.hashCode() : 0);
+            return result;
         }
 
         @Override
@@ -1002,6 +1054,25 @@ public final class Filters {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            AndFilter andFilter = (AndFilter) o;
+
+            return filters.equals(andFilter.filters);
+        }
+
+        @Override
+        public int hashCode() {
+            return filters.hashCode();
+        }
+
+        @Override
         public String toString() {
             return "And Filter{"
                            + "filters=" + filters
@@ -1046,6 +1117,30 @@ public final class Filters {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            OrNorFilter that = (OrNorFilter) o;
+
+            if (operator != that.operator) {
+                return false;
+            }
+            return filters.equals(that.filters);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = operator.hashCode();
+            result = 31 * result + filters.hashCode();
+            return result;
+        }
+
+        @Override
         public String toString() {
             return operator.toStringName + " Filter{"
                            + "filters=" + filters
@@ -1086,6 +1181,34 @@ public final class Filters {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            IterableOperatorFilter<?> that = (IterableOperatorFilter<?>) o;
+
+            if (!fieldName.equals(that.fieldName)) {
+                return false;
+            }
+            if (!operatorName.equals(that.operatorName)) {
+                return false;
+            }
+            return values.equals(that.values);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = fieldName.hashCode();
+            result = 31 * result + operatorName.hashCode();
+            result = 31 * result + values.hashCode();
+            return result;
+        }
+
+        @Override
         public String toString() {
             return operatorFilterToString(fieldName, operatorName, values);
         }
@@ -1110,6 +1233,30 @@ public final class Filters {
             writer.writeEndDocument();
 
             return writer.getDocument();
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            SimpleEncodingFilter<?> that = (SimpleEncodingFilter<?>) o;
+
+            if (!fieldName.equals(that.fieldName)) {
+                return false;
+            }
+            return value != null ? value.equals(that.value) : that.value == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = fieldName.hashCode();
+            result = 31 * result + (value != null ? value.hashCode() : 0);
+            return result;
         }
 
         @Override
@@ -1170,6 +1317,25 @@ public final class Filters {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            NotFilter notFilter = (NotFilter) o;
+
+            return filter.equals(notFilter.filter);
+        }
+
+        @Override
+        public int hashCode() {
+            return filter.hashCode();
+        }
+
+        @Override
         public String toString() {
             return "Not Filter{"
                            + "filter=" + filter
@@ -1221,6 +1387,42 @@ public final class Filters {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            GeometryOperatorFilter<?> that = (GeometryOperatorFilter<?>) o;
+
+            if (operatorName != null ? !operatorName.equals(that.operatorName) : that.operatorName != null) {
+                return false;
+            }
+            if (!fieldName.equals(that.fieldName)) {
+                return false;
+            }
+            if (!geometry.equals(that.geometry)) {
+                return false;
+            }
+            if (maxDistance != null ? !maxDistance.equals(that.maxDistance) : that.maxDistance != null) {
+                return false;
+            }
+            return minDistance != null ? minDistance.equals(that.minDistance) : that.minDistance == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = operatorName != null ? operatorName.hashCode() : 0;
+            result = 31 * result + fieldName.hashCode();
+            result = 31 * result + geometry.hashCode();
+            result = 31 * result + (maxDistance != null ? maxDistance.hashCode() : 0);
+            result = 31 * result + (minDistance != null ? minDistance.hashCode() : 0);
+            return result;
+        }
+
+        @Override
         public String toString() {
             return "Geometry Operator Filter{"
                            + "fieldName='" + fieldName + '\''
@@ -1260,6 +1462,30 @@ public final class Filters {
                 searchDocument.put("$diacriticSensitive", BsonBoolean.valueOf(diacriticSensitive));
             }
             return new BsonDocument("$text", searchDocument);
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            TextFilter that = (TextFilter) o;
+
+            if (search != null ? !search.equals(that.search) : that.search != null) {
+                return false;
+            }
+            return textSearchOptions != null ? textSearchOptions.equals(that.textSearchOptions) : that.textSearchOptions == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = search != null ? search.hashCode() : 0;
+            result = 31 * result + (textSearchOptions != null ? textSearchOptions.hashCode() : 0);
+            return result;
         }
 
         @Override

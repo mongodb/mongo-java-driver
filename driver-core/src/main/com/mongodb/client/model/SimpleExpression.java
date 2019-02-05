@@ -43,6 +43,30 @@ class SimpleExpression<TExpression> implements Bson {
     }
 
     @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        SimpleExpression<?> that = (SimpleExpression<?>) o;
+
+        if (name != null ? !name.equals(that.name) : that.name != null) {
+            return false;
+        }
+        return expression != null ? expression.equals(that.expression) : that.expression == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name != null ? name.hashCode() : 0;
+        result = 31 * result + (expression != null ? expression.hashCode() : 0);
+        return result;
+    }
+
+    @Override
     public String toString() {
         return "Expression{"
                        + "name='" + name + '\''

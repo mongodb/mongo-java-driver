@@ -199,20 +199,7 @@ public final class Indexes {
      * @mongodb.driver.manual core/index-compound compoundIndex
      */
     public static Bson compoundIndex(final List<? extends Bson> indexes) {
-        notNull("indexes", indexes);
-        return new Bson() {
-            @Override
-            public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
-                BsonDocument compoundIndex = new BsonDocument();
-                for (Bson index : indexes) {
-                    BsonDocument indexDocument = index.toBsonDocument(documentClass, codecRegistry);
-                    for (String key : indexDocument.keySet()) {
-                        compoundIndex.append(key, indexDocument.get(key));
-                    }
-                }
-                return compoundIndex;
-            }
-        };
+        return new CompoundIndex(indexes);
     }
 
     private static Bson compoundIndex(final List<String> fieldNames, final BsonValue value) {
@@ -222,4 +209,45 @@ public final class Indexes {
         }
         return document;
     }
+
+    private static class CompoundIndex implements Bson {
+        private final List<? extends Bson> indexes;
+
+        CompoundIndex(final List<? extends Bson> indexes) {
+            notNull("indexes", indexes);
+            this.indexes = indexes;
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+            BsonDocument compoundIndex = new BsonDocument();
+            for (Bson index : indexes) {
+                BsonDocument indexDocument = index.toBsonDocument(documentClass, codecRegistry);
+                for (String key : indexDocument.keySet()) {
+                    compoundIndex.append(key, indexDocument.get(key));
+                }
+            }
+            return compoundIndex;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            CompoundIndex that = (CompoundIndex) o;
+
+            return indexes.equals(that.indexes);
+        }
+
+        @Override
+        public int hashCode() {
+            return indexes.hashCode();
+        }
+    }
 }
+

@@ -91,6 +91,35 @@ public final class GraphLookupOptions {
     }
 
     @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        GraphLookupOptions that = (GraphLookupOptions) o;
+
+        if (maxDepth != null ? !maxDepth.equals(that.maxDepth) : that.maxDepth != null) {
+            return false;
+        }
+        if (depthField != null ? !depthField.equals(that.depthField) : that.depthField != null) {
+            return false;
+        }
+        return restrictSearchWithMatch != null ? restrictSearchWithMatch.equals(that.restrictSearchWithMatch)
+                : that.restrictSearchWithMatch == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = maxDepth != null ? maxDepth.hashCode() : 0;
+        result = 31 * result + (depthField != null ? depthField.hashCode() : 0);
+        result = 31 * result + (restrictSearchWithMatch != null ? restrictSearchWithMatch.hashCode() : 0);
+        return result;
+    }
+
+    @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder()
             .append("GraphLookupOptions{");

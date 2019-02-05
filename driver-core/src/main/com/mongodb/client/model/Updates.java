@@ -456,6 +456,30 @@ public final class Updates {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            SimpleBsonKeyValue that = (SimpleBsonKeyValue) o;
+
+            if (!fieldName.equals(that.fieldName)) {
+                return false;
+            }
+            return value.equals(that.value);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = fieldName.hashCode();
+            result = 31 * result + value.hashCode();
+            return result;
+        }
+
+        @Override
         public String toString() {
             return "SimpleBsonKeyValue{"
                     + "fieldName='" + fieldName + '\''
@@ -490,6 +514,34 @@ public final class Updates {
             writer.writeEndDocument();
 
             return writer.getDocument();
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            SimpleUpdate<?> that = (SimpleUpdate<?>) o;
+
+            if (!fieldName.equals(that.fieldName)) {
+                return false;
+            }
+            if (value != null ? !value.equals(that.value) : that.value != null) {
+                return false;
+            }
+            return operator != null ? operator.equals(that.operator) : that.operator == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = fieldName.hashCode();
+            result = 31 * result + (value != null ? value.hashCode() : 0);
+            result = 31 * result + (operator != null ? operator.hashCode() : 0);
+            return result;
         }
 
         @Override
@@ -551,6 +603,34 @@ public final class Updates {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            WithEachUpdate<?> that = (WithEachUpdate<?>) o;
+
+            if (!fieldName.equals(that.fieldName)) {
+                return false;
+            }
+            if (!values.equals(that.values)) {
+                return false;
+            }
+            return operator != null ? operator.equals(that.operator) : that.operator == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = fieldName.hashCode();
+            result = 31 * result + values.hashCode();
+            result = 31 * result + (operator != null ? operator.hashCode() : 0);
+            return result;
+        }
+
+        @Override
         public String toString() {
             return "Each Update{"
                            + "fieldName='" + fieldName + '\''
@@ -594,6 +674,30 @@ public final class Updates {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            if (!super.equals(o)) {
+                return false;
+            }
+
+            PushUpdate<?> that = (PushUpdate<?>) o;
+
+            return options.equals(that.options);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = super.hashCode();
+            result = 31 * result + options.hashCode();
+            return result;
+        }
+
+        @Override
         protected String additionalFieldsToString() {
             return ", options=" + options;
         }
@@ -629,6 +733,30 @@ public final class Updates {
             writer.writeEndDocument();
 
             return writer.getDocument();
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            PullAllUpdate<?> that = (PullAllUpdate<?>) o;
+
+            if (!fieldName.equals(that.fieldName)) {
+                return false;
+            }
+            return values.equals(that.values);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = fieldName.hashCode();
+            result = 31 * result + values.hashCode();
+            return result;
         }
 
         @Override
@@ -669,6 +797,25 @@ public final class Updates {
             }
 
             return document;
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            CompositeUpdate that = (CompositeUpdate) o;
+
+            return updates != null ? updates.equals(that.updates) : that.updates == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return updates != null ? updates.hashCode() : 0;
         }
 
         @Override

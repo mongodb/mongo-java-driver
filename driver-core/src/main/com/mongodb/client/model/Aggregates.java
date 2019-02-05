@@ -493,6 +493,30 @@ public final class Aggregates {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            SimplePipelineStage that = (SimplePipelineStage) o;
+
+            if (name != null ? !name.equals(that.name) : that.name != null) {
+                return false;
+            }
+            return value != null ? value.equals(that.value) : that.value == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = name != null ? name.hashCode() : 0;
+            result = 31 * result + (value != null ? value.hashCode() : 0);
+            return result;
+        }
+
+        @Override
         public String toString() {
             return "Stage{"
                            + "name='" + name + '\''
@@ -542,6 +566,34 @@ public final class Aggregates {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            BucketStage<?, ?> that = (BucketStage<?, ?>) o;
+
+            if (groupBy != null ? !groupBy.equals(that.groupBy) : that.groupBy != null) {
+                return false;
+            }
+            if (boundaries != null ? !boundaries.equals(that.boundaries) : that.boundaries != null) {
+                return false;
+            }
+            return options.equals(that.options);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = groupBy != null ? groupBy.hashCode() : 0;
+            result = 31 * result + (boundaries != null ? boundaries.hashCode() : 0);
+            result = 31 * result + options.hashCode();
+            return result;
+        }
+
+        @Override
         public String toString() {
             return "Stage{"
                 + "name='$bucket'"
@@ -587,6 +639,34 @@ public final class Aggregates {
             writer.writeEndDocument();
 
             return writer.getDocument();
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            BucketAutoStage<?> that = (BucketAutoStage<?>) o;
+
+            if (buckets != that.buckets) {
+                return false;
+            }
+            if (groupBy != null ? !groupBy.equals(that.groupBy) : that.groupBy != null) {
+                return false;
+            }
+            return options.equals(that.options);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = groupBy != null ? groupBy.hashCode() : 0;
+            result = 31 * result + buckets;
+            result = 31 * result + options.hashCode();
+            return result;
         }
 
         @Override
@@ -650,6 +730,38 @@ public final class Aggregates {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            LookupStage<?> that = (LookupStage<?>) o;
+
+            if (from != null ? !from.equals(that.from) : that.from != null) {
+                return false;
+            }
+            if (let != null ? !let.equals(that.let) : that.let != null) {
+                return false;
+            }
+            if (pipeline != null ? !pipeline.equals(that.pipeline) : that.pipeline != null) {
+                return false;
+            }
+            return as != null ? as.equals(that.as) : that.as == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = from != null ? from.hashCode() : 0;
+            result = 31 * result + (let != null ? let.hashCode() : 0);
+            result = 31 * result + (pipeline != null ? pipeline.hashCode() : 0);
+            result = 31 * result + (as != null ? as.hashCode() : 0);
+            return result;
+        }
+
+        @Override
         public String toString() {
             return "Stage{"
                     + "name='$lookup'"
@@ -660,9 +772,6 @@ public final class Aggregates {
                     + '}';
         }
     }
-
-
-
 
     private static final class GraphLookupStage<TExpression> implements Bson {
         private final String from;
@@ -717,6 +826,46 @@ public final class Aggregates {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            GraphLookupStage<?> that = (GraphLookupStage<?>) o;
+
+            if (from != null ? !from.equals(that.from) : that.from != null) {
+                return false;
+            }
+            if (startWith != null ? !startWith.equals(that.startWith) : that.startWith != null) {
+                return false;
+            }
+            if (connectFromField != null ? !connectFromField.equals(that.connectFromField) : that.connectFromField != null) {
+                return false;
+            }
+            if (connectToField != null ? !connectToField.equals(that.connectToField) : that.connectToField != null) {
+                return false;
+            }
+            if (as != null ? !as.equals(that.as) : that.as != null) {
+                return false;
+            }
+            return options != null ? options.equals(that.options) : that.options == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = from != null ? from.hashCode() : 0;
+            result = 31 * result + (startWith != null ? startWith.hashCode() : 0);
+            result = 31 * result + (connectFromField != null ? connectFromField.hashCode() : 0);
+            result = 31 * result + (connectToField != null ? connectToField.hashCode() : 0);
+            result = 31 * result + (as != null ? as.hashCode() : 0);
+            result = 31 * result + (options != null ? options.hashCode() : 0);
+            return result;
+        }
+
+        @Override
         public String toString() {
             return "Stage{"
                 + "name='$graphLookup'"
@@ -762,6 +911,30 @@ public final class Aggregates {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            GroupStage<?> that = (GroupStage<?>) o;
+
+            if (id != null ? !id.equals(that.id) : that.id != null) {
+                return false;
+            }
+            return fieldAccumulators != null ? fieldAccumulators.equals(that.fieldAccumulators) : that.fieldAccumulators == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = id != null ? id.hashCode() : 0;
+            result = 31 * result + (fieldAccumulators != null ? fieldAccumulators.hashCode() : 0);
+            return result;
+        }
+
+        @Override
         public String toString() {
             return "Stage{"
                            + "name='$group'"
@@ -790,6 +963,25 @@ public final class Aggregates {
             writer.writeEndDocument();
 
             return writer.getDocument();
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            SortByCountStage<?> that = (SortByCountStage<?>) o;
+
+            return filter != null ? filter.equals(that.filter) : that.filter == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return filter != null ? filter.hashCode() : 0;
         }
 
         @Override
@@ -829,6 +1021,25 @@ public final class Aggregates {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            FacetStage that = (FacetStage) o;
+
+            return facets != null ? facets.equals(that.facets) : that.facets == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return facets != null ? facets.hashCode() : 0;
+        }
+
+        @Override
         public String toString() {
             return "Stage{"
                 + "name='$facet', "
@@ -861,6 +1072,25 @@ public final class Aggregates {
         }
 
         @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            AddFieldsStage that = (AddFieldsStage) o;
+
+            return fields != null ? fields.equals(that.fields) : that.fields == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return fields != null ? fields.hashCode() : 0;
+        }
+
+        @Override
         public String toString() {
             return "Stage{"
                 + "name='$addFields', "
@@ -888,6 +1118,25 @@ public final class Aggregates {
             writer.writeEndDocument();
 
             return writer.getDocument();
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            ReplaceRootStage<?> that = (ReplaceRootStage<?>) o;
+
+            return value != null ? value.equals(that.value) : that.value == null;
+        }
+
+        @Override
+        public int hashCode() {
+            return value != null ? value.hashCode() : 0;
         }
 
         @Override
@@ -951,6 +1200,30 @@ public final class Aggregates {
 
             writer.writeEndDocument();
             return writer.getDocument();
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            OutStage outStage = (OutStage) o;
+
+            if (collectionName != null ? !collectionName.equals(outStage.collectionName) : outStage.collectionName != null) {
+                return false;
+            }
+            return options != null ? options.equals(outStage.options) : outStage.options == null;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = collectionName != null ? collectionName.hashCode() : 0;
+            result = 31 * result + (options != null ? options.hashCode() : 0);
+            return result;
         }
 
         private boolean optionsAreAllDefault() {
