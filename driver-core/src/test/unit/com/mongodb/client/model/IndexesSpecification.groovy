@@ -89,4 +89,28 @@ class IndexesSpecification extends Specification {
     def toBson(Bson bson) {
         bson.toBsonDocument(BsonDocument, registry)
     }
+
+    def 'should test equals on CompoundIndex'() {
+        expect:
+        compoundIndex([ascending('x'), descending('y')])
+                .equals(compoundIndex([ascending('x'), descending('y')]))
+        compoundIndex(ascending('x'), descending('y'))
+                .equals(compoundIndex(ascending('x'), descending('y')))
+        compoundIndex(ascending('x'), descending('y'), descending('x'))
+                .equals(compoundIndex(ascending('x'), descending('y'), descending('x')))
+        compoundIndex(ascending('x', 'y'), descending('a', 'b'))
+                .equals(compoundIndex(ascending('x', 'y'), descending('a', 'b')))
+    }
+
+    def 'should test hashCode on CompoundIndex'() {
+        expect:
+        compoundIndex([ascending('x'), descending('y')]).hashCode() ==
+                compoundIndex([ascending('x'), descending('y')]).hashCode()
+        compoundIndex(ascending('x'), descending('y')).hashCode() ==
+                compoundIndex(ascending('x'), descending('y')).hashCode()
+        compoundIndex(ascending('x'), descending('y'), descending('x')).hashCode() ==
+                compoundIndex(ascending('x'), descending('y'), descending('x')).hashCode()
+        compoundIndex(ascending('x', 'y'), descending('a', 'b')).hashCode() ==
+                compoundIndex(ascending('x', 'y'), descending('a', 'b')).hashCode()
+    }
 }

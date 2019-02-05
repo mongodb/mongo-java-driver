@@ -383,4 +383,355 @@ class AggregatesSpecification extends Specification {
     def toBson(Bson bson) {
         bson.toBsonDocument(BsonDocument, registry)
     }
+
+    def 'should test equals for SimplePipelineStage'() {
+        expect:
+        match(eq('author', 'dave')).equals(match(eq('author', 'dave')))
+        project(fields(include('title', 'author'), computed('lastName', '$author.last')))
+                .equals(project(fields(include('title', 'author'), computed('lastName', '$author.last'))))
+        sort(ascending('title', 'author')).equals(sort(ascending('title', 'author')))
+        !sort(ascending('title', 'author')).equals(sort(descending('title', 'author')))
+    }
+
+    def 'should test hashCode for SimplePipelineStage'() {
+        expect:
+        match(eq('author', 'dave')).hashCode() == match(eq('author', 'dave')).hashCode()
+        project(fields(include('title', 'author'), computed('lastName', '$author.last'))).hashCode() ==
+                project(fields(include('title', 'author'), computed('lastName', '$author.last'))).hashCode()
+        sort(ascending('title', 'author')).hashCode() == sort(ascending('title', 'author')).hashCode()
+        sort(ascending('title', 'author')).hashCode() != sort(descending('title', 'author')).hashCode()
+    }
+
+    def 'should test equals for BucketStage'() {
+        expect:
+        bucket('$screenSize', [0, 24, 32, 50, 100000]).equals(bucket('$screenSize', [0, 24, 32, 50, 100000]))
+    }
+
+    def 'should test hashCode for BucketStage'() {
+        expect:
+        bucket('$screenSize', [0, 24, 32, 50, 100000]).hashCode() == bucket('$screenSize', [0, 24, 32, 50, 100000]).hashCode()
+        bucket('$screenSize', [0, 24, 32, 50, 100000]).hashCode() != bucket('$screenSize', [0, 24, 32, 50, 10000]).hashCode()
+    }
+
+    def 'should test equals for BucketAutoStage'() {
+        expect:
+        bucketAuto('$price', 4).equals(bucketAuto('$price', 4))
+        bucketAuto('$price', 4, new BucketAutoOptions()
+                .output(sum('count', 1),
+                        avg('avgPrice', '$price')))
+                .equals(bucketAuto('$price', 4, new BucketAutoOptions()
+                .output(sum('count', 1),
+                avg('avgPrice', '$price'))))
+        bucketAuto('$price', 4, new BucketAutoOptions()
+                .granularity(R5)
+                .output(sum('count', 1),
+                avg('avgPrice', '$price')))
+                .equals(bucketAuto('$price', 4, new BucketAutoOptions()
+                .granularity(R5)
+                .output(sum('count', 1),
+                avg('avgPrice', '$price'))))
+    }
+
+    def 'should test hashCode for BucketAutoStage'() {
+        expect:
+        bucketAuto('$price', 4).hashCode() == bucketAuto('$price', 4).hashCode()
+        bucketAuto('$price', 4, new BucketAutoOptions()
+                .output(sum('count', 1),
+                avg('avgPrice', '$price'))).hashCode() ==
+                bucketAuto('$price', 4, new BucketAutoOptions()
+                .output(sum('count', 1),
+                avg('avgPrice', '$price'))).hashCode()
+        bucketAuto('$price', 4, new BucketAutoOptions()
+                .granularity(R5)
+                .output(sum('count', 1),
+                avg('avgPrice', '$price'))).hashCode() ==
+                bucketAuto('$price', 4, new BucketAutoOptions()
+                .granularity(R5)
+                .output(sum('count', 1),
+                avg('avgPrice', '$price'))).hashCode()
+    }
+
+    def 'should test equals for LookupStage'() {
+        expect:
+        lookup('from', 'localField', 'foreignField', 'as')
+                .equals(lookup('from', 'localField', 'foreignField', 'as'))
+
+        List<Bson> pipeline = asList(match(expr(new Document('$eq', asList('x', '1')))))
+        lookup('from', asList(new Variable('var1', 'expression1')), pipeline, 'as')
+                .equals(lookup('from', asList(new Variable('var1', 'expression1')), pipeline, 'as'))
+
+        lookup('from', pipeline, 'as').equals(lookup('from', pipeline, 'as'))
+    }
+
+    def 'should test hashCode for LookupStage'() {
+        expect:
+        lookup('from', 'localField', 'foreignField', 'as').hashCode() ==
+                lookup('from', 'localField', 'foreignField', 'as').hashCode()
+
+        List<Bson> pipeline = asList(match(expr(new Document('$eq', asList('x', '1')))))
+        lookup('from', asList(new Variable('var1', 'expression1')), pipeline, 'as').hashCode() ==
+                lookup('from', asList(new Variable('var1', 'expression1')), pipeline, 'as').hashCode()
+
+        lookup('from', pipeline, 'as').hashCode() == lookup('from', pipeline, 'as').hashCode()
+    }
+
+    def 'should test equals for GraphLookupStage'() {
+        expect:
+        graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork')
+                .equals(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork'))
+
+        graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions().maxDepth(1))
+                .equals(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork',
+                new GraphLookupOptions().maxDepth(1)))
+
+        graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions().depthField('master'))
+                .equals(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork',
+                new GraphLookupOptions().depthField('master')))
+
+        graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
+                .restrictSearchWithMatch(eq('hobbies', 'golf')))
+                .equals(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
+                .restrictSearchWithMatch(eq('hobbies', 'golf'))))
+
+        graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
+                .maxDepth(1).depthField('master'))
+                .equals(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
+                .maxDepth(1).depthField('master')))
+
+        graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
+                .maxDepth(1).depthField('master').restrictSearchWithMatch(eq('hobbies', 'golf')))
+                .equals(graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
+                .maxDepth(1).depthField('master').restrictSearchWithMatch(eq('hobbies', 'golf'))))
+    }
+
+    def 'should test hashCode for GraphLookupStage'() {
+        expect:
+        graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork').hashCode() ==
+                graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork').hashCode()
+
+        graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions().maxDepth(1))
+                .hashCode() ==
+                graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork',
+                new GraphLookupOptions().maxDepth(1)).hashCode()
+
+        graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions().depthField('master'))
+                .hashCode() ==
+                graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork',
+                new GraphLookupOptions().depthField('master')).hashCode()
+
+        graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
+                .restrictSearchWithMatch(eq('hobbies', 'golf'))).hashCode() ==
+                graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
+                .restrictSearchWithMatch(eq('hobbies', 'golf'))).hashCode()
+
+        graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
+                .maxDepth(1).depthField('master')).hashCode() ==
+                graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
+                .maxDepth(1).depthField('master')).hashCode()
+
+        graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
+                .maxDepth(1).depthField('master').restrictSearchWithMatch(eq('hobbies', 'golf'))).hashCode() ==
+                graphLookup('contacts', '$friends', 'friends', 'name', 'socialNetwork', new GraphLookupOptions()
+                .maxDepth(1).depthField('master').restrictSearchWithMatch(eq('hobbies', 'golf'))).hashCode()
+    }
+
+    def 'should test equals for GroupStage'() {
+        expect:
+        group('$customerId').equals(group('$customerId'))
+        group(null).equals(group(null))
+
+        group(parse('{ month: { $month: "$date" }, day: { $dayOfMonth: "$date" }, year: { $year: "$date" } }'))
+                .equals(group(parse('{ month: { $month: "$date" }, day: { $dayOfMonth: "$date" }, year: { $year: "$date" } }')))
+
+        group(null,
+                sum('sum', parse('{ $multiply: [ "$price", "$quantity" ] }')),
+                avg('avg', '$quantity'),
+                min('min', '$quantity'),
+                max('max', '$quantity'),
+                first('first', '$quantity'),
+                last('last', '$quantity'),
+                push('all', '$quantity'),
+                addToSet('unique', '$quantity'),
+                stdDevPop('stdDevPop', '$quantity'),
+                stdDevSamp('stdDevSamp', '$quantity')
+        ).equals(group(null,
+                sum('sum', parse('{ $multiply: [ "$price", "$quantity" ] }')),
+                avg('avg', '$quantity'),
+                min('min', '$quantity'),
+                max('max', '$quantity'),
+                first('first', '$quantity'),
+                last('last', '$quantity'),
+                push('all', '$quantity'),
+                addToSet('unique', '$quantity'),
+                stdDevPop('stdDevPop', '$quantity'),
+                stdDevSamp('stdDevSamp', '$quantity')
+        ))
+    }
+
+    def 'should test hashCode for GroupStage'() {
+        expect:
+        group('$customerId').hashCode() == group('$customerId').hashCode()
+        group(null).hashCode() == group(null).hashCode()
+
+        group(parse('{ month: { $month: "$date" }, day: { $dayOfMonth: "$date" }, year: { $year: "$date" } }')).hashCode() ==
+                group(parse('{ month: { $month: "$date" }, day: { $dayOfMonth: "$date" }, year: { $year: "$date" } }')).hashCode()
+
+        group(null,
+                sum('sum', parse('{ $multiply: [ "$price", "$quantity" ] }')),
+                avg('avg', '$quantity'),
+                min('min', '$quantity'),
+                max('max', '$quantity'),
+                first('first', '$quantity'),
+                last('last', '$quantity'),
+                push('all', '$quantity'),
+                addToSet('unique', '$quantity'),
+                stdDevPop('stdDevPop', '$quantity'),
+                stdDevSamp('stdDevSamp', '$quantity')
+        ).hashCode() ==
+                group(null,
+                sum('sum', parse('{ $multiply: [ "$price", "$quantity" ] }')),
+                avg('avg', '$quantity'),
+                min('min', '$quantity'),
+                max('max', '$quantity'),
+                first('first', '$quantity'),
+                last('last', '$quantity'),
+                push('all', '$quantity'),
+                addToSet('unique', '$quantity'),
+                stdDevPop('stdDevPop', '$quantity'),
+                stdDevSamp('stdDevSamp', '$quantity')).hashCode()
+    }
+
+    def 'should test equals for SortByCountStage'() {
+        expect:
+        sortByCount('someField').equals(sortByCount('someField'))
+        sortByCount(new Document('$floor', '$x')).equals(sortByCount(new Document('$floor', '$x')))
+    }
+
+    def 'should test hashCode for SortByCountStage'() {
+        expect:
+        sortByCount('someField').hashCode() == sortByCount('someField').hashCode()
+        sortByCount(new Document('$floor', '$x')).hashCode() == sortByCount(new Document('$floor', '$x')).hashCode()
+    }
+
+    def 'should test equals for FacetStage'() {
+        expect:
+        facet(
+                new Facet('Screen Sizes',
+                        unwind('$attributes'),
+                        match(eq('attributes.name', 'screen size')),
+                        group(null, sum('count', 1 ))),
+                new Facet('Manufacturer',
+                        match(eq('attributes.name', 'manufacturer')),
+                        group('$attributes.value', sum('count', 1)),
+                        sort(descending('count')),
+                        limit(5)))
+                .equals(facet(
+                new Facet('Screen Sizes',
+                        unwind('$attributes'),
+                        match(eq('attributes.name', 'screen size')),
+                        group(null, sum('count', 1 ))),
+                new Facet('Manufacturer',
+                        match(eq('attributes.name', 'manufacturer')),
+                        group('$attributes.value', sum('count', 1)),
+                        sort(descending('count')),
+                        limit(5))))
+    }
+
+    def 'should test hashCode for FacetStage'() {
+        expect:
+        facet(
+                new Facet('Screen Sizes',
+                        unwind('$attributes'),
+                        match(eq('attributes.name', 'screen size')),
+                        group(null, sum('count', 1 ))),
+                new Facet('Manufacturer',
+                        match(eq('attributes.name', 'manufacturer')),
+                        group('$attributes.value', sum('count', 1)),
+                        sort(descending('count')),
+                        limit(5))).hashCode() ==
+                facet(
+                new Facet('Screen Sizes',
+                        unwind('$attributes'),
+                        match(eq('attributes.name', 'screen size')),
+                        group(null, sum('count', 1 ))),
+                new Facet('Manufacturer',
+                        match(eq('attributes.name', 'manufacturer')),
+                        group('$attributes.value', sum('count', 1)),
+                        sort(descending('count')),
+                        limit(5))).hashCode()
+    }
+
+    def 'should test equals for AddFieldsStage'() {
+        expect:
+        addFields(new Field('newField', null)).equals(addFields(new Field('newField', null)))
+        addFields(new Field('newField', 'hello')).equals(addFields(new Field('newField', 'hello')))
+        addFields(new Field('this', '$$CURRENT')).equals(addFields(new Field('this', '$$CURRENT')))
+        addFields(new Field('myNewField', new Document('c', 3).append('d', 4)))
+                .equals(addFields(new Field('myNewField', new Document('c', 3).append('d', 4))))
+        addFields(new Field('alt3', new Document('$lt', asList('$a', 3))))
+                .equals(addFields(new Field('alt3', new Document('$lt', asList('$a', 3)))))
+        addFields(new Field('b', 3), new Field('c', 5))
+                .equals(addFields(new Field('b', 3), new Field('c', 5)))
+        addFields(asList(new Field('b', 3), new Field('c', 5)))
+                .equals(addFields(asList(new Field('b', 3), new Field('c', 5))))
+    }
+
+    def 'should test hashCode for AddFieldsStage'() {
+        expect:
+        addFields(new Field('newField', null)).hashCode() == addFields(new Field('newField', null)).hashCode()
+        addFields(new Field('newField', 'hello')).hashCode() == addFields(new Field('newField', 'hello')).hashCode()
+        addFields(new Field('this', '$$CURRENT')).hashCode() == addFields(new Field('this', '$$CURRENT')).hashCode()
+        addFields(new Field('myNewField', new Document('c', 3).append('d', 4))).hashCode() ==
+                addFields(new Field('myNewField', new Document('c', 3).append('d', 4))).hashCode()
+        addFields(new Field('alt3', new Document('$lt', asList('$a', 3)))).hashCode() ==
+                addFields(new Field('alt3', new Document('$lt', asList('$a', 3)))).hashCode()
+        addFields(new Field('b', 3), new Field('c', 5)).hashCode() ==
+                addFields(new Field('b', 3), new Field('c', 5)).hashCode()
+        addFields(asList(new Field('b', 3), new Field('c', 5))).hashCode() ==
+                addFields(asList(new Field('b', 3), new Field('c', 5))).hashCode()
+    }
+
+    def 'should test equals for ReplaceRootStage'() {
+        expect:
+        replaceRoot('$a1').equals(replaceRoot('$a1'))
+        replaceRoot('$a1.b').equals(replaceRoot('$a1.b'))
+        replaceRoot('$a1').equals(replaceRoot('$a1'))
+    }
+
+    def 'should test hashCode for ReplaceRootStage'() {
+        expect:
+        replaceRoot('$a1').hashCode() == replaceRoot('$a1').hashCode()
+        replaceRoot('$a1.b').hashCode() == replaceRoot('$a1.b').hashCode()
+        replaceRoot('$a1').hashCode() == replaceRoot('$a1').hashCode()
+    }
+
+    def 'should test equals for OutStage'() {
+        expect:
+        out('authors').equals(out('authors'))
+        out('authors', new AggregateOutStageOptions().mode(REPLACE_COLLECTION))
+                .equals(out('authors', new AggregateOutStageOptions().mode(REPLACE_COLLECTION)))
+        out('authors', new AggregateOutStageOptions().mode(REPLACE_DOCUMENTS))
+        .equals(out('authors', new AggregateOutStageOptions().mode(REPLACE_DOCUMENTS)))
+        out('authors', new AggregateOutStageOptions().mode(INSERT_DOCUMENTS))
+        .equals(out('authors', new AggregateOutStageOptions().mode(INSERT_DOCUMENTS)))
+        out('authors', new AggregateOutStageOptions().databaseName('db1'))
+        .equals(out('authors', new AggregateOutStageOptions().databaseName('db1')))
+        out('authors', new AggregateOutStageOptions().uniqueKey(new BsonDocument('x', new BsonInt32(1))))
+                .equals(out('authors', new AggregateOutStageOptions().uniqueKey(new BsonDocument('x', new BsonInt32(1)))))
+    }
+
+    def 'should test hashCode for OutStage'() {
+        expect:
+        out('authors').hashCode() == out('authors').hashCode()
+        out('authors', new AggregateOutStageOptions().mode(REPLACE_COLLECTION)).hashCode() ==
+                out('authors', new AggregateOutStageOptions().mode(REPLACE_COLLECTION)).hashCode()
+        out('authors', new AggregateOutStageOptions().mode(REPLACE_DOCUMENTS)).hashCode() ==
+                out('authors', new AggregateOutStageOptions().mode(REPLACE_DOCUMENTS)).hashCode()
+        out('authors', new AggregateOutStageOptions().mode(INSERT_DOCUMENTS)).hashCode() ==
+                out('authors', new AggregateOutStageOptions().mode(INSERT_DOCUMENTS)).hashCode()
+        out('authors', new AggregateOutStageOptions().databaseName('db1')).hashCode() ==
+                out('authors', new AggregateOutStageOptions().databaseName('db1')).hashCode()
+        out('authors', new AggregateOutStageOptions().uniqueKey(new BsonDocument('x', new BsonInt32(1)))).hashCode() ==
+                out('authors', new AggregateOutStageOptions().uniqueKey(new BsonDocument('x', new BsonInt32(1)))).hashCode()
+    }
 }

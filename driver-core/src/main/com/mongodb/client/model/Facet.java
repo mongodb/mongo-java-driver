@@ -65,6 +65,30 @@ public class Facet {
     }
 
     @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        Facet facet = (Facet) o;
+
+        if (name != null ? !name.equals(facet.name) : facet.name != null) {
+            return false;
+        }
+        return pipeline != null ? pipeline.equals(facet.pipeline) : facet.pipeline == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = name != null ? name.hashCode() : 0;
+        result = 31 * result + (pipeline != null ? pipeline.hashCode() : 0);
+        return result;
+    }
+
+    @Override
     public String toString() {
         return "Facet{"
                 + "name='" + name + '\''

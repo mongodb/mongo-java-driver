@@ -215,4 +215,146 @@ class UpdatesSpecification extends Specification {
         bson.toBsonDocument(BsonDocument, registry)
     }
 
+    def 'should test equals for SimpleBsonKeyValue'() {
+        expect:
+        setOnInsert('x', 1).equals(setOnInsert('x', 1))
+        setOnInsert('x', null).equals(setOnInsert('x', null))
+        setOnInsert(parse('{ a : 1, b: "two"}')).equals(setOnInsert(parse('{ a : 1, b: "two"}')))
+    }
+
+    def 'should test hashCode for SimpleBsonKeyValue'() {
+        expect:
+        setOnInsert('x', 1).hashCode() == setOnInsert('x', 1).hashCode()
+        setOnInsert('x', null).hashCode() == setOnInsert('x', null).hashCode()
+        setOnInsert(parse('{ a : 1, b: "two"}')).hashCode() == setOnInsert(parse('{ a : 1, b: "two"}')).hashCode()
+    }
+
+    def 'should test equals for SimpleUpdate'() {
+        expect:
+        setOnInsert('x', 1).equals(setOnInsert('x', 1))
+        setOnInsert('x', null).equals(setOnInsert('x', null))
+        setOnInsert(parse('{ a : 1, b: "two"}')).equals(setOnInsert(parse('{ a : 1, b: "two"}')))
+        rename('x', 'y').equals(rename('x', 'y'))
+        inc('x', 1).equals(inc('x', 1))
+        inc('x', 5L).equals(inc('x', 5L))
+        inc('x', 3.4d).equals(inc('x', 3.4d))
+        mul('x', 1).equals(mul('x', 1))
+        mul('x', 5L).equals(mul('x', 5L))
+        mul('x', 3.4d).equals(mul('x', 3.4d))
+        min('x', 42).equals(min('x', 42))
+        max('x', 42).equals(max('x', 42))
+        currentDate('x').equals(currentDate('x'))
+        currentTimestamp('x').equals(currentTimestamp('x'))
+        addToSet('x', 1).equals(addToSet('x', 1))
+        addEachToSet('x', [1, 2, 3]).equals(addEachToSet('x', [1, 2, 3]))
+        push('x', 1).equals(push('x', 1))
+        pull('x', 1).equals(pull('x', 1))
+        popFirst('x').equals(popFirst('x'))
+        popLast('x').equals(popLast('x'))
+    }
+
+    def 'should test hashCode for SimpleUpdate'() {
+        expect:
+        setOnInsert('x', 1).hashCode() == setOnInsert('x', 1).hashCode()
+        setOnInsert('x', null).hashCode() == setOnInsert('x', null).hashCode()
+        setOnInsert(parse('{ a : 1, b: "two"}')).hashCode() == setOnInsert(parse('{ a : 1, b: "two"}')).hashCode()
+        rename('x', 'y').hashCode() == rename('x', 'y').hashCode()
+        inc('x', 1).hashCode() == inc('x', 1).hashCode()
+        inc('x', 5L).hashCode() == inc('x', 5L).hashCode()
+        inc('x', 3.4d).hashCode() == inc('x', 3.4d).hashCode()
+        mul('x', 1).hashCode() == mul('x', 1).hashCode()
+        mul('x', 5L).hashCode() == mul('x', 5L).hashCode()
+        mul('x', 3.4d).hashCode() == mul('x', 3.4d).hashCode()
+        min('x', 42).hashCode() == min('x', 42).hashCode()
+        max('x', 42).hashCode() == max('x', 42).hashCode()
+        currentDate('x').hashCode() == currentDate('x').hashCode()
+        currentTimestamp('x').hashCode() == currentTimestamp('x').hashCode()
+        addToSet('x', 1).hashCode() == addToSet('x', 1).hashCode()
+        addEachToSet('x', [1, 2, 3]).hashCode() == addEachToSet('x', [1, 2, 3]).hashCode()
+        push('x', 1).hashCode() == push('x', 1).hashCode()
+        pull('x', 1).hashCode() == pull('x', 1).hashCode()
+        popFirst('x').hashCode() == popFirst('x').hashCode()
+        popLast('x').hashCode() == popLast('x').hashCode()
+    }
+
+    def 'should test equals for WithEachUpdate'() {
+        expect:
+        addEachToSet('x', [1, 2, 3]).equals(addEachToSet('x', [1, 2, 3]))
+    }
+
+    def 'should test hashCode for WithEachUpdate'() {
+        expect:
+        addEachToSet('x', [1, 2, 3]).hashCode() == addEachToSet('x', [1, 2, 3]).hashCode()
+    }
+
+    def 'should test equals for PushUpdate'() {
+        expect:
+        pushEach('x', [1, 2, 3], new PushOptions()).equals(pushEach('x', [1, 2, 3], new PushOptions()))
+        pushEach('x', [parse('{score : 89}'), parse('{score : 65}')],
+                new PushOptions().position(0).slice(3).sortDocument(parse('{score : -1}')))
+        .equals(pushEach('x', [parse('{score : 89}'), parse('{score : 65}')],
+                new PushOptions().position(0).slice(3).sortDocument(parse('{score : -1}'))))
+
+        pushEach('x', [89, 65],
+                new PushOptions().position(0).slice(3).sort(-1))
+        .equals(pushEach('x', [89, 65],
+                new PushOptions().position(0).slice(3).sort(-1)))
+    }
+
+    def 'should test hashCode for PushUpdate'() {
+        expect:
+        pushEach('x', [1, 2, 3], new PushOptions()).hashCode() == pushEach('x', [1, 2, 3], new PushOptions()).hashCode()
+        pushEach('x', [parse('{score : 89}'), parse('{score : 65}')],
+                new PushOptions().position(0).slice(3).sortDocument(parse('{score : -1}'))).hashCode() ==
+                pushEach('x', [parse('{score : 89}'), parse('{score : 65}')],
+                new PushOptions().position(0).slice(3).sortDocument(parse('{score : -1}'))).hashCode()
+
+        pushEach('x', [89, 65],
+                new PushOptions().position(0).slice(3).sort(-1)).hashCode() ==
+                pushEach('x', [89, 65], new PushOptions().position(0).slice(3).sort(-1)).hashCode()
+    }
+
+    def 'should test equals for PullAllUpdate'() {
+        expect:
+        pullAll('x', []).equals(pullAll('x', []))
+        pullAll('x', [1, 2, 3]).equals(pullAll('x', [1, 2, 3]))
+    }
+
+    def 'should test hashCode for PullAllUpdate'() {
+        expect:
+        pullAll('x', []).hashCode() == pullAll('x', []).hashCode()
+        pullAll('x', [1, 2, 3]).hashCode() == pullAll('x', [1, 2, 3]).hashCode()
+    }
+
+    def 'should test equals for CompositeUpdate'() {
+        expect:
+        combine(set('x', 1)).equals(combine(set('x', 1)))
+        combine(set('x', 1), set('y', 2)).equals(combine(set('x', 1), set('y', 2)))
+        combine(set('x', 1), set('x', 2)).equals(combine(set('x', 1), set('x', 2)))
+        combine(set('x', 1), inc('z', 3), set('y', 2), inc('a', 4))
+                .equals(combine(set('x', 1), inc('z', 3), set('y', 2), inc('a', 4)))
+
+        combine(combine(set('x', 1))).equals(combine(combine(set('x', 1))))
+        combine(combine(set('x', 1), set('y', 2))).equals(combine(combine(set('x', 1), set('y', 2))))
+        combine(combine(set('x', 1), set('x', 2))).equals(combine(combine(set('x', 1), set('x', 2))))
+
+        combine(combine(set('x', 1), inc('z', 3), set('y', 2), inc('a', 4)))
+                .equals(combine(combine(set('x', 1), inc('z', 3), set('y', 2), inc('a', 4))))
+    }
+
+    def 'should test hashCode for CompositeUpdate'() {
+        expect:
+        combine(set('x', 1)).hashCode() == combine(set('x', 1)).hashCode()
+        combine(set('x', 1), set('y', 2)).hashCode() == combine(set('x', 1), set('y', 2)).hashCode()
+        combine(set('x', 1), set('x', 2)).equals(combine(set('x', 1), set('x', 2)))
+        combine(set('x', 1), inc('z', 3), set('y', 2), inc('a', 4)).hashCode() ==
+                combine(set('x', 1), inc('z', 3), set('y', 2), inc('a', 4)).hashCode()
+
+        combine(combine(set('x', 1))).hashCode() == combine(combine(set('x', 1))).hashCode()
+        combine(combine(set('x', 1), set('y', 2))).hashCode() == combine(combine(set('x', 1), set('y', 2))).hashCode()
+        combine(combine(set('x', 1), set('x', 2))).hashCode() == combine(combine(set('x', 1), set('x', 2))).hashCode()
+
+        combine(combine(set('x', 1), inc('z', 3), set('y', 2), inc('a', 4))).hashCode() ==
+                combine(combine(set('x', 1), inc('z', 3), set('y', 2), inc('a', 4))).hashCode()
+    }
 }

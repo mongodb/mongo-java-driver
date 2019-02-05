@@ -694,4 +694,150 @@ class FiltersSpecification extends Specification {
     def toBson(Bson bson) {
         bson.toBsonDocument(BsonDocument, registry)
     }
+
+    def 'should test equals for SimpleFilter'() {
+        expect:
+        regex('x', 'acme.*corp').equals(regex('x', 'acme.*corp'))
+    }
+
+    def 'should test hashCode for SimpleFilter'() {
+        expect:
+        regex('x', 'acme.*corp').hashCode() == regex('x', 'acme.*corp').hashCode()
+    }
+
+    def 'should test equals for OperatorFilter'() {
+        expect:
+        ne('x', 1).equals(ne('x', 1))
+        exists('x').equals(exists('x', true))
+        exists('x', false).equals(exists('x', false))
+        type('a', BsonType.ARRAY).equals(type('a', BsonType.ARRAY))
+        !type('a', 'number').equals(type('a', BsonType.ARRAY))
+    }
+
+    def 'should test hashCode for OperatorFilter'() {
+        expect:
+        ne('x', 1).hashCode() == ne('x', 1).hashCode()
+        exists('x').hashCode() == exists('x', true).hashCode()
+        exists('x', false).hashCode() == exists('x', false).hashCode()
+        type('a', BsonType.ARRAY).hashCode() == type('a', BsonType.ARRAY).hashCode()
+        type('a', 'number').hashCode() != type('a', BsonType.ARRAY).hashCode()
+    }
+
+    def 'should test equals for AndFilter'() {
+        expect:
+        and([]).equals(and())
+        and([eq('x', 1), eq('y', 2)])
+                .equals(and(eq('x', 1), eq('y', 2)))
+    }
+
+    def 'should test hashCode for AndFilter'() {
+        expect:
+        and([]).hashCode() == and().hashCode()
+        and([eq('x', 1), eq('y', 2)]).hashCode() ==
+                and(eq('x', 1), eq('y', 2)).hashCode()
+    }
+
+    def 'should test equals for OrNorFilter'() {
+        expect:
+        or([]).equals(or())
+        nor(eq('x', 1), eq('x', 2)).equals(nor(eq('x', 1), eq('x', 2)))
+        !nor(eq('x', 1), eq('x', 2)).equals(or(eq('x', 1), eq('x', 2)))
+    }
+
+    def 'should test hashCode for OrNorFilter'() {
+        expect:
+        or([]).hashCode() == or().hashCode()
+        nor(eq('x', 1), eq('x', 2)).hashCode() == nor(eq('x', 1), eq('x', 2)).hashCode()
+        nor(eq('x', 1), eq('x', 2)).hashCode() != or(eq('x', 1), eq('x', 2)).hashCode()
+    }
+
+    def 'should test equals for IterableOperatorFilter'() {
+        expect:
+        Filters.in('a', [1, 2, 3]).equals(Filters.in('a', 1, 2, 3))
+        !nin('a', [1, 2, 3]).equals(nin('a', 1, 2))
+        !all('a', [1, 2, 3]).equals(nin('a', 1, 2, 3))
+        all('a', []).equals(all('a'))
+    }
+
+    def 'should test hashCode for IterableOperatorFilter'() {
+        expect:
+        Filters.in('a', [1, 2, 3]).hashCode() == Filters.in('a', 1, 2, 3).hashCode()
+        nin('a', [1, 2, 3]).hashCode() != nin('a', 1, 2).hashCode()
+        all('a', [1, 2, 3]).hashCode() != nin('a', 1, 2, 3).hashCode()
+        all('a', []).hashCode() == all('a').hashCode()
+    }
+
+    def 'should test equals for SimpleEncodingFilter'() {
+        expect:
+        eq('x', 1).equals(eq('x', 1))
+        !eq('x', 1).equals(ne('x', 1))
+        !eq('x', 1).equals(eq('x', 2))
+        !eq('y', 1).equals(eq('x', 1))
+        !eq('x', 1).equals(parse('{x : 1}'))
+        expr(new BsonDocument('$gt', new BsonArray([new BsonString('$spent'), new BsonString('$budget')])))
+                .equals(expr(new BsonDocument('$gt', new BsonArray([new BsonString('$spent'), new BsonString('$budget')]))))
+    }
+
+    def 'should test hashCode for SimpleEncodingFilter'() {
+        expect:
+        eq('x', 1).hashCode() == eq('x', 1).hashCode()
+        eq('x', 1).hashCode() != ne('x', 1).hashCode()
+        eq('x', 1).hashCode() != eq('x', 2).hashCode()
+        eq('y', 1).hashCode() != eq('x', 1).hashCode()
+        eq('x', 1).hashCode() != parse('{x : 1}').hashCode()
+        expr(new BsonDocument('$gt', new BsonArray([new BsonString('$spent'), new BsonString('$budget')]))).hashCode() ==
+                expr(new BsonDocument('$gt', new BsonArray([new BsonString('$spent'), new BsonString('$budget')]))).hashCode()
+    }
+
+    def 'should test equals for NotFilter'() {
+        expect:
+        not(eq('x', 1)).equals(not(eq('x', 1)))
+    }
+
+    def 'should test hashCode for NotFilter'() {
+        expect:
+        not(eq('x', 1)).hashCode() == not(eq('x', 1)).hashCode()
+    }
+
+    def 'should test equals for GeometryOperatorFilter'() {
+        def polygon = new Polygon([new Position([40.0d, 18.0d]),
+                                   new Position([40.0d, 19.0d]),
+                                   new Position([41.0d, 19.0d]),
+                                   new Position([40.0d, 18.0d])])
+        expect:
+        geoWithin('loc', polygon).equals(geoWithin('loc', polygon))
+        !geoWithinBox('loc', 1d, 2d, 3d, 4d)
+                .equals(geoWithinBox('loc', 1d, 2d, 3d, 5d))
+
+        geoWithinPolygon('loc', [[0d, 0d], [3d, 6d], [6d, 0d]])
+                .equals(geoWithinPolygon('loc', [[0d, 0d], [3d, 6d], [6d, 0d]]))
+    }
+
+    def 'should test hashCode for GeometryOperatorFilter'() {
+        def polygon = new Polygon([new Position([40.0d, 18.0d]),
+                                   new Position([40.0d, 19.0d]),
+                                   new Position([41.0d, 19.0d]),
+                                   new Position([40.0d, 18.0d])])
+        expect:
+        geoWithin('loc', polygon).hashCode() == geoWithin('loc', polygon).hashCode()
+        geoWithinBox('loc', 1d, 2d, 3d, 4d).hashCode() !=
+                geoWithinBox('loc', 1d, 2d, 3d, 5d).hashCode()
+
+        geoWithinPolygon('loc', [[0d, 0d], [3d, 6d], [6d, 0d]]).hashCode() ==
+                geoWithinPolygon('loc', [[0d, 0d], [3d, 6d], [6d, 0d]]).hashCode()
+    }
+
+    def 'should test equals for TextFilter'() {
+        expect:
+        text('mongoDB for GIANT ideas').equals(text('mongoDB for GIANT ideas'))
+        text('mongoDB for GIANT ideas', 'english')
+                .equals(text('mongoDB for GIANT ideas', new TextSearchOptions().language('english')))
+    }
+
+    def 'should test hashCode for TextFilter'() {
+        expect:
+        text('mongoDB for GIANT ideas').hashCode() == text('mongoDB for GIANT ideas').hashCode()
+        text('mongoDB for GIANT ideas', 'english').hashCode() ==
+                text('mongoDB for GIANT ideas', new TextSearchOptions().language('english')).hashCode()
+    }
 }

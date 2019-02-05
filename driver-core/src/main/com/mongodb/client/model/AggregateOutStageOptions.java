@@ -127,6 +127,34 @@ public class AggregateOutStageOptions {
         return uniqueKey;
     }
 
+    @Override
+    public boolean equals(final Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        AggregateOutStageOptions that = (AggregateOutStageOptions) o;
+
+        if (mode != that.mode) {
+            return false;
+        }
+        if (databaseName != null ? !databaseName.equals(that.databaseName) : that.databaseName != null) {
+            return false;
+        }
+        return uniqueKey != null ? uniqueKey.equals(that.uniqueKey) : that.uniqueKey == null;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = mode != null ? mode.hashCode() : 0;
+        result = 31 * result + (databaseName != null ? databaseName.hashCode() : 0);
+        result = 31 * result + (uniqueKey != null ? uniqueKey.hashCode() : 0);
+        return result;
+    }
+
     /**
      * Sets the document describing the unique keys used for comparing documents in the output collection when the mode is either
      * {@code Mode#REPLACE_DOCUMENTS} or {@code Mode#INSERT_DOCUMENTS}.  The format is similar to that used to define a unique index on one

@@ -75,4 +75,28 @@ class SortsSpecification extends Specification {
     def toBson(Bson bson) {
         bson.toBsonDocument(BsonDocument, registry)
     }
+
+    def 'should test equals for CompoundSort'() {
+        expect:
+        orderBy([ascending('x'), descending('y')])
+                .equals(orderBy([ascending('x'), descending('y')]))
+        orderBy(ascending('x'), descending('y'))
+                .equals(orderBy(ascending('x'), descending('y')))
+        orderBy(ascending('x'), descending('y'), descending('x'))
+                .equals(orderBy(ascending('x'), descending('y'), descending('x')))
+        orderBy(ascending('x', 'y'), descending('a', 'b'))
+                .equals(orderBy(ascending('x', 'y'), descending('a', 'b')))
+    }
+
+    def 'should test hashCode for CompoundSort'() {
+        expect:
+        orderBy([ascending('x'), descending('y')]).hashCode() ==
+                orderBy([ascending('x'), descending('y')]).hashCode()
+        orderBy(ascending('x'), descending('y')).hashCode() ==
+                orderBy(ascending('x'), descending('y')).hashCode()
+        orderBy(ascending('x'), descending('y'), descending('x')).hashCode() ==
+                orderBy(ascending('x'), descending('y'), descending('x')).hashCode()
+        orderBy(ascending('x', 'y'), descending('a', 'b')).hashCode() ==
+                orderBy(ascending('x', 'y'), descending('a', 'b')).hashCode()
+    }
 }
