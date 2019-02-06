@@ -25,7 +25,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * Options for the $out aggregation stage
  *
- * @since 3.10
+ * @since 3.11
  * @see Aggregates#out(String, AggregateOutStageOptions)
  * @mongodb.driver.manual reference/operator/aggregation/out/  $out
  */
