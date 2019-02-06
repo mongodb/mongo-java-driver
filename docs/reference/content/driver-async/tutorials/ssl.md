@@ -10,9 +10,11 @@ title = "SSL"
 
 ## TLS/SSL
 
-The Java driver supports TLS/SSL connections to MongoDB servers using
-the underlying support for TLS/SSL provided by the JDK.
-To use TLS/SSL, you must configure the asynchronous driver to use [Netty](http://netty.io/).
+The asynchronous Java driver supports TLS/SSL connections to MongoDB servers using the underlying support 
+for TLS/SSL provided by the JDK.
+
+In its default configuration, the asynchronous driver is supported on Java 8+ when TLS/SSL is enabled.  
+Otherwise, applications must configure the asynchronous driver to use [Netty](http://netty.io/).
 
 
 ## Specify TLS/SSL and Netty Configuration
@@ -24,7 +26,14 @@ Netty artifacts.  The driver is currently tested against Netty 4.1.
 
 ### Via Connection String
 
-To configure the driver to use Netty, include the `ssl=true` and `streamType=netty` options in the connection string, as in:
+To configure the driver to use TLS/SSL, include the `ssl=true` option in the connection string, as in:
+
+```java
+MongoClient client = MongoClients.create("mongodb://localhost/?ssl=true");
+```
+
+To configure the driver to use use TLS/SSL with Netty, include the `ssl=true` and `streamType=netty` options in the connection string, as
+in:
 
 ```java
 MongoClient client = MongoClients.create("mongodb://localhost/?streamType=netty&ssl=true");
@@ -36,12 +45,20 @@ The streamType connection string query parameter is deprecated as of the 3.10 re
 
 ### Via `MongoClientSettings`
 
-To specify TLS/SSL with  [`MongoClientSettings`]({{< apiref "com/mongodb/MongoClientSettings.Builder.html#streamFactoryFactory-com.mongodb.connection.StreamFactoryFactory-">}}) ,
-set the ``sslEnabled`` property to ``true``, and the stream factory to 
+To specify TLS/SSL with [`MongoClientSettings`]({{< apiref "com/mongodb/MongoClientSettings.Builder.html#streamFactoryFactory-com.mongodb.connection.StreamFactoryFactory-">}}),
+set the ``sslEnabled`` property to ``true`, as in
+
+```java
+MongoClient client = MongoClients.create(MongoClientSettings.builder()
+        .applyToClusterSettings(builder -> builder.hosts(Arrays.asList(new ServerAddress())))
+        .applyToSslSettings(builder -> builder.enabled(true))
+        .build());
+```
+
+To specify TLS/SSL using Netty, set the ``sslEnabled`` property to ``true``, and the stream factory to 
 [`NettyStreamFactoryFactory`]({{< apiref "com/mongodb/connection/netty/NettyStreamFactoryFactory" >}}), as in
 
 ```java
-
 EventLoopGroup eventLoopGroup = new NioEventLoopGroup();  // make sure application shuts this down
 
 MongoClient client = MongoClients.create(MongoClientSettings.builder()
@@ -84,21 +101,18 @@ If your application must run on Java 6, or for some other reason you need
 to disable host name verification, you must explicitly indicate this using the `invalidHostNameAllowed` property:
 
 ```java
-EventLoopGroup eventLoopGroup = new NioEventLoopGroup();  // make sure application shuts this down
-
 MongoClient client = MongoClients.create(MongoClientSettings.builder()
+        .applyToClusterSettings(builder -> builder.hosts(Arrays.asList(new ServerAddress())))
         .applyToSslSettings(builder -> 
                 builder.enabled(true)
                        .invalidHostNameAllowed(true))
-        .streamFactoryFactory(NettyStreamFactoryFactory.builder()
-                .eventLoopGroup(eventLoopGroup).build())
         .build());
 ```
 
 Or via the connection string:
 
 ```java
-MongoClient client = MongoClients.create("mongodb://localhost/?ssl=true&sslInvalidHostNameAllowed=true&streamType=netty");
+MongoClient client = MongoClients.create("mongodb://localhost/?ssl=true&sslInvalidHostNameAllowed=true");
 ```
 
 {{% note %}}
