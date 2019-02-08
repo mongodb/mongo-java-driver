@@ -101,4 +101,27 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
      * @mongodb.server.release 4.0
      */
     void abortTransaction();
+
+    /**
+     * Execute the given function within a transaction.
+     *
+     * @param <T> the return type of the transaction body
+     * @param transactionBody the body of the transaction
+     * @return the return value of the transaction body
+     * @mongodb.server.release 4.0
+     * @since 3.11
+     */
+    <T> T withTransaction(TransactionBody<T> transactionBody);
+
+    /**
+     * Execute the given function within a transaction.
+     *
+     * @param <T> the return type of the transaction body
+     * @param options         the transaction options
+     * @param transactionBody the body of the transaction
+     * @return the return value of the transaction body
+     * @mongodb.server.release 4.0
+     * @since 3.11
+     */
+    <T> T withTransaction(TransactionOptions options, TransactionBody<T> transactionBody);
 }

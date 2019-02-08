@@ -18,16 +18,23 @@ package com.mongodb.client.internal;
 
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientException;
+import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
+import com.mongodb.MongoWriteConcernException;
 import com.mongodb.ReadConcern;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.ClientSession;
+import com.mongodb.client.TransactionBody;
 import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.operation.AbortTransactionOperation;
 import com.mongodb.operation.CommitTransactionOperation;
+import org.bson.BsonBoolean;
+import org.bson.BsonDocument;
 
+import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
+import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -36,6 +43,9 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
     private enum TransactionState {
         NONE, IN, COMMITTED, ABORTED
     }
+
+    private static final int WRITE_CONCERN_ERROR_CODE = 64;
+    private static final int MAX_RETRY_TIME_LIMIT_MS = 120000;
 
     private final MongoClientDelegate delegate;
     private TransactionState transactionState = TransactionState.NONE;
@@ -151,6 +161,72 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
             // ignore errors
         } finally {
             cleanupTransaction(TransactionState.ABORTED);
+        }
+    }
+
+    @Override
+    public <T> T withTransaction(final TransactionBody<T> transactionBody) {
+        return withTransaction(TransactionOptions.builder().build(), transactionBody);
+    }
+
+    @Override
+    public <T> T withTransaction(final TransactionOptions options, final TransactionBody<T> transactionBody) {
+        notNull("transactionBody", transactionBody);
+        long startTime = ClientSessionClock.INSTANCE.now();
+        outer:
+        while (true) {
+            T retVal;
+            try {
+                startTransaction(options);
+                retVal = transactionBody.execute();
+            } catch (RuntimeException e) {
+                if (transactionState == TransactionState.IN) {
+                    abortTransaction();
+                }
+                if (e instanceof MongoException) {
+                    if (((MongoException) e).hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)
+                            && ClientSessionClock.INSTANCE.now() - startTime < MAX_RETRY_TIME_LIMIT_MS) {
+                        continue;
+                    }
+                }
+                throw e;
+            }
+            if (transactionState == TransactionState.IN) {
+                while (true) {
+                    try {
+                        commitTransaction();
+                        break;
+                    } catch (MongoException e) {
+                        if (ClientSessionClock.INSTANCE.now() - startTime < MAX_RETRY_TIME_LIMIT_MS) {
+                            applyMajorityWriteConcernToTransactionOptions();
+
+                            if (e.hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
+                                continue;
+                            } else if (e.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)) {
+                                continue outer;
+                            }
+                        }
+                        throw e;
+                    }
+                }
+            }
+            return retVal;
+        }
+    }
+
+    // Apply majority write concern if the commit is to be retried.
+    private void applyMajorityWriteConcernToTransactionOptions() {
+        if (transactionOptions != null) {
+            WriteConcern writeConcern = transactionOptions.getWriteConcern();
+            if (writeConcern != null) {
+                transactionOptions = TransactionOptions.merge(TransactionOptions.builder()
+                        .writeConcern(writeConcern.withW("majority")).build(), transactionOptions);
+            } else {
+                transactionOptions = TransactionOptions.merge(TransactionOptions.builder()
+                        .writeConcern(WriteConcern.MAJORITY).build(), transactionOptions);
+            }
+        } else {
+            transactionOptions = TransactionOptions.builder().writeConcern(WriteConcern.MAJORITY).build();
         }
     }
 
