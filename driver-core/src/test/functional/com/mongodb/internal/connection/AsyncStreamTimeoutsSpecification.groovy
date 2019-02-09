@@ -36,7 +36,6 @@ import java.util.concurrent.TimeUnit
 
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
-import static com.mongodb.ClusterFixture.isNotAtLeastJava7
 import static com.mongodb.connection.ConnectionFixture.getCredentialListWithCache
 import static com.mongodb.internal.connection.CommandHelper.executeCommand
 
@@ -47,7 +46,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
     static SocketSettings openSocketSettings = SocketSettings.builder().connectTimeout(1, TimeUnit.MILLISECONDS).build()
     static SocketSettings readSocketSettings = SocketSettings.builder().readTimeout(5, TimeUnit.SECONDS).build()
 
-    @IgnoreIf({ isNotAtLeastJava7() || getSslSettings().isEnabled() })
+    @IgnoreIf({ getSslSettings().isEnabled() })
     def 'should throw a MongoSocketOpenException when the AsynchronousSocket Stream fails to open'() {
         given:
         def connection = new InternalStreamConnectionFactory(
@@ -61,7 +60,7 @@ class AsyncStreamTimeoutsSpecification extends OperationFunctionalSpecification 
         thrown(MongoSocketOpenException)
     }
 
-    @IgnoreIf({ isNotAtLeastJava7() || getSslSettings().isEnabled() })
+    @IgnoreIf({ getSslSettings().isEnabled() })
     def 'should throw a MongoSocketReadTimeoutException with the AsynchronousSocket stream'() {
         given:
         def connection = new InternalStreamConnectionFactory(

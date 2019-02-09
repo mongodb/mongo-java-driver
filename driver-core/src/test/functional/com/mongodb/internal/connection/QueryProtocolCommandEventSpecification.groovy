@@ -41,12 +41,11 @@ import spock.lang.Shared
 
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
-import static com.mongodb.ClusterFixture.isNotAtLeastJava7
 import static com.mongodb.connection.ConnectionFixture.getCredentialListWithCache
 import static com.mongodb.internal.connection.ProtocolTestHelper.execute
 import static org.bson.BsonDocument.parse
 
-@IgnoreIf({ isNotAtLeastJava7() || getSslSettings().isEnabled() })
+@IgnoreIf({ getSslSettings().isEnabled() })
 class QueryProtocolCommandEventSpecification extends OperationFunctionalSpecification {
     @Shared
     InternalStreamConnection nettyConnection

@@ -22,15 +22,12 @@ import com.mongodb.async.client.MongoDatabase
 import com.mongodb.async.client.gridfs.GridFSBucket
 import com.mongodb.async.client.gridfs.GridFSBucketImpl
 import org.bson.Document
-import spock.lang.Requires
 
 import java.nio.ByteBuffer
 import java.nio.channels.AsynchronousByteChannel
 import java.nio.channels.AsynchronousFileChannel
 import java.nio.channels.CompletionHandler
 import java.nio.file.Files
-
-// Wildcard import to work around Java 1.6
 import java.nio.file.Path
 import java.nio.file.Paths
 import java.nio.file.StandardOpenOption
@@ -40,11 +37,8 @@ import static com.mongodb.async.client.Fixture.getDefaultDatabaseName
 import static com.mongodb.async.client.Fixture.getMongoClient
 import static com.mongodb.async.client.TestHelper.run
 import static com.mongodb.async.client.gridfs.helpers.AsynchronousChannelHelper.channelToInputStream
-
-// Wildcard import to work around Java 1.6
 import static com.mongodb.async.client.gridfs.helpers.AsynchronousChannelHelper.channelToOutputStream
 
-@Requires({ javaVersion >= 1.7 })
 class AsynchronousChannelHelperSmokeTestSpecification extends FunctionalSpecification {
     protected MongoDatabase mongoDatabase;
     protected MongoCollection<Document> filesCollection;

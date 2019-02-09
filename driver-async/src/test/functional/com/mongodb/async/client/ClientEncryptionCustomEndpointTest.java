@@ -41,12 +41,10 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.TIMEOUT;
-import static com.mongodb.ClusterFixture.isNotAtLeastJava8;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 @RunWith(Parameterized.class)
@@ -73,7 +71,6 @@ public class ClientEncryptionCustomEndpointTest {
 
     @Before
     public void setUp() {
-        assumeFalse(isNotAtLeastJava8());
         assumeTrue(serverVersionAtLeast(4, 1));
         assumeTrue("Encryption test with external keyVault is disabled",
                 System.getProperty("org.mongodb.test.awsAccessKeyId") != null

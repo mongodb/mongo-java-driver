@@ -174,18 +174,6 @@ public final class ClusterFixture {
         return storageEngine != null && !storageEngine.get("name").equals("inMemory");
     }
 
-    public static boolean isNotAtLeastJava7() {
-        return javaVersionStartsWith("1.6");
-    }
-
-    public static boolean isNotAtLeastJava8() {
-        return isNotAtLeastJava7() || javaVersionStartsWith("1.7");
-    }
-
-    private static boolean javaVersionStartsWith(final String versionPrefix) {
-        return System.getProperty("java.version").startsWith(versionPrefix + ".");
-    }
-
     static class ShutdownHook extends Thread {
         @Override
         public void run() {
@@ -357,17 +345,9 @@ public final class ClusterFixture {
             return new NettyStreamFactory(getSocketSettings(), getSslSettings());
         } else if (streamType.equals("nio2")) {
             if (getSslSettings().isEnabled()) {
-                if (isNotAtLeastJava8()) {
-                    return new NettyStreamFactory(getSocketSettings(), getSslSettings());
-                } else {
-                    return new TlsChannelStreamFactoryFactory().create(getSocketSettings(), getSslSettings());
-                }
+                return new TlsChannelStreamFactoryFactory().create(getSocketSettings(), getSslSettings());
             } else {
-                if (isNotAtLeastJava7()) {
-                    return new NettyStreamFactory(getSocketSettings(), getSslSettings());
-                } else {
-                    return new AsynchronousSocketChannelStreamFactory(getSocketSettings(), getSslSettings());
-                }
+                return new AsynchronousSocketChannelStreamFactory(getSocketSettings(), getSslSettings());
             }
         } else {
             throw new IllegalArgumentException("Unsupported stream type " + streamType);

@@ -29,12 +29,9 @@ import com.mongodb.connection.AsynchronousSocketChannelStreamFactoryFactory;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.connection.TlsChannelStreamFactoryFactory;
-import com.mongodb.connection.netty.NettyStreamFactoryFactory;
 import org.bson.Document;
 
 import static com.mongodb.ClusterFixture.getSslSettings;
-import static com.mongodb.ClusterFixture.isNotAtLeastJava7;
-import static com.mongodb.ClusterFixture.isNotAtLeastJava8;
 import static com.mongodb.connection.ClusterType.SHARDED;
 import static java.lang.Thread.sleep;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -80,17 +77,9 @@ public final class Fixture {
 
     public static StreamFactoryFactory getStreamFactoryFactory() {
         if (getSslSettings().isEnabled()) {
-            if (isNotAtLeastJava8()) {
-                return NettyStreamFactoryFactory.builder().build();
-            } else {
-                return new TlsChannelStreamFactoryFactory();
-            }
+            return new TlsChannelStreamFactoryFactory();
         } else {
-            if (isNotAtLeastJava7()) {
-                return NettyStreamFactoryFactory.builder().build();
-            } else {
-                return AsynchronousSocketChannelStreamFactoryFactory.builder().build();
-            }
+            return AsynchronousSocketChannelStreamFactoryFactory.builder().build();
         }
     }
 

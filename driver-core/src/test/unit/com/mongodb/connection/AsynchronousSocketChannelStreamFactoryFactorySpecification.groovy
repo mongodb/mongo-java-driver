@@ -18,16 +18,12 @@ package com.mongodb.connection
 
 import com.mongodb.ServerAddress
 import com.mongodb.internal.connection.AsynchronousSocketChannelStream
-import spock.lang.IgnoreIf
 import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 
-import static com.mongodb.ClusterFixture.isNotAtLeastJava7
-
-@IgnoreIf({ isNotAtLeastJava7() })
 class AsynchronousSocketChannelStreamFactoryFactorySpecification extends Specification {
 
     @Unroll

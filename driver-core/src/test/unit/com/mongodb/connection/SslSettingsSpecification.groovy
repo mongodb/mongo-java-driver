@@ -17,13 +17,9 @@
 package com.mongodb.connection
 
 import com.mongodb.ConnectionString
-import com.mongodb.MongoInternalException
-import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import javax.net.ssl.SSLContext
-
-import static com.mongodb.ClusterFixture.isNotAtLeastJava7
 
 class SslSettingsSpecification extends Specification {
 
@@ -37,7 +33,6 @@ class SslSettingsSpecification extends Specification {
         !settings.invalidHostNameAllowed
     }
 
-    @IgnoreIf({ isNotAtLeastJava7() })
     def 'should set settings'() {
         when:
         def settings = SslSettings.builder()
@@ -52,23 +47,6 @@ class SslSettingsSpecification extends Specification {
         settings.invalidHostNameAllowed
     }
 
-    def 'should not allow invalid host name on Java 6'() {
-        given:
-        String javaVersion = System.getProperty('java.version')
-
-        when:
-        System.setProperty('java.version', '1.6.0_45')
-        SslSettings.builder().enabled(true).build()
-
-        then:
-        def e = thrown(MongoInternalException)
-        e.message.contains('SslSettings.invalidHostNameAllowed')
-
-        cleanup:
-        System.setProperty('java.version', javaVersion)
-    }
-
-    @IgnoreIf({ isNotAtLeastJava7() })
     def 'should apply connection string without ssl'() {
         expect:
         builder.applyConnectionString(new ConnectionString(connectionString)).build() == expected
@@ -88,7 +66,6 @@ class SslSettingsSpecification extends Specification {
                                                                                                 .invalidHostNameAllowed(true).build()
     }
 
-    @IgnoreIf({ isNotAtLeastJava7() })
     def 'should apply settings'() {
         given:
         def defaultSettings = SslSettings.builder().build()
@@ -103,7 +80,6 @@ class SslSettingsSpecification extends Specification {
         SslSettings.builder(customSettings).applySettings(defaultSettings).build() == defaultSettings
     }
 
-    @IgnoreIf({ isNotAtLeastJava7() })
     def 'should apply builder settings'() {
         when:
         def original = SslSettings.builder().enabled(true)
@@ -133,7 +109,6 @@ class SslSettingsSpecification extends Specification {
                         .context(SSLContext.getDefault()).build().hashCode()
     }
 
-    @IgnoreIf({ isNotAtLeastJava7() })
     def 'unequivalent settings should not be equal or have the same hash code'() {
         expect:
         SslSettings.builder().build() != SslSettings.builder().enabled(true).build()
