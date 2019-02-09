@@ -25,8 +25,6 @@ import org.bson.Document
 import org.bson.conversions.Bson
 import spock.lang.IgnoreIf
 
-import java.security.SecureRandom
-
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.model.Accumulators.addToSet
 import static com.mongodb.client.model.Accumulators.avg
@@ -695,11 +693,12 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
 
         helper.drop()
 
-        def random = new SecureRandom()
-        def total = random.nextInt(2000)
+        def total = 3
+        def documents = []
         (1..total).each {
-            helper.insertDocuments(new Document('price', random.nextDouble() * 5000D + 5.01D))
+            documents.add(new BsonDocument())
         }
+        helper.insertDocuments(documents)
 
         when:
         def results = helper.aggregate([count()])
