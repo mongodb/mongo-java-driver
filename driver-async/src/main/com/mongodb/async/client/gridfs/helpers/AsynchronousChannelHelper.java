@@ -32,7 +32,6 @@ import static com.mongodb.assertions.Assertions.notNull;
  * A helper class to convert to {@link AsynchronousByteChannel} or {@link AsynchronousFileChannel} instances into {@link AsyncInputStream}
  * or {@link AsyncOutputStream} instances.
  *
- * <p>Requires Java 7 or greater.</p>
  * @since 3.3
  * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */

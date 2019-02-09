@@ -190,18 +190,11 @@ public class MongoClientOptions {
 
         serverSettings = serverSettingsBuilder.build();
 
-        try {
-            sslSettings = SslSettings.builder()
-                    .enabled(sslEnabled)
-                    .invalidHostNameAllowed(sslInvalidHostNameAllowed)
-                    .context(sslContext)
-                    .build();
-        } catch (MongoInternalException e) {
-            // The error message from SslSettings needs to be translated to make sense for users of MongoClientOptions
-            throw new MongoInternalException("By default, SSL connections are only supported on Java 7 or later.  If the application "
-                    + "must run on Java 6, you must set the MongoClientOptions.sslInvalidHostNameAllowed "
-                    + "property to true");
-        }
+        sslSettings = SslSettings.builder()
+                .enabled(sslEnabled)
+                .invalidHostNameAllowed(sslInvalidHostNameAllowed)
+                .context(sslContext)
+                .build();
     }
 
     /**
@@ -497,8 +490,7 @@ public class MongoClientOptions {
 
     /**
      * Returns whether invalid host names should be allowed if SSL is enabled.  Take care before setting this to
-     * true, as it makes the application susceptible to man-in-the-middle attacks.  Note that host name verification currently requires
-     * Java 7, so if your application is using SSL and must run on Java 6, this property must be set to {@code true}.
+     * true, as it makes the application susceptible to man-in-the-middle attacks.
      *
      * <p>Default is {@code false}.</p>
      *

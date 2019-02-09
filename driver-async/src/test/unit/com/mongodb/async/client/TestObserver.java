@@ -244,8 +244,7 @@ public class TestObserver<T> implements Observer<T> {
      */
     public synchronized void assertNoErrors() {
         if (onErrorEvents.size() > 0) {
-            // can't use AssertionError because (message, cause) doesn't exist until Java 7
-            throw new RuntimeException("Unexpected onError events: " + getOnErrorEvents().size(), getOnErrorEvents().get(0));
+            throw new AssertionError("Unexpected onError events: " + getOnErrorEvents().size(), getOnErrorEvents().get(0));
         }
     }
 
@@ -256,8 +255,7 @@ public class TestObserver<T> implements Observer<T> {
      */
     public synchronized void assertErrored() {
         if (onErrorEvents.size() == 0) {
-            // can't use AssertionError because (message, cause) doesn't exist until Java 7
-            throw new RuntimeException("No onError events");
+            throw new AssertionError("No onError events");
         }
     }
 }
