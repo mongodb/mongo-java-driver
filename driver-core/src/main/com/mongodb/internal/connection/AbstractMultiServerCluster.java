@@ -33,7 +33,6 @@ import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -91,6 +90,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
     }
 
     protected void initialize(final Collection<ServerAddress> serverAddresses) {
+        ClusterDescription currentDescription = getCurrentDescription();
         ClusterDescription newDescription;
 
         // synchronizing this code because addServer registers a callback which is re-entrant to this instance.
@@ -101,12 +101,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
             }
             newDescription = updateDescription();
         }
-        fireChangeEvent(new ClusterDescriptionChangedEvent(getClusterId(), newDescription, createInitialDescription()));
-    }
-
-    private ClusterDescription createInitialDescription() {
-        return new ClusterDescription(getSettings().getMode(), ClusterType.UNKNOWN, Collections.<ServerDescription>emptyList(),
-                getSettings(), getServerFactory().getSettings());
+        fireChangeEvent(new ClusterDescriptionChangedEvent(getClusterId(), newDescription, currentDescription));
     }
 
     @Override
