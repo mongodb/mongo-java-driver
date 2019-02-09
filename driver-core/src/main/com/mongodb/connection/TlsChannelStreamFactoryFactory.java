@@ -49,9 +49,6 @@ import static com.mongodb.internal.connection.SslHelper.enableSni;
 
 /**
  * A {@code StreamFactoryFactory} that supports TLS/SSL.  The implementation supports asynchronous usage.
- * <p>
- * Requires Java 8
- * </p>
  *
  * @since 3.10
  */

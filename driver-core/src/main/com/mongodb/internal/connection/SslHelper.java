@@ -37,7 +37,7 @@ public final class SslHelper {
     }
 
     /**
-     * Enable SNI if running on Java 8 or later.  Otherwise fail silently to enable SNI.
+     * Enable SNI.
      *
      * @param host          the server host
      * @param sslParameters the SSL parameters
