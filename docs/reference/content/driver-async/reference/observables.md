@@ -74,16 +74,7 @@ Creating an `Observable` from any callback-based methods requires the wrapping o
 
 In the following example we print out the count of the number of documents in a collection:
 
-
 ```java
-    Block<SingleResultCallback<Long>> operation = new Block<SingleResultCallback<Long>>() {
-        @Override
-        void apply(final SingleResultCallback<Long> callback) {
-            collection.countDocuments(callback);
-        }
-    };
-
-    // Or in Java 8 syntax:
     operation = (Block<SingleResultCallback<Long>>) collection::countDocuments;
 
     Observables.observe(operation).subscribe(new Observer<Long>(){

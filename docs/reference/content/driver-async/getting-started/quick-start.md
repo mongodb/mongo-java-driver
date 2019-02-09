@@ -20,7 +20,7 @@ The callback-based Async Java Driver has been deprecated in favor of the
 
 ## SingleResultCallback
 
-The MongoDB Async driver provides an asynchronous API that can leverage either Netty or Java 7's `AsynchronousSocketChannel` for fast and non-blocking I/O.
+The MongoDB Async driver provides an asynchronous API that can leverage either Netty or `AsynchronousSocketChannel` for fast and non-blocking I/O.
 
 The MongoDB Asynchronous Driver API mirrors the new Synchronous MongoDB Driver API, but asynchronous methods that make network I/O operations take a [`SingleResultCallback<T>`]({{< apiref "com/mongodb/async/SingleResultCallback.html">}}) and return immediately. The `SingleResultCallback<T>` interface requires the implementation of a single method `onResult(T result, Throwable t)` which is called upon the completion of the operation.  Upon successful operation, the `result` parameter contains the result of the operation. If the operation failed for any reason, then the `t` contains the reason for the failure.
 
@@ -219,7 +219,7 @@ collection.insertOne(doc, new SingleResultCallback<Void>() {
 If no top-level `_id` field is specified in the document, the driver automatically adds the `_id` field to the inserted document.
 {{% /note %}}
 
-`SingleResultCallback<T>` is a [functional interface](https://docs.oracle.com/javase/specs/jls/se8/html/jls-9.html#jls-9.8) and can be implemented as a lambda if using Java 8:
+`SingleResultCallback<T>` is a [functional interface](https://docs.oracle.com/javase/specs/jls/se8/html/jls-9.html#jls-9.8):
 
 ```java
 collection.insertOne(doc, (Void result, final Throwable t) -> System.out.println("Inserted!"));

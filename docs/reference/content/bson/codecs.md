@@ -98,7 +98,7 @@ The `DocumentCodec`, because it is constructed with a `CodecRegistry`, can now u
 values contained in each Document that it encodes.
 
 One more problem remains, however.  Consider the problem of encoding values to a BSON DateTime.  An application may want  to 
-encode to a BSON DateTime instances of both the original Java `Date` class as well as the Java 8 `Instant` class.  It's easy to create 
+encode to a BSON DateTime instances of both the original Java `Date` class as well as the `Instant` class.  It's easy to create 
 implemenations of `Codec<Date>` and `Codec<Instant>`, and either one can be used for encoding.  But when decoding, a Document `Codec` 
 also has to choose which Java type to decode a BSON DateTime to.  Rather than hard-coding it in the `DocumentCodec`, the decision is 
 abstracted via the `BsonTypeClassMap` class.
@@ -108,7 +108,7 @@ abstracted via the `BsonTypeClassMap` class.
 The [`BsonTypeClassMap`]({{< apiref "org/bson/codecs/BsonTypeClassMap" >}}) class simply maps each value in the `BsonType` 
 enumeration to a Java class.  It contains a sensible set of default mappings that can easily be changed by passing an a `Map<BsonType, 
 Class<?>>` instance to the constructor with any replacement mappings to apply.  Consider the case where an application wants to decode 
-all BSON DateTime values to a Java 8 `Instant` instead of the default `Date`:
+all BSON DateTime values to an `Instant` instead of the default `Date`:
 
 ```java
 Map<BsonType, Class<?>> replacements = new HashMap<BsonType, Class<?>>();
