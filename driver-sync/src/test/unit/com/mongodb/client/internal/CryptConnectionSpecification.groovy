@@ -42,14 +42,11 @@ import org.bson.codecs.DocumentCodec
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.RawBsonDocumentCodec
 import org.bson.io.BasicOutputBuffer
-import spock.lang.IgnoreIf
 import spock.lang.Specification
 
-import static com.mongodb.ClusterFixture.notAtLeastJava8
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.connection.SplittablePayload.Type.INSERT
 
-@IgnoreIf( { notAtLeastJava8 })
 class CryptConnectionSpecification extends Specification {
 
     def 'should encrypt and decrypt a command'() {

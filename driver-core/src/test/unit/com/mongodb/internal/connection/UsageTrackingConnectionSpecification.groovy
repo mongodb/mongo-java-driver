@@ -27,7 +27,6 @@ import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.codecs.BsonDocumentCodec
 import org.junit.experimental.categories.Category
-import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import static com.mongodb.ReadPreference.primary
@@ -59,7 +58,6 @@ class UsageTrackingConnectionSpecification extends Specification {
     }
 
     @Category(Async)
-    @IgnoreIf({ javaVersion < 1.7 })
     def 'openAt should be set on open asynchronously'() {
         when:
         def futureResultCallback = new FutureResultCallback<Void>()
@@ -91,7 +89,6 @@ class UsageTrackingConnectionSpecification extends Specification {
     }
 
     @Category(Async)
-    @IgnoreIf({ javaVersion < 1.7 })
     def 'lastUsedAt should be set on open asynchronously'() {
         when:
         def futureResultCallback = new FutureResultCallback<Void>()
@@ -123,7 +120,6 @@ class UsageTrackingConnectionSpecification extends Specification {
     }
 
     @Category(Async)
-    @IgnoreIf({ javaVersion < 1.7 })
     def 'lastUsedAt should be set on sendMessage asynchronously'() {
         given:
         def connection = new UsageTrackingInternalConnection(new TestInternalConnectionFactory().create(SERVER_ID), 0);

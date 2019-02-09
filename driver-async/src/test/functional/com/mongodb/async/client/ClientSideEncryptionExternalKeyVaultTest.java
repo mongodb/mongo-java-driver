@@ -45,7 +45,6 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.mongodb.ClusterFixture.isNotAtLeastJava8;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.async.client.Fixture.getMongoClientBuilderFromConnectionString;
 import static com.mongodb.async.client.Fixture.getMongoClient;
@@ -66,7 +65,6 @@ public class ClientSideEncryptionExternalKeyVaultTest {
 
     @Before
     public void setUp() throws IOException, URISyntaxException {
-        assumeFalse(isNotAtLeastJava8());
         assumeTrue(serverVersionAtLeast(4, 1));
         assumeTrue("Encryption test with external keyVault is disabled",
                 System.getProperty("org.mongodb.test.awsAccessKeyId") != null

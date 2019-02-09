@@ -31,7 +31,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static com.mongodb.ClusterFixture.isNotAtLeastJava8;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static junit.framework.TestCase.assertTrue;
 import static com.mongodb.async.client.Fixture.getMongoClientBuilderFromConnectionString;
@@ -45,7 +44,6 @@ public class ClientSideEncryptionViewAreProhibitedTest {
 
     @Before
     public void setUp() {
-        assumeFalse(isNotAtLeastJava8());
         assumeTrue(serverVersionAtLeast(4, 1));
         assumeTrue("Encryption test with external keyVault is disabled",
                 System.getProperty("org.mongodb.test.awsAccessKeyId") != null

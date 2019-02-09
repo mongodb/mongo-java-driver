@@ -50,7 +50,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.ClusterFixture.isNotAtLeastJava8;
 import static com.mongodb.JsonTestServerVersionChecker.skipTest;
 import static com.mongodb.async.client.Fixture.getMongoClient;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
@@ -122,7 +121,6 @@ public class ClientSideEncryptionTest {
         assumeTrue("Client side encryption tests disabled",
                 System.getProperty("org.mongodb.test.awsAccessKeyId") != null
                         && !System.getProperty("org.mongodb.test.awsAccessKeyId").isEmpty());
-        assumeFalse("Client side encryption requires Java 8+", isNotAtLeastJava8());
         assumeFalse("runOn requirements not satisfied", skipTest);
         assumeFalse(definition.getString("skipReason", new BsonString("")).getValue(), definition.containsKey("skipReason"));
 

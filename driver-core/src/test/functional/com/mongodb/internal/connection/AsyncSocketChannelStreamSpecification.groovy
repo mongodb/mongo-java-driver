@@ -13,12 +13,9 @@ import spock.lang.Specification
 import java.nio.channels.AsynchronousChannelGroup
 import java.util.concurrent.Executors
 
-import static com.mongodb.ClusterFixture.isNotAtLeastJava7
+import static com.mongodb.ClusterFixture.getSslSettings
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
-import static com.mongodb.ClusterFixture.getSslSettings
-
-@IgnoreIf({ isNotAtLeastJava7() })
 class AsyncSocketChannelStreamSpecification extends Specification {
 
     @Category(Slow)

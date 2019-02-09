@@ -27,7 +27,6 @@ import com.mongodb.event.ServerListener
 import com.mongodb.event.ServerMonitorListener
 import com.mongodb.selector.ServerSelector
 import org.bson.UuidRepresentation
-import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import javax.net.SocketFactory
@@ -36,7 +35,6 @@ import javax.net.ssl.SSLContextSpi
 import javax.net.ssl.SSLSocketFactory
 import java.security.Provider
 
-import static com.mongodb.ClusterFixture.isNotAtLeastJava7
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
@@ -258,7 +256,6 @@ class MongoClientOptionsSpecification extends Specification {
         options.getAutoEncryptionSettings() == autoEncryptionSettings
     }
 
-    @IgnoreIf({ isNotAtLeastJava7() })
     def 'should get socketFactory based on sslEnabled'() {
         when:
         MongoClientOptions.Builder builder = MongoClientOptions.builder()
@@ -280,7 +277,6 @@ class MongoClientOptionsSpecification extends Specification {
         }
     }
 
-    @IgnoreIf({ isNotAtLeastJava7() })
     def 'should get socketFactory based on sslContext'() {
         given:
         def expectedSocketFactory = Mock(SSLSocketFactory)
@@ -300,7 +296,6 @@ class MongoClientOptionsSpecification extends Specification {
         socketFactory == expectedSocketFactory
     }
 
-    @IgnoreIf({ isNotAtLeastJava7() })
     def 'should get socketFactory based on configured socketFactory'() {
         given:
         def expectedSocketFactory = Mock(SocketFactory)
@@ -382,22 +377,6 @@ class MongoClientOptionsSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
-    }
-
-    def 'should throw MongoInternalException mentioning MongoClientOptions if sslEnabled is true and sslInvalidHostNameAllowed is false'() {
-        given:
-        String javaVersion = System.getProperty('java.version')
-        when:
-
-        System.setProperty('java.version', '1.6.0_45')
-        MongoClientOptions.builder().sslEnabled(true).build()
-
-        then:
-        def e = thrown(MongoInternalException)
-        e.message.contains('MongoClientOptions.sslInvalidHostNameAllowed')
-
-        cleanup:
-        System.setProperty('java.version', javaVersion)
     }
 
     def 'should add command listeners'() {

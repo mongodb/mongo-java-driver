@@ -29,8 +29,6 @@ import javax.net.ssl.SSLSocket
 import javax.net.ssl.SSLSocketFactory
 
 import static com.mongodb.ClusterFixture.getPrimary
-import static com.mongodb.ClusterFixture.isNotAtLeastJava7
-import static com.mongodb.ClusterFixture.isNotAtLeastJava8
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 
@@ -71,7 +69,7 @@ class SocketStreamHelperSpecification extends Specification {
         socket?.close()
     }
 
-    @IgnoreIf({ !ClusterFixture.sslSettings.enabled || isNotAtLeastJava7() })
+    @IgnoreIf({ !ClusterFixture.sslSettings.enabled })
     def 'should enable host name verification if socket is an instance of SSLSocket'() {
         given:
         SSLSocket socket = SSLSocketFactory.default.createSocket()
@@ -91,7 +89,7 @@ class SocketStreamHelperSpecification extends Specification {
                         SslSettings.builder().enabled(true).invalidHostNameAllowed(true).build()]
     }
 
-    @IgnoreIf({ !ClusterFixture.sslSettings.enabled || isNotAtLeastJava8() })
+    @IgnoreIf({ !ClusterFixture.sslSettings.enabled })
     def 'should enable SNI if socket is an instance of SSLSocket'() {
         given:
         SSLSocket socket = SSLSocketFactory.default.createSocket()

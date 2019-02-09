@@ -23,20 +23,17 @@ import com.mongodb.ServerAddress
 import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
 import org.bson.Document
-import spock.lang.IgnoreIf
 import spock.lang.Unroll
 
 import static com.mongodb.ClusterFixture.connectionString
 import static com.mongodb.ClusterFixture.getCredentialList
 import static com.mongodb.ClusterFixture.getSslSettings
-import static com.mongodb.ClusterFixture.isNotAtLeastJava8
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.secondaryPreferred
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class MongoClientsSpecification extends FunctionalSpecification {
 
-    @IgnoreIf({ isNotAtLeastJava8() })
     def 'should connect'() {
         given:
         def connectionString = 'mongodb://'
