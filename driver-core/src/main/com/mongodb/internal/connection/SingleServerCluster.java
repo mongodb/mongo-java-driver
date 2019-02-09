@@ -103,18 +103,12 @@ public final class SingleServerCluster extends BaseCluster {
         if (clusterType == ClusterType.UNKNOWN && serverDescription != null) {
             clusterType = serverDescription.getClusterType();
         }
-        ClusterDescription oldDescription = getCurrentDescription();
+        ClusterDescription currentDescription = getCurrentDescription();
         ClusterDescription description = new ClusterDescription(ClusterConnectionMode.SINGLE, clusterType,
                 serverDescription == null ? Collections.<ServerDescription>emptyList() : singletonList(serverDescription), getSettings(),
                 getServerFactory().getSettings());
 
         updateDescription(description);
-        fireChangeEvent(new ClusterDescriptionChangedEvent(getClusterId(), description,
-                oldDescription == null ? getInitialDescription() : oldDescription));
-    }
-
-    private ClusterDescription getInitialDescription() {
-        return new ClusterDescription(getSettings().getMode(), getSettings().getRequiredClusterType(),
-                Collections.<ServerDescription>emptyList(), getSettings(), getServerFactory().getSettings());
+        fireChangeEvent(new ClusterDescriptionChangedEvent(getClusterId(), description, currentDescription));
     }
 }

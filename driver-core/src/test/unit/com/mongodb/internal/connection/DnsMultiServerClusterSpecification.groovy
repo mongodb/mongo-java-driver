@@ -23,6 +23,8 @@ import com.mongodb.connection.ClusterSettings
 import com.mongodb.event.ClusterListener
 import spock.lang.Specification
 
+import java.util.concurrent.TimeUnit
+
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
 import static com.mongodb.connection.ClusterType.SHARDED
 import static com.mongodb.connection.ServerType.SHARD_ROUTER
@@ -61,6 +63,7 @@ class DnsMultiServerClusterSpecification extends Specification {
         def cluster = new DnsMultiServerCluster(new ClusterId(),
                 ClusterSettings.builder()
                         .addClusterListener(clusterListener)
+                        .serverSelectionTimeout(1, TimeUnit.MILLISECONDS)
                         .srvHost(srvHost)
                         .mode(MULTIPLE)
                         .build(),
@@ -70,12 +73,19 @@ class DnsMultiServerClusterSpecification extends Specification {
         initializer != null
         1 * dnsSrvRecordMonitor.start()
 
+        when: 'the current description is accessed before initialization'
+        def description = cluster.getCurrentDescription()
+
+        then: 'the description is not null'
+        description != null
+
         when: 'the listener is initialized with an exception'
         initializer.initialize(exception)
+        description = cluster.getCurrentDescription()
 
         then: 'the description includes the exception'
-        cluster.getCurrentDescription().getServerDescriptions() == []
-        cluster.getCurrentDescription().getSrvResolutionException() == exception
+        description.getServerDescriptions() == []
+        description.getSrvResolutionException() == exception
 
         when: 'the listener is initialized with servers'
         initializer.initialize([firstServer, secondServer] as Set)

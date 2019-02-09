@@ -42,6 +42,7 @@ import com.mongodb.selector.ServerSelector;
 import org.bson.BsonTimestamp;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.Iterator;
 import java.util.List;
@@ -86,6 +87,8 @@ abstract class BaseCluster implements Cluster {
         this.serverFactory = notNull("serverFactory", serverFactory);
         this.clusterListener = getClusterListener(settings);
         clusterListener.clusterOpening(new ClusterOpeningEvent(clusterId));
+        description = new ClusterDescription(settings.getMode(), ClusterType.UNKNOWN, Collections.<ServerDescription>emptyList(),
+                settings, serverFactory.getSettings());
     }
 
     @Override
