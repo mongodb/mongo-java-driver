@@ -229,9 +229,6 @@ Netty is an optional dependency of the asynchronous driver. If your application 
 Netty artifacts.  The driver is currently tested against Netty 4.1.
 {{% /note %}}
 
-In its default configuration, the async driver is supported on Java 7+ when TLS/SSL is disabled, and on Java 8+ when TLS/SSL is enabled.  
-Otherwise, applications must use [Netty](http://netty.io/).
-
 To configure the driver to use Netty,  
 
 - Include the `streamType` option set to `netty` in the connection string

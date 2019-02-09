@@ -78,18 +78,7 @@ See the Upgrade guide in the 3.0 driver reference documentation for breaking cha
 
 ## System Requirements
 
-The minimum JVM is Java 6. However, specific features require more recent versions:
-
-- [Atlas M0 (Free Tier)](https://docs.atlas.mongodb.com/getting-started/) support requires Java 8 or greater due to 
-its reliance on TLS Server Name Indication (SNI).
-- SSL support requires Java 7 or greater in order to perform host name verification, which is enabled by default.  See
-[SSL]({{< relref "driver/tutorials/ssl.md" >}}) for details on how to disable host name verification.
-- The asynchronous API requires Java 7 when TLS/SSL is disabled, as by default it relies on
-[`AsynchronousSocketChannel`](http://docs.oracle.com/javase/7/docs/api/java/nio/channels/AsynchronousSocketChannel.html) for
-its implementation.  See [Async]({{< ref "driver-async/index.md" >}}) for details on configuring the driver to use 
-[Netty](http://netty.io/) instead.
-- The asynchronous API requires Java 8 when TLS/SSL is enabled. See [Async]({{< ref "driver-async/index.md" >}}) for details on configuring 
-the driver to use [Netty](http://netty.io/) instead.
+The minimum JVM is Java 8.
 
 ## Compatibility
 
