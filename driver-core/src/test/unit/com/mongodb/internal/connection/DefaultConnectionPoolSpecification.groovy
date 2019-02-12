@@ -392,7 +392,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         1 * listener.connectionCheckedIn { it.connectionId.serverId == SERVER_ID }
     }
 
-    def 'should not fire any more events after pool is closed'() {
+    def 'should continue to fire events after pool is closed'() {
         def listener = Mock(ConnectionPoolListener)
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory, builder().maxSize(1).maxWaitQueueSize(1)
                 .addConnectionPoolListener(listener).build())
@@ -403,8 +403,8 @@ class DefaultConnectionPoolSpecification extends Specification {
         connection.close()
 
         then:
-        0 * listener.connectionCheckedIn { it.connectionId.serverId == SERVER_ID && it.clusterId == SERVER_ID.clusterId }
-        0 * listener.connectionRemoved { it.connectionId.serverId == SERVER_ID && it.clusterId == SERVER_ID.clusterId }
+        1 * listener.connectionCheckedIn { it.connectionId.serverId == SERVER_ID }
+        1 * listener.connectionRemoved { it.connectionId.serverId == SERVER_ID }
     }
 
     def 'should select connection asynchronously if one is immediately available'() {
