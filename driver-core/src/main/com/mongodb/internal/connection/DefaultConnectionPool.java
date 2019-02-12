@@ -78,12 +78,12 @@ class DefaultConnectionPool implements ConnectionPool {
                           final ConnectionPoolSettings settings) {
         this.serverId = notNull("serverId", serverId);
         this.settings = notNull("settings", settings);
-        UsageTrackingInternalConnectionItemFactory connectionItemFactory
-        = new UsageTrackingInternalConnectionItemFactory(internalConnectionFactory);
+        UsageTrackingInternalConnectionItemFactory connectionItemFactory =
+                new UsageTrackingInternalConnectionItemFactory(internalConnectionFactory);
         pool = new ConcurrentPool<UsageTrackingInternalConnection>(settings.getMaxSize(), connectionItemFactory);
+        this.connectionPoolListener = getConnectionPoolListener(settings);
         maintenanceTask = createMaintenanceTask();
         sizeMaintenanceTimer = createMaintenanceTimer();
-        this.connectionPoolListener = getConnectionPoolListener(settings);
         connectionPoolListener.connectionPoolOpened(new ConnectionPoolOpenedEvent(serverId, settings));
     }
 
@@ -400,11 +400,9 @@ class DefaultConnectionPool implements ConnectionPool {
         public void close() {
             // All but the first call is a no-op
             if (!isClosed.getAndSet(true)) {
-                if (!DefaultConnectionPool.this.closed) {
-                    connectionPoolListener.connectionCheckedIn(new ConnectionCheckedInEvent(getId(wrapped)));
-                    if (LOGGER.isTraceEnabled()) {
-                        LOGGER.trace(format("Checked in connection [%s] to server %s", getId(wrapped), serverId.getAddress()));
-                    }
+                connectionPoolListener.connectionCheckedIn(new ConnectionCheckedInEvent(getId(wrapped)));
+                if (LOGGER.isTraceEnabled()) {
+                    LOGGER.trace(format("Checked in connection [%s] to server %s", getId(wrapped), serverId.getAddress()));
                 }
                 pool.release(wrapped, wrapped.isClosed() || shouldPrune(wrapped));
             }
@@ -529,17 +527,15 @@ class DefaultConnectionPool implements ConnectionPool {
 
         @Override
         public void close(final UsageTrackingInternalConnection connection) {
-            if (!closed) {
-                connectionPoolListener.connectionRemoved(new ConnectionRemovedEvent(getId(connection)));
-            }
+            connectionPoolListener.connectionRemoved(new ConnectionRemovedEvent(getId(connection), getReasonForClosing(connection)));
             if (LOGGER.isInfoEnabled()) {
                 LOGGER.info(format("Closed connection [%s] to %s because %s.", getId(connection), serverId.getAddress(),
-                                  getReasonForClosing(connection)));
+                                  getReasonStringForClosing(connection)));
             }
             connection.close();
         }
 
-        private String getReasonForClosing(final UsageTrackingInternalConnection connection) {
+        private String getReasonStringForClosing(final UsageTrackingInternalConnection connection) {
             String reason;
             if (connection.isClosed()) {
                 reason = "there was a socket exception raised by this connection";
@@ -551,6 +547,22 @@ class DefaultConnectionPool implements ConnectionPool {
                 reason = "it is past its maximum allowed idle time";
             } else {
                 reason = "the pool has been closed";
+            }
+            return reason;
+        }
+
+        private ConnectionRemovedEvent.Reason getReasonForClosing(final UsageTrackingInternalConnection connection) {
+            ConnectionRemovedEvent.Reason reason;
+            if (connection.isClosed()) {
+                reason = ConnectionRemovedEvent.Reason.ERROR;
+            } else if (fromPreviousGeneration(connection)) {
+                reason = ConnectionRemovedEvent.Reason.STALE;
+            } else if (pastMaxLifeTime(connection)) {
+                reason = ConnectionRemovedEvent.Reason.MAX_LIFE_TIME_EXCEEDED;
+            } else if (pastMaxIdleTime(connection)) {
+                reason = ConnectionRemovedEvent.Reason.MAX_IDLE_TIME_EXCEEDED;
+            } else {
+                reason = ConnectionRemovedEvent.Reason.POOL_CLOSED;
             }
             return reason;
         }

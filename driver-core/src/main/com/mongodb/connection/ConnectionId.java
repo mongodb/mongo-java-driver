@@ -50,7 +50,20 @@ public final class ConnectionId {
         this(serverId, INCREMENTING_ID.incrementAndGet(), null);
     }
 
-    private ConnectionId(final ServerId serverId, final int localValue, final Integer serverValue) {
+    /**
+     * Construct an instance with the given serverId, localValue, and serverValue.
+     *
+     * <p>
+     *     Useful for testing, but generally prefer {@link #withServerValue(int)}
+     * </p>
+     *
+     * @param serverId the server id
+     * @param localValue the local value
+     * @param serverValue the server value, which may be null
+     * @see #withServerValue(int)
+     * @since 3.11
+     */
+    public ConnectionId(final ServerId serverId, final int localValue, final Integer serverValue) {
         this.serverId = notNull("serverId", serverId);
         this.localValue = localValue;
         this.serverValue = serverValue;

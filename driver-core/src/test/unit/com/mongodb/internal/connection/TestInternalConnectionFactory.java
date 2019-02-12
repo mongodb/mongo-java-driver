@@ -18,15 +18,22 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ServerId;
+import com.mongodb.connection.ServerType;
 import com.mongodb.session.SessionContext;
 import org.bson.ByteBuf;
 import org.bson.codecs.Decoder;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize;
 
 class TestInternalConnectionFactory implements InternalConnectionFactory {
+    private final AtomicInteger incrementingId = new AtomicInteger();
     private final List<TestInternalConnection> createdConnections = new ArrayList<TestInternalConnection>();
 
     @Override
@@ -44,13 +51,13 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
         return createdConnections.size();
     }
 
-    static class TestInternalConnection implements InternalConnection {
-        private final ServerId serverId;
+    class TestInternalConnection implements InternalConnection {
+        private final ConnectionId connectionId;
         private boolean closed;
         private boolean opened;
 
         TestInternalConnection(final ServerId serverId) {
-            this.serverId = serverId;
+            this.connectionId = new ConnectionId(serverId, incrementingId.incrementAndGet(), null);
         }
 
         public void open() {
@@ -115,7 +122,9 @@ class TestInternalConnectionFactory implements InternalConnectionFactory {
 
         @Override
         public ConnectionDescription getDescription() {
-            return new ConnectionDescription(serverId);
+            return new ConnectionDescription(connectionId, 7, ServerType.UNKNOWN, 1000,
+                    getDefaultMaxDocumentSize(), 100000, Collections.<String>emptyList());
+
         }
     }
 }
