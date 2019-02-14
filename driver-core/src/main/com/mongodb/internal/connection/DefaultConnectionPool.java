@@ -67,7 +67,7 @@ class DefaultConnectionPool implements ConnectionPool {
     private final ConnectionPoolSettings settings;
     private final AtomicInteger waitQueueSize = new AtomicInteger(0);
     private final AtomicInteger generation = new AtomicInteger(0);
-    private final ExecutorService sizeMaintenanceTimer;
+    private final ScheduledExecutorService sizeMaintenanceTimer;
     private ExecutorService asyncGetter;
     private final Runnable maintenanceTask;
     private final ConnectionPoolListener connectionPoolListener;
@@ -85,6 +85,14 @@ class DefaultConnectionPool implements ConnectionPool {
         maintenanceTask = createMaintenanceTask();
         sizeMaintenanceTimer = createMaintenanceTimer();
         connectionPoolListener.connectionPoolOpened(new ConnectionPoolOpenedEvent(serverId, settings));
+    }
+
+    @Override
+    public void start() {
+        if (sizeMaintenanceTimer != null) {
+            sizeMaintenanceTimer.scheduleAtFixedRate(maintenanceTask, settings.getMaintenanceInitialDelay(MILLISECONDS),
+                    settings.getMaintenanceFrequency(MILLISECONDS), MILLISECONDS);
+        }
     }
 
     @Override
@@ -316,14 +324,11 @@ class DefaultConnectionPool implements ConnectionPool {
         return newMaintenanceTask;
     }
 
-    private ExecutorService createMaintenanceTimer() {
+    private ScheduledExecutorService createMaintenanceTimer() {
         if (maintenanceTask == null) {
             return null;
         } else {
-            ScheduledExecutorService newTimer = Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory("MaintenanceTimer"));
-            newTimer.scheduleAtFixedRate(maintenanceTask, settings.getMaintenanceInitialDelay(MILLISECONDS),
-                                         settings.getMaintenanceFrequency(MILLISECONDS), MILLISECONDS);
-            return newTimer;
+            return Executors.newSingleThreadScheduledExecutor(new DaemonThreadFactory("MaintenanceTimer"));
         }
     }
 

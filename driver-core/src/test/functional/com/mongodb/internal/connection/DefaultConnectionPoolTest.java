@@ -62,6 +62,8 @@ public class DefaultConnectionPoolTest {
                                                                    .maxWaitQueueSize(1)
                                                                    .maxWaitTime(50, MILLISECONDS)
                                                                    .build());
+        provider.start();
+
         provider.get();
 
         // when
@@ -83,6 +85,7 @@ public class DefaultConnectionPoolTest {
                                                                    .maxWaitQueueSize(1)
                                                                    .maxWaitTime(500, MILLISECONDS)
                                                                    .build());
+        provider.start();
 
         provider.get();
 
@@ -109,6 +112,7 @@ public class DefaultConnectionPoolTest {
                                                                    .maintenanceInitialDelay(5, MINUTES)
                                                                    .maxConnectionLifeTime(50, MILLISECONDS)
                                                                    .build());
+        provider.start();
 
         // when
         provider.get().close();
@@ -129,6 +133,7 @@ public class DefaultConnectionPoolTest {
                                                                    .maxSize(1)
                                                                    .maxWaitQueueSize(1)
                                                                    .maxConnectionLifeTime(20, MILLISECONDS).build());
+        provider.start();
 
         // when
         InternalConnection connection = provider.get();
@@ -149,6 +154,7 @@ public class DefaultConnectionPoolTest {
                                                                    .maxWaitQueueSize(1)
                                                                    .maintenanceInitialDelay(5, MINUTES)
                                                                    .maxConnectionIdleTime(50, MILLISECONDS).build());
+        provider.start();
 
         // when
         provider.get().close();
@@ -170,6 +176,7 @@ public class DefaultConnectionPoolTest {
                                                                    .maxWaitQueueSize(1)
                                                                    .maintenanceInitialDelay(5, MINUTES)
                                                                    .maxConnectionLifeTime(20, MILLISECONDS).build());
+        provider.start();
 
         // when
         provider.get().close();
@@ -191,6 +198,7 @@ public class DefaultConnectionPoolTest {
                                                                    .maxWaitQueueSize(1)
                                                                    .maintenanceInitialDelay(5, MINUTES)
                                                                    .maxConnectionLifeTime(20, MILLISECONDS).build());
+        provider.start();
 
         // when
         provider.get().close();
@@ -214,7 +222,8 @@ public class DefaultConnectionPoolTest {
                                                                    .maintenanceInitialDelay(5, MINUTES)
                                                                    .maxWaitQueueSize(1)
                                                                    .build());
-        provider.get().close();
+        provider.get().close();                                                  provider.start();
+
 
         // when
         Thread.sleep(10);
@@ -237,6 +246,7 @@ public class DefaultConnectionPoolTest {
                                                                    .maxWaitTime(5, SECONDS)
                                                                    .addConnectionPoolListener(listener)
                                                                    .build());
+        provider.start();
 
         // then
         assertEquals(0, listener.getWaitQueueSize());

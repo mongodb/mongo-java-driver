@@ -71,6 +71,8 @@ public class DefaultClusterableServerFactory implements ClusterableServerFactory
                 new InternalStreamConnectionFactory(streamFactory, credentialList, applicationName,
                         mongoDriverInformation, compressorList, commandListener), connectionPoolSettings);
 
+        connectionPool.start();
+
         // no credentials, compressor list, or command listener for the server monitor factory
         ServerMonitorFactory serverMonitorFactory =
             new DefaultServerMonitorFactory(new ServerId(clusterId, serverAddress), serverSettings, clusterClock,
