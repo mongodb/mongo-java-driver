@@ -105,6 +105,7 @@ public class ConnectionPoolTest {
 
         pool = new DefaultConnectionPool(new ServerId(new ClusterId(), serverAddress), new TestInternalConnectionFactory(),
                 settings);
+        pool.start();
     }
 
     @After

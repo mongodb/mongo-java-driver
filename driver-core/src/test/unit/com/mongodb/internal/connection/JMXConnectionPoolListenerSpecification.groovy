@@ -43,6 +43,7 @@ class JMXConnectionPoolListenerSpecification extends Specification {
         provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                 ConnectionPoolSettings.builder().minSize(0).maxSize(5).maxWaitQueueSize(1)
                         .addConnectionPoolListener(jmxListener).build())
+        provider.start();
 
         when:
         provider.get()
@@ -68,6 +69,7 @@ class JMXConnectionPoolListenerSpecification extends Specification {
         provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                 ConnectionPoolSettings.builder().minSize(0).maxSize(5).maxWaitQueueSize(1)
                         .addConnectionPoolListener(jmxListener).build())
+        provider.start();
 
         then:
         ManagementFactory.getPlatformMBeanServer().isRegistered(
@@ -82,6 +84,8 @@ class JMXConnectionPoolListenerSpecification extends Specification {
         provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                 ConnectionPoolSettings.builder().minSize(0).maxSize(5).maxWaitQueueSize(1)
                         .addConnectionPoolListener(jmxListener).build())
+        provider.start();
+
         when:
         provider.close()
 

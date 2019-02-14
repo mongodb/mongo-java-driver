@@ -39,6 +39,10 @@ public class TestConnectionPool implements ConnectionPool {
     }
 
     @Override
+    public void start() {
+    }
+
+    @Override
     public InternalConnection get() {
         return new InternalConnection() {
             @Override

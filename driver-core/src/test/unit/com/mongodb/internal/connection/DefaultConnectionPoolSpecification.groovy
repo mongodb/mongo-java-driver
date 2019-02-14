@@ -60,6 +60,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         given:
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                                          builder().maxSize(1).maxWaitQueueSize(1).build())
+        pool.start();
 
         expect:
         pool.get() != null
@@ -69,6 +70,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         given:
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                                          builder().maxSize(1).maxWaitQueueSize(1).build())
+        pool.start();
 
         when:
         pool.get().close()
@@ -82,6 +84,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         given:
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                                          builder().maxSize(1).maxWaitQueueSize(1).build())
+        pool.start();
 
         when:
         pool.get().close()
@@ -94,6 +97,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         given:
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                                          builder().maxSize(1).maxWaitQueueSize(1).maxWaitTime(1, MILLISECONDS).build())
+        pool.start();
 
         when:
         def first = pool.get()
@@ -112,6 +116,8 @@ class DefaultConnectionPoolSpecification extends Specification {
         given:
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                                          builder().maxSize(1).maxWaitQueueSize(1).maxWaitTime(50, MILLISECONDS).build())
+        pool.start();
+
         pool.get()
 
         when:
@@ -142,6 +148,8 @@ class DefaultConnectionPoolSpecification extends Specification {
         }
 
         pool = new DefaultConnectionPool(SERVER_ID, mockConnectionFactory, builder().maxSize(2).maxWaitQueueSize(1).build())
+        pool.start();
+
         when:
         def c1 = pool.get()
         def c2 = pool.get()
@@ -224,6 +232,8 @@ class DefaultConnectionPoolSpecification extends Specification {
 
         pool = new DefaultConnectionPool(SERVER_ID, mockConnectionFactory,
                                          builder().maxSize(2).maxWaitQueueSize(1).build())
+        pool.start();
+
         when:
         def c1 = pool.get()
         def c2 = pool.get()
@@ -293,6 +303,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         given:
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                                          builder().maxSize(10).maintenanceInitialDelay(5, MINUTES).build())
+        pool.start();
 
         when:
         pool.doMaintenance()
@@ -306,6 +317,7 @@ class DefaultConnectionPoolSpecification extends Specification {
         given:
         pool = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                                          builder().maxSize(10).minSize(5).maintenanceInitialDelay(5, MINUTES).build())
+        pool.start();
 
         when:
         pool.doMaintenance()

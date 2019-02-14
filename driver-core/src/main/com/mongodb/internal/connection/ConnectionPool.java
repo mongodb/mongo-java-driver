@@ -23,6 +23,9 @@ import java.util.concurrent.TimeUnit;
 
 interface ConnectionPool extends Closeable {
 
+    // Start any maintenance task background tasks associated with the connection pool
+    void start();
+
     InternalConnection get();
 
     InternalConnection get(long timeout, TimeUnit timeUnit);
