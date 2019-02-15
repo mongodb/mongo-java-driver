@@ -89,16 +89,17 @@ public class MongoClient extends Mongo implements Closeable {
      * Gets the default codec registry.  It includes the following providers:
      *
      * <ul>
-     *     <li>{@link org.bson.codecs.ValueCodecProvider}</li>
-     *     <li>{@link org.bson.codecs.BsonValueCodecProvider}</li>
-     *     <li>{@link com.mongodb.DBRefCodecProvider}</li>
-     *     <li>{@link com.mongodb.DBObjectCodecProvider}</li>
-     *     <li>{@link org.bson.codecs.DocumentCodecProvider}</li>
-     *     <li>{@link org.bson.codecs.IterableCodecProvider}</li>
-     *     <li>{@link org.bson.codecs.MapCodecProvider}</li>
-     *     <li>{@link com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider}</li>
-     *     <li>{@link com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider}</li>
-     *     <li>{@link org.bson.codecs.jsr310.Jsr310CodecProvider}</li>
+     * <li>{@link org.bson.codecs.ValueCodecProvider}</li>
+     * <li>{@link org.bson.codecs.BsonValueCodecProvider}</li>
+     * <li>{@link com.mongodb.DBRefCodecProvider}</li>
+     * <li>{@link com.mongodb.DBObjectCodecProvider}</li>
+     * <li>{@link org.bson.codecs.DocumentCodecProvider}</li>
+     * <li>{@link org.bson.codecs.IterableCodecProvider}</li>
+     * <li>{@link org.bson.codecs.MapCodecProvider}</li>
+     * <li>{@link com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider}</li>
+     * <li>{@link com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider}</li>
+     * <li>{@link org.bson.codecs.jsr310.Jsr310CodecProvider}</li>
+     * <li>{@link org.bson.codecs.BsonCodecProvider}</li>
      * </ul>
      *
      * @return the default codec registry

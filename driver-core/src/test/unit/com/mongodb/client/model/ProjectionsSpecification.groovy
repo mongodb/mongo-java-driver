@@ -16,12 +16,10 @@
 
 package com.mongodb.client.model
 
-import org.bson.BsonDocument
-import org.bson.codecs.BsonValueCodecProvider
-import org.bson.codecs.ValueCodecProvider
-import org.bson.conversions.Bson
+
 import spock.lang.Specification
 
+import static com.mongodb.client.model.BsonHelper.toBson
 import static com.mongodb.client.model.Filters.and
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Projections.computed
@@ -33,10 +31,8 @@ import static com.mongodb.client.model.Projections.include
 import static com.mongodb.client.model.Projections.metaTextScore
 import static com.mongodb.client.model.Projections.slice
 import static org.bson.BsonDocument.parse
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
 class ProjectionsSpecification extends Specification {
-    def registry = fromProviders([new BsonValueCodecProvider(), new ValueCodecProvider()])
 
     def 'include'() {
         expect:
@@ -113,9 +109,5 @@ class ProjectionsSpecification extends Specification {
     def 'should create string representation for fields'() {
         expect:
         fields(include('x', 'y'), exclude('_id')).toString() == 'Projections{projections=[{"x": 1, "y": 1}, {"_id": 0}]}'
-    }
-
-    def toBson(Bson bson) {
-        bson.toBsonDocument(BsonDocument, registry)
     }
 }

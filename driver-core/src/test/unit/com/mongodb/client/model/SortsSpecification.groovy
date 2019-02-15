@@ -16,21 +16,17 @@
 
 package com.mongodb.client.model
 
-import org.bson.BsonDocument
-import org.bson.codecs.BsonValueCodecProvider
-import org.bson.codecs.ValueCodecProvider
-import org.bson.conversions.Bson
+
 import spock.lang.Specification
 
+import static com.mongodb.client.model.BsonHelper.toBson
 import static com.mongodb.client.model.Sorts.ascending
 import static com.mongodb.client.model.Sorts.descending
 import static com.mongodb.client.model.Sorts.metaTextScore
 import static com.mongodb.client.model.Sorts.orderBy
 import static org.bson.BsonDocument.parse
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
 class SortsSpecification extends Specification {
-    def registry = fromProviders([new BsonValueCodecProvider(), new ValueCodecProvider()])
 
     def 'ascending'() {
         expect:
@@ -70,10 +66,6 @@ class SortsSpecification extends Specification {
         expect:
         orderBy(ascending('x', 'y'), descending('a', 'b')).toString() ==
                 'Compound Sort{sorts=[{"x": 1, "y": 1}, {"a": -1, "b": -1}]}'
-    }
-
-    def toBson(Bson bson) {
-        bson.toBsonDocument(BsonDocument, registry)
     }
 
     def 'should test equals for CompoundSort'() {

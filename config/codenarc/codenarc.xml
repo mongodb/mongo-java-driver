@@ -72,7 +72,11 @@
         <exclude name="DuplicateStringLiteral"/>
         <exclude name="DuplicateMapLiteral"/>
     </ruleset-ref>
-    <ruleset-ref path='rulesets/exceptions.xml'/>
+    <ruleset-ref path='rulesets/exceptions.xml'>
+        <rule-config name='ThrowException'>
+            <property name='doNotApplyToFileNames' value='BsonCodecSpecification.groovy'/>
+        </rule-config>
+    </ruleset-ref>
     <ruleset-ref path='rulesets/formatting.xml'>
         <rule-config name='LineLength'>
             <property name='length' value='140'/>

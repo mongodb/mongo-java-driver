@@ -16,13 +16,10 @@
 
 package com.mongodb.client.model
 
-import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider
+
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document
-import org.bson.codecs.BsonValueCodecProvider
-import org.bson.codecs.DocumentCodecProvider
-import org.bson.codecs.ValueCodecProvider
 import org.bson.conversions.Bson
 import spock.lang.IgnoreIf
 import spock.lang.Specification
@@ -60,6 +57,7 @@ import static com.mongodb.client.model.Aggregates.skip
 import static com.mongodb.client.model.Aggregates.sort
 import static com.mongodb.client.model.Aggregates.sortByCount
 import static com.mongodb.client.model.Aggregates.unwind
+import static com.mongodb.client.model.BsonHelper.toBson
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Filters.expr
 import static com.mongodb.client.model.Projections.computed
@@ -69,11 +67,8 @@ import static com.mongodb.client.model.Sorts.ascending
 import static com.mongodb.client.model.Sorts.descending
 import static java.util.Arrays.asList
 import static org.bson.BsonDocument.parse
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
 class AggregatesSpecification extends Specification {
-    def registry = fromProviders([new BsonValueCodecProvider(), new DocumentCodecProvider(), new ValueCodecProvider(),
-                                  new GeoJsonCodecProvider()])
 
     @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should render $addFields'() {
@@ -378,10 +373,6 @@ class AggregatesSpecification extends Specification {
     def 'should render $sample'() {
         expect:
         toBson(sample(5)) == parse('{ $sample : { size: 5} }')
-    }
-
-    def toBson(Bson bson) {
-        bson.toBsonDocument(BsonDocument, registry)
     }
 
     def 'should test equals for SimplePipelineStage'() {

@@ -28,6 +28,7 @@ import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.event.CommandListener;
 import com.mongodb.lang.Nullable;
+import org.bson.codecs.BsonCodecProvider;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.DocumentCodecProvider;
 import org.bson.codecs.IterableCodecProvider;
@@ -65,7 +66,8 @@ public final class MongoClientSettings {
                     new MapCodecProvider(new DocumentToDBRefTransformer()),
                     new GeoJsonCodecProvider(),
                     new GridFSFileCodecProvider(),
-                    new Jsr310CodecProvider()));
+                    new Jsr310CodecProvider(),
+                    new BsonCodecProvider()));
 
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;
@@ -99,6 +101,7 @@ public final class MongoClientSettings {
      * <li>{@link com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider}</li>
      * <li>{@link com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider}</li>
      * <li>{@link org.bson.codecs.jsr310.Jsr310CodecProvider}</li>
+     * <li>{@link org.bson.codecs.BsonCodecProvider}</li>
      * </ul>
      *
      * @return the default codec registry
