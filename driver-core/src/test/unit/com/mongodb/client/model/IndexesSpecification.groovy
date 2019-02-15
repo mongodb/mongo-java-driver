@@ -16,25 +16,21 @@
 
 package com.mongodb.client.model
 
-import org.bson.BsonDocument
-import org.bson.codecs.BsonValueCodecProvider
-import org.bson.codecs.ValueCodecProvider
-import org.bson.conversions.Bson
+
 import spock.lang.Specification
 
+import static com.mongodb.client.model.BsonHelper.toBson
 import static com.mongodb.client.model.Indexes.ascending
 import static com.mongodb.client.model.Indexes.compoundIndex
 import static com.mongodb.client.model.Indexes.descending
 import static com.mongodb.client.model.Indexes.geo2d
 import static com.mongodb.client.model.Indexes.geo2dsphere
 import static com.mongodb.client.model.Indexes.geoHaystack
-import static com.mongodb.client.model.Indexes.text
 import static com.mongodb.client.model.Indexes.hashed
+import static com.mongodb.client.model.Indexes.text
 import static org.bson.BsonDocument.parse
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
 class IndexesSpecification extends Specification {
-    def registry = fromProviders([new BsonValueCodecProvider(), new ValueCodecProvider()])
 
     def 'ascending'() {
         expect:
@@ -84,10 +80,6 @@ class IndexesSpecification extends Specification {
         toBson(compoundIndex(ascending('x'), descending('y'))) == parse('{x : 1, y : -1}')
         toBson(compoundIndex(ascending('x'), descending('y'), descending('x'))) == parse('{y : -1, x : -1}')
         toBson(compoundIndex(ascending('x', 'y'), descending('a', 'b'))) == parse('{x : 1, y : 1, a : -1, b : -1}')
-    }
-
-    def toBson(Bson bson) {
-        bson.toBsonDocument(BsonDocument, registry)
     }
 
     def 'should test equals on CompoundIndex'() {

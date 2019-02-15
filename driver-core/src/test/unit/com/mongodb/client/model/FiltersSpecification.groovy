@@ -19,7 +19,6 @@ package com.mongodb.client.model
 import com.mongodb.client.model.geojson.Point
 import com.mongodb.client.model.geojson.Polygon
 import com.mongodb.client.model.geojson.Position
-import com.mongodb.client.model.geojson.codecs.GeoJsonCodecProvider
 import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -27,11 +26,6 @@ import org.bson.BsonInt64
 import org.bson.BsonString
 import org.bson.BsonType
 import org.bson.Document
-import org.bson.codecs.BsonValueCodecProvider
-import org.bson.codecs.DocumentCodecProvider
-import org.bson.codecs.IterableCodecProvider
-import org.bson.codecs.ValueCodecProvider
-import org.bson.conversions.Bson
 import spock.lang.Specification
 
 import java.util.regex.Pattern
@@ -39,6 +33,7 @@ import java.util.regex.Pattern
 import static Filters.and
 import static Filters.exists
 import static Filters.or
+import static com.mongodb.client.model.BsonHelper.toBson
 import static com.mongodb.client.model.Filters.all
 import static com.mongodb.client.model.Filters.bitsAllClear
 import static com.mongodb.client.model.Filters.bitsAllSet
@@ -71,12 +66,8 @@ import static com.mongodb.client.model.Filters.text
 import static com.mongodb.client.model.Filters.type
 import static com.mongodb.client.model.Filters.where
 import static org.bson.BsonDocument.parse
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
 class FiltersSpecification extends Specification {
-    def registry = fromProviders([new BsonValueCodecProvider(), new ValueCodecProvider(), new GeoJsonCodecProvider(),
-                                  new DocumentCodecProvider(),
-                                  new IterableCodecProvider()])
 
     def 'eq should render without $eq'() {
         expect:
@@ -689,10 +680,6 @@ class FiltersSpecification extends Specification {
     def 'should create string representation for iterable operator filters'() {
         expect:
         all('x', [1, 2, 3]).toString() == 'Operator Filter{fieldName=\'x\', operator=\'$all\', value=[1, 2, 3]}'
-    }
-
-    def toBson(Bson bson) {
-        bson.toBsonDocument(BsonDocument, registry)
     }
 
     def 'should test equals for SimpleFilter'() {

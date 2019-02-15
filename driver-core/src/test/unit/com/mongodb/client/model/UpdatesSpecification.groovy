@@ -16,12 +16,9 @@
 
 package com.mongodb.client.model
 
-import org.bson.BsonDocument
-import org.bson.codecs.BsonValueCodecProvider
-import org.bson.codecs.ValueCodecProvider
-import org.bson.conversions.Bson
 import spock.lang.Specification
 
+import static com.mongodb.client.model.BsonHelper.toBson
 import static com.mongodb.client.model.Updates.addEachToSet
 import static com.mongodb.client.model.Updates.addToSet
 import static com.mongodb.client.model.Updates.bitwiseAnd
@@ -46,10 +43,8 @@ import static com.mongodb.client.model.Updates.set
 import static com.mongodb.client.model.Updates.setOnInsert
 import static com.mongodb.client.model.Updates.unset
 import static org.bson.BsonDocument.parse
-import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
 class UpdatesSpecification extends Specification {
-    def registry = fromProviders([new BsonValueCodecProvider(), new ValueCodecProvider()])
 
     def 'should render $set'() {
         expect:
@@ -209,10 +204,6 @@ class UpdatesSpecification extends Specification {
                 'Updates{updates=[' +
                 'Update{fieldName=\'x\', operator=\'$set\', value=1}, ' +
                 'Update{fieldName=\'z\', operator=\'$inc\', value=3}]}'
-    }
-
-    def toBson(Bson bson) {
-        bson.toBsonDocument(BsonDocument, registry)
     }
 
     def 'should test equals for SimpleBsonKeyValue'() {
