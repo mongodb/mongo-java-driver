@@ -15,8 +15,19 @@
  */
 package org.bson.codecs.pojo;
 
-import org.bson.*;
-import org.bson.codecs.*;
+import org.bson.BsonBinaryReader;
+import org.bson.BsonBinaryWriter;
+import org.bson.BsonInt32;
+import org.bson.BsonString;
+import org.bson.BsonValue;
+import org.bson.BsonWriter;
+import org.bson.ByteBufNIO;
+import org.bson.codecs.BsonValueCodec;
+import org.bson.codecs.BsonValueCodecProvider;
+import org.bson.codecs.Codec;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
+import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.entities.SimpleEnum;
 import org.bson.io.BasicOutputBuffer;
@@ -44,7 +55,8 @@ public class EnumRoundTripTest {
     private final BsonValue encodedEnum;
     private final PojoCodecProvider.Builder builder;
 
-    public EnumRoundTripTest(String name, Enum<?> enumValue, BsonValue encodedEnum, PojoCodecProvider.Builder builder) {
+    public EnumRoundTripTest(final String name, final Enum<?> enumValue, final BsonValue encodedEnum,
+                             final PojoCodecProvider.Builder builder) {
         this.name = name;
         this.builder = builder;
         this.enumValue = enumValue;
@@ -57,7 +69,7 @@ public class EnumRoundTripTest {
     }
 
     private static List<TestData> testCases() {
-        List<TestData> data = new ArrayList<>(1);
+        List<TestData> data = new ArrayList<TestData>(1);
         data.add(new TestData("Enum Support",
                 SimpleEnum.BRAVO,
                 getPojoCodecProviderBuilder(SimpleEnum.class),
@@ -70,9 +82,9 @@ public class EnumRoundTripTest {
         List<Object[]> data = new ArrayList<Object[]>();
 
         for (TestData testData : testCases()) {
-            data.add(new Object[]{format("%s", testData.getName()), testData.getEnumValue(), testData.getEncodedEnum(), testData.getBuilder()});
-            data.add(new Object[]{format("%s [Auto]", testData.getName()), testData.getEnumValue(), testData.getEncodedEnum(), AUTOMATIC_BUILDER});
-            data.add(new Object[]{format("%s [Package]", testData.getName()), testData.getEnumValue(), testData.getEncodedEnum(), PACKAGE_BUILDER});
+            data.add(testData.toParams());
+            data.add(testData.toParamsWithAutoCodecProvider());
+            data.add(testData.toParamsWithPackageCodecProvider());
         }
         return data;
     }
@@ -117,9 +129,19 @@ public class EnumRoundTripTest {
         public PojoCodecProvider.Builder getBuilder() {
             return builder;
         }
+
+        public Object[] toParams() {
+            return new Object[]{getName(), getEnumValue(), getEncodedEnum(), getBuilder()};
+        }
+        public Object[] toParamsWithAutoCodecProvider() {
+            return new Object[]{format("%s [Auto]", getName()), getEnumValue(), getEncodedEnum(), AUTOMATIC_BUILDER};
+        }
+        public Object[] toParamsWithPackageCodecProvider() {
+            return new Object[]{format("%s [Package]", getName()), getEnumValue(), getEncodedEnum(), PACKAGE_BUILDER};
+        }
     }
 
-    private void roundTrip(PojoCodecProvider.Builder builder, Enum<?> enumValue, BsonValue encodedEnum) {
+    private void roundTrip(final PojoCodecProvider.Builder builder, final Enum<?> enumValue, final BsonValue encodedEnum) {
         encodesTo(getCodecRegistry(builder), enumValue, encodedEnum);
         decodesTo(getCodecRegistry(builder), encodedEnum, enumValue);
     }
@@ -138,7 +160,7 @@ public class EnumRoundTripTest {
         Assert.assertEquals("Encoded Value", encodedEnum, actualAsValue);
     }
 
-    private <E extends Enum<?>> void decodesTo(CodecRegistry registry, BsonValue encodedEnum, E enumValue) {
+    private <E extends Enum<?>> void decodesTo(final CodecRegistry registry, final BsonValue encodedEnum, final E enumValue) {
         @SuppressWarnings("unchecked") Codec<E> codec = (Codec<E>) registry.get(enumValue.getDeclaringClass());
 
         OutputBuffer toDecode = encode(VALUE_CODEC, encodedEnum);
