@@ -289,7 +289,7 @@ public enum Membership {
 public class Person {
     private String firstName;
     private String lastName;
-    private Member membership = Member.UNREGISTERED;
+    private Membership membership = Membership.UNREGISTERED;
 
     public Person() { }
 
