@@ -378,7 +378,7 @@ public final class PojoRoundTripTest extends PojoTestCase {
                 getPojoCodecProviderBuilder(FieldAndPropertyTypeMismatchModel.class),
                 "{'stringField': 'foo'}"));
 
-        data.add(new TestData("Enums support",
+        data.add(new TestData("Enums in POJO support",
                 new SimpleEnumModel(SimpleEnum.BRAVO),
                 getPojoCodecProviderBuilder(SimpleEnumModel.class),
                 "{ 'myEnum': 'BRAVO' }"));
