@@ -20,7 +20,6 @@ import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
-import com.mongodb.MongoWriteConcernException;
 import com.mongodb.ReadConcern;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
@@ -30,8 +29,6 @@ import com.mongodb.internal.session.BaseClientSessionImpl;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.operation.AbortTransactionOperation;
 import com.mongodb.operation.CommitTransactionOperation;
-import org.bson.BsonBoolean;
-import org.bson.BsonDocument;
 
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
@@ -44,7 +41,6 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         NONE, IN, COMMITTED, ABORTED
     }
 
-    private static final int WRITE_CONCERN_ERROR_CODE = 64;
     private static final int MAX_RETRY_TIME_LIMIT_MS = 120000;
 
     private final MongoClientDelegate delegate;
