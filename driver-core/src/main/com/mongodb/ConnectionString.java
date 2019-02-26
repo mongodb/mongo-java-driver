@@ -475,12 +475,14 @@ public class ConnectionString {
     }
 
     private void translateOptions(final Map<String, List<String>> optionsMap) {
+        boolean tlsInsecureSet = false;
+        boolean tlsAllowInvalidHostnamesSet = false;
+
         for (final String key : GENERAL_OPTIONS_KEYS) {
             String value = getLastValue(optionsMap, key);
             if (value == null) {
                 continue;
             }
-
             if (key.equals("maxpoolsize")) {
                 maxConnectionPoolSize = parseInteger(value, "maxpoolsize");
             } else if (key.equals("minpoolsize")) {
@@ -499,14 +501,17 @@ public class ConnectionString {
                 socketTimeout = parseInteger(value, "sockettimeoutms");
             } else if (key.equals("tlsallowinvalidhostnames")) {
                 sslInvalidHostnameAllowed = parseBoolean(value, "tlsAllowInvalidHostnames");
+                tlsAllowInvalidHostnamesSet = true;
             } else if (key.equals("sslinvalidhostnameallowed")) {
                 sslInvalidHostnameAllowed = parseBoolean(value, "sslinvalidhostnameallowed");
+                tlsAllowInvalidHostnamesSet = true;
             } else if (key.equals("tlsinsecure")) {
                 sslInvalidHostnameAllowed = parseBoolean(value, "tlsinsecure");
+                tlsInsecureSet = true;
             } else if (key.equals("ssl")) {
-                sslEnabled = parseBoolean(value, "ssl");
+                initializeSslEnabled("ssl", value);
             } else if (key.equals("tls")) {
-                sslEnabled = parseBoolean(value, "tls");
+                initializeSslEnabled("tls", value);
             } else if (key.equals("streamtype")) {
                 streamType = value;
                 LOGGER.warn("The streamType query parameter is deprecated and support for it will be removed"
@@ -528,9 +533,22 @@ public class ConnectionString {
             }
         }
 
+        if (tlsInsecureSet && tlsAllowInvalidHostnamesSet) {
+            throw new IllegalArgumentException("tlsAllowInvalidHostnames or sslInvalidHostnameAllowed set along with tlsInsecure "
+                    + "is not allowed");
+        }
+
         writeConcern = createWriteConcern(optionsMap);
         readPreference = createReadPreference(optionsMap);
         compressorList = createCompressors(optionsMap);
+    }
+
+    private void initializeSslEnabled(final String key, final String value) {
+        boolean booleanValue = parseBoolean(value, key);
+        if (sslEnabled != null && sslEnabled != booleanValue) {
+            throw new IllegalArgumentException("Conflicting tls and ssl parameter values are not allowed");
+        }
+        sslEnabled = booleanValue;
     }
 
     private List<MongoCompressor> createCompressors(final Map<String, List<String>> optionsMap) {
