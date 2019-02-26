@@ -77,7 +77,8 @@ public abstract class AbstractConnectionStringTest extends TestCase {
             expectedError = t;
         }
 
-        assertTrue(String.format("Connection string '%s' should have throw an exception", input),
+        assertNotNull(String.format("Connection string '%s' should have thrown an exception", input), expectedError);
+        assertTrue(String.format("Connection string '%s' should have thrown an IllegalArgumentException", input),
                 expectedError instanceof IllegalArgumentException);
     }
 
@@ -86,7 +87,7 @@ public abstract class AbstractConnectionStringTest extends TestCase {
         try {
             connectionString = new ConnectionString(input);
         } catch (Throwable t) {
-            assertTrue(String.format("Connection string '%s' should not have throw an exception: %s", input, t.toString()), false);
+            assertTrue(String.format("Connection string '%s' should not have thrown an exception: %s", input, t.toString()), false);
         }
 
         assertExpectedHosts(connectionString.getHosts());
@@ -98,7 +99,7 @@ public abstract class AbstractConnectionStringTest extends TestCase {
         try {
             connectionString = new ConnectionString(input);
         } catch (Throwable t) {
-            assertTrue(String.format("Connection string '%s' should not have throw an exception: %s", input, t.toString()), false);
+            assertTrue(String.format("Connection string '%s' should not have thrown an exception: %s", input, t.toString()), false);
         }
 
         for (Map.Entry<String, BsonValue> option : definition.getDocument("options").entrySet()) {

@@ -225,13 +225,13 @@ class ConnectionStringSpecification extends Specification {
         connectionString = new ConnectionString('mongodb://localhost/?tls=true&ssl=false')
 
         then:
-        connectionString.getSslEnabled()
+        thrown(IllegalArgumentException)
 
         when:
         connectionString = new ConnectionString('mongodb://localhost/?tls=false&ssl=true')
 
         then:
-        connectionString.getSslEnabled() == false
+        thrown(IllegalArgumentException)
     }
 
     def 'should parse options to enable TLS invalid host names'() {
@@ -288,13 +288,13 @@ class ConnectionStringSpecification extends Specification {
         connectionString.getSslInvalidHostnameAllowed() == false
 
         when:
-        connectionString = new ConnectionString('mongodb://localhost/?tls=true&tlsInsecure=true&tlsAllowInvalidHostnames=false')
+        connectionString = new ConnectionString('mongodb://localhost/?tls=true&tlsAllowInvalidHostnames=false')
 
         then:
         connectionString.getSslInvalidHostnameAllowed() == false
 
         when:
-        connectionString = new ConnectionString('mongodb://localhost/?tls=true&tlsInsecure=false&tlsAllowInvalidHostnames=true')
+        connectionString = new ConnectionString('mongodb://localhost/?tls=true&tlsAllowInvalidHostnames=true')
 
         then:
         connectionString.getSslInvalidHostnameAllowed()

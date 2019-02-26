@@ -42,8 +42,15 @@ public class UriOptionsTest extends AbstractConnectionStringTest {
     public void shouldPassAllOutcomes() {
         assumeFalse(getDefinition().getBoolean("warning", BsonBoolean.FALSE).getValue());
         assumeFalse(getDescription().equals("Arbitrary string readConcernLevel does not cause a warning"));
+        // Skip because Java driver does not support the tlsAllowInvalidCertificates option
+        assumeFalse(getDescription().startsWith("tlsInsecure and tlsAllowInvalidCertificates both present"));
+        assumeFalse(getDescription().startsWith("tlsAllowInvalidCertificates and tlsInsecure both present"));
 
-        testValidOptions();
+        if (getDefinition().getBoolean("valid", BsonBoolean.TRUE).getValue()) {
+            testValidOptions();
+        } else {
+            testInvalidUris();
+        }
     }
 
     @Parameterized.Parameters(name = "{1}")
