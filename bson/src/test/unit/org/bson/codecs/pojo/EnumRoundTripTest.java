@@ -18,6 +18,7 @@ package org.bson.codecs.pojo;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonBinaryWriter;
 import org.bson.BsonInt32;
+import org.bson.BsonReader;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
@@ -30,6 +31,7 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.entities.SimpleEnum;
+import org.bson.codecs.pojo.entities.SpecialEnum;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.ByteBufferBsonInput;
 import org.bson.io.OutputBuffer;
@@ -44,7 +46,9 @@ import java.util.Collection;
 import java.util.List;
 
 import static java.lang.String.format;
+import static org.bson.codecs.configuration.CodecRegistries.fromCodecs;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
+import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 import static org.bson.codecs.pojo.PojoTestCase.getPojoCodecProviderBuilder;
 
 @RunWith(Parameterized.class)
@@ -74,6 +78,10 @@ public class EnumRoundTripTest {
                 SimpleEnum.BRAVO,
                 getPojoCodecProviderBuilder(SimpleEnum.class),
                 "BRAVO"));
+        data.add(new TestData("Prefer Custom Enum Codec",
+                SpecialEnum.CHERRY,
+                getPojoCodecProviderBuilder(SpecialEnum.class),
+                SpecialEnum.CHERRY.ordinal()));
         return data;
     }
 
@@ -149,7 +157,8 @@ public class EnumRoundTripTest {
     static final BsonValueCodec VALUE_CODEC = new BsonValueCodec();
 
     CodecRegistry getCodecRegistry(final PojoCodecProvider.Builder builder) {
-        return fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider(), builder.build());
+        return fromRegistries(fromCodecs(new SpecialEnumCodec()),
+                fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider(), builder.build()));
     }
 
     private <E extends Enum<?>> void encodesTo(final CodecRegistry registry, final E enumValue, final BsonValue encodedEnum) {
@@ -184,4 +193,22 @@ public class EnumRoundTripTest {
         reader.readName("value");
         return codec.decode(reader, DecoderContext.builder().build());
     }
+
+    class SpecialEnumCodec implements Codec<SpecialEnum> {
+        @Override
+        public SpecialEnum decode(final BsonReader reader, final DecoderContext decoderContext) {
+            return SpecialEnum.values()[reader.readInt32()];
+        }
+
+        @Override
+        public void encode(final BsonWriter writer, final SpecialEnum value, final EncoderContext encoderContext) {
+            writer.writeInt32(value.ordinal());
+        }
+
+        @Override
+        public Class<SpecialEnum> getEncoderClass() {
+            return SpecialEnum.class;
+        }
+    }
+
 }
