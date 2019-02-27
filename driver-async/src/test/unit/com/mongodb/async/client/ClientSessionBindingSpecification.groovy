@@ -31,7 +31,7 @@ class ClientSessionBindingSpecification extends Specification {
     def 'should return the session context from the binding'() {
         given:
         def session = Stub(ClientSession)
-        def wrappedBinding = Stub(AsyncReadWriteBinding)
+        def wrappedBinding = Stub(AsyncClusterBinding)
         def binding = new ClientSessionBinding(session, false, wrappedBinding)
 
         when:
@@ -44,7 +44,7 @@ class ClientSessionBindingSpecification extends Specification {
     def 'should return the session context from the connection source'() {
         given:
         def session = Stub(ClientSession)
-        def wrappedBinding = Mock(AsyncReadWriteBinding)
+        def wrappedBinding = Mock(AsyncClusterBinding)
         def binding = new ClientSessionBinding(session, false, wrappedBinding)
 
         when:

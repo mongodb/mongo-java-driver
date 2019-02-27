@@ -75,6 +75,15 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
         return this;
     }
 
+    /**
+     * Return the cluster.
+     *
+     * @return the cluster
+     */
+    public Cluster getCluster() {
+        return cluster;
+    }
+
     @Override
     public ReadPreference getReadPreference() {
         return readPreference;

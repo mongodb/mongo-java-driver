@@ -178,7 +178,7 @@ class CommandOperationHelperSpecification extends Specification {
 
         then:
         def ex = thrown(MongoWriteConcernException)
-        ex.writeConcernError.code == 91
+        ex.writeConcernError.code == -1
     }
 
     def 'should retry with retryable exception async'() {
@@ -231,7 +231,7 @@ class CommandOperationHelperSpecification extends Specification {
 
         then:
         callback.throwable instanceof MongoWriteConcernException
-        callback.throwable.writeConcernError.code == 91
+        callback.throwable.writeConcernError.code == -1
     }
 
     def 'should use the ReadBindings readPreference'() {

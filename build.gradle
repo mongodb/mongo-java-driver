@@ -129,6 +129,7 @@ configure(javaCodeCheckedProjects) {
 
         systemProperties(
                 'org.mongodb.test.uri': System.getProperty('org.mongodb.test.uri'),
+                'org.mongodb.test.transaction.uri': System.getProperty('org.mongodb.test.transaction.uri'),
                 'org.mongodb.test.embedded.path': System.getProperty('org.mongodb.test.embedded.path'),
                 'org.mongodb.useSocket': System.getProperty('org.mongodb.useSocket', 'false'),
                 'org.mongodb.disableAsync': System.getProperty('org.mongodb.disableAsync', 'false'),

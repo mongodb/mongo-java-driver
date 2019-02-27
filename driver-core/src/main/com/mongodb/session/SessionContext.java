@@ -123,4 +123,19 @@ public interface SessionContext {
      * @since 3.8
      */
     ReadConcern getReadConcern();
+
+    /**
+     * Sets the recovery token in the session.
+     *
+     * @param recoveryToken the recovery token
+     * @since 3.11
+     */
+    void setRecoveryToken(BsonDocument recoveryToken);
+
+    /**
+     * Unpin a mongos from a session.
+     *
+     * @since 3.11
+     */
+    void unpinServerAddress();
 }

@@ -40,6 +40,7 @@ import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.CommandListener;
 import com.mongodb.session.SessionContext;
 import org.bson.BsonBinaryReader;
+import org.bson.BsonDocument;
 import org.bson.ByteBuf;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
@@ -66,6 +67,7 @@ import static com.mongodb.internal.connection.ProtocolHelper.getClusterTime;
 import static com.mongodb.internal.connection.ProtocolHelper.getCommandFailureException;
 import static com.mongodb.internal.connection.ProtocolHelper.getMessageSettings;
 import static com.mongodb.internal.connection.ProtocolHelper.getOperationTime;
+import static com.mongodb.internal.connection.ProtocolHelper.getRecoveryToken;
 import static com.mongodb.internal.connection.ProtocolHelper.isCommandOk;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -534,6 +536,12 @@ public class InternalStreamConnection implements InternalConnection {
     private void updateSessionContext(final SessionContext sessionContext, final ResponseBuffers responseBuffers) {
         sessionContext.advanceOperationTime(getOperationTime(responseBuffers));
         sessionContext.advanceClusterTime(getClusterTime(responseBuffers));
+        if (sessionContext.hasActiveTransaction()) {
+            BsonDocument recoveryToken = getRecoveryToken(responseBuffers);
+            if (recoveryToken != null) {
+                sessionContext.setRecoveryToken(recoveryToken);
+            }
+        }
     }
 
     private MongoException translateWriteException(final Throwable e) {

@@ -189,12 +189,7 @@ public final class ClusterFixture {
     }
 
     public static synchronized ConnectionString getMultiMongosConnectionString() {
-        ConnectionString mongoTransactionURIProperty =
-                getConnectionStringFromSystemProperty(MONGODB_TRANSACTION_URI_SYSTEM_PROPERTY_NAME);
-        if (mongoTransactionURIProperty != null) {
-            return mongoTransactionURIProperty;
-        }
-        return getConnectionString();
+        return getConnectionStringFromSystemProperty(MONGODB_TRANSACTION_URI_SYSTEM_PROPERTY_NAME);
     }
 
     public static synchronized ConnectionString getConnectionString() {

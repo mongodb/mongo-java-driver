@@ -18,12 +18,17 @@ package com.mongodb.client.internal;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.binding.ClusterBinding;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadWriteBinding;
+import com.mongodb.binding.SingleServerBinding;
 import com.mongodb.client.ClientSession;
+import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.Connection;
+import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.session.ClientSessionContext;
+import com.mongodb.selector.ReadPreferenceServerSelector;
 import com.mongodb.session.SessionContext;
 
 import static org.bson.assertions.Assertions.notNull;
@@ -32,15 +37,15 @@ import static org.bson.assertions.Assertions.notNull;
  * This class is not part of the public API and may be removed or changed at any time.
  */
 public class ClientSessionBinding implements ReadWriteBinding {
-    private final ReadWriteBinding wrapped;
+    private final ClusterBinding wrapped;
     private final ClientSession session;
     private final boolean ownsSession;
     private final ClientSessionContext sessionContext;
 
     public ClientSessionBinding(final ClientSession session, final boolean ownsSession, final ReadWriteBinding wrapped) {
-        this.wrapped = notNull("wrapped", wrapped);
-        this.ownsSession = ownsSession;
+        this.wrapped = ((ClusterBinding) wrapped);
         this.session = notNull("session", session);
+        this.ownsSession = ownsSession;
         this.sessionContext = new SyncClientSessionContext(session);
     }
 
@@ -74,8 +79,23 @@ public class ClientSessionBinding implements ReadWriteBinding {
 
     @Override
     public ConnectionSource getReadConnectionSource() {
-        ConnectionSource readConnectionSource = wrapped.getReadConnectionSource();
-        return new SessionBindingConnectionSource(readConnectionSource);
+        return new SessionBindingConnectionSource(wrapConnectionSource(wrapped.getReadConnectionSource()));
+    }
+
+    public ConnectionSource getWriteConnectionSource() {
+        return new SessionBindingConnectionSource(wrapConnectionSource(wrapped.getWriteConnectionSource()));
+    }
+
+    private ConnectionSource wrapConnectionSource(final ConnectionSource connectionSource) {
+        ConnectionSource retVal = connectionSource;
+        if (isActiveShardedTxn()) {
+            setPinnedServerAddress();
+            SingleServerBinding binding = new SingleServerBinding(wrapped.getCluster(), session.getPinnedServerAddress(),
+                    wrapped.getReadPreference());
+            retVal = binding.getWriteConnectionSource();
+            binding.release();
+        }
+        return retVal;
     }
 
     @Override
@@ -83,10 +103,15 @@ public class ClientSessionBinding implements ReadWriteBinding {
         return sessionContext;
     }
 
-    @Override
-    public ConnectionSource getWriteConnectionSource() {
-        ConnectionSource writeConnectionSource = wrapped.getWriteConnectionSource();
-        return new SessionBindingConnectionSource(writeConnectionSource);
+    private boolean isActiveShardedTxn() {
+        return session.hasActiveTransaction() && wrapped.getCluster().getDescription().getType() == ClusterType.SHARDED;
+    }
+
+    private void setPinnedServerAddress() {
+        if (session.getPinnedServerAddress() == null) {
+            Server server = wrapped.getCluster().selectServer(new ReadPreferenceServerSelector(wrapped.getReadPreference()));
+            session.setPinnedServerAddress(server.getDescription().getAddress());
+        }
     }
 
     private class SessionBindingConnectionSource implements ConnectionSource {

@@ -481,6 +481,9 @@ final class CommandOperationHelper {
                     connection.release();
                 }
 
+                if (binding.getSessionContext().hasActiveTransaction()) {
+                    binding.getSessionContext().unpinServerAddress();
+                }
                 final BsonDocument originalCommand = command;
                 final MongoException originalException = exception;
                 return withReleasableConnection(binding, originalException, new CallableWithConnectionAndSource<R>() {
@@ -495,8 +498,6 @@ final class CommandOperationHelper {
                             return transformer.apply(connection.command(database, retryCommand, fieldNameValidator,
                                     readPreference, commandResultDecoder, binding.getSessionContext()),
                                     connection.getDescription().getServerAddress());
-                        } catch (MongoException e) {
-                            throw originalException;
                         } finally {
                             connection.release();
                         }
@@ -586,6 +587,9 @@ final class CommandOperationHelper {
                 } else {
                     oldConnection.release();
                     oldSource.release();
+                    if (binding.getSessionContext().hasActiveTransaction()) {
+                        binding.getSessionContext().unpinServerAddress();
+                    }
                     retryableCommand(originalError);
                 }
             }
@@ -606,7 +610,7 @@ final class CommandOperationHelper {
                                     commandResultDecoder, binding.getSessionContext(),
                                     new TransformingResultCallback<T, R>(transformer,
                                             connection.getDescription().getServerAddress(),
-                                            originalError, releasingCallback(callback, source, connection)));
+                                            releasingCallback(callback, source, connection)));
                         }
                     }
                 });
@@ -617,14 +621,12 @@ final class CommandOperationHelper {
     static class TransformingResultCallback<T, R> implements SingleResultCallback<T> {
         private final CommandTransformer<T, R> transformer;
         private final ServerAddress serverAddress;
-        private final Throwable originalError;
         private final SingleResultCallback<R> callback;
 
         TransformingResultCallback(final CommandTransformer<T, R> transformer, final ServerAddress serverAddress,
-                                   final Throwable originalError, final SingleResultCallback<R> callback) {
+                                   final SingleResultCallback<R> callback) {
             this.transformer = transformer;
             this.serverAddress = serverAddress;
-            this.originalError = originalError;
             this.callback = callback;
         }
 
@@ -637,7 +639,7 @@ final class CommandOperationHelper {
                     R transformedResult = transformer.apply(result, serverAddress);
                     callback.onResult(transformedResult, null);
                 } catch (Throwable transformError) {
-                    callback.onResult(null, originalError);
+                    callback.onResult(null, transformError);
                 }
             }
         }
