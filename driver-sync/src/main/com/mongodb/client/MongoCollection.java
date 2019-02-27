@@ -858,9 +858,8 @@ public interface MongoCollection<TDocument> {
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param documents the documents to insert
      * @param options   the options to apply to the operation
-     * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
-     * @throws com.mongodb.WriteConcernException if the write failed due being unable to fulfil the write concern
-     * @throws com.mongodb.MongoException        if the write failed due some other failure
+     * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
+     * @throws com.mongodb.MongoException          if the write failed due some other failure
      */
     void insertMany(List<? extends TDocument> documents, InsertManyOptions options);
 
@@ -885,9 +884,8 @@ public interface MongoCollection<TDocument> {
      * @param clientSession the client session with which to associate this operation
      * @param documents the documents to insert
      * @param options   the options to apply to the operation
-     * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
-     * @throws com.mongodb.WriteConcernException if the write failed due being unable to fulfil the write concern
-     * @throws com.mongodb.MongoException        if the write failed due some other failure
+     * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
+     * @throws com.mongodb.MongoException          if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
      */
