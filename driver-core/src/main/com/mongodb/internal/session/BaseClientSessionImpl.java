@@ -35,7 +35,8 @@ public class BaseClientSessionImpl implements ClientSession {
     private final ClientSessionOptions options;
     private BsonDocument clusterTime;
     private BsonTimestamp operationTime;
-    private ServerAddress pinnedMongosAddress;
+    private ServerAddress pinnedServerAddress;
+    private BsonDocument recoveryToken;
     private volatile boolean closed;
 
     public BaseClientSessionImpl(final ServerSessionPool serverSessionPool, final Object originator, final ClientSessionOptions options) {
@@ -43,20 +44,30 @@ public class BaseClientSessionImpl implements ClientSession {
         this.serverSession = serverSessionPool.get();
         this.originator = originator;
         this.options = options;
-        this.pinnedMongosAddress = null;
+        this.pinnedServerAddress = null;
         closed = false;
     }
 
     @Override
     @Nullable
-    public ServerAddress getPinnedMongosAddress() {
-        return pinnedMongosAddress;
+    public ServerAddress getPinnedServerAddress() {
+        return pinnedServerAddress;
     }
 
     @Override
-    public void setPinnedMongosAddress(@Nullable final ServerAddress address) {
-        isTrue("pinned mongos null check", address == null || pinnedMongosAddress == null);
-        pinnedMongosAddress = address;
+    public void setPinnedServerAddress(@Nullable final ServerAddress address) {
+        isTrue("pinned mongos null check", address == null || pinnedServerAddress == null);
+        pinnedServerAddress = address;
+    }
+
+    @Override
+    public BsonDocument getRecoveryToken() {
+        return recoveryToken;
+    }
+
+    @Override
+    public void setRecoveryToken(final BsonDocument recoveryToken) {
+        this.recoveryToken = recoveryToken;
     }
 
     @Override
@@ -129,7 +140,7 @@ public class BaseClientSessionImpl implements ClientSession {
         if (!closed) {
             closed = true;
             serverSessionPool.release(serverSession);
-            pinnedMongosAddress = null;
+            pinnedServerAddress = null;
         }
     }
 }

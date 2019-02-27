@@ -28,8 +28,11 @@ import com.mongodb.ReadConcernLevel;
 import com.mongodb.ReadPreference;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
+import com.mongodb.async.FutureResultCallback;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.test.CollectionHelper;
+import com.mongodb.connection.ClusterSettings;
+import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.event.CommandEvent;
@@ -44,9 +47,7 @@ import org.bson.Document;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DocumentCodec;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -70,8 +71,11 @@ import static com.mongodb.async.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.async.client.Fixture.isSharded;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
@@ -89,14 +93,8 @@ public class TransactionsTest {
     private CollectionHelper<Document> collectionHelper;
     private Map<String, ClientSession> sessionsMap;
     private HashMap<String, BsonDocument> lsidMap;
-
-    @BeforeClass
-    public static void beforeClass() {
-    }
-
-    @AfterClass
-    public static void afterClass() {
-    }
+    private boolean useMultipleMongoses = false;
+    private ConnectionString connectionString;
 
     public TransactionsTest(final String filename, final String description, final BsonArray data, final BsonDocument definition) {
         this.filename = filename;
@@ -133,14 +131,19 @@ public class TransactionsTest {
             collectionHelper.runAdminCommand(definition.getDocument("failPoint"));
         }
 
-        BsonDocument clientOptions = definition.getDocument("clientOptions", new BsonDocument());
+        final BsonDocument clientOptions = definition.getDocument("clientOptions", new BsonDocument());
 
-        ConnectionString connectionString = getConnectionString();
-        if (this.filename.equals("pin-mongos.json")) {
+        connectionString = getConnectionString();
+
+        useMultipleMongoses = definition.getBoolean("useMultipleMongoses", BsonBoolean.FALSE).getValue();
+        if (useMultipleMongoses) {
+            assumeTrue(isSharded());
             connectionString = getMultiMongosConnectionString();
+            assumeTrue("The system property org.mongodb.test.transaction.uri is not set.", connectionString != null);
         }
-        MongoClientSettings.Builder builder = MongoClientSettings.builder()
-                .applyConnectionString(connectionString);
+
+        MongoClientSettings.Builder builder = MongoClientSettings.builder().applyConnectionString(connectionString);
+
         if (System.getProperty("java.version").startsWith("1.6.")) {
             builder.applyToSslSettings(new Block<SslSettings.Builder>() {
                 @Override
@@ -161,6 +164,14 @@ public class TransactionsTest {
                 .readConcern(getReadConcern(clientOptions))
                 .readPreference(getReadPreference(clientOptions))
                 .retryWrites(clientOptions.getBoolean("retryWrites", BsonBoolean.FALSE).getValue());
+        if (clientOptions.containsKey("heartbeatFrequencyMS")) {
+            builder.applyToServerSettings(new Block<ServerSettings.Builder>() {
+                @Override
+                public void apply(final ServerSettings.Builder builder) {
+                    builder.heartbeatFrequency(clientOptions.getInt32("heartbeatFrequencyMS").intValue(), TimeUnit.MILLISECONDS);
+                }
+            });
+        }
 
         mongoClient = MongoClients.create(builder.build());
 
@@ -260,30 +271,45 @@ public class TransactionsTest {
     @Test
     public void shouldPassAllOutcomes() {
         try {
-            for (BsonValue cur : definition.getArray("operations")) {
-                BsonDocument operation = cur.asDocument();
+            executeOperations(definition.getArray("operations"), false);
+        } finally {
+            closeAllSessions();
+        }
+
+        if (definition.containsKey("expectations")) {
+            // TODO: null operation may cause test failures, since it's used to grab the read preference
+            // TODO: though read-pref.json doesn't declare expectations, so maybe not
+            List<CommandEvent> expectedEvents = getExpectedEvents(definition.getArray("expectations"), databaseName, null);
+            List<CommandEvent> events = commandListener.getCommandStartedEvents();
+
+            assertEventsEquality(expectedEvents, events, lsidMap);
+        }
+
+        BsonDocument expectedOutcome = definition.getDocument("outcome", new BsonDocument());
+        if (expectedOutcome.containsKey("collection")) {
+            List<BsonDocument> collectionData = collectionHelper.find(new BsonDocumentCodec());
+            assertEquals(expectedOutcome.getDocument("collection").getArray("data").getValues(), collectionData);
+        }
+    }
+
+    private void executeOperations(final BsonArray operations, final boolean throwExceptions) {
+        TargetedFailPoint failPoint = null;
+
+        try {
+            for (BsonValue cur : operations) {
+                final BsonDocument operation = cur.asDocument();
                 String operationName = operation.getString("name").getValue();
                 BsonValue expectedResult = operation.get("result");
                 String receiver = operation.getString("object").getValue();
                 final ClientSession clientSession = receiver.startsWith("session") ? sessionsMap.get(receiver)
                         : (operation.getDocument("arguments").containsKey("session")
-                                ? sessionsMap.get(operation.getDocument("arguments").getString("session").getValue()) : null);
+                        ? sessionsMap.get(operation.getDocument("arguments").getString("session").getValue()) : null);
                 try {
                     if (operationName.equals("startTransaction")) {
                         BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
                         if (arguments.containsKey("options")) {
-                            BsonDocument options = arguments.getDocument("options");
-                            TransactionOptions.Builder builder = TransactionOptions.builder();
-                            if (options.containsKey("writeConcern")) {
-                                builder.writeConcern(helper.getWriteConcern(options));
-                            }
-                            if (options.containsKey("readConcern")) {
-                                builder.readConcern(helper.getReadConcern(options));
-                            }
-                            if (options.containsKey("readPreference")) {
-                                builder.readPreference(helper.getReadPreference(options));
-                            }
-                            nonNullClientSession(clientSession).startTransaction(builder.build());
+                            TransactionOptions transactionOptions = createTransactionOptions(arguments.getDocument("options"));
+                            nonNullClientSession(clientSession).startTransaction(transactionOptions);
                         } else {
                             nonNullClientSession(clientSession).startTransaction();
                         }
@@ -301,6 +327,20 @@ public class TransactionsTest {
                                 nonNullClientSession(clientSession).abortTransaction(getCallback());
                             }
                         }.get();
+                    } else if (operationName.equals("targetedFailPoint")) {
+                        assertTrue(failPoint == null);
+                        failPoint = new TargetedFailPoint(operation);
+                        failPoint.executeFailPoint();
+                    } else if (operationName.equals("assertSessionPinned")) {
+                        if (isSharded()) {
+                            final BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+                            assertNotNull(sessionsMap.get(arguments.getString("session").getValue()).getPinnedServerAddress());
+                        }
+                    } else if (operationName.equals("assertSessionUnpinned")) {
+                        if (isSharded()) {
+                            final BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+                            assertNull(sessionsMap.get(arguments.getString("session").getValue()).getPinnedServerAddress());
+                        }
                     } else {
                         BsonDocument actualOutcome = helper.getOperationResults(operation, clientSession);
                         if (expectedResult != null) {
@@ -358,29 +398,30 @@ public class TransactionsTest {
                             passedAssertion = true;
                         }
                     }
-                    if (!passedAssertion) {
+                    if (!passedAssertion || throwExceptions) {
                         throw e;
                     }
                 }
             }
         } finally {
-            closeAllSessions();
+            if (failPoint != null) {
+                failPoint.disableFailPoint();
+            }
         }
+    }
 
-        if (definition.containsKey("expectations")) {
-            // TODO: null operation may cause test failures, since it's used to grab the read preference
-            // TODO: though read-pref.json doesn't declare expectations, so maybe not
-            List<CommandEvent> expectedEvents = getExpectedEvents(definition.getArray("expectations"), databaseName, null);
-            List<CommandEvent> events = commandListener.getCommandStartedEvents();
-
-            assertEventsEquality(expectedEvents, events, lsidMap);
+    private TransactionOptions createTransactionOptions(final BsonDocument options) {
+        TransactionOptions.Builder builder = TransactionOptions.builder();
+        if (options.containsKey("writeConcern")) {
+            builder.writeConcern(helper.getWriteConcern(options));
         }
-
-        BsonDocument expectedOutcome = definition.getDocument("outcome", new BsonDocument());
-        if (expectedOutcome.containsKey("collection")) {
-            List<BsonDocument> collectionData = collectionHelper.find(new BsonDocumentCodec());
-            assertEquals(expectedOutcome.getDocument("collection").getArray("data").getValues(), collectionData);
+        if (options.containsKey("readConcern")) {
+            builder.readConcern(helper.getReadConcern(options));
         }
+        if (options.containsKey("readPreference")) {
+            builder.readPreference(helper.getReadPreference(options));
+        }
+        return builder.build();
     }
 
     private String getErrorContainsField(final BsonValue expectedResult) {
@@ -463,6 +504,57 @@ public class TransactionsTest {
             return serverVersionAtLeast(4, 0);
         } else {
             return false;
+        }
+    }
+
+    private class TargetedFailPoint {
+        private final BsonDocument failPointDocument;
+        private final MongoDatabase adminDB;
+        private MongoClient mongoClient;
+
+        TargetedFailPoint(final BsonDocument operation) {
+            final BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+            final ClientSession clientSession = sessionsMap.get(arguments.getString("session").getValue());
+
+            if (clientSession.getPinnedServerAddress() != null) {
+                mongoClient = MongoClients.create(MongoClientSettings.builder()
+                        .applyConnectionString(connectionString)
+                        .clusterSettings(ClusterSettings.builder()
+                        .hosts(singletonList(clientSession.getPinnedServerAddress())).build()).build());
+
+                adminDB = mongoClient.getDatabase("admin");
+            } else {
+                adminDB = null;
+            }
+            failPointDocument = arguments.getDocument("failPoint");
+        }
+
+        public void executeFailPoint() {
+            executeCommand(failPointDocument);
+        }
+
+        public void disableFailPoint() {
+            executeCommand(new BsonDocument("configureFailPoint",
+                    failPointDocument.getString("configureFailPoint"))
+                    .append("mode", new BsonString("off")));
+            if (mongoClient != null) {
+                mongoClient.close();
+            }
+        }
+
+        private void executeCommand(final BsonDocument doc) {
+            if (adminDB != null) {
+                FutureResultCallback<BsonDocument> futureResultCallback = new FutureResultCallback<BsonDocument>();
+
+                adminDB.runCommand(doc, BsonDocument.class, futureResultCallback);
+                try {
+                    futureResultCallback.get();
+                } catch (InterruptedException e) {
+                    throw new RuntimeException("Interrupted", e);
+                }
+            } else {
+                collectionHelper.runAdminCommand(doc);
+            }
         }
     }
 }

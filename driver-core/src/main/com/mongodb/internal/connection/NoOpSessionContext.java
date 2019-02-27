@@ -95,4 +95,14 @@ public class NoOpSessionContext implements SessionContext {
     public ReadConcern getReadConcern() {
         return ReadConcern.DEFAULT;
     }
+
+    @Override
+    public void setRecoveryToken(final BsonDocument recoveryToken) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void unpinServerAddress() {
+        throw new UnsupportedOperationException();
+    }
 }

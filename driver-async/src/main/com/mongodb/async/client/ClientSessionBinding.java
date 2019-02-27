@@ -19,23 +19,28 @@ package com.mongodb.async.client;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.binding.AsyncClusterBinding;
 import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadWriteBinding;
+import com.mongodb.binding.AsyncSingleServerBinding;
 import com.mongodb.connection.AsyncConnection;
+import com.mongodb.connection.ClusterType;
+import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.session.ClientSessionContext;
+import com.mongodb.selector.ReadPreferenceServerSelector;
 import com.mongodb.session.SessionContext;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
 class ClientSessionBinding implements AsyncReadWriteBinding {
-    private final AsyncReadWriteBinding wrapped;
+    private final AsyncClusterBinding wrapped;
     private final ClientSession session;
     private final boolean ownsSession;
     private final ClientSessionContext sessionContext;
 
     ClientSessionBinding(final ClientSession session, final boolean ownsSession, final AsyncReadWriteBinding wrapped) {
-        this.wrapped = notNull("wrapped", wrapped);
+        this.wrapped = notNull("wrapped", ((AsyncClusterBinding) wrapped));
         this.ownsSession = ownsSession;
         this.session = notNull("session", session);
         this.sessionContext = new AsyncClientSessionContext(session);
@@ -47,6 +52,19 @@ class ClientSessionBinding implements AsyncReadWriteBinding {
     }
 
     @Override
+    public void getReadConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
+        wrapped.getReadConnectionSource(new SingleResultCallback<AsyncConnectionSource>() {
+            @Override
+            public void onResult(final AsyncConnectionSource result, final Throwable t) {
+                if (t != null) {
+                    callback.onResult(null, t);
+                } else {
+                    wrapConnectionSource(result, callback);
+                }
+            }
+        });
+    }
+
     public void getWriteConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
         wrapped.getWriteConnectionSource(new SingleResultCallback<AsyncConnectionSource>() {
             @Override
@@ -54,7 +72,7 @@ class ClientSessionBinding implements AsyncReadWriteBinding {
                 if (t != null) {
                     callback.onResult(null, t);
                 } else {
-                    callback.onResult(new SessionBindingAsyncConnectionSource(result), null);
+                    wrapConnectionSource(result, callback);
                 }
             }
         });
@@ -65,11 +83,38 @@ class ClientSessionBinding implements AsyncReadWriteBinding {
         return sessionContext;
     }
 
-    @Override
-    public void getReadConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
-        wrapped.getReadConnectionSource(new SingleResultCallback<AsyncConnectionSource>() {
+    private void wrapConnectionSource(final AsyncConnectionSource connectionSource,
+                                      final SingleResultCallback<AsyncConnectionSource> callback) {
+        if (isActiveShardedTxn()) {
+            if (session.getPinnedServerAddress() == null) {
+                wrapped.getCluster().selectServerAsync(
+                        new ReadPreferenceServerSelector(wrapped.getReadPreference()),
+                        new SingleResultCallback<Server>() {
+                            @Override
+                            public void onResult(final Server server, final Throwable t) {
+                                if (t != null) {
+                                    callback.onResult(null, t);
+                                } else {
+                                    session.setPinnedServerAddress(server.getDescription().getAddress());
+                                    setSingleServerBindingConnectionSource(callback);
+                                }
+                            }
+                        });
+            } else {
+                setSingleServerBindingConnectionSource(callback);
+            }
+        } else {
+            callback.onResult(new SessionBindingAsyncConnectionSource(connectionSource), null);
+        }
+    }
+
+    private void setSingleServerBindingConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
+        final AsyncSingleServerBinding binding =
+                new AsyncSingleServerBinding(wrapped.getCluster(), session.getPinnedServerAddress(), wrapped.getReadPreference());
+        binding.getWriteConnectionSource(new SingleResultCallback<AsyncConnectionSource>() {
             @Override
             public void onResult(final AsyncConnectionSource result, final Throwable t) {
+                binding.release();
                 if (t != null) {
                     callback.onResult(null, t);
                 } else {
@@ -100,6 +145,10 @@ class ClientSessionBinding implements AsyncReadWriteBinding {
         if (getCount() == 0 && ownsSession) {
             session.close();
         }
+    }
+
+    private boolean isActiveShardedTxn() {
+        return session.hasActiveTransaction() && wrapped.getCluster().getDescription().getType() == ClusterType.SHARDED;
     }
 
     private class SessionBindingAsyncConnectionSource implements AsyncConnectionSource {

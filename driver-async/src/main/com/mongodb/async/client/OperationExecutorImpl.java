@@ -19,6 +19,7 @@ package com.mongodb.async.client;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
+import com.mongodb.MongoQueryException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadConcern;
@@ -26,22 +27,11 @@ import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncClusterBinding;
 import com.mongodb.binding.AsyncReadWriteBinding;
-import com.mongodb.binding.AsyncSingleServerBinding;
-import com.mongodb.connection.Cluster;
-import com.mongodb.connection.ClusterConnectionMode;
-import com.mongodb.connection.ClusterDescription;
-import com.mongodb.connection.ClusterType;
-import com.mongodb.connection.Server;
-import com.mongodb.connection.ServerDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.lang.Nullable;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
-import com.mongodb.selector.ReadPreferenceServerSelector;
-import com.mongodb.selector.ServerSelector;
-
-import java.util.List;
 
 import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
@@ -97,6 +87,7 @@ class OperationExecutorImpl implements OperationExecutor {
                                                 public void onResult(final T result, final Throwable t) {
                                                     try {
                                                         labelException(t, session);
+                                                        unpinServerAddressOnTransientTransactionError(session, t);
                                                         errHandlingCallback.onResult(result, t);
                                                     } finally {
                                                         binding.release();
@@ -142,6 +133,7 @@ class OperationExecutorImpl implements OperationExecutor {
                                             public void onResult(final T result, final Throwable t) {
                                                 try {
                                                     labelException(t, session);
+                                                    unpinServerAddressOnTransientTransactionError(session, t);
                                                     errHandlingCallback.onResult(result, t);
                                                 } finally {
                                                     binding.release();
@@ -157,103 +149,32 @@ class OperationExecutorImpl implements OperationExecutor {
     }
 
     private void labelException(final Throwable t, final ClientSession session) {
-        if ((t instanceof MongoSocketException || t instanceof MongoTimeoutException)
-                && session != null && session.hasActiveTransaction()
+        if (session != null && session.hasActiveTransaction()
+                && (t instanceof MongoSocketException || t instanceof MongoTimeoutException
+                || (t instanceof MongoQueryException && ((MongoQueryException) t).getErrorCode() == 91))
                 && !((MongoException) t).hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
             ((MongoException) t).addLabel(TRANSIENT_TRANSACTION_ERROR_LABEL);
         }
     }
 
+    private void unpinServerAddressOnTransientTransactionError(final @Nullable ClientSession session, final Throwable throwable) {
+        if (session != null && throwable != null && throwable instanceof MongoException
+                && ((MongoException) throwable).hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)) {
+            session.setPinnedServerAddress(null);
+        }
+    }
+
+
     private void getReadWriteBinding(final ReadPreference readPreference, final ReadConcern readConcern,
                                      @Nullable final ClientSession session, final boolean ownsSession,
                                      final SingleResultCallback<AsyncReadWriteBinding> callback) {
         notNull("readPreference", readPreference);
-        final SingleResultCallback<AsyncReadWriteBinding> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-        final Cluster cluster = mongoClient.getCluster();
-        if (session != null && session.hasActiveTransaction()) {
-            getClusterType(cluster, new SingleResultCallback<ClusterType>() {
-                @Override
-                public void onResult(final ClusterType clusterType, final Throwable t) {
-                    if (t != null) {
-                        errHandlingCallback.onResult(null, t);
-                    } else {
-                        if (clusterType == ClusterType.SHARDED) {
-                            bindWithPinnedMongos(cluster, readPreference, session, ownsSession, errHandlingCallback, callback);
-                        } else {
-                            allocateReadWriteBinding(readPreference, readConcern, session, ownsSession, callback);
-                        }
-                    }
-                }
-            });
-        } else {
-            allocateReadWriteBinding(readPreference, readConcern, session, ownsSession, callback);
-        }
-    }
-
-    private void bindWithPinnedMongos(final Cluster cluster, final ReadPreference readPreference,
-                                      final ClientSession session, final boolean ownsSession,
-                                      final SingleResultCallback<AsyncReadWriteBinding> errHandlingCallback,
-                                      final SingleResultCallback<AsyncReadWriteBinding> callback) {
-        if (session.getPinnedMongosAddress() == null) {
-            cluster.selectServerAsync(
-                    new ReadPreferenceServerSelector(getReadPreferenceForBinding(readPreference, session)),
-                    new SingleResultCallback<Server>() {
-                        @Override
-                        public void onResult(final Server server, final Throwable t) {
-                            if (t != null) {
-                                errHandlingCallback.onResult(null, t);
-                            } else {
-                                session.setPinnedMongosAddress(server.getDescription().getAddress());
-                                AsyncSingleServerBinding binding =
-                                        new AsyncSingleServerBinding(cluster, server.getDescription().getAddress(),
-                                                getReadPreferenceForBinding(readPreference, session));
-                                callback.onResult(new ClientSessionBinding(session, ownsSession, binding), null);
-                            }
-                        }
-                    });
-        } else {
-            AsyncSingleServerBinding binding = new AsyncSingleServerBinding(cluster, session.getPinnedMongosAddress(),
-                    getReadPreferenceForBinding(readPreference, session));
-            callback.onResult(new ClientSessionBinding(session, ownsSession, binding), null);
-        }
-    }
-
-    private void allocateReadWriteBinding(final ReadPreference readPreference, final ReadConcern readConcern,
-                                          final ClientSession session, final boolean ownsSession,
-                                          final SingleResultCallback<AsyncReadWriteBinding> callback) {
         AsyncReadWriteBinding readWriteBinding = new AsyncClusterBinding(mongoClient.getCluster(),
                 getReadPreferenceForBinding(readPreference, session), readConcern);
         if (session != null) {
             callback.onResult(new ClientSessionBinding(session, ownsSession, readWriteBinding), null);
         } else {
             callback.onResult(readWriteBinding, null);
-        }
-    }
-
-    private void getClusterType(final Cluster cluster, final SingleResultCallback<ClusterType> callback) {
-        ClusterDescription description = cluster.getCurrentDescription();
-        if (description.getType() != ClusterType.UNKNOWN) {
-            callback.onResult(description.getType(), null);
-        } else {
-            mongoClient.getCluster().selectServerAsync(new ServerSelector() {
-                @Override
-                public List<ServerDescription> select(final ClusterDescription clusterDescription) {
-                    if (clusterDescription.getConnectionMode() == ClusterConnectionMode.SINGLE) {
-                        return clusterDescription.getAny();
-                    } else {
-                        return clusterDescription.getAnyPrimaryOrSecondary();
-                    }
-                }
-            }, new SingleResultCallback<Server>() {
-                @Override
-                public void onResult(final Server server, final Throwable t) {
-                    if (t != null) {
-                        callback.onResult(null, t);
-                    } else {
-                        callback.onResult(server.getDescription().getType().getClusterType(), null);
-                    }
-                }
-            });
         }
     }
 

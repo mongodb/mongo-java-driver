@@ -49,6 +49,7 @@ import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -133,6 +134,13 @@ public final class CommandMonitoringTestHelper {
 
                 assertEquals(expectedCommandStartedEvent.getDatabaseName(), actualCommandStartedEvent.getDatabaseName());
                 assertEquals(expectedCommandStartedEvent.getCommand(), actualCommandStartedEvent.getCommand());
+                if (((CommandStartedEvent) expected).getCommand().containsKey("recoveryToken")) {
+                    if (((CommandStartedEvent) expected).getCommand().get("recoveryToken").isNull()) {
+                        assertFalse(((CommandStartedEvent) actual).getCommand().containsKey("recoveryToken"));
+                    } else {
+                        assertTrue(((CommandStartedEvent) actual).getCommand().containsKey("recoveryToken"));
+                    }
+                }
 
             } else if (actual.getClass().equals(CommandSucceededEvent.class)) {
                 CommandSucceededEvent actualCommandSucceededEvent = massageActualCommandSucceededEvent((CommandSucceededEvent) actual);
@@ -254,6 +262,9 @@ public final class CommandMonitoringTestHelper {
             if (command.isNull("readConcern")) {
                 command.remove("readConcern");
             }
+        }
+        if (command.containsKey("recoveryToken")) {
+            command.remove("recoveryToken");
         }
 
         return new CommandStartedEvent(event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),

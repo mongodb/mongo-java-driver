@@ -70,7 +70,11 @@ provision_ssl () {
 # Provision the correct connection string and set up SSL if needed
 if [ "$TOPOLOGY" == "sharded_cluster" ]; then
     if [ "$SAFE_FOR_MULTI_MONGOS" == "true" ]; then
-        export TRANSACTION_URI="${MONGODB_URI}"
+        if [ "$AUTH" = "auth" ]; then
+            export TRANSACTION_URI="mongodb://bob:pwd123@localhost:27017,localhost:27018/?authSource=admin"
+        else
+            export TRANSACTION_URI="${MONGODB_URI}"
+        fi
     fi
     
      if [ "$AUTH" = "auth" ]; then

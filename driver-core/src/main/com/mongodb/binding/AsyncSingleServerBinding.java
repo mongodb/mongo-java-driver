@@ -24,10 +24,8 @@ import com.mongodb.connection.Cluster;
 import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.NoOpSessionContext;
-import com.mongodb.selector.ReadPreferenceServerSelector;
 import com.mongodb.selector.ServerAddressSelector;
 import com.mongodb.selector.ServerSelector;
-import com.mongodb.selector.WritableServerSelector;
 import com.mongodb.session.SessionContext;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -71,12 +69,12 @@ public class AsyncSingleServerBinding extends AbstractReferenceCounted implement
 
     @Override
     public void getReadConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
-        getAsyncSingleServerBindingConnectionSource(new ReadPreferenceServerSelector(readPreference), callback);
+        getAsyncSingleServerBindingConnectionSource(new ServerAddressSelector(serverAddress), callback);
     }
 
     @Override
     public void getWriteConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
-        getAsyncSingleServerBindingConnectionSource(new WritableServerSelector(), callback);
+        getAsyncSingleServerBindingConnectionSource(new ServerAddressSelector(serverAddress), callback);
     }
 
     private void getAsyncSingleServerBindingConnectionSource(final ServerSelector serverSelector,
@@ -87,7 +85,7 @@ public class AsyncSingleServerBinding extends AbstractReferenceCounted implement
                 if (t != null) {
                     callback.onResult(null, t);
                 } else {
-                    callback.onResult(new AsyncSingleServerBindingConnectionSource(), null);
+                    callback.onResult(new AsyncSingleServerBindingConnectionSource(result), null);
                 }
             }
         });
@@ -107,9 +105,9 @@ public class AsyncSingleServerBinding extends AbstractReferenceCounted implement
     private final class AsyncSingleServerBindingConnectionSource extends AbstractReferenceCounted implements AsyncConnectionSource {
         private final Server server;
 
-        private AsyncSingleServerBindingConnectionSource() {
+        private AsyncSingleServerBindingConnectionSource(final Server server) {
             AsyncSingleServerBinding.this.retain();
-            server = cluster.selectServer(new ServerAddressSelector(serverAddress));
+            this.server = server;
         }
 
         @Override

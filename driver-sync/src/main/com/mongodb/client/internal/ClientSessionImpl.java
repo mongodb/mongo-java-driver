@@ -105,7 +105,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         if (!writeConcern.isAcknowledged()) {
             throw new MongoClientException("Transactions do not support unacknowledged write concern");
         }
-        setPinnedMongosAddress(null);
+        setPinnedServerAddress(null);
     }
 
     @Override
@@ -116,6 +116,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
         if (transactionState == TransactionState.NONE) {
             throw new IllegalStateException("There is no transaction started");
         }
+
         try {
             if (messageSentInCurrentTransaction) {
                 ReadConcern readConcern = transactionOptions.getReadConcern();
@@ -123,13 +124,16 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
                 }
                 commitInProgress = true;
-                delegate.getOperationExecutor().execute(
-                        new CommitTransactionOperation(transactionOptions.getWriteConcern(),
-                                transactionState == TransactionState.COMMITTED), readConcern, this);
+                delegate.getOperationExecutor().execute(new CommitTransactionOperation(transactionOptions.getWriteConcern(),
+                        transactionState == TransactionState.COMMITTED).recoveryToken(getRecoveryToken()),
+                        readConcern, this);
             }
+        } catch (MongoException e) {
+            unpinServerAddressOnError(e);
+            throw e;
         } finally {
-            commitInProgress = false;
             transactionState = TransactionState.COMMITTED;
+            commitInProgress = false;
         }
     }
 
@@ -154,9 +158,17 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                         readConcern, this);
             }
         } catch (Exception e) {
-            // ignore errors
+            if (e instanceof MongoException) {
+                unpinServerAddressOnError((MongoException) e);
+            }
         } finally {
             cleanupTransaction(TransactionState.ABORTED);
+        }
+    }
+
+    private void unpinServerAddressOnError(final MongoException e) {
+        if (e.hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL) || e.hasErrorLabel(UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL)) {
+            setPinnedServerAddress(null);
         }
     }
 
@@ -193,6 +205,7 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                         commitTransaction();
                         break;
                     } catch (MongoException e) {
+                        unpinServerAddressOnError(e);
                         if (ClientSessionClock.INSTANCE.now() - startTime < MAX_RETRY_TIME_LIMIT_MS) {
                             applyMajorityWriteConcernToTransactionOptions();
 

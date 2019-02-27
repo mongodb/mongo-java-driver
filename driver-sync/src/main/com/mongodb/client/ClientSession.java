@@ -34,7 +34,7 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
      * @since 3.11
      */
     @Nullable
-    ServerAddress getPinnedMongosAddress();
+    ServerAddress getPinnedServerAddress();
 
     /**
      * Pin the server address of the mongos on this session.
@@ -43,7 +43,7 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
      * @mongodb.server.release 4.2
      * @since 3.11
      */
-    void setPinnedMongosAddress(@Nullable ServerAddress address);
+    void setPinnedServerAddress(@Nullable ServerAddress address);
 
     /**
      * Returns true if there is an active transaction on this session, and false otherwise

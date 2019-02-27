@@ -31,6 +31,8 @@ import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.test.CollectionHelper;
+import com.mongodb.connection.ClusterSettings;
+import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;
 import com.mongodb.event.CommandEvent;
@@ -64,14 +66,16 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
+import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 @RunWith(Parameterized.class)
 public abstract class AbstractTransactionsTest {
-
     private final String filename;
     private final String description;
     private final String databaseName;
@@ -83,6 +87,8 @@ public abstract class AbstractTransactionsTest {
     private CollectionHelper<Document> collectionHelper;
     private Map<String, ClientSession> sessionsMap;
     private Map<String, BsonDocument> lsidMap;
+    private boolean useMultipleMongoses = false;
+    private ConnectionString connectionString = null;
 
     public AbstractTransactionsTest(final String filename, final String description, final BsonArray data, final BsonDocument definition) {
         this.filename = filename;
@@ -118,14 +124,17 @@ public abstract class AbstractTransactionsTest {
             collectionHelper.runAdminCommand(definition.getDocument("failPoint"));
         }
 
-        BsonDocument clientOptions = definition.getDocument("clientOptions", new BsonDocument());
+        final BsonDocument clientOptions = definition.getDocument("clientOptions", new BsonDocument());
 
-        ConnectionString connectionString = getConnectionString();
-        if (this.filename.equals("pin-mongos.json")) {
+        connectionString = getConnectionString();
+        useMultipleMongoses = definition.getBoolean("useMultipleMongoses", BsonBoolean.FALSE).getValue();
+        if (useMultipleMongoses) {
+            assumeTrue(isSharded());
             connectionString = getMultiMongosConnectionString();
+            assumeTrue("The system property org.mongodb.test.transaction.uri is not set.", connectionString != null);
         }
-        MongoClientSettings.Builder builder = MongoClientSettings.builder()
-                .applyConnectionString(connectionString);
+        MongoClientSettings.Builder builder = MongoClientSettings.builder().applyConnectionString(connectionString);
+
         if (System.getProperty("java.version").startsWith("1.6.")) {
             builder.applyToSslSettings(new Block<SslSettings.Builder>() {
                 @Override
@@ -145,6 +154,14 @@ public abstract class AbstractTransactionsTest {
                 .readConcern(getReadConcern(clientOptions))
                 .readPreference(getReadPreference(clientOptions))
                 .retryWrites(clientOptions.getBoolean("retryWrites", BsonBoolean.FALSE).getValue());
+        if (clientOptions.containsKey("heartbeatFrequencyMS")) {
+            builder.applyToServerSettings(new Block<ServerSettings.Builder>() {
+                @Override
+                public void apply(final ServerSettings.Builder builder) {
+                    builder.heartbeatFrequency(clientOptions.getInt32("heartbeatFrequencyMS").intValue(), TimeUnit.MILLISECONDS);
+                }
+            });
+        }
         mongoClient = MongoClients.create(builder.build());
 
         MongoDatabase database = mongoClient.getDatabase(databaseName);
@@ -258,114 +275,133 @@ public abstract class AbstractTransactionsTest {
     }
 
     private void executeOperations(final BsonArray operations, final boolean throwExceptions) {
-        for (BsonValue cur : operations) {
-            final BsonDocument operation = cur.asDocument();
-            String operationName = operation.getString("name").getValue();
-            BsonValue expectedResult = operation.get("result");
-            String receiver = operation.getString("object").getValue();
-            ClientSession clientSession = receiver.startsWith("session") ? sessionsMap.get(receiver) : null;
-            if (clientSession == null) {
-                clientSession = operation.getDocument("arguments").containsKey("session")
-                        ? sessionsMap.get(operation.getDocument("arguments").getString("session").getValue()) : null;
+        TargetedFailPoint failPoint = null;
+
+        try {
+            for (BsonValue cur : operations) {
+                final BsonDocument operation = cur.asDocument();
+                String operationName = operation.getString("name").getValue();
+                BsonValue expectedResult = operation.get("result");
+                String receiver = operation.getString("object").getValue();
+
+                ClientSession clientSession = receiver.startsWith("session") ? sessionsMap.get(receiver) : null;
+                if (clientSession == null) {
+                    clientSession = operation.getDocument("arguments").containsKey("session")
+                            ? sessionsMap.get(operation.getDocument("arguments").getString("session").getValue()) : null;
+                }
+                try {
+                    if (operationName.equals("startTransaction")) {
+                        BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+                        if (arguments.containsKey("options")) {
+                            TransactionOptions transactionOptions = createTransactionOptions(arguments.getDocument("options"));
+                            nonNullClientSession(clientSession).startTransaction(transactionOptions);
+                        } else {
+                            nonNullClientSession(clientSession).startTransaction();
+                        }
+                    } else if (operationName.equals("commitTransaction")) {
+                        nonNullClientSession(clientSession).commitTransaction();
+                    } else if (operationName.equals("abortTransaction")) {
+                        nonNullClientSession(clientSession).abortTransaction();
+                    } else if (operationName.equals("withTransaction")) {
+                        final BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+
+                        TransactionOptions transactionOptions = null;
+                        if (arguments.containsKey("options")) {
+                            transactionOptions = createTransactionOptions(arguments.getDocument("options"));
+                        }
+
+                        if (transactionOptions == null) {
+                            nonNullClientSession(clientSession).withTransaction(new TransactionBody<Object>() {
+                                @Override
+                                public Void execute() {
+                                    executeOperations(arguments.getDocument("callback").getArray("operations"), true);
+                                    return null;
+                                }
+                            });
+                        } else {
+                            nonNullClientSession(clientSession).withTransaction(transactionOptions, new TransactionBody<Object>() {
+                                @Override
+                                public Void execute() {
+                                    executeOperations(arguments.getDocument("callback").getArray("operations"), true);
+                                    return null;
+                                }
+                            });
+                        }
+                    } else if (operationName.equals("targetedFailPoint")) {
+                        assertTrue(failPoint == null);
+                        failPoint = new TargetedFailPoint(operation);
+                        failPoint.executeFailPoint();
+                    } else if (operationName.equals("assertSessionPinned")) {
+                        final BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+                        assertNotNull(sessionsMap.get(arguments.getString("session").getValue()).getPinnedServerAddress());
+                    } else if (operationName.equals("assertSessionUnpinned")) {
+                        final BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+                        assertNull(sessionsMap.get(arguments.getString("session").getValue()).getPinnedServerAddress());
+                    } else {
+                        BsonDocument actualOutcome = helper.getOperationResults(operation, clientSession);
+                        if (expectedResult != null) {
+                            BsonValue actualResult = actualOutcome.get("result");
+                            if (actualResult.isDocument()) {
+                                if (((BsonDocument) actualResult).containsKey("recoveryToken")) {
+                                    ((BsonDocument) actualResult).remove("recoveryToken");
+                                }
+                            }
+
+                            assertEquals("Expected operation result differs from actual", expectedResult, actualResult);
+                        }
+                    }
+                    assertFalse(String.format("Expected error '%s' but none thrown for operation %s",
+                            getErrorContainsField(expectedResult), operationName), hasErrorContainsField(expectedResult));
+                    assertFalse(String.format("Expected error code '%s' but none thrown for operation %s",
+                            getErrorCodeNameField(expectedResult), operationName), hasErrorCodeNameField(expectedResult));
+                } catch (RuntimeException e) {
+                    boolean passedAssertion = false;
+                    if (hasErrorLabelsContainField(expectedResult)) {
+                        if (e instanceof MongoException) {
+                            MongoException mongoException = (MongoException) e;
+                            for (String curErrorLabel : getErrorLabelsContainField(expectedResult)) {
+                                assertTrue(String.format("Expected error label '%s but found labels '%s' for operation %s",
+                                        curErrorLabel, mongoException.getErrorLabels(), operationName),
+                                        mongoException.hasErrorLabel(curErrorLabel));
+                            }
+                            passedAssertion = true;
+                        }
+                    }
+                    if (hasErrorLabelsOmitField(expectedResult)) {
+                        if (e instanceof MongoException) {
+                            MongoException mongoException = (MongoException) e;
+                            for (String curErrorLabel : getErrorLabelsOmitField(expectedResult)) {
+                                assertFalse(String.format("Expected error label '%s omitted but found labels '%s' for operation %s",
+                                        curErrorLabel, mongoException.getErrorLabels(), operationName),
+                                        mongoException.hasErrorLabel(curErrorLabel));
+                            }
+                            passedAssertion = true;
+                        }
+                    }
+                    if (hasErrorContainsField(expectedResult)) {
+                        String expectedError = getErrorContainsField(expectedResult);
+                        assertTrue(String.format("Expected '%s' but got '%s' for operation %s", expectedError, e.getMessage(),
+                                operationName), e.getMessage().toLowerCase().contains(expectedError.toLowerCase()));
+                        passedAssertion = true;
+                    }
+                    if (hasErrorCodeNameField(expectedResult)) {
+                        String expectedErrorCodeName = getErrorCodeNameField(expectedResult);
+                        if (e instanceof MongoCommandException) {
+                            assertEquals(expectedErrorCodeName, ((MongoCommandException) e).getErrorCodeName());
+                            passedAssertion = true;
+                        } else if (e instanceof MongoWriteConcernException) {
+                            assertEquals(expectedErrorCodeName, ((MongoWriteConcernException) e).getWriteConcernError().getCodeName());
+                            passedAssertion = true;
+                        }
+                    }
+                    if (!passedAssertion || throwExceptions) {
+                        throw e;
+                    }
+                }
             }
-            try {
-                if (operationName.equals("startTransaction")) {
-                    BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
-                    if (arguments.containsKey("options")) {
-                        TransactionOptions transactionOptions = createTransactionOptions(arguments.getDocument("options"));
-                        nonNullClientSession(clientSession).startTransaction(transactionOptions);
-                    } else {
-                        nonNullClientSession(clientSession).startTransaction();
-                    }
-                } else if (operationName.equals("commitTransaction")) {
-                    nonNullClientSession(clientSession).commitTransaction();
-                } else if (operationName.equals("abortTransaction")) {
-                    nonNullClientSession(clientSession).abortTransaction();
-                } else if (operationName.equals("withTransaction")) {
-                    final BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
-
-                    TransactionOptions transactionOptions = null;
-                    if (arguments.containsKey("options")) {
-                        transactionOptions = createTransactionOptions(arguments.getDocument("options"));
-                    }
-
-                    if (transactionOptions == null) {
-                        nonNullClientSession(clientSession).withTransaction(new TransactionBody<Object>() {
-                            @Override
-                            public Void execute() {
-                                executeOperations(arguments.getDocument("callback").getArray("operations"), true);
-                                return null;
-                            }
-                        });
-                    } else {
-                        nonNullClientSession(clientSession).withTransaction(transactionOptions, new TransactionBody<Object>() {
-                            @Override
-                            public Void execute() {
-                                executeOperations(arguments.getDocument("callback").getArray("operations"), true);
-                                return null;
-                            }
-                        });
-                    }
-                } else {
-                    BsonDocument actualOutcome = helper.getOperationResults(operation, clientSession);
-                    if (expectedResult != null) {
-                        BsonValue actualResult = actualOutcome.get("result");
-                        if (actualResult.isDocument()) {
-                            if (((BsonDocument) actualResult).containsKey("recoveryToken")) {
-                                ((BsonDocument) actualResult).remove("recoveryToken");
-                            }
-                        }
-
-                        assertEquals("Expected operation result differs from actual", expectedResult, actualResult);
-                    }
-                }
-                assertFalse(String.format("Expected error '%s' but none thrown for operation %s",
-                        getErrorContainsField(expectedResult), operationName), hasErrorContainsField(expectedResult));
-                assertFalse(String.format("Expected error code '%s' but none thrown for operation %s",
-                        getErrorCodeNameField(expectedResult), operationName), hasErrorCodeNameField(expectedResult));
-            } catch (RuntimeException e) {
-                boolean passedAssertion = false;
-                if (hasErrorLabelsContainField(expectedResult)) {
-                    if (e instanceof MongoException) {
-                        MongoException mongoException = (MongoException) e;
-                        for (String curErrorLabel : getErrorLabelsContainField(expectedResult)) {
-                            assertTrue(String.format("Expected error label '%s but found labels '%s' for operation %s",
-                                    curErrorLabel, mongoException.getErrorLabels(), operationName),
-                                    mongoException.hasErrorLabel(curErrorLabel));
-                        }
-                        passedAssertion = true;
-                    }
-                }
-                if (hasErrorLabelsOmitField(expectedResult)) {
-                    if (e instanceof MongoException) {
-                        MongoException mongoException = (MongoException) e;
-                        for (String curErrorLabel : getErrorLabelsOmitField(expectedResult)) {
-                            assertFalse(String.format("Expected error label '%s omitted but found labels '%s' for operation %s",
-                                    curErrorLabel, mongoException.getErrorLabels(), operationName),
-                                    mongoException.hasErrorLabel(curErrorLabel));
-                        }
-                        passedAssertion = true;
-                    }
-                }
-                if (hasErrorContainsField(expectedResult)) {
-                    String expectedError = getErrorContainsField(expectedResult);
-                    assertTrue(String.format("Expected '%s' but got '%s' for operation %s", expectedError, e.getMessage(),
-                            operationName), e.getMessage().toLowerCase().contains(expectedError.toLowerCase()));
-                    passedAssertion = true;
-                }
-                if (hasErrorCodeNameField(expectedResult)) {
-                    String expectedErrorCodeName = getErrorCodeNameField(expectedResult);
-                    if (e instanceof MongoCommandException) {
-                        assertEquals(expectedErrorCodeName, ((MongoCommandException) e).getErrorCodeName());
-                        passedAssertion = true;
-                    } else if (e instanceof MongoWriteConcernException) {
-                        assertEquals(expectedErrorCodeName, ((MongoWriteConcernException) e).getWriteConcernError().getCodeName());
-                        passedAssertion = true;
-                    }
-                }
-                if (!passedAssertion || throwExceptions) {
-                    throw e;
-                }
+        } finally {
+            if (failPoint != null) {
+                failPoint.disableFailPoint();
             }
         }
     }
@@ -451,6 +487,54 @@ public abstract class AbstractTransactionsTest {
             return serverVersionAtLeast(4, 0);
         } else {
             return false;
+        }
+    }
+
+    private class TargetedFailPoint {
+        private final BsonDocument failPointDocument;
+        private final MongoDatabase adminDB;
+        private MongoClient mongoClient;
+
+        TargetedFailPoint(final BsonDocument operation) {
+            final BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+            final ClientSession clientSession = sessionsMap.get(arguments.getString("session").getValue());
+
+            if (clientSession.getPinnedServerAddress() != null) {
+                mongoClient = MongoClients.create(MongoClientSettings.builder()
+                        .applyConnectionString(connectionString)
+                        .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
+                            @Override
+                            public void apply(final ClusterSettings.Builder builder) {
+                                builder.hosts(singletonList(clientSession.getPinnedServerAddress()));
+                            }
+                        }).build());
+
+                adminDB = mongoClient.getDatabase("admin");
+            } else {
+                adminDB = null;
+            }
+            failPointDocument = arguments.getDocument("failPoint");
+        }
+
+        public void executeFailPoint() {
+            executeCommand(failPointDocument);
+        }
+
+        public void disableFailPoint() {
+            executeCommand(new BsonDocument("configureFailPoint",
+                    failPointDocument.getString("configureFailPoint"))
+                    .append("mode", new BsonString("off")));
+            if (mongoClient != null) {
+                mongoClient.close();
+            }
+        }
+
+        private void executeCommand(final BsonDocument doc) {
+            if (adminDB != null) {
+                adminDB.runCommand(doc);
+            } else {
+                collectionHelper.runAdminCommand(doc);
+            }
         }
     }
 }
