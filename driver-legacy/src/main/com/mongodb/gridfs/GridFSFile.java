@@ -82,37 +82,6 @@ public abstract class GridFSFile implements DBObject {
     }
 
     /**
-     * Verifies that the MD5 matches between the database and the local file. This should be called after transferring a file.
-     *
-     * @throws MongoException if there's a failure
-     * @deprecated there is no replacement for this method
-     */
-    @Deprecated
-    public void validate() {
-        if (fs == null) {
-            throw new MongoException("no fs");
-        }
-        if (md5 == null) {
-            throw new MongoException("no md5 stored");
-        }
-
-        DBObject cmd = new BasicDBObject("filemd5", id);
-        cmd.put("root", fs.getBucketName());
-        DBObject res = fs.getDB().command(cmd);
-        if (res != null && res.containsField("md5")) {
-            String m = res.get("md5").toString();
-            if (m.equals(md5)) {
-                return;
-            }
-            throw new MongoException("md5 differ.  mine [" + md5 + "] theirs [" + m + "]");
-        }
-
-        // no md5 from the server
-        throw new MongoException("no md5 returned from server: " + res);
-
-    }
-
-    /**
      * Returns the number of chunks that store the file data.
      *
      * @return number of chunks
@@ -203,17 +172,6 @@ public abstract class GridFSFile implements DBObject {
      */
     public void setMetaData(final DBObject metadata) {
         extra.put("metadata", metadata);
-    }
-
-    /**
-     * Gets the observed MD5 during transfer
-     *
-     * @return md5
-     * @deprecated there is no replacement for this method
-     */
-    @Deprecated
-    public String getMD5() {
-        return md5;
     }
 
     @Override
