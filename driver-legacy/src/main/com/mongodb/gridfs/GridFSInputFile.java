@@ -19,7 +19,7 @@ package com.mongodb.gridfs;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.MongoException;
-import com.mongodb.util.Util;
+import com.mongodb.internal.HexUtils;
 import org.bson.types.ObjectId;
 
 import java.io.IOException;
@@ -319,7 +319,7 @@ public class GridFSInputFile extends GridFSFile {
      */
     private void finishData() {
         if (!savedChunks) {
-            md5 = Util.toHex(messageDigester.digest());
+            md5 = HexUtils.toHex(messageDigester.digest());
             messageDigester = null;
             length = totalBytes;
             savedChunks = true;

@@ -19,6 +19,11 @@ package com.mongodb;
 import com.mongodb.annotations.Immutable;
 import org.bson.LazyBSONCallback;
 import org.bson.LazyBSONObject;
+import org.bson.codecs.EncoderContext;
+import org.bson.json.JsonWriter;
+import org.bson.json.JsonWriterSettings;
+
+import java.io.StringWriter;
 
 /**
  * An immutable {@code DBObject} backed by a byte buffer that lazily provides keys and values on request. This is useful for transferring
@@ -65,8 +70,10 @@ public class LazyDBObject extends LazyBSONObject implements DBObject {
      *
      * @return JSON serialization
      */
-    @SuppressWarnings("deprecation")
     public String toString() {
-        return com.mongodb.util.JSON.serialize(this);
+        JsonWriter writer = new JsonWriter(new StringWriter(), JsonWriterSettings.builder().build());
+        DBObjectCodec.getDefaultRegistry().get(LazyDBObject.class).encode(writer, this,
+                EncoderContext.builder().isEncodingCollectibleDocument(true).build());
+        return writer.getWriter().toString();
     }
 }
