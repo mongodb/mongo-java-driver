@@ -19,7 +19,7 @@ package com.mongodb.gridfs;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
-import com.mongodb.util.Util;
+import com.mongodb.internal.HexUtils;
 
 import java.io.File;
 import java.security.DigestInputStream;
@@ -163,7 +163,7 @@ public class CLI {
                     is.close();
                 }
                 byte[] digest = md5.digest();
-                System.out.println("length: " + read + " md5: " + Util.toHex(digest));
+                System.out.println("length: " + read + " md5: " + HexUtils.toHex(digest));
                 return;
             }
 

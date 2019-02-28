@@ -18,6 +18,11 @@ package com.mongodb;
 
 import org.bson.LazyBSONCallback;
 import org.bson.LazyBSONList;
+import org.bson.codecs.EncoderContext;
+import org.bson.json.JsonWriter;
+import org.bson.json.JsonWriterSettings;
+
+import java.io.StringWriter;
 
 /**
  * A {@code LazyDBObject} representing a BSON array.

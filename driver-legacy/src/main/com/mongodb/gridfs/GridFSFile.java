@@ -18,9 +18,17 @@ package com.mongodb.gridfs;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
+import com.mongodb.DBObjectCodecProvider;
 import com.mongodb.MongoException;
 import org.bson.BSONObject;
+import org.bson.codecs.BsonValueCodecProvider;
+import org.bson.codecs.EncoderContext;
+import org.bson.codecs.ValueCodecProvider;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.json.JsonWriter;
+import org.bson.json.JsonWriterSettings;
 
+import java.io.StringWriter;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
@@ -29,6 +37,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static java.util.Arrays.asList;
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 
 /**
  * The abstract class representing a GridFS file.
@@ -37,14 +46,17 @@ import static java.util.Arrays.asList;
  */
 public abstract class GridFSFile implements DBObject {
 
+    private static final CodecRegistry DEFAULT_REGISTRY =
+            fromProviders(asList(new ValueCodecProvider(), new BsonValueCodecProvider(), new DBObjectCodecProvider()));
+
     private static final Set<String> VALID_FIELDS = Collections.unmodifiableSet(new HashSet<String>(asList("_id",
-                                                                                                           "filename",
-                                                                                                           "contentType",
-                                                                                                           "length",
-                                                                                                           "chunkSize",
-                                                                                                           "uploadDate",
-                                                                                                           "aliases",
-                                                                                                           "md5")));
+            "filename",
+            "contentType",
+            "length",
+            "chunkSize",
+            "uploadDate",
+            "aliases",
+            "md5")));
 
     final DBObject extra = new BasicDBObject();
 
@@ -280,9 +292,11 @@ public abstract class GridFSFile implements DBObject {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public String toString() {
-        return com.mongodb.util.JSON.serialize(this);
+        JsonWriter writer = new JsonWriter(new StringWriter(), JsonWriterSettings.builder().build());
+        DEFAULT_REGISTRY.get(GridFSFile.class).encode(writer, this,
+                EncoderContext.builder().isEncodingCollectibleDocument(true).build());
+        return writer.getWriter().toString();
     }
 
     /**
