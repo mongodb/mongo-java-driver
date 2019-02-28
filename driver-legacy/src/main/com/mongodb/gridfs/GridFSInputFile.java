@@ -19,14 +19,11 @@ package com.mongodb.gridfs;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.MongoException;
-import com.mongodb.internal.HexUtils;
 import org.bson.types.ObjectId;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 
 /**
@@ -49,7 +46,6 @@ public class GridFSInputFile extends GridFSFile {
     private int currentBufferPosition = 0;
     private long totalBytes = 0;
     private OutputStream outputStream = null;
-    private MessageDigest messageDigester = null;
 
     /**
      * Default constructor setting the GridFS file name and providing an input stream containing data to be written to the file.
@@ -69,12 +65,6 @@ public class GridFSInputFile extends GridFSFile {
         this.id = new ObjectId();
         this.chunkSize = GridFS.DEFAULT_CHUNKSIZE;
         this.uploadDate = new Date();
-        try {
-            this.messageDigester = MessageDigest.getInstance("MD5");
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("No MD5!");
-        }
-        this.messageDigester.reset();
         this.buffer = new byte[(int) chunkSize];
     }
 
@@ -277,7 +267,6 @@ public class GridFSInputFile extends GridFSFile {
 
         currentChunkNumber++;
         totalBytes += writeBuffer.length;
-        messageDigester.update(writeBuffer);
         currentBufferPosition = 0;
     }
 
@@ -319,8 +308,6 @@ public class GridFSInputFile extends GridFSFile {
      */
     private void finishData() {
         if (!savedChunks) {
-            md5 = HexUtils.toHex(messageDigester.digest());
-            messageDigester = null;
             length = totalBytes;
             savedChunks = true;
             try {
