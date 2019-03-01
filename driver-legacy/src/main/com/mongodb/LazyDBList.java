@@ -61,8 +61,11 @@ public class LazyDBList extends LazyBSONList implements DBObject {
      * Returns a JSON serialization of this object
      *
      * @return JSON serialization
+     * @deprecated there is no replacement for this method, as the driver no longer supports generating top-level JSON arrays. To encode
+     * an instance of this class to JSON it must be embedded inside a document.
      */
     @SuppressWarnings("deprecation")
+    @Deprecated
     public String toString() {
         return com.mongodb.util.JSON.serialize(this);
     }
