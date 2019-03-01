@@ -319,13 +319,23 @@ class DefaultConnectionPoolSpecification extends Specification {
                                          builder().maxSize(10).minSize(5).maintenanceInitialDelay(5, MINUTES).build())
         pool.start();
 
-        when:
+        when: 'the maintenance tasks runs'
         pool.doMaintenance()
         //not cool - but we have no way of being notified that the maintenance task has finished
         Thread.sleep(500)
 
-        then:
+        then: 'it ensures the minimum size of the pool'
         connectionFactory.createdConnections.size() == 5
+        connectionFactory.createdConnections.get(0).opened()  // if the first one is opened, they all should be
+
+        when: 'the pool is invalidated and the maintenance tasks runs'
+        pool.invalidate()
+        pool.doMaintenance()
+        //not cool - but we have no way of being notified that the maintenance task has finished
+        Thread.sleep(500)
+
+        then: 'it prunes the existing connections and again ensures the minimum size of the pool'
+        connectionFactory.createdConnections.size() == 10
         connectionFactory.createdConnections.get(0).opened()  // if the first one is opened, they all should be
     }
 
