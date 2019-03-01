@@ -9,8 +9,17 @@ title = "Upgrade Considerations"
 
 ## Upgrading from 3.9.x
 
+Please note that two large portions of the current driver have been deprecated as of the 3.9.0 release:
+
+* The callback-based asynchronous driver has been deprecated in favor of the 
+[Reactive Streams Java Driver](http://mongodb.github.io/mongo-java-driver-reactivestreams/).
+* Much of the "core" driver on which the both the asynchronous and synchronous drivers are built has been deprecated.  In 3.0 we made most
+of this "core" driver a public API, but the benefit to users has turned out to be small and the maintenance costs of maintaining backwards 
+compatibility has turned out to be high.  For that reason we've decided to remove it from the public API (though it will still continue 
+to exist as an implementation artifact).
+
 In the upcoming 4.0 release, all deprecated API elements except those documented as "not currently scheduled for removal" will be removed. 
-Currently the only API elements _not_ scheduled for removal are:
+Currently the only deprecated API elements _not_ scheduled for removal are:
 
 * [`Mongo.getDB`]({{<apiref "com/mongodb/Mongo.html#getDB-java.lang.String-">}})
 * [`JsonMode.STRICT`]({{<apiref "org/bson/json/JsonMode.html#STRICT">}}) 
