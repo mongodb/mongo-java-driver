@@ -23,7 +23,9 @@ For the synchronous MongoDB Driver, see [MongoDB Driver section]({{< relref "dri
 
 ### MongoDB Async Driver
 
-For the new asynchronous MongoDB Async Driver, the [MongoDB Async Driver section]({{< relref "driver-async/index.md" >}}).
+For the callback-based asynchronous MongoDB Async Driver, see [MongoDB Async Driver section]({{< relref "driver-async/index.md" >}}). Note 
+that this driver has been deprecated in favor of the 
+[Reactive Streams Java Driver](http://mongodb.github.io/mongo-java-driver-reactivestreams/). 
 
 ### BSON Library
 
