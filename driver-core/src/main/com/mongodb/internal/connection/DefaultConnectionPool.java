@@ -67,6 +67,7 @@ class DefaultConnectionPool implements ConnectionPool {
     private final ConnectionPoolSettings settings;
     private final AtomicInteger waitQueueSize = new AtomicInteger(0);
     private final AtomicInteger generation = new AtomicInteger(0);
+    private final AtomicInteger lastPrunedGeneration = new AtomicInteger(0);
     private final ScheduledExecutorService sizeMaintenanceTimer;
     private ExecutorService asyncGetter;
     private final Runnable maintenanceTask;
@@ -301,12 +302,14 @@ class DefaultConnectionPool implements ConnectionPool {
                 @Override
                 public synchronized void run() {
                     try {
-                        if (shouldPrune()) {
+                        int curGeneration = generation.get();
+                        if (shouldPrune() || curGeneration > lastPrunedGeneration.get()) {
                             if (LOGGER.isDebugEnabled()) {
                                 LOGGER.debug(format("Pruning pooled connections to %s", serverId.getAddress()));
                             }
                             pool.prune();
                         }
+                        lastPrunedGeneration.set(curGeneration);
                         if (shouldEnsureMinSize()) {
                             if (LOGGER.isDebugEnabled()) {
                                 LOGGER.debug(format("Ensuring minimum pooled connections to %s", serverId.getAddress()));
