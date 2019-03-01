@@ -26,6 +26,7 @@ import org.bson.codecs.LongCodec;
 import org.bson.codecs.MapCodec;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.pojo.entities.AnySetterFieldModel;
 import org.bson.codecs.pojo.entities.AsymmetricalCreatorModel;
 import org.bson.codecs.pojo.entities.AsymmetricalIgnoreModel;
 import org.bson.codecs.pojo.entities.AsymmetricalModel;
@@ -82,6 +83,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
 import static org.bson.codecs.pojo.Conventions.DEFAULT_CONVENTIONS;
 import static org.bson.codecs.pojo.Conventions.NO_CONVENTIONS;
+import static org.bson.codecs.pojo.Conventions.SET_ALL_FIELDS_CONVENTION;
 import static org.bson.codecs.pojo.Conventions.SET_PRIVATE_FIELDS_CONVENTION;
 import static org.bson.codecs.pojo.Conventions.USE_GETTERS_FOR_SETTERS;
 import static org.junit.Assert.assertEquals;
@@ -241,6 +243,17 @@ public final class PojoCustomTest extends PojoTestCase {
         builder.conventions(conventions);
 
         roundTrip(builder, new PrivateSetterFieldModel(1, "2", asList("a", "b")),
+                "{'someMethod': 'some method', 'integerField': 1, 'stringField': '2', listField: ['a', 'b']}");
+    }
+
+    @Test
+    public void testSetFieldDirectlyConvention() {
+        PojoCodecProvider.Builder builder = getPojoCodecProviderBuilder(AnySetterFieldModel.class);
+        ArrayList<Convention> conventions = new ArrayList<Convention>(DEFAULT_CONVENTIONS);
+        conventions.add(SET_ALL_FIELDS_CONVENTION);
+        builder.conventions(conventions);
+
+        roundTrip(builder, new AnySetterFieldModel(1, "2", asList("a", "b")),
                 "{'someMethod': 'some method', 'integerField': 1, 'stringField': '2', listField: ['a', 'b']}");
     }
 
