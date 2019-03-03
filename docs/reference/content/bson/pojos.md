@@ -9,8 +9,8 @@ title = "POJOs"
 
 ## POJOs - Plain Old Java Objects
 
-The 3.5 release of the driver adds POJO support via the [`PojoCodec`]({{<apiref "org/bson/codecs/pojo/PojoCodec.html">}}), which allows for 
-direct serialization of POJOs and Java Beans to and from BSON. Internally, each `PojoCodec` utilizes a
+The 3.5 release of the driver adds POJO support via the [`PojoCodecProvider`]({{<apiref "org/bson/codecs/pojo/PojoCodecProvider.html">}}), 
+which allows for direct serialization of POJOs and Java Beans to and from BSON. Internally, the `Codec` for each POJO utilizes a
 [`ClassModel`]({{<apiref "org/bson/codecs/pojo/ClassModel.html">}}) instance to store metadata about how the POJO should be serialized.
 
 A `ClassModel` for a POJO includes:
@@ -43,7 +43,7 @@ ClassModels are built using the [`ClassModelBuilder`]({{<apiref "org/bson/codecs
  the [`ClassModel.builder(clazz)`]({{<apiref "org/bson/codecs/pojo/ClassModel.html#builder-java.lang.Class-">}}) method. The builder 
  initially uses reflection to create the required metadata.
 
-`PojoCodec` instances are created by the [`PojoCodecProvider`]({{<apiref "org/bson/codecs/pojo/PojoCodecProvider.html">}}) which is a
+POJO `Codec` instances are created by the [`PojoCodecProvider`]({{<apiref "org/bson/codecs/pojo/PojoCodecProvider.html">}}) which is a
 `CodecProvider`. CodecProviders are used by the `CodecRegistry` to find the correct `Codec` for any given class.
 
 {{% note class="important" %}}
@@ -58,8 +58,7 @@ encoded and decoded.
 ## POJO support
 
 Automatic POJO support can be provided by setting `PojoCodecProvider.Builder#automatic(true)`, once built the `PojoCodecProvider` will 
-automatically create a `PojoCodec` for any class that contains at least one serializable or deserializable 
-property.
+automatically create a POJO `Codec` for any class that contains at least one serializable or deserializable property.
 
 The entry point for customisable POJO support is the `PojoCodecProvider`. New instances can be created via the
 [`PojoCodecProvider.builder()`]({{<apiref "org/bson/codecs/pojo/PojoCodecProvider.html#builder">}}) method. The `builder` allows users to 
@@ -70,8 +69,8 @@ register any combination of:
   * `ClassModel` instances which allow fine grained control over how a POJO is encoded and decoded.
   
 The `builder` also allows the user to register default [Conventions](#conventions) for any POJOs that are automatically mapped, either 
-the individual POJO classes or POJOs found from registered packages. The `PojoCodecProvider` will lookup PojoCodecs and return the first 
-that matches the POJO class:
+the individual POJO classes or POJOs found from registered packages. The `PojoCodecProvider` will lookup POJO `Codec` instances and return 
+the first that matches the POJO class:
   
   * Registered ClassModels
   * Registered POJO classes
@@ -96,14 +95,14 @@ CodecRegistry pojoCodecRegistry = fromRegistries(getDefaultCodecRegistry(), from
 {{% note class="tip" %}}
 In general only one instance of a `PojoCodecProvider` should be created. 
 
-This is because each `PojoCodecProvider` instance contains a look up table for discriminator names. If multiple PojoCodecProviders are 
+This is because each `PojoCodecProvider` instance contains a look up table for discriminator names. If multiple `PojoCodecProvider`s are 
 used, care should be taken to ensure that each provider contains a holistic view of POJO classes, otherwise discriminator lookups can fail. 
 Alternatively, using the full class name as the discriminator value will ensure successful POJO lookups. 
 {{% /note %}}
 
 ## Default configuration
 
-By default the `PojoCodec` will not store `null` values or a discriminator when converting a POJO to BSON. 
+By default the POJO `Codec` will not store `null` values or a discriminator when converting a POJO to BSON. 
 
 Take the following `Person` class:
 
@@ -195,8 +194,8 @@ public final class Tree extends GenericTree<Integer, String> {
 The `Tree` POJO is serializable because it doesn't have any unknown type parameters. The `left`, `right` and `genericClass` properties are 
 all serializable because they are bound to the concrete types `Integer`, `String` and `Long`. 
 
-On their own, instances of `GenericTree` or `GenericClass` are not serializable by the `PojoCodec`. This is because the runtime type parameter
-information is erased by the JVM, and the type parameters cannot be specialized accurately.
+On their own, instances of `GenericTree` or `GenericClass` are not serializable by the POJO `Codec`. This is because the runtime type 
+parameter information is erased by the JVM, and the type parameters cannot be specialized accurately.
 
 The 3.6 release of the driver further improves generic support with the addition of PropertyCodecProviders. The `PropertyCodecProvider` API 
 allows type-safe support of container types by providing concrete type parameters for the generic types as declared in the POJO.
@@ -273,8 +272,8 @@ public class Person {
 
 ### Enum support
 
-Enums are fully supported. The `PojoCodec` uses the name of the enum constant as the property value. This is then converted back into an Enum 
-value by the codec using the static `Enum.valueOf` method.
+Enums are fully supported. The POJO `Codec` uses the name of the enum constant as the property value. This is then converted back into an
+Enum value by the codec using the static `Enum.valueOf` method.
 
 Take the following example:
 
@@ -427,7 +426,7 @@ CodecRegistry pojoCodecRegistry = fromRegistries(getDefaultCodecRegistry(), from
 
 ### Supporting POJOs without no args constructors
 
-By default PojoCodecs work with POJOs that have an empty, no arguments, constructor. POJOs with alternative constructors are supported 
+By default a POJO `Codec` works with POJOs that have an empty, no arguments, constructor. POJOs with alternative constructors are supported 
 via the `ANNOTATION_CONVENTION` and the `@BsonCreator` annotation. Any parameters for the creator constructor should be annotated with the 
 `@BsonProperty` annotation. Below is an example of a `Person` POJO that contains final fields that are set via the annotated constructor:
 
