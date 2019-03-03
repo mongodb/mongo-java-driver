@@ -126,7 +126,7 @@ Connecting to Unix domain sockets is done via the [`ConnectionString`]({{< apire
 
 ### PojoCodec improvements
 
-The 3.7 release brings support for `Map<String, Object>` to the `PojoCodec`.
+The 3.7 release brings support for `Map<String, Object>` to the POJO `Codec`.
 
 ### JSR-310 Instant, LocalDate & LocalDateTime support
 
@@ -210,9 +210,9 @@ The 3.6 release adds support for [causally consistency](http://dochub.mongodb.or
 The 3.6 release adds support for application-configured control over server selection, using the `serverSelector` option in
 [`MongoClientOptions`]({{<apiref "com/mongodb/MongoClientOptions">}}).
 
-### PojoCodec improvements
+### POJO Codec improvements
 
-The 3.6 release brings new improvements to the `PojoCodec`:
+The 3.6 release brings new improvements to the POJO `Codec`:
 
   * Improved sub-class and discriminator support.
   * Support for custom Collection and Map implementations.
