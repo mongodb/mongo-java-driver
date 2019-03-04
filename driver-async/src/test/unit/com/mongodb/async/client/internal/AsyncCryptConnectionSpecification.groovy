@@ -43,7 +43,6 @@ import org.bson.codecs.DocumentCodec
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.RawBsonDocumentCodec
 import org.bson.io.BasicOutputBuffer
-import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import static com.mongodb.connection.ServerType.STANDALONE

@@ -55,8 +55,7 @@ public abstract class GridFSFile implements DBObject {
             "length",
             "chunkSize",
             "uploadDate",
-            "aliases",
-            "md5")));
+            "aliases")));
 
     final DBObject extra = new BasicDBObject();
 
@@ -67,7 +66,6 @@ public abstract class GridFSFile implements DBObject {
     long length;
     long chunkSize;
     Date uploadDate;
-    String md5;
 
     /**
      * Saves the file entry to the files collection
@@ -190,8 +188,6 @@ public abstract class GridFSFile implements DBObject {
             chunkSize = ((Number) v).longValue();
         } else if (key.equals("uploadDate")) {
             uploadDate = (Date) v;
-        } else if (key.equals("md5")) {
-            md5 = (String) v;
         } else {
             extra.put(key, v);
         }
@@ -214,8 +210,6 @@ public abstract class GridFSFile implements DBObject {
             return chunkSize;
         } else if (key.equals("uploadDate")) {
             return uploadDate;
-        } else if (key.equals("md5")) {
-            return md5;
         }
         return extra.get(key);
     }
