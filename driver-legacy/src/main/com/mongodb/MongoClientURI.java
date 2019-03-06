@@ -218,9 +218,6 @@ import static com.mongodb.assertions.Assertions.notNull;
  * will change to "unspecified" in the next major release.</li>
  * </ul>
  *
- * <p>Note: This class is a replacement for {@code MongoURI}, to be used with {@code MongoClient}.  The main difference in
- * behavior is that the default write concern is {@code WriteConcern.ACKNOWLEDGED}.</p>
- *
  * @mongodb.driver.manual reference/connection-string Connection String URI Format
  * @see MongoClientOptions for the default values for all options
  * @since 2.10.0
@@ -230,7 +227,7 @@ public class MongoClientURI {
     private final MongoClientOptions.Builder builder;
 
     /**
-     * Creates a MongoURI from the given string.
+     * Creates a MongoClientURI from the given string.
      *
      * @param uri the URI
      */
@@ -239,8 +236,8 @@ public class MongoClientURI {
     }
 
     /**
-     * Creates a MongoURI from the given URI string, and MongoClientOptions.Builder.  The builder can be configured with default options,
-     * which may be overridden by options specified in the URI string.
+     * Creates a MongoClientURI from the given URI string, and MongoClientOptions.Builder.  The builder can be configured with default
+     * options, which may be overridden by options specified in the URI string.
      *
      * <p>
      * The {@code MongoClientURI} takes ownership of the {@code MongoClientOptions.Builder} instance that is passed to this constructor,

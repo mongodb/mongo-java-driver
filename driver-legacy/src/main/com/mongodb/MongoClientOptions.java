@@ -32,9 +32,7 @@ import com.mongodb.selector.ServerSelector;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistry;
 
-import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSocketFactory;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,19 +46,12 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 /**
  * <p>Various settings to control the behavior of a {@code MongoClient}.</p>
  *
- * <p>Note: This class is a replacement for {@code MongoOptions}, to be used with {@code MongoClient}.  The main difference in behavior is
- * that the default write concern is {@code WriteConcern.ACKNOWLEDGED}.</p>
- *
  * @see MongoClient
  * @since 2.10.0
  */
 @Immutable
 public class MongoClientOptions {
 
-    private static final SocketFactory DEFAULT_SSL_SOCKET_FACTORY = SSLSocketFactory.getDefault();
-    private static final SocketFactory DEFAULT_SOCKET_FACTORY = SocketFactory.getDefault();
-
-    private final String description;
     private final String applicationName;
     private final List<MongoCompressor> compressorList;
     private final ReadPreference readPreference;
@@ -86,7 +77,6 @@ public class MongoClientOptions {
     private final boolean sslEnabled;
     private final boolean sslInvalidHostNameAllowed;
     private final SSLContext sslContext;
-    private final boolean alwaysUseMBeans;
     private final int heartbeatFrequency;
     private final int minHeartbeatFrequency;
     private final int heartbeatConnectTimeout;
@@ -96,7 +86,6 @@ public class MongoClientOptions {
     private final String requiredReplicaSetName;
     private final DBDecoderFactory dbDecoderFactory;
     private final DBEncoderFactory dbEncoderFactory;
-    private final SocketFactory socketFactory;
     private final boolean cursorFinalizerEnabled;
     private final ConnectionPoolSettings connectionPoolSettings;
     private final SocketSettings socketSettings;
@@ -111,7 +100,6 @@ public class MongoClientOptions {
 
     @SuppressWarnings("deprecation")
     private MongoClientOptions(final Builder builder) {
-        description = builder.description;
         applicationName = builder.applicationName;
         compressorList = builder.compressorList;
         minConnectionsPerHost = builder.minConnectionsPerHost;
@@ -135,7 +123,6 @@ public class MongoClientOptions {
         sslEnabled = builder.sslEnabled;
         sslInvalidHostNameAllowed = builder.sslInvalidHostNameAllowed;
         sslContext = builder.sslContext;
-        alwaysUseMBeans = builder.alwaysUseMBeans;
         heartbeatFrequency = builder.heartbeatFrequency;
         minHeartbeatFrequency = builder.minHeartbeatFrequency;
         heartbeatConnectTimeout = builder.heartbeatConnectTimeout;
@@ -144,7 +131,6 @@ public class MongoClientOptions {
         requiredReplicaSetName = builder.requiredReplicaSetName;
         dbDecoderFactory = builder.dbDecoderFactory;
         dbEncoderFactory = builder.dbEncoderFactory;
-        socketFactory = builder.socketFactory;
         cursorFinalizerEnabled = builder.cursorFinalizerEnabled;
 
         clusterListeners = unmodifiableList(builder.clusterListeners);
@@ -168,12 +154,10 @@ public class MongoClientOptions {
         socketSettings = SocketSettings.builder()
                 .connectTimeout(getConnectTimeout(), MILLISECONDS)
                 .readTimeout(getSocketTimeout(), MILLISECONDS)
-                .keepAlive(isSocketKeepAlive())
                 .build();
         heartbeatSocketSettings = SocketSettings.builder()
                 .connectTimeout(getHeartbeatConnectTimeout(), MILLISECONDS)
                 .readTimeout(getHeartbeatSocketTimeout(), MILLISECONDS)
-                .keepAlive(isSocketKeepAlive())
                 .build();
 
         ServerSettings.Builder serverSettingsBuilder = ServerSettings.builder()
@@ -216,19 +200,6 @@ public class MongoClientOptions {
      */
     public static Builder builder(final MongoClientOptions options) {
         return new Builder(options);
-    }
-
-    /**
-     * <p>Gets the description for this MongoClient, which is used in various places like logging and JMX.</p>
-     *
-     * <p>Default is null.</p>
-     *
-     * @return the description
-     * @deprecated Prefer {@link #getApplicationName()}
-     */
-    @Deprecated
-    public String getDescription() {
-        return description;
     }
 
     /**
@@ -370,22 +341,6 @@ public class MongoClientOptions {
      */
     public int getSocketTimeout() {
         return socketTimeout;
-    }
-
-    /**
-     * <p>This flag controls the socket keep-alive feature that keeps a connection alive through firewalls {@link
-     * java.net.Socket#setKeepAlive(boolean)}</p>
-     *
-     * <p>Default is {@code true}.</p>
-     *
-     * @return whether keep-alive is enabled on each socket
-     * @see <a href="https://docs.mongodb.com/manual/faq/diagnostics/#does-tcp-keepalive-time-affect-mongodb-deployments">
-     * Does TCP keep-alive time affect MongoDB Deployments?</a>
-     * @deprecated configuring keep-alive has been deprecated. It now defaults to true and disabling it is not recommended.
-     */
-    @Deprecated
-    public boolean isSocketKeepAlive() {
-        return socketKeepAlive;
     }
 
     /**
@@ -708,39 +663,6 @@ public class MongoClientOptions {
     }
 
     /**
-     * <p>Gets whether JMX beans registered by the driver should always be MBeans, regardless of whether the VM is Java 6 or greater. If
-     * false, the driver will use MXBeans if the VM is Java 6 or greater, and use MBeans if the VM is Java 5.</p>
-     *
-     * <p>Default is {@code false}.</p>
-     *
-     * @return true if JMX beans should always be MBeans
-     * @deprecated there is no replacement for this property
-     */
-    @Deprecated
-    public boolean isAlwaysUseMBeans() {
-        return alwaysUseMBeans;
-    }
-
-    /**
-     * <p>The socket factory for creating sockets to the mongo server.</p>
-     *
-     * <p>Default is SocketFactory.getDefault()</p>
-     *
-     * @return the socket factory
-     * @deprecated Prefer {@link #isSslEnabled()} and {@link #getSslContext()}
-     */
-    @Deprecated
-    public SocketFactory getSocketFactory() {
-        if (socketFactory != null) {
-            return socketFactory;
-        } else if (getSslSettings().isEnabled()) {
-            return sslContext == null ? DEFAULT_SSL_SOCKET_FACTORY : sslContext.getSocketFactory();
-        } else {
-            return DEFAULT_SOCKET_FACTORY;
-        }
-    }
-
-    /**
      * <p>Gets whether there is a a finalize method created that cleans up instances of DBCursor that the client does not close.  If you are
      * careful to always call the close method of DBCursor, then this can safely be set to false.</p>
      *
@@ -797,9 +719,6 @@ public class MongoClientOptions {
         MongoClientOptions that = (MongoClientOptions) o;
 
         if (localThreshold != that.localThreshold) {
-            return false;
-        }
-        if (alwaysUseMBeans != that.alwaysUseMBeans) {
             return false;
         }
         if (connectTimeout != that.connectTimeout) {
@@ -862,9 +781,6 @@ public class MongoClientOptions {
         if (dbEncoderFactory != null ? !dbEncoderFactory.equals(that.dbEncoderFactory) : that.dbEncoderFactory != null) {
             return false;
         }
-        if (description != null ? !description.equals(that.description) : that.description != null) {
-            return false;
-        }
         if (applicationName != null ? !applicationName.equals(that.applicationName) : that.applicationName != null) {
             return false;
         }
@@ -902,9 +818,6 @@ public class MongoClientOptions {
                 : that.requiredReplicaSetName != null) {
             return false;
         }
-        if (socketFactory != null ? !socketFactory.equals(that.socketFactory) : that.socketFactory != null) {
-            return false;
-        }
         if (!compressorList.equals(that.compressorList)) {
             return false;
         }
@@ -918,8 +831,7 @@ public class MongoClientOptions {
 
     @Override
     public int hashCode() {
-        int result = description != null ? description.hashCode() : 0;
-        result = 31 * result + (applicationName != null ? applicationName.hashCode() : 0);
+        int result = (applicationName != null ? applicationName.hashCode() : 0);
         result = 31 * result + readPreference.hashCode();
         result = 31 * result + writeConcern.hashCode();
         result = 31 * result + (retryWrites ? 1 : 0);
@@ -943,7 +855,6 @@ public class MongoClientOptions {
         result = 31 * result + (sslEnabled ? 1 : 0);
         result = 31 * result + (sslInvalidHostNameAllowed ? 1 : 0);
         result = 31 * result + (sslContext != null ? sslContext.hashCode() : 0);
-        result = 31 * result + (alwaysUseMBeans ? 1 : 0);
         result = 31 * result + heartbeatFrequency;
         result = 31 * result + minHeartbeatFrequency;
         result = 31 * result + heartbeatConnectTimeout;
@@ -953,7 +864,6 @@ public class MongoClientOptions {
         result = 31 * result + (dbDecoderFactory != null ? dbDecoderFactory.hashCode() : 0);
         result = 31 * result + (dbEncoderFactory != null ? dbEncoderFactory.hashCode() : 0);
         result = 31 * result + (cursorFinalizerEnabled ? 1 : 0);
-        result = 31 * result + (socketFactory != null ? socketFactory.hashCode() : 0);
         result = 31 * result + compressorList.hashCode();
         result = 31 * result + (autoEncryptionSettings != null ? autoEncryptionSettings.hashCode() : 0);
         return result;
@@ -962,7 +872,6 @@ public class MongoClientOptions {
     @Override
     public String toString() {
         return "MongoClientOptions{"
-                + "description='" + description + '\''
                 + ", applicationName='" + applicationName + '\''
                 + ", compressors='" + compressorList + '\''
                 + ", readPreference=" + readPreference
@@ -988,7 +897,6 @@ public class MongoClientOptions {
                 + ", sslEnabled=" + sslEnabled
                 + ", sslInvalidHostNamesAllowed=" + sslInvalidHostNameAllowed
                 + ", sslContext=" + sslContext
-                + ", alwaysUseMBeans=" + alwaysUseMBeans
                 + ", heartbeatFrequency=" + heartbeatFrequency
                 + ", minHeartbeatFrequency=" + minHeartbeatFrequency
                 + ", heartbeatConnectTimeout=" + heartbeatConnectTimeout
@@ -997,7 +905,6 @@ public class MongoClientOptions {
                 + ", requiredReplicaSetName='" + requiredReplicaSetName + '\''
                 + ", dbDecoderFactory=" + dbDecoderFactory
                 + ", dbEncoderFactory=" + dbEncoderFactory
-                + ", socketFactory=" + socketFactory
                 + ", cursorFinalizerEnabled=" + cursorFinalizerEnabled
                 + ", connectionPoolSettings=" + connectionPoolSettings
                 + ", socketSettings=" + socketSettings
@@ -1020,7 +927,6 @@ public class MongoClientOptions {
         private final List<ServerListener> serverListeners = new ArrayList<ServerListener>();
         private final List<ServerMonitorListener> serverMonitorListeners = new ArrayList<ServerMonitorListener>();
 
-        private String description;
         private String applicationName;
         private List<MongoCompressor> compressorList = Collections.emptyList();
         private ReadPreference readPreference = ReadPreference.primary();
@@ -1044,7 +950,6 @@ public class MongoClientOptions {
         private boolean sslEnabled = false;
         private boolean sslInvalidHostNameAllowed = false;
         private SSLContext sslContext;
-        private boolean alwaysUseMBeans = false;
 
         private int heartbeatFrequency = 10000;
         private int minHeartbeatFrequency = 500;
@@ -1055,7 +960,6 @@ public class MongoClientOptions {
         private String requiredReplicaSetName;
         private DBDecoderFactory dbDecoderFactory = DefaultDBDecoder.FACTORY;
         private DBEncoderFactory dbEncoderFactory = DefaultDBEncoder.FACTORY;
-        private SocketFactory socketFactory;
         private boolean cursorFinalizerEnabled = true;
         private AutoEncryptionSettings autoEncryptionSettings;
 
@@ -1077,7 +981,6 @@ public class MongoClientOptions {
          */
         @SuppressWarnings("deprecation")
         public Builder(final MongoClientOptions options) {
-            description = options.getDescription();
             applicationName = options.getApplicationName();
             compressorList = options.getCompressorList();
             minConnectionsPerHost = options.getMinConnectionsPerHost();
@@ -1089,7 +992,6 @@ public class MongoClientOptions {
             maxConnectionLifeTime = options.getMaxConnectionLifeTime();
             connectTimeout = options.getConnectTimeout();
             socketTimeout = options.getSocketTimeout();
-            socketKeepAlive = options.isSocketKeepAlive();
             readPreference = options.getReadPreference();
             writeConcern = options.getWriteConcern();
             retryWrites = options.getRetryWrites();
@@ -1101,7 +1003,6 @@ public class MongoClientOptions {
             sslEnabled = options.isSslEnabled();
             sslInvalidHostNameAllowed = options.isSslInvalidHostNameAllowed();
             sslContext = options.getSslContext();
-            alwaysUseMBeans = options.isAlwaysUseMBeans();
             heartbeatFrequency = options.getHeartbeatFrequency();
             minHeartbeatFrequency = options.getMinHeartbeatFrequency();
             heartbeatConnectTimeout = options.getHeartbeatConnectTimeout();
@@ -1110,7 +1011,6 @@ public class MongoClientOptions {
             requiredReplicaSetName = options.getRequiredReplicaSetName();
             dbDecoderFactory = options.getDbDecoderFactory();
             dbEncoderFactory = options.getDbEncoderFactory();
-            socketFactory = options.socketFactory;
             cursorFinalizerEnabled = options.isCursorFinalizerEnabled();
             clusterListeners.addAll(options.getClusterListeners());
             commandListeners.addAll(options.getCommandListeners());
@@ -1118,20 +1018,6 @@ public class MongoClientOptions {
             serverListeners.addAll(options.getServerListeners());
             serverMonitorListeners.addAll(options.getServerMonitorListeners());
             autoEncryptionSettings = options.getAutoEncryptionSettings();
-        }
-
-        /**
-         * Sets the description.
-         *
-         * @param description the description of this MongoClient
-         * @return {@code this}
-         * @see com.mongodb.MongoClientOptions#getDescription()
-         * @deprecated Prefer {@link MongoClientOptions.Builder#applicationName(String)}
-         */
-        @Deprecated
-        public Builder description(final String description) {
-            this.description = description;
-            return this;
         }
 
         /**
@@ -1301,34 +1187,11 @@ public class MongoClientOptions {
         }
 
         /**
-         * Sets whether socket keep-alive is enabled.
-         *
-         * @param socketKeepAlive keep-alive
-         * @return {@code this}
-         * @see <a href="https://docs.mongodb.com/manual/faq/diagnostics/#does-tcp-keepalive-time-affect-mongodb-deployments">
-         * Does TCP keep-alive time affect MongoDB Deployments?</a>
-         * @deprecated configuring keep-alive has been deprecated. It now defaults to true and disabling it is not recommended.
-         */
-        @Deprecated
-        public Builder socketKeepAlive(final boolean socketKeepAlive) {
-            this.socketKeepAlive = socketKeepAlive;
-            return this;
-        }
-
-        /**
          * Sets whether to use SSL.
-         *
-         * <p>If the socketFactory is unset, setting this to true will also set the socketFactory to
-         * {@link SSLSocketFactory#getDefault()} and setting it to false will set the socketFactory to
-         * {@link SocketFactory#getDefault()}</p>
-         *
-         * <p>If the socket factory is set and sslEnabled is also set, the socket factory must create instances of
-         * {@link javax.net.ssl.SSLSocket}. Otherwise, MongoClient will refuse to connect.</p>
          *
          * @param sslEnabled set to true if using SSL
          * @return {@code this}
          * @see MongoClientOptions#isSslEnabled()
-         * @see MongoClientOptions#getSocketFactory()
          * @since 3.0
          */
         public Builder sslEnabled(final boolean sslEnabled) {
@@ -1536,20 +1399,6 @@ public class MongoClientOptions {
         }
 
         /**
-         * Sets the socket factory.
-         *
-         * @param socketFactory the socket factory
-         * @return {@code this}
-         * @see MongoClientOptions#getSocketFactory()
-         * @deprecated Prefer {@link #sslEnabled(boolean)} and {@link #sslContext(SSLContext)}
-         */
-        @Deprecated
-        public Builder socketFactory(final SocketFactory socketFactory) {
-            this.socketFactory = socketFactory;
-            return this;
-        }
-
-        /**
          * Sets whether cursor finalizers are enabled.
          *
          * @param cursorFinalizerEnabled whether cursor finalizers are enabled.
@@ -1558,21 +1407,6 @@ public class MongoClientOptions {
          */
         public Builder cursorFinalizerEnabled(final boolean cursorFinalizerEnabled) {
             this.cursorFinalizerEnabled = cursorFinalizerEnabled;
-            return this;
-        }
-
-        /**
-         * Sets whether JMX beans registered by the driver should always be MBeans, regardless of whether the VM is Java 6 or greater. If
-         * false, the driver will use MXBeans if the VM is Java 6 or greater, and use MBeans if the VM is Java 5.
-         *
-         * @param alwaysUseMBeans true if driver should always use MBeans, regardless of VM version
-         * @return this
-         * @see MongoClientOptions#isAlwaysUseMBeans()
-         * @deprecated there is no replacement for this property
-         */
-        @Deprecated
-        public Builder alwaysUseMBeans(final boolean alwaysUseMBeans) {
-            this.alwaysUseMBeans = alwaysUseMBeans;
             return this;
         }
 
@@ -1701,19 +1535,6 @@ public class MongoClientOptions {
          */
         public Builder autoEncryptionSettings(final AutoEncryptionSettings autoEncryptionSettings) {
             this.autoEncryptionSettings = autoEncryptionSettings;
-            return this;
-        }
-
-        /**
-         * Sets defaults to be what they are in {@code MongoOptions}.
-         *
-         * @return {@code this}
-         * @see MongoOptions
-         * @deprecated there is no replacement for this method
-         */
-        @Deprecated
-        public Builder legacyDefaults() {
-            this.connectionsPerHost(10).writeConcern(WriteConcern.UNACKNOWLEDGED);
             return this;
         }
 

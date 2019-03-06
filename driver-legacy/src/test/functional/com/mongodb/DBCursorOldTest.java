@@ -30,7 +30,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static com.mongodb.ClusterFixture.serverVersionLessThan;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
@@ -38,7 +37,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeThat;
-import static org.junit.Assume.assumeTrue;
 
 @SuppressWarnings("deprecation")
 public class DBCursorOldTest extends DatabaseTestCase {
@@ -84,33 +82,6 @@ public class DBCursorOldTest extends DatabaseTestCase {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
-    public void testSnapshot() {
-        assumeTrue(serverVersionLessThan("3.7"));
-        insertTestData(collection, 100);
-        assertEquals(100, collection.find().count());
-        assertEquals(100, collection.find().toArray().size());
-        assertEquals(100, collection.find().snapshot().count());
-        assertEquals(100, collection.find().snapshot().toArray().size());
-        assertEquals(100, collection.find().snapshot().limit(50).count());
-        assertEquals(50, collection.find().snapshot().limit(50).toArray().size());
-    }
-
-    @Test
-    public void testOptions() {
-        DBCursor dbCursor = collection.find();
-
-        assertEquals(0, dbCursor.getOptions());
-        dbCursor.setOptions(Bytes.QUERYOPTION_TAILABLE);
-        assertEquals(Bytes.QUERYOPTION_TAILABLE, dbCursor.getOptions());
-        dbCursor.addOption(Bytes.QUERYOPTION_SLAVEOK);
-        assertEquals(Bytes.QUERYOPTION_TAILABLE | Bytes.QUERYOPTION_SLAVEOK, dbCursor.getOptions());
-        dbCursor.resetOptions();
-        assertEquals(0, dbCursor.getOptions());
-    }
-
-
-    @Test
     public void testTailable() {
         DBCollection c = database.getCollection("tail1");
         c.drop();
@@ -121,7 +92,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
 
         DBCursor cur = c.find()
                         .sort(new BasicDBObject("$natural", 1))
-                        .addOption(Bytes.QUERYOPTION_TAILABLE);
+                        .cursorType(CursorType.Tailable);
         c.save(firstDBObject, WriteConcern.ACKNOWLEDGED);
 
         assertEquals(firstDBObject, cur.tryNext());
@@ -155,7 +126,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
 
         final DBCursor cur = c.find()
                               .sort(new BasicDBObject("$natural", 1))
-                              .addOption(Bytes.QUERYOPTION_TAILABLE);
+                              .cursorType(CursorType.Tailable);
 
         final CountDownLatch latch = new CountDownLatch(1);
         Callable<Integer> callable = new Callable<Integer>() {
@@ -200,12 +171,12 @@ public class DBCursorOldTest extends DatabaseTestCase {
 
         final DBCursor cur = c.find()
                               .sort(new BasicDBObject("$natural", 1))
-                              .addOption(Bytes.QUERYOPTION_TAILABLE);
+                              .cursorType(CursorType.Tailable);
 
         final CountDownLatch latch = new CountDownLatch(1);
         Callable<Integer> callable = new Callable<Integer>() {
             @Override
-            public Integer call() throws Exception {
+            public Integer call() {
                 // the following call will block on the last hasNext
                 int i = 0;
                 while (i < 11) {
@@ -242,7 +213,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
         c.save(new BasicDBObject("x", 1), WriteConcern.ACKNOWLEDGED);
         DBCursor cur = c.find()
                         .sort(new BasicDBObject("$natural", 1))
-                        .addOption(Bytes.QUERYOPTION_TAILABLE);
+                        .cursorType(CursorType.Tailable);
 
         try {
             cur.tryNext();
@@ -262,8 +233,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
         c.save(new BasicDBObject("x", 1), WriteConcern.ACKNOWLEDGED);
         DBCursor cur = c.find()
                         .sort(new BasicDBObject("$natural", 1))
-                        .addOption(Bytes.QUERYOPTION_TAILABLE)
-                        .addOption(Bytes.QUERYOPTION_AWAITDATA);
+                        .cursorType(CursorType.TailableAwait);
 
         try {
             cur.tryNext();
@@ -282,8 +252,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
 
         c.save(new BasicDBObject("x", 1), WriteConcern.ACKNOWLEDGED);
         DBCursor cur = c.find()
-                        .sort(new BasicDBObject("$natural", 1))
-                        .addOption(Bytes.QUERYOPTION_AWAITDATA);
+                        .sort(new BasicDBObject("$natural", 1));
 
         cur.tryNext();
     }
@@ -322,21 +291,6 @@ public class DBCursorOldTest extends DatabaseTestCase {
 
         assertEquals(50, collection.find().limit(50).itcount());
         assertEquals(50, collection.find().batchSize(5).limit(50).itcount());
-    }
-
-    @Test
-    public void testSpecial() {
-        insertTestData(collection, 3);
-        collection.createIndex(new BasicDBObject("x", 1));
-
-        for (final DBObject o : collection.find().sort(new BasicDBObject("x", 1)).addSpecial("$returnKey", 1)) {
-            assertTrue(o.get("_id") == null);
-        }
-
-        for (final DBObject o : collection.find().sort(new BasicDBObject("x", 1))) {
-            assertTrue(o.get("_id") != null);
-        }
-
     }
 
     @Test
@@ -485,7 +439,7 @@ public class DBCursorOldTest extends DatabaseTestCase {
     //        // finally, no finalizer if disabled in mongo options
     //        MongoClientOptions mongoOptions = MongoClientOptions.builder().build();
     //        mongoOptions.cursorFinalizerEnabled = false;
-    //        Mongo m = new MongoClient("127.0.0.1", mongoOptions);
+    //        MongoClient m = new MongoClient("127.0.0.1", mongoOptions);
     //        try {
     //            c = m.getDB(cleanupDB).getCollection("HasFinalizerTest");
     //            cursor = c.find();

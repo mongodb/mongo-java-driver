@@ -40,7 +40,6 @@ class DBCollectionFindOptionsSpecification extends Specification {
         options.getLimit() == 0
         options.getMaxAwaitTime(TimeUnit.MILLISECONDS) == 0
         options.getMaxTime(TimeUnit.MILLISECONDS) == 0
-        options.getModifiers() == new BasicDBObject()
         options.getProjection() == null
         options.getReadConcern() == null
         options.getReadPreference() == null
@@ -60,7 +59,6 @@ class DBCollectionFindOptionsSpecification extends Specification {
         def projection = BasicDBObject.parse('{a: 1, _id: 0}')
         def sort = BasicDBObject.parse('{a: 1}')
         def cursorType = CursorType.TailableAwait
-        def modifiers = BasicDBObject.parse('{$comment: 1}')
         def readConcern = ReadConcern.LOCAL
         def readPreference = ReadPreference.nearest()
         def comment = 'comment'
@@ -76,7 +74,6 @@ class DBCollectionFindOptionsSpecification extends Specification {
                 .limit(1)
                 .maxAwaitTime(1, TimeUnit.MILLISECONDS)
                 .maxTime(1, TimeUnit.MILLISECONDS)
-                .modifiers(modifiers)
                 .noCursorTimeout(true)
                 .oplogReplay(true)
                 .partial(true)
@@ -99,7 +96,6 @@ class DBCollectionFindOptionsSpecification extends Specification {
         options.getLimit() == 1
         options.getMaxAwaitTime(TimeUnit.MILLISECONDS) == 1
         options.getMaxTime(TimeUnit.MILLISECONDS) == 1
-        options.getModifiers() == modifiers
         options.getProjection() == projection
         options.getReadConcern() == readConcern
         options.getReadPreference() == readPreference
@@ -122,7 +118,6 @@ class DBCollectionFindOptionsSpecification extends Specification {
         def projection = BasicDBObject.parse('{a: 1, _id: 0}')
         def sort = BasicDBObject.parse('{a: 1}')
         def cursorType = CursorType.TailableAwait
-        def modifiers = BasicDBObject.parse('{$comment: 1}')
         def readConcern = ReadConcern.LOCAL
         def readPreference = ReadPreference.nearest()
         def comment = 'comment'
@@ -138,7 +133,6 @@ class DBCollectionFindOptionsSpecification extends Specification {
                 .limit(1)
                 .maxAwaitTime(1, TimeUnit.MILLISECONDS)
                 .maxTime(1, TimeUnit.MILLISECONDS)
-                .modifiers(modifiers)
                 .noCursorTimeout(true)
                 .oplogReplay(true)
                 .partial(true)
@@ -165,7 +159,6 @@ class DBCollectionFindOptionsSpecification extends Specification {
         options.getLimit() == 1
         options.getMaxAwaitTime(TimeUnit.MILLISECONDS) == 1
         options.getMaxTime(TimeUnit.MILLISECONDS) == 1
-        options.getModifiers() == modifiers
         options.getProjection() == projection
         options.getReadConcern() == readConcern
         options.getReadPreference() == readPreference
