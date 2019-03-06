@@ -32,7 +32,6 @@ class DBCollectionCountOptionsSpecification extends Specification {
         then:
         options.getCollation() == null
         options.getHint() == null
-        options.getHintString() == null
         options.getLimit() == 0
         options.getMaxTime(TimeUnit.MILLISECONDS) == 0
         options.getReadConcern() == null
@@ -46,13 +45,11 @@ class DBCollectionCountOptionsSpecification extends Specification {
         def readConcern = ReadConcern.LOCAL
         def readPreference = ReadPreference.nearest()
         def hint = BasicDBObject.parse('{a: 1}')
-        def hintString = 'a_1'
 
         when:
         def options = new DBCollectionCountOptions()
                 .collation(collation)
                 .hint(hint)
-                .hintString(hintString)
                 .limit(1)
                 .maxTime(1, TimeUnit.MILLISECONDS)
                 .readConcern(readConcern)
@@ -62,7 +59,6 @@ class DBCollectionCountOptionsSpecification extends Specification {
         then:
         options.getCollation() == collation
         options.getHint() == hint
-        options.getHintString() == hintString
         options.getLimit() == 1
         options.getMaxTime(TimeUnit.MILLISECONDS) == 1
         options.getReadConcern() == readConcern

@@ -63,7 +63,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         dbCursor.explain().get('cursor') == 'BtreeCursor a_1'
 
         when:
-        dbCursor = collection.find().addSpecial('$hint', new BasicDBObject('a', 1))
+        dbCursor = collection.find().hint(new BasicDBObject('a', 1))
 
         then:
         dbCursor.explain().get('cursor') == 'BtreeCursor a_1'
@@ -82,7 +82,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         getKeyPattern(explainPlan) == cursorMap
 
         when:
-        dbCursor = collection.find().addSpecial('$hint', new BasicDBObject('a', 1))
+        dbCursor = collection.find().hint(new BasicDBObject('a', 1))
         explainPlan = dbCursor.explain()
 
         then:
@@ -92,47 +92,7 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
     def 'should use provided hint for count'() {
         expect:
         collection.createIndex(new BasicDBObject('a', 1));
-        collection.find().hint('a_1').count() == 1
         collection.find().hint(new BasicDBObject('a', 1)).count() == 1
-    }
-
-    @IgnoreIf({ serverVersionAtLeast(3, 0) })
-    def 'should use provided string hints for queries'() {
-        given:
-        collection.createIndex(new BasicDBObject('a', 1))
-
-        when:
-        dbCursor = collection.find().hint('a_1')
-
-        then:
-        dbCursor.explain().get('cursor') == 'BtreeCursor a_1'
-
-        when:
-        dbCursor = collection.find().addSpecial('$hint', 'a_1')
-
-        then:
-        dbCursor.explain().get('cursor') == 'BtreeCursor a_1'
-    }
-
-
-    @IgnoreIf({ !serverVersionAtLeast(3, 0) })
-    def 'should use provided string hints for queries mongodb > 2.7'() {
-        given:
-        collection.createIndex(new BasicDBObject('a', 1))
-
-        when:
-        dbCursor = collection.find().hint('a_1')
-        def explainPlan = dbCursor.explain()
-
-        then:
-        getKeyPattern(explainPlan) == cursorMap
-
-        when:
-        dbCursor = collection.find().addSpecial('$hint', 'a_1')
-        explainPlan = dbCursor.explain()
-
-        then:
-        getKeyPattern(explainPlan) == cursorMap
     }
 
     def 'should use provided hints for count'() {
@@ -143,75 +103,11 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         collection.find().count() == 2
 
         when:
-        collection.createIndex(new BasicDBObject('a', 1));
-
-        then:
-        collection.find(new BasicDBObject('a', 1)).hint('_id_').count() == 1
-        collection.find().hint('_id_').count() == 2
-
-        when:
         collection.createIndex(new BasicDBObject('x', 1), new BasicDBObject('sparse', true));
 
         then:
-        collection.find(new BasicDBObject('a', 1)).hint('x_1').count() == 0
-        collection.find().hint('a_1').count() == 2
+        collection.find(new BasicDBObject('a', 1)).hint(new BasicDBObject('x', 1)).count() == 0
     }
-
-    def 'should throw with bad hint'() {
-        when:
-        collection.find(new BasicDBObject('a', 1)).hint('BAD HINT').count()
-        then:
-        thrown(MongoException)
-    }
-
-    def 'should be able to use addSpecial with count'() {
-        when:
-        collection.insert(new BasicDBObject('a', 2));
-
-        then:
-        collection.find().count() == 2
-
-        when:
-        collection.createIndex(new BasicDBObject('a', 1));
-        collection.createIndex(new BasicDBObject('x', 1), new BasicDBObject('sparse', true));
-
-        then:
-        collection.find(new BasicDBObject('a', 1)).addSpecial('$hint', '_id_').count() == 1
-
-        when:
-        def countWithHint = collection.find(new BasicDBObject('a', 1)).addSpecial('$hint', 'x_1').count()
-
-        then:
-        countWithHint == 0
-    }
-
-    @IgnoreIf({ serverVersionAtLeast(3, 0) })
-    def 'should be able to use addSpecial with $explain'() {
-        given:
-        collection.createIndex(new BasicDBObject('a', 1))
-
-        when:
-        dbCursor = collection.find().hint(new BasicDBObject('a', 1))
-        dbCursor.addSpecial('$explain', 1)
-
-        then:
-        dbCursor.next().get('cursor') == 'BtreeCursor a_1'
-    }
-
-    @IgnoreIf({ !serverVersionAtLeast(3, 0) })
-    def 'should be able to use addSpecial with $explain mongod > 2.7'() {
-        given:
-        collection.createIndex(new BasicDBObject('a', 1))
-
-        when:
-        dbCursor = collection.find().hint(new BasicDBObject('a', 1))
-        dbCursor.addSpecial('$explain', 1)
-        def explainPlan = dbCursor.next()
-
-        then:
-        getKeyPattern(explainPlan) == cursorMap
-    }
-
 
     def 'should return results in the order they are on disk when natural sort applied'() {
         given:
@@ -222,13 +118,6 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         when:
         dbCursor = collection.find(new BasicDBObject('name', new BasicDBObject('$exists', true)))
                 .sort(new BasicDBObject('$natural', 1))
-
-        then:
-        dbCursor*.get('name') == ['Chris', 'Adam', 'Bob']
-
-        when:
-        dbCursor = collection.find(new BasicDBObject('name', new BasicDBObject('$exists', true)))
-                .addSpecial('$natural', 1)
 
         then:
         dbCursor*.get('name') == ['Chris', 'Adam', 'Bob']
@@ -243,13 +132,6 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         when:
         dbCursor = collection.find(new BasicDBObject('name', new BasicDBObject('$exists', true)))
                 .sort(new BasicDBObject('$natural', -1))
-
-        then:
-        dbCursor*.get('name') == ['Bob', 'Adam', 'Chris']
-
-        when:
-        dbCursor = collection.find(new BasicDBObject('name', new BasicDBObject('$exists', true)))
-                .addSpecial('$natural', -1)
 
         then:
         dbCursor*.get('name') == ['Bob', 'Adam', 'Chris']
@@ -300,13 +182,6 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
 
         then:
         dbCursor.collect { it -> [it.get('name'), it.get('_id')] } == [['Adam', 2], ['Adam', 4], ['Adam', 5], ['Bob', 3], ['Chris', 1]]
-
-        when:
-        dbCursor = collection.find(new BasicDBObject('name', new BasicDBObject('$exists', true)))
-                .addSpecial('$orderby', new BasicDBObject('name', 1).append('_id', 1))
-
-        then:
-        dbCursor.collect { it -> [it.get('name'), it.get('_id')] } == [['Adam', 2], ['Adam', 4], ['Adam', 5], ['Bob', 3], ['Chris', 1]]
     }
 
     // Spock bug as MongoCursor does implement closeable
@@ -353,19 +228,13 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         executor.getReadPreference() == ReadPreference.primary()
 
         when:
-        collection.find().addOption(Bytes.QUERYOPTION_SLAVEOK).hasNext()
-
-        then:
-        executor.getReadPreference() == ReadPreference.secondaryPreferred()
-
-        when:
-        collection.find().addOption(Bytes.QUERYOPTION_TAILABLE).tryNext()
+        collection.find().cursorType(CursorType.Tailable).tryNext()
 
         then:
         executor.getReadPreference() == ReadPreference.primary()
 
         when:
-        collection.find().addOption(Bytes.QUERYOPTION_TAILABLE).addOption(Bytes.QUERYOPTION_SLAVEOK).tryNext()
+        collection.find().cursorType(CursorType.Tailable).setReadPreference(ReadPreference.secondaryPreferred()).tryNext()
 
         then:
         executor.getReadPreference() == ReadPreference.secondaryPreferred()

@@ -32,12 +32,10 @@ import java.util.concurrent.TimeUnit
 
 import static Fixture.getDefaultDatabaseName
 import static Fixture.getMongoClientURI
-import static com.mongodb.ClusterFixture.isAuthenticated
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.Fixture.getMongoClient
-import static com.mongodb.MongoCredential.createCredential
 
 class MongoClientSessionSpecification extends FunctionalSpecification {
 
@@ -84,30 +82,6 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         clientSession.getServerSession() != null
 
         cleanup:
-        clientSession?.close()
-    }
-
-    @IgnoreIf({ !serverVersionAtLeast(4, 0) || isStandalone()  })
-    def 'should use mutated client properties for default transaction options'() {
-        given:
-        def originalWriteConcern = getMongoClient().getWriteConcern()
-        def originalReadPreference = getMongoClient().getReadPreference()
-        getMongoClient().setWriteConcern(WriteConcern.MAJORITY)
-        getMongoClient().setReadPreference(ReadPreference.secondary())
-
-        when:
-        def clientSession = getMongoClient().startSession()
-
-        then:
-        clientSession.getOptions().defaultTransactionOptions == TransactionOptions.builder()
-                .readConcern(ReadConcern.DEFAULT)
-                .writeConcern(WriteConcern.MAJORITY)
-                .readPreference(ReadPreference.secondary())
-                .build()
-
-        cleanup:
-        getMongoClient().setWriteConcern(originalWriteConcern)
-        getMongoClient().setReadPreference(originalReadPreference)
         clientSession?.close()
     }
 
@@ -359,34 +333,6 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         readConcern << [ReadConcern.DEFAULT, ReadConcern.LOCAL, ReadConcern.MAJORITY]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 6) || !isAuthenticated() })
-    @SuppressWarnings('deprecation')
-    def 'should not use a default session when there is more than one authenticated user'() {
-        given:
-        def sessionTestUserName = 'sessionTestUser'
-        def sessionTestPassword = 'sessionTestPassword'
-        getMongoClient().getDB('admin').addUser(sessionTestUserName, sessionTestPassword.toCharArray())
-
-        def commandListener = new TestCommandListener()
-        def optionsBuilder = MongoClientOptions.builder()
-                .addCommandListener(commandListener)
-        def mongoClientURI = getMongoClientURI(optionsBuilder)
-        def credentials = [mongoClientURI.getCredentials(),
-                           createCredential(sessionTestUserName, 'admin', sessionTestPassword.toCharArray())]
-        def client = new MongoClient(mongoClientURI.getHosts().collect { new ServerAddress(it) },
-                credentials, mongoClientURI.getOptions())
-
-        when:
-        client.getDatabase('admin').runCommand(new BsonDocument('ping', new BsonInt32(1)))
-
-        then:
-        def pingCommandStartedEvent = commandListener.events.get(0) as CommandStartedEvent
-        !pingCommandStartedEvent.command.containsKey('lsid')
-
-        cleanup:
-        getMongoClient().getDB('admin').removeUser(sessionTestUserName)
-        client?.close()
-    }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 6) })
     def 'should not use an implicit session for an unacknowledged write'() {

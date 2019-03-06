@@ -27,12 +27,9 @@ import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;
 import org.junit.Test;
 
-import java.net.UnknownHostException;
-
 import static com.mongodb.ClusterFixture.disableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.enableMaxTimeFailPoint;
 import static com.mongodb.ClusterFixture.getBinding;
-import static com.mongodb.ClusterFixture.isAuthenticated;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
@@ -71,16 +68,6 @@ public class DBTest extends DatabaseTestCase {
         assertEquals(getMongoClient(), database.getMongoClient());
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void shouldThrowGettingMongoClientIfFromMongo() {
-        Mongo mongo = new Mongo();
-        try {
-            mongo.getDB("test").getMongoClient();
-        } finally {
-            mongo.close();
-        }
-    }
-
     @Test
     public void shouldReturnCachedCollectionObjectIfExists() {
         DBCollection collection1 = database.getCollection("test");
@@ -96,13 +83,13 @@ public class DBTest extends DatabaseTestCase {
         db.createCollection(collectionName, new BasicDBObject());
 
         // then
-        assertThat(getMongoClient().getDatabaseNames(), hasItem(databaseName));
+        assertThat(getMongoClient().listDatabaseNames(), hasItem(databaseName));
 
         // when
         db.dropDatabase();
 
         // then
-        assertThat(getMongoClient().getDatabaseNames(), not(hasItem(databaseName)));
+        assertThat(getMongoClient().listDatabaseNames(), not(hasItem(databaseName)));
     }
 
     @Test
@@ -116,21 +103,6 @@ public class DBTest extends DatabaseTestCase {
         }
 
         assertThat(database.getCollectionNames(), hasItems(collectionNames));
-    }
-
-    @Test
-    public void shouldGetCollectionGivenAStringName() {
-        DBCollection collection = database.getCollectionFromString("foo");
-        assertEquals("foo", collection.getName());
-
-        collection = database.getCollectionFromString("foo.bar");
-        assertEquals("foo.bar", collection.getName());
-
-        collection = database.getCollectionFromString("foo.bar.zoo");
-        assertEquals("foo.bar.zoo", collection.getName());
-
-        collection = database.getCollectionFromString("foo.bar.zoo.dork");
-        assertEquals("foo.bar.zoo.dork", collection.getName());
     }
 
     @Test
@@ -229,54 +201,6 @@ public class DBTest extends DatabaseTestCase {
     }
 
     @Test
-    public void shouldDoEval() {
-        assumeThat(isAuthenticated(), is(false));
-        assumeThat(serverVersionAtLeast(4, 1), is(false));
-
-        String code = "function(name, incAmount) {\n"
-                      + "var doc = db.myCollection.findOne( { name : name } );\n"
-                      + "doc = doc || { name : name , num : 0 , total : 0 , avg : 0 , _id: 1 };\n"
-                      + "doc.num++;\n"
-                      + "doc.total += incAmount;\n"
-                      + "doc.avg = doc.total / doc.num;\n"
-                      + "db.myCollection.save( doc );\n"
-                      + "return doc;\n"
-                      + "}";
-        database.doEval(code, "eliot", 5);
-        assertEquals(database.getCollection("myCollection").findOne(), new BasicDBObject("_id", 1.0)
-                                                                       .append("avg", 5.0)
-                                                                       .append("num", 1.0)
-                                                                       .append("name", "eliot")
-                                                                       .append("total", 5.0));
-    }
-
-    @Test(expected = MongoException.class)
-    public void shouldThrowErrorwhileDoingEval() {
-        String code = "function(a, b) {\n"
-                      + "var doc = db.myCollection.findOne( { name : b } );\n"
-                      + "}";
-        database.eval(code, 1);
-    }
-
-    @Test
-    public void shouldInsertDocumentsUsingEval() {
-        assumeThat(isAuthenticated(), is(false));
-        assumeThat(serverVersionAtLeast(4, 1), is(false));
-
-        // when
-        database.eval("db." + collectionName + ".insert({name: 'Bob'})");
-
-        // then
-        assertThat(collection.find(new BasicDBObject("name", "Bob")).count(), is(1));
-    }
-
-    @Test
-    public void shouldGetStats() {
-        assumeThat(isSharded(), is(false));
-        assertThat(database.getStats(), hasFields(new String[]{"collections", "avgObjSize", "indexes", "db", "indexSize", "storageSize"}));
-    }
-
-    @Test
     public void shouldExecuteCommand() {
         CommandResult commandResult = database.command(new BasicDBObject("isMaster", 1));
         assertThat(commandResult, hasFields(new String[]{"ismaster", "maxBsonObjectSize", "ok"}));
@@ -304,59 +228,6 @@ public class DBTest extends DatabaseTestCase {
     public void shouldNotThrowAnExceptionOnCommandFailure() {
         CommandResult commandResult = database.command(new BasicDBObject("nonExistentCommand", 1));
         assertThat(commandResult, hasFields(new String[]{"ok", "errmsg"}));
-    }
-
-    @Test
-    public void shouldAddUser() {
-        String userName = "jeff";
-        char[] password = "123".toCharArray();
-        boolean readOnly = true;
-        try {
-            database.removeUser(userName);
-        } catch (Exception e) {
-            // NOOP
-        }
-
-        WriteResult result = database.addUser(userName, password, readOnly);
-        assertEquals(1, result.getN());
-        assertFalse(result.isUpdateOfExisting());
-        assertTrue(new com.mongodb.operation.UserExistsOperation(database.getName(), userName).execute(getBinding()));
-    }
-
-    @Test
-    public void shouldUpdateUser() {
-        String userName = "jeff";
-        char[] password = "123".toCharArray();
-        boolean readOnly = true;
-        try {
-            database.removeUser(userName);
-        } catch (Exception e) {
-            // NOOP
-        }
-
-        WriteResult result = database.addUser(userName, password, readOnly);
-        assertEquals(1, result.getN());
-        assertFalse(result.isUpdateOfExisting());
-
-        char[] newPassword = "345".toCharArray();
-        boolean newReadOnly = false;
-        result = database.addUser(userName, newPassword, newReadOnly);
-        assertEquals(1, result.getN());
-        assertTrue(result.isUpdateOfExisting());
-        assertTrue(new com.mongodb.operation.UserExistsOperation(database.getName(), userName).execute(getBinding()));
-    }
-
-    @Test
-    public void shouldRemoveUser() {
-        String userName = "jeff";
-
-        char[] password = "123".toCharArray();
-        boolean readOnly = true;
-        database.addUser(userName, password, readOnly);
-
-        database.removeUser(userName);
-
-        assertFalse(new com.mongodb.operation.UserExistsOperation(database.getName(), userName).execute(getBinding()));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -410,7 +281,7 @@ public class DBTest extends DatabaseTestCase {
     }
 
     @Test
-    public void shouldRunCommandAgainstSecondaryWhenOnlySecondaryReadPreferenceSpecified() throws UnknownHostException {
+    public void shouldRunCommandAgainstSecondaryWhenOnlySecondaryReadPreferenceSpecified() {
         assumeTrue(isDiscoverableReplicaSet());
 
         // When
@@ -422,7 +293,7 @@ public class DBTest extends DatabaseTestCase {
     }
 
     @Test
-    public void shouldRunStringCommandAgainstSecondaryWhenSecondaryReadPreferenceSpecified() throws UnknownHostException {
+    public void shouldRunStringCommandAgainstSecondaryWhenSecondaryReadPreferenceSpecified() {
         assumeTrue(isDiscoverableReplicaSet());
 
         // When
@@ -434,7 +305,7 @@ public class DBTest extends DatabaseTestCase {
     }
 
     @Test
-    public void shouldRunCommandAgainstSecondaryWhenOnlySecondaryReadPreferenceSpecifiedAlongWithEncoder() throws UnknownHostException {
+    public void shouldRunCommandAgainstSecondaryWhenOnlySecondaryReadPreferenceSpecifiedAlongWithEncoder() {
         assumeTrue(isDiscoverableReplicaSet());
 
         // When

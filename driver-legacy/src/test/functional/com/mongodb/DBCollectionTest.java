@@ -39,10 +39,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
@@ -110,10 +108,8 @@ public class DBCollectionTest extends DatabaseTestCase {
         assertNull(collection.getDBDecoderFactory());
         assertNull(collection.getDBEncoderFactory());
         assertEquals(BasicDBObject.class, collection.getObjectClass());
-        assertNull(collection.getHintFields());
         assertEquals(ReadPreference.primary(), collection.getReadPreference());
         assertEquals(WriteConcern.ACKNOWLEDGED, collection.getWriteConcern());
-        assertEquals(0, collection.getOptions());
     }
 
     @Test
@@ -964,34 +960,6 @@ public class DBCollectionTest extends DatabaseTestCase {
         }
     }
 
-    @Test
-    @Category(Slow.class)
-    public void testParallelScan() throws UnknownHostException {
-        assumeThat(isSharded(), is(false));
-        assumeThat(serverVersionAtLeast(4, 1), is(false));
-
-        Set<Integer> ids = new HashSet<Integer>();
-        List<BasicDBObject> documents = new ArrayList<BasicDBObject>(2000);
-
-        for (int i = 0; i < 2000; i++) {
-            ids.add(i);
-            documents.add(new BasicDBObject("_id", i));
-        }
-
-        collection.insert(documents);
-
-        List<Cursor> cursors = collection.parallelScan(ParallelScanOptions.builder().numCursors(3).batchSize(1000).build());
-        assertTrue(cursors.size() <= 3);
-        for (Cursor cursor : cursors) {
-            while (cursor.hasNext()) {
-                Integer id = (Integer) cursor.next().get("_id");
-                assertTrue(ids.remove(id));
-            }
-        }
-
-        assertTrue(ids.isEmpty());
-    }
-
 
     @Test
     public void testBypassDocumentValidationForInserts() {
@@ -1357,7 +1325,8 @@ public class DBCollectionTest extends DatabaseTestCase {
         c.insert(new BasicDBObject("level", 9));
 
         try {
-            c.aggregate(Collections.<DBObject>singletonList(new BasicDBObject("$out", cOut.getName())));
+            c.aggregate(Collections.<DBObject>singletonList(new BasicDBObject("$out", cOut.getName())),
+                    AggregationOptions.builder().build());
             if (serverVersionAtLeast(3, 2)) {
                 fail();
             }

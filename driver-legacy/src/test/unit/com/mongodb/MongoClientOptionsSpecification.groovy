@@ -29,10 +29,8 @@ import com.mongodb.selector.ServerSelector
 import org.bson.UuidRepresentation
 import spock.lang.Specification
 
-import javax.net.SocketFactory
 import javax.net.ssl.SSLContext
 import javax.net.ssl.SSLContextSpi
-import javax.net.ssl.SSLSocketFactory
 import java.security.Provider
 
 import static com.mongodb.CustomMatchers.isTheSameAs
@@ -48,7 +46,6 @@ class MongoClientOptionsSpecification extends Specification {
         def options = new MongoClientOptions.Builder().build()
 
         expect:
-        options.getDescription() == null
         options.getApplicationName() == null
         options.getWriteConcern() == WriteConcern.ACKNOWLEDGED
         options.getRetryWrites()
@@ -61,12 +58,9 @@ class MongoClientOptionsSpecification extends Specification {
         options.getReadPreference() == ReadPreference.primary()
         options.getServerSelector() == null;
         options.getThreadsAllowedToBlockForConnectionMultiplier() == 5
-        options.isSocketKeepAlive()
         !options.isSslEnabled()
         !options.isSslInvalidHostNameAllowed()
         options.getSslContext() == null
-        options.getSocketFactory() != null
-        !(options.getSocketFactory() instanceof SSLSocketFactory)
         options.getDbDecoderFactory() == DefaultDBDecoder.FACTORY
         options.getDbEncoderFactory() == DefaultDBEncoder.FACTORY
         options.getLocalThreshold() == 15
@@ -166,14 +160,12 @@ class MongoClientOptionsSpecification extends Specification {
     def 'should build with set options'() {
         given:
         def encoderFactory = new MyDBEncoderFactory()
-        def socketFactory = SSLSocketFactory.getDefault()
         def serverSelector = Mock(ServerSelector)
         def autoEncryptionSettings = AutoEncryptionSettings.builder()
                 .keyVaultNamespace('admin.keys')
                 .kmsProviders(['local': ['key': new byte[64]]])
                 .build()
         def options = MongoClientOptions.builder()
-                                        .description('test')
                                         .applicationName('appName')
                                         .readPreference(ReadPreference.secondary())
                                         .retryWrites(true)
@@ -189,8 +181,6 @@ class MongoClientOptionsSpecification extends Specification {
                                         .maxConnectionIdleTime(300)
                                         .maxConnectionLifeTime(400)
                                         .threadsAllowedToBlockForConnectionMultiplier(2)
-                                        .socketKeepAlive(false)
-                                        .socketFactory(socketFactory)
                                         .sslEnabled(true)
                                         .sslInvalidHostNameAllowed(true)
                                         .sslContext(SSLContext.getDefault())
@@ -208,7 +198,6 @@ class MongoClientOptionsSpecification extends Specification {
                                         .build()
 
         expect:
-        options.getDescription() == 'test'
         options.getApplicationName() == 'appName'
         options.getReadPreference() == ReadPreference.secondary()
         options.getWriteConcern() == WriteConcern.JOURNALED
@@ -224,8 +213,6 @@ class MongoClientOptionsSpecification extends Specification {
         options.getConnectTimeout() == 100
         options.getSocketTimeout() == 700
         options.getThreadsAllowedToBlockForConnectionMultiplier() == 2
-        !options.isSocketKeepAlive()
-        options.socketFactory == socketFactory
         options.isSslEnabled()
         options.isSslInvalidHostNameAllowed()
         options.getSslContext() == SSLContext.getDefault()
@@ -245,29 +232,15 @@ class MongoClientOptionsSpecification extends Specification {
                                                                 .maxWaitTime(200, MILLISECONDS).maxConnectionLifeTime(400, MILLISECONDS)
                                                                 .maxConnectionIdleTime(300, MILLISECONDS).build()
         options.socketSettings == SocketSettings.builder().connectTimeout(100, MILLISECONDS).readTimeout(700, MILLISECONDS)
-                                                .keepAlive(false).build()
+                                                .build()
         options.heartbeatSocketSettings == SocketSettings.builder().connectTimeout(15, MILLISECONDS).readTimeout(20, MILLISECONDS)
-                                                         .keepAlive(false).build()
+                                                         .build()
         options.serverSettings == ServerSettings.builder().minHeartbeatFrequency(11, MILLISECONDS).heartbeatFrequency(5, MILLISECONDS)
                                                 .build()
         options.sslSettings == SslSettings.builder().enabled(true).invalidHostNameAllowed(true)
                 .context(SSLContext.getDefault()).build()
         options.compressorList == [MongoCompressor.createZlibCompressor()]
         options.getAutoEncryptionSettings() == autoEncryptionSettings
-    }
-
-    def 'should get socketFactory based on sslEnabled'() {
-        when:
-        MongoClientOptions.Builder builder = MongoClientOptions.builder()
-
-        then:
-        builder.build().getSocketFactory() == MongoClientOptions.DEFAULT_SOCKET_FACTORY
-
-        when:
-        builder.sslEnabled(true)
-
-        then:
-        builder.build().getSocketFactory() == MongoClientOptions.DEFAULT_SSL_SOCKET_FACTORY
     }
 
     //  Can't use a Stub for this since SSLContext.getSocketFactory is a final method
@@ -277,43 +250,9 @@ class MongoClientOptionsSpecification extends Specification {
         }
     }
 
-    def 'should get socketFactory based on sslContext'() {
-        given:
-        def expectedSocketFactory = Mock(SSLSocketFactory)
-        def sslContextSpi = Stub(SSLContextSpi) {
-            engineGetSocketFactory() >> expectedSocketFactory
-        }
-        def sslContext = new SSLContextSubClass(sslContextSpi, Stub(Provider))
-        def options = MongoClientOptions.builder()
-                .sslEnabled(true)
-                .sslContext(sslContext)
-                .build()
-
-        when:
-        def socketFactory = options.getSocketFactory()
-
-        then:
-        socketFactory == expectedSocketFactory
-    }
-
-    def 'should get socketFactory based on configured socketFactory'() {
-        given:
-        def expectedSocketFactory = Mock(SocketFactory)
-        def options = MongoClientOptions.builder()
-                .socketFactory(expectedSocketFactory)
-                .build()
-
-        when:
-        def socketFactory = options.getSocketFactory()
-
-        then:
-        socketFactory == expectedSocketFactory
-    }
-
     def 'should be easy to create new options from existing'() {
         when:
         def options = MongoClientOptions.builder()
-                .description('test')
                 .applicationName('appName')
                 .readPreference(ReadPreference.secondary())
                 .retryReads(true)
@@ -328,7 +267,6 @@ class MongoClientOptionsSpecification extends Specification {
                 .maxConnectionIdleTime(300)
                 .maxConnectionLifeTime(400)
                 .threadsAllowedToBlockForConnectionMultiplier(2)
-                .socketKeepAlive(false)
                 .sslEnabled(true)
                 .sslInvalidHostNameAllowed(true)
                 .sslContext(SSLContext.getDefault())
@@ -612,7 +550,6 @@ class MongoClientOptionsSpecification extends Specification {
     def 'builder should copy all values from the existing MongoClientOptions'() {
         given:
         def options = MongoClientOptions.builder()
-                .description('test')
                 .applicationName('appName')
                 .readPreference(ReadPreference.secondary())
                 .writeConcern(WriteConcern.JOURNALED)
@@ -628,11 +565,9 @@ class MongoClientOptionsSpecification extends Specification {
                 .maxConnectionIdleTime(300)
                 .maxConnectionLifeTime(400)
                 .threadsAllowedToBlockForConnectionMultiplier(2)
-                .socketKeepAlive(false)
                 .sslEnabled(true)
                 .sslInvalidHostNameAllowed(true)
                 .sslContext(SSLContext.getDefault())
-                .socketFactory(SSLSocketFactory.getDefault())
                 .dbDecoderFactory(LazyDBDecoder.FACTORY)
                 .heartbeatFrequency(5)
                 .minHeartbeatFrequency(11)
@@ -662,13 +597,12 @@ class MongoClientOptionsSpecification extends Specification {
         when:
         // A regression test so that if any more methods are added then the builder(final MongoClientOptions options) should be updated
         def actual = MongoClientOptions.Builder.declaredFields.grep { !it.synthetic } *.name.sort()
-        def expected = ['alwaysUseMBeans', 'applicationName', 'autoEncryptionSettings', 'clusterListeners', 'codecRegistry',
-                        'commandListeners', 'compressorList', 'connectTimeout', 'connectionPoolListeners', 'cursorFinalizerEnabled',
-                        'dbDecoderFactory', 'dbEncoderFactory', 'description', 'heartbeatConnectTimeout', 'heartbeatFrequency',
-                        'heartbeatSocketTimeout', 'localThreshold', 'maxConnectionIdleTime', 'maxConnectionLifeTime',
-                        'maxConnectionsPerHost', 'maxWaitTime', 'minConnectionsPerHost', 'minHeartbeatFrequency', 'readConcern',
-                        'readPreference', 'requiredReplicaSetName', 'retryReads', 'retryWrites', 'serverListeners',
-                        'serverMonitorListeners', 'serverSelectionTimeout', 'serverSelector', 'socketFactory',
+        def expected = ['applicationName', 'autoEncryptionSettings', 'clusterListeners', 'codecRegistry', 'commandListeners',
+                        'compressorList', 'connectTimeout', 'connectionPoolListeners', 'cursorFinalizerEnabled', 'dbDecoderFactory',
+                        'dbEncoderFactory', 'heartbeatConnectTimeout', 'heartbeatFrequency', 'heartbeatSocketTimeout', 'localThreshold',
+                        'maxConnectionIdleTime', 'maxConnectionLifeTime', 'maxConnectionsPerHost', 'maxWaitTime', 'minConnectionsPerHost',
+                        'minHeartbeatFrequency', 'readConcern', 'readPreference', 'requiredReplicaSetName', 'retryReads', 'retryWrites',
+                        'serverListeners', 'serverMonitorListeners', 'serverSelectionTimeout', 'serverSelector',
                         'socketKeepAlive', 'socketTimeout', 'sslContext', 'sslEnabled', 'sslInvalidHostNameAllowed',
                         'threadsAllowedToBlockForConnectionMultiplier', 'uuidRepresentation', 'writeConcern']
 

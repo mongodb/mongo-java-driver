@@ -174,7 +174,6 @@ class MongoClientURISpecification extends Specification {
         options.getMaxWaitTime() == 120000
         options.getConnectTimeout() == 10000
         options.getSocketTimeout() == 0
-        options.getDescription() == null
         options.getReadPreference() == ReadPreference.primary()
         options.getRequiredReplicaSetName() == null
         !options.isSslEnabled()
@@ -185,7 +184,6 @@ class MongoClientURISpecification extends Specification {
     def 'should apply default uri to options'() {
         given:
         def optionsBuilder = MongoClientOptions.builder()
-                .description('test')
                 .applicationName('appName')
                 .readPreference(ReadPreference.secondary())
                 .retryWrites(true)
@@ -200,7 +198,6 @@ class MongoClientURISpecification extends Specification {
                 .maxConnectionIdleTime(300)
                 .maxConnectionLifeTime(400)
                 .threadsAllowedToBlockForConnectionMultiplier(2)
-                .socketKeepAlive(false)
                 .sslEnabled(true)
                 .sslInvalidHostNameAllowed(true)
                 .sslContext(SSLContext.getDefault())
@@ -216,7 +213,6 @@ class MongoClientURISpecification extends Specification {
         def options = new MongoClientURI('mongodb://localhost', optionsBuilder).getOptions()
 
         then:
-        options.getDescription() == 'test'
         options.getApplicationName() == 'appName'
         options.getReadPreference() == ReadPreference.secondary()
         options.getWriteConcern() == WriteConcern.JOURNALED
@@ -231,7 +227,6 @@ class MongoClientURISpecification extends Specification {
         options.getConnectTimeout() == 100
         options.getSocketTimeout() == 700
         options.getThreadsAllowedToBlockForConnectionMultiplier() == 2
-        !options.isSocketKeepAlive()
         options.isSslEnabled()
         options.isSslInvalidHostNameAllowed()
         options.getHeartbeatFrequency() == 5

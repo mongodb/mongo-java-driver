@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.DBObjects.toDBObject;
@@ -60,7 +59,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  *    List<DBObject> obj = collection.find(query).skip(1000).limit(100).toArray();
  * }</pre>
  *
- * See {@link Mongo#getDB(String)} for further information about the effective deprecation of this class.
+ * See {@link MongoClient#getDB(String)} for further information about the effective deprecation of this class.
  *
  * @mongodb.driver.manual core/read-operations Read Operations
  */
@@ -72,7 +71,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     private final DBCollectionFindOptions findOptions;
     private final OperationExecutor executor;
     private final boolean retryReads;
-    private int options;
     private DBDecoderFactory decoderFactory;
     private Decoder<DBObject> decoder;
     private IteratorOrArray iteratorOrArray;
@@ -110,12 +108,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     public DBCursor(final DBCollection collection, final DBObject query, @Nullable final DBObject fields,
                     @Nullable final ReadPreference readPreference, final boolean retryReads) {
         this(collection, query, new DBCollectionFindOptions().projection(fields).readPreference(readPreference), retryReads);
-
-        addOption(collection.getOptions());
-        DBObject indexKeys = lookupSuitableHints(query, collection.getHintFields());
-        if (indexKeys != null) {
-            hint(indexKeys);
-        }
     }
 
     DBCursor(final DBCollection collection, @Nullable final DBObject filter, final DBCollectionFindOptions findOptions) {
@@ -152,8 +144,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     /**
      * Checks if there is another object available.
      *
-     * <p><em>Note</em>: Automatically adds the {@link Bytes#QUERYOPTION_AWAITDATA} option to any cursors with the
-     * {@link Bytes#QUERYOPTION_TAILABLE} option set. For non blocking tailable cursors see {@link #tryNext }.</p>
+     * <p><em>Note</em>: Automatically turns cursors of type Tailable to TailableAwait. For non blocking tailable cursors see
+     * {@link #tryNext }.</p>
      *
      * @return true if there is another object available
      * @mongodb.driver.manual /core/cursors/#cursor-batches Cursor Batches
@@ -180,8 +172,8 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     /**
      * Returns the object the cursor is at and moves the cursor ahead by one.
      *
-     * <p><em>Note</em>: Automatically adds the {@link Bytes#QUERYOPTION_AWAITDATA} option to any cursors with the
-     * {@link Bytes#QUERYOPTION_TAILABLE} option set. For non blocking tailable cursors see {@link #tryNext }.</p>
+     * <p><em>Note</em>: Automatically turns cursors of type Tailable to TailableAwait. For non blocking tailable cursors see
+     * {@link #tryNext }.</p>
      *
      * @return the next element
      * @mongodb.driver.manual /core/cursors/#cursor-batches Cursor Batches
@@ -237,61 +229,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
-     * Adds a query option. See Bytes.QUERYOPTION_* for list.
-     *
-     * @param option the option to be added
-     * @return {@code this} so calls can be chained
-     * @see Bytes
-     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
-     * @deprecated Prefer per-option methods, e.g. {@link #cursorType(CursorType)}, {@link #noCursorTimeout(boolean)}, etc.
-     */
-    @Deprecated
-    public DBCursor addOption(final int option) {
-        setOptions(this.options |= option);
-        return this;
-    }
-
-    /**
-     * Sets the query option - see Bytes.QUERYOPTION_* for list.
-     *
-     * @param options the bitmask of options
-     * @return {@code this} so calls can be chained
-     * @see Bytes
-     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
-     */
-    @Deprecated
-    public DBCursor setOptions(final int options) {
-        if ((options & Bytes.QUERYOPTION_EXHAUST) != 0) {
-            throw new UnsupportedOperationException("exhaust query option is not supported");
-        }
-        this.options = options;
-        return this;
-    }
-
-    /**
-     * Resets the query options.
-     *
-     * @return {@code this} so calls can be chained
-     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
-     */
-    @Deprecated
-    public DBCursor resetOptions() {
-        this.options = 0;
-        return this;
-    }
-
-    /**
-     * Gets the query options.
-     *
-     * @return the bitmask of options
-     * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query Query Flags
-     */
-    @Deprecated
-    public int getOptions() {
-        return options;
-    }
-
-    /**
      * Gets the query limit.
      *
      * @return the limit, or 0 if no limit is set
@@ -310,60 +247,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
-     * Adds a special operator like $comment or $returnKey. For example:
-     * <pre>
-     *    addSpecial("$returnKey", 1)
-     *    addSpecial("$comment", "this is a special query)
-     * </pre>
-     *
-     * @param name  the name of the special query operator
-     * @param value the value of the special query operator
-     * @return {@code this} so calls can be chained
-     * @mongodb.driver.manual reference/operator Special Operators
-     * @deprecated Prefer per-operator methods, e.g. {@link #comment(String)}, {@link #explain()}, etc.
-     */
-    @SuppressWarnings("deprecation")
-    @Deprecated
-    public DBCursor addSpecial(@Nullable final String name, @Nullable final Object value) {
-        if (name == null || value == null) {
-            return this;
-        }
-
-        if ("$comment".equals(name)) {
-            comment(value.toString());
-        } else if ("$explain".equals(name)) {
-            findOptions.getModifiers().put("$explain", true);
-        } else if ("$hint".equals(name)) {
-            if (value instanceof String) {
-                hint((String) value);
-            } else {
-                hint((DBObject) value);
-            }
-        } else if ("$maxScan".equals(name)) {
-            maxScan(((Number) value).intValue());
-        } else if ("$maxTimeMS".equals(name)) {
-            maxTime(((Number) value).longValue(), MILLISECONDS);
-        } else if ("$max".equals(name)) {
-            max((DBObject) value);
-        } else if ("$min".equals(name)) {
-            min((DBObject) value);
-        } else if ("$orderby".equals(name)) {
-            sort((DBObject) value);
-        } else if ("$returnKey".equals(name)) {
-            returnKey();
-        } else if ("$showDiskLoc".equals(name)) {
-            showDiskLoc();
-        } else if ("$snapshot".equals(name)) {
-            snapshot();
-        } else if ("$natural".equals(name)) {
-            sort(new BasicDBObject("$natural", ((Number) value).intValue()));
-        } else {
-            throw new IllegalArgumentException(name + "is not a supported modifier");
-        }
-        return this;
-    }
-
-    /**
      * Adds a comment to the query to identify queries in the database profiler output.
      *
      * @param comment the comment that is to appear in the profiler output
@@ -373,22 +256,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      */
     public DBCursor comment(final String comment) {
         findOptions.comment(comment);
-        return this;
-    }
-
-    /**
-     * Limits the number of documents a cursor will return for a query.
-     *
-     * @param max the maximum number of documents to return
-     * @return {@code this} so calls can be chained
-     * @mongodb.driver.manual reference/operator/meta/maxScan/ $maxScan
-     * @see #limit(int)
-     * @since 2.12
-     * @deprecated Deprecated as of MongoDB 4.0 release
-     */
-    @Deprecated
-    public DBCursor maxScan(final int max) {
-        findOptions.getModifiers().put("$maxScan", max);
         return this;
     }
 
@@ -431,21 +298,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     /**
-     * Modifies the documents returned to include references to the on-disk location of each document.  The location will be returned in a
-     * property named {@code $diskLoc}
-     *
-     * @return {@code this} so calls can be chained
-     * @mongodb.driver.manual reference/operator/meta/showDiskLoc/ $showDiskLoc
-     * @since 2.12
-     * @deprecated showDiskLoc has been deprecated in the MongoDB server.  There is no replacement for it.
-     */
-    @Deprecated
-    public DBCursor showDiskLoc() {
-        findOptions.getModifiers().put("$showDiskLoc", true);
-        return this;
-    }
-
-    /**
      * Informs the database of indexed fields of the collection in order to improve performance.
      *
      * @param indexKeys a {@code DBObject} with fields and direction
@@ -454,20 +306,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      */
     public DBCursor hint(final DBObject indexKeys) {
         findOptions.hint(indexKeys);
-        return this;
-    }
-
-    /**
-     * Informs the database of an indexed field of the collection in order to improve performance.
-     *
-     * @param indexName the name of an index
-     * @return same DBCursor for chaining operations
-     * @mongodb.driver.manual reference/operator/meta/hint/ $hint
-     * @deprecated Prefer {@link #hint(DBObject)}
-     */
-    @Deprecated
-    public DBCursor hint(final String indexName) {
-        findOptions.getModifiers().put("$hint", indexName);
         return this;
     }
 
@@ -484,24 +322,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      */
     public DBCursor maxTime(final long maxTime, final TimeUnit timeUnit) {
         findOptions.maxTime(maxTime, timeUnit);
-        return this;
-    }
-
-    /**
-     * Use snapshot mode for the query. Snapshot mode prevents the cursor from returning a document more than once because an intervening
-     * write operation results in a move of the document. Even in snapshot mode, documents inserted or deleted during the lifetime of the
-     * cursor may or may not be returned.  Currently, snapshot mode may not be used with sorting or explicit hints.
-     *
-     * @return {@code this} so calls can be chained
-     *
-     * @see com.mongodb.DBCursor#sort(DBObject)
-     * @see com.mongodb.DBCursor#hint(DBObject)
-     * @mongodb.driver.manual reference/operator/meta/snapshot/ $snapshot
-     * @deprecated Deprecated in MongoDB 3.6 release and removed in MongoDB 4.0 release
-     */
-    @Deprecated
-    public DBCursor snapshot() {
-        findOptions.getModifiers().put("$snapshot", true);
         return this;
     }
 
@@ -578,14 +398,14 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
 
     @SuppressWarnings("deprecation")
     private FindOperation<DBObject> getQueryOperation(final Decoder<DBObject> decoder) {
-        FindOperation<DBObject> operation = new FindOperation<DBObject>(collection.getNamespace(), decoder)
+
+        return new FindOperation<DBObject>(collection.getNamespace(), decoder)
                                                 .filter(collection.wrapAllowNull(filter))
                                                 .batchSize(findOptions.getBatchSize())
                                                 .skip(findOptions.getSkip())
                                                 .limit(findOptions.getLimit())
                                                 .maxAwaitTime(findOptions.getMaxAwaitTime(MILLISECONDS), MILLISECONDS)
                                                 .maxTime(findOptions.getMaxTime(MILLISECONDS), MILLISECONDS)
-                                                .modifiers(collection.wrapAllowNull(findOptions.getModifiers()))
                                                 .projection(collection.wrapAllowNull(findOptions.getProjection()))
                                                 .sort(collection.wrapAllowNull(findOptions.getSort()))
                                                 .collation(findOptions.getCollation())
@@ -593,35 +413,13 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
                                                 .hint(collection.wrapAllowNull(findOptions.getHint()))
                                                 .min(collection.wrapAllowNull(findOptions.getMin()))
                                                 .max(collection.wrapAllowNull(findOptions.getMax()))
+                                                .cursorType(findOptions.getCursorType())
+                                                .noCursorTimeout(findOptions.isNoCursorTimeout())
+                                                .oplogReplay(findOptions.isOplogReplay())
+                                                .partial(findOptions.isPartial())
                                                 .returnKey(findOptions.isReturnKey())
                                                 .showRecordId(findOptions.isShowRecordId())
                                                 .retryReads(retryReads);
-
-        if ((this.options & Bytes.QUERYOPTION_TAILABLE) != 0) {
-            if ((this.options & Bytes.QUERYOPTION_AWAITDATA) != 0) {
-                operation.cursorType(CursorType.TailableAwait);
-            } else {
-                operation.cursorType(CursorType.Tailable);
-            }
-        } else {
-            operation.cursorType(findOptions.getCursorType());
-        }
-        if ((this.options & Bytes.QUERYOPTION_OPLOGREPLAY) != 0) {
-            operation.oplogReplay(true);
-        } else {
-            operation.oplogReplay(findOptions.isOplogReplay());
-        }
-        if ((this.options & Bytes.QUERYOPTION_NOTIMEOUT) != 0) {
-            operation.noCursorTimeout(true);
-        } else {
-            operation.noCursorTimeout(findOptions.isNoCursorTimeout());
-        }
-        if ((this.options & Bytes.QUERYOPTION_PARTIAL) != 0) {
-            operation.partial(true);
-        } else {
-            operation.partial(findOptions.isPartial());
-        }
-        return operation;
     }
 
     /**
@@ -712,18 +510,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         }
 
         currentObject = null;
-    }
-
-    /**
-     * Declare that this query can run on a secondary server.
-     *
-     * @return a copy of the same cursor (for chaining)
-     * @see ReadPreference#secondaryPreferred()
-     * @deprecated Replaced with {@link com.mongodb.ReadPreference#secondaryPreferred()}
-     */
-    @Deprecated
-    public DBCursor slaveOk() {
-        return addOption(Bytes.QUERYOPTION_SLAVEOK);
     }
 
     /**
@@ -986,14 +772,14 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     private void initializeCursor(final FindOperation<DBObject> operation) {
-        cursor = new MongoBatchCursorAdapter<DBObject>(executor.execute(operation, getReadPreferenceForCursor(), getReadConcern()));
+        cursor = new MongoBatchCursorAdapter<DBObject>(executor.execute(operation, getReadPreference(), getReadConcern()));
         if (isCursorFinalizerEnabled() && cursor.getServerCursor() != null) {
-            optionalFinalizer = new OptionalFinalizer(collection.getDB().getMongo(), collection.getNamespace());
+            optionalFinalizer = new OptionalFinalizer(collection.getDB().getMongoClient(), collection.getNamespace());
         }
     }
 
     private boolean isCursorFinalizerEnabled() {
-        return collection.getDB().getMongo().getMongoClientOptions().isCursorFinalizerEnabled();
+        return collection.getDB().getMongoClient().getMongoClientOptions().isCursorFinalizerEnabled();
     }
 
     private void setServerCursorOnFinalizer(@Nullable final ServerCursor serverCursor) {
@@ -1013,14 +799,6 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         }
 
         throw new IllegalArgumentException("Can't switch cursor access methods");
-    }
-
-    private ReadPreference getReadPreferenceForCursor() {
-        ReadPreference readPreference = getReadPreference();
-        if ((options & Bytes.QUERYOPTION_SLAVEOK) != 0 && !readPreference.isSlaveOk()) {
-            readPreference = ReadPreference.secondaryPreferred();
-        }
-        return readPreference;
     }
 
     private void fillArray(final int n) {
@@ -1065,33 +843,17 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
         return newCurrentObject;
     }
 
-    @Nullable
-    private static DBObject lookupSuitableHints(final DBObject query, @Nullable final List<DBObject> hints) {
-        if (hints == null) {
-            return null;
-        }
-
-        Set<String> keys = query.keySet();
-
-        for (final DBObject hint : hints) {
-            if (keys.containsAll(hint.keySet())) {
-                return hint;
-            }
-        }
-        return null;
-    }
-
     private enum IteratorOrArray {
         ITERATOR,
         ARRAY
     }
 
     private static class OptionalFinalizer {
-        private final Mongo mongo;
+        private final MongoClient mongo;
         private final MongoNamespace namespace;
         private volatile ServerCursor serverCursor;
 
-        private OptionalFinalizer(final Mongo mongo, final MongoNamespace namespace) {
+        private OptionalFinalizer(final MongoClient mongo, final MongoNamespace namespace) {
             this.namespace = notNull("namespace", namespace);
             this.mongo = notNull("mongo", mongo);
         }
@@ -1110,20 +872,11 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     }
 
     private DBCollectionCountOptions getDbCollectionCountOptions() {
-        DBCollectionCountOptions countOptions = new DBCollectionCountOptions()
-                .readPreference(getReadPreferenceForCursor())
+        return new DBCollectionCountOptions()
+                .readPreference(getReadPreference())
                 .readConcern(getReadConcern())
                 .collation(getCollation())
-                .maxTime(findOptions.getMaxTime(MILLISECONDS), MILLISECONDS);
-
-        Object hint = findOptions.getHint() != null ? findOptions.getHint() : findOptions.getModifiers().get("$hint");
-        if (hint != null) {
-            if (hint instanceof String) {
-                countOptions.hintString((String) hint);
-            } else {
-                countOptions.hint((DBObject) hint);
-            }
-        }
-        return countOptions;
+                .maxTime(findOptions.getMaxTime(MILLISECONDS), MILLISECONDS)
+                .hint(findOptions.getHint());
     }
 }

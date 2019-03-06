@@ -18,7 +18,6 @@ package com.mongodb
 
 import spock.lang.Specification
 
-import static com.mongodb.AggregationOptions.OutputMode.CURSOR
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class AggregationOptionsSpecification extends Specification {
@@ -28,13 +27,11 @@ class AggregationOptionsSpecification extends Specification {
         def options = AggregationOptions.builder()
                                         .allowDiskUse(true)
                                         .batchSize(3)
-                                        .outputMode(CURSOR)
                                         .maxTime(42, MILLISECONDS)
                                         .build()
         then:
         options.allowDiskUse
         options.batchSize == 3
-        options.outputMode == CURSOR
         options.getMaxTime(MILLISECONDS) == 42
     }
 }

@@ -27,10 +27,9 @@ import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit
 
-import static com.mongodb.CustomMatchers.isTheSameAs
 import static Fixture.getMongoClient
+import static com.mongodb.CustomMatchers.isTheSameAs
 import static spock.util.matcher.HamcrestSupport.expect
-
 
 class DBCursorSpecification extends Specification {
 
@@ -125,7 +124,6 @@ class DBCursorSpecification extends Specification {
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
                                                                 .filter(new BsonDocument())
                                                                 .projection(new BsonDocument())
-                                                                .modifiers(new BsonDocument())
                                                                 .retryReads(true))
     }
 
@@ -145,7 +143,6 @@ class DBCursorSpecification extends Specification {
                                                                 .limit(-1)
                                                                 .filter(new BsonDocument())
                                                                 .projection(new BsonDocument())
-                                                                .modifiers(new BsonDocument())
                                                                 .retryReads(true))
     }
 
@@ -192,7 +189,6 @@ class DBCursorSpecification extends Specification {
                 .partial(true)
                 .skip(1)
                 .sort(bsonSort)
-                .modifiers(new BsonDocument())
                 .retryReads(true)
         )
 
@@ -209,9 +205,7 @@ class DBCursorSpecification extends Specification {
         def filter = new BasicDBObject()
         def projection = BasicDBObject.parse('{a: 1, _id: 0}')
         def sort = BasicDBObject.parse('{a: 1}')
-        def modifiers = BasicDBObject.parse('{$comment: 1}')
         def bsonFilter = new BsonDocument()
-        def bsonModifiers = BsonDocument.parse(modifiers.toJson())
         def bsonProjection = BsonDocument.parse(projection.toJson())
         def bsonSort = BsonDocument.parse(sort.toJson())
         def comment = 'comment'
@@ -230,7 +224,6 @@ class DBCursorSpecification extends Specification {
                 .limit(1)
                 .maxAwaitTime(1, TimeUnit.MILLISECONDS)
                 .maxTime(1, TimeUnit.MILLISECONDS)
-                .modifiers(modifiers)
                 .noCursorTimeout(true)
                 .oplogReplay(true)
                 .partial(true)
@@ -260,7 +253,6 @@ class DBCursorSpecification extends Specification {
                 .limit(1)
                 .maxAwaitTime(1, TimeUnit.MILLISECONDS)
                 .maxTime(1, TimeUnit.MILLISECONDS)
-                .modifiers(bsonModifiers)
                 .noCursorTimeout(true)
                 .oplogReplay(true)
                 .partial(true)
@@ -277,46 +269,6 @@ class DBCursorSpecification extends Specification {
         )
 
         executor.getReadPreference() == findOptions.getReadPreference()
-    }
-
-    def 'DBCursor options should override DBCollectionFindOptions'() {
-        given:
-        def executor = new TestOperationExecutor([stubBatchCursor()]);
-        def collection = new DB(getMongoClient(), 'myDatabase', executor).getCollection('test')
-        def cursorType = CursorType.NonTailable
-        def readPreference = ReadPreference.primary()
-        def filter = new BasicDBObject()
-        def bsonFilter = new BsonDocument()
-        def findOptions = new DBCollectionFindOptions()
-                .cursorType(cursorType)
-                .noCursorTimeout(false)
-                .oplogReplay(false)
-                .partial(false)
-                .readPreference(readPreference)
-
-        def cursor = new DBCursor(collection, filter , findOptions)
-                .addOption(Bytes.QUERYOPTION_AWAITDATA)
-                .addOption(Bytes.QUERYOPTION_NOTIMEOUT)
-                .addOption(Bytes.QUERYOPTION_OPLOGREPLAY)
-                .addOption(Bytes.QUERYOPTION_PARTIAL)
-                .addOption(Bytes.QUERYOPTION_SLAVEOK)
-                .addOption(Bytes.QUERYOPTION_TAILABLE)
-
-        when:
-        cursor.toArray()
-
-        then:
-        expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
-                .modifiers(new BsonDocument())
-                .cursorType(CursorType.TailableAwait)
-                .filter(bsonFilter)
-                .noCursorTimeout(true)
-                .oplogReplay(true)
-                .partial(true)
-                .retryReads(true)
-        )
-
-        executor.getReadPreference() == ReadPreference.secondaryPreferred()
     }
 
     def 'count should create the correct CountOperation'() {
