@@ -16,7 +16,6 @@
 
 package com.mongodb.client.internal
 
-import com.mongodb.Block
 import com.mongodb.Function
 import com.mongodb.client.MongoCursor
 import com.mongodb.client.MongoIterable
@@ -40,7 +39,7 @@ class MappingIterableSpecification extends Specification {
         1 * iterable.first()
 
         when:
-        mappingIterable.forEach( { } as Block)
+        mappingIterable.forEach { }
 
         then:
         1 * iterable.forEach(_)

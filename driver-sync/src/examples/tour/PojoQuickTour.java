@@ -16,7 +16,6 @@
 
 package tour;
 
-import com.mongodb.Block;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
@@ -28,6 +27,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 import static com.mongodb.client.model.Filters.eq;
 import static com.mongodb.client.model.Filters.gt;
@@ -94,9 +94,9 @@ public class PojoQuickTour {
 
         System.out.println("");
         // lets get all the documents in the collection and print them out
-        Block<Person> printBlock = new Block<Person>() {
+        Consumer<Person> printBlock = new Consumer<Person>() {
             @Override
-            public void apply(final Person person) {
+            public void accept(final Person person) {
                 System.out.println(person);
             }
         };

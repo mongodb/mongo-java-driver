@@ -16,7 +16,7 @@
 
 package com.mongodb.client.gridfs
 
-import com.mongodb.Block
+
 import com.mongodb.CursorType
 import com.mongodb.Function
 import com.mongodb.MongoClientSettings
@@ -35,6 +35,8 @@ import org.bson.BsonObjectId
 import org.bson.Document
 import org.bson.types.ObjectId
 import spock.lang.Specification
+
+import java.util.function.Consumer
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.ReadPreference.secondary
@@ -160,9 +162,9 @@ class GridFSFindIterableSpecification extends Specification {
 
         when:
         def count = 0
-        mongoIterable.forEach(new Block<GridFSFile>() {
+        mongoIterable.forEach(new Consumer<GridFSFile>() {
             @Override
-            void apply(GridFSFile document) {
+            void accept(GridFSFile document) {
                 count++
             }
         })
