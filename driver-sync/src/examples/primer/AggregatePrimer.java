@@ -16,14 +16,15 @@
 
 package primer;
 
-import org.junit.Test;
-
-// @import: start
-import com.mongodb.Block;
 import com.mongodb.client.AggregateIterable;
 import org.bson.Document;
+import org.junit.Test;
+
+import java.util.function.Consumer;
 
 import static java.util.Arrays.asList;
+
+// @import: start
 // @import: end
 
 public class AggregatePrimer extends PrimerTestCase {
@@ -39,9 +40,9 @@ public class AggregatePrimer extends PrimerTestCase {
 
         // @pre: Iterate the results and apply a block to each resulting document
         // @code: start
-        iterable.forEach(new Block<Document>() {
+        iterable.forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 System.out.println(document.toJson());
             }
         });
@@ -73,9 +74,9 @@ public class AggregatePrimer extends PrimerTestCase {
 
         // @pre: Iterate the results and apply a block to each resulting document
         // @code: start
-        iterable.forEach(new Block<Document>() {
+        iterable.forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 System.out.println(document.toJson());
             }
         });

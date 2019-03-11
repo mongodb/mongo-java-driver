@@ -16,12 +16,11 @@
 
 package primer;
 
+import com.mongodb.client.FindIterable;
+import org.bson.Document;
 import org.junit.Test;
 
-// @imports: start
-import org.bson.Document;
-import com.mongodb.Block;
-import com.mongodb.client.FindIterable;
+import java.util.function.Consumer;
 
 import static com.mongodb.client.model.Filters.and;
 import static com.mongodb.client.model.Filters.eq;
@@ -29,8 +28,9 @@ import static com.mongodb.client.model.Filters.gt;
 import static com.mongodb.client.model.Filters.lt;
 import static com.mongodb.client.model.Filters.or;
 import static com.mongodb.client.model.Sorts.ascending;
-
 import static java.util.Arrays.asList;
+
+// @imports: start
 // @imports: end
 
 
@@ -45,9 +45,9 @@ public class QueryPrimer extends PrimerTestCase {
 
         // @pre: Iterate the results and apply a block to each resulting document.
         // @code: start
-        iterable.forEach(new Block<Document>() {
+        iterable.forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 System.out.println(document);
             }
         });
@@ -67,9 +67,9 @@ public class QueryPrimer extends PrimerTestCase {
 
         // @pre: Iterate the results and apply a block to each resulting document.
         // @code: start
-        iterable.forEach(new Block<Document>() {
+        iterable.forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 System.out.println(document);
             }
         });
@@ -95,9 +95,9 @@ public class QueryPrimer extends PrimerTestCase {
 
         // @pre: Iterate the results and apply a block to each resulting document.
         // @code: start
-        iterable.forEach(new Block<Document>() {
+        iterable.forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 System.out.println(document);
             }
         });
@@ -121,9 +121,9 @@ public class QueryPrimer extends PrimerTestCase {
 
         // @pre: Iterate the results and apply a block to each resulting document.
         // @code: start
-        iterable.forEach(new Block<Document>() {
+        iterable.forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 System.out.println(document);
             }
         });
@@ -146,9 +146,9 @@ public class QueryPrimer extends PrimerTestCase {
 
         // @pre: Iterate the results and apply a block to each resulting document.
         // @code: start
-        iterable.forEach(new Block<Document>() {
+        iterable.forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 System.out.println(document);
             }
         });
@@ -171,9 +171,9 @@ public class QueryPrimer extends PrimerTestCase {
 
         // @pre: Iterate the results and apply a block to each resulting document.
         // @code: start
-        iterable.forEach(new Block<Document>() {
+        iterable.forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 System.out.println(document);
             }
         });
@@ -196,9 +196,9 @@ public class QueryPrimer extends PrimerTestCase {
 
         // @pre: Iterate the results and apply a block to each resulting document.
         // @code: start
-        iterable.forEach(new Block<Document>() {
+        iterable.forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 System.out.println(document);
             }
         });
@@ -221,9 +221,9 @@ public class QueryPrimer extends PrimerTestCase {
 
         // @pre: Iterate the results and apply a block to each resulting document.
         // @code: start
-        iterable.forEach(new Block<Document>() {
+        iterable.forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 System.out.println(document);
             }
         });
@@ -247,9 +247,9 @@ public class QueryPrimer extends PrimerTestCase {
 
         // @pre: Iterate the results and apply a block to each resulting document
         // @code: start
-        iterable.forEach(new Block<Document>() {
+        iterable.forEach(new Consumer<Document>() {
             @Override
-            public void apply(final Document document) {
+            public void accept(final Document document) {
                 System.out.println(document);
             }
         });

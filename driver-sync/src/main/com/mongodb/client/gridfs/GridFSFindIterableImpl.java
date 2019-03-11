@@ -16,7 +16,6 @@
 
 package com.mongodb.client.gridfs;
 
-import com.mongodb.Block;
 import com.mongodb.Function;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCursor;
@@ -28,6 +27,7 @@ import org.bson.conversions.Bson;
 
 import java.util.Collection;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 class GridFSFindIterableImpl implements GridFSFindIterable {
     private final FindIterable<GridFSFile> underlying;
@@ -106,7 +106,7 @@ class GridFSFindIterableImpl implements GridFSFindIterable {
     }
 
     @Override
-    public void forEach(final Block<? super GridFSFile> block) {
+    public void forEach(final Consumer<? super GridFSFile> block) {
         underlying.forEach(block);
     }
 

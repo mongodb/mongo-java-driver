@@ -16,7 +16,6 @@
 
 package gridfs;
 
-import com.mongodb.Block;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
@@ -36,6 +35,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.function.Consumer;
 
 import static com.mongodb.client.model.Filters.eq;
 
@@ -98,9 +98,9 @@ public final class GridFSTour {
         /*
          * Find documents
          */
-        gridFSBucket.find().forEach(new Block<GridFSFile>() {
+        gridFSBucket.find().forEach(new Consumer<GridFSFile>() {
             @Override
-            public void apply(final GridFSFile gridFSFile) {
+            public void accept(final GridFSFile gridFSFile) {
                 System.out.println(gridFSFile.getFilename());
             }
         });
@@ -109,9 +109,9 @@ public final class GridFSTour {
          * Find documents with a filter
          */
         gridFSBucket.find(eq("metadata.contentType", "image/png")).forEach(
-                new Block<GridFSFile>() {
+                new Consumer<GridFSFile>() {
                     @Override
-                    public void apply(final GridFSFile gridFSFile) {
+                    public void accept(final GridFSFile gridFSFile) {
                         System.out.println(gridFSFile.getFilename());
                     }
                 });
