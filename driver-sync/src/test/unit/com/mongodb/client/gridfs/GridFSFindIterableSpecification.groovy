@@ -105,7 +105,6 @@ class GridFSFindIterableSpecification extends Specification {
         when:
         findIterable.filter(new Document('filter', 1))
                 .sort(new BsonDocument('sort', new BsonInt32(1)))
-                .modifiers(new Document('modifier', 1))
                 .iterator()
 
         def operation = executor.getReadOperation() as FindOperation<GridFSFile>
@@ -114,7 +113,6 @@ class GridFSFindIterableSpecification extends Specification {
         expect operation, isTheSameAs(new FindOperation<GridFSFile>(namespace, gridFSFileCodec)
                 .filter(new BsonDocument('filter', new BsonInt32(1)))
                 .sort(new BsonDocument('sort', new BsonInt32(1)))
-                .modifiers(new BsonDocument('modifier', new BsonInt32(1)))
                 .cursorType(CursorType.NonTailable)
                 .slaveOk(true)
                 .retryReads(true)
