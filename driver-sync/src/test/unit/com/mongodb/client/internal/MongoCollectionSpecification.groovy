@@ -211,50 +211,6 @@ class MongoCollectionSpecification extends Specification {
                 true, true, newReadConcern, JAVA_LEGACY, executor))
     }
 
-    def 'should use CountOperation correctly'() {
-        given:
-        def executor = new TestOperationExecutor([1L, 2L, 3L])
-        def filter = new BsonDocument()
-        def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED, true,
-                true, readConcern, JAVA_LEGACY, executor)
-        def expectedOperation = new CountOperation(namespace)
-                .filter(filter)
-                .retryReads(true)
-
-        def countMethod = collection.&count
-
-        when:
-        execute(countMethod, session)
-        def operation = executor.getReadOperation() as CountOperation
-
-        then:
-        executor.getClientSession() == session
-        expect operation, isTheSameAs(expectedOperation)
-
-        when:
-        filter = new BsonDocument('a', new BsonInt32(1))
-        execute(countMethod, session, filter)
-        operation = executor.getReadOperation() as CountOperation
-
-        then:
-        executor.getClientSession() == session
-        expect operation, isTheSameAs(expectedOperation.filter(filter))
-
-        when:
-        def hint = new BsonDocument('hint', new BsonInt32(1))
-        execute(countMethod, session, filter, new CountOptions().hint(hint).skip(10).limit(100)
-                .maxTime(100, MILLISECONDS).collation(collation))
-        operation = executor.getReadOperation() as CountOperation
-
-        then:
-        executor.getClientSession() == session
-        expect operation, isTheSameAs(expectedOperation.filter(filter).hint(hint).skip(10).limit(100).maxTime(100, MILLISECONDS)
-                .collation(collation))
-
-        where:
-        session << [null, Stub(ClientSession)]
-    }
-
     def 'should use CountOperation correctly with documentCount'() {
         given:
         def executor = new TestOperationExecutor([1L, 2L, 3L, 4L])
@@ -1474,11 +1430,6 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         collection.bulkWrite(null, [new InsertOneModel(new Document())])
-        then:
-        thrown(IllegalArgumentException)
-
-        when:
-        collection.count((ClientSession) null)
         then:
         thrown(IllegalArgumentException)
 

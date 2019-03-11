@@ -102,7 +102,9 @@ public class CommandMonitoringTest {
                                                                                      new MongoNamespace(databaseName,
                                                                                                         collectionName));
         collectionHelper.drop();
-        collectionHelper.insertDocuments(documents);
+        if (!documents.isEmpty()) {
+            collectionHelper.insertDocuments(documents);
+        }
 
         commandListener.reset();
         MongoDatabase database = mongoClient.getDatabase(databaseName);

@@ -50,7 +50,7 @@ public class SmokeTest extends DatabaseTestCase {
         assertEquals(null, collection.find().first());
 
         collection.insertOne(document);
-        assertEquals(1, collection.count());
+        assertEquals(1, collection.countDocuments());
 
         assertEquals(document, collection.find().first());
 

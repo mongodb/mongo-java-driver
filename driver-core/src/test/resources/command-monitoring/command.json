@@ -1,9 +1,5 @@
 {
   "data": [
-    {
-      "_id": 1,
-      "x": 11
-    }
   ],
   "collection_name": "test",
   "database_name": "command-monitoring-tests",
@@ -11,7 +7,7 @@
     {
       "description": "A successful command",
       "operation": {
-        "name": "count",
+        "name": "find",
         "arguments": {
           "filter": {
             "_id": 1
@@ -22,12 +18,12 @@
         {
           "command_started_event": {
             "command": {
-              "count": "test",
-              "query": {
+              "find": "test",
+              "filter": {
                 "_id": 1
               }
             },
-            "command_name": "count",
+            "command_name": "find",
             "database_name": "command-monitoring-tests"
           }
         },
@@ -35,9 +31,9 @@
           "command_succeeded_event": {
             "reply": {
               "ok": 1.0,
-              "n": 1
+              "cursor": {"id": {"$numberLong": "0"}, "ns": "command-monitoring-tests.test", "firstBatch": []}
             },
-            "command_name": "count"
+            "command_name": "find"
           }
         }
       ]
@@ -45,7 +41,7 @@
     {
       "description": "A failed command event",
       "operation": {
-        "name": "count",
+        "name": "find",
         "arguments": {
           "filter": {
             "$or": true
@@ -56,18 +52,18 @@
         {
           "command_started_event": {
             "command": {
-              "count": "test",
-              "query": {
+              "find": "test",
+              "filter": {
                 "$or": true
               }
             },
-            "command_name": "count",
+            "command_name": "find",
             "database_name": "command-monitoring-tests"
           }
         },
         {
           "command_failed_event": {
-            "command_name": "count"
+            "command_name": "find"
           }
         }
       ]
@@ -75,7 +71,7 @@
     {
       "description": "A successful command with a non-primary read preference",
       "operation": {
-        "name": "count",
+        "name": "find",
         "arguments": {
           "filter": {
             "_id": 1
@@ -89,12 +85,12 @@
         {
           "command_started_event": {
             "command": {
-              "count": "test",
-              "query": {
+              "find": "test",
+              "filter": {
                 "_id": 1
               }
             },
-            "command_name": "count",
+            "command_name": "find",
             "database_name": "command-monitoring-tests"
           }
         },
@@ -102,9 +98,9 @@
           "command_succeeded_event": {
             "reply": {
               "ok": 1.0,
-              "n": 1
+              "cursor": {"id": {"$numberLong": "0"}, "ns": "command-monitoring-tests.test", "firstBatch": []}
             },
-            "command_name": "count"
+            "command_name": "find"
           }
         }
       ]

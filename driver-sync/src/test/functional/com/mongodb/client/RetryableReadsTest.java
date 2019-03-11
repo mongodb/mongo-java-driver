@@ -113,6 +113,7 @@ public class RetryableReadsTest {
         assumeFalse(skipTest);
         assumeTrue("Skipping test: " + definition.getString("skipReason", new BsonString("")).getValue(),
                 !definition.containsKey("skipReason"));
+        assumeFalse("Skipping count tests", filename.startsWith("count.") || filename.startsWith("count-"));
 
         collectionHelper = new CollectionHelper<Document>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
         final BsonDocument clientOptions = definition.getDocument("clientOptions", new BsonDocument());
