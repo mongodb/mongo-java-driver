@@ -21,6 +21,7 @@ import com.mongodb.MongoGridFSException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.client.ClientSession;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.ListIndexesIterable;
 import com.mongodb.client.MongoCollection;
@@ -32,7 +33,6 @@ import com.mongodb.client.model.IndexOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.lang.Nullable;
-import com.mongodb.client.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.BsonObjectId;
 import org.bson.BsonString;
@@ -462,32 +462,6 @@ final class GridFSBucketImpl implements GridFSBucket {
         notNull("clientSession", clientSession);
         filesCollection.drop(clientSession);
         chunksCollection.drop(clientSession);
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public GridFSDownloadStream openDownloadStreamByName(final String filename) {
-        return openDownloadStreamByName(filename, new com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions());
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public GridFSDownloadStream openDownloadStreamByName(final String filename,
-                                                         final com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions options) {
-        return openDownloadStream(filename, new GridFSDownloadOptions().revision(options.getRevision()));
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public void downloadToStreamByName(final String filename, final OutputStream destination) {
-        downloadToStreamByName(filename, destination, new com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions());
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public void downloadToStreamByName(final String filename, final OutputStream destination,
-                                       final com.mongodb.client.gridfs.model.GridFSDownloadByNameOptions options) {
-        downloadToStream(filename, destination, new GridFSDownloadOptions().revision(options.getRevision()));
     }
 
     private static MongoCollection<GridFSFile> getFilesCollection(final MongoDatabase database, final String bucketName) {

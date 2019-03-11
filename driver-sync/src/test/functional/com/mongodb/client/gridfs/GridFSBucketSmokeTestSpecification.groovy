@@ -25,6 +25,7 @@ import com.mongodb.client.gridfs.model.GridFSDownloadOptions
 import com.mongodb.client.gridfs.model.GridFSFile
 import com.mongodb.client.gridfs.model.GridFSUploadOptions
 import org.bson.BsonDocument
+import org.bson.BsonObjectId
 import org.bson.BsonString
 import org.bson.Document
 import org.bson.UuidRepresentation
@@ -196,17 +197,17 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         def expectedLength = contentBytes.length as Long
         def expectedNoChunks = Math.ceil((expectedLength as double) / chunkSize) as int
         def expectedMD5 = MessageDigest.getInstance('MD5').digest(contentBytes).encodeHex().toString()
-        ObjectId fileId
+        def fileId
         byte[] gridFSContentBytes
 
         when:
         if (direct) {
-            fileId = gridFSBucket.uploadFromStream('myFile', new ByteArrayInputStream(contentBytes), options);
+            fileId = new BsonObjectId(gridFSBucket.uploadFromStream('myFile', new ByteArrayInputStream(contentBytes), options))
         } else {
             def outputStream = gridFSBucket.openUploadStream('myFile', options)
             outputStream.write(contentBytes)
             outputStream.close()
-            fileId = outputStream.getFileId()
+            fileId = outputStream.getId()
         }
 
         then:
@@ -217,7 +218,7 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         def fileInfo = filesCollection.find().first()
 
         then:
-        fileInfo.getId().getValue() == fileId
+        fileInfo.getId() == fileId
         fileInfo.getChunkSize() == options.getChunkSizeBytes()
         fileInfo.getLength() == expectedLength
         fileInfo.getMD5() == expectedMD5
@@ -538,31 +539,6 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
 
         then:
         filesCollection.find(BsonDocument).first().getDocument('metadata').getBinary('uuid').getType() == 4 as byte
-    }
-
-    @SuppressWarnings('deprecation')
-    def 'should be able to open by name using the deprecated methods'() {
-        given:
-        def content = 'Hello GridFS'
-        def contentBytes = content as byte[]
-        def filename = 'myFile'
-        gridFSBucket.uploadFromStream(filename, new ByteArrayInputStream(contentBytes))
-        byte[] gridFSContentBytes
-
-        when: 'Direct to a stream'
-        gridFSContentBytes = gridFSBucket.openDownloadStreamByName(filename).getBytes()
-
-        then:
-        gridFSContentBytes == contentBytes
-
-        when: 'To supplied stream'
-        def outputStream = new ByteArrayOutputStream(contentBytes.length)
-        gridFSBucket.downloadToStreamByName(filename, outputStream)
-        outputStream.close()
-        gridFSContentBytes = outputStream.toByteArray()
-
-        then:
-        gridFSContentBytes == contentBytes
     }
 
     @Unroll

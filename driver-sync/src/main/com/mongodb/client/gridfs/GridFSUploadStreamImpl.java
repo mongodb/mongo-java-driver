@@ -17,10 +17,10 @@
 package com.mongodb.client.gridfs;
 
 import com.mongodb.MongoGridFSException;
+import com.mongodb.client.ClientSession;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.lang.Nullable;
-import com.mongodb.client.ClientSession;
 import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.types.Binary;
@@ -64,12 +64,6 @@ final class GridFSUploadStreamImpl extends GridFSUploadStream {
         chunkIndex = 0;
         bufferOffset = 0;
         buffer = new byte[chunkSizeBytes];
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public ObjectId getFileId() {
-        return getObjectId();
     }
 
     @Override
