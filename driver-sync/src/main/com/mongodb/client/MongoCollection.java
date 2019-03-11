@@ -984,28 +984,6 @@ public interface MongoCollection<TDocument> {
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param filter        the query filter to apply the the replace operation
      * @param replacement   the replacement document
-     * @param updateOptions the options to apply to the replace operation
-     * @return the result of the replace one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
-     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
-     * @throws com.mongodb.MongoException             if the write failed due some other failure
-     * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
-     * @mongodb.driver.manual reference/command/update   Update Command Behaviors
-     * @deprecated use {@link #replaceOne(Bson, Object, ReplaceOptions)} instead
-     */
-    @Deprecated
-    UpdateResult replaceOne(Bson filter, TDocument replacement, UpdateOptions updateOptions);
-
-    /**
-     * Replace a document in the collection according to the specified arguments.
-     *
-     * <p>Use this method to replace a document using the specified replacement argument. To update the document with update operators, use
-     * the corresponding {@link #updateOne(Bson, Bson, UpdateOptions)} method.</p>
-     *
-     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
-     * @param filter        the query filter to apply the the replace operation
-     * @param replacement   the replacement document
      * @param replaceOptions the options to apply to the replace operation
      * @return the result of the replace one operation
      * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
@@ -1039,31 +1017,6 @@ public interface MongoCollection<TDocument> {
      * @mongodb.driver.manual reference/command/update   Update Command Behaviors
      */
     UpdateResult replaceOne(ClientSession clientSession, Bson filter, TDocument replacement);
-
-    /**
-     * Replace a document in the collection according to the specified arguments.
-     *
-     * <p>Use this method to replace a document using the specified replacement argument. To update the document with update operators, use
-     * the corresponding {@link #updateOne(ClientSession, Bson, Bson, UpdateOptions)} method.</p>
-     *
-     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
-     * @param clientSession the client session with which to associate this operation
-     * @param filter        the query filter to apply the the replace operation
-     * @param replacement   the replacement document
-     * @param updateOptions the options to apply to the replace operation
-     * @return the result of the replace one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
-     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
-     * @throws com.mongodb.MongoException             if the write failed due some other failure
-     * @since 3.6
-     * @mongodb.server.release 3.6
-     * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
-     * @deprecated use {@link #replaceOne(ClientSession, Bson, Object, ReplaceOptions)} instead
-     * @mongodb.driver.manual reference/command/update   Update Command Behaviors
-     */
-    @Deprecated
-    UpdateResult replaceOne(ClientSession clientSession, Bson filter, TDocument replacement, UpdateOptions updateOptions);
 
     /**
      * Replace a document in the collection according to the specified arguments.

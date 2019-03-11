@@ -798,19 +798,9 @@ class MongoCollectionSpecification extends Specification {
 
         when:
         def result = execute(replaceOneMethod, session, new Document('a', 1), new Document('a', 10),
-                new UpdateOptions().bypassDocumentValidation(bypassDocumentValidation))
-        def operation = executor.getWriteOperation() as MixedBulkWriteOperation
-
-        then:
-        expect operation, isTheSameAs(expectedOperation(false, writeConcern, bypassDocumentValidation, null))
-        executor.getClientSession() == session
-        result == expectedResult
-
-        when:
-        result = execute(replaceOneMethod, session, new Document('a', 1), new Document('a', 10),
                 new ReplaceOptions().upsert(true).bypassDocumentValidation(bypassDocumentValidation).collation(collation))
         executor.getClientSession() == session
-        operation = executor.getWriteOperation() as MixedBulkWriteOperation
+        def operation = executor.getWriteOperation() as MixedBulkWriteOperation
 
         then:
         expect operation, isTheSameAs(expectedOperation(true, writeConcern, bypassDocumentValidation, collation))
