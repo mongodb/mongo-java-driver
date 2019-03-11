@@ -17,6 +17,7 @@
 package com.mongodb;
 
 import category.Slow;
+import com.mongodb.client.model.DBCollectionCountOptions;
 import org.bson.BSONObject;
 import org.bson.BsonBinarySubType;
 import org.bson.BsonBinaryWriter;
@@ -337,8 +338,10 @@ public class DBCollectionTest extends DatabaseTestCase {
         }
         assertEquals(10, collection.getCount());
         assertEquals(5, collection.getCount(new BasicDBObject("_id", new BasicDBObject("$lt", 5))));
-        assertEquals(4, collection.getCount(new BasicDBObject("_id", new BasicDBObject("$lt", 5)), null, 100, 1));
-        assertEquals(4, collection.getCount(new BasicDBObject("_id", new BasicDBObject("$lt", 5)), null, 4, 0));
+        assertEquals(4, collection.getCount(new BasicDBObject("_id", new BasicDBObject("$lt", 5)),
+                new DBCollectionCountOptions().limit(100).skip(1)));
+        assertEquals(4, collection.getCount(new BasicDBObject("_id", new BasicDBObject("$lt", 5)),
+                new DBCollectionCountOptions().limit(4)));
     }
 
     @Test

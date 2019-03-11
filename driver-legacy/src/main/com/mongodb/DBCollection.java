@@ -828,7 +828,7 @@ public class DBCollection {
     }
 
     /**
-     * Same as {@link #getCount(DBObject)}
+     * Get the count of documents in collection that would match a criteria.
      *
      * @param query specifies the selection criteria
      * @return the number of documents that matches selection criteria
@@ -849,7 +849,7 @@ public class DBCollection {
      * @mongodb.driver.manual reference/command/count/ Count
      */
     public long count(@Nullable final DBObject query, final ReadPreference readPreference) {
-        return getCount(query, null, readPreference);
+        return getCount(query, new DBCollectionCountOptions().readPreference(readPreference));
     }
 
     /**
@@ -878,18 +878,6 @@ public class DBCollection {
     }
 
     /**
-     * Get the count of documents in collection.
-     *
-     * @param readPreference {@link ReadPreference} to be used for this operation
-     * @return the number of documents in collection
-     * @throws MongoException if the operation failed
-     * @mongodb.driver.manual reference/command/count/ Count
-     */
-    public long getCount(final ReadPreference readPreference) {
-        return getCount(new BasicDBObject(), null, readPreference);
-    }
-
-    /**
      * Get the count of documents in collection that would match a criteria.
      *
      * @param query specifies the selection criteria
@@ -899,73 +887,6 @@ public class DBCollection {
      */
     public long getCount(@Nullable final DBObject query) {
         return getCount(query, new DBCollectionCountOptions());
-    }
-
-    /**
-     * Get the count of documents in collection that would match a criteria.
-     *
-     * @param query      specifies the selection criteria
-     * @param projection this is ignored
-     * @return the number of documents that matches selection criteria
-     * @throws MongoException if the operation failed
-     * @mongodb.driver.manual reference/command/count/ Count
-     * @deprecated Prefer {@link #count(DBObject, DBCollectionCountOptions)}
-     */
-    @Deprecated
-    public long getCount(@Nullable final DBObject query, final DBObject projection) {
-        return getCount(query, projection, 0, 0);
-    }
-
-    /**
-     * Get the count of documents in collection that would match a criteria.
-     *
-     * @param query          specifies the selection criteria
-     * @param projection     this is ignored
-     * @param readPreference {@link ReadPreference} to be used for this operation
-     * @return the number of documents that matches selection criteria
-     * @throws MongoException if the operation failed
-     * @mongodb.driver.manual reference/command/count/ Count
-     * @deprecated Prefer {@link #count(DBObject, DBCollectionCountOptions)}
-     */
-    @Deprecated
-    public long getCount(@Nullable final DBObject query, @Nullable final DBObject projection, final ReadPreference readPreference) {
-        return getCount(query, projection, 0, 0, readPreference);
-    }
-
-    /**
-     * Get the count of documents in collection that would match a criteria.
-     *
-     * @param query      specifies the selection criteria
-     * @param projection this is ignored
-     * @param limit      limit the count to this value
-     * @param skip       number of documents to skip
-     * @return the number of documents that matches selection criteria
-     * @throws MongoException if the operation failed
-     * @mongodb.driver.manual reference/command/count/ Count
-     * @deprecated Prefer {@link #count(DBObject, DBCollectionCountOptions)}
-     */
-    @Deprecated
-    public long getCount(@Nullable final DBObject query, @Nullable final DBObject projection, final long limit, final long skip) {
-        return getCount(query, projection, limit, skip, getReadPreference());
-    }
-
-    /**
-     * Get the count of documents in collection that would match a criteria.
-     *
-     * @param query          specifies the selection criteria
-     * @param projection     this is ignored
-     * @param limit          limit the count to this value
-     * @param skip           number of documents to skip
-     * @param readPreference {@link ReadPreference} to be used for this operation
-     * @return the number of documents that matches selection criteria
-     * @throws MongoException if the operation failed
-     * @mongodb.driver.manual reference/command/count/ Count
-     * @deprecated Prefer {@link #count(DBObject, DBCollectionCountOptions)}
-     */
-    @Deprecated
-    public long getCount(@Nullable final DBObject query, @Nullable final DBObject projection, final long limit, final long skip,
-                         final ReadPreference readPreference) {
-        return getCount(query, new DBCollectionCountOptions().limit(limit).skip(skip).readPreference(readPreference));
     }
 
     /**
