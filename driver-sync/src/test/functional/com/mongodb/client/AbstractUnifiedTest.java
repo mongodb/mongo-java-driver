@@ -114,6 +114,7 @@ public abstract class AbstractUnifiedTest {
         assumeFalse(skipTest);
         assumeTrue("Skipping test: " + definition.getString("skipReason", new BsonString("")).getValue(),
                 !definition.containsKey("skipReason"));
+        assumeFalse("Skipping test of count", filename.equals("count.json"));
 
         collectionHelper = new CollectionHelper<Document>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
 

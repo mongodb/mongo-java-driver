@@ -175,43 +175,6 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
-    public long count() {
-        return count(new BsonDocument(), new CountOptions());
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public long count(final Bson filter) {
-        return count(filter, new CountOptions());
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public long count(final Bson filter, final CountOptions options) {
-        return executeCount(null, filter, options, CountStrategy.COMMAND);
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public long count(final ClientSession clientSession) {
-        return count(clientSession, new BsonDocument());
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public long count(final ClientSession clientSession, final Bson filter) {
-        return count(clientSession, filter, new CountOptions());
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public long count(final ClientSession clientSession, final Bson filter, final CountOptions options) {
-        notNull("clientSession", clientSession);
-        return executeCount(clientSession, filter, options, CountStrategy.COMMAND);
-    }
-
-    @Override
     public long countDocuments() {
         return countDocuments(new BsonDocument());
     }

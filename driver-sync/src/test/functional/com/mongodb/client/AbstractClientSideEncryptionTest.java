@@ -118,6 +118,7 @@ public abstract class AbstractClientSideEncryptionTest {
                 System.getProperty("org.mongodb.test.awsAccessKeyId") != null
                         && !System.getProperty("org.mongodb.test.awsAccessKeyId").isEmpty());
         assumeFalse("runOn requirements not satisfied", skipTest);
+        assumeFalse("Skipping count tests", filename.startsWith("count."));
         assumeFalse(definition.getString("skipReason", new BsonString("")).getValue(), definition.containsKey("skipReason"));
 
         String databaseName = specDocument.getString("database_name").getValue();
