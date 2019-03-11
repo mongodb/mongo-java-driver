@@ -25,20 +25,16 @@ import java.util.List;
 import java.util.Map;
 
 @Immutable
-@SuppressWarnings("deprecation")
 final class DBCollectionObjectFactory implements DBObjectFactory {
 
     private final Map<List<String>, Class<? extends DBObject>> pathToClassMap;
-    private final ReflectionDBObject.JavaWrapper wrapper;
 
     DBCollectionObjectFactory() {
-        this(Collections.<List<String>, Class<? extends DBObject>>emptyMap(), null);
+        this(Collections.<List<String>, Class<? extends DBObject>>emptyMap());
     }
 
-    private DBCollectionObjectFactory(final Map<List<String>, Class<? extends DBObject>> pathToClassMap,
-                                      final ReflectionDBObject.JavaWrapper wrapper) {
+    private DBCollectionObjectFactory(final Map<List<String>, Class<? extends DBObject>> pathToClassMap) {
         this.pathToClassMap = pathToClassMap;
-        this.wrapper = wrapper;
     }
 
     @Override
@@ -63,12 +59,11 @@ final class DBCollectionObjectFactory implements DBObjectFactory {
     }
 
     public DBCollectionObjectFactory update(final Class<? extends DBObject> aClass) {
-        return new DBCollectionObjectFactory(updatePathToClassMap(aClass, Collections.<String>emptyList()),
-                                             isReflectionDBObject(aClass) ? ReflectionDBObject.getWrapper(aClass) : wrapper);
+        return new DBCollectionObjectFactory(updatePathToClassMap(aClass, Collections.<String>emptyList()));
     }
 
     public DBCollectionObjectFactory update(final Class<? extends DBObject> aClass, final List<String> path) {
-        return new DBCollectionObjectFactory(updatePathToClassMap(aClass, path), wrapper);
+        return new DBCollectionObjectFactory(updatePathToClassMap(aClass, path));
     }
 
     private Map<List<String>, Class<? extends DBObject>> updatePathToClassMap(final Class<? extends DBObject> aClass,
@@ -86,13 +81,8 @@ final class DBCollectionObjectFactory implements DBObjectFactory {
         if (pathToClassMap.containsKey(path)) {
             return pathToClassMap.get(path);
         } else {
-            Class<? extends DBObject> aClass = (wrapper != null) ? wrapper.getInternalClass(path) : null;
-            return aClass != null ? aClass : BasicDBObject.class;
+            return BasicDBObject.class;
         }
-    }
-
-    private boolean isReflectionDBObject(final Class<? extends DBObject> aClass) {
-        return aClass != null && ReflectionDBObject.class.isAssignableFrom(aClass);
     }
 
     private MongoInternalException createInternalException(final Class<? extends DBObject> aClass, final Throwable e) {

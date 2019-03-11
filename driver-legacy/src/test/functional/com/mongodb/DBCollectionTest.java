@@ -544,56 +544,6 @@ public class DBCollectionTest extends DatabaseTestCase {
 
 
     @Test
-    public void testReflectionObject() {
-        collection.setObjectClass(Tweet.class);
-        Tweet insertedTweet = new Tweet(1, "Lorem", new Date(12));
-        collection.insert(insertedTweet);
-
-        assertThat(collection.count(), is(1L));
-
-        DBObject document = collection.findOne();
-        assertThat(document, instanceOf(Tweet.class));
-        Tweet tweet = (Tweet) document;
-
-        assertThat(tweet.getUserId(), is(1L));
-        assertThat(tweet.getMessage(), is("Lorem"));
-        assertThat(tweet.getDate(), is(new Date(12)));
-
-        insertedTweet.setMessage("Lorem 2");
-
-        DBObject replacedTweet = collection.findAndModify(new BasicDBObject(), insertedTweet);
-        assertThat(replacedTweet, instanceOf(Tweet.class));
-        tweet = (Tweet) replacedTweet;
-
-        assertThat(tweet.getUserId(), is(1L));
-        assertThat(tweet.getMessage(), is("Lorem"));
-        assertThat(tweet.getDate(), is(new Date(12)));
-
-        DBObject removedTweet = collection.findAndRemove(new BasicDBObject());
-        assertThat(removedTweet, instanceOf(Tweet.class));
-        tweet = (Tweet) removedTweet;
-
-        assertThat(tweet.getUserId(), is(1L));
-        assertThat(tweet.getMessage(), is("Lorem 2"));
-        assertThat(tweet.getDate(), is(new Date(12)));
-    }
-
-    @Test
-    public void testReflectionObjectAtLevel2() {
-        collection.insert(new BasicDBObject("t", new Tweet(1, "Lorem", new Date(12))));
-        collection.setInternalClass("t", Tweet.class);
-
-        DBObject document = collection.findOne();
-        assertThat(document.get("t"), instanceOf(Tweet.class));
-
-        Tweet tweet = (Tweet) document.get("t");
-
-        assertThat(tweet.getUserId(), is(1L));
-        assertThat(tweet.getMessage(), is("Lorem"));
-        assertThat(tweet.getDate(), is(new Date(12)));
-    }
-
-    @Test
     public void shouldAcceptDocumentsWithAllValidValueTypes() {
         BasicDBObject doc = new BasicDBObject();
         doc.append("_id", new ObjectId());
@@ -1421,47 +1371,6 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     public static class MyDBObject extends BasicDBObject {
         private static final long serialVersionUID = 3352369936048544621L;
-    }
-
-    // used via reflection
-    @SuppressWarnings("UnusedDeclaration")
-    public static class Tweet extends ReflectionDBObject {
-        private long userId;
-        private String message;
-        private Date date;
-
-        public Tweet(final long userId, final String message, final Date date) {
-            this.userId = userId;
-            this.message = message;
-            this.date = date;
-        }
-
-        public Tweet() {
-        }
-
-        public long getUserId() {
-            return userId;
-        }
-
-        public void setUserId(final long userId) {
-            this.userId = userId;
-        }
-
-        public String getMessage() {
-            return message;
-        }
-
-        public void setMessage(final String message) {
-            this.message = message;
-        }
-
-        public Date getDate() {
-            return date;
-        }
-
-        public void setDate(final Date date) {
-            this.date = date;
-        }
     }
 
     public static class MyEncoder implements DBEncoder {
