@@ -88,17 +88,6 @@ public interface FindIterable<TResult> extends MongoIterable<TResult> {
     FindIterable<TResult> maxAwaitTime(long maxAwaitTime, TimeUnit timeUnit);
 
     /**
-     * Sets the query modifiers to apply to this operation.
-     *
-     * @param modifiers the query modifiers to apply, which may be null.
-     * @return this
-     * @mongodb.driver.manual reference/operator/query-modifier/ Query Modifiers
-     * @deprecated use the individual setters instead
-     */
-    @Deprecated
-    FindIterable<TResult> modifiers(@Nullable Bson modifiers);
-
-    /**
      * Sets a document describing the fields to return for all matching documents.
      *
      * @param projection the project document, which may be null.
@@ -218,19 +207,6 @@ public interface FindIterable<TResult> extends MongoIterable<TResult> {
     FindIterable<TResult> min(@Nullable Bson min);
 
     /**
-     * Sets the maximum number of documents or index keys to scan when executing the query.
-     *
-     * A zero value or less will be ignored, and indicates that the driver should respect the server's default value.
-     *
-     * @param maxScan the maxScan
-     * @return this
-     * @since 3.5
-     * @deprecated Deprecated as of MongoDB 4.0 release
-     */
-    @Deprecated
-    FindIterable<TResult> maxScan(long maxScan);
-
-    /**
      * Sets the returnKey. If true the find operation will return only the index keys in the resulting documents.
      *
      * @param returnKey the returnKey
@@ -248,16 +224,4 @@ public interface FindIterable<TResult> extends MongoIterable<TResult> {
      */
     FindIterable<TResult> showRecordId(boolean showRecordId);
 
-    /**
-     * Sets the snapshot.
-     *
-     * If true it prevents the cursor from returning a document more than once because of an intervening write operation.
-     *
-     * @param snapshot the snapshot
-     * @return this
-     * @since 3.5
-     * @deprecated Deprecated in MongoDB 3.6 release and removed in MongoDB 4.0 release
-     */
-    @Deprecated
-    FindIterable<TResult> snapshot(boolean snapshot);
 }

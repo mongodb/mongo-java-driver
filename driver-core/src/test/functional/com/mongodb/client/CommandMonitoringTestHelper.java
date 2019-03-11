@@ -223,7 +223,10 @@ public final class CommandMonitoringTestHelper {
         if (command.containsKey("readConcern") && (command.getDocument("readConcern").containsKey("afterClusterTime"))) {
             command.getDocument("readConcern").put("afterClusterTime", new BsonInt32(42));
         }
-
+        // Tests expect maxTimeMS to be int32, but Java API requires maxTime to be a long.  This massage seems preferable to casting
+        if (command.containsKey("maxTimeMS")) {
+            command.put("maxTimeMS", new BsonInt32(command.getNumber("maxTimeMS").intValue()));
+        }
         massageActualCommand(command, expectedCommandStartedEvent.getCommand());
 
         return new CommandStartedEvent(event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),

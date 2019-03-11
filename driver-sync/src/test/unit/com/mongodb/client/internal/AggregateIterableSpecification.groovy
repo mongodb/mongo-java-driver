@@ -60,7 +60,7 @@ class AggregateIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([null, null, null, null, null]);
         def pipeline = [new Document('$match', 1)]
         def aggregationIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
-                                                            readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION,
+                readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION,
                 true)
 
         when: 'default input should be as expected'
@@ -71,14 +71,15 @@ class AggregateIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new AggregateOperation<Document>(namespace,
-                [new BsonDocument('$match', new BsonInt32(1))], new DocumentCodec()).retryReads(true))
+                [new BsonDocument('$match', new BsonInt32(1))], new DocumentCodec())
+                .useCursor(true)
+                .retryReads(true))
         readPreference == secondary()
 
         when: 'overriding initial options'
         aggregationIterable
                 .maxAwaitTime(99, MILLISECONDS)
                 .maxTime(999, MILLISECONDS)
-                .useCursor(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
                 .comment('this is a comment')
@@ -107,11 +108,10 @@ class AggregateIterableSpecification extends Specification {
 
         when: 'aggregation includes $out'
         new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                                  pipeline, AggregationLevel.COLLECTION, false)
+                pipeline, AggregationLevel.COLLECTION, false)
                 .batchSize(99)
                 .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
-                .useCursor(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
                 .comment('this is a comment').iterator()
@@ -145,7 +145,6 @@ class AggregateIterableSpecification extends Specification {
                 .batchSize(99)
                 .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
-                .useCursor(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
                 .comment('this is a comment').iterator()
@@ -210,7 +209,6 @@ class AggregateIterableSpecification extends Specification {
                 .batchSize(99)
                 .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
-                .useCursor(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
                 .comment('this is a comment').iterator()
@@ -246,7 +244,6 @@ class AggregateIterableSpecification extends Specification {
                 .batchSize(99)
                 .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
-                .useCursor(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
                 .comment('this is a comment').iterator()
@@ -283,7 +280,6 @@ class AggregateIterableSpecification extends Specification {
                 .batchSize(99)
                 .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
-                .useCursor(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
                 .comment('this is a comment').iterator()
@@ -417,7 +413,7 @@ class AggregateIterableSpecification extends Specification {
 
         when: 'a codec is missing'
         new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                                  pipeline, AggregationLevel.COLLECTION, false).iterator()
+                pipeline, AggregationLevel.COLLECTION, false).iterator()
 
         then:
         thrown(CodecConfigurationException)
