@@ -16,18 +16,20 @@
 
 package com.mongodb;
 
+import org.bson.BSONObject;
 import org.hamcrest.Matchers;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertThat;
 
-@SuppressWarnings("deprecation")
 public class DBCollectionObjectFactoryTest {
 
     private DBCollectionObjectFactory factory;
@@ -75,22 +77,10 @@ public class DBCollectionObjectFactoryTest {
     }
 
     @Test
-    public void testReflectionObject() {
-        factory = factory.update(Tweet.class);
-        assertThat(factory.getInstance(), instanceOf(Tweet.class));
-    }
-
-    @Test
-    public void testReflectionNestedObject() {
-        factory = factory.update(Tweet.class);
-        assertThat(factory.getInstance(singletonList("Next")), instanceOf(Tweet.class));
-    }
-
-    @Test
     public void testThatNullObjectClassRevertsToDefault() {
-        factory = factory.update(Tweet.class, singletonList("a")).update(null);
+        factory = factory.update(MyDBObject.class, singletonList("a")).update(null);
         assertThat(factory.getInstance(), Matchers.instanceOf(BasicDBObject.class));
-        assertThat(factory.getInstance(singletonList("a")), instanceOf(Tweet.class));
+        assertThat(factory.getInstance(singletonList("a")), instanceOf(MyDBObject.class));
 
         factory = factory.update(null, singletonList("a"));
         assertThat(factory.getInstance(), Matchers.instanceOf(BasicDBObject.class));
@@ -109,25 +99,50 @@ public class DBCollectionObjectFactoryTest {
         private static final long serialVersionUID = 5243874721805359328L;
     }
 
-    public static class Tweet extends ReflectionDBObject {
-        private String message;
-        private Tweet next;
+    public static class MyDBObject extends HashMap<String, Object> implements DBObject {
 
-        public Tweet getNext() {
-            return next;
+        @Override
+        public void markAsPartialObject() {
         }
 
-        public void setNext(final Tweet next) {
-            this.next = next;
+        @Override
+        public boolean isPartialObject() {
+            return false;
         }
 
-        public String getMessage() {
-            return message;
+        @Override
+        public void putAll(final BSONObject o) {
+            throw new UnsupportedOperationException();
         }
 
-        public void setMessage(final String message) {
-            this.message = message;
+        @Override
+        public void putAll(final Map m) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Object get(final String key) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Map toMap() {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public Object removeField(final String key) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean containsKey(final String key) {
+            throw new UnsupportedOperationException();
+        }
+
+        @Override
+        public boolean containsField(final String s) {
+            throw new UnsupportedOperationException();
         }
     }
-
 }
