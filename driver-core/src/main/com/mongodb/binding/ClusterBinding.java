@@ -22,6 +22,7 @@ import com.mongodb.connection.Cluster;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
 import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
 import com.mongodb.selector.ReadPreferenceServerSelector;
 import com.mongodb.selector.ServerSelector;
@@ -37,7 +38,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * @since 3.0
  */
 @Deprecated
-public class ClusterBinding extends AbstractReferenceCounted implements ReadWriteBinding {
+public class ClusterBinding extends AbstractReferenceCounted implements ClusterAwareReadWriteBinding {
     private final Cluster cluster;
     private final ReadPreference readPreference;
     private final ReadConcern readConcern;

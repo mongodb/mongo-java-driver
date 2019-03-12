@@ -1,0 +1,102 @@
+/*
+ * Copyright 2008-present MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+package com.mongodb.client.model.vault;
+
+import org.bson.BsonBinary;
+import org.bson.BsonValue;
+
+/**
+ * The options for explicit encryption.
+ *
+ * @since 3.11
+ */
+public class EncryptOptions {
+    // Optional: Identifies a key vault document by the UUID '_id'.
+    private BsonBinary keyId;
+
+    // Optional: Identifies a key vault document by 'keyAltName'.
+    private BsonValue keyAltName;
+
+    // Required: "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic" or "AEAD_AES_256_CBC_HMAC_SHA_512-Randomized"
+    private final String algorithm;
+
+    /**
+     * Construct an instance.
+     *
+     * @param algorithm the encryption algorithm
+     */
+    public EncryptOptions(final String algorithm) {
+        this.algorithm = algorithm;
+    }
+
+    /**
+     * Gets the encryption algorithm
+     *
+     * @return the encryption algorithm
+     */
+    public String getAlgorithm() {
+        return algorithm;
+    }
+
+    /**
+     * Gets the key identifier
+     *
+     * @return the key identifier
+     */
+    public BsonBinary getKeyId() {
+        return keyId;
+    }
+
+    /**
+     * Gets the alternate name with which to look up the key
+     *
+     * @return the alternate name
+     */
+    public BsonValue getKeyAltName() {
+        return keyAltName;
+    }
+
+    /**
+     * Sets the key identifier
+     *
+     * @param keyId the key identifier
+     * @return this
+     */
+    public EncryptOptions keyId(final BsonBinary keyId) {
+        this.keyId = keyId;
+        return this;
+    }
+
+    /**
+     * Sets the alternate key name
+     *
+     * @param keyAltName the alternate key name
+     * @return this
+     */
+    public EncryptOptions keyAltName(final BsonValue keyAltName) {
+        this.keyAltName = keyAltName;
+        return this;
+    }
+
+    @Override
+    public String toString() {
+        return "EncryptOptions{"
+                + "keyId=" + keyId
+                + ", keyAltName=" + keyAltName
+                + ", algorithm='" + algorithm + "'}";
+    }
+}

@@ -147,4 +147,10 @@
         <Bug pattern="RCN_REDUNDANT_NULLCHECK_OF_NONNULL_VALUE"/>
     </Match>
 
+    <Match>
+        <Class name="com.mongodb.client.internal.CryptConnection"/>
+        <Method name="retain"/>
+        <Bug pattern="RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"/>
+    </Match>
+
 </FindBugsFilter>

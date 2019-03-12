@@ -20,6 +20,7 @@ import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadWriteBinding;
 import com.mongodb.binding.SingleServerBinding;
+import com.mongodb.client.ClientSession;
 import com.mongodb.client.internal.MongoClientDelegate;
 import com.mongodb.client.internal.MongoIterableImpl;
 import com.mongodb.client.internal.OperationExecutor;
@@ -42,7 +43,6 @@ import com.mongodb.operation.CurrentOpOperation;
 import com.mongodb.operation.FsyncUnlockOperation;
 import com.mongodb.operation.ListDatabasesOperation;
 import com.mongodb.operation.ReadOperation;
-import com.mongodb.client.ClientSession;
 import org.bson.BsonBoolean;
 
 import java.util.ArrayList;

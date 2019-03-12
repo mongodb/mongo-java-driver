@@ -26,7 +26,7 @@ import com.mongodb.connection.ServerType;
  * @since 3.0
  */
 @Immutable
-final class MessageSettings {
+public final class MessageSettings {
     private static final int DEFAULT_MAX_DOCUMENT_SIZE = 0x1000000;  // 16MB
     private static final int DEFAULT_MAX_MESSAGE_SIZE = 0x2000000;   // 32MB
     private static final int DEFAULT_MAX_BATCH_COUNT = 1000;
