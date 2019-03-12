@@ -490,7 +490,9 @@ class MongoClientSettingsSpecification extends Specification {
         def extras = ['credentialList', 'clusterSettings', 'connectionPoolSettings', 'heartbeatSocketSettings', 'serverSettings',
                       'socketSettings' , 'sslSettings']
         def actual = MongoClientSettings.Builder.declaredMethods.grep { !it.synthetic } *.name.sort() - extras
-        def expected = com.mongodb.MongoClientSettings.Builder.declaredMethods.grep { !it.synthetic } *.name.sort() - 'commandListenerList'
+        def expected = com.mongodb.MongoClientSettings.Builder.declaredMethods.grep { !it.synthetic } *.name.sort()
+        expected -= 'commandListenerList'
+        expected -= 'autoEncryptionSettings'
 
         then:
         actual == expected

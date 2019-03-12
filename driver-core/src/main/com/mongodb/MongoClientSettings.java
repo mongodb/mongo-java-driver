@@ -88,6 +88,8 @@ public final class MongoClientSettings {
     private final String applicationName;
     private final List<MongoCompressor> compressorList;
 
+    private final AutoEncryptionSettings autoEncryptionSettings;
+
     /**
      * Gets the default codec registry.  It includes the following providers:
      *
@@ -153,6 +155,8 @@ public final class MongoClientSettings {
         private MongoCredential credential;
         private String applicationName;
         private List<MongoCompressor> compressorList = Collections.emptyList();
+
+        private AutoEncryptionSettings autoEncryptionSettings;
 
         private Builder() {
         }
@@ -432,6 +436,18 @@ public final class MongoClientSettings {
         }
 
         /**
+         * Sets the key vault options.
+         *
+         * @param autoEncryptionSettings key vault settings
+         * @return this
+         * @since 3.11
+         */
+        public Builder autoEncryptionSettings(final AutoEncryptionSettings autoEncryptionSettings) {
+            this.autoEncryptionSettings = autoEncryptionSettings;
+            return this;
+        }
+
+        /**
          * Build an instance of {@code MongoClientSettings}.
          *
          * @return the settings from this builder
@@ -567,6 +583,17 @@ public final class MongoClientSettings {
     }
 
     /**
+     * Gets the auto-encryption settings
+     *
+     * @return the auto-encryption settings, which may be null
+     * @since 3.11
+     */
+    @Nullable
+    public AutoEncryptionSettings getAutoEncryptionSettings() {
+        return autoEncryptionSettings;
+    }
+
+    /**
      * Gets the cluster settings.
      *
      * @return the cluster settings
@@ -647,6 +674,7 @@ public final class MongoClientSettings {
         connectionPoolSettings = builder.connectionPoolSettingsBuilder.build();
         sslSettings = builder.sslSettingsBuilder.build();
         compressorList = builder.compressorList;
+        autoEncryptionSettings = builder.autoEncryptionSettings;
 
         SocketSettings.Builder heartbeatSocketSettingsBuilder = SocketSettings.builder()
                 .readTimeout(socketSettings.getConnectTimeout(MILLISECONDS), MILLISECONDS)

@@ -80,6 +80,7 @@
     <ruleset-ref path='rulesets/formatting.xml'>
         <rule-config name='LineLength'>
             <property name='length' value='140'/>
+            <property name='doNotApplyToFileNames' value='ClientSideEncryptionProseTestSpecification.groovy'/>
         </rule-config>
         <!-- this check is failing '})' when it shouldn't -->
         <exclude name='SpaceAfterClosingBrace'/>

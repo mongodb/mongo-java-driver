@@ -23,15 +23,20 @@ import org.bson.io.BsonOutput;
 
 import static com.mongodb.internal.connection.BsonWriterHelper.writePayloadArray;
 
-class SplittablePayloadBsonWriter extends LevelCountingBsonWriter {
+public class SplittablePayloadBsonWriter extends LevelCountingBsonWriter {
     private final BsonWriter writer;
     private final BsonOutput bsonOutput;
     private final SplittablePayload payload;
     private final MessageSettings settings;
     private final int messageStartPosition;
 
-    SplittablePayloadBsonWriter(final BsonBinaryWriter writer, final BsonOutput bsonOutput, final int messageStartPosition,
-                                final MessageSettings settings, final SplittablePayload payload) {
+    public SplittablePayloadBsonWriter(final BsonBinaryWriter writer, final BsonOutput bsonOutput,
+                                       final MessageSettings settings, final SplittablePayload payload) {
+        this(writer, bsonOutput, 0, settings, payload);
+    }
+
+    public SplittablePayloadBsonWriter(final BsonBinaryWriter writer, final BsonOutput bsonOutput, final int messageStartPosition,
+                                       final MessageSettings settings, final SplittablePayload payload) {
         super(writer);
         this.writer = writer;
         this.bsonOutput = bsonOutput;

@@ -18,7 +18,6 @@ package com.mongodb.client.internal;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
-import com.mongodb.binding.ClusterBinding;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadWriteBinding;
 import com.mongodb.binding.SingleServerBinding;
@@ -27,6 +26,7 @@ import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
 import com.mongodb.internal.session.ClientSessionContext;
 import com.mongodb.selector.ReadPreferenceServerSelector;
 import com.mongodb.session.SessionContext;
@@ -37,13 +37,13 @@ import static org.bson.assertions.Assertions.notNull;
  * This class is not part of the public API and may be removed or changed at any time.
  */
 public class ClientSessionBinding implements ReadWriteBinding {
-    private final ClusterBinding wrapped;
+    private final ClusterAwareReadWriteBinding wrapped;
     private final ClientSession session;
     private final boolean ownsSession;
     private final ClientSessionContext sessionContext;
 
-    public ClientSessionBinding(final ClientSession session, final boolean ownsSession, final ReadWriteBinding wrapped) {
-        this.wrapped = ((ClusterBinding) wrapped);
+    public ClientSessionBinding(final ClientSession session, final boolean ownsSession, final ClusterAwareReadWriteBinding wrapped) {
+        this.wrapped = wrapped;
         this.session = notNull("session", session);
         this.ownsSession = ownsSession;
         this.sessionContext = new SyncClientSessionContext(session);

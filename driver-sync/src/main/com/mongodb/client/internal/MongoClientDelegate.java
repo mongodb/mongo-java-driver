@@ -39,6 +39,7 @@ import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
 import com.mongodb.operation.ReadOperation;
@@ -63,18 +64,23 @@ public class MongoClientDelegate {
     private final List<MongoCredential> credentialList;
     private final Object originator;
     private final OperationExecutor operationExecutor;
+    private volatile Crypt crypt;
 
     public MongoClientDelegate(final Cluster cluster, final List<MongoCredential> credentialList, final Object originator) {
         this(cluster, credentialList, originator, null);
     }
 
-    public MongoClientDelegate(final Cluster cluster, final List<MongoCredential> credentialList, final Object originator,
-                               @Nullable final OperationExecutor operationExecutor) {
+    MongoClientDelegate(final Cluster cluster, final List<MongoCredential> credentialList,
+                        final Object originator, @Nullable final OperationExecutor operationExecutor) {
         this.cluster = cluster;
         this.serverSessionPool = new ServerSessionPool(cluster);
         this.credentialList = credentialList;
         this.originator = originator;
         this.operationExecutor = operationExecutor == null ? new DelegateOperationExecutor() : operationExecutor;
+    }
+
+    void setCrypt(final Crypt crypt) {
+        this.crypt = crypt;
     }
 
     public OperationExecutor getOperationExecutor() {
@@ -121,6 +127,9 @@ public class MongoClientDelegate {
     }
 
     public void close() {
+        if (crypt != null) {
+            crypt.close();
+        }
         serverSessionPool.close();
         cluster.close();
     }
@@ -216,12 +225,18 @@ public class MongoClientDelegate {
 
         ReadWriteBinding getReadWriteBinding(final ReadPreference readPreference, final ReadConcern readConcern,
                                              @Nullable final ClientSession session, final boolean ownsSession) {
-            ReadWriteBinding readWriteBinding = new ClusterBinding(cluster, getReadPreferenceForBinding(readPreference, session),
-                    readConcern);
-            if (session != null) {
-                readWriteBinding = new ClientSessionBinding(session, ownsSession, readWriteBinding);
+            ClusterAwareReadWriteBinding readWriteBinding = new ClusterBinding(cluster,
+                    getReadPreferenceForBinding(readPreference, session), readConcern);
+
+            if (crypt != null) {
+                readWriteBinding = new CryptBinding(readWriteBinding, crypt);
             }
-            return readWriteBinding;
+
+            if (session != null) {
+                return new ClientSessionBinding(session, ownsSession, readWriteBinding);
+            } else {
+                return readWriteBinding;
+            }
         }
 
         private void labelException(final @Nullable ClientSession session, final MongoException e) {

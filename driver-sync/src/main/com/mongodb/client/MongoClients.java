@@ -19,8 +19,8 @@ package com.mongodb.client;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
-import com.mongodb.lang.Nullable;
 import com.mongodb.client.internal.MongoClientImpl;
+import com.mongodb.lang.Nullable;
 
 
 /**
@@ -111,7 +111,9 @@ public final class MongoClients {
     public static MongoClient create(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation) {
         MongoDriverInformation.Builder builder = mongoDriverInformation == null ? MongoDriverInformation.builder()
                 : MongoDriverInformation.builder(mongoDriverInformation);
-        return new MongoClientImpl(settings, builder.driverName("sync").build());
+        MongoClientImpl client = new MongoClientImpl(settings, builder.driverName("sync").build());
+        client.init();
+        return client;
     }
 
     private MongoClients() {
