@@ -128,6 +128,10 @@ public class ChangeStreamsTest extends DatabaseTestCase {
         collectionHelper2.drop();
         collectionHelper2.create();
 
+        if (definition.containsKey("failPoint")) {
+            collectionHelper.runAdminCommand(definition.getDocument("failPoint"));
+        }
+
         commandListener = new TestCommandListener();
         mongoClient = MongoClients.create(getMongoClientBuilderFromConnectionString().addCommandListener(commandListener).build());
     }
@@ -235,19 +239,31 @@ public class ChangeStreamsTest extends DatabaseTestCase {
             pipeline.add(bsonValue.asDocument());
         }
 
+        ChangeStreamIterable<BsonDocument> changeStreamIterable;
+
+        if (target.equals("client")) {
+            changeStreamIterable = mongoClient.watch(pipeline, BsonDocument.class);
+        } else if (target.equals("database")) {
+            changeStreamIterable = mongoClient.getDatabase(namespace.getDatabaseName()).watch(pipeline, BsonDocument.class);
+        } else if (target.equals("collection")) {
+            changeStreamIterable = mongoClient.getDatabase(namespace.getDatabaseName()).getCollection(namespace.getCollectionName())
+                    .watch(pipeline, BsonDocument.class);
+        } else {
+            throw new IllegalArgumentException(format("Unknown target: %s", target));
+        }
+
+        BsonDocument options = definition.getDocument("changeStreamOptions", new BsonDocument());
+
+        if (options.containsKey("batchSize")) {
+            changeStreamIterable.batchSize(options.getNumber("batchSize").intValue());
+        }
+
+
         FutureResultCallback<AsyncBatchCursor<ChangeStreamDocument<BsonDocument>>> callback =
                 new FutureResultCallback<AsyncBatchCursor<ChangeStreamDocument<BsonDocument>>>();
 
-        if (target.equals("client")) {
-            mongoClient.watch(pipeline, BsonDocument.class).batchCursor(callback);
-        } else if (target.equals("database")) {
-            mongoClient.getDatabase(namespace.getDatabaseName()).watch(pipeline, BsonDocument.class).batchCursor(callback);
-        } else if (target.equals("collection")) {
-            mongoClient.getDatabase(namespace.getDatabaseName()).getCollection(namespace.getCollectionName())
-                    .watch(pipeline, BsonDocument.class).batchCursor(callback);
-        } else {
-            callback.onResult(null, new IllegalArgumentException(format("Unknown target: %s", target)));
-        }
+
+        changeStreamIterable.batchCursor(callback);
         return futureResult(callback);
     }
 
