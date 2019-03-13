@@ -33,7 +33,7 @@ Each YAML file has the following keys:
   - ``description``: The name of the test.
   - ``minServerVersion``: The minimum server version to run this test against. If not present, assume there is no minimum server version.
   - ``maxServerVersion``: Reserved for later use
-  - ``failPoint``: Reserved for later use
+  - ``failPoint``(optional): The configureFailPoint command document to run to configure a fail point on the primary server.
   - ``target``: The entity on which to run the change stream. Valid values are:
   
     - ``collection``: Watch changes on collection ``database_name.collection_name``
@@ -104,6 +104,9 @@ For each YAML file, for each element in ``tests``:
   - Drop the database ``database2_name``
   - Create the database ``database_name`` and the collection ``database_name.collection_name``
   - Create the database ``database2_name`` and the collection ``database2_name.collection2_name``
+  - If the the ``failPoint`` field is present, configure the fail point on the primary server. See
+    `Server Fail Point <../../transactions/tests#server-fail-point>`_ in the
+    Transactions spec test documentation for more information.
 
 - Create a new MongoClient ``client``
 - Begin monitoring all APM events for ``client``. (If the driver uses global listeners, filter out all events that do not originate with ``client``). Filter out any "internal" commands (e.g. ``isMaster``)
@@ -118,12 +121,12 @@ For each YAML file, for each element in ``tests``:
 - If there was an error:
 
   - Assert that an error was expected for the test.
-  - Assert that the error MATCHES ``results.error``
+  - Assert that the error MATCHES ``result.error``
 
 - Else:
 
   - Assert that no error was expected for the test
-  - Assert that the changes received from ``changeStream`` MATCH the results in ``results.success``
+  - Assert that the changes received from ``changeStream`` MATCH the results in ``result.success``
 
 - If there are any ``expectations``
 
@@ -155,3 +158,4 @@ The following tests have not yet been automated, but MUST still be tested
 #. The ``killCursors`` command sent during the "Resume Process" must not be allowed to throw an exception.
 #. ``$changeStream`` stage for ``ChangeStream`` against a server ``>=4.0`` that has not received any results yet MUST include a ``startAtOperationTime`` option when resuming a changestream.
 #. ``ChangeStream`` will resume after a ``killCursors`` command is issued for its child cursor.
+

@@ -120,6 +120,10 @@ public class ChangeStreamsTest {
         collectionHelper2.drop();
         collectionHelper2.create();
 
+        if (definition.containsKey("failPoint")) {
+            collectionHelper.runAdminCommand(definition.getDocument("failPoint"));
+        }
+
         commandListener = new TestCommandListener();
         mongoClient = MongoClients.create(getMongoClientSettingsBuilder().addCommandListener(commandListener).build());
     }
@@ -209,16 +213,26 @@ public class ChangeStreamsTest {
             pipeline.add(bsonValue.asDocument());
         }
 
+        ChangeStreamIterable<BsonDocument> changeStreamIterable;
+
         if (target.equals("client")) {
-            return mongoClient.watch(pipeline, BsonDocument.class).iterator();
+            changeStreamIterable = mongoClient.watch(pipeline, BsonDocument.class);
         } else if (target.equals("database")) {
-            return mongoClient.getDatabase(namespace.getDatabaseName()).watch(pipeline, BsonDocument.class).iterator();
+            changeStreamIterable = mongoClient.getDatabase(namespace.getDatabaseName()).watch(pipeline, BsonDocument.class);
         } else if (target.equals("collection")) {
-            return mongoClient.getDatabase(namespace.getDatabaseName()).getCollection(namespace.getCollectionName())
-                    .watch(pipeline, BsonDocument.class).iterator();
+            changeStreamIterable = mongoClient.getDatabase(namespace.getDatabaseName()).getCollection(namespace.getCollectionName())
+                    .watch(pipeline, BsonDocument.class);
         } else {
             throw new IllegalArgumentException(format("Unknown target: %s", target));
         }
+
+        BsonDocument options = definition.getDocument("changeStreamOptions", new BsonDocument());
+
+        if (options.containsKey("batchSize")) {
+            changeStreamIterable.batchSize(options.getNumber("batchSize").intValue());
+        }
+
+        return changeStreamIterable.iterator();
     }
 
     private void handleOperations() {
