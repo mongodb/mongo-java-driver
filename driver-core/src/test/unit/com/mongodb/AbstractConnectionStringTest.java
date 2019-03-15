@@ -109,8 +109,13 @@ public abstract class AbstractConnectionStringTest extends TestCase {
 
             if (option.getKey().equals("authmechanism")) {
                 String expected = option.getValue().asString().getValue();
-                String actual = connectionString.getCredential().getAuthenticationMechanism().getMechanismName();
-                assertEquals(expected, actual);
+                if (expected.equals("MONGODB-CR"))  {
+                    assertNotNull(connectionString.getCredential());
+                    assertNull(connectionString.getCredential().getAuthenticationMechanism());
+                } else {
+                    String actual = connectionString.getCredential().getAuthenticationMechanism().getMechanismName();
+                    assertEquals(expected, actual);
+                }
             } else if (option.getKey().toLowerCase().equals("retrywrites")) {
                 boolean expected = option.getValue().asBoolean().getValue();
                 assertEquals(expected, connectionString.getRetryWritesValue().booleanValue());
@@ -235,7 +240,6 @@ public abstract class AbstractConnectionStringTest extends TestCase {
             } else {
                 switch (mechanism) {
                     case PLAIN:
-                    case MONGODB_CR:
                     case SCRAM_SHA_1:
                     case SCRAM_SHA_256:
                         assertString("auth.password", password);

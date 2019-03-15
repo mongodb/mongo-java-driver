@@ -25,10 +25,9 @@ import spock.lang.IgnoreIf
 import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static com.mongodb.MongoCredential.createMongoCRCredential
+import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.MongoCredential.createScramSha1Credential
 import static com.mongodb.MongoCredential.createScramSha256Credential
-
 
 class DropUserOperationSpecification extends OperationFunctionalSpecification {
 
@@ -69,7 +68,7 @@ class DropUserOperationSpecification extends OperationFunctionalSpecification {
     @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isDiscoverableReplicaSet() })
     def 'should throw MongoCommandException on write concern error'() {
         given:
-        def credential = createMongoCRCredential('userToDrop', databaseName, '123'.toCharArray())
+        def credential = createCredential('userToDrop', databaseName, '123'.toCharArray())
         new CreateUserOperation(credential, true).execute(getBinding())
         def operation = new DropUserOperation(databaseName, credential.userName, new WriteConcern(5))
 

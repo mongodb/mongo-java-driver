@@ -25,7 +25,6 @@ import static com.mongodb.MongoCompressor.createZlibCompressor
 import static com.mongodb.MongoCompressor.createZstdCompressor
 import static com.mongodb.MongoCredential.createCredential
 import static com.mongodb.MongoCredential.createGSSAPICredential
-import static com.mongodb.MongoCredential.createMongoCRCredential
 import static com.mongodb.MongoCredential.createMongoX509Credential
 import static com.mongodb.MongoCredential.createPlainCredential
 import static com.mongodb.MongoCredential.createScramSha1Credential
@@ -437,10 +436,10 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://jeff:123@localhost/?' +
                            '&authSource=test')                | createCredential('jeff', 'test', '123'.toCharArray())
         new ConnectionString('mongodb://jeff:123@localhost/?' +
-                           'authMechanism=MONGODB-CR')        | createMongoCRCredential('jeff', 'admin', '123'.toCharArray())
+                           'authMechanism=MONGODB-CR')        | createCredential('jeff', 'admin', '123'.toCharArray())
         new ConnectionString('mongodb://jeff:123@localhost/?' +
                            'authMechanism=MONGODB-CR' +
-                           '&authSource=test')                | createMongoCRCredential('jeff', 'test', '123'.toCharArray())
+                           '&authSource=test')                | createCredential('jeff', 'test', '123'.toCharArray())
         new ConnectionString('mongodb://jeff:123@localhost/?' +
                              'authMechanism=SCRAM-SHA-1')     | createScramSha1Credential('jeff', 'admin', '123'.toCharArray())
         new ConnectionString('mongodb://jeff:123@localhost/?' +
