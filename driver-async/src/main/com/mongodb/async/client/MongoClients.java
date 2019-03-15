@@ -88,9 +88,7 @@ public final class MongoClients {
      *
      * @param connectionString the settings
      * @return the client
-     * @throws IllegalArgumentException if the connection string's stream type is not one of "netty" or "nio2"
      *
-     * @see ConnectionString#getStreamType()
      * @see com.mongodb.MongoClientSettings.Builder
      * @see com.mongodb.connection.ClusterSettings.Builder#applyConnectionString(ConnectionString)
      * @see com.mongodb.connection.ConnectionPoolSettings.Builder#applyConnectionString(ConnectionString)
@@ -100,22 +98,6 @@ public final class MongoClients {
      */
     public static MongoClient create(final ConnectionString connectionString) {
         return create(connectionString, null);
-    }
-
-    /**
-     * Creates a new client with the given client settings.
-     *
-     * <p>Note: Intended for driver and library authors to associate extra driver metadata with the connections.</p>
-     *
-     * @param settings               the settings
-     * @param mongoDriverInformation any driver information to associate with the MongoClient
-     * @return the client
-     * @since 3.4
-     * @deprecated use {@link #create(com.mongodb.MongoClientSettings, MongoDriverInformation)} instead
-     */
-    @Deprecated
-    public static MongoClient create(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation) {
-        return create(settings, mongoDriverInformation, null);
     }
 
     /**
@@ -132,8 +114,7 @@ public final class MongoClients {
     public static MongoClient create(final ConnectionString connectionString,
                                      @Nullable final MongoDriverInformation mongoDriverInformation) {
 
-        return create(MongoClientSettings.builder().applyConnectionString(connectionString).build(),
-                mongoDriverInformation, connectionString.getStreamType());
+        return create(MongoClientSettings.builder().applyConnectionString(connectionString).build(), mongoDriverInformation);
     }
 
     /**
@@ -159,25 +140,29 @@ public final class MongoClients {
      */
     public static MongoClient create(final com.mongodb.MongoClientSettings settings,
                                      @Nullable final MongoDriverInformation mongoDriverInformation) {
-        return create(MongoClientSettings.createFromClientSettings(settings), mongoDriverInformation, null);
+        return create(MongoClientSettings.createFromClientSettings(settings), mongoDriverInformation);
     }
 
-    private static MongoClient create(final MongoClientSettings settings,
-                                      @Nullable final MongoDriverInformation mongoDriverInformation,
-                                      @Nullable final String requestedStreamType) {
-        String streamType = getStreamType(requestedStreamType);
+    /**
+     * Creates a new client with the given client settings.
+     *
+     * <p>Note: Intended for driver and library authors to associate extra driver metadata with the connections.</p>
+     *
+     * @param settings               the settings
+     * @param mongoDriverInformation any driver information to associate with the MongoClient
+     * @return the client
+     * @since 3.4
+     * @deprecated use {@link #create(com.mongodb.MongoClientSettings, MongoDriverInformation)} instead
+     */
+    @Deprecated
+    public  static MongoClient create(final MongoClientSettings settings,
+                                      @Nullable final MongoDriverInformation mongoDriverInformation) {
         if (settings.getStreamFactoryFactory() == null) {
-           if (isNetty(streamType)) {
-               return NettyMongoClients.create(settings, mongoDriverInformation);
-           } else if (isNio(streamType)) {
-               if (settings.getSslSettings().isEnabled()) {
-                   return createWithTlsChannel(settings, mongoDriverInformation);
-               } else {
-                   return createWithAsynchronousSocketChannel(settings, mongoDriverInformation);
-               }
-           } else {
-               throw new IllegalArgumentException("Unsupported stream type: " + streamType);
-           }
+            if (settings.getSslSettings().isEnabled()) {
+                return createWithTlsChannel(settings, mongoDriverInformation);
+            } else {
+                return createWithAsynchronousSocketChannel(settings, mongoDriverInformation);
+            }
         } else {
             return createMongoClient(settings, mongoDriverInformation, getStreamFactory(settings, false),
                     getStreamFactory(settings, true), null);
@@ -259,22 +244,6 @@ public final class MongoClients {
         }
         return streamFactoryFactory.create(isHeartbeat ? settings.getHeartbeatSocketSettings() : settings.getSocketSettings(),
                 settings.getSslSettings());
-    }
-
-    private static boolean isNetty(final String streamType) {
-        return streamType.toLowerCase().equals("netty");
-    }
-
-    private static boolean isNio(final String streamType) {
-        return streamType.toLowerCase().equals("nio2");
-    }
-
-    private static String getStreamType(@Nullable final String requestedStreamType) {
-        if (requestedStreamType != null) {
-            return requestedStreamType;
-        } else {
-            return System.getProperty("org.mongodb.async.type", "nio2");
-        }
     }
 
     private MongoClients() {

@@ -16,7 +16,6 @@
 
 package com.mongodb;
 
-import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.dns.DefaultDnsResolver;
@@ -120,9 +119,6 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code socketTimeoutMS=ms}: How long a send or receive on a socket can take before timing out.</li>
  * <li>{@code maxIdleTimeMS=ms}: Maximum idle time of a pooled connection. A connection that exceeds this limit will be closed</li>
  * <li>{@code maxLifeTimeMS=ms}: Maximum life time of a pooled connection. A connection that exceeds this limit will be closed</li>
- * <li>{@code streamType=nio2|netty}: The stream type to use for connections. If unspecified, nio2 will be used for asynchronous
- * clients.  Note that this query parameter has been deprecated and applications should use
- * {@link MongoClientSettings.Builder#streamFactoryFactory(StreamFactoryFactory)} instead.</li>
  * </ul>
  * <p>Connection pool configuration:</p>
  * <ul>
@@ -270,7 +266,6 @@ public class ConnectionString {
     private Integer socketTimeout;
     private Boolean sslEnabled;
     private Boolean sslInvalidHostnameAllowed;
-    private String streamType;
     private String requiredReplicaSetName;
     private Integer serverSelectionTimeout;
     private Integer localThreshold;
@@ -526,7 +521,6 @@ public class ConnectionString {
             } else if (key.equals("tls")) {
                 initializeSslEnabled("tls", value);
             } else if (key.equals("streamtype")) {
-                streamType = value;
                 LOGGER.warn("The streamType query parameter is deprecated and support for it will be removed"
                         + " in the next major release.");
             } else if (key.equals("replicaset")) {
@@ -1267,19 +1261,6 @@ public class ConnectionString {
     @Nullable
     public Boolean getSslEnabled() {
         return sslEnabled;
-    }
-
-    /**
-     * Gets the stream type value specified in the connection string.
-     * @return the stream type value
-     * @since 3.3
-     * @deprecated Use {@link MongoClientSettings.Builder#streamFactoryFactory(StreamFactoryFactory)} to configure the stream type
-     * programmatically
-     */
-    @Deprecated
-    @Nullable
-    public String getStreamType() {
-        return streamType;
     }
 
     /**
