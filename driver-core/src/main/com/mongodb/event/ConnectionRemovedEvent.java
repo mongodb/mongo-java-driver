@@ -66,17 +66,6 @@ public final class ConnectionRemovedEvent {
     private final Reason reason;
 
     /**
-     * Construct an instance
-     *
-     * @param connectionId the connectionId
-     * @deprecated Prefer {@link #ConnectionRemovedEvent(ConnectionId, Reason)}
-     */
-    @Deprecated
-    public ConnectionRemovedEvent(final ConnectionId connectionId) {
-        this(connectionId, Reason.UNKNOWN);
-    }
-
-    /**
      * Constructs an instance.
      *
      * @param connectionId the connection id
