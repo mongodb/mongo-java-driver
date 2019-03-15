@@ -76,6 +76,7 @@ class DBSpecification extends Specification {
         def executor = new TestOperationExecutor([1L, 2L, 3L])
         def db = new DB(mongo, 'test', executor)
         db.setReadConcern(ReadConcern.MAJORITY)
+        db.setWriteConcern(WriteConcern.MAJORITY)
 
         when:
         db.createCollection('ctest', new BasicDBObject())

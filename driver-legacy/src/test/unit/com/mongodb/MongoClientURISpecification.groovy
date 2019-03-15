@@ -104,12 +104,13 @@ class MongoClientURISpecification extends Specification {
         new MongoClientURI('mongodb://localhost/?safe=false')                                | WriteConcern.UNACKNOWLEDGED
         new MongoClientURI('mongodb://localhost/?wTimeout=5')                                | WriteConcern.ACKNOWLEDGED
                                                                                                            .withWTimeout(5, MILLISECONDS)
-        new MongoClientURI('mongodb://localhost/?fsync=true')                                | WriteConcern.ACKNOWLEDGED.withFsync(true)
         new MongoClientURI('mongodb://localhost/?journal=true')                              | WriteConcern.ACKNOWLEDGED.withJournal(true)
-        new MongoClientURI('mongodb://localhost/?w=2&wtimeoutMS=5&fsync=true&journal=true')  | new WriteConcern(2, 5, true, true)
-        new MongoClientURI('mongodb://localhost/?w=majority&wtimeoutMS=5&fsync=true&j=true') | new WriteConcern('majority', 5, true, true)
+        new MongoClientURI('mongodb://localhost/?w=2&wtimeoutMS=5&fsync=true&journal=true')  | new WriteConcern(2, 5).withJournal(true)
+        new MongoClientURI('mongodb://localhost/?w=majority&wtimeoutMS=5&j=true') | new WriteConcern('majority')
+                .withWTimeout(5, MILLISECONDS).withJournal(true)
     }
 
+    @Unroll
     def 'should correctly parse legacy wtimeout write concerns'() {
         expect:
         uri.getOptions().getWriteConcern() == writeConcern;
@@ -119,8 +120,9 @@ class MongoClientURISpecification extends Specification {
         new MongoClientURI('mongodb://localhost')                                          | WriteConcern.ACKNOWLEDGED
         new MongoClientURI('mongodb://localhost/?wTimeout=5')                              | WriteConcern.ACKNOWLEDGED
                                                                                                          .withWTimeout(5, MILLISECONDS)
-        new MongoClientURI('mongodb://localhost/?w=2&wtimeout=5&fsync=true&j=true')        | new WriteConcern(2, 5, true, true)
-        new MongoClientURI('mongodb://localhost/?w=majority&wtimeout=5&fsync=true&j=true') | new WriteConcern('majority', 5, true, true)
+        new MongoClientURI('mongodb://localhost/?w=2&wtimeout=5&j=true')        | new WriteConcern(2, 5).withJournal(true)
+        new MongoClientURI('mongodb://localhost/?w=majority&wtimeout=5&j=true') | new WriteConcern('majority')
+                .withWTimeout(5, MILLISECONDS).withJournal(true)
         new MongoClientURI('mongodb://localhost/?wTimeout=1&wtimeoutMS=5')                 | WriteConcern.ACKNOWLEDGED
                                                                                                          .withWTimeout(5, MILLISECONDS)
     }
@@ -130,7 +132,7 @@ class MongoClientURISpecification extends Specification {
         def uri = new MongoClientURI('mongodb://localhost/?minPoolSize=5&maxPoolSize=10&waitQueueMultiple=7&waitQueueTimeoutMS=150&'
                 + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test&'
                 + 'connectTimeoutMS=2500&socketTimeoutMS=5500&'
-                + 'safe=false&w=1&wtimeout=2500&fsync=true&ssl=true&readPreference=secondary&'
+                + 'safe=false&w=1&wtimeout=2500&ssl=true&readPreference=secondary&'
                 + 'sslInvalidHostNameAllowed=true&'
                 + 'serverSelectionTimeoutMS=25000&'
                 + 'localThresholdMS=30&'
@@ -143,7 +145,7 @@ class MongoClientURISpecification extends Specification {
         def options = uri.getOptions()
 
         then:
-        options.getWriteConcern() == new WriteConcern(1, 2500, true)
+        options.getWriteConcern() == new WriteConcern(1, 2500)
         options.getReadPreference() == ReadPreference.secondary()
         options.getConnectionsPerHost() == 10
         options.getMinConnectionsPerHost() == 5
@@ -392,7 +394,7 @@ class MongoClientURISpecification extends Specification {
                                                         + 'maxPoolSize=10;waitQueueMultiple=5;waitQueueTimeoutMS=150;'
                                                         + 'minPoolSize=7;maxIdleTimeMS=1000;maxLifeTimeMS=2000;replicaSet=test;'
                                                         + 'connectTimeoutMS=2500;socketTimeoutMS=5500;autoConnectRetry=true;'
-                                                        + 'slaveOk=true;safe=false;w=1;wtimeout=2600;fsync=true')
+                                                        + 'slaveOk=true;safe=false;w=1;wtimeout=2600')
 
         MongoClientOptions.Builder builder = MongoClientOptions.builder()
                                                                .connectionsPerHost(10)
@@ -405,7 +407,7 @@ class MongoClientURISpecification extends Specification {
                                                                .connectTimeout(2500)
                                                                .socketTimeout(5500)
                                                                .readPreference(secondaryPreferred())
-                                                               .writeConcern(new WriteConcern(1, 2600, true))
+                                                               .writeConcern(new WriteConcern(1, 2600))
 
         MongoClientOptions options = builder.build()
 

@@ -122,14 +122,6 @@ public class WriteConcern implements Serializable {
     public static final WriteConcern UNACKNOWLEDGED = new WriteConcern(0);
 
     /**
-     * Write operations wait for the server to flush the data to disk.
-     *
-     * @deprecated Prefer {@link #JOURNALED}
-     */
-    @Deprecated
-    public static final WriteConcern FSYNCED = ACKNOWLEDGED.withFsync(true);
-
-    /**
      * Write operations wait for the server to group commit to the journal file on disk.
      *
      * @mongodb.driver.manual core/write-concern/#journaled Journaled
@@ -137,86 +129,9 @@ public class WriteConcern implements Serializable {
     public static final WriteConcern JOURNALED = ACKNOWLEDGED.withJournal(true);
 
     /**
-     * Exceptions are raised for network issues, and server errors; waits for at least 2 servers for the write operation.
-     * @deprecated Prefer WriteConcern#W2
-     */
-    @Deprecated
-    public static final WriteConcern REPLICA_ACKNOWLEDGED = new WriteConcern(2);
-
-    /**
-     * <p>Write operations that use this write concern will return as soon as the message is written to the socket. Exceptions are raised
-     * for network issues, but not server errors.</p>
-     *
-     * <p>This field has been superseded by {@code WriteConcern.UNACKNOWLEDGED}, and may be deprecated in a future release.</p>
-     *
-     * @see WriteConcern#UNACKNOWLEDGED
-     * @deprecated Prefer {@link #UNACKNOWLEDGED}
-     */
-    @Deprecated
-    public static final WriteConcern NORMAL = UNACKNOWLEDGED;
-
-    /**
-     * <p>Write operations that use this write concern will wait for acknowledgement from the primary server before returning. Exceptions
-     * are raised for network issues, and server errors.</p>
-     *
-     * <p>This field has been superseded by {@code WriteConcern.ACKNOWLEDGED}, and may be deprecated in a future release.</p>
-     *
-     * @see WriteConcern#ACKNOWLEDGED
-     * @deprecated Prefer {@link #ACKNOWLEDGED}
-     */
-    @Deprecated
-    public static final WriteConcern SAFE = ACKNOWLEDGED;
-
-    /**
      * Exceptions are raised for network issues, and server errors; waits on a majority of servers for the write operation.
      */
     public static final WriteConcern MAJORITY = new WriteConcern("majority");
-
-    /**
-     * <p>Exceptions are raised for network issues, and server errors; the write operation waits for the server to flush the data to
-     * disk.</p>
-     *
-     * <p>This field has been superseded by {@code WriteConcern.FSYNCED}, and may be deprecated in a future release.</p>
-     *
-     * @see WriteConcern#FSYNCED
-     * @deprecated Prefer {@link #JOURNALED}
-     */
-    @Deprecated
-    public static final WriteConcern FSYNC_SAFE = FSYNCED;
-
-    /**
-     * <p>Exceptions are raised for network issues, and server errors; the write operation waits for the server to group commit to the
-     * journal file on disk. </p>
-     *
-     * <p>This field has been superseded by {@code WriteConcern.JOURNALED}, and may be deprecated in a future release.</p>
-     *
-     * @deprecated Prefer {@link #JOURNALED}
-     */
-    @Deprecated
-    public static final WriteConcern JOURNAL_SAFE = JOURNALED;
-
-    /**
-     * <p>Exceptions are raised for network issues, and server errors; waits for at least 2 servers for the write operation.</p>
-     *
-     * <p>This field has been superseded by {@code WriteConcern.REPLICA_ACKNOWLEDGED}, and may be deprecated in a future release.</p>
-     *
-     * @see WriteConcern#W2
-     * @deprecated Prefer {@link #W2}
-     */
-    @Deprecated
-    public static final WriteConcern REPLICAS_SAFE = REPLICA_ACKNOWLEDGED;
-
-    /**
-     * Constructs an instance with all properties initialized to their default values, except for w, which is initialized to 0, making
-     * instances constructed this ways equivalent to {@code WriteConcern#UNACKNOWLEDGED}
-     *
-     * @see WriteConcern#UNACKNOWLEDGED
-     * @deprecated Prefer {@link #UNACKNOWLEDGED}
-     */
-    @Deprecated
-    public WriteConcern() {
-        this(0);
-    }
 
     /**
      * Construct an instance with the given integer-based value for w.
@@ -251,63 +166,6 @@ public class WriteConcern implements Serializable {
      */
     public WriteConcern(final int w, final int wTimeoutMS) {
         this(w, wTimeoutMS, null, null);
-    }
-
-    /**
-     * Constructs an instance with the given value for fsync.
-     *
-     * @param fsync whether or not to fsync
-     * @deprecated prefer {@link #JOURNALED} or {@link #withJournal(Boolean)}
-     */
-    @Deprecated
-    public WriteConcern(final boolean fsync) {
-        this(null, null, fsync, null);
-    }
-
-    /**
-     * Constructs an instance with the given integer-based w value, wTimeout in milliseconds, and fsync value.
-     *
-     * @param w          the w value, which must be &gt;= 0
-     * @param wTimeoutMS the wTimeout in milliseconds, which must be &gt;= 0
-     * @param fsync      whether or not to fsync
-     * @deprecated Prefer {@link #withW(int)}, {@link #withWTimeout(long, TimeUnit)}, {@link #withJournal(Boolean)}
-     * @mongodb.driver.manual reference/write-concern/#w-option w option
-     * @mongodb.driver.manual reference/write-concern/#wtimeout wtimeout option
-     */
-    @Deprecated
-    public WriteConcern(final int w, final int wTimeoutMS, final boolean fsync) {
-        this(w, wTimeoutMS, fsync, null);
-    }
-
-    /**
-     * Constructs an instance with the given integer-based w value, wTimeout in milliseconds, fsync value, and journal value.
-     *
-     * @param w          the w value, which must be &gt;= 0
-     * @param wTimeoutMS the wTimeout in milliseconds, which must be &gt;= 0
-     * @param fsync      whether or not to fsync
-     * @param journal    whether writes should wait for a journaling group commit
-     * @deprecated Prefer {@link #withW(int)}, {@link #withWTimeout(long, TimeUnit)}, {@link #withJournal(Boolean)}
-     * @mongodb.driver.manual reference/write-concern/#w-option w option
-     * @mongodb.driver.manual reference/write-concern/#wtimeout wtimeout option
-     * @mongodb.driver.manual reference/write-concern/#j-option j option
-     */
-    @Deprecated
-    public WriteConcern(final int w, final int wTimeoutMS, final boolean fsync, final boolean journal) {
-        this((Object) w, wTimeoutMS, fsync, journal);
-    }
-
-    /**
-     * Constructs an instance with the given String-based w value, wTimeout in milliseconds, fsync value, and journal value.
-     *
-     * @param w          the w value, which must be non-null
-     * @param wTimeoutMS the wTimeout in milliseconds, which must be &gt;= 0
-     * @param fsync      whether or not to fsync
-     * @param journal    whether writes should wait for a journaling group commit
-     * @deprecated Prefer {@link #withW(String)}, {@link #withWTimeout(long, TimeUnit)}, {@link #withJournal(Boolean)}
-     */
-    @Deprecated
-    public WriteConcern(final String w, final int wTimeoutMS, final boolean fsync, final boolean journal) {
-        this((Object) notNull("w", w), wTimeoutMS, fsync, journal);
     }
 
     // Private constructor for creating the "default" unacknowledged write concern.  Necessary because there already a no-args
@@ -376,18 +234,6 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Gets the wTimeout in milliseconds.  If wTimeout has not been specified, returns 0.
-     *
-     * @return the wTimeout in milliseconds
-     * @deprecated Prefer {@link #getWTimeout(TimeUnit)}
-     * @mongodb.driver.manual core/write-concern/#timeouts wTimeout
-     */
-    @Deprecated
-    public int getWtimeout() {
-        return wTimeoutMS == null ? 0 : wTimeoutMS;
-    }
-
-    /**
      * Gets the journal property.  The default value is null.
      *
      * @return whether journal syncing is enabled, or null if unspecified.
@@ -396,51 +242,6 @@ public class WriteConcern implements Serializable {
      */
     public Boolean getJournal() {
         return journal;
-    }
-
-    /**
-     * Gets the journal property.  If journal has not been specified, returns false.
-     *
-     * @return true if journal is true, false if it false or unspecified.
-     * @mongodb.driver.manual core/write-concern/#journaled Journaled
-     * @deprecated Prefer {@link #getJournal()}
-     */
-    @Deprecated
-    public boolean getJ() {
-        return journal == null ? false : journal;
-    }
-
-    /**
-     * Gets the fsync property.  If fsync has not been specified, returns false.
-     *
-     * @return true if fsync is true, false if it false or unspecified
-     * @deprecated Prefer {@link #getJournal()}
-     */
-    @Deprecated
-    public boolean getFsync() {
-        return fsync == null ? false : fsync;
-    }
-
-    /**
-     * Gets the fsync property. If fsync has not been specified, returns false.
-     *
-     * @return true if fsync is true, false if it false or unspecified
-     * @deprecated Prefer {@link #getJournal()}
-     */
-    @Deprecated
-    public boolean fsync() {
-        return getFsync();
-    }
-
-    /**
-     * Returns true if this write concern indicates that write operations must be acknowledged.
-     *
-     * @return whether this write concern will result in an an acknowledged write
-     * @deprecated Prefer {@link #isAcknowledged()}
-     */
-    @Deprecated
-    public boolean callGetLastError() {
-        return isAcknowledged();
     }
 
     /**
@@ -562,18 +363,6 @@ public class WriteConcern implements Serializable {
     }
 
     /**
-     * Constructs a new WriteConcern from the current one and the specified fsync value
-     *
-     * @param fsync true if the write concern needs to include fsync
-     * @return the new WriteConcern
-     * @deprecated Prefer {@link #withJournal(Boolean)}
-     */
-    @Deprecated
-    public WriteConcern withFsync(final boolean fsync) {
-        return new WriteConcern(w, wTimeoutMS, fsync, journal);
-    }
-
-    /**
      * Constructs a new WriteConcern from the current one and the specified journal value
      *
      * @param journal true if journalling is required for acknowledgement, false if not, or null if unspecified
@@ -583,19 +372,6 @@ public class WriteConcern implements Serializable {
      */
     public WriteConcern withJournal(final Boolean journal) {
         return new WriteConcern(w, wTimeoutMS, fsync, journal);
-    }
-
-    /**
-     * Constructs a new WriteConcern from the current one and the specified journal value
-     *
-     * @param journal true if journalling is required for acknowledgement
-     * @return the new WriteConcern
-     * @deprecated Prefer {@link #withJournal(Boolean)}
-     * @mongodb.driver.manual reference/write-concern/#j-option j option
-     */
-    @Deprecated
-    public WriteConcern withJ(final boolean journal) {
-        return withJournal(journal);
     }
 
     /**
@@ -638,49 +414,6 @@ public class WriteConcern implements Serializable {
     private void addWTimeout(final BsonDocument document) {
         if (wTimeoutMS != null) {
             document.put("wtimeout", new BsonInt32(wTimeoutMS));
-        }
-    }
-
-    /**
-     * Create a Majority Write Concern that requires a majority of servers to acknowledge the write.
-     *
-     * @param wtimeout timeout for write operation
-     * @param fsync    whether or not to fsync
-     * @param j        whether writes should wait for a journal group commit
-     * @return Majority, a subclass of WriteConcern that represents the write concern requiring most servers to acknowledge the write
-     * @deprecated Prefer {@link #MAJORITY}, {@link #withWTimeout(long, TimeUnit)}, {@link #withJournal(Boolean)}
-     */
-    @Deprecated
-    public static Majority majorityWriteConcern(final int wtimeout, final boolean fsync, final boolean j) {
-        return new Majority(wtimeout, fsync, j);
-    }
-
-    /**
-     * A write concern that blocks acknowledgement of a write operation until a majority of replica set members have applied it.
-     *
-     * @deprecated Prefer {@link #MAJORITY}, {@link #withWTimeout(long, TimeUnit)}, {@link #withJournal(Boolean)}
-     */
-    @Deprecated
-    public static class Majority extends WriteConcern {
-
-        private static final long serialVersionUID = -4128295115883875212L;
-
-        /**
-         * Create a new Majority WriteConcern.
-         */
-        public Majority() {
-            this(0, false, false);
-        }
-
-        /**
-         * Create a new WriteConcern with the given configuration.
-         *
-         * @param wtimeout timeout for write operation
-         * @param fsync    whether or not to fsync
-         * @param j        whether writes should wait for a journaling group commit
-         */
-        public Majority(final int wtimeout, final boolean fsync, final boolean j) {
-            super("majority", wtimeout, fsync, j);
         }
     }
 
