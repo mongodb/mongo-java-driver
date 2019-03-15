@@ -47,8 +47,7 @@ public final class DefaultClusterFactory implements ClusterFactory {
                           final StreamFactory heartbeatStreamFactory,
                           final MongoCredential credential,
                           final ClusterListener clusterListener,
-                          final ConnectionPoolListener connectionPoolListener,
-                          final com.mongodb.event.ConnectionListener connectionListener) {
+                          final ConnectionPoolListener connectionPoolListener) {
 
         return createCluster(getClusterSettings(settings, clusterListener), serverSettings,
                 getConnectionPoolSettings(connectionPoolSettings, connectionPoolListener), streamFactory,
@@ -67,7 +66,6 @@ public final class DefaultClusterFactory implements ClusterFactory {
      * @param credential             the credential, which may be null
      * @param clusterListener        an optional listener for cluster-related events
      * @param connectionPoolListener an optional listener for connection pool-related events
-     * @param connectionListener     an optional listener for connection-related events
      * @param commandListener        an optional listener for command-related events
      * @return the cluster
      *
@@ -82,7 +80,6 @@ public final class DefaultClusterFactory implements ClusterFactory {
                           final MongoCredential credential,
                           final ClusterListener clusterListener,
                           final ConnectionPoolListener connectionPoolListener,
-                          final com.mongodb.event.ConnectionListener connectionListener,
                           final CommandListener commandListener) {
         return createCluster(getClusterSettings(settings, clusterListener), serverSettings,
                 getConnectionPoolSettings(connectionPoolSettings, connectionPoolListener), streamFactory, heartbeatStreamFactory,
@@ -100,7 +97,6 @@ public final class DefaultClusterFactory implements ClusterFactory {
      * @param credential             the credential, which may be null
      * @param clusterListener        an optional listener for cluster-related events
      * @param connectionPoolListener an optional listener for connection pool-related events
-     * @param connectionListener     an optional listener for connection-related events
      * @param commandListener        an optional listener for command-related events
      * @param applicationName        an optional application name to associate with connections to the servers in this cluster
      * @param mongoDriverInformation the optional driver information associate with connections to the servers in this cluster
@@ -117,7 +113,6 @@ public final class DefaultClusterFactory implements ClusterFactory {
                           final MongoCredential credential,
                           final ClusterListener clusterListener,
                           final ConnectionPoolListener connectionPoolListener,
-                          final com.mongodb.event.ConnectionListener connectionListener,
                           final CommandListener commandListener,
                           final String applicationName,
                           final MongoDriverInformation mongoDriverInformation) {

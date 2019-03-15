@@ -42,10 +42,8 @@ public interface ClusterFactory {
      * @param credential               the credential, which may be null
      * @param clusterListener          an optional listener for cluster-related events
      * @param connectionPoolListener   an optional listener for connection pool-related events
-     * @param connectionListener       an optional listener for connection-related events
      * @return the cluster
      */
-    @SuppressWarnings("deprecation")
     Cluster create(ClusterSettings settings,
                    ServerSettings serverSettings,
                    ConnectionPoolSettings connectionPoolSettings,
@@ -53,8 +51,7 @@ public interface ClusterFactory {
                    StreamFactory heartbeatStreamFactory,
                    MongoCredential credential,
                    ClusterListener clusterListener,
-                   ConnectionPoolListener connectionPoolListener,
-                   com.mongodb.event.ConnectionListener connectionListener);
+                   ConnectionPoolListener connectionPoolListener);
 
     // CHECKSTYLE:ON
 }
