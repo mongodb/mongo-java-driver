@@ -1166,7 +1166,7 @@ public class JsonPoweredCrudTestHelper {
             writeConcern = writeConcern.withWTimeout(writeConcernDocument.getNumber("wtimeout").longValue(), TimeUnit.MILLISECONDS);
         }
         if (writeConcernDocument.containsKey("j")) {
-            writeConcern = writeConcern.withJ(writeConcernDocument.getBoolean("j").getValue());
+            writeConcern = writeConcern.withJournal(writeConcernDocument.getBoolean("j").getValue());
         }
         return writeConcern;
     }

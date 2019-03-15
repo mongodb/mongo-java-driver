@@ -25,7 +25,6 @@ import spock.lang.Unroll
 
 import static java.util.concurrent.TimeUnit.MICROSECONDS
 import static java.util.concurrent.TimeUnit.MILLISECONDS
-import static java.util.concurrent.TimeUnit.SECONDS
 
 @SuppressWarnings('deprecation')
 class WriteConcernSpecification extends Specification {
@@ -35,53 +34,32 @@ class WriteConcernSpecification extends Specification {
         expect:
         wc.getWObject() == w;
         wc.getWTimeout(MILLISECONDS) == wTimeout;
-        wc.getFsync() == fsync;
         wc.getJournal() == journal;
 
         where:
-        wc                                                | w          | wTimeout | fsync | journal
-        new WriteConcern()                                | 0          | null     | false | null
-        new WriteConcern(1)                               | 1          | null     | false | null
-        new WriteConcern(1, 10)                           | 1          | 10       | false | null
-        new WriteConcern(true)                            | null       | null     | true  | null
-        new WriteConcern(1, 10, true)                     | 1          | 10       | true  | null
-        new WriteConcern(1, 10, false, true)              | 1          | 10       | false | true
-        new WriteConcern(1, 10, false, true)              | 1          | 10       | false | true
-        new WriteConcern((Object) null, 0, false, false)  | null       | 0        | false | false
-        new WriteConcern('majority')                      | 'majority' | null     | false | null
-        new WriteConcern('dc1', 10, false, true)          | 'dc1'      | 10       | false | true
-        new WriteConcern('dc1', 10, false, true)          | 'dc1'      | 10       | false | true
+        wc                                                | w          | wTimeout | journal
+        new WriteConcern(1)                               | 1          | null     | null
+        new WriteConcern(1, 10)                           | 1          | 10       | null
+        new WriteConcern((Object) null, 0, false, false)  | null       | 0        |  false
+        new WriteConcern('majority')                      | 'majority' | null     | null
     }
 
     def 'test journal getters'() {
         expect:
         wc.getJournal() == journal
-        wc.getJ() == j
 
         where:
-        wc                                        | journal | j
-        new WriteConcern(null, null, null, null)  | null    | false
-        new WriteConcern(null, null, null, false) | false   | false
-        new WriteConcern(null, null, null, true)  | true    | true
+        wc                                        | journal
+        new WriteConcern(null, null, null, null)  | null
+        new WriteConcern(null, null, null, false) | false
+        new WriteConcern(null, null, null, true)  | true
     }
 
-    def 'test fsync getters'() {
-        expect:
-        wc.getFsync() == fsync
-        wc.fsync() == fsync
-
-        where:
-        wc                                        | fsync
-        new WriteConcern(null, null, null, null)  | false
-        new WriteConcern(null, null, false, null) | false
-        new WriteConcern(null, null, true, null)  | true
-    }
 
     def 'test wTimeout getters'() {
         expect:
         wc.getWTimeout(MILLISECONDS) == wTimeout
         wc.getWTimeout(MICROSECONDS) == (wTimeout == null ? null : wTimeout * 1000)
-        wc.getWtimeout() == (wTimeout == null ? 0 : wTimeout)
 
         where:
         wc                                        | wTimeout
@@ -167,45 +145,21 @@ class WriteConcernSpecification extends Specification {
         thrown(IllegalArgumentException)
 
         when:
-        WriteConcern.UNACKNOWLEDGED.withFsync(true)
-
-        then:
-        thrown(IllegalArgumentException)
-
-        when:
         WriteConcern.UNACKNOWLEDGED.withJournal(true)
 
         then:
         thrown(IllegalArgumentException)
     }
 
-    def 'test withFsync methods'() {
-        expect:
-        new WriteConcern(null, null, null, null).withFsync(true) == new WriteConcern(null, null, true, null);
-        new WriteConcern(2, 100, false, false).withFsync(true) == new WriteConcern(2, 100, true, false);
-        new WriteConcern(2, 100, true, true).withFsync(false) == new WriteConcern(2, 100, false, true);
-    }
-
     def 'test withJournal methods'() {
         expect:
         new WriteConcern(null, null, null, null).withJournal(true) == new WriteConcern(null, null, null, true);
-        new WriteConcern(2, 100, false, false).withJournal(true) == new WriteConcern(2, 100, false, true);
-        new WriteConcern(2, 100, true, true).withJournal(false) == new WriteConcern(2, 100, true, false);
-        new WriteConcern(2, 100, true, true).withJournal(null) == new WriteConcern(2, 100, true, null);
-
-        new WriteConcern(null, null, null, null).withJ(true) == new WriteConcern(null, null, null, true);
-        new WriteConcern(2, 100, false, false).withJ(true) == new WriteConcern(2, 100, false, true);
-        new WriteConcern(2, 100, true, true).withJ(false) == new WriteConcern(2, 100, true, false);
     }
 
     def 'test withWTimeout methods'() {
         expect:
         new WriteConcern(null, null, null, null).withWTimeout(0, MILLISECONDS) == new WriteConcern(null, 0, null, null)
         new WriteConcern(null, null, null, null).withWTimeout(1000, MILLISECONDS) == new WriteConcern(null, 1000, null, null)
-        new WriteConcern(2, null, true, false).withWTimeout(1000, MILLISECONDS) == new WriteConcern(2, 1000, true, false);
-        new WriteConcern(2, null, true, false).withWTimeout(Integer.MAX_VALUE, MILLISECONDS) == new WriteConcern(2, Integer.MAX_VALUE,
-                                                                                                                 true, false);
-        new WriteConcern(2, null, true, false).withWTimeout(100, SECONDS) == new WriteConcern(2, 100000, true, false);
 
         when:
         WriteConcern.ACKNOWLEDGED.withWTimeout(0, null)
@@ -238,7 +192,6 @@ class WriteConcernSpecification extends Specification {
         WriteConcern.ACKNOWLEDGED         | new BsonDocument()
         WriteConcern.W2 | new BsonDocument('w', new BsonInt32(2))
         WriteConcern.JOURNALED            | new BsonDocument('j', BsonBoolean.TRUE)
-        WriteConcern.FSYNCED              | new BsonDocument('fsync', BsonBoolean.TRUE)
         new WriteConcern('majority')      | new BsonDocument('w', new BsonString('majority'))
         new WriteConcern(2, 100)          | new BsonDocument('w', new BsonInt32(2)).append('wtimeout', new BsonInt32(100))
     }
@@ -253,8 +206,6 @@ class WriteConcernSpecification extends Specification {
         WriteConcern.ACKNOWLEDGED            | WriteConcern.ACKNOWLEDGED           | true
         WriteConcern.ACKNOWLEDGED            | null                                | false
         WriteConcern.ACKNOWLEDGED            | WriteConcern.UNACKNOWLEDGED         | false
-        new WriteConcern(1, 0, false, false) | new WriteConcern(1, 0, false, true) | false
-        new WriteConcern(1, 0, false, false) | new WriteConcern(1, 0, true, false) | false
         new WriteConcern(1, 0)               | new WriteConcern(1, 1)              | false
     }
 
@@ -268,8 +219,6 @@ class WriteConcernSpecification extends Specification {
         WriteConcern.W1                      | 29791
         WriteConcern.W2                      | 59582
         WriteConcern.MAJORITY                | -1401337973
-        new WriteConcern(1, 0, false, false) | 69375
-        new WriteConcern(1, 0, true, true)   | 69183
     }
 
     def 'test constants'() {
@@ -283,18 +232,13 @@ class WriteConcernSpecification extends Specification {
         new WriteConcern(2)                               | WriteConcern.W2
         new WriteConcern(3)                               | WriteConcern.W3
         new WriteConcern(0)                               | WriteConcern.UNACKNOWLEDGED
-        WriteConcern.ACKNOWLEDGED.withFsync(true)         | WriteConcern.FSYNCED
-        WriteConcern.ACKNOWLEDGED.withFsync(true)         | WriteConcern.FSYNC_SAFE
-        WriteConcern.ACKNOWLEDGED.withJ(true)             | WriteConcern.JOURNALED
-        new WriteConcern(2)                               | WriteConcern.REPLICA_ACKNOWLEDGED
-        new WriteConcern(2)                               | WriteConcern.REPLICAS_SAFE
+        WriteConcern.ACKNOWLEDGED.withJournal(true)   | WriteConcern.JOURNALED
         new WriteConcern('majority')                      | WriteConcern.MAJORITY
     }
 
     def 'test isAcknowledged'() {
         expect:
         writeConcern.isAcknowledged() == acknowledged
-        writeConcern.callGetLastError() == acknowledged
 
         where:
         writeConcern                                               | acknowledged
@@ -305,7 +249,6 @@ class WriteConcernSpecification extends Specification {
         WriteConcern.MAJORITY                                      | true
         WriteConcern.UNACKNOWLEDGED                                | false
         WriteConcern.UNACKNOWLEDGED.withWTimeout(10, MILLISECONDS) | false
-        WriteConcern.UNACKNOWLEDGED.withFsync(false)         | false
         WriteConcern.UNACKNOWLEDGED.withJournal(false)      | false
     }
 
@@ -324,7 +267,6 @@ class WriteConcernSpecification extends Specification {
         expect:
         WriteConcern.ACKNOWLEDGED.serverDefault
         !WriteConcern.UNACKNOWLEDGED.serverDefault
-        !WriteConcern.ACKNOWLEDGED.withFsync(false).serverDefault
         !WriteConcern.ACKNOWLEDGED.withJournal(false).serverDefault
         !WriteConcern.ACKNOWLEDGED.withWTimeout(0, MILLISECONDS).serverDefault
     }
@@ -343,27 +285,5 @@ class WriteConcernSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
-    }
-
-    def 'majority write concern'() {
-        given:
-        def majority = new WriteConcern.Majority()
-
-        expect:
-        majority.getWString() == 'majority'
-        majority.getWtimeout() == 0
-        !majority.getFsync()
-        !majority.getJ()
-    }
-
-    def 'majority with options write concern'() {
-        given:
-        def majorityWithOptions = new WriteConcern.Majority(10, true, true)
-
-        expect:
-        majorityWithOptions.getWString() == 'majority'
-        majorityWithOptions.getWtimeout() == 10
-        majorityWithOptions.getFsync()
-        majorityWithOptions.getJ()
     }
 }
