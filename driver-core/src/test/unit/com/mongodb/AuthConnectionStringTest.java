@@ -105,8 +105,13 @@ public class AuthConnectionStringTest extends TestCase {
             for (Map.Entry<String, BsonValue> option : definition.getDocument("options").entrySet()) {
                 if (option.getKey().equals("authmechanism")) {
                     String expected = option.getValue().asString().getValue();
-                    String actual = connectionString.getCredential().getAuthenticationMechanism().getMechanismName();
-                    assertEquals(expected, actual);
+                    if (expected.equals("MONGODB-CR")) {
+                        assertNotNull(connectionString.getCredential());
+                        assertNull(connectionString.getCredential().getAuthenticationMechanism());
+                    } else {
+                        String actual = connectionString.getCredential().getAuthenticationMechanism().getMechanismName();
+                        assertEquals(expected, actual);
+                    }
                 }
             }
         }

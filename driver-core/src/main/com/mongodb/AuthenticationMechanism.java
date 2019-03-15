@@ -41,14 +41,6 @@ public enum AuthenticationMechanism {
     MONGODB_X509("MONGODB-X509"),
 
     /**
-     * The MongoDB Challenge Response mechanism.
-     *
-     * @deprecated This mechanism was replaced by {@link #SCRAM_SHA_1} in MongoDB 3.0, and is now deprecated
-     */
-    @Deprecated
-    MONGODB_CR("MONGODB-CR"),
-
-    /**
      * The SCRAM-SHA-1 mechanism.  See the <a href="http://tools.ietf.org/html/rfc5802">RFC</a>.
      */
     SCRAM_SHA_1("SCRAM-SHA-1"),
