@@ -197,7 +197,7 @@ public final class MongoClients {
         MongoDriverInformation.Builder builder = mongoDriverInformation == null ? MongoDriverInformation.builder()
                 : MongoDriverInformation.builder(mongoDriverInformation);
         return new DefaultClusterFactory().createCluster(settings.getClusterSettings(), settings.getServerSettings(),
-                settings.getConnectionPoolSettings(), streamFactory, heartbeatStreamFactory, settings.getCredentialList(),
+                settings.getConnectionPoolSettings(), streamFactory, heartbeatStreamFactory, settings.getCredential(),
                 getCommandListener(settings.getCommandListeners()), settings.getApplicationName(), builder.driverName("async").build(),
                 settings.getCompressorList());
     }

@@ -732,7 +732,7 @@ public class MongoClient implements Closeable {
                         options.getSslSettings()),
                 new SocketStreamFactory(options.getHeartbeatSocketSettings(),
                         options.getSslSettings()),
-                credential == null ? Collections.emptyList() : Collections.singletonList(credential),
+                credential,
                 getCommandListener(options.getCommandListeners()),
                 options.getApplicationName(),
                 mongoDriverInformation,

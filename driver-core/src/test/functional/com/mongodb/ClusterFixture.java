@@ -48,6 +48,7 @@ import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactory;
 import com.mongodb.connection.TlsChannelStreamFactoryFactory;
 import com.mongodb.connection.netty.NettyStreamFactory;
+import com.mongodb.internal.connection.MongoCredentialWithCache;
 import com.mongodb.lang.Nullable;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
@@ -307,19 +308,19 @@ public final class ClusterFixture {
     }
 
 
-    public static Cluster createCluster(final List<MongoCredential> credentials) {
-        return createCluster(credentials, getStreamFactory());
+    public static Cluster createCluster(final MongoCredential credential) {
+        return createCluster(credential, getStreamFactory());
     }
 
-    public static Cluster createAsyncCluster(final List<MongoCredential> credentials) {
-        return createCluster(credentials, getAsyncStreamFactory());
+    public static Cluster createAsyncCluster(final MongoCredential credential) {
+        return createCluster(credential, getAsyncStreamFactory());
     }
 
-    private static Cluster createCluster(final List<MongoCredential> credentials, final StreamFactory streamFactory) {
+    private static Cluster createCluster(final MongoCredential credential, final StreamFactory streamFactory) {
         return new DefaultClusterFactory().createCluster(ClusterSettings.builder().hosts(asList(getPrimary())).build(),
                 ServerSettings.builder().build(),
                 ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build(),
-                streamFactory, streamFactory, credentials, null, null, null,
+                streamFactory, streamFactory, credential, null, null, null,
                 Collections.<MongoCompressor>emptyList());
     }
 
@@ -330,7 +331,8 @@ public final class ClusterFixture {
                 ConnectionPoolSettings.builder().applyConnectionString(connectionString).build(),
                 streamFactory,
                 new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings(connectionString)),
-                connectionString.getCredentialList(), null, null, null,
+                connectionString.getCredential(),
+                null, null, null,
                 connectionString.getCompressorList());
     }
 
@@ -398,9 +400,14 @@ public final class ClusterFixture {
         return serverDescriptions.get(0).getAddress();
     }
 
-    @SuppressWarnings("deprecation")
-    public static List<MongoCredential> getCredentialList() {
-        return getConnectionString().getCredentialList();
+    @Nullable
+    public static MongoCredential getCredential() {
+        return getConnectionString().getCredential();
+    }
+
+    @Nullable
+    public static MongoCredentialWithCache getCredentialWithCache() {
+        return getConnectionString().getCredential() == null ? null : new MongoCredentialWithCache(getConnectionString().getCredential());
     }
 
     public static boolean isDiscoverableReplicaSet() {

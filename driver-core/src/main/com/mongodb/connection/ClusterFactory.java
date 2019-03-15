@@ -20,8 +20,6 @@ import com.mongodb.MongoCredential;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ConnectionPoolListener;
 
-import java.util.List;
-
 /**
  * Factory for {@code Cluster} implementations.
  *
@@ -41,7 +39,7 @@ public interface ClusterFactory {
      * @param connectionPoolSettings   the connection pool settings
      * @param streamFactory            the stream factory
      * @param heartbeatStreamFactory   the heartbeat stream factory
-     * @param credentialList           the credential list
+     * @param credential               the credential, which may be null
      * @param clusterListener          an optional listener for cluster-related events
      * @param connectionPoolListener   an optional listener for connection pool-related events
      * @param connectionListener       an optional listener for connection-related events
@@ -53,7 +51,7 @@ public interface ClusterFactory {
                    ConnectionPoolSettings connectionPoolSettings,
                    StreamFactory streamFactory,
                    StreamFactory heartbeatStreamFactory,
-                   List<MongoCredential> credentialList,
+                   MongoCredential credential,
                    ClusterListener clusterListener,
                    ConnectionPoolListener connectionPoolListener,
                    com.mongodb.event.ConnectionListener connectionListener);

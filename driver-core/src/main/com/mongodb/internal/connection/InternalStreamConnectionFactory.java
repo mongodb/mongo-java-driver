@@ -23,7 +23,6 @@ import com.mongodb.connection.StreamFactory;
 import com.mongodb.event.CommandListener;
 import org.bson.BsonDocument;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
@@ -32,11 +31,11 @@ import static com.mongodb.internal.connection.ClientMetadataHelper.createClientM
 class InternalStreamConnectionFactory implements InternalConnectionFactory {
     private final StreamFactory streamFactory;
     private final BsonDocument clientMetadataDocument;
-    private final List<Authenticator> authenticators;
+    private final Authenticator authenticator;
     private final List<MongoCompressor> compressorList;
     private final CommandListener commandListener;
 
-    InternalStreamConnectionFactory(final StreamFactory streamFactory, final List<MongoCredentialWithCache> credentialList,
+    InternalStreamConnectionFactory(final StreamFactory streamFactory, final MongoCredentialWithCache credential,
                                     final String applicationName, final MongoDriverInformation mongoDriverInformation,
                                     final List<MongoCompressor> compressorList,
                                     final CommandListener commandListener) {
@@ -44,17 +43,13 @@ class InternalStreamConnectionFactory implements InternalConnectionFactory {
         this.compressorList = notNull("compressorList", compressorList);
         this.commandListener = commandListener;
         this.clientMetadataDocument = createClientMetadataDocument(applicationName, mongoDriverInformation);
-        notNull("credentialList", credentialList);
-        this.authenticators = new ArrayList<Authenticator>(credentialList.size());
-        for (MongoCredentialWithCache credential : credentialList) {
-            authenticators.add(createAuthenticator(credential));
-        }
+        authenticator = credential == null ? null : createAuthenticator(credential);
     }
 
     @Override
     public InternalConnection create(final ServerId serverId) {
         return new InternalStreamConnection(serverId, streamFactory, compressorList, commandListener,
-                                            new InternalStreamConnectionInitializer(authenticators, clientMetadataDocument,
+                                            new InternalStreamConnectionInitializer(authenticator, clientMetadataDocument,
                                                                                            compressorList));
     }
 

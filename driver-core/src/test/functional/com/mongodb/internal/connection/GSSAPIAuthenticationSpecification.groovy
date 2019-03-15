@@ -38,13 +38,13 @@ import javax.security.auth.login.LoginContext
 
 import static com.mongodb.AuthenticationMechanism.GSSAPI
 import static com.mongodb.ClusterFixture.getConnectionString
-import static com.mongodb.ClusterFixture.getCredentialList
+import static com.mongodb.ClusterFixture.getCredential
 import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.MongoCredential.createGSSAPICredential
 import static com.mongodb.internal.connection.CommandHelper.executeCommand
 import static java.util.concurrent.TimeUnit.SECONDS
 
-@IgnoreIf({ getCredentialList().isEmpty() || getCredentialList().get(0).getAuthenticationMechanism() != GSSAPI })
+@IgnoreIf({ getCredential() == null || getCredential().getAuthenticationMechanism() != GSSAPI })
 class GSSAPIAuthenticationSpecification extends Specification {
 
     def 'should not authorize when not authenticated'() {
@@ -184,7 +184,7 @@ class GSSAPIAuthenticationSpecification extends Specification {
     }
 
     private static MongoCredential getMongoCredential() {
-        getCredentialList().get(0)
+        getCredential()
     }
 
     private static InternalStreamConnection createConnection(final boolean async, final MongoCredential credential) {
@@ -192,11 +192,11 @@ class GSSAPIAuthenticationSpecification extends Specification {
                 new ServerId(new ClusterId(), new ServerAddress(getConnectionString().getHosts().get(0))),
                 async ? new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings())
                         : new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()), [], null,
-                new InternalStreamConnectionInitializer(createAuthenticators(credential), null, []))
+                new InternalStreamConnectionInitializer(createAuthenticator(credential), null, []))
     }
 
-    private static List<Authenticator> createAuthenticators(final MongoCredential credential) {
-        credential == null ? [] : [new GSSAPIAuthenticator(new MongoCredentialWithCache(credential))]
+    private static Authenticator createAuthenticator(final MongoCredential credential) {
+        credential == null ? null : new GSSAPIAuthenticator(new MongoCredentialWithCache(credential))
     }
 
     private static void openConnection(final InternalConnection connection, final boolean async) {

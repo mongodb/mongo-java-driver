@@ -54,36 +54,31 @@ class ClientSessionHelper {
 
     @SuppressWarnings("deprecation")
     void createClientSession(final ClientSessionOptions options, final OperationExecutor executor,
-                             final SingleResultCallback<ClientSession>
-            callback) {
-        if (mongoClient.getSettings().getCredentialList().size() > 1) {
-            callback.onResult(null, null);
+                             final SingleResultCallback<ClientSession> callback) {
+        ClusterDescription clusterDescription = mongoClient.getCluster().getCurrentDescription();
+        if (!getServerDescriptionListToConsiderForSessionSupport(clusterDescription).isEmpty()
+                && clusterDescription.getLogicalSessionTimeoutMinutes() != null
+                && clusterDescription.getType() != ClusterType.STANDALONE) {
+            callback.onResult(createClientSession(options, executor), null);
         } else {
-            ClusterDescription clusterDescription = mongoClient.getCluster().getCurrentDescription();
-            if (!getServerDescriptionListToConsiderForSessionSupport(clusterDescription).isEmpty()
-                    && clusterDescription.getLogicalSessionTimeoutMinutes() != null
-                    && clusterDescription.getType() != ClusterType.STANDALONE) {
-                callback.onResult(createClientSession(options, executor), null);
-            } else {
-                mongoClient.getCluster().selectServerAsync(new ServerSelector() {
-                    @Override
-                    public List<ServerDescription> select(final ClusterDescription clusterDescription) {
-                        return getServerDescriptionListToConsiderForSessionSupport(clusterDescription);
+            mongoClient.getCluster().selectServerAsync(new ServerSelector() {
+                @Override
+                public List<ServerDescription> select(final ClusterDescription clusterDescription) {
+                    return getServerDescriptionListToConsiderForSessionSupport(clusterDescription);
+                }
+            }, new SingleResultCallback<Server>() {
+                @Override
+                public void onResult(final Server server, final Throwable t) {
+                    if (t != null) {
+                        callback.onResult(null, null);
+                    } else if (server.getDescription().getLogicalSessionTimeoutMinutes() == null
+                            || server.getDescription().getType() == ServerType.STANDALONE) {
+                        callback.onResult(null, null);
+                    } else {
+                        callback.onResult(createClientSession(options, executor), null);
                     }
-                }, new SingleResultCallback<Server>() {
-                    @Override
-                    public void onResult(final Server server, final Throwable t) {
-                        if (t != null) {
-                            callback.onResult(null, null);
-                        } else if (server.getDescription().getLogicalSessionTimeoutMinutes() == null
-                                || server.getDescription().getType() == ServerType.STANDALONE) {
-                            callback.onResult(null, null);
-                        } else {
-                            callback.onResult(createClientSession(options, executor), null);
-                        }
-                    }
-                });
-            }
+                }
+            });
         }
     }
 

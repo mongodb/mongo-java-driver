@@ -1108,33 +1108,10 @@ public class ConnectionString {
      * Get the unparsed connection string.
      *
      * @return the connection string
-     * deprecated use {@link #getConnectionString()}
-     */
-    @Deprecated
-    public String getURI() {
-        return getConnectionString();
-    }
-
-    /**
-     * Get the unparsed connection string.
-     *
-     * @return the connection string
      * @since 3.1
      */
     public String getConnectionString() {
         return connectionString;
-    }
-
-
-    /**
-     * Gets the credentials in an immutable list.  The list will be empty if no credentials were specified in the connection string.
-     *
-     * @return the credentials in an immutable list
-     * @deprecated Prefer {@link #getCredential()}
-     */
-    @Deprecated
-    public List<MongoCredential> getCredentialList() {
-        return credential != null ? singletonList(credential) : Collections.<MongoCredential>emptyList();
     }
 
     /**

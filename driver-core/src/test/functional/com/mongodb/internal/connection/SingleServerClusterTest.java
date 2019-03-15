@@ -42,7 +42,7 @@ import org.junit.Test;
 import java.util.Collections;
 import java.util.List;
 
-import static com.mongodb.ClusterFixture.getCredentialList;
+import static com.mongodb.ClusterFixture.getCredential;
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.getPrimary;
 import static com.mongodb.ClusterFixture.getSecondary;
@@ -68,7 +68,7 @@ public class SingleServerClusterTest {
                 clusterSettings,
                 new DefaultClusterableServerFactory(clusterId, clusterSettings, ServerSettings.builder().build(),
                         ConnectionPoolSettings.builder().maxSize(1).build(),
-                        streamFactory, streamFactory, getCredentialList(),
+                        streamFactory, streamFactory, getCredential(),
 
                         null, null, null,
                         Collections.<MongoCompressor>emptyList()));

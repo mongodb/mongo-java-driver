@@ -19,20 +19,9 @@ package com.mongodb.internal.connection;
 import com.mongodb.AuthenticationMechanism;
 import com.mongodb.MongoCredential;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class MongoCredentialWithCache {
     private final MongoCredential credential;
     private final Cache cache;
-
-    public static List<MongoCredentialWithCache> wrapCredentialList(final List<MongoCredential> credentialList) {
-        ArrayList<MongoCredentialWithCache> credentialListWithCache = new ArrayList<MongoCredentialWithCache>();
-        for (MongoCredential credential : credentialList) {
-            credentialListWithCache.add(new MongoCredentialWithCache(credential));
-        }
-        return credentialListWithCache;
-    }
 
     public MongoCredentialWithCache(final MongoCredential credential) {
         this(credential, null);
