@@ -1170,8 +1170,8 @@ public class ConnectionString {
     /**
      * <p>Gets whether writes should be retried if they fail due to a network error</p>
      *
-     * The name of this method differs from others in this class so as not to conflict with the deprecated (and soon to be removed)
-     * {@link #getRetryWrites()} method, which returns a primitive {@code boolean} value, which doesn't allow callers to differentiate
+     * The name of this method differs from others in this class so as not to conflict with the now removed
+     * getRetryWrites() method, which returned a primitive {@code boolean} value, and didn't allow callers to differentiate
      * between a false value and an unset value.
      *
      * @return the retryWrites value, or null if unset
