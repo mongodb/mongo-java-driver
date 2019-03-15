@@ -45,14 +45,14 @@ public final class DefaultClusterFactory implements ClusterFactory {
     public Cluster create(final ClusterSettings settings, final ServerSettings serverSettings,
                           final ConnectionPoolSettings connectionPoolSettings, final StreamFactory streamFactory,
                           final StreamFactory heartbeatStreamFactory,
-                          final List<MongoCredential> credentialList,
+                          final MongoCredential credential,
                           final ClusterListener clusterListener,
                           final ConnectionPoolListener connectionPoolListener,
                           final com.mongodb.event.ConnectionListener connectionListener) {
 
         return createCluster(getClusterSettings(settings, clusterListener), serverSettings,
                 getConnectionPoolSettings(connectionPoolSettings, connectionPoolListener), streamFactory,
-                heartbeatStreamFactory, credentialList, null, null, null,
+                heartbeatStreamFactory, credential, null, null, null,
                 Collections.<MongoCompressor>emptyList());
     }
 
@@ -64,7 +64,7 @@ public final class DefaultClusterFactory implements ClusterFactory {
      * @param connectionPoolSettings the connection pool settings
      * @param streamFactory          the stream factory
      * @param heartbeatStreamFactory the heartbeat stream factory
-     * @param credentialList         the credential list
+     * @param credential             the credential, which may be null
      * @param clusterListener        an optional listener for cluster-related events
      * @param connectionPoolListener an optional listener for connection pool-related events
      * @param connectionListener     an optional listener for connection-related events
@@ -73,20 +73,20 @@ public final class DefaultClusterFactory implements ClusterFactory {
      *
      * @since 3.1
      * @deprecated use {@link #createCluster(ClusterSettings, ServerSettings, ConnectionPoolSettings, StreamFactory, StreamFactory,
-     * List, CommandListener, String, MongoDriverInformation, List)} instead
+     * MongoCredential, CommandListener, String, MongoDriverInformation, List)} instead
      */
     @Deprecated
     public Cluster create(final ClusterSettings settings, final ServerSettings serverSettings,
                           final ConnectionPoolSettings connectionPoolSettings, final StreamFactory streamFactory,
                           final StreamFactory heartbeatStreamFactory,
-                          final List<MongoCredential> credentialList,
+                          final MongoCredential credential,
                           final ClusterListener clusterListener,
                           final ConnectionPoolListener connectionPoolListener,
                           final com.mongodb.event.ConnectionListener connectionListener,
                           final CommandListener commandListener) {
         return createCluster(getClusterSettings(settings, clusterListener), serverSettings,
                 getConnectionPoolSettings(connectionPoolSettings, connectionPoolListener), streamFactory, heartbeatStreamFactory,
-                credentialList, commandListener, null, null, Collections.<MongoCompressor>emptyList());
+                credential, commandListener, null, null, Collections.<MongoCompressor>emptyList());
     }
 
     /**
@@ -97,7 +97,7 @@ public final class DefaultClusterFactory implements ClusterFactory {
      * @param connectionPoolSettings the connection pool settings
      * @param streamFactory          the stream factory
      * @param heartbeatStreamFactory the heartbeat stream factory
-     * @param credentialList         the credential list
+     * @param credential             the credential, which may be null
      * @param clusterListener        an optional listener for cluster-related events
      * @param connectionPoolListener an optional listener for connection pool-related events
      * @param connectionListener     an optional listener for connection-related events
@@ -108,13 +108,13 @@ public final class DefaultClusterFactory implements ClusterFactory {
      *
      * @since 3.4
      * @deprecated use {@link #createCluster(ClusterSettings, ServerSettings, ConnectionPoolSettings, StreamFactory, StreamFactory,
-     * List, CommandListener, String, MongoDriverInformation, List)} instead
+     * MongoCredential, CommandListener, String, MongoDriverInformation, List)} instead
      */
     @Deprecated
     public Cluster create(final ClusterSettings settings, final ServerSettings serverSettings,
                           final ConnectionPoolSettings connectionPoolSettings, final StreamFactory streamFactory,
                           final StreamFactory heartbeatStreamFactory,
-                          final List<MongoCredential> credentialList,
+                          final MongoCredential credential,
                           final ClusterListener clusterListener,
                           final ConnectionPoolListener connectionPoolListener,
                           final com.mongodb.event.ConnectionListener connectionListener,
@@ -123,7 +123,7 @@ public final class DefaultClusterFactory implements ClusterFactory {
                           final MongoDriverInformation mongoDriverInformation) {
         return createCluster(getClusterSettings(settings, clusterListener), serverSettings,
                 getConnectionPoolSettings(connectionPoolSettings, connectionPoolListener), streamFactory, heartbeatStreamFactory,
-                credentialList, commandListener, applicationName, mongoDriverInformation, Collections.<MongoCompressor>emptyList());
+                credential, commandListener, applicationName, mongoDriverInformation, Collections.<MongoCompressor>emptyList());
     }
 
     /**
@@ -134,7 +134,7 @@ public final class DefaultClusterFactory implements ClusterFactory {
      * @param connectionPoolSettings the connection pool settings
      * @param streamFactory          the stream factory
      * @param heartbeatStreamFactory the heartbeat stream factory
-     * @param credentialList         the credential list
+     * @param credential             the credential, which may be null
      * @param commandListener        an optional listener for command-related events
      * @param applicationName        an optional application name to associate with connections to the servers in this cluster
      * @param mongoDriverInformation the optional driver information associate with connections to the servers in this cluster
@@ -142,16 +142,16 @@ public final class DefaultClusterFactory implements ClusterFactory {
      *
      * @since 3.5
      * @deprecated use {@link #createCluster(ClusterSettings, ServerSettings, ConnectionPoolSettings, StreamFactory, StreamFactory,
-     * List, CommandListener, String, MongoDriverInformation, List)} instead
+     * MongoCredential, CommandListener, String, MongoDriverInformation, List)} instead
 
      */
     @Deprecated
     public Cluster createCluster(final ClusterSettings clusterSettings, final ServerSettings serverSettings,
                                  final ConnectionPoolSettings connectionPoolSettings, final StreamFactory streamFactory,
-                                 final StreamFactory heartbeatStreamFactory, final List<MongoCredential> credentialList,
+                                 final StreamFactory heartbeatStreamFactory, final MongoCredential credential,
                                  final CommandListener commandListener, final String applicationName,
                                  final MongoDriverInformation mongoDriverInformation) {
-        return createCluster(clusterSettings, serverSettings, connectionPoolSettings, streamFactory, heartbeatStreamFactory, credentialList,
+        return createCluster(clusterSettings, serverSettings, connectionPoolSettings, streamFactory, heartbeatStreamFactory, credential,
                 commandListener, applicationName, mongoDriverInformation, Collections.<MongoCompressor>emptyList());
     }
 
@@ -163,7 +163,7 @@ public final class DefaultClusterFactory implements ClusterFactory {
      * @param connectionPoolSettings the connection pool settings
      * @param streamFactory          the stream factory
      * @param heartbeatStreamFactory the heartbeat stream factory
-     * @param credentialList         the credential list
+     * @param credential             the credential, which may be null
      * @param commandListener        an optional listener for command-related events
      * @param applicationName        an optional application name to associate with connections to the servers in this cluster
      * @param mongoDriverInformation the optional driver information associate with connections to the servers in this cluster
@@ -174,7 +174,7 @@ public final class DefaultClusterFactory implements ClusterFactory {
      */
     public Cluster createCluster(final ClusterSettings clusterSettings, final ServerSettings serverSettings,
                                  final ConnectionPoolSettings connectionPoolSettings, final StreamFactory streamFactory,
-                                 final StreamFactory heartbeatStreamFactory, final List<MongoCredential> credentialList,
+                                 final StreamFactory heartbeatStreamFactory, final MongoCredential credential,
                                  final CommandListener commandListener, final String applicationName,
                                  final MongoDriverInformation mongoDriverInformation,
                                  final List<MongoCompressor> compressorList) {
@@ -183,7 +183,7 @@ public final class DefaultClusterFactory implements ClusterFactory {
 
 
         ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(clusterId, clusterSettings, serverSettings,
-                connectionPoolSettings, streamFactory, heartbeatStreamFactory, credentialList, commandListener, applicationName,
+                connectionPoolSettings, streamFactory, heartbeatStreamFactory, credential, commandListener, applicationName,
                 mongoDriverInformation != null ? mongoDriverInformation : MongoDriverInformation.builder().build(), compressorList);
 
         DnsSrvRecordMonitorFactory dnsSrvRecordMonitorFactory = new DefaultDnsSrvRecordMonitorFactory(clusterId, serverSettings);

@@ -37,13 +37,9 @@ import com.mongodb.lang.Nullable;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistry;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
-import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
-import static java.util.Collections.singletonList;
 
 
 /**
@@ -57,7 +53,6 @@ import static java.util.Collections.singletonList;
 public final class MongoClientSettings {
     private final com.mongodb.MongoClientSettings wrapped;
     private final SocketSettings heartbeatSocketSettings;
-    private final List<MongoCredential> credentialList;
 
     /**
      * Convenience method to create a Builder.
@@ -89,8 +84,7 @@ public final class MongoClientSettings {
     @NotThreadSafe
     public static final class Builder {
         private final com.mongodb.MongoClientSettings.Builder wrappedBuilder;
-        private List<MongoCredential> credentialList = Collections.emptyList();
-        private SocketSettings.Builder heartbeatSocketSettingsBuilder = null;
+        private SocketSettings.Builder heartbeatSocketSettingsBuilder;
 
         private Builder() {
             wrappedBuilder = com.mongodb.MongoClientSettings.builder();
@@ -99,16 +93,10 @@ public final class MongoClientSettings {
         private Builder(final com.mongodb.MongoClientSettings settings) {
             notNull("settings", settings);
             wrappedBuilder = com.mongodb.MongoClientSettings.builder(settings);
-            MongoCredential credential = settings.getCredential();
-            if (credential != null) {
-                credentialList(singletonList(credential));
-            }
         }
 
-        @SuppressWarnings("deprecation")
         private Builder(final MongoClientSettings settings) {
             this(notNull("settings", settings).wrapped);
-            credentialList = new ArrayList<MongoCredential>(settings.credentialList);
             if (settings.heartbeatSocketSettings != null) {
                 heartbeatSocketSettings(settings.heartbeatSocketSettings);
             }
@@ -121,9 +109,7 @@ public final class MongoClientSettings {
          * @return this
          * @since 3.7
          */
-        @SuppressWarnings("deprecation")
         public Builder applyConnectionString(final ConnectionString connectionString) {
-            credentialList = new ArrayList<MongoCredential>(connectionString.getCredentialList());
             wrappedBuilder.applyConnectionString(connectionString);
             return this;
         }
@@ -374,23 +360,6 @@ public final class MongoClientSettings {
         }
 
         /**
-         * Sets the credential list.
-         *
-         * @param credentialList the credential list
-         * @return this
-         * @see MongoClientSettings#getCredentialList()
-         * @deprecated Prefer {@link #credential(MongoCredential)}
-         */
-        @Deprecated
-        public Builder credentialList(final List<MongoCredential> credentialList) {
-            this.credentialList = Collections.unmodifiableList(notNull("credentialList", credentialList));
-            if (!credentialList.isEmpty()) {
-                wrappedBuilder.credential(credentialList.get(credentialList.size() - 1));
-            }
-            return this;
-        }
-
-        /**
          * Sets the credential.
          *
          * @param credential the credential
@@ -399,7 +368,6 @@ public final class MongoClientSettings {
          * @since 3.6
          */
         public Builder credential(final MongoCredential credential) {
-            this.credentialList = singletonList(notNull("credential", credential));
             wrappedBuilder.credential(credential);
             return this;
         }
@@ -523,17 +491,6 @@ public final class MongoClientSettings {
     }
 
     /**
-     * Gets the credential list.
-     *
-     * @return the credential list
-     * @deprecated Prefer {@link #getCredential()}
-     */
-    @Deprecated
-    public List<MongoCredential> getCredentialList() {
-        return credentialList;
-    }
-
-    /**
      * Gets the credential.
      *
      * @return the credentia, which may be null
@@ -541,7 +498,6 @@ public final class MongoClientSettings {
      */
     @Nullable
     public MongoCredential getCredential() {
-        isTrue("Single or no credential", credentialList.size() <= 1);
         return wrapped.getCredential();
     }
 
@@ -769,7 +725,6 @@ public final class MongoClientSettings {
 
     private MongoClientSettings(final Builder builder) {
         wrapped = builder.wrappedBuilder.build();
-        credentialList = builder.credentialList;
         heartbeatSocketSettings = builder.heartbeatSocketSettingsBuilder != null ?  builder.heartbeatSocketSettingsBuilder.build() : null;
     }
 }

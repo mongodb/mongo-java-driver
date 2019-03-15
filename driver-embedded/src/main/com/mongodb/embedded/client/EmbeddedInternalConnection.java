@@ -28,7 +28,6 @@ import com.mongodb.connection.StreamFactory;
 import com.mongodb.embedded.capi.MongoEmbeddedClient;
 import com.mongodb.embedded.capi.MongoEmbeddedInstance;
 import com.mongodb.event.CommandListener;
-import com.mongodb.internal.connection.Authenticator;
 import com.mongodb.internal.connection.CommandMessage;
 import com.mongodb.internal.connection.InternalConnection;
 import com.mongodb.internal.connection.InternalStreamConnection;
@@ -61,8 +60,7 @@ class EmbeddedInternalConnection implements InternalConnection {
                         return new EmbeddedInternalStream();
                     }
                 }, Collections.<MongoCompressor>emptyList(), commandListener,
-                new InternalStreamConnectionInitializer(Collections.<Authenticator>emptyList(), clientMetadataDocument,
-                        Collections.<MongoCompressor>emptyList()));
+                new InternalStreamConnectionInitializer(null, clientMetadataDocument, Collections.<MongoCompressor>emptyList()));
     }
 
     @Override

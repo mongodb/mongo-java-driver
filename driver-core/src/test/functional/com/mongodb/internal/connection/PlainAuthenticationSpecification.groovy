@@ -34,13 +34,13 @@ import spock.lang.Specification
 
 import static com.mongodb.AuthenticationMechanism.PLAIN
 import static com.mongodb.ClusterFixture.getConnectionString
-import static com.mongodb.ClusterFixture.getCredentialList
+import static com.mongodb.ClusterFixture.getCredential
 import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.MongoCredential.createPlainCredential
 import static com.mongodb.internal.connection.CommandHelper.executeCommand
 import static java.util.concurrent.TimeUnit.SECONDS
 
-@IgnoreIf({ getCredentialList().isEmpty() || getCredentialList().get(0).getAuthenticationMechanism() != PLAIN })
+@IgnoreIf({ getCredential() == null || getCredential().getAuthenticationMechanism() != PLAIN })
 class PlainAuthenticationSpecification extends Specification {
 
     def 'should not authorize when not authenticated'() {
@@ -98,7 +98,7 @@ class PlainAuthenticationSpecification extends Specification {
     }
 
     private static MongoCredential getMongoCredential() {
-        getCredentialList().get(0);
+        getCredential()
     }
 
     private static InternalStreamConnection createConnection(final boolean async, final MongoCredential credential) {
@@ -106,11 +106,11 @@ class PlainAuthenticationSpecification extends Specification {
                 new ServerId(new ClusterId(), new ServerAddress(getConnectionString().getHosts().get(0))),
                 async ? new NettyStreamFactory(SocketSettings.builder().build(), getSslSettings())
                         : new SocketStreamFactory(SocketSettings.builder().build(), getSslSettings()), [], null,
-                new InternalStreamConnectionInitializer(createAuthenticators(credential), null, []))
+                new InternalStreamConnectionInitializer(createAuthenticator(credential), null, []))
     }
 
-    private static List<Authenticator> createAuthenticators(final MongoCredential credential) {
-        credential == null ? [] : [new PlainAuthenticator(new MongoCredentialWithCache(credential))]
+    private static Authenticator createAuthenticator(final MongoCredential credential) {
+        credential == null ? null : new PlainAuthenticator(new MongoCredentialWithCache(credential))
     }
 
     private static void openConnection(final InternalConnection connection, final boolean async) {

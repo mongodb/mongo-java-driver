@@ -434,7 +434,6 @@ class ConnectionStringSpecification extends Specification {
     def 'should support all credential types'() {
         expect:
         uri.credential == credential
-        uri.credentialList == [credential]
 
         where:
         uri                                                   | credential
@@ -491,24 +490,12 @@ class ConnectionStringSpecification extends Specification {
 
     def 'should ignore authSource if there is no credential'() {
         expect:
-        new ConnectionString('mongodb://localhost/?authSource=test').credentialList == []
+        new ConnectionString('mongodb://localhost/?authSource=test').credential == null
     }
 
     def 'should ignore authMechanismProperties if there is no credential'() {
         expect:
-        new ConnectionString('mongodb://localhost/?&authMechanismProperties=SERVICE_REALM:AWESOME').credentialList == []
-    }
-
-    @Unroll
-    def 'should create immutable credential list'() {
-        when:
-        uri.credentialList.add(createGSSAPICredential('user'))
-
-        then:
-        thrown(UnsupportedOperationException)
-
-        where:
-        uri << [new ConnectionString('mongodb://jeff:123@localhost'), new ConnectionString('mongodb://localhost')]
+        new ConnectionString('mongodb://localhost/?&authMechanismProperties=SERVICE_REALM:AWESOME').credential == null
     }
 
     def 'should support thrown an IllegalArgumentException when given invalid authMechanismProperties'() {

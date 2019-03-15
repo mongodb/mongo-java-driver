@@ -26,7 +26,7 @@ import org.bson.Document
 import spock.lang.Unroll
 
 import static com.mongodb.ClusterFixture.connectionString
-import static com.mongodb.ClusterFixture.getCredentialList
+import static com.mongodb.ClusterFixture.getCredential
 import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.secondaryPreferred
@@ -37,8 +37,8 @@ class MongoClientsSpecification extends FunctionalSpecification {
     def 'should connect'() {
         given:
         def connectionString = 'mongodb://'
-        if (!getCredentialList().isEmpty()) {
-           connectionString += (getCredentialList()[0].getUserName() + ':' + String.valueOf(getCredentialList()[0].getPassword()) + '@')
+        if (!getCredential() == null) {
+           connectionString += (getCredential().getUserName() + ':' + String.valueOf(getCredential().getPassword()) + '@')
         }
         connectionString += getConnectionString().getHosts()[0] + '/?'
         connectionString += 'ssl=' + getSslSettings().isEnabled() + '&'
@@ -77,7 +77,7 @@ class MongoClientsSpecification extends FunctionalSpecification {
         def client = MongoClients.create('mongodb://u:p@localhost/')
 
         then:
-        client.settings.credentialList == [MongoCredential.createCredential('u', 'admin', 'p'.toCharArray())]
+        client.settings.credential == MongoCredential.createCredential('u', 'admin', 'p'.toCharArray())
 
         cleanup:
         client?.close()
