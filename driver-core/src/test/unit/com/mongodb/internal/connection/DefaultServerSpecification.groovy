@@ -301,7 +301,7 @@ class DefaultServerSpecification extends Specification {
         def testConnection = (TestConnection) server.getConnection()
 
         when:
-        testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoNotPrimaryException(serverId.address)))
+        testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoNotPrimaryException(new BsonDocument(), serverId.address)))
 
         testConnection.insert(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()))
 
@@ -350,7 +350,7 @@ class DefaultServerSpecification extends Specification {
         def testConnection = (TestConnection) server.getConnection()
 
         when:
-        testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoNodeIsRecoveringException(new ServerAddress())))
+        testConnection.enqueueProtocol(new TestLegacyProtocol(new MongoNodeIsRecoveringException(new BsonDocument(), new ServerAddress())))
 
         testConnection.insert(new MongoNamespace('test', 'test'), true, new InsertRequest(new BsonDocument()))
 
