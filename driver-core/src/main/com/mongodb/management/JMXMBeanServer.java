@@ -14,19 +14,15 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.management.jmx;
+package com.mongodb.management;
 
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
-import com.mongodb.management.MBeanServer;
 
 import javax.management.ObjectName;
 import java.lang.management.ManagementFactory;
 
-/**
- * This class is NOT part of the public API.  It may change at any time without notification.
- */
-public class JMXMBeanServer implements MBeanServer {
+class JMXMBeanServer implements MBeanServer {
     private static final Logger LOGGER = Loggers.getLogger("management");
 
     @Override

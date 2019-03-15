@@ -16,18 +16,11 @@
 
 package com.mongodb.management;
 
-import com.mongodb.internal.management.jmx.JMXMBeanServer;
-
 /**
- * <p>This class is NOT part of the public API.  It may change at any time without notification.</p>
- *
  * <p>This class is used to insulate the rest of the driver from the possibility that JMX is not available, as currently is the case on
  * Android VM.</p>
- *
- * @since 2.9
  */
-@Deprecated
-public final class MBeanServerFactory {
+final class MBeanServerFactory {
     private MBeanServerFactory() {
     }
 
@@ -48,7 +41,7 @@ public final class MBeanServerFactory {
      *
      * @return the MBean server.
      */
-    public static MBeanServer getMBeanServer() {
+    static MBeanServer getMBeanServer() {
         return M_BEAN_SERVER;
     }
 
