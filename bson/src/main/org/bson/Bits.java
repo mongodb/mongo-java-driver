@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bson.io;
+package org.bson;
 
 import java.io.EOFException;
 import java.io.IOException;
@@ -22,10 +22,8 @@ import java.io.InputStream;
 
 /**
  * Utility class for reading values from an input stream.
- * @deprecated there is no replacement for this utility class
  */
-@Deprecated
-public class Bits {
+class Bits {
 
     /**
      * Reads bytes from the input stream and puts them into the given byte buffer. The equivalent of calling
@@ -35,23 +33,9 @@ public class Bits {
      * @param buffer      the buffer into which the data is read.
      * @throws IOException if there's an error reading from the {@code inputStream}
      */
-    public static void readFully(final InputStream inputStream, final byte[] buffer)
+    static void readFully(final InputStream inputStream, final byte[] buffer)
     throws IOException {
-        readFully(inputStream, buffer, buffer.length);
-    }
-
-    /**
-     * Reads bytes from the input stream and puts them into the given byte buffer. The equivalent of calling
-     * {@link #readFully(java.io.InputStream, byte[], int, int)} with an offset of zero.
-     *
-     * @param inputStream the input stream to read from
-     * @param buffer      the buffer into which the data is read.
-     * @param length      the maximum number of bytes to read.
-     * @throws IOException if there's an error reading from the {@code inputStream}
-     */
-    public static void readFully(final InputStream inputStream, final byte[] buffer, final int length)
-    throws IOException {
-        readFully(inputStream, buffer, 0, length);
+        readFully(inputStream, buffer, 0, buffer.length);
     }
 
     /**
@@ -64,7 +48,7 @@ public class Bits {
      * @throws IOException if there's an error reading from the {@code inputStream}
      * @see java.io.InputStream#read(byte[], int, int)
      */
-    public static void readFully(final InputStream inputStream, final byte[] buffer, final int offset, final int length)
+    static void readFully(final InputStream inputStream, final byte[] buffer, final int offset, final int length)
     throws IOException {
         if (buffer.length < length + offset) {
             throw new IllegalArgumentException("Buffer is too small");
@@ -86,23 +70,12 @@ public class Bits {
      * Reads and returns a single integer value from the input stream.
      *
      * @param inputStream the input stream to read from
-     * @return the integer value
-     * @throws IOException if there's an error reading from the {@code inputStream}
-     */
-    public static int readInt(final InputStream inputStream) throws IOException {
-        return readInt(inputStream, new byte[4]);
-    }
-
-    /**
-     * Reads and returns a single integer value from the input stream.
-     *
-     * @param inputStream the input stream to read from
      * @param buffer the buffer to write the input stream bytes into
      * @return the integer value
      * @throws IOException if there's an error reading from the {@code inputStream}
      */
-    public static int readInt(final InputStream inputStream, final byte[] buffer) throws IOException {
-        readFully(inputStream, buffer, 4);
+    static int readInt(final InputStream inputStream, final byte[] buffer) throws IOException {
+        readFully(inputStream, buffer, 0, 4);
         return readInt(buffer);
     }
 
@@ -113,7 +86,7 @@ public class Bits {
      * @param buffer the buffer to read from
      * @return the integer value
      */
-    public static int readInt(final byte[] buffer) {
+    static int readInt(final byte[] buffer) {
         return readInt(buffer, 0);
     }
 
@@ -124,28 +97,12 @@ public class Bits {
      * @param offset the position to start reading from the buffer
      * @return the integer value
      */
-    public static int readInt(final byte[] buffer, final int offset) {
+    static int readInt(final byte[] buffer, final int offset) {
         int x = 0;
         x |= (0xFF & buffer[offset + 0]) << 0;
         x |= (0xFF & buffer[offset + 1]) << 8;
         x |= (0xFF & buffer[offset + 2]) << 16;
         x |= (0xFF & buffer[offset + 3]) << 24;
-        return x;
-    }
-
-    /**
-     * Reads and returns a single big-endian integer value
-     *
-     * @param buffer the buffer to read from
-     * @param offset the position to start reading from the buffer
-     * @return the integer value
-     */
-    public static int readIntBE(final byte[] buffer, final int offset) {
-        int x = 0;
-        x |= (0xFF & buffer[offset + 0]) << 24;
-        x |= (0xFF & buffer[offset + 1]) << 16;
-        x |= (0xFF & buffer[offset + 2]) << 8;
-        x |= (0xFF & buffer[offset + 3]) << 0;
         return x;
     }
 
@@ -156,7 +113,7 @@ public class Bits {
      * @return the long value
      * @throws IOException if there's an error reading from the {@code inputStream}
      */
-    public static long readLong(final InputStream inputStream) throws IOException {
+    static long readLong(final InputStream inputStream) throws IOException {
         return readLong(inputStream, new byte[8]);
     }
 
@@ -168,8 +125,8 @@ public class Bits {
      * @return the long value
      * @throws IOException if there's an error reading from the {@code inputStream}
      */
-    public static long readLong(final InputStream inputStream, final byte[] buffer) throws IOException {
-        readFully(inputStream, buffer, 8);
+    static long readLong(final InputStream inputStream, final byte[] buffer) throws IOException {
+        readFully(inputStream, buffer, 0, 8);
         return readLong(buffer);
     }
 
@@ -180,7 +137,7 @@ public class Bits {
      * @param buffer the buffer to read from
      * @return the long value
      */
-    public static long readLong(final byte[] buffer) {
+    static long readLong(final byte[] buffer) {
         return readLong(buffer, 0);
     }
 
@@ -191,7 +148,7 @@ public class Bits {
      * @param offset the position to start reading from the buffer
      * @return the long value
      */
-    public static long readLong(final byte[] buffer, final int offset) {
+    static long readLong(final byte[] buffer, final int offset) {
         long x = 0;
         x |= (0xFFL & buffer[offset + 0]) << 0;
         x |= (0xFFL & buffer[offset + 1]) << 8;

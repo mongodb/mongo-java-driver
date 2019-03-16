@@ -16,7 +16,6 @@
 
 package org.bson;
 
-import org.bson.io.Bits;
 import org.bson.io.ByteBufferBsonInput;
 
 import java.io.IOException;

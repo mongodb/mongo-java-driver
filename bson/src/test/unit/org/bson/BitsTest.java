@@ -12,9 +12,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
  */
 
-package org.bson.io;
+package org.bson;
 
 import org.junit.Test;
 
@@ -36,7 +37,7 @@ public class BitsTest {
     @Test
     public void testReadFullyWithBufferLargerThanExpected() throws IOException {
         byte[] buffer = new byte[8192];
-        Bits.readFully(new ByteArrayInputStream(BYTES), buffer, BYTES.length);
+        Bits.readFully(new ByteArrayInputStream(BYTES), buffer, 0, BYTES.length);
         assertArrayEquals(BYTES, Arrays.copyOfRange(buffer, 0, BYTES.length));
     }
 
@@ -58,7 +59,7 @@ public class BitsTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testReadFullyUsingNotEnoughBigBuffer() throws IOException {
-        Bits.readFully(new ByteArrayInputStream(BYTES), new byte[2], BYTES.length);
+        Bits.readFully(new ByteArrayInputStream(BYTES), new byte[2], 0, BYTES.length);
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -75,17 +76,12 @@ public class BitsTest {
 
     @Test
     public void testReadIntFromInputStream() throws IOException {
-        assertEquals(41, Bits.readInt(new ByteArrayInputStream(BYTES)));
+        assertEquals(41, Bits.readInt(new ByteArrayInputStream(BYTES), new byte[4]));
     }
 
     @Test
     public void testReadIntWithOffset() {
         assertEquals(-12, Bits.readInt(BYTES, 8));
-    }
-
-    @Test
-    public void testReadIntInBigEndianNotation() {
-        assertEquals(-12, Bits.readIntBE(new byte[]{-1, -1, -1, -12}, 0));
     }
 
     @Test
