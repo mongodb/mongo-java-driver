@@ -50,7 +50,7 @@ public interface BsonReader extends Closeable {
      * Peeks the subtype of the binary data that the reader is positioned at.  This operation is not permitted if the mark is already set.
      *
      * @return the subtype
-     * @see #mark()
+     * @see #getMark()
      */
     byte peekBinarySubType();
 
@@ -58,7 +58,7 @@ public interface BsonReader extends Closeable {
      * Peeks the size of the binary data that the reader is positioned at.  This operation is not permitted if the mark is already set.
      *
      * @return the size of the binary data
-     * @see #mark()
+     * @see #getMark()
      * @since 3.4
      */
     int peekBinarySize();
@@ -383,30 +383,12 @@ public interface BsonReader extends Closeable {
     void skipValue();
 
     /**
-     * Creates a bookmark in the BsonReader's input
-     *
-     * The previous mark must be cleared before creating a new one
-     * @deprecated Use {@link #getMark()} instead
-     */
-    @Deprecated
-    void mark();
-
-    /**
      * Gets a mark representing the current state of the reader.
      *
      * @return the mark
      * @since 3.5
      */
     BsonReaderMark getMark();
-
-    /**
-     * Go back to the state at the last mark and removes the mark
-     *
-     * @throws org.bson.BSONException if no mark has been set
-     * @deprecated Prefer {@link #getMark()}
-     */
-    @Deprecated
-    void reset();
 
     @Override
     void close();
