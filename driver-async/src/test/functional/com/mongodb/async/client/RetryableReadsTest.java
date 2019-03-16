@@ -18,6 +18,7 @@ package com.mongodb.async.client;
 
 import com.mongodb.Block;
 import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
@@ -116,6 +117,8 @@ public class RetryableReadsTest {
         assumeFalse(skipTest);
         assumeTrue("Skipping test: " + definition.getString("skipReason", new BsonString("")).getValue(),
                 !definition.containsKey("skipReason"));
+        assumeFalse("Skipping count tests", filename.startsWith("count.") || filename.startsWith("count-"));
+
         collectionHelper = new CollectionHelper<Document>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
 
         collectionHelper.killAllSessions();

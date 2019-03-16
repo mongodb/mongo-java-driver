@@ -63,7 +63,7 @@ class MongoClientsSpecification extends FunctionalSpecification {
 
     def 'should apply connection string to cluster settings'() {
         when:
-        def client = MongoClients.create('mongodb://localhost,localhost:27018/')
+        def client = MongoClients.create('mongodb://localhost,localhost:27018/') as MongoClientImpl
 
         then:
         client.settings.clusterSettings.hosts == [new ServerAddress('localhost'), new ServerAddress('localhost:27018')]
@@ -74,7 +74,7 @@ class MongoClientsSpecification extends FunctionalSpecification {
 
     def 'should apply connection string to credential list'() {
         when:
-        def client = MongoClients.create('mongodb://u:p@localhost/')
+        def client = MongoClients.create('mongodb://u:p@localhost/') as MongoClientImpl
 
         then:
         client.settings.credential == MongoCredential.createCredential('u', 'admin', 'p'.toCharArray())
@@ -85,7 +85,7 @@ class MongoClientsSpecification extends FunctionalSpecification {
 
     def 'should apply connection string to server settings'() {
         when:
-        def client = MongoClients.create('mongodb://localhost/?heartbeatFrequencyMS=50')
+        def client = MongoClients.create('mongodb://localhost/?heartbeatFrequencyMS=50') as MongoClientImpl
 
         then:
         client.settings.serverSettings.getHeartbeatFrequency(MILLISECONDS) == 50
@@ -96,7 +96,7 @@ class MongoClientsSpecification extends FunctionalSpecification {
 
     def 'should apply connection string to connection pool settings'() {
         when:
-        def client = MongoClients.create('mongodb://localhost/?maxIdleTimeMS=200&maxLifeTimeMS=300')
+        def client = MongoClients.create('mongodb://localhost/?maxIdleTimeMS=200&maxLifeTimeMS=300') as MongoClientImpl
 
         then:
         client.settings.connectionPoolSettings.getMaxConnectionIdleTime(MILLISECONDS) == 200
@@ -108,7 +108,7 @@ class MongoClientsSpecification extends FunctionalSpecification {
 
     def 'should apply connection string to ssl settings'() {
         when:
-        def client = MongoClients.create('mongodb://localhost/?ssl=true&sslInvalidHostNameAllowed=true&streamType=netty')
+        def client = MongoClients.create('mongodb://localhost/?ssl=true&sslInvalidHostNameAllowed=true') as MongoClientImpl
 
         then:
         client.settings.sslSettings.enabled
@@ -120,7 +120,7 @@ class MongoClientsSpecification extends FunctionalSpecification {
 
     def 'should apply connection string to socket settings'() {
         when:
-        def client = MongoClients.create('mongodb://localhost/?connectTimeoutMS=300')
+        def client = MongoClients.create('mongodb://localhost/?connectTimeoutMS=300') as MongoClientImpl
 
         then:
         client.settings.socketSettings.getConnectTimeout(MILLISECONDS) == 300
@@ -132,7 +132,7 @@ class MongoClientsSpecification extends FunctionalSpecification {
     @Unroll
     def 'should apply read preference from connection string to settings'() {
         when:
-        def client = MongoClients.create(uri)
+        def client = MongoClients.create(uri) as MongoClientImpl
 
         then:
         client.settings.getReadPreference() == readPreference
@@ -149,7 +149,7 @@ class MongoClientsSpecification extends FunctionalSpecification {
     @Unroll
     def 'should apply read concern from connection string to settings'() {
         when:
-        def client = MongoClients.create(uri)
+        def client = MongoClients.create(uri) as MongoClientImpl
 
         then:
         client.settings.getReadConcern() == readConcern
@@ -166,7 +166,7 @@ class MongoClientsSpecification extends FunctionalSpecification {
     @Unroll
     def 'should apply write concern from connection string to settings'() {
         when:
-        def client = MongoClients.create(uri)
+        def client = MongoClients.create(uri) as MongoClientImpl
 
         then:
         client.settings.getWriteConcern() == writeConcern
@@ -183,7 +183,7 @@ class MongoClientsSpecification extends FunctionalSpecification {
     @Unroll
     def 'should apply application name from connection string to settings'() {
         when:
-        def client = MongoClients.create(uri)
+        def client = MongoClients.create(uri) as MongoClientImpl
 
         then:
         client.settings.getApplicationName() == applicationName
@@ -200,7 +200,7 @@ class MongoClientsSpecification extends FunctionalSpecification {
     @Unroll
     def 'should apply compressors from connection string to settings'() {
         when:
-        def client = MongoClients.create(uri)
+        def client = MongoClients.create(uri) as MongoClientImpl
 
         then:
         client.settings.getCompressorList() == compressorList

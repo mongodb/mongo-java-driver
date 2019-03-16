@@ -52,7 +52,6 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     private Boolean allowDiskUse;
     private long maxTimeMS;
     private long maxAwaitTimeMS;
-    private Boolean useCursor;
     private Boolean bypassDocumentValidation;
     private Collation collation;
     private String comment;
@@ -112,13 +111,6 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
-    @SuppressWarnings("deprecation")
-    public AggregateIterable<TResult> useCursor(@Nullable final Boolean useCursor) {
-        this.useCursor = useCursor;
-        return this;
-    }
-
-    @Override
     public AggregateIterable<TResult> maxAwaitTime(final long maxAwaitTime, final TimeUnit timeUnit) {
         notNull("timeUnit", timeUnit);
         this.maxAwaitTimeMS = TimeUnit.MILLISECONDS.convert(maxAwaitTime, timeUnit);
@@ -170,7 +162,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
             return new WriteOperationThenCursorReadOperation<TResult>(aggregateToCollectionOperation, findOperation);
         } else {
             return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, getBatchSize(), collation,
-                    hint, comment, allowDiskUse, useCursor, aggregationLevel);
+                    hint, comment, allowDiskUse, null, aggregationLevel);
         }
 
     }

@@ -67,20 +67,6 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
     AggregateIterable<TResult> maxAwaitTime(long maxAwaitTime, TimeUnit timeUnit);
 
     /**
-     * Sets whether the server should use a cursor to return results.
-     *
-     * @param useCursor whether the server should use a cursor to return results
-     * @return this
-     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
-     * @mongodb.server.release 2.6
-     * @deprecated There is no replacement for this.  Applications can assume that the driver will use a cursor for server versions
-     * that support it (&gt;= 2.6).  The driver will ignore this as of MongoDB 3.6, which does not support inline results for the aggregate
-     * command.
-     */
-    @Deprecated
-    AggregateIterable<TResult> useCursor(@Nullable Boolean useCursor);
-
-    /**
      * Aggregates documents according to the specified aggregation pipeline, which must end with a $out or $merge stage.
      *
      * @param callback the callback, which is called when the aggregation completes

@@ -73,8 +73,8 @@ class AsynchronousChannelHelperSmokeTestSpecification extends FunctionalSpecific
         def objectId = run(gridFSBucket.&uploadFromStream, 'myFile', channelToInputStream(inputChannel))
 
         then:
-        run(filesCollection.&count) == 1
-        run(chunksCollection.&count) == 1
+        run(filesCollection.&countDocuments) == 1
+        run(chunksCollection.&countDocuments) == 1
 
         when:
         def outputChannel = AsynchronousFileChannel.open(outputPath, StandardOpenOption.CREATE, StandardOpenOption.WRITE)
@@ -100,8 +100,8 @@ class AsynchronousChannelHelperSmokeTestSpecification extends FunctionalSpecific
         def objectId = run(gridFSBucket.&uploadFromStream, 'myFile', channelToInputStream(asyncByteChannel))
 
         then:
-        run(filesCollection.&count) == 1
-        run(chunksCollection.&count) == 1
+        run(filesCollection.&countDocuments) == 1
+        run(chunksCollection.&countDocuments) == 1
 
         when:
         run(gridFSBucket.&downloadToStream, objectId, channelToOutputStream(asyncByteChannel))

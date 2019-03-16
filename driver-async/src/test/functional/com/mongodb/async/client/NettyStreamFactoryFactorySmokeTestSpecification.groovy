@@ -47,7 +47,7 @@ class NettyStreamFactoryFactorySmokeTestSpecification extends FunctionalSpecific
         run(collection.&insertOne, document) == null
 
         then: 'The count is one'
-        run(collection.&count) == 1
+        run(collection.&countDocuments) == 1
 
         cleanup:
         mongoClient?.close()

@@ -121,6 +121,8 @@ public class CrudTest {
 
     @Test
     public void shouldPassAllOutcomes() {
+        assumeFalse(definition.getString("description").getValue().startsWith("Deprecated count"));
+
         BsonDocument expectedOutcome = definition.getDocument("outcome", null);
 
         // check if v1 test

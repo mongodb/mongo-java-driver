@@ -70,7 +70,6 @@ import static com.mongodb.bulk.WriteRequest.Type.DELETE;
 import static com.mongodb.bulk.WriteRequest.Type.INSERT;
 import static com.mongodb.bulk.WriteRequest.Type.REPLACE;
 import static com.mongodb.bulk.WriteRequest.Type.UPDATE;
-import static com.mongodb.client.model.ReplaceOptions.createReplaceOptions;
 import static com.mongodb.internal.client.model.CountOptionsHelper.fromEstimatedDocumentCountOptions;
 import static java.util.Collections.singletonList;
 import static org.bson.internal.CodecRegistryHelper.createRegistry;
@@ -164,44 +163,6 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     public MongoCollection<TDocument> withReadConcern(final ReadConcern readConcern) {
         return new MongoCollectionImpl<TDocument>(namespace, documentClass, codecRegistry, readPreference, writeConcern, retryWrites,
                 retryReads, readConcern, uuidRepresentation, executor);
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public void count(final SingleResultCallback<Long> callback) {
-        count(new BsonDocument(), callback);
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public void count(final Bson filter, final SingleResultCallback<Long> callback) {
-        count(filter, new CountOptions(), callback);
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public void count(final Bson filter, final CountOptions options, final SingleResultCallback<Long> callback) {
-        executeCount(null, filter, options, CountStrategy.COMMAND, callback);
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public void count(final ClientSession clientSession, final SingleResultCallback<Long> callback) {
-        count(clientSession, new BsonDocument(), callback);
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public void count(final ClientSession clientSession, final Bson filter, final SingleResultCallback<Long> callback) {
-        count(clientSession, filter, new CountOptions(), callback);
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public void count(final ClientSession clientSession, final Bson filter, final CountOptions options,
-                      final SingleResultCallback<Long> callback) {
-        notNull("clientSession", clientSession);
-        executeCount(clientSession, filter, options, CountStrategy.COMMAND, callback);
     }
 
     @Override
@@ -608,13 +569,6 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
-    public void replaceOne(final Bson filter, final TDocument replacement, final UpdateOptions options,
-                           final SingleResultCallback<UpdateResult> callback) {
-        replaceOne(filter, replacement, createReplaceOptions(options), callback);
-    }
-
-    @Override
     public void replaceOne(final Bson filter, final TDocument replacement, final ReplaceOptions options,
                            final SingleResultCallback<UpdateResult> callback) {
         executeReplaceOne(null, filter, replacement, options, callback);
@@ -624,13 +578,6 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     public void replaceOne(final ClientSession clientSession, final Bson filter, final TDocument replacement,
                            final SingleResultCallback<UpdateResult> callback) {
         replaceOne(clientSession, filter, replacement, new ReplaceOptions(), callback);
-    }
-
-    @Override
-    @SuppressWarnings("deprecation")
-    public void replaceOne(final ClientSession clientSession, final Bson filter, final TDocument replacement, final UpdateOptions options,
-                           final SingleResultCallback<UpdateResult> callback) {
-        replaceOne(clientSession, filter, replacement, createReplaceOptions(options), callback);
     }
 
     @Override

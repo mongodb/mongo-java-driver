@@ -67,8 +67,8 @@ class AsyncStreamHelperTestSpecification extends FunctionalSpecification {
         run(inputStream.&close)
 
         then:
-        run(filesCollection.&count) == 1
-        run(chunksCollection.&count) == 1
+        run(filesCollection.&countDocuments) == 1
+        run(chunksCollection.&countDocuments) == 1
 
         when:
 
@@ -96,8 +96,8 @@ class AsyncStreamHelperTestSpecification extends FunctionalSpecification {
         run(inputStream.&close)
 
         then:
-        run(filesCollection.&count) == 1
-        run(chunksCollection.&count) == 2
+        run(filesCollection.&countDocuments) == 1
+        run(chunksCollection.&countDocuments) == 2
 
         where:
         dataSource << [new byte[50], ByteBuffer.allocate(50), new ByteArrayInputStream(new byte[50])]

@@ -340,30 +340,6 @@ public class JsonPoweredCrudTestHelper {
         return results;
     }
 
-    @SuppressWarnings("deprecation")
-    BsonDocument getCountResult(final BsonDocument collectionOptions, final BsonDocument arguments,
-                                @Nullable final ClientSession clientSession) {
-        CountOptions options = new CountOptions();
-        if (arguments.containsKey("skip")) {
-            options.skip(arguments.getNumber("skip").intValue());
-        }
-        if (arguments.containsKey("limit")) {
-            options.limit(arguments.getNumber("limit").intValue());
-        }
-        if (arguments.containsKey("collation")) {
-            options.collation(getCollation(arguments.getDocument("collation")));
-        }
-
-        FutureResultCallback<Long> futureResultCallback = new FutureResultCallback<Long>();
-        BsonDocument filter = arguments.getDocument("filter", new BsonDocument());
-        if (clientSession == null) {
-            getCollection(collectionOptions).count(filter, options, futureResultCallback);
-        } else {
-            getCollection(collectionOptions).count(clientSession, filter, options, futureResultCallback);
-        }
-        return toResult(futureResult(futureResultCallback).intValue());
-    }
-
     BsonDocument getEstimatedDocumentCountResult(final BsonDocument collectionOptions, final BsonDocument arguments,
                                                  @Nullable final ClientSession clientSession) {
         if (!arguments.isEmpty()) {
@@ -506,11 +482,29 @@ public class JsonPoweredCrudTestHelper {
         if (arguments.containsKey("sort")) {
             iterable.sort(arguments.getDocument("sort"));
         }
-        if (arguments.containsKey("modifiers")) {
-            iterable.modifiers(arguments.getDocument("modifiers"));
-        }
         if (arguments.containsKey("collation")) {
             iterable.collation(getCollation(arguments.getDocument("collation")));
+        }
+        if (arguments.containsKey("comment")) {
+            iterable.comment(arguments.getString("comment").getValue());
+        }
+        if (arguments.containsKey("hint")) {
+            iterable.hint(arguments.getDocument("hint"));
+        }
+        if (arguments.containsKey("max")) {
+            iterable.max(arguments.getDocument("max"));
+        }
+        if (arguments.containsKey("min")) {
+            iterable.min(arguments.getDocument("min"));
+        }
+        if (arguments.containsKey("maxTimeMS")) {
+            iterable.maxTime(arguments.getNumber("maxTimeMS").intValue(), TimeUnit.MILLISECONDS);
+        }
+        if (arguments.containsKey("showRecordId")) {
+            iterable.showRecordId(arguments.getBoolean("showRecordId").getValue());
+        }
+        if (arguments.containsKey("returnKey")) {
+            iterable.returnKey(arguments.getBoolean("returnKey").getValue());
         }
         return iterable;
     }

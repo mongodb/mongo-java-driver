@@ -37,7 +37,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         def updatedDocument = new Document('_id', 1).append('a', 1)
 
         then: 'The count is zero'
-        run(collection.&count) == 0
+        run(collection.&countDocuments) == 0
 
         then: 'find first should return null if no documents'
         run(collection.find().&first) == null
@@ -46,7 +46,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         run(collection.&insertOne, document) == null
 
         then: 'The count is one'
-        run(collection.&count) == 1
+        run(collection.&countDocuments) == 1
 
         then: 'find that document'
         run(collection.find().&first) == document
@@ -64,7 +64,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         run(collection.&deleteOne, new Document()).getDeletedCount() == 1
 
         then: 'The count is zero'
-        run(collection.&count) == 0
+        run(collection.&countDocuments) == 0
 
         then: 'InsertMany documents'
         run(collection.&insertMany, [new Document('id', 'a'), new Document('id', 'b'), new Document('id', 'c')]) == null

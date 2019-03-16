@@ -91,8 +91,8 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         }
 
         then:
-        run(filesCollection.&count) == 1
-        run(chunksCollection.&count) == chunkCount
+        run(filesCollection.&countDocuments) == 1
+        run(chunksCollection.&countDocuments) == chunkCount
 
         when:
         def fileInfo = run(bucket.find().filter(eq('_id', fileId)).&first)
@@ -138,8 +138,8 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         fileId = runSlow(gridFSBucket.&uploadFromStream, 'myFile', toAsyncInputStream(contentBytes), options);
 
         then:
-        run(filesCollection.&count) == 1
-        run(chunksCollection.&count) == contentSize / chunkSize
+        run(filesCollection.&countDocuments) == 1
+        run(chunksCollection.&countDocuments) == contentSize / chunkSize
 
         when:
         def outStream = new ByteArrayOutputStream();
@@ -164,8 +164,8 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         fileId = runSlow(gridFSBucket.&uploadFromStream, 'myFile', toAsyncInputStream(contentBytes), options);
 
         then:
-        run(filesCollection.&count) == 1
-        run(chunksCollection.&count) == contentSize / chunkSize
+        run(filesCollection.&countDocuments) == 1
+        run(chunksCollection.&countDocuments) == contentSize / chunkSize
 
         when:
         def outStream = new ByteArrayOutputStream();
@@ -202,8 +202,8 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         run(gridFSBucket.&delete, fileId)
 
         then:
-        run(filesCollection.&count) == 0
-        run(chunksCollection.&count) == 0
+        run(filesCollection.&countDocuments) == 0
+        run(chunksCollection.&countDocuments) == 0
     }
 
     def 'should throw a chunk not found error when there are no chunks'() {
@@ -232,8 +232,8 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         def fileId = run(gridFSBucket.&uploadFromStream, 'myFile', toAsyncInputStream(contentBytes), options);
 
         then:
-        run(filesCollection.&count) == 1
-        run(chunksCollection.&count) == 3
+        run(filesCollection.&countDocuments) == 1
+        run(chunksCollection.&countDocuments) == 3
 
         when:
         def totalRead = 0
@@ -305,8 +305,8 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         fileId = run(gridFSBucket.&uploadFromStream, 'myFile', toAsyncInputStream(content.getBytes()));
 
         then:
-        run(filesCollection.&count) == 1
-        run(chunksCollection.&count) == 5
+        run(filesCollection.&countDocuments) == 1
+        run(chunksCollection.&countDocuments) == 5
 
         when:
         def fileInfo = run(gridFSBucket.find().filter(eq('_id', fileId)).&first)
@@ -349,8 +349,8 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         }
 
         then:
-        run(filesCollection.&count) == 1
-        run(chunksCollection.&count) == expectedNoChunks
+        run(filesCollection.&countDocuments) == 1
+        run(chunksCollection.&countDocuments) == expectedNoChunks
 
         when:
         def fileInfo = run(gridFSBucket.find().filter(eq('_id', fileId)).&first)
@@ -427,7 +427,7 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         def contentBytes = multiChunkString as byte[]
 
         then:
-        run(filesCollection.&count) == 0
+        run(filesCollection.&countDocuments) == 0
 
         when:
         def outputStream = gridFSBucket.openUploadStream('myFile')
@@ -435,8 +435,8 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         run(outputStream.&abort)
 
         then:
-        run(filesCollection.&count) == 0
-        run(chunksCollection.&count) == 0
+        run(filesCollection.&countDocuments) == 0
+        run(chunksCollection.&countDocuments) == 0
     }
 
     def 'should create the indexes as expected'() {
@@ -525,7 +525,7 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         }
 
         then:
-        run(filesCollection.&count) == 1
+        run(filesCollection.&countDocuments) == 1
 
         when:
         // Remove filename
