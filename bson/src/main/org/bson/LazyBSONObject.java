@@ -124,12 +124,6 @@ public class LazyBSONObject implements BSONObject {
     }
 
     @Override
-    @Deprecated
-    public boolean containsKey(final String key) {
-        return containsField(key);
-    }
-
-    @Override
     public boolean containsField(final String s) {
         BsonBinaryReader reader = getBsonReader();
         try {
