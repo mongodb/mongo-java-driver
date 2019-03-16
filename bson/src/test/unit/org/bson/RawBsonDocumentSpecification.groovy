@@ -319,7 +319,7 @@ class RawBsonDocumentSpecification extends Specification {
 
     def 'toJson should respect JsonWriterSettings'() {
         given:
-        def jsonWriterSettings = new JsonWriterSettings(JsonMode.SHELL)
+        def jsonWriterSettings = JsonWriterSettings.builder().outputMode(JsonMode.SHELL).build()
         def writer = new StringWriter()
 
         when:

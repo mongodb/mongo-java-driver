@@ -36,7 +36,7 @@ import static org.bson.assertions.Assertions.notNull;
  * @see JsonWriter
  * @since 3.0
  */
-public class JsonWriterSettings extends BsonWriterSettings {
+public final class JsonWriterSettings extends BsonWriterSettings {
 
     private static final JsonNullConverter JSON_NULL_CONVERTER = new JsonNullConverter();
     private static final JsonStringConverter JSON_STRING_CONVERTER = new JsonStringConverter();
@@ -112,79 +112,6 @@ public class JsonWriterSettings extends BsonWriterSettings {
      */
     public static Builder builder() {
         return new Builder();
-    }
-
-    /**
-     * Creates a new instance with default values for all properties.
-     * <p>
-     *     Defaults to {@link JsonMode#STRICT}
-     * </p>
-     *
-     * @deprecated Prefer {@link #builder()}, but note that the default output mode is different for that method
-     */
-    @Deprecated
-    public JsonWriterSettings() {
-        this(builder().outputMode(JsonMode.STRICT));
-    }
-
-    /**
-     * Creates a new instance with the given output mode and default values for all other properties.
-     *
-     * @param outputMode the output mode
-     * @deprecated Use the {@link Builder} instead
-     */
-    @Deprecated
-    public JsonWriterSettings(final JsonMode outputMode) {
-        this(builder().outputMode(outputMode));
-    }
-
-    /**
-     * Creates a new instance with indent mode enabled, and the default value for all other properties.
-     *
-     * @param indent whether indent mode is enabled
-     * @deprecated Use the {@link Builder} instead
-     */
-    @Deprecated
-    public JsonWriterSettings(final boolean indent) {
-        this(builder().indent(indent));
-    }
-
-    /**
-     * Creates a new instance with the given output mode, indent mode enabled, and the default value for all other properties.
-     *
-     * @param outputMode the output mode
-     * @param indent     whether indent mode is enabled
-     * @deprecated Use the {@link Builder} instead
-     */
-    @Deprecated
-    public JsonWriterSettings(final JsonMode outputMode, final boolean indent) {
-        this(builder().outputMode(outputMode).indent(indent));
-    }
-
-    /**
-     * Creates a new instance with the given values for all properties, indent mode enabled and the default value of {@code
-     * newLineCharacters}.
-     *
-     * @param outputMode       the output mode
-     * @param indentCharacters the indent characters
-     * @deprecated Use the {@link Builder} instead
-     */
-    @Deprecated
-    public JsonWriterSettings(final JsonMode outputMode, final String indentCharacters) {
-        this(builder().outputMode(outputMode).indent(true).indentCharacters(indentCharacters));
-    }
-
-    /**
-     * Creates a new instance with the given values for all properties and indent mode enabled.
-     *
-     * @param outputMode        the output mode
-     * @param indentCharacters  the indent characters
-     * @param newLineCharacters the new line character(s) to use
-     * @deprecated Use the {@link Builder} instead
-     */
-    @Deprecated
-    public JsonWriterSettings(final JsonMode outputMode, final String indentCharacters, final String newLineCharacters) {
-        this(builder().outputMode(outputMode).indent(true).indentCharacters(indentCharacters).newLineCharacters(newLineCharacters));
     }
 
     @SuppressWarnings("deprecation")

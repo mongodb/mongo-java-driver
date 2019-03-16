@@ -24,6 +24,7 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.RawBsonDocumentCodec;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.ByteBufferBsonInput;
+import org.bson.json.JsonMode;
 import org.bson.json.JsonReader;
 import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
@@ -319,7 +320,7 @@ public final class RawBsonDocument extends BsonDocument {
     @Override
     @SuppressWarnings("deprecation")
     public String toJson() {
-        return toJson(new JsonWriterSettings());
+        return toJson(JsonWriterSettings.builder().outputMode(JsonMode.STRICT).build());
     }
 
     @Override
