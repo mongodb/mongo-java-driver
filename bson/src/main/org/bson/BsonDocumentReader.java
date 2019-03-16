@@ -35,7 +35,6 @@ import java.util.Map;
  */
 public class BsonDocumentReader extends AbstractBsonReader {
     private BsonValue currentValue;
-    private Mark mark;
 
     /**
      * Construct a new instance.
@@ -235,28 +234,9 @@ public class BsonDocumentReader extends AbstractBsonReader {
         return getCurrentBsonType();
     }
 
-    @Deprecated
-    @Override
-    public void mark() {
-        if (mark != null) {
-            throw new BSONException("A mark already exists; it needs to be reset before creating a new one");
-        }
-        mark = new Mark();
-    }
-
     @Override
     public BsonReaderMark getMark() {
         return new Mark();
-    }
-
-    @Deprecated
-    @Override
-    public void reset() {
-        if (mark == null) {
-            throw new BSONException("trying to reset a mark before creating it");
-        }
-        mark.reset();
-        mark = null;
     }
 
     @Override
