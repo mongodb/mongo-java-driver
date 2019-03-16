@@ -219,12 +219,6 @@ public class BasicBSONCallback implements BSONCallback {
         _put(name, new BasicBSONObject("$ns", namespace).append("$id", id));
     }
 
-    @Deprecated
-    @Override
-    public void gotBinaryArray(final String name, final byte[] data) {
-        gotBinary(name, BSON.B_GENERAL, data);
-    }
-
     @Override
     public void gotBinary(final String name, final byte type, final byte[] data) {
         if (type == BSON.B_GENERAL || type == BSON.B_BINARY) {

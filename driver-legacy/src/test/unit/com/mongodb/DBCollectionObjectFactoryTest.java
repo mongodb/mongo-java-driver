@@ -136,11 +136,6 @@ public class DBCollectionObjectFactoryTest {
         }
 
         @Override
-        public boolean containsKey(final String key) {
-            throw new UnsupportedOperationException();
-        }
-
-        @Override
         public boolean containsField(final String s) {
             throw new UnsupportedOperationException();
         }

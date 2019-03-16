@@ -224,16 +224,6 @@ public interface BSONCallback {
     void gotDBRef(String name, String namespace, ObjectId id);
 
     /**
-     * This method is not used.
-     *
-     * @param name the name of the field
-     * @param data the field's value
-     * @deprecated this method is no longer called by the decoder
-     */
-    @Deprecated
-    void gotBinaryArray(String name, byte[] data);
-
-    /**
      * Called when reading a field with a {@link org.bson.BsonType#BINARY} value. Note that binary values have a subtype, which may
      * determine how the value is processed.
      *

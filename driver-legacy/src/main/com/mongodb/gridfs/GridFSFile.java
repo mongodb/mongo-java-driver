@@ -215,12 +215,6 @@ public abstract class GridFSFile implements DBObject {
     }
 
     @Override
-    @Deprecated
-    public boolean containsKey(final String key) {
-        return containsField(key);
-    }
-
-    @Override
     public boolean containsField(final String s) {
         return keySet().contains(s);
     }
