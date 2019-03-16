@@ -18,11 +18,11 @@ package org.bson.types;
 
 import org.junit.Test;
 
+import java.nio.ByteBuffer;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Random;
-import java.nio.ByteBuffer;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -33,8 +33,8 @@ import static org.junit.Assert.fail;
 public class ObjectIdTest {
     @Test
     public void testToBytes() {
-        ObjectId objectId = new ObjectId(0x5106FC9A, 0x00BC8237, (short) 0x5581, 0x0036D289);
         byte[] expectedBytes = new byte[]{81, 6, -4, -102, -68, -126, 55, 85, -127, 54, -46, -119};
+        ObjectId objectId = new ObjectId(expectedBytes);
 
         assertArrayEquals(expectedBytes, objectId.toByteArray());
 
@@ -71,15 +71,9 @@ public class ObjectIdTest {
 
         ObjectId objectId1 = new ObjectId(bytes);
         assertEquals(0x5106FC9A, objectId1.getTimestamp());
-        assertEquals(0x00BC8237, objectId1.getMachineIdentifier());
-        assertEquals((short) 0x5581, objectId1.getProcessIdentifier());
-        assertEquals(0x0036D289, objectId1.getCounter());
 
         ObjectId objectId2 = new ObjectId(ByteBuffer.wrap(bytes));
         assertEquals(0x5106FC9A, objectId2.getTimestamp());
-        assertEquals(0x00BC8237, objectId2.getMachineIdentifier());
-        assertEquals((short) 0x5581, objectId2.getProcessIdentifier());
-        assertEquals(0x0036D289, objectId2.getCounter());
     }
 
     @Test
@@ -100,22 +94,22 @@ public class ObjectIdTest {
 
     @Test
     public void testGetTimeZero() {
-        assertEquals(0L, new ObjectId(0, 0).getTime());
+        assertEquals(0L, new ObjectId(0, 0).getDate().getTime());
     }
 
     @Test
     public void testGetTimeMaxSignedInt() {
-        assertEquals(0x7FFFFFFFL * 1000, new ObjectId(0x7FFFFFFF, 0).getTime());
+        assertEquals(0x7FFFFFFFL * 1000, new ObjectId(0x7FFFFFFF, 0).getDate().getTime());
     }
 
     @Test
     public void testGetTimeMaxSignedIntPlusOne() {
-        assertEquals(0x80000000L * 1000, new ObjectId(0x80000000, 0).getTime());
+        assertEquals(0x80000000L * 1000, new ObjectId(0x80000000, 0).getDate().getTime());
     }
 
     @Test
     public void testGetTimeMaxInt() {
-        assertEquals(0xFFFFFFFFL * 1000, new ObjectId(0xFFFFFFFF, 0).getTime());
+        assertEquals(0xFFFFFFFFL * 1000, new ObjectId(0xFFFFFFFF, 0).getDate().getTime());
     }
 
     @Test
@@ -131,37 +125,6 @@ public class ObjectIdTest {
     }
 
     @Test
-    public void testMachineIdentifier() {
-        assertTrue(ObjectId.getGeneratedMachineIdentifier() > 0);
-        assertEquals(0, ObjectId.getGeneratedMachineIdentifier() & 0xff000000);
-
-        assertEquals(5, new ObjectId(0, 5, (short) 0, 0).getMachineIdentifier());
-        assertEquals(0x00ffffff, new ObjectId(0, 0x00ffffff, (short) 0, 0).getMachineIdentifier());
-        assertEquals(ObjectId.getGeneratedMachineIdentifier(), new ObjectId().getMachineIdentifier());
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldThrowIfMachineIdentifierIsTooLarge() {
-        new ObjectId(0, 0x00ffffff + 1, (short) 0, 0);
-    }
-
-    @Test
-    public void testProcessIdentifier() {
-        assertEquals(5, new ObjectId(0, 0, (short) 5, 0).getProcessIdentifier());
-        assertEquals(ObjectId.getGeneratedProcessIdentifier(), new ObjectId().getProcessIdentifier());
-    }
-
-    @Test
-    public void testCounter() {
-        assertEquals(new ObjectId().getCounter() + 1, new ObjectId().getCounter());
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void shouldThrowIfCounterIsTooLarge() {
-        new ObjectId(0, 0, (short) 0, 0x00ffffff + 1);
-    }
-
-    @Test
     public void testHexStringConstructor() {
         ObjectId id = new ObjectId();
         assertEquals(id, new ObjectId(id.toHexString()));
@@ -169,24 +132,23 @@ public class ObjectIdTest {
 
     @Test
     public void testCompareTo() {
-        assertEquals(-1, new ObjectId(0, 0, (short) 0, 0).compareTo(new ObjectId(1, 0, (short) 0, 0)));
-        assertEquals(-1, new ObjectId(0, 0, (short) 0, 0).compareTo(new ObjectId(0, 1, (short) 0, 0)));
-        assertEquals(-1, new ObjectId(0, 0, (short) 0, 0).compareTo(new ObjectId(0, 0, (short) 1, 0)));
-        assertEquals(-1, new ObjectId(0, 0, (short) 1, 0).compareTo(new ObjectId(0, 0, (short) -1, 0)));
-        assertEquals(-1, new ObjectId(0, 0, (short) 0, 0).compareTo(new ObjectId(0, 0, (short) 0, 1)));
-        assertEquals(0, new ObjectId(0, 0, (short) 0, 0).compareTo(new ObjectId(0, 0, (short) 0, 0)));
-        assertEquals(1, new ObjectId(1, 0, (short) 0, 0).compareTo(new ObjectId(0, 0, (short) 0, 0)));
-        assertEquals(1, new ObjectId(0, 1, (short) 0, 0).compareTo(new ObjectId(0, 0, (short) 0, 0)));
-        assertEquals(1, new ObjectId(0, 0, (short) 1, 0).compareTo(new ObjectId(0, 0, (short) 0, 0)));
-        assertEquals(1, new ObjectId(0, 0, (short) -1, 0).compareTo(new ObjectId(0, 0, (short) 1, 0)));
-        assertEquals(1, new ObjectId(0, 0, (short) 0, 1).compareTo(new ObjectId(0, 0, (short) 0, 0)));
+        Date dateOne = new Date();
+        Date dateTwo = new Date(dateOne.getTime() + 10000);
+        ObjectId first = new ObjectId(dateOne, 0);
+        ObjectId second = new ObjectId(dateOne, 1);
+        ObjectId third = new ObjectId(dateTwo, 0);
+        assertEquals(0, first.compareTo(first));
+        assertEquals(-1, first.compareTo(second));
+        assertEquals(-1, first.compareTo(third));
+        assertEquals(1, second.compareTo(first));
+        assertEquals(1, third.compareTo(first));
     }
 
     @Test
     public void testToHexString() {
-        assertEquals("000000000000000000000000", new ObjectId(0, 0, (short) 0, 0).toHexString());
+        assertEquals("000000000000000000000000", new ObjectId(new byte[12]).toHexString());
         assertEquals("7fffffff007fff7fff007fff",
-                new ObjectId(Integer.MAX_VALUE, Short.MAX_VALUE, Short.MAX_VALUE, Short.MAX_VALUE).toHexString());
+                new ObjectId(new byte[]{127, -1, -1, -1, 0, 127, -1, 127, -1, 0, 127, -1}).toHexString());
     }
 
     private Date getDate(final String s) throws ParseException {
@@ -211,24 +173,5 @@ public class ObjectIdTest {
     @Test
     public void testTimeMaxInt() throws ParseException {
         assertEquals(getDate("07-Feb-2106 06:28:15 -0000"), new ObjectId(0xFFFFFFFF, 0).getDate());
-    }
-
-    @SuppressWarnings("deprecation")
-    @Test
-    public void testDeprecatedMethods() {
-
-        ObjectId id = new ObjectId();
-        assertEquals(id.getTimestamp(), id.getTimeSecond());
-        assertEquals(id.getDate().getTime(), id.getTime());
-        assertEquals(id.toHexString(), id.toStringMongod());
-        assertArrayEquals(new byte[]{0x12, 0x34, 0x56, 0x78, 0x43, 0x21, 0xffffff87, 0x65, 0x74, 0xffffff92, 0xffffff87, 0x56},
-                new ObjectId(0x12345678, 0x43218765, 0x74928756).toByteArray());
-    }
-
-    // Got these values from 2.12.0 driver.  This test is ensuring that we properly round-trip old and new format ObjectIds.
-    @Test
-    public void testCreateFromLegacy() {
-        assertArrayEquals(new byte[]{82, 23, -82, -78, -80, -58, -95, -92, -75, -38, 118, -16},
-                ObjectId.createFromLegacyFormat(1377283762, -1329159772, -1243973904).toByteArray());
     }
 }
