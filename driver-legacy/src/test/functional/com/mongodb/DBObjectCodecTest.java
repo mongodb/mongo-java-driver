@@ -23,7 +23,6 @@ import org.bson.BsonInt32;
 import org.bson.BsonNull;
 import org.bson.BsonObjectId;
 import org.bson.LazyBSONCallback;
-import org.bson.Transformer;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.ValueCodecProvider;
@@ -43,38 +42,6 @@ import static org.junit.Assert.assertTrue;
 
 @SuppressWarnings("deprecation")
 public class DBObjectCodecTest extends DatabaseTestCase {
-
-    @Test
-    public void testTransformers() {
-        try {
-            collection.save(new BasicDBObject("_id", 1).append("x", 1.1));
-            assertEquals(Double.class, collection.findOne().get("x").getClass());
-
-            org.bson.BSON.addEncodingHook(Double.class, new Transformer() {
-                public Object transform(final Object o) {
-                    return o.toString();
-                }
-            });
-
-            collection.save(new BasicDBObject("_id", 1).append("x", 1.1));
-            assertEquals(String.class, collection.findOne().get("x").getClass());
-
-            org.bson.BSON.clearAllHooks();
-            collection.save(new BasicDBObject("_id", 1).append("x", 1.1));
-            assertEquals(Double.class, collection.findOne().get("x").getClass());
-
-            org.bson.BSON.addDecodingHook(Double.class, new Transformer() {
-                public Object transform(final Object o) {
-                    return o.toString();
-                }
-            });
-            assertEquals(String.class, collection.findOne().get("x").getClass());
-            org.bson.BSON.clearAllHooks();
-            assertEquals(Double.class, collection.findOne().get("x").getClass());
-        } finally {
-            org.bson.BSON.clearAllHooks();
-        }
-    }
 
     @Test
     public void testDBListEncoding() {

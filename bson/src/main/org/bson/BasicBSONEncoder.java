@@ -132,9 +132,9 @@ public class BasicBSONEncoder implements BSONEncoder {
      * Encodes any Object type
      *
      * @param name         the field name
-     * @param initialValue the value to write
+     * @param value the value to write
      */
-    protected void _putObjectField(final String name, final Object initialValue) {
+    protected void _putObjectField(final String name, final Object value) {
         if ("_transientFields".equals(name)) {
             return;
         }
@@ -142,11 +142,9 @@ public class BasicBSONEncoder implements BSONEncoder {
             throw new IllegalArgumentException("Document field names can't have a NULL character. (Bad Key: '" + name + "')");
         }
 
-        if ("$where".equals(name) && initialValue instanceof String) {
-            putCode(name, new Code((String) initialValue));
+        if ("$where".equals(name) && value instanceof String) {
+            putCode(name, new Code((String) value));
         }
-
-        Object value = BSON.applyEncodingHooks(initialValue);
 
         if (value == null) {
             putNull(name);
