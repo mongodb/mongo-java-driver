@@ -118,7 +118,7 @@ public class BasicBSONCallback implements BSONCallback {
             throw new IllegalStateException("Illegal object end in current context.");
         }
 
-        return !BSON.hasDecodeHooks() ? o : (BSONObject) BSON.applyDecodingHooks(o);
+        return o;
     }
 
     @Override
@@ -256,7 +256,7 @@ public class BasicBSONCallback implements BSONCallback {
      * @param value the value
      */
     protected void _put(final String name, final Object value) {
-        cur().put(name, !BSON.hasDecodeHooks() ? value : BSON.applyDecodingHooks(value));
+        cur().put(name, value);
     }
 
     /**

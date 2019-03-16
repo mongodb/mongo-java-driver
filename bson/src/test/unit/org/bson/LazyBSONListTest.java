@@ -31,7 +31,7 @@ import static org.junit.Assert.assertTrue;
 public class LazyBSONListTest {
     private LazyBSONList encodeAndExtractList(final List<?> list) {
         BSONObject document = new BasicBSONObject("l", list);
-        return (LazyBSONList) new LazyBSONObject(BSON.encode(document), new LazyBSONCallback()).get("l");
+        return (LazyBSONList) new LazyBSONObject(new BasicBSONEncoder().encode(document), new LazyBSONCallback()).get("l");
     }
 
 
