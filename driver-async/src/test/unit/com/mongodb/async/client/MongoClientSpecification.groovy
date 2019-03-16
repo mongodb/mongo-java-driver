@@ -16,6 +16,7 @@
 
 package com.mongodb.async.client
 
+import com.mongodb.MongoClientSettings
 import com.mongodb.ReadConcern
 import com.mongodb.WriteConcern
 import com.mongodb.client.model.geojson.MultiPolygon
@@ -73,17 +74,6 @@ class MongoClientSpecification extends Specification {
 
         where:
         session << [null, Stub(ClientSession)]
-    }
-
-    def 'should provide the same settings'() {
-        given:
-        def settings = MongoClientSettings.builder().build()
-
-        when:
-        def clientSettings = new MongoClientImpl(settings, Stub(Cluster), new TestOperationExecutor([])).getSettings()
-
-        then:
-        settings == clientSettings
     }
 
     def 'should pass the correct settings to getDatabase'() {

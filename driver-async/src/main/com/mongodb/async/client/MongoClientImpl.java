@@ -20,6 +20,7 @@ import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.Function;
 import com.mongodb.MongoClientException;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.client.internal.Crypt;
@@ -128,11 +129,6 @@ class MongoClientImpl implements MongoClient {
     }
 
     @Override
-    public MongoClientSettings getSettings() {
-        return settings;
-    }
-
-    @Override
     public MongoIterable<String> listDatabaseNames() {
         return createListDatabaseNamesIterable(null);
     }
@@ -227,6 +223,10 @@ class MongoClientImpl implements MongoClient {
     private <T> ListDatabasesIterable<T> createListDatabasesIterable(@Nullable final ClientSession clientSession, final Class<T> clazz) {
         return new ListDatabasesIterableImpl<T>(clientSession, clazz, codecRegistry,
                 ReadPreference.primary(), executor, settings.getRetryReads());
+    }
+
+    MongoClientSettings getSettings() {
+        return settings;
     }
 
     Cluster getCluster() {

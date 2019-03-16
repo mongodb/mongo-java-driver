@@ -56,7 +56,7 @@ public final class Observables {
      * This is required to make sure that the operation only occurs once the {@link Subscription} signals for data.</p>
      * <p>
      * A typical example would be when wrapping callback based methods to make them observable. <br>
-     * For example, converting {@link MongoCollection#count(SingleResultCallback)} into an {@link Observable}:
+     * For example, converting {@link MongoCollection#countDocuments(SingleResultCallback)} into an {@link Observable}:
      * <pre>
      * {@code
      *    Observable<Long> countObservable = observe(new Block<SingleResultCallback<Long>>() {

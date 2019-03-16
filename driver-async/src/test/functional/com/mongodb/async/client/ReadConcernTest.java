@@ -63,7 +63,7 @@ public class ReadConcernTest {
     public void shouldIncludeReadConcernInCommand() throws InterruptedException {
         final CountDownLatch latch = new CountDownLatch(1);
         mongoClient.getDatabase(getDefaultDatabaseName()).getCollection("test")
-                .withReadConcern(ReadConcern.LOCAL).count(new SingleResultCallback<Long>() {
+                .withReadConcern(ReadConcern.LOCAL).estimatedDocumentCount(new SingleResultCallback<Long>() {
             @Override
             public void onResult(final Long result, final Throwable t) {
                 latch.countDown();
