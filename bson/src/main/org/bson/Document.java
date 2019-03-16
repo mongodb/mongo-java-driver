@@ -23,6 +23,7 @@ import org.bson.codecs.Encoder;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
+import org.bson.json.JsonMode;
 import org.bson.json.JsonReader;
 import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
@@ -396,7 +397,7 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      */
     @SuppressWarnings("deprecation")
     public String toJson() {
-        return toJson(new JsonWriterSettings());
+        return toJson(JsonWriterSettings.builder().outputMode(JsonMode.STRICT).build());
     }
 
     /**
@@ -423,7 +424,7 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      */
     @SuppressWarnings("deprecation")
     public String toJson(final Encoder<Document> encoder) {
-        return toJson(new JsonWriterSettings(), encoder);
+        return toJson(JsonWriterSettings.builder().outputMode(JsonMode.STRICT).build(), encoder);
     }
 
     /**

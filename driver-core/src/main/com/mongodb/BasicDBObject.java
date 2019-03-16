@@ -29,6 +29,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 import org.bson.io.BasicOutputBuffer;
 import org.bson.io.OutputBuffer;
+import org.bson.json.JsonMode;
 import org.bson.json.JsonReader;
 import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
@@ -151,7 +152,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
      */
     @SuppressWarnings("deprecation")
     public String toJson() {
-        return toJson(new JsonWriterSettings());
+        return toJson(JsonWriterSettings.builder().outputMode(JsonMode.STRICT).build());
     }
 
     /**
@@ -178,7 +179,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
      */
     @SuppressWarnings("deprecation")
     public String toJson(final Encoder<BasicDBObject> encoder) {
-        return toJson(new JsonWriterSettings(), encoder);
+        return toJson(JsonWriterSettings.builder().outputMode(JsonMode.STRICT).build(), encoder);
     }
 
     /**
@@ -233,7 +234,6 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
      *
      * @return JSON serialization
      */
-    @SuppressWarnings("deprecation")
     public String toString() {
         return toJson();
     }

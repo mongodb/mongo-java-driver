@@ -26,6 +26,7 @@ import org.bson.RawBsonDocument;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.DecoderContext;
 import org.bson.io.ByteBufferBsonInput;
+import org.bson.json.JsonMode;
 import org.bson.json.JsonWriter;
 import org.bson.json.JsonWriterSettings;
 
@@ -96,7 +97,7 @@ class ByteBufBsonDocument extends AbstractByteBufBsonDocument {
     @Override
     @SuppressWarnings("deprecation")
     public String toJson() {
-        return toJson(new JsonWriterSettings());
+        return toJson(JsonWriterSettings.builder().outputMode(JsonMode.STRICT).build());
     }
 
     @Override

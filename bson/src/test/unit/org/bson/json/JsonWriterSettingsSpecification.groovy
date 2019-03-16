@@ -22,14 +22,7 @@ class JsonWriterSettingsSpecification extends Specification {
 
     def 'test defaults'() {
         when:
-        def settings = new JsonWriterSettings();
-
-        then:
-        !settings.isIndent()
-        settings.getOutputMode() == JsonMode.STRICT
-
-        when:
-        settings = JsonWriterSettings.builder().build();
+        def settings = JsonWriterSettings.builder().build();
 
         then:
         !settings.isIndent()
@@ -73,52 +66,6 @@ class JsonWriterSettingsSpecification extends Specification {
 
         then:
         settings.getMaxLength() == 100
-    }
-
-    def 'test constructors'() {
-        when:
-        def settings = new JsonWriterSettings()
-
-        then:
-        !settings.isIndent()
-        settings.getOutputMode() == JsonMode.STRICT
-        settings.getMaxLength() == 0
-
-        when:
-        settings = new JsonWriterSettings(JsonMode.SHELL)
-
-        then:
-        settings.getOutputMode() == JsonMode.SHELL
-
-        when:
-        settings = new JsonWriterSettings(true)
-
-        then:
-        settings.isIndent()
-
-        when:
-        settings = new JsonWriterSettings(JsonMode.SHELL, true)
-
-        then:
-        settings.getOutputMode() == JsonMode.SHELL
-        settings.isIndent()
-
-        when:
-        settings = new JsonWriterSettings(JsonMode.SHELL, '\t')
-
-        then:
-        settings.getOutputMode() == JsonMode.SHELL
-        settings.isIndent()
-        settings.getIndentCharacters() == '\t'
-
-        when:
-        settings = new JsonWriterSettings(JsonMode.SHELL, '\t', '\r')
-
-        then:
-        settings.getOutputMode() == JsonMode.SHELL
-        settings.isIndent()
-        settings.getIndentCharacters() == '\t'
-        settings.getNewLineCharacters() == '\r'
     }
 
     def 'should use legacy extended json converters for strict mode'() {

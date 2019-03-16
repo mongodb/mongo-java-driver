@@ -43,7 +43,7 @@ public class JsonWriter extends AbstractBsonWriter {
      */
     @SuppressWarnings("deprecation")
     public JsonWriter(final Writer writer) {
-        this(writer, new JsonWriterSettings());
+        this(writer, JsonWriterSettings.builder().build());
     }
 
     /**
@@ -242,11 +242,11 @@ public class JsonWriter extends AbstractBsonWriter {
     }
 
     /**
-     * Return true if the output has been truncated due to exceeding the length specified in {@link JsonWriterSettings#maxLength}.
+     * Return true if the output has been truncated due to exceeding the length specified in {@link JsonWriterSettings#getMaxLength()}.
      *
      * @return true if the output has been truncated
      * @since 3.7
-     * @see JsonWriterSettings#maxLength
+     * @see JsonWriterSettings#getMaxLength()
      */
     public boolean isTruncated() {
         return strictJsonWriter.isTruncated();
@@ -262,18 +262,6 @@ public class JsonWriter extends AbstractBsonWriter {
      * settings for the indentation level and whether there are any child elements at this level.
      */
     public class Context extends AbstractBsonWriter.Context {
-
-        /**
-         * Creates a new context.
-         *
-         * @param parentContext the parent context that can be used for going back up to the parent level
-         * @param contextType   the type of this context
-         * @param indentChars   the String to use for indentation at this level.
-         */
-        @Deprecated
-        public Context(final Context parentContext, final BsonContextType contextType, final String indentChars) {
-            this(parentContext, contextType);
-        }
 
         /**
          * Creates a new context.
