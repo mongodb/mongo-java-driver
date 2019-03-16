@@ -240,35 +240,6 @@ class ByteBufferBsonInputSpecification extends Specification {
         stream.position == 5
     }
 
-    def 'reset should throw when there is no mark'() {
-        given:
-        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([0x4a, 0x61, 0x76, 0x61, 0] as byte[])))
-
-        when:
-        stream.reset()
-
-        then:
-        thrown(IllegalStateException)
-    }
-
-    def 'should reset to the mark'() {
-        given:
-        def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([0x4a, 0x61, 0x76, 0x61, 0] as byte[])))
-
-        when:
-        stream.with {
-            readByte()
-            readByte()
-            mark(1024)
-            readByte()
-            readByte()
-            readByte()
-            reset()
-        }
-        then:
-        stream.position == 2
-    }
-
     def 'should reset to the BsonInputMark'() {
         given:
         def stream = new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap([0x4a, 0x61, 0x76, 0x61, 0] as byte[])))

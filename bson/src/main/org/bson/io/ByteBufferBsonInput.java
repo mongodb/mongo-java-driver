@@ -42,7 +42,6 @@ public class ByteBufferBsonInput implements BsonInput {
     }
 
     private ByteBuf buffer;
-    private int mark = -1;
 
     /**
      * Construct an instance with the given byte buffer.  The stream takes over ownership of the buffer and closes it when this instance is
@@ -181,13 +180,6 @@ public class ByteBufferBsonInput implements BsonInput {
         buffer.position(buffer.position() + numBytes);
     }
 
-    @Deprecated
-    @Override
-    public void mark(final int readLimit) {
-        ensureOpen();
-        mark = buffer.position();
-    }
-
     @Override
     public BsonInputMark getMark(final int readLimit) {
         return new BsonInputMark() {
@@ -198,16 +190,6 @@ public class ByteBufferBsonInput implements BsonInput {
                 buffer.position(mark);
             }
         };
-    }
-
-    @Deprecated
-    @Override
-    public void reset() {
-        ensureOpen();
-        if (mark == -1) {
-            throw new IllegalStateException("Mark not set");
-        }
-        buffer.position(mark);
     }
 
     @Override
