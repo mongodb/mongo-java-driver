@@ -44,7 +44,6 @@ import com.mongodb.operation.FindAndDeleteOperation
 import com.mongodb.operation.FindAndReplaceOperation
 import com.mongodb.operation.FindAndUpdateOperation
 import com.mongodb.operation.FindOperation
-import com.mongodb.operation.GroupOperation
 import com.mongodb.operation.InsertOperation
 import com.mongodb.operation.MapReduceBatchCursor
 import com.mongodb.operation.MapReduceStatistics
