@@ -67,7 +67,6 @@ class GridFSBucketSpecification extends Specification {
     def databaseWithExecutor(OperationExecutor executor) {
         new MongoDatabaseImpl('test', registry, primary(), WriteConcern.ACKNOWLEDGED, true, true, readConcern, uuidRepresentation, executor)
     }
-    def disableMD5 = false
 
     def 'should return the correct bucket name'() {
         when:
@@ -190,7 +189,7 @@ class GridFSBucketSpecification extends Specification {
         then:
         expect stream, isTheSameAs(new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, stream.getId(),
                 'filename', 255, null, new GridFSIndexCheckImpl(clientSession, filesCollection, chunksCollection)),
-                ['md5', 'closeAndWritingLock'])
+                ['closeAndWritingLock'])
 
         where:
         clientSession << [null, Stub(ClientSession)]
@@ -457,7 +456,7 @@ class GridFSBucketSpecification extends Specification {
         given:
         def fileId = new ObjectId()
         def bsonFileId = new BsonObjectId(fileId)
-        def fileInfo = new GridFSFile(bsonFileId, 'filename', 10, 255, new Date(), '1234', new Document())
+        def fileInfo = new GridFSFile(bsonFileId, 'filename', 10, 255, new Date(), new Document())
         def batchCursor = Mock(AsyncBatchCursor)
         def filesFindIterable = Mock(FindIterable)
         def chunksFindIterable = Mock(FindIterable)
@@ -512,7 +511,7 @@ class GridFSBucketSpecification extends Specification {
     def 'should download to stream using #description'() {
         given:
         def bsonFileId = fileId instanceof ObjectId ? new BsonObjectId(fileId) : fileId
-        def fileInfo = new GridFSFile(bsonFileId, 'filename', 10L, 255, new Date(), '1234', new Document())
+        def fileInfo = new GridFSFile(bsonFileId, 'filename', 10L, 255, new Date(), new Document())
         def batchCursor = Mock(AsyncBatchCursor)
         def filesFindIterable = Mock(FindIterable)
         def chunksFindIterable = Mock(FindIterable)
@@ -571,7 +570,7 @@ class GridFSBucketSpecification extends Specification {
         given:
         def filename = 'filename'
         def fileId = new ObjectId()
-        def fileInfo = new GridFSFile(new BsonObjectId(fileId), filename, 10L, 255, new Date(), '1234', new Document())
+        def fileInfo = new GridFSFile(new BsonObjectId(fileId), filename, 10L, 255, new Date(), new Document())
         def batchCursor = Mock(AsyncBatchCursor)
         def filesFindIterable = Mock(FindIterable)
         def chunksFindIterable = Mock(FindIterable)
@@ -665,7 +664,7 @@ class GridFSBucketSpecification extends Specification {
         def filename = 'filename'
         def fileId = new ObjectId()
         def bsonFileId = new BsonObjectId(fileId)
-        def fileInfo = new GridFSFile(bsonFileId, filename, 10, 255, new Date(), '1234', new Document())
+        def fileInfo = new GridFSFile(bsonFileId, filename, 10, 255, new Date(), new Document())
         def findIterable = Mock(FindIterable)
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Stub(MongoCollection)

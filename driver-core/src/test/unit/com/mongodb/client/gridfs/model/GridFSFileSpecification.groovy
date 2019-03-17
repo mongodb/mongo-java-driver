@@ -33,14 +33,10 @@ class GridFSFileSpecification extends Specification {
         def length = 100L
         def chunkSize = 255
         def uploadDate = new Date()
-        def md5 = '000000'
         def metadata = new Document('id', id)
-        def contentType = 'text/txt'
-        def aliases = ['fileb']
-        def extraElements = new Document('contentType', contentType).append('aliases', aliases)
 
         when:
-        def gridFSFile = new GridFSFile(id, filename, length, chunkSize, uploadDate, md5, metadata, extraElements)
+        def gridFSFile = new GridFSFile(id, filename, length, chunkSize, uploadDate, metadata)
 
         then:
         gridFSFile.getId() == id
@@ -48,42 +44,15 @@ class GridFSFileSpecification extends Specification {
         gridFSFile.getLength() == length
         gridFSFile.getChunkSize() == chunkSize
         gridFSFile.getUploadDate() == uploadDate
-        gridFSFile.getMD5() == md5
         gridFSFile.getMetadata() == metadata
-        gridFSFile.getExtraElements() == extraElements
-        gridFSFile.getContentType() == contentType
-        gridFSFile.getAliases() == aliases
     }
 
     def 'should throw an exception when using getObjectId with custom id types'() {
         given:
-        def gridFSFile = new GridFSFile(new BsonString('id'), 'test', 10L, 225, new Date(), '', null)
+        def gridFSFile = new GridFSFile(new BsonString('id'), 'test', 10L, 225, new Date(), null)
 
         when:
         gridFSFile.getObjectId()
-
-        then:
-        thrown(MongoGridFSException)
-    }
-
-    def 'should throw an exception if there is no contentType'() {
-        given:
-        def gridFSFile = new GridFSFile(new BsonString('id'), 'test', 10L, 225, new Date(), '', null, null)
-
-        when:
-        gridFSFile.getContentType()
-
-        then:
-        thrown(MongoGridFSException)
-    }
-
-
-    def 'should throw an exception if there are no aliases'() {
-        given:
-        def gridFSFile = new GridFSFile(new BsonString('id'), 'test', 10L, 225, new Date(), '', null, null)
-
-        when:
-        gridFSFile.getAliases()
 
         then:
         thrown(MongoGridFSException)

@@ -53,9 +53,7 @@ class GridFSFileCodecSpecification extends Specification {
     static final LENGTH = 100L
     static final CHUNKSIZE = 255
     static final UPLOADDATE = new Date()
-    static final MD5 = '000000'
     static final METADATA = new Document('field', 'value')
-    static final EXTRAELEMENTS = new Document('contentType', 'text/txt').append('aliases', ['fileb'])
 
     def 'should encode and decode all default types with all readers and writers'() {
         expect:
@@ -63,32 +61,15 @@ class GridFSFileCodecSpecification extends Specification {
 
         where:
         original << [
-            new GridFSFile(ID, FILENAME, LENGTH, CHUNKSIZE, UPLOADDATE, null, null, null),
-            new GridFSFile(ID, FILENAME, LENGTH, CHUNKSIZE, UPLOADDATE, MD5, null, null),
-            new GridFSFile(ID, FILENAME, LENGTH, CHUNKSIZE, UPLOADDATE, MD5, METADATA, null),
-            new GridFSFile(ID, FILENAME, LENGTH, CHUNKSIZE, UPLOADDATE, MD5, null, EXTRAELEMENTS),
-            new GridFSFile(ID, FILENAME, LENGTH, CHUNKSIZE, UPLOADDATE, null, METADATA, EXTRAELEMENTS),
-            new GridFSFile(ID, FILENAME, LENGTH, CHUNKSIZE, UPLOADDATE, MD5, METADATA, EXTRAELEMENTS)
+                new GridFSFile(ID, FILENAME, LENGTH, CHUNKSIZE, UPLOADDATE, null),
+                new GridFSFile(ID, FILENAME, LENGTH, CHUNKSIZE, UPLOADDATE, METADATA),
         ]
-    }
-
-    def 'it should decode extra elements'() {
-        given:
-        def expected = new GridFSFile(ID, FILENAME, LENGTH, CHUNKSIZE, UPLOADDATE, MD5, METADATA, EXTRAELEMENTS)
-
-        when:
-        def gridFSFileFromDocument = toGridFSFile(['_id': ID, 'filename': FILENAME, 'length': LENGTH, 'chunkSize': CHUNKSIZE,
-                                              'uploadDate': UPLOADDATE, 'md5': MD5, 'metadata': METADATA,
-                                              'contentType': 'text/txt', 'aliases': ['fileb']] as Document)
-
-        then:
-        gridFSFileFromDocument == expected
     }
 
     def 'it should use the users codec for metadata / extra elements'() {
         when:
         def gridFSFileFromDocument = toGridFSFile(['_id': ID, 'filename': FILENAME, 'length': LENGTH, 'chunkSize': CHUNKSIZE,
-                                                   'uploadDate': UPLOADDATE, 'md5': MD5, 'metadata': METADATA] as Document,
+                                                   'uploadDate': UPLOADDATE, 'metadata': METADATA] as Document,
                 BSONTYPESREGISTRY)
         then:
         gridFSFileFromDocument.metadata.get('field') == new BsonString('value')

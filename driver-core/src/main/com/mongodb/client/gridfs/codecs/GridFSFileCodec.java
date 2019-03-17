@@ -35,10 +35,8 @@ import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.Date;
-import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static java.util.Arrays.asList;
 
 
 /**
@@ -47,7 +45,6 @@ import static java.util.Arrays.asList;
  * @since 3.3
  */
 public final class GridFSFileCodec implements Codec<GridFSFile> {
-    private static final List<String> VALID_FIELDS = asList("_id", "filename", "length", "chunkSize", "uploadDate", "md5", "metadata");
     private final Codec<Document> documentCodec;
     private final Codec<BsonDocument> bsonDocumentCodec;
 
@@ -70,17 +67,11 @@ public final class GridFSFileCodec implements Codec<GridFSFile> {
         long length = bsonDocument.getNumber("length").longValue();
         int chunkSize = bsonDocument.getNumber("chunkSize").intValue();
         Date uploadDate = new Date(bsonDocument.getDateTime("uploadDate").getValue());
-        String md5 = bsonDocument.containsKey("md5") ? bsonDocument.getString("md5").getValue() : null;
         BsonDocument metadataBsonDocument = bsonDocument.getDocument("metadata", new BsonDocument());
 
         Document optionalMetadata = asDocumentOrNull(metadataBsonDocument);
 
-        for (String key : VALID_FIELDS) {
-            bsonDocument.remove(key);
-        }
-        Document deprecatedExtraElements = asDocumentOrNull(bsonDocument);
-
-        return new GridFSFile(id, filename, length, chunkSize, uploadDate, md5, optionalMetadata, deprecatedExtraElements);
+        return new GridFSFile(id, filename, length, chunkSize, uploadDate, optionalMetadata);
     }
 
     @Override
@@ -92,20 +83,11 @@ public final class GridFSFileCodec implements Codec<GridFSFile> {
         bsonDocument.put("length", new BsonInt64(value.getLength()));
         bsonDocument.put("chunkSize", new BsonInt32(value.getChunkSize()));
         bsonDocument.put("uploadDate", new BsonDateTime(value.getUploadDate().getTime()));
-        if (value.getMD5() != null) {
-            bsonDocument.put("md5", new BsonString(value.getMD5()));
-        }
 
         Document metadata = value.getMetadata();
         if (metadata != null) {
             bsonDocument.put("metadata", new BsonDocumentWrapper<Document>(metadata, documentCodec));
         }
-
-        Document extraElements = value.getExtraElements();
-        if (extraElements != null) {
-            bsonDocument.putAll(new BsonDocumentWrapper<Document>(extraElements, documentCodec));
-        }
-
         bsonDocumentCodec.encode(writer, bsonDocument, encoderContext);
     }
 

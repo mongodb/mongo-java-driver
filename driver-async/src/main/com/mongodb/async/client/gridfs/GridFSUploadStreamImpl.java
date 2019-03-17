@@ -172,7 +172,7 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
                     errHandlingCallback.onResult(null, t);
                 } else {
                     GridFSFile gridFSFile = new GridFSFile(fileId, filename, lengthInBytes, chunkSizeBytes, new Date(),
-                            null, metadata);
+                            metadata);
 
                     SingleResultCallback<Void> insertCallback = new SingleResultCallback<Void>() {
                         @Override
