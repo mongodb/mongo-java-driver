@@ -25,7 +25,6 @@ import com.mongodb.bulk.IndexRequest;
 import com.mongodb.bulk.InsertRequest;
 import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.bulk.WriteRequest;
-import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CountOptions;
@@ -50,6 +49,7 @@ import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
+import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.CountStrategy;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.operation.AggregateOperation;
@@ -192,15 +192,13 @@ final class Operations<TDocument> {
     <TResult> AggregateOperation<TResult> aggregate(final List<? extends Bson> pipeline, final Class<TResult> resultClass,
                                                     final long maxTimeMS, final long maxAwaitTimeMS, final Integer batchSize,
                                                     final Collation collation, final Bson hint, final String comment,
-                                                    final Boolean allowDiskUse, final Boolean useCursor,
-                                                    final AggregationLevel aggregationLevel) {
+                                                    final Boolean allowDiskUse, final AggregationLevel aggregationLevel) {
         return new AggregateOperation<TResult>(namespace, toBsonDocumentList(pipeline), codecRegistry.get(resultClass), aggregationLevel)
                 .retryReads(retryReads)
                 .maxTime(maxTimeMS, MILLISECONDS)
                 .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
                 .allowDiskUse(allowDiskUse)
                 .batchSize(batchSize)
-                .useCursor(useCursor)
                 .collation(collation)
                 .hint(hint == null ? null : hint.toBsonDocument(documentClass, codecRegistry))
                 .comment(comment);

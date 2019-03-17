@@ -21,7 +21,6 @@ import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.WriteConcern
 import com.mongodb.client.ClientSession
-import com.mongodb.internal.client.model.AggregationLevel
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.CreateViewOptions
@@ -29,6 +28,7 @@ import com.mongodb.client.model.IndexOptionDefaults
 import com.mongodb.client.model.ValidationAction
 import com.mongodb.client.model.ValidationLevel
 import com.mongodb.client.model.ValidationOptions
+import com.mongodb.internal.client.model.AggregationLevel
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
 import com.mongodb.operation.CommandReadOperation
 import com.mongodb.operation.CreateCollectionOperation

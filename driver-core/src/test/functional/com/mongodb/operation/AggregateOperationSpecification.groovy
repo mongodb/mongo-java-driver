@@ -89,7 +89,6 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         operation.getMaxAwaitTime(MILLISECONDS) == 0
         operation.getMaxTime(MILLISECONDS) == 0
         operation.getPipeline() == []
-        operation.getUseCursor() == null
     }
 
     def 'should set optional values correctly'(){
@@ -104,7 +103,6 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
                 .hint(hint)
                 .maxAwaitTime(10, MILLISECONDS)
                 .maxTime(10, MILLISECONDS)
-                .useCursor(true)
 
         then:
         operation.getAllowDiskUse()
@@ -112,7 +110,6 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         operation.getCollation() == defaultCollation
         operation.getMaxAwaitTime(MILLISECONDS) == 10
         operation.getMaxTime(MILLISECONDS) == 10
-        operation.getUseCursor()
         operation.getHint() == hint
     }
 
@@ -149,7 +146,6 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
                 .collation(defaultCollation)
                 .maxAwaitTime(15, MILLISECONDS)
                 .maxTime(10, MILLISECONDS)
-                .useCursor(true)
 
         def expectedCommand = new BsonDocument('aggregate', new BsonString(helper.namespace.getCollectionName()))
                 .append('pipeline', new BsonArray(pipeline))
@@ -248,7 +244,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should be able to aggregate'() {
         when:
-        AggregateOperation operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec()).useCursor(useCursor)
+        AggregateOperation operation = new AggregateOperation<Document>(getNamespace(), [], new DocumentCodec())
         def batchCursor = execute(operation, async)
         def results = collectCursorResults(batchCursor)*.getString('name')
 
@@ -257,7 +253,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         results.containsAll(['Pete', 'Sam'])
 
         where:
-        [async, useCursor] << [[true, false], useCursorOptions()].combinations()
+        async << [true, false]
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 4) })
@@ -271,7 +267,6 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
         when:
         AggregateOperation operation = new AggregateOperation<Document>(viewNamespace, [], new DocumentCodec())
-                .useCursor(useCursor)
         def batchCursor = execute(operation, async)
         def results = collectCursorResults(batchCursor)*.getString('name')
 
@@ -283,13 +278,13 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         new DropCollectionOperation(viewNamespace, WriteConcern.ACKNOWLEDGED).execute(getBinding(getCluster()))
 
         where:
-        [async, useCursor] << [[true, false], useCursorOptions()].combinations()
+        async << [true, false]
     }
 
     def 'should be able to aggregate with pipeline'() {
         when:
         AggregateOperation operation = new AggregateOperation<Document>(getNamespace(),
-                [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber')))], new DocumentCodec()).useCursor(useCursor)
+                [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber')))], new DocumentCodec())
         def batchCursor = execute(operation, async)
         def results = collectCursorResults(batchCursor)*.getString('name')
 
@@ -298,7 +293,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         results == ['Sam']
 
         where:
-        [async, useCursor] << [[true, false], useCursorOptions()].combinations()
+        async << [true, false]
     }
 
     def 'should allow disk usage'() {
@@ -570,10 +565,6 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
                     .append('cursor', new BsonDocument('id', new BsonInt64(0)).append('ns', new BsonString('db.coll'))
                     .append('firstBatch', new BsonArrayWrapper([])))
     ]
-
-    private static List<Boolean> useCursorOptions() {
-        [null, true, false]
-    }
 
     private static BsonDocument createExpectedChangeNotification(MongoNamespace namespace, int idValue) {
         BsonDocument.parse("""{

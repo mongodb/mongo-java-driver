@@ -45,7 +45,6 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         operation.getSizeInBytes() == 0
         operation.isAutoIndex()
         operation.getMaxDocuments() == 0
-        operation.isUsePowerOf2Sizes() == null
         operation.getStorageEngineOptions() == null
         operation.getIndexOptionDefaults() == null
         operation.getValidator() == null
@@ -67,7 +66,6 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
             .capped(true)
             .sizeInBytes(1000)
             .maxDocuments(1000)
-            .usePowerOf2Sizes(true)
             .storageEngineOptions(storageEngineOptions)
             .indexOptionDefaults(indexOptionDefaults)
             .validator(validator)
@@ -80,7 +78,6 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         operation.sizeInBytes == 1000
         !operation.isAutoIndex()
         operation.getMaxDocuments() == 1000
-        operation.isUsePowerOf2Sizes() == true
         operation.getStorageEngineOptions() == storageEngineOptions
         operation.getIndexOptionDefaults() == indexOptionDefaults
         operation.getValidator() == validator
@@ -143,25 +140,6 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         new ListCollectionsOperation(getDatabaseName(), new BsonDocumentCodec()).execute(getBinding()).next().find {
             it -> it.getString('name').value == getCollectionName()
         }.getDocument('options').getDocument('storageEngine') == operation.storageEngineOptions
-
-        where:
-        async << [true, false]
-    }
-
-    @IgnoreIf({ serverVersionAtLeast(4, 1) })
-    def 'should set flags for use power of two sizes'() {
-        given:
-        assert !collectionNameExists(getCollectionName())
-        def operation = new CreateCollectionOperation(getDatabaseName(), getCollectionName())
-                .usePowerOf2Sizes(true)
-
-        when:
-        execute(operation, async)
-
-        then:
-        new ListCollectionsOperation(getDatabaseName(), new BsonDocumentCodec()).execute(getBinding()).next().find {
-            it -> it.getString('name').value == getCollectionName()
-        }.getDocument('options').getNumber('flags').intValue() == 1
 
         where:
         async << [true, false]

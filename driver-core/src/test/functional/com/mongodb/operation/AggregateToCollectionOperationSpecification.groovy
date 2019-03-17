@@ -37,6 +37,7 @@ import org.bson.BsonInt32
 import org.bson.BsonString
 import org.bson.Document
 import org.bson.codecs.BsonDocumentCodec
+import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodec
 import spock.lang.IgnoreIf
 
@@ -47,12 +48,15 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.client.model.Filters.gte
 import static com.mongodb.operation.QueryOperationHelper.getKeyPattern
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 
 class AggregateToCollectionOperationSpecification extends OperationFunctionalSpecification {
+    def registry = fromProviders([new BsonValueCodecProvider()])
 
     def aggregateCollectionNamespace = new MongoNamespace(getDatabaseName(), 'aggregateCollectionName')
 
@@ -69,14 +73,14 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         def pipeline = [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))]
 
         when:
-        AggregateToCollectionOperation operation = new AggregateToCollectionOperation(getNamespace(), pipeline)
+        AggregateToCollectionOperation operation = new AggregateToCollectionOperation(getNamespace(), pipeline, ACKNOWLEDGED)
 
         then:
         operation.getAllowDiskUse() == null
         operation.getMaxTime(MILLISECONDS) == 0
         operation.getPipeline() == pipeline
         operation.getBypassDocumentValidation() == null
-        operation.getWriteConcern() == null
+        operation.getWriteConcern() == ACKNOWLEDGED
         operation.getCollation() == null
     }
 
@@ -120,7 +124,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
 
     def 'should not accept an empty pipeline'() {
         when:
-        new AggregateToCollectionOperation(getNamespace(), [])
+        new AggregateToCollectionOperation(getNamespace(), [], ACKNOWLEDGED)
 
 
         then:
@@ -131,7 +135,8 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         when:
         AggregateToCollectionOperation operation =
                 new AggregateToCollectionOperation(getNamespace(),
-                                                   [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))])
+                                                   [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))],
+                        ACKNOWLEDGED)
         execute(operation, async);
 
         then:
@@ -161,7 +166,8 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         AggregateToCollectionOperation operation =
                 new AggregateToCollectionOperation(getNamespace(),
                                                    [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber'))),
-                                                    new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))])
+                                                    new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))],
+                        ACKNOWLEDGED)
         execute(operation, async);
 
         then:
@@ -176,7 +182,8 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         AggregateToCollectionOperation operation =
                 new AggregateToCollectionOperation(getNamespace(),
                                                    [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber'))),
-                                                    new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))])
+                                                    new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))],
+                        ACKNOWLEDGED)
                         .maxTime(1, SECONDS)
         enableMaxTimeFailPoint()
 
@@ -222,7 +229,8 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         getCollectionHelper().insertDocuments(BsonDocument.parse('{ level: 9 }'))
 
         when:
-        def operation = new AggregateToCollectionOperation(getNamespace(), [BsonDocument.parse('{$out: "collectionOut"}')])
+        def operation = new AggregateToCollectionOperation(getNamespace(), [BsonDocument.parse('{$out: "collectionOut"}')],
+                ACKNOWLEDGED)
         execute(operation, async);
 
         then:
@@ -291,7 +299,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
     def 'should throw an exception when passing an unsupported collation'() {
         given:
         def pipeline = [BsonDocument.parse('{$out: "collectionOut"}')]
-        def operation = new AggregateToCollectionOperation(getNamespace(), pipeline).collation(defaultCollation)
+        def operation = new AggregateToCollectionOperation(getNamespace(), pipeline, ACKNOWLEDGED).collation(defaultCollation)
 
         when:
         testOperationThrows(operation, [3, 2, 0], async)
@@ -310,7 +318,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         getCollectionHelper().insertDocuments(BsonDocument.parse('{_id: 1, str: "foo"}'))
         def pipeline = [BsonDocument.parse('{$match: {str: "FOO"}}'),
                         new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))]
-        def operation = new AggregateToCollectionOperation(getNamespace(), pipeline).collation(defaultCollation)
+        def operation = new AggregateToCollectionOperation(getNamespace(), pipeline, ACKNOWLEDGED).collation(defaultCollation)
                 .collation(caseInsensitiveCollation)
 
         when:
@@ -329,7 +337,8 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         def hint = new BsonDocument('a', new BsonInt32(1))
         collectionHelper.createIndex(hint)
 
-        def operation = new AggregateToCollectionOperation(getNamespace(), [Aggregates.out('outputCollection')])
+        def operation = new AggregateToCollectionOperation(getNamespace(),
+                [Aggregates.out('outputCollection').toBsonDocument(BsonDocument, registry)], ACKNOWLEDGED)
                 .hint(hint)
 
         when:
@@ -350,7 +359,8 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         new CommandWriteOperation(getDatabaseName(), new BsonDocument('profile', new BsonInt32(2)), new BsonDocumentCodec())
                 .execute(getBinding())
         def expectedComment = 'this is a comment'
-        def operation = new AggregateToCollectionOperation(getNamespace(), [Aggregates.out('outputCollection')])
+        def operation = new AggregateToCollectionOperation(getNamespace(),
+                [Aggregates.out('outputCollection').toBsonDocument(BsonDocument, registry)], ACKNOWLEDGED)
                 .comment(expectedComment)
 
         when:
