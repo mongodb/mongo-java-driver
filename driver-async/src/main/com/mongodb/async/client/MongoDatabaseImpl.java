@@ -286,9 +286,7 @@ class MongoDatabaseImpl implements MongoDatabase {
         CreateCollectionOperation operation = new CreateCollectionOperation(name, collectionName, writeConcern)
                 .capped(options.isCapped())
                 .sizeInBytes(options.getSizeInBytes())
-                .autoIndex(options.isAutoIndex())
                 .maxDocuments(options.getMaxDocuments())
-                .usePowerOf2Sizes(options.isUsePowerOf2Sizes())
                 .storageEngineOptions(toBsonDocument(options.getStorageEngineOptions()))
                 .collation(options.getCollation());
 

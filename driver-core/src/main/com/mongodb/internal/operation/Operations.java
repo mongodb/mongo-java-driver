@@ -155,7 +155,6 @@ final class Operations<TDocument> {
                 .limit(options.getLimit())
                 .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                 .maxAwaitTime(options.getMaxAwaitTime(MILLISECONDS), MILLISECONDS)
-                .modifiers(toBsonDocumentOrNull(options.getModifiers()))
                 .projection(toBsonDocumentOrNull(options.getProjection()))
                 .sort(toBsonDocumentOrNull(options.getSort()))
                 .cursorType(options.getCursorType())
@@ -167,10 +166,8 @@ final class Operations<TDocument> {
                 .comment(options.getComment())
                 .min(toBsonDocumentOrNull(options.getMin()))
                 .max(toBsonDocumentOrNull(options.getMax()))
-                .maxScan(options.getMaxScan())
                 .returnKey(options.isReturnKey())
-                .showRecordId(options.isShowRecordId())
-                .snapshot(options.isSnapshot());
+                .showRecordId(options.isShowRecordId());
 
         if (options.getHint() != null) {
             operation.hint(toBsonDocument(options.getHint()));

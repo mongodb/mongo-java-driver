@@ -19,7 +19,6 @@ package com.mongodb.client.model;
 import org.bson.conversions.Bson;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.client.model.ReplaceOptions.createReplaceOptions;
 
 /**
  * A model describing the replacement of at most one document that matches the query filter.
@@ -41,19 +40,6 @@ public final class ReplaceOneModel<T> extends WriteModel<T> {
      */
     public ReplaceOneModel(final Bson filter, final T replacement) {
         this(filter, replacement, new ReplaceOptions());
-    }
-
-    /**
-     * Construct a new instance.
-     *
-     * @param filter    a document describing the query filter, which may not be null.
-     * @param replacement the replacement document
-     * @param options     the options to apply
-     * @deprecated use {@link #ReplaceOneModel(Bson, Object, ReplaceOptions)} instead
-     */
-    @Deprecated
-    public ReplaceOneModel(final Bson filter, final T replacement, final UpdateOptions options) {
-        this(filter, replacement, createReplaceOptions(options));
     }
 
     /**
@@ -86,20 +72,6 @@ public final class ReplaceOneModel<T> extends WriteModel<T> {
      */
     public T getReplacement() {
         return replacement;
-    }
-
-    /**
-     * Gets the options to apply.
-     *
-     * @return the update options
-     * @deprecated use {@link #getReplaceOptions()} instead
-     */
-    @Deprecated
-    public UpdateOptions getOptions() {
-        return new UpdateOptions()
-                .bypassDocumentValidation(options.getBypassDocumentValidation())
-                .collation(options.getCollation())
-                .upsert(options.isUpsert());
     }
 
     /**

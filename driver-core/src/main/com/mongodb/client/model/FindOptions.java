@@ -37,7 +37,6 @@ import static com.mongodb.assertions.Assertions.notNull;
 public final class FindOptions {
     private int batchSize;
     private int limit;
-    private Bson modifiers;
     private Bson projection;
     private long maxTimeMS;
     private long maxAwaitTimeMS;
@@ -53,45 +52,13 @@ public final class FindOptions {
     private String hintString;
     private Bson max;
     private Bson min;
-    private long maxScan;
     private boolean returnKey;
     private boolean showRecordId;
-    private boolean snapshot;
 
     /**
      * Construct a new instance.
      */
     public FindOptions() {
-    }
-
-    /**
-     * Construct a new instance by making a shallow copy of the given model.
-     * @param from model to copy
-     * @deprecated this constructor is unused
-     */
-    @Deprecated
-    public FindOptions(final FindOptions from) {
-        batchSize = from.batchSize;
-        limit = from.limit;
-        modifiers = from.modifiers;
-        projection = from.projection;
-        maxTimeMS = from.maxTimeMS;
-        maxAwaitTimeMS = from.maxAwaitTimeMS;
-        skip = from.skip;
-        sort = from.sort;
-        cursorType = from.cursorType;
-        noCursorTimeout = from.noCursorTimeout;
-        oplogReplay = from.oplogReplay;
-        partial = from.partial;
-        comment = from.comment;
-        hint = from.hint;
-        hintString = from.hintString;
-        max = from.max;
-        min = from.min;
-        maxScan = from.maxScan;
-        returnKey = from.returnKey;
-        showRecordId = from.showRecordId;
-        snapshot = from.snapshot;
     }
 
     /**
@@ -224,33 +191,6 @@ public final class FindOptions {
      */
     public FindOptions batchSize(final int batchSize) {
         this.batchSize = batchSize;
-        return this;
-    }
-
-    /**
-     * Gets the query modifiers to apply to this operation.  The default is not to apply any modifiers.
-     *
-     * @return the query modifiers, which may be null
-     * @mongodb.driver.manual reference/operator/query-modifier/ Query Modifiers
-     * @deprecated use the individual modifier methods instead.
-     */
-    @Deprecated
-    @Nullable
-    public Bson getModifiers() {
-        return modifiers;
-    }
-
-    /**
-     * Sets the query modifiers to apply to this operation.
-     *
-     * @param modifiers the query modifiers to apply, which may be null.
-     * @return this
-     * @mongodb.driver.manual reference/operator/query-modifier/ Query Modifiers
-     * @deprecated use the individual modifier methods instead.
-     */
-    @Deprecated
-    public FindOptions modifiers(@Nullable final Bson modifiers) {
-        this.modifiers = modifiers;
         return this;
     }
 
@@ -525,36 +465,6 @@ public final class FindOptions {
     }
 
     /**
-     * Returns the maximum number of documents or index keys to scan when executing the query.
-     *
-     * A zero value or less will be ignored, and indicates that the driver should respect the server's default value.
-     *
-     * @return the maxScan
-     * @since 3.5
-     * @deprecated Deprecated as of MongoDB 4.0 release
-     */
-    @Deprecated
-    public long getMaxScan() {
-        return maxScan;
-    }
-
-    /**
-     * Sets the maximum number of documents or index keys to scan when executing the query.
-     *
-     * A zero value or less will be ignored, and indicates that the driver should respect the server's default value.
-     *
-     * @param maxScan the maxScan
-     * @return this
-     * @since 3.5
-     * @deprecated Deprecated as of MongoDB 4.0 release
-     */
-    @Deprecated
-    public FindOptions maxScan(final long maxScan) {
-        this.maxScan = maxScan;
-        return this;
-    }
-
-    /**
      * Returns the returnKey. If true the find operation will return only the index keys in the resulting documents.
      *
      * Default value is false. If returnKey is true and the find command does not use an index, the returned documents will be empty.
@@ -603,42 +513,11 @@ public final class FindOptions {
         return this;
     }
 
-    /**
-     * Returns the snapshot.
-     *
-     * Prevents the cursor from returning a document more than once because of an intervening write operation. The default is false.
-     *
-     * @return the snapshot
-     * @since 3.5
-     * @deprecated Deprecated in MongoDB 3.6 release and removed in MongoDB 4.0 release
-     */
-    @Deprecated
-    public boolean isSnapshot() {
-        return snapshot;
-    }
-
-    /**
-     * Sets the snapshot.
-     *
-     * If true it prevents the cursor from returning a document more than once because of an intervening write operation.
-     *
-     * @param snapshot the snapshot
-     * @return this
-     * @since 3.5
-     * @deprecated Deprecated in MongoDB 3.6 release and removed in MongoDB 4.0 release
-     */
-    @Deprecated
-    public FindOptions snapshot(final boolean snapshot) {
-        this.snapshot = snapshot;
-        return this;
-    }
-
     @Override
     public String toString() {
         return "FindOptions{"
                 + "batchSize=" + batchSize
                 + ", limit=" + limit
-                + ", modifiers=" + modifiers
                 + ", projection=" + projection
                 + ", maxTimeMS=" + maxTimeMS
                 + ", maxAwaitTimeMS=" + maxAwaitTimeMS
@@ -653,10 +532,8 @@ public final class FindOptions {
                 + ", hint=" + hint
                 + ", max=" + max
                 + ", min=" + min
-                + ", maxScan=" + maxScan
                 + ", returnKey=" + returnKey
                 + ", showRecordId=" + showRecordId
-                + ", snapshot=" + snapshot
                 + "}";
     }
 }

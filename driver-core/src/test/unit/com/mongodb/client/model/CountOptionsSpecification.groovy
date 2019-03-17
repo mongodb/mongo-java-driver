@@ -32,7 +32,6 @@ class CountOptionsSpecification extends Specification {
         then:
         options.getCollation() == null
         options.getHint() == null
-        options.getHintString() == null
         options.getLimit() == 0
         options.getMaxTime(MILLISECONDS) == 0
         options.getSkip() == 0
@@ -54,13 +53,6 @@ class CountOptionsSpecification extends Specification {
         hint << [null, new BsonDocument(), new Document('a', 1)]
     }
 
-    def 'should set hintString'() {
-        expect:
-        new CountOptions().hintString(hintString).getHintString() == hintString
-
-        where:
-        hintString << [null, 'a_1']
-    }
 
     def 'should set limit'() {
         expect:
