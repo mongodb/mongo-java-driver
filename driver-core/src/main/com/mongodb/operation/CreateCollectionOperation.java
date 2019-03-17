@@ -29,24 +29,23 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.operation.OperationHelper.CallableWithConnection;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
-import org.bson.BsonInt32;
 import org.bson.BsonString;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 import static com.mongodb.operation.CommandOperationHelper.executeCommand;
 import static com.mongodb.operation.CommandOperationHelper.executeCommandAsync;
+import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTransformer;
 import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorWriteTransformer;
 import static com.mongodb.operation.DocumentHelper.putIfFalse;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
+import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.validateCollation;
-import static com.mongodb.operation.OperationHelper.withConnection;
-import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
-import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTransformer;
-import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.withAsyncConnection;
+import static com.mongodb.operation.OperationHelper.withConnection;
 
 /**
  * An operation to create a collection
@@ -63,7 +62,6 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
     private long sizeInBytes = 0;
     private boolean autoIndex = true;
     private long maxDocuments = 0;
-    private Boolean usePowerOf2Sizes = null;
     private BsonDocument storageEngineOptions;
     private BsonDocument indexOptionDefaults;
     private BsonDocument validator;
@@ -195,38 +193,6 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
      */
     public CreateCollectionOperation sizeInBytes(final long sizeInBytes) {
         this.sizeInBytes = sizeInBytes;
-        return this;
-    }
-
-    /**
-     * Gets whether usePowerOf2Sizes should be used foe the allocation strategy.
-     *
-     * <p>Note: {@code }usePowerOf2Sizes} became the default allocation strategy in mongodb 2.6</p>
-     *
-     * @return usePowerOf2Sizes became the default allocation strategy
-     * @mongodb.driver.manual reference/command/collMod/#usePowerOf2Sizes usePowerOf2Sizes
-     * @mongodb.server.release 2.6
-     * @deprecated As of MongoDB 3.0, power of 2 sizes is ignored by the MongoDB server
-     */
-    @Deprecated
-    public Boolean isUsePowerOf2Sizes() {
-        return usePowerOf2Sizes;
-    }
-
-    /**
-     * Sets whether usePowerOf2Sizes should be used foe the allocation strategy.
-     *
-     * <p>Note: {@code }usePowerOf2Sizes} became the default allocation strategy in mongodb 2.6</p>
-     *
-     * @param usePowerOf2Sizes as the default allocation strategy
-     * @return this
-     * @mongodb.driver.manual reference/command/collMod/#usePowerOf2Sizes usePowerOf2Sizes
-     * @mongodb.server.release 2.6
-     * @deprecated As of MongoDB 3.0, power of 2 sizes is ignored by the MongoDB server
-     */
-    @Deprecated
-    public CreateCollectionOperation usePowerOf2Sizes(final Boolean usePowerOf2Sizes) {
-        this.usePowerOf2Sizes = usePowerOf2Sizes;
         return this;
     }
 
@@ -422,9 +388,6 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
         if (capped) {
             putIfNotZero(document, "size", sizeInBytes);
             putIfNotZero(document, "max", maxDocuments);
-        }
-        if (usePowerOf2Sizes != null) {
-            document.put("flags", new BsonInt32(1));
         }
         if (storageEngineOptions != null) {
             document.put("storageEngine", storageEngineOptions);

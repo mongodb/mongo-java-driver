@@ -162,7 +162,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
             return new WriteOperationThenCursorReadOperation<TResult>(aggregateToCollectionOperation, findOperation);
         } else {
             return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, getBatchSize(), collation,
-                    hint, comment, allowDiskUse, null, aggregationLevel);
+                    hint, comment, allowDiskUse, aggregationLevel);
         }
 
     }

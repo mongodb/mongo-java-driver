@@ -178,39 +178,6 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
     }
 
     /**
-     * Gets whether the server should use a cursor to return results.  The default value is null, in which case a cursor will be used if the
-     * server supports it.
-     *
-     * @return whether the server should use a cursor to return results
-     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
-     * @mongodb.server.release 2.6
-     * @deprecated There is no replacement for this.  Applications can assume that the driver will use a cursor for server versions
-     * that support it (&gt;= 2.6).  The driver will ignore this as of MongoDB 3.6, which does not support inline results for the aggregate
-     * command.
-     */
-    @Deprecated
-    public Boolean getUseCursor() {
-        return wrapped.getUseCursor();
-    }
-
-    /**
-     * Sets whether the server should use a cursor to return results.
-     *
-     * @param useCursor whether the server should use a cursor to return results
-     * @return this
-     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
-     * @mongodb.server.release 2.6
-     * @deprecated There is no replacement for this.  Applications can assume that the driver will use a cursor for server versions
-     * that support it (&gt;= 2.6).  The driver will ignore this as of MongoDB 3.6, which does not support inline results for the aggregate
-     * command.
-     */
-    @Deprecated
-    public AggregateOperation<T> useCursor(final Boolean useCursor) {
-        wrapped.useCursor(useCursor);
-        return this;
-    }
-
-    /**
      * Returns the collation options
      *
      * @return the collation options
@@ -388,7 +355,6 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
                 + ", hint=" + getHint()
                 + ", maxAwaitTimeMS=" + getMaxAwaitTime(TimeUnit.MILLISECONDS)
                 + ", maxTimeMS=" + getMaxTime(TimeUnit.MILLISECONDS)
-                + ", useCursor=" + wrapped.getUseCursor()
                 + "}";
     }
 }
