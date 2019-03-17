@@ -21,10 +21,10 @@ import com.mongodb.MongoGridFSException
 import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
+import com.mongodb.async.client.ClientSession
 import com.mongodb.async.client.FindIterable
 import com.mongodb.async.client.MongoCollection
 import com.mongodb.client.gridfs.model.GridFSFile
-import com.mongodb.async.client.ClientSession
 import org.bson.BsonObjectId
 import org.bson.Document
 import org.bson.types.Binary
@@ -36,7 +36,7 @@ import java.nio.ByteBuffer
 import java.util.concurrent.CountDownLatch
 
 class GridFSDownloadStreamSpecification extends Specification {
-    private final static GridFSFile FILE_INFO = new GridFSFile(new BsonObjectId(new ObjectId()), 'filename', 3L, 2, new Date(), 'abc',
+    private final static GridFSFile FILE_INFO = new GridFSFile(new BsonObjectId(new ObjectId()), 'filename', 3L, 2, new Date(),
             new Document())
 
     def 'should return the file info'() {
@@ -237,7 +237,7 @@ class GridFSDownloadStreamSpecification extends Specification {
     def 'should skip to the correct point'() {
         given:
         def fileInfo = new GridFSFile(new BsonObjectId(new ObjectId()), 'filename', 4194297L, 32,
-                new Date(), 'abc', new Document())
+                new Date(), new Document())
 
         def firstChunkBytes = 1..32 as byte[]
         def lastChunkBytes = 33 .. 57 as byte[]

@@ -124,12 +124,12 @@ class GridFSFindIterableSpecification extends Specification {
     def 'should follow the MongoIterable interface as expected'() {
         given:
         def cannedResults = [
-                new GridFSFile(new BsonObjectId(new ObjectId()), 'File 1', 123L, 255, new Date(1438679434041),
-                        'd41d8cd98f00b204e9800998ecf8427e', null),
-                new GridFSFile(new BsonObjectId(new ObjectId()), 'File 2', 999999L, 255, new Date(1438679434050),
-                        'd41d8cd98f00b204e9800998ecf8427e', null),
-                new GridFSFile(new BsonObjectId(new ObjectId()), 'File 3', 1L, 255, new Date(1438679434090),
-                        'd41d8cd98f00b204e9800998ecf8427e', null),
+                new GridFSFile(new BsonObjectId(new ObjectId()), 'File 1', 123L, 255, new Date(1438679434041)
+                        , null),
+                new GridFSFile(new BsonObjectId(new ObjectId()), 'File 2', 999999L, 255, new Date(1438679434050)
+                        , null),
+                new GridFSFile(new BsonObjectId(new ObjectId()), 'File 3', 1L, 255, new Date(1438679434090)
+                        , null),
         ]
         def cursor = {
             Stub(BatchCursor) {

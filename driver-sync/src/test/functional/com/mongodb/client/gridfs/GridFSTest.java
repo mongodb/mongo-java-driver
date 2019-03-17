@@ -272,9 +272,6 @@ public class GridFSTest extends DatabaseTestCase {
             if (rawOptions.containsKey("metadata")) {
                 options = options.metadata(Document.parse(rawOptions.getDocument("metadata").toJson()));
             }
-            if (rawOptions.containsKey("disableMD5")) {
-                gridFSUploadBucket = gridFSUploadBucket.withDisableMD5(rawOptions.getBoolean("disableMD5").getValue());
-            }
 
             objectId = gridFSUploadBucket.uploadFromStream(filename, input, options);
         } catch (Throwable e) {
@@ -300,7 +297,6 @@ public class GridFSTest extends DatabaseTestCase {
                     for (BsonDocument expected : documents) {
                         assertEquals(expected.get("length"), actual.get("length"));
                         assertEquals(expected.get("chunkSize"), actual.get("chunkSize"));
-                        assertEquals(expected.get("md5"), actual.get("md5"));
                         assertEquals(expected.get("filename"), actual.get("filename"));
 
                         if (expected.containsKey("metadata")) {
