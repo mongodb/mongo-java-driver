@@ -63,7 +63,6 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.CursorType.NonTailable
 import static com.mongodb.CursorType.Tailable
 import static com.mongodb.CursorType.TailableAwait
-import static com.mongodb.ExplainVerbosity.QUERY_PLANNER
 import static com.mongodb.connection.ServerType.STANDALONE
 import static com.mongodb.operation.OperationReadConcernHelper.appendReadConcernToCommand
 import static java.util.concurrent.TimeUnit.MILLISECONDS
@@ -89,7 +88,6 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         operation.getLimit() == 0
         operation.getSkip() == 0
         operation.getBatchSize() == 0
-        operation.getModifiers() == null
         operation.getProjection() == null
         operation.getCollation() == null
         !operation.isNoCursorTimeout()
@@ -102,7 +100,6 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         given:
         def filter = new BsonDocument('filter', new BsonInt32(1))
         def projection = new BsonDocument('projection', new BsonInt32(1))
-        def modifiers = new BsonDocument('modifiers', new BsonInt32(1))
         def hint = new BsonString('a_1')
 
         when:
@@ -115,7 +112,6 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                 .hint(hint)
                 .batchSize(40)
                 .projection(projection)
-                .modifiers(modifiers)
                 .cursorType(Tailable)
                 .collation(defaultCollation)
                 .partial(true)
@@ -132,7 +128,6 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         operation.getHint() == hint
         operation.getBatchSize() == 40
         operation.getProjection() == projection
-        operation.getModifiers() == modifiers
         operation.getCollation() == defaultCollation
         operation.isNoCursorTimeout()
         operation.isOplogReplay()
@@ -170,9 +165,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         where:
         [async, operation] << [
                 [true, false],
-                [new FindOperation<Document>(getNamespace(), new DocumentCodec()).filter(new BsonDocument('_id', new BsonInt32(1))),
-                 new FindOperation<Document>(getNamespace(), new DocumentCodec())
-                         .modifiers(new BsonDocument('$query', new BsonDocument('_id', new BsonInt32(1))))]
+                [new FindOperation<Document>(getNamespace(), new DocumentCodec()).filter(new BsonDocument('_id', new BsonInt32(1)))]
         ].combinations()
     }
 
@@ -192,9 +185,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         where:
         [async, operation] << [
                 [true, false],
-                [new FindOperation<Document>(getNamespace(), new DocumentCodec()).sort(new BsonDocument('_id', new BsonInt32(1))),
-                 new FindOperation<Document>(getNamespace(), new DocumentCodec())
-                         .modifiers(new BsonDocument('$orderby', new BsonDocument('_id', new BsonInt32(1))))]
+                [new FindOperation<Document>(getNamespace(), new DocumentCodec()).sort(new BsonDocument('_id', new BsonInt32(1)))]
         ].combinations()
     }
 
@@ -312,23 +303,6 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
-    def 'should throw query exception from explain'() {
-        given:
-        def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
-                .filter(new BsonDocument('x', new BsonDocument('$thisIsNotAnOperator', BsonBoolean.TRUE)))
-        operation = async ? operation.asExplainableOperationAsync(QUERY_PLANNER) :
-                operation.asExplainableOperation(QUERY_PLANNER)
-
-        when:
-        execute(operation, async)
-
-        then:
-        thrown(MongoQueryException)
-
-        where:
-        async << [true, false]
-    }
-
     @IgnoreIf({ isSharded() })
     def 'should throw execution timeout exception from execute'() {
         given:
@@ -348,9 +322,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         where:
         [async, operation] << [
                 [true, false],
-                [new FindOperation<Document>(getNamespace(), new DocumentCodec()).maxTime(1000, MILLISECONDS),
-                 new FindOperation<Document>(getNamespace(), new DocumentCodec()).
-                         modifiers(new BsonDocument('$maxTimeMS', new BsonInt32(1000)))]
+                [new FindOperation<Document>(getNamespace(), new DocumentCodec()).maxTime(1000, MILLISECONDS)]
         ].combinations()
     }
 
@@ -361,7 +333,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         }
         collectionHelper.createIndex(new BsonDocument('count', new BsonInt32(1)))
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
-                .modifiers(new BsonDocument('$max', new BsonDocument('count', new BsonInt32(11))))
+                .max(new BsonDocument('count', new BsonInt32(11)))
                 .hint(new BsonDocument('count', new BsonInt32(1)))
 
         when:
@@ -381,7 +353,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         }
         collectionHelper.createIndex(new BsonDocument('count', new BsonInt32(1)))
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
-                .modifiers(new BsonDocument('$min', new BsonDocument('count', new BsonInt32(10))))
+                .min(new BsonDocument('count', new BsonInt32(10)))
                 .hint(new BsonDocument('count', new BsonInt32(1)))
 
         when:
@@ -389,25 +361,6 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         count == 91
-
-        where:
-        async << [true, false]
-    }
-
-    @IgnoreIf({ serverVersionAtLeast(4, 1) })
-    def '$maxScan should limit items returned'() {
-        given:
-        (1..100).each {
-            collectionHelper.insertDocuments(new DocumentCodec(), new Document('x', 'y'))
-        }
-        def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
-                .modifiers(new BsonDocument('$maxScan', new BsonInt32(34)))
-
-        when:
-        def count = executeAndCollectBatchCursorResults(operation, async).size()
-
-        then:
-        count == 34
 
         where:
         async << [true, false]
@@ -422,7 +375,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
                 .filter(new BsonDocument('x', new BsonInt32(7)))
-                .modifiers(new BsonDocument('$returnKey', BsonBoolean.TRUE))
+                .returnKey(true)
 
         when:
         def results = executeAndCollectBatchCursorResults(operation, async)
@@ -434,22 +387,18 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         async << [true, false]
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(3, 0) })
     def 'should apply $hint'() {
         given:
         def index = new BsonDocument('a', new BsonInt32(1))
         collectionHelper.createIndex(index)
 
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
-        if (useModifer) {
-            operation.modifiers(new BsonDocument('$hint', hint))
-        } else {
-            operation.hint(hint)
-        }
-        operation = async ? operation.asExplainableOperationAsync(QUERY_PLANNER) :
-                operation.asExplainableOperation(QUERY_PLANNER)
+                .hint(hint)
+                .asExplainableOperationAsync(QUERY_PLANNER)
 
         when:
-        def explainPlan = execute(operation, async)
+        def explainPlan = execute(operation, true)
 
         then:
         if (serverVersionAtLeast(3, 0)) {
@@ -459,8 +408,8 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         }
 
         where:
-        [async, useModifer, hint] << [[true, false], [true, false], [new BsonDocument('a', new BsonInt32(1)),
-                                                                     new BsonString('a_1')]].combinations()
+        hint << [new BsonDocument('a', new BsonInt32(1)),
+                 new BsonString('a_1')]
     }
 
     @IgnoreIf({ isSharded() })
@@ -471,7 +420,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
                 .execute(getBinding())
         def expectedComment = 'this is a comment'
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
-                .modifiers(new BsonDocument('$comment', new BsonString(expectedComment)))
+                .comment(expectedComment)
 
         when:
         execute(operation, async)
@@ -501,7 +450,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         collectionHelper.insertDocuments(new BsonDocument())
 
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
-                .modifiers(new BsonDocument('$showDiskLoc', BsonBoolean.TRUE))
+                .showRecordId(true)
 
         when:
         def result = executeAndCollectBatchCursorResults(operation, async).head()
@@ -638,83 +587,6 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         1 * connection.release()
     }
 
-    def 'should call query on Connection with correct arguments for an explain'() {
-        given:
-        def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
-                .limit(20)
-                .batchSize(2)
-                .projection(new BsonDocument('x', new BsonInt32(1)))
-                .sort(new BsonDocument('y', new BsonInt32(-1)))
-                .filter(new BsonDocument('z', new BsonString('val')))
-                .hint(new BsonDocument('a', new BsonInt32(1)))
-                .min(new BsonDocument('min', new BsonInt32(1)))
-                .max(new BsonDocument('max', new BsonInt32(1)))
-        def binding = Stub(ReadBinding)
-        def source = Stub(ConnectionSource)
-        def connection = Mock(Connection)
-        binding.readPreference >> ReadPreference.primary()
-        binding.readConnectionSource >> source
-        source.connection >> connection
-        source.retain() >> source
-
-        when:
-        operation.asExplainableOperation(QUERY_PLANNER).execute(binding)
-
-        then:
-        _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                 2, STANDALONE, 1000, 100000, 100000, [])
-
-        1 * connection.query(getNamespace(), new BsonDocument('$query', operation.filter)
-                .append('$explain', BsonBoolean.TRUE).append('$orderby', operation.sort)
-                .append('$hint', operation.hint)
-                .append('$min', operation.min)
-                .append('$max', operation.max),
-                operation.projection, 0, -20, 0, false, false, false, false, false, false, _) >>
-                new QueryResult(getNamespace(), [new BsonDocument('n', new BsonInt32(1))], 0, new ServerAddress())
-
-        _ * connection.retain() >> connection
-        _ * connection.release()
-    }
-
-    def 'should explain'() {
-        given:
-        def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
-                .modifiers(modifiers)
-        operation = async ? operation.asExplainableOperationAsync(QUERY_PLANNER) :
-                operation.asExplainableOperation(QUERY_PLANNER)
-
-        when:
-        BsonDocument result = execute(operation, async)
-
-        then:
-        !result.isEmpty()
-
-        where:
-        [async, modifiers] << [
-                [true, false],
-                [null, new BsonDocument('$explain', BsonBoolean.TRUE), new BsonDocument('$explain', BsonBoolean.FALSE)]
-        ].combinations()
-    }
-
-
-    def 'should explain with $explain modifier'() {
-        given:
-        def operation = new FindOperation<BsonDocument>(getNamespace(), new BsonDocumentCodec())
-                .modifiers(new BsonDocument('$explain', BsonBoolean.TRUE))
-        def explainOperation = async ?
-                new FindOperation<BsonDocument>(getNamespace(), new BsonDocumentCodec()).asExplainableOperationAsync(QUERY_PLANNER) :
-                new FindOperation<BsonDocument>(getNamespace(), new BsonDocumentCodec()).asExplainableOperation(QUERY_PLANNER)
-
-        when:
-        def cursorResult = executeAndCollectBatchCursorResults(operation, async).head()
-        def explainResult = execute(explainOperation, async)
-
-        then:
-        QueryOperationHelper.sanitizeExplainResult(cursorResult) == QueryOperationHelper.sanitizeExplainResult(explainResult)
-
-        where:
-        async << [true, false]
-    }
 
     //  sanity check that the server accepts tailable and await data flags
     def 'should pass tailable and await data flags through'() {
