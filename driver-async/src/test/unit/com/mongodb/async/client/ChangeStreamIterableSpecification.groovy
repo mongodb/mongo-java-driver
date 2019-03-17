@@ -28,6 +28,7 @@ import com.mongodb.client.model.Collation
 import com.mongodb.client.model.changestream.ChangeStreamDocument
 import com.mongodb.client.model.changestream.ChangeStreamDocumentCodec
 import com.mongodb.client.model.changestream.FullDocument
+import com.mongodb.client.model.changestream.OperationType
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
 import com.mongodb.operation.ChangeStreamOperation
 import org.bson.BsonDocument
@@ -134,8 +135,8 @@ class ChangeStreamIterableSpecification extends Specification {
         given:
         def count = 0
         def cannedResults = ['{_id: 1}', '{_id: 2}', '{_id: 3}'].collect {
-            new ChangeStreamDocument(RawBsonDocument.parse(it), new BsonDocument(), Document.parse(it),
-                    BsonDocument.parse(it), null, null, null)
+            new ChangeStreamDocument<Document>(OperationType.INSERT, new BsonDocument(), new BsonDocument(), new BsonDocument(),
+                    Document.parse(it), new BsonDocument(), null, null)
         }
         def executor = new TestOperationExecutor([cursor(cannedResults), cursor(cannedResults), cursor(cannedResults),
                                                   cursor(cannedResults), cursor(cannedResults)])

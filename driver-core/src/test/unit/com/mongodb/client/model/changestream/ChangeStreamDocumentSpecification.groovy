@@ -78,24 +78,6 @@ class ChangeStreamDocumentSpecification extends Specification {
         changeStreamDocumentWithTxnInfo.getDatabaseName() == namespace.getDatabaseName()
         changeStreamDocumentWithTxnInfo.getTxnNumber() == txnNumber
         changeStreamDocumentWithTxnInfo.getLsid() == lsid
-
-        when:
-        def changeStreamDocumentFromNamespace = new ChangeStreamDocument<BsonDocument>(resumeToken, namespace, fullDocument,
-                documentKey, clusterTime, operationType, updateDesc)
-
-        then:
-        changeStreamDocumentFromNamespace.getResumeToken() == resumeToken
-        changeStreamDocumentFromNamespace.getFullDocument() == fullDocument
-        changeStreamDocumentFromNamespace.getDocumentKey() == documentKey
-        changeStreamDocumentFromNamespace.getClusterTime() == clusterTime
-        changeStreamDocumentFromNamespace.getNamespace() == namespace
-        changeStreamDocumentFromNamespace.getOperationType() == operationType
-        changeStreamDocumentFromNamespace.getUpdateDescription() == updateDesc
-        changeStreamDocumentFromNamespace.getDatabaseName() == namespace.getDatabaseName()
-        changeStreamDocumentFromNamespace.getNamespaceDocument() == namespaceDocument
-        changeStreamDocumentFromNamespace.getDestinationNamespaceDocument() == null
-        changeStreamDocumentFromNamespace.getTxnNumber() == null
-        changeStreamDocumentFromNamespace.getLsid() == null
     }
 
     def 'should handle null namespace correctly'() {
