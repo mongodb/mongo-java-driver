@@ -32,9 +32,7 @@ class CreateCollectionOptionsSpecification extends Specification {
         options.getSizeInBytes() == 0
         options.getStorageEngineOptions() == null
         options.getValidationOptions().getValidator() == null
-        options.isAutoIndex()
         !options.isCapped()
-        !options.isUsePowerOf2Sizes()
    }
 
     def 'should set collation'() {
@@ -85,27 +83,11 @@ class CreateCollectionOptionsSpecification extends Specification {
         validationOptions << [new ValidationOptions(), new ValidationOptions().validationAction(ValidationAction.ERROR)]
     }
 
-    def 'should set autoIndex'() {
-        expect:
-        new CreateCollectionOptions().autoIndex(autoIndex).isAutoIndex() == autoIndex
-
-        where:
-        autoIndex << [true, false]
-    }
-
     def 'should set capped'() {
         expect:
         new CreateCollectionOptions().capped(capped).isCapped() == capped
 
         where:
         capped << [true, false]
-    }
-
-    def 'should set usePowerOf2Sizes'() {
-        expect:
-        new CreateCollectionOptions().usePowerOf2Sizes(usePowerOf2Sizes).isUsePowerOf2Sizes() == usePowerOf2Sizes
-
-        where:
-        usePowerOf2Sizes << [true, false]
     }
 }

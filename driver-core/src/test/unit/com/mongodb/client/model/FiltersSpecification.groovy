@@ -244,7 +244,6 @@ class FiltersSpecification extends Specification {
     def 'should render $text'() {
         expect:
         toBson(text('mongoDB for GIANT ideas')) == parse('{$text: {$search: "mongoDB for GIANT ideas"} }')
-        toBson(text('mongoDB for GIANT ideas', 'english')) == parse('{$text: {$search: "mongoDB for GIANT ideas", $language : "english"}}')
         toBson(text('mongoDB for GIANT ideas', new TextSearchOptions().language('english'))) == parse('''
             {$text : {$search : "mongoDB for GIANT ideas", $language : "english"} }'''
         )
@@ -817,14 +816,14 @@ class FiltersSpecification extends Specification {
     def 'should test equals for TextFilter'() {
         expect:
         text('mongoDB for GIANT ideas').equals(text('mongoDB for GIANT ideas'))
-        text('mongoDB for GIANT ideas', 'english')
+        text('mongoDB for GIANT ideas', new TextSearchOptions().language('english'))
                 .equals(text('mongoDB for GIANT ideas', new TextSearchOptions().language('english')))
     }
 
     def 'should test hashCode for TextFilter'() {
         expect:
         text('mongoDB for GIANT ideas').hashCode() == text('mongoDB for GIANT ideas').hashCode()
-        text('mongoDB for GIANT ideas', 'english').hashCode() ==
+        text('mongoDB for GIANT ideas', new TextSearchOptions().language('english')).hashCode() ==
                 text('mongoDB for GIANT ideas', new TextSearchOptions().language('english')).hashCode()
     }
 }

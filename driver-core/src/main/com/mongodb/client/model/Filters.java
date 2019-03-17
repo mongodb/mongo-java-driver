@@ -431,21 +431,6 @@ public final class Filters {
     }
 
     /**
-     * Creates a filter that matches all documents matching the given search term using the given language.
-     *
-     * @param search   the search term
-     * @param language the language to use for stop words
-     * @return the filter
-     * @mongodb.driver.manual reference/operator/query/text $text
-     * @deprecated use {@link Filters#text(String, TextSearchOptions)}
-     */
-    @Deprecated
-    public static Bson text(final String search, final String language) {
-        notNull("search", search);
-        return text(search, new TextSearchOptions().language(language));
-    }
-
-    /**
      * Creates a filter that matches all documents matching the given the search term with the given text search options.
      *
      * @param search            the search term

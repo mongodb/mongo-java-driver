@@ -141,7 +141,6 @@ public final class CollectionHelper<T> {
         CreateCollectionOperation operation = new CreateCollectionOperation(namespace.getDatabaseName(), collectionName, writeConcern)
                 .capped(options.isCapped())
                 .sizeInBytes(options.getSizeInBytes())
-                .autoIndex(options.isAutoIndex())
                 .maxDocuments(options.getMaxDocuments());
 
         IndexOptionDefaults indexOptionDefaults = options.getIndexOptionDefaults();

@@ -287,7 +287,6 @@ class FiltersFunctionalSpecification extends OperationFunctionalSpecification {
 
         then:
         find(text('GIANT')) == [textDocument]
-        find(text('GIANT', 'english')) == [textDocument]
         find(text('GIANT', new TextSearchOptions().language('english'))) == [textDocument]
     }
 
