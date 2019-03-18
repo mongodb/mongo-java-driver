@@ -20,11 +20,11 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class JsonBufferTest {
+public class JsonStringBufferTest {
 
     @Test
     public void testRead() {
-        JsonBuffer buffer = new JsonBuffer("ABC");
+        JsonBuffer buffer = new JsonStringBuffer("ABC");
         assertEquals('A', buffer.read());
         assertEquals('B', buffer.read());
         assertEquals('C', buffer.read());
@@ -33,7 +33,7 @@ public class JsonBufferTest {
 
     @Test
     public void testUnRead() {
-        JsonBuffer buffer = new JsonBuffer("A");
+        JsonStringBuffer buffer = new JsonStringBuffer("A");
         buffer.unread(buffer.read());
         assertEquals('A', buffer.read());
         assertEquals(-1, buffer.read());
@@ -41,15 +41,16 @@ public class JsonBufferTest {
 
     @Test
     public void testPosition() {
-        JsonBuffer buffer = new JsonBuffer("ABC");
+        JsonStringBuffer buffer = new JsonStringBuffer("ABC");
 
-        buffer.setPosition(2);
+        buffer.read();
+        buffer.read();
         assertEquals(2, buffer.getPosition());
     }
 
     @Test(expected = JsonParseException.class)
     public void testEOFCheck() {
-        JsonBuffer buffer = new JsonBuffer("");
+        JsonStringBuffer buffer = new JsonStringBuffer("");
 
         buffer.read();
         buffer.read();
