@@ -995,9 +995,6 @@ public class JsonPoweredCrudTestHelper {
         if (rawOptions.containsKey("metadata")) {
             options.metadata(Document.parse(rawOptions.getDocument("metadata").toJson()));
         }
-        if (rawOptions.containsKey("disableMD5")) {
-            gridFSUploadBucket.withDisableMD5(rawOptions.getBoolean("disableMD5").getValue());
-        }
 
         objectId = new MongoOperation<ObjectId>() {
             @Override

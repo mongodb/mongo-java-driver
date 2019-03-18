@@ -34,7 +34,6 @@ import org.junit.experimental.categories.Category
 import spock.lang.Unroll
 
 import java.nio.ByteBuffer
-import java.security.MessageDigest
 import java.security.SecureRandom
 
 import static com.mongodb.async.client.Fixture.getDefaultDatabaseName
@@ -78,8 +77,7 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         def content = multiChunk ? multiChunkString : singleChunkString
         def contentBytes = content as byte[]
         def expectedLength = contentBytes.length
-        def expectedMD5 = md5Disabled ? null : MessageDigest.getInstance('MD5').digest(contentBytes).encodeHex().toString()
-        def bucket = gridFSBucket.withDisableMD5(md5Disabled)
+        def bucket = gridFSBucket
         ObjectId fileId
 
         when:
@@ -103,7 +101,6 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         fileInfo.getId().getValue() == fileId
         fileInfo.getChunkSize() == bucket.getChunkSizeBytes()
         fileInfo.getLength() == expectedLength
-        fileInfo.getMD5() == expectedMD5
         fileInfo.getMetadata() == null
 
         when:
@@ -120,13 +117,11 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         byteBuffer.array() == contentBytes
 
         where:
-        description                     | multiChunk | chunkCount | direct | md5Disabled
-        'a small file directly'         | false      | 1          | true   | false
-        'a small file to stream'        | false      | 1          | false  | false
-        'a large file directly'         | true       | 5          | true   | false
-        'a large file to stream'        | true       | 5          | false  | false
-        'a small file directly no md5'  | false      | 1          | true   | true
-        'a small file to stream no md5' | false      | 1          | false  | true
+        description                     | multiChunk | chunkCount | direct
+        'a small file directly'         | false      | 1          | true
+        'a small file to stream'        | false      | 1          | false
+        'a large file directly'         | true       | 5          | true
+        'a large file to stream'        | true       | 5          | false
     }
 
     @Category(Slow)
@@ -304,7 +299,6 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         def content = multiChunkString
         def contentBytes = content as byte[]
         def expectedLength = contentBytes.length as Long
-        def expectedMD5 = MessageDigest.getInstance('MD5').digest(contentBytes).encodeHex().toString()
         ObjectId fileId
 
         when:
@@ -321,7 +315,6 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         fileInfo.getObjectId() == fileId
         fileInfo.getChunkSize() == gridFSBucket.getChunkSizeBytes()
         fileInfo.getLength() == expectedLength
-        fileInfo.getMD5() == expectedMD5
         fileInfo.getMetadata() == null
 
         when:
@@ -343,7 +336,6 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         def contentBytes = content as byte[]
         def expectedLength = contentBytes.length as Long
         def expectedNoChunks = Math.ceil((expectedLength as double) / chunkSize) as int
-        def expectedMD5 = MessageDigest.getInstance('MD5').digest(contentBytes).encodeHex().toString()
         ObjectId fileId
 
         when:
@@ -367,7 +359,6 @@ class GridFSBucketSmokeTestSpecification extends FunctionalSpecification {
         fileInfo.getId().getValue() == fileId
         fileInfo.getChunkSize() == options.getChunkSizeBytes()
         fileInfo.getLength() == expectedLength
-        fileInfo.getMD5() == expectedMD5
         fileInfo.getMetadata() == options.getMetadata()
 
         when:

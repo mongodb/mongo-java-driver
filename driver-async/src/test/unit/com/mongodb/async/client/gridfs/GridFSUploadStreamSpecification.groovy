@@ -20,8 +20,8 @@ import com.mongodb.MongoException
 import com.mongodb.MongoGridFSException
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
-import com.mongodb.async.client.MongoCollection
 import com.mongodb.async.client.ClientSession
+import com.mongodb.async.client.MongoCollection
 import org.bson.BsonObjectId
 import org.bson.BsonString
 import org.bson.Document
@@ -29,7 +29,6 @@ import org.bson.types.Binary
 import spock.lang.Specification
 
 import java.nio.ByteBuffer
-import java.security.MessageDigest
 import java.util.concurrent.CountDownLatch
 
 class GridFSUploadStreamSpecification extends Specification {
@@ -37,12 +36,11 @@ class GridFSUploadStreamSpecification extends Specification {
     def filename = 'filename'
     def metadata = new Document()
     def content = 'file content ' as byte[]
-    def disableMD5 = false
 
     def 'should return the file id'() {
         when:
-        def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), Stub(MongoCollection), fileId, filename, 255,
-                disableMD5, metadata, NOOP_INDEXCHECK)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), Stub(MongoCollection), fileId, filename, 255
+                , metadata, NOOP_INDEXCHECK)
 
         then:
         uploadStream.getId() == fileId
@@ -56,8 +54,8 @@ class GridFSUploadStreamSpecification extends Specification {
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
         def callback = Stub(SingleResultCallback)
-        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 2,
-                disableMD5, metadata, NOOP_INDEXCHECK)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 2
+                , metadata, NOOP_INDEXCHECK)
 
         when:
         uploadStream.write(ByteBuffer.wrap(new byte[1]), callback)
@@ -84,8 +82,8 @@ class GridFSUploadStreamSpecification extends Specification {
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
         def callback = Stub(SingleResultCallback)
-        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255,
-                disableMD5, null, NOOP_INDEXCHECK)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255
+                , null, NOOP_INDEXCHECK)
         def byteBuffer = ByteBuffer.wrap(new byte[10])
 
         when:
@@ -117,7 +115,7 @@ class GridFSUploadStreamSpecification extends Specification {
         def callback = Stub(SingleResultCallback)
         def metadata = new Document('contentType', 'text/txt')
         def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255,
-                md5Disabled, metadata, NOOP_INDEXCHECK)
+                metadata, NOOP_INDEXCHECK)
         def chunksData
         def fileData
 
@@ -157,11 +155,10 @@ class GridFSUploadStreamSpecification extends Specification {
         fileData.getFilename() == filename
         fileData.getLength() == content.length as Long
         fileData.getChunkSize() == 255
-        fileData.getMD5() == md5Disabled ? null : MessageDigest.getInstance('MD5').digest(content).encodeHex().toString()
         fileData.getMetadata() == metadata
 
         where:
-        [clientSession, md5Disabled] << [[null, Stub(ClientSession)], [true, false]].combinations()
+        clientSession << [null, Stub(ClientSession)]
     }
 
     def 'should not write an empty chunk'() {
@@ -169,8 +166,8 @@ class GridFSUploadStreamSpecification extends Specification {
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
         def callback = Stub(SingleResultCallback)
-        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255,
-                disableMD5, metadata, NOOP_INDEXCHECK)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255
+                , metadata, NOOP_INDEXCHECK)
 
         when:
         uploadStream.close(callback)
@@ -191,8 +188,8 @@ class GridFSUploadStreamSpecification extends Specification {
         given:
         def chunksCollection = Mock(MongoCollection)
         def callback = Stub(SingleResultCallback)
-        def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), chunksCollection, fileId, filename, 255,
-                disableMD5, metadata, NOOP_INDEXCHECK)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), chunksCollection, fileId, filename, 255
+                , metadata, NOOP_INDEXCHECK)
 
         when:
         uploadStream.write(ByteBuffer.wrap(content), callback)
@@ -212,8 +209,8 @@ class GridFSUploadStreamSpecification extends Specification {
     def 'should close the stream on abort'() {
         given:
         def callback = Stub(SingleResultCallback)
-        def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), Stub(MongoCollection), fileId, filename, 255,
-                disableMD5, metadata, NOOP_INDEXCHECK)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), Stub(MongoCollection), fileId, filename, 255
+                , metadata, NOOP_INDEXCHECK)
         uploadStream.write(ByteBuffer.wrap(content), callback)
         uploadStream.abort(callback)
 
@@ -232,8 +229,8 @@ class GridFSUploadStreamSpecification extends Specification {
     def 'should throw an exception when trying to action post close'() {
         given:
         def callback = Stub(SingleResultCallback)
-        def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), Stub(MongoCollection), fileId, filename, 255,
-                disableMD5, metadata, NOOP_INDEXCHECK)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), Stub(MongoCollection), fileId, filename, 255
+                , metadata, NOOP_INDEXCHECK)
         uploadStream.close(callback)
 
         when:
@@ -269,8 +266,8 @@ class GridFSUploadStreamSpecification extends Specification {
         def fileId = new BsonString('myFile')
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
-        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255,
-                disableMD5, metadata, NOOP_INDEXCHECK)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255
+                , metadata, NOOP_INDEXCHECK)
 
         when:
         uploadStream.getObjectId()
@@ -287,8 +284,8 @@ class GridFSUploadStreamSpecification extends Specification {
         def latchA = new CountDownLatch(1)
         def latchB = new CountDownLatch(1)
         def chunksCollection = Mock(MongoCollection)
-        def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), chunksCollection, fileId, filename, 255,
-                disableMD5, metadata, NOOP_INDEXCHECK)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), chunksCollection, fileId, filename, 255
+                , metadata, NOOP_INDEXCHECK)
 
         when:
         def futureResult = new FutureResultCallback()
@@ -334,8 +331,8 @@ class GridFSUploadStreamSpecification extends Specification {
         def latchA = new CountDownLatch(1)
         def latchB = new CountDownLatch(1)
         def chunksCollection = Mock(MongoCollection)
-        def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), chunksCollection, fileId, filename, 255,
-                disableMD5, metadata, NOOP_INDEXCHECK)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), chunksCollection, fileId, filename, 255
+                , metadata, NOOP_INDEXCHECK)
 
         when:
         def futureResult = new FutureResultCallback()
@@ -381,8 +378,8 @@ class GridFSUploadStreamSpecification extends Specification {
         def latchA = new CountDownLatch(1)
         def latchB = new CountDownLatch(1)
         def chunksCollection = Mock(MongoCollection)
-        def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), chunksCollection, fileId, filename, 255,
-                disableMD5, metadata, NOOP_INDEXCHECK)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), chunksCollection, fileId, filename, 255
+                , metadata, NOOP_INDEXCHECK)
 
         when:
         def futureResult = new FutureResultCallback()
@@ -427,8 +424,8 @@ class GridFSUploadStreamSpecification extends Specification {
         given:
         def chunksCollection = Mock(MongoCollection)
         def alternativeException = new MongoException('Alternative failure')
-        def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), chunksCollection, fileId, filename, 255,
-                disableMD5, metadata, NOOP_INDEXCHECK)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, Stub(MongoCollection), chunksCollection, fileId, filename, 255
+                , metadata, NOOP_INDEXCHECK)
 
         when:
         def futureResult = new FutureResultCallback()
@@ -460,8 +457,8 @@ class GridFSUploadStreamSpecification extends Specification {
 
         when: 'The insert to the chunks collection fails'
         def futureResult = new FutureResultCallback()
-        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255,
-                disableMD5, metadata, NOOP_INDEXCHECK)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255
+                , metadata, NOOP_INDEXCHECK)
         uploadStream.write(ByteBuffer.wrap(content), Stub(SingleResultCallback))
         uploadStream.close(futureResult)
 
@@ -481,8 +478,8 @@ class GridFSUploadStreamSpecification extends Specification {
 
         when: 'The insert to the files collection fails'
         futureResult = new FutureResultCallback()
-        uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255,
-                disableMD5, metadata, NOOP_INDEXCHECK)
+        uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255
+                , metadata, NOOP_INDEXCHECK)
         uploadStream.write(ByteBuffer.wrap(content), Stub(SingleResultCallback))
         uploadStream.close(futureResult)
 
@@ -511,8 +508,8 @@ class GridFSUploadStreamSpecification extends Specification {
         def filesCollection = Mock(MongoCollection)
         def chunksCollection = Mock(MongoCollection)
         def abortException = new MongoException('Alternative failure')
-        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255,
-                disableMD5, metadata, NOOP_INDEXCHECK)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255
+                , metadata, NOOP_INDEXCHECK)
         def futureResult = new FutureResultCallback()
 
         when:
@@ -544,8 +541,8 @@ class GridFSUploadStreamSpecification extends Specification {
         def indexCheck = Mock(GridFSIndexCheck) {
             1 * checkAndCreateIndex(_) >> { it.last().onResult(null, indexException) }
         }
-        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255,
-                disableMD5, metadata, indexCheck)
+        def uploadStream = new GridFSUploadStreamImpl(clientSession, filesCollection, chunksCollection, fileId, filename, 255
+                , metadata, indexCheck)
         def futureResult = new FutureResultCallback()
 
         when:
