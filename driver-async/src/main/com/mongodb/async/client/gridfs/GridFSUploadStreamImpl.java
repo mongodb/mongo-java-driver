@@ -18,25 +18,22 @@ package com.mongodb.async.client.gridfs;
 
 import com.mongodb.MongoGridFSException;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.client.ClientSession;
 import com.mongodb.async.client.MongoCollection;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.lang.Nullable;
-import com.mongodb.async.client.ClientSession;
 import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.types.Binary;
 import org.bson.types.ObjectId;
 
 import java.nio.ByteBuffer;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.Date;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.internal.HexUtils.toHex;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 
 final class GridFSUploadStreamImpl implements GridFSUploadStream {
@@ -48,8 +45,6 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
     private final String filename;
     private final int chunkSizeBytes;
     private final Document metadata;
-    private final MessageDigest md5;
-    private final boolean disableMD5;
     private final GridFSIndexCheck indexCheck;
     private final Object closeAndWritingLock = new Object();
 
@@ -69,7 +64,7 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
 
     GridFSUploadStreamImpl(@Nullable final ClientSession clientSession, final MongoCollection<GridFSFile> filesCollection,
                            final MongoCollection<Document> chunksCollection, final BsonValue fileId, final String filename,
-                           final int chunkSizeBytes, final boolean disableMD5, @Nullable final Document metadata,
+                           final int chunkSizeBytes, @Nullable final Document metadata,
                            final GridFSIndexCheck indexCheck) {
         this.clientSession = clientSession;
         this.filesCollection = notNull("files collection", filesCollection);
@@ -79,8 +74,6 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
         this.chunkSizeBytes = chunkSizeBytes;
         this.metadata = metadata;
         this.indexCheck = indexCheck;
-        this.disableMD5 = disableMD5;
-        md5 = createMD5Digest();
         chunkIndex = 0;
         bufferOffset = 0;
         buffer = new byte[chunkSizeBytes];
@@ -179,7 +172,7 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
                     errHandlingCallback.onResult(null, t);
                 } else {
                     GridFSFile gridFSFile = new GridFSFile(fileId, filename, lengthInBytes, chunkSizeBytes, new Date(),
-                            getMD5Digest(), metadata);
+                            null, metadata);
 
                     SingleResultCallback<Void> insertCallback = new SingleResultCallback<Void>() {
                         @Override
@@ -251,10 +244,7 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
     }
 
     private void writeChunk(final SingleResultCallback<Void> callback) {
-        if (md5 == null && !disableMD5) {
-            callback.onResult(null, new MongoGridFSException("No MD5 message digest available. "
-                    + "Use `GridFSBucket.withDisableMD5(true)` to disable creating a MD5 hash."));
-        } else if (bufferOffset > 0) {
+        if (bufferOffset > 0) {
             Document insertDocument = new Document("files_id", fileId).append("n", chunkIndex).append("data", getData());
             SingleResultCallback<Void> insertCallback = new SingleResultCallback<Void>() {
                 @Override
@@ -262,7 +252,6 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
                     if (t != null) {
                         callback.onResult(null, t);
                     } else {
-                        updateMD5();
                         chunkIndex++;
                         bufferOffset = 0;
                         callback.onResult(null, null);
@@ -319,27 +308,4 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
         callback.onResult(null, new MongoGridFSException("The AsyncOutputStream does not support concurrent writing."));
     }
 
-    @Nullable
-    private MessageDigest createMD5Digest() {
-        if (disableMD5) {
-            return null;
-        } else {
-            try {
-                return MessageDigest.getInstance("MD5");
-            } catch (NoSuchAlgorithmException e) {
-                return null;
-            }
-        }
-    }
-
-    @Nullable
-    private String getMD5Digest() {
-        return md5 != null ? toHex(md5.digest()) : null;
-    }
-
-    private void updateMD5() {
-        if (md5 != null) {
-            md5.update(buffer);
-        }
-    }
 }
