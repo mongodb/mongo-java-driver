@@ -241,7 +241,7 @@ class LimitedLookaheadMarkSpecification extends Specification {
         ]
     }
 
-    def 'Lookahead should work at various states with Mark'(BsonWriter writer) {
+    def 'Lookahead should work at various states with Mark'(BsonWriter writer, boolean useAlternateReader) {
         given:
         writer.with {
             writeStartDocument()
@@ -274,7 +274,11 @@ class LimitedLookaheadMarkSpecification extends Specification {
             BasicOutputBuffer buffer = (BasicOutputBuffer) writer.getBsonOutput();
             reader = new BsonBinaryReader(new ByteBufferBsonInput(buffer.getByteBuffers().get(0)))
         } else if (writer instanceof JsonWriter) {
-            reader = new JsonReader(writer.writer.toString())
+            if (useAlternateReader) {
+                reader = new JsonReader(new InputStreamReader(new ByteArrayInputStream(writer.writer.toString().getBytes())))
+            } else {
+                reader = new JsonReader(writer.writer.toString())
+            }
         }
 
         reader.readStartDocument()
@@ -420,11 +424,11 @@ class LimitedLookaheadMarkSpecification extends Specification {
         reader.readEndDocument()
 
         where:
-        writer << [
-                new BsonDocumentWriter(new BsonDocument()),
-                new BsonBinaryWriter(new BasicOutputBuffer()),
-                new JsonWriter(new StringWriter())
-        ]
+        writer | useAlternateReader
+        new BsonDocumentWriter(new BsonDocument()) | false
+        new BsonBinaryWriter(new BasicOutputBuffer()) | false
+        new JsonWriter(new StringWriter()) | false
+        new JsonWriter(new StringWriter()) | true
     }
 
     def 'should peek binary subtype and size'(BsonWriter writer) {

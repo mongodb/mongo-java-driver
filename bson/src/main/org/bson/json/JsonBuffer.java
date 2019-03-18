@@ -16,47 +16,17 @@
 
 package org.bson.json;
 
-class JsonBuffer {
+interface JsonBuffer {
 
-    private final String buffer;
-    private int position;
-    private boolean eof;
+    int getPosition();
 
-    JsonBuffer(final String buffer) {
-        this.buffer = buffer;
-    }
+    int read();
 
-    public int getPosition() {
-        return position;
-    }
+    void unread(int c);
 
-    public void setPosition(final int position) {
-        this.position = position;
-    }
+    int mark();
 
-    public int read() {
-        if (eof) {
-            throw new JsonParseException("Trying to read past EOF.");
-    } else if (position >= buffer.length()) {
-            eof = true;
-            return -1;
-        }  else {
-            return buffer.charAt(position++);
-        }
-    }
+    void reset(int markPos);
 
-    public void unread(final int c) {
-        eof = false;
-        if (c != -1 && buffer.charAt(position - 1) == c) {
-            position--;
-        }
-    }
-
-    public String substring(final int beginIndex) {
-        return buffer.substring(beginIndex);
-    }
-
-    public String substring(final int beginIndex, final int endIndex) {
-        return buffer.substring(beginIndex, endIndex);
-    }
+    void discard(int markPos);
 }
