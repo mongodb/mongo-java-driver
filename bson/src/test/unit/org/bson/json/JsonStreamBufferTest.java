@@ -18,13 +18,15 @@ package org.bson.json;
 
 import org.junit.Test;
 
+import java.io.ByteArrayInputStream;
+
 import static org.junit.Assert.assertEquals;
 
-public class JsonBufferTest {
+public class JsonStreamBufferTest {
 
     @Test
     public void testRead() {
-        JsonBuffer buffer = new JsonBuffer("ABC");
+        JsonStreamBuffer buffer = new JsonStreamBuffer(new ByteArrayInputStream("ABC".getBytes()));
         assertEquals('A', buffer.read());
         assertEquals('B', buffer.read());
         assertEquals('C', buffer.read());
@@ -33,7 +35,7 @@ public class JsonBufferTest {
 
     @Test
     public void testUnRead() {
-        JsonBuffer buffer = new JsonBuffer("A");
+        JsonStreamBuffer buffer = new JsonStreamBuffer(new ByteArrayInputStream("A".getBytes()));
         buffer.unread(buffer.read());
         assertEquals('A', buffer.read());
         assertEquals(-1, buffer.read());
@@ -41,15 +43,16 @@ public class JsonBufferTest {
 
     @Test
     public void testPosition() {
-        JsonBuffer buffer = new JsonBuffer("ABC");
+        JsonStreamBuffer buffer = new JsonStreamBuffer(new ByteArrayInputStream("ABC".getBytes()));
 
-        buffer.setPosition(2);
+        buffer.read();
+        buffer.read();
         assertEquals(2, buffer.getPosition());
     }
 
     @Test(expected = JsonParseException.class)
     public void testEOFCheck() {
-        JsonBuffer buffer = new JsonBuffer("");
+        JsonStreamBuffer buffer = new JsonStreamBuffer(new ByteArrayInputStream("".getBytes()));
 
         buffer.read();
         buffer.read();

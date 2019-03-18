@@ -16,21 +16,19 @@
 
 package org.bson.json;
 
-import java.io.Closeable;
+import java.io.InputStream;
 
-interface JsonBuffer extends Closeable {
+final class JsonBufferFactory {
 
-    int getPosition();
+    private JsonBufferFactory() {
 
-    int read();
+    }
 
-    void unread(int c);
+    static JsonBuffer createBuffer(final String json) {
+        return new JsonStringBuffer(json);
+    }
 
-    int mark();
-
-    void reset(int markPos);
-
-    void close();
-
-    void discard(int markPos);
+    static JsonBuffer createBuffer(final InputStream jsonStream) {
+        return new JsonStreamBuffer(jsonStream);
+    }
 }
