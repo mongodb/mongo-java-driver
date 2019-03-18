@@ -50,7 +50,7 @@ class MongoClientSettingsSpecification extends Specification {
 
         expect:
         settings.getWriteConcern() == WriteConcern.ACKNOWLEDGED
-        !settings.getRetryWrites()
+        settings.getRetryWrites()
         settings.getReadConcern() == ReadConcern.DEFAULT
         settings.getReadPreference() == ReadPreference.primary()
         settings.getCommandListeners().isEmpty()

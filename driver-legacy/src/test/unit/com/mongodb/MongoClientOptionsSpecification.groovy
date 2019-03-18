@@ -52,7 +52,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.getDescription() == null
         options.getApplicationName() == null
         options.getWriteConcern() == WriteConcern.ACKNOWLEDGED
-        !options.getRetryWrites()
+        options.getRetryWrites()
         options.getMinConnectionsPerHost() == 0
         options.getConnectionsPerHost() == 100
         options.getConnectTimeout() == 10000

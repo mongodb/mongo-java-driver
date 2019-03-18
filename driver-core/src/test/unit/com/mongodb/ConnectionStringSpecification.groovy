@@ -134,7 +134,7 @@ class ConnectionStringSpecification extends Specification {
 
         where:
         uri                                                                            | retryWrites | retryWritesValue
-        new ConnectionString('mongodb://localhost/')                    | false       | null
+        new ConnectionString('mongodb://localhost/')                    | true        | null
         new ConnectionString('mongodb://localhost/?retryWrites=false')  | false       | false
         new ConnectionString('mongodb://localhost/?retryWrites=true')   | true        | true
         new ConnectionString('mongodb://localhost/?retryWrites=foos')   | false       | false
@@ -356,7 +356,7 @@ class ConnectionStringSpecification extends Specification {
         connectionString.getStreamType() == null
         connectionString.getApplicationName() == null
         connectionString.getCompressorList() == []
-        !connectionString.getRetryWrites()
+        connectionString.getRetryWrites()
         connectionString.getRetryWritesValue() == null
     }
 

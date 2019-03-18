@@ -81,7 +81,9 @@ public class CommandMonitoringTest {
     @BeforeClass
     public static void beforeClass() {
         commandListener = new TestCommandListener();
-        mongoClient = MongoClients.create(getMongoClientSettingsBuilder().addCommandListener(commandListener).build());
+        mongoClient = MongoClients.create(getMongoClientSettingsBuilder()
+                .retryWrites(false)
+                .addCommandListener(commandListener).build());
     }
 
     @AfterClass

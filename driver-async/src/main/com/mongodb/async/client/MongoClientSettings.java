@@ -330,6 +330,8 @@ public final class MongoClientSettings {
         /**
          * Sets whether writes should be retried if they fail due to a network error.
          *
+         * <p>Starting with the 3.11.0 release, the default value is true</p>
+         *
          * @param retryWrites sets if writes should be retried if they fail due to a network error.
          * @return this
          * @see #getRetryWrites()
@@ -513,6 +515,8 @@ public final class MongoClientSettings {
 
     /**
      * Returns true if writes should be retried if they fail due to a network error.
+     *
+     * <p>Starting with the 3.11.0 release, the default value is true</p>
      *
      * @return the retryWrites value
      * @since 3.6
