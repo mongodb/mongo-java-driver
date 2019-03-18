@@ -179,7 +179,7 @@ class MongoClientURISpecification extends Specification {
         options.getReadPreference() == ReadPreference.primary()
         options.getRequiredReplicaSetName() == null
         !options.isSslEnabled()
-        !options.getRetryWrites()
+        options.getRetryWrites()
     }
 
     def 'should apply default uri to options'() {

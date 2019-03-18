@@ -137,7 +137,7 @@ public final class MongoClientSettings {
     public static final class Builder {
         private ReadPreference readPreference = ReadPreference.primary();
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
-        private boolean retryWrites;
+        private boolean retryWrites = true;
         private ReadConcern readConcern = ReadConcern.DEFAULT;
         private CodecRegistry codecRegistry = MongoClientSettings.getDefaultCodecRegistry();
         private StreamFactoryFactory streamFactoryFactory;
@@ -296,6 +296,8 @@ public final class MongoClientSettings {
 
         /**
          * Sets whether writes should be retried if they fail due to a network error.
+         *
+         * <p>Starting with the 3.11.0 release, the default value is true</p>
          *
          * @param retryWrites sets if writes should be retried if they fail due to a network error.
          * @return this
@@ -457,7 +459,9 @@ public final class MongoClientSettings {
     }
 
     /**
-     * Returns true if writes should be retried if they fail due to a network error.  The default is false.
+     * Returns true if writes should be retried if they fail due to a network error.
+     *
+     * <p>Starting with the 3.11.0 release, the default value is true</p>
      *
      * @return the retryWrites value
      * @mongodb.server.release 3.6

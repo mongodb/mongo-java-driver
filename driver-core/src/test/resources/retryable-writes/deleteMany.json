@@ -13,9 +13,6 @@
   "tests": [
     {
       "description": "DeleteMany ignores retryWrites",
-      "clientOptions": {
-        "retryWrites": true
-      },
       "operation": {
         "name": "deleteMany",
         "arguments": {

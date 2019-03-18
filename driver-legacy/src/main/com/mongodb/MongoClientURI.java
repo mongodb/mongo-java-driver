@@ -205,6 +205,11 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <li>{@code zlibCompressionLevel=integer}: Integer value from -1 to 9 representing the zlib compression level. Lower values will make
  * compression faster, while higher values will make compression better.</li>
  * </ul>
+ * <p>General configuration:</p>
+ * <ul>
+ * <li>{@code retryWrites=true|false}. If true the driver will retry supported write operations if they fail due to a network error.
+ *  Defaults to true.</li>
+ * </ul>
  *
  * <p>Note: This class is a replacement for {@code MongoURI}, to be used with {@code MongoClient}.  The main difference in
  * behavior is that the default write concern is {@code WriteConcern.ACKNOWLEDGED}.</p>

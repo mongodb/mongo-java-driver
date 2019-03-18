@@ -17,6 +17,7 @@
 package com.mongodb.client;
 
 import com.mongodb.ClusterFixture;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.connection.ServerVersion;
@@ -113,9 +114,11 @@ public class RetryableWritesTest {
 
         collectionHelper = new CollectionHelper<Document>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
         BsonDocument clientOptions = definition.getDocument("clientOptions", new BsonDocument());
-        mongoClient = MongoClients.create(getMongoClientSettingsBuilder()
-                .retryWrites(clientOptions.getBoolean("retryWrites", BsonBoolean.FALSE).getValue())
-                .build());
+        MongoClientSettings.Builder builder = getMongoClientSettingsBuilder();
+        if (clientOptions.containsKey("retryWrites")) {
+            builder.retryWrites(clientOptions.getBoolean("retryWrites").getValue());
+        }
+        mongoClient = MongoClients.create(builder.build());
 
         List<BsonDocument> documents = new ArrayList<BsonDocument>();
         for (BsonValue document : data) {

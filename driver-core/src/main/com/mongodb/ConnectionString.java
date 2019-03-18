@@ -154,8 +154,6 @@ import static java.util.Collections.unmodifiableList;
  * {@code "majority"}</li>
  * </ul>
  * </li>
- * <li>{@code retryWrites=true|false}. If true the driver will retry supported write operations if they fail due to a network error.
- *  Defaults to false.</li>
  * <li>{@code wtimeoutMS=ms}
  * <ul>
  * <li>The driver adds { wtimeout : ms } to all write commands. Implies {@code safe=true}.</li>
@@ -224,6 +222,11 @@ import static java.util.Collections.unmodifiableList;
  * currently are 'zlib', 'snappy' and 'zstd'.</li>
  * <li>{@code zlibCompressionLevel=integer}: Integer value from -1 to 9 representing the zlib compression level. Lower values will make
  * compression faster, while higher values will make compression better.</li>
+ * </ul>
+ * <p>General configuration:</p>
+ * <ul>
+ * <li>{@code retryWrites=true|false}. If true the driver will retry supported write operations if they fail due to a network error.
+ *  Defaults to true.</li>
  * </ul>
  *
  * @mongodb.driver.manual reference/connection-string Connection String Format
@@ -1127,14 +1130,16 @@ public class ConnectionString {
     /**
      * Returns true if writes should be retried if they fail due to a network error, and false otherwise
      *
-     * @return the retryWrites value, or false if unset
+     * <p>Starting with the 3.11.0 release, the default value is true</p>
+     *
+     * @return the retryWrites value, or true if unset
      * @since 3.6
      * @mongodb.server.release 3.6
      * @deprecated Prefer {@link #getRetryWritesValue()}
      */
     @Deprecated
     public boolean getRetryWrites() {
-        return retryWrites == null ? false : retryWrites;
+        return retryWrites == null ? true : retryWrites;
     }
 
     /**

@@ -536,6 +536,8 @@ public class MongoClientOptions {
     /**
      * Returns true if writes should be retried if they fail due to a network error.
      *
+     * <p>Starting with the 3.11.0 release, the default value is true</p>
+     *
      * @return the retryWrites value
      * @since 3.6
      * @mongodb.server.release 3.6
@@ -964,7 +966,7 @@ public class MongoClientOptions {
         private List<MongoCompressor> compressorList = Collections.emptyList();
         private ReadPreference readPreference = ReadPreference.primary();
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
-        private boolean retryWrites = false;
+        private boolean retryWrites = true;
         private ReadConcern readConcern = ReadConcern.DEFAULT;
         private CodecRegistry codecRegistry = MongoClient.getDefaultCodecRegistry();
         private ServerSelector serverSelector;
@@ -1318,6 +1320,8 @@ public class MongoClientOptions {
 
         /**
          * Sets whether writes should be retried if they fail due to a network error.
+         *
+         * <p>Starting with the 3.11.0 release, the default value is true</p>
          *
          * @param retryWrites sets if writes should be retried if they fail due to a network error.
          * @return {@code this}

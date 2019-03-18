@@ -10,6 +10,9 @@
   "tests": [
     {
       "description": "causal consistency",
+      "clientOptions": {
+        "retryWrites": false
+      },
       "operations": [
         {
           "name": "updateOne",
@@ -157,6 +160,9 @@
     },
     {
       "description": "causal consistency disabled",
+      "clientOptions": {
+        "retryWrites": false
+      },
       "sessionOptions": {
         "session0": {
           "causalConsistency": false
