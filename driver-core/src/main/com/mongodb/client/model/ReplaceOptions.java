@@ -42,7 +42,9 @@ public class ReplaceOptions {
      *
      * @param updateOptions the updateOptions
      * @return replace options
+     * @deprecated there is no replacement for this method
      */
+    @Deprecated
     public static ReplaceOptions createReplaceOptions(final UpdateOptions updateOptions) {
         notNull("updateOptions", updateOptions);
 
