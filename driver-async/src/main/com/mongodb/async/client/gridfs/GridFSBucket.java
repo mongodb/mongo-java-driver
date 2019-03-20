@@ -80,7 +80,9 @@ public interface GridFSBucket {
      *
      * @return true if computing MD5 checksums when uploading files is disabled.
      * @since 3.8
+     * @deprecated there is no replacement for this method, as MD5 is being removed
      */
+    @Deprecated
     boolean getDisableMD5();
 
     /**
@@ -123,7 +125,9 @@ public interface GridFSBucket {
      * @param disableMD5 true if computing MD5 checksums when uploading files should be disabled.
      * @return a new GridFSBucket instance with the new disable MD5 value.
      * @since 3.8
+     * @deprecated there is no replacement for this method, as MD5 is being removed
      */
+    @Deprecated
     GridFSBucket withDisableMD5(boolean disableMD5);
 
     /**
