@@ -110,14 +110,6 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
     }
 
     @Override
-    public <T> T command(final String database, final BsonDocument command, final boolean slaveOk,
-                         final FieldNameValidator fieldNameValidator,
-                         final Decoder<T> commandResultDecoder) {
-        return command(database, command, fieldNameValidator, getReadPreferenceFromSlaveOk(slaveOk), commandResultDecoder,
-                NoOpSessionContext.INSTANCE);
-    }
-
-    @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
                          final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext) {
         return command(database, command, fieldNameValidator, readPreference, commandResultDecoder, sessionContext, true, null, null);
@@ -130,14 +122,6 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
                          final FieldNameValidator payloadFieldNameValidator) {
         return executeProtocol(new CommandProtocolImpl<T>(database, command, commandFieldNameValidator, readPreference,
                 commandResultDecoder, responseExpected, payload, payloadFieldNameValidator, clusterConnectionMode), sessionContext);
-    }
-
-    @Override
-    public <T> void commandAsync(final String database, final BsonDocument command, final boolean slaveOk,
-                                 final FieldNameValidator fieldNameValidator, final Decoder<T> commandResultDecoder,
-                                 final SingleResultCallback<T> callback) {
-        commandAsync(database, command, fieldNameValidator, getReadPreferenceFromSlaveOk(slaveOk), commandResultDecoder,
-                NoOpSessionContext.INSTANCE, callback);
     }
 
     @Override
@@ -160,22 +144,6 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
 
     @Override
     public <T> QueryResult<T> query(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
-                                    final int numberToReturn, final int skip,
-                                    final boolean slaveOk, final boolean tailableCursor,
-                                    final boolean awaitData, final boolean noCursorTimeout,
-                                    final boolean partial, final boolean oplogReplay,
-                                    final Decoder<T> resultDecoder) {
-        return executeProtocol(new QueryProtocol<T>(namespace, skip, numberToReturn, queryDocument, fields, resultDecoder)
-                               .tailableCursor(tailableCursor)
-                               .slaveOk(getSlaveOk(slaveOk))
-                               .oplogReplay(oplogReplay)
-                               .noCursorTimeout(noCursorTimeout)
-                               .awaitData(awaitData)
-                               .partial(partial));
-    }
-
-    @Override
-    public <T> QueryResult<T> query(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
                                     final int skip, final int limit, final int batchSize,
                                     final boolean slaveOk, final boolean tailableCursor,
                                     final boolean awaitData, final boolean noCursorTimeout,
@@ -188,22 +156,6 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
                                .noCursorTimeout(noCursorTimeout)
                                .awaitData(awaitData)
                                .partial(partial));
-    }
-
-    @Override
-    public <T> void queryAsync(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
-                               final int numberToReturn, final int skip,
-                               final boolean slaveOk, final boolean tailableCursor, final boolean awaitData, final boolean noCursorTimeout,
-                               final boolean partial,
-                               final boolean oplogReplay, final Decoder<T> resultDecoder,
-                               final SingleResultCallback<QueryResult<T>> callback) {
-        executeProtocolAsync(new QueryProtocol<T>(namespace, skip, numberToReturn, queryDocument, fields, resultDecoder)
-                             .tailableCursor(tailableCursor)
-                             .slaveOk(getSlaveOk(slaveOk))
-                             .oplogReplay(oplogReplay)
-                             .noCursorTimeout(noCursorTimeout)
-                             .awaitData(awaitData)
-                             .partial(partial), callback);
     }
 
     @Override
@@ -233,27 +185,13 @@ public class DefaultServerConnection extends AbstractReferenceCounted implements
     }
 
     @Override
-    public void killCursor(final List<Long> cursors) {
-        killCursor(null, cursors);
-    }
-
-    @Override
     public void killCursor(final MongoNamespace namespace, final List<Long> cursors) {
         executeProtocol(new KillCursorProtocol(namespace, cursors));
     }
 
     @Override
-    public void killCursorAsync(final List<Long> cursors, final SingleResultCallback<Void> callback) {
-        killCursorAsync(null, cursors, callback);
-    }
-
-    @Override
     public void killCursorAsync(final MongoNamespace namespace, final List<Long> cursors, final SingleResultCallback<Void> callback) {
         executeProtocolAsync(new KillCursorProtocol(namespace, cursors), callback);
-    }
-
-    private ReadPreference getReadPreferenceFromSlaveOk(final boolean slaveOk) {
-        return getSlaveOk(slaveOk) ? ReadPreference.secondaryPreferred() : ReadPreference.primary();
     }
 
     private boolean getSlaveOk(final boolean slaveOk) {

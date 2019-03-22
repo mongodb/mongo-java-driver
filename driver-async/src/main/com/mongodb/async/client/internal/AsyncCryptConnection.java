@@ -218,21 +218,6 @@ class AsyncCryptConnection implements AsyncConnection {
     }
 
     @Override
-    public <T> void commandAsync(final String database, final BsonDocument command, final boolean slaveOk,
-                                 final FieldNameValidator fieldNameValidator, final Decoder<T> commandResultDecoder,
-                                 final SingleResultCallback<T> callback) {
-        callback.onResult(null, new UnsupportedOperationException());
-    }
-
-    @Override
-    public <T> void queryAsync(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
-                               final int numberToReturn, final int skip, final boolean slaveOk, final boolean tailableCursor,
-                               final boolean awaitData, final boolean noCursorTimeout, final boolean partial, final boolean oplogReplay,
-                               final Decoder<T> resultDecoder, final SingleResultCallback<QueryResult<T>> callback) {
-        callback.onResult(null, new UnsupportedOperationException());
-    }
-
-    @Override
     public <T> void queryAsync(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
                                final int skip, final int limit, final int batchSize, final boolean slaveOk, final boolean tailableCursor,
                                final boolean awaitData, final boolean noCursorTimeout, final boolean partial, final boolean oplogReplay,
@@ -243,11 +228,6 @@ class AsyncCryptConnection implements AsyncConnection {
     @Override
     public <T> void getMoreAsync(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
                                  final Decoder<T> resultDecoder, final SingleResultCallback<QueryResult<T>> callback) {
-        callback.onResult(null, new UnsupportedOperationException());
-    }
-
-    @Override
-    public void killCursorAsync(final List<Long> cursors, final SingleResultCallback<Void> callback) {
         callback.onResult(null, new UnsupportedOperationException());
     }
 
