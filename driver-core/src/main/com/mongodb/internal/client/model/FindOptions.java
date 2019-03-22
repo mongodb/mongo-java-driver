@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package com.mongodb.client.model;
+package com.mongodb.internal.client.model;
 
 import com.mongodb.CursorType;
+import com.mongodb.client.model.Collation;
 import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
 
@@ -28,12 +29,9 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * The options to apply to a find operation (also commonly referred to as a query).
  *
- * @since 3.0
  * @mongodb.driver.manual tutorial/query-documents/ Find
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#op-query OP_QUERY
- * @deprecated there is no replacement for this class
  */
-@Deprecated
 public final class FindOptions {
     private int batchSize;
     private int limit;

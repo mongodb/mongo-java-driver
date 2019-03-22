@@ -23,7 +23,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.FindIterable;
 import com.mongodb.client.model.Collation;
-import com.mongodb.client.model.FindOptions;
+import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.lang.Nullable;
 import com.mongodb.operation.BatchCursor;
