@@ -16,7 +16,6 @@
 
 package com.mongodb.client.internal
 
-
 import com.mongodb.Function
 import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
@@ -25,8 +24,8 @@ import com.mongodb.WriteConcern
 import com.mongodb.client.ClientSession
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.changestream.ChangeStreamDocument
-import com.mongodb.client.model.changestream.ChangeStreamLevel
 import com.mongodb.client.model.changestream.FullDocument
+import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
 import com.mongodb.operation.AggregateResponseBatchCursor
 import com.mongodb.operation.ChangeStreamOperation
 import org.bson.BsonDocument

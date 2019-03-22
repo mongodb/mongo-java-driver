@@ -21,7 +21,7 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
-import com.mongodb.client.model.changestream.ChangeStreamLevel;
+import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.lang.Nullable;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;

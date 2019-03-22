@@ -16,7 +16,6 @@
 
 package com.mongodb.client.internal
 
-
 import com.mongodb.MongoClientSettings
 import com.mongodb.MongoInternalException
 import com.mongodb.MongoNamespace

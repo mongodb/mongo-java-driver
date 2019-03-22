@@ -25,7 +25,6 @@ import com.mongodb.client.internal.MongoClientImpl
 import com.mongodb.client.internal.MongoDatabaseImpl
 import com.mongodb.client.internal.MongoIterables
 import com.mongodb.client.internal.TestOperationExecutor
-import com.mongodb.client.model.changestream.ChangeStreamLevel
 import com.mongodb.connection.Cluster
 import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ClusterDescription
@@ -34,6 +33,7 @@ import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
 import com.mongodb.connection.ServerVersion
+import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
 import org.bson.BsonDocument
 import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider

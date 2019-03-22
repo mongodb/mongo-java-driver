@@ -16,7 +16,6 @@
 
 package com.mongodb.operation
 
-
 import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
@@ -29,7 +28,6 @@ import com.mongodb.binding.ConnectionSource
 import com.mongodb.binding.ReadBinding
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.changestream.ChangeStreamDocument
-import com.mongodb.client.model.changestream.ChangeStreamLevel
 import com.mongodb.client.model.changestream.FullDocument
 import com.mongodb.client.model.changestream.OperationType
 import com.mongodb.client.model.changestream.UpdateDescription
@@ -37,6 +35,7 @@ import com.mongodb.client.test.CollectionHelper
 import com.mongodb.connection.AsyncConnection
 import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
+import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
 import com.mongodb.session.SessionContext
 import org.bson.BsonArray
 import org.bson.BsonBoolean
