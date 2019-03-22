@@ -24,7 +24,6 @@ import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerType
-import com.mongodb.connection.ServerVersion
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.netty.NettyStreamFactory
 import org.bson.BsonDocument
@@ -59,7 +58,7 @@ class CommandHelperSpecification extends Specification {
         given:
         def connection = Mock(InternalStreamConnection) {
             getDescription() >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                    new ServerVersion(3, 6), 6, ServerType.REPLICA_SET_PRIMARY, 1000, 1000, 1000, [])
+                    6, ServerType.REPLICA_SET_PRIMARY, 1000, 1000, 1000, [])
         }
         def clusterClock = new ClusterClock()
         clusterClock.advance(new BsonDocument('clusterTime', new BsonTimestamp(42L)))

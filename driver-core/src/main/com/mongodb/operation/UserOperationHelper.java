@@ -21,7 +21,6 @@ import com.mongodb.MongoCredential;
 import com.mongodb.MongoInternalException;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
-import com.mongodb.connection.ServerVersion;
 import com.mongodb.internal.operation.WriteConcernHelper;
 import com.mongodb.lang.NonNull;
 import org.bson.BsonArray;
@@ -37,7 +36,6 @@ import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeast
 import static com.mongodb.internal.operation.WriteConcernHelper.hasWriteConcernError;
 
 final class UserOperationHelper {
-    private static final ServerVersion FOUR_ZERO = new ServerVersion(4, 0);
 
     static BsonDocument asCommandDocument(final MongoCredential credential, final ConnectionDescription connectionDescription,
                                           final boolean readOnly, final String commandName) {

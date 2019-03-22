@@ -184,8 +184,7 @@ class DefaultServerMonitor implements ServerMonitor {
                 serverMonitorListener.serverHeartbeatSucceeded(
                         new ServerHeartbeatSucceededEvent(connection.getDescription().getConnectionId(), isMasterResult, elapsedTimeNanos));
 
-                return createServerDescription(serverId.getAddress(), isMasterResult, connection.getDescription().getServerVersion(),
-                                               averageRoundTripTime.getAverage());
+                return createServerDescription(serverId.getAddress(), isMasterResult, averageRoundTripTime.getAverage());
             } catch (RuntimeException e) {
                 serverMonitorListener.serverHeartbeatFailed(
                         new ServerHeartbeatFailedEvent(connection.getDescription().getConnectionId(), System.nanoTime() - start, e));
@@ -269,7 +268,7 @@ class DefaultServerMonitor implements ServerMonitor {
         if (previous.getType() != current.getType()) {
             return true;
         }
-        if (!previous.getVersion().equals(current.getVersion())) {
+        if (previous.getMaxWireVersion() != current.getMaxWireVersion()) {
             return true;
         }
         if (previous.getElectionId() != null

@@ -250,21 +250,21 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
 
         then:
         def exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('Collation not supported by server version:')
+        exception.getMessage().startsWith('Collation not supported by wire version:')
 
         when:
         dbCursor.one()
 
         then:
         exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('Collation not supported by server version:')
+        exception.getMessage().startsWith('Collation not supported by wire version:')
 
         when:
         ++dbCursor.iterator()
 
         then:
         exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('Collation not supported by server version:')
+        exception.getMessage().startsWith('Collation not supported by wire version:')
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 4) })

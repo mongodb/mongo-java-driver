@@ -34,7 +34,6 @@ import com.mongodb.binding.SingleConnectionBinding;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
 import com.mongodb.connection.Cluster;
-import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ConnectionPoolSettings;
@@ -58,7 +57,6 @@ import com.mongodb.operation.CommandWriteOperation;
 import com.mongodb.operation.DropDatabaseOperation;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
-import com.mongodb.selector.ServerSelector;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
@@ -103,6 +101,8 @@ public final class ClusterFixture {
     private static Map<ReadPreference, ReadWriteBinding> bindingMap = new HashMap<ReadPreference, ReadWriteBinding>();
     private static Map<ReadPreference, AsyncReadWriteBinding> asyncBindingMap = new HashMap<ReadPreference, AsyncReadWriteBinding>();
 
+    private static ServerVersion serverVersion;
+
     static {
         Runtime.getRuntime().addShutdownHook(new ShutdownHook());
     }
@@ -119,13 +119,20 @@ public final class ClusterFixture {
     }
 
     public static ServerVersion getServerVersion() {
-        return getCluster().selectServer(new ServerSelector() {
-            @Override
-            @SuppressWarnings("deprecation")
-            public List<ServerDescription> select(final ClusterDescription clusterDescription) {
-                return clusterDescription.getAny();
-            }
-        }).getDescription().getVersion();
+        if (serverVersion == null) {
+            serverVersion = getVersion(new CommandReadOperation<BsonDocument>("admin",
+                    new BsonDocument("buildInfo", new BsonInt32(1)), new BsonDocumentCodec())
+                    .execute(new ClusterBinding(getCluster(), ReadPreference.nearest(), ReadConcern.DEFAULT)));
+        }
+        return serverVersion;
+    }
+
+    private static ServerVersion getVersion(final BsonDocument buildInfoResult) {
+        List<BsonValue> versionArray = buildInfoResult.getArray("versionArray").subList(0, 3);
+
+        return new ServerVersion(asList(versionArray.get(0).asInt32().getValue(),
+                versionArray.get(1).asInt32().getValue(),
+                versionArray.get(2).asInt32().getValue()));
     }
 
     public static boolean serverVersionAtLeast(final List<Integer> versionArray) {

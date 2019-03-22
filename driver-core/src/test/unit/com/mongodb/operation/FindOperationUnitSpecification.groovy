@@ -32,7 +32,6 @@ import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.QueryResult
 import com.mongodb.connection.ServerId
-import com.mongodb.connection.ServerVersion
 import com.mongodb.session.SessionContext
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -52,9 +51,8 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
 
     def 'should query with the correct arguments'() {
         given:
-        def serverVersion = new ServerVersion(3, 0)
         def connectionDescription = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                serverVersion, 3, STANDALONE, 1000, 16000000, 48000000, [])
+                 3, STANDALONE, 1000, 16000000, 48000000, [])
         def connection = Mock(Connection) {
             _ * getDescription() >> connectionDescription
         }
@@ -226,7 +224,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
         def namespace = new MongoNamespace(dbName, collectionName)
         def decoder = Stub(Decoder)
         def connectionDescription = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                new ServerVersion(3, 0), 3, STANDALONE, 1000, 16000000, 48000000, [])
+                 3, STANDALONE, 1000, 16000000, 48000000, [])
         def connection = Mock(Connection) {
             _ * getDescription() >> connectionDescription
         }
@@ -265,7 +263,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
         def namespace = new MongoNamespace(dbName, collectionName)
         def decoder = Stub(Decoder)
         def connectionDescription = new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                new ServerVersion(3, 0), 3, STANDALONE, 1000, 16000000, 48000000, [])
+                 3, STANDALONE, 1000, 16000000, 48000000, [])
 
         def connection = Mock(AsyncConnection) {
             _ * getDescription() >> connectionDescription
@@ -322,7 +320,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
 
         then:
         def exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('Collation not supported by server version:')
+        exception.getMessage().startsWith('Collation not supported by wire version:')
 
         where:
         async << [true, false]

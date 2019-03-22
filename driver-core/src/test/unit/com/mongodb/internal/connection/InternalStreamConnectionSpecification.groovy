@@ -33,7 +33,6 @@ import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerType
-import com.mongodb.connection.ServerVersion
 import com.mongodb.connection.Stream
 import com.mongodb.connection.StreamFactory
 import com.mongodb.event.CommandFailedEvent
@@ -74,7 +73,7 @@ class InternalStreamConnectionSpecification extends Specification {
     def commandListener = new TestCommandListener()
     def messageSettings = MessageSettings.builder().maxWireVersion(THREE_DOT_SIX_WIRE_VERSION).build()
 
-    def connectionDescription = new ConnectionDescription(connectionId, new ServerVersion(3, 6), 3,
+    def connectionDescription = new ConnectionDescription(connectionId, 3,
             ServerType.STANDALONE, getDefaultMaxWriteBatchSize(), getDefaultMaxDocumentSize(), getDefaultMaxMessageSize(), [])
     def stream = Mock(Stream) {
         openAsync(_) >> { it[0].completed(null) }

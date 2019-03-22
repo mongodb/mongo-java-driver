@@ -23,7 +23,6 @@ import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerType;
-import com.mongodb.connection.ServerVersion;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -53,15 +52,13 @@ import static com.mongodb.connection.ServerType.REPLICA_SET_SECONDARY;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.connection.ServerType.STANDALONE;
 import static com.mongodb.connection.ServerType.UNKNOWN;
-import static java.util.Arrays.asList;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
 public final class DescriptionHelper {
 
     static ConnectionDescription createConnectionDescription(final ConnectionId connectionId,
-                                                             final BsonDocument isMasterResult,
-                                                             final BsonDocument buildInfoResult) {
-        ConnectionDescription connectionDescription = new ConnectionDescription(connectionId, getVersion(buildInfoResult),
+                                                             final BsonDocument isMasterResult) {
+        ConnectionDescription connectionDescription = new ConnectionDescription(connectionId,
                 getMaxWireVersion(isMasterResult), getServerType(isMasterResult), getMaxWriteBatchSize(isMasterResult),
                 getMaxBsonObjectSize(isMasterResult), getMaxMessageSizeBytes(isMasterResult), getCompressors(isMasterResult));
         if (isMasterResult.containsKey("connectionId")) {
@@ -73,10 +70,9 @@ public final class DescriptionHelper {
     }
 
     public static ServerDescription createServerDescription(final ServerAddress serverAddress, final BsonDocument isMasterResult,
-                                                            final ServerVersion serverVersion, final long roundTripTime) {
+                                                            final long roundTripTime) {
         return ServerDescription.builder()
                                 .state(CONNECTED)
-                                .version(serverVersion)
                                 .address(serverAddress)
                                 .type(getServerType(isMasterResult))
                                 .canonicalAddress(isMasterResult.containsKey("me") ? isMasterResult.getString("me").getValue() : null)
@@ -143,14 +139,6 @@ public final class DescriptionHelper {
         } else {
             return null;
         }
-    }
-
-    static ServerVersion getVersion(final BsonDocument buildInfoResult) {
-        List<BsonValue> versionArray = buildInfoResult.getArray("versionArray").subList(0, 3);
-
-        return new ServerVersion(asList(versionArray.get(0).asInt32().getValue(),
-                                        versionArray.get(1).asInt32().getValue(),
-                                        versionArray.get(2).asInt32().getValue()));
     }
 
     private static Set<String> listToSet(final BsonArray array) {

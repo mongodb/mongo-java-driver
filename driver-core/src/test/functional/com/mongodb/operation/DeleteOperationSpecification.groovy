@@ -92,7 +92,7 @@ class DeleteOperationSpecification extends OperationFunctionalSpecification {
         then:
         def exception = thrown(Exception)
         exception instanceof IllegalArgumentException
-        exception.getMessage().startsWith('Collation not supported by server version:')
+        exception.getMessage().startsWith('Collation not supported by wire version:')
 
         where:
         [async, requests] << [

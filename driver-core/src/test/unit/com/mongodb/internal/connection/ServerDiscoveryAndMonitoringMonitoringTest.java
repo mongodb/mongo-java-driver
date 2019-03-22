@@ -21,7 +21,6 @@ import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.connection.ServerType;
-import com.mongodb.connection.ServerVersion;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ClusterOpeningEvent;
 import com.mongodb.event.ServerClosedEvent;
@@ -200,7 +199,6 @@ public class ServerDiscoveryAndMonitoringMonitoringTest extends AbstractServerDi
                 .hosts(getHostNamesSet(serverDescriptionDocument, "hosts"))
                 .arbiters(getHostNamesSet(serverDescriptionDocument, "arbiters"))
                 .passives(getHostNamesSet(serverDescriptionDocument, "passives"))
-                .version(serverType == ServerType.UNKNOWN ? new ServerVersion() : new ServerVersion(2, 6))
                 .build();
     }
 

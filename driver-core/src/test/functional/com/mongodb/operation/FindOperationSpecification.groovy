@@ -39,7 +39,6 @@ import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.QueryResult
 import com.mongodb.connection.ServerId
-import com.mongodb.connection.ServerVersion
 import com.mongodb.session.SessionContext
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -552,7 +551,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                new ServerVersion(3, 6), 6, STANDALONE, 1000, 100000, 100000, [])
+                 6, STANDALONE, 1000, 100000, 100000, [])
         1 * connection.command(_, commandDocument, _, _, _, sessionContext) >>
                 new BsonDocument('cursor', new BsonDocument('id', new BsonInt64(1))
                         .append('ns', new BsonString(getNamespace().getFullName()))
@@ -590,7 +589,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                new ServerVersion(3, 6), 6, STANDALONE, 1000, 100000, 100000, [])
+                 6, STANDALONE, 1000, 100000, 100000, [])
         1 * connection.commandAsync(_, commandDocument, _, _, _, sessionContext, _) >> {
             it[6].onResult(new BsonDocument('cursor', new BsonDocument('id', new BsonInt64(1))
                     .append('ns', new BsonString(getNamespace().getFullName()))
@@ -631,7 +630,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                new ServerVersion(2, 6), 2, STANDALONE, 1000, 100000, 100000, [])
+                 2, STANDALONE, 1000, 100000, 100000, [])
 
 
         1 * connection.query(getNamespace(), operation.filter, operation.projection, 0, 0, 0, false, false, false, false,
@@ -663,7 +662,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                new ServerVersion(2, 6), 2, STANDALONE, 1000, 100000, 100000, [])
+                 2, STANDALONE, 1000, 100000, 100000, [])
 
         1 * connection.query(getNamespace(), new BsonDocument('$query', operation.filter)
                 .append('$explain', BsonBoolean.TRUE).append('$orderby', operation.sort)

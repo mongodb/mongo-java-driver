@@ -79,7 +79,6 @@ public class ServerDescription {
     private final long roundTripTimeNanos;
     private final boolean ok;
     private final ServerConnectionState state;
-    private final ServerVersion version;
 
     private final int minWireVersion;
     private final int maxWireVersion;
@@ -141,7 +140,6 @@ public class ServerDescription {
         private long roundTripTimeNanos;
         private boolean ok;
         private ServerConnectionState state;
-        private ServerVersion version = new ServerVersion();
         private int minWireVersion = 0;
         private int maxWireVersion = 0;
         private ObjectId electionId;
@@ -298,20 +296,6 @@ public class ServerDescription {
          */
         public Builder state(final ServerConnectionState state) {
             this.state = state;
-            return this;
-        }
-
-        /**
-         * Sets the server version
-         *
-         * @param version a ServerVersion representing which version of MongoDB is running on this server
-         * @return this
-         * @deprecated Use {@link #maxWireVersion} instead
-         */
-        @Deprecated
-        public Builder version(final ServerVersion version) {
-            notNull("version", version);
-            this.version = version;
             return this;
         }
 
@@ -727,17 +711,6 @@ public class ServerDescription {
     }
 
     /**
-     * Gets the server version
-     *
-     * @return a ServerVersion representing which version of MongoDB is running on this server
-     * @deprecated Use {@link #getMaxWireVersion()} instead
-     */
-    @Deprecated
-    public ServerVersion getVersion() {
-        return version;
-    }
-
-    /**
      * Get the time it took to make the round trip for requesting this information from the server in nanoseconds.
      *
      * @return the time taken to request the information, in nano seconds
@@ -809,9 +782,6 @@ public class ServerDescription {
         if (type != that.type) {
             return false;
         }
-        if (!version.equals(that.version)) {
-            return false;
-        }
         if (minWireVersion != that.minWireVersion) {
             return false;
         }
@@ -872,7 +842,6 @@ public class ServerDescription {
         result = 31 * result + (int) (lastUpdateTimeNanos ^ (lastUpdateTimeNanos >>> 32));
         result = 31 * result + (ok ? 1 : 0);
         result = 31 * result + state.hashCode();
-        result = 31 * result + version.hashCode();
         result = 31 * result + minWireVersion;
         result = 31 * result + maxWireVersion;
         result = 31 * result + (logicalSessionTimeoutMinutes != null ? logicalSessionTimeoutMinutes.hashCode() : 0);
@@ -890,7 +859,6 @@ public class ServerDescription {
                + (state == CONNECTED
                   ?
                   ", ok=" + ok
-                  + ", version=" + version
                   + ", minWireVersion=" + minWireVersion
                   + ", maxWireVersion=" + maxWireVersion
                   + ", maxDocumentSize=" + maxDocumentSize
@@ -957,7 +925,6 @@ public class ServerDescription {
         address = notNull("address", builder.address);
         type = notNull("type", builder.type);
         state = notNull("state", builder.state);
-        version = notNull("version", builder.version);
         canonicalAddress = builder.canonicalAddress;
         hosts = builder.hosts;
         passives = builder.passives;

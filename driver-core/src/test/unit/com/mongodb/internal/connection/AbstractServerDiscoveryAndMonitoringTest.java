@@ -27,7 +27,6 @@ import com.mongodb.connection.ServerType;
 import com.mongodb.event.ClusterListener;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
-import org.bson.BsonInt32;
 import util.JsonPoweredTestHelper;
 
 import java.io.File;
@@ -41,8 +40,6 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.connection.ServerConnectionState.CONNECTING;
 import static com.mongodb.internal.connection.DescriptionHelper.createServerDescription;
-import static com.mongodb.internal.connection.DescriptionHelper.getVersion;
-import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 
 public class AbstractServerDiscoveryAndMonitoringTest {
@@ -71,12 +68,7 @@ public class AbstractServerDiscoveryAndMonitoringTest {
         if (isMasterResult.isEmpty()) {
             serverDescription = ServerDescription.builder().type(ServerType.UNKNOWN).state(CONNECTING).address(serverAddress).build();
         } else {
-            serverDescription = createServerDescription(serverAddress, isMasterResult,
-                    getVersion(new BsonDocument("versionArray",
-                            new BsonArray(asList(new BsonInt32(2),
-                                    new BsonInt32(6),
-                                    new BsonInt32(0))))),
-                    5000000);
+            serverDescription = createServerDescription(serverAddress, isMasterResult, 5000000);
         }
         factory.sendNotification(serverAddress, serverDescription);
     }

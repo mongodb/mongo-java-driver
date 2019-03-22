@@ -33,7 +33,6 @@ import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerType
-import com.mongodb.connection.ServerVersion
 import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -46,11 +45,10 @@ import static com.mongodb.connection.ServerConnectionState.CONNECTED
 class BulkWriteBatchSpecification extends Specification {
     def namespace = new MongoNamespace('db.coll')
     def serverDescription = ServerDescription.builder().address(new ServerAddress()).state(CONNECTED)
-            .version(new ServerVersion(3, 6))
             .logicalSessionTimeoutMinutes(30)
             .build()
     def connectionDescription = new ConnectionDescription(
-            new ConnectionId(new ServerId(new ClusterId(), serverDescription.getAddress())), new ServerVersion(3, 6), 6,
+            new ConnectionId(new ServerId(new ClusterId(), serverDescription.getAddress())), 6,
             ServerType.REPLICA_SET_PRIMARY, 1000, 16000, 48000, [])
     def sessionContext = new ReadConcernAwareNoOpSessionContext(ReadConcern.DEFAULT)
 

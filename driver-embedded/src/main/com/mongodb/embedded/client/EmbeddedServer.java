@@ -163,8 +163,7 @@ class EmbeddedServer implements Server, Closeable {
             long start = System.nanoTime();
             BsonDocument isMasterResult = CommandHelper.executeCommand("admin", new BsonDocument("ismaster", new BsonInt32(1)),
                     clusterClock, connection);
-            return DescriptionHelper.createServerDescription(serverAddress, isMasterResult, connection.getDescription().getServerVersion(),
-                    System.nanoTime() - start);
+            return DescriptionHelper.createServerDescription(serverAddress, isMasterResult, System.nanoTime() - start);
         } finally {
             connection.close();
         }

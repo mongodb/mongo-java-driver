@@ -32,7 +32,6 @@ import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerId
-import com.mongodb.connection.ServerVersion
 import com.mongodb.session.SessionContext
 import org.bson.BsonDocument
 import spock.lang.Specification
@@ -449,15 +448,15 @@ class OperationHelperSpecification extends Specification {
 
 
     static ConnectionId connectionId = new ConnectionId(new ServerId(new ClusterId(), new ServerAddress()))
-    static ConnectionDescription threeSixConnectionDescription = new ConnectionDescription(connectionId, new ServerVersion(3, 6), 6,
+    static ConnectionDescription threeSixConnectionDescription = new ConnectionDescription(connectionId, 6,
             STANDALONE, 1000, 100000, 100000, [])
-    static ConnectionDescription threeSixPrimaryConnectionDescription = new ConnectionDescription(connectionId, new ServerVersion(3, 6), 6,
+    static ConnectionDescription threeSixPrimaryConnectionDescription = new ConnectionDescription(connectionId, 6,
             REPLICA_SET_PRIMARY, 1000, 100000, 100000, [])
-    static ConnectionDescription threeFourConnectionDescription = new ConnectionDescription(connectionId, new ServerVersion(3, 4), 5,
+    static ConnectionDescription threeFourConnectionDescription = new ConnectionDescription(connectionId, 5,
             STANDALONE, 1000, 100000, 100000, [])
-    static ConnectionDescription threeTwoConnectionDescription = new ConnectionDescription(connectionId, new ServerVersion(3, 2), 4,
+    static ConnectionDescription threeTwoConnectionDescription = new ConnectionDescription(connectionId, 4,
             STANDALONE, 1000, 100000, 100000, [])
-    static ConnectionDescription threeConnectionDescription = new ConnectionDescription(connectionId, new ServerVersion(3, 0), 3,
+    static ConnectionDescription threeConnectionDescription = new ConnectionDescription(connectionId, 3,
             STANDALONE, 1000, 100000, 100000, [])
 
     static ServerDescription retryableServerDescription = ServerDescription.builder().address(new ServerAddress()).state(CONNECTED)
