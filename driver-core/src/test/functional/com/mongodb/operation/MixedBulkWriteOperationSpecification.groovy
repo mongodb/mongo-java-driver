@@ -936,7 +936,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         then:
         def exception = thrown(Exception)
         exception instanceof IllegalArgumentException
-        exception.getMessage().startsWith('Collation not supported by server version:')
+        exception.getMessage().startsWith('Collation not supported by wire version:')
         getCollectionHelper().count() == 3
 
         where:

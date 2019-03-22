@@ -26,18 +26,12 @@ import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerSettings
 import com.mongodb.connection.ServerType
-import com.mongodb.connection.ServerVersion
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SocketStreamFactory
-import com.mongodb.operation.CommandReadOperation
-import org.bson.BsonDocument
-import org.bson.BsonInt32
-import org.bson.codecs.BsonDocumentCodec
 import org.bson.types.ObjectId
 
 import java.util.concurrent.CountDownLatch
 
-import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
@@ -65,24 +59,6 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
 
         then:
         newDescription.roundTripTimeNanos > 0
-    }
-
-    def 'should return server version'() {
-        given:
-        initializeServerMonitor(getPrimary())
-
-        def commandResult = new CommandReadOperation<BsonDocument>('admin', new BsonDocument('buildinfo', new BsonInt32(1)),
-                                                                   new BsonDocumentCodec())
-                .execute(getBinding())
-        def expectedVersion = new ServerVersion(commandResult.getArray('versionArray')[0..2]*.value)
-        when:
-        latch.await()
-
-        then:
-        newDescription.version == expectedVersion
-
-        cleanup:
-        serverMonitor.close()
     }
 
     def 'should report current exception'() {
@@ -171,9 +147,6 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
         then:
         shouldLogStageChange(description, otherDescription)
 
-        when:
-        otherDescription = createBuilder().version(new ServerVersion(asList(2, 6, 1))).build();
-
         then:
         shouldLogStageChange(description, otherDescription)
 
@@ -208,7 +181,6 @@ class ServerMonitorSpecification extends OperationFunctionalSpecification {
                 .hosts(new HashSet<String>(asList('localhost:27017', 'localhost:27018')))
                 .passives(new HashSet<String>(asList('localhost:27019')))
                 .arbiters(new HashSet<String>(asList('localhost:27020')))
-                .version(new ServerVersion(asList(3, 4, 1)))
                 .electionId(new ObjectId('abcdabcdabcdabcdabcdabcd'))
                 .setVersion(2)
     }

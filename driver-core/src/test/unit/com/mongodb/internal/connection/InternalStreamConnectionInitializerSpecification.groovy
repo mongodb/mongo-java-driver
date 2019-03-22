@@ -25,7 +25,6 @@ import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerType
-import com.mongodb.connection.ServerVersion
 import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -246,7 +245,7 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
 
     private ConnectionDescription getExpectedDescription(final Integer localValue, final Integer serverValue) {
         new ConnectionDescription(new ConnectionId(serverId, localValue, serverValue),
-                new ServerVersion(3, 0), 3, ServerType.STANDALONE, 512, 16777216, 33554432, [])
+                3, ServerType.STANDALONE, 512, 16777216, 33554432, [])
     }
 
     def enqueueSuccessfulReplies(final boolean isArbiter, final Integer serverConnectionId) {
@@ -255,7 +254,6 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
                 'maxWireVersion: 3' +
                 (isArbiter ? ', isreplicaset: true, arbiterOnly: true' : '') +
                 '}'))
-        internalConnection.enqueueReply(buildSuccessfulReply('{ok: 1, versionArray : [3, 0, 0]}'))
         internalConnection.enqueueReply(buildSuccessfulReply(
                 '{ok: 1 ' +
                 (serverConnectionId == null ? '' : ', connectionId: ' + serverConnectionId) +

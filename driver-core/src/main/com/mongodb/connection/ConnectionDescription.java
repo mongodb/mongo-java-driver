@@ -34,7 +34,6 @@ import static com.mongodb.connection.ServerDescription.getDefaultMaxDocumentSize
 @Immutable
 public class ConnectionDescription {
     private final ConnectionId connectionId;
-    private final ServerVersion serverVersion;
     private final int maxWireVersion;
     private final ServerType serverType;
     private final int maxBatchCount;
@@ -51,75 +50,8 @@ public class ConnectionDescription {
      * @param serverId   the server address
      */
     public ConnectionDescription(final ServerId serverId) {
-        this(new ConnectionId(serverId), new ServerVersion(), 0, ServerType.UNKNOWN, DEFAULT_MAX_WRITE_BATCH_SIZE,
+        this(new ConnectionId(serverId), 0, ServerType.UNKNOWN, DEFAULT_MAX_WRITE_BATCH_SIZE,
              getDefaultMaxDocumentSize(), DEFAULT_MAX_MESSAGE_SIZE, Collections.<String>emptyList());
-    }
-
-    /**
-     * Construct an instance.
-     *
-     * @param connectionId    the connection id
-     * @param serverVersion   the server version
-     * @param serverType      the server type
-     * @param maxBatchCount   the max batch count
-     * @param maxDocumentSize the max document size in bytes
-     * @param maxMessageSize  the max message size in bytes
-     * @deprecated Prefer {@link #ConnectionDescription(ConnectionId, ServerVersion, int, ServerType, int, int, int, List)}
-     */
-    @Deprecated
-    public ConnectionDescription(final ConnectionId connectionId, final ServerVersion serverVersion,
-                                 final ServerType serverType, final int maxBatchCount, final int maxDocumentSize,
-                                 final int maxMessageSize) {
-
-        this(connectionId, serverVersion, 0, serverType, maxBatchCount, maxDocumentSize, maxMessageSize, Collections.<String>emptyList());
-    }
-
-    /**
-     * Construct an instance.
-     *
-     * @param connectionId    the connection id
-     * @param serverVersion   the server version
-     * @param serverType      the server type
-     * @param maxBatchCount   the max batch count
-     * @param maxDocumentSize the max document size in bytes
-     * @param maxMessageSize  the max message size in bytes
-     * @param compressors     the available compressors on the connection
-     * @since 3.5
-     * @deprecated Prefer {@link #ConnectionDescription(ConnectionId, ServerVersion, int, ServerType, int, int, int, List)}
-     */
-    @Deprecated
-    public ConnectionDescription(final ConnectionId connectionId, final ServerVersion serverVersion,
-                                 final ServerType serverType, final int maxBatchCount, final int maxDocumentSize,
-                                 final int maxMessageSize, final List<String> compressors) {
-        this(connectionId, serverVersion, 0, serverType, maxBatchCount, maxDocumentSize, maxMessageSize, compressors);
-    }
-
-    /**
-     * Construct an instance.
-     *
-     * @param connectionId    the connection id
-     * @param serverVersion   the server version
-     * @param maxWireVersion  the max wire version
-     * @param serverType      the server type
-     * @param maxBatchCount   the max batch count
-     * @param maxDocumentSize the max document size in bytes
-     * @param maxMessageSize  the max message size in bytes
-     * @param compressors     the available compressors on the connection
-     * @since 3.10
-     * @deprecated
-     */
-    @Deprecated
-    public ConnectionDescription(final ConnectionId connectionId, final ServerVersion serverVersion, final int maxWireVersion,
-                                 final ServerType serverType, final int maxBatchCount, final int maxDocumentSize,
-                                 final int maxMessageSize, final List<String> compressors) {
-        this.connectionId = connectionId;
-        this.serverType = serverType;
-        this.maxBatchCount = maxBatchCount;
-        this.maxDocumentSize = maxDocumentSize;
-        this.maxMessageSize = maxMessageSize;
-        this.serverVersion = serverVersion;
-        this.maxWireVersion = maxWireVersion;
-        this.compressors = notNull("compressors", Collections.unmodifiableList(new ArrayList<String>(compressors)));
     }
 
     /**
@@ -137,7 +69,13 @@ public class ConnectionDescription {
     public ConnectionDescription(final ConnectionId connectionId, final int maxWireVersion,
                                  final ServerType serverType, final int maxBatchCount, final int maxDocumentSize,
                                  final int maxMessageSize, final List<String> compressors) {
-        this(connectionId, new ServerVersion(), maxWireVersion, serverType, maxBatchCount, maxDocumentSize, maxMessageSize, compressors);
+        this.connectionId = connectionId;
+        this.serverType = serverType;
+        this.maxBatchCount = maxBatchCount;
+        this.maxDocumentSize = maxDocumentSize;
+        this.maxMessageSize = maxMessageSize;
+        this.maxWireVersion = maxWireVersion;
+        this.compressors = notNull("compressors", Collections.unmodifiableList(new ArrayList<String>(compressors)));
     }
 
     /**
@@ -149,8 +87,8 @@ public class ConnectionDescription {
      */
     public ConnectionDescription withConnectionId(final ConnectionId connectionId) {
         notNull("connectionId", connectionId);
-        return new ConnectionDescription(connectionId, serverVersion, maxWireVersion, serverType, maxBatchCount, maxDocumentSize,
-                maxMessageSize, compressors);
+        return new ConnectionDescription(connectionId, maxWireVersion, serverType, maxBatchCount, maxDocumentSize, maxMessageSize,
+                compressors);
     }
 
     /**
@@ -169,17 +107,6 @@ public class ConnectionDescription {
      */
     public ConnectionId getConnectionId() {
         return connectionId;
-    }
-
-    /**
-     * Gets the version of the server.
-     *
-     * @return the server version
-     * @deprecated Use {@link #getMaxWireVersion()} instead
-     */
-    @Deprecated
-    public ServerVersion getServerVersion() {
-        return serverVersion;
     }
 
     /**
@@ -283,9 +210,6 @@ public class ConnectionDescription {
         if (serverType != that.serverType) {
             return false;
         }
-        if (!serverVersion.equals(that.serverVersion)) {
-            return false;
-        }
         if (maxWireVersion != that.maxWireVersion) {
             return false;
         }
@@ -299,7 +223,6 @@ public class ConnectionDescription {
     @Override
     public int hashCode() {
         int result = connectionId.hashCode();
-        result = 31 * result + serverVersion.hashCode();
         result = 31 * result + maxBatchCount;
         result = 31 * result + serverType.hashCode();
         result = 31 * result + maxBatchCount;
@@ -313,7 +236,6 @@ public class ConnectionDescription {
     public String toString() {
         return "ConnectionDescription{"
                 + "connectionId=" + connectionId
-                + ", serverVersion=" + serverVersion
                 + ", maxWireVersion=" + maxWireVersion
                 + ", serverType=" + serverType
                 + ", maxBatchCount=" + maxBatchCount

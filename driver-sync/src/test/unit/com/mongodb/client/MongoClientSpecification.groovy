@@ -32,7 +32,6 @@ import com.mongodb.connection.ClusterType
 import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
-import com.mongodb.connection.ServerVersion
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
 import org.bson.BsonDocument
 import org.bson.Document
@@ -179,7 +178,6 @@ class MongoClientSpecification extends Specification {
                          .address(new ServerAddress())
                          .type(ServerType.UNKNOWN)
                          .state(ServerConnectionState.CONNECTING)
-                         .version(new ServerVersion())
                          .build()])
         def cluster = Mock(Cluster) {
             1 * getCurrentDescription() >> {

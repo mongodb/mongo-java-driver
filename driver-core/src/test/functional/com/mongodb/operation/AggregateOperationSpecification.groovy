@@ -175,7 +175,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         def exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('ReadConcern not supported by server version:')
+        exception.getMessage().startsWith('ReadConcern not supported by wire version:')
 
         where:
         [async, readConcern] << [[true, false], [ReadConcern.MAJORITY, ReadConcern.LOCAL]].combinations()
@@ -192,7 +192,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         def exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('Collation not supported by server version:')
+        exception.getMessage().startsWith('Collation not supported by wire version:')
 
         where:
         async << [true, false]
@@ -489,7 +489,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                new ServerVersion(3, 6), 6, STANDALONE, 1000, 100000, 100000, [])
+                6, STANDALONE, 1000, 100000, 100000, [])
         1 * connection.command(_, commandDocument, _, _, _, sessionContext) >>
                 new BsonDocument('cursor', new BsonDocument('id', new BsonInt64(1))
                         .append('ns', new BsonString(getNamespace().getFullName()))
@@ -529,7 +529,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                new ServerVersion(3, 6), 6, STANDALONE, 1000, 100000, 100000, [])
+                6, STANDALONE, 1000, 100000, 100000, [])
         1 * connection.commandAsync(_, commandDocument, _, _, _, sessionContext, _) >> {
             it[6].onResult(new BsonDocument('cursor', new BsonDocument('id', new BsonInt64(1))
                     .append('ns', new BsonString(getNamespace().getFullName()))

@@ -49,10 +49,10 @@ import static com.mongodb.ClusterFixture.disableOnPrimaryTransactionalWriteFailP
 import static com.mongodb.ClusterFixture.enableOnPrimaryTransactionalWriteFailPoint
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
+import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
 import static com.mongodb.WriteConcern.W1
 import static com.mongodb.client.model.Filters.gte
-import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY
 import static com.mongodb.connection.ServerType.STANDALONE
 import static java.util.Arrays.asList
@@ -586,7 +586,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         def exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('Collation not supported by server version:')
+        exception.getMessage().startsWith('Collation not supported by wire version:')
 
         where:
         async << [false, false]

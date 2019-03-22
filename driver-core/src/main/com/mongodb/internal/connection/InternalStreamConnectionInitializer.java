@@ -108,10 +108,9 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
             }
             throw e;
         }
-        BsonDocument buildInfoResult = executeCommand("admin", new BsonDocument("buildinfo", new BsonInt32(1)), internalConnection);
 
         ConnectionDescription connectionDescription = createConnectionDescription(internalConnection.getDescription().getConnectionId(),
-                isMasterResult, buildInfoResult);
+                isMasterResult);
         setAuthenticator(isMasterResult, connectionDescription);
         return connectionDescription;
     }
@@ -170,21 +169,10 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
                                 callback.onResult(null, t);
                             }
                         } else {
-                            executeCommandAsync("admin", new BsonDocument("buildinfo", new BsonInt32(1)), internalConnection,
-                                    new SingleResultCallback<BsonDocument>() {
-                                        @Override
-                                        public void onResult(final BsonDocument buildInfoResult, final Throwable t) {
-                                            if (t != null) {
-                                                callback.onResult(null, t);
-                                            } else {
-                                                ConnectionId connectionId = internalConnection.getDescription().getConnectionId();
-                                                ConnectionDescription connectionDescription = createConnectionDescription(connectionId,
-                                                        isMasterResult, buildInfoResult);
-                                                setAuthenticator(isMasterResult, connectionDescription);
-                                                callback.onResult(connectionDescription, null);
-                                            }
-                                        }
-                                    });
+                            ConnectionId connectionId = internalConnection.getDescription().getConnectionId();
+                            ConnectionDescription connectionDescription = createConnectionDescription(connectionId, isMasterResult);
+                            setAuthenticator(isMasterResult, connectionDescription);
+                            callback.onResult(connectionDescription, null);
                         }
                     }
                 });

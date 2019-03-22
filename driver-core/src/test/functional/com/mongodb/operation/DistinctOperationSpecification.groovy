@@ -34,7 +34,6 @@ import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
-import com.mongodb.connection.ServerVersion
 import com.mongodb.session.SessionContext
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -245,7 +244,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         def exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('ReadConcern not supported by server version:')
+        exception.getMessage().startsWith('ReadConcern not supported by wire version:')
 
         where:
         [async, readConcern] << [[true, false], [ReadConcern.MAJORITY, ReadConcern.LOCAL]].combinations()
@@ -260,7 +259,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         def exception = thrown(IllegalArgumentException)
-        exception.getMessage().startsWith('Collation not supported by server version:')
+        exception.getMessage().startsWith('Collation not supported by wire version:')
 
         where:
         async << [false, false]
@@ -305,7 +304,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                new ServerVersion(3, 6), 6, STANDALONE, 1000, 100000, 100000, [])
+                6, STANDALONE, 1000, 100000, 100000, [])
         1 * connection.command(_, commandDocument, _, _, _, sessionContext) >>
                 new BsonDocument('values', new BsonArrayWrapper([]))
         1 * connection.release()
@@ -342,7 +341,7 @@ class DistinctOperationSpecification extends OperationFunctionalSpecification {
 
         then:
         _ * connection.description >> new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())),
-                new ServerVersion(3, 6), 6, STANDALONE, 1000, 100000, 100000, [])
+                 6, STANDALONE, 1000, 100000, 100000, [])
         1 * connection.commandAsync(_, commandDocument, _, _, _, sessionContext, _) >> {
             it[6].onResult(new BsonDocument('values', new BsonArrayWrapper([])), null)
         }
