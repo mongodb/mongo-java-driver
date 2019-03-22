@@ -25,7 +25,7 @@ import com.mongodb.WriteConcern
 import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
-import com.mongodb.client.model.AggregationLevel
+import com.mongodb.internal.client.model.AggregationLevel
 import com.mongodb.client.model.Collation
 import com.mongodb.operation.AggregateOperation
 import com.mongodb.operation.AggregateToCollectionOperation
