@@ -37,7 +37,7 @@ import com.mongodb.bulk.UpdateRequest
 import com.mongodb.bulk.WriteConcernError
 import com.mongodb.client.ImmutableDocument
 import com.mongodb.client.ImmutableDocumentCodecProvider
-import com.mongodb.client.model.AggregationLevel
+import com.mongodb.internal.client.model.AggregationLevel
 import com.mongodb.client.model.BulkWriteOptions
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CountOptions

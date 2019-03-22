@@ -22,7 +22,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.ClientSession;
-import com.mongodb.client.model.AggregationLevel;
+import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.operation.SyncOperations;
