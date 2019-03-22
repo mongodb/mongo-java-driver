@@ -57,7 +57,6 @@ class ClusterSettingsSpecification extends Specification {
         def settings = ClusterSettings.builder()
                                       .hosts(hosts)
                                       .mode(ClusterConnectionMode.MULTIPLE)
-                                      .description('my cluster')
                                       .requiredClusterType(ClusterType.REPLICA_SET)
                                       .requiredReplicaSetName('foo')
                                       .localThreshold(1, TimeUnit.SECONDS)
@@ -70,7 +69,6 @@ class ClusterSettingsSpecification extends Specification {
 
         then:
         settings.hosts == hosts
-        settings.description == 'my cluster'
         settings.mode == ClusterConnectionMode.MULTIPLE
         settings.requiredClusterType == ClusterType.REPLICA_SET
         settings.requiredReplicaSetName == 'foo'
@@ -88,7 +86,6 @@ class ClusterSettingsSpecification extends Specification {
         def customSettings = ClusterSettings.builder()
                 .hosts(hosts)
                 .mode(ClusterConnectionMode.MULTIPLE)
-                .description('my cluster')
                 .requiredClusterType(ClusterType.REPLICA_SET)
                 .requiredReplicaSetName('foo')
                 .serverSelector(serverSelector)

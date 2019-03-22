@@ -79,7 +79,7 @@ public final class DefaultClusterFactory implements ClusterFactory {
                                  final MongoDriverInformation mongoDriverInformation,
                                  final List<MongoCompressor> compressorList) {
 
-        ClusterId clusterId = new ClusterId(clusterSettings.getDescription());
+        ClusterId clusterId = new ClusterId();
 
 
         ClusterableServerFactory serverFactory = new DefaultClusterableServerFactory(clusterId, clusterSettings, serverSettings,

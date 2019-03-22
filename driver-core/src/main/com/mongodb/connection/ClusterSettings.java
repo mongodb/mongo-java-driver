@@ -18,7 +18,6 @@ package com.mongodb.connection;
 
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientException;
-import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
@@ -55,7 +54,6 @@ public final class ClusterSettings {
     private final ClusterType requiredClusterType;
     private final String requiredReplicaSetName;
     private final ServerSelector serverSelector;
-    private final String description;
     private final long localThresholdMS;
     private final long serverSelectionTimeoutMS;
     private final int maxWaitQueueSize;
@@ -93,7 +91,6 @@ public final class ClusterSettings {
         private ClusterType requiredClusterType = ClusterType.UNKNOWN;
         private String requiredReplicaSetName;
         private ServerSelector serverSelector;
-        private String description;
         private long serverSelectionTimeoutMS = MILLISECONDS.convert(30, TimeUnit.SECONDS);
         private long localThresholdMS = MILLISECONDS.convert(15, MILLISECONDS);
         private int maxWaitQueueSize = 500;
@@ -113,7 +110,6 @@ public final class ClusterSettings {
          */
         public Builder applySettings(final ClusterSettings clusterSettings) {
             notNull("clusterSettings", clusterSettings);
-            description = clusterSettings.description;
             srvHost = clusterSettings.srvHost;
             hosts = clusterSettings.hosts;
             mode = clusterSettings.mode;
@@ -124,19 +120,6 @@ public final class ClusterSettings {
             maxWaitQueueSize = clusterSettings.maxWaitQueueSize;
             clusterListeners = new ArrayList<ClusterListener>(clusterSettings.clusterListeners);
             serverSelector = unpackServerSelector(clusterSettings.serverSelector);
-            return this;
-        }
-
-        /**
-         * Sets the user defined description of the MongoClient.
-         *
-         * @param description the user defined description of the MongoClient
-         * @return this
-         * @deprecated Prefer {@link com.mongodb.MongoClientSettings.Builder#applicationName(String)}
-         */
-        @Deprecated
-        public Builder description(final String description) {
-            this.description = description;
             return this;
         }
 
@@ -351,17 +334,6 @@ public final class ClusterSettings {
     }
 
     /**
-     * Gets the user defined description of the MongoClient.
-     *
-     * @return the user defined description of the MongoClient
-     * @deprecated Prefer {@link MongoClientSettings#getApplicationName()}
-     */
-    @Deprecated
-    public String getDescription() {
-        return description;
-    }
-
-    /**
      * Gets the host name from which to lookup SRV record for the seed list
      * @return the SRV host, or null if none specified
      * @since 3.10
@@ -515,9 +487,6 @@ public final class ClusterSettings {
         if (localThresholdMS != that.localThresholdMS) {
             return false;
         }
-        if (description != null ? !description.equals(that.description) : that.description != null) {
-            return false;
-        }
         if (srvHost != null ? !srvHost.equals(that.srvHost) : that.srvHost != null) {
             return false;
         }
@@ -552,7 +521,6 @@ public final class ClusterSettings {
         result = 31 * result + requiredClusterType.hashCode();
         result = 31 * result + (requiredReplicaSetName != null ? requiredReplicaSetName.hashCode() : 0);
         result = 31 * result + (serverSelector != null ? serverSelector.hashCode() : 0);
-        result = 31 * result + (description != null ? description.hashCode() : 0);
         result = 31 * result + (int) (serverSelectionTimeoutMS ^ (serverSelectionTimeoutMS >>> 32));
         result = 31 * result + (int) (localThresholdMS ^ (localThresholdMS >>> 32));
         result = 31 * result + maxWaitQueueSize;
@@ -573,7 +541,6 @@ public final class ClusterSettings {
                + ", serverSelectionTimeout='" + serverSelectionTimeoutMS + " ms" + '\''
                + ", localThreshold='" + serverSelectionTimeoutMS + " ms" + '\''
                + ", maxWaitQueueSize=" + maxWaitQueueSize
-               + ", description='" + description + '\''
                + '}';
     }
 
@@ -591,7 +558,6 @@ public final class ClusterSettings {
                + ", serverSelectionTimeout='" + serverSelectionTimeoutMS + " ms" + '\''
                + ", maxWaitQueueSize=" + maxWaitQueueSize
                + (requiredReplicaSetName == null ? "" : ", requiredReplicaSetName='" + requiredReplicaSetName + '\'')
-               + (description == null ? "" : ", description='" + description + '\'')
                + '}';
     }
 
@@ -625,7 +591,6 @@ public final class ClusterSettings {
             }
         }
 
-        description = builder.description;
         srvHost = builder.srvHost;
         hosts = builder.hosts;
         mode = builder.mode != null ? builder.mode : hosts.size() == 1 ? ClusterConnectionMode.SINGLE : ClusterConnectionMode.MULTIPLE;

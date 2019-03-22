@@ -30,7 +30,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * @since 3.0
  */
 @Immutable
-public class SocketSettings {
+public final class SocketSettings {
     private final long connectTimeoutMS;
     private final long readTimeoutMS;
     private final int receiveBufferSize;
