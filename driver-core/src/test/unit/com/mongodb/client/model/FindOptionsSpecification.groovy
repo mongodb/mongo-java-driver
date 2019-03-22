@@ -17,6 +17,7 @@
 package com.mongodb.client.model
 
 import com.mongodb.CursorType
+import com.mongodb.internal.client.model.FindOptions
 import org.bson.BsonDocument
 import org.bson.Document
 import spock.lang.Specification

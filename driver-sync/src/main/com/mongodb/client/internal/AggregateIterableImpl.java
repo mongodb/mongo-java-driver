@@ -24,7 +24,7 @@ import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.model.AggregationLevel;
 import com.mongodb.client.model.Collation;
-import com.mongodb.client.model.FindOptions;
+import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.lang.Nullable;
 import com.mongodb.operation.BatchCursor;
