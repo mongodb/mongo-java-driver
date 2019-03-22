@@ -160,12 +160,6 @@ class CryptConnection implements Connection {
     // UNSUPPORTED METHODS for encryption/decryption
 
     @Override
-    public <T> T command(final String database, final BsonDocument command, final boolean slaveOk,
-                         final FieldNameValidator fieldNameValidator, final Decoder<T> commandResultDecoder) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
     public WriteConcernResult insert(final MongoNamespace namespace, final boolean ordered, final InsertRequest insertRequest) {
         throw new UnsupportedOperationException();
     }
@@ -182,14 +176,6 @@ class CryptConnection implements Connection {
 
     @Override
     public <T> QueryResult<T> query(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
-                                    final int numberToReturn, final int skip, final boolean slaveOk, final boolean tailableCursor,
-                                    final boolean awaitData, final boolean noCursorTimeout, final boolean partial,
-                                    final boolean oplogReplay, final Decoder<T> resultDecoder) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public <T> QueryResult<T> query(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
                                     final int skip, final int limit, final int batchSize, final boolean slaveOk,
                                     final boolean tailableCursor, final boolean awaitData, final boolean noCursorTimeout,
                                     final boolean partial, final boolean oplogReplay, final Decoder<T> resultDecoder) {
@@ -199,11 +185,6 @@ class CryptConnection implements Connection {
     @Override
     public <T> QueryResult<T> getMore(final MongoNamespace namespace, final long cursorId, final int numberToReturn,
                                       final Decoder<T> resultDecoder) {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void killCursor(final List<Long> cursors) {
         throw new UnsupportedOperationException();
     }
 

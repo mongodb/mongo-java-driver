@@ -86,23 +86,6 @@ public interface AsyncConnection extends ReferenceCounted {
                      SingleResultCallback<WriteConcernResult> callback);
 
     /**
-     * Execute the command asynchronously.
-     *
-     * @param database             the database to execute the command in
-     * @param command              the command document
-     * @param slaveOk              whether the command can run on a secondary
-     * @param fieldNameValidator   the field name validator for the command document
-     * @param commandResultDecoder the decoder for the result
-     * @param callback             the callback to be passed the command result
-     * @param <T>                  the type of the result
-     * @deprecated Prefer {@link #commandAsync(String, BsonDocument, FieldNameValidator, ReadPreference, Decoder, SessionContext,
-     * SingleResultCallback)}
-     */
-    @Deprecated
-    <T> void commandAsync(String database, BsonDocument command, boolean slaveOk, FieldNameValidator fieldNameValidator,
-                          Decoder<T> commandResultDecoder, SingleResultCallback<T> callback);
-
-    /**
      * Execute the command.
      *
      * @param <T>                  the type of the result
@@ -145,31 +128,6 @@ public interface AsyncConnection extends ReferenceCounted {
      * @param namespace       the namespace to query
      * @param queryDocument   the query document
      * @param fields          the field to include or exclude
-     * @param numberToReturn  the number of documents to return
-     * @param skip            the number of documents to skip
-     * @param slaveOk         whether the query can run on a secondary
-     * @param tailableCursor  whether to return a tailable cursor
-     * @param awaitData       whether a tailable cursor should wait before returning if no documents are available
-     * @param noCursorTimeout whether the cursor should not timeout
-     * @param partial         whether partial results from sharded clusters are acceptable
-     * @param oplogReplay     whether to replay the oplog
-     * @param resultDecoder   the decoder for the query result documents
-     * @param <T>             the query result document type
-     * @param callback        the callback to be passed the write result
-     * @deprecated Replaced by {@link #queryAsync(MongoNamespace, BsonDocument, BsonDocument, int, int, int, boolean, boolean, boolean,
-     * boolean, boolean, boolean, Decoder, SingleResultCallback)}
-     */
-    @Deprecated
-    <T> void queryAsync(MongoNamespace namespace, BsonDocument queryDocument, BsonDocument fields,
-                        int numberToReturn, int skip, boolean slaveOk, boolean tailableCursor, boolean awaitData, boolean noCursorTimeout,
-                        boolean partial, boolean oplogReplay, Decoder<T> resultDecoder, SingleResultCallback<QueryResult<T>> callback);
-
-    /**
-     * Execute the query asynchronously.
-     *
-     * @param namespace       the namespace to query
-     * @param queryDocument   the query document
-     * @param fields          the field to include or exclude
      * @param skip            the number of documents to skip
      * @param limit           the maximum number of documents to return in all batches
      * @param batchSize       the maximum number of documents to return in this batch
@@ -201,16 +159,6 @@ public interface AsyncConnection extends ReferenceCounted {
      */
     <T> void getMoreAsync(MongoNamespace namespace, long cursorId, int numberToReturn, Decoder<T> resultDecoder,
                           SingleResultCallback<QueryResult<T>> callback);
-
-    /**
-     * Asynchronously Kills the given list of cursors.
-     *
-     * @param cursors  the cursors
-     * @param callback the callback that is called once the cursors have been killed
-     * @deprecated Replaced by {@link #killCursorAsync(MongoNamespace, List, SingleResultCallback)}
-     */
-    @Deprecated
-    void killCursorAsync(List<Long> cursors, SingleResultCallback<Void> callback);
 
     /**
      * Asynchronously Kills the given list of cursors.

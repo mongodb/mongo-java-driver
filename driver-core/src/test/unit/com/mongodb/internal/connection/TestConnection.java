@@ -103,14 +103,6 @@ class TestConnection implements Connection, AsyncConnection {
         executeEnqueuedLegacyProtocolAsync(callback);
     }
 
-
-    @Override
-    public <T> T command(final String database, final BsonDocument command, final boolean slaveOk,
-                         final FieldNameValidator fieldNameValidator,
-                         final Decoder<T> commandResultDecoder) {
-        return executeEnqueuedCommandBasedProtocol(null);
-    }
-
     @Override
     public <T> T command(final String database, final BsonDocument command, final FieldNameValidator fieldNameValidator,
                          final ReadPreference readPreference, final Decoder<T> commandResultDecoder, final SessionContext sessionContext) {
@@ -123,13 +115,6 @@ class TestConnection implements Connection, AsyncConnection {
                          final boolean responseExpected, final SplittablePayload payload,
                          final FieldNameValidator payloadFieldNameValidator) {
         return executeEnqueuedCommandBasedProtocol(sessionContext);
-    }
-
-    @Override
-    public <T> void commandAsync(final String database, final BsonDocument command, final boolean slaveOk,
-                                 final FieldNameValidator fieldNameValidator,
-                                 final Decoder<T> commandResultDecoder, final SingleResultCallback<T> callback) {
-        executeEnqueuedCommandBasedProtocolAsync(null, callback);
     }
 
     @Override
@@ -149,30 +134,11 @@ class TestConnection implements Connection, AsyncConnection {
 
     @Override
     public <T> QueryResult<T> query(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
-                                    final int numberToReturn, final int skip,
-                                    final boolean slaveOk, final boolean tailableCursor, final boolean awaitData,
-                                    final boolean noCursorTimeout,
-                                    final boolean partial, final boolean oplogReplay, final Decoder<T> resultDecoder) {
-        return executeEnqueuedLegacyProtocol();
-    }
-
-    @Override
-    public <T> QueryResult<T> query(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
                                     final int skip, final int limit,
                                     final int batchSize, final boolean slaveOk, final boolean tailableCursor, final boolean awaitData,
                                     final boolean noCursorTimeout,
                                     final boolean partial, final boolean oplogReplay, final Decoder<T> resultDecoder) {
         return executeEnqueuedLegacyProtocol();
-    }
-
-    @Override
-    public <T> void queryAsync(final MongoNamespace namespace, final BsonDocument queryDocument, final BsonDocument fields,
-                               final int numberToReturn, final int skip,
-                               final boolean slaveOk, final boolean tailableCursor, final boolean awaitData, final boolean noCursorTimeout,
-                               final boolean partial,
-                               final boolean oplogReplay, final Decoder<T> resultDecoder,
-                               final SingleResultCallback<QueryResult<T>> callback) {
-        executeEnqueuedLegacyProtocolAsync(callback);
     }
 
     @Override
@@ -199,18 +165,8 @@ class TestConnection implements Connection, AsyncConnection {
     }
 
     @Override
-    public void killCursor(final List<Long> cursors) {
-        executeEnqueuedLegacyProtocol();
-    }
-
-    @Override
     public void killCursor(final MongoNamespace namespace, final List<Long> cursors) {
         executeEnqueuedLegacyProtocol();
-    }
-
-    @Override
-    public void killCursorAsync(final List<Long> cursors, final SingleResultCallback<Void> callback) {
-        executeEnqueuedLegacyProtocolAsync(callback);
     }
 
     @Override
