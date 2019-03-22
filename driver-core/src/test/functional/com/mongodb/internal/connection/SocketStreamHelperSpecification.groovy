@@ -39,7 +39,6 @@ class SocketStreamHelperSpecification extends Specification {
         Socket socket = SocketFactory.default.createSocket()
         def socketSettings = SocketSettings.builder()
                 .readTimeout(10, SECONDS)
-                .keepAlive(true)
                 .build()
 
         when:

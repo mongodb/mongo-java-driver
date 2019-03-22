@@ -37,7 +37,7 @@ final class SocketStreamHelper {
                            final SslSettings sslSettings) throws IOException {
         socket.setTcpNoDelay(true);
         socket.setSoTimeout(settings.getReadTimeout(MILLISECONDS));
-        socket.setKeepAlive(settings.isKeepAlive());
+        socket.setKeepAlive(true);
         if (settings.getReceiveBufferSize() > 0) {
             socket.setReceiveBufferSize(settings.getReceiveBufferSize());
         }

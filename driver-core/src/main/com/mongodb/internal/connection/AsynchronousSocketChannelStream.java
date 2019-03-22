@@ -68,7 +68,7 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
             try {
                 AsynchronousSocketChannel attemptConnectionChannel = AsynchronousSocketChannel.open(group);
                 attemptConnectionChannel.setOption(StandardSocketOptions.TCP_NODELAY, true);
-                attemptConnectionChannel.setOption(StandardSocketOptions.SO_KEEPALIVE, settings.isKeepAlive());
+                attemptConnectionChannel.setOption(StandardSocketOptions.SO_KEEPALIVE, true);
                 if (settings.getReceiveBufferSize() > 0) {
                     attemptConnectionChannel.setOption(StandardSocketOptions.SO_RCVBUF, settings.getReceiveBufferSize());
                 }

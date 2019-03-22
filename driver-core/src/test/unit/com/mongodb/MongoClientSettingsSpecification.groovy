@@ -147,7 +147,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.getReadConcern() == ReadConcern.LOCAL
         settings.getApplicationName() == 'app1'
         settings.getSocketSettings() == SocketSettings.builder().build()
-        settings.getHeartbeatSocketSettings() == SocketSettings.builder().readTimeout(10000, TimeUnit.MILLISECONDS).keepAlive(true).build()
+        settings.getHeartbeatSocketSettings() == SocketSettings.builder().readTimeout(10000, TimeUnit.MILLISECONDS).build()
         settings.getCommandListeners().get(0) == commandListener
         settings.getCodecRegistry() == codecRegistry
         settings.getCredential() == credential
