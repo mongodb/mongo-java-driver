@@ -28,7 +28,7 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateViewOptions;
 import com.mongodb.client.model.IndexOptionDefaults;
 import com.mongodb.client.model.ValidationOptions;
-import com.mongodb.client.model.changestream.ChangeStreamLevel;
+import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.lang.Nullable;
 import com.mongodb.operation.CommandReadOperation;
 import com.mongodb.operation.CreateCollectionOperation;

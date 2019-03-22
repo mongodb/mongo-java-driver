@@ -61,11 +61,11 @@ import com.mongodb.client.model.ReplaceOptions
 import com.mongodb.client.model.UpdateManyModel
 import com.mongodb.client.model.UpdateOneModel
 import com.mongodb.client.model.UpdateOptions
-import com.mongodb.client.model.changestream.ChangeStreamLevel
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 import com.mongodb.client.test.Worker
 import com.mongodb.internal.client.model.CountStrategy
+import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
 import com.mongodb.operation.CountOperation
 import com.mongodb.operation.CreateIndexesOperation
 import com.mongodb.operation.DropCollectionOperation

@@ -14,16 +14,11 @@
  * limitations under the License.
  */
 
-package com.mongodb.client.model.changestream;
+package com.mongodb.internal.client.model.changestream;
 
 /**
  * The level at which the change stream operation operates at.
- *
- * @since 3.8
- * @mongodb.server.release 4.0
- *
  */
-@Deprecated
 public enum ChangeStreamLevel {
     /**
      * Observing all changes on the Client
