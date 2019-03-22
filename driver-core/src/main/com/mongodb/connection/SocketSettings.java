@@ -33,7 +33,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 public class SocketSettings {
     private final long connectTimeoutMS;
     private final long readTimeoutMS;
-    private final boolean keepAlive;
     private final int receiveBufferSize;
     private final int sendBufferSize;
 
@@ -62,7 +61,6 @@ public class SocketSettings {
     public static final class Builder {
         private long connectTimeoutMS = 10000;
         private long readTimeoutMS;
-        private boolean keepAlive = true;
         private int receiveBufferSize;
         private int sendBufferSize;
 
@@ -82,7 +80,6 @@ public class SocketSettings {
             notNull("socketSettings", socketSettings);
             connectTimeoutMS = socketSettings.connectTimeoutMS;
             readTimeoutMS = socketSettings.readTimeoutMS;
-            keepAlive = socketSettings.keepAlive;
             receiveBufferSize = socketSettings.receiveBufferSize;
             sendBufferSize = socketSettings.sendBufferSize;
             return this;
@@ -109,21 +106,6 @@ public class SocketSettings {
          */
         public Builder readTimeout(final int readTimeout, final TimeUnit timeUnit) {
             this.readTimeoutMS = MILLISECONDS.convert(readTimeout, timeUnit);
-            return this;
-        }
-
-        /**
-         * Sets keep-alive.
-         *
-         * @param keepAlive false if keep-alive should be disabled
-         * @return this
-         * @deprecated configuring keep-alive has been deprecated. It now defaults to true and disabling it is not recommended.
-         * @see <a href="https://docs.mongodb.com/manual/faq/diagnostics/#does-tcp-keepalive-time-affect-mongodb-deployments">
-         *     Does TCP keep-alive time affect MongoDB Deployments?</a>
-         */
-        @Deprecated
-        public Builder keepAlive(final boolean keepAlive) {
-            this.keepAlive = keepAlive;
             return this;
         }
 
@@ -201,19 +183,6 @@ public class SocketSettings {
     }
 
     /**
-     * Gets whether keep-alive is enabled. Defaults to true.
-     *
-     * @return true if keep-alive is enabled.
-     * @deprecated configuring keep-alive has been deprecated. It now defaults to true and disabling it is not recommended.
-     * @see <a href="https://docs.mongodb.com/manual/faq/diagnostics/#does-tcp-keepalive-time-affect-mongodb-deployments">
-     *     Does TCP keep-alive time affect MongoDB Deployments?</a>
-     */
-    @Deprecated
-    public boolean isKeepAlive() {
-        return keepAlive;
-    }
-
-    /**
      * Gets the receive buffer size. Defaults to the operating system default.
      * @return the receive buffer size
      */
@@ -244,9 +213,6 @@ public class SocketSettings {
         if (connectTimeoutMS != that.connectTimeoutMS) {
             return false;
         }
-        if (keepAlive != that.keepAlive) {
-            return false;
-        }
         if (readTimeoutMS != that.readTimeoutMS) {
             return false;
         }
@@ -264,7 +230,6 @@ public class SocketSettings {
     public int hashCode() {
         int result = (int) (connectTimeoutMS ^ (connectTimeoutMS >>> 32));
         result = 31 * result + (int) (readTimeoutMS ^ (readTimeoutMS >>> 32));
-        result = 31 * result + (keepAlive ? 1 : 0);
         result = 31 * result + receiveBufferSize;
         result = 31 * result + sendBufferSize;
         return result;
@@ -275,16 +240,14 @@ public class SocketSettings {
         return "SocketSettings{"
                + "connectTimeoutMS=" + connectTimeoutMS
                + ", readTimeoutMS=" + readTimeoutMS
-               + ", keepAlive=" + keepAlive
                + ", receiveBufferSize=" + receiveBufferSize
                + ", sendBufferSize=" + sendBufferSize
                + '}';
     }
 
-    SocketSettings(final Builder builder) {
+    private SocketSettings(final Builder builder) {
         connectTimeoutMS = builder.connectTimeoutMS;
         readTimeoutMS = builder.readTimeoutMS;
-        keepAlive = builder.keepAlive;
         receiveBufferSize = builder.receiveBufferSize;
         sendBufferSize = builder.sendBufferSize;
     }

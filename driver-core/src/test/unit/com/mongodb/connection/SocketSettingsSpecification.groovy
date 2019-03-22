@@ -31,7 +31,6 @@ class SocketSettingsSpecification extends Specification {
         then:
         settings.getConnectTimeout(MILLISECONDS) == 10000
         settings.getReadTimeout(MILLISECONDS) == 0
-        settings.keepAlive
         settings.receiveBufferSize == 0
         settings.sendBufferSize == 0
     }
@@ -41,7 +40,6 @@ class SocketSettingsSpecification extends Specification {
         def settings = SocketSettings.builder()
                                      .connectTimeout(5000, MILLISECONDS)
                                      .readTimeout(2000, MILLISECONDS)
-                                     .keepAlive(false)
                                      .sendBufferSize(1000)
                                      .receiveBufferSize(1500)
                                      .build()
@@ -50,7 +48,6 @@ class SocketSettingsSpecification extends Specification {
         then:
         settings.getConnectTimeout(MILLISECONDS) == 5000
         settings.getReadTimeout(MILLISECONDS) == 2000
-        !settings.keepAlive
         settings.sendBufferSize == 1000
         settings.receiveBufferSize == 1500
     }
@@ -60,7 +57,6 @@ class SocketSettingsSpecification extends Specification {
         def original = SocketSettings.builder()
                 .connectTimeout(5000, MILLISECONDS)
                 .readTimeout(2000, MILLISECONDS)
-                .keepAlive(false)
                 .sendBufferSize(1000)
                 .receiveBufferSize(1500)
                 .build()
@@ -70,7 +66,6 @@ class SocketSettingsSpecification extends Specification {
         then:
         settings.getConnectTimeout(MILLISECONDS) == 5000
         settings.getReadTimeout(MILLISECONDS) == 2000
-        !settings.keepAlive
         settings.sendBufferSize == 1000
         settings.receiveBufferSize == 1500
     }
@@ -86,7 +81,6 @@ class SocketSettingsSpecification extends Specification {
         then:
         settings.getConnectTimeout(MILLISECONDS) == 5000
         settings.getReadTimeout(MILLISECONDS) == 2000
-        settings.keepAlive
         settings.sendBufferSize == 0
         settings.receiveBufferSize == 0
     }
@@ -97,7 +91,6 @@ class SocketSettingsSpecification extends Specification {
         def customSettings = SocketSettings.builder()
                 .connectTimeout(5000, MILLISECONDS)
                 .readTimeout(2000, MILLISECONDS)
-                .keepAlive(false)
                 .sendBufferSize(1000)
                 .receiveBufferSize(1500)
                 .build()
@@ -113,14 +106,12 @@ class SocketSettingsSpecification extends Specification {
         SocketSettings.builder()
                       .connectTimeout(5000, MILLISECONDS)
                       .readTimeout(2000, MILLISECONDS)
-                      .keepAlive(true)
                       .sendBufferSize(1000)
                       .receiveBufferSize(1500)
                       .build() ==
         SocketSettings.builder()
                       .connectTimeout(5000, MILLISECONDS)
                       .readTimeout(2000, MILLISECONDS)
-                      .keepAlive(true)
                       .sendBufferSize(1000)
                       .receiveBufferSize(1500)
                       .build()
@@ -128,7 +119,7 @@ class SocketSettingsSpecification extends Specification {
 
     def 'different settings should not be equal'() {
         expect:
-        SocketSettings.builder().keepAlive(true).build() != SocketSettings.builder().keepAlive(false).build()
+        SocketSettings.builder().receiveBufferSize(4) != SocketSettings.builder().receiveBufferSize(3).build()
     }
 
     def 'identical settings should have same hash code'() {
@@ -137,14 +128,12 @@ class SocketSettingsSpecification extends Specification {
         SocketSettings.builder()
                       .connectTimeout(5000, MILLISECONDS)
                       .readTimeout(2000, MILLISECONDS)
-                      .keepAlive(true)
                       .sendBufferSize(1000)
                       .receiveBufferSize(1500)
                       .build().hashCode() ==
         SocketSettings.builder()
                       .connectTimeout(5000, MILLISECONDS)
                       .readTimeout(2000, MILLISECONDS)
-                      .keepAlive(true)
                       .sendBufferSize(1000)
                       .receiveBufferSize(1500)
                       .build().hashCode()
@@ -152,6 +141,6 @@ class SocketSettingsSpecification extends Specification {
 
     def 'different settings should have different hash codes'() {
         expect:
-        SocketSettings.builder().keepAlive(true).build().hashCode() != SocketSettings.builder().keepAlive(false).build().hashCode()
+        SocketSettings.builder().sendBufferSize(4).build().hashCode() != SocketSettings.builder().sendBufferSize(3).build().hashCode()
     }
 }
