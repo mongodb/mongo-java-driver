@@ -16,10 +16,6 @@
 
 package com.mongodb
 
-import com.mongodb.bulk.DeleteRequest
-import com.mongodb.bulk.IndexRequest
-import com.mongodb.bulk.InsertRequest
-import com.mongodb.bulk.UpdateRequest
 import com.mongodb.client.internal.TestOperationExecutor
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CollationAlternate
@@ -32,6 +28,10 @@ import com.mongodb.client.model.DBCollectionFindAndModifyOptions
 import com.mongodb.client.model.DBCollectionFindOptions
 import com.mongodb.client.model.DBCollectionRemoveOptions
 import com.mongodb.client.model.DBCollectionUpdateOptions
+import com.mongodb.internal.bulk.DeleteRequest
+import com.mongodb.internal.bulk.IndexRequest
+import com.mongodb.internal.bulk.InsertRequest
+import com.mongodb.internal.bulk.UpdateRequest
 import com.mongodb.internal.operation.AggregateOperation
 import com.mongodb.internal.operation.AggregateToCollectionOperation
 import com.mongodb.internal.operation.BatchCursor
@@ -733,7 +733,7 @@ class DBCollectionSpecification extends Specification {
 
         when:
         def updateRequest = new UpdateRequest(BsonDocument.parse(query), BsonDocument.parse(update),
-                com.mongodb.bulk.WriteRequest.Type.UPDATE).multi(false)
+                com.mongodb.internal.bulk.WriteRequest.Type.UPDATE).multi(false)
         collection.update(BasicDBObject.parse(query), BasicDBObject.parse(update))
 
         then:
@@ -811,7 +811,7 @@ class DBCollectionSpecification extends Specification {
         def insertedDocument = new BasicDBObject('_id', 1)
         def insertRequest = new InsertRequest(new BsonDocumentWrapper(insertedDocument, collection.getDefaultDBObjectCodec()))
         def updateRequest = new UpdateRequest(BsonDocument.parse(query), BsonDocument.parse(update),
-                com.mongodb.bulk.WriteRequest.Type.UPDATE).multi(false).collation(collation)
+                com.mongodb.internal.bulk.WriteRequest.Type.UPDATE).multi(false).collation(collation)
                 .arrayFilters(bsonDocumentWrapperArrayFilters)
         def deleteRequest = new DeleteRequest(BsonDocument.parse(query)).multi(false).collation(frenchCollation)
         def writeRequests = asList(insertRequest, updateRequest, deleteRequest)

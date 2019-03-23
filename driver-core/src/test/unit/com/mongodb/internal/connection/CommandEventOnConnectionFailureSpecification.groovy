@@ -20,10 +20,10 @@ import com.mongodb.MongoNamespace
 import com.mongodb.MongoSocketReadException
 import com.mongodb.MongoSocketWriteException
 import com.mongodb.ServerAddress
-import com.mongodb.bulk.DeleteRequest
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ServerId
 import com.mongodb.event.CommandFailedEvent
+import com.mongodb.internal.bulk.DeleteRequest
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.codecs.DocumentCodec

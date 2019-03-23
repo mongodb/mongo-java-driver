@@ -16,12 +16,12 @@
 
 package com.mongodb
 
-import com.mongodb.bulk.IndexRequest
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CollationAlternate
 import com.mongodb.client.model.CollationCaseFirst
 import com.mongodb.client.model.CollationMaxVariable
 import com.mongodb.client.model.CollationStrength
+import com.mongodb.internal.bulk.IndexRequest
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import spock.lang.Specification

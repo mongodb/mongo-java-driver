@@ -18,9 +18,9 @@
 
 package com.mongodb.internal.operation
 
-import com.mongodb.bulk.DeleteRequest
-import com.mongodb.bulk.WriteRequest
 import com.mongodb.client.model.Collation
+import com.mongodb.internal.bulk.DeleteRequest
+import com.mongodb.internal.bulk.WriteRequest
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import spock.lang.Specification

@@ -21,10 +21,6 @@ import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcernResult
 import com.mongodb.async.SingleResultCallback
-import com.mongodb.bulk.DeleteRequest
-import com.mongodb.bulk.InsertRequest
-import com.mongodb.bulk.UpdateRequest
-import com.mongodb.bulk.WriteRequest
 import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
@@ -32,6 +28,10 @@ import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.QueryResult
 import com.mongodb.connection.ServerId
 import com.mongodb.diagnostics.logging.Logger
+import com.mongodb.internal.bulk.DeleteRequest
+import com.mongodb.internal.bulk.InsertRequest
+import com.mongodb.internal.bulk.UpdateRequest
+import com.mongodb.internal.bulk.WriteRequest
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonBoolean
 import org.bson.BsonDocument

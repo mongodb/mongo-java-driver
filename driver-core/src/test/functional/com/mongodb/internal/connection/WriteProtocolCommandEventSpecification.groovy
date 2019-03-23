@@ -18,15 +18,15 @@ package com.mongodb.internal.connection
 
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
-import com.mongodb.bulk.DeleteRequest
-import com.mongodb.bulk.InsertRequest
-import com.mongodb.bulk.UpdateRequest
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.netty.NettyStreamFactory
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.event.CommandSucceededEvent
+import com.mongodb.internal.bulk.DeleteRequest
+import com.mongodb.internal.bulk.InsertRequest
+import com.mongodb.internal.bulk.UpdateRequest
 import org.bson.BsonArray
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -38,8 +38,8 @@ import spock.lang.Shared
 import static com.mongodb.ClusterFixture.getCredentialWithCache
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.getSslSettings
-import static com.mongodb.bulk.WriteRequest.Type.REPLACE
-import static com.mongodb.bulk.WriteRequest.Type.UPDATE
+import static com.mongodb.internal.bulk.WriteRequest.Type.REPLACE
+import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE
 import static com.mongodb.internal.connection.ProtocolTestHelper.execute
 
 class WriteProtocolCommandEventSpecification extends OperationFunctionalSpecification {

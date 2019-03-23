@@ -27,9 +27,9 @@ import com.mongodb.WriteConcernResult;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.bulk.BulkWriteError;
 import com.mongodb.bulk.BulkWriteResult;
-import com.mongodb.bulk.WriteRequest;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.internal.bulk.WriteRequest;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -38,10 +38,10 @@ import org.bson.BsonString;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.bulk.WriteRequest.Type.DELETE;
-import static com.mongodb.bulk.WriteRequest.Type.INSERT;
-import static com.mongodb.bulk.WriteRequest.Type.REPLACE;
-import static com.mongodb.bulk.WriteRequest.Type.UPDATE;
+import static com.mongodb.internal.bulk.WriteRequest.Type.DELETE;
+import static com.mongodb.internal.bulk.WriteRequest.Type.INSERT;
+import static com.mongodb.internal.bulk.WriteRequest.Type.REPLACE;
+import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE;
 
 
 /**

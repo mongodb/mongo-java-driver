@@ -22,10 +22,6 @@ import com.mongodb.ServerAddress
 import com.mongodb.WriteConcern
 import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.bulk.BulkWriteUpsert
-import com.mongodb.bulk.DeleteRequest
-import com.mongodb.bulk.InsertRequest
-import com.mongodb.bulk.UpdateRequest
-import com.mongodb.bulk.WriteRequest
 import com.mongodb.client.model.Collation
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
@@ -33,14 +29,18 @@ import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerType
+import com.mongodb.internal.bulk.DeleteRequest
+import com.mongodb.internal.bulk.InsertRequest
+import com.mongodb.internal.bulk.UpdateRequest
+import com.mongodb.internal.bulk.WriteRequest
 import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import spock.lang.Specification
 
-import static com.mongodb.bulk.WriteRequest.Type.REPLACE
-import static com.mongodb.bulk.WriteRequest.Type.UPDATE
 import static com.mongodb.connection.ServerConnectionState.CONNECTED
+import static com.mongodb.internal.bulk.WriteRequest.Type.REPLACE
+import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE
 
 class BulkWriteBatchSpecification extends Specification {
     def namespace = new MongoNamespace('db.coll')

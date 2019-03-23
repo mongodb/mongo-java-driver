@@ -16,8 +16,8 @@
 
 package com.mongodb;
 
-import com.mongodb.bulk.DeleteRequest;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.bulk.DeleteRequest;
 import org.bson.BsonDocumentWrapper;
 import org.bson.codecs.Encoder;
 
@@ -43,7 +43,7 @@ class RemoveRequest extends WriteRequest {
     }
 
     @Override
-    com.mongodb.bulk.WriteRequest toNew(final DBCollection dbCollection) {
+    com.mongodb.internal.bulk.WriteRequest toNew(final DBCollection dbCollection) {
         return new DeleteRequest(new BsonDocumentWrapper<DBObject>(query, this.codec)).multi(isMulti()).collation(collation);
     }
 }

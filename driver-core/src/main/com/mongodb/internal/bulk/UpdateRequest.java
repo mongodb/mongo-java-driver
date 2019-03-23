@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.bulk;
+package com.mongodb.internal.bulk;
 
 import com.mongodb.client.model.Collation;
 import org.bson.BsonDocument;

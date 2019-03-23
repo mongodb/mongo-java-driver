@@ -18,8 +18,8 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
-import com.mongodb.bulk.UpdateRequest;
-import com.mongodb.bulk.WriteRequest;
+import com.mongodb.internal.bulk.UpdateRequest;
+import com.mongodb.internal.bulk.WriteRequest;
 
 import java.util.List;
 

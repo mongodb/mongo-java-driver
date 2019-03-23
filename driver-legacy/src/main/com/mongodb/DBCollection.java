@@ -17,10 +17,6 @@
 package com.mongodb;
 
 import com.mongodb.annotations.ThreadSafe;
-import com.mongodb.bulk.DeleteRequest;
-import com.mongodb.bulk.IndexRequest;
-import com.mongodb.bulk.InsertRequest;
-import com.mongodb.bulk.UpdateRequest;
 import com.mongodb.client.internal.MongoBatchCursorAdapter;
 import com.mongodb.client.internal.MongoIterableImpl;
 import com.mongodb.client.internal.OperationExecutor;
@@ -31,6 +27,11 @@ import com.mongodb.client.model.DBCollectionFindOptions;
 import com.mongodb.client.model.DBCollectionRemoveOptions;
 import com.mongodb.client.model.DBCollectionUpdateOptions;
 import com.mongodb.connection.BufferProvider;
+import com.mongodb.internal.bulk.DeleteRequest;
+import com.mongodb.internal.bulk.IndexRequest;
+import com.mongodb.internal.bulk.InsertRequest;
+import com.mongodb.internal.bulk.UpdateRequest;
+import com.mongodb.internal.bulk.WriteRequest.Type;
 import com.mongodb.internal.operation.AggregateOperation;
 import com.mongodb.internal.operation.AggregateToCollectionOperation;
 import com.mongodb.internal.operation.BaseWriteOperation;
@@ -82,6 +83,7 @@ import static com.mongodb.MongoNamespace.checkCollectionNameValidity;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.ReadPreference.primaryPreferred;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -419,7 +421,7 @@ public class DBCollection {
         DBObject filter = new BasicDBObject(ID_FIELD_NAME, id);
 
         UpdateRequest replaceRequest = new UpdateRequest(wrap(filter), wrap(obj, objectCodec),
-                                                         com.mongodb.bulk.WriteRequest.Type.REPLACE).upsert(true);
+                                                         Type.REPLACE).upsert(true);
 
         return executeWriteOperation(new UpdateOperation(getNamespace(), false, writeConcern, retryWrites,
                 singletonList(replaceRequest)));
@@ -566,9 +568,8 @@ public class DBCollection {
         notNull("update", update);
         notNull("options", options);
         WriteConcern writeConcern = options.getWriteConcern() != null ? options.getWriteConcern() : getWriteConcern();
-        com.mongodb.bulk.WriteRequest.Type updateType = !update.keySet().isEmpty() && update.keySet().iterator().next().startsWith("$")
-                                                                ? com.mongodb.bulk.WriteRequest.Type.UPDATE
-                                                                : com.mongodb.bulk.WriteRequest.Type.REPLACE;
+        Type updateType = (!update.keySet().isEmpty() && update.keySet().iterator().next().startsWith("$"))
+                ? UPDATE : Type.REPLACE;
         UpdateRequest updateRequest = new UpdateRequest(wrap(query), wrap(update, options.getEncoder()), updateType)
                                               .upsert(options.isUpsert()).multi(options.isMulti())
                                               .collation(options.getCollation())
@@ -2022,8 +2023,8 @@ public class DBCollection {
         }
     }
 
-    private List<com.mongodb.bulk.WriteRequest> translateWriteRequestsToNew(final List<WriteRequest> writeRequests) {
-        List<com.mongodb.bulk.WriteRequest> retVal = new ArrayList<com.mongodb.bulk.WriteRequest>(writeRequests.size());
+    private List<com.mongodb.internal.bulk.WriteRequest> translateWriteRequestsToNew(final List<WriteRequest> writeRequests) {
+        List<com.mongodb.internal.bulk.WriteRequest> retVal = new ArrayList<com.mongodb.internal.bulk.WriteRequest>(writeRequests.size());
         for (WriteRequest cur : writeRequests) {
             retVal.add(cur.toNew(this));
         }

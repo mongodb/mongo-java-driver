@@ -29,8 +29,8 @@ import spock.lang.Specification
 
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
-import static com.mongodb.bulk.WriteRequest.Type.INSERT
-import static com.mongodb.bulk.WriteRequest.Type.UPDATE
+import static com.mongodb.internal.bulk.WriteRequest.Type.INSERT
+import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE
 
 class BulkWriteBatchCombinerSpecification extends Specification {
     def 'should get unacknowledged result for an unacknowledged write'() {

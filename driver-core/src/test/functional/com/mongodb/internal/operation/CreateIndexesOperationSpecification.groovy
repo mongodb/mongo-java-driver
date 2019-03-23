@@ -22,7 +22,7 @@ import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcern
-import com.mongodb.bulk.IndexRequest
+import com.mongodb.internal.bulk.IndexRequest
 import org.bson.BsonDocument
 import org.bson.BsonDocumentWrapper
 import org.bson.BsonInt32

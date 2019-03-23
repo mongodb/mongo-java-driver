@@ -16,8 +16,8 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.bulk.InsertRequest;
 import com.mongodb.connection.ByteBufferBsonOutput;
+import com.mongodb.internal.bulk.InsertRequest;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.BsonMaximumSizeExceededException;
