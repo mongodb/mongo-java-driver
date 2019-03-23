@@ -21,6 +21,8 @@ import com.mongodb.connection.ServerDescription;
 
 import java.util.List;
 
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
+
 /**
  * A server selector that chooses servers that are primaries.
  *
@@ -33,7 +35,7 @@ public final class PrimaryServerSelector implements ServerSelector {
     @Override
     @SuppressWarnings("deprecation")
     public List<ServerDescription> select(final ClusterDescription clusterDescription) {
-        return clusterDescription.getPrimaries();
+        return getPrimaries(clusterDescription);
     }
 
     @Override

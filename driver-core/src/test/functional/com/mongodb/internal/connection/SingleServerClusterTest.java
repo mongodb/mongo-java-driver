@@ -47,6 +47,7 @@ import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.getPrimary;
 import static com.mongodb.ClusterFixture.getSecondary;
 import static com.mongodb.ClusterFixture.getSslSettings;
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -108,7 +109,7 @@ public class SingleServerClusterTest {
         Server server = cluster.selectServer(new ServerSelector() {
             @Override
             public List<ServerDescription> select(final ClusterDescription clusterDescription) {
-                return clusterDescription.getPrimaries();
+                return getPrimaries(clusterDescription);
             }
         });
 

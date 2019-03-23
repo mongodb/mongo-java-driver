@@ -18,20 +18,16 @@ package com.mongodb.connection;
 
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
-import com.mongodb.ServerAddress;
-import com.mongodb.TagSet;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.selector.ReadPreferenceServerSelector;
 import com.mongodb.selector.WritableServerSelector;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getServersByPredicate;
 import static java.lang.String.format;
 
 /**
@@ -237,12 +233,9 @@ public class ClusterDescription {
      */
     public Integer getLogicalSessionTimeoutMinutes() {
         Integer retVal = null;
-        for (ServerDescription cur : getServersByPredicate(new Predicate() {
-            @Override
-            public boolean apply(final ServerDescription serverDescription) {
-                return serverDescription.isPrimary() || serverDescription.isSecondary();
-            }
-        })) {
+
+        for (ServerDescription cur : getServersByPredicate(this, serverDescription ->
+                serverDescription.isPrimary() || serverDescription.isSecondary())) {
             if (cur.getLogicalSessionTimeoutMinutes() == null) {
                 return null;
             }
@@ -253,142 +246,6 @@ public class ClusterDescription {
             }
         }
         return retVal;
-    }
-
-    /**
-     * Returns the Set of all server descriptions in this cluster, sorted by the String value of the ServerAddress of each one.
-     *
-     * @return the set of server descriptions
-     * @deprecated Use {@link #getServerDescriptions()} instead
-     */
-    @Deprecated
-    public Set<ServerDescription> getAll() {
-        Set<ServerDescription> serverDescriptionSet = new TreeSet<ServerDescription>(new Comparator<ServerDescription>() {
-            @Override
-            public int compare(final ServerDescription o1, final ServerDescription o2) {
-                int val = o1.getAddress().getHost().compareTo(o2.getAddress().getHost());
-                if (val != 0) {
-                    return val;
-                }
-                return integerCompare(o1.getAddress().getPort(), o2.getAddress().getPort());
-            }
-
-            private int integerCompare(final int p1, final int p2) {
-                return (p1 < p2) ? -1 : ((p1 == p2) ? 0 : 1);
-            }
-        });
-        serverDescriptionSet.addAll(serverDescriptions);
-        return Collections.unmodifiableSet(serverDescriptionSet);
-    }
-
-    /**
-     * Returns the ServerDescription for the server at the given address
-     *
-     * @param serverAddress the ServerAddress for a server in this cluster
-     * @return the ServerDescription for this server
-     * @deprecated Replace with a filter on ServerDescription in the caller
-     */
-    @Deprecated
-    public ServerDescription getByServerAddress(final ServerAddress serverAddress) {
-        for (final ServerDescription cur : serverDescriptions) {
-            if (cur.isOk() && cur.getAddress().equals(serverAddress)) {
-                return cur;
-            }
-        }
-        return null;
-    }
-
-    /**
-     * While it may seem counter-intuitive that a MongoDB cluster can have more than one primary, it can in the case where the client's view
-     * of the cluster is a set of mongos servers, any of which can serve as the primary.
-     *
-     * @return a list of servers that can act as primaries
-     * @deprecated Replace with a filter on ServerDescription in the caller
-     */
-    @Deprecated
-    public List<ServerDescription> getPrimaries() {
-        return getServersByPredicate(new Predicate() {
-            public boolean apply(final ServerDescription serverDescription) {
-                return serverDescription.isPrimary();
-            }
-        });
-    }
-
-    /**
-     * Get a list of all the secondaries in this cluster
-     *
-     * @return a List of ServerDescriptions of all the secondaries this cluster is currently aware of
-     * @deprecated Replace with a filter on ServerDescription in the caller
-     */
-    @Deprecated
-    public List<ServerDescription> getSecondaries() {
-        return getServersByPredicate(new Predicate() {
-            public boolean apply(final ServerDescription serverDescription) {
-                return serverDescription.isSecondary();
-            }
-        });
-    }
-
-    /**
-     * Get a list of all the secondaries in this cluster that match a given TagSet
-     *
-     * @param tagSet a Set of replica set tags
-     * @return a List of ServerDescriptions of all the secondaries this cluster that match all of the given tags
-     * @deprecated Replace with a filter on ServerDescription in the caller
-     */
-    @Deprecated
-    public List<ServerDescription> getSecondaries(final TagSet tagSet) {
-        return getServersByPredicate(new Predicate() {
-            public boolean apply(final ServerDescription serverDescription) {
-                return serverDescription.isSecondary() && serverDescription.hasTags(tagSet);
-            }
-        });
-    }
-
-    /**
-     * Gets a list of ServerDescriptions for all the servers in this cluster which are currently accessible.
-     *
-     * @return a List of ServerDescriptions for all servers that have a status of OK
-     * @deprecated Replace with a filter on ServerDescription in the caller
-     */
-    @Deprecated
-    public List<ServerDescription> getAny() {
-        return getServersByPredicate(new Predicate() {
-            public boolean apply(final ServerDescription serverDescription) {
-                return serverDescription.isOk();
-            }
-        });
-    }
-
-    /**
-     * Gets a list of all the primaries and secondaries in this cluster.
-     *
-     * @return a list of ServerDescriptions for all primary and secondary servers
-     * @deprecated Replace with a filter on ServerDescription in the caller
-     */
-    @Deprecated
-    public List<ServerDescription> getAnyPrimaryOrSecondary() {
-        return getServersByPredicate(new Predicate() {
-            public boolean apply(final ServerDescription serverDescription) {
-                return serverDescription.isPrimary() || serverDescription.isSecondary();
-            }
-        });
-    }
-
-    /**
-     * Gets a list of all the primaries and secondaries in this cluster that match the given replica set tags.
-     *
-     * @param tagSet a Set of replica set tags
-     * @return a list of ServerDescriptions for all primary and secondary servers that contain all of the given tags
-     * @deprecated Replace with a filter on ServerDescription in the caller
-     */
-    @Deprecated
-    public List<ServerDescription> getAnyPrimaryOrSecondary(final TagSet tagSet) {
-        return getServersByPredicate(new Predicate() {
-            public boolean apply(final ServerDescription serverDescription) {
-                return (serverDescription.isPrimary() || serverDescription.isSecondary()) && serverDescription.hasTags(tagSet);
-            }
-        });
     }
 
     @Override
@@ -468,21 +325,5 @@ public class ClusterDescription {
         }  else {
             return format("{type=%s, srvResolutionException=%s, servers=[%s]", type, srvResolutionException, serverDescriptions);
         }
-    }
-
-    private interface Predicate {
-        boolean apply(ServerDescription serverDescription);
-    }
-
-    private List<ServerDescription> getServersByPredicate(final Predicate predicate) {
-        List<ServerDescription> membersByTag = new ArrayList<ServerDescription>();
-
-        for (final ServerDescription cur : serverDescriptions) {
-            if (predicate.apply(cur)) {
-                membersByTag.add(cur);
-            }
-        }
-
-        return membersByTag;
     }
 }

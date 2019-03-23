@@ -24,6 +24,7 @@ import com.mongodb.connection.ServerDescription;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAny;
 
 /**
  * A server selector that chooses based on a read preference.
@@ -56,7 +57,7 @@ public class ReadPreferenceServerSelector implements ServerSelector {
     @SuppressWarnings("deprecation")
     public List<ServerDescription> select(final ClusterDescription clusterDescription) {
         if (clusterDescription.getConnectionMode() == ClusterConnectionMode.SINGLE) {
-            return clusterDescription.getAny();
+            return getAny(clusterDescription);
         }
         return readPreference.choose(clusterDescription);
     }

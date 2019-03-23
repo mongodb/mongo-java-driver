@@ -34,6 +34,10 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAny;
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAnyPrimaryOrSecondary;
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getSecondaries;
 import static java.lang.String.format;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
@@ -155,7 +159,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
     @Override
     @SuppressWarnings("deprecation")
     protected List<ServerDescription> chooseForNonReplicaSet(final ClusterDescription clusterDescription) {
-        return selectFreshServers(clusterDescription, clusterDescription.getAny());
+        return selectFreshServers(clusterDescription, getAny(clusterDescription));
     }
 
     protected static ClusterDescription copyClusterDescription(final ClusterDescription clusterDescription,
@@ -294,12 +298,12 @@ public abstract class TaggableReadPreference extends ReadPreference {
         @Override
         @SuppressWarnings("deprecation")
         protected List<ServerDescription> chooseForReplicaSet(final ClusterDescription clusterDescription) {
-            List<ServerDescription> selectedServers = selectFreshServers(clusterDescription, clusterDescription.getSecondaries());
+            List<ServerDescription> selectedServers = selectFreshServers(clusterDescription, getSecondaries(clusterDescription));
             if (!getTagSetList().isEmpty()) {
                 ClusterDescription nonStaleClusterDescription = copyClusterDescription(clusterDescription, selectedServers);
                 selectedServers = Collections.emptyList();
                 for (final TagSet tagSet : getTagSetList()) {
-                    List<ServerDescription> servers = nonStaleClusterDescription.getSecondaries(tagSet);
+                    List<ServerDescription> servers = getSecondaries(nonStaleClusterDescription, tagSet);
                     if (!servers.isEmpty()) {
                         selectedServers = servers;
                         break;
@@ -331,7 +335,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         protected List<ServerDescription> chooseForReplicaSet(final ClusterDescription clusterDescription) {
             List<ServerDescription> selectedServers = super.chooseForReplicaSet(clusterDescription);
             if (selectedServers.isEmpty()) {
-                selectedServers = clusterDescription.getPrimaries();
+                selectedServers = getPrimaries(clusterDescription);
             }
             return selectedServers;
         }
@@ -358,12 +362,12 @@ public abstract class TaggableReadPreference extends ReadPreference {
         @Override
         @SuppressWarnings("deprecation")
         public List<ServerDescription> chooseForReplicaSet(final ClusterDescription clusterDescription) {
-            List<ServerDescription> selectedServers = selectFreshServers(clusterDescription, clusterDescription.getAnyPrimaryOrSecondary());
+            List<ServerDescription> selectedServers = selectFreshServers(clusterDescription, getAnyPrimaryOrSecondary(clusterDescription));
             if (!getTagSetList().isEmpty()) {
                 ClusterDescription nonStaleClusterDescription = copyClusterDescription(clusterDescription, selectedServers);
                 selectedServers = Collections.emptyList();
                 for (final TagSet tagSet : getTagSetList()) {
-                    List<ServerDescription> servers = nonStaleClusterDescription.getAnyPrimaryOrSecondary(tagSet);
+                    List<ServerDescription> servers = getAnyPrimaryOrSecondary(nonStaleClusterDescription, tagSet);
                     if (!servers.isEmpty()) {
                         selectedServers = servers;
                         break;
@@ -393,7 +397,7 @@ public abstract class TaggableReadPreference extends ReadPreference {
         @Override
         @SuppressWarnings("deprecation")
         protected List<ServerDescription> chooseForReplicaSet(final ClusterDescription clusterDescription) {
-            List<ServerDescription> selectedServers = selectFreshServers(clusterDescription, clusterDescription.getPrimaries());
+            List<ServerDescription> selectedServers = selectFreshServers(clusterDescription, getPrimaries(clusterDescription));
             if (selectedServers.isEmpty()) {
                 selectedServers = super.chooseForReplicaSet(clusterDescription);
             }

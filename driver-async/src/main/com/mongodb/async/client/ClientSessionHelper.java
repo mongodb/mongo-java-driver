@@ -32,6 +32,8 @@ import com.mongodb.selector.ServerSelector;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrue;
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAny;
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAnyPrimaryOrSecondary;
 
 class ClientSessionHelper {
     private final MongoClientImpl mongoClient;
@@ -100,9 +102,9 @@ class ClientSessionHelper {
     @SuppressWarnings("deprecation")
     private List<ServerDescription> getServerDescriptionListToConsiderForSessionSupport(final ClusterDescription clusterDescription) {
         if (clusterDescription.getConnectionMode() == ClusterConnectionMode.SINGLE) {
-            return clusterDescription.getAny();
+            return getAny(clusterDescription);
         } else {
-            return clusterDescription.getAnyPrimaryOrSecondary();
+            return getAnyPrimaryOrSecondary(clusterDescription);
         }
     }
 }
