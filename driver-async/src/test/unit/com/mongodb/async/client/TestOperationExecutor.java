@@ -19,9 +19,9 @@ package com.mongodb.async.client;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.operation.AsyncReadOperation;
+import com.mongodb.internal.operation.AsyncWriteOperation;
 import com.mongodb.lang.Nullable;
-import com.mongodb.operation.AsyncReadOperation;
-import com.mongodb.operation.AsyncWriteOperation;
 
 import java.util.ArrayList;
 import java.util.List;

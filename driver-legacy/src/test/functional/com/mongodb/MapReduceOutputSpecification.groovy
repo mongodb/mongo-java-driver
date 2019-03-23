@@ -16,8 +16,8 @@
 
 package com.mongodb
 
-import com.mongodb.operation.MapReduceBatchCursor
-import com.mongodb.operation.MapReduceStatistics
+import com.mongodb.internal.operation.MapReduceBatchCursor
+import com.mongodb.internal.operation.MapReduceStatistics
 import spock.lang.Subject
 
 @SuppressWarnings('deprecated')

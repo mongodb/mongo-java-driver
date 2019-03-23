@@ -20,7 +20,6 @@ import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.WriteConcern
 import com.mongodb.async.SingleResultCallback
-import com.mongodb.internal.client.model.AggregationLevel
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.CreateViewOptions
@@ -28,11 +27,12 @@ import com.mongodb.client.model.IndexOptionDefaults
 import com.mongodb.client.model.ValidationAction
 import com.mongodb.client.model.ValidationLevel
 import com.mongodb.client.model.ValidationOptions
+import com.mongodb.internal.client.model.AggregationLevel
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
-import com.mongodb.operation.CommandReadOperation
-import com.mongodb.operation.CreateCollectionOperation
-import com.mongodb.operation.CreateViewOperation
-import com.mongodb.operation.DropDatabaseOperation
+import com.mongodb.internal.operation.CommandReadOperation
+import com.mongodb.internal.operation.CreateCollectionOperation
+import com.mongodb.internal.operation.CreateViewOperation
+import com.mongodb.internal.operation.DropDatabaseOperation
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32

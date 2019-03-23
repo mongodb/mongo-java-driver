@@ -20,8 +20,8 @@ import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.AsyncWriteBinding;
-import com.mongodb.operation.AsyncReadOperation;
-import com.mongodb.operation.AsyncWriteOperation;
+import com.mongodb.internal.operation.AsyncReadOperation;
+import com.mongodb.internal.operation.AsyncWriteOperation;
 
 class WriteOperationThenCursorReadOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>> {
     private final AsyncWriteOperation<Void> aggregateToCollectionOperation;

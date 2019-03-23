@@ -24,8 +24,8 @@ import com.mongodb.ReadPreference
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.binding.AsyncClusterBinding
 import com.mongodb.binding.ClusterBinding
-import com.mongodb.operation.CommandReadOperation
-import com.mongodb.operation.CommandWriteOperation
+import com.mongodb.internal.operation.CommandReadOperation
+import com.mongodb.internal.operation.CommandWriteOperation
 import org.bson.BsonDocument
 import org.bson.BsonDocumentWrapper
 import org.bson.BsonString

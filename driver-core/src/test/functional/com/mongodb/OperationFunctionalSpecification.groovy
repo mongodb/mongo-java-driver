@@ -47,12 +47,12 @@ import com.mongodb.connection.ServerType
 import com.mongodb.connection.ServerVersion
 import com.mongodb.connection.SplittablePayload
 import com.mongodb.internal.connection.ServerHelper
+import com.mongodb.internal.operation.AsyncReadOperation
+import com.mongodb.internal.operation.AsyncWriteOperation
+import com.mongodb.internal.operation.InsertOperation
+import com.mongodb.internal.operation.ReadOperation
+import com.mongodb.internal.operation.WriteOperation
 import com.mongodb.internal.validator.NoOpFieldNameValidator
-import com.mongodb.operation.AsyncReadOperation
-import com.mongodb.operation.AsyncWriteOperation
-import com.mongodb.operation.InsertOperation
-import com.mongodb.operation.ReadOperation
-import com.mongodb.operation.WriteOperation
 import com.mongodb.session.SessionContext
 import org.bson.BsonDocument
 import org.bson.Document
@@ -71,7 +71,7 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.getPrimary
 import static com.mongodb.ClusterFixture.loopCursor
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
-import static com.mongodb.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion
+import static com.mongodb.internal.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion
 
 class OperationFunctionalSpecification extends Specification {
 

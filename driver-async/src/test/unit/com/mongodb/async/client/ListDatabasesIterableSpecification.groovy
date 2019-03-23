@@ -21,7 +21,7 @@ import com.mongodb.Function
 import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
-import com.mongodb.operation.ListDatabasesOperation
+import com.mongodb.internal.operation.ListDatabasesOperation
 import org.bson.BsonDocument
 import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider

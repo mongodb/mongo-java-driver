@@ -19,9 +19,9 @@ package com.mongodb
 import com.mongodb.client.internal.TestOperationExecutor
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.DBCollectionFindOptions
-import com.mongodb.operation.BatchCursor
-import com.mongodb.operation.CountOperation
-import com.mongodb.operation.FindOperation
+import com.mongodb.internal.operation.BatchCursor
+import com.mongodb.internal.operation.CountOperation
+import com.mongodb.internal.operation.FindOperation
 import org.bson.BsonDocument
 import spock.lang.Specification
 

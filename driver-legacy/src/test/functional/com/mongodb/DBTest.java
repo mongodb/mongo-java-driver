@@ -21,7 +21,7 @@ import com.mongodb.client.model.CollationAlternate;
 import com.mongodb.client.model.CollationCaseFirst;
 import com.mongodb.client.model.CollationMaxVariable;
 import com.mongodb.client.model.CollationStrength;
-import com.mongodb.operation.ListCollectionsOperation;
+import com.mongodb.internal.operation.ListCollectionsOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.codecs.BsonDocumentCodec;

@@ -23,8 +23,8 @@ import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.client.ClientSession
 import com.mongodb.client.model.Collation
-import com.mongodb.operation.BatchCursor
-import com.mongodb.operation.DistinctOperation
+import com.mongodb.internal.operation.BatchCursor
+import com.mongodb.internal.operation.DistinctOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document

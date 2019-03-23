@@ -19,8 +19,8 @@ package com.mongodb.client.internal
 
 import com.mongodb.Function
 import com.mongodb.client.ClientSession
-import com.mongodb.operation.BatchCursor
-import com.mongodb.operation.ListCollectionsOperation
+import com.mongodb.internal.operation.BatchCursor
+import com.mongodb.internal.operation.ListCollectionsOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document

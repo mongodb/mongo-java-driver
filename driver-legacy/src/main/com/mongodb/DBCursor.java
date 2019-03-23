@@ -23,8 +23,8 @@ import com.mongodb.client.internal.OperationExecutor;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.DBCollectionCountOptions;
 import com.mongodb.client.model.DBCollectionFindOptions;
+import com.mongodb.internal.operation.FindOperation;
 import com.mongodb.lang.Nullable;
-import com.mongodb.operation.FindOperation;
 import org.bson.codecs.Decoder;
 
 import java.util.ArrayList;

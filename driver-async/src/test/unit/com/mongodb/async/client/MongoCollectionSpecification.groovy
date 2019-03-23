@@ -76,6 +76,16 @@ import com.mongodb.operation.FindAndUpdateOperation
 import com.mongodb.operation.ListIndexesOperation
 import com.mongodb.operation.MixedBulkWriteOperation
 import com.mongodb.operation.RenameCollectionOperation
+import com.mongodb.internal.operation.CountOperation
+import com.mongodb.internal.operation.CreateIndexesOperation
+import com.mongodb.internal.operation.DropCollectionOperation
+import com.mongodb.internal.operation.DropIndexOperation
+import com.mongodb.internal.operation.FindAndDeleteOperation
+import com.mongodb.internal.operation.FindAndReplaceOperation
+import com.mongodb.internal.operation.FindAndUpdateOperation
+import com.mongodb.internal.operation.ListIndexesOperation
+import com.mongodb.internal.operation.MixedBulkWriteOperation
+import com.mongodb.internal.operation.RenameCollectionOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document

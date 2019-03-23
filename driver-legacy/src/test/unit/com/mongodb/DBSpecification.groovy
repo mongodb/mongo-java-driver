@@ -26,10 +26,10 @@ import com.mongodb.client.model.CollationStrength
 import com.mongodb.client.model.DBCreateViewOptions
 import com.mongodb.client.model.ValidationAction
 import com.mongodb.client.model.ValidationLevel
-import com.mongodb.operation.BatchCursor
-import com.mongodb.operation.CreateCollectionOperation
-import com.mongodb.operation.CreateViewOperation
-import com.mongodb.operation.ListCollectionsOperation
+import com.mongodb.internal.operation.BatchCursor
+import com.mongodb.internal.operation.CreateCollectionOperation
+import com.mongodb.internal.operation.CreateViewOperation
+import com.mongodb.internal.operation.ListCollectionsOperation
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonDouble

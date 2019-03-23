@@ -24,7 +24,7 @@ import com.mongodb.MongoQueryException;
 import com.mongodb.client.internal.MongoChangeStreamCursorImpl;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
-import com.mongodb.operation.AggregateResponseBatchCursor;
+import com.mongodb.internal.operation.AggregateResponseBatchCursor;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;

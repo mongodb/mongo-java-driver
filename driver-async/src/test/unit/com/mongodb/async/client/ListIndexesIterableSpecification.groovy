@@ -22,7 +22,7 @@ import com.mongodb.MongoNamespace
 import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
-import com.mongodb.operation.ListIndexesOperation
+import com.mongodb.internal.operation.ListIndexesOperation
 import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodec

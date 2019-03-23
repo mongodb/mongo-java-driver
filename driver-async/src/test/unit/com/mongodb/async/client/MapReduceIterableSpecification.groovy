@@ -27,10 +27,10 @@ import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.MapReduceAction
-import com.mongodb.operation.FindOperation
-import com.mongodb.operation.MapReduceStatistics
-import com.mongodb.operation.MapReduceToCollectionOperation
-import com.mongodb.operation.MapReduceWithInlineResultsOperation
+import com.mongodb.internal.operation.FindOperation
+import com.mongodb.internal.operation.MapReduceStatistics
+import com.mongodb.internal.operation.MapReduceToCollectionOperation
+import com.mongodb.internal.operation.MapReduceWithInlineResultsOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonJavaScript
