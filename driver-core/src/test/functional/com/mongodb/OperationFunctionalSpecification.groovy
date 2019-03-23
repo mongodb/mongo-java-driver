@@ -17,7 +17,6 @@
 package com.mongodb
 
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.bulk.InsertRequest
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CollationAlternate
 import com.mongodb.client.model.CollationCaseFirst
@@ -46,6 +45,7 @@ import com.mongodb.internal.binding.ReadWriteBinding
 import com.mongodb.internal.binding.SessionBinding
 import com.mongodb.internal.binding.SingleConnectionBinding
 import com.mongodb.internal.binding.WriteBinding
+import com.mongodb.internal.bulk.InsertRequest
 import com.mongodb.internal.connection.ServerHelper
 import com.mongodb.internal.operation.AsyncReadOperation
 import com.mongodb.internal.operation.AsyncWriteOperation

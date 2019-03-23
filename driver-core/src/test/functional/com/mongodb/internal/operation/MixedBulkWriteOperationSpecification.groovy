@@ -27,12 +27,12 @@ import com.mongodb.ServerAddress
 import com.mongodb.WriteConcern
 import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.bulk.BulkWriteUpsert
-import com.mongodb.bulk.DeleteRequest
-import com.mongodb.bulk.InsertRequest
-import com.mongodb.bulk.UpdateRequest
-import com.mongodb.bulk.WriteRequest
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.ValidationOptions
+import com.mongodb.internal.bulk.DeleteRequest
+import com.mongodb.internal.bulk.InsertRequest
+import com.mongodb.internal.bulk.UpdateRequest
+import com.mongodb.internal.bulk.WriteRequest
 import org.bson.BsonBinary
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
@@ -57,14 +57,14 @@ import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
-import static com.mongodb.bulk.WriteRequest.Type.DELETE
-import static com.mongodb.bulk.WriteRequest.Type.INSERT
-import static com.mongodb.bulk.WriteRequest.Type.REPLACE
-import static com.mongodb.bulk.WriteRequest.Type.UPDATE
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Filters.gte
 import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY
 import static com.mongodb.connection.ServerType.STANDALONE
+import static com.mongodb.internal.bulk.WriteRequest.Type.DELETE
+import static com.mongodb.internal.bulk.WriteRequest.Type.INSERT
+import static com.mongodb.internal.bulk.WriteRequest.Type.REPLACE
+import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE
 
 @SuppressWarnings('ClassSize')
 class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecification {

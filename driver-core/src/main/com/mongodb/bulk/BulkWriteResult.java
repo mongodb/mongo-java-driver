@@ -16,6 +16,8 @@
 
 package com.mongodb.bulk;
 
+import com.mongodb.internal.bulk.WriteRequest;
+
 import java.util.List;
 
 /**

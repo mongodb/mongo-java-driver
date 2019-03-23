@@ -16,9 +16,9 @@
 
 package com.mongodb.internal.operation
 
-import com.mongodb.bulk.UpdateRequest
-import com.mongodb.bulk.WriteRequest
 import com.mongodb.client.model.Collation
+import com.mongodb.internal.bulk.UpdateRequest
+import com.mongodb.internal.bulk.WriteRequest
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32

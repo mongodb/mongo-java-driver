@@ -21,7 +21,7 @@ import com.mongodb.MongoClientException
 import com.mongodb.MongoException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcernResult
-import com.mongodb.bulk.UpdateRequest
+import com.mongodb.internal.bulk.UpdateRequest
 import org.bson.BsonBinary
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -36,7 +36,7 @@ import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.WriteConcern.UNACKNOWLEDGED
-import static com.mongodb.bulk.WriteRequest.Type.UPDATE
+import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE
 import static java.util.Arrays.asList
 
 class UpdateOperationSpecification extends OperationFunctionalSpecification {

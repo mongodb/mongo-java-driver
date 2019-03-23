@@ -30,10 +30,6 @@ import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.bulk.BulkWriteError
 import com.mongodb.bulk.BulkWriteUpsert
-import com.mongodb.bulk.DeleteRequest
-import com.mongodb.bulk.IndexRequest
-import com.mongodb.bulk.InsertRequest
-import com.mongodb.bulk.UpdateRequest
 import com.mongodb.bulk.WriteConcernError
 import com.mongodb.client.ImmutableDocument
 import com.mongodb.client.ImmutableDocumentCodecProvider
@@ -64,6 +60,10 @@ import com.mongodb.client.model.UpdateOptions
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 import com.mongodb.client.test.Worker
+import com.mongodb.internal.bulk.DeleteRequest
+import com.mongodb.internal.bulk.IndexRequest
+import com.mongodb.internal.bulk.InsertRequest
+import com.mongodb.internal.bulk.UpdateRequest
 import com.mongodb.internal.client.model.CountStrategy
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
 import com.mongodb.operation.CountOperation
@@ -109,10 +109,10 @@ import static com.mongodb.async.client.TestHelper.createIterable
 import static com.mongodb.async.client.TestHelper.execute
 import static com.mongodb.bulk.BulkWriteResult.acknowledged
 import static com.mongodb.bulk.BulkWriteResult.unacknowledged
-import static com.mongodb.bulk.WriteRequest.Type.DELETE
-import static com.mongodb.bulk.WriteRequest.Type.INSERT
-import static com.mongodb.bulk.WriteRequest.Type.REPLACE
-import static com.mongodb.bulk.WriteRequest.Type.UPDATE
+import static com.mongodb.internal.bulk.WriteRequest.Type.DELETE
+import static com.mongodb.internal.bulk.WriteRequest.Type.INSERT
+import static com.mongodb.internal.bulk.WriteRequest.Type.REPLACE
+import static com.mongodb.internal.bulk.WriteRequest.Type.UPDATE
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static org.bson.UuidRepresentation.JAVA_LEGACY
 import static org.bson.UuidRepresentation.STANDARD

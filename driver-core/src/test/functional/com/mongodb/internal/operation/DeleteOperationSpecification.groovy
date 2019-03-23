@@ -20,7 +20,7 @@ import category.Slow
 import com.mongodb.MongoClientException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.WriteConcernResult
-import com.mongodb.bulk.DeleteRequest
+import com.mongodb.internal.bulk.DeleteRequest
 import org.bson.BsonBinary
 import org.bson.BsonDocument
 import org.bson.BsonInt32

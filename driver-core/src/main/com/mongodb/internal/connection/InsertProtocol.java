@@ -19,10 +19,10 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.bulk.InsertRequest;
 import com.mongodb.connection.ByteBufferBsonOutput;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.internal.bulk.InsertRequest;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 

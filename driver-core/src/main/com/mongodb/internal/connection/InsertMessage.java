@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.bulk.InsertRequest;
+import com.mongodb.internal.bulk.InsertRequest;
 import com.mongodb.internal.validator.CollectibleDocumentFieldNameValidator;
 import org.bson.io.BsonOutput;
 

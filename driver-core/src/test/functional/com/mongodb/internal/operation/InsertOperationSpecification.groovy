@@ -20,7 +20,7 @@ import category.Slow
 import com.mongodb.DuplicateKeyException
 import com.mongodb.MongoClientException
 import com.mongodb.OperationFunctionalSpecification
-import com.mongodb.bulk.InsertRequest
+import com.mongodb.internal.bulk.InsertRequest
 import org.bson.BsonBinary
 import org.bson.BsonDocument
 import org.bson.BsonInt32
