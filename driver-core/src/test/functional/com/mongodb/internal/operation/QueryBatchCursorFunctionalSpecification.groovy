@@ -23,10 +23,10 @@ import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
 import com.mongodb.ServerCursor
 import com.mongodb.WriteConcern
-import com.mongodb.binding.ConnectionSource
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.connection.Connection
 import com.mongodb.connection.QueryResult
+import com.mongodb.internal.binding.ConnectionSource
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32

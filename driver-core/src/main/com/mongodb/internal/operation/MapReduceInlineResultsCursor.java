@@ -16,8 +16,8 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.binding.ConnectionSource;
 import com.mongodb.connection.QueryResult;
+import com.mongodb.internal.binding.ConnectionSource;
 import org.bson.codecs.Decoder;
 
 /**

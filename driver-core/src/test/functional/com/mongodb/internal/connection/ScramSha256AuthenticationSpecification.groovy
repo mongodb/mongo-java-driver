@@ -22,8 +22,8 @@ import com.mongodb.MongoSecurityException
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.binding.AsyncClusterBinding
-import com.mongodb.binding.ClusterBinding
+import com.mongodb.internal.binding.AsyncClusterBinding
+import com.mongodb.internal.binding.ClusterBinding
 import com.mongodb.internal.operation.CommandReadOperation
 import com.mongodb.internal.operation.CommandWriteOperation
 import org.bson.BsonDocument

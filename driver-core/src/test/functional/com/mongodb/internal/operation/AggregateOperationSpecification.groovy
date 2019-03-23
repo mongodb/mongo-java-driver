@@ -24,10 +24,6 @@ import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcern
-import com.mongodb.binding.AsyncConnectionSource
-import com.mongodb.binding.AsyncReadBinding
-import com.mongodb.binding.ConnectionSource
-import com.mongodb.binding.ReadBinding
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.Filters
@@ -38,6 +34,10 @@ import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
 import com.mongodb.connection.ServerVersion
+import com.mongodb.internal.binding.AsyncConnectionSource
+import com.mongodb.internal.binding.AsyncReadBinding
+import com.mongodb.internal.binding.ConnectionSource
+import com.mongodb.internal.binding.ReadBinding
 import com.mongodb.session.SessionContext
 import org.bson.BsonArray
 import org.bson.BsonBoolean

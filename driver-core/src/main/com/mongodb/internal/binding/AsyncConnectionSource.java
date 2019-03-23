@@ -14,28 +14,29 @@
  * limitations under the License.
  */
 
-package com.mongodb.binding;
+package com.mongodb.internal.binding;
 
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.connection.AsyncConnection;
+import com.mongodb.connection.ServerDescription;
 import com.mongodb.session.SessionContext;
 
 /**
- * An asynchronous factory of connection sources to servers that can be written to, e.g, a standalone, a mongos, or a replica set primary.
+ * A source of connections to a single MongoDB server.
  *
  * @since 3.0
  */
-@Deprecated
-public interface AsyncWriteBinding extends ReferenceCounted {
+public interface AsyncConnectionSource extends ReferenceCounted {
 
     /**
-     * Supply a connection source to a server that can be written to
+     * Gets the current description of this source.
      *
-     * @param callback the to be passed the connection source
+     * @return the current details of the server state.
      */
-    void getWriteConnectionSource(SingleResultCallback<AsyncConnectionSource> callback);
+    ServerDescription getServerDescription();
 
     /**
-     * Gets the session context for this binding.
+     * Gets the session context for this source
      *
      * @return the session context, which may not be null
      *
@@ -43,6 +44,13 @@ public interface AsyncWriteBinding extends ReferenceCounted {
      */
     SessionContext getSessionContext();
 
+    /**
+     * Gets a connection from this source.
+     *
+     * @param callback the to be passed the connection
+     */
+    void getConnection(SingleResultCallback<AsyncConnection> callback);
+
     @Override
-    AsyncWriteBinding retain();
+    AsyncConnectionSource retain();
 }

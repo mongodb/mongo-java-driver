@@ -14,16 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.binding;
-
-
 /**
- * A factory of connection sources to servers that can be read from or written to.
- *
- * @since 3.0
+ * This package contains classes that manage binding to MongoDB servers for various operations.
  */
-@Deprecated
-public interface ReadWriteBinding extends ReadBinding, WriteBinding, ReferenceCounted {
-    @Override
-    ReadWriteBinding retain();
-}
+package com.mongodb.internal.binding;

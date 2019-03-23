@@ -14,32 +14,28 @@
  * limitations under the License.
  */
 
-package com.mongodb.binding;
+package com.mongodb.internal.binding;
 
-import com.mongodb.ReadPreference;
+import com.mongodb.connection.Connection;
+import com.mongodb.connection.ServerDescription;
 import com.mongodb.session.SessionContext;
 
 /**
- * A factory of connection sources to servers that can be read from and that satisfy the specified read preference.
+ * A source of connections to a single MongoDB server.
  *
  * @since 3.0
  */
-@Deprecated
-public interface ReadBinding extends ReferenceCounted {
-    /**
-     * The read preference that all connection sources returned by this instance will satisfy.
-     * @return the non-null read preference
-     */
-    ReadPreference getReadPreference();
+public interface ConnectionSource extends ReferenceCounted {
 
     /**
-     * Returns a connection source to a server that satisfies the specified read preference.
-     * @return the connection source
+     * Gets the current description of this source.
+     *
+     * @return the current details of the server state.
      */
-    ConnectionSource getReadConnectionSource();
+    ServerDescription getServerDescription();
 
     /**
-     * Gets the session context for this binding.
+     * Gets the session context for this source
      *
      * @return the session context, which may not be null
      *
@@ -47,6 +43,13 @@ public interface ReadBinding extends ReferenceCounted {
      */
     SessionContext getSessionContext();
 
+    /**
+     * Gets a connection from this source.
+     *
+     * @return the connection
+     */
+    Connection getConnection();
+
     @Override
-    ReadBinding retain();
+    ConnectionSource retain();
 }

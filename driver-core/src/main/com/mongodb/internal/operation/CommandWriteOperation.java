@@ -17,8 +17,8 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.binding.AsyncWriteBinding;
-import com.mongodb.binding.WriteBinding;
+import com.mongodb.internal.binding.AsyncWriteBinding;
+import com.mongodb.internal.binding.WriteBinding;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
 

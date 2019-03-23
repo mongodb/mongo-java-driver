@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.binding;
 
-import com.mongodb.binding.ReadWriteBinding;
 import com.mongodb.connection.Cluster;
 
 /**

@@ -18,8 +18,8 @@ package com.mongodb.async.client;
 
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.binding.AsyncReadBinding;
-import com.mongodb.binding.AsyncWriteBinding;
+import com.mongodb.internal.binding.AsyncReadBinding;
+import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.internal.operation.AsyncWriteOperation;
 

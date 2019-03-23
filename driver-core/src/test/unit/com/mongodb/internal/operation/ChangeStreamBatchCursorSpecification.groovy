@@ -16,8 +16,7 @@
 
 package com.mongodb.internal.operation
 
-
-import com.mongodb.binding.ReadBinding
+import com.mongodb.internal.binding.ReadBinding
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import spock.lang.Specification

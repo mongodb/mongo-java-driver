@@ -20,8 +20,8 @@ import com.mongodb.MongoException
 import com.mongodb.MongoTimeoutException
 import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.binding.AsyncWriteBinding
-import com.mongodb.binding.WriteBinding
+import com.mongodb.internal.binding.AsyncWriteBinding
+import com.mongodb.internal.binding.WriteBinding
 import com.mongodb.session.SessionContext
 
 class CommitTransactionOperationUnitSpecification extends OperationUnitSpecification {

@@ -18,15 +18,15 @@ package com.mongodb.client.internal;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
-import com.mongodb.binding.ConnectionSource;
-import com.mongodb.binding.ReadWriteBinding;
-import com.mongodb.binding.SingleServerBinding;
 import com.mongodb.client.ClientSession;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
+import com.mongodb.internal.binding.ConnectionSource;
+import com.mongodb.internal.binding.ReadWriteBinding;
+import com.mongodb.internal.binding.SingleServerBinding;
 import com.mongodb.internal.session.ClientSessionContext;
 import com.mongodb.selector.ReadPreferenceServerSelector;
 import com.mongodb.session.SessionContext;

@@ -14,8 +14,15 @@
  * limitations under the License.
  */
 
+package com.mongodb.internal.binding;
+
+
 /**
- * This package contains classes that manage binding to MongoDB servers for various operations.
+ * An asynchronous factory of connection sources to servers that can be read from or written to.
+ *
+ * @since 3.0
  */
-@Deprecated
-package com.mongodb.binding;
+public interface AsyncReadWriteBinding extends AsyncReadBinding, AsyncWriteBinding, ReferenceCounted {
+    @Override
+    AsyncReadWriteBinding retain();
+}

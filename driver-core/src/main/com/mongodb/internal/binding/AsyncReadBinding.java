@@ -14,23 +14,23 @@
  * limitations under the License.
  */
 
-package com.mongodb.binding;
+package com.mongodb.internal.binding;
 
+import com.mongodb.ReadPreference;
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.session.SessionContext;
 
 /**
- * A factory of connection sources to servers that can be written to, e.g, a standalone, a mongos, or a replica set primary.
+ * An asynchronous factory of connection sources to servers that can be read from and that satisfy the specified read preference.
  *
  * @since 3.0
  */
-@Deprecated
-public interface WriteBinding extends ReferenceCounted {
+public interface AsyncReadBinding extends ReferenceCounted {
     /**
-     * Supply a connection source to a server that can be written to
-     *
-     * @return a connection source
+     * The read preference that all connection sources returned by this instance will satisfy.
+     * @return the non-null read preference
      */
-    ConnectionSource getWriteConnectionSource();
+    ReadPreference getReadPreference();
 
     /**
      * Gets the session context for this binding.
@@ -41,6 +41,12 @@ public interface WriteBinding extends ReferenceCounted {
      */
     SessionContext getSessionContext();
 
+    /**
+     * Returns a connection source to a server that satisfies the specified read preference.
+     * @param callback the to be passed the connection source
+     */
+    void getReadConnectionSource(SingleResultCallback<AsyncConnectionSource> callback);
+
     @Override
-    WriteBinding retain();
+    AsyncReadBinding retain();
 }

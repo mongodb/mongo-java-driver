@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package com.mongodb.binding;
+package com.mongodb.internal.binding;
 
 
 /**
- * An asynchronous factory of connection sources to servers that can be read from or written to.
+ * A factory of connection sources to servers that can be read from or written to.
  *
  * @since 3.0
  */
-@Deprecated
-public interface AsyncReadWriteBinding extends AsyncReadBinding, AsyncWriteBinding, ReferenceCounted {
+public interface ReadWriteBinding extends ReadBinding, WriteBinding, ReferenceCounted {
     @Override
-    AsyncReadWriteBinding retain();
+    ReadWriteBinding retain();
 }
