@@ -32,6 +32,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAny;
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -624,13 +626,13 @@ public abstract class ReadPreference {
         @Override
         @SuppressWarnings("deprecation")
         protected List<ServerDescription> chooseForReplicaSet(final ClusterDescription clusterDescription) {
-            return clusterDescription.getPrimaries();
+            return getPrimaries(clusterDescription);
         }
 
         @Override
         @SuppressWarnings("deprecation")
         protected List<ServerDescription> chooseForNonReplicaSet(final ClusterDescription clusterDescription) {
-            return clusterDescription.getAny();
+            return getAny(clusterDescription);
         }
 
         @Override

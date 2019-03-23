@@ -62,7 +62,7 @@ class SingleServerClusterSpecification extends Specification {
         then:
         cluster.getDescription().type == ClusterType.STANDALONE
         cluster.getDescription().connectionMode == SINGLE
-        cluster.getDescription().all == getDescriptions()
+        ClusterDescriptionHelper.getAll(cluster.getDescription()) == getDescriptions()
 
         cleanup:
         cluster?.close()
@@ -111,7 +111,7 @@ class SingleServerClusterSpecification extends Specification {
 
         then:
         cluster.getDescription().type == ClusterType.SHARDED
-        cluster.getDescription().all == [] as Set
+        ClusterDescriptionHelper.getAll(cluster.getDescription()) == [] as Set
 
         cleanup:
         cluster?.close()
@@ -128,7 +128,7 @@ class SingleServerClusterSpecification extends Specification {
 
         then:
         cluster.getDescription().type == REPLICA_SET
-        cluster.getDescription().all == getDescriptions()
+        ClusterDescriptionHelper.getAll(cluster.getDescription()) == getDescriptions()
 
         cleanup:
         cluster?.close()
@@ -145,7 +145,7 @@ class SingleServerClusterSpecification extends Specification {
 
         then:
         cluster.getDescription().type == REPLICA_SET
-        cluster.getDescription().all == [] as Set
+        ClusterDescriptionHelper.getAll(cluster.getDescription()) == [] as Set
 
         cleanup:
         cluster?.close()

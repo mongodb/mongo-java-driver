@@ -20,11 +20,12 @@ import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getByServerAddress;
+import static java.util.Collections.singletonList;
 
 /**
  * A server selector that chooses a server that matches the server address.
@@ -56,8 +57,9 @@ public class ServerAddressSelector implements ServerSelector {
     @Override
     @SuppressWarnings("deprecation")
     public List<ServerDescription> select(final ClusterDescription clusterDescription) {
-        if (clusterDescription.getByServerAddress(serverAddress) != null) {
-            return Arrays.asList(clusterDescription.getByServerAddress(serverAddress));
+        ServerDescription serverDescription = getByServerAddress(clusterDescription, serverAddress);
+        if (serverDescription != null) {
+            return singletonList(serverDescription);
         }
         return Collections.emptyList();
     }

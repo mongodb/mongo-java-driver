@@ -20,11 +20,10 @@ import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
 import com.mongodb.Tag;
 import com.mongodb.TagSet;
+import com.mongodb.internal.connection.ClusterDescriptionHelper;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -44,6 +43,9 @@ import static com.mongodb.connection.ServerDescription.builder;
 import static com.mongodb.connection.ServerType.REPLICA_SET_OTHER;
 import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY;
 import static com.mongodb.connection.ServerType.REPLICA_SET_SECONDARY;
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAll;
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAny;
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAnyPrimaryOrSecondary;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -57,7 +59,7 @@ public class ClusterDescriptionTest {
     private ClusterDescription cluster;
 
     @Before
-    public void setUp() throws IOException {
+    public void setUp() {
         TagSet tags1 = new TagSet(asList(new Tag("foo", "1"),
                                          new Tag("bar", "2"),
                                          new Tag("baz", "1")));
@@ -117,18 +119,16 @@ public class ClusterDescriptionTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
     public void testAll() {
         ClusterDescription description = new ClusterDescription(MULTIPLE, UNKNOWN, Collections.<ServerDescription>emptyList());
-        assertTrue(description.getAll().isEmpty());
+        assertTrue(getAll(description).isEmpty());
         assertEquals(new HashSet<ServerDescription>(asList(primary, secondary, otherSecondary, uninitiatedMember, notOkMember)),
-                     cluster.getAll());
+                     getAll(cluster));
     }
 
     @Test
-    @SuppressWarnings("deprecation")
-    public void testAny() throws UnknownHostException {
-        List<ServerDescription> any = cluster.getAny();
+    public void testAny() {
+        List<ServerDescription> any = getAny(cluster);
         assertEquals(4, any.size());
         assertTrue(any.contains(primary));
         assertTrue(any.contains(secondary));
@@ -137,11 +137,10 @@ public class ClusterDescriptionTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
-    public void testPrimaryOrSecondary() throws UnknownHostException {
-        assertEquals(asList(primary, secondary, otherSecondary), cluster.getAnyPrimaryOrSecondary());
-        assertEquals(asList(primary, secondary), cluster.getAnyPrimaryOrSecondary(new TagSet(asList(new Tag("foo", "1"),
-                                                                                                    new Tag("bar", "2")))));
+    public void testPrimaryOrSecondary() {
+        assertEquals(asList(primary, secondary, otherSecondary), getAnyPrimaryOrSecondary(cluster));
+        assertEquals(asList(primary, secondary), getAnyPrimaryOrSecondary(cluster, new TagSet(asList(new Tag("foo", "1"),
+                new Tag("bar", "2")))));
     }
 
     @Test
@@ -162,15 +161,13 @@ public class ClusterDescriptionTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
-    public void getByServerAddress() throws UnknownHostException {
-        assertEquals(primary, cluster.getByServerAddress(primary.getAddress()));
-        assertNull(cluster.getByServerAddress(notOkMember.getAddress()));
+    public void testGetByServerAddress() {
+        assertEquals(primary, ClusterDescriptionHelper.getByServerAddress(cluster, primary.getAddress()));
+        assertNull(ClusterDescriptionHelper.getByServerAddress(cluster, notOkMember.getAddress()));
     }
 
     @Test
-    @SuppressWarnings("deprecation")
-    public void testSortingOfAll() throws UnknownHostException {
+    public void testSortingOfAll() {
         ClusterDescription description =
         new ClusterDescription(MULTIPLE, UNKNOWN, asList(
                                                         builder()
@@ -186,14 +183,14 @@ public class ClusterDescriptionTest {
                                                         .address(new ServerAddress("loc:27017"))
                                                         .build())
         );
-        Iterator<ServerDescription> iter = description.getAll().iterator();
+        Iterator<ServerDescription> iter = getAll(description).iterator();
         assertEquals(new ServerAddress("loc:27017"), iter.next().getAddress());
         assertEquals(new ServerAddress("loc:27018"), iter.next().getAddress());
         assertEquals(new ServerAddress("loc:27019"), iter.next().getAddress());
     }
 
     @Test
-    public void clusterDescriptionWithAnIncompatiblyNewServerShouldBeIncompatible() throws UnknownHostException {
+    public void clusterDescriptionWithAnIncompatiblyNewServerShouldBeIncompatible() {
         ClusterDescription description =
         new ClusterDescription(MULTIPLE, UNKNOWN, asList(
                                                         builder()
@@ -218,7 +215,7 @@ public class ClusterDescriptionTest {
     }
 
     @Test
-    public void clusterDescriptionWithAnIncompatiblyOlderServerShouldBeIncompatible() throws UnknownHostException {
+    public void clusterDescriptionWithAnIncompatiblyOlderServerShouldBeIncompatible() {
         ClusterDescription description =
                 new ClusterDescription(MULTIPLE, UNKNOWN, asList(
                         builder()
@@ -243,7 +240,7 @@ public class ClusterDescriptionTest {
     }
 
     @Test
-    public void clusterDescriptionWithCompatibleServerShouldBeCompatible() throws UnknownHostException {
+    public void clusterDescriptionWithCompatibleServerShouldBeCompatible() {
         ClusterDescription description =
         new ClusterDescription(MULTIPLE, UNKNOWN, asList(
                                                         builder()
@@ -389,7 +386,7 @@ public class ClusterDescriptionTest {
     }
 
     @Test
-    public void testObjectOverrides() throws UnknownHostException {
+    public void testObjectOverrides() {
         ClusterDescription description =
         new ClusterDescription(MULTIPLE, UNKNOWN, asList(
                                                         builder()

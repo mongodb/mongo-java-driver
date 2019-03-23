@@ -75,6 +75,8 @@ import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static com.mongodb.connection.ClusterType.REPLICA_SET;
 import static com.mongodb.connection.ClusterType.SHARDED;
 import static com.mongodb.connection.ClusterType.STANDALONE;
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getSecondaries;
 import static java.lang.String.format;
 import static java.lang.Thread.sleep;
 import static java.util.Arrays.asList;
@@ -381,28 +383,28 @@ public final class ClusterFixture {
 
     @SuppressWarnings("deprecation")
     public static ServerAddress getPrimary() {
-        List<ServerDescription> serverDescriptions = getCluster().getDescription().getPrimaries();
+        List<ServerDescription> serverDescriptions = getPrimaries(getCluster().getDescription());
         while (serverDescriptions.isEmpty()) {
             try {
                 sleep(100);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            serverDescriptions = getCluster().getDescription().getPrimaries();
+            serverDescriptions = getPrimaries(getCluster().getDescription());
         }
         return serverDescriptions.get(0).getAddress();
     }
 
     @SuppressWarnings("deprecation")
     public static ServerAddress getSecondary() {
-        List<ServerDescription> serverDescriptions = getCluster().getDescription().getSecondaries();
+        List<ServerDescription> serverDescriptions = getSecondaries(getCluster().getDescription());
         while (serverDescriptions.isEmpty()) {
             try {
                 sleep(100);
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
-            serverDescriptions = getCluster().getDescription().getSecondaries();
+            serverDescriptions = getSecondaries(getCluster().getDescription());
         }
         return serverDescriptions.get(0).getAddress();
     }

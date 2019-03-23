@@ -54,6 +54,8 @@ import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAny;
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAnyPrimaryOrSecondary;
 
 /**
  * This class is not part of the public API and may be removed or changed at any time.
@@ -158,9 +160,9 @@ public class MongoClientDelegate {
     @SuppressWarnings("deprecation")
     private List<ServerDescription> getServerDescriptionListToConsiderForSessionSupport(final ClusterDescription clusterDescription) {
         if (clusterDescription.getConnectionMode() == ClusterConnectionMode.SINGLE) {
-            return clusterDescription.getAny();
+            return getAny(clusterDescription);
         } else {
-            return clusterDescription.getAnyPrimaryOrSecondary();
+            return getAnyPrimaryOrSecondary(clusterDescription);
         }
     }
 

@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Collection;
 
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
 import static com.mongodb.internal.event.EventListenerHelper.NO_OP_CLUSTER_LISTENER;
 import static com.mongodb.internal.event.EventListenerHelper.NO_OP_SERVER_LISTENER;
 import static org.junit.Assert.assertEquals;
@@ -132,11 +133,11 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
         } else if (topologyType.equals("ReplicaSetWithPrimary")) {
             assertEquals(MultiServerCluster.class, getCluster().getClass());
             assertEquals(getClusterType(topologyType), getCluster().getCurrentDescription().getType());
-            assertEquals(1, getCluster().getCurrentDescription().getPrimaries().size());
+            assertEquals(1, getPrimaries(getCluster().getCurrentDescription()).size());
         } else if (topologyType.equals("ReplicaSetNoPrimary")) {
             assertEquals(MultiServerCluster.class, getCluster().getClass());
             assertEquals(getClusterType(topologyType), getCluster().getCurrentDescription().getType());
-            assertEquals(0, getCluster().getCurrentDescription().getPrimaries().size());
+            assertEquals(0, getPrimaries(getCluster().getCurrentDescription()).size());
         } else if (topologyType.equals("Sharded")) {
             assertEquals(MultiServerCluster.class, getCluster().getClass());
             assertEquals(getClusterType(topologyType), getCluster().getCurrentDescription().getType());

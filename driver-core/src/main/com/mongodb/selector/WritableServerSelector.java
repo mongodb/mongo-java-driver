@@ -22,6 +22,9 @@ import com.mongodb.connection.ServerDescription;
 
 import java.util.List;
 
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAny;
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
+
 /**
  * A server selector that chooses servers that are writable.
  *
@@ -34,9 +37,9 @@ public final class WritableServerSelector implements ServerSelector {
     @SuppressWarnings("deprecation")
     public List<ServerDescription> select(final ClusterDescription clusterDescription) {
         if (clusterDescription.getConnectionMode() == ClusterConnectionMode.SINGLE) {
-            return clusterDescription.getAny();
+            return getAny(clusterDescription);
         }
-        return clusterDescription.getPrimaries();
+        return getPrimaries(clusterDescription);
     }
 
     @Override

@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAny;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.NANOSECONDS;
 
@@ -61,9 +62,9 @@ public class LatencyMinimizingServerSelector implements ServerSelector {
     @SuppressWarnings("deprecation")
     public List<ServerDescription> select(final ClusterDescription clusterDescription) {
         if (clusterDescription.getConnectionMode() != MULTIPLE) {
-            return clusterDescription.getAny();
+            return getAny(clusterDescription);
         } else {
-            return getServersWithAcceptableLatencyDifference(clusterDescription.getAny(),
+            return getServersWithAcceptableLatencyDifference(getAny(clusterDescription),
                                                              getFastestRoundTripTimeNanos(clusterDescription.getServerDescriptions()));
         }
     }
