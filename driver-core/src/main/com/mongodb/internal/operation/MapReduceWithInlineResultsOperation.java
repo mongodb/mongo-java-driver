@@ -69,7 +69,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * @mongodb.driver.manual core/map-reduce Map-Reduce
  * @since 3.0
  */
-@Deprecated
 public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperation<MapReduceAsyncBatchCursor<T>>,
                                                                ReadOperation<MapReduceBatchCursor<T>> {
     private final MongoNamespace namespace;

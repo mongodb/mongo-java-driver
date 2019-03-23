@@ -26,7 +26,6 @@ import com.mongodb.binding.AsyncWriteBinding;
  *
  * @since 3.0
  */
-@Deprecated
 public interface AsyncWriteOperation<T> {
 
     /**

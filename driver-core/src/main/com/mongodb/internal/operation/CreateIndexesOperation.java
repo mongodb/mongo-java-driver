@@ -68,7 +68,6 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  * @mongodb.driver.manual reference/command/createIndexes/ Create indexes
  * @since 3.0
  */
-@Deprecated
 public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final MongoNamespace namespace;
     private final List<IndexRequest> requests;
@@ -80,9 +79,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
      *
      * @param namespace     the database and collection namespace for the operation.
      * @param requests the index request
-     * @deprecated Prefer {@link #CreateIndexesOperation(MongoNamespace, List, WriteConcern)}
      */
-    @Deprecated
     public CreateIndexesOperation(final MongoNamespace namespace, final List<IndexRequest> requests) {
         this(namespace, requests, null);
     }

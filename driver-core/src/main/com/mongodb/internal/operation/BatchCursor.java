@@ -36,7 +36,6 @@ import java.util.List;
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#wire-op-get-more OP_GET_MORE
  */
 @NotThreadSafe
-@Deprecated
 public interface BatchCursor<T> extends Iterator<List<T>>, Closeable {
     @Override
     void close();

@@ -83,7 +83,6 @@ import static java.util.Arrays.asList;
  * @param <T> the document type
  * @since 3.0
  */
-@Deprecated
 public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
     private final String databaseName;
     private final Decoder<T> decoder;

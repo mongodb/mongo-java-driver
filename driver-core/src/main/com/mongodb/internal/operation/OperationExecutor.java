@@ -22,9 +22,7 @@ import com.mongodb.ReadPreference;
  * An interface describing the execution of a read or a write operation.
  *
  * @since 3.0
- * @deprecated there is no replacement for this interface
  */
-@Deprecated
 public interface OperationExecutor {
     /**
      * Execute the read operation with the given read preference.

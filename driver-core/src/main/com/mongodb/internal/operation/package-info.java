@@ -18,5 +18,4 @@
  * The core of the MongoDB driver works via operations, using the command pattern. The main Operations supported by MongoDB are in this
  * package, as are helpers and infrastructure required for operation functionality.
  */
-@Deprecated
 package com.mongodb.internal.operation;

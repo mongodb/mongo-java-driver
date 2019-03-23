@@ -41,7 +41,6 @@ import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeast
  * @param <T> the document type
  * @since 3.8
  */
-@Deprecated
 public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
 
     private final MongoNamespace namespace;

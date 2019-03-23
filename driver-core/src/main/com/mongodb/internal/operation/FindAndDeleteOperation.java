@@ -45,7 +45,6 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
  * @mongodb.driver.manual reference/command/findAndModify/ findAndModify
  * @since 3.0
  */
-@Deprecated
 public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
     private BsonDocument filter;
     private BsonDocument projection;
@@ -58,9 +57,7 @@ public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
      *
      * @param namespace the database and collection namespace for the operation.
      * @param decoder   the decoder for the result documents.
-     * @deprecated      use {@link #FindAndDeleteOperation(MongoNamespace, WriteConcern, boolean, Decoder)} instead
      */
-    @Deprecated
     public FindAndDeleteOperation(final MongoNamespace namespace, final Decoder<T> decoder) {
         this(namespace, WriteConcern.ACKNOWLEDGED, false, decoder);
     }
@@ -72,9 +69,7 @@ public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
      * @param writeConcern the writeConcern for the operation
      * @param decoder      the decoder for the result documents.
      * @since 3.2
-     * @deprecated         use {@link #FindAndDeleteOperation(MongoNamespace, WriteConcern, boolean, Decoder)} instead
      */
-    @Deprecated
     public FindAndDeleteOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final Decoder<T> decoder) {
         this(namespace, writeConcern, false, decoder);
     }

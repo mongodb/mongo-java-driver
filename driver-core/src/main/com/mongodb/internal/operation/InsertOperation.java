@@ -31,7 +31,6 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @since 3.0
  */
-@Deprecated
 public class InsertOperation extends BaseWriteOperation {
     private final List<InsertRequest> insertRequests;
 
@@ -42,9 +41,7 @@ public class InsertOperation extends BaseWriteOperation {
      * @param ordered           whether the inserts are ordered.
      * @param writeConcern      the write concern for the operation.
      * @param insertRequests    the list of inserts.
-     * @deprecated              use {@link #InsertOperation(MongoNamespace, boolean, WriteConcern, boolean, List)} instead
      */
-    @Deprecated
     public InsertOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                            final List<InsertRequest> insertRequests) {
         this(namespace, ordered, writeConcern, false, insertRequests);
