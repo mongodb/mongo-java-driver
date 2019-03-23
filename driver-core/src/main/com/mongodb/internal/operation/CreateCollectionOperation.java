@@ -53,7 +53,6 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  * @since 3.0
  * @mongodb.driver.manual reference/method/db.createCollection Create Collection
  */
-@Deprecated
 public class CreateCollectionOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private final String databaseName;
     private final String collectionName;

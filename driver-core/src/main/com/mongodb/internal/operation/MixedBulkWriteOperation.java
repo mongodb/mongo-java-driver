@@ -68,7 +68,6 @@ import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeast
  *
  * @since 3.0
  */
-@Deprecated
 public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteResult>, WriteOperation<BulkWriteResult> {
     private static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator();
     private final MongoNamespace namespace;
@@ -85,9 +84,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
      * @param writeRequests the list of writeRequests to execute.
      * @param ordered       whether the writeRequests must be executed in order.
      * @param writeConcern  the write concern for the operation.
-     * @deprecated          use {@link #MixedBulkWriteOperation(MongoNamespace, List, boolean, WriteConcern, boolean)} instead
      */
-    @Deprecated
     public MixedBulkWriteOperation(final MongoNamespace namespace, final List<? extends WriteRequest> writeRequests,
                                    final boolean ordered, final WriteConcern writeConcern) {
         this(namespace, writeRequests, ordered, writeConcern, false);

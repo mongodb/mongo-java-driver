@@ -74,7 +74,6 @@ import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeast
  * @param <T> the operations result type.
  * @since 3.0
  */
-@Deprecated
 public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
     private static final String FIRST_BATCH = "firstBatch";
 

@@ -29,7 +29,6 @@ import static com.mongodb.internal.operation.CommandOperationHelper.noOpRetryCom
  *
  * @since 3.8
  */
-@Deprecated
 public class AbortTransactionOperation extends TransactionOperation {
     private BsonDocument recoveryToken;
 

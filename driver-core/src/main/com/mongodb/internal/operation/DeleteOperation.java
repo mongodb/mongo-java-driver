@@ -31,7 +31,6 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @since 3.0
  */
-@Deprecated
 public class DeleteOperation extends BaseWriteOperation {
     private final List<DeleteRequest> deleteRequests;
 
@@ -42,9 +41,7 @@ public class DeleteOperation extends BaseWriteOperation {
      * @param ordered        whether the writes are ordered.
      * @param writeConcern   the write concern for the operation.
      * @param deleteRequests the remove requests.
-     * @deprecated           use {@link #DeleteOperation(MongoNamespace, boolean, WriteConcern, boolean, List)} instead
      */
-    @Deprecated
     public DeleteOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                            final List<DeleteRequest> deleteRequests) {
         this(namespace, ordered, writeConcern, false, deleteRequests);

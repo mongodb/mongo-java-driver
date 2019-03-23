@@ -46,7 +46,6 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  *
  * @since 3.0
  */
-@Deprecated
 public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOperation<Void> {
     private static final BsonDocument DROP_DATABASE = new BsonDocument("dropDatabase", new BsonInt32(1));
     private final String databaseName;
@@ -57,7 +56,6 @@ public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOp
      *
      * @param databaseName the name of the database for the operation.
      */
-    @Deprecated
     public DropDatabaseOperation(final String databaseName) {
         this(databaseName, null);
     }

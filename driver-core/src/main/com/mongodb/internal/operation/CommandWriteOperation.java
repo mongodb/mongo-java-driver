@@ -32,7 +32,6 @@ import static com.mongodb.internal.operation.CommandOperationHelper.executeComma
  * @param <T> the operations result type.
  * @since 3.0
  */
-@Deprecated
 public class CommandWriteOperation<T> implements AsyncWriteOperation<T>, WriteOperation<T> {
     private final String databaseName;
     private final BsonDocument command;

@@ -61,7 +61,6 @@ import static com.mongodb.internal.operation.OperationReadConcernHelper.appendRe
  *
  * @since 3.0
  */
-@Deprecated
 public class CountOperation implements AsyncReadOperation<Long>, ReadOperation<Long> {
     private static final Decoder<BsonDocument> DECODER = new BsonDocumentCodec();
     private final MongoNamespace namespace;

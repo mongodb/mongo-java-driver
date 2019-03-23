@@ -25,7 +25,6 @@ import com.mongodb.binding.WriteBinding;
  *
  * @since 3.0
  */
-@Deprecated
 public interface WriteOperation<T> {
     /**
      * General execute which can return anything of type T

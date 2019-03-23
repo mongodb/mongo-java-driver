@@ -31,7 +31,6 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @since 3.0
  */
-@Deprecated
 public class UpdateOperation extends BaseWriteOperation {
     private final List<UpdateRequest> updates;
 
@@ -42,9 +41,7 @@ public class UpdateOperation extends BaseWriteOperation {
      * @param ordered       whether the updates are ordered.
      * @param writeConcern  the write concern for the operation.
      * @param updates       the update requests.
-     * @deprecated          use {@link #UpdateOperation(MongoNamespace, boolean, WriteConcern, boolean, List)} instead
      */
-    @Deprecated
     public UpdateOperation(final MongoNamespace namespace, final boolean ordered, final WriteConcern writeConcern,
                            final List<UpdateRequest> updates) {
         this(namespace, ordered, writeConcern, false, updates);

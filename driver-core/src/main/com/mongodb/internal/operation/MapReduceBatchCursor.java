@@ -23,7 +23,6 @@ package com.mongodb.internal.operation;
  * @param <T> the operations result type.
  * @since 3.0
  */
-@Deprecated
 public interface MapReduceBatchCursor<T> extends BatchCursor<T> {
     /**
      * Get the statistics for this map-reduce operation
