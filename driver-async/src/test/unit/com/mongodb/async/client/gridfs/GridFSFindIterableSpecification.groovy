@@ -30,7 +30,7 @@ import com.mongodb.async.client.TestOperationExecutor
 import com.mongodb.client.gridfs.codecs.GridFSFileCodec
 import com.mongodb.client.gridfs.model.GridFSFile
 import com.mongodb.client.model.Collation
-import com.mongodb.operation.FindOperation
+import com.mongodb.internal.operation.FindOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonObjectId

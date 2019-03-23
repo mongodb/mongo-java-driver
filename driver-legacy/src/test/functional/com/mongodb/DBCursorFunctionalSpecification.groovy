@@ -19,7 +19,7 @@ package com.mongodb
 import com.mongodb.client.internal.TestOperationExecutor
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CollationStrength
-import com.mongodb.operation.BatchCursor
+import com.mongodb.internal.operation.BatchCursor
 import spock.lang.IgnoreIf
 import spock.lang.Subject
 

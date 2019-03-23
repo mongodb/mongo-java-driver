@@ -26,8 +26,8 @@ import com.mongodb.client.model.Collation
 import com.mongodb.client.model.changestream.ChangeStreamDocument
 import com.mongodb.client.model.changestream.FullDocument
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
-import com.mongodb.operation.AggregateResponseBatchCursor
-import com.mongodb.operation.ChangeStreamOperation
+import com.mongodb.internal.operation.AggregateResponseBatchCursor
+import com.mongodb.internal.operation.ChangeStreamOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonTimestamp

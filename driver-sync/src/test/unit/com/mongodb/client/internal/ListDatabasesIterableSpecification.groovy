@@ -18,8 +18,8 @@ package com.mongodb.client.internal
 
 
 import com.mongodb.Function
-import com.mongodb.operation.BatchCursor
-import com.mongodb.operation.ListDatabasesOperation
+import com.mongodb.internal.operation.BatchCursor
+import com.mongodb.internal.operation.ListDatabasesOperation
 import org.bson.BsonDocument
 import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider

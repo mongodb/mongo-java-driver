@@ -22,8 +22,8 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.operation.AsyncReadOperation;
 import com.mongodb.lang.Nullable;
-import com.mongodb.operation.AsyncReadOperation;
 
 import java.util.Collection;
 import java.util.List;

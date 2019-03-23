@@ -18,7 +18,7 @@ package com.mongodb.connection
 
 
 import com.mongodb.OperationFunctionalSpecification
-import com.mongodb.operation.CommandReadOperation
+import com.mongodb.internal.operation.CommandReadOperation
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.codecs.BsonDocumentCodec

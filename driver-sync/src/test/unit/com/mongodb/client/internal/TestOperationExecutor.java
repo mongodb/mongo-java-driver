@@ -18,10 +18,10 @@ package com.mongodb.client.internal;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
-import com.mongodb.lang.Nullable;
-import com.mongodb.operation.ReadOperation;
-import com.mongodb.operation.WriteOperation;
 import com.mongodb.client.ClientSession;
+import com.mongodb.internal.operation.ReadOperation;
+import com.mongodb.internal.operation.WriteOperation;
+import com.mongodb.lang.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;

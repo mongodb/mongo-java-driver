@@ -18,14 +18,13 @@ package com.mongodb.client.internal
 
 import com.mongodb.ServerAddress
 import com.mongodb.ServerCursor
-import com.mongodb.operation.AggregateResponseBatchCursor
+import com.mongodb.internal.operation.AggregateResponseBatchCursor
 import org.bson.BsonDocument
-import org.bson.BsonInt32;
-import org.bson.codecs.Decoder;
-import org.bson.RawBsonDocument;
+import org.bson.BsonInt32
+import org.bson.RawBsonDocument
+import org.bson.codecs.Decoder
 import org.bson.codecs.RawBsonDocumentCodec
 import spock.lang.Specification
-
 
 class MongoChangeStreamCursorSpecification extends Specification {
     def 'should get server cursor and address'() {
