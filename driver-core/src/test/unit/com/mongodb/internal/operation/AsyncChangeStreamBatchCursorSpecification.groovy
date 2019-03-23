@@ -17,7 +17,7 @@
 package com.mongodb.internal.operation
 
 import com.mongodb.async.SingleResultCallback
-import com.mongodb.binding.AsyncReadBinding
+import com.mongodb.internal.binding.AsyncReadBinding
 import spock.lang.Specification
 
 class AsyncChangeStreamBatchCursorSpecification extends Specification {

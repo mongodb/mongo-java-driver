@@ -22,11 +22,11 @@ import com.mongodb.MongoNamespace
 import com.mongodb.ServerAddress
 import com.mongodb.ServerCursor
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.binding.AsyncConnectionSource
 import com.mongodb.connection.AsyncConnection
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.QueryResult
 import com.mongodb.connection.ServerVersion
+import com.mongodb.internal.binding.AsyncConnectionSource
 import org.bson.BsonArray
 import org.bson.BsonDocument
 import org.bson.BsonInt32

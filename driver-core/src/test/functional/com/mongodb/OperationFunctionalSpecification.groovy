@@ -17,18 +17,6 @@
 package com.mongodb
 
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.binding.AsyncConnectionSource
-import com.mongodb.binding.AsyncReadBinding
-import com.mongodb.binding.AsyncReadWriteBinding
-import com.mongodb.binding.AsyncSessionBinding
-import com.mongodb.binding.AsyncSingleConnectionBinding
-import com.mongodb.binding.AsyncWriteBinding
-import com.mongodb.binding.ConnectionSource
-import com.mongodb.binding.ReadBinding
-import com.mongodb.binding.ReadWriteBinding
-import com.mongodb.binding.SessionBinding
-import com.mongodb.binding.SingleConnectionBinding
-import com.mongodb.binding.WriteBinding
 import com.mongodb.bulk.InsertRequest
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CollationAlternate
@@ -46,6 +34,18 @@ import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
 import com.mongodb.connection.ServerVersion
 import com.mongodb.connection.SplittablePayload
+import com.mongodb.internal.binding.AsyncConnectionSource
+import com.mongodb.internal.binding.AsyncReadBinding
+import com.mongodb.internal.binding.AsyncReadWriteBinding
+import com.mongodb.internal.binding.AsyncSessionBinding
+import com.mongodb.internal.binding.AsyncSingleConnectionBinding
+import com.mongodb.internal.binding.AsyncWriteBinding
+import com.mongodb.internal.binding.ConnectionSource
+import com.mongodb.internal.binding.ReadBinding
+import com.mongodb.internal.binding.ReadWriteBinding
+import com.mongodb.internal.binding.SessionBinding
+import com.mongodb.internal.binding.SingleConnectionBinding
+import com.mongodb.internal.binding.WriteBinding
 import com.mongodb.internal.connection.ServerHelper
 import com.mongodb.internal.operation.AsyncReadOperation
 import com.mongodb.internal.operation.AsyncWriteOperation

@@ -18,12 +18,12 @@ package com.mongodb.client.internal
 
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
-import com.mongodb.binding.ClusterBinding
-import com.mongodb.binding.ConnectionSource
-import com.mongodb.binding.ReadWriteBinding
-import com.mongodb.connection.Cluster
-import com.mongodb.internal.session.ClientSessionContext
 import com.mongodb.client.ClientSession
+import com.mongodb.connection.Cluster
+import com.mongodb.internal.binding.ClusterBinding
+import com.mongodb.internal.binding.ConnectionSource
+import com.mongodb.internal.binding.ReadWriteBinding
+import com.mongodb.internal.session.ClientSessionContext
 import spock.lang.Specification
 
 class ClientSessionBindingSpecification extends Specification {

@@ -26,15 +26,15 @@ import com.mongodb.ServerCursor
 import com.mongodb.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
-import com.mongodb.binding.AsyncConnectionSource
-import com.mongodb.binding.AsyncReadBinding
-import com.mongodb.binding.ConnectionSource
-import com.mongodb.binding.ReadBinding
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.connection.AsyncConnection
 import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.QueryResult
+import com.mongodb.internal.binding.AsyncConnectionSource
+import com.mongodb.internal.binding.AsyncReadBinding
+import com.mongodb.internal.binding.ConnectionSource
+import com.mongodb.internal.binding.ReadBinding
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonDouble
@@ -54,7 +54,6 @@ import static com.mongodb.ClusterFixture.getBinding
 import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static java.util.concurrent.TimeUnit.MILLISECONDS
-
 
 class ListCollectionsOperationSpecification extends OperationFunctionalSpecification {
 

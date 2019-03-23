@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package com.mongodb.binding;
+package com.mongodb.internal.binding;
 
 /**
  * An interface for reference-counted objects.
  *
  * @since 3.0
  */
-@Deprecated
 public interface ReferenceCounted {
     /**
      * Gets the current reference count, which starts at 0.

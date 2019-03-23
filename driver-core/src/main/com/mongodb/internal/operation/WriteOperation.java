@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.binding.WriteBinding;
+import com.mongodb.internal.binding.WriteBinding;
 
 /**
  * An operation which writes to a MongoDB server.

@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.binding.ReferenceCounted;
+import com.mongodb.internal.binding.ReferenceCounted;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

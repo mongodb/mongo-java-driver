@@ -16,8 +16,6 @@
 
 package com.mongodb.internal.binding;
 
-import com.mongodb.binding.ReferenceCounted;
-
 import java.util.concurrent.atomic.AtomicInteger;
 
 public abstract class AbstractReferenceCounted implements ReferenceCounted {

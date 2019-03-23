@@ -20,10 +20,10 @@ import com.mongodb.MongoNamespace
 import com.mongodb.MongoSocketException
 import com.mongodb.MongoSocketOpenException
 import com.mongodb.ServerAddress
-import com.mongodb.binding.ConnectionSource
 import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.QueryResult
+import com.mongodb.internal.binding.ConnectionSource
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonInt64

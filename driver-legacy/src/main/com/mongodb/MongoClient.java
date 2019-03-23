@@ -16,9 +16,6 @@
 
 package com.mongodb;
 
-import com.mongodb.binding.ConnectionSource;
-import com.mongodb.binding.ReadWriteBinding;
-import com.mongodb.binding.SingleServerBinding;
 import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListDatabasesIterable;
@@ -37,6 +34,9 @@ import com.mongodb.connection.Connection;
 import com.mongodb.connection.DefaultClusterFactory;
 import com.mongodb.connection.SocketStreamFactory;
 import com.mongodb.event.ClusterListener;
+import com.mongodb.internal.binding.ConnectionSource;
+import com.mongodb.internal.binding.ReadWriteBinding;
+import com.mongodb.internal.binding.SingleServerBinding;
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.internal.connection.PowerOfTwoBufferPool;
 import com.mongodb.internal.session.ServerSessionPool;

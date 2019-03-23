@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package com.mongodb.binding;
+package com.mongodb.internal.binding;
 
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
+import com.mongodb.async.SingleResultCallback;
+import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Cluster;
-import com.mongodb.connection.Connection;
 import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.internal.binding.AbstractReferenceCounted;
-import com.mongodb.internal.binding.ClusterAwareReadWriteBinding;
 import com.mongodb.internal.connection.ReadConcernAwareNoOpSessionContext;
 import com.mongodb.selector.ReadPreferenceServerSelector;
 import com.mongodb.selector.ServerSelector;
@@ -38,38 +37,34 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @since 3.0
  */
-@Deprecated
-public class ClusterBinding extends AbstractReferenceCounted implements ClusterAwareReadWriteBinding {
+public class AsyncClusterBinding extends AbstractReferenceCounted implements AsyncClusterAwareReadWriteBinding {
     private final Cluster cluster;
     private final ReadPreference readPreference;
     private final ReadConcern readConcern;
 
     /**
      * Creates an instance.
+     *
      * @param cluster        a non-null Cluster which will be used to select a server to bind to
      * @param readPreference a non-null ReadPreference for read operations
      * @param readConcern    a non-null read concern
      * @since 3.8
      */
-    public ClusterBinding(final Cluster cluster, final ReadPreference readPreference, final ReadConcern readConcern) {
+    public AsyncClusterBinding(final Cluster cluster, final ReadPreference readPreference, final ReadConcern readConcern) {
         this.cluster = notNull("cluster", cluster);
         this.readPreference = notNull("readPreference", readPreference);
-        this.readConcern = notNull("readConcern", readConcern);
-    }
-
-    /**
-     * Return the cluster.
-     * @return the cluster
-     * @since 3.11
-     */
-    public Cluster getCluster() {
-        return cluster;
+        this.readConcern = (notNull("readConcern", readConcern));
     }
 
     @Override
-    public ReadWriteBinding retain() {
+    public AsyncReadWriteBinding retain() {
         super.retain();
         return this;
+    }
+
+    @Override
+    public Cluster getCluster() {
+        return cluster;
     }
 
     @Override
@@ -78,26 +73,40 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
     }
 
     @Override
-    public ConnectionSource getReadConnectionSource() {
-        return new ClusterBindingConnectionSource(new ReadPreferenceServerSelector(readPreference));
-    }
-
-    @Override
     public SessionContext getSessionContext() {
         return new ReadConcernAwareNoOpSessionContext(readConcern);
     }
 
     @Override
-    public ConnectionSource getWriteConnectionSource() {
-        return new ClusterBindingConnectionSource(new WritableServerSelector());
+    public void getReadConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
+        getAsyncClusterBindingConnectionSource(new ReadPreferenceServerSelector(readPreference), callback);
     }
 
-    private final class ClusterBindingConnectionSource extends AbstractReferenceCounted implements ConnectionSource {
+    @Override
+    public void getWriteConnectionSource(final SingleResultCallback<AsyncConnectionSource> callback) {
+        getAsyncClusterBindingConnectionSource(new WritableServerSelector(), callback);
+    }
+
+    private void getAsyncClusterBindingConnectionSource(final ServerSelector serverSelector,
+                                                        final SingleResultCallback<AsyncConnectionSource> callback) {
+        cluster.selectServerAsync(serverSelector, new SingleResultCallback<Server>() {
+            @Override
+            public void onResult(final Server result, final Throwable t) {
+                if (t != null) {
+                    callback.onResult(null, t);
+                } else {
+                    callback.onResult(new AsyncClusterBindingConnectionSource(result), null);
+                }
+            }
+        });
+    }
+
+    private final class AsyncClusterBindingConnectionSource extends AbstractReferenceCounted implements AsyncConnectionSource {
         private final Server server;
 
-        private ClusterBindingConnectionSource(final ServerSelector serverSelector) {
-            this.server = cluster.selectServer(serverSelector);
-            ClusterBinding.this.retain();
+        private AsyncClusterBindingConnectionSource(final Server server) {
+            this.server = server;
+            AsyncClusterBinding.this.retain();
         }
 
         @Override
@@ -111,20 +120,20 @@ public class ClusterBinding extends AbstractReferenceCounted implements ClusterA
         }
 
         @Override
-        public Connection getConnection() {
-            return server.getConnection();
+        public void getConnection(final SingleResultCallback<AsyncConnection> callback) {
+            server.getConnectionAsync(callback);
         }
 
-        public ConnectionSource retain() {
+        public AsyncConnectionSource retain() {
             super.retain();
-            ClusterBinding.this.retain();
+            AsyncClusterBinding.this.retain();
             return this;
         }
 
         @Override
         public void release() {
             super.release();
-            ClusterBinding.this.release();
+            AsyncClusterBinding.this.release();
         }
     }
 }

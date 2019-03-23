@@ -17,7 +17,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.binding.AsyncWriteBinding;
+import com.mongodb.internal.binding.AsyncWriteBinding;
 
 /**
  * An operation which asynchronously writes to a MongoDB server.

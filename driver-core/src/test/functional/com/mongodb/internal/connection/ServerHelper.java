@@ -20,9 +20,9 @@ import com.mongodb.ClusterFixture;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
-import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.selector.ServerAddressSelector;
 
 import static com.mongodb.ClusterFixture.getAsyncCluster;

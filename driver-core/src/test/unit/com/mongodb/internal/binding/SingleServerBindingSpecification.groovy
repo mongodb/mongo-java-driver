@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.binding
+package com.mongodb.internal.binding
 
 import com.mongodb.ServerAddress
 import com.mongodb.connection.Cluster
