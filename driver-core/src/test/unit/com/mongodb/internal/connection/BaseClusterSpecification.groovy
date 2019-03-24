@@ -29,7 +29,6 @@ import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterDescription
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ClusterType
-import com.mongodb.connection.Server
 import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType

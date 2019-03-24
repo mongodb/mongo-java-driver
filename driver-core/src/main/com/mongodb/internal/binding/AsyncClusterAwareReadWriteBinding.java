@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.binding;
 
-import com.mongodb.connection.Cluster;
+import com.mongodb.internal.connection.Cluster;
 
 /**
  * This interface is not part of the public API and may be removed or changed at any time.

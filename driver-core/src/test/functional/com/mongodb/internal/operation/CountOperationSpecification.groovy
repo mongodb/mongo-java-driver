@@ -24,9 +24,7 @@ import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
-import com.mongodb.connection.AsyncConnection
 import com.mongodb.connection.ClusterId
-import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
@@ -36,6 +34,8 @@ import com.mongodb.internal.binding.ConnectionSource
 import com.mongodb.internal.binding.ReadBinding
 import com.mongodb.internal.bulk.IndexRequest
 import com.mongodb.internal.client.model.CountStrategy
+import com.mongodb.internal.connection.AsyncConnection
+import com.mongodb.internal.connection.Connection
 import com.mongodb.session.SessionContext
 import org.bson.BsonArray
 import org.bson.BsonDocument

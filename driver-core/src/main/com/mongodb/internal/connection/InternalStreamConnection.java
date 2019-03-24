@@ -29,7 +29,6 @@ import com.mongodb.ServerAddress;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.connection.AsyncCompletionHandler;
-import com.mongodb.connection.ByteBufferBsonOutput;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ServerId;

@@ -19,7 +19,7 @@ package com.mongodb.internal.operation;
 import com.mongodb.MongoException;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.connection.QueryResult;
+import com.mongodb.internal.connection.QueryResult;
 
 import java.util.List;
 

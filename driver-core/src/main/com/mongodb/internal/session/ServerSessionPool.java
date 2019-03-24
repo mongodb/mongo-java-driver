@@ -18,12 +18,12 @@ package com.mongodb.internal.session;
 
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
-import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ClusterDescription;
-import com.mongodb.connection.Connection;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.connection.ConcurrentPool;
 import com.mongodb.internal.connection.ConcurrentPool.Prune;
+import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;

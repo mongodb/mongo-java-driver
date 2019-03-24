@@ -25,14 +25,11 @@ import com.mongodb.client.model.CollationStrength
 import com.mongodb.client.test.CollectionHelper
 import com.mongodb.client.test.Worker
 import com.mongodb.client.test.WorkerCodec
-import com.mongodb.connection.AsyncConnection
-import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
 import com.mongodb.connection.ServerVersion
-import com.mongodb.connection.SplittablePayload
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
 import com.mongodb.internal.binding.AsyncReadWriteBinding
@@ -46,7 +43,10 @@ import com.mongodb.internal.binding.SessionBinding
 import com.mongodb.internal.binding.SingleConnectionBinding
 import com.mongodb.internal.binding.WriteBinding
 import com.mongodb.internal.bulk.InsertRequest
+import com.mongodb.internal.connection.AsyncConnection
+import com.mongodb.internal.connection.Connection
 import com.mongodb.internal.connection.ServerHelper
+import com.mongodb.internal.connection.SplittablePayload
 import com.mongodb.internal.operation.AsyncReadOperation
 import com.mongodb.internal.operation.AsyncWriteOperation
 import com.mongodb.internal.operation.InsertOperation

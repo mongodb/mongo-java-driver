@@ -20,10 +20,8 @@ import com.mongodb.MongoClientException
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
-import com.mongodb.connection.ByteBufferBsonOutput
 import com.mongodb.connection.ClusterConnectionMode
 import com.mongodb.connection.ServerType
-import com.mongodb.connection.SplittablePayload
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import com.mongodb.session.SessionContext
 import org.bson.BsonArray
@@ -45,7 +43,7 @@ import spock.lang.Specification
 
 import java.nio.ByteBuffer
 
-import static com.mongodb.connection.SplittablePayload.Type.INSERT
+import static com.mongodb.internal.connection.SplittablePayload.Type.INSERT
 import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_ZERO_WIRE_VERSION
 import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_FOUR_WIRE_VERSION
 import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION

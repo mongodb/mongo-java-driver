@@ -21,7 +21,6 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
 import com.mongodb.WriteConcernResult;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.connection.ByteBufferBsonOutput;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.event.CommandListener;
 import org.bson.BsonBoolean;

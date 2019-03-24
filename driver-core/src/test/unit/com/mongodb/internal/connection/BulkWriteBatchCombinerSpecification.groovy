@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection
+package com.mongodb.internal.connection
 
 import com.mongodb.MongoBulkWriteException
 import com.mongodb.ServerAddress
@@ -22,7 +22,6 @@ import com.mongodb.bulk.BulkWriteError
 import com.mongodb.bulk.BulkWriteResult
 import com.mongodb.bulk.BulkWriteUpsert
 import com.mongodb.bulk.WriteConcernError
-import com.mongodb.internal.connection.IndexMap
 import org.bson.BsonDocument
 import org.bson.BsonString
 import spock.lang.Specification

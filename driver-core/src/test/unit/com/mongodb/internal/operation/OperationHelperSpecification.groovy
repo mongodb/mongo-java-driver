@@ -20,9 +20,7 @@ import com.mongodb.MongoClientException
 import com.mongodb.ReadConcern
 import com.mongodb.ServerAddress
 import com.mongodb.client.model.Collation
-import com.mongodb.connection.AsyncConnection
 import com.mongodb.connection.ClusterId
-import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerDescription
@@ -32,6 +30,8 @@ import com.mongodb.internal.bulk.DeleteRequest
 import com.mongodb.internal.bulk.IndexRequest
 import com.mongodb.internal.bulk.UpdateRequest
 import com.mongodb.internal.bulk.WriteRequest
+import com.mongodb.internal.connection.AsyncConnection
+import com.mongodb.internal.connection.Connection
 import com.mongodb.session.SessionContext
 import org.bson.BsonDocument
 import spock.lang.Specification

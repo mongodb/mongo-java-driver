@@ -14,9 +14,13 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
+package com.mongodb.internal.connection;
 
 import com.mongodb.MongoCredential;
+import com.mongodb.connection.ClusterSettings;
+import com.mongodb.connection.ConnectionPoolSettings;
+import com.mongodb.connection.ServerSettings;
+import com.mongodb.connection.StreamFactory;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ConnectionPoolListener;
 
@@ -25,7 +29,6 @@ import com.mongodb.event.ConnectionPoolListener;
  *
  * @since 3.0
  */
-@Deprecated
 public interface ClusterFactory {
 
     // CHECKSTYLE:OFF

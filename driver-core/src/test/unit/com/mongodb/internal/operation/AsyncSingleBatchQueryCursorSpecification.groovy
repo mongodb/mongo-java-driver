@@ -20,7 +20,7 @@ import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.connection.QueryResult
+import com.mongodb.internal.connection.QueryResult
 import org.bson.Document
 import spock.lang.Specification
 

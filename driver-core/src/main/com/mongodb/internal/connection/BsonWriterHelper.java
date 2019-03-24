@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.connection.SplittablePayload;
 import org.bson.BsonDocument;
 import org.bson.BsonElement;
 import org.bson.BsonMaximumSizeExceededException;

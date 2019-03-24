@@ -18,12 +18,12 @@ package com.mongodb.async.client.internal;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.connection.AsyncConnection;
-import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
+import com.mongodb.internal.connection.AsyncConnection;
+import com.mongodb.internal.connection.Cluster;
 import com.mongodb.session.SessionContext;
 
 @SuppressWarnings("deprecation")

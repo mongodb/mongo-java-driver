@@ -17,8 +17,8 @@
 package com.mongodb.internal.binding;
 
 import com.mongodb.ReadPreference;
-import com.mongodb.connection.Connection;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.connection.Connection;
 import com.mongodb.session.SessionContext;
 
 import static org.bson.assertions.Assertions.notNull;

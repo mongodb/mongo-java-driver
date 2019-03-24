@@ -14,21 +14,20 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
+package com.mongodb.internal.connection;
 
 import com.mongodb.MongoCompressor;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoDriverInformation;
+import com.mongodb.connection.ClusterConnectionMode;
+import com.mongodb.connection.ClusterId;
+import com.mongodb.connection.ClusterSettings;
+import com.mongodb.connection.ConnectionPoolSettings;
+import com.mongodb.connection.ServerSettings;
+import com.mongodb.connection.StreamFactory;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.ConnectionPoolListener;
-import com.mongodb.internal.connection.ClusterableServerFactory;
-import com.mongodb.internal.connection.DefaultClusterableServerFactory;
-import com.mongodb.internal.connection.DefaultDnsSrvRecordMonitorFactory;
-import com.mongodb.internal.connection.DnsMultiServerCluster;
-import com.mongodb.internal.connection.DnsSrvRecordMonitorFactory;
-import com.mongodb.internal.connection.MultiServerCluster;
-import com.mongodb.internal.connection.SingleServerCluster;
 
 import java.util.Collections;
 import java.util.List;
@@ -38,7 +37,6 @@ import java.util.List;
  *
  * @since 3.0
  */
-@Deprecated
 public final class DefaultClusterFactory implements ClusterFactory {
 
     @Override

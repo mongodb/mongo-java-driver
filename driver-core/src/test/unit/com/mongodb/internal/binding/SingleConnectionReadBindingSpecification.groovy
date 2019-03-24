@@ -18,8 +18,8 @@ package com.mongodb.internal.binding
 
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
-import com.mongodb.connection.Connection
 import com.mongodb.connection.ServerDescription
+import com.mongodb.internal.connection.Connection
 import spock.lang.Specification
 
 import static com.mongodb.connection.ServerConnectionState.CONNECTED

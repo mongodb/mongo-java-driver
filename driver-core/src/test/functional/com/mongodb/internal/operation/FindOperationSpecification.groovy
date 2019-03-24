@@ -26,12 +26,9 @@ import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.client.model.CreateCollectionOptions
-import com.mongodb.connection.AsyncConnection
 import com.mongodb.connection.ClusterId
-import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
-import com.mongodb.connection.QueryResult
 import com.mongodb.connection.ServerId
 import com.mongodb.internal.binding.AsyncClusterBinding
 import com.mongodb.internal.binding.AsyncConnectionSource
@@ -39,6 +36,9 @@ import com.mongodb.internal.binding.AsyncReadBinding
 import com.mongodb.internal.binding.ClusterBinding
 import com.mongodb.internal.binding.ConnectionSource
 import com.mongodb.internal.binding.ReadBinding
+import com.mongodb.internal.connection.AsyncConnection
+import com.mongodb.internal.connection.Connection
+import com.mongodb.internal.connection.QueryResult
 import com.mongodb.session.SessionContext
 import org.bson.BsonBoolean
 import org.bson.BsonDocument

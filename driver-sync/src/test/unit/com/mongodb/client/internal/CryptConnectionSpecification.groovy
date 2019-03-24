@@ -19,12 +19,12 @@ package com.mongodb.client.internal
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterId
-import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId
 import com.mongodb.connection.ServerId
-import com.mongodb.connection.SplittablePayload
+import com.mongodb.internal.connection.Connection
 import com.mongodb.internal.connection.NoOpSessionContext
+import com.mongodb.internal.connection.SplittablePayload
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonArray
 import org.bson.BsonBinary
@@ -45,7 +45,7 @@ import org.bson.io.BasicOutputBuffer
 import spock.lang.Specification
 
 import static com.mongodb.connection.ServerType.STANDALONE
-import static com.mongodb.connection.SplittablePayload.Type.INSERT
+import static com.mongodb.internal.connection.SplittablePayload.Type.INSERT
 
 class CryptConnectionSpecification extends Specification {
 
