@@ -20,7 +20,6 @@ import com.mongodb.MongoInternalException
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
-import com.mongodb.connection.ByteBufferBsonOutput
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerId

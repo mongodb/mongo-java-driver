@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
+package com.mongodb.internal.connection;
 
 import org.bson.BsonDocument;
 
@@ -22,9 +22,9 @@ import java.util.List;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.connection.SplittablePayload.Type.INSERT;
-import static com.mongodb.connection.SplittablePayload.Type.REPLACE;
-import static com.mongodb.connection.SplittablePayload.Type.UPDATE;
+import static com.mongodb.internal.connection.SplittablePayload.Type.INSERT;
+import static com.mongodb.internal.connection.SplittablePayload.Type.REPLACE;
+import static com.mongodb.internal.connection.SplittablePayload.Type.UPDATE;
 
 /**
  * A Splittable payload for write commands.
@@ -32,15 +32,14 @@ import static com.mongodb.connection.SplittablePayload.Type.UPDATE;
  * <p>The command will consume as much of the payload as possible. The {@link #hasAnotherSplit()} method will return true if there is
  * another split to consume, {@link #getNextSplit} method will return the next SplittablePayload.</p>
  *
- * @see com.mongodb.connection.Connection#command(String, org.bson.BsonDocument, org.bson.FieldNameValidator, com.mongodb.ReadPreference,
- * org.bson.codecs.Decoder, com.mongodb.session.SessionContext, boolean, com.mongodb.connection.SplittablePayload,
+ * @see Connection#command(String, org.bson.BsonDocument, org.bson.FieldNameValidator, com.mongodb.ReadPreference,
+ * org.bson.codecs.Decoder, com.mongodb.session.SessionContext, boolean, SplittablePayload,
  * org.bson.FieldNameValidator)
- * @see com.mongodb.connection.AsyncConnection#commandAsync(String, org.bson.BsonDocument, org.bson.FieldNameValidator,
+ * @see AsyncConnection#commandAsync(String, org.bson.BsonDocument, org.bson.FieldNameValidator,
  * com.mongodb.ReadPreference, org.bson.codecs.Decoder, com.mongodb.session.SessionContext, boolean,
- * com.mongodb.connection.SplittablePayload, org.bson.FieldNameValidator, com.mongodb.async.SingleResultCallback)
+ * SplittablePayload, org.bson.FieldNameValidator, com.mongodb.async.SingleResultCallback)
  * @since 3.6
  */
-@Deprecated
 public final class SplittablePayload {
     private final Type payloadType;
     private final List<BsonDocument> payload;

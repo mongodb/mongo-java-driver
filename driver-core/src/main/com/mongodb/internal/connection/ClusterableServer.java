@@ -16,8 +16,6 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.connection.Server;
-
 /**
  * A logical connection to a MongoDB server that supports clustering along with other servers.
  */

@@ -22,6 +22,7 @@ import com.mongodb.ServerAddress;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.event.ClusterListener;
+import com.mongodb.internal.connection.Cluster;
 import com.mongodb.internal.selector.LatencyMinimizingServerSelector;
 import com.mongodb.selector.CompositeServerSelector;
 import com.mongodb.selector.ServerSelector;

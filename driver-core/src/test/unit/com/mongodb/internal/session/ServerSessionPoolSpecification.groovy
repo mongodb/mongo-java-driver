@@ -17,14 +17,14 @@
 package com.mongodb.internal.session
 
 import com.mongodb.ServerAddress
-import com.mongodb.connection.Cluster
 import com.mongodb.connection.ClusterDescription
 import com.mongodb.connection.ClusterSettings
-import com.mongodb.connection.Connection
-import com.mongodb.connection.Server
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerSettings
+import com.mongodb.internal.connection.Cluster
+import com.mongodb.internal.connection.Connection
 import com.mongodb.internal.connection.NoOpSessionContext
+import com.mongodb.internal.connection.Server
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import org.bson.BsonArray
 import org.bson.BsonBinarySubType

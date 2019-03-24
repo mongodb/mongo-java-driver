@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
+package com.mongodb.internal.connection;
 
 import com.mongodb.MongoBulkWriteException;
 import com.mongodb.ServerAddress;
@@ -23,7 +23,6 @@ import com.mongodb.bulk.BulkWriteError;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.BulkWriteUpsert;
 import com.mongodb.bulk.WriteConcernError;
-import com.mongodb.internal.connection.IndexMap;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -37,7 +36,6 @@ import static java.util.Arrays.asList;
 /**
  * This class is not part of the public API.  It may be changed or removed at any time.
  */
-@Deprecated
 public class BulkWriteBatchCombiner {
     private final ServerAddress serverAddress;
     private final boolean ordered;

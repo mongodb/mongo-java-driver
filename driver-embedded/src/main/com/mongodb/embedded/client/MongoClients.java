@@ -18,9 +18,9 @@ package com.mongodb.embedded.client;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.internal.MongoClientImpl;
-import com.mongodb.connection.Cluster;
 import com.mongodb.embedded.capi.MongoEmbeddedCAPI;
 import com.mongodb.embedded.capi.MongoEmbeddedLibrary;
+import com.mongodb.internal.connection.Cluster;
 
 import static java.lang.String.format;
 

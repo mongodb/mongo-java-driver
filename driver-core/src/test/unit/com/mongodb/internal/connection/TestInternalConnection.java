@@ -19,7 +19,6 @@ package com.mongodb.internal.connection;
 import com.mongodb.MongoException;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.connection.BufferProvider;
-import com.mongodb.connection.ByteBufferBsonOutput;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerId;
 import com.mongodb.session.SessionContext;

@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
+package com.mongodb.internal.connection;
 
+import com.mongodb.connection.BufferProvider;
 import org.bson.ByteBuf;
 import org.bson.io.OutputBuffer;
 
@@ -31,7 +32,6 @@ import static com.mongodb.assertions.Assertions.notNull;
  * This class should not be considered as part of the public API, and it may change or be removed at any time.
  *
  */
-@Deprecated
 public class ByteBufferBsonOutput extends OutputBuffer {
 
     private static final int MAX_SHIFT = 31;

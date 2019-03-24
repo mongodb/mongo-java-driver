@@ -18,12 +18,11 @@ package com.mongodb.internal.binding;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.ServerAddress;
-import com.mongodb.connection.Cluster;
-import com.mongodb.connection.Connection;
-import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.internal.binding.AbstractReferenceCounted;
+import com.mongodb.internal.connection.Cluster;
+import com.mongodb.internal.connection.Connection;
 import com.mongodb.internal.connection.NoOpSessionContext;
+import com.mongodb.internal.connection.Server;
 import com.mongodb.internal.selector.ServerAddressSelector;
 import com.mongodb.session.SessionContext;
 

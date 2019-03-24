@@ -17,7 +17,6 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoCommandException;
-import com.mongodb.connection.ByteBufferBsonOutput;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.event.CommandListener;

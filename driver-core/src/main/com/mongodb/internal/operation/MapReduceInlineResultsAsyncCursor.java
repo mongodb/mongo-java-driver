@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.operation;
 
-import com.mongodb.connection.QueryResult;
+import com.mongodb.internal.connection.QueryResult;
 
 /**
  * Cursor representation of the results of an inline map-reduce operation.  This allows users to iterate over the results that were returned

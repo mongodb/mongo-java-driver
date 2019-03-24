@@ -17,7 +17,7 @@
 
 package com.mongodb.benchmark.benchmarks;
 
-import com.mongodb.connection.ByteBufferBsonOutput;
+import com.mongodb.internal.connection.ByteBufferBsonOutput;
 import org.bson.BsonBinaryWriter;
 import org.bson.codecs.Codec;
 import org.bson.codecs.EncoderContext;

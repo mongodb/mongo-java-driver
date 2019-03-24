@@ -31,9 +31,7 @@ import com.mongodb.ServerAddress
 import com.mongodb.WriteConcernResult
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
-import com.mongodb.connection.AsyncConnection
 import com.mongodb.connection.ClusterId
-import com.mongodb.connection.Connection
 import com.mongodb.connection.ServerId
 import com.mongodb.event.CommandListener
 import com.mongodb.event.ServerListener

@@ -18,11 +18,11 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.connection.AsyncConnection;
-import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.binding.AsyncWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
+import com.mongodb.internal.connection.AsyncConnection;
+import com.mongodb.internal.connection.Connection;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 

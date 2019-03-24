@@ -27,11 +27,11 @@ import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.SingleResultCallback
 import com.mongodb.client.model.CreateCollectionOptions
-import com.mongodb.connection.AsyncConnection
-import com.mongodb.connection.Connection
-import com.mongodb.connection.QueryResult
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
+import com.mongodb.internal.connection.AsyncConnection
+import com.mongodb.internal.connection.Connection
+import com.mongodb.internal.connection.QueryResult
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonInt32

@@ -25,8 +25,6 @@ import com.mongodb.client.model.CollationAlternate
 import com.mongodb.client.model.CollationCaseFirst
 import com.mongodb.client.model.CollationMaxVariable
 import com.mongodb.client.model.CollationStrength
-import com.mongodb.connection.AsyncConnection
-import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding
@@ -34,6 +32,8 @@ import com.mongodb.internal.binding.AsyncWriteBinding
 import com.mongodb.internal.binding.ConnectionSource
 import com.mongodb.internal.binding.ReadBinding
 import com.mongodb.internal.binding.WriteBinding
+import com.mongodb.internal.connection.AsyncConnection
+import com.mongodb.internal.connection.Connection
 import com.mongodb.session.SessionContext
 import org.bson.BsonDocument
 import spock.lang.Shared

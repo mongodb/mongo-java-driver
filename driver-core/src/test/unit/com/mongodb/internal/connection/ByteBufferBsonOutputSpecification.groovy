@@ -14,10 +14,9 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection
+package com.mongodb.internal.connection
 
 import category.Slow
-import com.mongodb.internal.connection.SimpleBufferProvider
 import org.bson.BsonSerializationException
 import org.bson.types.ObjectId
 import org.junit.experimental.categories.Category

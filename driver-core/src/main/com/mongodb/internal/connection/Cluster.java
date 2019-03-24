@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
+package com.mongodb.internal.connection;
 
 
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ClusterSettings;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
 import org.bson.BsonTimestamp;
@@ -29,7 +31,6 @@ import java.io.Closeable;
  *
  * @since 3.0
  */
-@Deprecated
 public interface Cluster extends Closeable {
 
     /**

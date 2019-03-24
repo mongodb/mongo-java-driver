@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.connection;
+package com.mongodb.internal.connection;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.ServerAddress;
@@ -28,7 +28,6 @@ import java.util.List;
  * @param <T> the type of document to decode query results to
  * @since 3.0
  */
-@Deprecated
 public class QueryResult<T> {
     private final MongoNamespace namespace;
     private final List<T> results;

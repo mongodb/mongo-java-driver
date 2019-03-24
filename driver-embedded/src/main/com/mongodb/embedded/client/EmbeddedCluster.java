@@ -19,16 +19,16 @@ package com.mongodb.embedded.client;
 import com.mongodb.MongoConfigurationException;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;
-import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.embedded.capi.MongoEmbeddedLibrary;
+import com.mongodb.internal.connection.Cluster;
+import com.mongodb.internal.connection.Server;
 import com.mongodb.selector.ServerSelector;
 import org.bson.BsonTimestamp;
 

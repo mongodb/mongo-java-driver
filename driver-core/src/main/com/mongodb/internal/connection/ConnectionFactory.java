@@ -16,9 +16,7 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.ClusterConnectionMode;
-import com.mongodb.connection.Connection;
 
 interface ConnectionFactory {
     Connection create(InternalConnection internalConnection, ProtocolExecutor executor, ClusterConnectionMode clusterConnectionMode);

@@ -22,8 +22,6 @@ import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.async.SingleResultCallback
-import com.mongodb.connection.AsyncConnection
-import com.mongodb.connection.Connection
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
@@ -33,6 +31,8 @@ import com.mongodb.internal.binding.AsyncWriteBinding
 import com.mongodb.internal.binding.ConnectionSource
 import com.mongodb.internal.binding.ReadBinding
 import com.mongodb.internal.binding.WriteBinding
+import com.mongodb.internal.connection.AsyncConnection
+import com.mongodb.internal.connection.Connection
 import com.mongodb.internal.validator.NoOpFieldNameValidator
 import com.mongodb.session.SessionContext
 import org.bson.BsonBoolean

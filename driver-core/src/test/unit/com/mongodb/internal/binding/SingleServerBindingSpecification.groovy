@@ -17,7 +17,7 @@
 package com.mongodb.internal.binding
 
 import com.mongodb.ServerAddress
-import com.mongodb.connection.Cluster
+import com.mongodb.internal.connection.Cluster
 import spock.lang.Specification
 
 class SingleServerBindingSpecification extends Specification {

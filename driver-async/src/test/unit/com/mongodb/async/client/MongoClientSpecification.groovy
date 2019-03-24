@@ -20,7 +20,7 @@ import com.mongodb.MongoClientSettings
 import com.mongodb.ReadConcern
 import com.mongodb.WriteConcern
 import com.mongodb.client.model.geojson.MultiPolygon
-import com.mongodb.connection.Cluster
+import com.mongodb.internal.connection.Cluster
 import org.bson.BsonDocument
 import org.bson.Document
 import org.bson.UuidRepresentation
