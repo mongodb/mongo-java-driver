@@ -14,32 +14,35 @@
  * limitations under the License.
  */
 
-package com.mongodb.selector;
+package com.mongodb.internal.selector;
 
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.selector.ServerSelector;
 
 import java.util.List;
 
+import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAny;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimaries;
 
 /**
- * A server selector that chooses servers that are primaries.
+ * A server selector that chooses servers that are writable.
  *
- * @since 3.0
- * @deprecated Use either {@link ReadPreferenceServerSelector} or {@link WritableServerSelector}, depending on your requirements
+ * @since 3.1
  */
-@Deprecated
-public final class PrimaryServerSelector implements ServerSelector {
+public final class WritableServerSelector implements ServerSelector {
 
     @Override
-    @SuppressWarnings("deprecation")
     public List<ServerDescription> select(final ClusterDescription clusterDescription) {
+        if (clusterDescription.getConnectionMode() == ClusterConnectionMode.SINGLE) {
+            return getAny(clusterDescription);
+        }
         return getPrimaries(clusterDescription);
     }
 
     @Override
     public String toString() {
-        return "PrimaryServerSelector";
+        return "WritableServerSelector";
     }
 }

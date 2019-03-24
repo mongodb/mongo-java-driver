@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package com.mongodb.selector;
+package com.mongodb.internal.selector;
 
 import com.mongodb.ReadPreference;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.selector.ServerSelector;
 
 import java.util.List;
 
@@ -31,7 +32,6 @@ import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAny;
  *
  * @since 3.0
  */
-@Deprecated
 public class ReadPreferenceServerSelector implements ServerSelector {
     private final ReadPreference readPreference;
 

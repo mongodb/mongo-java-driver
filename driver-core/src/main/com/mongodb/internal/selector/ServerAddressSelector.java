@@ -14,11 +14,12 @@
  * limitations under the License.
  */
 
-package com.mongodb.selector;
+package com.mongodb.internal.selector;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.selector.ServerSelector;
 
 import java.util.Collections;
 import java.util.List;
@@ -32,7 +33,6 @@ import static java.util.Collections.singletonList;
  *
  * @since 3.0
  */
-@Deprecated
 public class ServerAddressSelector implements ServerSelector {
     private final ServerAddress serverAddress;
 

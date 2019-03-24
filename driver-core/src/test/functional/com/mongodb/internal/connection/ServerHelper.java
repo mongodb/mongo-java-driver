@@ -23,7 +23,7 @@ import com.mongodb.ServerAddress;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.binding.AsyncConnectionSource;
-import com.mongodb.selector.ServerAddressSelector;
+import com.mongodb.internal.selector.ServerAddressSelector;
 
 import static com.mongodb.ClusterFixture.getAsyncCluster;
 import static com.mongodb.ClusterFixture.getCluster;

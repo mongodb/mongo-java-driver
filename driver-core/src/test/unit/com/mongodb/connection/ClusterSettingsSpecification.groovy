@@ -20,9 +20,9 @@ import com.mongodb.ConnectionString
 import com.mongodb.ServerAddress
 import com.mongodb.UnixServerAddress
 import com.mongodb.event.ClusterListener
+import com.mongodb.internal.selector.LatencyMinimizingServerSelector
+import com.mongodb.internal.selector.WritableServerSelector
 import com.mongodb.selector.CompositeServerSelector
-import com.mongodb.selector.LatencyMinimizingServerSelector
-import com.mongodb.selector.WritableServerSelector
 import spock.lang.Specification
 
 import java.util.concurrent.TimeUnit

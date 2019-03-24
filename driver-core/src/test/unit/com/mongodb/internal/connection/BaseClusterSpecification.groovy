@@ -33,9 +33,9 @@ import com.mongodb.connection.Server
 import com.mongodb.connection.ServerConnectionState
 import com.mongodb.connection.ServerDescription
 import com.mongodb.connection.ServerType
-import com.mongodb.selector.ReadPreferenceServerSelector
-import com.mongodb.selector.ServerAddressSelector
-import com.mongodb.selector.WritableServerSelector
+import com.mongodb.internal.selector.ReadPreferenceServerSelector
+import com.mongodb.internal.selector.ServerAddressSelector
+import com.mongodb.internal.selector.WritableServerSelector
 import org.junit.experimental.categories.Category
 import spock.lang.Specification
 

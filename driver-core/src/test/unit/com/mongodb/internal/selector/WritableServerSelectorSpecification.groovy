@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.selector
+package com.mongodb.internal.selector
 
 import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterDescription
@@ -24,11 +24,12 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE
+import static com.mongodb.connection.ClusterConnectionMode.SINGLE
 import static com.mongodb.connection.ServerConnectionState.CONNECTED
 import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY
 import static com.mongodb.connection.ServerType.REPLICA_SET_SECONDARY
 
-class PrimaryServerSelectorSpecification extends Specification {
+class WritableServerSelectorSpecification extends Specification {
     private static final ServerDescription.Builder SERVER_DESCRIPTION_BUILDER = ServerDescription.builder()
             .state(CONNECTED)
             .address(new ServerAddress())
@@ -37,9 +38,9 @@ class PrimaryServerSelectorSpecification extends Specification {
     private static final ServerDescription SECONDARY_SERVER = SERVER_DESCRIPTION_BUILDER.type(REPLICA_SET_SECONDARY).build()
 
     @Unroll
-    def 'PrimaryServerSelector will choose primary server for #clusterDescription'() throws UnknownHostException {
+    def 'WritableServerSelector will choose primary server for #clusterDescription'() throws UnknownHostException {
         expect:
-        PrimaryServerSelector selector = new PrimaryServerSelector()
+        WritableServerSelector selector = new WritableServerSelector()
         expectedServerList == selector.select(clusterDescription)
 
         where:
@@ -47,6 +48,17 @@ class PrimaryServerSelectorSpecification extends Specification {
         [PRIMARY_SERVER]   | new ClusterDescription(MULTIPLE, ClusterType.REPLICA_SET, [PRIMARY_SERVER])
         [PRIMARY_SERVER]   | new ClusterDescription(MULTIPLE, ClusterType.REPLICA_SET, [PRIMARY_SERVER, SECONDARY_SERVER])
         []                 | new ClusterDescription(MULTIPLE, ClusterType.REPLICA_SET, [SECONDARY_SERVER])
+    }
+
+    @Unroll
+    def 'WritableServerSelector will choose secondary server in single mode for #clusterDescription'() throws UnknownHostException {
+        expect:
+        WritableServerSelector selector = new WritableServerSelector()
+        expectedServerList == selector.select(clusterDescription)
+
+        where:
+        expectedServerList | clusterDescription
+        [SECONDARY_SERVER] | new ClusterDescription(SINGLE, ClusterType.REPLICA_SET, [SECONDARY_SERVER])
     }
 
 }
