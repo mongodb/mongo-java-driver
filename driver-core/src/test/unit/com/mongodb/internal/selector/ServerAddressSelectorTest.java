@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.selector;
+package com.mongodb.internal.selector;
 
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterDescription;

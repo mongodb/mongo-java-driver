@@ -24,7 +24,7 @@ import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.binding.AbstractReferenceCounted;
 import com.mongodb.internal.connection.NoOpSessionContext;
-import com.mongodb.selector.ServerAddressSelector;
+import com.mongodb.internal.selector.ServerAddressSelector;
 import com.mongodb.session.SessionContext;
 
 import static com.mongodb.assertions.Assertions.notNull;

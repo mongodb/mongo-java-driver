@@ -14,10 +14,11 @@
  * limitations under the License.
  */
 
-package com.mongodb.selector;
+package com.mongodb.internal.selector;
 
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.selector.ServerSelector;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +34,6 @@ import static java.util.concurrent.TimeUnit.NANOSECONDS;
  *
  * @since 3.0
  */
-@Deprecated
 public class LatencyMinimizingServerSelector implements ServerSelector {
 
     private final long acceptableLatencyDifferenceNanos;

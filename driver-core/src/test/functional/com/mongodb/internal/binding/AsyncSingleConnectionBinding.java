@@ -25,8 +25,8 @@ import com.mongodb.connection.Cluster;
 import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.NoOpSessionContext;
-import com.mongodb.selector.ReadPreferenceServerSelector;
-import com.mongodb.selector.WritableServerSelector;
+import com.mongodb.internal.selector.ReadPreferenceServerSelector;
+import com.mongodb.internal.selector.WritableServerSelector;
 import com.mongodb.session.SessionContext;
 
 import java.util.concurrent.CountDownLatch;

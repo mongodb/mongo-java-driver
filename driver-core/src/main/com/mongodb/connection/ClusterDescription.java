@@ -19,8 +19,8 @@ package com.mongodb.connection;
 import com.mongodb.MongoException;
 import com.mongodb.ReadPreference;
 import com.mongodb.annotations.Immutable;
-import com.mongodb.selector.ReadPreferenceServerSelector;
-import com.mongodb.selector.WritableServerSelector;
+import com.mongodb.internal.selector.ReadPreferenceServerSelector;
+import com.mongodb.internal.selector.WritableServerSelector;
 
 import java.util.ArrayList;
 import java.util.Collections;

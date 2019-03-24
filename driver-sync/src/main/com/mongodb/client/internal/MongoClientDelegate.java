@@ -41,6 +41,7 @@ import com.mongodb.internal.binding.ReadWriteBinding;
 import com.mongodb.internal.binding.WriteBinding;
 import com.mongodb.internal.operation.ReadOperation;
 import com.mongodb.internal.operation.WriteOperation;
+import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;

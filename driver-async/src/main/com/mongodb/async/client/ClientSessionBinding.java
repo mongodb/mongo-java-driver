@@ -27,8 +27,8 @@ import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
 import com.mongodb.internal.binding.AsyncSingleServerBinding;
+import com.mongodb.internal.selector.ReadPreferenceServerSelector;
 import com.mongodb.internal.session.ClientSessionContext;
-import com.mongodb.selector.ReadPreferenceServerSelector;
 import com.mongodb.session.SessionContext;
 
 import static com.mongodb.assertions.Assertions.notNull;
