@@ -51,24 +51,6 @@ class DBCursorFunctionalSpecification extends FunctionalSpecification {
         1 * decoder.decode(_ as byte[], collection)
     }
 
-    @IgnoreIf({ serverVersionAtLeast(3, 0) })
-    def 'should use provided hints for queries'() {
-        given:
-        collection.createIndex(new BasicDBObject('a', 1))
-
-        when:
-        dbCursor = collection.find().hint(new BasicDBObject('a', 1))
-
-        then:
-        dbCursor.explain().get('cursor') == 'BtreeCursor a_1'
-
-        when:
-        dbCursor = collection.find().hint(new BasicDBObject('a', 1))
-
-        then:
-        dbCursor.explain().get('cursor') == 'BtreeCursor a_1'
-    }
-
     @IgnoreIf({ !serverVersionAtLeast(3, 0) })
     def 'should use provided hints for queries mongod > 3.0'() {
         given:

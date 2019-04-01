@@ -29,14 +29,11 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static java.util.concurrent.TimeUnit.SECONDS;
-import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
-import static org.junit.Assume.assumeThat;
 
 @SuppressWarnings("deprecation")
 public class DBCursorOldTest extends DatabaseTestCase {
@@ -255,34 +252,6 @@ public class DBCursorOldTest extends DatabaseTestCase {
                         .sort(new BasicDBObject("$natural", 1));
 
         cur.tryNext();
-    }
-
-    @Test
-    public void testExplain() {
-        assumeThat(serverVersionAtLeast(3, 0), is(false));
-        insertTestData(collection, 100);
-
-        DBObject q = BasicDBObjectBuilder.start().push("x").add("$gt", 50).get();
-
-        assertEquals(49, collection.find(q).count());
-        assertEquals(49, collection.find(q).itcount());
-        assertEquals(49, collection.find(q).toArray().size());
-        assertEquals(49, collection.find(q).itcount());
-        assertEquals(20, collection.find(q).limit(20).itcount());
-        assertEquals(20, collection.find(q).limit(-20).itcount());
-
-        collection.createIndex(new BasicDBObject("x", 1));
-
-        assertEquals(49, collection.find(q).count());
-        assertEquals(49, collection.find(q).toArray().size());
-        assertEquals(49, collection.find(q).itcount());
-        assertEquals(20, collection.find(q).limit(20).itcount());
-        assertEquals(20, collection.find(q).limit(-20).itcount());
-
-        assertEquals(49, collection.find(q).explain().get("n"));
-
-        assertEquals(20, collection.find(q).limit(20).explain().get("n"));
-        assertEquals(20, collection.find(q).limit(-20).explain().get("n"));
     }
 
     @Test
