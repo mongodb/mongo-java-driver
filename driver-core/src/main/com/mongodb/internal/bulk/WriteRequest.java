@@ -21,7 +21,6 @@ package com.mongodb.internal.bulk;
  *
  * @since 3.0
  */
-@Deprecated
 public abstract class WriteRequest {
 
     /**

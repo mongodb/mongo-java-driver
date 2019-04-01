@@ -25,7 +25,6 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @since 3.0
  */
-@Deprecated
 public final class InsertRequest extends WriteRequest {
     private final BsonDocument document;
 
