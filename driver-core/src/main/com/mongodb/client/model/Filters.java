@@ -749,14 +749,15 @@ public final class Filters {
      *
      * @param fieldName   the field name
      * @param geometry    the bounding GeoJSON geometry object
-     * @param maxDistance the maximum distance from the point, in meters
-     * @param minDistance the minimum distance from the point, in meters
+     * @param maxDistance the maximum distance from the point, in meters. It may be null.
+     * @param minDistance the minimum distance from the point, in meters. It may be null.
      * @return the filter
      * @since 3.1
      * @mongodb.driver.manual reference/operator/query/near/ $near
      * @mongodb.server.release 2.4
      */
-    public static Bson near(final String fieldName, final Point geometry, final Double maxDistance, final Double minDistance) {
+    public static Bson near(final String fieldName, final Point geometry, @Nullable final Double maxDistance,
+                            @Nullable final Double minDistance) {
         return new GeometryOperatorFilter<Point>("$near", fieldName, geometry, maxDistance, minDistance);
     }
 
@@ -765,14 +766,15 @@ public final class Filters {
      *
      * @param fieldName   the field name
      * @param geometry    the bounding GeoJSON geometry object
-     * @param maxDistance the maximum distance from the point, in meters
-     * @param minDistance the minimum distance from the point, in meters
+     * @param maxDistance the maximum distance from the point, in meters. It may be null.
+     * @param minDistance the minimum distance from the point, in meters. It may be null.
      * @return the filter
      * @since 3.1
      * @mongodb.driver.manual reference/operator/query/near/ $near
      * @mongodb.server.release 2.4
      */
-    public static Bson near(final String fieldName, final Bson geometry, final Double maxDistance, final Double minDistance) {
+    public static Bson near(final String fieldName, final Bson geometry, @Nullable final Double maxDistance,
+                            @Nullable final Double minDistance) {
         return new GeometryOperatorFilter<Bson>("$near", fieldName, geometry, maxDistance, minDistance);
     }
 
@@ -782,14 +784,15 @@ public final class Filters {
      * @param fieldName   the field name
      * @param x           the x coordinate
      * @param y           the y coordinate
-     * @param maxDistance the maximum distance from the point, in radians
-     * @param minDistance the minimum distance from the point, in radians
+     * @param maxDistance the maximum distance from the point, in radians. It may be null.
+     * @param minDistance the minimum distance from the point, in radians. It may be null.
      * @return the filter
      * @since 3.1
      * @mongodb.driver.manual reference/operator/query/near/ $near
      * @mongodb.server.release 2.4
      */
-    public static Bson near(final String fieldName, final double x, final double y, final Double maxDistance, final Double minDistance) {
+    public static Bson near(final String fieldName, final double x, final double y, @Nullable final Double maxDistance,
+                            @Nullable final Double minDistance) {
         return createNearFilterDocument(fieldName, x, y, maxDistance, minDistance, "$near");
     }
 
@@ -799,14 +802,15 @@ public final class Filters {
      *
      * @param fieldName   the field name
      * @param geometry    the bounding GeoJSON geometry object
-     * @param maxDistance the maximum distance from the point, in meters
-     * @param minDistance the minimum distance from the point, in meters
+     * @param maxDistance the maximum distance from the point, in meters. It may be null.
+     * @param minDistance the minimum distance from the point, in meters. It may be null.
      * @return the filter
      * @since 3.1
      * @mongodb.driver.manual reference/operator/query/near/ $near
      * @mongodb.server.release 2.4
      */
-    public static Bson nearSphere(final String fieldName, final Point geometry, final Double maxDistance, final Double minDistance) {
+    public static Bson nearSphere(final String fieldName, final Point geometry, @Nullable final Double maxDistance,
+                                  @Nullable final Double minDistance) {
         return new GeometryOperatorFilter<Point>("$nearSphere", fieldName, geometry, maxDistance, minDistance);
     }
 
@@ -816,14 +820,15 @@ public final class Filters {
      *
      * @param fieldName   the field name
      * @param geometry    the bounding GeoJSON geometry object
-     * @param maxDistance the maximum distance from the point, in meters
-     * @param minDistance the minimum distance from the point, in meters
+     * @param maxDistance the maximum distance from the point, in meters. It may be null.
+     * @param minDistance the minimum distance from the point, in meters. It may be null.
      * @return the filter
      * @since 3.1
      * @mongodb.driver.manual reference/operator/query/near/ $near
      * @mongodb.server.release 2.4
      */
-    public static Bson nearSphere(final String fieldName, final Bson geometry, final Double maxDistance, final Double minDistance) {
+    public static Bson nearSphere(final String fieldName, final Bson geometry, @Nullable final Double maxDistance,
+                                  @Nullable final Double minDistance) {
         return new GeometryOperatorFilter<Bson>("$nearSphere", fieldName, geometry, maxDistance, minDistance);
     }
 
@@ -834,15 +839,15 @@ public final class Filters {
      * @param fieldName   the field name
      * @param x           the x coordinate
      * @param y           the y coordinate
-     * @param maxDistance the maximum distance from the point, in radians
-     * @param minDistance the minimum distance from the point, in radians
+     * @param maxDistance the maximum distance from the point, in radians. It may be null.
+     * @param minDistance the minimum distance from the point, in radians. It may be null.
      * @return the filter
      * @since 3.1
      * @mongodb.driver.manual reference/operator/query/near/ $near
      * @mongodb.server.release 2.4
      */
-    public static Bson nearSphere(final String fieldName, final double x, final double y, final Double maxDistance,
-                                  final Double minDistance) {
+    public static Bson nearSphere(final String fieldName, final double x, final double y, @Nullable final Double maxDistance,
+                                  @Nullable final Double minDistance) {
         return createNearFilterDocument(fieldName, x, y, maxDistance, minDistance, "$nearSphere");
     }
 
