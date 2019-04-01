@@ -1144,21 +1144,6 @@ public class ConnectionString {
     }
 
     /**
-     * Returns true if writes should be retried if they fail due to a network error, and false otherwise
-     *
-     * <p>Starting with the 3.11.0 release, the default value is true</p>
-     *
-     * @return the retryWrites value, or true if unset
-     * @since 3.6
-     * @mongodb.server.release 3.6
-     * @deprecated Prefer {@link #getRetryWritesValue()}
-     */
-    @Deprecated
-    public boolean getRetryWrites() {
-        return retryWrites == null ? true : retryWrites;
-    }
-
-    /**
      * <p>Gets whether writes should be retried if they fail due to a network error</p>
      *
      * The name of this method differs from others in this class so as not to conflict with the now removed
