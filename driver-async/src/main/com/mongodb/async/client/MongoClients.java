@@ -204,7 +204,7 @@ public final class MongoClients {
 
     private static MongoClient createWithAsynchronousSocketChannel(final MongoClientSettings settings,
                                                                    @Nullable final MongoDriverInformation mongoDriverInformation) {
-        StreamFactoryFactory streamFactoryFactory = new AsynchronousSocketChannelStreamFactoryFactory();
+        StreamFactoryFactory streamFactoryFactory = AsynchronousSocketChannelStreamFactoryFactory.builder().build();
         StreamFactory streamFactory = streamFactoryFactory.create(settings.getSocketSettings(), settings.getSslSettings());
         StreamFactory heartbeatStreamFactory = streamFactoryFactory.create(settings.getHeartbeatSocketSettings(),
                 settings.getSslSettings());
