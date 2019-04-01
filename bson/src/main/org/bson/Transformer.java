@@ -18,10 +18,7 @@ package org.bson;
 
 /**
  * Transforms objects that can be converted to BSON into other Java types, and vice versa.
- * @deprecated there is no direct replacement for this class, but you can achieve the same effect more flexibly using a
- *  {@link org.bson.codecs.configuration.CodecRegistry}.
  */
-@Deprecated
 public interface Transformer {
     /**
      * Turns the {@code objectToTransform} into some other {@code Object}. This can either be turning a simple BSON-friendly object into a
