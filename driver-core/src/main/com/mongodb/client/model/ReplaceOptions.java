@@ -17,12 +17,6 @@
 package com.mongodb.client.model;
 
 import com.mongodb.lang.Nullable;
-import org.bson.conversions.Bson;
-
-import java.util.List;
-
-import static com.mongodb.assertions.Assertions.isTrue;
-import static com.mongodb.assertions.Assertions.notNull;
 
 /**
  * The options to apply when replacing documents.
@@ -36,26 +30,6 @@ public class ReplaceOptions {
     private boolean upsert;
     private Boolean bypassDocumentValidation;
     private Collation collation;
-
-    /**
-     * Creates replace options from updateOptions.
-     *
-     * @param updateOptions the updateOptions
-     * @return replace options
-     * @deprecated there is no replacement for this method
-     */
-    @Deprecated
-    public static ReplaceOptions createReplaceOptions(final UpdateOptions updateOptions) {
-        notNull("updateOptions", updateOptions);
-
-        List<? extends Bson> arrayFilters = updateOptions.getArrayFilters();
-        isTrue("ArrayFilters should be empty.",  arrayFilters == null || arrayFilters.isEmpty());
-
-        return new ReplaceOptions()
-                .bypassDocumentValidation(updateOptions.getBypassDocumentValidation())
-                .collation(updateOptions.getCollation())
-                .upsert(updateOptions.isUpsert());
-    }
 
     /**
      * Returns true if a new document should be inserted if there are no matches to the query filter.  The default is false.
