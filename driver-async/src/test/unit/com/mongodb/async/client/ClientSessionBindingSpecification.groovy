@@ -16,6 +16,7 @@
 
 package com.mongodb.async.client
 
+import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.binding.AsyncClusterBinding
@@ -169,6 +170,6 @@ class ClientSessionBindingSpecification extends Specification {
                 it[1].onResult(Stub(Server), null)
             }
         }
-        new AsyncClusterBinding(cluster, ReadPreference.primary())
+        new AsyncClusterBinding(cluster, ReadPreference.primary(), ReadConcern.DEFAULT)
     }
 }
