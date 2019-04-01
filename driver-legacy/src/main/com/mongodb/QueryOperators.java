@@ -63,15 +63,35 @@ public class QueryOperators {
     public static final String LANGUAGE = "$language";
 
     // meta query operators (to be implemented in QueryBuilder)
+
+    @Deprecated
     public static final String RETURN_KEY = "$returnKey";
+
+    @Deprecated
     public static final String MAX_SCAN = "$maxScan";
+
+    @Deprecated
     public static final String ORDER_BY = "$orderby";
+
+    @Deprecated
     public static final String EXPLAIN = "$explain";
+
+    @Deprecated
     public static final String SNAPSHOT = "$snapshot";
+
+    @Deprecated
     public static final String MIN = "$min";
+
+    @Deprecated
     public static final String MAX = "$max";
+
+    @Deprecated
     public static final String SHOW_DISK_LOC = "$showDiskLoc";
+
+    @Deprecated
     public static final String HINT = "$hint";
+
+    @Deprecated
     public static final String COMMENT = "$comment";
 
     private QueryOperators() {
