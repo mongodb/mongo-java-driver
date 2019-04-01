@@ -27,10 +27,11 @@ import com.mongodb.ServerAddress
 import com.mongodb.WriteConcern
 import com.mongodb.WriteConcernResult
 import com.mongodb.WriteError
+import com.mongodb.bulk.BulkWriteError
+import com.mongodb.bulk.WriteConcernError
 import com.mongodb.client.ClientSession
 import com.mongodb.client.ImmutableDocument
 import com.mongodb.client.ImmutableDocumentCodecProvider
-import com.mongodb.internal.client.model.AggregationLevel
 import com.mongodb.client.model.BulkWriteOptions
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CountOptions
@@ -61,19 +62,9 @@ import com.mongodb.internal.bulk.DeleteRequest
 import com.mongodb.internal.bulk.IndexRequest
 import com.mongodb.internal.bulk.InsertRequest
 import com.mongodb.internal.bulk.UpdateRequest
+import com.mongodb.internal.client.model.AggregationLevel
 import com.mongodb.internal.client.model.CountStrategy
 import com.mongodb.internal.client.model.changestream.ChangeStreamLevel
-import com.mongodb.operation.BatchCursor
-import com.mongodb.operation.CountOperation
-import com.mongodb.operation.CreateIndexesOperation
-import com.mongodb.operation.DropCollectionOperation
-import com.mongodb.operation.DropIndexOperation
-import com.mongodb.operation.FindAndDeleteOperation
-import com.mongodb.operation.FindAndReplaceOperation
-import com.mongodb.operation.FindAndUpdateOperation
-import com.mongodb.operation.ListIndexesOperation
-import com.mongodb.operation.MixedBulkWriteOperation
-import com.mongodb.operation.RenameCollectionOperation
 import com.mongodb.internal.operation.BatchCursor
 import com.mongodb.internal.operation.CountOperation
 import com.mongodb.internal.operation.CreateIndexesOperation
@@ -727,7 +718,7 @@ class MongoCollectionSpecification extends Specification {
     def 'deleteOne should translate BulkWriteException correctly'() {
         given:
         def bulkWriteException = new MongoBulkWriteException(acknowledged(0, 0, 1, null, []), [],
-                                                             new com.mongodb.bulk.WriteConcernError(100, '', new BsonDocument()),
+                new WriteConcernError(100, 'codeName', 'Message', new BsonDocument()),
                                                              new ServerAddress())
 
         def executor = new TestOperationExecutor([bulkWriteException])
@@ -831,7 +822,7 @@ class MongoCollectionSpecification extends Specification {
     def 'replaceOne should translate BulkWriteException correctly'() {
         given:
         def bulkWriteException = new MongoBulkWriteException(bulkWriteResult, [],
-                                                             new com.mongodb.bulk.WriteConcernError(100, '', new BsonDocument()),
+                                                             new WriteConcernError(100, 'codeName', 'Message', new BsonDocument()),
                                                              new ServerAddress())
 
         def executor = new TestOperationExecutor([bulkWriteException])
@@ -961,7 +952,7 @@ class MongoCollectionSpecification extends Specification {
 
         where:
         executor << new TestOperationExecutor([new MongoBulkWriteException(acknowledged(INSERT, 1, []),
-                [new com.mongodb.bulk.BulkWriteError(11000, 'oops',
+                [new BulkWriteError(11000, 'oops',
                         new BsonDocument(), 0)],
                 null, new ServerAddress())])
     }
@@ -969,8 +960,7 @@ class MongoCollectionSpecification extends Specification {
     def 'should translate MongoBulkWriteException to MongoWriteConcernException'() {
         given:
         def executor = new TestOperationExecutor([new MongoBulkWriteException(acknowledged(INSERT, 1, []), [],
-                new com.mongodb.bulk.WriteConcernError(42, 'oops',
-                        new BsonDocument()),
+                new WriteConcernError(42, 'codeName', 'Message', new BsonDocument()),
                 new ServerAddress())])
         def collection = new MongoCollectionImpl(namespace, Document, codecRegistry, readPreference, ACKNOWLEDGED,
                 true, true, readConcern, JAVA_LEGACY, executor)
@@ -980,7 +970,7 @@ class MongoCollectionSpecification extends Specification {
 
         then:
         def e = thrown(MongoWriteConcernException)
-        e.writeConcernError == new com.mongodb.bulk.WriteConcernError(42, 'oops', new BsonDocument())
+        e.writeConcernError == new WriteConcernError(42, 'codeName', 'Message', new BsonDocument())
     }
 
     def 'should use FindOneAndDeleteOperation correctly'() {
