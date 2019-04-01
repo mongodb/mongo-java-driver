@@ -32,7 +32,6 @@ import static java.util.Arrays.asList;
  * @mongodb.driver.manual reference/method/db.collection.ensureIndex/#options Index options
  * @since 3.0
  */
-@Deprecated
 public class IndexRequest {
     private final BsonDocument keys;
     private static final List<Integer> VALID_TEXT_INDEX_VERSIONS = asList(1, 2, 3);

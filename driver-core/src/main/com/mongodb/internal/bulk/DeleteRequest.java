@@ -26,7 +26,6 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @since 3.0
  */
-@Deprecated
 public final class DeleteRequest extends WriteRequest {
     private final BsonDocument filter;
     private boolean isMulti = true;
