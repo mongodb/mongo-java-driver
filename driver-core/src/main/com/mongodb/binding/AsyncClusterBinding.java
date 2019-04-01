@@ -50,18 +50,6 @@ public class AsyncClusterBinding extends AbstractReferenceCounted implements Asy
      *
      * @param cluster        a non-null Cluster which will be used to select a server to bind to
      * @param readPreference a non-null ReadPreference for read operations
-     * @deprecated Prefer {@link #AsyncClusterBinding(Cluster, ReadPreference, ReadConcern)}
-     */
-    @Deprecated
-    public AsyncClusterBinding(final Cluster cluster, final ReadPreference readPreference) {
-        this(cluster, readPreference, ReadConcern.DEFAULT);
-    }
-
-    /**
-     * Creates an instance.
-     *
-     * @param cluster        a non-null Cluster which will be used to select a server to bind to
-     * @param readPreference a non-null ReadPreference for read operations
      * @param readConcern    a non-null read concern
      * @since 3.8
      */
