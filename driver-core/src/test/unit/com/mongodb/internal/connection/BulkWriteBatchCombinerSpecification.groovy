@@ -91,8 +91,8 @@ class BulkWriteBatchCombinerSpecification extends Specification {
     def 'should throw last write concern error'() {
         given:
         def combiner = new BulkWriteBatchCombiner(new ServerAddress(), true, ACKNOWLEDGED)
-        combiner.addWriteConcernErrorResult(new WriteConcernError(65, 'journal error', new BsonDocument()));
-        def writeConcernError = new WriteConcernError(75, 'wtimeout', new BsonDocument())
+        combiner.addWriteConcernErrorResult(new WriteConcernError(65, 'journalError', 'journal error', new BsonDocument()));
+        def writeConcernError = new WriteConcernError(75, 'wtimeout', 'wtimeout message', new BsonDocument())
         combiner.addWriteConcernErrorResult(writeConcernError)
 
         when:

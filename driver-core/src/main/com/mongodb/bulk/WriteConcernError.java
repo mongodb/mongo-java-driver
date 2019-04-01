@@ -49,19 +49,6 @@ public class WriteConcernError {
     }
 
     /**
-     * Constructs a new instance.
-     *
-     * @param code    the error code
-     * @param message the error message
-     * @param details any details
-     * @deprecated
-     */
-    @Deprecated
-    public WriteConcernError(final int code, final String message, final BsonDocument details) {
-        this(code, "", message, details);
-    }
-
-    /**
      * Gets the code associated with this error.
      *
      * @return the code
