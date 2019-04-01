@@ -33,33 +33,11 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @since 3.1
  */
-public class NettyStreamFactoryFactory implements StreamFactoryFactory {
+public final class NettyStreamFactoryFactory implements StreamFactoryFactory {
 
     private final EventLoopGroup eventLoopGroup;
     private final Class<? extends SocketChannel> socketChannelClass;
     private final ByteBufAllocator allocator;
-
-    /**
-     * Construct an instance with the default {@code EventLoopGroup} and {@code ByteBufAllocator}.
-     *
-     * @deprecated Use {@link NettyStreamFactoryFactory#builder()} instead to construct the {@code  NettyStreamFactoryFactory}.
-     */
-    @Deprecated
-    public NettyStreamFactoryFactory() {
-        this(builder());
-    }
-
-    /**
-     * Construct an instance with the given {@code EventLoopGroup} and {@code ByteBufAllocator}.
-     *
-     * @param eventLoopGroup the non-null event loop group
-     * @param allocator the non-null byte buf allocator
-     * @deprecated Use {@link NettyStreamFactoryFactory#builder()} instead to construct the {@code  NettyStreamFactoryFactory}.
-     */
-    @Deprecated
-    public NettyStreamFactoryFactory(final EventLoopGroup eventLoopGroup, final ByteBufAllocator allocator) {
-        this(builder().eventLoopGroup(eventLoopGroup).allocator(allocator));
-    }
 
     /**
      * Gets a builder for an instance of {@code NettyStreamFactoryFactory}.
