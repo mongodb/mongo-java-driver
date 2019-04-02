@@ -50,7 +50,6 @@ import static com.mongodb.connection.ClusterConnectionMode.SINGLE;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.internal.connection.BsonWriterHelper.writePayload;
 import static com.mongodb.internal.connection.ReadConcernHelper.getReadConcernDocument;
-import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_TWO_WIRE_VERSION;
 import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_ZERO_WIRE_VERSION;
 import static com.mongodb.internal.operation.ServerVersionHelper.THREE_DOT_SIX_WIRE_VERSION;
 
@@ -265,9 +264,10 @@ public final class CommandMessage extends RequestMessage {
 
     private void checkServerVersionForTransactionSupport() {
         int wireVersion = getSettings().getMaxWireVersion();
-        if (wireVersion < FOUR_DOT_ZERO_WIRE_VERSION
-                || (wireVersion < FOUR_DOT_TWO_WIRE_VERSION && getSettings().getServerType() == SHARD_ROUTER)) {
+        if (wireVersion < FOUR_DOT_ZERO_WIRE_VERSION) {
             throw new MongoClientException("Transactions are not supported by the MongoDB cluster to which this client is connected.");
+        } else if (getSettings().getServerType() == SHARD_ROUTER) {
+            throw new MongoClientException("This version of the driver does not support transactions on a sharded cluster.");
         }
     }
 

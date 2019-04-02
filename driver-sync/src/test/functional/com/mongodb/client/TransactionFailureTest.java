@@ -31,12 +31,22 @@ public class TransactionFailureTest extends DatabaseTestCase {
 
     @Before
     public void setUp() {
-        assumeTrue(canRunTests());
         super.setUp();
     }
 
     @Test(expected = MongoClientException.class)
-    public void testTransactionFails() {
+    public void testTransactionFailsOn40Cluster() {
+        assumeTrue(serverVersionLessThan("4.0"));
+        doTransaction();
+    }
+
+    @Test(expected = MongoClientException.class)
+    public void testTransactionFailsOnShardedCluster() {
+        assumeTrue(isSharded());
+        doTransaction();
+    }
+
+    private void doTransaction() {
         ClientSession clientSession = client.startSession();
         try {
             clientSession.startTransaction();
@@ -44,10 +54,5 @@ public class TransactionFailureTest extends DatabaseTestCase {
         } finally {
             clientSession.close();
         }
-    }
-
-    private boolean canRunTests() {
-        return serverVersionLessThan("4.0")
-                || (serverVersionLessThan("4.1.0") && isSharded());
     }
 }
