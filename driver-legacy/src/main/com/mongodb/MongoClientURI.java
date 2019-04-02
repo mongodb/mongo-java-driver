@@ -249,6 +249,10 @@ public class MongoClientURI {
         proxied = new ConnectionString(uri);
     }
 
+    ConnectionString getProxied() {
+        return proxied;
+    }
+
     // ---------------------------------
 
     /**

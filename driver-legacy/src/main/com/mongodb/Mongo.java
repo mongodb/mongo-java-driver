@@ -59,7 +59,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import static com.mongodb.ReadPreference.primary;
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static com.mongodb.connection.ClusterType.REPLICA_SET;
-import static com.mongodb.internal.connection.ServerAddressHelper.createServerAddress;
 import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -708,27 +707,14 @@ public class Mongo {
     }
 
     private static MongoClientOptions createLegacyOptions() {
-        return MongoClientOptions.builder()
-                                 .legacyDefaults()
-                                 .build();
+        return MongoClientOptions.builder().legacyDefaults().build();
     }
 
     private static Cluster createCluster(final MongoClientURI mongoURI, @Nullable final MongoDriverInformation mongoDriverInformation) {
         List<MongoCredential> credentialList = mongoURI.getCredentials() != null
-                                               ? singletonList(mongoURI.getCredentials())
-                                               : Collections.<MongoCredential>emptyList();
-
-        if (mongoURI.getHosts().size() == 1) {
-            return createCluster(createServerAddress(mongoURI.getHosts().get(0)),
-                                 credentialList,
-                                 mongoURI.getOptions(), null);
-        } else {
-            List<ServerAddress> seedList = new ArrayList<ServerAddress>(mongoURI.getHosts().size());
-            for (final String host : mongoURI.getHosts()) {
-                seedList.add(createServerAddress(host));
-            }
-            return createCluster(seedList, credentialList, mongoURI.getOptions(), mongoDriverInformation);
-        }
+                ? singletonList(mongoURI.getCredentials()) : Collections.<MongoCredential>emptyList();
+        return createCluster(getClusterSettings(ClusterSettings.builder().applyConnectionString(mongoURI.getProxied()),
+                mongoURI.getOptions()), credentialList, mongoURI.getOptions(), mongoDriverInformation);
     }
 
     private static Cluster createCluster(final List<ServerAddress> seedList,
@@ -764,12 +750,8 @@ public class Mongo {
                 options.getCompressorList());
     }
 
-    private static ClusterSettings getClusterSettings(final List<ServerAddress> seedList, final MongoClientOptions options,
-                                                      final ClusterConnectionMode clusterConnectionMode) {
-        ClusterSettings.Builder builder = ClusterSettings.builder()
-                .hosts(new ArrayList<ServerAddress>(seedList))
-                .mode(clusterConnectionMode)
-                .requiredReplicaSetName(options.getRequiredReplicaSetName())
+    private static ClusterSettings getClusterSettings(final ClusterSettings.Builder builder, final MongoClientOptions options) {
+        builder.requiredReplicaSetName(options.getRequiredReplicaSetName())
                 .serverSelectionTimeout(options.getServerSelectionTimeout(), MILLISECONDS)
                 .localThreshold(options.getLocalThreshold(), MILLISECONDS)
                 .serverSelector(options.getServerSelector())
@@ -779,6 +761,13 @@ public class Mongo {
             builder.addClusterListener(clusterListener);
         }
         return builder.build();
+    }
+
+    private static ClusterSettings getClusterSettings(final List<ServerAddress> seedList, final MongoClientOptions options,
+                                                      final ClusterConnectionMode clusterConnectionMode) {
+        return getClusterSettings(ClusterSettings.builder()
+                .hosts(new ArrayList<ServerAddress>(seedList))
+                .mode(clusterConnectionMode), options);
     }
 
     Cluster getCluster() {
