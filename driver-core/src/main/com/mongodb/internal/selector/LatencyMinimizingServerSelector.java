@@ -59,7 +59,6 @@ public class LatencyMinimizingServerSelector implements ServerSelector {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public List<ServerDescription> select(final ClusterDescription clusterDescription) {
         if (clusterDescription.getConnectionMode() != MULTIPLE) {
             return getAny(clusterDescription);

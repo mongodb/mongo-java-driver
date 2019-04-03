@@ -179,7 +179,6 @@ public abstract class BaseWriteOperation implements AsyncWriteOperation<WriteCon
                 .bypassDocumentValidation(bypassDocumentValidation);
     }
 
-    @SuppressWarnings("deprecation")
     private MongoException convertBulkWriteException(final MongoBulkWriteException e) {
         BulkWriteError lastError = getLastError(e);
         if (lastError != null) {

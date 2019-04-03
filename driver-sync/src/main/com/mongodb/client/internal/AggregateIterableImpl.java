@@ -148,7 +148,6 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
         MongoNamespace outNamespace = getOutNamespace();
 

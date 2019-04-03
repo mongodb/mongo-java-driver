@@ -333,7 +333,6 @@ public final class ClusterFixture {
                 Collections.<MongoCompressor>emptyList());
     }
 
-    @SuppressWarnings("deprecation")
     private static Cluster createCluster(final ConnectionString connectionString, final StreamFactory streamFactory) {
         return new DefaultClusterFactory().createCluster(ClusterSettings.builder().applyConnectionString(connectionString).build(),
                 ServerSettings.builder().build(),
@@ -381,7 +380,6 @@ public final class ClusterFixture {
         return builder.build();
     }
 
-    @SuppressWarnings("deprecation")
     public static ServerAddress getPrimary() {
         List<ServerDescription> serverDescriptions = getPrimaries(getCluster().getDescription());
         while (serverDescriptions.isEmpty()) {
@@ -395,7 +393,6 @@ public final class ClusterFixture {
         return serverDescriptions.get(0).getAddress();
     }
 
-    @SuppressWarnings("deprecation")
     public static ServerAddress getSecondary() {
         List<ServerDescription> serverDescriptions = getSecondaries(getCluster().getDescription());
         while (serverDescriptions.isEmpty()) {

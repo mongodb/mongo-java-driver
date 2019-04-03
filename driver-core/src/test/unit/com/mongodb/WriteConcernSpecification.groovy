@@ -26,7 +26,6 @@ import spock.lang.Unroll
 import static java.util.concurrent.TimeUnit.MICROSECONDS
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
-@SuppressWarnings('deprecation')
 class WriteConcernSpecification extends Specification {
 
     @Unroll

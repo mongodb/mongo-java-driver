@@ -22,8 +22,8 @@ import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.client.model.AggregationLevel;
 import com.mongodb.internal.client.model.FindOptions;
 import com.mongodb.internal.operation.AsyncOperations;
 import com.mongodb.internal.operation.AsyncReadOperation;
@@ -142,7 +142,6 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     AsyncReadOperation<AsyncBatchCursor<TResult>> asAsyncReadOperation() {
         MongoNamespace outNamespace = getOutNamespace();
 

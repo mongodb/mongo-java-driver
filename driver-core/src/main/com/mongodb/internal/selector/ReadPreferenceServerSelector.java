@@ -54,7 +54,6 @@ public class ReadPreferenceServerSelector implements ServerSelector {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public List<ServerDescription> select(final ClusterDescription clusterDescription) {
         if (clusterDescription.getConnectionMode() == ClusterConnectionMode.SINGLE) {
             return getAny(clusterDescription);

@@ -294,7 +294,6 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
                                                       : MongoException.fromThrowable(t);
     }
 
-    @SuppressWarnings("deprecation")
     private MongoException checkForDuplicateKeyError(final MongoCommandException e) {
         if (ErrorCategory.fromErrorCode(e.getCode()) == ErrorCategory.DUPLICATE_KEY) {
             return new DuplicateKeyException(e.getResponse(), e.getServerAddress(), WriteConcernResult.acknowledged(0, false, null));

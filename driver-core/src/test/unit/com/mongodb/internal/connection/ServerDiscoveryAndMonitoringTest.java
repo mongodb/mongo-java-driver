@@ -124,7 +124,6 @@ public class ServerDiscoveryAndMonitoringTest extends AbstractServerDiscoveryAnd
         return serverDescription;
     }
 
-    @SuppressWarnings("deprecation")
     private void assertTopologyType(final String topologyType) {
         if (topologyType.equals("Single")) {
             assertEquals(SingleServerCluster.class, getCluster().getClass());

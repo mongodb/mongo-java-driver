@@ -109,7 +109,6 @@ import static org.bson.internal.CodecRegistryHelper.createRegistry;
  * @see MongoClientURI
  * @since 2.10.0
  */
-@SuppressWarnings("deprecation")
 public class MongoClient implements Closeable {
 
     private final ConcurrentMap<String, DB> dbCache = new ConcurrentHashMap<>();

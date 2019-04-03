@@ -52,7 +52,6 @@ class FindIterableSpecification extends Specification {
     def readConcern = ReadConcern.DEFAULT
     def collation = Collation.builder().locale('en').build()
 
-    @SuppressWarnings('deprecation')
     def 'should build the expected findOperation'() {
         given:
         def cursor = Stub(AsyncBatchCursor) {

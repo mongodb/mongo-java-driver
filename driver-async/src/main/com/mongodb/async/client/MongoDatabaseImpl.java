@@ -280,7 +280,6 @@ class MongoDatabaseImpl implements MongoDatabase {
         executeCreateCollection(clientSession, collectionName, options, callback);
     }
 
-    @SuppressWarnings("deprecation")
     private void executeCreateCollection(@Nullable final ClientSession clientSession, final String collectionName,
                                          final CreateCollectionOptions options, final SingleResultCallback<Void> callback) {
         CreateCollectionOperation operation = new CreateCollectionOperation(name, collectionName, writeConcern)

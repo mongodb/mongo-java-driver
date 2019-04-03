@@ -54,7 +54,6 @@ class FindIterableSpecification extends Specification {
     def namespace = new MongoNamespace('db', 'coll')
     def collation = Collation.builder().locale('en').build()
 
-    @SuppressWarnings('deprecation')
     def 'should build the expected findOperation'() {
         given:
         def executor = new TestOperationExecutor([null, null, null])

@@ -45,7 +45,6 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static org.bson.internal.CodecRegistryHelper.createRegistry;
 
-@SuppressWarnings("deprecation")
 class MongoClientImpl implements MongoClient {
     private static final Logger LOGGER = Loggers.getLogger("client");
     private final Cluster cluster;

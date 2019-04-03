@@ -240,7 +240,6 @@ class FiltersSpecification extends Specification {
         toBson(type('a', 'number')) == parse('{a : {$type : "number"} }')
     }
 
-    @SuppressWarnings('deprecation')
     def 'should render $text'() {
         expect:
         toBson(text('mongoDB for GIANT ideas')) == parse('{$text: {$search: "mongoDB for GIANT ideas"} }')

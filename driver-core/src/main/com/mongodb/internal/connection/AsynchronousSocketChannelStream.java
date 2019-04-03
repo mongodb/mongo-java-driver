@@ -58,7 +58,6 @@ public final class AsynchronousSocketChannelStream extends AsynchronousChannelSt
         initializeSocketChannel(handler, new LinkedList<SocketAddress>(serverAddress.getSocketAddresses()));
     }
 
-    @SuppressWarnings("deprecation")
     private void initializeSocketChannel(final AsyncCompletionHandler<Void> handler, final Queue<SocketAddress> socketAddressQueue) {
         if (socketAddressQueue.isEmpty()) {
             handler.failed(new MongoSocketException("Exception opening socket", serverAddress));

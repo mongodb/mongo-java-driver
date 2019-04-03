@@ -24,7 +24,6 @@ import java.util.regex.Pattern;
  *
  * @see org.bson.Transformer
  */
-@SuppressWarnings("deprecation")
 class BSON {
 
 

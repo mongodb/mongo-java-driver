@@ -57,14 +57,6 @@ public final class Fixture {
         return getMongoClient().getServerSessionPool().getInUseCount();
     }
 
-    @SuppressWarnings("deprecation") // This is for access to the old API, so it will use deprecated methods
-    public static synchronized DB getDefaultDatabase() {
-        if (defaultDatabase == null) {
-            defaultDatabase = getMongoClient().getDB(getDefaultDatabaseName());
-        }
-        return defaultDatabase;
-    }
-
     public static String getDefaultDatabaseName() {
         return DEFAULT_DATABASE_NAME;
     }
@@ -110,7 +102,6 @@ public final class Fixture {
         return getMongoClientURI().getOptions();
     }
 
-    @SuppressWarnings("deprecation")
     public static ServerAddress getPrimary() throws InterruptedException {
         getMongoClient();
         List<ServerDescription> serverDescriptions = getPrimaries(mongoClient.getCluster().getDescription());

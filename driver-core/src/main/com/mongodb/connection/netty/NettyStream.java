@@ -109,7 +109,6 @@ final class NettyStream implements Stream {
         initializeChannel(handler, new LinkedList<SocketAddress>(address.getSocketAddresses()));
     }
 
-    @SuppressWarnings("deprecation")
     private void initializeChannel(final AsyncCompletionHandler<Void> handler, final Queue<SocketAddress> socketAddressQueue) {
         if (socketAddressQueue.isEmpty()) {
             handler.failed(new MongoSocketException("Exception opening socket", getAddress()));

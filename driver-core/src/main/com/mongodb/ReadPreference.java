@@ -624,13 +624,11 @@ public abstract class ReadPreference {
         }
 
         @Override
-        @SuppressWarnings("deprecation")
         protected List<ServerDescription> chooseForReplicaSet(final ClusterDescription clusterDescription) {
             return getPrimaries(clusterDescription);
         }
 
         @Override
-        @SuppressWarnings("deprecation")
         protected List<ServerDescription> chooseForNonReplicaSet(final ClusterDescription clusterDescription) {
             return getAny(clusterDescription);
         }
