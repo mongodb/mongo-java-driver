@@ -59,7 +59,6 @@ public class ReadConcernTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
     public void shouldIncludeReadConcernInCommand() throws InterruptedException {
         final CountDownLatch latch = new CountDownLatch(1);
         mongoClient.getDatabase(getDefaultDatabaseName()).getCollection("test")

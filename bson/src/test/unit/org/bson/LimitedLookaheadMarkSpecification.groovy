@@ -25,7 +25,6 @@ import org.bson.json.JsonWriterSettings
 import spock.lang.Specification
 
 @SuppressWarnings('UnnecessaryObjectReferences')
-@SuppressWarnings('deprecation')
 class LimitedLookaheadMarkSpecification extends Specification {
 
 
@@ -59,7 +58,7 @@ class LimitedLookaheadMarkSpecification extends Specification {
         if (writer instanceof BsonDocumentWriter) {
             reader = new BsonDocumentReader(writer.document)
         } else if (writer instanceof BsonBinaryWriter) {
-            BasicOutputBuffer buffer = (BasicOutputBuffer) writer.getBsonOutput();
+            BasicOutputBuffer buffer = (BasicOutputBuffer) writer.getBsonOutput()
             reader = new BsonBinaryReader(new ByteBufferBsonInput(buffer.getByteBuffers().get(0)))
         } else if (writer instanceof JsonWriter) {
             if (useAlternateReader) {
@@ -233,7 +232,7 @@ class LimitedLookaheadMarkSpecification extends Specification {
         if (writer instanceof BsonDocumentWriter) {
             reader = new BsonDocumentReader(writer.document)
         } else if (writer instanceof BsonBinaryWriter) {
-            BasicOutputBuffer buffer = (BasicOutputBuffer) writer.getBsonOutput();
+            BasicOutputBuffer buffer = (BasicOutputBuffer) writer.getBsonOutput()
             reader = new BsonBinaryReader(new ByteBufferBsonInput(buffer.getByteBuffers().get(0)))
         } else if (writer instanceof JsonWriter) {
             reader = new JsonReader(writer.writer.toString())

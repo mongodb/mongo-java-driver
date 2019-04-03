@@ -319,7 +319,6 @@ public class DB {
     }
 
 
-    @SuppressWarnings("deprecation")
     private CreateCollectionOperation getCreateCollectionOperation(final String collectionName, final DBObject options) {
         if (options.get("size") != null && !(options.get("size") instanceof Number)) {
             throw new IllegalArgumentException("'size' should be Number");

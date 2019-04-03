@@ -447,7 +447,6 @@ public class JsonPoweredCrudTestHelper {
         return toResult(new BsonArray(futureResult(futureResultCallback)));
     }
 
-    @SuppressWarnings("deprecation")
     BsonDocument getFindOneResult(final BsonDocument collectionOptions, final BsonDocument arguments,
                                   @Nullable final ClientSession clientSession) {
         FutureResultCallback<BsonDocument> futureResultCallback = new FutureResultCallback<BsonDocument>();
@@ -455,7 +454,6 @@ public class JsonPoweredCrudTestHelper {
         return toResult(futureResult(futureResultCallback));
     }
 
-    @SuppressWarnings("deprecation")
     BsonDocument getFindResult(final BsonDocument collectionOptions, final BsonDocument arguments,
                                @Nullable final ClientSession clientSession) {
         return toResult(createFindIterable(collectionOptions, arguments, clientSession));

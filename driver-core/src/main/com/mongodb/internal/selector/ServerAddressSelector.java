@@ -55,7 +55,6 @@ public class ServerAddressSelector implements ServerSelector {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     public List<ServerDescription> select(final ClusterDescription clusterDescription) {
         ServerDescription serverDescription = getByServerAddress(clusterDescription, serverAddress);
         if (serverDescription != null) {

@@ -68,6 +68,7 @@ class JsonWriterSettingsSpecification extends Specification {
         settings.getMaxLength() == 100
     }
 
+    @SuppressWarnings('deprecation')
     def 'should use legacy extended json converters for strict mode'() {
         when:
         def settings = JsonWriterSettings.builder().outputMode(JsonMode.STRICT).build()

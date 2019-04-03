@@ -157,7 +157,6 @@ public abstract class TaggableReadPreference extends ReadPreference {
     }
 
     @Override
-    @SuppressWarnings("deprecation")
     protected List<ServerDescription> chooseForNonReplicaSet(final ClusterDescription clusterDescription) {
         return selectFreshServers(clusterDescription, getAny(clusterDescription));
     }
@@ -296,7 +295,6 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         @Override
-        @SuppressWarnings("deprecation")
         protected List<ServerDescription> chooseForReplicaSet(final ClusterDescription clusterDescription) {
             List<ServerDescription> selectedServers = selectFreshServers(clusterDescription, getSecondaries(clusterDescription));
             if (!getTagSetList().isEmpty()) {
@@ -331,7 +329,6 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         @Override
-        @SuppressWarnings("deprecation")
         protected List<ServerDescription> chooseForReplicaSet(final ClusterDescription clusterDescription) {
             List<ServerDescription> selectedServers = super.chooseForReplicaSet(clusterDescription);
             if (selectedServers.isEmpty()) {
@@ -360,7 +357,6 @@ public abstract class TaggableReadPreference extends ReadPreference {
 
 
         @Override
-        @SuppressWarnings("deprecation")
         public List<ServerDescription> chooseForReplicaSet(final ClusterDescription clusterDescription) {
             List<ServerDescription> selectedServers = selectFreshServers(clusterDescription, getAnyPrimaryOrSecondary(clusterDescription));
             if (!getTagSetList().isEmpty()) {
@@ -395,7 +391,6 @@ public abstract class TaggableReadPreference extends ReadPreference {
         }
 
         @Override
-        @SuppressWarnings("deprecation")
         protected List<ServerDescription> chooseForReplicaSet(final ClusterDescription clusterDescription) {
             List<ServerDescription> selectedServers = selectFreshServers(clusterDescription, getPrimaries(clusterDescription));
             if (selectedServers.isEmpty()) {

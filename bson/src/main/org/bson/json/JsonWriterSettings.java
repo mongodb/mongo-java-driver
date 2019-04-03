@@ -484,7 +484,6 @@ public final class JsonWriterSettings extends BsonWriterSettings {
      *
      * @since 3.5
      */
-    @SuppressWarnings("deprecation")
     public static final class Builder {
         private boolean indent;
         private String newLineCharacters = System.getProperty("line.separator");

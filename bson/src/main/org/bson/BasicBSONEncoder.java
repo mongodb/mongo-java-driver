@@ -40,7 +40,6 @@ import java.util.regex.Pattern;
 /**
  * This is meant to be pooled or cached. There is some per instance memory for string conversion, etc...
  */
-@SuppressWarnings("deprecation")
 public class BasicBSONEncoder implements BSONEncoder {
 
     private BsonBinaryWriter bsonWriter;

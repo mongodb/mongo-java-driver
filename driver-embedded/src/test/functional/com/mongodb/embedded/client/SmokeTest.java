@@ -37,7 +37,6 @@ import static org.junit.Assert.assertTrue;
 public class SmokeTest extends DatabaseTestCase {
 
     @Test
-    @SuppressWarnings("deprecation")
     public void shouldHandleCommonCRUDScenariosWithoutError() {
         MongoDatabase database = Fixture.getDefaultDatabase();
         MongoCollection<Document> collection = database.getCollection("test");

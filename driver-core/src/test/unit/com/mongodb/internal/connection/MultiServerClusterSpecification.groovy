@@ -46,7 +46,6 @@ import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAll
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getByServerAddress
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
-@SuppressWarnings('deprecation')
 class MultiServerClusterSpecification extends Specification {
     private static final ClusterId CLUSTER_ID = new ClusterId()
 
@@ -207,7 +206,6 @@ class MultiServerClusterSpecification extends Specification {
         getAll(cluster.getDescription()) == factory.getDescriptions(firstServer)
     }
 
-    @SuppressWarnings('deprecation')
     def 'should ignore an empty list of hosts when type is replica set'() {
         given:
         def cluster = new MultiServerCluster(
@@ -223,7 +221,6 @@ class MultiServerClusterSpecification extends Specification {
         getByServerAddress(cluster.getDescription(), secondServer).getType() == REPLICA_SET_GHOST
     }
 
-    @SuppressWarnings('deprecation')
     def 'should ignore a host without a replica set name when type is replica set'() {
         given:
         def cluster = new MultiServerCluster(

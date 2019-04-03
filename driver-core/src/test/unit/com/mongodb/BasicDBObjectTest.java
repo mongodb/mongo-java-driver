@@ -139,7 +139,6 @@ public class BasicDBObjectTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
     public void testBuilderNested() {
         BasicDBObjectBuilder b = BasicDBObjectBuilder.start();
         b.add("a", 1);
@@ -149,7 +148,6 @@ public class BasicDBObjectTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
     public void testDown1() {
         BasicDBObjectBuilder b = BasicDBObjectBuilder.start();
         b.append("x", 1);

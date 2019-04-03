@@ -32,7 +32,6 @@ import static com.mongodb.internal.connection.ClusterDescriptionHelper.getPrimar
 public final class PrimaryServerSelector implements ServerSelector {
 
     @Override
-    @SuppressWarnings("deprecation")
     public List<ServerDescription> select(final ClusterDescription clusterDescription) {
         return getPrimaries(clusterDescription);
     }

@@ -98,7 +98,6 @@ public class SingleServerClusterTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
     public void shouldGetServerWithOkDescription() {
         // given
         setUpCluster(getPrimary());

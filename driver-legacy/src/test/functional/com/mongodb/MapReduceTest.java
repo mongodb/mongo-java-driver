@@ -141,7 +141,6 @@ public class MapReduceTest extends DatabaseTestCase {
     }
 
     @Test
-    @SuppressWarnings("deprecation") // This is for testing the old API, so it will use deprecated methods
     public void testMapReduceWithOutputToAnotherDatabase() {
         MapReduceCommand command = new MapReduceCommand(collection,
                                                         DEFAULT_MAP,
@@ -152,7 +151,7 @@ public class MapReduceTest extends DatabaseTestCase {
         command.setOutputDB(MR_DATABASE);
         MapReduceOutput output = collection.mapReduce(command);
 
-
+        @SuppressWarnings("deprecation")
         DB db = database.getMongoClient().getDB(MR_DATABASE);
         assertTrue(db.collectionExists(DEFAULT_COLLECTION));
         assertEquals(toList(output.results()), toList(db.getCollection(DEFAULT_COLLECTION).find()));

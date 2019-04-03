@@ -24,7 +24,6 @@ import spock.lang.Specification
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 import static java.util.concurrent.TimeUnit.SECONDS
 
-@SuppressWarnings('deprecation')
 class ServerSettingsSpecification extends Specification {
     def 'should have correct defaults'() {
         when:

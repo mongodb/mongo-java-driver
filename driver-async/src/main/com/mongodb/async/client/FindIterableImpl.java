@@ -36,7 +36,6 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 
 
-@SuppressWarnings("deprecation")
 class FindIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResult> implements FindIterable<TResult> {
     private final AsyncOperations<TDocument> operations;
     private final Class<TResult> resultClass;
