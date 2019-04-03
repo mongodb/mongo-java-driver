@@ -28,6 +28,7 @@ import com.mongodb.lang.Nullable;
  *
  * This class is not part of the public API and may be removed or changed at any time.
  */
+@SuppressWarnings("overloads")
 public interface OperationExecutor {
     /**
      * Execute the read operation with the given read preference.
