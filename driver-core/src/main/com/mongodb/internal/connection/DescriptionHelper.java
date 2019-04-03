@@ -61,9 +61,15 @@ public final class DescriptionHelper {
     static ConnectionDescription createConnectionDescription(final ConnectionId connectionId,
                                                              final BsonDocument isMasterResult,
                                                              final BsonDocument buildInfoResult) {
-        return new ConnectionDescription(connectionId, getVersion(buildInfoResult), getMaxWireVersion(isMasterResult),
-                getServerType(isMasterResult), getMaxWriteBatchSize(isMasterResult), getMaxBsonObjectSize(isMasterResult),
-                getMaxMessageSizeBytes(isMasterResult), getCompressors(isMasterResult));
+        ConnectionDescription connectionDescription = new ConnectionDescription(connectionId, getVersion(buildInfoResult),
+                getMaxWireVersion(isMasterResult), getServerType(isMasterResult), getMaxWriteBatchSize(isMasterResult),
+                getMaxBsonObjectSize(isMasterResult), getMaxMessageSizeBytes(isMasterResult), getCompressors(isMasterResult));
+        if (isMasterResult.containsKey("connectionId")) {
+            ConnectionId newConnectionId =
+                    connectionDescription.getConnectionId().withServerValue(isMasterResult.getNumber("connectionId").intValue());
+            connectionDescription = connectionDescription.withConnectionId(newConnectionId);
+        }
+        return connectionDescription;
     }
 
     public static ServerDescription createServerDescription(final ServerAddress serverAddress, final BsonDocument isMasterResult,
