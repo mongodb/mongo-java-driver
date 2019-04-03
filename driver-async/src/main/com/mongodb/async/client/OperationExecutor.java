@@ -26,6 +26,7 @@ import com.mongodb.lang.Nullable;
 /**
  * An interface describing the execution of a read or a write operation.
  */
+@SuppressWarnings("overloads")
 interface OperationExecutor {
     /**
      * Execute the read operation with the given read preference.

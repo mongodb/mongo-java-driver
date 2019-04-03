@@ -160,6 +160,8 @@ public final class Filters {
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/in $in
      */
+    @SafeVarargs
+    @SuppressWarnings("varargs")
     public static <TItem> Bson in(final String fieldName, final TItem... values) {
         return in(fieldName, asList(values));
     }
@@ -186,6 +188,8 @@ public final class Filters {
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/nin $nin
      */
+    @SafeVarargs
+    @SuppressWarnings("varargs")
     public static <TItem> Bson nin(final String fieldName, final TItem... values) {
         return nin(fieldName, asList(values));
     }
@@ -480,6 +484,8 @@ public final class Filters {
      * @return the filter
      * @mongodb.driver.manual reference/operator/query/all $all
      */
+    @SafeVarargs
+    @SuppressWarnings("varargs")
     public static <TItem> Bson all(final String fieldName, final TItem... values) {
         return all(fieldName, asList(values));
     }
@@ -918,7 +924,7 @@ public final class Filters {
         private final String fieldName;
         private final TItem value;
 
-        OperatorFilter(final String operatorName, final String fieldName, final TItem value) {
+        OperatorFilter(final String operatorName, final String fieldName, @Nullable final TItem value) {
             this.operatorName = notNull("operatorName", operatorName);
             this.fieldName = notNull("fieldName", fieldName);
             this.value = value;
@@ -1208,7 +1214,7 @@ public final class Filters {
         private final String fieldName;
         private final TItem value;
 
-        SimpleEncodingFilter(final String fieldName, final TItem value) {
+        SimpleEncodingFilter(final String fieldName, @Nullable final TItem value) {
             this.fieldName = notNull("fieldName", fieldName);
             this.value = value;
         }

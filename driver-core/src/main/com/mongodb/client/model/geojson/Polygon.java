@@ -37,6 +37,7 @@ public final class Polygon extends Geometry {
      * @param exterior the exterior ring of the polygon
      * @param holes    optional interior rings of the polygon
      */
+    @SafeVarargs
     public Polygon(final List<Position> exterior, final List<Position>... holes) {
         this(new PolygonCoordinates(exterior, holes));
     }

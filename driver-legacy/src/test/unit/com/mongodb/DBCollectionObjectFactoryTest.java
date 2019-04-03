@@ -99,7 +99,10 @@ public class DBCollectionObjectFactoryTest {
         private static final long serialVersionUID = 5243874721805359328L;
     }
 
+    @SuppressWarnings("rawtypes")
     public static class MyDBObject extends HashMap<String, Object> implements DBObject {
+
+        private static final long serialVersionUID = -8540791504402368127L;
 
         @Override
         public void markAsPartialObject() {

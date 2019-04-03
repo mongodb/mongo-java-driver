@@ -116,6 +116,7 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
         return new MappingIterable<TResult, U>(this, mapper);
     }
 
+    @SuppressWarnings("overloads")
     private void forEach(final Block<? super TResult> block) {
         MongoCursor<TResult> cursor = iterator();
         try {

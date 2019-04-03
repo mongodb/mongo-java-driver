@@ -200,11 +200,15 @@ public final class CollectionHelper<T> {
         insertDocuments(new DocumentCodec(registry), asList(documents));
     }
 
-    public <I> void insertDocuments(final Codec<I> iCodec, final I... documents) {
+    @SafeVarargs
+    @SuppressWarnings("varargs")
+    public final <I> void insertDocuments(final Codec<I> iCodec, final I... documents) {
         insertDocuments(iCodec, asList(documents));
     }
 
-    public <I> void insertDocuments(final Codec<I> iCodec, final WriteBinding binding, final I... documents) {
+    @SafeVarargs
+    @SuppressWarnings("varargs")
+    public final <I> void insertDocuments(final Codec<I> iCodec, final WriteBinding binding, final I... documents) {
         insertDocuments(iCodec, binding, asList(documents));
     }
 
@@ -286,12 +290,14 @@ public final class CollectionHelper<T> {
         return results;
     }
 
+    @SuppressWarnings("overloads")
     public List<T> find(final Bson filter, final Bson sort) {
         return find(filter != null ? filter.toBsonDocument(Document.class, registry) : null,
                     sort != null ? sort.toBsonDocument(Document.class, registry) : null,
                     codec);
     }
 
+    @SuppressWarnings("overloads")
     public List<T> find(final Bson filter, final Bson sort, final Bson projection) {
         return find(filter != null ? filter.toBsonDocument(Document.class, registry) : null,
                     sort != null ? sort.toBsonDocument(Document.class, registry) : null,
@@ -299,10 +305,12 @@ public final class CollectionHelper<T> {
                     codec);
     }
 
+    @SuppressWarnings("overloads")
     public <D> List<D> find(final BsonDocument filter, final Decoder<D> decoder) {
         return find(filter, null, decoder);
     }
 
+    @SuppressWarnings("overloads")
     public <D> List<D> find(final BsonDocument filter, final BsonDocument sort, final Decoder<D> decoder) {
         return find(filter, sort, null, decoder);
     }

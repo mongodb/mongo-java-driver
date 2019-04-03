@@ -486,36 +486,44 @@ public final class ClusterFixture {
         }
     }
 
+    @SuppressWarnings("overloads")
     public static <T> T executeSync(final WriteOperation<T> op) {
         return executeSync(op, getBinding());
     }
 
+    @SuppressWarnings("overloads")
     public static <T> T executeSync(final WriteOperation<T> op, final ReadWriteBinding binding) {
         return op.execute(binding);
     }
 
+    @SuppressWarnings("overloads")
     public static <T> T executeSync(final ReadOperation<T> op) {
         return executeSync(op, getBinding());
     }
 
+    @SuppressWarnings("overloads")
     public static <T> T executeSync(final ReadOperation<T> op, final ReadWriteBinding binding) {
         return op.execute(binding);
     }
 
+    @SuppressWarnings("overloads")
     public static <T> T executeAsync(final AsyncWriteOperation<T> op) throws Throwable {
         return executeAsync(op, getAsyncBinding());
     }
 
+    @SuppressWarnings("overloads")
     public static <T> T executeAsync(final AsyncWriteOperation<T> op, final AsyncWriteBinding binding) throws Throwable {
         final FutureResultCallback<T> futureResultCallback = new FutureResultCallback<T>();
         op.executeAsync(binding, futureResultCallback);
         return futureResultCallback.get(TIMEOUT, SECONDS);
     }
 
+    @SuppressWarnings("overloads")
     public static <T> T executeAsync(final AsyncReadOperation<T> op) throws Throwable {
         return executeAsync(op, getAsyncBinding());
     }
 
+    @SuppressWarnings("overloads")
     public static <T> T executeAsync(final AsyncReadOperation<T> op, final AsyncReadBinding binding) throws Throwable {
         final FutureResultCallback<T> futureResultCallback = new FutureResultCallback<T>();
         op.executeAsync(binding, futureResultCallback);

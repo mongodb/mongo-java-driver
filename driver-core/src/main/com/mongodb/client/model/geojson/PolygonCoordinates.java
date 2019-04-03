@@ -38,6 +38,7 @@ public final class PolygonCoordinates {
      * @param exterior the exterior ring of the polygon
      * @param holes    optional interior rings of the polygon
      */
+    @SafeVarargs
     public PolygonCoordinates(final List<Position> exterior, final List<Position>... holes) {
         notNull("exteriorRing", exterior);
         isTrueArgument("ring contains only non-null positions", !exterior.contains(null));
