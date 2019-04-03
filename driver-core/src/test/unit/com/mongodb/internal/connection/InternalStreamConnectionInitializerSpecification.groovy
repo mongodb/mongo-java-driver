@@ -81,12 +81,38 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
         description == getExpectedDescription(description.connectionId.localValue, 123)
     }
 
+    def 'should create correct description with server connection id from isMaster'() {
+        given:
+        def initializer = new InternalStreamConnectionInitializer([], null, [])
+
+        when:
+        enqueueSuccessfulRepliesWithConnectionIdIsIsMasterResponse(false, 123)
+        def description = initializer.initialize(internalConnection)
+
+        then:
+        description == getExpectedDescription(description.connectionId.localValue, 123)
+    }
+
     def 'should create correct description with server connection id asynchronously'() {
         given:
         def initializer = new InternalStreamConnectionInitializer([], null, [])
 
         when:
         enqueueSuccessfulReplies(false, 123)
+        def futureCallback = new FutureResultCallback<ConnectionDescription>()
+        initializer.initializeAsync(internalConnection, futureCallback)
+        def description = futureCallback.get()
+
+        then:
+        description == getExpectedDescription(description.connectionId.localValue, 123)
+    }
+
+    def 'should create correct description with server connection id from isMaster asynchronously'() {
+        given:
+        def initializer = new InternalStreamConnectionInitializer([], null, [])
+
+        when:
+        enqueueSuccessfulRepliesWithConnectionIdIsIsMasterResponse(false, 123)
         def futureCallback = new FutureResultCallback<ConnectionDescription>()
         initializer.initializeAsync(internalConnection, futureCallback)
         def description = futureCallback.get()
@@ -238,5 +264,15 @@ class InternalStreamConnectionInitializerSpecification extends Specification {
                 '{ok: 1 ' +
                 (serverConnectionId == null ? '' : ', connectionId: ' + serverConnectionId) +
                 '}'))
+    }
+
+    def enqueueSuccessfulRepliesWithConnectionIdIsIsMasterResponse(final boolean isArbiter, final Integer serverConnectionId) {
+        internalConnection.enqueueReply(buildSuccessfulReply(
+                '{ok: 1, ' +
+                        'maxWireVersion: 3,' +
+                        'connectionId: ' + serverConnectionId +
+                        (isArbiter ? ', isreplicaset: true, arbiterOnly: true' : '') +
+                        '}'))
+        internalConnection.enqueueReply(buildSuccessfulReply('{ok: 1, versionArray : [3, 0, 0]}'))
     }
 }

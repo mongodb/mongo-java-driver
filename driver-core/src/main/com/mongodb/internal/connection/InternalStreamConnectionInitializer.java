@@ -140,6 +140,10 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
 
     private ConnectionDescription completeConnectionDescriptionInitialization(final InternalConnection internalConnection,
                                                                               final ConnectionDescription connectionDescription) {
+        if (connectionDescription.getConnectionId().getServerValue() != null) {
+            return connectionDescription;
+        }
+
         return applyGetLastErrorResult(executeCommandWithoutCheckingForFailure("admin",
                                                                                new BsonDocument("getlasterror", new BsonInt32(1)),
                                                                                internalConnection),
@@ -204,6 +208,11 @@ public class InternalStreamConnectionInitializer implements InternalConnectionIn
     private void completeConnectionDescriptionInitializationAsync(final InternalConnection internalConnection,
                                                                   final ConnectionDescription connectionDescription,
                                                                   final SingleResultCallback<ConnectionDescription> callback) {
+        if (connectionDescription.getConnectionId().getServerValue() != null) {
+            callback.onResult(connectionDescription, null);
+            return;
+        }
+
         executeCommandAsync("admin", new BsonDocument("getlasterror", new BsonInt32(1)),
                             internalConnection,
                             new SingleResultCallback<BsonDocument>() {

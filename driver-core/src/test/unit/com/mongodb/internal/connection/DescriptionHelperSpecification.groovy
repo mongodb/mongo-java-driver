@@ -82,6 +82,39 @@ class DescriptionHelperSpecification extends Specification {
                                           "ok" : 1
                                           }''')) ==
         new ConnectionDescription(connectionId, serverVersion, 6, ServerType.STANDALONE, 1000, 16777216, 48000000, [])
+
+        createConnectionDescription(connectionId,
+                parse('''{
+                                          ismaster : true,
+                                          maxBsonObjectSize : 16777216,
+                                          maxMessageSizeBytes : 48000000,
+                                          maxWriteBatchSize : 1000,
+                                          localTime : ISODate("2015-03-04T23:03:45.848Z"),
+                                          maxWireVersion : 6,
+                                          minWireVersion : 0,
+                                          connectionId : 1004
+                                          ok : 1
+                                          }'''),
+                parse('''{
+                                          "version" : "2.6.1",
+                                          "gitVersion" : "nogitversion",
+                                          "OpenSSLVersion" : "",
+                                          "loaderFlags" : "-fPIC -pthread -Wl,-bind_at_load -m64 -mmacosx-version-min=10.9",
+                                          "allocator" : "tcmalloc",
+                                          "versionArray" : [
+                                          3,
+                                          0,
+                                          0,
+                                          1
+                                          ],
+                                          "javascriptEngine" : "V8",
+                                          "bits" : 64,
+                                          "debug" : false,
+                                          "maxBsonObjectSize" : 16777216,
+                                          "ok" : 1
+                                          }''')) ==
+                new ConnectionDescription(connectionId, serverVersion, 6, ServerType.STANDALONE, 1000, 16777216, 48000000, [])
+                    .withConnectionId(connectionId.withServerValue(1004))
     }
 
     def 'connection description should reflect ismaster result with compressors'() {
