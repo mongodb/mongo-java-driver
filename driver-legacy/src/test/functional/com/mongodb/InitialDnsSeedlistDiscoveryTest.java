@@ -44,9 +44,11 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.mongodb.ClusterFixture.getSslSettings;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
+import static com.mongodb.ClusterFixture.isNotAtLeastJava7;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 // See https://github.com/mongodb/specifications/tree/master/source/initial-dns-seedlist-discovery/tests
@@ -72,6 +74,8 @@ public class InitialDnsSeedlistDiscoveryTest {
 
     @Test
     public void shouldResolveTxtRecord() throws InterruptedException {
+        assumeFalse(isNotAtLeastJava7());
+
         if (isError) {
             MongoClient client = null;
             try {
@@ -131,6 +135,7 @@ public class InitialDnsSeedlistDiscoveryTest {
 
     @Test
     public void shouldDiscoverSrvRecord() throws InterruptedException {
+        assumeFalse(isNotAtLeastJava7());
         if (seeds.isEmpty()) {
             return;
         }
