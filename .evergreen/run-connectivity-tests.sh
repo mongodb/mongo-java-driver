@@ -25,4 +25,5 @@ export JAVA_HOME="/opt/java/jdk9"
 for MONGODB_URI in $@; do
     ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --info -Dtest.single=ConnectivityTest --rerun-tasks driver-sync:test
     ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --info -Dtest.single=ConnectivityTest --rerun-tasks driver-async:test
+    ./gradlew -PjdkHome=/opt/java/${JDK} -Dorg.mongodb.test.uri=${MONGODB_URI} --stacktrace --info -Dtest.single=ConnectivityTest --rerun-tasks driver-legacy:test
 done
