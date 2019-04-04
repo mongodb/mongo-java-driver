@@ -75,12 +75,14 @@ public final class CommandMonitoringTestHelper {
             String eventType = curExpectedEventDocument.keySet().iterator().next();
             BsonDocument eventDescriptionDocument = curExpectedEventDocument.getDocument(eventType);
             CommandEvent commandEvent;
-            String commandName = eventDescriptionDocument.getString("command_name").getValue();
+            String commandName = eventDescriptionDocument.getString("command_name", new BsonString("")).getValue();
             if (eventType.equals("command_started_event")) {
                 BsonDocument commandDocument = eventDescriptionDocument.getDocument("command");
                 String actualDatabaseName = databaseName;
                 if (commandName.equals("commitTransaction") || commandName.equals("abortTransaction")) {
                     actualDatabaseName = "admin";
+                } else if (commandName.equals("")) {
+                    commandName = commandDocument.keySet().iterator().next();
                 }
                 // Not clear whether these global fields should be included, but also not clear how to efficiently exclude them
                 if (ClusterFixture.serverVersionAtLeast(3, 6)) {
@@ -127,10 +129,10 @@ public final class CommandMonitoringTestHelper {
             assertEquals(expected.getCommandName().toLowerCase(), actual.getCommandName().toLowerCase());
 
             if (actual.getClass().equals(CommandStartedEvent.class)) {
-                CommandStartedEvent actualCommandStartedEvent = massageActualCommandStartedEvent((CommandStartedEvent) actual,
-                        lsidMap);
                 CommandStartedEvent expectedCommandStartedEvent = massageExpectedCommandStartedEvent((CommandStartedEvent) expected,
                         lsidMap);
+                CommandStartedEvent actualCommandStartedEvent = massageActualCommandStartedEvent((CommandStartedEvent) actual,
+                        lsidMap, expectedCommandStartedEvent);
 
                 assertEquals(expectedCommandStartedEvent.getDatabaseName(), actualCommandStartedEvent.getDatabaseName());
                 assertEquals(expectedCommandStartedEvent.getCommand(), actualCommandStartedEvent.getCommand());
@@ -212,23 +214,32 @@ public final class CommandMonitoringTestHelper {
     }
 
     private static CommandStartedEvent massageActualCommandStartedEvent(final CommandStartedEvent event,
-                                                                        @Nullable final Map<String, BsonDocument> lsidMap) {
+                                                                        @Nullable final Map<String, BsonDocument> lsidMap,
+                                                                        final CommandStartedEvent expectedCommandStartedEvent) {
         BsonDocument command = getWritableCloneOfCommand(event.getCommand());
 
         massageCommand(event, command);
 
-        if (lsidMap == null) {
-            command.remove("lsid");
-        }
         if (command.containsKey("readConcern") && (command.getDocument("readConcern").containsKey("afterClusterTime"))) {
             command.getDocument("readConcern").put("afterClusterTime", new BsonInt32(42));
         }
-        if (command.containsKey("recoveryToken")) {
-            command.remove("recoveryToken");
-        }
+
+        massageActualCommand(command, expectedCommandStartedEvent.getCommand());
 
         return new CommandStartedEvent(event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),
                 event.getCommandName(), command);
+    }
+
+    private static void massageActualCommand(final BsonDocument command, final BsonDocument expectedCommand) {
+        String[] keySet = command.keySet().toArray(new String[command.keySet().size()]);
+        for (String key : keySet) {
+            if (!expectedCommand.containsKey(key)) {
+                command.remove(key);
+            } else if (command.isDocument(key) && expectedCommand.isDocument(key)) {
+                massageActualCommand(command.getDocument(key), expectedCommand.getDocument(key));
+            }
+        }
+
     }
 
     private static CommandStartedEvent massageExpectedCommandStartedEvent(final CommandStartedEvent event,
@@ -265,6 +276,15 @@ public final class CommandMonitoringTestHelper {
         }
         if (command.containsKey("recoveryToken")) {
             command.remove("recoveryToken");
+        }
+        if (command.containsKey("query")) {
+            command.remove("query");
+        }
+        if (command.containsKey("filter") && command.getDocument("filter").isEmpty()) {
+            command.remove("filter");
+        }
+        if (command.containsKey("mapReduce")) {
+            command.remove("mapReduce");
         }
 
         return new CommandStartedEvent(event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),

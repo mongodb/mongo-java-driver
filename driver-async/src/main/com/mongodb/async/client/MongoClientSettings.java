@@ -328,11 +328,11 @@ public final class MongoClientSettings {
         }
 
         /**
-         * Sets whether writes should be retried if they fail due to a network error.
+         * Sets whether writes should be retried if they fail due to a network error or other retryable error.
          *
          * <p>Starting with the 3.11.0 release, the default value is true</p>
          *
-         * @param retryWrites sets if writes should be retried if they fail due to a network error.
+         * @param retryWrites sets if writes should be retried if they fail due to a network error or other retryable error.
          * @return this
          * @see #getRetryWrites()
          * @since 3.6
@@ -340,6 +340,20 @@ public final class MongoClientSettings {
          */
         public Builder retryWrites(final boolean retryWrites) {
             wrappedBuilder.retryWrites(retryWrites);
+            return this;
+        }
+
+        /**
+         * Sets whether reads should be retried if they fail due to a network error or other retryable error.
+         *
+         * @param retryReads sets if reads should be retried if they fail due to a network error or other retryable error.
+         * @return this
+         * @see #getRetryReads()
+         * @since 3.11
+         * @mongodb.server.release 3.6
+         */
+        public Builder retryReads(final boolean retryReads) {
+            wrappedBuilder.retryReads(retryReads);
             return this;
         }
 
@@ -514,7 +528,7 @@ public final class MongoClientSettings {
     }
 
     /**
-     * Returns true if writes should be retried if they fail due to a network error.
+     * Returns true if writes should be retried if they fail due to a network error or other retryable error.
      *
      * <p>Starting with the 3.11.0 release, the default value is true</p>
      *
@@ -524,6 +538,17 @@ public final class MongoClientSettings {
      */
     public boolean getRetryWrites() {
         return wrapped.getRetryWrites();
+    }
+
+    /**
+     * Returns true if reads should be retried if they fail due to a network error or other retryable error. The default value is true.
+     *
+     * @return the retryReads value
+     * @since 3.11
+     * @mongodb.server.release 3.6
+     */
+    public boolean getRetryReads() {
+        return wrapped.getRetryReads();
     }
 
     /**

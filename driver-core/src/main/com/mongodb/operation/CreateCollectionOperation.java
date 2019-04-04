@@ -34,8 +34,9 @@ import org.bson.BsonString;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
-import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static com.mongodb.operation.CommandOperationHelper.executeCommand;
+import static com.mongodb.operation.CommandOperationHelper.executeCommandAsync;
+import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorWriteTransformer;
 import static com.mongodb.operation.DocumentHelper.putIfFalse;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.operation.OperationHelper.LOGGER;
@@ -379,7 +380,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
             @Override
             public Void call(final Connection connection) {
                 validateCollation(connection, collation);
-                executeWrappedCommandProtocol(binding, databaseName, getCommand(connection.getDescription()), connection,
+                executeCommand(binding, databaseName, getCommand(connection.getDescription()), connection,
                         writeConcernErrorTransformer());
                 return null;
             }
@@ -402,8 +403,8 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
                             if (t != null) {
                                 wrappedCallback.onResult(null, t);
                             } else {
-                                executeWrappedCommandProtocolAsync(binding, databaseName, getCommand(connection.getDescription()),
-                                        connection, writeConcernErrorTransformer(), wrappedCallback);
+                                executeCommandAsync(binding, databaseName, getCommand(connection.getDescription()),
+                                        connection, writeConcernErrorWriteTransformer(), wrappedCallback);
                             }
                         }
                     });

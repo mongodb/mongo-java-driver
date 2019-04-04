@@ -65,7 +65,7 @@ class ChangeStreamIterableSpecification extends Specification {
         def pipeline = [new Document('$match', 1)]
         def codec = new ChangeStreamDocumentCodec(Document, codecRegistry)
         def changeStreamIterable = new ChangeStreamIterableImpl(null, namespace, codecRegistry, readPreference, readConcern, executor,
-                pipeline, Document, ChangeStreamLevel.COLLECTION)
+                pipeline, Document, ChangeStreamLevel.COLLECTION, true)
 
         when: 'default input should be as expected'
         changeStreamIterable.into([]) { result, t -> }
@@ -75,7 +75,7 @@ class ChangeStreamIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new ChangeStreamOperation<Document>(namespace, FullDocument.DEFAULT,
-                [BsonDocument.parse('{$match: 1}')], codec, ChangeStreamLevel.COLLECTION))
+                [BsonDocument.parse('{$match: 1}')], codec, ChangeStreamLevel.COLLECTION).retryReads(true))
         readPreference == secondary()
 
         when: 'overriding initial options'
@@ -92,7 +92,7 @@ class ChangeStreamIterableSpecification extends Specification {
                 [BsonDocument.parse('{$match: 1}')], codec, ChangeStreamLevel.COLLECTION)
                 .collation(collation).maxAwaitTime(99, MILLISECONDS)
                 .resumeAfter(resumeToken).startAtOperationTime(startAtOperationTime)
-                .startAfter(resumeToken))
+                .startAfter(resumeToken).retryReads(true))
     }
 
     def 'should handle exceptions correctly'() {
@@ -101,7 +101,7 @@ class ChangeStreamIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([new MongoException('failure')])
         def pipeline = [new BsonDocument('$match', new BsonInt32(1))]
         def changeStreamIterable = new ChangeStreamIterableImpl(null, namespace, codecRegistry, readPreference, readConcern, executor,
-                pipeline, BsonDocument, ChangeStreamLevel.COLLECTION)
+                pipeline, BsonDocument, ChangeStreamLevel.COLLECTION, true)
         def futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
 
         when: 'The operation fails with an exception'
@@ -114,7 +114,7 @@ class ChangeStreamIterableSpecification extends Specification {
         when: 'a codec is missing'
         futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
         new ChangeStreamIterableImpl(null, namespace, altRegistry, readPreference, readConcern, executor, pipeline, Document,
-                ChangeStreamLevel.COLLECTION).into([], futureResultCallback)
+                ChangeStreamLevel.COLLECTION, true).into([], futureResultCallback)
         futureResultCallback.get()
 
         then:
@@ -123,7 +123,7 @@ class ChangeStreamIterableSpecification extends Specification {
         when: 'pipeline contains null'
         futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
         new ChangeStreamIterableImpl(null, namespace, codecRegistry, readPreference, readConcern, executor, [null], Document
-                , ChangeStreamLevel.COLLECTION).into([], futureResultCallback)
+                , ChangeStreamLevel.COLLECTION, true).into([], futureResultCallback)
         futureResultCallback.get()
 
         then:
@@ -140,7 +140,7 @@ class ChangeStreamIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([cursor(cannedResults), cursor(cannedResults), cursor(cannedResults),
                                                   cursor(cannedResults), cursor(cannedResults)])
         def mongoIterable = new ChangeStreamIterableImpl(null, namespace, codecRegistry, readPreference, readConcern, executor, [],
-                Document, ChangeStreamLevel.COLLECTION)
+                Document, ChangeStreamLevel.COLLECTION, true)
 
         when:
         def results = new FutureResultCallback()
@@ -206,7 +206,7 @@ class ChangeStreamIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([cursor(cannedResults), cursor(cannedResults), cursor(cannedResults),
                                                   cursor(cannedResults), cursor(cannedResults)])
         def mongoIterable = new ChangeStreamIterableImpl(null, namespace, codecRegistry, readPreference, readConcern, executor, [],
-                Document, ChangeStreamLevel.COLLECTION).withDocumentClass(RawBsonDocument)
+                Document, ChangeStreamLevel.COLLECTION, true).withDocumentClass(RawBsonDocument)
 
         when:
         def results = new FutureResultCallback()
@@ -268,7 +268,8 @@ class ChangeStreamIterableSpecification extends Specification {
     def 'should check variables using notNull'() {
         given:
         def mongoIterable = new ChangeStreamIterableImpl(null, namespace, codecRegistry, readPreference, readConcern,
-                Stub(OperationExecutor), [new BsonDocument('$match', new BsonInt32(1))], BsonDocument, ChangeStreamLevel.COLLECTION)
+                Stub(OperationExecutor), [new BsonDocument('$match', new BsonInt32(1))], BsonDocument,
+                ChangeStreamLevel.COLLECTION, true)
         def callback = Stub(SingleResultCallback)
         def block = Stub(Block)
         def target = Stub(List)
@@ -312,7 +313,7 @@ class ChangeStreamIterableSpecification extends Specification {
         when:
         def results = new FutureResultCallback()
         mongoIterable = new ChangeStreamIterableImpl(null, namespace, codecRegistry, readPreference, readConcern,
-                Stub(OperationExecutor), [null], BsonDocument, ChangeStreamLevel.COLLECTION)
+                Stub(OperationExecutor), [null], BsonDocument, ChangeStreamLevel.COLLECTION, true)
         mongoIterable.into(target, results)
         results.get()
 
@@ -324,7 +325,8 @@ class ChangeStreamIterableSpecification extends Specification {
         when:
         def batchSize = 5
         def mongoIterable = new ChangeStreamIterableImpl(null, namespace, codecRegistry, readPreference, readConcern,
-                Stub(OperationExecutor), [BsonDocument.parse('{$match: 1}')], BsonDocument, ChangeStreamLevel.COLLECTION)
+                Stub(OperationExecutor), [BsonDocument.parse('{$match: 1}')], BsonDocument,
+                ChangeStreamLevel.COLLECTION, true)
 
         then:
         mongoIterable.getBatchSize() == null

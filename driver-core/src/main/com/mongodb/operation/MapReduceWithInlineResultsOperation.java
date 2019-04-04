@@ -18,8 +18,8 @@ package com.mongodb.operation;
 
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
-import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ConnectionSource;
 import com.mongodb.binding.ReadBinding;
@@ -28,9 +28,10 @@ import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.QueryResult;
+import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.connection.NoOpSessionContext;
-import com.mongodb.operation.CommandOperationHelper.CommandTransformer;
-import com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
+import com.mongodb.operation.CommandOperationHelper.CommandReadTransformer;
+import com.mongodb.operation.CommandOperationHelper.CommandReadTransformerAsync;
 import com.mongodb.session.SessionContext;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -46,16 +47,14 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
-import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static com.mongodb.operation.CommandOperationHelper.CommandCreator;
+import static com.mongodb.operation.CommandOperationHelper.executeCommand;
+import static com.mongodb.operation.CommandOperationHelper.executeCommandAsync;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.operation.DocumentHelper.putIfTrue;
 import static com.mongodb.operation.ExplainHelper.asExplainCommand;
-import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.LOGGER;
-import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.validateReadConcernAndCollation;
-import static com.mongodb.operation.OperationHelper.withConnection;
 import static com.mongodb.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -358,45 +357,16 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
     @Override
     @SuppressWarnings("unchecked")
     public MapReduceBatchCursor<T> execute(final ReadBinding binding) {
-        return withConnection(binding, new CallableWithConnectionAndSource<MapReduceBatchCursor<T>>() {
-            @Override
-            public MapReduceBatchCursor<T> call(final ConnectionSource source, final Connection connection) {
-                validateReadConcernAndCollation(connection, binding.getSessionContext().getReadConcern(), collation);
-                return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(binding.getSessionContext()),
-                                                     CommandResultDocumentCodec.create(decoder, "results"),
-                                                     connection, transformer(source, connection));
-            }
-        });
+        return executeCommand(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
+                CommandResultDocumentCodec.create(decoder, "results"), transformer(), false);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<MapReduceAsyncBatchCursor<T>> callback) {
-        withConnection(binding, new AsyncCallableWithConnection() {
-            @Override
-            public void call(final AsyncConnection connection, final Throwable t) {
-                SingleResultCallback<MapReduceAsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-                if (t != null) {
-                    errHandlingCallback.onResult(null, t);
-                } else {
-                    final SingleResultCallback<MapReduceAsyncBatchCursor<T>> wrappedCallback = releasingCallback(
-                            errHandlingCallback, connection);
-                    validateReadConcernAndCollation(connection, binding.getSessionContext().getReadConcern(), collation,
-                            new AsyncCallableWithConnection() {
-                                @Override
-                                public void call(final AsyncConnection connection, final Throwable t) {
-                                    if (t != null) {
-                                        wrappedCallback.onResult(null, t);
-                                    } else {
-                                        executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
-                                                getCommand(binding.getSessionContext()),
-                                                CommandResultDocumentCodec.create(decoder, "results"), connection,
-                                                asyncTransformer(connection), wrappedCallback);
-                                    }
-                                }
-                            });
-                }
-            }
-        });
+        SingleResultCallback<MapReduceAsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
+        executeCommandAsync(binding, namespace.getDatabaseName(), getCommandCreator(binding.getSessionContext()),
+                CommandResultDocumentCodec.create(decoder, "results"),
+                asyncTransformer(), false, errHandlingCallback);
     }
 
     /**
@@ -425,23 +395,33 @@ public class MapReduceWithInlineResultsOperation<T> implements AsyncReadOperatio
                                                       new BsonDocumentCodec());
     }
 
-    private CommandTransformer<BsonDocument, MapReduceBatchCursor<T>> transformer(final ConnectionSource source,
-                                                                                  final Connection connection) {
-        return new CommandTransformer<BsonDocument, MapReduceBatchCursor<T>>() {
+    private CommandReadTransformer<BsonDocument, MapReduceBatchCursor<T>> transformer() {
+        return new CommandReadTransformer<BsonDocument, MapReduceBatchCursor<T>>() {
             @Override
-            public MapReduceBatchCursor<T> apply(final BsonDocument result, final ServerAddress serverAddress) {
+            public MapReduceBatchCursor<T> apply(final BsonDocument result, final ConnectionSource source, final Connection connection) {
                 return new MapReduceInlineResultsCursor<T>(createQueryResult(result, connection.getDescription()), decoder, source,
                                                            MapReduceHelper.createStatistics(result));
             }
         };
     }
 
-    private CommandTransformer<BsonDocument, MapReduceAsyncBatchCursor<T>> asyncTransformer(final AsyncConnection connection) {
-        return new CommandTransformer<BsonDocument, MapReduceAsyncBatchCursor<T>>() {
+    private CommandReadTransformerAsync<BsonDocument, MapReduceAsyncBatchCursor<T>> asyncTransformer() {
+        return new CommandReadTransformerAsync<BsonDocument, MapReduceAsyncBatchCursor<T>>() {
             @Override
-            public MapReduceAsyncBatchCursor<T> apply(final BsonDocument result, final ServerAddress serverAddress) {
+            public MapReduceAsyncBatchCursor<T> apply(final BsonDocument result, final AsyncConnectionSource source,
+                                                      final AsyncConnection connection) {
                 return new MapReduceInlineResultsAsyncCursor<T>(createQueryResult(result, connection.getDescription()),
                                                                 MapReduceHelper.createStatistics(result));
+            }
+        };
+    }
+
+    private CommandCreator getCommandCreator(final SessionContext sessionContext) {
+        return new CommandCreator() {
+            @Override
+            public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
+                validateReadConcernAndCollation(connectionDescription, sessionContext.getReadConcern(), collation);
+                return getCommand(sessionContext);
             }
         };
     }

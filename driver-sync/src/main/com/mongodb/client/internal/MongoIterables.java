@@ -63,9 +63,9 @@ public final class MongoIterables {
                                  final Class<TDocument> documentClass, final Class<TResult> resultClass,
                                  final CodecRegistry codecRegistry,
                                  final ReadPreference readPreference, final ReadConcern readConcern,
-                                 final OperationExecutor executor, final Bson filter) {
+                                 final OperationExecutor executor, final Bson filter, final boolean retryReads) {
         return factory.findOf(clientSession, namespace, documentClass, resultClass, codecRegistry, readPreference, readConcern, executor,
-                filter);
+                filter, retryReads);
     }
 
     public static <TDocument, TResult>
@@ -73,9 +73,10 @@ public final class MongoIterables {
                                            final Class<TDocument> documentClass, final Class<TResult> resultClass,
                                            final CodecRegistry codecRegistry, final ReadPreference readPreference,
                                            final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
-                                           final List<? extends Bson> pipeline, final AggregationLevel aggregationLevel) {
+                                           final List<? extends Bson> pipeline, final AggregationLevel aggregationLevel,
+                                           final boolean retryReads) {
         return factory.aggregateOf(clientSession, namespace, documentClass, resultClass, codecRegistry,
-                readPreference, readConcern, writeConcern, executor, pipeline, aggregationLevel);
+                readPreference, readConcern, writeConcern, executor, pipeline, aggregationLevel, retryReads);
     }
 
     public static <TDocument, TResult>
@@ -83,9 +84,10 @@ public final class MongoIterables {
                                            final Class<TDocument> documentClass, final Class<TResult> resultClass,
                                            final CodecRegistry codecRegistry, final ReadPreference readPreference,
                                            final ReadConcern readConcern, final WriteConcern writeConcern, final OperationExecutor executor,
-                                           final List<? extends Bson> pipeline, final AggregationLevel aggregationLevel) {
+                                           final List<? extends Bson> pipeline, final AggregationLevel aggregationLevel,
+                                           final boolean retryReads) {
         return factory.aggregateOf(clientSession, databaseName, documentClass, resultClass, codecRegistry,
-                readPreference, readConcern, writeConcern, executor, pipeline, aggregationLevel);
+                readPreference, readConcern, writeConcern, executor, pipeline, aggregationLevel, retryReads);
     }
 
     public static <TResult>
@@ -93,9 +95,9 @@ public final class MongoIterables {
                                                  final CodecRegistry codecRegistry, final ReadPreference readPreference,
                                                  final ReadConcern readConcern, final OperationExecutor executor,
                                                  final List<? extends Bson> pipeline, final Class<TResult> resultClass,
-                                                 final ChangeStreamLevel changeStreamLevel) {
+                                                 final ChangeStreamLevel changeStreamLevel, final boolean retryReads) {
         return factory.changeStreamOf(clientSession, databaseName, codecRegistry, readPreference, readConcern, executor, pipeline,
-                resultClass, changeStreamLevel);
+                resultClass, changeStreamLevel, retryReads);
     }
 
     public static <TResult>
@@ -103,9 +105,9 @@ public final class MongoIterables {
                                                  final CodecRegistry codecRegistry, final ReadPreference readPreference,
                                                  final ReadConcern readConcern, final OperationExecutor executor,
                                                  final List<? extends Bson> pipeline, final Class<TResult> resultClass,
-                                                 final ChangeStreamLevel changeStreamLevel) {
+                                                 final ChangeStreamLevel changeStreamLevel, final boolean retryReads) {
         return factory.changeStreamOf(clientSession, namespace, codecRegistry, readPreference, readConcern, executor, pipeline, resultClass,
-                changeStreamLevel);
+                changeStreamLevel, retryReads);
     }
 
     public static <TDocument, TResult>
@@ -113,32 +115,33 @@ public final class MongoIterables {
                                          final Class<TDocument> documentClass, final Class<TResult> resultClass,
                                          final CodecRegistry codecRegistry, final ReadPreference readPreference,
                                          final ReadConcern readConcern, final OperationExecutor executor,
-                                         final String fieldName, final Bson filter) {
+                                         final String fieldName, final Bson filter, final boolean retryReads) {
         return factory.distinctOf(clientSession, namespace, documentClass, resultClass, codecRegistry,
-                readPreference, readConcern, executor, fieldName, filter);
+                readPreference, readConcern, executor, fieldName, filter, retryReads);
     }
 
     public static <TResult>
     ListDatabasesIterable<TResult> listDatabasesOf(final @Nullable ClientSession clientSession, final Class<TResult> resultClass,
                                                    final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                                                   final OperationExecutor executor) {
-        return factory.listDatabasesOf(clientSession, resultClass, codecRegistry, readPreference, executor);
+                                                   final OperationExecutor executor, final boolean retryReads) {
+        return factory.listDatabasesOf(clientSession, resultClass, codecRegistry, readPreference, executor, retryReads);
     }
 
     public static <TResult>
     ListCollectionsIterable<TResult> listCollectionsOf(final @Nullable ClientSession clientSession, final String databaseName,
                                                        final boolean collectionNamesOnly, final Class<TResult> resultClass,
                                                        final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                                                       final OperationExecutor executor) {
+                                                       final OperationExecutor executor, final boolean retryReads) {
         return factory.listCollectionsOf(clientSession, databaseName, collectionNamesOnly, resultClass, codecRegistry, readPreference,
-                executor);
+                executor, retryReads);
     }
 
     public static <TResult>
     ListIndexesIterable<TResult> listIndexesOf(final @Nullable ClientSession clientSession, final MongoNamespace namespace,
                                                final Class<TResult> resultClass, final CodecRegistry codecRegistry,
-                                               final ReadPreference readPreference, final OperationExecutor executor) {
-        return factory.listIndexesOf(clientSession, namespace, resultClass, codecRegistry, readPreference, executor);
+                                               final ReadPreference readPreference, final OperationExecutor executor,
+                                               final boolean retryReads) {
+        return factory.listIndexesOf(clientSession, namespace, resultClass, codecRegistry, readPreference, executor, retryReads);
     }
 
     public static <TDocument, TResult>

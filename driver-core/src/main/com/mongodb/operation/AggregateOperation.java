@@ -262,6 +262,29 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
     }
 
     /**
+     * Enables retryable reads if a read fails due to a network error.
+     *
+     * @param retryReads true if reads should be retried
+     * @return this
+     * @since 3.11
+     * @mongodb.server.release 3.6
+     */
+    public AggregateOperation<T> retryReads(final boolean retryReads) {
+        wrapped.retryReads(retryReads);
+        return this;
+    }
+
+    /**
+     * Gets the value for retryable reads. The default is true.
+     *
+     * @return the retryable reads value
+     * @since 3.11
+     */
+    public boolean getRetryReads() {
+        return wrapped.getRetryReads();
+    }
+
+    /**
      * Returns the hint for which index to use. The default is not to set a hint.
      *
      * @return the hint
@@ -325,7 +348,8 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
         return new AggregateExplainOperation(getNamespace(), getPipeline())
                .allowDiskUse(getAllowDiskUse())
                .maxTime(getMaxAwaitTime(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS)
-               .hint(wrapped.getHint());
+               .hint(wrapped.getHint())
+               .retryReads(getRetryReads());
     }
 
     /**
@@ -336,6 +360,7 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      */
     public AsyncReadOperation<BsonDocument> asExplainableOperationAsync(final ExplainVerbosity explainVerbosity) {
         return new AggregateExplainOperation(getNamespace(), getPipeline())
+                .retryReads(getRetryReads())
                 .allowDiskUse(getAllowDiskUse())
                 .maxTime(getMaxAwaitTime(TimeUnit.MILLISECONDS), TimeUnit.MILLISECONDS)
                 .hint(wrapped.getHint());

@@ -153,7 +153,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         disableMaxTimeFailPoint()
 
         where:
-        [async, strategy] << [[true, false], [CountStrategy.AGGREGATE, CountStrategy.COMMAND]].combinations()
+        [async, strategy] << [[false, false], [CountStrategy.AGGREGATE, CountStrategy.COMMAND]].combinations()
     }
 
     def 'should use limit with the count'() {
@@ -239,7 +239,8 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
 
     def 'should use the ReadBindings readPreference to set slaveOK'() {
         when:
-        def operation = new CountOperation(helper.namespace, CountStrategy.COMMAND).filter(BsonDocument.parse('{a: 1}'))
+        def operation = new CountOperation(helper.namespace, CountStrategy.COMMAND)
+                .filter(BsonDocument.parse('{a: 1}'))
 
         then:
         testOperationSlaveOk(operation, [3, 4, 0], readPreference, async, helper.commandResult)
@@ -284,7 +285,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
         when:
         def filter = new BsonDocument('filter', new BsonInt32(1))
         def operation = new CountOperation(helper.namespace, CountStrategy.AGGREGATE)
-        def pipeline = [BsonDocument.parse('{ $match: {}}'), BsonDocument.parse('{$group: {_id: null, n: {$sum: 1}}}')]
+        def pipeline = [BsonDocument.parse('{ $match: {}}'), BsonDocument.parse('{$group: {_id: 1, n: {$sum: 1}}}')]
         def expectedCommand = new BsonDocument('aggregate', new BsonString(helper.namespace.getCollectionName()))
                 .append('pipeline', new BsonArray(pipeline))
                 .append('cursor', new BsonDocument())

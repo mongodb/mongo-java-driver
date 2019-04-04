@@ -61,7 +61,7 @@ class FindIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor, cursor, cursor])
         def findIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, executor,
-                new Document('filter', 1))
+                new Document('filter', 1), true)
                 .sort(new Document('sort', 1))
                 .modifiers(new Document('modifier', 1))
                 .projection(new Document('projection', 1))
@@ -111,6 +111,7 @@ class FindIterableSpecification extends Specification {
                 .returnKey(false)
                 .showRecordId(false)
                 .snapshot(false)
+                .retryReads(true)
         )
         readPreference == secondary()
 
@@ -166,11 +167,12 @@ class FindIterableSpecification extends Specification {
                 .returnKey(true)
                 .showRecordId(true)
                 .snapshot(true)
+                .retryReads(true)
         )
 
         when: 'passing nulls to nullable methods'
         new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, executor,
-                new Document('filter', 1))
+                new Document('filter', 1), true)
                 .filter(null as Bson)
                 .collation(null)
                 .modifiers(null)
@@ -186,7 +188,7 @@ class FindIterableSpecification extends Specification {
 
         then: 'should set an empty doc for the filter'
         expect operation, isTheSameAs(new FindOperation<Document>(namespace, new DocumentCodec())
-                .filter(new BsonDocument()).slaveOk(true))
+                .filter(new BsonDocument()).slaveOk(true).retryReads(true))
     }
 
     def 'should handle mixed types'() {
@@ -198,7 +200,7 @@ class FindIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor])
         def findIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, executor,
-                new Document('filter', 1))
+                new Document('filter', 1), true)
 
         when:
         findIterable.filter(new Document('filter', 1))
@@ -217,6 +219,7 @@ class FindIterableSpecification extends Specification {
                 .cursorType(CursorType.NonTailable)
                 .slaveOk(true)
                 .batchSize(100)
+                .retryReads(true)
         )
     }
 
@@ -240,7 +243,7 @@ class FindIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor()])
         def mongoIterable = new FindIterableImpl(null, new MongoNamespace('db', 'coll'), Document, Document, codecRegistry,
-                readPreference, readConcern, executor, new Document())
+                readPreference, readConcern, executor, new Document(), true)
 
         when:
         def results = new FutureResultCallback()
@@ -303,7 +306,7 @@ class FindIterableSpecification extends Specification {
     def 'should check variables using notNull'() {
         given:
         def mongoIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, Stub(OperationExecutor), new Document())
+                readConcern, Stub(OperationExecutor), new Document(), true)
         def callback = Stub(SingleResultCallback)
         def block = Stub(Block)
         def target = Stub(List)
@@ -349,7 +352,7 @@ class FindIterableSpecification extends Specification {
         when:
         def batchSize = 5
         def mongoIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, Stub(OperationExecutor), new Document())
+                readConcern, Stub(OperationExecutor), new Document(), true)
 
         then:
         mongoIterable.getBatchSize() == null

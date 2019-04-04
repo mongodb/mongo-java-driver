@@ -139,6 +139,7 @@ class MongoClientURISpecification extends Specification {
                 + 'localThresholdMS=30&'
                 + 'heartbeatFrequencyMS=20000&'
                 + 'retryWrites=true&'
+                + 'retryReads=true&'
                 + 'appName=app1')
 
         when:
@@ -162,6 +163,7 @@ class MongoClientURISpecification extends Specification {
         options.getLocalThreshold() == 30
         options.getHeartbeatFrequency() == 20000
         options.getRetryWrites()
+        options.getRetryReads()
         options.getApplicationName() == 'app1'
     }
 
@@ -180,6 +182,7 @@ class MongoClientURISpecification extends Specification {
         options.getRequiredReplicaSetName() == null
         !options.isSslEnabled()
         options.getRetryWrites()
+        options.getRetryReads()
     }
 
     def 'should apply default uri to options'() {
@@ -189,6 +192,7 @@ class MongoClientURISpecification extends Specification {
                 .applicationName('appName')
                 .readPreference(ReadPreference.secondary())
                 .retryWrites(true)
+                .retryReads(true)
                 .writeConcern(WriteConcern.JOURNALED)
                 .minConnectionsPerHost(30)
                 .connectionsPerHost(500)
@@ -220,6 +224,7 @@ class MongoClientURISpecification extends Specification {
         options.getReadPreference() == ReadPreference.secondary()
         options.getWriteConcern() == WriteConcern.JOURNALED
         options.getRetryWrites()
+        options.getRetryReads()
         options.getServerSelectionTimeout() == 150
         options.getMaxWaitTime() == 200
         options.getMaxConnectionIdleTime() == 300

@@ -43,6 +43,7 @@ class MongoClientSettingsSpecification extends Specification {
         expect:
         settings.getWriteConcern() == WriteConcern.ACKNOWLEDGED
         settings.getRetryWrites()
+        settings.getRetryReads()
         settings.getReadConcern() == ReadConcern.DEFAULT
         settings.getReadPreference() == ReadPreference.primary()
         settings.getCommandListeners().isEmpty()
@@ -117,6 +118,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .readPreference(ReadPreference.secondary())
                 .writeConcern(WriteConcern.JOURNALED)
                 .retryWrites(true)
+                .retryReads(true)
                 .readConcern(ReadConcern.LOCAL)
                 .applicationName('app1')
                 .addCommandListener(commandListener)
@@ -136,6 +138,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.getReadPreference() == ReadPreference.secondary()
         settings.getWriteConcern() == WriteConcern.JOURNALED
         settings.getRetryWrites()
+        settings.getRetryReads()
         settings.getReadConcern() == ReadConcern.LOCAL
         settings.getApplicationName() == 'app1'
         settings.getSocketSettings() == SocketSettings.builder().build()
@@ -165,6 +168,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .readPreference(ReadPreference.secondary())
                 .writeConcern(WriteConcern.JOURNALED)
                 .retryWrites(true)
+                .retryReads(false)
                 .readConcern(ReadConcern.LOCAL)
                 .applicationName('app1')
                 .addCommandListener(commandListener)
@@ -267,6 +271,7 @@ class MongoClientSettingsSpecification extends Specification {
                 + '&appName=MyApp'
                 + '&replicaSet=test'
                 + '&retryWrites=true'
+                + '&retryReads=true'
                 + '&ssl=true&sslInvalidHostNameAllowed=true'
                 + '&w=majority&wTimeoutMS=2500'
                 + '&readPreference=secondary'
@@ -324,6 +329,7 @@ class MongoClientSettingsSpecification extends Specification {
             .credential(MongoCredential.createScramSha1Credential('user', 'test', 'pass'.toCharArray()))
             .compressorList([MongoCompressor.createZlibCompressor().withProperty(MongoCompressor.LEVEL, 5)])
             .retryWrites(true)
+            .retryReads(true)
             .build()
 
         then:
@@ -381,6 +387,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .credential(MongoCredential.createScramSha1Credential('user', 'test', 'pass'.toCharArray()))
                 .compressorList([MongoCompressor.createZlibCompressor().withProperty(MongoCompressor.LEVEL, 5)])
                 .retryWrites(true)
+                .retryReads(true)
 
         def expectedSettings = builder.build()
         def settingsWithDefaultConnectionStringApplied = builder
@@ -410,7 +417,7 @@ class MongoClientSettingsSpecification extends Specification {
         // A regression test so that if anymore fields are added then the builder(final MongoClientSettings settings) should be updated
         def actual = MongoClientSettings.Builder.declaredFields.grep {  !it.synthetic } *.name.sort()
         def expected = ['applicationName', 'clusterSettingsBuilder', 'codecRegistry', 'commandListeners', 'compressorList',
-                        'connectionPoolSettingsBuilder', 'credential', 'readConcern', 'readPreference', 'retryWrites',
+                        'connectionPoolSettingsBuilder', 'credential', 'readConcern', 'readPreference', 'retryReads', 'retryWrites',
                         'serverSettingsBuilder', 'socketSettingsBuilder', 'sslSettingsBuilder', 'streamFactoryFactory', 'writeConcern']
 
         then:
@@ -424,7 +431,7 @@ class MongoClientSettingsSpecification extends Specification {
         def expected = ['addCommandListener', 'applicationName', 'applyConnectionString', 'applyToClusterSettings',
                         'applyToConnectionPoolSettings', 'applyToServerSettings', 'applyToSocketSettings', 'applyToSslSettings',
                         'build', 'codecRegistry', 'commandListenerList', 'compressorList', 'credential', 'readConcern', 'readPreference',
-                        'retryWrites', 'streamFactoryFactory', 'writeConcern']
+                        'retryReads', 'retryWrites', 'streamFactoryFactory', 'writeConcern']
         then:
         actual == expected
     }

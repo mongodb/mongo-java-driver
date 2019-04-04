@@ -34,7 +34,6 @@ import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
-import com.mongodb.connection.SslSettings;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.lang.Nullable;
@@ -66,6 +65,7 @@ import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
+import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -89,6 +89,8 @@ public abstract class AbstractTransactionsTest {
     private Map<String, BsonDocument> lsidMap;
     private boolean useMultipleMongoses = false;
     private ConnectionString connectionString = null;
+
+    private static final long MIN_HEARTBEAT_FREQUENCY_MS = 50L;
 
     public AbstractTransactionsTest(final String filename, final String description, final BsonArray data, final BsonDocument definition) {
         this.filename = filename;
@@ -133,17 +135,9 @@ public abstract class AbstractTransactionsTest {
             connectionString = getMultiMongosConnectionString();
             assumeTrue("The system property org.mongodb.test.transaction.uri is not set.", connectionString != null);
         }
-        MongoClientSettings.Builder builder = MongoClientSettings.builder().applyConnectionString(connectionString);
-
-        if (System.getProperty("java.version").startsWith("1.6.")) {
-            builder.applyToSslSettings(new Block<SslSettings.Builder>() {
-                @Override
-                public void apply(final SslSettings.Builder builder) {
-                    builder.invalidHostNameAllowed(true);
-                }
-            });
-        }
-        builder.addCommandListener(commandListener)
+        MongoClientSettings.Builder builder = getMongoClientSettingsBuilder()
+                .applyConnectionString(connectionString)
+                .addCommandListener(commandListener)
                 .applyToSocketSettings(new Block<SocketSettings.Builder>() {
                     @Override
                     public void apply(final SocketSettings.Builder builder) {
@@ -153,7 +147,14 @@ public abstract class AbstractTransactionsTest {
                 .writeConcern(getWriteConcern(clientOptions))
                 .readConcern(getReadConcern(clientOptions))
                 .readPreference(getReadPreference(clientOptions))
-                .retryWrites(clientOptions.getBoolean("retryWrites", BsonBoolean.FALSE).getValue());
+                .retryWrites(clientOptions.getBoolean("retryWrites", BsonBoolean.FALSE).getValue())
+                .retryReads(false)
+                .applyToServerSettings(new Block<ServerSettings.Builder>() {
+                    @Override
+                    public void apply(final ServerSettings.Builder builder) {
+                        builder.minHeartbeatFrequency(MIN_HEARTBEAT_FREQUENCY_MS, TimeUnit.MILLISECONDS);
+                    }
+                });
         if (clientOptions.containsKey("heartbeatFrequencyMS")) {
             builder.applyToServerSettings(new Block<ServerSettings.Builder>() {
                 @Override

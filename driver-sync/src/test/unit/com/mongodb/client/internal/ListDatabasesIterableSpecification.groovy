@@ -53,7 +53,8 @@ class ListDatabasesIterableSpecification extends Specification {
         def readPreference = executor.getReadPreference()
 
         then:
-        expect operation, isTheSameAs(new ListDatabasesOperation<Document>(new DocumentCodec()).maxTime(1000, MILLISECONDS))
+        expect operation, isTheSameAs(new ListDatabasesOperation<Document>(new DocumentCodec()).maxTime(1000, MILLISECONDS)
+                .retryReads(true))
         readPreference == secondary()
 
         when: 'overriding initial options'
@@ -63,7 +64,7 @@ class ListDatabasesIterableSpecification extends Specification {
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new ListDatabasesOperation<Document>(new DocumentCodec()).maxTime(999, MILLISECONDS)
-                .filter(BsonDocument.parse('{a: 1}')).nameOnly(true))
+                .filter(BsonDocument.parse('{a: 1}')).nameOnly(true).retryReads(true))
     }
 
     def 'should follow the MongoIterable interface as expected'() {

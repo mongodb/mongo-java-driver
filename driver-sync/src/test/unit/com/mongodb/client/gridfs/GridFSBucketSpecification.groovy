@@ -58,7 +58,7 @@ class GridFSBucketSpecification extends Specification {
     def registry = MongoClientSettings.getDefaultCodecRegistry()
     def database = databaseWithExecutor(Stub(OperationExecutor))
     def databaseWithExecutor(OperationExecutor executor) {
-        new MongoDatabaseImpl('test', registry, primary(), WriteConcern.ACKNOWLEDGED, false, readConcern, executor)
+        new MongoDatabaseImpl('test', registry, primary(), WriteConcern.ACKNOWLEDGED, false, false, readConcern, executor)
     }
     def disableMD5 = false
 
@@ -168,7 +168,7 @@ class GridFSBucketSpecification extends Specification {
         given:
         def defaultChunkSizeBytes = 255 * 1024
         def database = new MongoDatabaseImpl('test', fromProviders(new DocumentCodecProvider()), secondary(), WriteConcern.ACKNOWLEDGED,
-                false, readConcern, new TestOperationExecutor([]))
+                false, false, readConcern, new TestOperationExecutor([]))
 
         when:
         def gridFSBucket = new GridFSBucketImpl(database)

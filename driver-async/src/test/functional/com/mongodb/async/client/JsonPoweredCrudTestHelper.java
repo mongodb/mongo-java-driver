@@ -19,15 +19,20 @@ package com.mongodb.async.client;
 
 import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoException;
+import com.mongodb.MongoGridFSException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadConcernLevel;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
+import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.FutureResultCallback;
+import com.mongodb.async.client.gridfs.GridFSBucket;
 import com.mongodb.bulk.BulkWriteError;
 import com.mongodb.bulk.BulkWriteResult;
 import com.mongodb.bulk.BulkWriteUpsert;
+import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
+import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CollationAlternate;
@@ -50,18 +55,28 @@ import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
+import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonArray;
+import org.bson.BsonBinary;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonNull;
+import org.bson.BsonObjectId;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.Document;
+import org.bson.types.ObjectId;
 import org.junit.AssumptionViolatedException;
+import util.Hex;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -70,6 +85,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.async.client.Fixture.isSharded;
+import static com.mongodb.async.client.gridfs.helpers.AsyncStreamHelper.toAsyncInputStream;
+import static com.mongodb.async.client.gridfs.helpers.AsyncStreamHelper.toAsyncOutputStream;
 import static java.lang.String.format;
 import static org.junit.Assume.assumeTrue;
 
@@ -77,12 +94,22 @@ public class JsonPoweredCrudTestHelper {
     private final String description;
     private final MongoDatabase database;
     private final MongoCollection<BsonDocument> baseCollection;
+    private final GridFSBucket gridFSBucket;
+    private final MongoClient mongoClient;
 
     public JsonPoweredCrudTestHelper(final String description, final MongoDatabase database,
                                      final MongoCollection<BsonDocument> collection) {
+        this(description, database, collection, null, null);
+    }
+
+    public JsonPoweredCrudTestHelper(final String description, final MongoDatabase database,
+                                     final MongoCollection<BsonDocument> collection, final GridFSBucket gridFSBucket,
+                                     final MongoClient mongoClient) {
         this.description = description;
         this.database = database;
         this.baseCollection = collection;
+        this.gridFSBucket = gridFSBucket;
+        this.mongoClient = mongoClient;
     }
 
     BsonDocument getOperationResults(final BsonDocument operation) {
@@ -116,14 +143,24 @@ public class JsonPoweredCrudTestHelper {
     private String createMethodName(final String name, final String object) {
         StringBuilder builder = new StringBuilder();
         builder.append("get");
-        if (!object.isEmpty() && !object.equals("collection")) {
-            builder.append(object.substring(0, 1).toUpperCase());
-            builder.append(object.substring(1));
+        if (!object.isEmpty() && !object.equals("collection") && !object.equals("gridfsbucket")) {
+            appendInitCapToBuilder(builder, object);
         }
-        builder.append(name.substring(0, 1).toUpperCase());
-        builder.append(name.substring(1));
+        if (name.indexOf('_') >= 0) {
+            String[] nameParts = name.split("_");
+            for (String part : nameParts) {
+                appendInitCapToBuilder(builder, part);
+            }
+        } else {
+            appendInitCapToBuilder(builder, name);
+        }
         builder.append("Result");
         return builder.toString();
+    }
+
+    private void appendInitCapToBuilder(final StringBuilder builder, final String object) {
+        builder.append(object.substring(0, 1).toUpperCase());
+        builder.append(object.substring(1));
     }
 
     <T> T futureResult(final FutureResultCallback<T> callback) {
@@ -338,6 +375,59 @@ public class JsonPoweredCrudTestHelper {
         return toResult(futureResult(futureResultCallback).intValue());
     }
 
+    BsonDocument getClientListDatabasesResult(final BsonDocument clientOptions, final BsonDocument arguments,
+                                              @Nullable final ClientSession clientSession) {
+        ListDatabasesIterable<BsonDocument> iterable;
+        if (clientSession == null) {
+            iterable = mongoClient.listDatabases(BsonDocument.class);
+        } else {
+            iterable = mongoClient.listDatabases(clientSession, BsonDocument.class);
+        }
+        return toResult(iterable);
+    }
+
+    BsonDocument getClientListDatabaseObjectsResult(final BsonDocument databaseOptions, final BsonDocument arguments,
+                                                    @Nullable final ClientSession clientSession) {
+        return getClientListDatabasesResult(databaseOptions, arguments, clientSession);
+    }
+
+    BsonDocument getClientListDatabaseNamesResult(final BsonDocument databaseOptions, final BsonDocument arguments,
+                                                  @Nullable final ClientSession clientSession) {
+        return getClientListDatabasesResult(databaseOptions, arguments, clientSession);
+    }
+
+    BsonDocument getDatabaseListCollectionObjectsResult(final BsonDocument databaseOptions, final BsonDocument arguments,
+                                                        @Nullable final ClientSession clientSession) {
+        return getDatabaseListCollectionsResult(databaseOptions, arguments, clientSession);
+    }
+
+    BsonDocument getDatabaseListCollectionNamesResult(final BsonDocument databaseOptions, final BsonDocument arguments,
+                                                      @Nullable final ClientSession clientSession) {
+        return getDatabaseListCollectionsResult(databaseOptions, arguments, clientSession);
+    }
+
+    BsonDocument getDatabaseListCollectionsResult(final BsonDocument databaseOptions, final BsonDocument arguments,
+                                                  @Nullable final ClientSession clientSession) {
+        ListCollectionsIterable<BsonDocument> iterable;
+        if (clientSession == null) {
+            iterable = database.listCollections(BsonDocument.class);
+        } else {
+            iterable = database.listCollections(clientSession, BsonDocument.class);
+        }
+        return toResult(iterable);
+    }
+
+    BsonDocument getListIndexesResult(final BsonDocument collectionOptions, final BsonDocument arguments,
+                                      @Nullable final ClientSession clientSession) {
+        ListIndexesIterable<BsonDocument> iterable;
+        if (clientSession == null) {
+            iterable = getCollection(collectionOptions).listIndexes(BsonDocument.class);
+        } else {
+            iterable = getCollection(collectionOptions).listIndexes(clientSession, BsonDocument.class);
+        }
+        return toResult(iterable);
+    }
+
     BsonDocument getCountDocumentsResult(final BsonDocument collectionOptions, final BsonDocument arguments,
                                          @Nullable final ClientSession clientSession) {
         CountOptions options = new CountOptions();
@@ -383,6 +473,12 @@ public class JsonPoweredCrudTestHelper {
     }
 
     @SuppressWarnings("deprecation")
+    BsonDocument getFindOneResult(final BsonDocument collectionOptions, final BsonDocument arguments,
+                                  @Nullable final ClientSession clientSession) {
+        return getFindResult(collectionOptions, arguments, clientSession);
+    }
+
+    @SuppressWarnings("deprecation")
     BsonDocument getFindResult(final BsonDocument collectionOptions, final BsonDocument arguments,
                                @Nullable final ClientSession clientSession) {
         FindIterable<BsonDocument> iterable;
@@ -411,6 +507,28 @@ public class JsonPoweredCrudTestHelper {
             iterable.collation(getCollation(arguments.getDocument("collation")));
         }
         return toResult(iterable);
+    }
+
+    BsonDocument getMapReduceResult(final BsonDocument collectionOptions, final BsonDocument arguments,
+                                    @Nullable final ClientSession clientSession) {
+        MapReduceIterable<BsonDocument> iterable;
+        if (clientSession == null) {
+            iterable = getCollection(collectionOptions).mapReduce(arguments.get("map").asJavaScript().getCode(),
+                    arguments.get("reduce").asJavaScript().getCode());
+        } else {
+            iterable = getCollection(collectionOptions).mapReduce(clientSession, arguments.get("map").asJavaScript().getCode(),
+                    arguments.get("reduce").asJavaScript().getCode());
+        }
+
+        if (arguments.containsKey("filter")) {
+            iterable.filter(arguments.getDocument("filter"));
+        }
+        if (arguments.containsKey("collation")) {
+            iterable.collation(getCollation(arguments.getDocument("collation")));
+        }
+        FutureResultCallback<List<BsonValue>> futureResultCallback = new FutureResultCallback<List<BsonValue>>();
+        iterable.into(new BsonArray(), futureResultCallback);
+        return toResult(new BsonArray(futureResult(futureResultCallback)));
     }
 
     BsonDocument getDeleteManyResult(final BsonDocument collectionOptions, final BsonDocument arguments,
@@ -756,6 +874,132 @@ public class JsonPoweredCrudTestHelper {
         return new BsonDocument("ok", new BsonInt32(1));
     }
 
+    // GridFSBucket operations
+
+    BsonDocument getDownloadByNameResult(final BsonDocument collectionOptions, final BsonDocument arguments,
+                                         @Nullable final ClientSession clientSession) throws IOException {
+        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        try {
+            final GridFSDownloadOptions downloadOptions = new GridFSDownloadOptions();
+            if (arguments.containsKey("options")) {
+                int revision = arguments.getDocument("options").getInt32("revision").getValue();
+                downloadOptions.revision(revision);
+            }
+            new MongoOperation<Long>() {
+                @Override
+                public void execute() {
+                    gridFSBucket.downloadToStream(arguments.getString("filename").getValue(), toAsyncOutputStream(outputStream),
+                            downloadOptions, getCallback());
+                }
+            }.get();
+
+            return toResult("result", new BsonString(Hex.encode(outputStream.toByteArray()).toLowerCase()));
+        } finally {
+            outputStream.close();
+        }
+    }
+
+    BsonDocument getDeleteResult(final BsonDocument collectionOptions, final BsonDocument arguments,
+                                 @Nullable final ClientSession clientSession) {
+        try {
+            new MongoOperation<Void>() {
+                @Override
+                public void execute() {
+                    gridFSBucket.delete(arguments.getObjectId("id").getValue(), getCallback());
+                }
+            }.get();
+
+            return new BsonDocument("ok", new BsonInt32(1));
+        } catch (MongoGridFSException e) {
+            BsonDocument result = toResult("message", new BsonString(e.getMessage()));
+            result.put("error", BsonBoolean.TRUE);
+            return result;
+        }
+    }
+
+    BsonDocument getDownloadResult(final BsonDocument collectionOptions, final BsonDocument arguments,
+                                   @Nullable final ClientSession clientSession) throws IOException {
+        final ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
+        try {
+            new MongoOperation<Long>() {
+                @Override
+                public void execute() {
+                    gridFSBucket.downloadToStream(arguments.getObjectId("id").getValue(), toAsyncOutputStream(outputStream),
+                            getCallback());
+                }
+            }.get();
+        } finally {
+            outputStream.close();
+        }
+        return toResult("result", new BsonString(Hex.encode(outputStream.toByteArray()).toLowerCase()));
+    }
+
+    BsonDocument getUploadResult(final BsonDocument collectionOptions, final BsonDocument rawArguments,
+                                 @Nullable final ClientSession clientSession) {
+        ObjectId objectId = null;
+        BsonDocument arguments = parseHexDocument(rawArguments, "source");
+
+        final GridFSBucket gridFSUploadBucket = gridFSBucket;
+        final String filename = arguments.getString("filename").getValue();
+        final InputStream inputStream = new ByteArrayInputStream(arguments.getBinary("source").getData());
+        final GridFSUploadOptions options = new GridFSUploadOptions();
+        BsonDocument rawOptions = arguments.getDocument("options", new BsonDocument());
+        if (rawOptions.containsKey("chunkSizeBytes")) {
+            options.chunkSizeBytes(rawOptions.getInt32("chunkSizeBytes").getValue());
+        }
+        if (rawOptions.containsKey("metadata")) {
+            options.metadata(Document.parse(rawOptions.getDocument("metadata").toJson()));
+        }
+        if (rawOptions.containsKey("disableMD5")) {
+            gridFSUploadBucket.withDisableMD5(rawOptions.getBoolean("disableMD5").getValue());
+        }
+
+        objectId = new MongoOperation<ObjectId>() {
+            @Override
+            public void execute() {
+                gridFSUploadBucket.uploadFromStream(filename, toAsyncInputStream(inputStream), options, getCallback());
+            }
+        }.get();
+
+        return new BsonDocument("objectId", new BsonObjectId(objectId));
+    }
+
+    // Change streams operations
+
+    BsonDocument getClientWatchResult(final BsonDocument collectionOptions, final BsonDocument rawArguments,
+                                      @Nullable final ClientSession clientSession) {
+        new MongoOperation<AsyncBatchCursor<ChangeStreamDocument<Document>>>() {
+            @Override
+            public void execute() {
+                mongoClient.watch().batchCursor(getCallback());
+            }
+        }.get();
+        return new BsonDocument("ok", new BsonInt32(1));
+    }
+
+    BsonDocument getWatchResult(final BsonDocument collectionOptions, final BsonDocument rawArguments,
+                                @Nullable final ClientSession clientSession) {
+        new MongoOperation<AsyncBatchCursor<ChangeStreamDocument<BsonDocument>>>() {
+            @Override
+            public void execute() {
+                baseCollection.watch().batchCursor(getCallback());
+            }
+        }.get();
+        return new BsonDocument("ok", new BsonInt32(1));
+    }
+
+    BsonDocument getDatabaseWatchResult(final BsonDocument collectionOptions, final BsonDocument rawArguments,
+                                        @Nullable final ClientSession clientSession) {
+        new MongoOperation<AsyncBatchCursor<ChangeStreamDocument<Document>>>() {
+            @Override
+            public void execute() {
+                database.watch().batchCursor(getCallback());
+            }
+        }.get();
+        return new BsonDocument("ok", new BsonInt32(1));
+    }
 
     Collation getCollation(final BsonDocument bsonCollation) {
         Collation.Builder builder = Collation.builder();
@@ -886,5 +1130,13 @@ public class JsonPoweredCrudTestHelper {
 
     ReadConcern getReadConcern(final BsonDocument arguments) {
         return new ReadConcern(ReadConcernLevel.fromString(arguments.getDocument("readConcern").getString("level").getValue()));
+    }
+
+    private BsonDocument parseHexDocument(final BsonDocument document, final String hexDocument) {
+        if (document.containsKey(hexDocument) && document.get(hexDocument).isDocument()) {
+            byte[] bytes = Hex.decode(document.getDocument(hexDocument).getString("$hex").getValue());
+            document.put(hexDocument, new BsonBinary(bytes));
+        }
+        return document;
     }
 }

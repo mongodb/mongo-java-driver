@@ -96,6 +96,8 @@ public class TransactionsTest {
     private boolean useMultipleMongoses = false;
     private ConnectionString connectionString;
 
+    private static final long MIN_HEARTBEAT_FREQUENCY_MS = 50L;
+
     public TransactionsTest(final String filename, final String description, final BsonArray data, final BsonDocument definition) {
         this.filename = filename;
         this.description = description;
@@ -163,7 +165,15 @@ public class TransactionsTest {
                 .writeConcern(getWriteConcern(clientOptions))
                 .readConcern(getReadConcern(clientOptions))
                 .readPreference(getReadPreference(clientOptions))
-                .retryWrites(clientOptions.getBoolean("retryWrites", BsonBoolean.FALSE).getValue());
+                .retryWrites(clientOptions.getBoolean("retryWrites", BsonBoolean.FALSE).getValue())
+                .retryReads(false)
+                .applyToServerSettings(new Block<ServerSettings.Builder>() {
+                    @Override
+                    public void apply(final ServerSettings.Builder builder) {
+                        builder.minHeartbeatFrequency(MIN_HEARTBEAT_FREQUENCY_MS, TimeUnit.MILLISECONDS);
+                    }
+                });
+
         if (clientOptions.containsKey("heartbeatFrequencyMS")) {
             builder.applyToServerSettings(new Block<ServerSettings.Builder>() {
                 @Override

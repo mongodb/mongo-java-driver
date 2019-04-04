@@ -66,7 +66,7 @@ class AggregateIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([cursor, cursor, cursor, cursor, cursor]);
         def pipeline = [new Document('$match', 1)]
         def aggregationIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                writeConcern, executor, pipeline, AggregationLevel.COLLECTION)
+                writeConcern, executor, pipeline, AggregationLevel.COLLECTION, true)
 
         when: 'default input should be as expected'
         aggregationIterable.into([]) { result, t -> }
@@ -76,7 +76,7 @@ class AggregateIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new AggregateOperation<Document>(namespace, [new BsonDocument('$match', new BsonInt32(1))],
-                new DocumentCodec()))
+                new DocumentCodec()).retryReads(true))
         readPreference == secondary()
 
         when: 'overriding initial options'
@@ -100,6 +100,7 @@ class AggregateIterableSpecification extends Specification {
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
                 .comment('this is a comment')
+                .retryReads(true)
         )
     }
 
@@ -117,7 +118,7 @@ class AggregateIterableSpecification extends Specification {
 
         when: 'aggregation includes $out'
         new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                pipeline, AggregationLevel.COLLECTION)
+                pipeline, AggregationLevel.COLLECTION, true)
                 .batchSize(99)
                 .maxAwaitTime(99, MILLISECONDS)
                 .maxTime(999, MILLISECONDS)
@@ -151,7 +152,7 @@ class AggregateIterableSpecification extends Specification {
 
         when: 'aggregation includes $out and is at the database level'
         new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                pipeline, AggregationLevel.DATABASE)
+                pipeline, AggregationLevel.DATABASE, true)
                 .batchSize(99)
                 .maxAwaitTime(99, MILLISECONDS)
                 .maxTime(999, MILLISECONDS)
@@ -187,7 +188,7 @@ class AggregateIterableSpecification extends Specification {
         when: 'toCollection should work as expected'
         def futureResultCallback = new FutureResultCallback()
         new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
-                pipeline, AggregationLevel.COLLECTION)
+                pipeline, AggregationLevel.COLLECTION, true)
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new Document('a', 1))
@@ -212,7 +213,7 @@ class AggregateIterableSpecification extends Specification {
         def executor = new TestOperationExecutor([new MongoException('failure')])
         def pipeline = [new BsonDocument('$match', new BsonInt32(1))]
         def aggregationIterable = new AggregateIterableImpl(null, namespace, Document, BsonDocument, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION)
+                readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION, true)
 
         def futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
 
@@ -232,7 +233,7 @@ class AggregateIterableSpecification extends Specification {
         when: 'a codec is missing'
         futureResultCallback = new FutureResultCallback<List<BsonDocument>>()
         new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,  readConcern, writeConcern, executor,
-                pipeline, AggregationLevel.COLLECTION)
+                pipeline, AggregationLevel.COLLECTION, true)
                 .into([], futureResultCallback)
         futureResultCallback.get()
 
@@ -260,7 +261,8 @@ class AggregateIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor()]);
         def mongoIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, executor, [new BsonDocument('$match', new BsonInt32(1))], AggregationLevel.COLLECTION)
+                readConcern, writeConcern, executor, [new BsonDocument('$match', new BsonInt32(1))],
+                AggregationLevel.COLLECTION, true)
 
         when:
         def results = new FutureResultCallback()
@@ -323,7 +325,8 @@ class AggregateIterableSpecification extends Specification {
     def 'should check variables using notNull'() {
         given:
         def mongoIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, Stub(OperationExecutor), [Document.parse('{$match: 1}')], AggregationLevel.COLLECTION)
+                readConcern, writeConcern, Stub(OperationExecutor), [Document.parse('{$match: 1}')],
+                AggregationLevel.COLLECTION, true)
         def callback = Stub(SingleResultCallback)
         def block = Stub(Block)
         def target = Stub(List)
@@ -367,7 +370,7 @@ class AggregateIterableSpecification extends Specification {
         when:
         def results = new FutureResultCallback()
         mongoIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, Stub(OperationExecutor), [null], AggregationLevel.COLLECTION)
+                readConcern, writeConcern, Stub(OperationExecutor), [null], AggregationLevel.COLLECTION, true)
         mongoIterable.into(target, results)
         results.get()
 
@@ -379,7 +382,7 @@ class AggregateIterableSpecification extends Specification {
         when:
         def batchSize = 5
         def mongoIterable = new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference,
-                readConcern, writeConcern, Stub(OperationExecutor), [null], AggregationLevel.COLLECTION)
+                readConcern, writeConcern, Stub(OperationExecutor), [null], AggregationLevel.COLLECTION, true)
 
         then:
         mongoIterable.getBatchSize() == null

@@ -125,7 +125,8 @@ class DBCursorSpecification extends Specification {
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
                                                                 .filter(new BsonDocument())
                                                                 .projection(new BsonDocument())
-                                                                .modifiers(new BsonDocument()))
+                                                                .modifiers(new BsonDocument())
+                                                                .retryReads(true))
     }
 
 
@@ -144,7 +145,8 @@ class DBCursorSpecification extends Specification {
                                                                 .limit(-1)
                                                                 .filter(new BsonDocument())
                                                                 .projection(new BsonDocument())
-                                                                .modifiers(new BsonDocument()))
+                                                                .modifiers(new BsonDocument())
+                                                                .retryReads(true))
     }
 
     def 'DBCursor methods should be used to create the expected operation'() {
@@ -191,6 +193,7 @@ class DBCursorSpecification extends Specification {
                 .skip(1)
                 .sort(bsonSort)
                 .modifiers(new BsonDocument())
+                .retryReads(true)
         )
 
         executor.getReadPreference() == readPreference
@@ -270,6 +273,7 @@ class DBCursorSpecification extends Specification {
                 .min(bsonMin)
                 .returnKey(true)
                 .showRecordId(true)
+                .retryReads(true)
         )
 
         executor.getReadPreference() == findOptions.getReadPreference()
@@ -309,6 +313,7 @@ class DBCursorSpecification extends Specification {
                 .noCursorTimeout(true)
                 .oplogReplay(true)
                 .partial(true)
+                .retryReads(true)
         )
 
         executor.getReadPreference() == ReadPreference.secondaryPreferred()
@@ -326,7 +331,7 @@ class DBCursorSpecification extends Specification {
         then:
         result == 42
         expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace())
-                                                                .filter(new BsonDocument()))
+                                                                .filter(new BsonDocument()).retryReads(true))
         executor.getReadConcern() == ReadConcern.MAJORITY
     }
 
@@ -342,7 +347,7 @@ class DBCursorSpecification extends Specification {
         then:
         result == 42
         expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace())
-                                                                .filter(new BsonDocument()))
+                                                                .filter(new BsonDocument()).retryReads(true))
         executor.getReadConcern() == ReadConcern.MAJORITY
     }
 

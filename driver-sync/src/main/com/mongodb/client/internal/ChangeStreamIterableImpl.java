@@ -63,16 +63,16 @@ class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeStreamDo
     ChangeStreamIterableImpl(@Nullable final ClientSession clientSession, final String databaseName,
                              final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
                              final OperationExecutor executor, final List<? extends Bson> pipeline, final Class<TResult> resultClass,
-                             final ChangeStreamLevel changeStreamLevel) {
+                             final ChangeStreamLevel changeStreamLevel, final boolean retryReads) {
         this(clientSession, new MongoNamespace(databaseName, "ignored"), codecRegistry, readPreference, readConcern, executor, pipeline,
-                resultClass, changeStreamLevel);
+                resultClass, changeStreamLevel, retryReads);
     }
 
     ChangeStreamIterableImpl(@Nullable final ClientSession clientSession, final MongoNamespace namespace,
                              final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
                              final OperationExecutor executor, final List<? extends Bson> pipeline, final Class<TResult> resultClass,
-                             final ChangeStreamLevel changeStreamLevel) {
-        super(clientSession, executor, readConcern, readPreference);
+                             final ChangeStreamLevel changeStreamLevel, final boolean retryReads) {
+        super(clientSession, executor, readConcern, readPreference, retryReads);
         this.namespace = notNull("namespace", namespace);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.pipeline = notNull("pipeline", pipeline);
@@ -113,7 +113,7 @@ class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeStreamDo
 
     @Override
     public <TDocument> MongoIterable<TDocument> withDocumentClass(final Class<TDocument> clazz) {
-        return new MongoIterableImpl<TDocument>(getClientSession(), getExecutor(), getReadConcern(), getReadPreference()) {
+        return new MongoIterableImpl<TDocument>(getClientSession(), getExecutor(), getReadConcern(), getReadPreference(), getRetryReads()) {
             private ReadOperation<BatchCursor<TDocument>> operation = createChangeStreamOperation(codecRegistry.get(clazz));
 
             @Override
@@ -147,7 +147,8 @@ class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeStreamDo
                         .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
                         .resumeAfter(resumeToken)
                         .startAtOperationTime(startAtOperationTime)
-                        .startAfter(startAfter);
+                        .startAfter(startAfter)
+                        .retryReads(getRetryReads());
     }
 
     private List<BsonDocument> createBsonDocumentList(final List<? extends Bson> pipeline) {

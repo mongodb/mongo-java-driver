@@ -325,7 +325,7 @@ class FindOperationUnitSpecification extends OperationUnitSpecification {
         exception.getMessage().startsWith('Collation not supported by server version:')
 
         where:
-        async << [false, false]
+        async << [true, false]
     }
 
     def namespace = new MongoNamespace('db', 'coll')

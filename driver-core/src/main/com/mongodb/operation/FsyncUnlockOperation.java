@@ -20,12 +20,15 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.Connection;
+import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.connection.ServerDescription;
 import com.mongodb.operation.OperationHelper.CallableWithConnection;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.codecs.BsonDocumentCodec;
 
-import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
+import static com.mongodb.operation.CommandOperationHelper.CommandCreator;
+import static com.mongodb.operation.CommandOperationHelper.executeCommand;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
@@ -54,7 +57,7 @@ public class FsyncUnlockOperation implements WriteOperation<BsonDocument>, ReadO
             @Override
             public BsonDocument call(final Connection connection) {
                 if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
-                    return executeWrappedCommandProtocol(binding, "admin", FSYNC_UNLOCK_COMMAND, connection);
+                    return executeCommand(binding, "admin", FSYNC_UNLOCK_COMMAND, connection);
                 } else {
                     return queryUnlock(connection);
                 }
@@ -68,7 +71,7 @@ public class FsyncUnlockOperation implements WriteOperation<BsonDocument>, ReadO
             @Override
             public BsonDocument call(final Connection connection) {
                 if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
-                    return executeWrappedCommandProtocol(binding, "admin", FSYNC_UNLOCK_COMMAND, connection);
+                    return executeCommand(binding, "admin", getCommandCreator(), false);
                 } else {
                     return queryUnlock(connection);
                 }
@@ -82,4 +85,12 @@ public class FsyncUnlockOperation implements WriteOperation<BsonDocument>, ReadO
                 new BsonDocumentCodec()).getResults().get(0);
     }
 
+    private CommandCreator getCommandCreator() {
+        return new CommandCreator() {
+            @Override
+            public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
+                return FSYNC_UNLOCK_COMMAND;
+            }
+        };
+    }
 }

@@ -51,6 +51,7 @@ class MongoClientSettingsSpecification extends Specification {
         expect:
         settings.getWriteConcern() == WriteConcern.ACKNOWLEDGED
         settings.getRetryWrites()
+        settings.getRetryReads()
         settings.getReadConcern() == ReadConcern.DEFAULT
         settings.getReadPreference() == ReadPreference.primary()
         settings.getCommandListeners().isEmpty()
@@ -154,6 +155,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .readPreference(ReadPreference.secondary())
                 .writeConcern(WriteConcern.JOURNALED)
                 .retryWrites(true)
+                .retryReads(true)
                 .readConcern(ReadConcern.LOCAL)
                 .applicationName('app1')
                 .addCommandListener(commandListener)
@@ -172,6 +174,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.getReadPreference() == ReadPreference.secondary()
         settings.getWriteConcern() == WriteConcern.JOURNALED
         settings.getRetryWrites()
+        settings.getRetryReads()
         settings.getReadConcern() == ReadConcern.LOCAL
         settings.getApplicationName() == 'app1'
         settings.getCommandListeners().get(0) == commandListener
@@ -201,6 +204,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .readPreference(ReadPreference.secondary())
                 .writeConcern(WriteConcern.JOURNALED)
                 .retryWrites(true)
+                .retryReads(true)
                 .readConcern(ReadConcern.LOCAL)
                 .applicationName('app1')
                 .addCommandListener(commandListener)
@@ -221,6 +225,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.getReadPreference() == ReadPreference.secondary()
         settings.getWriteConcern() == WriteConcern.JOURNALED
         settings.getRetryWrites()
+        settings.getRetryReads()
         settings.getReadConcern() == ReadConcern.LOCAL
         settings.getApplicationName() == 'app1'
         settings.getSocketSettings() == SocketSettings.builder().build()
@@ -281,6 +286,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .readPreference(ReadPreference.secondary())
                 .writeConcern(WriteConcern.JOURNALED)
                 .retryWrites(true)
+                .retryReads(true)
                 .readConcern(ReadConcern.LOCAL)
                 .applicationName('app1')
                 .addCommandListener(commandListener)
@@ -382,6 +388,7 @@ class MongoClientSettingsSpecification extends Specification {
                 + '&appName=MyApp'
                 + '&replicaSet=test'
                 + '&retryWrites=true'
+                + '&retryReads=true'
                 + '&ssl=true&sslInvalidHostNameAllowed=true'
                 + '&w=majority&wTimeoutMS=2500'
                 + '&readPreference=secondary'
@@ -405,6 +412,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .credential(MongoCredential.createScramSha1Credential('user', 'test', 'pass'.toCharArray()))
                 .compressorList([MongoCompressor.createZlibCompressor().withProperty(MongoCompressor.LEVEL, 5)])
                 .retryWrites(true)
+                .retryReads(true)
                 .build()
 
         then:

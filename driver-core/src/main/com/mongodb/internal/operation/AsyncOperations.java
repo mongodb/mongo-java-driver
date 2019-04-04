@@ -54,21 +54,38 @@ import java.util.List;
  * This class is NOT part of the public API. It may change at any time without notification.
  */
 public final class AsyncOperations<TDocument> {
-    private final Operations<TDocument> operations;
+    private Operations<TDocument> operations;
 
     public AsyncOperations(final Class<TDocument> documentClass, final ReadPreference readPreference,
                            final CodecRegistry codecRegistry) {
-        this(null, documentClass, readPreference, codecRegistry, WriteConcern.ACKNOWLEDGED, false);
+        this(null, documentClass, readPreference, codecRegistry, WriteConcern.ACKNOWLEDGED, false, true);
+    }
+
+    public AsyncOperations(final Class<TDocument> documentClass, final ReadPreference readPreference,
+                           final CodecRegistry codecRegistry, final boolean retryReads) {
+        this(null, documentClass, readPreference, codecRegistry, WriteConcern.ACKNOWLEDGED, false, retryReads);
     }
 
     public AsyncOperations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
                            final CodecRegistry codecRegistry) {
-        this(namespace, documentClass, readPreference, codecRegistry, WriteConcern.ACKNOWLEDGED, false);
+        this(namespace, documentClass, readPreference, codecRegistry, WriteConcern.ACKNOWLEDGED, false, true);
     }
 
     public AsyncOperations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
-                           final CodecRegistry codecRegistry, final WriteConcern writeConcern, final boolean retryWrites) {
-        this.operations = new Operations<TDocument>(namespace, documentClass, readPreference, codecRegistry, writeConcern, retryWrites);
+                           final CodecRegistry codecRegistry, final boolean retryReads) {
+        this(namespace, documentClass, readPreference, codecRegistry, WriteConcern.ACKNOWLEDGED, false, retryReads);
+    }
+
+    public AsyncOperations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
+                           final CodecRegistry codecRegistry, final WriteConcern writeConcern) {
+        this(namespace, documentClass, readPreference, codecRegistry, writeConcern, false, true);
+    }
+
+    public AsyncOperations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
+                           final CodecRegistry codecRegistry, final WriteConcern writeConcern, final boolean retryWrites,
+                           final boolean retryReads) {
+        this.operations = new Operations<TDocument>(namespace, documentClass, readPreference, codecRegistry, writeConcern, retryWrites,
+                retryReads);
     }
 
     public AsyncReadOperation<Long> count(final Bson filter, final CountOptions options, final CountStrategy countStrategy) {

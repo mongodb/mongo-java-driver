@@ -294,6 +294,29 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
         return startAtOperationTime;
     }
 
+    /**
+     * Enables retryable reads if a read fails due to a network error.
+     *
+     * @param retryReads true if reads should be retried
+     * @return this
+     * @mongodb.driver.manual reference/method/db.collection.find/ Filter
+     * @since 3.11
+     */
+    public ChangeStreamOperation<T> retryReads(final boolean retryReads) {
+        wrapped.retryReads(retryReads);
+        return this;
+    }
+
+    /**
+     * Gets the value for retryable reads. The default is true.
+     *
+     * @return the retryable reads value
+     * @since 3.11
+     */
+    public boolean getRetryReads() {
+        return wrapped.getRetryReads();
+    }
+
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         return new ChangeStreamBatchCursor<T>(ChangeStreamOperation.this, wrapped.execute(binding), binding);

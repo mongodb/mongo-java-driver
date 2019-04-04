@@ -19,12 +19,15 @@ package com.mongodb.operation;
 import com.mongodb.MongoNamespace;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.connection.Connection;
+import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.connection.ServerDescription;
 import com.mongodb.operation.OperationHelper.CallableWithConnection;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.codecs.BsonDocumentCodec;
 
-import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
+import static com.mongodb.operation.CommandOperationHelper.CommandCreator;
+import static com.mongodb.operation.CommandOperationHelper.executeCommand;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.operation.OperationHelper.withConnection;
 
@@ -42,7 +45,7 @@ public class CurrentOpOperation implements ReadOperation<BsonDocument> {
             @Override
             public BsonDocument call(final Connection connection) {
                 if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
-                    return executeWrappedCommandProtocol(binding, "admin", new BsonDocument("currentOp", new BsonInt32(1)), connection);
+                    return executeCommand(binding, "admin", getCommandCreator(), true);
                 } else {
                     return connection.query(new MongoNamespace("admin", "$cmd.sys.inprog"), new BsonDocument(), null, 0, 1, 0,
                                            binding.getReadPreference().isSlaveOk(), false, false, false, false, false,
@@ -51,5 +54,14 @@ public class CurrentOpOperation implements ReadOperation<BsonDocument> {
                 }
             }
         });
+    }
+
+    private CommandCreator getCommandCreator() {
+        return new CommandCreator() {
+            @Override
+            public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
+                return new BsonDocument("currentOp", new BsonInt32(1));
+            }
+        };
     }
 }

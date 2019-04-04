@@ -158,6 +158,19 @@ class ConnectionStringSpecification extends Specification {
     }
 
     @Unroll
+    def 'should correct parse retryReads'() {
+        expect:
+        uri.getRetryReads() == retryReads
+
+        where:
+        uri                                                                           | retryReads
+        new ConnectionString('mongodb://localhost/')                    | null
+        new ConnectionString('mongodb://localhost/?retryReads=false')   | false
+        new ConnectionString('mongodb://localhost/?retryReads=true')    | true
+        new ConnectionString('mongodb://localhost/?retryReads=foos')    | null
+    }
+
+    @Unroll
     def 'should correctly parse URI options for #type'() {
         expect:
         connectionString.getMinConnectionPoolSize() == 5
@@ -399,6 +412,7 @@ class ConnectionStringSpecification extends Specification {
         connectionString.getCompressorList() == []
         connectionString.getRetryWrites()
         connectionString.getRetryWritesValue() == null
+        connectionString.getRetryReads() == null
     }
 
     @Unroll

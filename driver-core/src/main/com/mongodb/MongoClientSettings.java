@@ -72,6 +72,7 @@ public final class MongoClientSettings {
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;
     private final boolean retryWrites;
+    private final boolean retryReads;
     private final ReadConcern readConcern;
     private final MongoCredential credential;
     private final StreamFactoryFactory streamFactoryFactory;
@@ -138,6 +139,7 @@ public final class MongoClientSettings {
         private ReadPreference readPreference = ReadPreference.primary();
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
         private boolean retryWrites = true;
+        private boolean retryReads = true;
         private ReadConcern readConcern = ReadConcern.DEFAULT;
         private CodecRegistry codecRegistry = MongoClientSettings.getDefaultCodecRegistry();
         private StreamFactoryFactory streamFactoryFactory;
@@ -164,6 +166,7 @@ public final class MongoClientSettings {
             readPreference = settings.getReadPreference();
             writeConcern = settings.getWriteConcern();
             retryWrites = settings.getRetryWrites();
+            retryReads = settings.getRetryReads();
             readConcern = settings.getReadConcern();
             credential = settings.getCredential();
             streamFactoryFactory = settings.getStreamFactoryFactory();
@@ -306,6 +309,20 @@ public final class MongoClientSettings {
          */
         public Builder retryWrites(final boolean retryWrites) {
             this.retryWrites = retryWrites;
+            return this;
+        }
+
+        /**
+         * Sets whether reads should be retried if they fail due to a network error.
+         *
+         * @param retryReads sets if reads should be retried if they fail due to a network error.
+         * @return this
+         * @see #getRetryReads()
+         * @since 3.11
+         * @mongodb.server.release 3.6
+         */
+        public Builder retryReads(final boolean retryReads) {
+            this.retryReads = retryReads;
             return this;
         }
 
@@ -459,7 +476,7 @@ public final class MongoClientSettings {
     }
 
     /**
-     * Returns true if writes should be retried if they fail due to a network error.
+     * Returns true if writes should be retried if they fail due to a network error or other retryable error.
      *
      * <p>Starting with the 3.11.0 release, the default value is true</p>
      *
@@ -468,6 +485,17 @@ public final class MongoClientSettings {
      */
     public boolean getRetryWrites() {
         return retryWrites;
+    }
+
+    /**
+     * Returns true if reads should be retried if they fail due to a network error or other retryable error. The default value is true.
+     *
+     * @return the retryReads value
+     * @since 3.11
+     * @mongodb.server.release 3.6
+     */
+    public boolean getRetryReads() {
+        return retryReads;
     }
 
     /**
@@ -606,6 +634,7 @@ public final class MongoClientSettings {
         readPreference = builder.readPreference;
         writeConcern = builder.writeConcern;
         retryWrites = builder.retryWrites;
+        retryReads = builder.retryReads;
         readConcern = builder.readConcern;
         credential = builder.credential;
         streamFactoryFactory = builder.streamFactoryFactory;

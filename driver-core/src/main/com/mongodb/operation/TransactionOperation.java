@@ -34,6 +34,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.CommandOperationHelper.executeRetryableCommand;
 import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTransformer;
+import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTransformerAsync;
 import static com.mongodb.operation.OperationHelper.LOGGER;
 
 /**
@@ -74,7 +75,7 @@ public abstract class TransactionOperation implements WriteOperation<Void>, Asyn
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
         isTrue("in transaction", binding.getSessionContext().hasActiveTransaction());
         executeRetryableCommand(binding, "admin", null, new NoOpFieldNameValidator(),
-                new BsonDocumentCodec(), getCommandCreator(), writeConcernErrorTransformer(), getRetryCommandModifier(),
+                new BsonDocumentCodec(), getCommandCreator(), writeConcernErrorTransformerAsync(), getRetryCommandModifier(),
                 errorHandlingCallback(callback, LOGGER));
     }
 

@@ -37,7 +37,9 @@ import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.QueryResult;
+import com.mongodb.connection.ServerDescription;
 import com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
+import com.mongodb.operation.OperationHelper.CallableWithSource;
 import com.mongodb.session.SessionContext;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -62,9 +64,11 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
-import static com.mongodb.operation.CommandOperationHelper.CommandTransformer;
-import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
-import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static com.mongodb.operation.CommandOperationHelper.CommandCreator;
+import static com.mongodb.operation.CommandOperationHelper.CommandReadTransformer;
+import static com.mongodb.operation.CommandOperationHelper.CommandReadTransformerAsync;
+import static com.mongodb.operation.CommandOperationHelper.executeCommandWithConnection;
+import static com.mongodb.operation.CommandOperationHelper.executeCommandAsyncWithConnection;
 import static com.mongodb.operation.DocumentHelper.putIfNotNullOrEmpty;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.LOGGER;
@@ -72,6 +76,7 @@ import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.validateReadConcernAndCollation;
 import static com.mongodb.operation.OperationHelper.withConnection;
+import static com.mongodb.operation.OperationHelper.withConnectionSource;
 import static com.mongodb.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 
 /**
@@ -86,6 +91,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
 
     private final MongoNamespace namespace;
     private final Decoder<T> decoder;
+    private boolean retryReads;
     private BsonDocument filter;
     private int batchSize;
     private int limit;
@@ -691,37 +697,62 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
         return this;
     }
 
+    /**
+     * Enables retryable reads if a read fails due to a network error.
+     *
+     * @param retryReads true if reads should be retried
+     * @return this
+     * @since 3.11
+     */
+    public FindOperation<T> retryReads(final boolean retryReads) {
+        this.retryReads = retryReads;
+        return this;
+    }
+
+    /**
+     * Gets the value for retryable reads. The default is true.
+     *
+     * @return the retryable reads value
+     * @since 3.11
+     */
+    public boolean getRetryReads() {
+        return retryReads;
+    }
+
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return withConnection(binding, new CallableWithConnectionAndSource<BatchCursor<T>>() {
+        return withConnectionSource(binding, new CallableWithSource<BatchCursor<T>>() {
             @Override
-            public BatchCursor<T> call(final ConnectionSource source, final Connection connection) {
+            public BatchCursor<T> call(final ConnectionSource source) {
+                Connection connection = source.getConnection();
                 if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
                     try {
-                        validateReadConcernAndCollation(connection, binding.getSessionContext().getReadConcern(), collation);
-                        return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(),
-                                                             wrapInExplainIfNecessary(getCommand(binding.getSessionContext())),
-                                                             CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
-                                                             connection, transformer(source, connection));
+                        return executeCommandWithConnection(binding, source, namespace.getDatabaseName(),
+                                getCommandCreator(binding.getSessionContext()),
+                                CommandResultDocumentCodec.create(decoder, FIRST_BATCH), transformer(), retryReads, connection);
                     } catch (MongoCommandException e) {
                         throw new MongoQueryException(e);
                     }
                 } else {
-                    validateReadConcernAndCollation(connection, binding.getSessionContext().getReadConcern(), collation);
-                    QueryResult<T> queryResult = connection.query(namespace,
-                                                                  asDocument(connection.getDescription(), binding.getReadPreference()),
-                                                                  projection,
-                                                                  skip,
-                                                                  limit,
-                                                                  batchSize,
-                                                                  isSlaveOk() || binding.getReadPreference().isSlaveOk(),
-                                                                  isTailableCursor(),
-                                                                  isAwaitData(),
-                                                                  isNoCursorTimeout(),
-                                                                  isPartial(),
-                                                                  isOplogReplay(),
-                                                                  decoder);
-                    return new QueryBatchCursor<T>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, source, connection);
+                    try {
+                        validateReadConcernAndCollation(connection, binding.getSessionContext().getReadConcern(), collation);
+                        QueryResult<T> queryResult = connection.query(namespace,
+                                asDocument(connection.getDescription(), binding.getReadPreference()),
+                                projection,
+                                skip,
+                                limit,
+                                batchSize,
+                                isSlaveOk() || binding.getReadPreference().isSlaveOk(),
+                                isTailableCursor(),
+                                isAwaitData(),
+                                isNoCursorTimeout(),
+                                isPartial(),
+                                isOplogReplay(),
+                                decoder);
+                        return new QueryBatchCursor<T>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, source, connection);
+                    } finally {
+                        connection.release();
+                    }
                 }
             }
         });
@@ -738,22 +769,10 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
                 } else {
                     if (serverIsAtLeastVersionThreeDotTwo(connection.getDescription())) {
                         final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback =
-                                releasingCallback(exceptionTransformingCallback(errHandlingCallback), source, connection);
-                        validateReadConcernAndCollation(source, connection, binding.getSessionContext().getReadConcern(), collation,
-                                new AsyncCallableWithConnectionAndSource() {
-                                    @Override
-                                    public void call(final AsyncConnectionSource source, final AsyncConnection connection,
-                                                     final Throwable t) {
-                                        if (t != null) {
-                                            wrappedCallback.onResult(null, t);
-                                        } else {
-                                            executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
-                                                    wrapInExplainIfNecessary(getCommand(binding.getSessionContext())),
-                                                    CommandResultDocumentCodec.create(decoder, FIRST_BATCH), connection,
-                                                    asyncTransformer(source, connection), wrappedCallback);
-                                        }
-                                    }
-                                });
+                                exceptionTransformingCallback(errHandlingCallback);
+                        executeCommandAsyncWithConnection(binding, source, namespace.getDatabaseName(),
+                                getCommandCreator(binding.getSessionContext()), CommandResultDocumentCodec.create(decoder, FIRST_BATCH),
+                                asyncTransformer(), retryReads, connection, wrappedCallback);
                     } else {
                         final SingleResultCallback<AsyncBatchCursor<T>> wrappedCallback =
                                 releasingCallback(errHandlingCallback, source, connection);
@@ -1073,6 +1092,16 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
         }
     }
 
+    private CommandCreator getCommandCreator(final SessionContext sessionContext) {
+        return new CommandOperationHelper.CommandCreator() {
+            @Override
+            public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
+                validateReadConcernAndCollation(connectionDescription, sessionContext.getReadConcern(), collation);
+                return wrapInExplainIfNecessary(getCommand(sessionContext));
+            }
+        };
+    }
+
     private boolean isExplain() {
         return modifiers != null && modifiers.get("$explain", BsonBoolean.FALSE).equals(BsonBoolean.TRUE);
     }
@@ -1085,12 +1114,11 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
         return cursorType == CursorType.TailableAwait;
     }
 
-    private CommandTransformer<BsonDocument, BatchCursor<T>> transformer(final ConnectionSource source,
-                                                                         final Connection connection) {
-        return new CommandTransformer<BsonDocument, BatchCursor<T>>() {
+    private CommandReadTransformer<BsonDocument, BatchCursor<T>> transformer() {
+        return new CommandReadTransformer<BsonDocument, BatchCursor<T>>() {
             @Override
-            public BatchCursor<T> apply(final BsonDocument result, final ServerAddress serverAddress) {
-                QueryResult<T> queryResult = documentToQueryResult(result, serverAddress);
+            public BatchCursor<T> apply(final BsonDocument result, final ConnectionSource source, final Connection connection) {
+                QueryResult<T> queryResult = documentToQueryResult(result, connection.getDescription().getServerAddress());
                 return new QueryBatchCursor<T>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, source, connection);
             }
         };
@@ -1100,12 +1128,12 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
         return cursorType == CursorType.TailableAwait ? maxAwaitTimeMS : 0;
     }
 
-    private CommandTransformer<BsonDocument, AsyncBatchCursor<T>> asyncTransformer(final AsyncConnectionSource source,
-                                                                                   final AsyncConnection connection) {
-        return new CommandTransformer<BsonDocument, AsyncBatchCursor<T>>() {
+    private CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>> asyncTransformer() {
+        return new CommandReadTransformerAsync<BsonDocument, AsyncBatchCursor<T>>() {
             @Override
-            public AsyncBatchCursor<T> apply(final BsonDocument result, final ServerAddress serverAddress) {
-                QueryResult<T> queryResult = documentToQueryResult(result, serverAddress);
+            public AsyncBatchCursor<T> apply(final BsonDocument result, final AsyncConnectionSource source,
+                                             final AsyncConnection connection) {
+                QueryResult<T> queryResult = documentToQueryResult(result, connection.getDescription().getServerAddress());
                 return new AsyncQueryBatchCursor<T>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, source, connection);
             }
         };

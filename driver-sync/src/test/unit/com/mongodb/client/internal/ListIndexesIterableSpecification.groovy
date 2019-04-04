@@ -56,7 +56,7 @@ class ListIndexesIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new ListIndexesOperation<Document>(namespace, new DocumentCodec())
-                .batchSize(100).maxTime(1000, MILLISECONDS))
+                .batchSize(100).maxTime(1000, MILLISECONDS).retryReads(true))
         readPreference == secondary()
 
         when: 'overriding initial options'
@@ -68,7 +68,7 @@ class ListIndexesIterableSpecification extends Specification {
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new ListIndexesOperation<Document>(namespace, new DocumentCodec())
-                .batchSize(99).maxTime(999, MILLISECONDS))
+                .batchSize(99).maxTime(999, MILLISECONDS).retryReads(true))
     }
 
     def 'should use ClientSession'() {

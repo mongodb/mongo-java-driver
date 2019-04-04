@@ -51,9 +51,9 @@ class ListCollectionsIterableSpecification extends Specification {
         }
         def executor = new TestOperationExecutor([cursor, cursor, cursor]);
         def listCollectionIterable = new ListCollectionsIterableImpl<Document>(null, 'db', false, Document, codecRegistry, readPreference,
-                executor).filter(new Document('filter', 1)).batchSize(100).maxTime(1000, MILLISECONDS)
+                executor, true).filter(new Document('filter', 1)).batchSize(100).maxTime(1000, MILLISECONDS)
         def listCollectionNamesIterable = new ListCollectionsIterableImpl<Document>(null, 'db', true, Document, codecRegistry,
-                readPreference, executor)
+                readPreference, executor, true)
 
         when: 'default input should be as expected'
         listCollectionIterable.into([]) { result, t -> }
@@ -63,7 +63,8 @@ class ListCollectionsIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec())
-                .filter(new BsonDocument('filter', new BsonInt32(1))).batchSize(100).maxTime(1000, MILLISECONDS))
+                .filter(new BsonDocument('filter', new BsonInt32(1))).batchSize(100).maxTime(1000, MILLISECONDS)
+                .retryReads(true))
         readPreference == secondary()
 
         when: 'overriding initial options'
@@ -73,7 +74,8 @@ class ListCollectionsIterableSpecification extends Specification {
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec())
-                .filter(new BsonDocument('filter', new BsonInt32(2))).batchSize(99).maxTime(999, MILLISECONDS))
+                .filter(new BsonDocument('filter', new BsonInt32(2))).batchSize(99).maxTime(999, MILLISECONDS)
+                .retryReads(true))
 
         when: 'requesting collection names only'
         listCollectionNamesIterable.into([]) { result, t -> }
@@ -81,7 +83,8 @@ class ListCollectionsIterableSpecification extends Specification {
         operation = executor.getReadOperation() as ListCollectionsOperation<Document>
 
         then: 'should create operation with nameOnly'
-        expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec()).nameOnly(true))
+        expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec()).nameOnly(true)
+                .retryReads(true))
     }
 
     def 'should follow the MongoIterable interface as expected'() {
@@ -103,7 +106,8 @@ class ListCollectionsIterableSpecification extends Specification {
             }
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor()]);
-        def mongoIterable = new ListCollectionsIterableImpl<Document>(null, 'db', false, Document, codecRegistry, readPreference, executor)
+        def mongoIterable = new ListCollectionsIterableImpl<Document>(null, 'db', false, Document, codecRegistry, readPreference,
+                executor, true)
 
         when:
         def results = new FutureResultCallback()
@@ -166,7 +170,7 @@ class ListCollectionsIterableSpecification extends Specification {
     def 'should check variables using notNull'() {
         given:
         def mongoIterable = new ListCollectionsIterableImpl<Document>(null, 'db', false, Document, codecRegistry, readPreference,
-                Stub(OperationExecutor))
+                Stub(OperationExecutor), true)
         def callback = Stub(SingleResultCallback)
         def block = Stub(Block)
         def target = Stub(List)
@@ -212,7 +216,7 @@ class ListCollectionsIterableSpecification extends Specification {
         when:
         def batchSize = 5
         def mongoIterable = new ListCollectionsIterableImpl<Document>(null, 'db', false, Document, codecRegistry, readPreference,
-                Stub(OperationExecutor))
+                Stub(OperationExecutor), true)
 
         then:
         mongoIterable.getBatchSize() == null

@@ -65,6 +65,7 @@ public class MongoClientOptions {
     private final ReadPreference readPreference;
     private final WriteConcern writeConcern;
     private final boolean retryWrites;
+    private final boolean retryReads;
     private final ReadConcern readConcern;
     private final CodecRegistry codecRegistry;
     private final ServerSelector serverSelector;
@@ -122,6 +123,7 @@ public class MongoClientOptions {
         readPreference = builder.readPreference;
         writeConcern = builder.writeConcern;
         retryWrites = builder.retryWrites;
+        retryReads = builder.retryReads;
         readConcern = builder.readConcern;
         codecRegistry = builder.codecRegistry;
         serverSelector = builder.serverSelector;
@@ -534,7 +536,7 @@ public class MongoClientOptions {
     }
 
     /**
-     * Returns true if writes should be retried if they fail due to a network error.
+     * Returns true if writes should be retried if they fail due to a network error or other retryable error.
      *
      * <p>Starting with the 3.11.0 release, the default value is true</p>
      *
@@ -544,6 +546,17 @@ public class MongoClientOptions {
      */
     public boolean getRetryWrites() {
         return retryWrites;
+    }
+
+    /**
+     * Returns true if reads should be retried if they fail due to a network error or other retryable error.
+     *
+     * @return the retryReads value
+     * @since 3.11
+     * @mongodb.server.release 3.6
+     */
+    public boolean getRetryReads() {
+        return retryReads;
     }
 
     /**
@@ -834,6 +847,9 @@ public class MongoClientOptions {
         if (retryWrites != that.retryWrites) {
             return false;
         }
+        if (retryReads != that.retryReads) {
+            return false;
+        }
         if (!readConcern.equals(that.readConcern)) {
             return false;
         }
@@ -870,6 +886,7 @@ public class MongoClientOptions {
         result = 31 * result + readPreference.hashCode();
         result = 31 * result + writeConcern.hashCode();
         result = 31 * result + (retryWrites ? 1 : 0);
+        result = 31 * result + (retryReads ? 1 : 0);
         result = 31 * result + (readConcern != null ? readConcern.hashCode() : 0);
         result = 31 * result + codecRegistry.hashCode();
         result = 31 * result + (serverSelector != null ? serverSelector.hashCode() : 0);
@@ -912,6 +929,7 @@ public class MongoClientOptions {
                + ", readPreference=" + readPreference
                + ", writeConcern=" + writeConcern
                + ", retryWrites=" + retryWrites
+               + ", retryReads=" + retryReads
                + ", readConcern=" + readConcern
                + ", codecRegistry=" + codecRegistry
                + ", serverSelector=" + serverSelector
@@ -967,6 +985,7 @@ public class MongoClientOptions {
         private ReadPreference readPreference = ReadPreference.primary();
         private WriteConcern writeConcern = WriteConcern.ACKNOWLEDGED;
         private boolean retryWrites = true;
+        private boolean retryReads = true;
         private ReadConcern readConcern = ReadConcern.DEFAULT;
         private CodecRegistry codecRegistry = MongoClient.getDefaultCodecRegistry();
         private ServerSelector serverSelector;
@@ -1031,6 +1050,7 @@ public class MongoClientOptions {
             readPreference = options.getReadPreference();
             writeConcern = options.getWriteConcern();
             retryWrites = options.getRetryWrites();
+            retryReads = options.getRetryReads();
             readConcern = options.getReadConcern();
             codecRegistry = options.getCodecRegistry();
             serverSelector = options.getServerSelector();
@@ -1331,6 +1351,20 @@ public class MongoClientOptions {
          */
         public Builder retryWrites(final boolean retryWrites) {
             this.retryWrites = retryWrites;
+            return this;
+        }
+
+        /**
+         * Sets whether reads should be retried if they fail due to a network error.
+         *
+         * @param retryReads sets if reads should be retried if they fail due to a network error.
+         * @return {@code this}
+         * @see #getRetryReads()
+         * @since 3.11
+         * @mongodb.server.release 3.6
+         */
+        public Builder retryReads(final boolean retryReads) {
+            this.retryReads = retryReads;
             return this;
         }
 

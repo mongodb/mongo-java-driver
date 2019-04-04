@@ -29,9 +29,7 @@ import org.bson.BsonValue;
 import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -79,14 +77,6 @@ public class RetryableWritesTest {
         this.definition = definition;
     }
 
-    @BeforeClass
-    public static void beforeClass() {
-    }
-
-    @AfterClass
-    public static void afterClass() {
-    }
-
     @Before
     public void setUp() {
         assumeTrue(canRunTests());
@@ -115,6 +105,7 @@ public class RetryableWritesTest {
         collectionHelper = new CollectionHelper<Document>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
         BsonDocument clientOptions = definition.getDocument("clientOptions", new BsonDocument());
         MongoClientSettings.Builder builder = getMongoClientSettingsBuilder();
+
         if (clientOptions.containsKey("retryWrites")) {
             builder.retryWrites(clientOptions.getBoolean("retryWrites").getValue());
         }

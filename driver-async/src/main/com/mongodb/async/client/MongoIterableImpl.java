@@ -36,14 +36,16 @@ abstract class MongoIterableImpl<TResult> implements MongoIterable<TResult> {
     private final ReadConcern readConcern;
     private final OperationExecutor executor;
     private final ReadPreference readPreference;
+    private final boolean retryReads;
     private Integer batchSize;
 
     MongoIterableImpl(@Nullable final ClientSession clientSession, final OperationExecutor executor, final ReadConcern readConcern,
-                      final ReadPreference readPreference) {
+                      final ReadPreference readPreference, final boolean retryReads) {
         this.clientSession = clientSession;
         this.executor = notNull("executor", executor);
         this.readConcern = notNull("readConcern", readConcern);
         this.readPreference = notNull("readPreference", readPreference);
+        this.retryReads = notNull("retryReads", retryReads);
     }
 
     abstract AsyncReadOperation<AsyncBatchCursor<TResult>> asAsyncReadOperation();
@@ -62,6 +64,10 @@ abstract class MongoIterableImpl<TResult> implements MongoIterable<TResult> {
 
     ReadConcern getReadConcern() {
         return readConcern;
+    }
+
+    boolean getRetryReads() {
+        return retryReads;
     }
 
     @Override

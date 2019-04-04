@@ -149,7 +149,7 @@ public class GroupCommand {
         return new BasicDBObject("group", args);
     }
 
-    GroupOperation<DBObject> toOperation(final MongoNamespace namespace, final DBObjectCodec codec) {
+    GroupOperation<DBObject> toOperation(final MongoNamespace namespace, final DBObjectCodec codec, final boolean retryReads) {
         if (initial == null) {
             throw new IllegalArgumentException("Group command requires an initial document for the aggregate result");
         }
@@ -158,9 +158,8 @@ public class GroupCommand {
             throw new IllegalArgumentException("Group command requires a reduce function for the aggregate result");
         }
 
-        GroupOperation<DBObject> operation = new GroupOperation<DBObject>(namespace,
-                                                                          new BsonJavaScript(reduce),
-                                                                          new BsonDocumentWrapper<DBObject>(initial, codec), codec);
+        GroupOperation<DBObject> operation = new GroupOperation<DBObject>(namespace, new BsonJavaScript(reduce),
+                new BsonDocumentWrapper<DBObject>(initial, codec), codec).retryReads(retryReads);
 
         if (keys != null) {
             operation.key(new BsonDocumentWrapper<DBObject>(keys, codec));
