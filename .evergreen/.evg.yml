@@ -303,8 +303,8 @@ functions:
         working_dir: "src"
         script: |
           # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
-          JDK="jdk8" .evergreen/run-connectivity-tests.sh '${atlas_free_tier_uri}' '${atlas_replica_set_uri}' '${atlas_sharded_uri}' '${atlas_tls_v11_uri}' '${atlas_tls_v12_uri}'
- 
+          JDK="jdk8" .evergreen/run-connectivity-tests.sh '${atlas_free_tier_uri}' '${atlas_replica_set_uri}' '${atlas_sharded_uri}' '${atlas_tls_v11_uri}' '${atlas_tls_v12_uri}' '${atlas_free_tier_uri_srv}' '${atlas_replica_set_uri_srv}' '${atlas_sharded_uri_srv}' '${atlas_tls_v11_uri_srv}' '${atlas_tls_v12_uri_srv}'
+
   "publish snapshot":
     - command: shell.exec
       type: test
