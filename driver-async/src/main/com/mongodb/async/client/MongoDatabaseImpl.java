@@ -52,18 +52,20 @@ class MongoDatabaseImpl implements MongoDatabase {
     private final CodecRegistry codecRegistry;
     private final WriteConcern writeConcern;
     private final boolean retryWrites;
+    private final boolean retryReads;
     private final ReadConcern readConcern;
     private final OperationExecutor executor;
 
     MongoDatabaseImpl(final String name, final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                      final WriteConcern writeConcern, final boolean retryWrites, final ReadConcern readConcern,
-                      final OperationExecutor executor) {
+                      final WriteConcern writeConcern, final boolean retryWrites, final boolean retryReads,
+                      final ReadConcern readConcern, final OperationExecutor executor) {
         checkDatabaseNameValidity(name);
         this.name = notNull("name", name);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
         this.readPreference = notNull("readPreference", readPreference);
         this.writeConcern = notNull("writeConcern", writeConcern);
         this.retryWrites = retryWrites;
+        this.retryReads = retryReads;
         this.readConcern = notNull("readConcern", readConcern);
         this.executor = notNull("executor", executor);
     }
@@ -95,22 +97,22 @@ class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public MongoDatabase withCodecRegistry(final CodecRegistry codecRegistry) {
-        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, readConcern, executor);
+        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern, executor);
     }
 
     @Override
     public MongoDatabase withReadPreference(final ReadPreference readPreference) {
-        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, readConcern, executor);
+        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern, executor);
     }
 
     @Override
     public MongoDatabase withWriteConcern(final WriteConcern writeConcern) {
-        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, readConcern, executor);
+        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern, executor);
     }
 
     @Override
     public MongoDatabase withReadConcern(final ReadConcern readConcern) {
-        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, readConcern, executor);
+        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern, executor);
     }
 
     @Override
@@ -159,7 +161,7 @@ class MongoDatabaseImpl implements MongoDatabase {
                                                                                      final Class<TResult> resultClass,
                                                                                      final boolean collectionNamesOnly) {
         return new ListCollectionsIterableImpl<TResult>(clientSession, name, collectionNamesOnly, resultClass, codecRegistry,
-                ReadPreference.primary(), executor);
+                ReadPreference.primary(), executor, retryReads);
     }
 
     @Override
@@ -170,7 +172,7 @@ class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public <TDocument> MongoCollection<TDocument> getCollection(final String collectionName, final Class<TDocument> documentClass) {
         return new MongoCollectionImpl<TDocument>(new MongoNamespace(name, collectionName), documentClass, codecRegistry, readPreference,
-                                                  writeConcern, retryWrites, readConcern, executor);
+                                                  writeConcern, retryWrites, retryReads, readConcern, executor);
     }
 
     @Override
@@ -394,14 +396,14 @@ class MongoDatabaseImpl implements MongoDatabase {
                                                                          final List<? extends Bson> pipeline,
                                                                          final Class<TResult> resultClass) {
         return new AggregateIterableImpl<Document, TResult>(clientSession, name, Document.class, resultClass, codecRegistry,
-                readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.DATABASE);
+                readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.DATABASE, retryReads);
     }
 
     private <TResult> ChangeStreamIterable<TResult> createChangeStreamIterable(@Nullable final ClientSession clientSession,
                                                                                final List<? extends Bson> pipeline,
                                                                                final Class<TResult> resultClass) {
         return new ChangeStreamIterableImpl<TResult>(clientSession, name, codecRegistry, readPreference,
-                readConcern, executor, pipeline, resultClass, ChangeStreamLevel.DATABASE);
+                readConcern, executor, pipeline, resultClass, ChangeStreamLevel.DATABASE, retryReads);
     }
 
     private void executeCreateView(@Nullable final ClientSession clientSession, final String viewName, final String viewOn,

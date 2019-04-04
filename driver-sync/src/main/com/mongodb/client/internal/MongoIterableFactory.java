@@ -41,47 +41,50 @@ interface MongoIterableFactory {
     <TDocument, TResult>
     FindIterable<TResult> findOf(@Nullable ClientSession clientSession, MongoNamespace namespace, Class<TDocument> documentClass,
                                  Class<TResult> resultClass, CodecRegistry codecRegistry, ReadPreference readPreference,
-                                 ReadConcern readConcern, OperationExecutor executor, Bson filter);
+                                 ReadConcern readConcern, OperationExecutor executor, Bson filter, boolean retryReads);
 
     <TDocument, TResult>
     AggregateIterable<TResult> aggregateOf(@Nullable ClientSession clientSession, MongoNamespace namespace, Class<TDocument> documentClass,
                                            Class<TResult> resultClass, CodecRegistry codecRegistry, ReadPreference readPreference,
                                            ReadConcern readConcern, WriteConcern writeConcern, OperationExecutor executor,
-                                           List<? extends Bson> pipeline, AggregationLevel aggregationLevel);
+                                           List<? extends Bson> pipeline, AggregationLevel aggregationLevel, boolean retryReads);
 
     <TDocument, TResult>
     AggregateIterable<TResult> aggregateOf(@Nullable ClientSession clientSession, String databaseName, Class<TDocument> documentClass,
                                            Class<TResult> resultClass, CodecRegistry codecRegistry, ReadPreference readPreference,
                                            ReadConcern readConcern, WriteConcern writeConcern, OperationExecutor executor,
-                                           List<? extends Bson> pipeline, AggregationLevel aggregationLevel);
+                                           List<? extends Bson> pipeline, AggregationLevel aggregationLevel, boolean retryReads);
 
     <TResult>
     ChangeStreamIterable<TResult> changeStreamOf(@Nullable ClientSession clientSession, String databaseName, CodecRegistry codecRegistry,
                                                  ReadPreference readPreference, ReadConcern readConcern, OperationExecutor executor,
                                                  List<? extends Bson> pipeline, Class<TResult> resultClass,
-                                                 ChangeStreamLevel changeStreamLevel);
+                                                 ChangeStreamLevel changeStreamLevel, boolean retryReads);
 
     <TResult>
     ChangeStreamIterable<TResult> changeStreamOf(@Nullable ClientSession clientSession, MongoNamespace namespace,
                                                  CodecRegistry codecRegistry, ReadPreference readPreference, ReadConcern readConcern,
                                                  OperationExecutor executor, List<? extends Bson> pipeline, Class<TResult> resultClass,
-                                                 ChangeStreamLevel changeStreamLevel);
+                                                 ChangeStreamLevel changeStreamLevel, boolean retryReads);
 
     <TDocument, TResult>
     DistinctIterable<TResult> distinctOf(@Nullable ClientSession clientSession, MongoNamespace namespace, Class<TDocument> documentClass,
                                          Class<TResult> resultClass, CodecRegistry codecRegistry, ReadPreference readPreference,
-                                         ReadConcern readConcern, OperationExecutor executor, String fieldName, Bson filter);
+                                         ReadConcern readConcern, OperationExecutor executor, String fieldName, Bson filter,
+                                         boolean retryReads);
 
     <TResult>
     ListDatabasesIterable<TResult> listDatabasesOf(@Nullable ClientSession clientSession, Class<TResult> resultClass,
-                                                   CodecRegistry codecRegistry, ReadPreference readPreference, OperationExecutor executor);
+                                                   CodecRegistry codecRegistry, ReadPreference readPreference,
+                                                   OperationExecutor executor, boolean retryReads);
     <TResult>
     ListCollectionsIterable<TResult> listCollectionsOf(@Nullable ClientSession clientSession, String databaseName,
                                                        boolean collectionNamesOnly, Class<TResult> resultClass, CodecRegistry codecRegistry,
-                                                       ReadPreference readPreference, OperationExecutor executor);
+                                                       ReadPreference readPreference, OperationExecutor executor, boolean retryReads);
     <TResult>
     ListIndexesIterable<TResult> listIndexesOf(@Nullable ClientSession clientSession, MongoNamespace namespace, Class<TResult> resultClass,
-                                               CodecRegistry codecRegistry, ReadPreference readPreference, OperationExecutor executor);
+                                               CodecRegistry codecRegistry, ReadPreference readPreference, OperationExecutor executor,
+                                               boolean retryReads);
 
     <TDocument, TResult>
     MapReduceIterable<TResult> mapReduceOf(@Nullable ClientSession clientSession, MongoNamespace namespace, Class<TDocument> documentClass,

@@ -20,6 +20,7 @@ import com.mongodb.MongoCommandException
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.ValidationOptions
@@ -244,7 +245,8 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         }
 
         then:
-        testOperation(operation, serverVersion, expectedCommand, async, cannedResults)
+        testOperation(operation, serverVersion, expectedCommand, async, cannedResults, true, false,
+                ReadPreference.primary(), false)
 
         when:
         operation.action(action)
@@ -276,7 +278,8 @@ class MapReduceToCollectionOperationSpecification extends OperationFunctionalSpe
         }
 
         then:
-        testOperation(operation, serverVersion, expectedCommand, async, cannedResults)
+        testOperation(operation, serverVersion, expectedCommand, async, cannedResults, true, false,
+                ReadPreference.primary(), false)
 
         where:
         serverVersion | includeBypassValidation | includeWriteConcern | includeCollation | async

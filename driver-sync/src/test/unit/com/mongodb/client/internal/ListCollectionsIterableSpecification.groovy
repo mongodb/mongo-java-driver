@@ -61,7 +61,8 @@ class ListCollectionsIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec())
-                .filter(new BsonDocument('filter', new BsonInt32(1))).batchSize(100).maxTime(1000, MILLISECONDS))
+                .filter(new BsonDocument('filter', new BsonInt32(1))).batchSize(100).maxTime(1000, MILLISECONDS)
+                .retryReads(true))
         readPreference == secondary()
 
         when: 'overriding initial options'
@@ -71,7 +72,8 @@ class ListCollectionsIterableSpecification extends Specification {
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec())
-                .filter(new BsonDocument('filter', new BsonInt32(2))).batchSize(99).maxTime(999, MILLISECONDS))
+                .filter(new BsonDocument('filter', new BsonInt32(2))).batchSize(99).maxTime(999, MILLISECONDS)
+                .retryReads(true))
 
         when: 'requesting collection names only'
         listCollectionNamesIterable.iterator()
@@ -79,7 +81,8 @@ class ListCollectionsIterableSpecification extends Specification {
         operation = executor.getReadOperation() as ListCollectionsOperation<Document>
 
         then: 'should create operation with nameOnly'
-        expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec()).nameOnly(true))
+        expect operation, isTheSameAs(new ListCollectionsOperation<Document>('db', new DocumentCodec()).nameOnly(true)
+                .retryReads(true))
     }
 
     def 'should use ClientSession'() {

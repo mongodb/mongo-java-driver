@@ -53,7 +53,7 @@ class DistinctIterableSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([null, null]);
         def distinctIterable = new DistinctIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                executor, 'field', new BsonDocument())
+                executor, 'field', new BsonDocument(), true)
 
         when: 'default input should be as expected'
         distinctIterable.iterator()
@@ -63,7 +63,7 @@ class DistinctIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new DistinctOperation<Document>(namespace, 'field', new DocumentCodec())
-                .filter(new BsonDocument()))
+                .filter(new BsonDocument()).retryReads(true))
         readPreference == secondary()
 
         when: 'overriding initial options'
@@ -74,7 +74,7 @@ class DistinctIterableSpecification extends Specification {
         then: 'should use the overrides'
         expect operation, isTheSameAs(new DistinctOperation<Document>(namespace, 'field', new DocumentCodec())
                 .filter(new BsonDocument('field', new BsonInt32(1)))
-                .maxTime(999, MILLISECONDS).collation(collation))
+                .maxTime(999, MILLISECONDS).collation(collation).retryReads(true))
     }
 
     def 'should use ClientSession'() {

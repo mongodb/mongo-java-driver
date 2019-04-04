@@ -269,7 +269,8 @@ class DBCollectionSpecification extends Specification {
         then:
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
                 .filter(new BsonDocument())
-                .modifiers(new BsonDocument()))
+                .modifiers(new BsonDocument())
+                .retryReads(true))
 
         when: // Inherits from DB
         db.setReadConcern(ReadConcern.MAJORITY)
@@ -278,7 +279,8 @@ class DBCollectionSpecification extends Specification {
         then:
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
                 .filter(new BsonDocument())
-                .modifiers(new BsonDocument()))
+                .modifiers(new BsonDocument())
+                .retryReads(true))
 
         when:
         collection.setReadConcern(ReadConcern.LOCAL)
@@ -288,7 +290,8 @@ class DBCollectionSpecification extends Specification {
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
                 .filter(new BsonDocument())
                 .modifiers(new BsonDocument())
-                .collation(collation))
+                .collation(collation)
+                .retryReads(true))
     }
 
     def 'findOne should create the correct FindOperation'() {
@@ -310,7 +313,8 @@ class DBCollectionSpecification extends Specification {
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
                 .filter(new BsonDocument())
                 .modifiers(new BsonDocument())
-                .limit(-1))
+                .limit(-1)
+                .retryReads(true))
 
         when: // Inherits from DB
         db.setReadConcern(ReadConcern.MAJORITY)
@@ -320,7 +324,8 @@ class DBCollectionSpecification extends Specification {
         expect executor.getReadOperation(), isTheSameAs(new FindOperation(collection.getNamespace(), collection.getObjectCodec())
                 .filter(new BsonDocument())
                 .modifiers(new BsonDocument())
-                .limit(-1))
+                .limit(-1)
+                .retryReads(true))
 
         when:
         collection.setReadConcern(ReadConcern.LOCAL)
@@ -331,7 +336,8 @@ class DBCollectionSpecification extends Specification {
                 .filter(new BsonDocument())
                 .modifiers(new BsonDocument())
                 .limit(-1)
-                .collation(collation))
+                .collation(collation)
+                .retryReads(true))
     }
 
     def 'findAndRemove should create the correct FindAndDeleteOperation'() {
@@ -428,7 +434,8 @@ class DBCollectionSpecification extends Specification {
         collection.count()
 
         then:
-        expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace()).filter(new BsonDocument()))
+        expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace())
+                .filter(new BsonDocument()).retryReads(true))
 
         when: // Inherits from DB
         db.setReadConcern(ReadConcern.MAJORITY)
@@ -437,7 +444,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace())
-                .filter(new BsonDocument()))
+                .filter(new BsonDocument()).retryReads(true))
         executor.getReadConcern() == ReadConcern.MAJORITY
 
         when:
@@ -446,7 +453,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new CountOperation(collection.getNamespace())
-                .filter(new BsonDocument())
+                .filter(new BsonDocument()).retryReads(true)
                 .collation(collation))
         executor.getReadConcern() == ReadConcern.LOCAL
     }
@@ -473,7 +480,7 @@ class DBCollectionSpecification extends Specification {
         then:
         distinctFieldValues == [1, 2]
         expect executor.getReadOperation(), isTheSameAs(new DistinctOperation(collection.getNamespace(), 'field1', new BsonValueCodec())
-                                                                .filter(new BsonDocument()))
+                                                                .filter(new BsonDocument()).retryReads(true))
         executor.getReadConcern() == ReadConcern.DEFAULT
 
         when: // Inherits from DB
@@ -482,7 +489,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new DistinctOperation(collection.getNamespace(), 'field1', new BsonValueCodec())
-                .filter(new BsonDocument()))
+                .filter(new BsonDocument()).retryReads(true))
         executor.getReadConcern() == ReadConcern.MAJORITY
 
         when:
@@ -491,7 +498,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new DistinctOperation(collection.getNamespace(), 'field1', new BsonValueCodec())
-                .collation(collation))
+                .collation(collation).retryReads(true))
         executor.getReadConcern() == ReadConcern.LOCAL
     }
 
@@ -513,7 +520,7 @@ class DBCollectionSpecification extends Specification {
         then:
         expect executor.getReadOperation(), isTheSameAs(new GroupOperation<DBObject>(collection.getNamespace(), new BsonJavaScript(reduce),
                 new BsonDocument(), collection.getDefaultDBObjectCodec()).key(BsonDocument.parse('{name: 1}'))
-                .filter(new BsonDocument()))
+                .filter(new BsonDocument()).retryReads(true))
 
         when: // Can set collation
         def groupCommand = new GroupCommand(collection, key, new BasicDBObject(), new BasicDBObject(), reduce, null, collation)
@@ -522,7 +529,7 @@ class DBCollectionSpecification extends Specification {
         then:
         expect executor.getReadOperation(), isTheSameAs(new GroupOperation<DBObject>(collection.getNamespace(), new BsonJavaScript(reduce),
                 new BsonDocument(), collection.getDefaultDBObjectCodec()).key(BsonDocument.parse('{name: 1}')).collation(collation)
-                .filter(new BsonDocument())
+                .filter(new BsonDocument()).retryReads(true)
         )
     }
 
@@ -638,7 +645,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
-                collection.getDefaultDBObjectCodec()).useCursor(true))
+                collection.getDefaultDBObjectCodec()).useCursor(true).retryReads(true))
         executor.getReadConcern() == ReadConcern.DEFAULT
 
         when: // Inherits from DB
@@ -647,7 +654,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
-                collection.getDefaultDBObjectCodec()).useCursor(true))
+                collection.getDefaultDBObjectCodec()).useCursor(true).retryReads(true))
         executor.getReadConcern() == ReadConcern.MAJORITY
 
         when:
@@ -656,7 +663,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
-                collection.getDefaultDBObjectCodec()).useCursor(true).collation(collation))
+                collection.getDefaultDBObjectCodec()).useCursor(true).collation(collation).retryReads(true))
         executor.getReadConcern() == ReadConcern.LOCAL
     }
 
@@ -705,7 +712,8 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
-                collection.getDefaultDBObjectCodec()).collation(collation).asExplainableOperation(ExplainVerbosity.QUERY_PLANNER))
+                collection.getDefaultDBObjectCodec()).retryReads(true).collation(collation)
+                .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER))
 
         when: // Inherits from DB
         db.setReadConcern(ReadConcern.MAJORITY)
@@ -713,7 +721,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
-                collection.getDefaultDBObjectCodec()).collation(collation)
+                collection.getDefaultDBObjectCodec()).retryReads(true).collation(collation)
                 .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER))
 
         when:
@@ -722,7 +730,7 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getReadOperation(), isTheSameAs(new AggregateOperation(collection.getNamespace(), bsonPipeline,
-                collection.getDefaultDBObjectCodec()).useCursor(false).collation(collation)
+                collection.getDefaultDBObjectCodec()).retryReads(true).useCursor(false).collation(collation)
                 .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER))
     }
 
@@ -742,7 +750,7 @@ class DBCollectionSpecification extends Specification {
         then:
         cursors.size() == 1
         expect executor.getReadOperation(), isTheSameAs(new ParallelCollectionScanOperation(collection.getNamespace(), 1,
-                                                                                            collection.getObjectCodec()))
+                                                                                            collection.getObjectCodec()).retryReads(true))
         executor.getReadConcern() == ReadConcern.MAJORITY
     }
 

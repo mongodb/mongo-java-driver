@@ -77,8 +77,7 @@ public abstract class BaseFindAndModifyOperation<T> implements AsyncWriteOperati
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<T> callback) {
         executeRetryableCommand(binding, getDatabaseName(), null, getFieldNameValidator(),
                 CommandResultDocumentCodec.create(getDecoder(), "value"),
-                getCommandCreator(binding.getSessionContext()),
-                FindAndModifyHelper.<T>transformer(), callback);
+                getCommandCreator(binding.getSessionContext()), FindAndModifyHelper.<T>asyncTransformer(), callback);
     }
 
     protected abstract String getDatabaseName();

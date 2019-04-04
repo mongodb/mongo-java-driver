@@ -67,7 +67,7 @@ public final class MongoClientImpl implements MongoClient {
     @Override
     public MongoDatabase getDatabase(final String databaseName) {
         return new MongoDatabaseImpl(databaseName, settings.getCodecRegistry(), settings.getReadPreference(), settings.getWriteConcern(),
-                settings.getRetryWrites(), settings.getReadConcern(), delegate.getOperationExecutor());
+                settings.getRetryWrites(), settings.getRetryReads(), settings.getReadConcern(), delegate.getOperationExecutor());
     }
 
     @Override
@@ -175,7 +175,7 @@ public final class MongoClientImpl implements MongoClient {
                                                                                final Class<TResult> resultClass) {
         return MongoIterables.changeStreamOf(clientSession, "admin", settings.getCodecRegistry(),
                 settings.getReadPreference(), settings.getReadConcern(), delegate.getOperationExecutor(), pipeline, resultClass,
-                ChangeStreamLevel.CLIENT);
+                ChangeStreamLevel.CLIENT, settings.getRetryReads());
     }
 
     public Cluster getCluster() {
@@ -205,7 +205,7 @@ public final class MongoClientImpl implements MongoClient {
 
     private <T> ListDatabasesIterable<T> createListDatabasesIterable(@Nullable final ClientSession clientSession, final Class<T> clazz) {
         return MongoIterables.listDatabasesOf(clientSession, clazz, settings.getCodecRegistry(),
-                ReadPreference.primary(), delegate.getOperationExecutor());
+                ReadPreference.primary(), delegate.getOperationExecutor(), settings.getRetryReads());
     }
 
     private MongoIterable<String> createListDatabaseNamesIterable(final @Nullable ClientSession clientSession) {

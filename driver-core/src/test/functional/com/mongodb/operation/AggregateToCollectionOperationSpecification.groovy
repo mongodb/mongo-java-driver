@@ -22,6 +22,7 @@ import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
 import com.mongodb.client.model.Aggregates
 import com.mongodb.client.model.CreateCollectionOptions
@@ -245,7 +246,8 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         }
 
         then:
-        testOperation(operation, serverVersion, expectedCommand, false, BsonDocument.parse('{ok: 1}'))
+        testOperation(operation, serverVersion, expectedCommand, false, BsonDocument.parse('{ok: 1}'),
+                true, false, ReadPreference.primary(), false)
 
         where:
         serverVersion | includeBypassValidation | includeWriteConcern | includeCollation | async  | useCursor

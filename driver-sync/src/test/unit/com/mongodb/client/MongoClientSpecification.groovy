@@ -58,7 +58,7 @@ class MongoClientSpecification extends Specification {
 
         where:
         expectedDatabase << new MongoDatabaseImpl('name', getDefaultCodecRegistry(), secondary(),
-                WriteConcern.MAJORITY, true, ReadConcern.MAJORITY, new TestOperationExecutor([]))
+                WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, new TestOperationExecutor([]))
     }
 
     def 'should use ListDatabasesIterableImpl correctly'() {
@@ -73,14 +73,14 @@ class MongoClientSpecification extends Specification {
 
         then:
         expect listDatabasesIterable, isTheSameAs(MongoIterables.listDatabasesOf(session, Document, getDefaultCodecRegistry(),
-                primary(), executor))
+                primary(), executor, true))
 
         when:
         listDatabasesIterable = execute(listDatabasesMethod, session, BsonDocument)
 
         then:
         expect listDatabasesIterable, isTheSameAs(MongoIterables.listDatabasesOf(session, BsonDocument,
-                getDefaultCodecRegistry(), primary(), executor))
+                getDefaultCodecRegistry(), primary(), executor, true))
 
         when:
         def listDatabaseNamesIterable = execute(listDatabasesNamesMethod, session) as MongoIterable<String>
@@ -88,7 +88,7 @@ class MongoClientSpecification extends Specification {
         then:
         // listDatabaseNamesIterable is an instance of a MappingIterable, so have to get the mapped iterable inside it
         expect listDatabaseNamesIterable.getMapped(), isTheSameAs(MongoIterables.listDatabasesOf(session, BsonDocument,
-                getDefaultCodecRegistry(), primary(), executor).nameOnly(true))
+                getDefaultCodecRegistry(), primary(), executor, true).nameOnly(true))
 
         cleanup:
         client?.close()
@@ -117,21 +117,21 @@ class MongoClientSpecification extends Specification {
 
         then:
         expect changeStreamIterable, isTheSameAs(MongoIterables.changeStreamOf(session, namespace, codecRegistry, readPreference,
-                readConcern, executor, [], Document, ChangeStreamLevel.CLIENT), ['codec'])
+                readConcern, executor, [], Document, ChangeStreamLevel.CLIENT, true), ['codec'])
 
         when:
         changeStreamIterable = execute(watchMethod, session, [new Document('$match', 1)])
 
         then:
         expect changeStreamIterable, isTheSameAs(MongoIterables.changeStreamOf(session, namespace, codecRegistry, readPreference,
-                readConcern, executor, [new Document('$match', 1)], Document, ChangeStreamLevel.CLIENT), ['codec'])
+                readConcern, executor, [new Document('$match', 1)], Document, ChangeStreamLevel.CLIENT, true), ['codec'])
 
         when:
         changeStreamIterable = execute(watchMethod, session, [new Document('$match', 1)], BsonDocument)
 
         then:
         expect changeStreamIterable, isTheSameAs(MongoIterables.changeStreamOf(session, namespace, codecRegistry, readPreference,
-                readConcern, executor, [new Document('$match', 1)], BsonDocument, ChangeStreamLevel.CLIENT), ['codec'])
+                readConcern, executor, [new Document('$match', 1)], BsonDocument, ChangeStreamLevel.CLIENT, true), ['codec'])
 
         where:
         session << [null, Stub(ClientSession)]

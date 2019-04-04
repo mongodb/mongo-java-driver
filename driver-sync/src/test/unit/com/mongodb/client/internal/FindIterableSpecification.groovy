@@ -56,7 +56,7 @@ class FindIterableSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([null, null, null])
         def findIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                executor, new Document('filter', 1))
+                executor, new Document('filter', 1), true)
                 .sort(new Document('sort', 1))
                 .modifiers(new Document('modifier', 1))
                 .projection(new Document('projection', 1))
@@ -106,6 +106,7 @@ class FindIterableSpecification extends Specification {
                 .returnKey(false)
                 .showRecordId(false)
                 .snapshot(false)
+                .retryReads(true)
         )
         readPreference == secondary()
 
@@ -161,11 +162,12 @@ class FindIterableSpecification extends Specification {
                 .returnKey(true)
                 .showRecordId(true)
                 .snapshot(true)
+                .retryReads(true)
         )
 
         when: 'passing nulls to nullable methods'
         new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                executor, new Document('filter', 1))
+                executor, new Document('filter', 1), true)
                 .filter(null as Bson)
                 .collation(null)
                 .modifiers(null)
@@ -181,7 +183,7 @@ class FindIterableSpecification extends Specification {
 
         then: 'should set an empty doc for the filter'
         expect operation, isTheSameAs(new FindOperation<Document>(namespace, new DocumentCodec())
-                .filter(new BsonDocument()).slaveOk(true))
+                .filter(new BsonDocument()).slaveOk(true).retryReads(true))
     }
 
     def 'should use ClientSession'() {
@@ -213,7 +215,7 @@ class FindIterableSpecification extends Specification {
         given:
         def executor = new TestOperationExecutor([null, null])
         def findIterable = new FindIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                executor, new Document('filter', 1))
+                executor, new Document('filter', 1), true)
 
         when:
         findIterable.filter(new Document('filter', 1))
@@ -230,6 +232,7 @@ class FindIterableSpecification extends Specification {
                 .modifiers(new BsonDocument('modifier', new BsonInt32(1)))
                 .cursorType(CursorType.NonTailable)
                 .slaveOk(true)
+                .retryReads(true)
         )
     }
 

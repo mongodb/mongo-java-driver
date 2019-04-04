@@ -23,15 +23,18 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.ServerAddress;
 import com.mongodb.client.internal.MongoClientImpl;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SslSettings;
 
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Helper class for the acceptance tests.
  */
 public final class Fixture {
     private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
+    private static final long MIN_HEARTBEAT_FREQUENCY_MS = 50L;
 
     private static MongoClient mongoClient;
     private static MongoClientSettings mongoClientSettings;
@@ -81,7 +84,13 @@ public final class Fixture {
     public static synchronized MongoClientSettings getMongoClientSettings() {
         if (mongoClientSettings == null) {
             MongoClientSettings.Builder builder = MongoClientSettings.builder()
-                    .applyConnectionString(new ConnectionString(getConnectionStringProperty()));
+                    .applyConnectionString(new ConnectionString(getConnectionStringProperty()))
+                    .applyToServerSettings(new Block<ServerSettings.Builder>() {
+                        @Override
+                        public void apply(final ServerSettings.Builder builder) {
+                            builder.minHeartbeatFrequency(MIN_HEARTBEAT_FREQUENCY_MS, TimeUnit.MILLISECONDS);
+                        }
+                    });
             if (System.getProperty("java.version").startsWith("1.6.")) {
                 builder.applyToSslSettings(new Block<SslSettings.Builder>() {
                     @Override

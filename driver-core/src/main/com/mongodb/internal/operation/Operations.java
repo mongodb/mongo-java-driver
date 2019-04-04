@@ -94,19 +94,23 @@ final class Operations<TDocument> {
     private final CodecRegistry codecRegistry;
     private final WriteConcern writeConcern;
     private final boolean retryWrites;
+    private boolean retryReads;
 
     Operations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
-               final CodecRegistry codecRegistry, final WriteConcern writeConcern, final boolean retryWrites) {
+               final CodecRegistry codecRegistry, final WriteConcern writeConcern, final boolean retryWrites,
+               final boolean retryReads) {
         this.namespace = namespace;
         this.documentClass = documentClass;
         this.readPreference = readPreference;
         this.codecRegistry = codecRegistry;
         this.writeConcern = writeConcern;
         this.retryWrites = retryWrites;
+        this.retryReads = retryReads;
     }
 
     CountOperation count(final Bson filter, final CountOptions options, final CountStrategy countStrategy) {
         CountOperation operation = new CountOperation(namespace, countStrategy)
+                .retryReads(retryReads)
                 .filter(toBsonDocument(filter))
                 .skip(options.getSkip())
                 .limit(options.getLimit())
@@ -139,6 +143,7 @@ final class Operations<TDocument> {
     private <TResult> FindOperation<TResult> createFindOperation(final MongoNamespace findNamespace, final Bson filter,
                                                                  final Class<TResult> resultClass, final FindOptions options) {
         return new FindOperation<TResult>(findNamespace, codecRegistry.get(resultClass))
+                .retryReads(retryReads)
                 .filter(filter == null ? new BsonDocument() : filter.toBsonDocument(documentClass, codecRegistry))
                 .batchSize(options.getBatchSize())
                 .skip(options.getSkip())
@@ -168,6 +173,7 @@ final class Operations<TDocument> {
                                                          final Class<TResult> resultClass, final long maxTimeMS,
                                                          final Collation collation) {
         return new DistinctOperation<TResult>(namespace, fieldName, codecRegistry.get(resultClass))
+                .retryReads(retryReads)
                 .filter(filter == null ? null : filter.toBsonDocument(documentClass, codecRegistry))
                 .maxTime(maxTimeMS, MILLISECONDS)
                 .collation(collation);
@@ -181,6 +187,7 @@ final class Operations<TDocument> {
                                                     final Boolean allowDiskUse, final Boolean useCursor,
                                                     final AggregationLevel aggregationLevel) {
         return new AggregateOperation<TResult>(namespace, toBsonDocumentList(pipeline), codecRegistry.get(resultClass), aggregationLevel)
+                .retryReads(retryReads)
                 .maxTime(maxTimeMS, MILLISECONDS)
                 .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
                 .allowDiskUse(allowDiskUse)
@@ -460,6 +467,7 @@ final class Operations<TDocument> {
                                                                 final Bson filter, final boolean collectionNamesOnly,
                                                                 final Integer batchSize, final long maxTimeMS) {
         return new ListCollectionsOperation<TResult>(databaseName, codecRegistry.get(resultClass))
+                .retryReads(retryReads)
                 .filter(toBsonDocumentOrNull(filter))
                 .nameOnly(collectionNamesOnly)
                 .batchSize(batchSize == null ? 0 : batchSize)
@@ -469,6 +477,7 @@ final class Operations<TDocument> {
     <TResult> ListDatabasesOperation<TResult> listDatabases(final Class<TResult> resultClass, final Bson filter,
                                                                    final Boolean nameOnly, final long maxTimeMS) {
         return new ListDatabasesOperation<TResult>(codecRegistry.get(resultClass)).maxTime(maxTimeMS, MILLISECONDS)
+                .retryReads(retryReads)
                 .filter(toBsonDocumentOrNull(filter))
                 .nameOnly(nameOnly);
     }
@@ -476,6 +485,7 @@ final class Operations<TDocument> {
     <TResult> ListIndexesOperation<TResult> listIndexes(final Class<TResult> resultClass, final Integer batchSize,
                                                                final long maxTimeMS) {
         return new ListIndexesOperation<TResult>(namespace, codecRegistry.get(resultClass))
+                .retryReads(retryReads)
                 .batchSize(batchSize == null ? 0 : batchSize)
                 .maxTime(maxTimeMS, MILLISECONDS);
     }

@@ -45,8 +45,8 @@ import spock.lang.Specification
 
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.operation.CommandOperationHelper.executeRetryableCommand
-import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol
-import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync
+import static com.mongodb.operation.CommandOperationHelper.executeCommand
+import static com.mongodb.operation.CommandOperationHelper.executeCommandAsync
 import static com.mongodb.operation.CommandOperationHelper.isNamespaceError
 import static com.mongodb.operation.CommandOperationHelper.rethrowIfNotNamespaceError
 import static com.mongodb.operation.OperationUnitSpecification.getMaxWireVersionForServerVersion
@@ -120,7 +120,7 @@ class CommandOperationHelperSpecification extends Specification {
         def command = new BsonDocument()
         def decoder = Stub(Decoder)
         def connection = Mock(Connection)
-        def function = Stub(CommandOperationHelper.CommandTransformer)
+        def function = Stub(CommandOperationHelper.CommandWriteTransformer)
         def connectionSource = Stub(ConnectionSource) {
             getConnection() >> connection
         }
@@ -130,7 +130,7 @@ class CommandOperationHelperSpecification extends Specification {
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeWrappedCommandProtocol(writeBinding, dbName, command, decoder, function)
+        executeCommand(writeBinding, dbName, command, decoder, function)
 
         then:
         _ * connection.getDescription() >> connectionDescription
@@ -185,7 +185,12 @@ class CommandOperationHelperSpecification extends Specification {
         given:
         def dbName = 'db'
         def command = BsonDocument.parse('''{findAndModify: "coll", query: {a: 1}, new: false, update: {$inc: {a :1}}, txnNumber: 1}''')
-        def commandCreator = { serverDescription, connectionDescription -> command }
+        def serverDescription = Stub(ServerDescription)
+        def connectionDescription = Stub(ConnectionDescription) {
+            getMaxWireVersion() >> getMaxWireVersionForServerVersion([4, 0, 0])
+            getServerType() >> ServerType.REPLICA_SET_PRIMARY
+        }
+        def commandCreator = { serverDesc, connectionDesc -> command }
         def callback = new SingleResultCallback() {
             def result
             def throwable
@@ -201,17 +206,12 @@ class CommandOperationHelperSpecification extends Specification {
                 BsonDocument.parse('{ok: 1.0, writeConcernError: {code: -1, errmsg: "UnknownError"}}')] as Queue
 
         def connection = Mock(AsyncConnection) {
-            _ * getDescription() >> Stub(ConnectionDescription) {
-                getMaxWireVersion() >> getMaxWireVersionForServerVersion([4, 0, 0])
-                getServerType() >> ServerType.REPLICA_SET_PRIMARY
-            }
+            _ * getDescription() >> connectionDescription
         }
 
         def connectionSource = Stub(AsyncConnectionSource) {
             getConnection(_) >> { it[0].onResult(connection, null) }
-            _ * getServerDescription() >> Stub(ServerDescription) {
-                getLogicalSessionTimeoutMinutes() >> 1
-            }
+            _ * getServerDescription() >> serverDescription
         }
         def asyncWriteBinding = Stub(AsyncWriteBinding) {
             getWriteConnectionSource(_) >> { it[0].onResult(connectionSource, null) }
@@ -223,8 +223,8 @@ class CommandOperationHelperSpecification extends Specification {
         }
 
         when:
-        executeRetryableCommand(asyncWriteBinding, dbName, primary(), new NoOpFieldNameValidator(), decoder, commandCreator,
-                FindAndModifyHelper.transformer(), callback)
+        executeRetryableCommand(asyncWriteBinding, dbName, primary(), new NoOpFieldNameValidator(), decoder,
+                commandCreator, FindAndModifyHelper.asyncTransformer(), callback)
 
         then:
         2 * connection.commandAsync(dbName, command, _, primary(), decoder, _, _) >> { it.last().onResult(results.poll(), null) }
@@ -238,8 +238,9 @@ class CommandOperationHelperSpecification extends Specification {
         given:
         def dbName = 'db'
         def command = new BsonDocument()
+        def commandCreator = { serverDescription, connectionDescription -> command }
         def decoder = Stub(Decoder)
-        def function = Stub(CommandOperationHelper.CommandTransformer)
+        def function = Stub(CommandOperationHelper.CommandReadTransformer)
         def connection = Mock(Connection)
         def connectionSource = Stub(ConnectionSource) {
             getConnection() >> connection
@@ -251,7 +252,7 @@ class CommandOperationHelperSpecification extends Specification {
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeWrappedCommandProtocol(readBinding, dbName, command, decoder, function)
+        executeCommand(readBinding, dbName, commandCreator, decoder, function, false)
 
         then:
         _ * connection.getDescription() >> connectionDescription
@@ -268,7 +269,7 @@ class CommandOperationHelperSpecification extends Specification {
         def command = new BsonDocument()
         def decoder = Stub(Decoder)
         def callback = Stub(SingleResultCallback)
-        def function = Stub(CommandOperationHelper.CommandTransformer)
+        def function = Stub(CommandOperationHelper.CommandWriteTransformerAsync)
         def connection = Mock(AsyncConnection)
         def connectionSource = Stub(AsyncConnectionSource) {
             getConnection(_) >> { it[0].onResult(connection, null) }
@@ -279,7 +280,7 @@ class CommandOperationHelperSpecification extends Specification {
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeWrappedCommandProtocolAsync(asyncWriteBinding, dbName, command, decoder, function, callback)
+        executeCommandAsync(asyncWriteBinding, dbName, command, decoder, function, callback)
 
         then:
         _ * connection.getDescription() >> connectionDescription
@@ -291,9 +292,10 @@ class CommandOperationHelperSpecification extends Specification {
         given:
         def dbName = 'db'
         def command = new BsonDocument()
+        def commandCreator = { serverDescription, connectionDescription -> command }
         def decoder = Stub(Decoder)
         def callback = Stub(SingleResultCallback)
-        def function = Stub(CommandOperationHelper.CommandTransformer)
+        def function = Stub(CommandOperationHelper.CommandReadTransformerAsync)
         def connection = Mock(AsyncConnection)
         def connectionSource = Stub(AsyncConnectionSource) {
             getConnection(_) >> { it[0].onResult(connection, null) }
@@ -305,7 +307,7 @@ class CommandOperationHelperSpecification extends Specification {
         def connectionDescription = Stub(ConnectionDescription)
 
         when:
-        executeWrappedCommandProtocolAsync(asyncReadBinding, dbName, command, decoder, function, callback)
+        executeCommandAsync(asyncReadBinding, dbName, commandCreator, decoder, function, false, callback)
 
         then:
         _ * connection.getDescription() >> connectionDescription

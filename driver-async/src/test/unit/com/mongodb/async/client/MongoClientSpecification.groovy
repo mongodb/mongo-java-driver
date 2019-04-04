@@ -47,14 +47,14 @@ class MongoClientSpecification extends Specification {
 
         then:
         expect listDatabasesIterable, isTheSameAs(new ListDatabasesIterableImpl<Document>(session, Document, getDefaultCodecRegistry(),
-                primary(), executor))
+                primary(), executor, true))
 
         when:
         listDatabasesIterable = execute(listDatabasesMethod, session, BsonDocument)
 
         then:
         expect listDatabasesIterable, isTheSameAs(new ListDatabasesIterableImpl<BsonDocument>(session, BsonDocument,
-                getDefaultCodecRegistry(), primary(), executor))
+                getDefaultCodecRegistry(), primary(), executor, true))
 
         when:
         def listDatabaseNamesIterable = execute(listDatabasesNamesMethod, session)
@@ -62,7 +62,7 @@ class MongoClientSpecification extends Specification {
         then:
         // listDatabaseNamesIterable is an instance of a MappingIterable, so have to get the mapped iterable inside it
         expect listDatabaseNamesIterable.getMapped(), isTheSameAs(new ListDatabasesIterableImpl<BsonDocument>(session, BsonDocument,
-                getDefaultCodecRegistry(), primary(), executor).nameOnly(true))
+                getDefaultCodecRegistry(), primary(), executor, true).nameOnly(true))
 
         cleanup:
         client?.close()
@@ -89,6 +89,7 @@ class MongoClientSpecification extends Specification {
                                           .readPreference(secondary())
                                           .writeConcern(WriteConcern.MAJORITY)
                                           .retryWrites(true)
+                                          .retryReads(true)
                                           .readConcern(ReadConcern.MAJORITY)
                                           .codecRegistry(codecRegistry)
                                           .build()
@@ -102,7 +103,7 @@ class MongoClientSpecification extends Specification {
 
         where:
         expectedDatabase << new MongoDatabaseImpl('name', fromProviders([new BsonValueCodecProvider()]), secondary(),
-                WriteConcern.MAJORITY, true, ReadConcern.MAJORITY, new TestOperationExecutor([]))
+                WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, new TestOperationExecutor([]))
     }
 
 

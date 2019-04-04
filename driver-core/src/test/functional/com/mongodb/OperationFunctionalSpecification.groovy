@@ -244,7 +244,8 @@ class OperationFunctionalSpecification extends Specification {
 
     void testOperationThrows(operation, List<Integer> serverVersion, ReadConcern readConcern, boolean async) {
         def test = async ? this.&testAsyncOperation : this.&testSyncOperation
-        test(operation, serverVersion, readConcern, null, false)
+        test(operation, serverVersion, readConcern, null, false, null, false, ReadPreference.primary(),
+                false, ServerType.STANDALONE, false)
     }
 
     def testSyncOperation(operation, List<Integer> serverVersion, ReadConcern readConcern, result, Boolean checkCommand=true,

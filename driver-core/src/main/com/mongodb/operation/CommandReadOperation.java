@@ -19,12 +19,15 @@ package com.mongodb.operation;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
+import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.connection.ServerDescription;
 import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
-import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static com.mongodb.operation.CommandOperationHelper.CommandCreator;
+import static com.mongodb.operation.CommandOperationHelper.executeCommand;
+import static com.mongodb.operation.CommandOperationHelper.executeCommandAsync;
 
 /**
  * An operation that executes an arbitrary command that reads from the server.
@@ -53,11 +56,20 @@ public class CommandReadOperation<T> implements AsyncReadOperation<T>, ReadOpera
 
     @Override
     public T execute(final ReadBinding binding) {
-        return executeWrappedCommandProtocol(binding, databaseName, command, decoder);
+        return executeCommand(binding, databaseName, getCommandCreator(), decoder, false);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<T> callback) {
-        executeWrappedCommandProtocolAsync(binding, databaseName, command, decoder, callback);
+        executeCommandAsync(binding, databaseName, getCommandCreator(), decoder, false, callback);
+    }
+
+    private CommandCreator getCommandCreator() {
+        return new CommandCreator() {
+            @Override
+            public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
+                return command;
+            }
+        };
     }
 }

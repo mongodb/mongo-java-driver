@@ -63,7 +63,7 @@ class GridFSBucketSpecification extends Specification {
     def registry = MongoClients.defaultCodecRegistry
     def database = databaseWithExecutor(Stub(OperationExecutor))
     def databaseWithExecutor(OperationExecutor executor) {
-        new MongoDatabaseImpl('test', registry, primary(), WriteConcern.ACKNOWLEDGED, false, readConcern, executor)
+        new MongoDatabaseImpl('test', registry, primary(), WriteConcern.ACKNOWLEDGED, true, true, readConcern, executor)
     }
     def disableMD5 = false
 
@@ -173,7 +173,7 @@ class GridFSBucketSpecification extends Specification {
         given:
         def defaultChunkSizeBytes = 255 * 1024
         def database = new MongoDatabaseImpl('test', fromProviders(new DocumentCodecProvider()), secondary(), WriteConcern.ACKNOWLEDGED,
-                false, readConcern, new TestOperationExecutor([]))
+                true, true, readConcern, new TestOperationExecutor([]))
 
         when:
         def gridFSBucket = new GridFSBucketImpl(database)
@@ -757,7 +757,7 @@ class GridFSBucketSpecification extends Specification {
         then:
         executor.getReadPreference() == primary()
         expect executor.getReadOperation(), isTheSameAs(new FindOperation<GridFSFile>(new MongoNamespace('test.fs.files'), decoder)
-                .filter(new BsonDocument()))
+                .filter(new BsonDocument()).retryReads(true))
 
         when:
         def filter = new BsonDocument('filename', new BsonString('filename'))
@@ -767,7 +767,7 @@ class GridFSBucketSpecification extends Specification {
         then:
         executor.getReadPreference() == secondary()
         expect executor.getReadOperation(), isTheSameAs(new FindOperation<GridFSFile>(new MongoNamespace('test.fs.files'), decoder)
-                .filter(filter).slaveOk(true))
+                .filter(filter).slaveOk(true).retryReads(true))
 
         where:
         clientSession << [null, Stub(ClientSession)]

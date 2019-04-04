@@ -195,7 +195,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
         exception.getMessage().startsWith('Collation not supported by server version:')
 
         where:
-        async << [false, false]
+        async << [true, false]
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 4) })

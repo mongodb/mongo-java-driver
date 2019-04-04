@@ -27,8 +27,8 @@ class Java8ListCollectionsIterableImpl<TResult> extends ListCollectionsIterableI
     Java8ListCollectionsIterableImpl(final @Nullable ClientSession clientSession, final String databaseName,
                                      final boolean collectionNamesOnly, final Class<TResult> resultClass,
                                      final CodecRegistry codecRegistry, final ReadPreference readPreference,
-                                     final OperationExecutor executor) {
-        super(clientSession, databaseName, collectionNamesOnly, resultClass, codecRegistry, readPreference, executor);
+                                     final OperationExecutor executor, final boolean retryReads) {
+        super(clientSession, databaseName, collectionNamesOnly, resultClass, codecRegistry, readPreference, executor, retryReads);
     }
 
     @Override

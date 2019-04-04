@@ -143,6 +143,8 @@ import static com.mongodb.assertions.Assertions.notNull;
  *  </li>
  *  <li>{@code retryWrites=true|false}. If true the driver will retry supported write operations if they fail due to a network error.
  *  Defaults to false.</li>
+ *  <li>{@code retryReads=true|false}. If true the driver will retry supported read operations if they fail due to a network error.
+ *  Defaults to false.</li>
  * </ul>
  *
  *
@@ -208,6 +210,8 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <p>General configuration:</p>
  * <ul>
  * <li>{@code retryWrites=true|false}. If true the driver will retry supported write operations if they fail due to a network error.
+ *  Defaults to true.</li>
+ * <li>{@code retryReads=true|false}. If true the driver will retry supported read operations if they fail due to a network error.
  *  Defaults to true.</li>
  * </ul>
  *
@@ -345,6 +349,10 @@ public class MongoClientURI {
         if (proxied.getRetryWritesValue() != null) {
             builder.retryWrites(proxied.getRetryWritesValue());
         }
+        if (proxied.getRetryReads() != null) {
+            builder.retryReads(proxied.getRetryReads());
+        }
+
         Integer maxConnectionPoolSize = proxied.getMaxConnectionPoolSize();
         if (maxConnectionPoolSize != null) {
             builder.connectionsPerHost(maxConnectionPoolSize);

@@ -220,21 +220,26 @@ public class FindAndDeleteOperation<T> extends BaseFindAndModifyOperation<T> {
         return new CommandCreator() {
             @Override
             public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
-                validateCollation(connectionDescription, collation);
-                BsonDocument commandDocument = new BsonDocument("findAndModify", new BsonString(getNamespace().getCollectionName()));
-                putIfNotNull(commandDocument, "query", getFilter());
-                putIfNotNull(commandDocument, "fields", getProjection());
-                putIfNotNull(commandDocument, "sort", getSort());
-                putIfNotZero(commandDocument, "maxTimeMS", getMaxTime(MILLISECONDS));
-                commandDocument.put("remove", BsonBoolean.TRUE);
-                addWriteConcernToCommand(connectionDescription, commandDocument, sessionContext);
-                if (collation != null) {
-                    commandDocument.put("collation", collation.asDocument());
-                }
-                addTxnNumberToCommand(serverDescription, connectionDescription, commandDocument, sessionContext);
-                return commandDocument;
+                return createCommand(sessionContext, serverDescription, connectionDescription);
             }
         };
+    }
+
+    private BsonDocument createCommand(final SessionContext sessionContext, final ServerDescription serverDescription,
+                                       final ConnectionDescription connectionDescription) {
+        validateCollation(connectionDescription, collation);
+        BsonDocument commandDocument = new BsonDocument("findAndModify", new BsonString(getNamespace().getCollectionName()));
+        putIfNotNull(commandDocument, "query", getFilter());
+        putIfNotNull(commandDocument, "fields", getProjection());
+        putIfNotNull(commandDocument, "sort", getSort());
+        putIfNotZero(commandDocument, "maxTimeMS", getMaxTime(MILLISECONDS));
+        commandDocument.put("remove", BsonBoolean.TRUE);
+        addWriteConcernToCommand(connectionDescription, commandDocument, sessionContext);
+        if (collation != null) {
+            commandDocument.put("collation", collation.asDocument());
+        }
+        addTxnNumberToCommand(serverDescription, connectionDescription, commandDocument, sessionContext);
+        return commandDocument;
     }
 
     @Override

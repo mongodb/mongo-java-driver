@@ -46,8 +46,9 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
-import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static com.mongodb.operation.CommandOperationHelper.executeCommand;
+import static com.mongodb.operation.CommandOperationHelper.executeCommandAsync;
+import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorWriteTransformer;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.internal.operation.IndexHelper.generateIndexName;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
@@ -172,7 +173,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
             public Void call(final Connection connection) {
                 try {
                     validateIndexRequestCollations(connection, requests);
-                    executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
+                    executeCommand(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
                             connection, writeConcernErrorTransformer());
                 } catch (MongoCommandException e) {
                     throw checkForDuplicateKeyError(e);
@@ -198,8 +199,8 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
                             if (t != null) {
                                 wrappedCallback.onResult(null, t);
                             } else {
-                                executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(),
-                                        getCommand(connection.getDescription()), connection, writeConcernErrorTransformer(),
+                                executeCommandAsync(binding, namespace.getDatabaseName(),
+                                        getCommand(connection.getDescription()), connection, writeConcernErrorWriteTransformer(),
                                         new SingleResultCallback<Void>() {
                                             @Override
                                             public void onResult(final Void result, final Throwable t) {

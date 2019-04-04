@@ -53,6 +53,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.getApplicationName() == null
         options.getWriteConcern() == WriteConcern.ACKNOWLEDGED
         options.getRetryWrites()
+        options.getRetryReads()
         options.getMinConnectionsPerHost() == 0
         options.getConnectionsPerHost() == 100
         options.getConnectTimeout() == 10000
@@ -165,6 +166,7 @@ class MongoClientOptionsSpecification extends Specification {
                                         .applicationName('appName')
                                         .readPreference(ReadPreference.secondary())
                                         .retryWrites(true)
+                                        .retryReads(false)
                                         .writeConcern(WriteConcern.JOURNALED)
                                         .minConnectionsPerHost(30)
                                         .connectionsPerHost(500)
@@ -200,6 +202,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.getWriteConcern() == WriteConcern.JOURNALED
         options.getServerSelector() == serverSelector
         options.getRetryWrites()
+        !options.getRetryReads()
         options.getServerSelectionTimeout() == 150
         options.getMaxWaitTime() == 200
         options.getMaxConnectionIdleTime() == 300
@@ -303,6 +306,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .description('test')
                 .applicationName('appName')
                 .readPreference(ReadPreference.secondary())
+                .retryReads(true)
                 .writeConcern(WriteConcern.JOURNALED)
                 .minConnectionsPerHost(30)
                 .connectionsPerHost(500)
@@ -614,6 +618,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .readPreference(ReadPreference.secondary())
                 .writeConcern(WriteConcern.JOURNALED)
                 .retryWrites(true)
+                .retryReads(true)
                 .minConnectionsPerHost(30)
                 .connectionsPerHost(500)
                 .connectTimeout(100)
@@ -660,7 +665,7 @@ class MongoClientOptionsSpecification extends Specification {
                         'connectTimeout', 'connectionPoolListeners', 'cursorFinalizerEnabled', 'dbDecoderFactory', 'dbEncoderFactory',
                         'description', 'heartbeatConnectTimeout', 'heartbeatFrequency', 'heartbeatSocketTimeout', 'localThreshold',
                         'maxConnectionIdleTime', 'maxConnectionLifeTime', 'maxConnectionsPerHost', 'maxWaitTime', 'minConnectionsPerHost',
-                        'minHeartbeatFrequency', 'readConcern', 'readPreference', 'requiredReplicaSetName', 'retryWrites',
+                        'minHeartbeatFrequency', 'readConcern', 'readPreference', 'requiredReplicaSetName', 'retryReads', 'retryWrites',
                         'serverListeners', 'serverMonitorListeners', 'serverSelectionTimeout', 'serverSelector', 'socketFactory',
                         'socketKeepAlive', 'socketTimeout', 'sslContext', 'sslEnabled', 'sslInvalidHostNameAllowed',
                         'threadsAllowedToBlockForConnectionMultiplier', 'writeConcern']

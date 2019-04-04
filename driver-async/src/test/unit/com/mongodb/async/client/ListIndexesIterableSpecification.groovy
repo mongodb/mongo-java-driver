@@ -50,7 +50,8 @@ class ListIndexesIterableSpecification extends Specification {
             }
         }
         def executor = new TestOperationExecutor([cursor, cursor])
-        def listIndexesIterable = new ListIndexesIterableImpl<Document>(null, namespace, Document, codecRegistry, readPreference, executor)
+        def listIndexesIterable = new ListIndexesIterableImpl<Document>(null, namespace, Document, codecRegistry, readPreference,
+                executor, true)
                 .batchSize(100).maxTime(1000, MILLISECONDS)
 
         when: 'default input should be as expected'
@@ -61,7 +62,7 @@ class ListIndexesIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new ListIndexesOperation<Document>(namespace, new DocumentCodec())
-                .batchSize(100).maxTime(1000, MILLISECONDS))
+                .batchSize(100).maxTime(1000, MILLISECONDS).retryReads(true))
         readPreference == secondary()
 
         when: 'overriding initial options'
@@ -73,7 +74,7 @@ class ListIndexesIterableSpecification extends Specification {
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new ListIndexesOperation<Document>(namespace, new DocumentCodec())
-                .batchSize(99).maxTime(999, MILLISECONDS))
+                .batchSize(99).maxTime(999, MILLISECONDS).retryReads(true))
     }
 
     def 'should follow the MongoIterable interface as expected'() {
@@ -95,7 +96,8 @@ class ListIndexesIterableSpecification extends Specification {
             }
         }
         def executor = new TestOperationExecutor([cursor(), cursor(), cursor(), cursor(), cursor()]);
-        def mongoIterable = new ListIndexesIterableImpl<Document>(null, namespace, Document, codecRegistry, readPreference, executor)
+        def mongoIterable = new ListIndexesIterableImpl<Document>(null, namespace, Document, codecRegistry, readPreference,
+                executor, true)
 
         when:
         def results = new FutureResultCallback()
@@ -158,7 +160,7 @@ class ListIndexesIterableSpecification extends Specification {
     def 'should check variables using notNull'() {
         given:
         def mongoIterable = new ListIndexesIterableImpl<Document>(null, namespace, Document, codecRegistry, readPreference,
-                Stub(OperationExecutor))
+                Stub(OperationExecutor), true)
         def callback = Stub(SingleResultCallback)
         def block = Stub(Block)
         def target = Stub(List)
@@ -204,7 +206,7 @@ class ListIndexesIterableSpecification extends Specification {
         when:
         def batchSize = 5
         def mongoIterable = new ListIndexesIterableImpl<Document>(null, namespace, Document, codecRegistry, readPreference,
-                Stub(OperationExecutor))
+                Stub(OperationExecutor), true)
 
         then:
         mongoIterable.getBatchSize() == null

@@ -120,31 +120,31 @@ class Java8MongoIterablesSpecification extends Specification {
         mongoIterableFactory << [
                 { executor ->
                     new Java8FindIterableImpl(null, namespace, Document, Document, codecRegistry,
-                            readPreference, readConcern, executor, filter)
+                            readPreference, readConcern, executor, filter, true)
                 },
                 { executor ->
                     new Java8AggregateIterableImpl(null, namespace, Document, Document, codecRegistry,
-                            readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION)
+                            readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION, true)
                 },
                 { executor ->
                     new Java8ChangeStreamIterableImpl<>(null, namespace, codecRegistry, readPreference, readConcern, executor, pipeline,
-                        Document, ChangeStreamLevel.COLLECTION)
+                        Document, ChangeStreamLevel.COLLECTION, true)
                 },
                 { executor ->
                     new Java8DistinctIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern,
-                            executor, 'f1', filter)
+                            executor, 'f1', filter, true)
                 },
                 { executor ->
                     new Java8ListDatabasesIterableImpl(null, Document, codecRegistry, readPreference,
-                            executor)
+                            executor, true)
                 },
                 { executor ->
                     new Java8ListCollectionsIterableImpl(null, 'test', true, Document,
-                            codecRegistry, readPreference, executor)
+                            codecRegistry, readPreference, executor, true)
                 },
                 { executor ->
                     new Java8ListIndexesIterableImpl(null, namespace, Document, codecRegistry,
-                            readPreference, executor)
+                            readPreference, executor, true)
                 },
                 { executor ->
                     new Java8MapReduceIterableImpl(null, namespace, Document, BsonDocument,

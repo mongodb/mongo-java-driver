@@ -21,8 +21,8 @@ import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncReadBinding;
 import com.mongodb.binding.ReadBinding;
 import com.mongodb.client.model.Collation;
-import com.mongodb.connection.AsyncConnection;
-import com.mongodb.connection.Connection;
+import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.connection.ServerDescription;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -36,21 +36,19 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.operation.CommandOperationHelper.IdentityTransformer;
-import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
-import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
-import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
-import static com.mongodb.operation.OperationHelper.CallableWithConnection;
+import static com.mongodb.operation.CommandOperationHelper.CommandCreator;
+import static com.mongodb.operation.CommandOperationHelper.IdentityTransformerAsync;
+import static com.mongodb.operation.CommandOperationHelper.executeCommand;
+import static com.mongodb.operation.CommandOperationHelper.executeCommandAsync;
 import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.validateCollation;
-import static com.mongodb.operation.OperationHelper.releasingCallback;
-import static com.mongodb.operation.OperationHelper.withConnection;
 
 
 // an operation that executes an explain on an aggregation pipeline
 class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, ReadOperation<BsonDocument> {
     private final MongoNamespace namespace;
     private final List<BsonDocument> pipeline;
+    private boolean retryReads;
     private Boolean allowDiskUse;
     private long maxTimeMS;
     private Collation collation;
@@ -86,6 +84,30 @@ class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, Rea
         notNull("timeUnit", timeUnit);
         this.maxTimeMS = TimeUnit.MILLISECONDS.convert(maxTime, timeUnit);
         return this;
+    }
+
+    /**
+     * Enables retryable reads if a read fails due to a network error. A null value indicates that it's unspecified.
+     *
+     * @param retryReads true if retryable reads is enabled
+     * @return this
+     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
+     * @mongodb.server.release 3.6
+     * @since 3.11
+     */
+    public AggregateExplainOperation retryReads(final boolean retryReads) {
+        this.retryReads = retryReads;
+        return this;
+    }
+
+    /**
+     * Gets the value for retryable reads. The default is true.
+     *
+     * @return the retryable reads value
+     * @since 3.11
+     */
+    public boolean getRetryReads() {
+        return retryReads;
     }
 
     /**
@@ -149,39 +171,24 @@ class AggregateExplainOperation implements AsyncReadOperation<BsonDocument>, Rea
 
     @Override
     public BsonDocument execute(final ReadBinding binding) {
-        return withConnection(binding, new CallableWithConnection<BsonDocument>() {
-            @Override
-            public BsonDocument call(final Connection connection) {
-                validateCollation(connection, collation);
-                return executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(), connection);
-            }
-        });
+        return executeCommand(binding, namespace.getDatabaseName(), getCommandCreator(), retryReads);
     }
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<BsonDocument> callback) {
-        withConnection(binding, new AsyncCallableWithConnection() {
+        SingleResultCallback<BsonDocument> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
+        executeCommandAsync(binding, namespace.getDatabaseName(), getCommandCreator(),
+                new IdentityTransformerAsync<BsonDocument>(), retryReads, errHandlingCallback);
+    }
+
+    private CommandCreator getCommandCreator() {
+        return new CommandCreator() {
             @Override
-            public void call(final AsyncConnection connection, final Throwable t) {
-                SingleResultCallback<BsonDocument> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-                if (t != null) {
-                    errHandlingCallback.onResult(null, t);
-                } else {
-                    final SingleResultCallback<BsonDocument> wrappedCallback = releasingCallback(errHandlingCallback, connection);
-                    validateCollation(connection, collation, new AsyncCallableWithConnection() {
-                        @Override
-                        public void call(final AsyncConnection connection, final Throwable t) {
-                            if (t != null) {
-                                wrappedCallback.onResult(null, t);
-                            } else {
-                                executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(),
-                                        connection, new IdentityTransformer<BsonDocument>(),  wrappedCallback);
-                            }
-                        }
-                    });
-                }
+            public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
+                validateCollation(connectionDescription, collation);
+                return getCommand();
             }
-        });
+        };
     }
 
     private BsonDocument getCommand() {

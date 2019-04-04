@@ -281,7 +281,8 @@ public class DB {
      */
     public Set<String> getCollectionNames() {
         List<String> collectionNames =
-                new MongoIterableImpl<DBObject>(null, executor, ReadConcern.DEFAULT, primary()) {
+                new MongoIterableImpl<DBObject>(null, executor, ReadConcern.DEFAULT, primary(),
+                        mongo.getMongoClientOptions().getRetryReads()) {
                     @Override
                     public ReadOperation<BatchCursor<DBObject>> asReadOperation() {
                         return new ListCollectionsOperation<DBObject>(name, commandCodec)

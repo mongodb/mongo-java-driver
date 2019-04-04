@@ -23,8 +23,8 @@ import org.bson.BsonDocument;
 import org.bson.codecs.Decoder;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
-import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static com.mongodb.operation.CommandOperationHelper.executeCommand;
+import static com.mongodb.operation.CommandOperationHelper.executeCommandAsync;
 
 /**
  * An operation that executes an arbitrary command that writes to the server.
@@ -53,11 +53,11 @@ public class CommandWriteOperation<T> implements AsyncWriteOperation<T>, WriteOp
 
     @Override
     public T execute(final WriteBinding binding) {
-        return executeWrappedCommandProtocol(binding, databaseName, command, decoder);
+        return executeCommand(binding, databaseName, command, decoder);
     }
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<T> callback) {
-        executeWrappedCommandProtocolAsync(binding, databaseName, command, decoder, callback);
+        executeCommandAsync(binding, databaseName, command, decoder, callback);
     }
 }

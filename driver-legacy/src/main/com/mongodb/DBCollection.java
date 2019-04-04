@@ -130,6 +130,7 @@ public class DBCollection {
     private final OperationExecutor executor;
     private final Bytes.OptionHolder optionHolder;
     private final boolean retryWrites;
+    private final boolean retryReads;
     private volatile ReadPreference readPreference;
     private volatile WriteConcern writeConcern;
     private volatile ReadConcern readConcern;
@@ -154,6 +155,7 @@ public class DBCollection {
         this.objectFactory = new DBCollectionObjectFactory();
         this.objectCodec = new CompoundDBObjectCodec(getDefaultDBObjectCodec());
         this.retryWrites = database.getMongo().getMongoClientOptions().getRetryWrites();
+        this.retryReads = database.getMongo().getMongoClientOptions().getRetryReads();
     }
 
     /**
@@ -1013,7 +1015,8 @@ public class DBCollection {
                                        .skip(options.getSkip())
                                        .limit(options.getLimit())
                                        .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
-                                       .collation(options.getCollation());
+                                       .collation(options.getCollation())
+                                       .retryReads(retryReads);
         if (query != null) {
             operation.filter(wrap(query));
         }
@@ -1146,7 +1149,8 @@ public class DBCollection {
      */
     @Deprecated
     public DBObject group(final GroupCommand cmd, final ReadPreference readPreference) {
-        return toDBList(executor.execute(cmd.toOperation(getNamespace(), getDefaultDBObjectCodec()), readPreference, getReadConcern()));
+        return toDBList(executor.execute(cmd.toOperation(getNamespace(), getDefaultDBObjectCodec(), retryReads), readPreference,
+                getReadConcern()));
     }
 
     /**
@@ -1211,12 +1215,14 @@ public class DBCollection {
         notNull("fieldName", fieldName);
         return new MongoIterableImpl<BsonValue>(null, executor,
                                                   options.getReadConcern() != null ? options.getReadConcern() : getReadConcern(),
-                                                  options.getReadPreference() != null ? options.getReadPreference() : getReadPreference()) {
+                                                  options.getReadPreference() != null ? options.getReadPreference() : getReadPreference(),
+                                                  retryReads) {
             @Override
             public ReadOperation<BatchCursor<BsonValue>> asReadOperation() {
                 return new DistinctOperation<BsonValue>(getNamespace(), fieldName, new BsonValueCodec())
                                .filter(wrapAllowNull(options.getFilter()))
-                               .collation(options.getCollation());
+                               .collation(options.getCollation())
+                               .retryReads(retryReads);
             }
         }.map(new Function<BsonValue, Object>() {
             @Override
@@ -1498,7 +1504,8 @@ public class DBCollection {
                     .allowDiskUse(options.getAllowDiskUse())
                     .batchSize(options.getBatchSize())
                     .useCursor(options.getOutputMode() == com.mongodb.AggregationOptions.OutputMode.CURSOR)
-                    .collation(options.getCollation());
+                    .collation(options.getCollation())
+                    .retryReads(retryReads);
             BatchCursor<DBObject> cursor = executor.execute(operation, readPreference, getReadConcern());
             return new MongoCursorAdapter(new MongoBatchCursorAdapter<DBObject>(cursor));
         }
@@ -1519,7 +1526,8 @@ public class DBCollection {
                                                                                           new BsonDocumentCodec())
                                                          .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                                                          .allowDiskUse(options.getAllowDiskUse())
-                                                         .collation(options.getCollation());
+                                                         .collation(options.getCollation())
+                                                         .retryReads(retryReads);
         return new CommandResult(executor.execute(operation.asExplainableOperation(ExplainVerbosity.QUERY_PLANNER), primaryPreferred(),
                 getReadConcern()));
     }
@@ -1552,7 +1560,7 @@ public class DBCollection {
         ParallelCollectionScanOperation<DBObject> operation = new ParallelCollectionScanOperation<DBObject>(getNamespace(),
                                                                                                             options.getNumCursors(),
                                                                                                             objectCodec)
-                                                                  .batchSize(options.getBatchSize());
+                                                                  .batchSize(options.getBatchSize()).retryReads(retryReads);
         ReadPreference readPreferenceFromOptions = options.getReadPreference();
         List<BatchCursor<DBObject>> mongoCursors = executor.execute(operation,
                                                                     readPreferenceFromOptions != null ? readPreferenceFromOptions
@@ -2214,10 +2222,10 @@ public class DBCollection {
      * @mongodb.driver.manual core/indexes/ Indexes
      */
     public List<DBObject> getIndexInfo() {
-        return new MongoIterableImpl<DBObject>(null, executor, ReadConcern.DEFAULT, primary()) {
+        return new MongoIterableImpl<DBObject>(null, executor, ReadConcern.DEFAULT, primary(), retryReads) {
             @Override
             public ReadOperation<BatchCursor<DBObject>> asReadOperation() {
-                return new ListIndexesOperation<DBObject>(getNamespace(), getDefaultDBObjectCodec());
+                return new ListIndexesOperation<DBObject>(getNamespace(), getDefaultDBObjectCodec()).retryReads(retryReads);
             }
         }.into(new ArrayList<DBObject>());
     }

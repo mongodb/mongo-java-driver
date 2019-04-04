@@ -49,75 +49,76 @@ class MongoIterablesSpecification extends Specification {
     def 'should create Java 8 iterables when java.util.function.Consumer is available'() {
         when:
         def findIterable = MongoIterables.findOf(clientSession, namespace, Document, BsonDocument, codecRegistry, readPreference,
-                readConcern, executor, filter)
+                readConcern, executor, filter, true)
 
         then:
         expect findIterable, isTheSameAs(new Java8FindIterableImpl<Document, BsonDocument>(clientSession, namespace, Document,
-                BsonDocument, codecRegistry, readPreference, readConcern, executor, filter))
+                BsonDocument, codecRegistry, readPreference, readConcern, executor, filter, true))
 
         when:
         def aggregateIterable = MongoIterables.aggregateOf(clientSession, namespace, Document, BsonDocument, codecRegistry,
-                readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION)
+                readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION, true)
 
         then:
         expect aggregateIterable, isTheSameAs(new Java8AggregateIterableImpl<Document, BsonDocument>(clientSession, namespace,
                 Document, BsonDocument, codecRegistry, readPreference, readConcern, writeConcern, executor, pipeline,
-                AggregationLevel.COLLECTION))
+                AggregationLevel.COLLECTION, true))
 
         when:
         aggregateIterable = MongoIterables.aggregateOf(clientSession, namespace.databaseName, Document, BsonDocument, codecRegistry,
-                readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.DATABASE)
+                readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.DATABASE, true)
 
         then:
         expect aggregateIterable, isTheSameAs(new Java8AggregateIterableImpl<Document, BsonDocument>(clientSession, namespace.databaseName,
                 Document, BsonDocument, codecRegistry, readPreference, readConcern, writeConcern, executor, pipeline,
-                AggregationLevel.DATABASE))
+                AggregationLevel.DATABASE, true))
 
         when:
         def changeStreamIterable = MongoIterables.changeStreamOf(clientSession, namespace, codecRegistry,
-                readPreference, readConcern, executor, pipeline, Document, ChangeStreamLevel.COLLECTION)
+                readPreference, readConcern, executor, pipeline, Document, ChangeStreamLevel.COLLECTION, true)
 
         then:
         expect changeStreamIterable, isTheSameAs(new Java8ChangeStreamIterableImpl(clientSession, namespace, codecRegistry,
-                readPreference, readConcern, executor, pipeline, Document, ChangeStreamLevel.COLLECTION), ['codec'])
+                readPreference, readConcern, executor, pipeline, Document, ChangeStreamLevel.COLLECTION, true), ['codec'])
 
         when:
         changeStreamIterable = MongoIterables.changeStreamOf(clientSession, namespace.databaseName, codecRegistry,
-                readPreference, readConcern, executor, pipeline, Document, ChangeStreamLevel.COLLECTION)
+                readPreference, readConcern, executor, pipeline, Document, ChangeStreamLevel.COLLECTION, true)
 
         then:
         expect changeStreamIterable, isTheSameAs(new Java8ChangeStreamIterableImpl(clientSession, namespace.databaseName, codecRegistry,
-                readPreference, readConcern, executor, pipeline, Document, ChangeStreamLevel.COLLECTION), ['codec'])
+                readPreference, readConcern, executor, pipeline, Document, ChangeStreamLevel.COLLECTION, true), ['codec'])
 
         when:
         def distinctIterable = MongoIterables.distinctOf(clientSession, namespace, Document, BsonDocument, codecRegistry, readPreference,
-                readConcern, executor, 'f1', filter)
+                readConcern, executor, 'f1', filter, true)
 
         then:
         expect distinctIterable, isTheSameAs(new Java8DistinctIterableImpl(clientSession, namespace, Document, BsonDocument, codecRegistry,
-                readPreference, readConcern, executor, 'f1', filter))
+                readPreference, readConcern, executor, 'f1', filter, true))
 
         when:
-        def listDatabasesIterable = MongoIterables.listDatabasesOf(clientSession, Document, codecRegistry, readPreference, executor)
+        def listDatabasesIterable = MongoIterables.listDatabasesOf(clientSession, Document, codecRegistry, readPreference, executor, true)
 
         then:
         expect listDatabasesIterable, isTheSameAs(new Java8ListDatabasesIterableImpl(clientSession, Document, codecRegistry, readPreference,
-                executor))
+                executor, true))
 
         when:
         def listCollectionsIterable = MongoIterables.listCollectionsOf(clientSession, 'test', true, Document,
-                codecRegistry, readPreference, executor)
+                codecRegistry, readPreference, executor, true)
 
         then:
         expect listCollectionsIterable, isTheSameAs(new Java8ListCollectionsIterableImpl(clientSession, 'test', true, Document,
-                codecRegistry, readPreference, executor))
+                codecRegistry, readPreference, executor, true))
 
         when:
-        def listIndexesIterable = MongoIterables.listIndexesOf(clientSession, namespace, Document, codecRegistry, readPreference, executor)
+        def listIndexesIterable = MongoIterables.listIndexesOf(clientSession, namespace, Document, codecRegistry, readPreference, executor,
+                true)
 
         then:
         expect listIndexesIterable, isTheSameAs(new Java8ListIndexesIterableImpl(clientSession, namespace, Document, codecRegistry,
-                readPreference, executor))
+                readPreference, executor, true))
 
         when:
         def mapReduceIterable = MongoIterables.mapReduceOf(clientSession, namespace, Document, BsonDocument, codecRegistry, readPreference,
@@ -132,7 +133,7 @@ class MongoIterablesSpecification extends Specification {
     def 'should create non-Java 8 iterables when java.util.function.Consumer is unavailable'() {
         when:
         def findIterable = MongoIterables.findOf(clientSession, namespace, Document, BsonDocument, codecRegistry, readPreference,
-                readConcern, executor, filter)
+                readConcern, executor, filter, true)
 
         then:
         expect findIterable, isTheSameAs(new FindIterableImpl<Document, BsonDocument>(clientSession, namespace, Document,
@@ -140,16 +141,16 @@ class MongoIterablesSpecification extends Specification {
 
         when:
         def aggregateIterable = MongoIterables.aggregateOf(clientSession, namespace, Document, BsonDocument, codecRegistry,
-                readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION)
+                readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.COLLECTION, true)
 
         then:
         expect aggregateIterable, isTheSameAs(new AggregateIterableImpl<Document, BsonDocument>(clientSession, namespace,
                 Document, BsonDocument, codecRegistry, readPreference, readConcern, writeConcern, executor, pipeline,
-                AggregationLevel.COLLECTION))
+                AggregationLevel.COLLECTION, true))
 
         when:
         aggregateIterable = MongoIterables.aggregateOf(clientSession, namespace.databaseName, Document, BsonDocument, codecRegistry,
-                readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.DATABASE)
+                readPreference, readConcern, writeConcern, executor, pipeline, AggregationLevel.DATABASE, true)
 
         then:
         expect aggregateIterable, isTheSameAs(new AggregateIterableImpl<Document, BsonDocument>(clientSession, namespace.databaseName,
@@ -158,30 +159,30 @@ class MongoIterablesSpecification extends Specification {
 
         when:
         def changeStreamIterable = MongoIterables.changeStreamOf(clientSession, namespace, codecRegistry,
-                readPreference, readConcern, executor, pipeline, Document, ChangeStreamLevel.COLLECTION)
+                readPreference, readConcern, executor, pipeline, Document, ChangeStreamLevel.COLLECTION, true)
 
         then:
         expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl(clientSession, namespace, codecRegistry,
-                readPreference, readConcern, executor, pipeline, Document, ChangeStreamLevel.COLLECTION), ['codec'])
+                readPreference, readConcern, executor, pipeline, Document, ChangeStreamLevel.COLLECTION, true), ['codec'])
 
         when:
         changeStreamIterable = MongoIterables.changeStreamOf(clientSession, namespace.databaseName, codecRegistry,
-                readPreference, readConcern, executor, pipeline, Document, ChangeStreamLevel.COLLECTION)
+                readPreference, readConcern, executor, pipeline, Document, ChangeStreamLevel.COLLECTION, true)
 
         then:
         expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl(clientSession, namespace.databaseName, codecRegistry,
-                readPreference, readConcern, executor, pipeline, Document, ChangeStreamLevel.COLLECTION), ['codec'])
+                readPreference, readConcern, executor, pipeline, Document, ChangeStreamLevel.COLLECTION, true), ['codec'])
 
         when:
         def distinctIterable = MongoIterables.distinctOf(clientSession, namespace, Document, BsonDocument, codecRegistry, readPreference,
-                readConcern, executor, 'f1', filter)
+                readConcern, executor, 'f1', filter, true)
 
         then:
         expect distinctIterable, isTheSameAs(new DistinctIterableImpl(clientSession, namespace, Document, BsonDocument, codecRegistry,
                 readPreference, readConcern, executor, 'f1', filter))
 
         when:
-        def listDatabasesIterable = MongoIterables.listDatabasesOf(clientSession, Document, codecRegistry, readPreference, executor)
+        def listDatabasesIterable = MongoIterables.listDatabasesOf(clientSession, Document, codecRegistry, readPreference, executor, true)
 
         then:
         expect listDatabasesIterable, isTheSameAs(new ListDatabasesIterableImpl(clientSession, Document, codecRegistry, readPreference,
@@ -189,18 +190,11 @@ class MongoIterablesSpecification extends Specification {
 
         when:
         def listCollectionsIterable = MongoIterables.listCollectionsOf(clientSession, 'test', true, Document,
-                codecRegistry, readPreference, executor)
+                codecRegistry, readPreference, executor, true)
 
         then:
         expect listCollectionsIterable, isTheSameAs(new ListCollectionsIterableImpl(clientSession, 'test', true, Document,
                 codecRegistry, readPreference, executor))
-
-        when:
-        def listIndexesIterable = MongoIterables.listIndexesOf(clientSession, namespace, Document, codecRegistry, readPreference, executor)
-
-        then:
-        expect listIndexesIterable, isTheSameAs(new ListIndexesIterableImpl(clientSession, namespace, Document, codecRegistry,
-                readPreference, executor))
 
         when:
         def mapReduceIterable = MongoIterables.mapReduceOf(clientSession, namespace, Document, BsonDocument, codecRegistry, readPreference,

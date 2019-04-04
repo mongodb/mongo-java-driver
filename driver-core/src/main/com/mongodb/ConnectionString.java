@@ -227,6 +227,8 @@ import static java.util.Collections.unmodifiableList;
  * <ul>
  * <li>{@code retryWrites=true|false}. If true the driver will retry supported write operations if they fail due to a network error.
  *  Defaults to true.</li>
+ * <li>{@code retryReads=true|false}. If true the driver will retry supported read operations if they fail due to a network error.
+ *  Defaults to true.</li>
  * </ul>
  *
  * @mongodb.driver.manual reference/connection-string Connection String Format
@@ -251,6 +253,7 @@ public class ConnectionString {
     private ReadPreference readPreference;
     private WriteConcern writeConcern;
     private Boolean retryWrites;
+    private Boolean retryReads;
     private ReadConcern readConcern;
 
     private Integer minConnectionPoolSize;
@@ -427,6 +430,7 @@ public class ConnectionString {
         GENERAL_OPTIONS_KEYS.add("localthresholdms");
         GENERAL_OPTIONS_KEYS.add("heartbeatfrequencyms");
         GENERAL_OPTIONS_KEYS.add("retrywrites");
+        GENERAL_OPTIONS_KEYS.add("retryreads");
 
         GENERAL_OPTIONS_KEYS.add("appname");
 
@@ -533,6 +537,8 @@ public class ConnectionString {
                 applicationName = value;
             } else if (key.equals("retrywrites")) {
                 retryWrites = parseBoolean(value, "retrywrites");
+            } else if (key.equals("retryreads")) {
+                retryReads = parseBoolean(value, "retryreads");
             }
         }
 
@@ -1169,6 +1175,17 @@ public class ConnectionString {
      */
     public Boolean getRetryWritesValue() {
         return retryWrites;
+    }
+
+    /**
+     * <p>Gets whether reads should be retried if they fail due to a network error</p>
+     *
+     * @return the retryWrites value
+     * @since 3.11
+     * @mongodb.server.release 3.6
+     */
+    public Boolean getRetryReads() {
+        return retryReads;
     }
 
     /**

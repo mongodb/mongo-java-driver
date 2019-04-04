@@ -32,10 +32,11 @@ import org.bson.BsonString;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
-import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocol;
-import static com.mongodb.operation.CommandOperationHelper.executeWrappedCommandProtocolAsync;
+import static com.mongodb.operation.CommandOperationHelper.executeCommand;
+import static com.mongodb.operation.CommandOperationHelper.executeCommandAsync;
 import static com.mongodb.operation.CommandOperationHelper.isNamespaceError;
 import static com.mongodb.operation.CommandOperationHelper.rethrowIfNotNamespaceError;
+import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorWriteTransformer;
 import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
@@ -92,7 +93,7 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
             @Override
             public Void call(final Connection connection) {
                 try {
-                    executeWrappedCommandProtocol(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
+                    executeCommand(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
                             connection, writeConcernErrorTransformer());
                 } catch (MongoCommandException e) {
                     rethrowIfNotNamespaceError(e);
@@ -112,8 +113,8 @@ public class DropCollectionOperation implements AsyncWriteOperation<Void>, Write
                     errHandlingCallback.onResult(null, t);
                 } else {
                     final SingleResultCallback<Void> releasingCallback = releasingCallback(errHandlingCallback, connection);
-                    executeWrappedCommandProtocolAsync(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
-                            connection, writeConcernErrorTransformer(), new SingleResultCallback<Void>() {
+                    executeCommandAsync(binding, namespace.getDatabaseName(), getCommand(connection.getDescription()),
+                            connection, writeConcernErrorWriteTransformer(), new SingleResultCallback<Void>() {
                                 @Override
                                 public void onResult(final Void result, final Throwable t) {
                                     if (t != null && !isNamespaceError(t)) {
