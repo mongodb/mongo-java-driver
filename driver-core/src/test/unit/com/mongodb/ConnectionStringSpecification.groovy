@@ -127,7 +127,7 @@ class ConnectionStringSpecification extends Specification {
     }
 
     @Unroll
-    def 'should correct parse retryWrites'() {
+    def 'should correctly parse retryWrites'() {
         expect:
         uri.getRetryWrites() == retryWrites
         uri.getRetryWritesValue() == retryWritesValue
@@ -137,7 +137,24 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://localhost/')                    | true        | null
         new ConnectionString('mongodb://localhost/?retryWrites=false')  | false       | false
         new ConnectionString('mongodb://localhost/?retryWrites=true')   | true        | true
-        new ConnectionString('mongodb://localhost/?retryWrites=foos')   | false       | false
+        new ConnectionString('mongodb://localhost/?retryWrites=foos')   | true        | null
+    }
+
+    @Unroll
+    def 'should parse range of boolean values'() {
+        expect:
+        uri.getSslEnabled() == value
+
+        where:
+        uri                                                                   | value
+        new ConnectionString('mongodb://localhost/?tls=true')  | true
+        new ConnectionString('mongodb://localhost/?tls=yes')   | true
+        new ConnectionString('mongodb://localhost/?tls=1')     | true
+        new ConnectionString('mongodb://localhost/?tls=false') | false
+        new ConnectionString('mongodb://localhost/?tls=no')    | false
+        new ConnectionString('mongodb://localhost/?tls=0')     | false
+        new ConnectionString('mongodb://localhost/?tls=foo')   | null
+        new ConnectionString('mongodb://localhost')            | null
     }
 
     @Unroll
@@ -210,6 +227,12 @@ class ConnectionStringSpecification extends Specification {
         connectionString.getSslEnabled()
 
         when:
+        connectionString = new ConnectionString('mongodb://localhost/?ssl=foo')
+
+        then:
+        connectionString.getSslEnabled() == null
+
+        when:
         connectionString = new ConnectionString('mongodb://localhost/?tls=false')
 
         then:
@@ -220,6 +243,12 @@ class ConnectionStringSpecification extends Specification {
 
         then:
         connectionString.getSslEnabled()
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?tls=foo')
+
+        then:
+        connectionString.getSslEnabled() == null
 
         when:
         connectionString = new ConnectionString('mongodb://localhost/?tls=true&ssl=false')
@@ -248,6 +277,12 @@ class ConnectionStringSpecification extends Specification {
         connectionString.getSslInvalidHostnameAllowed()
 
         when:
+        connectionString = new ConnectionString('mongodb://localhost/?ssl=true&sslInvalidHostNameAllowed=foo')
+
+        then:
+        connectionString.getSslInvalidHostnameAllowed() == null
+
+        when:
         connectionString = new ConnectionString('mongodb://localhost/?tls=true&tlsAllowInvalidHostnames=false')
 
         then:
@@ -258,6 +293,12 @@ class ConnectionStringSpecification extends Specification {
 
         then:
         connectionString.getSslInvalidHostnameAllowed()
+
+        when:
+        connectionString = new ConnectionString('mongodb://localhost/?tls=true&tlsAllowInvalidHostnames=foo')
+
+        then:
+        connectionString.getSslInvalidHostnameAllowed() == null
 
         when:
         connectionString = new ConnectionString(
@@ -479,6 +520,7 @@ class ConnectionStringSpecification extends Specification {
                                    '?readPreference=secondaryPreferred') | secondaryPreferred()
         new ConnectionString('mongodb://localhost/?slaveOk=true')        | secondaryPreferred()
         new ConnectionString('mongodb://localhost/?slaveOk=false')       | primary()
+        new ConnectionString('mongodb://localhost/?slaveOk=foo')         | primary()
         new ConnectionString('mongodb://localhost/' +
                                    '?readPreference=secondaryPreferred' +
                                    '&readPreferenceTags=dc:ny,rack:1' +

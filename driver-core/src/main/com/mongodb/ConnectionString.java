@@ -547,8 +547,8 @@ public class ConnectionString {
     }
 
     private void initializeSslEnabled(final String key, final String value) {
-        boolean booleanValue = parseBoolean(value, key);
-        if (sslEnabled != null && sslEnabled != booleanValue) {
+        Boolean booleanValue = parseBoolean(value, key);
+        if (sslEnabled != null && !sslEnabled.equals(booleanValue)) {
             throw new IllegalArgumentException("Conflicting tls and ssl parameter values are not allowed");
         }
         sslEnabled = booleanValue;
@@ -597,9 +597,9 @@ public class ConnectionString {
 
     @Nullable
     private WriteConcern createWriteConcern(final Map<String, List<String>> optionsMap) {
-        Boolean safe = null;
         String w = null;
         Integer wTimeout = null;
+        Boolean safe = null;
         Boolean fsync = null;
         Boolean journal = null;
 
@@ -815,7 +815,7 @@ public class ConnectionString {
         // handle legacy slaveok settings
         String slaveok = getLastValue(optionsMap, "slaveok");
         if (slaveok != null && !optionsMap.containsKey("readpreference")) {
-            String readPreference = parseBoolean(slaveok, "slaveok")
+            String readPreference = Boolean.TRUE.equals(parseBoolean(slaveok, "slaveok"))
                                     ? "secondaryPreferred" : "primary";
             optionsMap.put("readpreference", singletonList(readPreference));
             if (LOGGER.isWarnEnabled()) {
@@ -902,16 +902,30 @@ public class ConnectionString {
         return new TagSet(tagList);
     }
 
-    private boolean parseBoolean(final String input, final String key) {
-        String trimmedInput = input.trim();
-        boolean isTrue = trimmedInput.length() > 0 && (trimmedInput.equals("1") || trimmedInput.toLowerCase().equals("true")
-                || trimmedInput.toLowerCase().equals("yes"));
+    private static final Set<String> TRUE_VALUES = new HashSet<String>(asList("true", "yes", "1"));
+    private static final Set<String> FALSE_VALUES = new HashSet<String>(asList("false", "no", "0"));
 
-        if ((!input.equals("true") && !input.equals("false")) && LOGGER.isWarnEnabled()) {
-            LOGGER.warn(format("Deprecated boolean value ('%s') in the connection string for '%s', please update to %s=%s",
-                    input, key, key, isTrue));
+    @Nullable
+    private Boolean parseBoolean(final String input, final String key) {
+        String trimmedInput = input.trim().toLowerCase();
+
+        if (TRUE_VALUES.contains(trimmedInput)) {
+            if (!trimmedInput.equals("true")) {
+                LOGGER.warn(format("Deprecated boolean value '%s' in the connection string for '%s'. Replace with 'true'",
+                        trimmedInput, key));
+            }
+            return true;
+        } else if (FALSE_VALUES.contains(trimmedInput)) {
+            if (!trimmedInput.equals("false")) {
+                LOGGER.warn(format("Deprecated boolean value '%s' in the connection string for '%s'. Replace with'false'",
+                        trimmedInput, key));
+            }
+            return false;
+        } else {
+            LOGGER.warn(format("Ignoring unrecognized boolean value '%s' in the connection string for '%s'. " +
+                            "Replace with either 'true' or 'false'", trimmedInput, key));
+            return null;
         }
-        return isTrue;
     }
 
     private int parseInteger(final String input, final String key) {
