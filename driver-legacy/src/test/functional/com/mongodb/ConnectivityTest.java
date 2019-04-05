@@ -24,7 +24,7 @@ public class ConnectivityTest {
     // the test succeeds if no exception is thrown, and fail otherwise
     @Test
     public void testConnectivity() {
-        MongoClient client = Fixture.getMongoClient();
+        MongoClient client = new MongoClient(Fixture.getMongoClientURI());
 
         try {
             // test that a command that doesn't require auth completes normally
