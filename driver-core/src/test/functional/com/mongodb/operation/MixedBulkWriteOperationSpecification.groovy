@@ -973,9 +973,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         result.getInsertedCount() == 2
         result.getDeletedCount() == 2
         result.getMatchedCount() == 4
-        if (result.isModifiedCountAvailable()) {
-            result.getModifiedCount() == 4
-        }
+        result.getModifiedCount() == 4
         result.getUpserts().isEmpty()
 
         then:

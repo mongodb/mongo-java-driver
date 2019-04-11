@@ -30,7 +30,6 @@ import spock.lang.Specification
 
 import static com.mongodb.bulk.WriteRequest.Type.DELETE
 import static com.mongodb.bulk.WriteRequest.Type.INSERT
-import static com.mongodb.bulk.WriteRequest.Type.REPLACE
 import static com.mongodb.bulk.WriteRequest.Type.UPDATE
 import static com.mongodb.internal.connection.WriteCommandResultHelper.getBulkWriteException
 import static com.mongodb.internal.connection.WriteCommandResultHelper.getBulkWriteResult
@@ -55,17 +54,6 @@ class WriteCommandHelperSpecification extends Specification {
                                                            .append('_id',
                                                                    new BsonString('id2'))])))
                 .getUpserts()
-    }
-
-
-    def 'should not have modified count for update with no nModified field in the result'() {
-        expect:
-        !getBulkWriteResult(UPDATE, new BsonDocument('n', new BsonInt32(1))).isModifiedCountAvailable()
-    }
-
-    def 'should not have modified count for replace with no nModified field in the result'() {
-        expect:
-        !getBulkWriteResult(REPLACE, new BsonDocument('n', new BsonInt32(1))).isModifiedCountAvailable()
     }
 
     def 'should have modified count of 0 for insert with no nModified field in the result'() {

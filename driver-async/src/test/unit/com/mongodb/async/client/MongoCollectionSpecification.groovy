@@ -41,7 +41,6 @@ import com.mongodb.client.model.AggregationLevel
 import com.mongodb.client.model.BulkWriteOptions
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CountOptions
-import com.mongodb.internal.client.model.CountStrategy
 import com.mongodb.client.model.CreateIndexOptions
 import com.mongodb.client.model.DeleteManyModel
 import com.mongodb.client.model.DeleteOneModel
@@ -66,6 +65,7 @@ import com.mongodb.client.model.changestream.ChangeStreamLevel
 import com.mongodb.client.result.DeleteResult
 import com.mongodb.client.result.UpdateResult
 import com.mongodb.client.test.Worker
+import com.mongodb.internal.client.model.CountStrategy
 import com.mongodb.operation.CountOperation
 import com.mongodb.operation.CreateIndexesOperation
 import com.mongodb.operation.DropCollectionOperation
@@ -850,7 +850,7 @@ class MongoCollectionSpecification extends Specification {
         where:
         [bypassDocumentValidation, modifiedCount, upsertedId, writeConcern, session, retryWrites] << [
                 [null, true, false],
-                [null, 1],
+                [1],
                 [null, new BsonInt32(42)],
                 [ACKNOWLEDGED, UNACKNOWLEDGED],
                 [null, Stub(ClientSession)],

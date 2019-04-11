@@ -848,7 +848,7 @@ class MongoCollectionSpecification extends Specification {
         where:
         [bypassDocumentValidation, modifiedCount, upsertedId, writeConcern, session, retryWrites] << [
                 [null, true, false],
-                [null, 1],
+                [1],
                 [null, new BsonInt32(42)],
                 [ACKNOWLEDGED, UNACKNOWLEDGED],
                 [null, Stub(ClientSession)],

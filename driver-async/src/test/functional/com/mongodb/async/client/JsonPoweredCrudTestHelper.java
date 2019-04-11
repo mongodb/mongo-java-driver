@@ -152,9 +152,7 @@ public class JsonPoweredCrudTestHelper {
 
     BsonDocument toResult(final UpdateResult updateResult) {
         BsonDocument resultDoc = new BsonDocument("matchedCount", new BsonInt32((int) updateResult.getMatchedCount()));
-        if (updateResult.isModifiedCountAvailable()) {
-            resultDoc.append("modifiedCount", new BsonInt32((int) updateResult.getModifiedCount()));
-        }
+        resultDoc.append("modifiedCount", new BsonInt32((int) updateResult.getModifiedCount()));
         // If the upsertedId is an ObjectId that means it came from the server and can't be verified.
         // This check is to handle the "ReplaceOne with upsert when no documents match without an id specified" test
         // in replaceOne-pre_2.6
@@ -186,9 +184,7 @@ public class JsonPoweredCrudTestHelper {
             resultDoc.append("insertedCount", new BsonInt32(insertedIds.size()));
 
             resultDoc.append("matchedCount", new BsonInt32(bulkWriteResult.getMatchedCount()));
-            if (bulkWriteResult.isModifiedCountAvailable()) {
-                resultDoc.append("modifiedCount", new BsonInt32(bulkWriteResult.getModifiedCount()));
-            }
+            resultDoc.append("modifiedCount", new BsonInt32(bulkWriteResult.getModifiedCount()));
             resultDoc.append("upsertedCount", bulkWriteResult.getUpserts() == null
                     ? new BsonInt32(0) : new BsonInt32(bulkWriteResult.getUpserts().size()));
             BsonDocument upserts = new BsonDocument();

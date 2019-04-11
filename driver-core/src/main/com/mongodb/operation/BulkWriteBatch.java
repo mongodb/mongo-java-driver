@@ -45,7 +45,6 @@ import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
-import org.bson.BsonNumber;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
@@ -296,9 +295,7 @@ final class BulkWriteBatch {
     }
 
     private Integer getModifiedCount(final BsonDocument result) {
-        BsonNumber modifiedCount = result.getNumber("nModified",
-                (batchType == UPDATE || batchType == REPLACE) ? null : new BsonInt32(0));
-        return modifiedCount == null ? null : modifiedCount.intValue();
+        return result.getNumber("nModified", new BsonInt32(0)).intValue();
     }
 
     private boolean hasError(final BsonDocument result) {

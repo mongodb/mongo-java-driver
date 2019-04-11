@@ -45,10 +45,12 @@ public abstract class UpdateResult {
     /**
      * Gets a value indicating whether the modified count is available.
      * <p>
-     * The modified count is only available when all servers have been upgraded to 2.6 or above.
+     * This method now always returns true, as modified count is available since MongoDB 2.6.
      * </p>
      * @return true if the modified count is available
+     * @deprecated no longer needed since all supported server versions support modified count
      */
+    @Deprecated
     public abstract boolean isModifiedCountAvailable();
 
     /**
@@ -93,7 +95,7 @@ public abstract class UpdateResult {
         private final Long modifiedCount;
         private final BsonValue upsertedId;
 
-        AcknowledgedUpdateResult(final long matchedCount, @Nullable final Long modifiedCount, @Nullable final BsonValue upsertedId) {
+        AcknowledgedUpdateResult(final long matchedCount, final Long modifiedCount, @Nullable final BsonValue upsertedId) {
             this.matchedCount = matchedCount;
             this.modifiedCount = modifiedCount;
             this.upsertedId = upsertedId;
@@ -110,16 +112,13 @@ public abstract class UpdateResult {
         }
 
         @Override
+        @Deprecated
         public boolean isModifiedCountAvailable() {
-            return modifiedCount != null;
+            return true;
         }
 
         @Override
         public long getModifiedCount() {
-            if (modifiedCount == null) {
-                throw new UnsupportedOperationException("Modified count is only available when connected to MongoDB 2.6 servers or "
-                                                        + "above.");
-            }
             return modifiedCount;
         }
 
@@ -183,6 +182,7 @@ public abstract class UpdateResult {
         }
 
         @Override
+        @Deprecated
         public boolean isModifiedCountAvailable() {
             return false;
         }
