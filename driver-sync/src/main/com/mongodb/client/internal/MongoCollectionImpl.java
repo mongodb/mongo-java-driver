@@ -989,9 +989,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private UpdateResult toUpdateResult(final com.mongodb.bulk.BulkWriteResult result) {
         if (result.wasAcknowledged()) {
-            Long modifiedCount = result.isModifiedCountAvailable() ? (long) result.getModifiedCount() : null;
             BsonValue upsertedId = result.getUpserts().isEmpty() ? null : result.getUpserts().get(0).getId();
-            return UpdateResult.acknowledged(result.getMatchedCount(), modifiedCount, upsertedId);
+            return UpdateResult.acknowledged(result.getMatchedCount(), (long) result.getModifiedCount(), upsertedId);
         } else {
             return UpdateResult.unacknowledged();
         }

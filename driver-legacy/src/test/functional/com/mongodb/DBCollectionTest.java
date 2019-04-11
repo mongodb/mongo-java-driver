@@ -721,9 +721,7 @@ public class DBCollectionTest extends DatabaseTestCase {
         assertEquals(1, result.getInsertedCount());
         assertEquals(4, result.getMatchedCount());
         assertEquals(3, result.getRemovedCount());
-        if (result.isModifiedCountAvailable()) {
-            assertEquals(4, result.getModifiedCount());
-        }
+        assertEquals(4, result.getModifiedCount());
         assertEquals(Arrays.asList(new BulkWriteUpsert(1, upsertOneId),
                                    new BulkWriteUpsert(2, upsertTwoId)),
                      result.getUpserts());

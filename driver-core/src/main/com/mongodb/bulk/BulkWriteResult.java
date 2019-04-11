@@ -63,14 +63,18 @@ public abstract class BulkWriteResult {
     public abstract int getDeletedCount();
 
     /**
-     * Returns true if the server was able to provide a count of modified documents.  If this method returns false (which can happen if the
-     * server is not at least version 2.6) then the {@code getModifiedCount} method will throw {@code UnsupportedOperationException}.
+     * Returns true if the server was able to provide a count of modified documents.
      *
+     * <p>
+     * This method now always returns true, as modified count is available since MongoDB 2.6.
+     * </p>
      * @return true if modifiedCount is available
      * @throws java.lang.UnsupportedOperationException if the write was unacknowledged.
      * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
      * @see #getModifiedCount()
+     * @deprecated no longer needed since all supported server versions support modified count
      */
+    @Deprecated
     public abstract boolean isModifiedCountAvailable();
 
     /**
@@ -78,13 +82,8 @@ public abstract class BulkWriteResult {
      * documents that were actually changed; for example, if you set the value of some field , and the field already has that value, that
      * will not count as a modification.
      *
-     * <p> If the server is not able to provide a count of modified documents (which can happen if the server is not at least version 2.6),
-     * then this method will throw an {@code UnsupportedOperationException} </p>
-     *
      * @return the number of documents modified by the write operation
-     * @throws java.lang.UnsupportedOperationException if the write was unacknowledged or if no modified count is available.
      * @see com.mongodb.WriteConcern#UNACKNOWLEDGED
-     * @see #isModifiedCountAvailable()
      */
     public abstract int getModifiedCount();
 
@@ -133,7 +132,7 @@ public abstract class BulkWriteResult {
      * @param insertedCount the number of documents inserted by the write operation
      * @param matchedCount  the number of documents matched by the write operation
      * @param removedCount  the number of documents removed by the write operation
-     * @param modifiedCount the number of documents modified, which may be null if the server was not able to provide the count
+     * @param modifiedCount the number of documents modified, which may not be null
      * @param upserts       the list of upserts
      * @return an acknowledged BulkWriteResult
      */
@@ -161,17 +160,13 @@ public abstract class BulkWriteResult {
             }
 
             @Override
+            @Deprecated
             public boolean isModifiedCountAvailable() {
-                return modifiedCount != null;
+                return true;
             }
 
             @Override
             public int getModifiedCount() {
-                if (modifiedCount == null) {
-                    throw new UnsupportedOperationException("The modifiedCount is not available because at least one of the servers that "
-                                                            + "was updated was not able to provide this information (the server is must be "
-                                                            + "at least version 2.6");
-                }
                 return modifiedCount;
             }
 
@@ -195,9 +190,6 @@ public abstract class BulkWriteResult {
                     return false;
                 }
                 if (insertedCount != that.getInsertedCount()) {
-                    return false;
-                }
-                if (isModifiedCountAvailable() != that.isModifiedCountAvailable()) {
                     return false;
                 }
                 if (modifiedCount != null && !modifiedCount.equals(that.getModifiedCount())) {
@@ -267,6 +259,7 @@ public abstract class BulkWriteResult {
             }
 
             @Override
+            @Deprecated
             public boolean isModifiedCountAvailable() {
                 throw getUnacknowledgedWriteException();
             }

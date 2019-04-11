@@ -18,7 +18,6 @@ package com.mongodb.embedded.client;
 
 import android.content.res.AssetManager;
 import android.support.test.InstrumentationRegistry;
-
 import com.mongodb.MongoBulkWriteException;
 import com.mongodb.MongoException;
 import com.mongodb.ReadConcern;
@@ -59,7 +58,6 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.lang.Nullable;
-
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -138,9 +136,7 @@ public class JsonPoweredCrudTestHelper {
 
     BsonDocument toResult(final UpdateResult updateResult) {
         BsonDocument resultDoc = new BsonDocument("matchedCount", new BsonInt32((int) updateResult.getMatchedCount()));
-        if (updateResult.isModifiedCountAvailable()) {
-            resultDoc.append("modifiedCount", new BsonInt32((int) updateResult.getModifiedCount()));
-        }
+        resultDoc.append("modifiedCount", new BsonInt32((int) updateResult.getModifiedCount()));
         if (updateResult.getUpsertedId() != null) {
             resultDoc.append("upsertedId", updateResult.getUpsertedId());
         }
@@ -169,9 +165,7 @@ public class JsonPoweredCrudTestHelper {
             resultDoc.append("insertedCount", new BsonInt32(insertedIds.size()));
 
             resultDoc.append("matchedCount", new BsonInt32(bulkWriteResult.getMatchedCount()));
-            if (bulkWriteResult.isModifiedCountAvailable()) {
-                resultDoc.append("modifiedCount", new BsonInt32(bulkWriteResult.getModifiedCount()));
-            }
+            resultDoc.append("modifiedCount", new BsonInt32(bulkWriteResult.getModifiedCount()));
             resultDoc.append("upsertedCount", bulkWriteResult.getUpserts() == null
                     ? new BsonInt32(0) : new BsonInt32(bulkWriteResult.getUpserts().size()));
             BsonDocument upserts = new BsonDocument();

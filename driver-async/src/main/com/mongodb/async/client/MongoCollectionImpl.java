@@ -32,7 +32,6 @@ import com.mongodb.bulk.WriteRequest;
 import com.mongodb.client.model.AggregationLevel;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.CountOptions;
-import com.mongodb.internal.client.model.CountStrategy;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteOptions;
 import com.mongodb.client.model.DropIndexOptions;
@@ -51,6 +50,7 @@ import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
+import com.mongodb.internal.client.model.CountStrategy;
 import com.mongodb.internal.operation.AsyncOperations;
 import com.mongodb.internal.operation.IndexHelper;
 import com.mongodb.lang.Nullable;
@@ -1065,9 +1065,8 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private UpdateResult toUpdateResult(final com.mongodb.bulk.BulkWriteResult result) {
         if (result.wasAcknowledged()) {
-            Long modifiedCount = result.isModifiedCountAvailable() ? (long) result.getModifiedCount() : null;
             BsonValue upsertedId = result.getUpserts().isEmpty() ? null : result.getUpserts().get(0).getId();
-            return UpdateResult.acknowledged(result.getMatchedCount(), modifiedCount, upsertedId);
+            return UpdateResult.acknowledged(result.getMatchedCount(), (long) result.getModifiedCount(), upsertedId);
         } else {
             return UpdateResult.unacknowledged();
         }

@@ -16,8 +16,6 @@
 
 package com.mongodb;
 
-import com.mongodb.lang.Nullable;
-
 import java.util.Collections;
 import java.util.List;
 
@@ -27,15 +25,15 @@ class AcknowledgedBulkWriteResult extends BulkWriteResult {
     private int insertedCount;
     private int matchedCount;
     private int removedCount;
-    private Integer modifiedCount;
+    private int modifiedCount;
     private final List<BulkWriteUpsert> upserts;
 
     AcknowledgedBulkWriteResult(final int insertedCount, final int matchedCount, final int removedCount,
-                                @Nullable final Integer modifiedCount, final List<BulkWriteUpsert> upserts) {
+                                final Integer modifiedCount, final List<BulkWriteUpsert> upserts) {
         this.insertedCount = insertedCount;
         this.matchedCount = matchedCount;
         this.removedCount = removedCount;
-        this.modifiedCount = modifiedCount;
+        this.modifiedCount = notNull("modifiedCount", modifiedCount);
         this.upserts = Collections.unmodifiableList(notNull("upserts", upserts));
     }
 
@@ -60,16 +58,13 @@ class AcknowledgedBulkWriteResult extends BulkWriteResult {
     }
 
     @Override
+    @Deprecated
     public boolean isModifiedCountAvailable() {
-        return modifiedCount != null;
+        return true;
     }
 
     @Override
     public int getModifiedCount() {
-        if (modifiedCount == null) {
-            throw new UnsupportedOperationException("The modifiedCount is not available because at least one of the servers "
-                    + "updated was not able to provide this information (the server must be at least version 2.6 or higher.");
-        }
         return modifiedCount;
     }
 
@@ -98,7 +93,7 @@ class AcknowledgedBulkWriteResult extends BulkWriteResult {
         if (removedCount != that.removedCount) {
             return false;
         }
-        if (modifiedCount != null ? !modifiedCount.equals(that.modifiedCount) : that.modifiedCount != null) {
+        if (modifiedCount != that.modifiedCount) {
             return false;
         }
         if (!upserts.equals(that.upserts)) {
@@ -113,7 +108,7 @@ class AcknowledgedBulkWriteResult extends BulkWriteResult {
         int result = insertedCount;
         result = 31 * result + matchedCount;
         result = 31 * result + removedCount;
-        result = 31 * result + (modifiedCount != null ? modifiedCount.hashCode() : 0);
+        result = 31 * result + modifiedCount;
         result = 31 * result + upserts.hashCode();
         return result;
     }
