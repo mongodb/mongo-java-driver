@@ -148,6 +148,7 @@ class CreateCollectionOperationSpecification extends OperationFunctionalSpecific
         async << [true, false]
     }
 
+    @IgnoreIf({ serverVersionAtLeast(4, 1) })
     def 'should set flags for use power of two sizes'() {
         given:
         assert !collectionNameExists(getCollectionName())
