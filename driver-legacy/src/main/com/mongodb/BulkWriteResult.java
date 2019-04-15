@@ -67,22 +67,6 @@ public abstract class BulkWriteResult {
     public abstract int getRemovedCount();
 
     /**
-     * Returns true if the server was able to provide a count of modified documents.
-     *
-     * <p>
-     * This method now always returns true, as modified count is available since MongoDB 2.6.
-     * </p>
-     *
-     * @return true if modifiedCount is available
-     * @throws java.lang.UnsupportedOperationException if the write was unacknowledged.
-     * @see WriteConcern#UNACKNOWLEDGED
-     * @see #getModifiedCount()
-     * @deprecated no longer needed since all supported server versions support modified count
-     */
-    @Deprecated
-    public abstract boolean isModifiedCountAvailable();
-
-    /**
      * <p>Returns the number of documents modified by the write operation.  This only applies to updates or replacements, and will only
      * count documents that were actually changed; for example, if you set the value of some field , and the field already has that value,
      * that will not count as a modification.</p>

@@ -44,12 +44,6 @@ class UnacknowledgedBulkWriteResult extends BulkWriteResult {
     }
 
     @Override
-    @Deprecated
-    public boolean isModifiedCountAvailable() {
-        throw getUnacknowledgedWriteException();
-    }
-
-    @Override
     public int getModifiedCount() {
         throw getUnacknowledgedWriteException();
     }
