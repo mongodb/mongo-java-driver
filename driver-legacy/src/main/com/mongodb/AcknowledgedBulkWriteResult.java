@@ -58,12 +58,6 @@ class AcknowledgedBulkWriteResult extends BulkWriteResult {
     }
 
     @Override
-    @Deprecated
-    public boolean isModifiedCountAvailable() {
-        return true;
-    }
-
-    @Override
     public int getModifiedCount() {
         return modifiedCount;
     }

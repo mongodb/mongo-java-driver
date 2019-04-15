@@ -43,17 +43,6 @@ public abstract class UpdateResult {
     public abstract long getMatchedCount();
 
     /**
-     * Gets a value indicating whether the modified count is available.
-     * <p>
-     * This method now always returns true, as modified count is available since MongoDB 2.6.
-     * </p>
-     * @return true if the modified count is available
-     * @deprecated no longer needed since all supported server versions support modified count
-     */
-    @Deprecated
-    public abstract boolean isModifiedCountAvailable();
-
-    /**
      * Gets the number of documents modified by the update.
      *
      * @return the number of documents modified
@@ -109,12 +98,6 @@ public abstract class UpdateResult {
         @Override
         public long getMatchedCount() {
             return matchedCount;
-        }
-
-        @Override
-        @Deprecated
-        public boolean isModifiedCountAvailable() {
-            return true;
         }
 
         @Override
@@ -179,12 +162,6 @@ public abstract class UpdateResult {
         @Override
         public long getMatchedCount() {
             throw getUnacknowledgedWriteException();
-        }
-
-        @Override
-        @Deprecated
-        public boolean isModifiedCountAvailable() {
-            return false;
         }
 
         @Override
