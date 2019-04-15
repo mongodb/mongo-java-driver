@@ -85,7 +85,7 @@ public class JsonScannerTest {
         JsonToken token = scanner.nextToken();
         assertEquals(JsonTokenType.LEFT_PAREN, token.getType());
         assertEquals("(", token.getValue());
-        token = scanner.nextToken();
+        scanner.nextToken();
         token = scanner.nextToken();
         assertEquals(JsonTokenType.RIGHT_PAREN, token.getType());
         assertEquals('x', buffer.read());

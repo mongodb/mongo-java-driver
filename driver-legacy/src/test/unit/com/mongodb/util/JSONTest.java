@@ -171,7 +171,6 @@ public class JSONTest {
             threw = true;
         }
         assertEquals(true, threw);
-        threw = false;
     }
 
     @Test
@@ -212,7 +211,6 @@ public class JSONTest {
             threw = true;
         }
         assertEquals(false, threw);
-        threw = false;
 
         assertEquals(JSON.parse("4"), 4);
     }

@@ -312,7 +312,6 @@ class QueryProtocol<T> implements LegacyProtocol<QueryResult<T>> {
     public void executeAsync(final InternalConnection connection, final SingleResultCallback<QueryResult<T>> callback) {
         long startTimeNanos = System.nanoTime();
         QueryMessage message = createQueryMessage(connection.getDescription());
-        boolean sentStartedEvent = true;
         try {
             if (LOGGER.isDebugEnabled()) {
                 LOGGER.debug(format("Asynchronously sending query of namespace %s on connection [%s] to server %s", namespace,
@@ -321,7 +320,6 @@ class QueryProtocol<T> implements LegacyProtocol<QueryResult<T>> {
             ByteBufferBsonOutput bsonOutput = new ByteBufferBsonOutput(connection);
             RequestMessage.EncodingMetadata metadata = encodeMessageWithMetadata(message, bsonOutput);
             boolean isExplainEvent = sendQueryStartedEvent(connection, message, bsonOutput, metadata);
-            sentStartedEvent = true;
 
             SingleResultCallback<ResponseBuffers> receiveCallback = new QueryResultCallback(callback, message.getId(),
                     startTimeNanos, message, isExplainEvent, connection.getDescription());
