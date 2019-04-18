@@ -359,6 +359,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         collectionHelper.createIndex(new BsonDocument('count', new BsonInt32(1)))
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
                 .modifiers(new BsonDocument('$max', new BsonDocument('count', new BsonInt32(11))))
+                .hint(new BsonDocument('count', new BsonInt32(1)))
 
         when:
         def count = executeAndCollectBatchCursorResults(operation, async).size()
@@ -378,6 +379,7 @@ class FindOperationSpecification extends OperationFunctionalSpecification {
         collectionHelper.createIndex(new BsonDocument('count', new BsonInt32(1)))
         def operation = new FindOperation<Document>(getNamespace(), new DocumentCodec())
                 .modifiers(new BsonDocument('$min', new BsonDocument('count', new BsonInt32(10))))
+                .hint(new BsonDocument('count', new BsonInt32(1)))
 
         when:
         def count = executeAndCollectBatchCursorResults(operation, async).size()
