@@ -321,18 +321,24 @@ public class DBCursorTest extends DatabaseTestCase {
 
     @Test
     public void testMax() {
+        collection.createIndex(new BasicDBObject("x", 1));
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                     .addSpecial("$max", new BasicDBObject("x", 4)), 4);
+                     .addSpecial("$max", new BasicDBObject("x", 4))
+                     .addSpecial("$hint", new BasicDBObject("x", 1)), 4);
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                     .max(new BasicDBObject("x", 4)), 4);
+                     .max(new BasicDBObject("x", 4))
+                     .hint(new BasicDBObject("x", 1)), 4);
     }
 
     @Test
     public void testMin() {
+        collection.createIndex(new BasicDBObject("x", 1));
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                     .addSpecial("$min", new BasicDBObject("x", 4)), 6);
+                     .addSpecial("$min", new BasicDBObject("x", 4))
+                     .addSpecial("$hint", new BasicDBObject("x", 1)), 6);
         countResults(new DBCursor(collection, new BasicDBObject(), new BasicDBObject(), ReadPreference.primary())
-                     .min(new BasicDBObject("x", 4)), 6);
+                     .min(new BasicDBObject("x", 4))
+                     .hint(new BasicDBObject("x", 1)), 6);
     }
 
     @Test
