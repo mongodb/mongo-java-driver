@@ -40,7 +40,6 @@ import static org.junit.Assume.assumeTrue;
 // See https://github.com/mongodb/specifications/blob/master/source/transactions/tests/README.rst#mongos-pinning-prose-tests
 public class TransactionProseTest {
     private MongoClient client;
-    private MongoDatabase database;
     private MongoCollection<Document> collection;
 
     @Before
@@ -66,8 +65,7 @@ public class TransactionProseTest {
                 })
                 .build());
 
-        database = client.getDatabase(getDefaultDatabaseName());
-        collection = database.getCollection(getClass().getName());
+        collection = client.getDatabase(getDefaultDatabaseName()).getCollection(getClass().getName());
         collection.drop();
     }
 
@@ -93,7 +91,7 @@ public class TransactionProseTest {
             collection.insertOne(session, Document.parse("{ _id : 1 }"));
             session.commitTransaction();
 
-            Set<FindIterable> addresses = new HashSet<FindIterable>();
+            Set<FindIterable<Document>> addresses = new HashSet<FindIterable<Document>>();
             int iterations = 50;
             while (iterations-- > 0) {
                 session.startTransaction();
@@ -121,7 +119,7 @@ public class TransactionProseTest {
             session.startTransaction();
             collection.insertOne(session, Document.parse("{ _id : 1 }"));
 
-            Set<FindIterable> addresses = new HashSet<FindIterable>();
+            Set<FindIterable<Document>> addresses = new HashSet<FindIterable<Document>>();
             int iterations = 50;
             while (iterations-- > 0) {
                 addresses.add(collection.find(session, Document.parse("{}")));
