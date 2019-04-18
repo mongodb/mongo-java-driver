@@ -922,8 +922,8 @@ public class ConnectionString {
             }
             return false;
         } else {
-            LOGGER.warn(format("Ignoring unrecognized boolean value '%s' in the connection string for '%s'. " +
-                            "Replace with either 'true' or 'false'", trimmedInput, key));
+            LOGGER.warn(format("Ignoring unrecognized boolean value '%s' in the connection string for '%s'. "
+                    + "Replace with either 'true' or 'false'", trimmedInput, key));
             return null;
         }
     }
