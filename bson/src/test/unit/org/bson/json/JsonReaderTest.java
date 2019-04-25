@@ -32,12 +32,12 @@ import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
+import java.nio.charset.Charset;
 import java.text.ParsePosition;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.function.Function;
 
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertArrayEquals;
@@ -48,6 +48,12 @@ import static org.junit.Assert.fail;
 
 
 public class JsonReaderTest {
+
+    // Define our own until Java 8 is the minimum supported version
+    interface Function<T, R> {
+       R apply(T t);
+    }
+
     @Test
     public void testArrayEmpty() {
         String json = "[]";
@@ -1487,7 +1493,8 @@ public class JsonReaderTest {
             assertEquals(exClass, e.getClass());
         }
         try {
-            testFunc.apply(new JsonReader(new InputStreamReader(new ByteArrayInputStream(json.getBytes()))));
+            testFunc.apply(new JsonReader(new InputStreamReader(new ByteArrayInputStream(json.getBytes(Charset.forName("UTF-8"))),
+                    Charset.forName("UTF-8"))));
         } catch (final RuntimeException e) {
             if (exClass == null) {
                 throw e;
