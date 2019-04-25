@@ -28,9 +28,10 @@ import com.mongodb.connection.Stream;
 import org.bson.ByteBuf;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.SocketTimeoutException;
-import java.nio.ByteBuffer;
 import java.nio.channels.SocketChannel;
 import java.util.Iterator;
 import java.util.List;
@@ -44,6 +45,8 @@ public class SocketChannelStream implements Stream {
     private final SslSettings sslSettings;
     private final BufferProvider bufferProvider;
     private volatile SocketChannel socketChannel;
+    private volatile OutputStream outputStream;
+    private volatile InputStream inputStream;
     private volatile boolean isClosed;
 
     public SocketChannelStream(final ServerAddress address, final SocketSettings settings, final SslSettings sslSettings,
@@ -58,6 +61,8 @@ public class SocketChannelStream implements Stream {
     public void open() {
         try {
             socketChannel = initializeSocketChannel();
+            outputStream = socketChannel.socket().getOutputStream();
+            inputStream = socketChannel.socket().getInputStream();
         } catch (IOException e) {
             close();
             throw new MongoSocketOpenException("Exception opening socket", getAddress(), e);
@@ -90,16 +95,8 @@ public class SocketChannelStream implements Stream {
     public void write(final List<ByteBuf> buffers) throws IOException {
         isTrue("open", !isClosed());
 
-        int totalSize = 0;
-        ByteBuffer[] byteBufferArray = new ByteBuffer[buffers.size()];
-        for (int i = 0; i < buffers.size(); i++) {
-            byteBufferArray[i] = buffers.get(i).asNIO();
-            totalSize += byteBufferArray[i].limit();
-        }
-
-        long bytesRead = 0;
-        while (bytesRead < totalSize) {
-            bytesRead += socketChannel.write(byteBufferArray);
+        for (final ByteBuf cur : buffers) {
+            outputStream.write(cur.array(), 0, cur.limit());
         }
     }
 
@@ -109,15 +106,16 @@ public class SocketChannelStream implements Stream {
         isTrue("open", !isClosed());
 
         int totalBytesRead = 0;
-        while (totalBytesRead < buffer.limit()) {
-            int bytesRead = socketChannel.read(buffer.asNIO());
+        byte[] bytes = buffer.array();
+        while (totalBytesRead < numBytes) {
+            int bytesRead = inputStream.read(bytes, totalBytesRead, numBytes - totalBytesRead);
             if (bytesRead == -1) {
                 buffer.release();
                 throw new MongoSocketReadException("Prematurely reached end of stream", getAddress());
             }
             totalBytesRead += bytesRead;
         }
-        return buffer.flip();
+        return buffer;
     }
 
     @Override
