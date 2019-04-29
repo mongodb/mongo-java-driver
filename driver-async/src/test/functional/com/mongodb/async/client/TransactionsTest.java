@@ -26,6 +26,7 @@ import com.mongodb.MongoWriteConcernException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadConcernLevel;
 import com.mongodb.ReadPreference;
+import com.mongodb.ServerAddress;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.FutureResultCallback;
@@ -95,6 +96,7 @@ public class TransactionsTest {
     private HashMap<String, BsonDocument> lsidMap;
     private boolean useMultipleMongoses = false;
     private ConnectionString connectionString;
+    private final String collectionName = "test";
 
     private static final long MIN_HEARTBEAT_FREQUENCY_MS = 50L;
 
@@ -113,7 +115,6 @@ public class TransactionsTest {
         assumeTrue("Skipping test: " + definition.getString("skipReason", new BsonString("")).getValue(),
                 !definition.containsKey("skipReason"));
 
-        String collectionName = "test";
         collectionHelper = new CollectionHelper<Document>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
 
         collectionHelper.killAllSessions();
@@ -186,6 +187,12 @@ public class TransactionsTest {
         mongoClient = MongoClients.create(builder.build());
 
         MongoDatabase database = mongoClient.getDatabase(databaseName);
+
+        if (useMultipleMongoses) {
+            // non-transactional distinct operation to avoid StaleDbVersion error
+            runDistinctOnEachNode();
+        }
+
         helper = new JsonPoweredCrudTestHelper(description, database, database.getCollection(collectionName, BsonDocument.class));
 
         ClientSession sessionZero = createSession("session0");
@@ -257,6 +264,34 @@ public class TransactionsTest {
             }
         }
         return builder.build();
+    }
+
+    private void runDistinctOnEachNode() {
+        List<String> hosts = connectionString.getHosts();
+        for (String host : hosts) {
+            runDistinctOnHost(host);
+        }
+    }
+
+    private void runDistinctOnHost(final String host) {
+        MongoClient client = MongoClients.create(MongoClientSettings.builder()
+                .applyConnectionString(connectionString)
+                .clusterSettings(ClusterSettings.builder()
+                        .hosts(singletonList(new ServerAddress(host))).build()).build());
+        DistinctIterable<BsonValue> iterable = client.getDatabase(databaseName).getCollection(collectionName)
+                .distinct("_id", BsonValue.class);
+        FutureResultCallback<List<BsonValue>> futureResultCallback = new FutureResultCallback<List<BsonValue>>();
+        iterable.into(new BsonArray(), futureResultCallback);
+
+        try {
+            futureResultCallback.get();
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Interrupted", e);
+        } finally {
+            client.close();
+        }
     }
 
     @After
