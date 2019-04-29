@@ -27,6 +27,7 @@ import com.mongodb.MongoWriteConcernException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadConcernLevel;
 import com.mongodb.ReadPreference;
+import com.mongodb.ServerAddress;
 import com.mongodb.TransactionOptions;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.CreateCollectionOptions;
@@ -89,6 +90,7 @@ public abstract class AbstractTransactionsTest {
     private Map<String, BsonDocument> lsidMap;
     private boolean useMultipleMongoses = false;
     private ConnectionString connectionString = null;
+    private final String collectionName = "test";
 
     private static final long MIN_HEARTBEAT_FREQUENCY_MS = 50L;
 
@@ -107,7 +109,6 @@ public abstract class AbstractTransactionsTest {
         assumeTrue("Skipping test: " + definition.getString("skipReason", new BsonString("")).getValue(),
                 !definition.containsKey("skipReason"));
 
-        String collectionName = "test";
         collectionHelper = new CollectionHelper<Document>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
 
         collectionHelper.killAllSessions();
@@ -135,6 +136,7 @@ public abstract class AbstractTransactionsTest {
             connectionString = getMultiMongosConnectionString();
             assumeTrue("The system property org.mongodb.test.transaction.uri is not set.", connectionString != null);
         }
+
         MongoClientSettings.Builder builder = getMongoClientSettingsBuilder()
                 .applyConnectionString(connectionString)
                 .addCommandListener(commandListener)
@@ -166,6 +168,12 @@ public abstract class AbstractTransactionsTest {
         mongoClient = MongoClients.create(builder.build());
 
         MongoDatabase database = mongoClient.getDatabase(databaseName);
+
+        if (useMultipleMongoses) {
+            // non-transactional distinct operation to avoid StaleDbVersion error
+            runDistinctOnEachNode();
+        }
+
         helper = new JsonPoweredCrudTestHelper(description, database, database.getCollection(collectionName, BsonDocument.class));
 
         ClientSession sessionZero = createSession("session0");
@@ -232,6 +240,26 @@ public abstract class AbstractTransactionsTest {
             }
         }
         return builder.build();
+    }
+
+    private void runDistinctOnEachNode() {
+        List<String> hosts = connectionString.getHosts();
+        for (String host : hosts) {
+            runDistinctOnHost(host);
+        }
+    }
+
+    private void runDistinctOnHost(final String host) {
+        MongoClient client = MongoClients.create(MongoClientSettings.builder()
+                .applyConnectionString(connectionString)
+                .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
+                    @Override
+                    public void apply(final ClusterSettings.Builder builder) {
+                        builder.hosts(singletonList(new ServerAddress(host)));
+                    }
+                }).build());
+        client.getDatabase(databaseName).getCollection(collectionName).distinct("_id", BsonValue.class).into(new BsonArray());
+        client.close();
     }
 
     @After
