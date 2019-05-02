@@ -286,8 +286,8 @@ class DefaultConnectionPool implements ConnectionPool {
     }
 
     private MongoWaitQueueFullException createWaitQueueFullException() {
-        return new MongoWaitQueueFullException(format("Too many threads are already waiting for a connection. "
-                                                      + "Max number of threads (maxWaitQueueSize) of %d has been exceeded.",
+        return new MongoWaitQueueFullException(format("Too many operations are already waiting for a connection. "
+                                                      + "Max number of operations (maxWaitQueueSize) of %d has been exceeded.",
                                                       settings.getMaxWaitQueueSize()));
     }
 
