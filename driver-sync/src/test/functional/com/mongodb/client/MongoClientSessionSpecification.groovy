@@ -24,8 +24,8 @@ import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.TransactionOptions
 import com.mongodb.WriteConcern
-import com.mongodb.internal.connection.TestCommandListener
 import com.mongodb.event.CommandStartedEvent
+import com.mongodb.internal.connection.TestCommandListener
 import org.bson.BsonBinarySubType
 import org.bson.BsonDocument
 import org.bson.BsonInt32
@@ -363,12 +363,14 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
     @IgnoreIf({ !serverVersionAtLeast(4, 0) || !isDiscoverableReplicaSet() })
     def 'should ignore unacknowledged write concern when in a transaction'() {
         given:
+        def collection = getMongoClient().getDatabase(getDatabaseName()).getCollection(getCollectionName())
+        collection.insertOne(new Document())
+
         def session = getMongoClient().startSession()
         session.startTransaction()
 
         when:
-        getMongoClient().getDatabase(getDatabaseName()).getCollection(getCollectionName())
-                .withWriteConcern(WriteConcern.UNACKNOWLEDGED)
+        collection.withWriteConcern(WriteConcern.UNACKNOWLEDGED)
                 .insertOne(session, new Document())
 
         then:
