@@ -20,6 +20,9 @@ in this file. Those tests will need to be manually implemented by each driver.
 Server Fail Point
 =================
 
+failCommand
+```````````
+
 Some tests depend on a server fail point, expressed in the ``failPoint`` field.
 For example the ``failCommand`` fail point allows the client to force the
 server to return an error. Keep in mind that the fail point only triggers for
@@ -72,9 +75,26 @@ Test Format
 
 Each YAML file has the following keys:
 
-- ``topology``: Optional. An array of server topologies against which to run
-  the test. Valid topologies are "single", "replicaset" and "sharded". The
-  default is all topologies (ie ``[single, replicaset", sharded]``).
+- ``runOn`` (optional): An array of server version and/or topology requirements
+  for which the tests can be run. If the test environment satisfies one or more
+  of these requirements, the tests may be executed; otherwise, this file should
+  be skipped. If this field is omitted, the tests can be assumed to have no
+  particular requirements and should be executed. Each element will have some or
+  all of the following fields:
+
+  - ``minServerVersion`` (optional): The minimum server version (inclusive)
+    required to successfully run the tests. If this field is omitted, it should
+    be assumed that there is no lower bound on the required server version.
+
+  - ``maxServerVersion`` (optional): The maximum server version (inclusive)
+    against which the tests can be run successfully. If this field is omitted,
+    it should be assumed that there is no upper bound on the required server
+    version.
+
+  - ``topology`` (optional): An array of server topologies against which the
+    tests can be run successfully. Valid topologies are "single", "replicaset",
+    and "sharded". If this field is omitted, the default is all topologies (i.e.
+    ``["single", "replicaset", "sharded"]``).
 
 - ``database_name`` and ``collection_name``: The database and collection to use
   for testing.
@@ -90,14 +110,16 @@ Each YAML file has the following keys:
   - ``skipReason``: Optional, string describing why this test should be
     skipped.
 
-  - ``useMultipleMongoses``: Optional, boolean. If true and this test is
-    running against a sharded cluster, intialize the MongoClient for this
-    test with multiple mongos seed addresses.
+  - ``useMultipleMongoses`` (optional): If ``true``, the MongoClient for this
+    test should be initialized with multiple mongos seed addresses. If ``false``
+    or omitted, only a single mongos address should be specified. This field has
+    no effect for non-sharded topologies.
 
   - ``clientOptions``: Optional, parameters to pass to MongoClient().
 
   - ``failPoint``: Optional, a server failpoint to enable expressed as the
-    configureFailPoint command to run on the admin database.
+    configureFailPoint command to run on the admin database. This option and
+    ``useMultipleMongoses: true`` are mutually exclusive.
 
   - ``sessionOptions``: Optional, parameters to pass to
     MongoClient.startSession().
@@ -148,7 +170,7 @@ Each YAML file has the following keys:
       - ``data``: The data that should exist in the collection after the
         operations have run.
 
-Use as integration tests
+Use as Integration Tests
 ========================
 
 Run a MongoDB replica set with a primary, a secondary, and an arbiter,
@@ -171,6 +193,12 @@ Then for each element in ``tests``:
    ``client.admin.runCommand({killAllSessions: []})`` to clean up any open
    transactions from previous test failures.
 
+   - Running ``killAllSessions`` cleans up any open transactions from
+     a previously failed test to prevent the current test from blocking.
+     It is sufficient to run this command once before starting the test suite
+     and once after each failed test.
+   - When testing against a sharded cluster run this command on ALL mongoses.
+
 #. Create a collection object from the MongoClient, using the ``database_name``
    and ``collection_name`` fields of the YAML file.
 #. Drop the test collection, using writeConcern "majority".
@@ -179,11 +207,11 @@ Then for each element in ``tests``:
    create it explicitly.)
 #. If the YAML file contains a ``data`` array, insert the documents in ``data``
    into the test collection, using writeConcern "majority".
+#. When testing against a sharded cluster run a ``distinct`` command on the
+   newly created collection on all mongoses. For an explanation see,
+   `Why do tests that run distinct sometimes fail with StaleDbVersion?`_
 #. If ``failPoint`` is specified, its value is a configureFailPoint command.
    Run the command on the admin database to enable the fail point.
-
-   - When testing against a sharded cluster run this command on ALL mongoses.
-
 #. Create a **new** MongoClient ``client``, with Command Monitoring listeners
    enabled. (Using a new MongoClient for each test ensures a fresh session pool
    that hasn't executed any transactions previously, so the tests can assert
@@ -253,8 +281,6 @@ Then for each element in ``tests``:
         mode: "off"
     });
 
-   - When testing against a sharded cluster run this command on ALL mongoses.
-
 #. For each element in ``outcome``:
 
    - If ``name`` is "collection", verify that the test collection contains
@@ -278,6 +304,15 @@ point on a specific mongos. The mongos to run the ``configureFailPoint`` is
 determined by the "session" argument (either "session0" or "session1").
 The session must already be pinned to a mongos server. The "failPoint" argument
 is the ``configureFailPoint`` command to run.
+
+If a test uses ``targetedFailPoint``, disable the fail point after running
+all ``operations`` to avoid spurious failures in subsequent tests. The fail
+point may be disabled like so::
+
+    db.adminCommand({
+        configureFailPoint: <fail point name>,
+        mode: "off"
+    });
 
 Here is an example which instructs the test runner to enable the failCommand
 fail point on the mongos server which "session0" is pinned to::
@@ -438,7 +473,9 @@ attempt fails on mongos A and is retried on mongos B, mongos B will block
 waiting for the transaction to complete. However because the initial commit
 attempt failed, the command will only complete after the transaction is
 automatically aborted for exceeding the shard's
-transactionLifetimeLimitSeconds setting.
+transactionLifetimeLimitSeconds setting. `SERVER-39726`_ requests that
+recovering the outcome of an uncommitted transaction should immediately abort
+the transaction.
 
 The second case is when a *single-shard* transaction is committed successfully
 on mongos A and then explicitly committed again on mongos B. Mongos B will also
@@ -454,11 +491,46 @@ prematurely timing out any tests' transactions. To decrease the timeout, run::
 
   db.adminCommand( { setParameter: 1, transactionLifetimeLimitSeconds: 3 } )
 
+Note that mongo-orchestration >=0.6.13 automatically sets this timeout to 3
+seconds so drivers using mongo-orchestration do not need to run these commands
+manually.
+
+.. _SERVER-39726: https://jira.mongodb.org/browse/SERVER-39726
+
 .. _SERVER-39349: https://jira.mongodb.org/browse/SERVER-39349
 
-**Changelog**
--------------
+Why do tests that run distinct sometimes fail with StaleDbVersion?
+``````````````````````````````````````````````````````````````````
 
+When a shard receives its first command that contains a dbVersion, the shard
+returns a StaleDbVersion error and the Mongos retries the operation. In a
+sharded transaction, Mongos does not retry these operations and instead returns
+the error to the client. For example::
+
+  Command distinct failed: Transaction aa09e296-472a-494f-8334-48d57ab530b6:1 was aborted on statement 0 due to: an error from cluster data placement change :: caused by :: got stale databaseVersion response from shard sh01 at host localhost:27217 :: caused by :: don't know dbVersion.
+
+To workaround this limitation, a driver test runner MUST run a
+non-transactional ``distinct`` command on each Mongos before running any test
+that uses ``distinct``. To ease the implementation drivers can simply run
+``distinct`` before *every* test.
+
+Note that drivers can remove this workaround once `SERVER-39704`_ is resolved
+so that mongos retries this operation transparently. The ``distinct`` command
+is the only command allowed in a sharded transaction that uses the
+``dbVersion`` concept so it is the only command affected.
+
+.. _SERVER-39704: https://jira.mongodb.org/browse/SERVER-39704
+
+Changelog
+=========
+
+:2019-03-25: Add workaround for StaleDbVersion on distinct.
+:2019-03-01: Add top-level ``runOn`` field to denote server version and/or
+             topology requirements requirements for the test file. Removes the
+             ``topology`` top-level field, which is now expressed within
+             ``runOn`` elements.
+:2019-02-28: ``useMultipleMongoses: true`` and non-targeted fail points are
+             mutually exclusive.
 :2019-02-13: Modify test format for 4.2 sharded transactions, including
              "useMultipleMongoses", ``object: testRunner``, the
              ``targetedFailPoint`` operation, and recoveryToken assertions.

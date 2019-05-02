@@ -1,6 +1,11 @@
 {
-  "topology": [
-    "sharded"
+  "runOn": [
+    {
+      "minServerVersion": "4.1.8",
+      "topology": [
+        "sharded"
+      ]
+    }
   ],
   "database_name": "transaction-tests",
   "collection_name": "test",
@@ -131,18 +136,6 @@
       "description": "distinct",
       "useMultipleMongoses": true,
       "operations": [
-        {
-          "name": "distinct",
-          "object": "collection",
-          "arguments": {
-            "fieldName": "_id",
-            "session": "session0"
-          },
-          "result": [
-            1,
-            2
-          ]
-        },
         {
           "name": "startTransaction",
           "object": "session0"
@@ -1080,7 +1073,7 @@
       "description": "unpin after transient error within a transaction and commit",
       "useMultipleMongoses": true,
       "clientOptions": {
-        "heartbeatFrequencyMS": 5000
+        "heartbeatFrequencyMS": 30000
       },
       "operations": [
         {
