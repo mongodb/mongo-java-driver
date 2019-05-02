@@ -430,12 +430,14 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
     @IgnoreIf({ !serverVersionAtLeast(4, 0) || !isDiscoverableReplicaSet() })
     def 'should ignore unacknowledged write concern when in a transaction'() {
         given:
+        def collection = getMongoClient().getDatabase(getDatabaseName()).getCollection(getCollectionName())
+        collection.insertOne(new Document())
+
         def session = getMongoClient().startSession()
         session.startTransaction()
 
         when:
-        getMongoClient().getDatabase(getDatabaseName()).getCollection(getCollectionName())
-                .withWriteConcern(WriteConcern.UNACKNOWLEDGED)
+        collection.withWriteConcern(WriteConcern.UNACKNOWLEDGED)
                 .insertOne(session, new Document())
 
         then:

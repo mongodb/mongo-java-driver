@@ -36,6 +36,7 @@ import com.mongodb.connection.Connection;
 import com.mongodb.internal.connection.MongoWriteConcernWithResponseException;
 import com.mongodb.internal.connection.ProtocolHelper;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
+import com.mongodb.session.SessionContext;
 import org.bson.BsonDocument;
 import org.bson.FieldNameValidator;
 
@@ -194,12 +195,12 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         return withReleasableConnection(binding, new CallableWithConnectionAndSource<BulkWriteResult>() {
             @Override
             public BulkWriteResult call(final ConnectionSource connectionSource, final Connection connection) {
-                validateWriteRequestsAndReleaseConnectionIfError(connection);
+                validateWriteRequestsAndReleaseConnectionIfError(binding, connection);
 
                 if (getWriteConcern().isAcknowledged() || serverIsAtLeastVersionThreeDotSix(connection.getDescription())) {
                     BulkWriteBatch bulkWriteBatch = BulkWriteBatch.createBulkWriteBatch(namespace, connectionSource.getServerDescription(),
-                            connection.getDescription(), ordered, writeConcern, bypassDocumentValidation, retryWrites, writeRequests,
-                            binding.getSessionContext());
+                            connection.getDescription(), ordered, getAppliedWriteConcern(binding), bypassDocumentValidation, retryWrites,
+                            writeRequests, binding.getSessionContext());
                     return executeBulkWriteBatch(binding, connection, bulkWriteBatch);
                 } else {
                     return executeLegacyBatches(connection);
@@ -217,7 +218,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 if (t != null) {
                     errHandlingCallback.onResult(null, t);
                 } else {
-                    validateWriteRequests(connection, bypassDocumentValidation, writeRequests, writeConcern,
+                    validateWriteRequests(connection, bypassDocumentValidation, writeRequests, getAppliedWriteConcern(binding),
                             new AsyncCallableWithConnection() {
                                 @Override
                                 public void call(final AsyncConnection connection, final Throwable t1) {
@@ -227,12 +228,12 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                                     if (t1 != null) {
                                         releasingCallback.onResult(null, t1);
                                     } else {
-                                        if (writeConcern.isAcknowledged()
+                                        if (getAppliedWriteConcern(binding).isAcknowledged()
                                                 || serverIsAtLeastVersionThreeDotSix(connection.getDescription())) {
                                             try {
                                                 BulkWriteBatch batch = BulkWriteBatch.createBulkWriteBatch(namespace,
-                                                        source.getServerDescription(), connection.getDescription(), ordered, writeConcern,
-                                                        bypassDocumentValidation,
+                                                        source.getServerDescription(), connection.getDescription(), ordered,
+                                                        getAppliedWriteConcern(binding), bypassDocumentValidation,
                                                         retryWrites, writeRequests, binding.getSessionContext());
                                                 executeBatchesAsync(binding, connection, batch, retryWrites, releasingCallback);
                                             } catch (Throwable t) {
@@ -301,8 +302,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         return withReleasableConnection(binding, originalError, new CallableWithConnectionAndSource<BulkWriteResult>() {
             @Override
             public BulkWriteResult call(final ConnectionSource source, final Connection connection) {
-                if (!isRetryableWrite(retryWrites, writeConcern, source.getServerDescription(), connection.getDescription(),
-                        binding.getSessionContext())) {
+                if (!isRetryableWrite(retryWrites, getAppliedWriteConcern(binding), source.getServerDescription(),
+                        connection.getDescription(), binding.getSessionContext())) {
                     return checkMongoWriteConcernWithResponseException(connection);
                 } else {
                     try {
@@ -360,8 +361,8 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 } else {
                     final ConnectionReleasingWrappedCallback<BulkWriteResult> releasingCallback =
                             new ConnectionReleasingWrappedCallback<BulkWriteResult>(callback, source, connection);
-                    if (!isRetryableWrite(retryWrites, writeConcern, source.getServerDescription(), connection.getDescription(),
-                            binding.getSessionContext())) {
+                    if (!isRetryableWrite(retryWrites, getAppliedWriteConcern(binding), source.getServerDescription(),
+                            connection.getDescription(), binding.getSessionContext())) {
                         checkMongoWriteConcernWithResponseException(connection, releasingCallback);
                     } else {
                         executeCommandAsync(binding, connection, retryBatch, releasingCallback,
@@ -431,7 +432,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
 
     private BsonDocument executeCommand(final Connection connection, final BulkWriteBatch batch, final WriteBinding binding) {
         return connection.command(namespace.getDatabaseName(), batch.getCommand(), NO_OP_FIELD_NAME_VALIDATOR,
-                null, batch.getDecoder(), binding.getSessionContext(), shouldAcknowledge(batch, writeConcern),
+                null, batch.getDecoder(), binding.getSessionContext(), shouldAcknowledge(batch, binding.getSessionContext()),
                 batch.getPayload(), batch.getFieldNameValidator());
     }
 
@@ -440,15 +441,34 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                                      final SingleResultCallback<BsonDocument> commandCallback) {
         try {
             connection.commandAsync(namespace.getDatabaseName(), batch.getCommand(), NO_OP_FIELD_NAME_VALIDATOR,
-                    null, batch.getDecoder(), binding.getSessionContext(), shouldAcknowledge(batch, writeConcern),
+                    null, batch.getDecoder(), binding.getSessionContext(), shouldAcknowledge(batch, binding.getSessionContext()),
                     batch.getPayload(), batch.getFieldNameValidator(), commandCallback);
         } catch (Throwable t) {
             callback.onResult(null, t);
         }
     }
 
-    private boolean shouldAcknowledge(final BulkWriteBatch batch, final WriteConcern writeConcern) {
-        return ordered ? batch.hasAnotherBatch() || writeConcern.isAcknowledged() : writeConcern.isAcknowledged();
+
+    private WriteConcern getAppliedWriteConcern(final WriteBinding binding) {
+        return getAppliedWriteConcern(binding.getSessionContext());
+    }
+
+    private WriteConcern getAppliedWriteConcern(final AsyncWriteBinding binding) {
+        return getAppliedWriteConcern(binding.getSessionContext());
+    }
+
+    private WriteConcern getAppliedWriteConcern(final SessionContext sessionContext) {
+        if (sessionContext.hasActiveTransaction()) {
+            return WriteConcern.ACKNOWLEDGED;
+        } else {
+            return writeConcern;
+        }
+    }
+
+    private boolean shouldAcknowledge(final BulkWriteBatch batch, final SessionContext sessionContext) {
+        return ordered
+                ? batch.hasAnotherBatch() || getAppliedWriteConcern(sessionContext).isAcknowledged()
+                : getAppliedWriteConcern(sessionContext).isAcknowledged();
     }
 
     private SingleResultCallback<BsonDocument> getCommandCallback(final AsyncWriteBinding binding, final AsyncConnection connection,
@@ -508,9 +528,9 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
         }
     }
 
-    private void validateWriteRequestsAndReleaseConnectionIfError(final Connection connection) {
+    private void validateWriteRequestsAndReleaseConnectionIfError(final WriteBinding binding, final Connection connection) {
         try {
-            validateWriteRequests(connection.getDescription(), bypassDocumentValidation, writeRequests, writeConcern);
+            validateWriteRequests(connection.getDescription(), bypassDocumentValidation, writeRequests, getAppliedWriteConcern(binding));
         } catch (IllegalArgumentException e) {
             connection.release();
             throw e;
