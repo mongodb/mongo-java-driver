@@ -20,9 +20,9 @@ import com.mongodb.ServerAddress;
 import com.mongodb.TagSet;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
-import com.mongodb.lang.Nullable;
 import com.mongodb.internal.connection.DecimalFormatHelper;
 import com.mongodb.internal.connection.Time;
+import com.mongodb.lang.Nullable;
 import org.bson.types.ObjectId;
 
 import java.util.Collections;
@@ -56,7 +56,7 @@ public class ServerDescription {
      * The minimum supported driver wire version
      * @since 3.8
      */
-    public static final int MIN_DRIVER_WIRE_VERSION = 1;
+    public static final int MIN_DRIVER_WIRE_VERSION = 2;
     /**
      * The maximum supported driver wire version
      * @since 3.8
