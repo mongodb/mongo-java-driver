@@ -36,6 +36,7 @@ import static com.mongodb.connection.ClusterType.SHARDED
 import static com.mongodb.connection.ClusterType.UNKNOWN
 import static com.mongodb.connection.ServerConnectionState.CONNECTED
 import static com.mongodb.connection.ServerConnectionState.CONNECTING
+import static com.mongodb.connection.ServerDescription.MAX_DRIVER_WIRE_VERSION
 import static com.mongodb.connection.ServerType.REPLICA_SET_GHOST
 import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY
 import static com.mongodb.connection.ServerType.REPLICA_SET_SECONDARY
@@ -482,7 +483,7 @@ class MultiServerClusterSpecification extends Specification {
                 .setName('test')
                 .canonicalAddress(firstServer.toString())
                 .setVersion(1)
-                .maxWireVersion(1)
+                .maxWireVersion(MAX_DRIVER_WIRE_VERSION)
                 .build()
 
         when:

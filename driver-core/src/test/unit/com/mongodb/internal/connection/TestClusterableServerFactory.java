@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.mongodb.connection.ServerConnectionState.CONNECTED;
+import static com.mongodb.connection.ServerDescription.MAX_DRIVER_WIRE_VERSION;
 
 public class TestClusterableServerFactory implements ClusterableServerFactory {
     private final Map<ServerAddress, TestServer> addressToServerMap = new HashMap<ServerAddress, TestServer>();
@@ -155,7 +156,7 @@ public class TestClusterableServerFactory implements ClusterableServerFactory {
                                 .passives(passivesSet)
                                 .setName(setName)
                                 .electionId(electionId)
-                                .maxWireVersion(1)
+                                .maxWireVersion(MAX_DRIVER_WIRE_VERSION)
                                 .setVersion(1);
     }
 }
