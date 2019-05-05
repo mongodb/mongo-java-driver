@@ -84,4 +84,17 @@ class TagSetSpecification extends Specification {
         thrown(IllegalArgumentException)
     }
 
+    def 'should alphabetically order tags'() {
+        when:
+        def pTag = new Tag('p', '1')
+        def dcTag = new Tag('dc', 'ny')
+        def tagSet = new TagSet([pTag, dcTag])
+        def iter = tagSet.iterator()
+
+        then:
+        iter.next() == dcTag
+        iter.next() == pTag
+        !iter.hasNext()
+        tagSet == new TagSet([dcTag, pTag])
+    }
 }
