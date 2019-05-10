@@ -675,6 +675,30 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     }
 
     @Override
+    public void updateOne(final Bson filter, final List<? extends Bson> update, final SingleResultCallback<UpdateResult> callback) {
+        updateOne(filter, update, new UpdateOptions(), callback);
+    }
+
+    @Override
+    public void updateOne(final Bson filter, final List<? extends Bson> update, final UpdateOptions options,
+                          final SingleResultCallback<UpdateResult> callback) {
+        executeUpdate(null, filter, update, options, false, callback);
+    }
+
+    @Override
+    public void updateOne(final ClientSession clientSession, final Bson filter, final List<? extends Bson> update,
+                          final SingleResultCallback<UpdateResult> callback) {
+        updateOne(clientSession, filter, update, new UpdateOptions(), callback);
+    }
+
+    @Override
+    public void updateOne(final ClientSession clientSession, final Bson filter, final List<? extends Bson> update,
+                          final UpdateOptions options, final SingleResultCallback<UpdateResult> callback) {
+        notNull("clientSession", clientSession);
+        executeUpdate(clientSession, filter, update, options, false, callback);
+    }
+
+    @Override
     public void updateMany(final Bson filter, final Bson update, final SingleResultCallback<UpdateResult> callback) {
         updateMany(filter, update, new UpdateOptions(), callback);
     }
@@ -698,7 +722,47 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         executeUpdate(clientSession, filter, update, options, true, callback);
     }
 
+    @Override
+    public void updateMany(final Bson filter, final List<? extends Bson> update, final SingleResultCallback<UpdateResult> callback) {
+        updateMany(filter, update, new UpdateOptions(), callback);
+    }
+
+    @Override
+    public void updateMany(final Bson filter, final List<? extends Bson> update, final UpdateOptions options,
+                           final SingleResultCallback<UpdateResult> callback) {
+        executeUpdate(null, filter, update, options, true, callback);
+    }
+
+    @Override
+    public void updateMany(final ClientSession clientSession, final Bson filter, final List<? extends Bson> update,
+                           final SingleResultCallback<UpdateResult> callback) {
+        updateMany(clientSession, filter, update, new UpdateOptions(), callback);
+    }
+
+    @Override
+    public void updateMany(final ClientSession clientSession, final Bson filter, final List<? extends Bson> update,
+                           final UpdateOptions options, final SingleResultCallback<UpdateResult> callback) {
+        notNull("clientSession", clientSession);
+        executeUpdate(clientSession, filter, update, options, true, callback);
+    }
+
     private void executeUpdate(@Nullable final ClientSession clientSession, final Bson filter, final Bson update,
+                               final UpdateOptions options, final boolean multi, final SingleResultCallback<UpdateResult> callback) {
+        executeSingleWriteRequest(clientSession,
+                multi ? operations.updateMany(filter, update, options) : operations.updateOne(filter, update, options), UPDATE,
+                new SingleResultCallback<BulkWriteResult>() {
+                    @Override
+                    public void onResult(final BulkWriteResult result, final Throwable t) {
+                        if (t != null) {
+                            callback.onResult(null, t);
+                        } else {
+                            callback.onResult(toUpdateResult(result), null);
+                        }
+                    }
+                });
+    }
+
+    private void executeUpdate(@Nullable final ClientSession clientSession, final Bson filter, final List<? extends Bson> update,
                                final UpdateOptions options, final boolean multi, final SingleResultCallback<UpdateResult> callback) {
         executeSingleWriteRequest(clientSession,
                 multi ? operations.updateMany(filter, update, options) : operations.updateOne(filter, update, options), UPDATE,
@@ -794,7 +858,36 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         executeFindOneAndUpdate(clientSession, filter, update, options, callback);
     }
 
+    @Override
+    public void findOneAndUpdate(final Bson filter, final List<? extends Bson> update, final SingleResultCallback<TDocument> callback) {
+        findOneAndUpdate(filter, update, new FindOneAndUpdateOptions(), callback);
+    }
+
+    @Override
+    public void findOneAndUpdate(final Bson filter, final List<? extends Bson> update, final FindOneAndUpdateOptions options,
+                                 final SingleResultCallback<TDocument> callback) {
+        executeFindOneAndUpdate(null, filter, update, options, callback);
+    }
+
+    @Override
+    public void findOneAndUpdate(final ClientSession clientSession, final Bson filter, final List<? extends Bson> update,
+                                 final SingleResultCallback<TDocument> callback) {
+        findOneAndUpdate(clientSession, filter, update, new FindOneAndUpdateOptions(), callback);
+    }
+
+    @Override
+    public void findOneAndUpdate(final ClientSession clientSession, final Bson filter, final List<? extends Bson> update,
+                                 final FindOneAndUpdateOptions options, final SingleResultCallback<TDocument> callback) {
+        notNull("clientSession", clientSession);
+        executeFindOneAndUpdate(clientSession, filter, update, options, callback);
+    }
+
     private void executeFindOneAndUpdate(@Nullable final ClientSession clientSession, final Bson filter, final Bson update,
+                                         final FindOneAndUpdateOptions options, final SingleResultCallback<TDocument> callback) {
+        executor.execute(operations.findOneAndUpdate(filter, update, options), readConcern, clientSession, callback);
+    }
+
+    private void executeFindOneAndUpdate(@Nullable final ClientSession clientSession, final Bson filter, final List<? extends Bson> update,
                                          final FindOneAndUpdateOptions options, final SingleResultCallback<TDocument> callback) {
         executor.execute(operations.findOneAndUpdate(filter, update, options), readConcern, clientSession, callback);
     }

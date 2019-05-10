@@ -28,6 +28,7 @@ import com.mongodb.client.model.ValidationOptions
 import com.mongodb.client.test.CollectionHelper
 import com.mongodb.client.test.Worker
 import com.mongodb.client.test.WorkerCodec
+import org.bson.BsonArray
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonDocumentWrapper
@@ -54,6 +55,8 @@ import static com.mongodb.client.model.Filters.gte
 import static com.mongodb.WriteConcern.ACKNOWLEDGED
 import static com.mongodb.connection.ServerType.REPLICA_SET_PRIMARY
 import static com.mongodb.connection.ServerType.STANDALONE
+import static java.util.Arrays.asList
+import static java.util.Collections.singletonList
 
 class FindAndUpdateOperationSpecification extends OperationFunctionalSpecification {
     private final DocumentCodec documentCodec = new DocumentCodec()
@@ -77,7 +80,26 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         operation.getCollation() == null
     }
 
-    def 'should set optional values correctly'(){
+    @IgnoreIf({ !serverVersionAtLeast(asList(4, 1, 11)) })
+    def 'should have the correct defaults and passed values using update pipelines'() {
+        when:
+        def updatePipeline = new BsonArray(singletonList(new BsonDocument('update', new BsonInt32(1))))
+        def operation = new FindAndUpdateOperation<Document>(getNamespace(), ACKNOWLEDGED, false, documentCodec, updatePipeline)
+
+        then:
+        operation.getNamespace() == getNamespace()
+        operation.getWriteConcern() == ACKNOWLEDGED
+        operation.getDecoder() == documentCodec
+        operation.getUpdatePipeline() == updatePipeline
+        operation.getFilter() == null
+        operation.getSort() == null
+        operation.getProjection() == null
+        operation.getMaxTime(TimeUnit.SECONDS) == 0
+        operation.getBypassDocumentValidation() == null
+        operation.getCollation() == null
+    }
+
+    def 'should set optional values correctly'() {
         given:
         def filter = new BsonDocument('filter', new BsonInt32(1))
         def sort = new BsonDocument('sort', new BsonInt32(1))
@@ -86,6 +108,32 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         when:
         def operation = new FindAndUpdateOperation<Document>(getNamespace(), ACKNOWLEDGED, false, documentCodec,
                 new BsonDocument('update', new BsonInt32(1))).filter(filter).sort(sort).projection(projection)
+                .bypassDocumentValidation(true).maxTime(1, TimeUnit.SECONDS).upsert(true)
+                .returnOriginal(false)
+                .collation(defaultCollation)
+
+        then:
+        operation.getFilter() == filter
+        operation.getSort() == sort
+        operation.getProjection() == projection
+        operation.upsert == true
+        operation.getMaxTime(TimeUnit.SECONDS) == 1
+        operation.getBypassDocumentValidation()
+        !operation.isReturnOriginal()
+        operation.getCollation() == defaultCollation
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(4, 1, 11)) })
+    def 'should set optional values correctly when using update pipelines'(){
+        given:
+        def filter = new BsonDocument('filter', new BsonInt32(1))
+        def sort = new BsonDocument('sort', new BsonInt32(1))
+        def projection = new BsonDocument('projection', new BsonInt32(1))
+
+        when:
+        def operation = new FindAndUpdateOperation<Document>(getNamespace(), ACKNOWLEDGED, false, documentCodec,
+                new BsonArray(singletonList(new BsonDocument('update', new BsonInt32(1)))))
+                        .filter(filter).sort(sort).projection(projection)
                 .bypassDocumentValidation(true).maxTime(1, TimeUnit.SECONDS).upsert(true)
                 .returnOriginal(false)
                 .collation(defaultCollation)
@@ -134,6 +182,38 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(asList(4, 1, 11)) })
+    def 'should add field using update pipeline'() {
+        given:
+        CollectionHelper<Document> helper = new CollectionHelper<Document>(documentCodec, getNamespace())
+        Document pete = new Document('name', 'Pete').append('numberOfJobs', 3)
+        Document sam = new Document('name', 'Sam').append('numberOfJobs', 5)
+
+        helper.insertDocuments(new DocumentCodec(), pete, sam)
+
+        when:
+        def update = new BsonArray(singletonList(new BsonDocument('$addFields', new BsonDocument('foo', new BsonInt32(1)))))
+        def operation = new FindAndUpdateOperation<Document>(getNamespace(), ACKNOWLEDGED, false, documentCodec, update)
+                .filter(new BsonDocument('name', new BsonString('Pete')))
+                .returnOriginal(false)
+        Document returnedDocument = execute(operation, false)
+
+        then:
+        returnedDocument.getInteger('numberOfJobs') == 3
+        helper.find().get(0).getInteger('foo') == 1
+
+        when:
+        update = new BsonArray(singletonList(new BsonDocument('$addFields', new BsonDocument('foo', new BsonInt32(1)))))
+        operation = new FindAndUpdateOperation<Document>(getNamespace(), ACKNOWLEDGED, false, documentCodec, update)
+                .filter(new BsonDocument('name', new BsonString('Pete')))
+                .returnOriginal(false)
+        returnedDocument = execute(operation, false)
+
+        then:
+        returnedDocument.getInteger('numberOfJobs') == 3
+        helper.find().get(0).getInteger('foo') == 1
+    }
+
     def 'should update single document when using custom codecs'() {
         given:
         CollectionHelper<Worker> helper = new CollectionHelper<Worker>(workerCodec, getNamespace())
@@ -162,6 +242,30 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
 
         then:
         returnedDocument.numberOfJobs == 5
+
+        where:
+        async << [true, false]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(asList(4, 1, 11)) })
+    def 'should update using pipeline when using custom codecs'() {
+        given:
+        CollectionHelper<Document> helper = new CollectionHelper<Document>(documentCodec, getNamespace())
+        Document pete = new Document('name', 'Pete').append('numberOfJobs', 3)
+        Document sam = new Document('name', 'Sam').append('numberOfJobs', 5)
+
+        helper.insertDocuments(new DocumentCodec(), pete, sam)
+
+        when:
+        def update = new BsonArray(singletonList(new BsonDocument('$project', new BsonDocument('name', new BsonInt32(1)))))
+        def operation = new FindAndUpdateOperation<Document>(getNamespace(), ACKNOWLEDGED, false, documentCodec, update)
+                .filter(new BsonDocument('name', new BsonString('Pete')))
+                .returnOriginal(false)
+        Document returnedDocument = execute(operation, async)
+
+        then:
+        returnedDocument.getString('name') == 'Pete'
+        !returnedDocument.containsKey('numberOfJobs')
 
         where:
         async << [true, false]
@@ -196,7 +300,28 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
+    @IgnoreIf({ !serverVersionAtLeast(asList(4, 1, 11)) })
+    def 'should throw an exception if update pipeline contains operations that are not supported'() {
+        when:
+        def update = new BsonArray(singletonList(new BsonDocument('$foo', new BsonDocument('x', new BsonInt32(1)))))
+        def operation = new FindAndUpdateOperation<Document>(getNamespace(), ACKNOWLEDGED, false, documentCodec, update)
+        execute(operation, async)
+
+        then:
+        thrown(MongoCommandException)
+
+        when:
+        update = singletonList(new BsonInt32(1))
+        operation = new FindAndUpdateOperation<Document>(getNamespace(), ACKNOWLEDGED, false, documentCodec, update)
+        execute(operation, async)
+
+        then:
+        thrown(MongoCommandException)
+
+        where:
+        async << [true, false]
+    }
+
     def 'should support bypassDocumentValidation'() {
         given:
         def namespace = new MongoNamespace(getDatabaseName(), 'collectionOut')

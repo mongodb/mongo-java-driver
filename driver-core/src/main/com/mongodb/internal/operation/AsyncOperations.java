@@ -168,6 +168,11 @@ public final class AsyncOperations<TDocument> {
         return operations.findOneAndUpdate(filter, update, options);
     }
 
+    public AsyncWriteOperation<TDocument> findOneAndUpdate(final Bson filter, final List<? extends Bson> update,
+                                                           final FindOneAndUpdateOptions options) {
+        return operations.findOneAndUpdate(filter, update, options);
+    }
+
     public AsyncWriteOperation<BulkWriteResult> insertOne(final TDocument document, final InsertOneOptions options) {
         return operations.insertOne(document, options);
     }
@@ -189,7 +194,17 @@ public final class AsyncOperations<TDocument> {
         return operations.updateOne(filter, update, updateOptions);
     }
 
+    public AsyncWriteOperation<BulkWriteResult> updateOne(final Bson filter, final List<? extends Bson> update,
+                                                          final UpdateOptions updateOptions) {
+        return operations.updateOne(filter, update, updateOptions);
+    }
+
     public AsyncWriteOperation<BulkWriteResult> updateMany(final Bson filter, final Bson update, final UpdateOptions updateOptions) {
+        return operations.updateMany(filter, update, updateOptions);
+    }
+
+    public AsyncWriteOperation<BulkWriteResult> updateMany(final Bson filter, final List<? extends Bson> update,
+                                                           final UpdateOptions updateOptions) {
         return operations.updateMany(filter, update, updateOptions);
     }
 

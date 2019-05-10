@@ -1238,6 +1238,84 @@ public interface MongoCollection<TDocument> {
                    SingleResultCallback<UpdateResult> callback);
 
     /**
+     * Update a single document in the collection according to the specified arguments.
+     *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
+     * @param filter a document describing the query filter, which may not be null.
+     * @param update a pipeline describing the update, which may not be null.
+     * @param callback the callback passed the result of the update one operation
+     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             if the write failed due some other failure
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     * @mongodb.driver.manual tutorial/modify-documents/ Updates
+     * @mongodb.driver.manual reference/operator/update/ Update Operators
+     */
+    void updateOne(Bson filter, List<? extends Bson> update, SingleResultCallback<UpdateResult> callback);
+
+    /**
+     * Update a single document in the collection according to the specified arguments.
+     *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
+     * @param filter        a document describing the query filter, which may not be null.
+     * @param update        a pipeline describing the update, which may not be null.
+     * @param updateOptions the options to apply to the update operation
+     * @param callback the callback passed the result of the update one operation
+     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             if the write failed due some other failure
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     * @mongodb.driver.manual tutorial/modify-documents/ Updates
+     * @mongodb.driver.manual reference/operator/update/ Update Operators
+     */
+    void updateOne(Bson filter, List<? extends Bson> update, UpdateOptions updateOptions,
+                           SingleResultCallback<UpdateResult> callback);
+
+    /**
+     * Update a single document in the collection according to the specified arguments.
+     *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
+     * @param clientSession the client session with which to associate this operation
+     * @param filter a document describing the query filter, which may not be null.
+     * @param update a pipeline describing the update, which may not be null.
+     * @param callback the callback passed the result of the update one operation
+     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             if the write failed due some other failure
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     * @mongodb.driver.manual tutorial/modify-documents/ Updates
+     * @mongodb.driver.manual reference/operator/update/ Update Operators
+     */
+    void updateOne(ClientSession clientSession, Bson filter, List<? extends Bson> update, SingleResultCallback<UpdateResult> callback);
+
+    /**
+     * Update a single document in the collection according to the specified arguments.
+     *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
+     * @param clientSession the client session with which to associate this operation
+     * @param filter        a document describing the query filter, which may not be null.
+     * @param update        a pipeline describing the update, which may not be null.
+     * @param updateOptions the options to apply to the update operation
+     * @param callback the callback passed the result of the update one operation
+     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             if the write failed due some other failure
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     * @mongodb.driver.manual tutorial/modify-documents/ Updates
+     * @mongodb.driver.manual reference/operator/update/ Update Operators
+     */
+    void updateOne(ClientSession clientSession, Bson filter, List<? extends Bson> update, UpdateOptions updateOptions,
+                   SingleResultCallback<UpdateResult> callback);
+
+    /**
      * Update all documents in the collection according to the specified arguments.
      *
      * @param filter   a document describing the query filter, which may not be null.
@@ -1304,6 +1382,75 @@ public interface MongoCollection<TDocument> {
      * @mongodb.server.release 3.6
      */
     void updateMany(ClientSession clientSession, Bson filter, Bson update, UpdateOptions options,
+                    SingleResultCallback<UpdateResult> callback);
+
+    /**
+     * Update all documents in the collection according to the specified arguments.
+     *
+     * @param filter a document describing the query filter, which may not be null.
+     * @param update a pipeline describing the update, which may not be null.
+     * @param callback the callback passed the result of the update many operation
+     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoException             if the write failed due some other failure
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     * @mongodb.driver.manual tutorial/modify-documents/ Updates
+     * @mongodb.driver.manual reference/operator/update/ Update Operators
+     */
+    void updateMany(Bson filter, List<? extends Bson> update, SingleResultCallback<UpdateResult> callback);
+
+    /**
+     * Update all documents in the collection according to the specified arguments.
+     *
+     * @param filter        a document describing the query filter, which may not be null.
+     * @param update        a pipeline describing the update, which may not be null.
+     * @param updateOptions the options to apply to the update operation
+     * @param callback the callback passed the result of the update many operation
+     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoException             if the write failed due some other failure
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     * @mongodb.driver.manual tutorial/modify-documents/ Updates
+     * @mongodb.driver.manual reference/operator/update/ Update Operators
+     */
+    void updateMany(Bson filter, List<? extends Bson> update, UpdateOptions updateOptions, SingleResultCallback<UpdateResult> callback);
+
+    /**
+     * Update all documents in the collection according to the specified arguments.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param filter a document describing the query filter, which may not be null.
+     * @param update a pipeline describing the update, which may not be null.
+     * @param callback the callback passed the result of the update many operation
+     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoException             if the write failed due some other failure
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     * @mongodb.driver.manual tutorial/modify-documents/ Updates
+     * @mongodb.driver.manual reference/operator/update/ Update Operators
+     */
+    void updateMany(ClientSession clientSession, Bson filter, List<? extends Bson> update, SingleResultCallback<UpdateResult> callback);
+
+    /**
+     * Update all documents in the collection according to the specified arguments.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param filter        a document describing the query filter, which may not be null.
+     * @param update        a pipeline describing the update, which may not be null.
+     * @param updateOptions the options to apply to the update operation
+     * @param callback the callback passed the result of the update many operation
+     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoException             if the write failed due some other failure
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     * @mongodb.driver.manual tutorial/modify-documents/ Updates
+     * @mongodb.driver.manual reference/operator/update/ Update Operators
+     */
+    void updateMany(ClientSession clientSession, Bson filter, List<? extends Bson> update, UpdateOptions updateOptions,
                     SingleResultCallback<UpdateResult> callback);
 
     /**
@@ -1464,6 +1611,66 @@ public interface MongoCollection<TDocument> {
      * @mongodb.server.release 3.6
      */
     void findOneAndUpdate(ClientSession clientSession, Bson filter, Bson update, FindOneAndUpdateOptions options,
+                          SingleResultCallback<TDocument> callback);
+
+    /**
+     * Atomically find a document and update it.
+     *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
+     * @param filter a document describing the query filter, which may not be null.
+     * @param update a pipeline describing the update, which may not be null.
+     * @param callback the callback passed the document that was updated before the update was applied.  If no documents matched the query
+     *                 filter, then null will be returned
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     */
+    void findOneAndUpdate(Bson filter, List<? extends Bson> update, SingleResultCallback<TDocument> callback);
+
+    /**
+     * Atomically find a document and update it.
+     *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
+     * @param filter  a document describing the query filter, which may not be null.
+     * @param update  a pipeline describing the update, which may not be null.
+     * @param options the options to apply to the operation
+     * @param callback the callback passed the document that was updated.  Depending on the value of the {@code returnOriginal} property,
+     *                 this will either be the document as it was before the update or as it is after the update.  If no documents matched
+     *                 the query filter, then null will be returned
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     */
+    void findOneAndUpdate(Bson filter, List<? extends Bson> update, FindOneAndUpdateOptions options,
+                          SingleResultCallback<TDocument> callback);
+
+    /**
+     * Atomically find a document and update it.
+     *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
+     * @param clientSession the client session with which to associate this operation
+     * @param filter a document describing the query filter, which may not be null.
+     * @param update a pipeline describing the update, which may not be null.
+     * @param callback the callback passed the document that was updated before the update was applied.  If no documents matched the query
+     *                 filter, then null will be returned
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     */
+    void findOneAndUpdate(ClientSession clientSession, Bson filter, List<? extends Bson> update, SingleResultCallback<TDocument> callback);
+
+    /**
+     * Atomically find a document and update it.
+     *
+     * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
+     * @param clientSession the client session with which to associate this operation
+     * @param filter  a document describing the query filter, which may not be null.
+     * @param update  a pipeline describing the update, which may not be null.
+     * @param options the options to apply to the operation
+     * @param callback the callback passed the document that was updated.  Depending on the value of the {@code returnOriginal} property,
+     *                 this will either be the document as it was before the update or as it is after the update.  If no documents matched
+     *                 the query filter, then null will be returned
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     */
+    void findOneAndUpdate(ClientSession clientSession, Bson filter, List<? extends Bson> update, FindOneAndUpdateOptions options,
                           SingleResultCallback<TDocument> callback);
 
     /**

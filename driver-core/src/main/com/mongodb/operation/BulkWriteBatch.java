@@ -387,12 +387,28 @@ final class BulkWriteBatch {
                 writer.writeStartDocument();
                 writer.writeName("q");
                 getCodec(update.getFilter()).encode(writer, update.getFilter(), EncoderContext.builder().build());
-                writer.writeName("u");
 
-                if (update.getType() == WriteRequest.Type.UPDATE && update.getUpdate().isEmpty()) {
-                    throw new IllegalArgumentException("Invalid BSON document for an update");
+                BsonValue updateValue = update.getUpdateValue();
+                if (!updateValue.isDocument() && !updateValue.isArray()) {
+                    throw new IllegalArgumentException("Invalid BSON value for an update.");
                 }
-                getCodec(update.getUpdate()).encode(writer, update.getUpdate(), EncoderContext.builder().build());
+                if (updateValue.isDocument() && updateValue.asDocument().isEmpty()) {
+                    throw new IllegalArgumentException("Invalid BSON document for an update. The document may not be empty.");
+                }
+                if (updateValue.isArray() && updateValue.asArray().isEmpty()) {
+                    throw new IllegalArgumentException("Invalid pipeline for an update. The pipeline may not be empty.");
+                }
+
+                writer.writeName("u");
+                if (updateValue.isDocument()) {
+                    getCodec(updateValue.asDocument()).encode(writer, updateValue.asDocument(), EncoderContext.builder().build());
+                } else if (update.getType() == WriteRequest.Type.UPDATE && updateValue.isArray()) {
+                    writer.writeStartArray();
+                    for (BsonValue cur : updateValue.asArray()) {
+                        getCodec(cur.asDocument()).encode(writer, cur.asDocument(), EncoderContext.builder().build());
+                    }
+                    writer.writeEndArray();
+                }
 
                 if (update.isMulti()) {
                     writer.writeBoolean("multi", update.isMulti());
