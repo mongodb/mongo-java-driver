@@ -72,7 +72,7 @@ class UpdateRequestSpecification extends Specification {
 
         then:
         updateRequest.filter == filter
-        updateRequest.update == update
+        updateRequest.updateValue == update
     }
 
     def 'multi property should default to true'() {

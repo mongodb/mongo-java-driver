@@ -616,16 +616,26 @@ public class JsonPoweredCrudTestHelper {
             options.collation(getCollation(arguments.getDocument("collation")));
         }
         if (arguments.containsKey("arrayFilters")) {
-            options.arrayFilters((getArrayFilters(arguments.getArray("arrayFilters"))));
+            options.arrayFilters((getListOfDocuments(arguments.getArray("arrayFilters"))));
         }
 
         BsonDocument result;
         if (clientSession == null) {
-            result = getCollection(collectionOptions).findOneAndUpdate(arguments.getDocument("filter"), arguments.getDocument("update"),
-                    options);
+            if (arguments.isDocument("update")) {
+                result = getCollection(collectionOptions).findOneAndUpdate(arguments.getDocument("filter"), arguments.getDocument("update"),
+                        options);
+            } else {  // update is a pipeline
+                result = getCollection(collectionOptions).findOneAndUpdate(arguments.getDocument("filter"),
+                        getListOfDocuments(arguments.getArray("update")), options);
+            }
         } else {
-            result = getCollection(collectionOptions).findOneAndUpdate(clientSession, arguments.getDocument("filter"),
-                    arguments.getDocument("update"), options);
+            if (arguments.isDocument("update")) {
+                result = getCollection(collectionOptions).findOneAndUpdate(clientSession, arguments.getDocument("filter"),
+                        arguments.getDocument("update"), options);
+            } else {  // update is a pipeline
+                result = getCollection(collectionOptions).findOneAndUpdate(clientSession, arguments.getDocument("filter"),
+                        getListOfDocuments(arguments.getArray("update")), options);
+            }
         }
 
         return toResult(result);
@@ -724,7 +734,7 @@ public class JsonPoweredCrudTestHelper {
             options.collation(getCollation(arguments.getDocument("collation")));
         }
         if (arguments.containsKey("arrayFilters")) {
-            options.arrayFilters((getArrayFilters(arguments.getArray("arrayFilters"))));
+            options.arrayFilters((getListOfDocuments(arguments.getArray("arrayFilters"))));
         }
         if (arguments.containsKey("bypassDocumentValidation")) {
             options.bypassDocumentValidation(arguments.getBoolean("bypassDocumentValidation").getValue());
@@ -732,11 +742,21 @@ public class JsonPoweredCrudTestHelper {
 
         UpdateResult updateResult;
         if (clientSession == null) {
-            updateResult = getCollection(collectionOptions).updateMany(arguments.getDocument("filter"), arguments.getDocument("update"),
-                    options);
+            if (arguments.isDocument("update")) {
+                updateResult = getCollection(collectionOptions).updateMany(arguments.getDocument("filter"), arguments.getDocument("update"),
+                        options);
+            } else {  // update is a pipeline
+                updateResult = getCollection(collectionOptions).updateMany(arguments.getDocument("filter"),
+                        getListOfDocuments(arguments.getArray("update")), options);
+            }
         } else {
-            updateResult = getCollection(collectionOptions).updateMany(clientSession, arguments.getDocument("filter"),
-                    arguments.getDocument("update"), options);
+            if (arguments.isDocument("update")) {
+                updateResult = getCollection(collectionOptions).updateMany(clientSession, arguments.getDocument("filter"),
+                        arguments.getDocument("update"), options);
+            } else {  // update is a pipeline
+                updateResult = getCollection(collectionOptions).updateMany(clientSession, arguments.getDocument("filter"),
+                        getListOfDocuments(arguments.getArray("update")), options);
+            }
         }
 
         return toResult(updateResult);
@@ -753,7 +773,7 @@ public class JsonPoweredCrudTestHelper {
             options.collation(getCollation(arguments.getDocument("collation")));
         }
         if (arguments.containsKey("arrayFilters")) {
-            options.arrayFilters((getArrayFilters(arguments.getArray("arrayFilters"))));
+            options.arrayFilters((getListOfDocuments(arguments.getArray("arrayFilters"))));
         }
         if (arguments.containsKey("bypassDocumentValidation")) {
             options.bypassDocumentValidation(arguments.getBoolean("bypassDocumentValidation").getValue());
@@ -761,11 +781,21 @@ public class JsonPoweredCrudTestHelper {
 
         UpdateResult updateResult;
         if (clientSession == null) {
-            updateResult = getCollection(collectionOptions).updateOne(arguments.getDocument("filter"), arguments.getDocument("update"),
-                    options);
+            if (arguments.isDocument("update")) {
+                updateResult = getCollection(collectionOptions).updateOne(arguments.getDocument("filter"), arguments.getDocument("update"),
+                        options);
+            } else {  // update is a pipeline
+                updateResult = getCollection(collectionOptions).updateOne(arguments.getDocument("filter"),
+                        getListOfDocuments(arguments.getArray("update")), options);
+            }
         } else {
-            updateResult = getCollection(collectionOptions).updateOne(clientSession, arguments.getDocument("filter"),
-                    arguments.getDocument("update"), options);
+            if (arguments.isDocument("update")) {
+                updateResult = getCollection(collectionOptions).updateOne(clientSession, arguments.getDocument("filter"),
+                        arguments.getDocument("update"), options);
+            } else {  // update is a pipeline
+                updateResult = getCollection(collectionOptions).updateOne(clientSession, arguments.getDocument("filter"),
+                        getListOfDocuments(arguments.getArray("update")), options);
+            }
         }
 
         return toResult(updateResult);
@@ -976,7 +1006,7 @@ public class JsonPoweredCrudTestHelper {
             options.upsert(true);
         }
         if (requestArguments.containsKey("arrayFilters")) {
-            options.arrayFilters(getArrayFilters(requestArguments.getArray("arrayFilters")));
+            options.arrayFilters(getListOfDocuments(requestArguments.getArray("arrayFilters")));
         }
         if (requestArguments.containsKey("collation")) {
             options.collation(getCollation(requestArguments.getDocument("collation")));
@@ -1004,7 +1034,7 @@ public class JsonPoweredCrudTestHelper {
     }
 
     @Nullable
-    private List<BsonDocument> getArrayFilters(@Nullable final BsonArray bsonArray) {
+    private List<BsonDocument> getListOfDocuments(@Nullable final BsonArray bsonArray) {
         if (bsonArray == null) {
             return null;
         }
