@@ -154,7 +154,8 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
                 if (readConcern == null) {
                     throw new MongoInternalException("Invariant violated.  Transaction options read concern can not be null");
                 }
-                delegate.getOperationExecutor().execute(new AbortTransactionOperation(transactionOptions.getWriteConcern()),
+                delegate.getOperationExecutor().execute(new AbortTransactionOperation(transactionOptions.getWriteConcern())
+                                .recoveryToken(getRecoveryToken()),
                         readConcern, this);
             }
         } catch (Exception e) {

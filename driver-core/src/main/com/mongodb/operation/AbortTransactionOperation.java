@@ -18,6 +18,8 @@ package com.mongodb.operation;
 
 import com.mongodb.Function;
 import com.mongodb.WriteConcern;
+import com.mongodb.connection.ConnectionDescription;
+import com.mongodb.connection.ServerDescription;
 import org.bson.BsonDocument;
 
 import static com.mongodb.operation.CommandOperationHelper.noOpRetryCommandModifier;
@@ -29,6 +31,7 @@ import static com.mongodb.operation.CommandOperationHelper.noOpRetryCommandModif
  */
 @Deprecated
 public class AbortTransactionOperation extends TransactionOperation {
+    private BsonDocument recoveryToken;
 
     /**
      * Construct an instance.
@@ -39,9 +42,35 @@ public class AbortTransactionOperation extends TransactionOperation {
         super(writeConcern);
     }
 
+    /**
+     * Set the recovery token.
+     *
+     * @param recoveryToken the recovery token
+     * @return the AbortTransactionOperation
+     * @since 3.11
+     */
+    public AbortTransactionOperation recoveryToken(final BsonDocument recoveryToken) {
+        this.recoveryToken = recoveryToken;
+        return this;
+    }
+
     @Override
     protected String getCommandName() {
         return "abortTransaction";
+    }
+
+    @Override
+    CommandOperationHelper.CommandCreator getCommandCreator() {
+        final CommandOperationHelper.CommandCreator creator = super.getCommandCreator();
+        if (recoveryToken != null) {
+            return new CommandOperationHelper.CommandCreator() {
+                @Override
+                public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
+                    return creator.create(serverDescription, connectionDescription).append("recoveryToken", recoveryToken);
+                }
+            };
+        }
+        return creator;
     }
 
     @Override
