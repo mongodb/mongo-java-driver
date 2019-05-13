@@ -185,6 +185,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
@@ -200,6 +201,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
@@ -214,9 +216,8 @@ public class DBCollection {
      * @param documents    {@code DBObject}'s to be inserted
      * @param writeConcern {@code WriteConcern} to be used during operation
      * @return the result of the operation
-     * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
-     * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
-     * @throws MongoException if the operation failed for some other reason
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
     public WriteResult insert(final WriteConcern writeConcern, final DBObject... documents) {
@@ -232,6 +233,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
@@ -247,6 +249,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
@@ -263,6 +266,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
@@ -280,6 +284,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
@@ -297,6 +302,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
@@ -318,6 +324,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/insert-documents/ Insert Documents
      */
@@ -382,6 +389,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert or update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/modify-documents/#modify-a-document-with-save-method Save
      */
@@ -405,6 +413,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the insert or update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/modify-documents/#modify-a-document-with-save-method Save
      */
@@ -441,6 +450,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/modify-documents/ Modify Documents
      */
@@ -463,6 +473,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/modify-documents/ Modify Documents
      */
@@ -485,6 +496,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/modify-documents/ Modify
      * @since 2.14
@@ -507,6 +519,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/modify-documents/ Modify Documents
      */
@@ -522,6 +535,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/modify-documents/ Modify Documents
      */
@@ -537,6 +551,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/modify-documents/ Modify Documents
      */
@@ -553,6 +568,7 @@ public class DBCollection {
      * @return the result of the operation
      * @throws com.mongodb.DuplicateKeyException if the write failed to a duplicate unique key
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/modify-documents/ Modify
      * @since 3.4
@@ -580,6 +596,7 @@ public class DBCollection {
      *              in the collection.
      * @return the result of the operation
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the delete command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/remove-documents/ Remove Documents
      */
@@ -595,6 +612,7 @@ public class DBCollection {
      * @param writeConcern {@code WriteConcern} to be used during operation
      * @return the result of the operation
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the delete command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/remove-documents/ Remove Documents
      */
@@ -611,6 +629,7 @@ public class DBCollection {
      * @param encoder      {@code DBEncoder} to be used
      * @return the result of the operation
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the delete command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/remove-documents/ Remove Documents
      */
@@ -626,6 +645,7 @@ public class DBCollection {
      * @param options the options to apply to the delete operation
      * @return the result of the operation
      * @throws com.mongodb.WriteConcernException if the write failed due some other failure specific to the delete command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual tutorial/remove-documents/ Remove Documents
      * @since 3.4
@@ -1714,6 +1734,7 @@ public class DBCollection {
      * @param update the modifications to apply
      * @return pre-modification document
      * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      */
@@ -1730,6 +1751,7 @@ public class DBCollection {
      * @param update the modifications to apply
      * @return the document as it was before the modifications
      * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      */
@@ -1744,6 +1766,7 @@ public class DBCollection {
      * @param query specifies the selection criteria for the modification
      * @return the document as it was before the modifications
      * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      */
@@ -1766,6 +1789,7 @@ public class DBCollection {
      * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
      * after the changes were made
      * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      */
@@ -1791,6 +1815,7 @@ public class DBCollection {
      * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
      * after the changes were made
      * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @since 2.14
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
@@ -1819,6 +1844,7 @@ public class DBCollection {
      * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
      * after the changes were made
      * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      * @since 2.12.0
@@ -1850,6 +1876,7 @@ public class DBCollection {
      * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
      * after the changes were made
      * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      * @since 2.14.0
@@ -1889,6 +1916,7 @@ public class DBCollection {
      * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
      * after the changes were made
      * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      * @since 2.14.0
@@ -1922,6 +1950,7 @@ public class DBCollection {
      * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
      * after the changes were made
      * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      * @since 2.14.0
@@ -1953,6 +1982,7 @@ public class DBCollection {
      * @return the document as it was before the modifications, unless {@code oprtions.returnNew} is true, in which case it returns the
      * document after the changes were made
      * @throws WriteConcernException if the write failed due some other failure specific to the update command
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed for some other reason
      * @mongodb.driver.manual reference/command/findAndModify/ Find and Modify
      * @since 3.4
@@ -2153,6 +2183,7 @@ public class DBCollection {
     /**
      * Drops (deletes) this collection from the database. Use with care.
      *
+     * @throws com.mongodb.MongoCommandException if the write failed due to a specific command exception
      * @throws MongoException if the operation failed
      * @mongodb.driver.manual reference/command/drop/ Drop Command
      */
