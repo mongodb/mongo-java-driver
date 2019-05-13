@@ -791,8 +791,9 @@ public interface MongoCollection<TDocument> {
      *
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param document the document to insert
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the insert command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      */
     void insertOne(TDocument document);
@@ -803,9 +804,9 @@ public interface MongoCollection<TDocument> {
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param document the document to insert
      * @param options  the options to apply to the operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the insert command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
-     * @throws com.mongodb.MongoCommandException      if the write failed due to document validation reasons
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.2
      */
@@ -817,8 +818,9 @@ public interface MongoCollection<TDocument> {
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param clientSession the client session with which to associate this operation
      * @param document      the document to insert
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the insert command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
@@ -832,9 +834,9 @@ public interface MongoCollection<TDocument> {
      * @param clientSession the client session with which to associate this operation
      * @param document      the document to insert
      * @param options       the options to apply to the operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the insert command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
-     * @throws com.mongodb.MongoCommandException      if the write failed due to document validation reasons
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
@@ -847,6 +849,7 @@ public interface MongoCollection<TDocument> {
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param documents the documents to insert
      * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
+     * @throws com.mongodb.MongoCommandException   if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException          if the write failed due some other failure
      * @see com.mongodb.client.MongoCollection#bulkWrite
      */
@@ -859,6 +862,7 @@ public interface MongoCollection<TDocument> {
      * @param documents the documents to insert
      * @param options   the options to apply to the operation
      * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
+     * @throws com.mongodb.MongoCommandException   if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException          if the write failed due some other failure
      */
     void insertMany(List<? extends TDocument> documents, InsertManyOptions options);
@@ -870,6 +874,7 @@ public interface MongoCollection<TDocument> {
      * @param clientSession the client session with which to associate this operation
      * @param documents the documents to insert
      * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
+     * @throws com.mongodb.MongoCommandException   if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException          if the write failed due some other failure
      * @see com.mongodb.client.MongoCollection#bulkWrite
      * @since 3.6
@@ -885,6 +890,7 @@ public interface MongoCollection<TDocument> {
      * @param documents the documents to insert
      * @param options   the options to apply to the operation
      * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
+     * @throws com.mongodb.MongoCommandException   if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException          if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
@@ -898,8 +904,9 @@ public interface MongoCollection<TDocument> {
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param filter the query filter to apply the the delete operation
      * @return the result of the remove one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the delete command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      */
     DeleteResult deleteOne(Bson filter);
@@ -912,8 +919,9 @@ public interface MongoCollection<TDocument> {
      * @param filter the query filter to apply the the delete operation
      * @param options  the options to apply to the delete operation
      * @return the result of the remove one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the delete command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.4
      */
@@ -927,8 +935,9 @@ public interface MongoCollection<TDocument> {
      * @param clientSession the client session with which to associate this operation
      * @param filter the query filter to apply the the delete operation
      * @return the result of the remove one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the delete command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
@@ -944,8 +953,9 @@ public interface MongoCollection<TDocument> {
      * @param filter the query filter to apply the the delete operation
      * @param options  the options to apply to the delete operation
      * @return the result of the remove one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the delete command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
@@ -957,8 +967,9 @@ public interface MongoCollection<TDocument> {
      *
      * @param filter the query filter to apply the the delete operation
      * @return the result of the remove many operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the delete command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      */
     DeleteResult deleteMany(Bson filter);
@@ -969,8 +980,9 @@ public interface MongoCollection<TDocument> {
      * @param filter the query filter to apply the the delete operation
      * @param options  the options to apply to the delete operation
      * @return the result of the remove many operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the delete command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.4
      */
@@ -982,8 +994,9 @@ public interface MongoCollection<TDocument> {
      * @param clientSession the client session with which to associate this operation
      * @param filter the query filter to apply the the delete operation
      * @return the result of the remove many operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the delete command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
@@ -997,8 +1010,9 @@ public interface MongoCollection<TDocument> {
      * @param filter the query filter to apply the the delete operation
      * @param options  the options to apply to the delete operation
      * @return the result of the remove many operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the delete command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
@@ -1012,8 +1026,9 @@ public interface MongoCollection<TDocument> {
      * @param filter      the query filter to apply the the replace operation
      * @param replacement the replacement document
      * @return the result of the replace one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the replace command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
      */
@@ -1027,8 +1042,9 @@ public interface MongoCollection<TDocument> {
      * @param replacement   the replacement document
      * @param updateOptions the options to apply to the replace operation
      * @return the result of the replace one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the replace command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
      * @deprecated use {@link #replaceOne(Bson, Object, ReplaceOptions)} instead
@@ -1044,8 +1060,9 @@ public interface MongoCollection<TDocument> {
      * @param replacement   the replacement document
      * @param replaceOptions the options to apply to the replace operation
      * @return the result of the replace one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the replace command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
      * @since 3.7
@@ -1060,8 +1077,9 @@ public interface MongoCollection<TDocument> {
      * @param filter      the query filter to apply the the replace operation
      * @param replacement the replacement document
      * @return the result of the replace one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the replace command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
@@ -1078,8 +1096,9 @@ public interface MongoCollection<TDocument> {
      * @param replacement   the replacement document
      * @param updateOptions the options to apply to the replace operation
      * @return the result of the replace one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the replace command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
@@ -1098,8 +1117,9 @@ public interface MongoCollection<TDocument> {
      * @param replacement   the replacement document
      * @param replaceOptions the options to apply to the replace operation
      * @return the result of the replace one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the replace command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.7
      * @mongodb.server.release 3.6
@@ -1114,8 +1134,9 @@ public interface MongoCollection<TDocument> {
      * @param filter a document describing the query filter, which may not be null.
      * @param update a document describing the update, which may not be null. The update to apply must include only update operators.
      * @return the result of the update one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
@@ -1130,8 +1151,9 @@ public interface MongoCollection<TDocument> {
      * @param update        a document describing the update, which may not be null. The update to apply must include only update operators.
      * @param updateOptions the options to apply to the update operation
      * @return the result of the update one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
@@ -1146,8 +1168,9 @@ public interface MongoCollection<TDocument> {
      * @param filter a document describing the query filter, which may not be null.
      * @param update a document describing the update, which may not be null. The update to apply must include only update operators.
      * @return the result of the update one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
@@ -1165,8 +1188,9 @@ public interface MongoCollection<TDocument> {
      * @param update        a document describing the update, which may not be null. The update to apply must include only update operators.
      * @param updateOptions the options to apply to the update operation
      * @return the result of the update one operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
@@ -1181,8 +1205,9 @@ public interface MongoCollection<TDocument> {
      * @param filter a document describing the query filter, which may not be null.
      * @param update a document describing the update, which may not be null. The update to apply must include only update operators.
      * @return the result of the update many operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
@@ -1196,8 +1221,9 @@ public interface MongoCollection<TDocument> {
      * @param update        a document describing the update, which may not be null. The update to apply must include only update operators.
      * @param updateOptions the options to apply to the update operation
      * @return the result of the update many operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
@@ -1211,8 +1237,9 @@ public interface MongoCollection<TDocument> {
      * @param filter a document describing the query filter, which may not be null.
      * @param update a document describing the update, which may not be null. The update to apply must include only update operators.
      * @return the result of the update many operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
@@ -1229,8 +1256,9 @@ public interface MongoCollection<TDocument> {
      * @param update        a document describing the update, which may not be null. The update to apply must include only update operators.
      * @param updateOptions the options to apply to the update operation
      * @return the result of the update many operation
-     * @throws com.mongodb.MongoWriteException        if the write failed due some other failure specific to the update command
-     * @throws com.mongodb.MongoWriteConcernException if the write failed due being unable to fulfil the write concern
+     * @throws com.mongodb.MongoWriteException        if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      if the write failed due to a specific command exception
      * @throws com.mongodb.MongoException             if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6

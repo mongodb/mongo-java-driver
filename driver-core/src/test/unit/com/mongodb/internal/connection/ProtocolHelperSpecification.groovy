@@ -16,15 +16,13 @@
 
 package com.mongodb.internal.connection
 
-import com.mongodb.DuplicateKeyException
+
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoNodeIsRecoveringException
 import com.mongodb.MongoNotPrimaryException
 import com.mongodb.MongoQueryException
 import com.mongodb.ServerAddress
-import com.mongodb.WriteConcernException
-import com.mongodb.WriteConcernResult
 import org.bson.BsonBoolean
 import org.bson.BsonDocument
 import org.bson.BsonDouble

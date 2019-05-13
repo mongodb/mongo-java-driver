@@ -746,6 +746,10 @@ public interface MongoCollection<TDocument> {
      * contain any {@code UpdateManyModels} or {@code DeleteManyModels} then the bulk operation will not support retryable writes.</p>
      * @param requests the writes to execute
      * @param callback the callback passed the result of the bulk write
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      */
     void bulkWrite(List<? extends WriteModel<? extends TDocument>> requests, SingleResultCallback<BulkWriteResult> callback);
 
@@ -758,6 +762,10 @@ public interface MongoCollection<TDocument> {
      * @param requests the writes to execute
      * @param options  the options to apply to the bulk write operation
      * @param callback the callback passed the result of the bulk write
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      */
     void bulkWrite(List<? extends WriteModel<? extends TDocument>> requests, BulkWriteOptions options,
                    SingleResultCallback<BulkWriteResult> callback);
@@ -771,6 +779,10 @@ public interface MongoCollection<TDocument> {
      * @param clientSession  the client session with which to associate this operation
      * @param requests the writes to execute
      * @param callback the callback passed the result of the bulk write
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
      */
@@ -787,6 +799,10 @@ public interface MongoCollection<TDocument> {
      * @param requests the writes to execute
      * @param options  the options to apply to the bulk write operation
      * @param callback the callback passed the result of the bulk write
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
      */
@@ -799,9 +815,10 @@ public interface MongoCollection<TDocument> {
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param document the document to insert
      * @param callback the callback that is completed once the insert has completed
-     * @throws com.mongodb.MongoWriteException        returned via the callback
-     * @throws com.mongodb.MongoWriteConcernException returned via the callback
-     * @throws com.mongodb.MongoException             returned via the callback
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      */
     void insertOne(TDocument document, SingleResultCallback<Void> callback);
 
@@ -812,10 +829,10 @@ public interface MongoCollection<TDocument> {
      * @param document the document to insert
      * @param options  the options to apply to the operation
      * @param callback the callback that is completed once the insert has completed
-     * @throws com.mongodb.MongoWriteException        returned via the callback
-     * @throws com.mongodb.MongoWriteConcernException returned via the callback
-     * @throws com.mongodb.MongoCommandException      returned via the callback
-     * @throws com.mongodb.MongoException             returned via the callback
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      * @since 3.2
      */
     void insertOne(TDocument document, InsertOneOptions options, SingleResultCallback<Void> callback);
@@ -827,9 +844,10 @@ public interface MongoCollection<TDocument> {
      * @param clientSession  the client session with which to associate this operation
      * @param document the document to insert
      * @param callback the callback that is completed once the insert has completed
-     * @throws com.mongodb.MongoWriteException        returned via the callback
-     * @throws com.mongodb.MongoWriteConcernException returned via the callback
-     * @throws com.mongodb.MongoException             returned via the callback
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
      */
@@ -843,10 +861,10 @@ public interface MongoCollection<TDocument> {
      * @param document the document to insert
      * @param options  the options to apply to the operation
      * @param callback the callback that is completed once the insert has completed
-     * @throws com.mongodb.MongoWriteException        returned via the callback
-     * @throws com.mongodb.MongoWriteConcernException returned via the callback
-     * @throws com.mongodb.MongoCommandException      returned via the callback
-     * @throws com.mongodb.MongoException             returned via the callback
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
      */
@@ -859,6 +877,7 @@ public interface MongoCollection<TDocument> {
      * @param documents the documents to insert
      * @param callback  the callback that is completed once the insert has completed
      * @throws com.mongodb.MongoBulkWriteException if there's an exception in the bulk write operation
+     * @throws com.mongodb.MongoCommandException   via the callback
      * @throws com.mongodb.MongoException          if the write failed due some other failure
      * @see com.mongodb.async.client.MongoCollection#bulkWrite
      */
@@ -916,9 +935,10 @@ public interface MongoCollection<TDocument> {
      * <p>Note: Supports retryable writes on MongoDB server versions 3.6 or higher when the retryWrites setting is enabled.</p>
      * @param filter   the query filter to apply the the delete operation
      * @param callback the callback passed the result of the remove one operation
-     * @throws com.mongodb.MongoWriteException        returned via the callback
-     * @throws com.mongodb.MongoWriteConcernException returned via the callback
-     * @throws com.mongodb.MongoException             returned via the callback
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      */
     void deleteOne(Bson filter, SingleResultCallback<DeleteResult> callback);
 
@@ -930,9 +950,10 @@ public interface MongoCollection<TDocument> {
      * @param filter   the query filter to apply the the delete operation
      * @param options  the options to apply to the delete operation
      * @param callback the callback passed the result of the remove one operation
-     * @throws com.mongodb.MongoWriteException        returned via the callback
-     * @throws com.mongodb.MongoWriteConcernException returned via the callback
-     * @throws com.mongodb.MongoException             returned via the callback
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      */
     void deleteOne(Bson filter, DeleteOptions options, SingleResultCallback<DeleteResult> callback);
 
@@ -944,9 +965,10 @@ public interface MongoCollection<TDocument> {
      * @param clientSession  the client session with which to associate this operation
      * @param filter   the query filter to apply the the delete operation
      * @param callback the callback passed the result of the remove one operation
-     * @throws com.mongodb.MongoWriteException        returned via the callback
-     * @throws com.mongodb.MongoWriteConcernException returned via the callback
-     * @throws com.mongodb.MongoException             returned via the callback
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
      */
@@ -961,9 +983,10 @@ public interface MongoCollection<TDocument> {
      * @param filter   the query filter to apply the the delete operation
      * @param options  the options to apply to the delete operation
      * @param callback the callback passed the result of the remove one operation
-     * @throws com.mongodb.MongoWriteException        returned via the callback
-     * @throws com.mongodb.MongoWriteConcernException returned via the callback
-     * @throws com.mongodb.MongoException             returned via the callback
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
      */
@@ -974,9 +997,10 @@ public interface MongoCollection<TDocument> {
      *
      * @param filter   the query filter to apply the the delete operation
      * @param callback the callback passed the result of the remove many operation
-     * @throws com.mongodb.MongoWriteException        returned via the callback
-     * @throws com.mongodb.MongoWriteConcernException returned via the callback
-     * @throws com.mongodb.MongoException             returned via the callback
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      */
     void deleteMany(Bson filter, SingleResultCallback<DeleteResult> callback);
 
@@ -986,9 +1010,10 @@ public interface MongoCollection<TDocument> {
      * @param filter   the query filter to apply the the delete operation
      * @param options  the options to apply to the delete operation
      * @param callback the callback passed the result of the remove many operation
-     * @throws com.mongodb.MongoWriteException        returned via the callback
-     * @throws com.mongodb.MongoWriteConcernException returned via the callback
-     * @throws com.mongodb.MongoException             returned via the callback
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      */
     void deleteMany(Bson filter, DeleteOptions options, SingleResultCallback<DeleteResult> callback);
 
@@ -998,9 +1023,10 @@ public interface MongoCollection<TDocument> {
      * @param clientSession  the client session with which to associate this operation
      * @param filter   the query filter to apply the the delete operation
      * @param callback the callback passed the result of the remove many operation
-     * @throws com.mongodb.MongoWriteException        returned via the callback
-     * @throws com.mongodb.MongoWriteConcernException returned via the callback
-     * @throws com.mongodb.MongoException             returned via the callback
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
      */
@@ -1013,9 +1039,10 @@ public interface MongoCollection<TDocument> {
      * @param filter   the query filter to apply the the delete operation
      * @param options  the options to apply to the delete operation
      * @param callback the callback passed the result of the remove many operation
-     * @throws com.mongodb.MongoWriteException        returned via the callback
-     * @throws com.mongodb.MongoWriteConcernException returned via the callback
-     * @throws com.mongodb.MongoException             returned via the callback
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      * @since 3.6
      * @mongodb.server.release 3.6
      */
@@ -1028,9 +1055,10 @@ public interface MongoCollection<TDocument> {
      * @param filter      the query filter to apply the the replace operation
      * @param replacement the replacement document
      * @param callback    the callback passed the result of the replace one operation
-     * @throws com.mongodb.MongoWriteException        returned via the callback
-     * @throws com.mongodb.MongoWriteConcernException returned via the callback
-     * @throws com.mongodb.MongoException             returned via the callback
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
      */
     void replaceOne(Bson filter, TDocument replacement, SingleResultCallback<UpdateResult> callback);
@@ -1043,9 +1071,10 @@ public interface MongoCollection<TDocument> {
      * @param replacement the replacement document
      * @param options     the options to apply to the replace operation
      * @param callback    the callback passed the result of the replace one operation
-     * @throws com.mongodb.MongoWriteException        returned via the callback
-     * @throws com.mongodb.MongoWriteConcernException returned via the callback
-     * @throws com.mongodb.MongoException             returned via the callback
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
      * @deprecated use {@link #replaceOne(Bson, Object, ReplaceOptions, SingleResultCallback)} instead
      */
@@ -1060,9 +1089,10 @@ public interface MongoCollection<TDocument> {
      * @param replacement the replacement document
      * @param options     the options to apply to the replace operation
      * @param callback    the callback passed the result of the replace one operation
-     * @throws com.mongodb.MongoWriteException        returned via the callback
-     * @throws com.mongodb.MongoWriteConcernException returned via the callback
-     * @throws com.mongodb.MongoException             returned via the callback
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
      * @since 3.7
      */
@@ -1076,9 +1106,10 @@ public interface MongoCollection<TDocument> {
      * @param filter      the query filter to apply the the replace operation
      * @param replacement the replacement document
      * @param callback    the callback passed the result of the replace one operation
-     * @throws com.mongodb.MongoWriteException        returned via the callback
-     * @throws com.mongodb.MongoWriteConcernException returned via the callback
-     * @throws com.mongodb.MongoException             returned via the callback
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
      * @since 3.6
      * @mongodb.server.release 3.6
@@ -1094,9 +1125,10 @@ public interface MongoCollection<TDocument> {
      * @param replacement the replacement document
      * @param options     the options to apply to the replace operation
      * @param callback    the callback passed the result of the replace one operation
-     * @throws com.mongodb.MongoWriteException        returned via the callback
-     * @throws com.mongodb.MongoWriteConcernException returned via the callback
-     * @throws com.mongodb.MongoException             returned via the callback
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
      * @since 3.6
      * @mongodb.server.release 3.6
@@ -1115,9 +1147,10 @@ public interface MongoCollection<TDocument> {
      * @param replacement the replacement document
      * @param options     the options to apply to the replace operation
      * @param callback    the callback passed the result of the replace one operation
-     * @throws com.mongodb.MongoWriteException        returned via the callback
-     * @throws com.mongodb.MongoWriteConcernException returned via the callback
-     * @throws com.mongodb.MongoException             returned via the callback
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
      * @mongodb.server.release 3.6
      * @since 3.7
@@ -1132,9 +1165,10 @@ public interface MongoCollection<TDocument> {
      * @param filter   a document describing the query filter, which may not be null.
      * @param update   a document describing the update, which may not be null. The update to apply must include only update operators.
      * @param callback the callback passed the result of the update one operation
-     * @throws com.mongodb.MongoWriteException        returned via the callback
-     * @throws com.mongodb.MongoWriteConcernException returned via the callback
-     * @throws com.mongodb.MongoException             returned via the callback
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
@@ -1148,9 +1182,10 @@ public interface MongoCollection<TDocument> {
      * @param update   a document describing the update, which may not be null. The update to apply must include only update operators.
      * @param options  the options to apply to the update operation
      * @param callback the callback passed the result of the update one operation
-     * @throws com.mongodb.MongoWriteException        returned via the callback
-     * @throws com.mongodb.MongoWriteConcernException returned via the callback
-     * @throws com.mongodb.MongoException             returned via the callback
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
@@ -1164,9 +1199,10 @@ public interface MongoCollection<TDocument> {
      * @param filter   a document describing the query filter, which may not be null.
      * @param update   a document describing the update, which may not be null. The update to apply must include only update operators.
      * @param callback the callback passed the result of the update one operation
-     * @throws com.mongodb.MongoWriteException        returned via the callback
-     * @throws com.mongodb.MongoWriteConcernException returned via the callback
-     * @throws com.mongodb.MongoException             returned via the callback
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      * @since 3.6
@@ -1183,9 +1219,10 @@ public interface MongoCollection<TDocument> {
      * @param update   a document describing the update, which may not be null. The update to apply must include only update operators.
      * @param options  the options to apply to the update operation
      * @param callback the callback passed the result of the update one operation
-     * @throws com.mongodb.MongoWriteException        returned via the callback
-     * @throws com.mongodb.MongoWriteConcernException returned via the callback
-     * @throws com.mongodb.MongoException             returned via the callback
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      * @since 3.6
@@ -1200,9 +1237,10 @@ public interface MongoCollection<TDocument> {
      * @param filter   a document describing the query filter, which may not be null.
      * @param update   a document describing the update, which may not be null. The update to apply must include only update operators. T
      * @param callback the callback passed the result of the update many operation
-     * @throws com.mongodb.MongoWriteException        returned via the callback
-     * @throws com.mongodb.MongoWriteConcernException returned via the callback
-     * @throws com.mongodb.MongoException             returned via the callback
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
@@ -1215,9 +1253,10 @@ public interface MongoCollection<TDocument> {
      * @param update   a document describing the update, which may not be null. The update to apply must include only update operators.
      * @param options  the options to apply to the update operation
      * @param callback the callback passed the result of the update many operation
-     * @throws com.mongodb.MongoWriteException        returned via the callback
-     * @throws com.mongodb.MongoWriteConcernException returned via the callback
-     * @throws com.mongodb.MongoException             returned via the callback
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      */
@@ -1230,9 +1269,10 @@ public interface MongoCollection<TDocument> {
      * @param filter   a document describing the query filter, which may not be null.
      * @param update   a document describing the update, which may not be null. The update to apply must include only update operators. T
      * @param callback the callback passed the result of the update many operation
-     * @throws com.mongodb.MongoWriteException        returned via the callback
-     * @throws com.mongodb.MongoWriteConcernException returned via the callback
-     * @throws com.mongodb.MongoException             returned via the callback
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      * @since 3.6
@@ -1248,9 +1288,10 @@ public interface MongoCollection<TDocument> {
      * @param update   a document describing the update, which may not be null. The update to apply must include only update operators.
      * @param options  the options to apply to the update operation
      * @param callback the callback passed the result of the update many operation
-     * @throws com.mongodb.MongoWriteException        returned via the callback
-     * @throws com.mongodb.MongoWriteConcernException returned via the callback
-     * @throws com.mongodb.MongoException             returned via the callback
+     * @throws com.mongodb.MongoWriteException        via the callback if the write failed due to some specific write exception
+     * @throws com.mongodb.MongoWriteConcernException via the callback if the write failed due to being unable to fulfil the write concern
+     * @throws com.mongodb.MongoCommandException      via the callback if the write failed due to a specific command exception
+     * @throws com.mongodb.MongoException             via the callback if the write failed due some other failure
      * @mongodb.driver.manual tutorial/modify-documents/ Updates
      * @mongodb.driver.manual reference/operator/update/ Update Operators
      * @since 3.6
