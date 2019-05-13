@@ -36,7 +36,6 @@ import spock.lang.Specification
 
 import static com.mongodb.internal.connection.ProtocolHelper.getCommandFailureException
 import static com.mongodb.internal.connection.ProtocolHelper.getQueryFailureException
-import static com.mongodb.internal.connection.ProtocolHelper.getWriteResult
 import static com.mongodb.internal.connection.ProtocolHelper.isCommandOk
 
 class ProtocolHelperSpecification extends Specification {
@@ -149,64 +148,4 @@ class ProtocolHelperSpecification extends Specification {
                                  new ServerAddress()) instanceof MongoQueryException
     }
 
-    def 'getWriteResult should return write result'() {
-        when:
-        def res = getWriteResult(new BsonDocument('ok', BsonBoolean.TRUE).append('n', new BsonInt32(1))
-                                                                         .append('updatedExisting', BsonBoolean.TRUE).
-                                         append('upserted', new BsonInt64(5)),
-                                 new ServerAddress())
-
-        then:
-        res == WriteConcernResult.acknowledged(1, true, new BsonInt64(5))
-    }
-
-    def 'getWriteResult should throw MongoCommandException if ok is false'() {
-        when:
-        getWriteResult(new BsonDocument('ok', BsonBoolean.FALSE).append('errmsg', new BsonString('something wrong')),
-                       new ServerAddress())
-
-        then:
-        thrown(MongoCommandException)
-    }
-
-    def 'getWriteResult should throw MongoNotPrimaryException if err starts with not master'() {
-        when:
-        getWriteResult(new BsonDocument('ok', BsonBoolean.TRUE).append('err', new BsonString('not master here')),
-                       new ServerAddress())
-
-        then:
-        thrown(MongoNotPrimaryException)
-    }
-
-    def 'getWriteResult should throw MongoNodeIsRecoveringException if err starts with node is recovering'() {
-        when:
-        getWriteResult(new BsonDocument('ok', BsonBoolean.TRUE).append('err', new BsonString('node is recovering here')),
-                       new ServerAddress())
-
-        then:
-        thrown(MongoNodeIsRecoveringException)
-    }
-
-    def 'getWriteResult should throw MongoDuplicateKeyException if code is one of the duplicate key error codes'() {
-        when:
-        getWriteResult(new BsonDocument('ok', BsonBoolean.TRUE).append('err', new BsonString('dup key'))
-                                                               .append('code', new BsonInt32(code)),
-                       new ServerAddress())
-
-        then:
-        thrown(DuplicateKeyException)
-
-        where:
-        code << [11000, 11001, 12582]
-    }
-
-    def 'getWriteResult should throw MongoWriteConcernException if err field is present'() {
-        when:
-        getWriteResult(new BsonDocument('ok', BsonBoolean.TRUE).append('err', new BsonString('dup key'))
-                                                               .append('code', new BsonInt32(42)),
-                       new ServerAddress())
-
-        then:
-        thrown(WriteConcernException)
-    }
 }

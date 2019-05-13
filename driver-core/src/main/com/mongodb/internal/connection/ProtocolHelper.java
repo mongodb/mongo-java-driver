@@ -63,18 +63,6 @@ public final class ProtocolHelper {
     private static final Logger PROTOCOL_EVENT_LOGGER = Loggers.getLogger("protocol.event");
     private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
 
-    static WriteConcernResult getWriteResult(final BsonDocument result, final ServerAddress serverAddress) {
-        if (!isCommandOk(result)) {
-            throw getCommandFailureException(result, serverAddress);
-        }
-
-        if (hasWriteError(result)) {
-            throwWriteException(result, serverAddress);
-        }
-
-        return createWriteResult(result);
-    }
-
     private static WriteConcernResult createWriteResult(final BsonDocument result) {
         BsonBoolean updatedExisting = result.getBoolean("updatedExisting", BsonBoolean.FALSE);
 
