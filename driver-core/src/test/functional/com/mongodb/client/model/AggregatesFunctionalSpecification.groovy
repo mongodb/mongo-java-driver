@@ -19,7 +19,6 @@ package com.mongodb.client.model
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import org.bson.BsonDocument
-import org.bson.BsonInt32
 import org.bson.BsonString
 import org.bson.Document
 import org.bson.conversions.Bson
@@ -36,8 +35,6 @@ import static com.mongodb.client.model.Accumulators.push
 import static com.mongodb.client.model.Accumulators.stdDevPop
 import static com.mongodb.client.model.Accumulators.stdDevSamp
 import static com.mongodb.client.model.Accumulators.sum
-import static com.mongodb.client.model.AggregateOutStageOptions.Mode.INSERT_DOCUMENTS
-import static com.mongodb.client.model.AggregateOutStageOptions.Mode.REPLACE_DOCUMENTS
 import static com.mongodb.client.model.Aggregates.addFields
 import static com.mongodb.client.model.Aggregates.bucket
 import static com.mongodb.client.model.Aggregates.bucketAuto
@@ -193,68 +190,12 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
     def '$out'() {
         given:
         def outCollectionName = getCollectionName() + '.out'
-        def namespace = new MongoNamespace(getDatabaseName(), outCollectionName)
 
         when:
         aggregate([out(outCollectionName)])
 
         then:
-        getCollectionHelper(namespace).find() == [a, b, c]
-
-        cleanup:
-        getCollectionHelper(namespace).drop()
-    }
-
-    @IgnoreIf({ !serverVersionAtLeast(4, 1) })
-    def '$out with options'() {
-        given:
-        def outCollectionName = getCollectionName() + '.out'
-        def namespace = new MongoNamespace(getDatabaseName(), outCollectionName)
-
-        when:
-        aggregate([out(outCollectionName, new AggregateOutStageOptions().mode(REPLACE_DOCUMENTS))])
-
-        then:
         getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
-
-        when:
-        aggregate([out(outCollectionName, new AggregateOutStageOptions()
-                .mode(AggregateOutStageOptions.Mode.REPLACE_COLLECTION)
-                .uniqueKey(new BsonDocument('_id', new BsonInt32(1))))])
-
-        then:
-        getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
-
-        when:
-        aggregate([out(outCollectionName, new AggregateOutStageOptions()
-                .mode(REPLACE_DOCUMENTS)
-                .uniqueKey(new BsonDocument('_id', new BsonInt32(1))))])
-
-        then:
-        getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
-
-        when:
-        getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).drop()
-        aggregate([out(outCollectionName, new AggregateOutStageOptions()
-                .mode(INSERT_DOCUMENTS)
-                .uniqueKey(new BsonDocument('_id', new BsonInt32(1))))])
-
-        then:
-        getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
-
-        when:
-        def otherDbNamespace = new MongoNamespace('outDbName', outCollectionName)
-        getCollectionHelper(otherDbNamespace).create()
-        aggregate([out(outCollectionName, new AggregateOutStageOptions()
-                .mode(REPLACE_DOCUMENTS)
-                .databaseName('outDbName'))])
-
-        then:
-        getCollectionHelper(otherDbNamespace).find() == [a, b, c]
-
-        cleanup:
-        getCollectionHelper(namespace).drop()
-        getCollectionHelper(otherDbNamespace).drop()
     }
 
     @IgnoreIf({ !serverVersionAtLeast(3, 2) })

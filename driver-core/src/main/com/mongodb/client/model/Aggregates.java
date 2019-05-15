@@ -27,7 +27,6 @@ import org.bson.conversions.Bson;
 
 import java.util.List;
 
-import static com.mongodb.client.model.AggregateOutStageOptions.Mode.REPLACE_COLLECTION;
 import static java.util.Arrays.asList;
 import static org.bson.assertions.Assertions.notNull;
 
@@ -412,7 +411,7 @@ public final class Aggregates {
     }
 
     /**
-     * Creates a $out pipeline stage using the specified collection name
+     * Creates a $out pipeline stage for the specified filter
      *
      * @param collectionName the collection name
      * @return the $out pipeline stage
@@ -420,22 +419,7 @@ public final class Aggregates {
      * @mongodb.server.release 2.6
      */
     public static Bson out(final String collectionName) {
-        return out(collectionName, new AggregateOutStageOptions());
-    }
-
-    /**
-     * Creates a $out pipeline stage using the specified collection name and options
-     *
-     * @param collectionName the collection name
-     * @param options the $out stage options
-     * @return the $out pipeline stage
-     * @mongodb.driver.manual reference/operator/aggregation/out/  $out
-     * @mongodb.server.release 2.6
-     */
-    public static Bson out(final String collectionName, final AggregateOutStageOptions options) {
-        notNull("collectionName", collectionName);
-        notNull("options", options);
-        return new OutStage(collectionName, options);
+        return new BsonDocument("$out", new BsonString(collectionName));
     }
 
     /**
@@ -1145,89 +1129,6 @@ public final class Aggregates {
                 + "name='$replaceRoot', "
                 + "value=" + value
                 + '}';
-        }
-    }
-
-    private static class OutStage implements Bson {
-
-        private final String collectionName;
-        private final AggregateOutStageOptions options;
-
-        OutStage(final String collectionName, final AggregateOutStageOptions options) {
-            this.collectionName = collectionName;
-            this.options = options;
-        }
-
-        @Override
-        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
-            BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
-            writer.writeStartDocument();
-
-            writer.writeName("$out");
-            if (optionsAreAllDefault()) {
-                writer.writeString(collectionName);
-            } else {
-                writer.writeStartDocument();
-                writer.writeName("mode");
-                switch (options.getMode()) {
-                    case REPLACE_COLLECTION:
-                        writer.writeString("replaceCollection");
-                        break;
-                    case REPLACE_DOCUMENTS:
-                        writer.writeString("replaceDocuments");
-                        break;
-                    case INSERT_DOCUMENTS:
-                        writer.writeString("insertDocuments");
-                        break;
-                    default:
-                        throw new IllegalArgumentException("Unsupported mode: " + options.getMode());
-                }
-                writer.writeString("to", collectionName);
-
-                String databaseName = options.getDatabaseName();
-                if (databaseName != null) {
-                    writer.writeString("db", databaseName);
-                }
-
-                Bson uniqueKey = options.getUniqueKey();
-                if (uniqueKey != null) {
-                    writer.writeName("uniqueKey");
-                    BuildersHelper.encodeValue(writer, uniqueKey, codecRegistry);
-                }
-
-                writer.writeEndDocument();
-            }
-
-            writer.writeEndDocument();
-            return writer.getDocument();
-        }
-
-        @Override
-        public boolean equals(final Object o) {
-            if (this == o) {
-                return true;
-            }
-            if (o == null || getClass() != o.getClass()) {
-                return false;
-            }
-
-            OutStage outStage = (OutStage) o;
-
-            if (collectionName != null ? !collectionName.equals(outStage.collectionName) : outStage.collectionName != null) {
-                return false;
-            }
-            return options != null ? options.equals(outStage.options) : outStage.options == null;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = collectionName != null ? collectionName.hashCode() : 0;
-            result = 31 * result + (options != null ? options.hashCode() : 0);
-            return result;
-        }
-
-        private boolean optionsAreAllDefault() {
-            return options.getMode() == REPLACE_COLLECTION && options.getDatabaseName() == null && options.getUniqueKey() == null;
         }
     }
 
