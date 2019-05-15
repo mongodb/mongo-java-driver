@@ -71,7 +71,7 @@ public class SocketStream implements Stream {
         }
     }
 
-    private Socket initializeSocket() throws IOException {
+    protected Socket initializeSocket() throws IOException {
         Iterator<InetSocketAddress> inetSocketAddresses = address.getSocketAddresses().iterator();
         while (inetSocketAddresses.hasNext()) {
             Socket socket = socketFactory.createSocket();
