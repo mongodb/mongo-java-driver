@@ -36,9 +36,6 @@ import static com.mongodb.client.model.Accumulators.push
 import static com.mongodb.client.model.Accumulators.stdDevPop
 import static com.mongodb.client.model.Accumulators.stdDevSamp
 import static com.mongodb.client.model.Accumulators.sum
-import static com.mongodb.client.model.AggregateOutStageOptions.Mode.INSERT_DOCUMENTS
-import static com.mongodb.client.model.AggregateOutStageOptions.Mode.REPLACE_COLLECTION
-import static com.mongodb.client.model.AggregateOutStageOptions.Mode.REPLACE_DOCUMENTS
 import static com.mongodb.client.model.Aggregates.addFields
 import static com.mongodb.client.model.Aggregates.bucket
 import static com.mongodb.client.model.Aggregates.bucketAuto
@@ -304,15 +301,6 @@ class AggregatesSpecification extends Specification {
     def 'should render $out'() {
         expect:
         toBson(out('authors')) == parse('{ $out : "authors" }')
-        toBson(out('authors', new AggregateOutStageOptions().mode(REPLACE_COLLECTION))) == parse('{ $out : "authors" }')
-        toBson(out('authors', new AggregateOutStageOptions().mode(REPLACE_DOCUMENTS))) ==
-                parse('{ $out : {mode : "replaceDocuments", to : "authors" } }')
-        toBson(out('authors', new AggregateOutStageOptions().mode(INSERT_DOCUMENTS))) ==
-                parse('{ $out : {mode : "insertDocuments", to : "authors" } }')
-        toBson(out('authors', new AggregateOutStageOptions().databaseName('db1'))) ==
-                parse('{ $out : {mode : "replaceCollection", to : "authors", db : "db1" } }')
-        toBson(out('authors', new AggregateOutStageOptions().uniqueKey(new BsonDocument('x', new BsonInt32(1))))) ==
-                parse('{ $out : {mode : "replaceCollection", to : "authors", uniqueKey : {x : 1 } } }')
     }
 
     def 'should render $group'() {
@@ -694,35 +682,5 @@ class AggregatesSpecification extends Specification {
         replaceRoot('$a1').hashCode() == replaceRoot('$a1').hashCode()
         replaceRoot('$a1.b').hashCode() == replaceRoot('$a1.b').hashCode()
         replaceRoot('$a1').hashCode() == replaceRoot('$a1').hashCode()
-    }
-
-    def 'should test equals for OutStage'() {
-        expect:
-        out('authors').equals(out('authors'))
-        out('authors', new AggregateOutStageOptions().mode(REPLACE_COLLECTION))
-                .equals(out('authors', new AggregateOutStageOptions().mode(REPLACE_COLLECTION)))
-        out('authors', new AggregateOutStageOptions().mode(REPLACE_DOCUMENTS))
-        .equals(out('authors', new AggregateOutStageOptions().mode(REPLACE_DOCUMENTS)))
-        out('authors', new AggregateOutStageOptions().mode(INSERT_DOCUMENTS))
-        .equals(out('authors', new AggregateOutStageOptions().mode(INSERT_DOCUMENTS)))
-        out('authors', new AggregateOutStageOptions().databaseName('db1'))
-        .equals(out('authors', new AggregateOutStageOptions().databaseName('db1')))
-        out('authors', new AggregateOutStageOptions().uniqueKey(new BsonDocument('x', new BsonInt32(1))))
-                .equals(out('authors', new AggregateOutStageOptions().uniqueKey(new BsonDocument('x', new BsonInt32(1)))))
-    }
-
-    def 'should test hashCode for OutStage'() {
-        expect:
-        out('authors').hashCode() == out('authors').hashCode()
-        out('authors', new AggregateOutStageOptions().mode(REPLACE_COLLECTION)).hashCode() ==
-                out('authors', new AggregateOutStageOptions().mode(REPLACE_COLLECTION)).hashCode()
-        out('authors', new AggregateOutStageOptions().mode(REPLACE_DOCUMENTS)).hashCode() ==
-                out('authors', new AggregateOutStageOptions().mode(REPLACE_DOCUMENTS)).hashCode()
-        out('authors', new AggregateOutStageOptions().mode(INSERT_DOCUMENTS)).hashCode() ==
-                out('authors', new AggregateOutStageOptions().mode(INSERT_DOCUMENTS)).hashCode()
-        out('authors', new AggregateOutStageOptions().databaseName('db1')).hashCode() ==
-                out('authors', new AggregateOutStageOptions().databaseName('db1')).hashCode()
-        out('authors', new AggregateOutStageOptions().uniqueKey(new BsonDocument('x', new BsonInt32(1)))).hashCode() ==
-                out('authors', new AggregateOutStageOptions().uniqueKey(new BsonDocument('x', new BsonInt32(1)))).hashCode()
     }
 }
