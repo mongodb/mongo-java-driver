@@ -42,7 +42,6 @@ class StreamSocketAddressSpecification extends Specification {
         socketFactory.createSocket() >>> [socket0, socket1, socket2]
 
         def socketStream = new SocketStream(serverAddress, socketSettings, sslSettings, socketFactory, bufferProvider)
-        def socketChannelStream = new SocketChannelStream(serverAddress, socketSettings, sslSettings, bufferProvider)
 
         when:
         socketStream.open()
@@ -52,15 +51,8 @@ class StreamSocketAddressSpecification extends Specification {
         !socket1.isConnected()
         socket2.isConnected()
 
-        when:
-        socketChannelStream.open()
-
-        then:
-        !socketChannelStream.isClosed()
-
         cleanup:
         socketStream?.close()
-        socketChannelStream?.close()
     }
 
     @Category(Slow)
@@ -87,7 +79,6 @@ class StreamSocketAddressSpecification extends Specification {
         socketFactory.createSocket() >>> [socket0, socket1, socket2]
 
         def socketStream = new SocketStream(serverAddress, socketSettings, sslSettings, socketFactory, bufferProvider)
-        def socketChannelStream = new SocketChannelStream(serverAddress, socketSettings, sslSettings, bufferProvider)
 
         when:
         socketStream.open()
@@ -98,15 +89,7 @@ class StreamSocketAddressSpecification extends Specification {
         !socket1.isConnected()
         !socket2.isConnected()
 
-        when:
-        socketChannelStream.open()
-
-        then:
-        thrown(MongoSocketOpenException)
-        socketChannelStream.isClosed()
-
         cleanup:
         socketStream?.close()
-        socketChannelStream?.close()
     }
 }
