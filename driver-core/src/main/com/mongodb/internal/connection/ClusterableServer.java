@@ -29,6 +29,12 @@ interface ClusterableServer extends Server {
     void invalidate();
 
     /**
+     * Invalidate the description of this server due to the passed in reason.
+     * @param reason the reason for invalidation.
+     */
+    void invalidate(Throwable reason);
+
+    /**
      * <p>Closes the server.  Instances that have been closed will no longer be available for use.</p>
      *
      * <p>Implementations should ensure that this method can be called multiple times with no ill effects. </p>

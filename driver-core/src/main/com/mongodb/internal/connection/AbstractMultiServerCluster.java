@@ -17,6 +17,7 @@
 package com.mongodb.internal.connection;
 
 import com.mongodb.MongoException;
+import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
@@ -29,6 +30,7 @@ import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
 import com.mongodb.event.ServerListenerAdapter;
+import org.bson.BsonDocument;
 import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
@@ -364,7 +366,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
                 if (LOGGER.isInfoEnabled()) {
                     LOGGER.info(format("Rediscovering type of existing primary %s", serverTuple.description.getAddress()));
                 }
-                serverTuple.server.invalidate();
+                serverTuple.server.invalidate(new MongoNotPrimaryException(new BsonDocument(), serverTuple.description.getAddress()));
             }
         }
     }

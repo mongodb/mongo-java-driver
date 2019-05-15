@@ -395,6 +395,10 @@ public final class CollectionHelper<T> {
         }
     }
 
+    public void runAdminCommand(final String command) {
+        runAdminCommand(BsonDocument.parse(command));
+    }
+
     public void runAdminCommand(final BsonDocument command) {
         new CommandWriteOperation<BsonDocument>("admin", command, new BsonDocumentCodec()).execute(getBinding());
     }
