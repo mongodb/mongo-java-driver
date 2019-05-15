@@ -56,6 +56,11 @@ public class TestServer implements ClusterableServer {
     }
 
     @Override
+    public void invalidate(final Throwable reason) {
+        invalidate();
+    }
+
+    @Override
     public void close() {
         isClosed = true;
     }

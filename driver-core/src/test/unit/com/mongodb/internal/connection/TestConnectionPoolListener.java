@@ -34,13 +34,16 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-class TestConnectionPoolListener implements ConnectionPoolListener {
+public class TestConnectionPoolListener implements ConnectionPoolListener {
 
     private final List<Object> events = new ArrayList<Object>();
     private final Lock lock = new ReentrantLock();
     private final Condition condition = lock.newCondition();
     private volatile Class<?> waitingForEventClass;
     private volatile int waitingForEventCount;
+
+    public TestConnectionPoolListener() {
+    }
 
     public List<Object> getEvents() {
         lock.lock();
@@ -49,6 +52,16 @@ class TestConnectionPoolListener implements ConnectionPoolListener {
         } finally {
             lock.unlock();
         }
+    }
+
+    public <T> int countEvents(final Class<T> eventClass) {
+        int eventCount = 0;
+        for (Object event : getEvents()) {
+            if (event.getClass().equals(eventClass)) {
+                eventCount++;
+            }
+        }
+        return eventCount;
     }
 
     public <T> void waitForEvent(final Class<T> eventClass, final int count, final long time, final TimeUnit unit)
@@ -73,16 +86,7 @@ class TestConnectionPoolListener implements ConnectionPoolListener {
     }
 
     private <T> boolean containsEvent(final Class<T> eventClass, final int expectedEventCount) {
-        int eventCount = 0;
-        for (Object event : events) {
-            if (event.getClass().equals(eventClass)) {
-                eventCount++;
-                if (eventCount == expectedEventCount) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return countEvents(eventClass) == expectedEventCount;
     }
 
     private void addEvent(final Object event) {
