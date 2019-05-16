@@ -440,8 +440,8 @@ tasks:
 
     - name: "embedded-test-android"
       commands:
-      - func: "run embedded tests android"
-      - func: "upload android logs"
+#      - func: "run embedded tests android"
+#      - func: "upload android logs"
 
     - name: "atlas-test"
       commands:
