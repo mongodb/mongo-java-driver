@@ -48,6 +48,7 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static com.mongodb.connection.ClusterConnectionMode.SINGLE;
 import static com.mongodb.connection.ServerType.SHARD_ROUTER;
+import static com.mongodb.connection.ServerType.STANDALONE;
 import static com.mongodb.internal.connection.BsonWriterHelper.writePayload;
 import static com.mongodb.internal.connection.ReadConcernHelper.getReadConcernDocument;
 import static com.mongodb.internal.operation.ServerVersionHelper.FOUR_DOT_TWO_WIRE_VERSION;
@@ -215,11 +216,13 @@ public final class CommandMessage extends RequestMessage {
     }
 
     private boolean isSlaveOk() {
-        return (readPreference != null && readPreference.isSlaveOk()) || isDirectConnectionToNonShardRouter();
+        return (readPreference != null && readPreference.isSlaveOk()) || isDirectConnectionToReplicaSetMember();
     }
 
-    private boolean isDirectConnectionToNonShardRouter() {
-        return clusterConnectionMode == SINGLE && getSettings().getServerType() != SHARD_ROUTER;
+    private boolean isDirectConnectionToReplicaSetMember() {
+        return clusterConnectionMode == SINGLE
+                && getSettings().getServerType() != SHARD_ROUTER
+                && getSettings().getServerType() != STANDALONE;
     }
 
     private boolean useOpMsg() {
@@ -256,7 +259,7 @@ public final class CommandMessage extends RequestMessage {
         if (readPreference != null) {
             if (!readPreference.equals(primary())) {
                 extraElements.add(new BsonElement("$readPreference", readPreference.toDocument()));
-            } else if (isDirectConnectionToNonShardRouter()) {
+            } else if (isDirectConnectionToReplicaSetMember()) {
                 extraElements.add(new BsonElement("$readPreference", primaryPreferred().toDocument()));
             }
         }

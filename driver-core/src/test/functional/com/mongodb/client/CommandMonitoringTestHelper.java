@@ -17,7 +17,6 @@
 package com.mongodb.client;
 
 import com.mongodb.ClusterFixture;
-import com.mongodb.ReadPreference;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandStartedEvent;
@@ -45,8 +44,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
-import static com.mongodb.ClusterFixture.isSharded;
 import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -89,9 +86,7 @@ public final class CommandMonitoringTestHelper {
                     commandDocument.put("$db", new BsonString(actualDatabaseName));
                     if (operation != null && operation.containsKey("read_preference")) {
                         commandDocument.put("$readPreference", operation.getDocument("read_preference"));
-                    } else if (!isDiscoverableReplicaSet() && !isSharded() && !isWriteCommand(commandName)) {
-                        commandDocument.put("$readPreference", ReadPreference.primaryPreferred().toDocument());
-                    }
+                    } 
                 }
                 commandEvent = new CommandStartedEvent(1, null, actualDatabaseName, commandName,
                         commandDocument);
