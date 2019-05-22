@@ -45,6 +45,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
         then:
         BsonDocument.parse(json) == writer.getDocument()
 
+        when:
         BsonReader bsonReader = new BsonDocumentReader(writer.getDocument())
         ChangeStreamDocument actual = codec.decode(bsonReader, DecoderContext.builder().build())
 
@@ -56,23 +57,28 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                 new ChangeStreamDocument<Document>(
                         BsonDocument.parse('{token: true}'),
                         BsonDocument.parse('{db: "databaseName", coll: "collectionName"}'),
+                        null,
                         Document.parse('{key: "value for fullDocument"}'),
                         new BsonDocument('_id', new BsonInt32(1)),
                         new BsonTimestamp(1234, 2),
                         OperationType.INSERT,
-                        null
-                ),
+                        null),
                 new ChangeStreamDocument<Document>(
                         BsonDocument.parse('{token: true}'),
                         BsonDocument.parse('{db: "databaseName", coll: "collectionName"}'),
+                        null,
                         Document.parse('{key: "value for fullDocument"}'),
                         new BsonDocument('_id', new BsonInt32(2)),
                         null,
                         OperationType.UPDATE,
-                        new UpdateDescription(['a', 'b'], BsonDocument.parse('{c: 1}'))
-                )
+                        new UpdateDescription(['a', 'b'], BsonDocument.parse('{c: 1}'))),
+                new ChangeStreamDocument<Document>(
+                        BsonDocument.parse('{token: true}'),
+                        BsonDocument.parse('{db: "databaseName", coll: "collectionName"}'),
+                        BsonDocument.parse('{db: "databaseName2", coll: "collectionName2"}'),
+                        null, null, null, OperationType.RENAME, null),
         ]
-        clazz << [Document, Document]
+        clazz << [Document, Document, Document]
         json << [
             '''{_id: {token: true}, ns: {db: "databaseName", coll: "collectionName"}, documentKey : {_id : 1},
                 fullDocument: {key: "value for fullDocument"}, clusterTime: { "$timestamp" : { "t" : 1234, "i" : 2 } }
@@ -80,6 +86,8 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
             '''{_id: {token: true}, ns: {db: "databaseName", coll: "collectionName"}, documentKey : {_id : 2},
                 fullDocument: {key: "value for fullDocument"},
                 operationType: "update", updateDescription: {removedFields: ["a", "b"], updatedFields: {c: 1}}}''',
+            '''{_id: {token: true}, ns: {db: "databaseName", coll: "collectionName"},
+                to: {db: "databaseName2", coll: "collectionName2"}, operationType: "rename"}''',
         ]
     }
 }
