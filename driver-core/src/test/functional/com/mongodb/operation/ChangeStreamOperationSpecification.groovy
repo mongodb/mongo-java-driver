@@ -380,7 +380,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         def helper = getHelper()
 
         def pipeline = [BsonDocument.parse('{$match: {operationType: "rename"}}')]
-        def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.UPDATE_LOOKUP, pipeline,
+        def operation = new ChangeStreamOperation<ChangeStreamDocument>(helper.getNamespace(), FullDocument.UPDATE_LOOKUP, pipeline,
                 ChangeStreamDocument.createCodec(BsonDocument, fromProviders(new BsonValueCodecProvider(), new ValueCodecProvider())))
         def newNamespace = new MongoNamespace('JavaDriverTest', 'newCollectionName')
         helper.insertDocuments(BsonDocument.parse('{ _id : 2, x : 2, y : 3 }'))
@@ -395,6 +395,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         next.getDocumentKey() == null
         next.getFullDocument() == null
         next.getNamespace() == helper.getNamespace()
+        next.getDestinationNamespace() == newNamespace
         next.getOperationType() == OperationType.RENAME
         next.getUpdateDescription() == null
 
