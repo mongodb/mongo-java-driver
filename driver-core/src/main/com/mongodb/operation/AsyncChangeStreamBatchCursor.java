@@ -17,10 +17,14 @@
 package com.mongodb.operation;
 
 import com.mongodb.MongoChangeStreamException;
+import com.mongodb.async.AsyncAggregateResponseBatchCursor;
 import com.mongodb.async.AsyncBatchCursor;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.binding.AsyncConnectionSource;
 import com.mongodb.binding.AsyncReadBinding;
+import com.mongodb.operation.OperationHelper.AsyncCallableWithSource;
 import org.bson.BsonDocument;
+import org.bson.BsonTimestamp;
 import org.bson.RawBsonDocument;
 
 import java.util.ArrayList;
@@ -29,26 +33,27 @@ import java.util.List;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.ChangeStreamBatchCursorHelper.isRetryableError;
 import static com.mongodb.operation.OperationHelper.LOGGER;
+import static com.mongodb.operation.OperationHelper.withConnection;
 
-final class AsyncChangeStreamBatchCursor<T> implements AsyncBatchCursor<T> {
+final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     private final AsyncReadBinding binding;
     private final ChangeStreamOperation<T> changeStreamOperation;
 
     private volatile BsonDocument resumeToken;
-    private volatile AsyncBatchCursor<RawBsonDocument> wrapped;
+    private volatile AsyncAggregateResponseBatchCursor<RawBsonDocument> wrapped;
 
     AsyncChangeStreamBatchCursor(final ChangeStreamOperation<T> changeStreamOperation,
-                                 final AsyncBatchCursor<RawBsonDocument> wrapped,
-                                 final AsyncReadBinding binding) {
-        changeStreamOperation.startOperationTimeForResume(binding.getSessionContext().getOperationTime());
+                                 final AsyncAggregateResponseBatchCursor<RawBsonDocument> wrapped,
+                                 final AsyncReadBinding binding,
+                                 final BsonDocument resumeToken) {
         this.changeStreamOperation = changeStreamOperation;
-        this.resumeToken = changeStreamOperation.getResumeToken();
         this.wrapped = wrapped;
         this.binding = binding;
         binding.retain();
+        this.resumeToken = resumeToken;
     }
 
-    AsyncBatchCursor<RawBsonDocument> getWrapped() {
+    AsyncAggregateResponseBatchCursor<RawBsonDocument> getWrapped() {
         return wrapped;
     }
 
@@ -56,8 +61,10 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncBatchCursor<T> {
     public void next(final SingleResultCallback<List<T>> callback) {
         resumeableOperation(new AsyncBlock() {
             @Override
-            public void apply(final AsyncBatchCursor<RawBsonDocument> cursor, final SingleResultCallback<List<RawBsonDocument>> callback) {
+            public void apply(final AsyncAggregateResponseBatchCursor<RawBsonDocument> cursor,
+                              final SingleResultCallback<List<RawBsonDocument>> callback) {
                 cursor.next(callback);
+                cachePostBatchResumeToken(cursor);
             }
         }, convertResultsCallback(callback));
     }
@@ -66,10 +73,18 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncBatchCursor<T> {
     public void tryNext(final SingleResultCallback<List<T>> callback) {
         resumeableOperation(new AsyncBlock() {
             @Override
-            public void apply(final AsyncBatchCursor<RawBsonDocument> cursor, final SingleResultCallback<List<RawBsonDocument>> callback) {
+            public void apply(final AsyncAggregateResponseBatchCursor<RawBsonDocument> cursor,
+                              final SingleResultCallback<List<RawBsonDocument>> callback) {
                 cursor.tryNext(callback);
+                cachePostBatchResumeToken(cursor);
             }
         }, convertResultsCallback(callback));
+    }
+
+    @Override
+    public void close() {
+        wrapped.close();
+        binding.release();
     }
 
     @Override
@@ -88,13 +103,54 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncBatchCursor<T> {
     }
 
     @Override
-    public void close() {
-        wrapped.close();
-        binding.release();
+    public BsonDocument getPostBatchResumeToken() {
+        return wrapped.getPostBatchResumeToken();
+    }
+
+    @Override
+    public BsonTimestamp getOperationTime() {
+        return changeStreamOperation.getStartAtOperationTime();
+    }
+
+    @Override
+    public boolean isFirstBatchEmpty() {
+        return wrapped.isFirstBatchEmpty();
+    }
+
+    private void cachePostBatchResumeToken(final AsyncAggregateResponseBatchCursor<RawBsonDocument> queryBatchCursor) {
+        if (queryBatchCursor.getPostBatchResumeToken() != null) {
+            resumeToken = queryBatchCursor.getPostBatchResumeToken();
+        }
+    }
+
+    private SingleResultCallback<List<RawBsonDocument>> convertResultsCallback(final SingleResultCallback<List<T>> callback) {
+        return errorHandlingCallback(new SingleResultCallback<List<RawBsonDocument>>() {
+            @Override
+            public void onResult(final List<RawBsonDocument> rawDocuments, final Throwable t) {
+                if (t != null) {
+                    callback.onResult(null, t);
+                } else if (rawDocuments != null) {
+                    List<T> results = new ArrayList<T>();
+                    for (RawBsonDocument rawDocument : rawDocuments) {
+                        if (!rawDocument.containsKey("_id")) {
+                            callback.onResult(null,
+                                    new MongoChangeStreamException("Cannot provide resume functionality when the resume token is missing.")
+                            );
+                            return;
+                        }
+                        results.add(rawDocument.decode(changeStreamOperation.getDecoder()));
+                    }
+                    resumeToken = rawDocuments.get(rawDocuments.size() - 1).getDocument("_id");
+                    callback.onResult(results, null);
+                } else {
+                    callback.onResult(null, null);
+                }
+            }
+        }, LOGGER);
     }
 
     private interface AsyncBlock {
-        void apply(AsyncBatchCursor<RawBsonDocument> cursor, SingleResultCallback<List<RawBsonDocument>> callback);
+        void apply(AsyncAggregateResponseBatchCursor<RawBsonDocument> cursor, SingleResultCallback<List<RawBsonDocument>> callback);
     }
 
     private void resumeableOperation(final AsyncBlock asyncBlock, final SingleResultCallback<List<RawBsonDocument>> callback) {
@@ -114,47 +170,28 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncBatchCursor<T> {
     }
 
     private void retryOperation(final AsyncBlock asyncBlock, final SingleResultCallback<List<RawBsonDocument>> callback) {
-        if (resumeToken != null) {
-            changeStreamOperation.startOperationTimeForResume(null);
-            changeStreamOperation.resumeAfter(resumeToken);
-        }
-        changeStreamOperation.executeAsync(binding, new SingleResultCallback<AsyncBatchCursor<T>>() {
+        withConnection(binding, new AsyncCallableWithSource() {
             @Override
-            public void onResult(final AsyncBatchCursor<T> result, final Throwable t) {
+            public void call(final AsyncConnectionSource source, final Throwable t) {
                 if (t != null) {
                     callback.onResult(null, t);
                 } else {
-                    wrapped = ((AsyncChangeStreamBatchCursor<T>) result).getWrapped();
-                    binding.release(); // release the new change stream batch cursor's reference to the binding
-                    resumeableOperation(asyncBlock, callback);
+                    changeStreamOperation.setChangeStreamOptionsForResume(resumeToken, source.getServerDescription().getMaxWireVersion());
+                    source.release();
+                    changeStreamOperation.executeAsync(binding, new SingleResultCallback<AsyncBatchCursor<T>>() {
+                        @Override
+                        public void onResult(final AsyncBatchCursor<T> result, final Throwable t) {
+                            if (t != null) {
+                                callback.onResult(null, t);
+                            } else {
+                                wrapped = ((AsyncChangeStreamBatchCursor<T>) result).getWrapped();
+                                binding.release(); // release the new change stream batch cursor's reference to the binding
+                                resumeableOperation(asyncBlock, callback);
+                            }
+                        }
+                    });
                 }
             }
         });
-    }
-
-    private SingleResultCallback<List<RawBsonDocument>> convertResultsCallback(final SingleResultCallback<List<T>> callback) {
-        return errorHandlingCallback(new SingleResultCallback<List<RawBsonDocument>>() {
-            @Override
-            public void onResult(final List<RawBsonDocument> rawDocuments, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else if (rawDocuments != null) {
-                    List<T> results = new ArrayList<T>();
-                    for (RawBsonDocument rawDocument : rawDocuments) {
-                        if (!rawDocument.containsKey("_id")) {
-                            callback.onResult(null,
-                                    new MongoChangeStreamException("Cannot provide resume functionality when the resume token is missing.")
-                            );
-                            return;
-                        }
-                        resumeToken = rawDocument.getDocument("_id");
-                        results.add(rawDocument.decode(changeStreamOperation.getDecoder()));
-                    }
-                    callback.onResult(results, null);
-                } else {
-                    callback.onResult(null, null);
-                }
-            }
-        }, LOGGER);
     }
 }

@@ -263,13 +263,14 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
         }
     }
 
-    private CommandReadTransformer<BsonDocument, BatchCursor<T>> transformer() {
-        return new CommandReadTransformer<BsonDocument, BatchCursor<T>>() {
+    private CommandReadTransformer<BsonDocument, AggregateResponseBatchCursor<T>> transformer() {
+        return new CommandReadTransformer<BsonDocument, AggregateResponseBatchCursor<T>>() {
             @Override
-            public BatchCursor<T> apply(final BsonDocument result, final ConnectionSource source, final Connection connection) {
+            public AggregateResponseBatchCursor<T> apply(final BsonDocument result, final ConnectionSource source,
+                                                         final Connection connection) {
                 QueryResult<T> queryResult = createQueryResult(result, connection.getDescription());
                 return new QueryBatchCursor<T>(queryResult, 0, batchSize != null ? batchSize : 0, maxAwaitTimeMS, decoder, source,
-                        connection);
+                        connection, result);
             }
         };
     }
@@ -281,7 +282,7 @@ class AggregateOperationImpl<T> implements AsyncReadOperation<AsyncBatchCursor<T
                                              final AsyncConnection connection) {
                 QueryResult<T> queryResult = createQueryResult(result, connection.getDescription());
                 return new AsyncQueryBatchCursor<T>(queryResult, 0, batchSize != null ? batchSize : 0, maxAwaitTimeMS, decoder,
-                        source, connection);
+                        source, connection, result);
             }
         };
     }

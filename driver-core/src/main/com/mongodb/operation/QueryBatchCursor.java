@@ -31,6 +31,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
 import org.bson.BsonString;
+import org.bson.BsonTimestamp;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.BsonDocumentCodec;
 import org.bson.codecs.Decoder;
@@ -46,8 +47,12 @@ import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeast
 import static com.mongodb.operation.QueryHelper.translateCommandException;
 import static java.util.Collections.singletonList;
 
-class QueryBatchCursor<T> implements BatchCursor<T> {
+class QueryBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     private static final FieldNameValidator NO_OP_FIELD_NAME_VALIDATOR = new NoOpFieldNameValidator();
+    private static final String CURSOR = "cursor";
+    private static final String POST_BATCH_RESUME_TOKEN = "postBatchResumeToken";
+    private static final String OPERATION_TIME = "operationTime";
+
     private final MongoNamespace namespace;
     private final ServerAddress serverAddress;
     private final int limit;
@@ -59,6 +64,9 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
     private List<T> nextBatch;
     private int count;
     private volatile boolean closed;
+    private BsonDocument postBatchResumeToken;
+    private BsonTimestamp operationTime;
+    private boolean firstBatchEmpty;
 
     QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize, final Decoder<T> decoder) {
         this(firstQueryResult, limit, batchSize, decoder, null);
@@ -66,11 +74,22 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
 
     QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize,
                      final Decoder<T> decoder, final ConnectionSource connectionSource) {
-        this(firstQueryResult, limit, batchSize, 0, decoder, connectionSource, null);
+        this(firstQueryResult, limit, batchSize, 0, decoder, connectionSource, null, null);
+    }
+
+    QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize,
+                     final Decoder<T> decoder, final ConnectionSource connectionSource, final Connection connection) {
+        this(firstQueryResult, limit, batchSize, 0, decoder, connectionSource, connection, null);
     }
 
     QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize, final long maxTimeMS,
                      final Decoder<T> decoder, final ConnectionSource connectionSource, final Connection connection) {
+        this(firstQueryResult, limit, batchSize, maxTimeMS, decoder, connectionSource, connection, null);
+    }
+
+    QueryBatchCursor(final QueryResult<T> firstQueryResult, final int limit, final int batchSize, final long maxTimeMS,
+                     final Decoder<T> decoder, final ConnectionSource connectionSource, final Connection connection,
+                     final BsonDocument result) {
         isTrueArgument("maxTimeMS >= 0", maxTimeMS >= 0);
         this.maxTimeMS = maxTimeMS;
         this.namespace = firstQueryResult.getNamespace();
@@ -78,6 +97,9 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
         this.limit = limit;
         this.batchSize = batchSize;
         this.decoder = notNull("decoder", decoder);
+        if (result != null) {
+            this.operationTime = result.getTimestamp(OPERATION_TIME, null);
+        }
         if (firstQueryResult.getCursor() != null) {
             notNull("connectionSource", connectionSource);
         }
@@ -88,6 +110,7 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
         }
 
         initFromQueryResult(firstQueryResult);
+        firstBatchEmpty = firstQueryResult.getResults().isEmpty();
         if (limitReached()) {
             killCursor(connection);
         }
@@ -214,6 +237,21 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
         return serverAddress;
     }
 
+    @Override
+    public BsonDocument getPostBatchResumeToken() {
+        return postBatchResumeToken;
+    }
+
+    @Override
+    public BsonTimestamp getOperationTime() {
+        return operationTime;
+    }
+
+    @Override
+    public boolean isFirstBatchEmpty() {
+        return firstBatchEmpty;
+    }
+
     private void getMore() {
         Connection connection = connectionSource.getConnection();
         try {
@@ -267,8 +305,10 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
     }
 
     private void initFromCommandResult(final BsonDocument getMoreCommandResultDocument) {
-        QueryResult<T> queryResult = getMoreCursorDocumentToQueryResult(getMoreCommandResultDocument.getDocument("cursor"),
+        QueryResult<T> queryResult = getMoreCursorDocumentToQueryResult(getMoreCommandResultDocument.getDocument(CURSOR),
                                                                         connectionSource.getServerDescription().getAddress());
+        postBatchResumeToken = getPostBatchResumeTokenFromResponse(getMoreCommandResultDocument);
+        operationTime = getMoreCommandResultDocument.getTimestamp(OPERATION_TIME, null);
         initFromQueryResult(queryResult);
     }
 
@@ -307,5 +347,13 @@ class QueryBatchCursor<T> implements BatchCursor<T> {
     private BsonDocument asKillCursorsCommandDocument() {
         return new BsonDocument("killCursors", new BsonString(namespace.getCollectionName()))
                        .append("cursors", new BsonArray(singletonList(new BsonInt64(serverCursor.getId()))));
+    }
+
+    private BsonDocument getPostBatchResumeTokenFromResponse(final BsonDocument result) {
+        BsonDocument cursor = result.getDocument(CURSOR, null);
+        if (cursor != null) {
+            return cursor.getDocument(POST_BATCH_RESUME_TOKEN, null);
+        }
+        return null;
     }
 }
