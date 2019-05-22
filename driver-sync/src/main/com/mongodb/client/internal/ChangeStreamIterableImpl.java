@@ -21,6 +21,8 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.ChangeStreamIterable;
 import com.mongodb.client.ClientSession;
+import com.mongodb.client.MongoChangeStreamCursor;
+import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
@@ -32,7 +34,9 @@ import com.mongodb.operation.ChangeStreamOperation;
 import com.mongodb.operation.ReadOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
+import org.bson.RawBsonDocument;
 import org.bson.codecs.Codec;
+import org.bson.codecs.RawBsonDocumentCodec;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -114,11 +118,19 @@ class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeStreamDo
     @Override
     public <TDocument> MongoIterable<TDocument> withDocumentClass(final Class<TDocument> clazz) {
         return new MongoIterableImpl<TDocument>(getClientSession(), getExecutor(), getReadConcern(), getReadPreference(), getRetryReads()) {
-            private ReadOperation<BatchCursor<TDocument>> operation = createChangeStreamOperation(codecRegistry.get(clazz));
+            @Override
+            public MongoCursor<TDocument> iterator() {
+                return cursor();
+            }
+
+            @Override
+            public MongoChangeStreamCursor<TDocument> cursor() {
+                return new MongoChangeStreamCursorImpl<TDocument>(execute(), codecRegistry.get(clazz), initialResumeToken());
+            }
 
             @Override
             public ReadOperation<BatchCursor<TDocument>> asReadOperation() {
-                return operation;
+                throw new UnsupportedOperationException();
             }
         };
     }
@@ -136,12 +148,37 @@ class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeStreamDo
     }
 
     @Override
-    public ReadOperation<BatchCursor<ChangeStreamDocument<TResult>>> asReadOperation() {
-        return createChangeStreamOperation(codec);
+    public MongoCursor<ChangeStreamDocument<TResult>> iterator() {
+        return cursor();
     }
 
-    private <S> ReadOperation<BatchCursor<S>> createChangeStreamOperation(final Codec<S> codec) {
-        return new ChangeStreamOperation<S>(namespace, fullDocument,  createBsonDocumentList(pipeline), codec, changeStreamLevel)
+    @Override
+    public MongoChangeStreamCursor<ChangeStreamDocument<TResult>> cursor() {
+        return new MongoChangeStreamCursorImpl<ChangeStreamDocument<TResult>>(execute(), codec, initialResumeToken());
+    }
+
+    @Nullable
+    @Override
+    public ChangeStreamDocument<TResult> first() {
+        MongoChangeStreamCursor<ChangeStreamDocument<TResult>> cursor = cursor();
+        try {
+            if (!cursor.hasNext()) {
+                return null;
+            }
+            return cursor.next();
+        } finally {
+            cursor.close();
+        }
+    }
+
+    @Override
+    public ReadOperation<BatchCursor<ChangeStreamDocument<TResult>>> asReadOperation() {
+        throw new UnsupportedOperationException();
+    }
+
+    private ReadOperation<BatchCursor<RawBsonDocument>> createChangeStreamOperation() {
+        return new ChangeStreamOperation<RawBsonDocument>(namespace, fullDocument,  createBsonDocumentList(pipeline),
+                new RawBsonDocumentCodec(), changeStreamLevel)
                         .batchSize(getBatchSize())
                         .collation(collation)
                         .maxAwaitTime(maxAwaitTimeMS, MILLISECONDS)
@@ -160,5 +197,13 @@ class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeStreamDo
             aggregateList.add(obj.toBsonDocument(BsonDocument.class, codecRegistry));
         }
         return aggregateList;
+    }
+
+    private BatchCursor<RawBsonDocument> execute() {
+        return getExecutor().execute(createChangeStreamOperation(), getReadPreference(), getReadConcern(), getClientSession());
+    }
+
+    private BsonDocument initialResumeToken() {
+        return startAfter != null ? startAfter : resumeToken;
     }
 }

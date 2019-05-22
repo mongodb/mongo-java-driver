@@ -352,7 +352,7 @@ final class OperationHelper {
                                                                     final int batchSize) {
         return new AsyncQueryBatchCursor<T>(OperationHelper.<T>cursorDocumentToQueryResult(cursorDocument,
                 source.getServerDescription().getAddress()),
-                0, batchSize, 0, decoder, source, connection);
+                0, batchSize, 0, decoder, source, connection, cursorDocument);
     }
 
 

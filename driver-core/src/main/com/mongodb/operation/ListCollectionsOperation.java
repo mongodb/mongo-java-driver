@@ -443,7 +443,6 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
         public ServerAddress getServerAddress() {
             return delegate.getServerAddress();
         }
-
     }
 
     private final class ProjectingAsyncBatchCursor implements AsyncBatchCursor<T> {

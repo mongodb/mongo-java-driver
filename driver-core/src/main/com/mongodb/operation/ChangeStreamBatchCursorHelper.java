@@ -27,7 +27,7 @@ import java.util.List;
 import static java.util.Arrays.asList;
 
 final class ChangeStreamBatchCursorHelper {
-    private static final List<Integer> UNRETRYABLE_SERVER_ERROR_CODES = asList(136, 237, 11601);
+    private static final List<Integer> UNRETRYABLE_SERVER_ERROR_CODES = asList(136, 237, 280, 11601);
 
     static boolean isRetryableError(final Throwable t) {
         if (!(t instanceof MongoException) || t instanceof MongoChangeStreamException) {

@@ -558,7 +558,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         cursor.close()
         waitForLastRelease(async ? getAsyncCluster() : getCluster())
 
-        operation.resumeAfter(result.head().getDocument('_id'))
+        operation.resumeAfter(result.head().getDocument('_id')).startAtOperationTime(null)
         cursor = execute(operation, async)
         result = nextAndClean(cursor, async)
 
@@ -594,7 +594,7 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         cursor.close()
         waitForLastRelease(async ? getAsyncCluster() : getCluster())
 
-        cursor = execute(operation.startAfter(result.head().getDocument('_id')), async)
+        cursor = execute(operation.startAfter(result.head().getDocument('_id')).startAtOperationTime(null), async)
         result = nextAndClean(cursor, async)
 
         then:
@@ -674,44 +674,6 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
         then:
         changeStream.getTimestamp('startAtOperationTime') == startAtTime
-
-        when: 'set startAtOperationTimeForResume'
-        def resumeStartAt = new BsonTimestamp(42, 42)
-        new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
-                .startOperationTimeForResume(resumeStartAt)
-                .execute(binding)
-
-        then:
-        changeStream.getTimestamp('startAtOperationTime') == resumeStartAt
-
-        when: 'set startAtOperationTime && startAtOperationTimeForResume'
-        new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
-                .startAtOperationTime(startAtTime)
-                .startOperationTimeForResume(resumeStartAt)
-                .execute(binding)
-
-        then:
-        changeStream.getTimestamp('startAtOperationTime') == startAtTime
-
-        when: 'set resumeAfter && startAtOperationTimeForResume'
-        new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
-                .resumeAfter(new BsonDocument())
-                .startOperationTimeForResume(resumeStartAt)
-                .execute(binding)
-
-        then:
-        changeStream.containsKey('resumeAfter')
-        !changeStream.containsKey('startAtOperationTime')
-
-        when: 'set startAfter && startAtOperationTimeForResume'
-        new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
-                .startAfter(new BsonDocument())
-                .startOperationTimeForResume(resumeStartAt)
-                .execute(binding)
-
-        then:
-        changeStream.containsKey('startAfter')
-        !changeStream.containsKey('startAtOperationTime')
     }
 
     def 'should set the startAtOperationTime on the async cursor'() {
@@ -767,44 +729,6 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
 
         then:
         changeStream.getTimestamp('startAtOperationTime') == startAtTime
-
-        when: 'set startAtOperationTimeForResume'
-        def resumeStartAt = new BsonTimestamp(42, 42)
-        new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
-                .startOperationTimeForResume(resumeStartAt)
-                .executeAsync(binding, Stub(SingleResultCallback))
-
-        then:
-        changeStream.getTimestamp('startAtOperationTime') == resumeStartAt
-
-        when: 'set startAtOperationTime && startAtOperationTimeForResume'
-        new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
-                .startAtOperationTime(startAtTime)
-                .startOperationTimeForResume(resumeStartAt)
-                .executeAsync(binding, Stub(SingleResultCallback))
-
-        then:
-        changeStream.getTimestamp('startAtOperationTime') == startAtTime
-
-        when: 'set resumeAfter && startAtOperationTimeForResume'
-        new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
-                .resumeAfter(new BsonDocument())
-                .startOperationTimeForResume(resumeStartAt)
-                .executeAsync(binding, Stub(SingleResultCallback))
-
-        then:
-        changeStream.containsKey('resumeAfter')
-        !changeStream.containsKey('startAtOperationTime')
-
-        when: 'set startAfter && startAtOperationTimeForResume'
-        new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
-                .startAfter(new BsonDocument())
-                .startOperationTimeForResume(resumeStartAt)
-                .executeAsync(binding, Stub(SingleResultCallback))
-
-        then:
-        changeStream.containsKey('startAfter')
-        !changeStream.containsKey('startAtOperationTime')
     }
 
     private final static CODEC = new BsonDocumentCodec()

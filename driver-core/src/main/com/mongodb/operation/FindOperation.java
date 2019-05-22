@@ -1114,12 +1114,13 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
         return cursorType == CursorType.TailableAwait;
     }
 
-    private CommandReadTransformer<BsonDocument, BatchCursor<T>> transformer() {
-        return new CommandReadTransformer<BsonDocument, BatchCursor<T>>() {
+    private CommandReadTransformer<BsonDocument, AggregateResponseBatchCursor<T>> transformer() {
+        return new CommandReadTransformer<BsonDocument, AggregateResponseBatchCursor<T>>() {
             @Override
-            public BatchCursor<T> apply(final BsonDocument result, final ConnectionSource source, final Connection connection) {
+            public AggregateResponseBatchCursor<T> apply(final BsonDocument result, final ConnectionSource source,
+                                                         final Connection connection) {
                 QueryResult<T> queryResult = documentToQueryResult(result, connection.getDescription().getServerAddress());
-                return new QueryBatchCursor<T>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, source, connection);
+                return new QueryBatchCursor<T>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, source, connection, result);
             }
         };
     }
@@ -1134,7 +1135,8 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
             public AsyncBatchCursor<T> apply(final BsonDocument result, final AsyncConnectionSource source,
                                              final AsyncConnection connection) {
                 QueryResult<T> queryResult = documentToQueryResult(result, connection.getDescription().getServerAddress());
-                return new AsyncQueryBatchCursor<T>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, source, connection);
+                return new AsyncQueryBatchCursor<T>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, source, connection,
+                        result);
             }
         };
     }

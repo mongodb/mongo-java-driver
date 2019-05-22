@@ -135,6 +135,14 @@ public final class ClusterFixture {
         return serverVersionAtLeast(asList(majorVersion, minorVersion, 0));
     }
 
+    public static boolean serverVersionLessThan(final List<Integer> versionArray) {
+        return getServerVersion().compareTo(new ServerVersion(versionArray)) < 0;
+    }
+
+    public static boolean serverVersionLessThan(final int majorVersion, final int minorVersion) {
+        return serverVersionAtLeast(asList(majorVersion, minorVersion, 0));
+    }
+
     public static boolean serverVersionLessThan(final String versionString) {
         return getServerVersion().compareTo(new ServerVersion(getVersionList(versionString).subList(0, 3))) < 0;
     }
