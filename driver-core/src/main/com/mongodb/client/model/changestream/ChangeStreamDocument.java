@@ -59,8 +59,8 @@ public final class ChangeStreamDocument<TDocument> {
      * @param fullDocument the fullDocument
      * @param operationType the operation type
      * @param updateDescription the update description
-     * @deprecated Prefer {@link #ChangeStreamDocument(BsonDocument, BsonDocument, BsonDocument, Object, BsonDocument, BsonTimestamp,
-     * OperationType, UpdateDescription)}
+     * @deprecated Prefer {@link #ChangeStreamDocument(OperationType, BsonDocument, BsonDocument, BsonDocument, Object, BsonDocument,
+     * BsonTimestamp, UpdateDescription)}
      */
     @Deprecated
     public ChangeStreamDocument(final BsonDocument resumeToken,
@@ -82,8 +82,8 @@ public final class ChangeStreamDocument<TDocument> {
      * @param fullDocument the fullDocument
      * @param operationType the operation type
      * @param updateDescription the update description
-     * @deprecated Prefer {@link #ChangeStreamDocument(BsonDocument, BsonDocument, BsonDocument, Object, BsonDocument, BsonTimestamp,
-     * OperationType, UpdateDescription)}
+     * @deprecated Prefer {@link #ChangeStreamDocument(OperationType, BsonDocument, BsonDocument, BsonDocument, Object, BsonDocument,
+     * BsonTimestamp, UpdateDescription)}
      */
     @Deprecated
     public ChangeStreamDocument(final BsonDocument resumeToken,
@@ -117,31 +117,32 @@ public final class ChangeStreamDocument<TDocument> {
                                 @Nullable @BsonProperty("clusterTime") final BsonTimestamp clusterTime,
                                 @BsonProperty("operationType") final OperationType operationType,
                                 @BsonProperty("updateDescription") final UpdateDescription updateDescription) {
-        this(resumeToken, namespaceDocument, null, fullDocument, documentKey, clusterTime, operationType, updateDescription);
+        this(operationType, resumeToken, namespaceDocument, null, fullDocument, documentKey, clusterTime,
+                updateDescription);
     }
 
     /**
      * Creates a new instance
      *
+     * @param operationType the operation type
      * @param resumeToken the resume token
      * @param namespaceDocument the BsonDocument representing the namespace
      * @param destinationNamespaceDocument the BsonDocument representing the destinatation namespace
      * @param fullDocument the full document
      * @param documentKey a document containing the _id of the changed document
      * @param clusterTime the cluster time at which the change occured
-     * @param operationType the operation type
      * @param updateDescription the update description
      *
      * @since 3.11
      */
     @BsonCreator
-    public ChangeStreamDocument(@BsonProperty("resumeToken") final BsonDocument resumeToken,
-                                @BsonProperty("ns") final BsonDocument namespaceDocument,
+    public ChangeStreamDocument(@BsonProperty("operationType") final OperationType operationType,
+                                @BsonProperty("resumeToken") final BsonDocument resumeToken,
+                                @Nullable @BsonProperty("ns") final BsonDocument namespaceDocument,
                                 @Nullable @BsonProperty("to") final BsonDocument destinationNamespaceDocument,
-                                @BsonProperty("fullDocument") final TDocument fullDocument,
+                                @Nullable @BsonProperty("fullDocument") final TDocument fullDocument,
                                 @Nullable @BsonProperty("documentKey") final BsonDocument documentKey,
                                 @Nullable @BsonProperty("clusterTime") final BsonTimestamp clusterTime,
-                                @BsonProperty("operationType") final OperationType operationType,
                                 @Nullable @BsonProperty("updateDescription") final UpdateDescription updateDescription) {
         this.resumeToken = resumeToken;
         this.namespaceDocument = namespaceDocument;
@@ -178,7 +179,8 @@ public final class ChangeStreamDocument<TDocument> {
      * @return the namespace. If the namespaceDocument is null or if it is missing either the 'db' or 'coll' keys,
      * then this will return null.
      */
-    @BsonIgnore @Nullable
+    @BsonIgnore
+    @Nullable
     public MongoNamespace getNamespace() {
         if (namespaceDocument == null) {
             return null;
@@ -200,6 +202,7 @@ public final class ChangeStreamDocument<TDocument> {
      * @since 3.8
      */
     @BsonProperty("ns")
+    @Nullable
     public BsonDocument getNamespaceDocument() {
         return namespaceDocument;
     }
@@ -237,6 +240,7 @@ public final class ChangeStreamDocument<TDocument> {
      * @since 3.11
      */
     @BsonProperty("to")
+    @Nullable
     public BsonDocument getDestinationNamespaceDocument() {
         return destinationNamespaceDocument;
     }
@@ -248,7 +252,8 @@ public final class ChangeStreamDocument<TDocument> {
      * return null.
      * @since 3.8
      */
-    @BsonIgnore @Nullable
+    @BsonIgnore
+    @Nullable
     public String getDatabaseName() {
         if (namespaceDocument == null) {
             return null;
@@ -386,13 +391,13 @@ public final class ChangeStreamDocument<TDocument> {
     @Override
     public String toString() {
         return "ChangeStreamDocument{"
-                + "resumeToken=" + resumeToken
+                + " operationType=" + operationType
+                + ", resumeToken=" + resumeToken
                 + ", namespace=" + getNamespace()
                 + ", destinationNamespace=" + getDestinationNamespace()
                 + ", fullDocument=" + fullDocument
                 + ", documentKey=" + documentKey
                 + ", clusterTime=" + clusterTime
-                + ", operationType=" + operationType
                 + ", updateDescription=" + updateDescription
                 + "}";
     }
