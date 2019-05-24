@@ -60,6 +60,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
     private final Decoder<T> decoder;
     private final ChangeStreamLevel changeStreamLevel;
 
+    private boolean showMigrationEvents;
     private BsonDocument resumeToken;
     private BsonDocument startAfter;
     private BsonTimestamp startAtOperationTime;
@@ -317,6 +318,32 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
         return wrapped.getRetryReads();
     }
 
+    /**
+     * <b>This functionality is for internal use only. It is not supported.</b>
+     *
+     * <p>Configures this change stream to show chunk migration CRUD events.</p>
+     *
+     * @param showMigrationEvents true if chunk migrations events should be shown.
+     * @return this
+     * @since 3.10.3-SNAPSHOT
+     */
+    public ChangeStreamOperation<T> showMigrationEvents(final boolean showMigrationEvents) {
+        this.showMigrationEvents = showMigrationEvents;
+        return this;
+    }
+
+    /**
+     * <b>This functionality is for internal use only. It is not supported.</b>
+     *
+     * <p>Returns true if this operation will create a change stream that will show chunk migrations.</p>
+     *
+     * @return if this change stream will show chunk migrations.
+     * @since 3.10.3-SNAPSHOT
+     */
+    public boolean getShowMigrationEvents() {
+        return showMigrationEvents;
+    }
+
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
         return new ChangeStreamBatchCursor<T>(ChangeStreamOperation.this, wrapped.execute(binding), binding);
@@ -373,6 +400,10 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
 
                 if (!hasResumeSetting && startAtOperationTimeForResume != null && serverIsAtLeastVersionFourDotZero(description)) {
                     changeStream.append("startAtOperationTime", startAtOperationTimeForResume);
+                }
+
+                if (showMigrationEvents) {
+                    changeStream.append("showMigrationEvents", BsonBoolean.TRUE);
                 }
 
                 changeStreamPipeline.add(new BsonDocument("$changeStream", changeStream));
