@@ -319,13 +319,15 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
     }
 
     /**
-     * <b>This functionality is for internal use only. It is not supported.</b>
+     * <p>This option is NOT part of the public API.  It may change at any time without notification.</p>
      *
      * <p>Configures this change stream to show chunk migration CRUD events.</p>
+     * <p>This option is only allowed to be true when passed to a change stream opened directly with a shard.</p>
+     * <p>Using this option with a change stream opened against a mongos is an error.</p>
      *
      * @param showMigrationEvents true if chunk migrations events should be shown.
      * @return this
-     * @since 3.10.3-SNAPSHOT
+     * @since 3.10.3-mongot
      */
     public ChangeStreamOperation<T> showMigrationEvents(final boolean showMigrationEvents) {
         this.showMigrationEvents = showMigrationEvents;
@@ -333,12 +335,12 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
     }
 
     /**
-     * <b>This functionality is for internal use only. It is not supported.</b>
+     * <p>This option is NOT part of the public API.  It may change at any time without notification.</p>
      *
      * <p>Returns true if this operation will create a change stream that will show chunk migrations.</p>
      *
      * @return if this change stream will show chunk migrations.
-     * @since 3.10.3-SNAPSHOT
+     * @since 3.10.3-mongot
      */
     public boolean getShowMigrationEvents() {
         return showMigrationEvents;

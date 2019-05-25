@@ -625,21 +625,22 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         waitForLastRelease(getCluster())
     }
 
-    def 'should support showMigrationEvents on the sync API'() {
+    def 'should set and unset showMigrationEvents'() {
         given:
         def helper = getHelper()
 
         when:
         def operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
-
-        then:
-        operation.getShowMigrationEvents().equals(false)
-
-        when:
-        operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC).showMigrationEvents(true)
+                .showMigrationEvents(true)
 
         then:
         operation.getShowMigrationEvents().equals(true)
+
+        when:
+        operation = new ChangeStreamOperation<BsonDocument>(helper.getNamespace(), FullDocument.DEFAULT, [], CODEC)
+
+        then:
+        operation.getShowMigrationEvents().equals(false)
     }
 
     def 'should set the startAtOperationTime on the sync cursor'() {

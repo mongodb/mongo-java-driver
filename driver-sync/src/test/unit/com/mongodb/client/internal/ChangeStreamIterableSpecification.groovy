@@ -54,7 +54,6 @@ class ChangeStreamIterableSpecification extends Specification {
     def readConcern = ReadConcern.MAJORITY
     def writeConcern = WriteConcern.MAJORITY
     def collation = Collation.builder().locale('en').build()
-    def showMigrationEvents = true
 
     def 'should build the expected ChangeStreamOperation'() {
         given:
@@ -78,9 +77,14 @@ class ChangeStreamIterableSpecification extends Specification {
         when: 'overriding initial options'
         def resumeToken = RawBsonDocument.parse('{_id: {a: 1}}')
         def startAtOperationTime = new BsonTimestamp(99)
-        changeStreamIterable.collation(collation).maxAwaitTime(99, MILLISECONDS)
-                .fullDocument(FullDocument.UPDATE_LOOKUP).resumeAfter(resumeToken).startAtOperationTime(startAtOperationTime)
-                .startAfter(resumeToken).showMigrationEvents(showMigrationEvents).iterator()
+        changeStreamIterable.collation(collation)
+                .maxAwaitTime(99, MILLISECONDS)
+                .fullDocument(FullDocument.UPDATE_LOOKUP)
+                .resumeAfter(resumeToken)
+                .startAtOperationTime(startAtOperationTime)
+                .startAfter(resumeToken)
+                .showMigrationEvents(true)
+                .iterator()
 
         operation = executor.getReadOperation() as ChangeStreamOperation<Document>
 
@@ -88,8 +92,12 @@ class ChangeStreamIterableSpecification extends Specification {
         expect operation, isTheSameAs(new ChangeStreamOperation<Document>(namespace, FullDocument.UPDATE_LOOKUP,
                 [BsonDocument.parse('{$match: 1}')], codec, ChangeStreamLevel.COLLECTION)
                 .retryReads(true)
-                .collation(collation).maxAwaitTime(99, MILLISECONDS)
-                .resumeAfter(resumeToken).startAtOperationTime(startAtOperationTime).startAfter(resumeToken).showMigrationEvents(showMigrationEvents))
+                .collation(collation)
+                .maxAwaitTime(99, MILLISECONDS)
+                .resumeAfter(resumeToken)
+                .startAtOperationTime(startAtOperationTime)
+                .startAfter(resumeToken)
+                .showMigrationEvents(true))
     }
 
     def 'should use ClientSession'() {
