@@ -77,9 +77,14 @@ class ChangeStreamIterableSpecification extends Specification {
         when: 'overriding initial options'
         def resumeToken = RawBsonDocument.parse('{_id: {a: 1}}')
         def startAtOperationTime = new BsonTimestamp(99)
-        changeStreamIterable.collation(collation).maxAwaitTime(99, MILLISECONDS)
-                .fullDocument(FullDocument.UPDATE_LOOKUP).resumeAfter(resumeToken).startAtOperationTime(startAtOperationTime)
-                .startAfter(resumeToken).iterator()
+        changeStreamIterable.collation(collation)
+                .maxAwaitTime(99, MILLISECONDS)
+                .fullDocument(FullDocument.UPDATE_LOOKUP)
+                .resumeAfter(resumeToken)
+                .startAtOperationTime(startAtOperationTime)
+                .startAfter(resumeToken)
+                .showMigrationEvents(true)
+                .iterator()
 
         operation = executor.getReadOperation() as ChangeStreamOperation<Document>
 
@@ -87,8 +92,12 @@ class ChangeStreamIterableSpecification extends Specification {
         expect operation, isTheSameAs(new ChangeStreamOperation<Document>(namespace, FullDocument.UPDATE_LOOKUP,
                 [BsonDocument.parse('{$match: 1}')], codec, ChangeStreamLevel.COLLECTION)
                 .retryReads(true)
-                .collation(collation).maxAwaitTime(99, MILLISECONDS)
-                .resumeAfter(resumeToken).startAtOperationTime(startAtOperationTime).startAfter(resumeToken))
+                .collation(collation)
+                .maxAwaitTime(99, MILLISECONDS)
+                .resumeAfter(resumeToken)
+                .startAtOperationTime(startAtOperationTime)
+                .startAfter(resumeToken)
+                .showMigrationEvents(true))
     }
 
     def 'should use ClientSession'() {
