@@ -327,7 +327,6 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
      *
      * @param showMigrationEvents true if chunk migrations events should be shown.
      * @return this
-     * @since 3.10.3-mongot
      */
     public ChangeStreamOperation<T> showMigrationEvents(final boolean showMigrationEvents) {
         this.showMigrationEvents = showMigrationEvents;
@@ -340,7 +339,6 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
      * <p>Returns true if this operation will create a change stream that will show chunk migrations.</p>
      *
      * @return if this change stream will show chunk migrations.
-     * @since 3.10.3-mongot
      */
     public boolean getShowMigrationEvents() {
         return showMigrationEvents;

@@ -101,7 +101,7 @@ class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeStreamDo
 
     @Override
     public ChangeStreamIterable<TResult> showMigrationEvents(final boolean showMigrationEvents) {
-        this.showMigrationEvents = notNull("showMigrationEvents", showMigrationEvents);
+        this.showMigrationEvents = showMigrationEvents;
         return this;
     }
 

@@ -130,7 +130,6 @@ public interface ChangeStreamIterable<TResult> extends MongoIterable<ChangeStrea
      *
      * @param showMigrationEvents the showMigrationEvents boolean
      * @return this
-     * @since never
      * @mongodb.server.release 4.2
      */
     ChangeStreamIterable<TResult> showMigrationEvents(boolean showMigrationEvents);
