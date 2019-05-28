@@ -59,6 +59,7 @@ class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeStreamDo
     private long maxAwaitTimeMS;
     private Collation collation;
     private BsonTimestamp startAtOperationTime;
+    private boolean showMigrationEvents;
 
     ChangeStreamIterableImpl(@Nullable final ClientSession clientSession, final String databaseName,
                              final CodecRegistry codecRegistry, final ReadPreference readPreference, final ReadConcern readConcern,
@@ -95,6 +96,12 @@ class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeStreamDo
     @Override
     public ChangeStreamIterable<TResult> batchSize(final int batchSize) {
         super.batchSize(batchSize);
+        return this;
+    }
+
+    @Override
+    public ChangeStreamIterable<TResult> showMigrationEvents(final boolean showMigrationEvents) {
+        this.showMigrationEvents = showMigrationEvents;
         return this;
     }
 
@@ -148,7 +155,8 @@ class ChangeStreamIterableImpl<TResult> extends MongoIterableImpl<ChangeStreamDo
                         .resumeAfter(resumeToken)
                         .startAtOperationTime(startAtOperationTime)
                         .startAfter(startAfter)
-                        .retryReads(getRetryReads());
+                        .retryReads(getRetryReads())
+                        .showMigrationEvents(showMigrationEvents);
     }
 
     private List<BsonDocument> createBsonDocumentList(final List<? extends Bson> pipeline) {

@@ -120,4 +120,17 @@ public interface ChangeStreamIterable<TResult> extends MongoIterable<ChangeStrea
      * @mongodb.driver.manual changeStreams/#change-stream-start-after
      */
     ChangeStreamIterable<TResult> startAfter(BsonDocument startAfter);
+
+    /**
+     * <p>This option is NOT part of the public API.  It may change at any time without notification.</p>
+     *
+     * <p>Configures this change stream to show chunk migration CRUD events.</p>
+     * <p>This option is only allowed to be true when passed to a change stream opened directly with a shard.</p>
+     * <p>Using this option with a change stream opened against a mongos is an error.</p>
+     *
+     * @param showMigrationEvents the showMigrationEvents boolean
+     * @return this
+     * @mongodb.server.release 4.2
+     */
+    ChangeStreamIterable<TResult> showMigrationEvents(boolean showMigrationEvents);
 }
