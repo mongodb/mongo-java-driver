@@ -384,7 +384,7 @@ functions:
 # Anchors
 
 hosts: &hosts
- - rhel62-small
+ - rhel70-small
 
 pre:
   - func: "fetch source"
