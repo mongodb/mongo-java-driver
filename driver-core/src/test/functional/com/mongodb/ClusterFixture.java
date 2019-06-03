@@ -143,7 +143,7 @@ public final class ClusterFixture {
         return getServerVersion().compareTo(new ServerVersion(getVersionList(versionString).subList(0, 3))) > 0;
     }
 
-    private static List<Integer> getVersionList(final String versionString) {
+    public static List<Integer> getVersionList(final String versionString) {
         List<Integer> versionList = new ArrayList<Integer>();
         for (String s : versionString.split("\\.")) {
             versionList.add(Integer.valueOf(s));

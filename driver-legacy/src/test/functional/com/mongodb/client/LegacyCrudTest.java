@@ -33,10 +33,10 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static com.mongodb.ClusterFixture.serverVersionGreaterThan;
-import static com.mongodb.ClusterFixture.serverVersionLessThan;
+import static com.mongodb.JsonTestServerVersionChecker.skipTest;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeFalse;
 
 // See https://github.com/mongodb/specifications/tree/master/source/crud/tests
 @RunWith(Parameterized.class)
@@ -46,21 +46,24 @@ public class LegacyCrudTest extends LegacyDatabaseTestCase {
     private final String databaseName;
     private final BsonArray data;
     private final BsonDocument definition;
+    private final boolean skipTest;
     private MongoCollection<BsonDocument> collection;
     private JsonPoweredCrudTestHelper helper;
 
     public LegacyCrudTest(final String filename, final String description, final String databaseName, final BsonArray data,
-                          final BsonDocument definition) {
+                          final BsonDocument definition, final boolean skipTest) {
         this.filename = filename;
         this.description = description;
         this.databaseName = databaseName;
         this.data = data;
         this.definition = definition;
+        this.skipTest = skipTest;
     }
 
     @Before
     public void setUp() {
         super.setUp();
+        assumeFalse(skipTest);
         if (!data.isEmpty()) {
             List<BsonDocument> documents = new ArrayList<BsonDocument>();
             for (BsonValue document : data) {
@@ -110,18 +113,10 @@ public class LegacyCrudTest extends LegacyDatabaseTestCase {
         List<Object[]> data = new ArrayList<Object[]>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/crud")) {
             BsonDocument testDocument = util.JsonPoweredTestHelper.getTestDocument(file);
-            if (testDocument.containsKey("minServerVersion")
-                    && serverVersionLessThan(testDocument.getString("minServerVersion").getValue())) {
-                continue;
-            }
-            if (testDocument.containsKey("maxServerVersion")
-                        && serverVersionGreaterThan(testDocument.getString("maxServerVersion").getValue())) {
-                continue;
-            }
             for (BsonValue test: testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
                         testDocument.getString("database_name", new BsonString(getDefaultDatabaseName())).getValue(),
-                        testDocument.getArray("data"), test.asDocument()});
+                        testDocument.getArray("data"), test.asDocument(), skipTest(testDocument, test.asDocument())});
             }
         }
         return data;

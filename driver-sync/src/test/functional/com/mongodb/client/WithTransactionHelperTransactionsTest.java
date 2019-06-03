@@ -30,14 +30,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static com.mongodb.ClusterFixture.serverVersionLessThan;
+import static com.mongodb.JsonTestServerVersionChecker.skipTest;
 
 // See https://github.com/mongodb/specifications/tree/master/source/transactions-convenient-api/tests
 @RunWith(Parameterized.class)
 public class WithTransactionHelperTransactionsTest extends AbstractTransactionsTest {
     public WithTransactionHelperTransactionsTest(final String filename, final String description, final BsonArray data,
-                                                 final BsonDocument definition) {
-        super(filename, description, data, definition);
+                                                 final BsonDocument definition, final boolean skipTest) {
+        super(filename, description, data, definition, skipTest);
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")
@@ -45,13 +45,9 @@ public class WithTransactionHelperTransactionsTest extends AbstractTransactionsT
         List<Object[]> data = new ArrayList<Object[]>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/transactions-convenient-api")) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
-            if (testDocument.containsKey("minServerVersion")
-                    && serverVersionLessThan(testDocument.getString("minServerVersion").getValue())) {
-                continue;
-            }
             for (BsonValue test : testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
-                        testDocument.getArray("data"), test.asDocument()});
+                        testDocument.getArray("data"), test.asDocument(), skipTest(testDocument, test.asDocument())});
             }
         }
         return data;
