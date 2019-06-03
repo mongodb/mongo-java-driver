@@ -83,15 +83,7 @@ public final class Fixture {
         return DEFAULT_DATABASE_NAME;
     }
 
-    static boolean serverVersionLessThan(final String versionString) {
-        return getServerVersion().compareTo(new ServerVersion(getVersionList(versionString).subList(0, 3))) < 0;
-    }
-
-    static boolean serverVersionGreaterThan(final String versionString) {
-        return getServerVersion().compareTo(new ServerVersion(getVersionList(versionString).subList(0, 3))) > 0;
-    }
-
-    private static synchronized ServerVersion getServerVersion() {
+    static synchronized ServerVersion getServerVersion() {
         if (serverVersion == null) {
             BsonDocument buildInfoResult = getMongoClient().getDatabase("admin")
                     .runCommand(new Document("buildInfo", 1), BsonDocument.class);
