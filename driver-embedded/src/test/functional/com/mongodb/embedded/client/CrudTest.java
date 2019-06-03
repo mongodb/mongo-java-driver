@@ -40,6 +40,7 @@ import java.util.List;
 import static com.mongodb.JsonTestServerVersionChecker.skipTest;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.embedded.client.Fixture.getMongoClient;
+import static com.mongodb.embedded.client.Fixture.getServerVersion;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeFalse;
 
@@ -132,7 +133,7 @@ public class CrudTest extends DatabaseTestCase {
             for (BsonValue test: testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
                         testDocument.getString("database_name", new BsonString(getDefaultDatabaseName())).getValue(),
-                        testDocument.getArray("data"), test.asDocument(), skipTest(testDocument, test.asDocument())});
+                        testDocument.getArray("data"), test.asDocument(), skipTest(testDocument, test.asDocument(), getServerVersion())});
             }
         }
         return data;

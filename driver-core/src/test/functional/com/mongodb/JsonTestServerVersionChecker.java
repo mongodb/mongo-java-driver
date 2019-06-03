@@ -22,6 +22,7 @@ import org.bson.BsonValue;
 
 import java.util.List;
 
+import static com.mongodb.ClusterFixture.getServerVersion;
 import static com.mongodb.ClusterFixture.getVersionList;
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
@@ -31,15 +32,16 @@ import static java.util.Arrays.asList;
 
 public final class JsonTestServerVersionChecker {
     private static final List<String> TOPOLOGY_TYPES = asList("sharded", "replicaset", "single");
-    private static ServerVersion serverVersion;
 
     public static boolean skipTest(final BsonDocument testDocument, final BsonDocument testDefinition) {
-        return !(canRunTest(testDocument) && canRunTest(testDefinition));
+        return skipTest(testDocument, testDefinition, getServerVersion());
     }
 
-    private static boolean canRunTest(final BsonDocument document) {
-        ServerVersion serverVersion = getServerVersion();
+    public static boolean skipTest(final BsonDocument testDocument, final BsonDocument testDefinition, final ServerVersion serverVersion) {
+        return !(canRunTest(testDocument, serverVersion) && canRunTest(testDefinition, serverVersion));
+    }
 
+    private static boolean canRunTest(final BsonDocument document, final ServerVersion serverVersion) {
         if (document.containsKey("minServerVersion")
                 && serverVersion.compareTo(getServerVersionForField("minServerVersion", document)) < 0) {
             return false;
@@ -54,7 +56,7 @@ public final class JsonTestServerVersionChecker {
         }
 
         if (document.containsKey("runOn")) {
-            return canRunTest(document.getArray("runOn"));
+            return canRunTest(document.getArray("runOn"), serverVersion);
         }
 
         // Ignore certain matching types
@@ -73,10 +75,10 @@ public final class JsonTestServerVersionChecker {
         return true;
     }
 
-    private static boolean canRunTest(final BsonArray runOn) {
+    private static boolean canRunTest(final BsonArray runOn, final ServerVersion serverVersion) {
         boolean topologyFound = false;
         for (BsonValue info : runOn) {
-            topologyFound = canRunTest(info.asDocument());
+            topologyFound = canRunTest(info.asDocument(), serverVersion);
             if (topologyFound) {
                 break;
             }
@@ -98,13 +100,6 @@ public final class JsonTestServerVersionChecker {
             }
         }
         return false;
-    }
-
-    private static ServerVersion getServerVersion() {
-        if (serverVersion == null) {
-            serverVersion = ClusterFixture.getServerVersion();
-        }
-        return serverVersion;
     }
 
     private static ServerVersion getServerVersionForField(final String fieldName, final BsonDocument document) {
