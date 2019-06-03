@@ -60,9 +60,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
-import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
@@ -73,6 +71,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 @RunWith(Parameterized.class)
@@ -82,6 +81,7 @@ public abstract class AbstractTransactionsTest {
     private final String databaseName;
     private final BsonArray data;
     private final BsonDocument definition;
+    private final boolean skipTest;
     private JsonPoweredCrudTestHelper helper;
     private final TestCommandListener commandListener;
     private MongoClient mongoClient;
@@ -94,18 +94,20 @@ public abstract class AbstractTransactionsTest {
 
     private static final long MIN_HEARTBEAT_FREQUENCY_MS = 50L;
 
-    public AbstractTransactionsTest(final String filename, final String description, final BsonArray data, final BsonDocument definition) {
+    public AbstractTransactionsTest(final String filename, final String description, final BsonArray data, final BsonDocument definition,
+                                    final boolean skipTest) {
         this.filename = filename;
         this.description = description;
         this.databaseName = getDefaultDatabaseName();
         this.data = data;
         this.definition = definition;
         this.commandListener = new TestCommandListener();
+        this.skipTest = skipTest;
     }
 
     @Before
     public void setUp() {
-        assumeTrue(canRunTests());
+        assumeFalse(skipTest);
         assumeTrue("Skipping test: " + definition.getString("skipReason", new BsonString("")).getValue(),
                 !definition.containsKey("skipReason"));
 
@@ -507,16 +509,6 @@ public abstract class AbstractTransactionsTest {
             throw new IllegalArgumentException("clientSession can't be null in this context");
         }
         return clientSession;
-    }
-
-    private boolean canRunTests() {
-        if (isSharded()) {
-            return serverVersionAtLeast(4, 1);
-        } else if (isDiscoverableReplicaSet()) {
-            return serverVersionAtLeast(4, 0);
-        } else {
-            return false;
-        }
     }
 
     private class TargetedFailPoint {

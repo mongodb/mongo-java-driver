@@ -16,7 +16,6 @@
 
 package com.mongodb.async.client;
 
-import com.mongodb.ClusterFixture;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
@@ -26,7 +25,6 @@ import com.mongodb.client.CommandMonitoringTestHelper;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.OperationType;
 import com.mongodb.client.test.CollectionHelper;
-import com.mongodb.connection.ServerVersion;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import com.mongodb.lang.Nullable;
@@ -54,17 +52,15 @@ import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
-import static com.mongodb.ClusterFixture.isSharded;
-import static com.mongodb.ClusterFixture.isStandalone;
+import static com.mongodb.JsonTestServerVersionChecker.skipTest;
 import static com.mongodb.async.client.Fixture.getMongoClientBuilderFromConnectionString;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeNotNull;
-import static org.junit.Assume.assumeTrue;
 
 // See https://github.com/mongodb/specifications/tree/master/source/retryable-writes/tests
 @RunWith(Parameterized.class)
@@ -74,17 +70,19 @@ public class ChangeStreamsTest extends DatabaseTestCase {
     private final MongoNamespace namespace;
     private final MongoNamespace namespace2;
     private final BsonDocument definition;
+    private final boolean skipTest;
 
     private MongoClient mongoClient;
     private TestCommandListener commandListener;
 
     public ChangeStreamsTest(final String filename, final String description, final MongoNamespace namespace,
-                             final MongoNamespace namespace2, final BsonDocument definition) {
+                             final MongoNamespace namespace2, final BsonDocument definition, final boolean skipTest) {
         this.filename = filename;
         this.description = description;
         this.namespace = namespace;
         this.namespace2 = namespace2;
         this.definition = definition;
+        this.skipTest = skipTest;
     }
 
     @BeforeClass
@@ -97,27 +95,7 @@ public class ChangeStreamsTest extends DatabaseTestCase {
 
     @Before
     public void setUp() {
-        ServerVersion serverVersion = ClusterFixture.getServerVersion();
-        if (definition.containsKey("minServerVersion")) {
-            assumeTrue(serverVersion.compareTo(getServerVersion("minServerVersion")) > 0);
-        }
-        if (definition.containsKey("maxServerVersion")) {
-            assumeTrue(serverVersion.compareTo(getServerVersion("maxServerVersion")) < 0);
-        }
-        if (definition.containsKey("topology")) {
-            BsonArray topologyTypes = definition.getArray("topology");
-            for (BsonValue type : topologyTypes) {
-                String typeString = type.asString().getValue();
-                if (typeString.equals("sharded")) {
-                    assumeTrue(isSharded());
-                } else if (typeString.equals("replicaset")) {
-                    assumeTrue(isDiscoverableReplicaSet());
-                } else if (typeString.equals("single")) {
-                    assumeTrue(isStandalone());
-                }
-            }
-        }
-
+        assumeFalse(skipTest);
         CollectionHelper.dropDatabase(namespace.getDatabaseName(), WriteConcern.MAJORITY);
         CollectionHelper<BsonDocument> collectionHelper = new CollectionHelper<BsonDocument>(new BsonDocumentCodec(), namespace);
         collectionHelper.drop();
@@ -291,16 +269,12 @@ public class ChangeStreamsTest extends DatabaseTestCase {
                     testDocument.getString("collection2_name").getValue());
             for (BsonValue test : testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
-                        namespace, namespace2, test.asDocument()});
+                        namespace, namespace2, test.asDocument(), skipTest(testDocument, test.asDocument())});
             }
         }
         return data;
     }
 
-    private ServerVersion getServerVersion(final String fieldName) {
-        String[] versionStringArray = definition.getString(fieldName).getValue().split("\\.");
-        return new ServerVersion(Integer.parseInt(versionStringArray[0]), Integer.parseInt(versionStringArray[1]));
-    }
     <T> T futureResult(final FutureResultCallback<T> callback) {
         try {
             return callback.get(5, TimeUnit.SECONDS);

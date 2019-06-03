@@ -16,12 +16,10 @@
 
 package com.mongodb.client;
 
-import com.mongodb.ClusterFixture;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadPreference;
 import com.mongodb.client.test.CollectionHelper;
-import com.mongodb.connection.ServerVersion;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonArray;
@@ -45,9 +43,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
-import static com.mongodb.ClusterFixture.isSharded;
-import static com.mongodb.ClusterFixture.isStandalone;
+import static com.mongodb.JsonTestServerVersionChecker.skipTest;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
@@ -65,17 +61,19 @@ public class CommandMonitoringTest {
     private final String collectionName;
     private final BsonArray data;
     private final BsonDocument definition;
+    private final boolean skipTest;
     private MongoCollection<BsonDocument> collection;
     private JsonPoweredCrudTestHelper helper;
 
     public CommandMonitoringTest(final String filename, final String description, final String databaseName, final String collectionName,
-                                 final BsonArray data, final BsonDocument definition) {
+                                 final BsonArray data, final BsonDocument definition, final boolean skipTest) {
         this.filename = filename;
         this.description = description;
         this.databaseName = databaseName;
         this.collectionName = collectionName;
         this.data = data;
         this.definition = definition;
+        this.skipTest = skipTest;
     }
 
     @BeforeClass
@@ -95,27 +93,7 @@ public class CommandMonitoringTest {
 
     @Before
     public void setUp() {
-        ServerVersion serverVersion = ClusterFixture.getServerVersion();
-        if (definition.containsKey("ignore_if_server_version_less_than")) {
-            assumeFalse(serverVersion.compareTo(getServerVersion("ignore_if_server_version_less_than")) < 0);
-        }
-        if (definition.containsKey("ignore_if_server_version_greater_than")) {
-            assumeFalse(serverVersion.compareTo(getServerVersion("ignore_if_server_version_greater_than")) > 0);
-        }
-        if (definition.containsKey("ignore_if_topology_type")) {
-            BsonArray topologyTypes = definition.getArray("ignore_if_topology_type");
-            for (BsonValue type : topologyTypes) {
-                String typeString = type.asString().getValue();
-                if (typeString.equals("sharded")) {
-                    assumeFalse(isSharded());
-                } else if (typeString.equals("replica_set")) {
-                    assumeFalse(isDiscoverableReplicaSet());
-                } else if (typeString.equals("standalone")) {
-                    assumeFalse(isStandalone());
-                }
-            }
-        }
-
+        assumeFalse(skipTest);
         List<BsonDocument> documents = new ArrayList<BsonDocument>();
         for (BsonValue document : data) {
             documents.add(document.asDocument());
@@ -137,11 +115,6 @@ public class CommandMonitoringTest {
         helper = new JsonPoweredCrudTestHelper(description, database, collection);
     }
 
-    private ServerVersion getServerVersion(final String fieldName) {
-        String[] versionStringArray = definition.getString(fieldName).getValue().split("\\.");
-        return new ServerVersion(Integer.parseInt(versionStringArray[0]), Integer.parseInt(versionStringArray[1]));
-    }
-
     @Test
     public void shouldPassAllOutcomes() {
         executeOperation();
@@ -161,7 +134,6 @@ public class CommandMonitoringTest {
         }
     }
 
-
     @Parameterized.Parameters(name = "{1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<Object[]>();
@@ -170,7 +142,9 @@ public class CommandMonitoringTest {
             for (BsonValue test : testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
                         testDocument.getString("database_name", new BsonString(getDefaultDatabaseName())).getValue(),
-                        testDocument.getString("collection_name").getValue(), testDocument.getArray("data"), test.asDocument()});
+                        testDocument.getString("collection_name").getValue(), testDocument.getArray("data"), test.asDocument(),
+                        skipTest(testDocument, test.asDocument())
+                });
             }
         }
         return data;
