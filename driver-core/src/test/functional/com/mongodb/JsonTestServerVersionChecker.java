@@ -43,11 +43,11 @@ public final class JsonTestServerVersionChecker {
 
     private static boolean canRunTest(final BsonDocument document, final ServerVersion serverVersion) {
         if (document.containsKey("minServerVersion")
-                && serverVersion.compareTo(getServerVersionForField("minServerVersion", document)) < 0) {
+                && serverVersion.compareTo(getMinServerVersionForField("minServerVersion", document)) < 0) {
             return false;
         }
         if (document.containsKey("maxServerVersion")
-                && serverVersion.compareTo(getServerVersionForField("maxServerVersion", document)) > 0) {
+                && serverVersion.compareTo(getMaxServerVersionForField("maxServerVersion", document)) > 0) {
             return false;
         }
         if (document.containsKey("topology")) {
@@ -61,11 +61,11 @@ public final class JsonTestServerVersionChecker {
 
         // Ignore certain matching types
         if (document.containsKey("ignore_if_server_version_less_than")
-                && serverVersion.compareTo(getServerVersionForField("ignore_if_server_version_less_than", document)) < 0) {
+                && serverVersion.compareTo(getMinServerVersionForField("ignore_if_server_version_less_than", document)) < 0) {
             return false;
         }
         if (document.containsKey("ignore_if_server_version_greater_than")
-                && serverVersion.compareTo(getServerVersionForField("ignore_if_server_version_greater_than", document)) > 0) {
+                && serverVersion.compareTo(getMaxServerVersionForField("ignore_if_server_version_greater_than", document)) > 0) {
             return false;
         }
         if (document.containsKey("ignore_if_topology_type")) {
@@ -102,8 +102,16 @@ public final class JsonTestServerVersionChecker {
         return false;
     }
 
-    private static ServerVersion getServerVersionForField(final String fieldName, final BsonDocument document) {
+    private static ServerVersion getMinServerVersionForField(final String fieldName, final BsonDocument document) {
         return new ServerVersion(getVersionList(document.getString(fieldName).getValue()));
+    }
+
+    private static ServerVersion getMaxServerVersionForField(final String fieldName, final BsonDocument document) {
+        List<Integer> versionList = getVersionList(document.getString(fieldName).getValue());
+        if (versionList.size() > 2 && versionList.get(2).equals(0)) {
+            versionList = asList(versionList.get(0), versionList.get(1), Integer.MAX_VALUE);
+        }
+        return new ServerVersion(versionList);
     }
 
 
