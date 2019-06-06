@@ -105,6 +105,8 @@ public class MongoClientOptions {
     private final List<ClusterListener> clusterListeners;
     private final List<CommandListener> commandListeners;
 
+    private final AutoEncryptionSettings autoEncryptionSettings;
+
     @SuppressWarnings("deprecation")
     private MongoClientOptions(final Builder builder) {
         description = builder.description;
@@ -144,6 +146,7 @@ public class MongoClientOptions {
 
         clusterListeners = unmodifiableList(builder.clusterListeners);
         commandListeners = unmodifiableList(builder.commandListeners);
+        autoEncryptionSettings = builder.autoEncryptionSettings;
 
         ConnectionPoolSettings.Builder connectionPoolSettingsBuilder = ConnectionPoolSettings.builder()
                 .minSize(getMinConnectionsPerHost())
@@ -735,6 +738,17 @@ public class MongoClientOptions {
         return cursorFinalizerEnabled;
     }
 
+    /**
+     * Gets the auto-encryption settings
+     *
+     * @return the auto-encryption settings, which may be null
+     * @since 3.11
+     */
+    @Nullable
+    public AutoEncryptionSettings getAutoEncryptionSettings() {
+        return autoEncryptionSettings;
+    }
+
     ConnectionPoolSettings getConnectionPoolSettings() {
         return connectionPoolSettings;
     }
@@ -875,6 +889,10 @@ public class MongoClientOptions {
         if (!compressorList.equals(that.compressorList)) {
             return false;
         }
+        if (autoEncryptionSettings != null ? !autoEncryptionSettings.equals(that.autoEncryptionSettings)
+                : that.autoEncryptionSettings != null) {
+            return false;
+        }
 
         return true;
     }
@@ -917,6 +935,7 @@ public class MongoClientOptions {
         result = 31 * result + (cursorFinalizerEnabled ? 1 : 0);
         result = 31 * result + (socketFactory != null ? socketFactory.hashCode() : 0);
         result = 31 * result + compressorList.hashCode();
+        result = 31 * result + (autoEncryptionSettings != null ? autoEncryptionSettings.hashCode() : 0);
         return result;
     }
 
@@ -963,6 +982,7 @@ public class MongoClientOptions {
                + ", socketSettings=" + socketSettings
                + ", serverSettings=" + serverSettings
                + ", heartbeatSocketSettings=" + heartbeatSocketSettings
+               + ", autoEncryptionSettings="  + autoEncryptionSettings
                + '}';
     }
 
@@ -1015,6 +1035,7 @@ public class MongoClientOptions {
         private DBEncoderFactory dbEncoderFactory = DefaultDBEncoder.FACTORY;
         private SocketFactory socketFactory;
         private boolean cursorFinalizerEnabled = true;
+        private AutoEncryptionSettings autoEncryptionSettings;
 
         /**
          * Creates a Builder for MongoClientOptions, getting the appropriate system properties for initialization.
@@ -1073,6 +1094,7 @@ public class MongoClientOptions {
             connectionPoolListeners.addAll(options.getConnectionPoolListeners());
             serverListeners.addAll(options.getServerListeners());
             serverMonitorListeners.addAll(options.getServerMonitorListeners());
+            autoEncryptionSettings = options.getAutoEncryptionSettings();
         }
 
         /**
@@ -1625,6 +1647,18 @@ public class MongoClientOptions {
          */
         public Builder requiredReplicaSetName(final String requiredReplicaSetName) {
             this.requiredReplicaSetName = requiredReplicaSetName;
+            return this;
+        }
+
+        /**
+         * Set options for auto-encryption.
+         *
+         * @param autoEncryptionSettings auto encryption settings
+         * @return this
+         * @since 3.11
+         */
+        public Builder autoEncryptionSettings(final AutoEncryptionSettings autoEncryptionSettings) {
+            this.autoEncryptionSettings = autoEncryptionSettings;
             return this;
         }
 

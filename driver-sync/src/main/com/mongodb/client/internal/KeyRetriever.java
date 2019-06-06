@@ -17,8 +17,6 @@
 package com.mongodb.client.internal;
 
 import com.mongodb.MongoNamespace;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoCollection;
 import org.bson.BsonDocument;
 
 import java.io.Closeable;
@@ -28,19 +26,19 @@ import java.util.Iterator;
 import static com.mongodb.assertions.Assertions.notNull;
 
 class KeyRetriever implements Closeable {
-    private final MongoClient client;
+    private final SimpleMongoClient client;
     private final boolean ownsClient;
-    private final MongoCollection<BsonDocument> collection;
+    private final MongoNamespace namespace;
 
-    KeyRetriever(final MongoClient client, final boolean ownsClient, final MongoNamespace namespace) {
-        notNull("namespace", namespace);
+    KeyRetriever(final SimpleMongoClient client, final boolean ownsClient, final MongoNamespace namespace) {
         this.client = notNull("client", client);
         this.ownsClient = ownsClient;
-        this.collection = client.getDatabase(namespace.getDatabaseName()).getCollection(namespace.getCollectionName(), BsonDocument.class);
+        this.namespace = notNull("namespace", namespace);
     }
 
     public Iterator<BsonDocument> find(final BsonDocument keyFilter) {
-        return collection.find(keyFilter).into(new ArrayList<BsonDocument>()).iterator();
+        return client.getDatabase(namespace.getDatabaseName()).getCollection(namespace.getCollectionName(), BsonDocument.class)
+                .find(keyFilter).into(new ArrayList<BsonDocument>()).iterator();
     }
 
     @Override

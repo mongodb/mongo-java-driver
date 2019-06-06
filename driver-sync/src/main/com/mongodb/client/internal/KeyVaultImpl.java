@@ -36,7 +36,7 @@ public class KeyVaultImpl implements KeyVault, Closeable {
 
     public KeyVaultImpl(final KeyVaultEncryptionSettings options) {
         keyVaultClient = MongoClients.create(options.getKeyVaultMongoClientSettings());
-        this.crypt = Crypts.create(keyVaultClient, options);
+        this.crypt = Crypts.create(SimpleMongoClients.create(keyVaultClient), options);
         this.options = options;
     }
 

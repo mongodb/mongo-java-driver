@@ -16,21 +16,14 @@
 
 package com.mongodb.client.internal;
 
-import com.mongodb.lang.Nullable;
-import org.bson.BsonDocument;
+import com.mongodb.client.MongoDatabase;
 
-import static com.mongodb.assertions.Assertions.notNull;
+import java.io.Closeable;
 
-class CollectionInfoRetriever {
+// To unify the two MongoClients
+public interface SimpleMongoClient extends Closeable {
 
-    private final SimpleMongoClient client;
+    MongoDatabase getDatabase(String databaseName);
 
-    CollectionInfoRetriever(final SimpleMongoClient client) {
-        this.client = notNull("client", client);
-    }
-
-    @Nullable
-    public BsonDocument filter(final String databaseName, final BsonDocument filter) {
-        return client.getDatabase(databaseName).listCollections(BsonDocument.class).filter(filter).first();
-    }
+    void close();
 }

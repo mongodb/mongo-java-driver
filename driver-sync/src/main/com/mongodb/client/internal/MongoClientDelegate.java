@@ -64,22 +64,21 @@ public class MongoClientDelegate {
     private final List<MongoCredential> credentialList;
     private final Object originator;
     private final OperationExecutor operationExecutor;
-    private volatile Crypt crypt;
+    private final Crypt crypt;
 
-    public MongoClientDelegate(final Cluster cluster, final List<MongoCredential> credentialList, final Object originator) {
-        this(cluster, credentialList, originator, null);
+    public MongoClientDelegate(final Cluster cluster, final List<MongoCredential> credentialList, final Object originator,
+                               @Nullable final Crypt crypt) {
+        this(cluster, credentialList, originator, null, crypt);
     }
 
     MongoClientDelegate(final Cluster cluster, final List<MongoCredential> credentialList,
-                        final Object originator, @Nullable final OperationExecutor operationExecutor) {
+                        final Object originator, @Nullable final OperationExecutor operationExecutor,
+                        @Nullable final Crypt crypt) {
         this.cluster = cluster;
         this.serverSessionPool = new ServerSessionPool(cluster);
         this.credentialList = credentialList;
         this.originator = originator;
         this.operationExecutor = operationExecutor == null ? new DelegateOperationExecutor() : operationExecutor;
-    }
-
-    void setCrypt(final Crypt crypt) {
         this.crypt = crypt;
     }
 
