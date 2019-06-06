@@ -21,7 +21,6 @@ import com.mongodb.KeyVaultEncryptionSettings;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoNamespace;
-import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.crypt.capi.MongoAwsKmsProviderOptions;
 import com.mongodb.crypt.capi.MongoCryptOptions;
@@ -34,9 +33,9 @@ import java.nio.ByteBuffer;
 import java.security.NoSuchAlgorithmException;
 import java.util.Map;
 
-final class Crypts {
+public final class Crypts {
 
-    static Crypt createCrypt(final MongoClient client, final AutoEncryptionSettings options) {
+    public static Crypt createCrypt(final SimpleMongoClient client, final AutoEncryptionSettings options) {
         return new Crypt(MongoCrypts.create(createMongoCryptOptions(options.getKmsProviders(),
                 options.getNamespaceToLocalSchemaDocumentMap())),
                 new CollectionInfoRetriever(client),
@@ -46,7 +45,7 @@ final class Crypts {
                 options.isBypassAutoEncryption());
     }
 
-    static Crypt create(final MongoClient keyVaultClient, final KeyVaultEncryptionSettings options) {
+    static Crypt create(final SimpleMongoClient keyVaultClient, final KeyVaultEncryptionSettings options) {
         return new Crypt(MongoCrypts.create(
                 createMongoCryptOptions(options.getKmsProviders(), null)),
                 createKeyRetriever(keyVaultClient, false, options.getKeyVaultNamespace()),
@@ -79,13 +78,13 @@ final class Crypts {
         return mongoCryptOptionsBuilder.build();
     }
 
-    private static KeyRetriever createKeyRetriever(final MongoClient defaultKeyVaultClient,
+    private static KeyRetriever createKeyRetriever(final SimpleMongoClient defaultKeyVaultClient,
                                                    final MongoClientSettings keyVaultMongoClientSettings,
                                                    final String keyVaultNamespaceString) {
-        MongoClient keyVaultClient;
+        SimpleMongoClient keyVaultClient;
         boolean keyRetrieverOwnsClient;
         if (keyVaultMongoClientSettings != null) {
-            keyVaultClient = MongoClients.create(keyVaultMongoClientSettings);
+            keyVaultClient = SimpleMongoClients.create(MongoClients.create(keyVaultMongoClientSettings));
             keyRetrieverOwnsClient = true;
         } else {
             keyVaultClient = defaultKeyVaultClient;
@@ -95,7 +94,7 @@ final class Crypts {
         return createKeyRetriever(keyVaultClient, keyRetrieverOwnsClient, keyVaultNamespaceString);
     }
 
-    private static KeyRetriever createKeyRetriever(final MongoClient keyVaultClient, final boolean keyRetrieverOwnsClient,
+    private static KeyRetriever createKeyRetriever(final SimpleMongoClient keyVaultClient, final boolean keyRetrieverOwnsClient,
                                                    final String keyVaultNamespaceString) {
         return new KeyRetriever(keyVaultClient, keyRetrieverOwnsClient, new MongoNamespace(keyVaultNamespaceString));
     }

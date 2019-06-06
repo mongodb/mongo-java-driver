@@ -24,6 +24,7 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.internal.MongoClientDelegate;
 import com.mongodb.client.internal.MongoIterableImpl;
 import com.mongodb.client.internal.OperationExecutor;
+import com.mongodb.client.internal.SimpleMongoClient;
 import com.mongodb.connection.BufferProvider;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ClusterConnectionMode;
@@ -57,6 +58,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import static com.mongodb.ReadPreference.primary;
+import static com.mongodb.client.internal.Crypts.createCrypt;
 import static com.mongodb.connection.ClusterConnectionMode.MULTIPLE;
 import static com.mongodb.connection.ClusterType.REPLICA_SET;
 import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
@@ -320,8 +322,17 @@ public class Mongo {
         this.readConcern = options.getReadConcern();
         this.optionHolder = new Bytes.OptionHolder(null);
         this.credentialsList = unmodifiableList(credentialsList);
-        this.delegate = new MongoClientDelegate(cluster, credentialsList, this);
+
+        AutoEncryptionSettings autoEncryptionSettings = options.getAutoEncryptionSettings();
+        this.delegate = new MongoClientDelegate(cluster, credentialsList, this,
+                autoEncryptionSettings == null ? null : createCrypt(asSimpleMongoClient(), autoEncryptionSettings));
+
         cursorCleaningService = options.isCursorFinalizerEnabled() ? createCursorCleaningService() : null;
+    }
+
+    // bit of a hack, but it works because only MongoClient subclass will ever make use of this
+    SimpleMongoClient asSimpleMongoClient() {
+        throw new UnsupportedOperationException();
     }
 
     /**

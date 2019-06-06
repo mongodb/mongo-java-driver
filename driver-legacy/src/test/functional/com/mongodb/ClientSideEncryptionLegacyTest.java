@@ -14,28 +14,36 @@
  * limitations under the License.
  */
 
-package com.mongodb.client;
+package com.mongodb;
 
-import com.mongodb.AutoEncryptionSettings;
+import com.mongodb.client.AbstractClientSideEncryptionTest;
+import com.mongodb.client.MongoDatabase;
 import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.junit.After;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
-public class ClientSideEncryptionTest extends AbstractClientSideEncryptionTest {
+import static com.mongodb.ClusterFixture.getConnectionString;
+
+// See https://github.com/mongodb/specifications/tree/master/source/client-side-encryption/tests
+@RunWith(Parameterized.class)
+public class ClientSideEncryptionLegacyTest extends AbstractClientSideEncryptionTest {
+
     private MongoClient mongoClient;
 
-    public ClientSideEncryptionTest(final String filename, final String description, final BsonDocument specDocument,
-                                    final BsonArray data, final BsonDocument definition, final boolean skipTest) {
+    public ClientSideEncryptionLegacyTest(final String filename, final String description, final BsonDocument specDocument,
+                                          final BsonArray data, final BsonDocument definition, final boolean skipTest) {
         super(filename, description, specDocument, data, definition, skipTest);
     }
 
     @Override
     protected void createMongoClient(final AutoEncryptionSettings autoEncryptionSettings, final TestCommandListener commandListener) {
-        mongoClient = MongoClients.create(Fixture.getMongoClientSettingsBuilder()
-                .autoEncryptionSettings(autoEncryptionSettings)
-                .addCommandListener(commandListener)
-                .build());
+        mongoClient = new MongoClient(new MongoClientURI(getConnectionString().getConnectionString(),
+                MongoClientOptions.builder()
+                        .autoEncryptionSettings(autoEncryptionSettings)
+                        .addCommandListener(commandListener)));
     }
 
     @Override

@@ -88,6 +88,7 @@ class MongoClientOptionsSpecification extends Specification {
                                                 .build()
         options.sslSettings == SslSettings.builder().build();
         options.compressorList == []
+        options.getAutoEncryptionSettings() == null
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')
@@ -161,6 +162,10 @@ class MongoClientOptionsSpecification extends Specification {
         def encoderFactory = new MyDBEncoderFactory()
         def socketFactory = SSLSocketFactory.getDefault()
         def serverSelector = Mock(ServerSelector)
+        def autoEncryptionSettings = AutoEncryptionSettings.builder()
+                .keyVaultNamespace('admin.keys')
+                .kmsProviders(['local': ['key': new byte[64]]])
+                .build()
         def options = MongoClientOptions.builder()
                                         .description('test')
                                         .applicationName('appName')
@@ -193,6 +198,7 @@ class MongoClientOptionsSpecification extends Specification {
                                         .cursorFinalizerEnabled(false)
                                         .dbEncoderFactory(encoderFactory)
                                         .compressorList([MongoCompressor.createZlibCompressor()])
+                                        .autoEncryptionSettings(autoEncryptionSettings)
                                         .build()
 
         expect:
@@ -241,6 +247,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.sslSettings == SslSettings.builder().enabled(true).invalidHostNameAllowed(true)
                 .context(SSLContext.getDefault()).build()
         options.compressorList == [MongoCompressor.createZlibCompressor()]
+        options.getAutoEncryptionSettings() == autoEncryptionSettings
     }
 
     @IgnoreIf({ isNotAtLeastJava7() })
@@ -336,6 +343,10 @@ class MongoClientOptionsSpecification extends Specification {
                 .addServerListener(Mock(ServerListener))
                 .addServerMonitorListener(Mock(ServerMonitorListener))
                 .compressorList([MongoCompressor.createZlibCompressor()])
+                .autoEncryptionSettings(AutoEncryptionSettings.builder()
+                        .keyVaultNamespace('admin.keys')
+                        .kmsProviders(['local': ['key': new byte[64]]])
+                        .build())
                 .build()
 
         then:
@@ -648,6 +659,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .addServerListener(Mock(ServerListener))
                 .addServerMonitorListener(Mock(ServerMonitorListener))
                 .compressorList([MongoCompressor.createZlibCompressor()])
+                .autoEncryptionSettings()
                 .build()
 
         when:
@@ -661,12 +673,13 @@ class MongoClientOptionsSpecification extends Specification {
         when:
         // A regression test so that if any more methods are added then the builder(final MongoClientOptions options) should be updated
         def actual = MongoClientOptions.Builder.declaredFields.grep { !it.synthetic } *.name.sort()
-        def expected = ['alwaysUseMBeans', 'applicationName', 'clusterListeners', 'codecRegistry', 'commandListeners', 'compressorList',
-                        'connectTimeout', 'connectionPoolListeners', 'cursorFinalizerEnabled', 'dbDecoderFactory', 'dbEncoderFactory',
-                        'description', 'heartbeatConnectTimeout', 'heartbeatFrequency', 'heartbeatSocketTimeout', 'localThreshold',
-                        'maxConnectionIdleTime', 'maxConnectionLifeTime', 'maxConnectionsPerHost', 'maxWaitTime', 'minConnectionsPerHost',
-                        'minHeartbeatFrequency', 'readConcern', 'readPreference', 'requiredReplicaSetName', 'retryReads', 'retryWrites',
-                        'serverListeners', 'serverMonitorListeners', 'serverSelectionTimeout', 'serverSelector', 'socketFactory',
+        def expected = ['alwaysUseMBeans', 'applicationName', 'autoEncryptionSettings', 'clusterListeners', 'codecRegistry',
+                        'commandListeners', 'compressorList', 'connectTimeout', 'connectionPoolListeners', 'cursorFinalizerEnabled',
+                        'dbDecoderFactory', 'dbEncoderFactory', 'description', 'heartbeatConnectTimeout', 'heartbeatFrequency',
+                        'heartbeatSocketTimeout', 'localThreshold', 'maxConnectionIdleTime', 'maxConnectionLifeTime',
+                        'maxConnectionsPerHost', 'maxWaitTime', 'minConnectionsPerHost', 'minHeartbeatFrequency', 'readConcern',
+                        'readPreference', 'requiredReplicaSetName', 'retryReads', 'retryWrites', 'serverListeners',
+                        'serverMonitorListeners', 'serverSelectionTimeout', 'serverSelector', 'socketFactory',
                         'socketKeepAlive', 'socketTimeout', 'sslContext', 'sslEnabled', 'sslInvalidHostNameAllowed',
                         'threadsAllowedToBlockForConnectionMultiplier', 'writeConcern']
 

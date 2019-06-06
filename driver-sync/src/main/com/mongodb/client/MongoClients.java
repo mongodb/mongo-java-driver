@@ -111,9 +111,7 @@ public final class MongoClients {
     public static MongoClient create(final MongoClientSettings settings, @Nullable final MongoDriverInformation mongoDriverInformation) {
         MongoDriverInformation.Builder builder = mongoDriverInformation == null ? MongoDriverInformation.builder()
                 : MongoDriverInformation.builder(mongoDriverInformation);
-        MongoClientImpl client = new MongoClientImpl(settings, builder.driverName("sync").build());
-        client.init();
-        return client;
+        return new MongoClientImpl(settings, builder.driverName("sync").build());
     }
 
     private MongoClients() {

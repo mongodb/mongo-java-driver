@@ -16,21 +16,25 @@
 
 package com.mongodb.client.internal;
 
-import com.mongodb.lang.Nullable;
-import org.bson.BsonDocument;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoDatabase;
 
-import static com.mongodb.assertions.Assertions.notNull;
+final class SimpleMongoClients {
 
-class CollectionInfoRetriever {
+    static SimpleMongoClient create(final MongoClient mongoClient) {
+        return new SimpleMongoClient() {
+            @Override
+            public MongoDatabase getDatabase(final String databaseName) {
+                return mongoClient.getDatabase(databaseName);
+            }
 
-    private final SimpleMongoClient client;
-
-    CollectionInfoRetriever(final SimpleMongoClient client) {
-        this.client = notNull("client", client);
+            @Override
+            public void close() {
+                mongoClient.close();
+            }
+        };
     }
 
-    @Nullable
-    public BsonDocument filter(final String databaseName, final BsonDocument filter) {
-        return client.getDatabase(databaseName).listCollections(BsonDocument.class).filter(filter).first();
+    private SimpleMongoClients() {
     }
 }

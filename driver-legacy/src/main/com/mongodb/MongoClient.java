@@ -23,6 +23,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.internal.MongoDatabaseImpl;
 import com.mongodb.client.internal.MongoIterables;
+import com.mongodb.client.internal.SimpleMongoClient;
 import com.mongodb.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -703,6 +704,21 @@ public class MongoClient extends Mongo implements Closeable {
      */
     public void close() {
         super.close();
+    }
+
+    @Override
+    SimpleMongoClient asSimpleMongoClient() {
+        return new SimpleMongoClient() {
+            @Override
+            public MongoDatabase getDatabase(final String databaseName) {
+                return MongoClient.this.getDatabase(databaseName);
+            }
+
+            @Override
+            public void close() {
+                MongoClient.this.close();
+            }
+        };
     }
 
     private <TResult> ChangeStreamIterable<TResult> createChangeStreamIterable(@Nullable final ClientSession clientSession,
