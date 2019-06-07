@@ -35,6 +35,7 @@ import java.util.Collection;
 import java.util.List;
 
 import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
+import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.JsonTestServerVersionChecker.skipTest;
 import static com.mongodb.async.client.Fixture.getDefaultDatabase;
 import static com.mongodb.async.client.Fixture.getMongoClient;
@@ -68,6 +69,8 @@ public class CrudTest extends DatabaseTestCase {
     public void setUp() {
         super.setUp();
         assumeFalse(skipTest);
+        // No runOn syntax for legacy CRUD, so skipping these manually for now
+        assumeFalse(isSharded() && description.startsWith("Aggregate with $currentOp"));
         collection = Fixture.initializeCollection(new MongoNamespace(databaseName, getClass().getName()))
                 .withDocumentClass(BsonDocument.class);
         helper = new JsonPoweredCrudTestHelper(description, getMongoClient().getDatabase(databaseName), collection);

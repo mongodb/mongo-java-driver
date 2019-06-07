@@ -84,11 +84,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.async.client.Fixture.isSharded;
 import static com.mongodb.async.client.gridfs.helpers.AsyncStreamHelper.toAsyncInputStream;
 import static com.mongodb.async.client.gridfs.helpers.AsyncStreamHelper.toAsyncOutputStream;
 import static java.lang.String.format;
-import static org.junit.Assume.assumeTrue;
 
 public class JsonPoweredCrudTestHelper {
     private final String description;
@@ -305,7 +303,6 @@ public class JsonPoweredCrudTestHelper {
 
     BsonDocument getDatabaseAggregateResult(final BsonDocument collectionOptions, final BsonDocument arguments,
                                             @Nullable final ClientSession clientSession) {
-        assumeTrue(!isSharded());
         List<BsonDocument> pipeline = new ArrayList<BsonDocument>();
         for (BsonValue stage : arguments.getArray("pipeline")) {
             pipeline.add(stage.asDocument());

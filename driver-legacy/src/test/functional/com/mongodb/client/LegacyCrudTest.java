@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.JsonTestServerVersionChecker.skipTest;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static org.junit.Assert.assertEquals;
@@ -64,6 +65,8 @@ public class LegacyCrudTest extends LegacyDatabaseTestCase {
     public void setUp() {
         super.setUp();
         assumeFalse(skipTest);
+        // No runOn syntax for legacy CRUD, so skipping these manually for now
+        assumeFalse(isSharded() && description.startsWith("Aggregate with $currentOp"));
         if (!data.isEmpty()) {
             List<BsonDocument> documents = new ArrayList<BsonDocument>();
             for (BsonValue document : data) {
