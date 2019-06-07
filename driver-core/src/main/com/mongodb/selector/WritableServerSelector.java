@@ -16,6 +16,7 @@
 
 package com.mongodb.selector;
 
+import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ServerDescription;
 
@@ -32,6 +33,9 @@ public final class WritableServerSelector implements ServerSelector {
     @Override
     @SuppressWarnings("deprecation")
     public List<ServerDescription> select(final ClusterDescription clusterDescription) {
+        if (clusterDescription.getConnectionMode() == ClusterConnectionMode.SINGLE) {
+            return clusterDescription.getAny();
+        }
         return clusterDescription.getPrimaries();
     }
 
