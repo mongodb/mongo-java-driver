@@ -95,6 +95,7 @@ public final class MongoClientSettings {
         }
 
         private Builder(final com.mongodb.MongoClientSettings settings) {
+            isTrue("auto-encryption settings is null", settings.getAutoEncryptionSettings() == null);
             notNull("settings", settings);
             wrappedBuilder = com.mongodb.MongoClientSettings.builder(settings);
             MongoCredential credential = settings.getCredential();

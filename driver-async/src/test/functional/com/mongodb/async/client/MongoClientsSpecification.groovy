@@ -16,6 +16,7 @@
 
 package com.mongodb.async.client
 
+import com.mongodb.AutoEncryptionSettings
 import com.mongodb.MongoCompressor
 import com.mongodb.MongoCredential
 import com.mongodb.MongoDriverInformation
@@ -251,5 +252,18 @@ class MongoClientsSpecification extends FunctionalSpecification {
             run(profileCollection.&drop)
         }
         client?.close()
+    }
+
+    def 'should throw if AutoEncryptionSettings is not null'() {
+        when:
+        MongoClients.create(com.mongodb.MongoClientSettings.builder()
+                .autoEncryptionSettings(AutoEncryptionSettings.builder()
+                        .keyVaultNamespace('test.keys')
+                        .kmsProviders([local: ['key': new byte[96]]])
+                        .build())
+                .build())
+
+        then:
+        thrown(IllegalStateException)
     }
 }
