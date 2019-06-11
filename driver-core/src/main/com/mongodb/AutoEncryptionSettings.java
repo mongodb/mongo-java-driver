@@ -26,7 +26,31 @@ import java.util.Map;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * The auto-encryption options.
+ * The client-side automatic encryption settings. Client side encryption enables an application to specify what fields in a collection
+ * must be encrypted, and the driver automatically encrypts commands sent to MongoDB and decrypts responses.
+ * <p>
+ * Automatic encryption is an enterprise only feature that only applies to operations on a collection. Automatic encryption is not
+ * supported for operations on a database or view and will result in error. To bypass automatic encryption,
+ * set bypassAutoEncryption=true in {@code AutoEncryptionSettings}.
+ * </p>
+ * <p>
+ * Explicit encryption/decryption and automatic decryption is a community feature, enabled with the new
+ * {@code com.mongodb.client.vault.ClientEncryption} type.
+ * </p>
+ * <p>
+ * A MongoClient configured with bypassAutoEncryption=true will still automatically decrypt.
+ * </p>
+ * <p>
+ * If automatic encryption fails on an operation, use a MongoClient configured with bypassAutoEncryption=true and use
+ * ClientEncryption#encrypt to manually encrypt values.
+ * </p>
+ * <p>
+ * Enabling client side encryption reduces the maximum document and message size (using a maxBsonObjectSize of 2MiB and
+ * maxMessageSizeBytes of 6MB) and may have a negative performance impact.
+ * </p>
+ * <p>
+ * Automatic encryption requires the authenticated user to have the listCollections privilege action.
+ * </p>
  *
  * @since 3.11
  */
@@ -34,7 +58,7 @@ public final class AutoEncryptionSettings {
     private final MongoClientSettings keyVaultMongoClientSettings;
     private final String keyVaultNamespace;
     private final Map<String, Map<String, Object>> kmsProviders;
-    private final Map<String, BsonDocument> namespaceToLocalSchemaDocumentMap;
+    private final Map<String, BsonDocument> schemaMap;
     private final Map<String, Object> extraOptions;
     private final boolean bypassAutoEncryption;
 
@@ -47,7 +71,7 @@ public final class AutoEncryptionSettings {
         private MongoClientSettings keyVaultMongoClientSettings;
         private String keyVaultNamespace;
         private Map<String, Map<String, Object>> kmsProviders;
-        private Map<String, BsonDocument> namespaceToLocalSchemaDocumentMap = Collections.emptyMap();
+        private Map<String, BsonDocument> schemaMap = Collections.emptyMap();
         private Map<String, Object> extraOptions = Collections.emptyMap();
         private boolean bypassAutoEncryption;
 
@@ -56,6 +80,7 @@ public final class AutoEncryptionSettings {
          *
          * @param keyVaultMongoClientSettings the key vault mongo client settings, which may be null.
          * @return this
+         * @see #getKeyVaultMongoClientSettings()
          */
         public Builder keyVaultMongoClientSettings(final MongoClientSettings keyVaultMongoClientSettings) {
             this.keyVaultMongoClientSettings = keyVaultMongoClientSettings;
@@ -67,6 +92,7 @@ public final class AutoEncryptionSettings {
          *
          * @param keyVaultNamespace the key vault namespace, which may not be null
          * @return this
+         * @see #getKeyVaultNamespace()
          */
         public Builder keyVaultNamespace(final String keyVaultNamespace) {
             this.keyVaultNamespace = notNull("keyVaultNamespace", keyVaultNamespace);
@@ -78,6 +104,7 @@ public final class AutoEncryptionSettings {
          *
          * @param kmsProviders the KMS providers map, which may not be null
          * @return this
+         * @see #getKmsProviders()
          */
         public Builder kmsProviders(final Map<String, Map<String, Object>> kmsProviders) {
             this.kmsProviders = notNull("kmsProviders", kmsProviders);
@@ -87,11 +114,12 @@ public final class AutoEncryptionSettings {
         /**
          * Sets the map from namespace to local schema document
          *
-         * @param namespaceToLocalSchemaDocumentMap the map from namespace to local schema document
+         * @param schemaMap the map from namespace to local schema document
          * @return this
+         * @see #getSchemaMap()
          */
-        public Builder namespaceToLocalSchemaDocumentMap(final Map<String, BsonDocument> namespaceToLocalSchemaDocumentMap) {
-            this.namespaceToLocalSchemaDocumentMap = notNull("namespaceToLocalSchemaDocumentMap", namespaceToLocalSchemaDocumentMap);
+        public Builder schemaMap(final Map<String, BsonDocument> schemaMap) {
+            this.schemaMap = notNull("schemaMap", schemaMap);
             return this;
         }
 
@@ -100,6 +128,7 @@ public final class AutoEncryptionSettings {
          *
          * @param extraOptions the extra options, which may not be null
          * @return this
+         * @see #getExtraOptions()
          */
         public Builder extraOptions(final Map<String, Object> extraOptions) {
             this.extraOptions = notNull("extraOptions", extraOptions);
@@ -111,6 +140,7 @@ public final class AutoEncryptionSettings {
          *
          * @param bypassAutoEncryption whether auto-encryption should be bypassed
          * @return this
+         * @see #isBypassAutoEncryption()
          */
         public Builder bypassAutoEncryption(final boolean bypassAutoEncryption) {
             this.bypassAutoEncryption = bypassAutoEncryption;
@@ -142,6 +172,11 @@ public final class AutoEncryptionSettings {
     /**
      * Gets the key vault settings.
      *
+     * <p>
+     * The key vault collection is assumed to reside on the same MongoDB cluster as the encrypted collections. But the optional
+     * keyVaultMongoClientSettings can be used to route data key queries to a separate MongoDB cluster, or the same cluster but using a
+     * different credential.
+     * </p>
      * @return the key vault settings, which may be null to indicate that the same {@code MongoClient} should be used to access the key
      * vault collection as is used for the rest of the application.
      */
@@ -153,6 +188,12 @@ public final class AutoEncryptionSettings {
     /**
      * Gets the key vault namespace.
      *
+     * <p>
+     * The key vault namespace refers to a collection that contains all data keys used for encryption and decryption (aka the key vault
+     * collection). Data keys are stored as documents in a special MongoDB collection. Data keys are protected with encryption by a KMS
+     * provider (AWS KMS or a local master key).
+     * </p>
+     *
      * @return the key vault namespace, which may not be null
      */
     public String getKeyVaultNamespace() {
@@ -160,7 +201,25 @@ public final class AutoEncryptionSettings {
     }
 
     /**
-     * Gets the map of KMS provider properties
+     * Gets the map of KMS provider properties.
+     *
+     * <p>
+     * Multiple KMS providers may be specified. Initially, two KMS providers are supported: "aws" and "local". The kmsProviders map
+     * values differ by provider:
+     * </p>
+     * <p>
+     * For "aws", the properties are:
+     * </p>
+     * <ul>
+     *     <li>accessKeyId: a String containing the AWS access key identifier</li>
+     *     <li>secretAccessKey: a String the AWS secret access key</li>
+     * </ul>
+     * <p>
+     * For "local", the properties are:
+     * </p>
+     * <ul>
+     *     <li>key: &lt;byte array of length 96&gt;</li>
+     * </ul>
      *
      * @return map of KMS provider properties
      */
@@ -169,18 +228,48 @@ public final class AutoEncryptionSettings {
     }
 
     /**
-     * Gets the map of namespace to local JSON schema
-     *
+     * Gets the map of namespace to local JSON schema.
+     * <p>
+     * Automatic encryption is configured with an "encrypt" field in a collection's JSONSchema. By default, a collection's JSONSchema is
+     * periodically polled with the listCollections command. But a JSONSchema may be specified locally with the schemaMap option.
+     * </p>
+     * <p>
+     * The key into the map is the full namespace of the collection, which is {@code &lt;database name>.&lt;collection name>}.  For
+     * example, if the database name is {@code "test"} and the collection name is {@code "users"}, then the namesspace is
+     * {@code "test.users"}.
+     * </p>
+     * <p>
+     * Supplying a schemaMap provides more security than relying on JSON Schemas obtained from the server. It protects against a
+     * malicious server advertising a false JSON Schema, which could trick the client into sending unencrypted data that should be
+     * encrypted.
+     * </p>
+     * <p>
+     * Schemas supplied in the schemaMap only apply to configuring automatic encryption for client side encryption. Other validation
+     * rules in the JSON schema will not be enforced by the driver and will result in an error.
+     * </p>
      * @return map of namespace to local JSON schema
      */
-    public Map<String, BsonDocument> getNamespaceToLocalSchemaDocumentMap() {
-        return namespaceToLocalSchemaDocumentMap;
+    public Map<String, BsonDocument> getSchemaMap() {
+        return schemaMap;
     }
 
     /**
      * Gets the extra options that control the behavior of auto-encryption components.
+     * <p>
+     * The extraOptions currently only relate to the mongocryptd process.  The following options keys are supported:
+     * </p>
+     * <ul>
+     * <li>mongocryptdURI: a String which defaults to "mongodb://%2Fvar%2Fmongocryptd.sock" if domain sockets are available or
+     * "mongodb://localhost:27020" otherwise.</li>
+     * <li>mongocryptdBypassSpawn: a boolean which defaults to false. If true, the driver will not attempt to automatically spawn a
+     * mongocryptd process</li>
+     * <li>mongocryptdSpawnPath: specifies the full path to the mongocryptd executable. By default the driver spawns mongocryptd from
+     * the system path.</li>
+     * <li>mongocryptdSpawnArgs: Used to control the behavior of mongocryptd when the driver spawns it. By default, the driver spawns
+     * mongocryptd with the single command line argument {@code "--idleShutdownTimeoutSecs=60"}</li>
+     * </ul>
      *
-     * @return the extra options
+     * @return the extra options map
      */
     public Map<String, Object> getExtraOptions() {
         return extraOptions;
@@ -188,7 +277,12 @@ public final class AutoEncryptionSettings {
 
     /**
      * Gets whether auto-encryption should be bypassed.  Even when this option is true, auto-decryption is still enabled.
-     *
+     * <p>
+     * This option is useful for cases where the driver throws an exception because it is unable to prove that the command does not
+     * contain any fields that should be automatically encrypted, but the application is able to determine that it does not.  For these
+     * cases, the application can construct a {@code MongoClient} with {@code AutoEncryptionSettings} with {@code bypassAutoEncryption}
+     * enabled.
+     * </p>
      * @return true if auto-encryption should be bypassed
      */
     public boolean isBypassAutoEncryption() {
@@ -199,7 +293,7 @@ public final class AutoEncryptionSettings {
         this.keyVaultMongoClientSettings = builder.keyVaultMongoClientSettings;
         this.keyVaultNamespace = notNull("keyVaultNamespace", builder.keyVaultNamespace);
         this.kmsProviders = notNull("kmsProviders", builder.kmsProviders);
-        this.namespaceToLocalSchemaDocumentMap = notNull("namespaceToLocalSchemaDocumentMap", builder.namespaceToLocalSchemaDocumentMap);
+        this.schemaMap = notNull("schemaMap", builder.schemaMap);
         this.extraOptions = notNull("extraOptions", builder.extraOptions);
         this.bypassAutoEncryption = builder.bypassAutoEncryption;
     }

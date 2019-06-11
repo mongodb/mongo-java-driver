@@ -17,13 +17,13 @@
 package com.mongodb.client
 
 import com.mongodb.AutoEncryptionSettings
-import com.mongodb.KeyVaultEncryptionSettings
+import com.mongodb.ClientEncryptionSettings
 import com.mongodb.MongoClientException
 import com.mongodb.MongoCommandException
 import com.mongodb.MongoNamespace
 import com.mongodb.client.model.vault.DataKeyOptions
 import com.mongodb.client.model.vault.EncryptOptions
-import com.mongodb.client.vault.KeyVaults
+import com.mongodb.client.vault.ClientEncryptions
 import com.mongodb.crypt.capi.MongoCryptException
 import org.bson.BsonArray
 import org.bson.BsonBinary
@@ -142,7 +142,7 @@ class ClientSideEncryptionProseTestSpecification extends FunctionalSpecification
                 .autoEncryptionSettings(AutoEncryptionSettings.builder()
                         .keyVaultNamespace(keyVaultNamespace.fullName)
                         .kmsProviders(localProviderProperties)
-                        .namespaceToLocalSchemaDocumentMap(singletonMap(autoEncryptingCollectionNamespace.fullName,
+                        .schemaMap(singletonMap(autoEncryptingCollectionNamespace.fullName,
                                 BsonDocument.parse(
                                         '''
     {
@@ -170,7 +170,7 @@ class ClientSideEncryptionProseTestSpecification extends FunctionalSpecification
 
     def 'should create local data key'() {
         given:
-        def keyVault = KeyVaults.create(KeyVaultEncryptionSettings.builder()
+        def keyVault = ClientEncryptions.create(ClientEncryptionSettings.builder()
                 .keyVaultMongoClientSettings(getMongoClientSettings())
                 .keyVaultNamespace(keyVaultNamespace.fullName)
                 .kmsProviders(localProviderProperties)
@@ -187,7 +187,7 @@ class ClientSideEncryptionProseTestSpecification extends FunctionalSpecification
 
     def 'should create aws data key'() {
         given:
-        def keyVault = KeyVaults.create(KeyVaultEncryptionSettings.builder()
+        def keyVault = ClientEncryptions.create(ClientEncryptionSettings.builder()
                 .keyVaultMongoClientSettings(getMongoClientSettings())
                 .keyVaultNamespace(keyVaultNamespace.fullName)
                 .kmsProviders(awsProviderProperties)
@@ -205,7 +205,7 @@ class ClientSideEncryptionProseTestSpecification extends FunctionalSpecification
     def 'should explicitly encrypt and decrypt with local provider'() {
         given:
         dataKeyCollection.insertOne(localDataKeyDocument)
-        def keyVault = KeyVaults.create(KeyVaultEncryptionSettings.builder()
+        def keyVault = ClientEncryptions.create(ClientEncryptionSettings.builder()
                 .keyVaultMongoClientSettings(getMongoClientSettings())
                 .keyVaultNamespace(keyVaultNamespace.fullName)
                 .kmsProviders(localProviderProperties)
@@ -230,7 +230,7 @@ class ClientSideEncryptionProseTestSpecification extends FunctionalSpecification
     def 'should explicitly encrypt and decrypt with aws provider'() {
         given:
         dataKeyCollection.insertOne(awsDataKeyDocument)
-        def keyVault = KeyVaults.create(KeyVaultEncryptionSettings.builder()
+        def keyVault = ClientEncryptions.create(ClientEncryptionSettings.builder()
                 .keyVaultMongoClientSettings(getMongoClientSettings())
                 .keyVaultNamespace(keyVaultNamespace.fullName)
                 .kmsProviders(awsProviderProperties)
@@ -255,14 +255,14 @@ class ClientSideEncryptionProseTestSpecification extends FunctionalSpecification
     /*
 Test explicit encrypt of invalid values.
 
-- Create a `KeyVault` with either a "local" or "aws" KMS provider
-- Use `KeyVault.encrypt` to attempt to encrypt each BSON type with deterministic encryption.
+- Create a `ClientEncryption` with either a "local" or "aws" KMS provider
+- Use `ClientEncryption.encrypt` to attempt to encrypt each BSON type with deterministic encryption.
 
   - Expect `document` and `array` to fail. An exception MUST be thrown.
   - Expect a BSON binary subtype 6 to fail. An exception MUST be thrown.
   - Expect all other values to succeed.
 
-- Use `KeyVault.encrypt` to attempt to encrypt a document using randomized encryption.
+- Use `ClientEncryption.encrypt` to attempt to encrypt a document using randomized encryption.
 
   - Expect a BSON binary subtype 6 to fail. An exception MUST be thrown.
   - Expect all other values to succeed.
@@ -272,7 +272,7 @@ Test explicit encrypt of invalid values.
     def 'should encrypt valid values'() {
         given:
         dataKeyCollection.insertOne(localDataKeyDocument)
-        def keyVault = KeyVaults.create(KeyVaultEncryptionSettings.builder()
+        def keyVault = ClientEncryptions.create(ClientEncryptionSettings.builder()
                 .keyVaultMongoClientSettings(getMongoClientSettings())
                 .keyVaultNamespace(keyVaultNamespace.fullName)
                 .kmsProviders(localProviderProperties)
@@ -302,7 +302,7 @@ Test explicit encrypt of invalid values.
     def 'should fail to encrypt invalid values with deterministic encryption'() {
         given:
         dataKeyCollection.insertOne(localDataKeyDocument)
-        def keyVault = KeyVaults.create(KeyVaultEncryptionSettings.builder()
+        def keyVault = ClientEncryptions.create(ClientEncryptionSettings.builder()
                 .keyVaultMongoClientSettings(getMongoClientSettings())
                 .keyVaultNamespace(keyVaultNamespace.fullName)
                 .kmsProviders(localProviderProperties)
@@ -367,7 +367,7 @@ Test explicit encrypt of invalid values.
     def 'should fail to encrypt invalid values with randomized encryption'() {
         given:
         dataKeyCollection.insertOne(localDataKeyDocument)
-        def keyVault = KeyVaults.create(KeyVaultEncryptionSettings.builder()
+        def keyVault = ClientEncryptions.create(ClientEncryptionSettings.builder()
                 .keyVaultMongoClientSettings(getMongoClientSettings())
                 .keyVaultNamespace(keyVaultNamespace.fullName)
                 .kmsProviders(localProviderProperties)
@@ -387,7 +387,7 @@ Test explicit encrypt of invalid values.
     def 'should encrypt values with randomized encryption that are invalid with deterministic encryption'() {
         given:
         dataKeyCollection.insertOne(localDataKeyDocument)
-        def keyVault = KeyVaults.create(KeyVaultEncryptionSettings.builder()
+        def keyVault = ClientEncryptions.create(ClientEncryptionSettings.builder()
                 .keyVaultMongoClientSettings(getMongoClientSettings())
                 .keyVaultNamespace(keyVaultNamespace.fullName)
                 .kmsProviders(localProviderProperties)
@@ -423,8 +423,8 @@ Test explicit encrypt of invalid values.
     /*
     Test explicit encryption with auto decryption.
 
-     - Create a `KeyVault` with either a "local" or "aws" KMS provider
-     - Use `KeyVault.encrypt` to encrypt a value.
+     - Create a `ClientEncryption` with either a "local" or "aws" KMS provider
+     - Use `ClientEncryption.encrypt` to encrypt a value.
      - Create a document, setting some field to the value.
      - Insert the document into a collection.
      - Find the document. Verify both the value matches the originally set value.
@@ -433,7 +433,7 @@ Test explicit encrypt of invalid values.
     def 'should auto decrypt explicitly encrypted value'() {
         given:
         dataKeyCollection.insertOne(localDataKeyDocument)
-        def keyVault = KeyVaults.create(KeyVaultEncryptionSettings.builder()
+        def keyVault = ClientEncryptions.create(ClientEncryptionSettings.builder()
                 .keyVaultMongoClientSettings(getMongoClientSettings())
                 .keyVaultNamespace(keyVaultNamespace.fullName)
                 .kmsProviders(localProviderProperties)
@@ -457,16 +457,16 @@ Test explicit encrypt of invalid values.
     /*
     Test explicit encrypting an auto encrypted field.
 
-     - Create a `KeyVault` with either a "local" or "aws" KMS provider
+     - Create a `ClientEncryption` with either a "local" or "aws" KMS provider
      - Create a collection with a JSONSchema specifying an encrypted field.
-     - Use `KeyVault.encrypt` to encrypt a value.
+     - Use `ClientEncryption.encrypt` to encrypt a value.
      - Create a document, setting the auto-encrypted field to the value.
      - Insert the document. Verify an exception is thrown.
      */
 
     def 'should throw when inserting a document with an explicitly encrypted value that should be auto-encrypted'() {
         dataKeyCollection.insertOne(localDataKeyDocument)
-        def keyVault = KeyVaults.create(KeyVaultEncryptionSettings.builder()
+        def keyVault = ClientEncryptions.create(ClientEncryptionSettings.builder()
                 .keyVaultMongoClientSettings(getMongoClientSettings())
                 .keyVaultNamespace(keyVaultNamespace.fullName)
                 .kmsProviders(localProviderProperties)
