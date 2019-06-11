@@ -18,6 +18,7 @@ package com.mongodb.operation;
 
 import com.mongodb.Function;
 import com.mongodb.MongoException;
+import com.mongodb.MongoExecutionTimeoutException;
 import com.mongodb.MongoNodeIsRecoveringException;
 import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.MongoSocketException;
@@ -29,14 +30,20 @@ import com.mongodb.binding.AsyncWriteBinding;
 import com.mongodb.binding.WriteBinding;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.lang.Nullable;
 import com.mongodb.operation.CommandOperationHelper.CommandCreator;
 import org.bson.BsonDocument;
+import org.bson.BsonInt32;
+import org.bson.BsonInt64;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
+import static com.mongodb.assertions.Assertions.isTrueArgument;
+import static com.mongodb.assertions.Assertions.notNull;
 import static java.util.Arrays.asList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * An operation that commits a transaction.
@@ -47,6 +54,7 @@ import static java.util.Arrays.asList;
 public class CommitTransactionOperation extends TransactionOperation {
     private final boolean alreadyCommitted;
     private BsonDocument recoveryToken;
+    private Long maxCommitTimeMS;
 
     /**
      * Construct an instance.
@@ -81,6 +89,44 @@ public class CommitTransactionOperation extends TransactionOperation {
         return this;
     }
 
+    /**
+     * Sets the maximum execution time on the server for the commitTransaction operation.
+     *
+     * @param maxCommitTime  the max commit time, which must be either null or greater than zero, in the given time unit
+     * @param timeUnit the time unit, which may not be null
+     * @return this
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     */
+    public CommitTransactionOperation maxCommitTime(@Nullable final Long maxCommitTime, final TimeUnit timeUnit) {
+        if (maxCommitTime == null) {
+            this.maxCommitTimeMS = null;
+        } else {
+            notNull("timeUnit", timeUnit);
+            isTrueArgument("maxCommitTime > 0", maxCommitTime > 0);
+            this.maxCommitTimeMS = MILLISECONDS.convert(maxCommitTime, timeUnit);
+        }
+        return this;
+    }
+
+    /**
+     * Gets the maximum amount of time to allow a single commitTransaction command to execute.  The default is 0, which places no limit on
+     * the execution time.
+     *
+     * @param timeUnit the time unit to return the result in
+     * @return the maximum execution time in the given time unit
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     */
+    @Nullable
+    public Long getMaxCommitTime(final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        if (maxCommitTimeMS == null) {
+            return null;
+        }
+        return timeUnit.convert(maxCommitTimeMS, MILLISECONDS);
+    }
+
     @Override
     public Void execute(final WriteBinding binding) {
         try {
@@ -112,7 +158,7 @@ public class CommitTransactionOperation extends TransactionOperation {
 
     private static final List<Integer> NON_RETRYABLE_WRITE_CONCERN_ERROR_CODES = asList(79, 100);
 
-    static boolean shouldAddUnknownTransactionCommitResultLabel(final Throwable t) {
+    private static boolean shouldAddUnknownTransactionCommitResultLabel(final Throwable t) {
         if (!(t instanceof MongoException)) {
             return false;
         }
@@ -120,7 +166,8 @@ public class CommitTransactionOperation extends TransactionOperation {
         MongoException e = (MongoException) t;
 
         if (e instanceof MongoSocketException || e instanceof MongoTimeoutException
-                || e instanceof MongoNotPrimaryException || e instanceof MongoNodeIsRecoveringException) {
+                || e instanceof MongoNotPrimaryException || e instanceof MongoNodeIsRecoveringException
+                || e instanceof MongoExecutionTimeoutException) {
             return true;
         }
 
@@ -139,7 +186,19 @@ public class CommitTransactionOperation extends TransactionOperation {
 
     @Override
     CommandCreator getCommandCreator() {
-        final CommandCreator creator = super.getCommandCreator();
+        final CommandCreator creator = new CommandCreator() {
+            @Override
+            public BsonDocument create(final ServerDescription serverDescription, final ConnectionDescription connectionDescription) {
+                BsonDocument command = CommitTransactionOperation.super.getCommandCreator().create(serverDescription,
+                        connectionDescription);
+                if (maxCommitTimeMS != null) {
+                    command.append("maxTimeMS",
+                            maxCommitTimeMS > Integer.MAX_VALUE
+                            ? new BsonInt64(maxCommitTimeMS) : new BsonInt32(maxCommitTimeMS.intValue()));
+                }
+                return command;
+            }
+        };
         if (alreadyCommitted) {
             return new CommandCreator() {
                 @Override

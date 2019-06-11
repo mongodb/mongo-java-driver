@@ -306,7 +306,7 @@ class CountOperationSpecification extends OperationFunctionalSpecification {
                                                    new BsonDocument('$skip', new BsonInt64(30)),
                                                    new BsonDocument('$limit', new BsonInt64(20)),
                                                    pipeline.last()]))
-                .append('maxTimeMS', new BsonInt64(10))
+                .append('maxTimeMS', new BsonInt32(10))
                 .append('collation', defaultCollation.asDocument())
                 .append('hint', hint)
 
