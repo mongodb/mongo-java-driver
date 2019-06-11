@@ -274,6 +274,9 @@ public class JsonPoweredCrudTestHelper {
         if (arguments.containsKey("batchSize")) {
             iterable.batchSize(arguments.getNumber("batchSize").intValue());
         }
+        if (arguments.containsKey("maxTimeMS")) {
+            iterable.maxTime(arguments.getNumber("maxTimeMS").longValue(), TimeUnit.MILLISECONDS);
+        }
         if (arguments.containsKey("collation")) {
             iterable.collation(getCollation(arguments.getDocument("collation")));
         }

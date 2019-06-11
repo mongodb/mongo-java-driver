@@ -267,6 +267,9 @@ public final class CommandMonitoringTestHelper {
         if (command.containsKey("autocommit") && command.isNull("autocommit")) {
             command.remove("autocommit");
         }
+        if (command.containsKey("maxTimeMS") && command.isNull("maxTimeMS")) {
+            command.remove("maxTimeMS");
+        }
         if (command.containsKey("writeConcern") && command.isNull("writeConcern")) {
             command.remove("writeConcern");
         }

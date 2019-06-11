@@ -18,6 +18,8 @@ package com.mongodb
 
 import spock.lang.Specification
 
+import java.util.concurrent.TimeUnit
+
 class TransactionOptionsSpecification extends Specification {
     def 'should have correct defaults'() {
         when:
@@ -27,6 +29,7 @@ class TransactionOptionsSpecification extends Specification {
         options.getReadConcern() == null
         options.getWriteConcern() == null
         options.getReadPreference() == null
+        options.getMaxCommitTime(TimeUnit.MILLISECONDS) == null
     }
 
     def 'should apply options set in builder'() {
@@ -35,12 +38,15 @@ class TransactionOptionsSpecification extends Specification {
                 .readConcern(ReadConcern.LOCAL)
                 .writeConcern(WriteConcern.JOURNALED)
                 .readPreference(ReadPreference.secondary())
+                .maxCommitTime(5, TimeUnit.SECONDS)
                 .build()
 
         then:
         options.readConcern == ReadConcern.LOCAL
         options.writeConcern == WriteConcern.JOURNALED
         options.readPreference == ReadPreference.secondary()
+        options.getMaxCommitTime(TimeUnit.MILLISECONDS) == 5000
+        options.getMaxCommitTime(TimeUnit.SECONDS) == 5
     }
 
     def 'should merge'() {
@@ -49,11 +55,13 @@ class TransactionOptionsSpecification extends Specification {
         def second = TransactionOptions.builder().readConcern(ReadConcern.MAJORITY)
                 .writeConcern(WriteConcern.MAJORITY)
                 .readPreference(ReadPreference.secondary())
+                .maxCommitTime(5, TimeUnit.SECONDS)
                 .build()
         def third = TransactionOptions.builder()
                 .readConcern(ReadConcern.LOCAL)
                 .writeConcern(WriteConcern.W2)
                 .readPreference(ReadPreference.nearest())
+                .maxCommitTime(10, TimeUnit.SECONDS)
                 .build()
 
         expect:

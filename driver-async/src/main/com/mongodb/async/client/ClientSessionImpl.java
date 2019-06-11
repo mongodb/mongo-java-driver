@@ -33,6 +33,7 @@ import static com.mongodb.MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL;
 import static com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL;
 import static com.mongodb.assertions.Assertions.isTrue;
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
 
@@ -124,7 +125,8 @@ class ClientSessionImpl extends BaseClientSessionImpl implements ClientSession {
             boolean alreadyCommitted = commitInProgress || transactionState == TransactionState.COMMITTED;
             commitInProgress = true;
             executor.execute(new CommitTransactionOperation(transactionOptions.getWriteConcern(), alreadyCommitted)
-                            .recoveryToken(getRecoveryToken()),
+                            .recoveryToken(getRecoveryToken())
+                            .maxCommitTime(transactionOptions.getMaxCommitTime(MILLISECONDS), MILLISECONDS),
                     readConcern, this,
                     new SingleResultCallback<Void>() {
                         @Override

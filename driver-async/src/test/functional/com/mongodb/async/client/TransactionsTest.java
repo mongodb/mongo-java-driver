@@ -72,6 +72,7 @@ import static com.mongodb.async.client.Fixture.isSharded;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
 import static java.util.Collections.singletonList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -265,6 +266,10 @@ public class TransactionsTest {
             if (defaultTransactionOptionsDocument.containsKey("readPreference")) {
                 builder.readPreference(helper.getReadPreference(defaultTransactionOptionsDocument));
             }
+            if (defaultTransactionOptionsDocument.containsKey("maxCommitTimeMS")) {
+                builder.maxCommitTime(defaultTransactionOptionsDocument.getNumber("maxCommitTimeMS").longValue(), MILLISECONDS);
+            }
+
         }
         return builder.build();
     }
@@ -467,6 +472,9 @@ public class TransactionsTest {
         }
         if (options.containsKey("readPreference")) {
             builder.readPreference(helper.getReadPreference(options));
+        }
+        if (options.containsKey("maxCommitTimeMS")) {
+            builder.maxCommitTime(options.getNumber("maxCommitTimeMS").longValue(), MILLISECONDS);
         }
         return builder.build();
     }

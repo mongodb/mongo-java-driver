@@ -19,7 +19,11 @@ package com.mongodb;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.lang.Nullable;
 
+import java.util.concurrent.TimeUnit;
+
+import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 /**
  * Options to apply to transactions. The default values for the options depend on context.  For options specified per-transaction, the
@@ -36,6 +40,7 @@ public final class TransactionOptions {
     private final ReadConcern readConcern;
     private final WriteConcern writeConcern;
     private final ReadPreference readPreference;
+    private final Long maxCommitTimeMS;
 
     /**
      * Gets the read concern.
@@ -68,6 +73,24 @@ public final class TransactionOptions {
     }
 
     /**
+     * Gets the maximum amount of time to allow a single commitTransaction command to execute.  The default is null, which places no
+     * limit on the execution time.
+     *
+     * @param timeUnit the time unit to return the result in
+     * @return the maximum execution time in the given time unit
+     * @mongodb.server.release 4.2
+     * @since 3.11
+     */
+    @Nullable
+    public Long getMaxCommitTime(final TimeUnit timeUnit) {
+        notNull("timeUnit", timeUnit);
+        if (maxCommitTimeMS == null) {
+            return null;
+        }
+        return timeUnit.convert(maxCommitTimeMS, MILLISECONDS);
+    }
+
+    /**
      * Gets an instance of a builder
      *
      * @return a builder instance
@@ -79,7 +102,7 @@ public final class TransactionOptions {
     /**
      * Merge the two provided transaction options, with the first taking precedence over the second.
      *
-     * @param options the transaction options, which take precedence for any property that is non-null
+     * @param options        the transaction options, which take precedence for any property that is non-null
      * @param defaultOptions the default transaction options
      * @return the merged transaction options
      */
@@ -93,6 +116,9 @@ public final class TransactionOptions {
                         ? defaultOptions.getReadConcern() : options.getReadConcern())
                 .readPreference(options.getReadPreference() == null
                         ? defaultOptions.getReadPreference() : options.getReadPreference())
+                .maxCommitTime(options.getMaxCommitTime(MILLISECONDS) == null
+                                ? defaultOptions.getMaxCommitTime(MILLISECONDS) : options.getMaxCommitTime(MILLISECONDS),
+                        MILLISECONDS)
                 .build();
     }
 
@@ -107,6 +133,9 @@ public final class TransactionOptions {
 
         TransactionOptions that = (TransactionOptions) o;
 
+        if (maxCommitTimeMS != null ? !maxCommitTimeMS.equals(that.maxCommitTimeMS) : that.maxCommitTimeMS != null) {
+            return false;
+        }
         if (readConcern != null ? !readConcern.equals(that.readConcern) : that.readConcern != null) {
             return false;
         }
@@ -125,6 +154,7 @@ public final class TransactionOptions {
         int result = readConcern != null ? readConcern.hashCode() : 0;
         result = 31 * result + (writeConcern != null ? writeConcern.hashCode() : 0);
         result = 31 * result + (readPreference != null ? readPreference.hashCode() : 0);
+        result = 31 * result + (maxCommitTimeMS != null ? maxCommitTimeMS.hashCode() : 0);
         return result;
     }
 
@@ -134,6 +164,7 @@ public final class TransactionOptions {
                 + "readConcern=" + readConcern
                 + ", writeConcern=" + writeConcern
                 + ", readPreference=" + readPreference
+                + ", maxCommitTimeMS" + maxCommitTimeMS
                 + '}';
     }
 
@@ -144,6 +175,7 @@ public final class TransactionOptions {
         private ReadConcern readConcern;
         private WriteConcern writeConcern;
         private ReadPreference readPreference;
+        private Long maxCommitTimeMS;
 
         /**
          * Sets the read concern.
@@ -179,6 +211,26 @@ public final class TransactionOptions {
         }
 
         /**
+         * Sets the maximum execution time on the server for the commitTransaction operation.
+         *
+         * @param maxCommitTime the max commit time, which must be either null or greater than zero, in the given time unit
+         * @param timeUnit      the time unit, which may not be null
+         * @return this
+         * @mongodb.server.release 4.2
+         * @since 3.11
+         */
+        public Builder maxCommitTime(@Nullable final Long maxCommitTime, final TimeUnit timeUnit) {
+            if (maxCommitTime == null) {
+                this.maxCommitTimeMS = null;
+            } else {
+                notNull("timeUnit", timeUnit);
+                isTrueArgument("maxCommitTime > 0", maxCommitTime > 0);
+                this.maxCommitTimeMS = MILLISECONDS.convert(maxCommitTime, timeUnit);
+            }
+            return this;
+        }
+
+        /**
          * Build the transaction options instance.
          *
          * @return The {@code TransactionOptions}
@@ -196,5 +248,6 @@ public final class TransactionOptions {
         readConcern = builder.readConcern;
         writeConcern = builder.writeConcern;
         readPreference = builder.readPreference;
+        maxCommitTimeMS = builder.maxCommitTimeMS;
     }
 }

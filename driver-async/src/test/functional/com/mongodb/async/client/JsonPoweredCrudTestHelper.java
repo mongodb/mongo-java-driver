@@ -298,6 +298,9 @@ public class JsonPoweredCrudTestHelper {
         if (arguments.containsKey("collation")) {
             iterable.collation(getCollation(arguments.getDocument("collation")));
         }
+        if (arguments.containsKey("maxTimeMS")) {
+            iterable.maxTime(arguments.getNumber("maxTimeMS").longValue(), TimeUnit.MILLISECONDS);
+        }
         return toResult(iterable);
     }
 

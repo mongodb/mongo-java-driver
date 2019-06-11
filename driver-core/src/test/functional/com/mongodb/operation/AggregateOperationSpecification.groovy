@@ -156,7 +156,7 @@ class AggregateOperationSpecification extends OperationFunctionalSpecification {
                 .append('allowDiskUse', new BsonBoolean(true))
                 .append('collation', defaultCollation.asDocument())
                 .append('cursor', new BsonDocument('batchSize', new BsonInt32(10)))
-                .append('maxTimeMS', new BsonInt64(10))
+                .append('maxTimeMS', new BsonInt32(10))
 
         then:
         testOperation(operation, [3, 4, 0], expectedCommand, async, helper.cursorResult)

@@ -66,6 +66,7 @@ import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static java.util.Collections.singletonList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -156,14 +157,14 @@ public abstract class AbstractTransactionsTest {
                 .applyToServerSettings(new Block<ServerSettings.Builder>() {
                     @Override
                     public void apply(final ServerSettings.Builder builder) {
-                        builder.minHeartbeatFrequency(MIN_HEARTBEAT_FREQUENCY_MS, TimeUnit.MILLISECONDS);
+                        builder.minHeartbeatFrequency(MIN_HEARTBEAT_FREQUENCY_MS, MILLISECONDS);
                     }
                 });
         if (clientOptions.containsKey("heartbeatFrequencyMS")) {
             builder.applyToServerSettings(new Block<ServerSettings.Builder>() {
                 @Override
                 public void apply(final ServerSettings.Builder builder) {
-                    builder.heartbeatFrequency(clientOptions.getInt32("heartbeatFrequencyMS").intValue(), TimeUnit.MILLISECONDS);
+                    builder.heartbeatFrequency(clientOptions.getInt32("heartbeatFrequencyMS").intValue(), MILLISECONDS);
                 }
             });
         }
@@ -239,6 +240,9 @@ public abstract class AbstractTransactionsTest {
             }
             if (defaultTransactionOptionsDocument.containsKey("readPreference")) {
                 builder.readPreference(helper.getReadPreference(defaultTransactionOptionsDocument));
+            }
+            if (defaultTransactionOptionsDocument.containsKey("maxCommitTimeMS")) {
+                builder.maxCommitTime(defaultTransactionOptionsDocument.getNumber("maxCommitTimeMS").longValue(), MILLISECONDS);
             }
         }
         return builder.build();
@@ -447,6 +451,9 @@ public abstract class AbstractTransactionsTest {
         }
         if (options.containsKey("readPreference")) {
             builder.readPreference(helper.getReadPreference(options));
+        }
+        if (options.containsKey("maxCommitTimeMS")) {
+            builder.maxCommitTime(options.getNumber("maxCommitTimeMS").longValue(), MILLISECONDS);
         }
         return builder.build();
     }
