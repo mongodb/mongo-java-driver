@@ -441,6 +441,7 @@ public final class MongoClientSettings {
          * @param autoEncryptionSettings key vault settings
          * @return this
          * @since 3.11
+         * @see #getAutoEncryptionSettings()
          */
         public Builder autoEncryptionSettings(final AutoEncryptionSettings autoEncryptionSettings) {
             this.autoEncryptionSettings = autoEncryptionSettings;
@@ -583,7 +584,23 @@ public final class MongoClientSettings {
     }
 
     /**
-     * Gets the auto-encryption settings
+     * Gets the auto-encryption settings.
+     * <p>
+     * Client side encryption enables an application to specify what fields in a collection must be
+     * encrypted, and the driver automatically encrypts commands and decrypts results.
+     * <p>
+     * Automatic encryption is an enterprise only feature that only applies to operations on a collection. Automatic encryption is not
+     * supported for operations on a database or view and will result in error. To bypass automatic encryption,
+     * set bypassAutoEncryption=true in ClientSideEncryptionOptions.
+     * </p>
+     * <p>
+     * Explicit encryption/decryption and automatic decryption is a community feature, enabled with the new
+     * {@code com.mongodb.client.vault .ClientEncryption} type. A MongoClient configured with bypassAutoEncryption=true will still
+     * automatically decrypt.
+     * </p>
+     * <p>
+     * Automatic encryption requires the authenticated user to have the listCollections privilege action.
+     * </p>
      *
      * @return the auto-encryption settings, which may be null
      * @since 3.11

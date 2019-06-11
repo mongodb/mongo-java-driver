@@ -16,25 +16,25 @@
 
 package com.mongodb.client.internal;
 
-import com.mongodb.KeyVaultEncryptionSettings;
+import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoNamespace;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
-import com.mongodb.client.vault.KeyVault;
+import com.mongodb.client.vault.ClientEncryption;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 
 import java.io.Closeable;
 
-public class KeyVaultImpl implements KeyVault, Closeable {
+public class ClientEncryptionImpl implements ClientEncryption, Closeable {
     private final Crypt crypt;
-    private final KeyVaultEncryptionSettings options;
+    private final ClientEncryptionSettings options;
     private final MongoClient keyVaultClient;
 
-    public KeyVaultImpl(final KeyVaultEncryptionSettings options) {
+    public ClientEncryptionImpl(final ClientEncryptionSettings options) {
         keyVaultClient = MongoClients.create(options.getKeyVaultMongoClientSettings());
         this.crypt = Crypts.create(SimpleMongoClients.create(keyVaultClient), options);
         this.options = options;

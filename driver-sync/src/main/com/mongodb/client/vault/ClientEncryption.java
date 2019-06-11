@@ -30,40 +30,49 @@ import java.io.Closeable;
  *
  * @since 3.11
  */
-public interface KeyVault extends Closeable {
+public interface ClientEncryption extends Closeable {
 
     /**
      * Create a data key with the given KMS provider.
      *
+     * <p>
+     * Creates a new key document and inserts into the key vault collection.
+     * </p>
+     *
      * @param kmsProvider the KMS provider
-     * @return the identifier for the data key
+     * @return the identifier for the created data key
      */
     BsonBinary createDataKey(String kmsProvider);
 
     /**
      * Create a data key with the given KMS provider and options.
      *
+     * <p>
+     * Creates a new key document and inserts into the key vault collection.
+     * </p>
+     *
      * @param kmsProvider    the KMS provider
      * @param dataKeyOptions the options for data key creation
-     * @return the identifier for the data key
+     * @return the identifier for the created data key
      */
     BsonBinary createDataKey(String kmsProvider, DataKeyOptions dataKeyOptions);
 
-    // TODO should these be generic methods that can use a codec registry
-
     /**
      * Encrypt the given value with the given options.
+     * <p>
+     *  The driver may throw an exception for prohibited BSON value types
+     * </p>
      *
      * @param value   the value to encrypt
      * @param options the options for data encryption
-     * @return the encrypted value
+     * @return the encrypted value, a BSON binary of subtype 6
      */
     BsonBinary encrypt(BsonValue value, EncryptOptions options);
 
     /**
      * Decrypt the given value.
      *
-     * @param value the value to decrypt
+     * @param value the value to decrypt, which must be of subtype 6
      * @return the decrypted value
      */
     BsonValue decrypt(BsonBinary value);

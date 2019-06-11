@@ -16,15 +16,15 @@
 
 package com.mongodb.client.vault;
 
-import com.mongodb.KeyVaultEncryptionSettings;
-import com.mongodb.client.internal.KeyVaultImpl;
+import com.mongodb.ClientEncryptionSettings;
+import com.mongodb.client.internal.ClientEncryptionImpl;
 
 /**
- * Factory for KeyVault implementations.
+ * Factory for ClientEncryption implementations.
  *
  * @since 3.11
  */
-public final class KeyVaults {
+public final class ClientEncryptions {
 
     /**
      * Create a key vault with the given options.
@@ -32,10 +32,10 @@ public final class KeyVaults {
      * @param options the key vault options
      * @return the key vault
      */
-    public static KeyVault create(final KeyVaultEncryptionSettings options) {
-        return new KeyVaultImpl(options);
+    public static ClientEncryption create(final ClientEncryptionSettings options) {
+        return new ClientEncryptionImpl(options);
     }
 
-    private KeyVaults() {
+    private ClientEncryptions() {
     }
 }
