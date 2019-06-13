@@ -1,5 +1,6 @@
 {{- $artifactId := .Get "artifactId"}}
 {{- $version := .Get "version" -}}
+{{- $classifier := .Get "classifier" -}}
 {{- $dependencies := .Get "dependencies" -}}
 {{- $snapshot := in $version "SNAPSHOT" -}}
 
@@ -29,7 +30,7 @@
 <section class="gradle hidden">
 <pre><code>
   dependencies {
-      compile 'org.mongodb:{{$artifactId}}:{{$version}}'
+      compile 'org.mongodb:{{$artifactId}}:{{$version}}{{- if $classifier -}}:{{$classifier}}{{- end -}}'
   }
   repositories {
     maven {
@@ -59,7 +60,8 @@
     &lt;dependency&gt;
         &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
         &lt;artifactId&gt;{{$artifactId}}&lt;/artifactId&gt;
-        &lt;version&gt;{{$version}}&lt;/version&gt;
+        &lt;version&gt;{{$version}}&lt;/version&gt;{{- if $classifier -}}
+        <classifier>{{$classifier}}</classifier>{{- end -}}
     &lt;/dependency&gt;
 &lt;/dependencies&gt;
 
@@ -68,7 +70,7 @@
 <section class="gradle hidden">
 <pre><code>
   dependencies {
-      compile 'org.mongodb:{{$artifactId}}:{{$version}}'
+      compile 'org.mongodb:{{$artifactId}}:{{$version}}{{- if $classifier -}}:{{$classifier}}{{- end -}}'
   }
 
 </code></pre>
