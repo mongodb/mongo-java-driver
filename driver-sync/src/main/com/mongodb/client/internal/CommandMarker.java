@@ -47,11 +47,10 @@ class CommandMarker implements Closeable {
 
         if (options.containsKey("mongocryptdURI")) {
             connectionString = (String) options.get("mongocryptdURI");
-        } else if (System.getProperty("os.name").toLowerCase().contains("windows")) {
-            connectionString = "mongodb://localhost:27020";
         } else {
-            connectionString = "mongodb://%2Ftmp%2Fmongocryptd.sock";
+            connectionString = "mongodb://localhost:27020";
         }
+
         this.client = MongoClients.create(MongoClientSettings.builder()
                 .applyConnectionString(new ConnectionString(connectionString))
                 .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
