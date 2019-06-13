@@ -4,7 +4,7 @@ title = "Monitoring"
 [menu.main]
   parent = "Sync Reference"
  identifier = "Sync Monitoring"
-  weight = 100
+  weight = 20
   pre = "<i class='fa'></i>"
 +++
 
