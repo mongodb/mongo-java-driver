@@ -61,8 +61,16 @@ final class PropertyMetadata<T> {
 
     public PropertyMetadata<T> addReadAnnotation(final Annotation annotation) {
         if (readAnnotations.containsKey(annotation.annotationType())) {
-            throw new CodecConfigurationException(format("Read annotation %s for '%s' already exists in %s", annotation.annotationType(),
-                    name, declaringClassName));
+            Annotation existingAnnotation = readAnnotations.get(annotation.annotationType());
+            if (annotation.equals(existingAnnotation)) {
+                //An equivalent annotation already exists
+                return this;
+            } else {
+                throw new CodecConfigurationException(
+                        format("Property %s in class %s has multiple conflicting read annotations of type %s",
+                        name, declaringClassName, annotation.annotationType())
+                );
+            }
         }
         readAnnotations.put(annotation.annotationType(), annotation);
         return this;
@@ -74,8 +82,16 @@ final class PropertyMetadata<T> {
 
     public PropertyMetadata<T> addWriteAnnotation(final Annotation annotation) {
         if (writeAnnotations.containsKey(annotation.annotationType())) {
-            throw new CodecConfigurationException(format("Write annotation %s for '%s' already exists in %s", annotation.annotationType(),
-                    name, declaringClassName));
+            Annotation existingAnnotation = writeAnnotations.get(annotation.annotationType());
+            if (annotation.equals(existingAnnotation)) {
+                //An equivalent annotation already exists
+                return this;
+            } else {
+                throw new CodecConfigurationException(
+                        format("Property %s in class %s has multiple conflicting write annotations of type %s",
+                        name, declaringClassName, annotation.annotationType())
+                );
+            }
         }
         writeAnnotations.put(annotation.annotationType(), annotation);
         return this;
