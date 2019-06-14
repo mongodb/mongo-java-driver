@@ -120,8 +120,6 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
         this.aggregationLevel = notNull("aggregationLevel", aggregationLevel);
 
         isTrueArgument("pipeline is not empty", !pipeline.isEmpty());
-        isTrueArgument("last stage of pipeline contains an output collection",
-                pipeline.get(pipeline.size() - 1).get("$out") != null);
     }
 
     /**
@@ -208,7 +206,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     /**
      * Sets the bypass document level validation flag.
      *
-     * <p>Note: This only applies when an $out stage is specified</p>.
+     * <p>Note: This only applies when an $out or $merge stage is specified</p>.
      *
      * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
      * @return this

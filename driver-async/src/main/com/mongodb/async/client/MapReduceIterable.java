@@ -167,8 +167,6 @@ public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
     /**
      * Sets the bypass document level validation flag.
      *
-     * <p>Note: This only applies when an $out stage is specified</p>.
-     *
      * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
      * @return this
      * @since 3.2

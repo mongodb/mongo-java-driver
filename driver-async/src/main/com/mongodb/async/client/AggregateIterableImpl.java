@@ -30,7 +30,7 @@ import com.mongodb.lang.Nullable;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
 import org.bson.BsonDocument;
-import org.bson.BsonValue;
+import org.bson.BsonString;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -84,8 +84,8 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     @Override
     public void toCollection(final SingleResultCallback<Void> callback) {
 
-        if (getOutCollection() == null) {
-            throw new IllegalStateException("The last stage of the aggregation pipeline must be $out");
+        if (getOutNamespace() == null) {
+            throw new IllegalStateException("The last stage of the aggregation pipeline must be $out or $merge");
         }
 
         getExecutor().execute(operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint,
@@ -152,9 +152,9 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     @Override
     @SuppressWarnings("deprecation")
     AsyncReadOperation<AsyncBatchCursor<TResult>> asAsyncReadOperation() {
-        BsonValue outCollection = getOutCollection();
+        MongoNamespace outNamespace = getOutNamespace();
 
-        if (outCollection != null) {
+        if (outNamespace != null) {
             AsyncWriteOperation<Void> aggregateToCollectionOperation =
                     operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint, comment,
                             aggregationLevel);
@@ -165,8 +165,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
                 findOptions.batchSize(batchSize);
             }
             AsyncReadOperation<AsyncBatchCursor<TResult>> findOperation =
-                    operations.find(new MongoNamespace(namespace.getDatabaseName(), outCollection.asString().getValue()),
-                            new BsonDocument(), resultClass, findOptions);
+                    operations.find(outNamespace, new BsonDocument(), resultClass, findOptions);
 
             return new WriteOperationThenCursorReadOperation<TResult>(aggregateToCollectionOperation, findOperation);
         } else {
@@ -177,12 +176,26 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Nullable
-    private BsonValue getOutCollection() {
+    private MongoNamespace getOutNamespace() {
         if (pipeline.size() == 0) {
             return null;
         }
 
         Bson lastStage = notNull("last stage", pipeline.get(pipeline.size() - 1));
-        return lastStage.toBsonDocument(documentClass, codecRegistry).get("$out");
+        BsonDocument lastStageDocument = lastStage.toBsonDocument(documentClass, codecRegistry);
+        if (lastStageDocument.containsKey("$out")) {
+            return new MongoNamespace(namespace.getDatabaseName(), lastStageDocument.getString("$out").getValue());
+        } else if (lastStageDocument.containsKey("$merge")) {
+            BsonDocument mergeDocument = lastStageDocument.getDocument("$merge");
+            if (mergeDocument.isDocument("into")) {
+                BsonDocument intoDocument = mergeDocument.getDocument("into");
+                return new MongoNamespace(intoDocument.getString("db", new BsonString(namespace.getDatabaseName())).getValue(),
+                        intoDocument.getString("coll").getValue());
+            } else if (mergeDocument.isString("into")) {
+                return new MongoNamespace(namespace.getDatabaseName(), mergeDocument.getString("into").getValue());
+            }
+        }
+
+        return null;
     }
 }

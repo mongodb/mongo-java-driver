@@ -21,16 +21,16 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.ClientSession;
+import com.mongodb.client.model.AggregationLevel;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.FindOptions;
-import com.mongodb.client.model.AggregationLevel;
 import com.mongodb.internal.operation.SyncOperations;
 import com.mongodb.lang.Nullable;
 import com.mongodb.operation.BatchCursor;
 import com.mongodb.operation.ReadOperation;
-import com.mongodb.client.ClientSession;
 import org.bson.BsonDocument;
-import org.bson.BsonValue;
+import org.bson.BsonString;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -90,8 +90,8 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
 
     @Override
     public void toCollection() {
-        if (getOutCollection() == null) {
-            throw new IllegalStateException("The last stage of the aggregation pipeline must be $out");
+        if (getOutNamespace() == null) {
+            throw new IllegalStateException("The last stage of the aggregation pipeline must be $out or $merge");
         }
 
         getExecutor().execute(operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation, hint,
@@ -158,9 +158,9 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     @Override
     @SuppressWarnings("deprecation")
     public ReadOperation<BatchCursor<TResult>> asReadOperation() {
-        BsonValue outCollection = getOutCollection();
+        MongoNamespace outNamespace = getOutNamespace();
 
-        if (outCollection != null) {
+        if (outNamespace != null) {
             getExecutor().execute(operations.aggregateToCollection(pipeline, maxTimeMS, allowDiskUse, bypassDocumentValidation, collation,
                     hint, comment, aggregationLevel), getReadConcern(), getClientSession());
 
@@ -169,8 +169,7 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
             if (batchSize != null) {
                 findOptions.batchSize(batchSize);
             }
-            return operations.find(new MongoNamespace(namespace.getDatabaseName(), outCollection.asString().getValue()), new BsonDocument(),
-                    resultClass, findOptions);
+            return operations.find(outNamespace, new BsonDocument(), resultClass, findOptions);
         } else {
             return operations.aggregate(pipeline, resultClass, maxTimeMS, maxAwaitTimeMS, getBatchSize(), collation,
                     hint, comment, allowDiskUse, useCursor, aggregationLevel);
@@ -178,12 +177,26 @@ class AggregateIterableImpl<TDocument, TResult> extends MongoIterableImpl<TResul
     }
 
     @Nullable
-    private BsonValue getOutCollection() {
+    private MongoNamespace getOutNamespace() {
         if (pipeline.size() == 0) {
             return null;
         }
 
         Bson lastStage = notNull("last stage", pipeline.get(pipeline.size() - 1));
-        return lastStage.toBsonDocument(documentClass, codecRegistry).get("$out");
+        BsonDocument lastStageDocument = lastStage.toBsonDocument(documentClass, codecRegistry);
+        if (lastStageDocument.containsKey("$out")) {
+            return new MongoNamespace(namespace.getDatabaseName(), lastStageDocument.getString("$out").getValue());
+        } else if (lastStageDocument.containsKey("$merge")) {
+            BsonDocument mergeDocument = lastStageDocument.getDocument("$merge");
+            if (mergeDocument.isDocument("into")) {
+                BsonDocument intoDocument = mergeDocument.getDocument("into");
+                return new MongoNamespace(intoDocument.getString("db", new BsonString(namespace.getDatabaseName())).getValue(),
+                        intoDocument.getString("coll").getValue());
+            } else if (mergeDocument.isString("into")) {
+                return new MongoNamespace(namespace.getDatabaseName(), mergeDocument.getString("into").getValue());
+            }
+        }
+
+        return null;
     }
 }

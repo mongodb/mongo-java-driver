@@ -22,13 +22,13 @@ import com.mongodb.MongoException
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.WriteConcern
+import com.mongodb.client.ClientSession
 import com.mongodb.client.model.AggregationLevel
 import com.mongodb.client.model.Collation
 import com.mongodb.operation.AggregateOperation
 import com.mongodb.operation.AggregateToCollectionOperation
 import com.mongodb.operation.BatchCursor
 import com.mongodb.operation.FindOperation
-import com.mongodb.client.ClientSession
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonString
@@ -98,7 +98,7 @@ class AggregateIterableSpecification extends Specification {
                 .useCursor(true))
     }
 
-    def 'should build the expected AggregateToCollectionOperation'() {
+    def 'should build the expected AggregateToCollectionOperation for $out'() {
         given:
         def executor = new TestOperationExecutor([null, null, null, null, null])
         def collectionName = 'collectionName'
@@ -192,6 +192,147 @@ class AggregateIterableSpecification extends Specification {
                 .hint(new BsonDocument('a', new BsonInt32(1)))
                 .comment('this is a comment'))
     }
+
+    def 'should build the expected AggregateToCollectionOperation for $merge'() {
+        given:
+        def executor = new TestOperationExecutor([null, null, null, null, null, null, null])
+        def collectionName = 'collectionName'
+        def collectionNamespace = new MongoNamespace(namespace.getDatabaseName(), collectionName)
+        def pipeline = [new Document('$match', 1), new Document('$merge', new Document('into', collectionName))]
+        def pipelineWithIntoDocument = [new Document('$match', 1), new Document('$merge',
+                new Document('into', new Document('db', 'db2').append('coll', collectionName)))]
+
+        when: 'aggregation includes $merge'
+        new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
+                pipeline, AggregationLevel.COLLECTION, false)
+                .batchSize(99)
+                .maxTime(999, MILLISECONDS)
+                .allowDiskUse(true)
+                .useCursor(true)
+                .collation(collation)
+                .hint(new Document('a', 1))
+                .comment('this is a comment').iterator()
+
+        def operation = executor.getWriteOperation() as AggregateToCollectionOperation
+
+        then: 'should use the overrides'
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
+                [new BsonDocument('$match', new BsonInt32(1)),
+                 new BsonDocument('$merge', new BsonDocument('into', new BsonString(collectionName)))],
+                writeConcern,
+                AggregationLevel.COLLECTION)
+                .maxTime(999, MILLISECONDS)
+                .allowDiskUse(true)
+                .collation(collation)
+                .hint(new BsonDocument('a', new BsonInt32(1)))
+                .comment('this is a comment')
+        )
+
+        when: 'the subsequent read should have the batchSize set'
+        operation = executor.getReadOperation() as FindOperation<Document>
+
+        then: 'should use the correct settings'
+        operation.getNamespace() == collectionNamespace
+        operation.getBatchSize() == 99
+        operation.getCollation() == collation
+        operation.getMaxAwaitTime(MILLISECONDS) == 0
+        operation.getMaxTime(MILLISECONDS) == 0
+
+        when: 'aggregation includes $merge into a different database'
+        new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
+                pipelineWithIntoDocument, AggregationLevel.COLLECTION, false)
+                .batchSize(99)
+                .maxTime(999, MILLISECONDS)
+                .allowDiskUse(true)
+                .useCursor(true)
+                .collation(collation)
+                .hint(new Document('a', 1))
+                .comment('this is a comment').iterator()
+
+        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+
+        then: 'should use the overrides'
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
+                [new BsonDocument('$match', new BsonInt32(1)),
+                 new BsonDocument('$merge', new BsonDocument('into',
+                         new BsonDocument('db', new BsonString('db2')).append('coll', new BsonString(collectionName))))],
+                writeConcern,
+                AggregationLevel.COLLECTION)
+                .maxTime(999, MILLISECONDS)
+                .allowDiskUse(true)
+                .collation(collation)
+                .hint(new BsonDocument('a', new BsonInt32(1)))
+                .comment('this is a comment')
+        )
+
+        when: 'the subsequent read should have the batchSize set'
+        operation = executor.getReadOperation() as FindOperation<Document>
+
+        then: 'should use the correct settings'
+        operation.getNamespace() == new MongoNamespace('db2', collectionName)
+        operation.getBatchSize() == 99
+        operation.getCollation() == collation
+        operation.getMaxAwaitTime(MILLISECONDS) == 0
+        operation.getMaxTime(MILLISECONDS) == 0
+
+        when: 'aggregation includes $merge and is at the database level'
+        new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
+                pipeline, AggregationLevel.DATABASE, false)
+                .batchSize(99)
+                .maxTime(999, MILLISECONDS)
+                .allowDiskUse(true)
+                .useCursor(true)
+                .collation(collation)
+                .hint(new Document('a', 1))
+                .comment('this is a comment').iterator()
+
+        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+
+        then: 'should use the overrides'
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
+                [new BsonDocument('$match', new BsonInt32(1)),
+                 new BsonDocument('$merge', new BsonDocument('into', new BsonString(collectionName)))],
+                writeConcern,
+                AggregationLevel.DATABASE)
+                .maxTime(999, MILLISECONDS)
+                .allowDiskUse(true)
+                .collation(collation)
+                .hint(new BsonDocument('a', new BsonInt32(1)))
+                .comment('this is a comment')
+        )
+
+        when: 'the subsequent read should have the batchSize set'
+        operation = executor.getReadOperation() as FindOperation<Document>
+
+        then: 'should use the correct settings'
+        operation.getNamespace() == collectionNamespace
+        operation.getBatchSize() == 99
+        operation.getCollation() == collation
+        operation.getMaxAwaitTime(MILLISECONDS) == 0
+        operation.getMaxTime(MILLISECONDS) == 0
+
+        when: 'toCollection should work as expected'
+        new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
+                pipeline, AggregationLevel.COLLECTION, false)
+                .allowDiskUse(true)
+                .collation(collation)
+                .hint(new Document('a', 1))
+                .comment('this is a comment')
+                .toCollection()
+
+        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+
+        then:
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
+                [new BsonDocument('$match', new BsonInt32(1)),
+                 new BsonDocument('$merge', new BsonDocument('into', new BsonString(collectionName)))],
+                writeConcern)
+                .allowDiskUse(true)
+                .collation(collation)
+                .hint(new BsonDocument('a', new BsonInt32(1)))
+                .comment('this is a comment'))
+    }
+
 
     def 'should use ClientSession for AggregationOperation'() {
         given:
