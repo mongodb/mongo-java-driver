@@ -16,6 +16,7 @@
 
 package com.mongodb.client.model
 
+import com.mongodb.MongoCommandException
 import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import org.bson.BsonDocument
@@ -45,6 +46,7 @@ import static com.mongodb.client.model.Aggregates.group
 import static com.mongodb.client.model.Aggregates.limit
 import static com.mongodb.client.model.Aggregates.lookup
 import static com.mongodb.client.model.Aggregates.match
+import static com.mongodb.client.model.Aggregates.merge
 import static com.mongodb.client.model.Aggregates.out
 import static com.mongodb.client.model.Aggregates.project
 import static com.mongodb.client.model.Aggregates.replaceRoot
@@ -195,6 +197,92 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         aggregate([out(outCollectionName)])
 
         then:
+        getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(4, 2) })
+    def '$merge'() {
+        given:
+        def outCollectionName = getCollectionName() + '.out'
+        getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName))
+                .createUniqueIndex(new Document('x', 1))
+        getCollectionHelper(new MongoNamespace('db1', outCollectionName)).create()
+
+        when:
+        aggregate([merge(outCollectionName)])
+
+        then:
+        getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
+
+        when:
+        aggregate([merge(new MongoNamespace('db1', outCollectionName))])
+
+        then:
+        getCollectionHelper(new MongoNamespace('db1', outCollectionName)).find() == [a, b, c]
+
+        when:
+        aggregate([merge(outCollectionName, new MergeOptions()
+                .uniqueIdentifier('x')
+                .whenMatched(MergeOptions.WhenMatched.REPLACE)
+                .whenNotMatched(MergeOptions.WhenNotMatched.FAIL))])
+
+        then:
+        getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
+
+        when:
+        aggregate([merge(outCollectionName, new MergeOptions()
+                .uniqueIdentifier('x')
+                .whenMatched(MergeOptions.WhenMatched.KEEP_EXISTING))])
+
+        then:
+        getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
+
+        when:
+        aggregate([merge(outCollectionName, new MergeOptions()
+                .uniqueIdentifier('x')
+                .whenMatched(MergeOptions.WhenMatched.MERGE))])
+
+        then:
+        getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
+
+        when:
+        aggregate([merge(outCollectionName, new MergeOptions()
+                .uniqueIdentifier('x')
+                .whenMatched(MergeOptions.WhenMatched.FAIL))])
+
+        then:
+        thrown(MongoCommandException)
+
+        when:
+        aggregate([merge(outCollectionName, new MergeOptions()
+                .uniqueIdentifier('x')
+                .whenMatched(MergeOptions.WhenMatched.REPLACE)
+                .whenNotMatched(MergeOptions.WhenNotMatched.DISCARD))])
+
+        then:
+        getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
+
+        when:
+        aggregate([merge(outCollectionName, new MergeOptions()
+                .uniqueIdentifier('x')
+                .whenMatched(MergeOptions.WhenMatched.REPLACE)
+                .whenNotMatched(MergeOptions.WhenNotMatched.INSERT))])
+
+        then:
+        getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
+
+        when:
+        aggregate([merge(outCollectionName, new MergeOptions()
+                .uniqueIdentifier('x')
+                .whenMatched(MergeOptions.WhenMatched.PIPELINE)
+                .variables([new Variable<Integer>('b', 1)])
+                .whenMatchedPipeline([addFields([new Field<String>('b', '$$b')])])
+                .whenNotMatched(MergeOptions.WhenNotMatched.FAIL))])
+
+        then:
+        a.append('b', 1)
+        b.append('b', 1)
+        c.append('b', 1)
         getCollectionHelper(new MongoNamespace(getDatabaseName(), outCollectionName)).find() == [a, b, c]
     }
 

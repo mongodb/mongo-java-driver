@@ -216,6 +216,27 @@ This example writes the pipeline to the `authors` collection:
 out("authors")
 ```
 
+### Merge
+
+The [`$merge`]({{< docsref "reference/operator/aggregation/merge/" >}}) pipeline stage merges all documents into the specified
+collection.  It must be the last stage in any aggregate pipeline:
+
+This example merges the pipeline into the `authors` collection using the default options:
+
+```java
+merge("authors")
+```
+
+This example merges the pipeline into the `authors` collection using some non-default options:
+
+```java
+merge(new MongoNamespace("reporting", customers"),
+    new MergeOptions().uniqueIdentifier(Arrays.asList("date", "customerId"))
+                      .whenMatched(MergeOptions.WhenMatched.REPLACE)
+                      .whenNotMatched(MergeOptions.WhenNotMatched.INSERT))
+```
+
+
 ### GraphLookup
 
 The [`$graphLookup`]({{< docsref "reference/operator/aggregation/graphLookup/" >}}) pipeline stage performs a recursive search on a specified collection to match field A of one document to some field B of the other documents. For the matching documents, the stage repeats the search to match field A from the matching documents to the field B of the remaining documents until no new documents are encountered or until a specified depth. To each output document, `$graphLookup` adds a new array field that contains the traversal results of the search for that document.

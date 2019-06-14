@@ -16,12 +16,14 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.MongoNamespace;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
 import org.bson.BsonInt32;
 import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -411,7 +413,7 @@ public final class Aggregates {
     }
 
     /**
-     * Creates a $out pipeline stage for the specified filter
+     * Creates a $out pipeline stage that writes into the specified collection
      *
      * @param collectionName the collection name
      * @return the $out pipeline stage
@@ -420,6 +422,61 @@ public final class Aggregates {
      */
     public static Bson out(final String collectionName) {
         return new BsonDocument("$out", new BsonString(collectionName));
+    }
+
+    /**
+     * Creates a $merge pipeline stage that merges into the specified collection
+     *
+     * @param collectionName the name of the collection to merge into
+     * @return the $merge pipeline stage
+     * @since 3.11
+     * @mongodb.driver.manual reference/operator/aggregation/merge/  $merge
+     * @mongodb.server.release 4.2
+     */
+    public static Bson merge(final String collectionName) {
+        return merge(collectionName, new MergeOptions());
+    }
+
+    /**
+     * Creates a $merge pipeline stage that merges into the specified namespace
+     *
+     * @param namespace the namespace to merge into
+     * @return the $merge pipeline stage
+     * @since 3.11
+     * @mongodb.driver.manual reference/operator/aggregation/merge/  $merge
+     * @mongodb.server.release 4.2
+     */
+    public static Bson merge(final MongoNamespace namespace) {
+        return merge(namespace, new MergeOptions());
+    }
+
+    /**
+     * Creates a $merge pipeline stage that merges into the specified collection using the specified options.
+     *
+     * @param collectionName the name of the collection to merge into
+     * @param options the merge options
+     * @return the $merge pipeline stage
+     * @since 3.11
+     * @mongodb.driver.manual reference/operator/aggregation/merge/  $merge
+     * @mongodb.server.release 4.2
+     */
+    public static Bson merge(final String collectionName, final MergeOptions options) {
+        return new MergeStage(new BsonString(collectionName), options);
+    }
+
+    /**
+     * Creates a $merge pipeline stage that merges into the specified namespace using the specified options.
+     *
+     * @param namespace the namespace to merge into
+     * @param options the merge options
+     * @return the $merge pipeline stage
+     * @since 3.11
+     * @mongodb.driver.manual reference/operator/aggregation/merge/  $merge
+     * @mongodb.server.release 4.2
+     */
+    public static Bson merge(final MongoNamespace namespace, final MergeOptions options) {
+        return new MergeStage(new BsonDocument("db", new BsonString(namespace.getDatabaseName()))
+                .append("coll", new BsonString(namespace.getCollectionName())), options);
     }
 
     /**
@@ -1129,6 +1186,136 @@ public final class Aggregates {
                 + "name='$replaceRoot', "
                 + "value=" + value
                 + '}';
+        }
+    }
+
+    private static class MergeStage implements Bson {
+        private final BsonValue intoValue;
+        private final MergeOptions options;
+
+        MergeStage(final BsonValue intoValue, final MergeOptions options) {
+            this.intoValue = intoValue;
+            this.options = options;
+        }
+
+        @Override
+        public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> documentClass, final CodecRegistry codecRegistry) {
+            BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
+            writer.writeStartDocument();
+            writer.writeStartDocument("$merge");
+            writer.writeName("into");
+            if (intoValue.isString()) {
+                writer.writeString(intoValue.asString().getValue());
+            } else {
+                writer.writeStartDocument();
+                writer.writeString("db", intoValue.asDocument().getString("db").getValue());
+                writer.writeString("coll", intoValue.asDocument().getString("coll").getValue());
+                writer.writeEndDocument();
+            }
+            if (options.getUniqueIdentifier() != null) {
+                if (options.getUniqueIdentifier().size() == 1) {
+                    writer.writeString("on", options.getUniqueIdentifier().get(0));
+                } else {
+                    writer.writeStartArray("on");
+                    for (String cur : options.getUniqueIdentifier()) {
+                        writer.writeString(cur);
+                    }
+                    writer.writeEndArray();
+                }
+            }
+            if (options.getVariables() != null) {
+                writer.writeStartDocument("let");
+
+                for (Variable<?> variable : options.getVariables()) {
+                    writer.writeName(variable.getName());
+                    BuildersHelper.encodeValue(writer, variable.getValue(), codecRegistry);
+                }
+
+                writer.writeEndDocument();
+            }
+
+            if (options.getWhenMatched() != null) {
+                writer.writeName("whenMatched");
+                switch (options.getWhenMatched()) {
+                    case REPLACE:
+                        writer.writeString("replace");
+                        break;
+                    case KEEP_EXISTING:
+                        writer.writeString("keepExisting");
+                        break;
+                    case MERGE:
+                        writer.writeString("merge");
+                        break;
+                    case PIPELINE:
+                        writer.writeStartArray();
+                        for (Bson curStage : options.getWhenMatchedPipeline()) {
+                            BuildersHelper.encodeValue(writer, curStage, codecRegistry);
+                        }
+                        writer.writeEndArray();
+                        break;
+                    case FAIL:
+                        writer.writeString("fail");
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("Unexpected value: " + options.getWhenMatched());
+                }
+            }
+            if (options.getWhenNotMatched() != null) {
+                writer.writeName("whenNotMatched");
+                switch (options.getWhenNotMatched()) {
+                    case INSERT:
+                        writer.writeString("insert");
+                        break;
+                    case DISCARD:
+                        writer.writeString("discard");
+                        break;
+                    case FAIL:
+                        writer.writeString("fail");
+                        break;
+                    default:
+                        throw new UnsupportedOperationException("Unexpected value: " + options.getWhenNotMatched());
+                }
+            }
+            writer.writeEndDocument();
+            writer.writeEndDocument();
+            return writer.getDocument();
+        }
+
+        @Override
+        public boolean equals(final Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+
+            MergeStage that = (MergeStage) o;
+
+            if (!intoValue.equals(that.intoValue)) {
+                return false;
+            }
+            if (!options.equals(that.options)) {
+                return false;
+            }
+
+            return true;
+        }
+
+        @Override
+        public int hashCode() {
+            int result = intoValue.hashCode();
+            result = 31 * result + options.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "Stage{"
+                    + "name='$merge', "
+                    + ", into=" + intoValue
+                    + ", options=" + options
+                    + '}';
         }
     }
 
