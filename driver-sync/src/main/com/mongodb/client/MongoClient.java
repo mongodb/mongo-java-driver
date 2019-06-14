@@ -19,6 +19,9 @@ package com.mongodb.client;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.MongoNamespace;
 import com.mongodb.annotations.Immutable;
+import com.mongodb.connection.ClusterDescription;
+import com.mongodb.connection.ClusterSettings;
+import com.mongodb.event.ClusterListener;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
@@ -230,4 +233,20 @@ public interface MongoClient extends Closeable {
      */
     <TResult> ChangeStreamIterable<TResult> watch(ClientSession clientSession, List<? extends Bson> pipeline, Class<TResult> resultClass);
 
+    /**
+     * Gets the current cluster description.
+     *
+     * <p>
+     * This method will not block, meaning that it may return a {@link ClusterDescription} whose {@code clusterType} is unknown
+     * and whose {@link com.mongodb.connection.ServerDescription}s are all in the connecting state.  If the application requires
+     * notifications after the driver has connected to a member of the cluster, it should register a {@link ClusterListener} via
+     * the {@link ClusterSettings} in {@link com.mongodb.MongoClientSettings}.
+     * </p>
+     *
+     * @return the current cluster description
+     * @see ClusterSettings.Builder#addClusterListener(ClusterListener)
+     * @see com.mongodb.MongoClientSettings.Builder#applyToClusterSettings(com.mongodb.Block)
+     * @since 3.11
+     */
+    ClusterDescription getClusterDescription();
 }

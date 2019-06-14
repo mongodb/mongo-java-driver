@@ -33,6 +33,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.connection.Cluster;
+import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.DefaultClusterFactory;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SocketStreamFactory;
@@ -173,6 +174,11 @@ public final class MongoClientImpl implements MongoClient {
                                                          final Class<TResult> resultClass) {
         notNull("clientSession", clientSession);
         return createChangeStreamIterable(clientSession, pipeline, resultClass);
+    }
+
+    @Override
+    public ClusterDescription getClusterDescription() {
+        return delegate.getCluster().getCurrentDescription();
     }
 
     private <TResult> ChangeStreamIterable<TResult> createChangeStreamIterable(@Nullable final ClientSession clientSession,

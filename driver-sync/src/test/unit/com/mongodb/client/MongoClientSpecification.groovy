@@ -19,14 +19,21 @@ package com.mongodb.client
 import com.mongodb.MongoClientSettings
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
+import com.mongodb.ServerAddress
 import com.mongodb.WriteConcern
-import com.mongodb.client.internal.ListDatabasesIterableImpl
 import com.mongodb.client.internal.MongoClientImpl
 import com.mongodb.client.internal.MongoDatabaseImpl
 import com.mongodb.client.internal.MongoIterables
 import com.mongodb.client.internal.TestOperationExecutor
 import com.mongodb.client.model.changestream.ChangeStreamLevel
 import com.mongodb.connection.Cluster
+import com.mongodb.connection.ClusterConnectionMode
+import com.mongodb.connection.ClusterDescription
+import com.mongodb.connection.ClusterType
+import com.mongodb.connection.ServerConnectionState
+import com.mongodb.connection.ServerDescription
+import com.mongodb.connection.ServerType
+import com.mongodb.connection.ServerVersion
 import org.bson.BsonDocument
 import org.bson.Document
 import spock.lang.Specification
@@ -153,5 +160,26 @@ class MongoClientSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+    }
+
+    def 'should get the cluster description'() {
+        given:
+        def clusterDescription = new ClusterDescription(ClusterConnectionMode.SINGLE, ClusterType.STANDALONE,
+                [ServerDescription.builder()
+                         .address(new ServerAddress())
+                         .type(ServerType.UNKNOWN)
+                         .state(ServerConnectionState.CONNECTING)
+                         .version(new ServerVersion())
+                         .build()])
+        def cluster = Mock(Cluster) {
+            1 * getCurrentDescription() >> {
+                clusterDescription
+            }
+        }
+        def settings = MongoClientSettings.builder().build()
+        def client = new MongoClientImpl(cluster, settings, new TestOperationExecutor([]))
+
+        expect:
+        client.getClusterDescription() == clusterDescription
     }
 }
