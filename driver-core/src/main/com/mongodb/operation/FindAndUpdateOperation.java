@@ -38,11 +38,11 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.operation.CommandOperationHelper.CommandCreator;
 import static com.mongodb.operation.DocumentHelper.putIfNotNull;
 import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.operation.DocumentHelper.putIfTrue;
-import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.operation.OperationHelper.validateCollation;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
@@ -263,8 +263,6 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
 
     /**
      * Sets the bypass document level validation flag.
-     *
-     * <p>Note: This only applies when an $out stage is specified</p>.
      *
      * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
      * @return this

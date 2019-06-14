@@ -104,7 +104,7 @@ class AggregateIterableSpecification extends Specification {
         )
     }
 
-    def 'should build the expected AggregateToCollectionOperation'() {
+    def 'should build the expected AggregateToCollectionOperation for $out'() {
         given:
         def cursor = Stub(AsyncBatchCursor) {
             next(_) >> {
@@ -201,6 +201,155 @@ class AggregateIterableSpecification extends Specification {
         then:
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
                 [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))], writeConcern)
+                .allowDiskUse(true)
+                .collation(collation)
+                .hint(new BsonDocument('a', new BsonInt32(1)))
+                .comment('this is a comment'))
+    }
+
+    def 'should build the expected AggregateToCollectionOperation for $merge'() {
+        given:
+        def cursor = Stub(AsyncBatchCursor) {
+            next(_) >> {
+                it[0].onResult(null, null)
+            }
+        }
+        def executor = new TestOperationExecutor([cursor, cursor, cursor, cursor, cursor, cursor, cursor]);
+        def collectionName = 'collectionName'
+        def collectionNamespace = new MongoNamespace(namespace.getDatabaseName(), collectionName)
+        def pipeline = [new Document('$match', 1), new Document('$merge', new Document('into', collectionName))]
+        def pipelineWithIntoDocument = [new Document('$match', 1), new Document('$merge',
+                new Document('into', new Document('db', 'db2').append('coll', collectionName)))]
+
+        when: 'aggregation includes $merge'
+        new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
+                pipeline, AggregationLevel.COLLECTION, true)
+                .batchSize(99)
+                .maxAwaitTime(99, MILLISECONDS)
+                .maxTime(999, MILLISECONDS)
+                .allowDiskUse(true)
+                .useCursor(true)
+                .collation(collation)
+                .hint(new Document('a', 1))
+                .comment('this is a comment')
+                .into([]) { result, t -> }
+
+        def operation = executor.getReadOperation() as WriteOperationThenCursorReadOperation
+
+        then: 'should use the overrides'
+        expect operation.getAggregateToCollectionOperation(), isTheSameAs(new AggregateToCollectionOperation(namespace,
+                [new BsonDocument('$match', new BsonInt32(1)),
+                 new BsonDocument('$merge', new BsonDocument('into', new BsonString(collectionName)))],
+                writeConcern)
+                .maxTime(999, MILLISECONDS)
+                .allowDiskUse(true)
+                .collation(collation)
+                .hint(new BsonDocument('a', new BsonInt32(1)))
+                .comment('this is a comment'))
+
+        when: 'the subsequent read should have the batchSize set'
+        operation = operation.getReadOperation() as FindOperation
+
+        then: 'should use the correct settings'
+        operation.getNamespace() == collectionNamespace
+        operation.getCollation() == collation
+        operation.getBatchSize() == 99
+        operation.getMaxAwaitTime(MILLISECONDS) == 0
+        operation.getMaxTime(MILLISECONDS) == 0
+
+        when: 'aggregation includes $merge into a different database'
+        new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
+                pipelineWithIntoDocument, AggregationLevel.COLLECTION, false)
+                .batchSize(99)
+                .maxTime(999, MILLISECONDS)
+                .allowDiskUse(true)
+                .useCursor(true)
+                .collation(collation)
+                .hint(new Document('a', 1))
+                .comment('this is a comment')
+                .into([]) { result, t -> }
+
+        operation = executor.getReadOperation() as WriteOperationThenCursorReadOperation
+
+        then: 'should use the overrides'
+        expect operation.getAggregateToCollectionOperation(), isTheSameAs(new AggregateToCollectionOperation(namespace,
+                [new BsonDocument('$match', new BsonInt32(1)),
+                 new BsonDocument('$merge', new BsonDocument('into',
+                         new BsonDocument('db', new BsonString('db2')).append('coll', new BsonString(collectionName))))],
+                writeConcern,
+                AggregationLevel.COLLECTION)
+                .maxTime(999, MILLISECONDS)
+                .allowDiskUse(true)
+                .collation(collation)
+                .hint(new BsonDocument('a', new BsonInt32(1)))
+                .comment('this is a comment')
+        )
+
+        when: 'the subsequent read should have the batchSize set'
+        operation = operation.getReadOperation() as FindOperation
+
+        then: 'should use the correct settings'
+        operation.getNamespace() == new MongoNamespace('db2', collectionName)
+        operation.getBatchSize() == 99
+        operation.getCollation() == collation
+        operation.getMaxAwaitTime(MILLISECONDS) == 0
+        operation.getMaxTime(MILLISECONDS) == 0
+
+        when: 'aggregation includes $out and is at the database level'
+        new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
+                pipeline, AggregationLevel.DATABASE, true)
+                .batchSize(99)
+                .maxAwaitTime(99, MILLISECONDS)
+                .maxTime(999, MILLISECONDS)
+                .allowDiskUse(true)
+                .useCursor(true)
+                .collation(collation)
+                .hint(new Document('a', 1))
+                .comment('this is a comment')
+                .into([]) { result, t -> }
+
+        operation = executor.getReadOperation() as WriteOperationThenCursorReadOperation
+
+        then: 'should use the overrides'
+        expect operation.getAggregateToCollectionOperation(), isTheSameAs(new AggregateToCollectionOperation(namespace,
+                [new BsonDocument('$match', new BsonInt32(1)),
+                 new BsonDocument('$merge', new BsonDocument('into', new BsonString(collectionName)))],
+                writeConcern,
+                AggregationLevel.DATABASE)
+                .maxTime(999, MILLISECONDS)
+                .allowDiskUse(true)
+                .collation(collation)
+                .hint(new BsonDocument('a', new BsonInt32(1)))
+                .comment('this is a comment'))
+
+        when: 'the subsequent read should have the batchSize set'
+        operation = operation.getReadOperation() as FindOperation
+
+        then: 'should use the correct settings'
+        operation.getNamespace() == collectionNamespace
+        operation.getCollation() == collation
+        operation.getBatchSize() == 99
+        operation.getMaxAwaitTime(MILLISECONDS) == 0
+        operation.getMaxTime(MILLISECONDS) == 0
+
+        when: 'toCollection should work as expected'
+        def futureResultCallback = new FutureResultCallback()
+        new AggregateIterableImpl(null, namespace, Document, Document, codecRegistry, readPreference, readConcern, writeConcern, executor,
+                pipeline, AggregationLevel.COLLECTION, true)
+                .allowDiskUse(true)
+                .collation(collation)
+                .hint(new Document('a', 1))
+                .comment('this is a comment')
+                .toCollection(futureResultCallback)
+        futureResultCallback.get()
+
+        operation = executor.getWriteOperation() as AggregateToCollectionOperation
+
+        then:
+        expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
+                [new BsonDocument('$match', new BsonInt32(1)),
+                 new BsonDocument('$merge', new BsonDocument('into', new BsonString(collectionName)))],
+                writeConcern)
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))

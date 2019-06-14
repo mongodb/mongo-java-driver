@@ -539,7 +539,7 @@ public interface MongoCollection<TDocument> {
     <TResult> FindIterable<TResult> find(ClientSession clientSession, Bson filter, Class<TResult> resultClass);
 
     /**
-     * Aggregates documents according to the specified aggregation pipeline.  If the pipeline ends with a $out stage, the returned
+     * Aggregates documents according to the specified aggregation pipeline.  If the pipeline ends with a $out or $merge stage, the returned
      * iterable will be a query of the collection that the aggregation was written to.  Note that in this case the pipeline will be
      * executed even if the iterable is never iterated.
      *
@@ -550,7 +550,7 @@ public interface MongoCollection<TDocument> {
     AggregateIterable<TDocument> aggregate(List<? extends Bson> pipeline);
 
     /**
-     * Aggregates documents according to the specified aggregation pipeline.  If the pipeline ends with a $out stage, the returned
+     * Aggregates documents according to the specified aggregation pipeline.  If the pipeline ends with a $out or $merge stage, the returned
      * iterable will be a query of the collection that the aggregation was written to.  Note that in this case the pipeline will be
      * executed even if the iterable is never iterated.
      *
@@ -563,7 +563,7 @@ public interface MongoCollection<TDocument> {
     <TResult> AggregateIterable<TResult> aggregate(List<? extends Bson> pipeline, Class<TResult> resultClass);
 
     /**
-     * Aggregates documents according to the specified aggregation pipeline.  If the pipeline ends with a $out stage, the returned
+     * Aggregates documents according to the specified aggregation pipeline.  If the pipeline ends with a $out or $merge stage, the returned
      * iterable will be a query of the collection that the aggregation was written to.  Note that in this case the pipeline will be
      * executed even if the iterable is never iterated.
      *
@@ -577,7 +577,7 @@ public interface MongoCollection<TDocument> {
     AggregateIterable<TDocument> aggregate(ClientSession clientSession, List<? extends Bson> pipeline);
 
     /**
-     * Aggregates documents according to the specified aggregation pipeline.  If the pipeline ends with a $out stage, the returned
+     * Aggregates documents according to the specified aggregation pipeline.  If the pipeline ends with a $out or $merge stage, the returned
      * iterable will be a query of the collection that the aggregation was written to.  Note that in this case the pipeline will be
      * executed even if the iterable is never iterated.
      *

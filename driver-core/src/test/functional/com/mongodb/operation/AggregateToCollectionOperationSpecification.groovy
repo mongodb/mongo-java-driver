@@ -107,20 +107,26 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         thrown(IllegalArgumentException)
     }
 
-    def 'should not accept a pipeline without the last stage specifying an output-collection'() {
-        when:
-        new AggregateToCollectionOperation(getNamespace(), [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber')))])
-
-
-        then:
-        thrown(IllegalArgumentException)
-    }
-
     def 'should be able to output to a collection'() {
         when:
         AggregateToCollectionOperation operation =
                 new AggregateToCollectionOperation(getNamespace(),
                                                    [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))])
+        execute(operation, async);
+
+        then:
+        getCollectionHelper(aggregateCollectionNamespace).count() == 3
+
+        where:
+        async << [true, false]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(4, 2) })
+    def 'should be able to merge into a collection'() {
+        when:
+        AggregateToCollectionOperation operation =
+                new AggregateToCollectionOperation(getNamespace(),
+                        [new BsonDocument('$merge', new BsonDocument('into', new BsonString(aggregateCollectionNamespace.collectionName)))])
         execute(operation, async);
 
         then:
