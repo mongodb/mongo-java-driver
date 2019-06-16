@@ -7,6 +7,59 @@ title = "What's New"
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
+## What's new in 3.11
+
+This release fully supports all MongoDB releases from versions 2.6 to 4.2. Key new features of the 3.11 Java driver release include:
+
+### Improved transactions support
+
+* The transactions API supports MongoDB 4.2 distributed transactions for use with sharded clusters. Distributed transactions use the same
+API as replica set transactions.
+* The sessions API supports the
+  [`ClientSession.withTransaction()`]({{<apiref "com/mongodb/client/ClientSession.html#withTransaction(com.mongodb.client.TransactionBody) ">}})
+  method to conveniently run a transaction with automatic retries and at-most-once semantics.
+* The transactions API supports the
+ [`maxCommitTime`]({{<apiref "com/mongodb/TransactionOptions.html#getMaxCommitTime(java.util.concurrent.TimeUnit)">}}) option to control the
+ maximum amount of time to wait for a transaction to commit.
+
+### Reliability improvements
+
+* Most read operations are by default
+  [automatically retried](https://github.com/mongodb/specifications/blob/master/source/retryable-reads/retryable-reads .rst). Supported read
+  operations that fail with a retryable error are retried automatically and transparently.
+* [Retryable writes](https://docs.mongodb.com/manual/core/retryable-writes/) are now enabled by default. Supported write
+  operations that fail with a retryable error are retried automatically and transparently, with at-most-once update semantics.
+* DNS [SRV](https://en.wikipedia.org/wiki/SRV_record) records are periodically polled in order to update the mongos proxy list without
+  having to change client configuration or even restart the client application. This feature is particularly useful when used with a sharded
+  cluster on [MongoDB Atlas](https://www.mongodb.com/cloud/atlas), which dynamically updates SRV records whenever you resize your Atlas
+  sharded cluster.
+* Connections to the replica set primary are no longer closed after a step-down, allowing in progress read operations to complete.
+
+### Security improvements
+
+Client-side encryption is supported. Automatic encryption and decryption is available for users of
+[MongoDB Enterprise Advanced](https://www.mongodb.com/products/mongodb-enterprise-advanced), while explicit encryption and decryption is
+available for users of MongoDB Community.
+
+See [Client-side Encryption]({{<ref "driver/reference/fle.md">}}) for further details.
+
+### General improvements
+
+* New [`aggregate`]({{<apiref "com/mongodb/client/MongoDatabase.html##aggregate(java.util.List)">}}) helper methods support running
+database-level aggregations.
+* Aggregate helper methods now support the `$merge` pipeline stage, and
+[`Aggregates.merge()`]({{<apiref "com/mongodb/client/model/Aggregates.html#merge(java.lang.String)">}}) builder methods support creation of
+the new pipeline stage.
+* [Zstandard](https://facebook.github.io/zstd/) for wire protocol compression is supported in addition to Snappy and Zlib.
+* Change stream helpers now support the `startAfter` option.
+* Index creation helpers now support wildcard indexes.
+
+### Full list of changes
+
+* [New Features](https://jira.mongodb.org/issues/?jql=project%20%3D%20JAVA%20AND%20issuetype%20%3D%20%22New%20Feature%22%20AND%20resolution%20%3D%20Fixed%20AND%20fixVersion%20%3D%203.11.0%20ORDER%20BY%20component%20DESC%2C%20key%20ASC)
+* [Improvements](https://jira.mongodb.org/issues/?jql=project%20%3D%20JAVA%20AND%20issuetype%20%3D%20Improvement%20AND%20resolution%20%3D%20Fixed%20AND%20fixVersion%20%3D%203.11.0%20ORDER%20BY%20component%20DESC%2C%20key%20ASC)
+* [Bug Fixes](https://jira.mongodb.org/issues/?jql=project%20%3D%20JAVA%20AND%20issuetype%20%3D%20Bug%20AND%20resolution%20%3D%20Fixed%20AND%20fixVersion%20%3D%203.11.0%20ORDER%20BY%20component%20DESC%2C%20key%20ASC)
+
 ## What's new in 3.10
 
 Key new features of the 3.10 Java driver release:
