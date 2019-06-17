@@ -42,7 +42,7 @@ dependencies {
     compile "io.netty:netty-handler:$nettyVersion", optional
     compile "org.xerial.snappy:snappy-java:$snappyVersion", optional
     compile "com.github.luben:zstd-jni:$zstdVersion", optional
-    compile "org.mongodb:mongocrypt:$mongoCryptVersion", optional
+    compile "org.mongodb:mongodb-crypt:$mongoCryptVersion", optional
 
     testCompile project(':bson').sourceSets.test.output
 }
