@@ -25,7 +25,7 @@ API as replica set transactions.
 ### Reliability improvements
 
 * Most read operations are by default
-  [automatically retried](https://github.com/mongodb/specifications/blob/master/source/retryable-reads/retryable-reads .rst). Supported read
+  [automatically retried](https://github.com/mongodb/specifications/blob/master/source/retryable-reads/retryable-reads.rst). Supported read
   operations that fail with a retryable error are retried automatically and transparently.
 * [Retryable writes](https://docs.mongodb.com/manual/core/retryable-writes/) are now enabled by default. Supported write
   operations that fail with a retryable error are retried automatically and transparently, with at-most-once update semantics.
