@@ -8,7 +8,7 @@ title = "Client Site Encryption"
   pre = "<i class='fa fa-lock'></i>"
 +++
 
-# Client Site Encryption
+# Client Side Encryption
 
 New in MongoDB 4.2 client side encryption allows administrators and developers to encrypt specific data fields in addition to other
 MongoDB encryption features.
