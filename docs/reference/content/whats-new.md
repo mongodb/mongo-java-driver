@@ -41,7 +41,7 @@ Client-side encryption is supported. Automatic encryption and decryption is avai
 [MongoDB Enterprise Advanced](https://www.mongodb.com/products/mongodb-enterprise-advanced), while explicit encryption and decryption is
 available for users of MongoDB Community.
 
-See [Client-side Encryption]({{<ref "driver/reference/fle.md">}}) for further details.
+See [Client-side Encryption]({{<ref "driver/tutorials/client-side-encryption.md">}}) for further details.
 
 ### General improvements
 
