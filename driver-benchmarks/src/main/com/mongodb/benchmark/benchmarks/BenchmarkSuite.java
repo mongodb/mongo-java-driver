@@ -4,7 +4,7 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *   http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -22,6 +22,7 @@ import com.mongodb.benchmark.framework.BenchmarkResult;
 import com.mongodb.benchmark.framework.BenchmarkResultWriter;
 import com.mongodb.benchmark.framework.BenchmarkRunner;
 import com.mongodb.benchmark.framework.EvergreenBenchmarkResultWriter;
+import com.mongodb.benchmark.framework.TextBasedBenchmarkResultWriter;
 import org.bson.Document;
 import org.bson.codecs.Codec;
 
@@ -40,14 +41,14 @@ public class BenchmarkSuite {
 
     private static final Class DOCUMENT_CLASS = Document.class;
     private static final IdRemover<Document> ID_REMOVER = new IdRemover<Document>() {
-        public void removeId(final Document document) {
-            document.remove("_id");
+        public Object removeId(final Document document) {
+            return document.remove("_id");
         }
     };
     private static final Codec<Document> DOCUMENT_CODEC = getDefaultCodecRegistry().get(DOCUMENT_CLASS);
 
     private static final List<BenchmarkResultWriter> WRITERS = Arrays.<BenchmarkResultWriter>asList(
-            new EvergreenBenchmarkResultWriter());
+            new EvergreenBenchmarkResultWriter(), new TextBasedBenchmarkResultWriter(System.err));
 
     public static void main(String[] args) throws Exception {
         runBenchmarks();
@@ -75,6 +76,9 @@ public class BenchmarkSuite {
                 DOCUMENT_CLASS, ID_REMOVER));
         runBenchmark(new InsertOneBenchmark<Document>("Large", "./single_and_multi_document/large_doc.json", 10,
                 DOCUMENT_CLASS, ID_REMOVER));
+
+        runBenchmark(new UpsertOneBenchmark<Document>("Large", "./single_and_multi_document/large_doc.json", 10,
+                                                      DOCUMENT_CLASS, ID_REMOVER));
 
         runBenchmark(new FindManyBenchmark<Document>("single_and_multi_document/tweet.json", BenchmarkSuite.DOCUMENT_CLASS));
         runBenchmark(new InsertManyBenchmark<Document>("Small", "./single_and_multi_document/small_doc.json", 10000,
