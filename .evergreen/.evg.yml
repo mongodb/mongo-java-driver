@@ -483,6 +483,13 @@ axes:
            # Multiple mongos instances can be specified in the connection string
            # for this version.
            SAFE_FOR_MULTI_MONGOS: true
+      - id: "4.2"
+        display_name: "4.2"
+        variables:
+           VERSION: "4.2"
+           # Multiple mongos instances can be specified in the connection string
+           # for this version.
+           SAFE_FOR_MULTI_MONGOS: true
       - id: "4.0"
         display_name: "4.0"
         variables:
@@ -603,21 +610,21 @@ buildvariants:
     - name: "static-analysis"
 
 - matrix_name: "tests-zlib-compression"
-  matrix_spec: { compressor : "zlib", auth: "noauth", ssl: "nossl", jdk: "jdk6", version: ["3.6", "4.0", "latest"], topology: "standalone", os: "linux" }
+  matrix_spec: { compressor : "zlib", auth: "noauth", ssl: "nossl", jdk: "jdk6", version: ["3.6", "4.0", "4.2", "latest"], topology: "standalone", os: "linux" }
   display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
      - name: "test"
 
 - matrix_name: "tests-snappy-compression"
-  matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: ["3.4", "3.6", "4.0", "latest"], topology: "standalone", os: "linux" }
+  matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: ["3.4", "3.6", "4.0", "4.2", "latest"], topology: "standalone", os: "linux" }
   display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
      - name: "test"
 
 - matrix_name: "tests-zstd-compression"
-  matrix_spec: { compressor : "zstd", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: "latest", topology: "standalone", os: "linux" }
+  matrix_spec: { compressor : "zstd", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: ["4.2", "latest"], topology: "standalone", os: "linux" }
   display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
@@ -632,14 +639,14 @@ buildvariants:
 
 - matrix_name: "tests-jdk6-secure"
   matrix_spec:  { auth: "auth", ssl: "ssl", jdk: "jdk6", version: "*", topology: "*", os: "linux" }
-  exclude_spec: { auth: "auth", ssl: "ssl", jdk: "jdk6", version: ["4.0", "latest"], topology: "*", os: "linux" }
+  exclude_spec: { auth: "auth", ssl: "ssl", jdk: "jdk6", version: ["4.0", "4.2", "latest"], topology: "*", os: "linux" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
      - name: "test"
 
 - matrix_name: "tests-jdk-newer-secure"
-  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk8", "jdk11"], version: ["4.0", "latest"], topology: "*", os: "linux" }
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk8", "jdk11"], version: ["4.0", "4.2", "latest"], topology: "*", os: "linux" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
@@ -653,28 +660,28 @@ buildvariants:
      - name: "test"
 
 - matrix_name: "tests-slow"
-  matrix_spec: { auth: "noauth", ssl: "*", jdk: "jdk8", version: ["4.0"], topology: "*", os: "linux" }
+  matrix_spec: { auth: "noauth", ssl: "*", jdk: "jdk8", version: ["4.2"], topology: "*", os: "linux" }
   display_name: "Slow: ${version} ${topology} ${ssl} ${jdk} ${os} "
   tags: ["tests-slow-variant"]
   tasks:
   - name: "slow-test"
 
 - matrix_name: "tests-socket"
-  matrix_spec: { auth: "*", ssl: "nossl", jdk: "jdk8", version: ["4.0"], topology: "standalone", os: "linux" }
+  matrix_spec: { auth: "*", ssl: "nossl", jdk: "jdk8", version: ["4.2"], topology: "standalone", os: "linux" }
   display_name: "Socket: ${version} ${topology} ${auth} ${jdk} ${os} "
   tags: ["tests-socket-variant"]
   tasks:
      - name: "socket-test"
 
 - matrix_name: "tests-socket-snappy-compression"
-  matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: ["4.0"], topology: "standalone", os: "linux" }
+  matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: ["4.2"], topology: "standalone", os: "linux" }
   display_name: "Socket: ${version} ${compressor} ${topology} ${auth} ${jdk} ${os} "
   tags: ["tests-socket-variant"]
   tasks:
      - name: "socket-test"
 
 - matrix_name: "tests-socket-zstd-compression"
-  matrix_spec: { compressor : "zstd", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: ["latest"], topology: "standalone", os: "linux" }
+  matrix_spec: { compressor : "zstd", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: ["4.2"], topology: "standalone", os: "linux" }
   display_name: "Socket: ${version} ${compressor} ${topology} ${auth} ${jdk} ${os} "
   tags: ["tests-socket-variant"]
   tasks:
@@ -696,7 +703,7 @@ buildvariants:
      - name: "perf"
 
 - matrix_name: "tests-embedded"
-  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "*", version: ["4.0"], topology: "standalone", os: "ubuntu" }
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "*", version: ["4.2"], topology: "standalone", os: "ubuntu" }
   exclude_spec: { auth: "*", ssl: "*", jdk: "jdk6", version: "*", topology: "*", os: "*" }
   display_name: "Embedded: ${jdk}"
   tags: ["test-embedded-variant"]
