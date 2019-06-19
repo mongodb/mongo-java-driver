@@ -40,17 +40,12 @@ import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.internal.validator.UpdateFieldNameValidator;
 import com.mongodb.session.SessionContext;
 import org.bson.BsonArray;
-import org.bson.BsonBinary;
 import org.bson.BsonBoolean;
-import org.bson.BsonDbPointer;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonInt32;
 import org.bson.BsonInt64;
-import org.bson.BsonReader;
-import org.bson.BsonRegularExpression;
 import org.bson.BsonString;
-import org.bson.BsonTimestamp;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.bson.FieldNameValidator;
@@ -60,8 +55,6 @@ import org.bson.codecs.Decoder;
 import org.bson.codecs.Encoder;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.types.Decimal128;
-import org.bson.types.ObjectId;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -396,9 +389,7 @@ final class BulkWriteBatch {
                 getCodec(update.getFilter()).encode(writer, update.getFilter(), EncoderContext.builder().build());
                 writer.writeName("u");
 
-                BsonWriter updateWriter = maybeWrapWriterForUpdate(writer, update);
-                getCodec(update.getUpdate()).encode(updateWriter, update.getUpdate(), EncoderContext.builder().build());
-                verifyNoEmptyUpdate(updateWriter);
+                getCodec(update.getUpdate()).encode(writer, update.getUpdate(), EncoderContext.builder().build());
 
                 if (update.isMulti()) {
                     writer.writeBoolean("multi", update.isMulti());
@@ -434,22 +425,6 @@ final class BulkWriteBatch {
             }
         }
 
-        private BsonWriter maybeWrapWriterForUpdate(BsonWriter writer, UpdateRequest update) {
-            BsonWriter updateWriter = writer;
-
-            if (update.getType() == WriteRequest.Type.UPDATE) {
-                updateWriter = new NonEmptyObjectWriterSpy(writer);
-            }
-            return updateWriter;
-        }
-
-        private void verifyNoEmptyUpdate(BsonWriter updateWriter) {
-            if (updateWriter instanceof NonEmptyObjectWriterSpy &&
-                    !((NonEmptyObjectWriterSpy) updateWriter).hasANonEmptyObject()) {
-                throw new IllegalArgumentException("Invalid BSON document for an update");
-            }
-        }
-
         @Override
         public Class<WriteRequest> getEncoderClass() {
             return WriteRequest.class;
@@ -467,256 +442,6 @@ final class BulkWriteBatch {
 
         WriteRequest.Type getType() {
             return writeRequest.getType();
-        }
-    }
-
-    static class NonEmptyObjectWriterSpy implements BsonWriter {
-        @Override
-        public void flush() {
-            bsonWriter.flush();
-        }
-
-        @Override
-        public void writeBinaryData(BsonBinary binary) {
-            bsonWriter.writeBinaryData(binary);
-        }
-
-        @Override
-        public void writeBinaryData(String name, BsonBinary binary) {
-            bsonWriter.writeBinaryData(name, binary);
-        }
-
-        @Override
-        public void writeBoolean(boolean value) {
-            bsonWriter.writeBoolean(value);
-        }
-
-        @Override
-        public void writeBoolean(String name, boolean value) {
-            bsonWriter.writeBoolean(name, value);
-        }
-
-        @Override
-        public void writeDateTime(long value) {
-            bsonWriter.writeDateTime(value);
-        }
-
-        @Override
-        public void writeDateTime(String name, long value) {
-            bsonWriter.writeDateTime(name, value);
-        }
-
-        @Override
-        public void writeDBPointer(BsonDbPointer value) {
-            bsonWriter.writeDBPointer(value);
-        }
-
-        @Override
-        public void writeDBPointer(String name, BsonDbPointer value) {
-            bsonWriter.writeDBPointer(name, value);
-        }
-
-        @Override
-        public void writeDouble(double value) {
-            bsonWriter.writeDouble(value);
-        }
-
-        @Override
-        public void writeDouble(String name, double value) {
-            bsonWriter.writeDouble(name, value);
-        }
-
-        @Override
-        public void writeEndArray() {
-            bsonWriter.writeEndArray();
-        }
-
-        @Override
-        public void writeEndDocument() {
-            bsonWriter.writeEndDocument();
-        }
-
-        @Override
-        public void writeInt32(int value) {
-            bsonWriter.writeInt32(value);
-        }
-
-        @Override
-        public void writeInt32(String name, int value) {
-            bsonWriter.writeInt32(name, value);
-        }
-
-        @Override
-        public void writeInt64(long value) {
-            bsonWriter.writeInt64(value);
-        }
-
-        @Override
-        public void writeInt64(String name, long value) {
-            bsonWriter.writeInt64(name, value);
-        }
-
-        @Override
-        public void writeDecimal128(Decimal128 value) {
-            bsonWriter.writeDecimal128(value);
-        }
-
-        @Override
-        public void writeDecimal128(String name, Decimal128 value) {
-            bsonWriter.writeDecimal128(name, value);
-        }
-
-        @Override
-        public void writeJavaScript(String code) {
-            bsonWriter.writeJavaScript(code);
-        }
-
-        @Override
-        public void writeJavaScript(String name, String code) {
-            bsonWriter.writeJavaScript(name, code);
-        }
-
-        @Override
-        public void writeJavaScriptWithScope(String code) {
-            bsonWriter.writeJavaScriptWithScope(code);
-        }
-
-        @Override
-        public void writeJavaScriptWithScope(String name, String code) {
-            bsonWriter.writeJavaScriptWithScope(name, code);
-        }
-
-        @Override
-        public void writeMaxKey() {
-            bsonWriter.writeMaxKey();
-        }
-
-        @Override
-        public void writeMaxKey(String name) {
-            bsonWriter.writeMaxKey(name);
-        }
-
-        @Override
-        public void writeMinKey() {
-            bsonWriter.writeMinKey();
-        }
-
-        @Override
-        public void writeMinKey(String name) {
-            bsonWriter.writeMinKey(name);
-        }
-
-        @Override
-        public void writeName(String name) {
-            hasANonEmptyObject = true;
-            bsonWriter.writeName(name);
-        }
-
-        @Override
-        public void writeNull() {
-            bsonWriter.writeNull();
-        }
-
-        @Override
-        public void writeNull(String name) {
-            bsonWriter.writeNull(name);
-        }
-
-        @Override
-        public void writeObjectId(ObjectId objectId) {
-            bsonWriter.writeObjectId(objectId);
-        }
-
-        @Override
-        public void writeObjectId(String name, ObjectId objectId) {
-            bsonWriter.writeObjectId(name, objectId);
-        }
-
-        @Override
-        public void writeRegularExpression(BsonRegularExpression regularExpression) {
-            bsonWriter.writeRegularExpression(regularExpression);
-        }
-
-        @Override
-        public void writeRegularExpression(String name, BsonRegularExpression regularExpression) {
-            bsonWriter.writeRegularExpression(name, regularExpression);
-        }
-
-        @Override
-        public void writeStartArray() {
-            bsonWriter.writeStartArray();
-        }
-
-        @Override
-        public void writeStartArray(String name) {
-            bsonWriter.writeStartArray(name);
-        }
-
-        @Override
-        public void writeStartDocument() {
-            bsonWriter.writeStartDocument();
-        }
-
-        @Override
-        public void writeStartDocument(String name) {
-            bsonWriter.writeStartDocument(name);
-        }
-
-        @Override
-        public void writeString(String value) {
-            bsonWriter.writeString(value);
-        }
-
-        @Override
-        public void writeString(String name, String value) {
-            bsonWriter.writeString(name, value);
-        }
-
-        @Override
-        public void writeSymbol(String value) {
-            bsonWriter.writeSymbol(value);
-        }
-
-        @Override
-        public void writeSymbol(String name, String value) {
-            bsonWriter.writeSymbol(name, value);
-        }
-
-        @Override
-        public void writeTimestamp(BsonTimestamp value) {
-            bsonWriter.writeTimestamp(value);
-        }
-
-        @Override
-        public void writeTimestamp(String name, BsonTimestamp value) {
-            bsonWriter.writeTimestamp(name, value);
-        }
-
-        @Override
-        public void writeUndefined() {
-            bsonWriter.writeUndefined();
-        }
-
-        @Override
-        public void writeUndefined(String name) {
-            bsonWriter.writeUndefined(name);
-        }
-
-        @Override
-        public void pipe(BsonReader reader) {
-            bsonWriter.pipe(reader);
-        }
-
-        private final BsonWriter bsonWriter;
-
-        private boolean hasANonEmptyObject = false;
-
-        public NonEmptyObjectWriterSpy(BsonWriter bsonWriter) {
-            this.bsonWriter = bsonWriter;
-        }
-
-        public boolean hasANonEmptyObject() {
-            return hasANonEmptyObject;
         }
     }
 

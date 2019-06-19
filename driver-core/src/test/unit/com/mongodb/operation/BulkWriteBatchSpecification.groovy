@@ -286,23 +286,6 @@ class BulkWriteBatchSpecification extends Specification {
         !bulkWriteBatch.shouldProcessBatch()
     }
 
-    def 'should reject empty update documents'() {
-        given:
-        def bulkWriteBatch = BulkWriteBatch.createBulkWriteBatch(namespace, serverDescription, connectionDescription, false,
-                                                                 WriteConcern.MAJORITY, true, false, [
-                                                                         new UpdateRequest(toBsonDocument('{ _id: 3}'),
-                                                                                           toBsonDocument('{}'), UPDATE)],
-                                                                 sessionContext)
-        def payload = bulkWriteBatch.getPayload()
-
-        when:
-        payload.setPosition(payload.getPayload().size())
-        payload.getPayload().iterator().next().getFirstKey()
-
-        then:
-        thrown IllegalArgumentException
-    }
-
     private static List<WriteRequest> getWriteRequests() {
         [new InsertRequest(toBsonDocument('{_id: 1, x: 1}')),
          new UpdateRequest(toBsonDocument('{ _id: 2}'), toBsonDocument('{$set: {x : 2}}'), UPDATE).upsert(true),
