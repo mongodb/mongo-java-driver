@@ -79,7 +79,7 @@ Each YAML file has the following keys:
 
         - ``local`` The local KMS provider.
 
-          - ``key`` A 64 byte local key.
+          - ``key`` A 96 byte local key.
 
       - ``schema_map``: Optional, a map from namespaces to local JSON schemas.
 
