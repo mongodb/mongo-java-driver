@@ -60,8 +60,8 @@
     &lt;dependency&gt;
         &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
         &lt;artifactId&gt;{{$artifactId}}&lt;/artifactId&gt;
-        &lt;version&gt;{{$version}}&lt;/version&gt;{{- if $classifier -}}
-        <classifier>{{$classifier}}</classifier>{{- end -}}
+        &lt;version&gt;{{$version}}&lt;/version&gt;{{- if $classifier }}
+        &lt;classifier&gt;{{$classifier}}&lt;/classifier&gt;{{- end }}
     &lt;/dependency&gt;
 &lt;/dependencies&gt;
 
