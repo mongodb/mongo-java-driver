@@ -286,7 +286,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
-    def 'when updating with an empty document, update should throw IllegalArgumentException'() {
+    def 'when updating with an empty document, update should fail'() {
         given:
         def id = new ObjectId()
         def operation = new MixedBulkWriteOperation(getNamespace(),
@@ -297,7 +297,7 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         execute(operation, async)
 
         then:
-        thrown(IllegalArgumentException)
+        thrown(RuntimeException)
 
         where:
         [async, ordered] << [[true, false], [true, false]].combinations()
