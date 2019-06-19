@@ -118,34 +118,6 @@
     ],
     "tests": [
         {
-            "description": "$expr unconditionally fails",
-            "clientOptions": {
-                "autoEncryptOpts": {
-                    "kmsProviders": {
-                        "aws": {}
-                    }
-                }
-            },
-            "operations": [
-                {
-                    "name": "find",
-                    "arguments": {
-                        "filter": {
-                            "$expr": {
-                                "$eq": [
-                                    1,
-                                    1
-                                ]
-                            }
-                        }
-                    },
-                    "result": {
-                        "errorContains": "Unsupported match expression operator for encryption"
-                    }
-                }
-            ]
-        },
-        {
             "description": "$text unconditionally fails",
             "clientOptions": {
                 "autoEncryptOpts": {
