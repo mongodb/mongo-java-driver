@@ -1,6 +1,6 @@
 +++
 date = "2019-06-13T09:00:01+01:00"
-title = "Client Site Encryption"
+title = "Client Side Encryption"
 [menu.main]
   parent = "Sync Tutorials"
   identifier = "Sync Client Side Encryption"
