@@ -167,7 +167,7 @@
                                     "_id": 1,
                                     "encrypted_string": {
                                         "$binary": {
-                                            "base64": "AQAAAAAAAAAAAAAAAAAAAAACKWM29kOcLsfSLfJJ3SSmLr+wgrTtpu1lads1NzDz80AjMyrstw/GMdCuzX+AS+JS84Si2cT1WPMemTkBdVdGAw==",
+                                            "base64": "AQAAAAAAAAAAAAAAAAAAAAACKWM29kOcLsfSLfJJ3SSmLlndNjmCz2VYgnjGni3WIUn1Q4CqTHGMkyzFswDHAiMzklSmjsIxbvNoxQ6tazd+zA==",
                                             "subType": "06"
                                         }
                                     },
@@ -189,7 +189,7 @@
                             "_id": 1,
                             "encrypted_string": {
                                 "$binary": {
-                                    "base64": "AQAAAAAAAAAAAAAAAAAAAAACKWM29kOcLsfSLfJJ3SSmLr+wgrTtpu1lads1NzDz80AjMyrstw/GMdCuzX+AS+JS84Si2cT1WPMemTkBdVdGAw==",
+                                    "base64": "AQAAAAAAAAAAAAAAAAAAAAACKWM29kOcLsfSLfJJ3SSmLlndNjmCz2VYgnjGni3WIUn1Q4CqTHGMkyzFswDHAiMzklSmjsIxbvNoxQ6tazd+zA==",
                                     "subType": "06"
                                 }
                             },
