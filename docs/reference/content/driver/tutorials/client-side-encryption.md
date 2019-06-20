@@ -29,21 +29,21 @@ See the [installation]({{< relref "driver/getting-started/installation.md" >}}) 
 
 There is a separate jar file containing`libmongocrypt` bindings.
 
-{{< install artifactId="mongodb-crypt" version="1.0.0-beta1">}}
+{{< install artifactId="mongodb-crypt" version="1.0.0-beta2">}}
 
 If the jar fails to run there are separate jar files for specific architectures:
 
 #### RHEL 7.0*
-{{< install artifactId="mongodb-crypt" version="1.0.0-beta1" classifier="linux64-rhel70">}}
+{{< install artifactId="mongodb-crypt" version="1.0.0-beta2" classifier="linux64-rhel70">}}
 
 #### OSX*
-{{< install artifactId="mongodb-crypt" version="1.0.0-beta1" classifier="osx">}}
+{{< install artifactId="mongodb-crypt" version="1.0.0-beta2" classifier="osx">}}
 
 #### Windows*
-{{< install artifactId="mongodb-crypt" version="1.0.0-beta1" classifier="win64">}}
+{{< install artifactId="mongodb-crypt" version="1.0.0-beta2" classifier="win64">}}
 
 #### Ubuntu 16.04
-{{< install artifactId="mongodb-crypt" version="1.0.0-beta1" classifier="linux64-ubuntu1604">}}
+{{< install artifactId="mongodb-crypt" version="1.0.0-beta2" classifier="linux64-ubuntu1604">}}
 
 
 * Distribution is included in the main `mongodb-crypt` jar file.
