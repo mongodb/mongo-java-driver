@@ -16,13 +16,16 @@
 
 package com.mongodb.async.client;
 
+import com.mongodb.MongoException;
+import com.mongodb.diagnostics.logging.Logger;
+import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.lang.Nullable;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 abstract class AbstractSubscription<TResult> implements Subscription {
-
+    private static final Logger LOGGER = Loggers.getLogger("client");
     private final Observer<? super TResult> observer;
 
     /* protected by `this` */
@@ -120,20 +123,23 @@ abstract class AbstractSubscription<TResult> implements Subscription {
     void onError(final Throwable t) {
         if (terminalAction()) {
             postTerminate();
-            observer.onError(t);
+            try {
+                observer.onError(t);
+            } catch (Throwable t1) {
+                LOGGER.error("Calling onError threw an exception", t1);
+                throw MongoException.fromThrowableNonNull(t1);
+            }
+        } else {
+            throw MongoException.fromThrowableNonNull(t);
         }
     }
 
     void onNext(final TResult next) {
-        boolean isTerminated;
-        synchronized (this) {
-            isTerminated = this.isTerminated;
-        }
-
-        if (!isTerminated) {
+        if (!isTerminated()) {
             try {
                 observer.onNext(next);
             } catch (Throwable t) {
+                LOGGER.error("Calling onNext threw an exception", t);
                 onError(t);
             }
         }
@@ -142,7 +148,12 @@ abstract class AbstractSubscription<TResult> implements Subscription {
     void onComplete() {
         if (terminalAction()) {
             postTerminate();
-            observer.onComplete();
+            try {
+                observer.onComplete();
+            } catch (Throwable t) {
+                LOGGER.error("Calling onComplete threw an exception", t);
+                throw MongoException.fromThrowableNonNull(t);
+            }
         }
     }
 

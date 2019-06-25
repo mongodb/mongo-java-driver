@@ -228,6 +228,7 @@ class SingleResultCallbackSubscriptionSpecification extends Specification {
         observer.requestMore(1)
 
         then:
+        thrown(MongoException)
         observer.assertReceivedOnNext([1])
         observer.assertUnsubscribed()
         observer.assertNoTerminalEvent()
@@ -283,6 +284,76 @@ class SingleResultCallbackSubscriptionSpecification extends Specification {
         observer.requestMore(1)
 
         then:
+        notThrown(MongoException)
+        observer.assertTerminalEvent()
+        observer.assertErrored()
+    }
+
+    def 'should throw the exception if calling onComplete raises one'() {
+        given:
+        def observer = new TestObserver(new Observer(){
+            @Override
+            void onSubscribe(final Subscription subscription) {
+            }
+
+            @Override
+            void onNext(final Object o) {
+            }
+
+            @Override
+            void onError(final Throwable e) {
+            }
+
+            @Override
+            void onComplete() {
+                throw new MongoException('exception calling onComplete')
+            }
+        })
+        observe(getBlock()).subscribe(observer)
+
+        when:
+        observer.requestMore(100)
+
+        then:
+        def ex = thrown(MongoException)
+        observer.assertNoErrors()
+        observer.assertTerminalEvent()
+        ex.message == 'exception calling onComplete'
+    }
+
+    def 'should throw the exception if calling onError raises one'() {
+        given:
+        def observer = new TestObserver(new Observer(){
+            @Override
+            void onSubscribe(final Subscription subscription) {
+            }
+
+            @Override
+            void onNext(final Object o) {
+            }
+
+            @Override
+            void onError(final Throwable e) {
+                throw new MongoException('exception calling onError')
+            }
+
+            @Override
+            void onComplete() {
+            }
+        })
+        observe(new Block<SingleResultCallback<Integer>>() {
+            @Override
+            void apply(final SingleResultCallback<Integer> callback) {
+                throw new MongoException('fail')
+            }
+        }).subscribe(observer)
+
+        when:
+        observer.requestMore(1)
+
+        then:
+        def ex = thrown(MongoException)
+        ex.message == 'exception calling onError'
         observer.assertErrored()
         observer.assertTerminalEvent()
     }

@@ -223,7 +223,6 @@ class FlatteningSingleResultCallbackSubscriptionSpecification extends Specificat
 
     def 'should call onError if onNext causes an Error'() {
         given:
-        def block = getBlock()
         def observer = new TestObserver(new Observer() {
             @Override
             void onSubscribe(final Subscription subscription) {
@@ -242,13 +241,80 @@ class FlatteningSingleResultCallbackSubscriptionSpecification extends Specificat
             void onComplete() {
             }
         })
-        observeAndFlatten(block).subscribe(observer)
+        observeAndFlatten(getBlock()).subscribe(observer)
 
         when:
         observer.requestMore(1)
 
         then:
+        notThrown(MongoException)
         observer.assertTerminalEvent()
+        observer.assertErrored()
+    }
+
+    def 'should throw the exception if calling onComplete raises one'() {
+        given:
+        def observer = new TestObserver(new Observer() {
+            @Override
+            void onSubscribe(final Subscription subscription) {
+            }
+
+            @Override
+            void onNext(final Object result) {
+            }
+
+            @Override
+            void onError(final Throwable e) {
+            }
+
+            @Override
+            void onComplete() {
+                throw new MongoException('exception calling onComplete')
+            }
+        })
+        observeAndFlatten(getBlock()).subscribe(observer)
+
+        when:
+        observer.requestMore(100)
+
+        then:
+        def ex = thrown(MongoException)
+        ex.message == 'exception calling onComplete'
+        observer.assertTerminalEvent()
+        observer.assertNoErrors()
+    }
+
+    def 'should throw the exception if calling onError raises one'() {
+        given:
+        def observer = new TestObserver(new Observer() {
+            @Override
+            void onSubscribe(final Subscription subscription) {
+            }
+
+            @Override
+            void onNext(final Object result) {
+                throw new MongoException('fail')
+            }
+
+            @Override
+            void onError(final Throwable e) {
+                throw new MongoException('exception calling onError')
+            }
+
+            @Override
+            void onComplete() {
+            }
+        })
+        observeAndFlatten(getBlock()).subscribe(observer)
+
+        when:
+        observer.requestMore(100)
+
+        then:
+        def ex = thrown(MongoException)
+        ex.message == 'exception calling onError'
+        observer.assertTerminalEvent()
+        observer.assertErrored()
     }
 
     def 'should call onError if the passed block errors'() {
@@ -257,7 +323,7 @@ class FlatteningSingleResultCallbackSubscriptionSpecification extends Specificat
         observeAndFlatten(new Block<SingleResultCallback<List<Integer>>>() {
             @Override
             void apply(final SingleResultCallback<List<Integer>> callback) {
-                throw new MongoException('failed');
+                throw new MongoException('failed')
             }
         }).subscribe(observer)
 
