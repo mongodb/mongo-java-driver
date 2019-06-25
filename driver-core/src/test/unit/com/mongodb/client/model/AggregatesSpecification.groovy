@@ -50,6 +50,7 @@ import static com.mongodb.client.model.Aggregates.merge
 import static com.mongodb.client.model.Aggregates.out
 import static com.mongodb.client.model.Aggregates.project
 import static com.mongodb.client.model.Aggregates.replaceRoot
+import static com.mongodb.client.model.Aggregates.replaceWith
 import static com.mongodb.client.model.Aggregates.sample
 import static com.mongodb.client.model.Aggregates.skip
 import static com.mongodb.client.model.Aggregates.sort
@@ -169,12 +170,18 @@ class AggregatesSpecification extends Specification {
         parse('{ $project : { title : 1 , author : 1, lastName : "$author.last" } }')
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should render $replaceRoot'() {
         expect:
         toBson(replaceRoot('$a1')) == parse('{$replaceRoot: {newRoot: "$a1"}}')
         toBson(replaceRoot('$a1.b')) == parse('{$replaceRoot: {newRoot: "$a1.b"}}')
         toBson(replaceRoot('$a1')) == parse('{$replaceRoot: {newRoot: "$a1"}}')
+    }
+
+    def 'should render $replaceWith'() {
+        expect:
+        toBson(replaceWith('$a1')) == parse('{$replaceWith: "$a1"}')
+        toBson(replaceWith('$a1.b')) == parse('{$replaceWith: "$a1.b"}')
+        toBson(replaceWith('$a1')) == parse('{$replaceWith: "$a1"}')
     }
 
     def 'should render $sort'() {

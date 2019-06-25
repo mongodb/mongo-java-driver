@@ -50,6 +50,7 @@ import static com.mongodb.client.model.Aggregates.merge
 import static com.mongodb.client.model.Aggregates.out
 import static com.mongodb.client.model.Aggregates.project
 import static com.mongodb.client.model.Aggregates.replaceRoot
+import static com.mongodb.client.model.Aggregates.replaceWith
 import static com.mongodb.client.model.Aggregates.sample
 import static com.mongodb.client.model.Aggregates.skip
 import static com.mongodb.client.model.Aggregates.sort
@@ -886,6 +887,37 @@ class AggregatesFunctionalSpecification extends OperationFunctionalSpecification
         helper.drop()
         helper.insertDocuments(Document.parse('{_id: 0, a1: {b: 1, _id: 7}, a2: 2}'))
         results = helper.aggregate([replaceRoot('$a1')])
+
+        then:
+        results == [Document.parse('{b: 1, _id: 7}')]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(4, 2) })
+    def '$replaceWith'() {
+        given:
+        def helper = getCollectionHelper()
+        def results = []
+
+        when:
+        helper.drop()
+        helper.insertDocuments(Document.parse('{_id: 0, a1: {b: 1}, a2: 2}'))
+        results = helper.aggregate([replaceWith('$a1')])
+
+        then:
+        results == [Document.parse('{b: 1}')]
+
+        when:
+        helper.drop()
+        helper.insertDocuments(Document.parse('{_id: 0, a1: {b: {c1: 4, c2: 5}}, a2: 2}'))
+        results = helper.aggregate([replaceWith('$a1.b')])
+
+        then:
+        results == [Document.parse('{c1: 4, c2: 5}')]
+
+        when:
+        helper.drop()
+        helper.insertDocuments(Document.parse('{_id: 0, a1: {b: 1, _id: 7}, a2: 2}'))
+        results = helper.aggregate([replaceWith('$a1')])
 
         then:
         results == [Document.parse('{b: 1, _id: 7}')]
