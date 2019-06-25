@@ -23,6 +23,12 @@
                     "base64": "AQAAAAAAAAAAAAAAAAAAAAACDdw4KFz3ZLquhsbt7RmDjD0N67n0uSXx7IGnQNCLeIKvot6s/ouI21Eo84IOtb6lhwUNPlSEBNY0/hbszWAKJg==",
                     "subType": "06"
                 }
+            },
+            "random": {
+                "$binary": {
+                    "base64": "AgAAAAAAAAAAAAAAAAAAAAACyfp+lXvKOi7f5vh6ZsCijLEaXFKq1X06RmyS98ZvmMQGixTw8HM1f/bGxZjGwvYwjXOkIEb7Exgb8p2KCDI5TQ==",
+                    "subType": "06"
+                }
             }
         }
     ],
@@ -236,6 +242,12 @@
                                     "base64": "AQAAAAAAAAAAAAAAAAAAAAACDdw4KFz3ZLquhsbt7RmDjD0N67n0uSXx7IGnQNCLeIKvot6s/ouI21Eo84IOtb6lhwUNPlSEBNY0/hbszWAKJg==",
                                     "subType": "06"
                                 }
+                            },
+                            "random": {
+                                "$binary": {
+                                    "base64": "AgAAAAAAAAAAAAAAAAAAAAACyfp+lXvKOi7f5vh6ZsCijLEaXFKq1X06RmyS98ZvmMQGixTw8HM1f/bGxZjGwvYwjXOkIEb7Exgb8p2KCDI5TQ==",
+                                    "subType": "06"
+                                }
                             }
                         }
                     ]
@@ -271,7 +283,8 @@
                         },
                         {
                             "_id": 2,
-                            "encrypted_string": "string1"
+                            "encrypted_string": "string1",
+                            "random": "abc"
                         }
                     ]
                 }
@@ -376,6 +389,12 @@
                             "encrypted_string": {
                                 "$binary": {
                                     "base64": "AQAAAAAAAAAAAAAAAAAAAAACDdw4KFz3ZLquhsbt7RmDjD0N67n0uSXx7IGnQNCLeIKvot6s/ouI21Eo84IOtb6lhwUNPlSEBNY0/hbszWAKJg==",
+                                    "subType": "06"
+                                }
+                            },
+                            "random": {
+                                "$binary": {
+                                    "base64": "AgAAAAAAAAAAAAAAAAAAAAACyfp+lXvKOi7f5vh6ZsCijLEaXFKq1X06RmyS98ZvmMQGixTw8HM1f/bGxZjGwvYwjXOkIEb7Exgb8p2KCDI5TQ==",
                                     "subType": "06"
                                 }
                             }
