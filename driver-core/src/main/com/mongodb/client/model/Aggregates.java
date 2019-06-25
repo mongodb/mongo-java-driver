@@ -490,7 +490,26 @@ public final class Aggregates {
      * @since 3.4
      */
     public static <TExpression> Bson replaceRoot(final TExpression value) {
-        return new ReplaceRootStage<TExpression>(value);
+        return new ReplaceStage<TExpression>(value);
+    }
+
+    /**
+     * Creates a $replaceRoot pipeline stage
+     *
+     * <p>With $replaceWith, you can promote an embedded document to the top-level.
+     * You can also specify a new document as the replacement.</p>
+     *
+     * <p>The $replaceWith is an alias for {@link #replaceRoot(Object)}.</p>
+     *
+     * @param <TExpression> the new root type
+     * @param value         the new root value
+     * @return the $replaceRoot pipeline stage
+     * @mongodb.driver.manual reference/operator/aggregation/replaceWith/ $replaceWith
+     * @mongodb.server.release 4.2
+     * @since 3.11
+     */
+    public static <TExpression> Bson replaceWith(final TExpression value) {
+        return new ReplaceStage<TExpression>(value, true);
     }
 
     /**
@@ -1140,22 +1159,34 @@ public final class Aggregates {
         }
     }
 
-    private static class ReplaceRootStage<TExpression> implements Bson {
+    private static class ReplaceStage<TExpression> implements Bson {
         private final TExpression value;
+        private final boolean replaceWith;
 
-        ReplaceRootStage(final TExpression value) {
+        ReplaceStage(final TExpression value) {
+            this(value, false);
+        }
+
+        ReplaceStage(final TExpression value, final boolean replaceWith) {
             this.value = value;
+            this.replaceWith = replaceWith;
         }
 
         @Override
         public <TDocument> BsonDocument toBsonDocument(final Class<TDocument> tDocumentClass, final CodecRegistry codecRegistry) {
             BsonDocumentWriter writer = new BsonDocumentWriter(new BsonDocument());
             writer.writeStartDocument();
-            writer.writeName("$replaceRoot");
-            writer.writeStartDocument();
-            writer.writeName("newRoot");
-            BuildersHelper.encodeValue(writer, value, codecRegistry);
-            writer.writeEndDocument();
+
+            if (replaceWith) {
+                writer.writeName("$replaceWith");
+                BuildersHelper.encodeValue(writer, value, codecRegistry);
+            } else {
+                writer.writeName("$replaceRoot");
+                writer.writeStartDocument();
+                writer.writeName("newRoot");
+                BuildersHelper.encodeValue(writer, value, codecRegistry);
+                writer.writeEndDocument();
+            }
             writer.writeEndDocument();
 
             return writer.getDocument();
@@ -1170,7 +1201,7 @@ public final class Aggregates {
                 return false;
             }
 
-            ReplaceRootStage<?> that = (ReplaceRootStage<?>) o;
+            ReplaceStage<?> that = (ReplaceStage<?>) o;
 
             return value != null ? value.equals(that.value) : that.value == null;
         }
