@@ -432,6 +432,72 @@ class MongoIterableSubscriptionSpecification extends Specification {
         observer.requestMore(1)
 
         then:
+        notThrown(MongoException)
+        observer.assertTerminalEvent()
+        observer.assertErrored()
+    }
+
+    def 'should throw the exception if calling onComplete raises one'() {
+        given:
+        def observer = new TestObserver(new Observer() {
+            @Override
+            void onSubscribe(final Subscription subscription) {
+            }
+
+            @Override
+            void onNext(final Object result) {
+            }
+
+            @Override
+            void onError(final Throwable e) {
+            }
+
+            @Override
+            void onComplete() {
+                throw new MongoException('exception calling onComplete')
+            }
+        })
+        observe(getMongoIterable()).subscribe(observer)
+
+        when:
+        observer.requestMore(100)
+
+        then:
+        def ex = thrown(MongoException)
+        ex.message == 'exception calling onComplete'
+        observer.assertTerminalEvent()
+        observer.assertNoErrors()
+    }
+
+    def 'should throw the exception if calling onError raises one'() {
+        given:
+        def observer = new TestObserver(new Observer() {
+            @Override
+            void onSubscribe(final Subscription subscription) {
+            }
+
+            @Override
+            void onNext(final Object result) {
+                throw new MongoException('fail')
+            }
+
+            @Override
+            void onError(final Throwable e) {
+                throw new MongoException('exception calling onError')
+            }
+
+            @Override
+            void onComplete() {
+            }
+        })
+        observe(getMongoIterable()).subscribe(observer)
+
+        when:
+        observer.requestMore(1)
+
+        then:
+        def ex = thrown(MongoException)
+        ex.message == 'exception calling onError'
         observer.assertTerminalEvent()
         observer.assertErrored()
     }
