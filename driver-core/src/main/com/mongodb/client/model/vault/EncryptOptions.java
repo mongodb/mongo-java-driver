@@ -17,7 +17,6 @@
 package com.mongodb.client.model.vault;
 
 import org.bson.BsonBinary;
-import org.bson.BsonValue;
 
 /**
  * The options for explicit encryption.
@@ -26,7 +25,7 @@ import org.bson.BsonValue;
  */
 public class EncryptOptions {
     private BsonBinary keyId;
-    private BsonValue keyAltName;
+    private String keyAltName;
     private final String algorithm;
 
     /**
@@ -71,7 +70,7 @@ public class EncryptOptions {
      *
      * @return the alternate name
      */
-    public BsonValue getKeyAltName() {
+    public String getKeyAltName() {
         return keyAltName;
     }
 
@@ -94,7 +93,7 @@ public class EncryptOptions {
      * @return this
      * @see #getKeyAltName()
      */
-    public EncryptOptions keyAltName(final BsonValue keyAltName) {
+    public EncryptOptions keyAltName(final String keyAltName) {
         this.keyAltName = keyAltName;
         return this;
     }
