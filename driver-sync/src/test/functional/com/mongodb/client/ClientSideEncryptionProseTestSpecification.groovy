@@ -85,7 +85,8 @@ class ClientSideEncryptionProseTestSpecification extends FunctionalSpecification
   "creationDate": { "$date": { "$numberLong": "1232739599082000" } },
   "updateDate": { "$date": { "$numberLong": "1232739599082000" } },
   "status": { "$numberInt": "0" },
-  "masterKey": { "provider": "local" }
+  "masterKey": { "provider": "local" },
+  "keyAltNames": [ "altname1", "altname2" ]
 }
 ''')
 
@@ -213,18 +214,26 @@ class ClientSideEncryptionProseTestSpecification extends FunctionalSpecification
         def value = new BsonString('hello')
 
         when:
-        def encryptedValue = keyVault.encrypt(value, new EncryptOptions('AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic')
-                .keyId(localDataKeyDocument.getBinary('_id')))
+        def options = new EncryptOptions('AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic')
+        if (useKeyId) {
+            options.keyId(localDataKeyDocument.getBinary('_id'))
+        } else {
+            options.keyAltName('altname1')
+        }
+
+        def encryptedValue = keyVault.encrypt(value, options)
 
         then:
-        encryptedValue == new BsonBinary((byte) 6,
-                Base64.decoder.decode('AWFhYWFhYWFhYWFhYWFhYWEC7ubnsHvOUXvbE4406+XawIhcl+fsvNWO7moBSY7ABkPuCTzsitrqWWp1FbaaT05muIESiB8daggJPgwarTQ3cQ=='))
+        encryptedValue.type == 6 as byte
 
         when:
         def decryptedValue = keyVault.decrypt(encryptedValue)
 
         then:
         decryptedValue == value
+
+        where:
+        useKeyId << [true, false]
     }
 
     def 'should explicitly encrypt and decrypt with aws provider'() {
@@ -238,18 +247,29 @@ class ClientSideEncryptionProseTestSpecification extends FunctionalSpecification
         def value = new BsonString('hello')
 
         when:
-        def encryptedValue = keyVault.encrypt(value, new EncryptOptions('AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic')
-                .keyId(awsDataKeyDocument.getBinary('_id')))
+        def options = new EncryptOptions('AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic')
+        if (useKeyId) {
+            options.keyId(awsDataKeyDocument.getBinary('_id'))
+        } else {
+            options.keyAltName('altname1')
+        }
+
+        def encryptedValue = keyVault.encrypt(value, options)
 
         then:
-        encryptedValue == new BsonBinary((byte) 6,
-                Base64.decoder.decode('AQAAAAAAAAAAAAAAAAAAAAACN0NwWlfe6YPGDEw+ObxEzbEtk45ewF3sIH2Oj7F0xd3GYoxCGCIp9gg0Q1uHTwdVWwG58SFhJyo4305IVoikEQ=='))
+        encryptedValue.type == 6 as byte
+
+        then:
+        encryptedValue.type == 6 as byte
 
         when:
         def decryptedValue = keyVault.decrypt(encryptedValue)
 
         then:
         decryptedValue == value
+
+        where:
+        useKeyId << [true, false]
     }
 
     /*

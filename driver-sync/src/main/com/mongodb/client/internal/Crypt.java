@@ -173,12 +173,19 @@ class Crypt implements Closeable {
         notNull("options", options);
 
         try {
-            MongoCryptContext encryptionContext = mongoCrypt.createExplicitEncryptionContext(
-                    new BsonDocument("v", value), MongoExplicitEncryptOptions.builder()
-                            .keyId(options.getKeyId())
-                            .algorithm(options.getAlgorithm())
-                            .build());
+            MongoExplicitEncryptOptions.Builder encryptOptionsBuilder = MongoExplicitEncryptOptions.builder()
+                    .algorithm(options.getAlgorithm());
 
+            if (options.getKeyId() != null) {
+                encryptOptionsBuilder.keyId(options.getKeyId());
+            }
+
+            if (options.getKeyAltName() != null) {
+                encryptOptionsBuilder.keyAltName(options.getKeyAltName());
+            }
+
+            MongoCryptContext encryptionContext = mongoCrypt.createExplicitEncryptionContext(
+                    new BsonDocument("v", value), encryptOptionsBuilder.build());
             try {
                 return executeStateMachine(encryptionContext, null).getBinary("v");
             } finally {
