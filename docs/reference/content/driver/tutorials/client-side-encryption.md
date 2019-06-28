@@ -60,39 +60,49 @@ More information about libmongocrypt will soon be available from the official do
 
 The following is a sample app that assumes key and schema have already been created in MongoDB. The example uses a local key,
 however using AWS Key Management Service is also an option. The data in the `encryptedField` field is automatically encrypted on the
-insert and decrypted when using find on the client side:
+insert and decrypted when using find on the client side. The following code snippet comes from the 
+[`ClientSideEncryptionSimpleTour.java`]({{< srcref "driver-sync/src/examples/tour/ClientSideEncryptionSimpleTour.java">}}) example code
+that can be found with the driver source on github:
 
 ```java
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.MongoClientSettings;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
 import org.bson.Document;
 
 import java.security.SecureRandom;
+import java.util.HashMap;
 import java.util.Map;
 
-public class ClientSideEncryptionSimpleTest {
+public class ClientSideEncryptionSimpleTour {
 
-    public static void main(String[] args) {
+    public static void main(final String[] args) {
 
         // This would have to be the same master key as was used to create the encryption key
-        var localMasterKey = new byte[96];
+        final byte[] localMasterKey = new byte[96];
         new SecureRandom().nextBytes(localMasterKey);
 
-        var kmsProviders = Map.of("local", Map.<String, Object>of("key", localMasterKey));
-        var keyVaultNamespace = "admin.datakeys";
+        Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
+           put("local", new HashMap<String, Object>() {{
+               put("key", localMasterKey);
+           }});
+        }};
 
-        var autoEncryptionSettings = AutoEncryptionSettings.builder()
-            .keyVaultNamespace(keyVaultNamespace)
-            .kmsProviders(kmsProviders)
-            .build();
+        String keyVaultNamespace = "admin.datakeys";
 
-        var clientSettings = MongoClientSettings.builder()
-            .autoEncryptionSettings(autoEncryptionSettings)
-            .build();
+        AutoEncryptionSettings autoEncryptionSettings = AutoEncryptionSettings.builder()
+                .keyVaultNamespace(keyVaultNamespace)
+                .kmsProviders(kmsProviders)
+                .build();
 
-        var client = MongoClients.create(clientSettings);
-        var collection = client.getDatabase("test").getCollection("coll");
+        MongoClientSettings clientSettings = MongoClientSettings.builder()
+                .autoEncryptionSettings(autoEncryptionSettings)
+                .build();
+
+        MongoClient mongoClient = MongoClients.create(clientSettings);
+        MongoCollection<Document> collection = mongoClient.getDatabase("test").getCollection("coll");
         collection.drop(); // Clear old data
 
         collection.insertOne(new Document("encryptedField", "123456789"));
@@ -106,18 +116,25 @@ public class ClientSideEncryptionSimpleTest {
 Auto encryption is an **enterprise** only feature.
 {{% /note %}}
 
-The following example shows how to configure the `AutoEncryptionSettings` instance to create a new key and setting the json schema map:
+The following example shows how to configure the `AutoEncryptionSettings` instance to create a new key and setting the json schema map.
+The full code snippet can be found in 
+[`ClientSideEncryptionAutoEncryptionSettingsTour.java`]({{< srcref "driver-sync/src/examples/tour/ClientSideEncryptionAutoEncryptionSettingsTour.java">}}):
 
 ```java
-import com.mongodb.ConnectionString;
 import com.mongodb.ClientEncryptionSettings;
+import com.mongodb.ConnectionString;
+import com.mongodb.client.model.vault.DataKeyOptions;
+import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.client.vault.ClientEncryptions;
+import org.bson.BsonBinary;
+import org.bson.BsonDocument;
+
+import java.util.Base64;
 
 ...
 
-
-var keyVaultNamespace = "admin.datakeys";
-var clientEncryptionSettings = ClientEncryptionSettings.builder()
+String keyVaultNamespace = "admin.datakeys";
+ClientEncryptionSettings clientEncryptionSettings = ClientEncryptionSettings.builder()
         .keyVaultMongoClientSettings(MongoClientSettings.builder()
                 .applyConnectionString(new ConnectionString("mongodb://localhost"))
                 .build())
@@ -125,35 +142,36 @@ var clientEncryptionSettings = ClientEncryptionSettings.builder()
         .kmsProviders(kmsProviders)
         .build();
 
-var clientEncryption = ClientEncryptions.create(clientEncryptionSettings);
-var dataKeyId = keyVault.createDataKey("local", new DataKeyOptions());
-var base64DataKeyId = Base64.getEncoder().encodeToString(dataKeyId.getData());
+ClientEncryption clientEncryption = ClientEncryptions.create(clientEncryptionSettings);
+BsonBinary dataKeyId = clientEncryption.createDataKey("local", new DataKeyOptions());
+final String base64DataKeyId = Base64.getEncoder().encodeToString(dataKeyId.getData());
 
-var dbName = "test";
-var collName = "coll";
-var autoEncryptionSettings = AutoEncryptionSettings.builder()
-    .keyVaultNamespace(keyVaultNamespace)
-    .kmsProviders(kmsProviders)
-    .namespaceToLocalSchemaDocumentMap(Map.of(dbName + "." + collName,
-        // Need a schema that references the new data key
-        BsonDocument.parse("{" +
-                "  properties: {" +
-                "    encryptedField: {" +
-                "      encrypt: {" +
-                "        keyId: [{" +
-                "          \"$binary\": {" +
-                "            \"base64\": \"" + base64DataKeyId + "\"," +
-                "            \"subType\": \"04\"" +
-                "          }" +
-                "        }]," +
-                "        bsonType: \"string\"," +
-                "        algorithm: \"AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic\"" +
-                "      }" +
-                "    }" +
-                "  }," +
-                "  \"bsonType\": \"object\"" +
-                "}"))
-    ).build();
+final String dbName = "test";
+final String collName = "coll";
+AutoEncryptionSettings autoEncryptionSettings = AutoEncryptionSettings.builder()
+        .keyVaultNamespace(keyVaultNamespace)
+        .kmsProviders(kmsProviders)
+        .schemaMap(new HashMap<String, BsonDocument>() {{
+            put(dbName + "." + collName,
+                    // Need a schema that references the new data key
+                    BsonDocument.parse("{"
+                            + "  properties: {"
+                            + "    encryptedField: {"
+                            + "      encrypt: {"
+                            + "        keyId: [{"
+                            + "          \"$binary\": {"
+                            + "            \"base64\": \"" + base64DataKeyId + "\","
+                            + "            \"subType\": \"04\""
+                            + "          }"
+                            + "        }],"
+                            + "        bsonType: \"string\","
+                            + "        algorithm: \"AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic\""
+                            + "      }"
+                            + "    }"
+                            + "  },"
+                            + "  \"bsonType\": \"object\""
+                            + "}"));
+        }}).build();
 ```
 
 {{% note %}}

@@ -25,7 +25,7 @@
     <suppress checks="VisibilityModifier" files="com[\\/]mongodb[\\/]internal[\\/]connection[\\/]tlschannel[\\/]"/>
 
     <suppress checks="MethodLength" files="QuickTour"/>
-    <suppress checks="Regexp" files="QuickTour"/>
+    <suppress checks="Regexp" files="Tour"/>
 
     <suppress checks="MethodLength" files="PojoRoundTripTest"/>
 
@@ -115,7 +115,7 @@
     <suppress checks="HideUtilityClassConstructor" files="ClassAncestry"/>
     <suppress checks="HideUtilityClassConstructor" files="CLI"/>
     <suppress checks="HideUtilityClassConstructor" files="JSON"/>
-    <suppress checks="HideUtilityClassConstructor" files="QuickTour"/>
+    <suppress checks="HideUtilityClassConstructor" files="Tour"/>
     <suppress checks="HideUtilityClassConstructor" files="Util"/>
     <suppress checks="HideUtilityClassConstructor" files="DatabaseTestCase"/>
 
