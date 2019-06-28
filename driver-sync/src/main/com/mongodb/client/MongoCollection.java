@@ -225,7 +225,8 @@ public interface MongoCollection<TDocument> {
      * Counts the number of documents in the collection.
      *
      * <p>
-     * Note: When migrating from {@code count()} to {@code countDocuments()} the following query operators must be replaced:
+     * Note: For a fast count of the total documents in a collection see {@link #estimatedDocumentCount()}.
+     * When migrating from {@code count()} to {@code countDocuments()} the following query operators must be replaced:
      * </p>
      * <pre>
      *
@@ -249,7 +250,8 @@ public interface MongoCollection<TDocument> {
      * Counts the number of documents in the collection according to the given options.
      *
      * <p>
-     * Note: When migrating from {@code count()} to {@code countDocuments()} the following query operators must be replaced:
+     * Note: For a fast count of the total documents in a collection see {@link #estimatedDocumentCount()}.
+     * When migrating from {@code count()} to {@code countDocuments()} the following query operators must be replaced:
      * </p>
      * <pre>
      *
@@ -274,7 +276,8 @@ public interface MongoCollection<TDocument> {
      * Counts the number of documents in the collection according to the given options.
      *
      * <p>
-     * Note: When migrating from {@code count()} to {@code countDocuments()} the following query operators must be replaced:
+     * Note: For a fast count of the total documents in a collection see {@link #estimatedDocumentCount()}.
+     * When migrating from {@code count()} to {@code countDocuments()} the following query operators must be replaced:
      * </p>
      * <pre>
      *
@@ -300,7 +303,8 @@ public interface MongoCollection<TDocument> {
      * Counts the number of documents in the collection.
      *
      * <p>
-     * Note: When migrating from {@code count()} to {@code countDocuments()} the following query operators must be replaced:
+     * Note: For a fast count of the total documents in a collection see {@link #estimatedDocumentCount()}.
+     * When migrating from {@code count()} to {@code countDocuments()} the following query operators must be replaced:
      * </p>
      * <pre>
      *
@@ -326,7 +330,8 @@ public interface MongoCollection<TDocument> {
      * Counts the number of documents in the collection according to the given options.
      *
      * <p>
-     * Note: When migrating from {@code count()} to {@code countDocuments()} the following query operators must be replaced:
+     * Note: For a fast count of the total documents in a collection see {@link #estimatedDocumentCount()}.
+     * When migrating from {@code count()} to {@code countDocuments()} the following query operators must be replaced:
      * </p>
      * <pre>
      *
@@ -353,7 +358,8 @@ public interface MongoCollection<TDocument> {
      * Counts the number of documents in the collection according to the given options.
      *
      * <p>
-     * Note: When migrating from {@code count()} to {@code countDocuments()} the following query operators must be replaced:
+     * Note: For a fast count of the total documents in a collection see {@link #estimatedDocumentCount()}.
+     * When migrating from {@code count()} to {@code countDocuments()} the following query operators must be replaced:
      * </p>
      * <pre>
      *
