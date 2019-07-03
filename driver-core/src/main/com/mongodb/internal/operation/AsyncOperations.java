@@ -17,6 +17,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.AsyncBatchCursor;
@@ -58,34 +59,39 @@ public final class AsyncOperations<TDocument> {
 
     public AsyncOperations(final Class<TDocument> documentClass, final ReadPreference readPreference,
                            final CodecRegistry codecRegistry) {
-        this(null, documentClass, readPreference, codecRegistry, WriteConcern.ACKNOWLEDGED, false, true);
+        this(null, documentClass, readPreference, codecRegistry, ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED, false, true);
     }
 
     public AsyncOperations(final Class<TDocument> documentClass, final ReadPreference readPreference,
                            final CodecRegistry codecRegistry, final boolean retryReads) {
-        this(null, documentClass, readPreference, codecRegistry, WriteConcern.ACKNOWLEDGED, false, retryReads);
+        this(null, documentClass, readPreference, codecRegistry, ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED, false, retryReads);
     }
 
     public AsyncOperations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
                            final CodecRegistry codecRegistry) {
-        this(namespace, documentClass, readPreference, codecRegistry, WriteConcern.ACKNOWLEDGED, false, true);
+        this(namespace, documentClass, readPreference, codecRegistry, ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED, false, true);
     }
 
     public AsyncOperations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
                            final CodecRegistry codecRegistry, final boolean retryReads) {
-        this(namespace, documentClass, readPreference, codecRegistry, WriteConcern.ACKNOWLEDGED, false, retryReads);
+        this(namespace, documentClass, readPreference, codecRegistry, ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED, false, retryReads);
     }
 
     public AsyncOperations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
                            final CodecRegistry codecRegistry, final WriteConcern writeConcern) {
-        this(namespace, documentClass, readPreference, codecRegistry, writeConcern, false, true);
+        this(namespace, documentClass, readPreference, codecRegistry, ReadConcern.DEFAULT, writeConcern, false, true);
     }
 
     public AsyncOperations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
-                           final CodecRegistry codecRegistry, final WriteConcern writeConcern, final boolean retryWrites,
-                           final boolean retryReads) {
-        this.operations = new Operations<TDocument>(namespace, documentClass, readPreference, codecRegistry, writeConcern, retryWrites,
-                retryReads);
+                           final CodecRegistry codecRegistry, final ReadConcern readConcern, final WriteConcern writeConcern) {
+        this(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern, false, true);
+    }
+
+    public AsyncOperations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
+                           final CodecRegistry codecRegistry, final ReadConcern readConcern, final WriteConcern writeConcern,
+                           final boolean retryWrites, final boolean retryReads) {
+        this.operations = new Operations<TDocument>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
+                retryWrites, retryReads);
     }
 
     public AsyncReadOperation<Long> count(final Bson filter, final CountOptions options, final CountStrategy countStrategy) {

@@ -24,6 +24,7 @@ import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonArray;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
@@ -58,6 +59,7 @@ public class CrudTest {
     private final String filename;
     private final String description;
     private final String databaseName;
+    private final String collectionName;
     private final BsonArray data;
     private final BsonDocument definition;
     private final boolean skipTest;
@@ -68,11 +70,12 @@ public class CrudTest {
     private JsonPoweredCrudTestHelper helper;
     private final TestCommandListener commandListener;
 
-    public CrudTest(final String filename, final String description, final String databaseName, final BsonArray data,
-                    final BsonDocument definition, final boolean skipTest) {
+    public CrudTest(final String filename, final String description, final String databaseName, final String collectionName,
+                    final BsonArray data, final BsonDocument definition, final boolean skipTest) {
         this.filename = filename;
         this.description = description;
         this.databaseName = databaseName;
+        this.collectionName = collectionName;
         this.data = data;
         this.definition = definition;
         this.skipTest = skipTest;
@@ -85,7 +88,6 @@ public class CrudTest {
         // No runOn syntax for legacy CRUD, so skipping these manually for now
         assumeFalse(isSharded() && description.startsWith("Aggregate with $currentOp"));
 
-        String collectionName = "test";
         collectionHelper = new CollectionHelper<Document>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
 
         collectionHelper.killAllSessions();
@@ -123,24 +125,32 @@ public class CrudTest {
 
     @Test
     public void shouldPassAllOutcomes() {
-        BsonDocument expectedOutcome = definition.getDocument("outcome");
+        BsonDocument expectedOutcome = definition.getDocument("outcome", null);
         // check if v1 test
         if (definition.containsKey("operation")) {
-            runOperation(expectedOutcome, helper.getOperationResults(definition.getDocument("operation")),
-                    expectedOutcome.containsKey("result") && expectedOutcome.isDocument("result")
+            runOperation(expectedOutcome, definition.getDocument("operation"),
+                    expectedOutcome != null && expectedOutcome.containsKey("result") && expectedOutcome.isDocument("result")
                             ? expectedOutcome.get("result").asDocument() : null);
         } else {  // v2 test
             BsonArray operations = definition.getArray("operations");
             for (BsonValue operation : operations) {
-                runOperation(expectedOutcome, helper.getOperationResults(operation.asDocument()),
+                runOperation(expectedOutcome, operation.asDocument(),
                         operation.asDocument().containsKey("result") ? operation.asDocument().getDocument("result") : null);
             }
         }
     }
 
-    private void runOperation(final BsonDocument expectedOutcome, final BsonDocument outcome, final BsonDocument expectedResult) {
-        if (expectedOutcome.containsKey("error")) {
-            assertEquals("Expected error", expectedOutcome.getBoolean("error"), outcome.get("error"));
+    private void runOperation(final BsonDocument expectedOutcome, final BsonDocument operation, final BsonDocument expectedResult) {
+        BsonDocument outcome = null;
+        boolean wasException = false;
+        try {
+            outcome = helper.getOperationResults(operation);
+        } catch (Exception e) {
+            wasException = true;
+        }
+
+        if (operation.getBoolean("error", BsonBoolean.FALSE).getValue()) {
+            assertEquals(operation.containsKey("error"), wasException);
         }
 
         if (expectedResult != null) {
@@ -160,14 +170,14 @@ public class CrudTest {
 
             assertEquals(description, expectedResult, actualResult);
         }
-
         if (definition.containsKey("expectations")) {
             List<CommandEvent> expectedEvents = getExpectedEvents(definition.getArray("expectations"), databaseName, null);
             List<CommandEvent> events = commandListener.getCommandStartedEvents();
 
-            assertEventsEquality(expectedEvents, events);
+
+            assertEventsEquality(expectedEvents, events.subList(0, expectedEvents.size()));
         }
-        if (expectedOutcome.containsKey("collection")) {
+        if (expectedOutcome != null && expectedOutcome.containsKey("collection")) {
             assertCollectionEquals(expectedOutcome.getDocument("collection"));
         }
     }
@@ -180,6 +190,7 @@ public class CrudTest {
             for (BsonValue test : testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
                         testDocument.getString("database_name", new BsonString(getDefaultDatabaseName())).getValue(),
+                        testDocument.getString("collection_name", new BsonString("test")).getValue(),
                         testDocument.getArray("data"), test.asDocument(), skipTest(testDocument, test.asDocument())});
             }
         }

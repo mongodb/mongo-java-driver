@@ -17,6 +17,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.bulk.DeleteRequest;
@@ -94,17 +95,19 @@ final class Operations<TDocument> {
     private final Class<TDocument> documentClass;
     private final ReadPreference readPreference;
     private final CodecRegistry codecRegistry;
+    private final ReadConcern readConcern;
     private final WriteConcern writeConcern;
     private final boolean retryWrites;
     private boolean retryReads;
 
     Operations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
-               final CodecRegistry codecRegistry, final WriteConcern writeConcern, final boolean retryWrites,
+               final CodecRegistry codecRegistry, final ReadConcern readConcern, final WriteConcern writeConcern, final boolean retryWrites,
                final boolean retryReads) {
         this.namespace = namespace;
         this.documentClass = documentClass;
         this.readPreference = readPreference;
         this.codecRegistry = codecRegistry;
+        this.readConcern = readConcern;
         this.writeConcern = writeConcern;
         this.retryWrites = retryWrites;
         this.retryReads = retryReads;
@@ -205,7 +208,7 @@ final class Operations<TDocument> {
                                                          final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
                                                          final Collation collation, final Bson hint, final String comment,
                                                          final AggregationLevel aggregationLevel) {
-        return new AggregateToCollectionOperation(namespace, toBsonDocumentList(pipeline), writeConcern, aggregationLevel)
+        return new AggregateToCollectionOperation(namespace, toBsonDocumentList(pipeline), readConcern, writeConcern, aggregationLevel)
                 .maxTime(maxTimeMS, MILLISECONDS)
                 .allowDiskUse(allowDiskUse)
                 .bypassDocumentValidation(bypassDocumentValidation)

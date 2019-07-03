@@ -120,8 +120,8 @@ class AggregateIterableSpecification extends Specification {
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
-                [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))], writeConcern,
-                AggregationLevel.COLLECTION)
+                [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))],
+                readConcern, writeConcern, AggregationLevel.COLLECTION)
                 .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
                 .collation(collation)
@@ -154,7 +154,8 @@ class AggregateIterableSpecification extends Specification {
 
         then: 'should use the overrides'
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
-                [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))], writeConcern,
+                [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))],
+                readConcern, writeConcern,
                 AggregationLevel.DATABASE)
                 .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
@@ -186,7 +187,8 @@ class AggregateIterableSpecification extends Specification {
 
         then:
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
-                [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))], writeConcern)
+                [new BsonDocument('$match', new BsonInt32(1)), new BsonDocument('$out', new BsonString(collectionName))],
+                readConcern, writeConcern)
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
@@ -219,7 +221,7 @@ class AggregateIterableSpecification extends Specification {
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
                 [new BsonDocument('$match', new BsonInt32(1)),
                  new BsonDocument('$merge', new BsonDocument('into', new BsonString(collectionName)))],
-                writeConcern,
+                readConcern, writeConcern,
                 AggregationLevel.COLLECTION)
                 .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
@@ -256,7 +258,7 @@ class AggregateIterableSpecification extends Specification {
                 [new BsonDocument('$match', new BsonInt32(1)),
                  new BsonDocument('$merge', new BsonDocument('into',
                          new BsonDocument('db', new BsonString('db2')).append('coll', new BsonString(collectionName))))],
-                writeConcern,
+                readConcern, writeConcern,
                 AggregationLevel.COLLECTION)
                 .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
@@ -292,7 +294,7 @@ class AggregateIterableSpecification extends Specification {
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
                 [new BsonDocument('$match', new BsonInt32(1)),
                  new BsonDocument('$merge', new BsonDocument('into', new BsonString(collectionName)))],
-                writeConcern,
+                readConcern, writeConcern,
                 AggregationLevel.DATABASE)
                 .maxTime(999, MILLISECONDS)
                 .allowDiskUse(true)
@@ -326,7 +328,7 @@ class AggregateIterableSpecification extends Specification {
         expect operation, isTheSameAs(new AggregateToCollectionOperation(namespace,
                 [new BsonDocument('$match', new BsonInt32(1)),
                  new BsonDocument('$merge', new BsonDocument('into', new BsonString(collectionName)))],
-                writeConcern)
+                readConcern, writeConcern)
                 .allowDiskUse(true)
                 .collation(collation)
                 .hint(new BsonDocument('a', new BsonInt32(1)))
