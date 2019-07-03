@@ -1502,7 +1502,8 @@ public class DBCollection {
         BsonValue outCollection = stages.get(stages.size() - 1).get("$out");
 
         if (outCollection != null) {
-            AggregateToCollectionOperation operation = new AggregateToCollectionOperation(getNamespace(), stages, getWriteConcern())
+            AggregateToCollectionOperation operation = new AggregateToCollectionOperation(getNamespace(), stages,
+                    getReadConcern(), getWriteConcern())
                                                        .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
                                                        .allowDiskUse(options.getAllowDiskUse())
                                                        .bypassDocumentValidation(options.getBypassDocumentValidation())

@@ -680,21 +680,21 @@ class DBCollectionSpecification extends Specification {
 
         then:
         expect executor.getWriteOperation(), isTheSameAs(new AggregateToCollectionOperation(collection.getNamespace(),
-                bsonPipeline, collection.getWriteConcern()))
+                bsonPipeline, collection.getReadConcern(), collection.getWriteConcern()))
 
         when: // Inherits from DB
         collection.aggregate(pipeline)
 
         then:
         expect executor.getWriteOperation(), isTheSameAs(new AggregateToCollectionOperation(collection.getNamespace(),
-                bsonPipeline, collection.getWriteConcern()))
+                bsonPipeline, collection.getReadConcern(), collection.getWriteConcern()))
 
         when:
         collection.aggregate(pipeline, AggregationOptions.builder().collation(collation).build())
 
         then:
         expect executor.getWriteOperation(), isTheSameAs(new AggregateToCollectionOperation(collection.getNamespace(),
-                bsonPipeline, collection.getWriteConcern()).collation(collation))
+                bsonPipeline, collection.getReadConcern(), collection.getWriteConcern()).collation(collation))
     }
 
     def 'explainAggregate should create the correct AggregateOperation'() {

@@ -18,6 +18,7 @@ package com.mongodb.operation;
 
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadConcern;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
@@ -41,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotFour;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotSix;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
@@ -68,6 +70,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     private final MongoNamespace namespace;
     private final List<BsonDocument> pipeline;
     private final WriteConcern writeConcern;
+    private final ReadConcern readConcern;
     private final AggregationLevel aggregationLevel;
 
     private Boolean allowDiskUse;
@@ -86,7 +89,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
      */
     @Deprecated
     public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline) {
-        this(namespace, pipeline, null);
+        this(namespace, pipeline, null, null, AggregationLevel.COLLECTION);
     }
 
     /**
@@ -100,7 +103,35 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
      */
     public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
                                           final WriteConcern writeConcern) {
-        this(namespace, pipeline, writeConcern, AggregationLevel.COLLECTION);
+        this(namespace, pipeline, null, writeConcern, AggregationLevel.COLLECTION);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param namespace the database and collection namespace for the operation.
+     * @param pipeline the aggregation pipeline.
+     * @param readConcern the read concern to apply
+     *
+     * @since 3.11
+     */
+    public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
+                                          final ReadConcern readConcern) {
+        this(namespace, pipeline, readConcern, null, AggregationLevel.COLLECTION);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param namespace the database and collection namespace for the operation.
+     * @param pipeline the aggregation pipeline.
+     * @param writeConcern the write concern to apply
+     * @param readConcern the read concern to apply
+     * @since 3.11
+     */
+    public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
+                                          final ReadConcern readConcern, final WriteConcern writeConcern) {
+        this(namespace, pipeline, readConcern, writeConcern, AggregationLevel.COLLECTION);
     }
 
     /**
@@ -114,9 +145,26 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
      */
     public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
                                           final WriteConcern writeConcern, final AggregationLevel aggregationLevel) {
+        this(namespace, pipeline, ReadConcern.DEFAULT, writeConcern, aggregationLevel);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param namespace the database and collection namespace for the operation.
+     * @param pipeline the aggregation pipeline.
+     * @param readConcern the read concern to apply
+     * @param writeConcern the write concern to apply
+     * @param aggregationLevel the aggregation level
+     * @since 3.11
+     */
+    public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
+                                          final ReadConcern readConcern, final WriteConcern writeConcern,
+                                          final AggregationLevel aggregationLevel) {
         this.namespace = notNull("namespace", namespace);
         this.pipeline = notNull("pipeline", pipeline);
         this.writeConcern = writeConcern;
+        this.readConcern = readConcern;
         this.aggregationLevel = notNull("aggregationLevel", aggregationLevel);
 
         isTrueArgument("pipeline is not empty", !pipeline.isEmpty());
@@ -130,6 +178,17 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
      */
     public List<BsonDocument> getPipeline() {
         return pipeline;
+    }
+
+    /**
+     * Gets the read concern.
+     *
+     * @return the read concern, which may be null
+     *
+     * @since 3.11
+     */
+    public ReadConcern getReadConcern() {
+        return readConcern;
     }
 
     /**
@@ -364,6 +423,10 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
         }
 
         appendWriteConcernToCommand(writeConcern, commandDocument, description);
+        if (readConcern != null && !readConcern.isServerDefault() && serverIsAtLeastVersionThreeDotFour(description)) {
+            commandDocument.put("readConcern", readConcern.asDocument());
+        }
+
         if (collation != null) {
             commandDocument.put("collation", collation.asDocument());
         }
