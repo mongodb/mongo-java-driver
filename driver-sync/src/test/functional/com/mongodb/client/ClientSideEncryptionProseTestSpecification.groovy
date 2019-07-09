@@ -19,36 +19,21 @@ package com.mongodb.client
 import com.mongodb.AutoEncryptionSettings
 import com.mongodb.ClientEncryptionSettings
 import com.mongodb.MongoClientException
-import com.mongodb.MongoCommandException
 import com.mongodb.MongoNamespace
 import com.mongodb.client.model.vault.DataKeyOptions
 import com.mongodb.client.model.vault.EncryptOptions
+import com.mongodb.client.vault.ClientEncryption
 import com.mongodb.client.vault.ClientEncryptions
-import com.mongodb.crypt.capi.MongoCryptException
-import org.bson.BsonArray
-import org.bson.BsonBinary
 import org.bson.BsonBinarySubType
-import org.bson.BsonBoolean
-import org.bson.BsonDecimal128
 import org.bson.BsonDocument
-import org.bson.BsonDouble
-import org.bson.BsonInt32
-import org.bson.BsonInt64
-import org.bson.BsonNull
-import org.bson.BsonObjectId
 import org.bson.BsonString
-import org.bson.BsonSymbol
-import org.bson.BsonTimestamp
-import org.bson.types.Decimal128
-import org.bson.types.ObjectId
-import spock.lang.Ignore
 
 import static com.mongodb.ClusterFixture.isNotAtLeastJava8
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.Fixture.getDefaultDatabaseName
 import static com.mongodb.client.Fixture.getMongoClient
 import static com.mongodb.client.Fixture.getMongoClientSettings
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder
+import static com.mongodb.client.model.Filters.eq
 import static java.util.Collections.singletonMap
 import static org.junit.Assume.assumeFalse
 import static org.junit.Assume.assumeTrue
@@ -56,453 +41,135 @@ import static org.junit.Assume.assumeTrue
 class ClientSideEncryptionProseTestSpecification extends FunctionalSpecification {
 
     private final MongoNamespace keyVaultNamespace = new MongoNamespace('test.datakeys')
-    private final MongoCollection dataKeyCollection = getMongoClient()
-            .getDatabase(keyVaultNamespace.databaseName).getCollection(keyVaultNamespace.collectionName, BsonDocument)
-    private final Map<String, Map<String, ? extends Object>> localProviderProperties =
-            ['local': ['key': new byte[96]]]
-    private final Map<String, Map<String, ? extends Object>> awsProviderProperties =
-            ['aws': ['accessKeyId'    : System.getProperty('org.mongodb.test.awsAccessKeyId'),
-                     'secretAccessKey': System.getProperty('org.mongodb.test.awsSecretAccessKey')]]
-    private final BsonDocument awsMasterKey = new BsonDocument('region', new BsonString('us-east-1'))
-            .append('key', new BsonString('arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0'))
     private final MongoNamespace autoEncryptingCollectionNamespace = new MongoNamespace(getDefaultDatabaseName(),
             'ClientSideEncryptionProseTestSpecification')
-    private final BsonDocument localDataKeyDocument = BsonDocument.parse(
-            '''
-{
-  "_id": {
-    "$binary": {
-        "base64": "YWFhYWFhYWFhYWFhYWFhYQ==",
-        "subType": "04"
-    }
-},
-  "keyMaterial": {
-    "$binary": {
-      "base64": "db27rshiqK4Jqhb2xnwK4RfdFb9JuKeUe6xt5aYQF4o62tS75b7B4wxVN499gND9UVLUbpVKoyUoaZAeA895OENP335b8n8OwchcTFqS44t+P3zmhteYUQLIWQXaIgon7gEgLeJbaDHmSXS6/7NbfDDFlB37N7BP/2hx1yCOTN6NG/8M1ppw3LYT3CfP6EfXVEttDYtPbJpbb7nBVlxD7w==",
-      "subType": "00"
-    }
-  },
-  "creationDate": { "$date": { "$numberLong": "1232739599082000" } },
-  "updateDate": { "$date": { "$numberLong": "1232739599082000" } },
-  "status": { "$numberInt": "0" },
-  "masterKey": { "provider": "local" },
-  "keyAltNames": [ "altname1", "altname2" ]
-}
-''')
-
-    private final BsonDocument awsDataKeyDocument = BsonDocument.parse(
-            '''
-{
-    "_id": {
-        "$binary": {
-            "base64": "AAAAAAAAAAAAAAAAAAAAAA==",
-            "subType": "04"
-        }
-    },
-    "version": {
-        "$numberLong": "0"
-    },
-    "keyAltNames": [ "altname1", "altname2" ],
-    "keyMaterial": {
-        "$binary": {
-            "base64": "AQICAHhQNmWG2CzOm1dq3kWLM+iDUZhEqnhJwH9wZVpuZ94A8gG2Qei6UQdbOR5RWhPSrNwnAAAAwjCBvwYJKoZIhvcNAQcGoIGxMIGuAgEAMIGoBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDMJ2xcv8wKZzqTIX/gIBEIB7dNUvInthJHEd55QaEyVYSacoPvMlx2wzhxW+E6MBcfP+nCrzByLkqyHRhWs5NEvrOBT2nuc87iZIuK/WNR/pl5eK1xQ/8Cy0GrMfD3GIjYDlZ6aWc06cJvwvZd3Cgqx0pQnunwNr2EfStTGj7gHW23kzkfpxDiphqPnH",
-            "subType": "00"
-        }
-    },
-    "creationDate": {
-        "$date": {
-            "$numberLong": "1553026537755"
-        }
-    },
-    "updateDate": {
-        "$date": {
-            "$numberLong": "1553026537755"
-        }
-    },
-    "status": {
-        "$numberInt": "1"
-    },
-    "masterKey": {
-        "key": "arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0",
-        "region": "us-east-1",
-        "provider": "aws"
-    }
-}'''
-    )
+    private final MongoCollection dataKeyCollection = getMongoClient()
+            .getDatabase(keyVaultNamespace.databaseName).getCollection(keyVaultNamespace.collectionName, BsonDocument)
+    private final MongoCollection<BsonDocument> dataCollection = getMongoClient()
+            .getDatabase(autoEncryptingCollectionNamespace.databaseName).getCollection(autoEncryptingCollectionNamespace.collectionName,
+            BsonDocument)
+    private final Map<String, Map<String, ? extends Object>> providerProperties =
+            ['local': ['key': Base64.getDecoder().decode('Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk')],
+             'aws'  : ['accessKeyId'    : System.getProperty('org.mongodb.test.awsAccessKeyId'),
+                       'secretAccessKey': System.getProperty('org.mongodb.test.awsSecretAccessKey')]
+            ]
 
     private MongoClient autoEncryptingClient
+    private ClientEncryption clientEncryption
+    private MongoCollection<BsonDocument> autoEncryptingDataCollection
 
     def setup() {
-        assumeFalse(isNotAtLeastJava8());
-        assumeTrue(serverVersionAtLeast([4, 1, 10]))
+        assumeFalse(isNotAtLeastJava8())
         assumeTrue('Key vault tests disabled',
                 System.getProperty('org.mongodb.test.awsAccessKeyId') != null
                         && !System.getProperty('org.mongodb.test.awsAccessKeyId').isEmpty())
         dataKeyCollection.drop()
+        dataCollection.drop()
+
         autoEncryptingClient = MongoClients.create(getMongoClientSettingsBuilder()
                 .autoEncryptionSettings(AutoEncryptionSettings.builder()
                         .keyVaultNamespace(keyVaultNamespace.fullName)
-                        .kmsProviders(localProviderProperties)
+                        .kmsProviders(providerProperties)
                         .schemaMap(singletonMap(autoEncryptingCollectionNamespace.fullName,
                                 BsonDocument.parse(
                                         '''
     {
-        "properties": {
-            "random": {
-                "encrypt": {
-                    "keyId": [
-                        {
-                            "$binary": {
-                                "base64": "YWFhYWFhYWFhYWFhYWFhYQ==",
-                                "subType": "04"
-                            }
-                        }
-                    ],
-                    "bsonType": "string",
-                    "algorithm": "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
-                }
-            }
-        },
-        "bsonType": "object"
+      "bsonType": "object",
+      "properties": {
+        "encrypted_placeholder": {
+          "encrypt": {
+            "keyId": "/placeholder",
+            "bsonType": "string",
+            "algorithm": "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
+          }
+        }
+      }
     }''')))
                         .build())
                 .build())
-    }
 
-    def 'should create local data key'() {
-        given:
-        def keyVault = ClientEncryptions.create(ClientEncryptionSettings.builder()
-                .keyVaultMongoClientSettings(getMongoClientSettings())
-                .keyVaultNamespace(keyVaultNamespace.fullName)
-                .kmsProviders(localProviderProperties)
-                .build())
-
-        when:
-        def id = keyVault.createDataKey('local')
-
-        then:
-        id != null
-        id.type == BsonBinarySubType.UUID_STANDARD.value
-        dataKeyCollection.find().first().getBinary('_id') == id
-    }
-
-    def 'should create aws data key'() {
-        given:
-        def keyVault = ClientEncryptions.create(ClientEncryptionSettings.builder()
-                .keyVaultMongoClientSettings(getMongoClientSettings())
-                .keyVaultNamespace(keyVaultNamespace.fullName)
-                .kmsProviders(awsProviderProperties)
-                .build())
-
-        when:
-        def id = keyVault.createDataKey('aws', new DataKeyOptions().masterKey(awsMasterKey))
-
-        then:
-        id != null
-        id.type == BsonBinarySubType.UUID_STANDARD.value
-        dataKeyCollection.find().first().getBinary('_id') == id
-    }
-
-    def 'should explicitly encrypt and decrypt with local provider'() {
-        given:
-        dataKeyCollection.insertOne(localDataKeyDocument)
-        def keyVault = ClientEncryptions.create(ClientEncryptionSettings.builder()
-                .keyVaultMongoClientSettings(getMongoClientSettings())
-                .keyVaultNamespace(keyVaultNamespace.fullName)
-                .kmsProviders(localProviderProperties)
-                .build())
-        def value = new BsonString('hello')
-
-        when:
-        def options = new EncryptOptions('AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic')
-        if (useKeyId) {
-            options.keyId(localDataKeyDocument.getBinary('_id'))
-        } else {
-            options.keyAltName('altname1')
-        }
-
-        def encryptedValue = keyVault.encrypt(value, options)
-
-        then:
-        encryptedValue.type == 6 as byte
-
-        when:
-        def decryptedValue = keyVault.decrypt(encryptedValue)
-
-        then:
-        decryptedValue == value
-
-        where:
-        useKeyId << [true, false]
-    }
-
-    def 'should explicitly encrypt and decrypt with aws provider'() {
-        given:
-        dataKeyCollection.insertOne(awsDataKeyDocument)
-        def keyVault = ClientEncryptions.create(ClientEncryptionSettings.builder()
-                .keyVaultMongoClientSettings(getMongoClientSettings())
-                .keyVaultNamespace(keyVaultNamespace.fullName)
-                .kmsProviders(awsProviderProperties)
-                .build())
-        def value = new BsonString('hello')
-
-        when:
-        def options = new EncryptOptions('AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic')
-        if (useKeyId) {
-            options.keyId(awsDataKeyDocument.getBinary('_id'))
-        } else {
-            options.keyAltName('altname1')
-        }
-
-        def encryptedValue = keyVault.encrypt(value, options)
-
-        then:
-        encryptedValue.type == 6 as byte
-
-        then:
-        encryptedValue.type == 6 as byte
-
-        when:
-        def decryptedValue = keyVault.decrypt(encryptedValue)
-
-        then:
-        decryptedValue == value
-
-        where:
-        useKeyId << [true, false]
-    }
-
-    /*
-Test explicit encrypt of invalid values.
-
-- Create a `ClientEncryption` with either a "local" or "aws" KMS provider
-- Use `ClientEncryption.encrypt` to attempt to encrypt each BSON type with deterministic encryption.
-
-  - Expect `document` and `array` to fail. An exception MUST be thrown.
-  - Expect a BSON binary subtype 6 to fail. An exception MUST be thrown.
-  - Expect all other values to succeed.
-
-- Use `ClientEncryption.encrypt` to attempt to encrypt a document using randomized encryption.
-
-  - Expect a BSON binary subtype 6 to fail. An exception MUST be thrown.
-  - Expect all other values to succeed.
-
- */
-
-    def 'should encrypt valid values'() {
-        given:
-        dataKeyCollection.insertOne(localDataKeyDocument)
-        def keyVault = ClientEncryptions.create(ClientEncryptionSettings.builder()
-                .keyVaultMongoClientSettings(getMongoClientSettings())
-                .keyVaultNamespace(keyVaultNamespace.fullName)
-                .kmsProviders(localProviderProperties)
-                .build())
-        def options = new EncryptOptions(algorithm).keyId(localDataKeyDocument.getBinary('_id'))
-
-        when:
-        keyVault.encrypt(value, options)
-
-        then:
-        noExceptionThrown()
-
-        where:
-        [value, algorithm] << [
-                [new BsonInt32(1),
-                 new BsonInt64(1L),
-                 new BsonTimestamp(42),
-                 new BsonObjectId(new ObjectId()),
-                 new BsonBinary(new byte[4]),
-                 new BsonString('42'),
-                 new BsonSymbol('42')],
-                ['AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic',
-                 'AEAD_AES_256_CBC_HMAC_SHA_512-Random']
-        ].combinations()
-    }
-
-    def 'should fail to encrypt invalid values with deterministic encryption'() {
-        given:
-        dataKeyCollection.insertOne(localDataKeyDocument)
-        def keyVault = ClientEncryptions.create(ClientEncryptionSettings.builder()
-                .keyVaultMongoClientSettings(getMongoClientSettings())
-                .keyVaultNamespace(keyVaultNamespace.fullName)
-                .kmsProviders(localProviderProperties)
-                .build())
-        def options = new EncryptOptions('AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic')
-                .keyId(localDataKeyDocument.getBinary('_id'))
-
-        when:
-        keyVault.encrypt(BsonNull.VALUE, options)
-
-        then:
-        def e = thrown(MongoClientException)
-        e.getCause() instanceof MongoCryptException
-
-        when:
-        keyVault.encrypt(BsonBoolean.TRUE, options)
-
-        then:
-        e = thrown(MongoClientException)
-        e.getCause() instanceof MongoCryptException
-
-        when:
-        keyVault.encrypt(new BsonDouble(1.0), options)
-
-        then:
-        e = thrown(MongoClientException)
-        e.getCause() instanceof MongoCryptException
-
-        when:
-        keyVault.encrypt(new BsonDecimal128(Decimal128.parse('1.0')), options)
-
-        then:
-        e = thrown(MongoClientException)
-        e.getCause() instanceof MongoCryptException
-
-        // TODO: enable this
-        when:
-//        keyVault.encrypt(new BsonBinary((byte) 6,
-//                Base64.decoder.decode('AQAAAAAAAAAAAAAAAAAAAAACN0NwWlfe6YPGDEw+ObxEzbEtk45ewF3sIH2Oj7F0xd3GYoxCGCIp9gg0Q1uHTwdVWwG58SFhJyo4305IVoikEQ==')),
-//                options)
-//
-//        then:
-//        thrown(MongoCryptException)
-
-        when:
-        keyVault.encrypt(new BsonArray([new BsonInt32(1), new BsonInt32(1)]), options)
-
-        then:
-        e = thrown(MongoClientException)
-        e.getCause() instanceof MongoCryptException
-
-        when:
-        keyVault.encrypt(new BsonDocument(), options)
-
-        then:
-        e = thrown(MongoClientException)
-        e.getCause() instanceof MongoCryptException
-    }
-
-    // TODO: enable this
-    @Ignore
-    def 'should fail to encrypt invalid values with randomized encryption'() {
-        given:
-        dataKeyCollection.insertOne(localDataKeyDocument)
-        def keyVault = ClientEncryptions.create(ClientEncryptionSettings.builder()
-                .keyVaultMongoClientSettings(getMongoClientSettings())
-                .keyVaultNamespace(keyVaultNamespace.fullName)
-                .kmsProviders(localProviderProperties)
-                .build())
-        def options = new EncryptOptions('AEAD_AES_256_CBC_HMAC_SHA_512-Randomized')
-                .keyId(localDataKeyDocument.getBinary('_id'))
-
-        when:
-        keyVault.encrypt(new BsonBinary((byte) 6,
-                Base64.decoder.decode('AQAAAAAAAAAAAAAAAAAAAAACN0NwWlfe6YPGDEw+ObxEzbEtk45ewF3sIH2Oj7F0xd3GYoxCGCIp9gg0Q1uHTwdVWwG58SFhJyo4305IVoikEQ==')),
-                options)
-
-        then:
-        thrown(MongoCryptException)
-    }
-
-    def 'should encrypt values with randomized encryption that are invalid with deterministic encryption'() {
-        given:
-        dataKeyCollection.insertOne(localDataKeyDocument)
-        def keyVault = ClientEncryptions.create(ClientEncryptionSettings.builder()
-                .keyVaultMongoClientSettings(getMongoClientSettings())
-                .keyVaultNamespace(keyVaultNamespace.fullName)
-                .kmsProviders(localProviderProperties)
-                .build())
-        def options = new EncryptOptions('AEAD_AES_256_CBC_HMAC_SHA_512-Random')
-                .keyId(localDataKeyDocument.getBinary('_id'))
-
-        when:
-        keyVault.encrypt(new BsonDouble(1.0), options)
-
-        then:
-        noExceptionThrown()
-
-        when:
-        keyVault.encrypt(new BsonDecimal128(Decimal128.parse('1.0')), options)
-
-        then:
-        noExceptionThrown()
-
-        when:
-        keyVault.encrypt(new BsonArray([new BsonInt32(1), new BsonInt32(1)]), options)
-
-        then:
-        noExceptionThrown()
-
-        when:
-        keyVault.encrypt(new BsonDocument(), options)
-
-        then:
-        noExceptionThrown()
-    }
-
-    /*
-    Test explicit encryption with auto decryption.
-
-     - Create a `ClientEncryption` with either a "local" or "aws" KMS provider
-     - Use `ClientEncryption.encrypt` to encrypt a value.
-     - Create a document, setting some field to the value.
-     - Insert the document into a collection.
-     - Find the document. Verify both the value matches the originally set value.
-     */
-
-    def 'should auto decrypt explicitly encrypted value'() {
-        given:
-        dataKeyCollection.insertOne(localDataKeyDocument)
-        def keyVault = ClientEncryptions.create(ClientEncryptionSettings.builder()
-                .keyVaultMongoClientSettings(getMongoClientSettings())
-                .keyVaultNamespace(keyVaultNamespace.fullName)
-                .kmsProviders(localProviderProperties)
-                .build())
-        def options = new EncryptOptions('AEAD_AES_256_CBC_HMAC_SHA_512-Random')
-                .keyId(localDataKeyDocument.getBinary('_id'))
-        def unencryptedValue = new BsonString('super secret')
-        def autoEncryptingCollection = autoEncryptingClient.getDatabase(getDefaultDatabaseName())
-                .getCollection(getCollectionName(), BsonDocument)
-
-
-        when:
-        def encryptedValue = keyVault.encrypt(unencryptedValue, options)
-        autoEncryptingCollection.insertOne(new BsonDocument('_id', encryptedValue))
-        def decryptedValue = autoEncryptingCollection.find().first().getString('_id')
-
-        then:
-        unencryptedValue == decryptedValue
-    }
-
-    /*
-    Test explicit encrypting an auto encrypted field.
-
-     - Create a `ClientEncryption` with either a "local" or "aws" KMS provider
-     - Create a collection with a JSONSchema specifying an encrypted field.
-     - Use `ClientEncryption.encrypt` to encrypt a value.
-     - Create a document, setting the auto-encrypted field to the value.
-     - Insert the document. Verify an exception is thrown.
-     */
-
-    def 'should throw when inserting a document with an explicitly encrypted value that should be auto-encrypted'() {
-        dataKeyCollection.insertOne(localDataKeyDocument)
-        def keyVault = ClientEncryptions.create(ClientEncryptionSettings.builder()
-                .keyVaultMongoClientSettings(getMongoClientSettings())
-                .keyVaultNamespace(keyVaultNamespace.fullName)
-                .kmsProviders(localProviderProperties)
-                .build())
-        def options = new EncryptOptions('AEAD_AES_256_CBC_HMAC_SHA_512-Random')
-                .keyId(localDataKeyDocument.getBinary('_id'))
-        def unencryptedValue = new BsonString('super secret')
-        def autoEncryptingCollection = autoEncryptingClient.getDatabase(autoEncryptingCollectionNamespace.databaseName)
+        autoEncryptingDataCollection = autoEncryptingClient.getDatabase(autoEncryptingCollectionNamespace.databaseName)
                 .getCollection(autoEncryptingCollectionNamespace.collectionName, BsonDocument)
 
+        clientEncryption = ClientEncryptions.create(ClientEncryptionSettings.builder()
+                .keyVaultMongoClientSettings(getMongoClientSettings())
+                .keyVaultNamespace(keyVaultNamespace.fullName)
+                .kmsProviders(providerProperties)
+                .build())
+    }
+
+    def 'client encryption prose test'() {
         when:
-        def encryptedValue = keyVault.encrypt(unencryptedValue, options)
-        autoEncryptingCollection.insertOne(new BsonDocument('random', encryptedValue))
+        def localDataKeyId = clientEncryption.createDataKey('local', new DataKeyOptions().keyAltNames(['local_altname']))
 
         then:
-        def e = thrown(MongoClientException)
-        e.getCause() instanceof MongoCommandException
+        localDataKeyId != null
+        localDataKeyId.type == BsonBinarySubType.UUID_STANDARD.value
+        dataKeyCollection.find(eq('masterKey.provider', 'local')).into([]).size() == 1
+
+        when:
+        def localEncrypted = clientEncryption.encrypt(new BsonString('hello local'),
+                new EncryptOptions('AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic')
+                .keyId(localDataKeyId))
+
+        then:
+        localEncrypted.asBinary().getType() == (byte) 6
+
+        when:
+        autoEncryptingDataCollection.insertOne(new BsonDocument('_id', new BsonString('local'))
+                .append('value', localEncrypted))
+
+        then:
+        autoEncryptingDataCollection.find(eq('_id', new BsonString('local'))).first().getString('value')
+                .value == 'hello local'
+
+        when:
+        def localEncryptedWithAltName = clientEncryption.encrypt(new BsonString('hello local'),
+                new EncryptOptions('AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic')
+                .keyAltName('local_altname'))
+
+        then:
+        localEncryptedWithAltName == localEncrypted
+
+        when:
+        def awsDataKeyId = clientEncryption.createDataKey('aws',
+                new DataKeyOptions().keyAltNames(['aws_altname'])
+                .masterKey(new BsonDocument('region', new BsonString('us-east-1'))
+                .append('key', new BsonString('arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0'))))
+
+        then:
+        awsDataKeyId != null
+        awsDataKeyId.type == BsonBinarySubType.UUID_STANDARD.value
+        dataKeyCollection.find(eq('masterKey.provider', 'aws')).into([]).size() == 1
+
+        when:
+        def awsEncrypted = clientEncryption.encrypt(new BsonString('hello aws'),
+                new EncryptOptions('AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic')
+                        .keyId(awsDataKeyId))
+
+        then:
+        awsEncrypted.asBinary().getType() == (byte) 6
+
+        when:
+        autoEncryptingDataCollection.insertOne(new BsonDocument('_id', new BsonString('aws'))
+                .append('value', awsEncrypted))
+
+        then:
+        autoEncryptingDataCollection.find(eq('_id', new BsonString('aws'))).first().getString('value')
+                .value == 'hello aws'
+
+        when:
+        def awsEncryptedWithAltName = clientEncryption.encrypt(new BsonString('hello aws'),
+                new EncryptOptions('AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic')
+                        .keyAltName('aws_altname'))
+
+        then:
+        awsEncryptedWithAltName == awsEncrypted
+
+        when:
+        autoEncryptingDataCollection.insertOne(new BsonDocument('encrypted_placeholder', localEncrypted))
+
+        then:
+        thrown(MongoClientException)
     }
 }
