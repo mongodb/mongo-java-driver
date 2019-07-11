@@ -91,7 +91,7 @@ public class CrudTest {
         collectionHelper = new CollectionHelper<Document>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
 
         collectionHelper.killAllSessions();
-        collectionHelper.create(collectionName, new CreateCollectionOptions(), WriteConcern.MAJORITY);
+        collectionHelper.create(collectionName, new CreateCollectionOptions(), WriteConcern.ACKNOWLEDGED);
 
         MongoClientSettings settings = MongoClientSettings.builder(getMongoClientSettings())
                 .addCommandListener(commandListener)
