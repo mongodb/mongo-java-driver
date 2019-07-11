@@ -322,6 +322,7 @@ class FindAndUpdateOperationSpecification extends OperationFunctionalSpecificati
         async << [true, false]
     }
 
+    @IgnoreIf({ !serverVersionAtLeast(3, 2) })
     def 'should support bypassDocumentValidation'() {
         given:
         def namespace = new MongoNamespace(getDatabaseName(), 'collectionOut')
