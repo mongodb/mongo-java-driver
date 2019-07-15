@@ -34,19 +34,11 @@
     },
     "aws_double_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_double_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_string_rand_auto_id": {
       "bsonType": "object",
@@ -81,19 +73,11 @@
     },
     "aws_string_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_string_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_string_det_auto_id": {
       "bsonType": "object",
@@ -128,19 +112,11 @@
     },
     "aws_string_det_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_string_det_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_object_rand_auto_id": {
       "bsonType": "object",
@@ -175,19 +151,11 @@
     },
     "aws_object_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_object_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_array_rand_auto_id": {
       "bsonType": "object",
@@ -222,19 +190,11 @@
     },
     "aws_array_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_array_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_binData=00_rand_auto_id": {
       "bsonType": "object",
@@ -269,19 +229,11 @@
     },
     "aws_binData=00_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_binData=00_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_binData=00_det_auto_id": {
       "bsonType": "object",
@@ -316,19 +268,11 @@
     },
     "aws_binData=00_det_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_binData=00_det_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_binData=04_rand_auto_id": {
       "bsonType": "object",
@@ -363,19 +307,11 @@
     },
     "aws_binData=04_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_binData=04_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_binData=04_det_auto_id": {
       "bsonType": "object",
@@ -410,19 +346,11 @@
     },
     "aws_binData=04_det_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_binData=04_det_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_objectId_rand_auto_id": {
       "bsonType": "object",
@@ -457,19 +385,11 @@
     },
     "aws_objectId_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_objectId_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_objectId_det_auto_id": {
       "bsonType": "object",
@@ -504,19 +424,11 @@
     },
     "aws_objectId_det_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_objectId_det_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_bool_rand_auto_id": {
       "bsonType": "object",
@@ -551,19 +463,11 @@
     },
     "aws_bool_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_bool_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_date_rand_auto_id": {
       "bsonType": "object",
@@ -598,19 +502,11 @@
     },
     "aws_date_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_date_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_date_det_auto_id": {
       "bsonType": "object",
@@ -645,19 +541,11 @@
     },
     "aws_date_det_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_date_det_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_regex_rand_auto_id": {
       "bsonType": "object",
@@ -692,19 +580,11 @@
     },
     "aws_regex_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_regex_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_regex_det_auto_id": {
       "bsonType": "object",
@@ -739,19 +619,11 @@
     },
     "aws_regex_det_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_regex_det_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_dbPointer_rand_auto_id": {
       "bsonType": "object",
@@ -786,19 +658,11 @@
     },
     "aws_dbPointer_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_dbPointer_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_dbPointer_det_auto_id": {
       "bsonType": "object",
@@ -833,19 +697,11 @@
     },
     "aws_dbPointer_det_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_dbPointer_det_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_javascript_rand_auto_id": {
       "bsonType": "object",
@@ -880,19 +736,11 @@
     },
     "aws_javascript_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_javascript_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_javascript_det_auto_id": {
       "bsonType": "object",
@@ -927,19 +775,11 @@
     },
     "aws_javascript_det_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_javascript_det_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_symbol_rand_auto_id": {
       "bsonType": "object",
@@ -974,19 +814,11 @@
     },
     "aws_symbol_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_symbol_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_symbol_det_auto_id": {
       "bsonType": "object",
@@ -1021,19 +853,11 @@
     },
     "aws_symbol_det_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_symbol_det_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_javascriptWithScope_rand_auto_id": {
       "bsonType": "object",
@@ -1068,19 +892,11 @@
     },
     "aws_javascriptWithScope_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_javascriptWithScope_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_int_rand_auto_id": {
       "bsonType": "object",
@@ -1115,19 +931,11 @@
     },
     "aws_int_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_int_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_int_det_auto_id": {
       "bsonType": "object",
@@ -1162,19 +970,11 @@
     },
     "aws_int_det_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_int_det_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_timestamp_rand_auto_id": {
       "bsonType": "object",
@@ -1209,19 +1009,11 @@
     },
     "aws_timestamp_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_timestamp_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_timestamp_det_auto_id": {
       "bsonType": "object",
@@ -1256,19 +1048,11 @@
     },
     "aws_timestamp_det_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_timestamp_det_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_long_rand_auto_id": {
       "bsonType": "object",
@@ -1303,19 +1087,11 @@
     },
     "aws_long_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_long_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_long_det_auto_id": {
       "bsonType": "object",
@@ -1350,19 +1126,11 @@
     },
     "aws_long_det_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_long_det_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_decimal_rand_auto_id": {
       "bsonType": "object",
@@ -1397,19 +1165,11 @@
     },
     "aws_decimal_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "aws_decimal_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_double_rand_auto_id": {
       "bsonType": "object",
@@ -1444,19 +1204,11 @@
     },
     "local_double_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_double_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_string_rand_auto_id": {
       "bsonType": "object",
@@ -1491,19 +1243,11 @@
     },
     "local_string_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_string_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_string_det_auto_id": {
       "bsonType": "object",
@@ -1538,19 +1282,11 @@
     },
     "local_string_det_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_string_det_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_object_rand_auto_id": {
       "bsonType": "object",
@@ -1585,19 +1321,11 @@
     },
     "local_object_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_object_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_array_rand_auto_id": {
       "bsonType": "object",
@@ -1632,19 +1360,11 @@
     },
     "local_array_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_array_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_binData=00_rand_auto_id": {
       "bsonType": "object",
@@ -1679,19 +1399,11 @@
     },
     "local_binData=00_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_binData=00_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_binData=00_det_auto_id": {
       "bsonType": "object",
@@ -1726,19 +1438,11 @@
     },
     "local_binData=00_det_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_binData=00_det_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_binData=04_rand_auto_id": {
       "bsonType": "object",
@@ -1773,19 +1477,11 @@
     },
     "local_binData=04_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_binData=04_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_binData=04_det_auto_id": {
       "bsonType": "object",
@@ -1820,19 +1516,11 @@
     },
     "local_binData=04_det_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_binData=04_det_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_objectId_rand_auto_id": {
       "bsonType": "object",
@@ -1867,19 +1555,11 @@
     },
     "local_objectId_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_objectId_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_objectId_det_auto_id": {
       "bsonType": "object",
@@ -1914,19 +1594,11 @@
     },
     "local_objectId_det_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_objectId_det_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_bool_rand_auto_id": {
       "bsonType": "object",
@@ -1961,19 +1633,11 @@
     },
     "local_bool_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_bool_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_date_rand_auto_id": {
       "bsonType": "object",
@@ -2008,19 +1672,11 @@
     },
     "local_date_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_date_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_date_det_auto_id": {
       "bsonType": "object",
@@ -2055,19 +1711,11 @@
     },
     "local_date_det_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_date_det_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_regex_rand_auto_id": {
       "bsonType": "object",
@@ -2102,19 +1750,11 @@
     },
     "local_regex_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_regex_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_regex_det_auto_id": {
       "bsonType": "object",
@@ -2149,19 +1789,11 @@
     },
     "local_regex_det_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_regex_det_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_dbPointer_rand_auto_id": {
       "bsonType": "object",
@@ -2196,19 +1828,11 @@
     },
     "local_dbPointer_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_dbPointer_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_dbPointer_det_auto_id": {
       "bsonType": "object",
@@ -2243,19 +1867,11 @@
     },
     "local_dbPointer_det_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_dbPointer_det_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_javascript_rand_auto_id": {
       "bsonType": "object",
@@ -2290,19 +1906,11 @@
     },
     "local_javascript_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_javascript_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_javascript_det_auto_id": {
       "bsonType": "object",
@@ -2337,19 +1945,11 @@
     },
     "local_javascript_det_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_javascript_det_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_symbol_rand_auto_id": {
       "bsonType": "object",
@@ -2384,19 +1984,11 @@
     },
     "local_symbol_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_symbol_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_symbol_det_auto_id": {
       "bsonType": "object",
@@ -2431,19 +2023,11 @@
     },
     "local_symbol_det_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_symbol_det_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_javascriptWithScope_rand_auto_id": {
       "bsonType": "object",
@@ -2478,19 +2062,11 @@
     },
     "local_javascriptWithScope_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_javascriptWithScope_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_int_rand_auto_id": {
       "bsonType": "object",
@@ -2525,19 +2101,11 @@
     },
     "local_int_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_int_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_int_det_auto_id": {
       "bsonType": "object",
@@ -2572,19 +2140,11 @@
     },
     "local_int_det_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_int_det_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_timestamp_rand_auto_id": {
       "bsonType": "object",
@@ -2619,19 +2179,11 @@
     },
     "local_timestamp_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_timestamp_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_timestamp_det_auto_id": {
       "bsonType": "object",
@@ -2666,19 +2218,11 @@
     },
     "local_timestamp_det_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_timestamp_det_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_long_rand_auto_id": {
       "bsonType": "object",
@@ -2713,19 +2257,11 @@
     },
     "local_long_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_long_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_long_det_auto_id": {
       "bsonType": "object",
@@ -2760,19 +2296,11 @@
     },
     "local_long_det_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_long_det_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_decimal_rand_auto_id": {
       "bsonType": "object",
@@ -2807,19 +2335,11 @@
     },
     "local_decimal_rand_explicit_id": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     },
     "local_decimal_rand_explicit_altname": {
       "bsonType": "object",
-      "properties": {
-        "value": {
-          "bsonType": "binData"
-        }
-      }
+      "properties": { "value": { "bsonType": "binData" } }
     }
   }
 }
