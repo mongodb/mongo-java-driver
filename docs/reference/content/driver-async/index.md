@@ -9,7 +9,7 @@ title = "MongoDB Async Driver"
 
 ## MongoDB Async Java Driver Documentation
 
-The following guide provides information on using the callback-based MongoDB Async Java Driver 3.10.
+The following guide provides information on using the callback-based MongoDB Async Java Driver 3.11.
 
 {{% note %}}
 The callback-based Async Java Driver has been deprecated in favor of the 
