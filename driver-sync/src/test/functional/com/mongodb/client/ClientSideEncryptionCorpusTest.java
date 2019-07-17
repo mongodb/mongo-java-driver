@@ -213,8 +213,8 @@ public class ClientSideEncryptionCorpusTest {
         assertEquals(corpus, corpusDecrypted);
 
         // Step 8: check the document with an unencrypted client
-        MongoCollection coll = client.getDatabase("db").getCollection("coll", BsonDocument.class);
-        BsonDocument corpusEncryptedActual = (BsonDocument) coll.find(new BsonDocument()).first();
+        MongoCollection<BsonDocument> coll = client.getDatabase("db").getCollection("coll", BsonDocument.class);
+        BsonDocument corpusEncryptedActual = coll.find(new BsonDocument()).first();
         BsonDocument corpusEncryptedExpected = bsonDocumentFromPath("corpus-encrypted.json");
 
         for (String field : corpusEncryptedExpected.keySet()) {
