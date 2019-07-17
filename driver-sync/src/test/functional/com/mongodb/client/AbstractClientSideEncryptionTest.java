@@ -227,8 +227,13 @@ public abstract class AbstractClientSideEncryptionTest {
             }
         }
 
+        String keyVaultNamespace = "admin.datakeys";
+        if (cryptOptions.containsKey("keyVaultNamespace")) {
+            keyVaultNamespace = cryptOptions.getString ("keyVaultNamespace").getValue();
+        }
+
         createMongoClient(AutoEncryptionSettings.builder()
-                .keyVaultNamespace("admin.datakeys")
+                .keyVaultNamespace(keyVaultNamespace)
                 .kmsProviders(kmsProvidersMap)
                 .schemaMap(namespaceToSchemaMap)
                 .bypassAutoEncryption(bypassAutoEncryption)
