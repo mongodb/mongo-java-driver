@@ -13,7 +13,7 @@
                 "encrypt": {
                     "keyId": "/altname",
                     "bsonType": "string",
-                    "algorithm": "AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic"
+                    "algorithm": "AEAD_AES_256_CBC_HMAC_SHA_512-Random"
                 }
             },
             "encrypted_string": {
@@ -178,10 +178,7 @@
                                 {
                                     "_id": 1,
                                     "encrypted_w_altname": {
-                                        "$binary": {
-                                            "base64": "AQAAAAAAAAAAAAAAAAAAAAACwj+3zkv2VM+aTfk60RqhXq6a/77WlLwu/BxXFkL7EppGsju/m8f0x5kBDD3EZTtGALGXlym5jnpZAoSIkswHoA==",
-                                            "subType": "06"
-                                        }
+                                        "$$type": "binData"
                                     },
                                     "altname": "altname"
                                 }
@@ -198,10 +195,7 @@
                         {
                             "_id": 1,
                             "encrypted_w_altname": {
-                                "$binary": {
-                                    "base64": "AQAAAAAAAAAAAAAAAAAAAAACwj+3zkv2VM+aTfk60RqhXq6a/77WlLwu/BxXFkL7EppGsju/m8f0x5kBDD3EZTtGALGXlym5jnpZAoSIkswHoA==",
-                                    "subType": "06"
-                                }
+                                "$$type": "binData"
                             },
                             "altname": "altname"
                         }
