@@ -29,6 +29,7 @@ import org.bson.BsonDocument
 import org.bson.BsonString
 
 import static com.mongodb.ClusterFixture.isNotAtLeastJava8
+import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.Fixture.getDefaultDatabaseName
 import static com.mongodb.client.Fixture.getMongoClient
 import static com.mongodb.client.Fixture.getMongoClientSettings
@@ -48,11 +49,6 @@ class ClientSideEncryptionProseTestSpecification extends FunctionalSpecification
     private final MongoCollection<BsonDocument> dataCollection = getMongoClient()
             .getDatabase(autoEncryptingCollectionNamespace.databaseName).getCollection(autoEncryptingCollectionNamespace.collectionName,
             BsonDocument)
-    private final Map<String, Map<String, ? extends Object>> providerProperties =
-            ['local': ['key': Base64.getDecoder().decode('Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk')],
-             'aws'  : ['accessKeyId'    : System.getProperty('org.mongodb.test.awsAccessKeyId'),
-                       'secretAccessKey': System.getProperty('org.mongodb.test.awsSecretAccessKey')]
-            ]
 
     private MongoClient autoEncryptingClient
     private ClientEncryption clientEncryption
@@ -60,11 +56,19 @@ class ClientSideEncryptionProseTestSpecification extends FunctionalSpecification
 
     def setup() {
         assumeFalse(isNotAtLeastJava8())
+        assumeTrue(serverVersionAtLeast(4, 2))
         assumeTrue('Key vault tests disabled',
                 System.getProperty('org.mongodb.test.awsAccessKeyId') != null
                         && !System.getProperty('org.mongodb.test.awsAccessKeyId').isEmpty())
         dataKeyCollection.drop()
         dataCollection.drop()
+
+        def providerProperties =
+                ['local': ['key': Base64.getDecoder().decode('Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN'
+                        + '3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk')],
+                 'aws'  : ['accessKeyId'    : System.getProperty('org.mongodb.test.awsAccessKeyId'),
+                           'secretAccessKey': System.getProperty('org.mongodb.test.awsSecretAccessKey')]
+                ]
 
         autoEncryptingClient = MongoClients.create(getMongoClientSettingsBuilder()
                 .autoEncryptionSettings(AutoEncryptionSettings.builder()
