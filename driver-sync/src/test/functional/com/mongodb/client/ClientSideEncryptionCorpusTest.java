@@ -46,6 +46,7 @@ import java.util.Map;
 
 import static com.mongodb.ClusterFixture.isNotAtLeastJava8;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
@@ -129,7 +130,7 @@ public class ClientSideEncryptionCorpusTest {
         autoEncryptingClient = MongoClients.create(clientSettings);
 
         ClientEncryptionSettings clientEncryptionSettings = ClientEncryptionSettings.builder().
-                keyVaultMongoClientSettings(MongoClientSettings.builder().build()).
+                keyVaultMongoClientSettings(getMongoClientSettings()).
                 kmsProviders(kmsProviders).
                 keyVaultNamespace("admin.datakeys").build();
         clientEncryption = ClientEncryptions.create(clientEncryptionSettings);
