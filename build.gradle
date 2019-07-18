@@ -48,9 +48,9 @@ ext {
 
 def configDir = ext.configDir
 def coreProjects = subprojects.findAll { !['util'].contains(it.name) }
-def javaProjects = subprojects.findAll { !['driver-embedded-android'].contains(it.name) }
-def javaMainProjects = subprojects.findAll { !['util', 'driver-embedded-android'].contains(it.name) }
-def javaCodeCheckedProjects = subprojects.findAll { !['util', 'mongo-java-driver', 'driver-embedded-android', 'driver-benchmarks'].contains(it.name) }
+def javaProjects = subprojects
+def javaMainProjects = subprojects.findAll { !['util'].contains(it.name) }
+def javaCodeCheckedProjects = subprojects.findAll { !['util', 'mongo-java-driver', 'driver-benchmarks'].contains(it.name) }
 
 configure(coreProjects) {
     evaluationDependsOn(':util')

@@ -121,26 +121,6 @@ functions:
         permissions: public-read
         content_type: ${content_type|application/x-gzip}
 
-  "upload android logs":
-    # Compress and upload the entire build directory
-    - command: archive.targz_pack
-      params:
-        # Example: mongo_c_driver_releng_9dfb7d741efbca16faa7859b9349d7a942273e43_16_11_08_19_29_52.tar.gz
-        target: "${build_id}.tar.gz"
-        source_dir: ${PROJECT_DIRECTORY}/.android/download_logs
-        include:
-          - "./**"
-    - command: s3.put
-      params:
-        aws_key: ${aws_key}
-        aws_secret: ${aws_secret}
-        local_file: ${build_id}.tar.gz
-        # Example: /mciuploads/${UPLOAD_BUCKET}/gcc49/9dfb7d741efbca16faa7859b9349d7a942273e43/debug-compile-nosasl-nossl/mongo_c_driver_releng_9dfb7d741efbca16faa7859b9349d7a942273e43_16_11_08_19_29_52.tar.gz
-        remote_file: ${UPLOAD_BUCKET}/${build_variant}/${revision}/${task_name}/${build_id}.tar.gz
-        bucket: mciuploads
-        permissions: public-read
-        content_type: ${content_type|application/x-gzip}
-
   "exec script" :
     - command: shell.exec
       type: test
@@ -215,9 +195,6 @@ functions:
     - command: attach.xunit_results
       params:
         file: ./src/*/build/test-results/test/TEST-*.xml
-    - command: attach.xunit_results
-      params:
-        file: ./src/*/build/outputs/androidTest-results/connected/TEST-*.xml
 
   "bootstrap mongo-orchestration":
     - command: shell.exec
@@ -265,15 +242,6 @@ functions:
       script: |
         ${PREPARE_SHELL}
         JDK="${JDK}" .evergreen/run-embedded-tests.sh
-
-  "run embedded tests android":
-  - command: shell.exec
-    type: test
-    params:
-      working_dir: "src"
-      script: |
-        ${PREPARE_SHELL}
-        .evergreen/run-embedded-tests-android.sh
 
   "run plain auth test":
     - command: shell.exec
@@ -438,11 +406,6 @@ tasks:
       commands:
       - func: "run embedded tests"
 
-    - name: "embedded-test-android"
-      commands:
-#      - func: "run embedded tests android"
-#      - func: "upload android logs"
-
     - name: "atlas-test"
       commands:
         - func: "run atlas test"
@@ -461,8 +424,6 @@ tasks:
           name: "plain-auth-test"
         - variant: ".test-embedded-variant"
           name: "embedded-test"
-        - variant: "embedded-test-android"
-          name: "embedded-test-android"
       commands:
         - func: "publish snapshot"
 
@@ -709,12 +670,6 @@ buildvariants:
   tags: ["test-embedded-variant"]
   tasks:
   - name: "embedded-test"
-
-- name: embedded-test-android
-  display_name: "Embedded: Android"
-  run_on: ubuntu1804-test
-  tasks:
-  - name: "embedded-test-android"
 
 - name: plain-auth-test
   display_name: "PLAIN (LDAP) Auth test"
