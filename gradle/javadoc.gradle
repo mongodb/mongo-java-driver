@@ -17,7 +17,7 @@ import static org.gradle.util.CollectionUtils.single
  */
 
 
-def javaMainProjects = subprojects.findAll { !['util', 'driver-embedded-android'].contains(it.name) }
+def javaMainProjects = subprojects.findAll { !['util'].contains(it.name) }
 task docs(type: Javadoc) {
     destinationDir = new File(rootDir, 'build/docs')
     javaMainProjects.each { proj ->

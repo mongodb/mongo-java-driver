@@ -28,10 +28,6 @@ atlassian-ide-plugin.xml
 # gradle
 .gradle
 
-# android
-.android/
-android/
-
 # code review
 codereview.rc
 

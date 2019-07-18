@@ -24,8 +24,3 @@ include ':driver-sync'
 include ':mongo-java-driver'
 include ':mongodb-driver'
 include ':util'
-
-// Only include driver-embedded-android if ANDROID_HOME exists
-if (System.getenv("ANDROID_HOME") != null) {
-    include ':driver-embedded-android'
-}
