@@ -229,7 +229,7 @@ public abstract class AbstractClientSideEncryptionTest {
 
         String keyVaultNamespace = "admin.datakeys";
         if (cryptOptions.containsKey("keyVaultNamespace")) {
-            keyVaultNamespace = cryptOptions.getString ("keyVaultNamespace").getValue();
+            keyVaultNamespace = cryptOptions.getString("keyVaultNamespace").getValue();
         }
 
         createMongoClient(AutoEncryptionSettings.builder()
