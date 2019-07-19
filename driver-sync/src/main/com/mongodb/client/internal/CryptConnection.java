@@ -59,6 +59,8 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 @SuppressWarnings("deprecation")
 class CryptConnection implements Connection {
     private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
+    private static final int MAX_MESSAGE_SIZE = 6000000;
+    private static final int MAX_DOCUMENT_SIZE = 2097152;
 
     private final Connection wrapped;
     private final Crypt crypt;
@@ -100,7 +102,7 @@ class CryptConnection implements Connection {
         }
 
         BasicOutputBuffer bsonOutput = new BasicOutputBuffer();
-        BsonBinaryWriter bsonBinaryWriter = new BsonBinaryWriter(createBsonWriterSettings(), createBsonBinaryWriterSettings(),
+        BsonBinaryWriter bsonBinaryWriter = new BsonBinaryWriter(new BsonWriterSettings(), new BsonBinaryWriterSettings(MAX_DOCUMENT_SIZE),
                 bsonOutput, getFieldNameValidator(payload, commandFieldNameValidator, payloadFieldNameValidator));
         BsonWriter writer = payload == null
                 ? bsonBinaryWriter
@@ -144,25 +146,11 @@ class CryptConnection implements Connection {
         return new MappedFieldNameValidator(commandFieldNameValidator, rootMap);
     }
 
-    private BsonWriterSettings createBsonWriterSettings() {
-        return new BsonWriterSettings();
-    }
-
-    // TODO
-    // Currently these settings will allow a split point that is potentially too large after encryption occurs. Need to find a way
-    // to allow at least one document to be included in the split even if it is equal in size to maxDocumentSize, but still split at a
-    // much smaller document size for the command document itself.
-    private BsonBinaryWriterSettings createBsonBinaryWriterSettings() {
-        ConnectionDescription connectionDescription = wrapped.getDescription();
-        return new BsonBinaryWriterSettings(connectionDescription.getMaxDocumentSize());
-    }
-
     private MessageSettings createSplittablePayloadMessageSettings() {
-        ConnectionDescription connectionDescription = wrapped.getDescription();
         return MessageSettings.builder()
-                .maxBatchCount(connectionDescription.getMaxBatchCount())
-                .maxMessageSize(connectionDescription.getMaxDocumentSize())
-                .maxDocumentSize(connectionDescription.getMaxDocumentSize())
+                .maxBatchCount(wrapped.getDescription().getMaxBatchCount())
+                .maxMessageSize(MAX_MESSAGE_SIZE)
+                .maxDocumentSize(MAX_DOCUMENT_SIZE)
                 .build();
     }
 
