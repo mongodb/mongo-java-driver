@@ -33,6 +33,7 @@ import com.mongodb.connection.BulkWriteBatchCombiner;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.SplittablePayload;
+import com.mongodb.internal.connection.FieldTrackingBsonWriter;
 import com.mongodb.internal.connection.IndexMap;
 import com.mongodb.internal.validator.CollectibleDocumentFieldNameValidator;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
@@ -392,16 +393,18 @@ final class BulkWriteBatch {
                 if (!updateValue.isDocument() && !updateValue.isArray()) {
                     throw new IllegalArgumentException("Invalid BSON value for an update.");
                 }
-                if (updateValue.isDocument() && updateValue.asDocument().isEmpty()) {
-                    throw new IllegalArgumentException("Invalid BSON document for an update. The document may not be empty.");
-                }
                 if (updateValue.isArray() && updateValue.asArray().isEmpty()) {
                     throw new IllegalArgumentException("Invalid pipeline for an update. The pipeline may not be empty.");
                 }
 
                 writer.writeName("u");
                 if (updateValue.isDocument()) {
-                    getCodec(updateValue.asDocument()).encode(writer, updateValue.asDocument(), EncoderContext.builder().build());
+                    FieldTrackingBsonWriter fieldTrackingBsonWriter = new FieldTrackingBsonWriter(writer);
+                    getCodec(updateValue.asDocument()).encode(fieldTrackingBsonWriter, updateValue.asDocument(),
+                            EncoderContext.builder().build());
+                    if (writeRequest.getType() == UPDATE && !fieldTrackingBsonWriter.hasWrittenField()) {
+                        throw new IllegalArgumentException("Invalid BSON document for an update. The document may not be empty.");
+                    }
                 } else if (update.getType() == WriteRequest.Type.UPDATE && updateValue.isArray()) {
                     writer.writeStartArray();
                     for (BsonValue cur : updateValue.asArray()) {
