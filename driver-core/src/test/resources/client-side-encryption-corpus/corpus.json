@@ -101,15 +101,6 @@
     "allowed": true,
     "value": "mongodb"
   },
-  "aws_string_det_auto_altname": {
-    "kms": "aws",
-    "type": "string",
-    "algo": "det",
-    "method": "auto",
-    "identifier": "altname",
-    "allowed": true,
-    "value": "mongodb"
-  },
   "aws_string_det_explicit_id": {
     "kms": "aws",
     "type": "string",
@@ -305,15 +296,6 @@
     "allowed": true,
     "value": { "$binary": { "base64": "AQIDBA==", "subType": "00" } }
   },
-  "aws_binData=00_det_auto_altname": {
-    "kms": "aws",
-    "type": "binData=00",
-    "algo": "det",
-    "method": "auto",
-    "identifier": "altname",
-    "allowed": true,
-    "value": { "$binary": { "base64": "AQIDBA==", "subType": "00" } }
-  },
   "aws_binData=00_det_explicit_id": {
     "kms": "aws",
     "type": "binData=00",
@@ -382,17 +364,6 @@
     "algo": "det",
     "method": "auto",
     "identifier": "id",
-    "allowed": true,
-    "value": {
-      "$binary": { "base64": "AAECAwQFBgcICQoLDA0ODw==", "subType": "04" }
-    }
-  },
-  "aws_binData=04_det_auto_altname": {
-    "kms": "aws",
-    "type": "binData=04",
-    "algo": "det",
-    "method": "auto",
-    "identifier": "altname",
     "allowed": true,
     "value": {
       "$binary": { "base64": "AAECAwQFBgcICQoLDA0ODw==", "subType": "04" }
@@ -498,15 +469,6 @@
     "algo": "det",
     "method": "auto",
     "identifier": "id",
-    "allowed": true,
-    "value": { "$oid": "01234567890abcdef0123456" }
-  },
-  "aws_objectId_det_auto_altname": {
-    "kms": "aws",
-    "type": "objectId",
-    "algo": "det",
-    "method": "auto",
-    "identifier": "altname",
     "allowed": true,
     "value": { "$oid": "01234567890abcdef0123456" }
   },
@@ -627,15 +589,6 @@
     "allowed": true,
     "value": { "$date": { "$numberLong": "12345" } }
   },
-  "aws_date_det_auto_altname": {
-    "kms": "aws",
-    "type": "date",
-    "algo": "det",
-    "method": "auto",
-    "identifier": "altname",
-    "allowed": true,
-    "value": { "$date": { "$numberLong": "12345" } }
-  },
   "aws_date_det_explicit_id": {
     "kms": "aws",
     "type": "date",
@@ -735,15 +688,6 @@
     "allowed": true,
     "value": { "$regularExpression": { "pattern": ".*", "options": "" } }
   },
-  "aws_regex_det_auto_altname": {
-    "kms": "aws",
-    "type": "regex",
-    "algo": "det",
-    "method": "auto",
-    "identifier": "altname",
-    "allowed": true,
-    "value": { "$regularExpression": { "pattern": ".*", "options": "" } }
-  },
   "aws_regex_det_explicit_id": {
     "kms": "aws",
     "type": "regex",
@@ -832,20 +776,6 @@
       }
     }
   },
-  "aws_dbPointer_det_auto_altname": {
-    "kms": "aws",
-    "type": "dbPointer",
-    "algo": "det",
-    "method": "auto",
-    "identifier": "altname",
-    "allowed": true,
-    "value": {
-      "$dbPointer": {
-        "$ref": "db.example",
-        "$id": { "$oid": "01234567890abcdef0123456" }
-      }
-    }
-  },
   "aws_dbPointer_det_explicit_id": {
     "kms": "aws",
     "type": "dbPointer",
@@ -919,15 +849,6 @@
     "allowed": true,
     "value": { "$code": "x=1" }
   },
-  "aws_javascript_det_auto_altname": {
-    "kms": "aws",
-    "type": "javascript",
-    "algo": "det",
-    "method": "auto",
-    "identifier": "altname",
-    "allowed": true,
-    "value": { "$code": "x=1" }
-  },
   "aws_javascript_det_explicit_id": {
     "kms": "aws",
     "type": "javascript",
@@ -988,15 +909,6 @@
     "algo": "det",
     "method": "auto",
     "identifier": "id",
-    "allowed": true,
-    "value": { "$symbol": "mongodb-symbol" }
-  },
-  "aws_symbol_det_auto_altname": {
-    "kms": "aws",
-    "type": "symbol",
-    "algo": "det",
-    "method": "auto",
-    "identifier": "altname",
     "allowed": true,
     "value": { "$symbol": "mongodb-symbol" }
   },
@@ -1117,15 +1029,6 @@
     "allowed": true,
     "value": { "$numberInt": "123" }
   },
-  "aws_int_det_auto_altname": {
-    "kms": "aws",
-    "type": "int",
-    "algo": "det",
-    "method": "auto",
-    "identifier": "altname",
-    "allowed": true,
-    "value": { "$numberInt": "123" }
-  },
   "aws_int_det_explicit_id": {
     "kms": "aws",
     "type": "int",
@@ -1189,15 +1092,6 @@
     "allowed": true,
     "value": { "$timestamp": { "t": 0, "i": 12345 } }
   },
-  "aws_timestamp_det_auto_altname": {
-    "kms": "aws",
-    "type": "timestamp",
-    "algo": "det",
-    "method": "auto",
-    "identifier": "altname",
-    "allowed": true,
-    "value": { "$timestamp": { "t": 0, "i": 12345 } }
-  },
   "aws_timestamp_det_explicit_id": {
     "kms": "aws",
     "type": "timestamp",
@@ -1258,15 +1152,6 @@
     "algo": "det",
     "method": "auto",
     "identifier": "id",
-    "allowed": true,
-    "value": { "$numberLong": "456" }
-  },
-  "aws_long_det_auto_altname": {
-    "kms": "aws",
-    "type": "long",
-    "algo": "det",
-    "method": "auto",
-    "identifier": "altname",
     "allowed": true,
     "value": { "$numberLong": "456" }
   },
@@ -1513,15 +1398,6 @@
     "allowed": true,
     "value": "mongodb"
   },
-  "local_string_det_auto_altname": {
-    "kms": "local",
-    "type": "string",
-    "algo": "det",
-    "method": "auto",
-    "identifier": "altname",
-    "allowed": true,
-    "value": "mongodb"
-  },
   "local_string_det_explicit_id": {
     "kms": "local",
     "type": "string",
@@ -1717,15 +1593,6 @@
     "allowed": true,
     "value": { "$binary": { "base64": "AQIDBA==", "subType": "00" } }
   },
-  "local_binData=00_det_auto_altname": {
-    "kms": "local",
-    "type": "binData=00",
-    "algo": "det",
-    "method": "auto",
-    "identifier": "altname",
-    "allowed": true,
-    "value": { "$binary": { "base64": "AQIDBA==", "subType": "00" } }
-  },
   "local_binData=00_det_explicit_id": {
     "kms": "local",
     "type": "binData=00",
@@ -1794,17 +1661,6 @@
     "algo": "det",
     "method": "auto",
     "identifier": "id",
-    "allowed": true,
-    "value": {
-      "$binary": { "base64": "AAECAwQFBgcICQoLDA0ODw==", "subType": "04" }
-    }
-  },
-  "local_binData=04_det_auto_altname": {
-    "kms": "local",
-    "type": "binData=04",
-    "algo": "det",
-    "method": "auto",
-    "identifier": "altname",
     "allowed": true,
     "value": {
       "$binary": { "base64": "AAECAwQFBgcICQoLDA0ODw==", "subType": "04" }
@@ -1910,15 +1766,6 @@
     "algo": "det",
     "method": "auto",
     "identifier": "id",
-    "allowed": true,
-    "value": { "$oid": "01234567890abcdef0123456" }
-  },
-  "local_objectId_det_auto_altname": {
-    "kms": "local",
-    "type": "objectId",
-    "algo": "det",
-    "method": "auto",
-    "identifier": "altname",
     "allowed": true,
     "value": { "$oid": "01234567890abcdef0123456" }
   },
@@ -2039,15 +1886,6 @@
     "allowed": true,
     "value": { "$date": { "$numberLong": "12345" } }
   },
-  "local_date_det_auto_altname": {
-    "kms": "local",
-    "type": "date",
-    "algo": "det",
-    "method": "auto",
-    "identifier": "altname",
-    "allowed": true,
-    "value": { "$date": { "$numberLong": "12345" } }
-  },
   "local_date_det_explicit_id": {
     "kms": "local",
     "type": "date",
@@ -2147,15 +1985,6 @@
     "allowed": true,
     "value": { "$regularExpression": { "pattern": ".*", "options": "" } }
   },
-  "local_regex_det_auto_altname": {
-    "kms": "local",
-    "type": "regex",
-    "algo": "det",
-    "method": "auto",
-    "identifier": "altname",
-    "allowed": true,
-    "value": { "$regularExpression": { "pattern": ".*", "options": "" } }
-  },
   "local_regex_det_explicit_id": {
     "kms": "local",
     "type": "regex",
@@ -2244,20 +2073,6 @@
       }
     }
   },
-  "local_dbPointer_det_auto_altname": {
-    "kms": "local",
-    "type": "dbPointer",
-    "algo": "det",
-    "method": "auto",
-    "identifier": "altname",
-    "allowed": true,
-    "value": {
-      "$dbPointer": {
-        "$ref": "db.example",
-        "$id": { "$oid": "01234567890abcdef0123456" }
-      }
-    }
-  },
   "local_dbPointer_det_explicit_id": {
     "kms": "local",
     "type": "dbPointer",
@@ -2331,15 +2146,6 @@
     "allowed": true,
     "value": { "$code": "x=1" }
   },
-  "local_javascript_det_auto_altname": {
-    "kms": "local",
-    "type": "javascript",
-    "algo": "det",
-    "method": "auto",
-    "identifier": "altname",
-    "allowed": true,
-    "value": { "$code": "x=1" }
-  },
   "local_javascript_det_explicit_id": {
     "kms": "local",
     "type": "javascript",
@@ -2400,15 +2206,6 @@
     "algo": "det",
     "method": "auto",
     "identifier": "id",
-    "allowed": true,
-    "value": { "$symbol": "mongodb-symbol" }
-  },
-  "local_symbol_det_auto_altname": {
-    "kms": "local",
-    "type": "symbol",
-    "algo": "det",
-    "method": "auto",
-    "identifier": "altname",
     "allowed": true,
     "value": { "$symbol": "mongodb-symbol" }
   },
@@ -2529,15 +2326,6 @@
     "allowed": true,
     "value": { "$numberInt": "123" }
   },
-  "local_int_det_auto_altname": {
-    "kms": "local",
-    "type": "int",
-    "algo": "det",
-    "method": "auto",
-    "identifier": "altname",
-    "allowed": true,
-    "value": { "$numberInt": "123" }
-  },
   "local_int_det_explicit_id": {
     "kms": "local",
     "type": "int",
@@ -2601,15 +2389,6 @@
     "allowed": true,
     "value": { "$timestamp": { "t": 0, "i": 12345 } }
   },
-  "local_timestamp_det_auto_altname": {
-    "kms": "local",
-    "type": "timestamp",
-    "algo": "det",
-    "method": "auto",
-    "identifier": "altname",
-    "allowed": true,
-    "value": { "$timestamp": { "t": 0, "i": 12345 } }
-  },
   "local_timestamp_det_explicit_id": {
     "kms": "local",
     "type": "timestamp",
@@ -2670,15 +2449,6 @@
     "algo": "det",
     "method": "auto",
     "identifier": "id",
-    "allowed": true,
-    "value": { "$numberLong": "456" }
-  },
-  "local_long_det_auto_altname": {
-    "kms": "local",
-    "type": "long",
-    "algo": "det",
-    "method": "auto",
-    "identifier": "altname",
     "allowed": true,
     "value": { "$numberLong": "456" }
   },
