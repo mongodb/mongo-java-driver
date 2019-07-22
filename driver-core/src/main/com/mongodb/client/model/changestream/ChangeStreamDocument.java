@@ -20,6 +20,7 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.assertions.Assertions;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
+import org.bson.BsonInt64;
 import org.bson.BsonString;
 import org.bson.BsonTimestamp;
 import org.bson.codecs.Codec;
@@ -49,6 +50,8 @@ public final class ChangeStreamDocument<TDocument> {
     private final BsonTimestamp clusterTime;
     private final OperationType operationType;
     private final UpdateDescription updateDescription;
+    private final BsonInt64 txnNumber;
+    private final BsonDocument lsid;
 
     /**
      * Creates a new instance
@@ -135,7 +138,7 @@ public final class ChangeStreamDocument<TDocument> {
      *
      * @since 3.11
      */
-    @BsonCreator
+    @Deprecated
     public ChangeStreamDocument(@BsonProperty("operationType") final OperationType operationType,
                                 @BsonProperty("resumeToken") final BsonDocument resumeToken,
                                 @Nullable @BsonProperty("ns") final BsonDocument namespaceDocument,
@@ -144,6 +147,37 @@ public final class ChangeStreamDocument<TDocument> {
                                 @Nullable @BsonProperty("documentKey") final BsonDocument documentKey,
                                 @Nullable @BsonProperty("clusterTime") final BsonTimestamp clusterTime,
                                 @Nullable @BsonProperty("updateDescription") final UpdateDescription updateDescription) {
+        this(operationType, resumeToken, namespaceDocument, destinationNamespaceDocument, fullDocument, documentKey, clusterTime,
+                updateDescription, null, null);
+    }
+
+    /**
+     * Creates a new instance
+     *
+     * @param operationType the operation type
+     * @param resumeToken the resume token
+     * @param namespaceDocument the BsonDocument representing the namespace
+     * @param destinationNamespaceDocument the BsonDocument representing the destinatation namespace
+     * @param fullDocument the full document
+     * @param documentKey a document containing the _id of the changed document
+     * @param clusterTime the cluster time at which the change occured
+     * @param updateDescription the update description
+     * @param txnNumber the transaction number
+     * @param lsid the identifier for the session associated with the transaction
+     *
+     * @since 3.11
+     */
+    @BsonCreator
+    public ChangeStreamDocument(@BsonProperty("operationType") final OperationType operationType,
+                                @BsonProperty("resumeToken") final BsonDocument resumeToken,
+                                @Nullable @BsonProperty("ns") final BsonDocument namespaceDocument,
+                                @Nullable @BsonProperty("to") final BsonDocument destinationNamespaceDocument,
+                                @Nullable @BsonProperty("fullDocument") final TDocument fullDocument,
+                                @Nullable @BsonProperty("documentKey") final BsonDocument documentKey,
+                                @Nullable @BsonProperty("clusterTime") final BsonTimestamp clusterTime,
+                                @Nullable @BsonProperty("updateDescription") final UpdateDescription updateDescription,
+                                @Nullable @BsonProperty("txnNumber") final BsonInt64 txnNumber,
+                                @Nullable @BsonProperty("lsid") final BsonDocument lsid) {
         this.resumeToken = resumeToken;
         this.namespaceDocument = namespaceDocument;
         this.destinationNamespaceDocument = destinationNamespaceDocument;
@@ -152,6 +186,8 @@ public final class ChangeStreamDocument<TDocument> {
         this.clusterTime = clusterTime;
         this.operationType = operationType;
         this.updateDescription = updateDescription;
+        this.txnNumber = txnNumber;
+        this.lsid = lsid;
     }
 
     private static BsonDocument namespaceToDocument(final MongoNamespace namespace) {
@@ -322,6 +358,30 @@ public final class ChangeStreamDocument<TDocument> {
     }
 
     /**
+     * Returns the transaction number
+     *
+     * @return the transaction number, or null if not part of a multi-document transaction
+     * @since 3.11
+     * @mongodb.server.release 4.0
+     */
+    @Nullable
+    public BsonInt64 getTxnNumber() {
+        return txnNumber;
+    }
+
+    /**
+     * Returns the identifier for the session associated with the transaction
+     *
+     * @return the lsid, or null if not part of a multi-document transaction
+     * @since 3.11
+     * @mongodb.server.release 4.0
+     */
+    @Nullable
+    public BsonDocument getLsid() {
+        return lsid;
+    }
+
+    /**
      * Creates the codec for the specific ChangeStreamOutput type
      *
      * @param fullDocumentClass the class to use to represent the fullDocument
@@ -371,6 +431,12 @@ public final class ChangeStreamDocument<TDocument> {
         if (updateDescription != null ? !updateDescription.equals(that.updateDescription) : that.updateDescription != null) {
             return false;
         }
+        if (txnNumber != null ? !txnNumber.equals(that.txnNumber) : that.txnNumber != null) {
+            return false;
+        }
+        if (lsid != null ? !lsid.equals(that.lsid) : that.lsid != null) {
+            return false;
+        }
 
         return true;
     }
@@ -385,6 +451,8 @@ public final class ChangeStreamDocument<TDocument> {
         result = 31 * result + (clusterTime != null ? clusterTime.hashCode() : 0);
         result = 31 * result + (operationType != null ? operationType.hashCode() : 0);
         result = 31 * result + (updateDescription != null ? updateDescription.hashCode() : 0);
+        result = 31 * result + (txnNumber != null ? txnNumber.hashCode() : 0);
+        result = 31 * result + (lsid != null ? lsid.hashCode() : 0);
         return result;
     }
 
@@ -399,6 +467,8 @@ public final class ChangeStreamDocument<TDocument> {
                 + ", documentKey=" + documentKey
                 + ", clusterTime=" + clusterTime
                 + ", updateDescription=" + updateDescription
+                + ", txnNumber=" + txnNumber
+                + ", lsid=" + lsid
                 + "}";
     }
 }
