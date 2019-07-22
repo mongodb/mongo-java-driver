@@ -47,6 +47,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -59,6 +60,7 @@ import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeNotNull;
 
@@ -143,8 +145,20 @@ public class ChangeStreamsTest extends DatabaseTestCase {
     private void checkStreamValues(final BsonDocument result, final AsyncBatchCursor<ChangeStreamDocument<BsonDocument>> cursor){
 
         BsonArray expectedResults = result.getArray("success", new BsonArray());
+        Queue<ChangeStreamDocument<BsonDocument>> results = null;
 
-        Queue<ChangeStreamDocument<BsonDocument>> results = getResults(cursor);
+        try {
+            results = getResults(cursor);
+        } catch (MongoException e) {
+            if (result.containsKey("error")) {
+                final BsonDocument error = result.getDocument("error");
+                assertTrue(e.getCode() == error.getInt32("code").intValue()
+                        || !Collections.disjoint(e.getErrorLabels(), error.getArray("errorLabels")));
+                return;
+            } else {
+                throw e;
+            }
+        }
         for (BsonValue expectedResult : expectedResults) {
             BsonDocument expected = expectedResult.asDocument();
 
@@ -195,7 +209,7 @@ public class ChangeStreamsTest extends DatabaseTestCase {
     }
 
     private void checkExpectations() {
-        if (definition.getArray("expectations").size() > 0) {
+        if (definition.containsKey("expectations") && definition.getArray("expectations").size() > 0) {
 
             String database = definition.getString("target").getValue().equals("client") ? "admin" : namespace.getDatabaseName();
             List<CommandEvent> expectedEvents = getExpectedEvents(definition.getArray("expectations"), database, new BsonDocument());
