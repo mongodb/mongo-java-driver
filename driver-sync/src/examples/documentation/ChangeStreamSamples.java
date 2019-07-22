@@ -16,6 +16,7 @@
 
 package documentation;
 
+import com.mongodb.client.MongoChangeStreamCursor;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
@@ -69,7 +70,7 @@ public final class ChangeStreamSamples {
         System.out.println("1. Initial document from the Change Stream:");
 
         // Create the change stream cursor.
-        MongoCursor<ChangeStreamDocument<Document>> cursor = collection.watch().iterator();
+        MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = collection.watch().cursor();
 
         // Insert a test document into the collection.
         collection.insertOne(Document.parse("{username: 'alice123', name: 'Alice'}"));
@@ -86,7 +87,7 @@ public final class ChangeStreamSamples {
         System.out.println("2. Document from the Change Stream, with lookup enabled:");
 
         // Create the change stream cursor.
-        cursor = collection.watch().fullDocument(FullDocument.UPDATE_LOOKUP).iterator();
+        cursor = collection.watch().fullDocument(FullDocument.UPDATE_LOOKUP).cursor();
 
         // Update the test document.
         collection.updateOne(Document.parse("{username: 'alice123'}"), Document.parse("{$set : { email: 'alice@example.com'}}"));
@@ -117,7 +118,7 @@ public final class ChangeStreamSamples {
         );
 
         // Create the change stream cursor with $match.
-        cursor = collection.watch(pipeline).fullDocument(FullDocument.UPDATE_LOOKUP).iterator();
+        cursor = collection.watch(pipeline).fullDocument(FullDocument.UPDATE_LOOKUP).cursor();
 
         // Forward to the end of the change stream
         next = cursor.tryNext();
@@ -146,11 +147,11 @@ public final class ChangeStreamSamples {
         System.out.println("4. Document from the Change Stream including a resume token:");
 
         // Get the resume token from the last document we saw in the previous change stream cursor.
-        BsonDocument resumeToken = next.getResumeToken();
+        BsonDocument resumeToken = cursor.getResumeToken();
         System.out.println(resumeToken);
 
         // Pass the resume token to the resume after function to continue the change stream cursor.
-        cursor = collection.watch().resumeAfter(resumeToken).iterator();
+        cursor = collection.watch().resumeAfter(resumeToken).cursor();
 
         // Insert a test document.
         collection.insertOne(Document.parse("{test: 'd'}"));
