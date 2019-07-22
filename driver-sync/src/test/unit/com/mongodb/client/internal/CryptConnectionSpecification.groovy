@@ -34,6 +34,7 @@ import org.bson.BsonBinaryWriter
 import org.bson.BsonDocument
 import org.bson.BsonDocumentWrapper
 import org.bson.BsonInt32
+import org.bson.BsonMaximumSizeExceededException
 import org.bson.BsonString
 import org.bson.Document
 import org.bson.RawBsonDocument
