@@ -22,12 +22,14 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.MongoSocketException;
 
+import java.util.Collections;
 import java.util.List;
 
 import static java.util.Arrays.asList;
 
 final class ChangeStreamBatchCursorHelper {
     private static final List<Integer> UNRETRYABLE_SERVER_ERROR_CODES = asList(136, 237, 280, 11601);
+    private static final List<String> NONRESUMABLE_CHANGE_STREAM_ERROR_LABELS = asList("NonResumableChangeStreamError");
 
     static boolean isRetryableError(final Throwable t) {
         if (!(t instanceof MongoException) || t instanceof MongoChangeStreamException) {
@@ -36,7 +38,8 @@ final class ChangeStreamBatchCursorHelper {
                 || t instanceof MongoSocketException) {
             return true;
         } else {
-            return !UNRETRYABLE_SERVER_ERROR_CODES.contains(((MongoException) t).getCode());
+            return !UNRETRYABLE_SERVER_ERROR_CODES.contains(((MongoException) t).getCode())
+                    && Collections.disjoint(NONRESUMABLE_CHANGE_STREAM_ERROR_LABELS, ((MongoException) t).getErrorLabels());
         }
     }
 
