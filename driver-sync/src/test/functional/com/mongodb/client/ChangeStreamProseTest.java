@@ -19,6 +19,7 @@ package com.mongodb.client;
 import com.mongodb.MongoChangeStreamException;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
+import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoQueryException;
 import com.mongodb.client.internal.MongoChangeStreamCursorImpl;
 import com.mongodb.client.model.Aggregates;
@@ -57,6 +58,43 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
 
         // create the collection before starting tests
         collection.insertOne(Document.parse("{ _id : 0 }"));
+    }
+
+    class ChangeStreamWatcher implements Runnable {
+        private volatile boolean interruptedExceptionOccurred = false;
+        private final MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor;
+
+        ChangeStreamWatcher(final MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor) {
+            this.cursor = cursor;
+        }
+
+        @Override
+        public void run() {
+            try {
+                cursor.next();
+            } catch (final MongoInterruptedException e) {
+                interruptedExceptionOccurred = true;
+            } finally {
+                cursor.close();
+            }
+        }
+
+        public boolean getInterruptedExceptionOccurred() {
+            return interruptedExceptionOccurred;
+        }
+    }
+
+    //
+    // Test that MongoInterruptedException is not retryable so that a thread can be interrupted.
+    //
+    @Test
+    public void testThreadInterrupted() throws InterruptedException {
+        final ChangeStreamWatcher watcher = new ChangeStreamWatcher(collection.watch().cursor());
+        final Thread t = new Thread(watcher);
+        t.start();
+        t.interrupt();
+        t.join();
+        assertTrue(watcher.getInterruptedExceptionOccurred());
     }
 
     //

@@ -19,6 +19,7 @@ package com.mongodb.operation;
 import com.mongodb.MongoChangeStreamException;
 import com.mongodb.MongoCursorNotFoundException;
 import com.mongodb.MongoException;
+import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.MongoSocketException;
 
@@ -32,7 +33,7 @@ final class ChangeStreamBatchCursorHelper {
     private static final List<String> NONRESUMABLE_CHANGE_STREAM_ERROR_LABELS = asList("NonResumableChangeStreamError");
 
     static boolean isRetryableError(final Throwable t) {
-        if (!(t instanceof MongoException) || t instanceof MongoChangeStreamException) {
+        if (!(t instanceof MongoException) || t instanceof MongoChangeStreamException || t instanceof MongoInterruptedException) {
             return false;
         } else if (t instanceof MongoNotPrimaryException || t instanceof MongoCursorNotFoundException
                 || t instanceof MongoSocketException) {
