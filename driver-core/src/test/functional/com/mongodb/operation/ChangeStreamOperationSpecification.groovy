@@ -54,7 +54,6 @@ import spock.lang.IgnoreIf
 
 import static com.mongodb.ClusterFixture.getAsyncCluster
 import static com.mongodb.ClusterFixture.getCluster
-import static com.mongodb.ClusterFixture.isSharded
 import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.internal.connection.ServerHelper.waitForLastRelease
@@ -404,7 +403,6 @@ class ChangeStreamOperationSpecification extends OperationFunctionalSpecificatio
         waitForLastRelease(getCluster())
     }
 
-    @IgnoreIf({ isSharded() })
     def 'should throw if the _id field is projected out'() {
         given:
         def helper = getHelper()
