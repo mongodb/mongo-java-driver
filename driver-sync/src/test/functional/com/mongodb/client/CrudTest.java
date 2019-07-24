@@ -85,8 +85,7 @@ public class CrudTest {
     @Before
     public void setUp() {
         assumeFalse(skipTest);
-        // No runOn syntax for legacy CRUD, so skipping these manually for now
-        assumeFalse(isSharded() && description.startsWith("Aggregate with $currentOp"));
+        assumeFalse(isSharded());
 
         collectionHelper = new CollectionHelper<Document>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
 
@@ -130,17 +129,16 @@ public class CrudTest {
         if (definition.containsKey("operation")) {
             runOperation(expectedOutcome, definition.getDocument("operation"),
                     expectedOutcome != null && expectedOutcome.containsKey("result") && expectedOutcome.isDocument("result")
-                            ? expectedOutcome.get("result").asDocument() : null);
+                            ? expectedOutcome.get("result") : null);
         } else {  // v2 test
             BsonArray operations = definition.getArray("operations");
             for (BsonValue operation : operations) {
-                runOperation(expectedOutcome, operation.asDocument(),
-                        operation.asDocument().containsKey("result") ? operation.asDocument().getDocument("result") : null);
+                runOperation(expectedOutcome, operation.asDocument(), operation.asDocument().get("result", null));
             }
         }
     }
 
-    private void runOperation(final BsonDocument expectedOutcome, final BsonDocument operation, final BsonDocument expectedResult) {
+    private void runOperation(final BsonDocument expectedOutcome, final BsonDocument operation, final BsonValue expectedResult) {
         BsonDocument outcome = null;
         boolean wasException = false;
         try {
@@ -191,7 +189,7 @@ public class CrudTest {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
                         testDocument.getString("database_name", new BsonString(getDefaultDatabaseName())).getValue(),
                         testDocument.getString("collection_name", new BsonString("test")).getValue(),
-                        testDocument.getArray("data"), test.asDocument(), skipTest(testDocument, test.asDocument())});
+                        testDocument.getArray("data", new BsonArray()), test.asDocument(), skipTest(testDocument, test.asDocument())});
             }
         }
         return data;
