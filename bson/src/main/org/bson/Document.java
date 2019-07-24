@@ -436,7 +436,7 @@ public class Document implements Map<String, Object>, Serializable, Bson {
      */
     public String toJson(final JsonWriterSettings writerSettings, final Encoder<Document> encoder) {
         JsonWriter writer = new JsonWriter(new StringWriter(), writerSettings);
-        encoder.encode(writer, this, EncoderContext.builder().isEncodingCollectibleDocument(true).build());
+        encoder.encode(writer, this, EncoderContext.builder().build());
         return writer.getWriter().toString();
     }
 

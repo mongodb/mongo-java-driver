@@ -191,7 +191,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
      */
     public String toJson(final JsonWriterSettings writerSettings, final Encoder<BasicDBObject> encoder) {
         JsonWriter writer = new JsonWriter(new StringWriter(), writerSettings);
-        encoder.encode(writer, this, EncoderContext.builder().isEncodingCollectibleDocument(true).build());
+        encoder.encode(writer, this, EncoderContext.builder().build());
         return writer.getWriter().toString();
     }
 

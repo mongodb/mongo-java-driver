@@ -60,19 +60,19 @@ public class BasicDBObjectTest {
 
     @Test
     public void testToJson() {
-        BasicDBObject document = BasicDBObject.parse("{ '_id' : { '$oid' : '000000000000000000000000' }, 'int' : 1, 'string' : 'abc', "
+        BasicDBObject document = BasicDBObject.parse("{ 'int' : 1, 'string' : 'abc', '_id' : { '$oid' : '000000000000000000000000' }, "
                 + "'dbRef' : { $ref: 'collection', $id: { $oid: '01234567890123456789abcd' }, $db: 'db' } }");
 
-        assertEquals("{\"_id\": {\"$oid\": \"000000000000000000000000\"}, \"int\": 1, \"string\": \"abc\", "
+        assertEquals("{\"int\": 1, \"string\": \"abc\", \"_id\": {\"$oid\": \"000000000000000000000000\"}, "
                 + "\"dbRef\": {\"$ref\": \"collection\", \"$id\": {\"$oid\": \"01234567890123456789abcd\"}, \"$db\": \"db\"}}",
                 document.toJson());
-        assertEquals("{\"_id\": ObjectId(\"000000000000000000000000\"), \"int\": 1, \"string\": \"abc\", "
+        assertEquals("{\"int\": 1, \"string\": \"abc\", \"_id\": ObjectId(\"000000000000000000000000\"), "
                 + "\"dbRef\": {\"$ref\": \"collection\", \"$id\": ObjectId(\"01234567890123456789abcd\"), \"$db\": \"db\"}}",
                 document.toJson(JsonWriterSettings.builder().outputMode(JsonMode.SHELL).build()));
-        assertEquals("{\"_id\": {\"$oid\": \"000000000000000000000000\"}, \"int\": 1, \"string\": \"abc\", "
+        assertEquals("{\"int\": 1, \"string\": \"abc\", \"_id\": {\"$oid\": \"000000000000000000000000\"}, "
                 + "\"dbRef\": {\"$ref\": \"collection\", \"$id\": {\"$oid\": \"01234567890123456789abcd\"}, \"$db\": \"db\"}}",
                 document.toJson(DECODER));
-        assertEquals("{\"_id\": ObjectId(\"000000000000000000000000\"), \"int\": 1, \"string\": \"abc\", "
+        assertEquals("{\"int\": 1, \"string\": \"abc\", \"_id\": ObjectId(\"000000000000000000000000\"), "
                 + "\"dbRef\": {\"$ref\": \"collection\", \"$id\": ObjectId(\"01234567890123456789abcd\"), \"$db\": \"db\"}}",
                 document.toJson(JsonWriterSettings.builder().outputMode(JsonMode.SHELL).build(), DECODER));
     }
