@@ -86,7 +86,7 @@ public class DocumentTest {
         Document d = new Document().append("x", 1)
                 .append("y", Collections.singletonList("one"))
                 .append("_id", "1");
-        assertEquals(new DocumentCodec().decode(new JsonReader(d.toJson()), DecoderContext.builder().build()), d);
+        assertEquals("{\"x\": 1, \"y\": [\"one\"], \"_id\": \"1\"}", d.toJson());
     }
 
     // Test in Java to make sure none of the casts result in compiler warnings or class cast exceptions
