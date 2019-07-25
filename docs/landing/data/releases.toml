@@ -1,7 +1,7 @@
 current = "3.10.2"
 
 [[versions]]
-  version = "3.11.0-beta4"
+  version = "3.11.0-rc0"
   docs = "./3.11"
   api = "./3.11/javadoc"
 
@@ -74,15 +74,15 @@ current = "3.10.2"
 [[drivers]]
   name = "mongodb-driver-sync"
   description = "The synchronous driver, new in 3.7."
-  versions = "3.11.0-beta4,3.10.2,3.9.0,3.8.2,3.7.1"
+  versions = "3.11.0-rc0,3.10.2,3.9.0,3.8.2,3.7.1"
 
 [[drivers]]
   name = "mongodb-driver-legacy"
   description = "The legacy API for the synchronous driver.<br/>Prefer mongodb-driver-sync for new applications"
-  versions = "3.11.0-beta4,3.10.2,3.9.0"
+  versions = "3.11.0-rc0,3.10.2,3.9.0"
 
 [[drivers]]
   name = "mongodb-driver-async"
   description = "The callback-based asynchronous driver.<br/>Prefer the Reactive Streams driver for new applications."
-  versions = "3.11.0-beta4,3.10.2,3.9.0,3.8.2,3.7.1,3.6.4,3.5.0,3.4.3,3.3.0,3.2.2,3.1.1,3.0.4"
+  versions = "3.11.0-rc0,3.10.2,3.9.0,3.8.2,3.7.1,3.6.4,3.5.0,3.4.3,3.3.0,3.2.2,3.1.1,3.0.4"
 
