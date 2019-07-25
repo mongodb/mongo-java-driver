@@ -20,6 +20,7 @@ import com.mongodb.client.JsonPoweredCrudTestHelper;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import org.bson.BsonArray;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
@@ -70,6 +71,7 @@ public class CrudTest extends DatabaseTestCase {
     @Before
     public void setUp() {
         assumeFalse(skipTest);
+        assumeFalse(description.startsWith("Aggregate with $listLocalSessions"));
         database = getMongoClient().getDatabase(databaseName);
         collection = database.getCollection(getClass().getName(), BsonDocument.class);
         if (!data.isEmpty()) {
@@ -91,30 +93,51 @@ public class CrudTest extends DatabaseTestCase {
 
     @Test
     public void shouldPassAllOutcomes() {
-        BsonDocument outcome = helper.getOperationResults(definition.getDocument("operation"));
-        BsonDocument expectedOutcome = definition.getDocument("outcome");
+        BsonDocument expectedOutcome = definition.getDocument("outcome", null);
+        // check if v1 test
+        if (definition.containsKey("operation")) {
+            runOperation(expectedOutcome, definition.getDocument("operation"),
+                    expectedOutcome != null && expectedOutcome.containsKey("result") && expectedOutcome.isDocument("result")
+                            ? expectedOutcome.get("result") : null);
+        } else {  // v2 test
+            BsonArray operations = definition.getArray("operations");
+            for (BsonValue operation : operations) {
+                runOperation(expectedOutcome, operation.asDocument(), operation.asDocument().get("result", null));
+            }
+        }
+    }
 
-        if (expectedOutcome.containsKey("error")) {
-            assertEquals("Expected error", expectedOutcome.getBoolean("error"), outcome.get("error"));
+    private void runOperation(final BsonDocument expectedOutcome, final BsonDocument operation, final BsonValue expectedResult) {
+        BsonDocument outcome = null;
+        boolean wasException = false;
+        try {
+            outcome = helper.getOperationResults(operation);
+        } catch (Exception e) {
+            wasException = true;
         }
 
-        // Hack to workaround the lack of upsertedCount
-        BsonValue expectedResult = expectedOutcome.get("result");
-        BsonValue actualResult = outcome.get("result");
-        if (actualResult.isDocument()
-                && actualResult.asDocument().containsKey("upsertedCount")
-                && actualResult.asDocument().getNumber("upsertedCount").intValue() == 0
-                && !expectedResult.asDocument().containsKey("upsertedCount")) {
-            expectedResult.asDocument().append("upsertedCount", actualResult.asDocument().get("upsertedCount"));
+        if (operation.getBoolean("error", BsonBoolean.FALSE).getValue()) {
+            assertEquals(operation.containsKey("error"), wasException);
         }
 
-        // Hack to workaround the lack of insertedIds
-        if (expectedResult.isDocument()
-                && !expectedResult.asDocument().containsKey("insertedIds")) {
-            actualResult.asDocument().remove("insertedIds");
-        }
+        if (expectedResult != null) {
+            // Hack to workaround the lack of upsertedCount
+            BsonValue actualResult = outcome.get("result");
+            if (actualResult.isDocument()
+                    && actualResult.asDocument().containsKey("upsertedCount")
+                    && actualResult.asDocument().getNumber("upsertedCount").intValue() == 0
+                    && !expectedResult.asDocument().containsKey("upsertedCount")) {
+                expectedResult.asDocument().append("upsertedCount", actualResult.asDocument().get("upsertedCount"));
+            }
 
-        assertEquals(description, expectedResult, actualResult);
+            // Hack to workaround the lack of insertedIds
+            if (expectedResult.isDocument()
+                    && !expectedResult.asDocument().containsKey("insertedIds")) {
+                actualResult.asDocument().remove("insertedIds");
+            }
+
+            assertEquals(description, expectedResult, actualResult);
+        }
 
         if (expectedOutcome.containsKey("collection")) {
             assertCollectionEquals(expectedOutcome.getDocument("collection"));
@@ -133,7 +156,8 @@ public class CrudTest extends DatabaseTestCase {
             for (BsonValue test: testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
                         testDocument.getString("database_name", new BsonString(getDefaultDatabaseName())).getValue(),
-                        testDocument.getArray("data"), test.asDocument(), skipTest(testDocument, test.asDocument(), getServerVersion())});
+                        testDocument.getArray("data", new BsonArray()), test.asDocument(),
+                        skipTest(testDocument, test.asDocument(), getServerVersion())});
             }
         }
         return data;
