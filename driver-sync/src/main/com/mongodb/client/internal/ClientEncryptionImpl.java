@@ -35,7 +35,7 @@ public class ClientEncryptionImpl implements ClientEncryption, Closeable {
     private final MongoClient keyVaultClient;
 
     public ClientEncryptionImpl(final ClientEncryptionSettings options) {
-        keyVaultClient = MongoClients.create(options.getKeyVaultMongoClientSettings());
+        this.keyVaultClient = MongoClients.create(options.getKeyVaultMongoClientSettings());
         this.crypt = Crypts.create(SimpleMongoClients.create(keyVaultClient), options);
         this.options = options;
     }
@@ -67,6 +67,7 @@ public class ClientEncryptionImpl implements ClientEncryption, Closeable {
 
     @Override
     public void close() {
+        crypt.close();
         keyVaultClient.close();
     }
 }

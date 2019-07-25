@@ -14,9 +14,11 @@
  * limitations under the License.
  */
 
-package com.mongodb.client.internal;
+package com.mongodb.async.client.internal;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.client.MongoClient;
 import org.bson.BsonDocument;
 
 import java.io.Closeable;
@@ -26,19 +28,19 @@ import java.util.List;
 import static com.mongodb.assertions.Assertions.notNull;
 
 class KeyRetriever implements Closeable {
-    private final SimpleMongoClient client;
+    private final MongoClient client;
     private final boolean ownsClient;
     private final MongoNamespace namespace;
 
-    KeyRetriever(final SimpleMongoClient client, final boolean ownsClient, final MongoNamespace namespace) {
+    KeyRetriever(final MongoClient client, final boolean ownsClient, final MongoNamespace namespace) {
         this.client = notNull("client", client);
         this.ownsClient = ownsClient;
         this.namespace = notNull("namespace", namespace);
     }
 
-    public List<BsonDocument> find(final BsonDocument keyFilter) {
-        return client.getDatabase(namespace.getDatabaseName()).getCollection(namespace.getCollectionName(), BsonDocument.class)
-                .find(keyFilter).into(new ArrayList<BsonDocument>());
+    public void find(final BsonDocument keyFilter, final SingleResultCallback<List<BsonDocument>> callback) {
+        client.getDatabase(namespace.getDatabaseName()).getCollection(namespace.getCollectionName(), BsonDocument.class)
+                .find(keyFilter).into(new ArrayList<BsonDocument>(), callback);
     }
 
     @Override

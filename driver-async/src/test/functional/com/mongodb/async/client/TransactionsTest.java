@@ -295,8 +295,6 @@ public class TransactionsTest {
             futureResultCallback.get();
         } catch (RuntimeException e) {
             throw e;
-        } catch (InterruptedException e) {
-            throw new RuntimeException("Interrupted", e);
         } finally {
             client.close();
         }
@@ -590,13 +588,8 @@ public class TransactionsTest {
         private void executeCommand(final BsonDocument doc) {
             if (adminDB != null) {
                 FutureResultCallback<BsonDocument> futureResultCallback = new FutureResultCallback<BsonDocument>();
-
                 adminDB.runCommand(doc, BsonDocument.class, futureResultCallback);
-                try {
-                    futureResultCallback.get();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException("Interrupted", e);
-                }
+                futureResultCallback.get();
             } else {
                 collectionHelper.runAdminCommand(doc);
             }

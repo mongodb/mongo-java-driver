@@ -17,6 +17,7 @@
 package com.mongodb.client.internal;
 
 import com.mongodb.MongoSocketOpenException;
+import com.mongodb.MongoSocketReadException;
 import com.mongodb.MongoSocketWriteException;
 import com.mongodb.ServerAddress;
 
@@ -32,7 +33,7 @@ import java.nio.ByteBuffer;
 class KeyManagementService {
     private final SSLContext sslContext;
     private final int port;
-    private int timeoutMillis;
+    private final int timeoutMillis;
 
     KeyManagementService(final SSLContext sslContext, final int port, final int timeoutMillis) {
         this.sslContext = sslContext;
@@ -73,7 +74,7 @@ class KeyManagementService {
             return socket.getInputStream();
         } catch (IOException e) {
             closeSocket(socket);
-            throw new MongoSocketWriteException("Exception receiving message from Key Management Service",
+            throw new MongoSocketReadException("Exception receiving message from Key Management Service",
                     new ServerAddress(host, port), e);
         }
     }

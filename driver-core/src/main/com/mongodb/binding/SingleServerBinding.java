@@ -22,6 +22,7 @@ import com.mongodb.connection.Cluster;
 import com.mongodb.connection.Connection;
 import com.mongodb.connection.Server;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.binding.AbstractReferenceCounted;
 import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.selector.ServerAddressSelector;
 import com.mongodb.session.SessionContext;

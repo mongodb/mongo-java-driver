@@ -14,11 +14,13 @@
  * limitations under the License.
  */
 
-package com.mongodb.binding;
+package com.mongodb.internal.binding;
+
+import com.mongodb.binding.ReferenceCounted;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-abstract class AbstractReferenceCounted implements ReferenceCounted {
+public abstract class AbstractReferenceCounted implements ReferenceCounted {
     private final AtomicInteger referenceCount = new AtomicInteger(1);
     @Override
     public int getCount() {

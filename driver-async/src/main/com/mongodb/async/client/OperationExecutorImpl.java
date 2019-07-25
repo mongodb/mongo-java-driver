@@ -25,10 +25,13 @@ import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.client.internal.Crypt;
+import com.mongodb.async.client.internal.AsyncCryptBinding;
 import com.mongodb.binding.AsyncClusterBinding;
 import com.mongodb.binding.AsyncReadWriteBinding;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding;
 import com.mongodb.lang.Nullable;
 import com.mongodb.operation.AsyncReadOperation;
 import com.mongodb.operation.AsyncWriteOperation;
@@ -169,8 +172,14 @@ class OperationExecutorImpl implements OperationExecutor {
                                      @Nullable final ClientSession session, final boolean ownsSession,
                                      final SingleResultCallback<AsyncReadWriteBinding> callback) {
         notNull("readPreference", readPreference);
-        AsyncReadWriteBinding readWriteBinding = new AsyncClusterBinding(mongoClient.getCluster(),
+        AsyncClusterAwareReadWriteBinding readWriteBinding = new AsyncClusterBinding(mongoClient.getCluster(),
                 getReadPreferenceForBinding(readPreference, session), readConcern);
+
+        Crypt crypt = mongoClient.getCrypt();
+        if (crypt != null) {
+            readWriteBinding = new AsyncCryptBinding(readWriteBinding, crypt);
+        }
+
         if (session != null) {
             callback.onResult(new ClientSessionBinding(session, ownsSession, readWriteBinding), null);
         } else {

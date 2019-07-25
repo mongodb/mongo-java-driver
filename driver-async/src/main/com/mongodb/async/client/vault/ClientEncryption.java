@@ -14,8 +14,9 @@
  * limitations under the License.
  */
 
-package com.mongodb.client.vault;
+package com.mongodb.async.client.vault;
 
+import com.mongodb.async.SingleResultCallback;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
 import org.bson.BsonBinary;
@@ -40,9 +41,9 @@ public interface ClientEncryption extends Closeable {
      * </p>
      *
      * @param kmsProvider the KMS provider
-     * @return the identifier for the created data key
+     * @param callback the callback containing the identifier for the created data key
      */
-    BsonBinary createDataKey(String kmsProvider);
+    void createDataKey(String kmsProvider, SingleResultCallback<BsonBinary> callback);
 
     /**
      * Create a data key with the given KMS provider and options.
@@ -53,9 +54,9 @@ public interface ClientEncryption extends Closeable {
      *
      * @param kmsProvider    the KMS provider
      * @param dataKeyOptions the options for data key creation
-     * @return the identifier for the created data key
+     * @param callback the callback containing the identifier for the created data key
      */
-    BsonBinary createDataKey(String kmsProvider, DataKeyOptions dataKeyOptions);
+    void createDataKey(String kmsProvider, DataKeyOptions dataKeyOptions, SingleResultCallback<BsonBinary> callback);
 
     /**
      * Encrypt the given value with the given options.
@@ -65,17 +66,17 @@ public interface ClientEncryption extends Closeable {
      *
      * @param value   the value to encrypt
      * @param options the options for data encryption
-     * @return the encrypted value, a BSON binary of subtype 6
+     * @param callback the callback containing the encrypted value, a BSON binary of subtype 6
      */
-    BsonBinary encrypt(BsonValue value, EncryptOptions options);
+    void encrypt(BsonValue value, EncryptOptions options, SingleResultCallback<BsonBinary> callback);
 
     /**
      * Decrypt the given value.
      *
      * @param value the value to decrypt, which must be of subtype 6
-     * @return the decrypted value
+     * @param callback the callback containing the decrypted value
      */
-    BsonValue decrypt(BsonBinary value);
+    void decrypt(BsonBinary value, SingleResultCallback<BsonValue> callback);
 
     @Override
     void close();

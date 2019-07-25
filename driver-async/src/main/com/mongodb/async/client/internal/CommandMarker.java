@@ -14,23 +14,22 @@
  * limitations under the License.
  */
 
-package com.mongodb.client.internal;
+package com.mongodb.async.client.internal;
 
 import com.mongodb.Block;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
-import com.mongodb.MongoException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
+import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.client.MongoClient;
+import com.mongodb.async.client.MongoClients;
 import com.mongodb.connection.ClusterSettings;
 import org.bson.RawBsonDocument;
 
 import java.io.Closeable;
-import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -51,7 +50,7 @@ class CommandMarker implements Closeable {
             connectionString = "mongodb://localhost:27020";
         }
 
-        this.client = MongoClients.create(MongoClientSettings.builder()
+        client = MongoClients.create(MongoClientSettings.builder()
                 .applyConnectionString(new ConnectionString(connectionString))
                 .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
                     @Override
@@ -60,7 +59,7 @@ class CommandMarker implements Closeable {
                     }
                 })
                 .build());
-        this.active = false;
+        active = false;
 
         if (!options.containsKey("mongocryptdBypassSpawn") || !((Boolean) options.get("mongocryptdBypassSpawn"))) {
             processBuilder = new ProcessBuilder(createMongocryptdSpawnArgs(options));
@@ -69,22 +68,29 @@ class CommandMarker implements Closeable {
         }
     }
 
-    RawBsonDocument mark(final String databaseName, final RawBsonDocument command) {
-        spawnIfNecesary();
-
-        try {
-            try {
-                return executeCommand(databaseName, command);
-            } catch (MongoTimeoutException e) {
-                if (processBuilder == null) {  // mongocryptdBypassSpawn=true
-                    throw e;
+    void mark(final String databaseName, final RawBsonDocument command, final SingleResultCallback<RawBsonDocument> callback) {
+        final SingleResultCallback<RawBsonDocument> wrappedCallback = new SingleResultCallback<RawBsonDocument>() {
+            @Override
+            public void onResult(final RawBsonDocument result, final Throwable t) {
+                if (t != null) {
+                    callback.onResult(null, new MongoClientException("Exception in encryption library: " + t.getMessage(), t));
+                } else {
+                    callback.onResult(result, null);
                 }
-                spawnIfNecesary();
-                return executeCommand(databaseName, command);
             }
-        } catch (MongoException e) {
-            throw wrapInClientException(e);
-        }
+        };
+        executeCommand(databaseName, command, new SingleResultCallback<RawBsonDocument>() {
+            @Override
+            public void onResult(final RawBsonDocument result, final Throwable t) {
+                if (t == null) {
+                    wrappedCallback.onResult(result, null);
+                } else if (t instanceof MongoTimeoutException && processBuilder != null) {
+                    executeCommand(databaseName, command, wrappedCallback);
+                } else {
+                    wrappedCallback.onResult(null, t);
+                }
+            }
+        });
     }
 
     @Override
@@ -92,14 +98,24 @@ class CommandMarker implements Closeable {
         client.close();
     }
 
-    private RawBsonDocument executeCommand(final String databaseName, final RawBsonDocument markableCommand) {
-        return client.getDatabase(databaseName)
-                .withReadConcern(ReadConcern.DEFAULT)
-                .withReadPreference(ReadPreference.primary())
-                .runCommand(markableCommand, RawBsonDocument.class);
+    private void executeCommand(final String databaseName, final RawBsonDocument markableCommand,
+                                final SingleResultCallback<RawBsonDocument> callback) {
+        spawnIfNecessary(new SingleResultCallback<Void>(){
+            @Override
+            public void onResult(final Void result, final Throwable t) {
+                if (t != null) {
+                    callback.onResult(null, t);
+                } else {
+                    client.getDatabase(databaseName)
+                            .withReadConcern(ReadConcern.DEFAULT)
+                            .withReadPreference(ReadPreference.primary())
+                            .runCommand(markableCommand, RawBsonDocument.class, callback);
+                }
+            }
+        });
     }
 
-    private synchronized void spawnIfNecesary() {
+    private synchronized void spawnIfNecessary(final SingleResultCallback<Void> callback) {
         try {
             if (processBuilder != null) {
                 synchronized (this) {
@@ -109,13 +125,11 @@ class CommandMarker implements Closeable {
                     }
                 }
             }
-        } catch (IOException e) {
-            throw new MongoClientException("Exception starting mongocryptd process. Is `mongocryptd` on the system path?", e);
+            callback.onResult(null, null);
+        } catch (Throwable t) {
+            callback.onResult(null,
+                    new MongoClientException("Exception starting mongocryptd process. Is `mongocryptd` on the system path?", t));
         }
-    }
-
-    private MongoClientException wrapInClientException(final MongoException e) {
-        return new MongoClientException("Exception in encryption library: " + e.getMessage(), e);
     }
 
 }

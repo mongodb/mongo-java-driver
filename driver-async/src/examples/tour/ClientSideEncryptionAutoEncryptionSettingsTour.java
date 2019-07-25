@@ -20,12 +20,13 @@ import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoCollection;
+import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.client.MongoClient;
+import com.mongodb.async.client.MongoClients;
+import com.mongodb.async.client.MongoCollection;
+import com.mongodb.async.client.vault.ClientEncryption;
+import com.mongodb.async.client.vault.ClientEncryptions;
 import com.mongodb.client.model.vault.DataKeyOptions;
-import com.mongodb.client.vault.ClientEncryption;
-import com.mongodb.client.vault.ClientEncryptions;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
 import org.bson.Document;
@@ -34,6 +35,8 @@ import java.security.SecureRandom;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * ClientSideEncryption AutoEncryptionSettings tour
@@ -46,8 +49,9 @@ public class ClientSideEncryptionAutoEncryptionSettingsTour {
      * Requires the mongodb-crypt library in the class path and mongocryptd on the system path.
      *
      * @param args ignored args
+     * @throws InterruptedException if interrupting waiting on a latch
      */
-    public static void main(final String[] args) {
+    public static void main(final String[] args) throws InterruptedException {
 
         // This would have to be the same master key as was used to create the encryption key
         final byte[] localMasterKey = new byte[96];
@@ -69,8 +73,17 @@ public class ClientSideEncryptionAutoEncryptionSettingsTour {
                 .build();
 
         ClientEncryption clientEncryption = ClientEncryptions.create(clientEncryptionSettings);
-        BsonBinary dataKeyId = clientEncryption.createDataKey("local", new DataKeyOptions());
-        final String base64DataKeyId = Base64.getEncoder().encodeToString(dataKeyId.getData());
+
+        final CountDownLatch createKeyLatch = new CountDownLatch(1);
+        final AtomicReference<String> base64DataKeyId = new AtomicReference<String>();
+        clientEncryption.createDataKey("local", new DataKeyOptions(), new SingleResultCallback<BsonBinary>() {
+            @Override
+            public void onResult(final BsonBinary dataKeyId, final Throwable t) {
+                base64DataKeyId.set(Base64.getEncoder().encodeToString(dataKeyId.getData()));
+                createKeyLatch.countDown();
+            }
+        });
+        createKeyLatch.await();
 
         final String dbName = "test";
         final String collName = "coll";
@@ -86,7 +99,7 @@ public class ClientSideEncryptionAutoEncryptionSettingsTour {
                                     + "      encrypt: {"
                                     + "        keyId: [{"
                                     + "          \"$binary\": {"
-                                    + "            \"base64\": \"" + base64DataKeyId + "\","
+                                    + "            \"base64\": \"" + base64DataKeyId.get() + "\","
                                     + "            \"subType\": \"04\""
                                     + "          }"
                                     + "        }],"
@@ -105,11 +118,35 @@ public class ClientSideEncryptionAutoEncryptionSettingsTour {
 
         MongoClient mongoClient = MongoClients.create(clientSettings);
         MongoCollection<Document> collection = mongoClient.getDatabase("test").getCollection("coll");
-        collection.drop(); // Clear old data
+        final CountDownLatch dropLatch = new CountDownLatch(1);
+        collection.drop(new SingleResultCallback<Void>() {
+            @Override
+            public void onResult(final Void result, final Throwable t) {
+                dropLatch.countDown();
+            }
+        });
+        dropLatch.await();
 
-        collection.insertOne(new Document("encryptedField", "123456789"));
+        final CountDownLatch insertLatch = new CountDownLatch(1);
+        collection.insertOne(new Document("encryptedField", "123456789"),
+                new SingleResultCallback<Void>() {
+                    @Override
+                    public void onResult(final Void result, final Throwable t) {
+                        System.out.println("Inserted!");
+                        insertLatch.countDown();
+                    }
+                });
+        insertLatch.await();
 
-        System.out.println(collection.find().first().toJson());
+        final CountDownLatch findLatch = new CountDownLatch(1);
+        collection.find().first(new SingleResultCallback<Document>() {
+            @Override
+            public void onResult(final Document result, final Throwable t) {
+                System.out.println(result.toJson());
+                findLatch.countDown();
+            }
+        });
+        findLatch.await();
 
         // release resources
         mongoClient.close();

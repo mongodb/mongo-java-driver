@@ -492,7 +492,6 @@ class MongoClientSettingsSpecification extends Specification {
         def actual = MongoClientSettings.Builder.declaredMethods.grep { !it.synthetic } *.name.sort() - extras
         def expected = com.mongodb.MongoClientSettings.Builder.declaredMethods.grep { !it.synthetic } *.name.sort()
         expected -= 'commandListenerList'
-        expected -= 'autoEncryptionSettings'
 
         then:
         actual == expected

@@ -57,20 +57,20 @@ public class FutureResultCallback<T> implements SingleResultCallback<T>, Future<
     }
 
     @Override
-    public T get() throws InterruptedException {
-        latch.await();
-        if (result.hasError()) {
-            throw MongoException.fromThrowable(result.getError());
-        } else {
-            return result.getResult();
-        }
+    public T get() {
+        return get(5, TimeUnit.MINUTES);
     }
 
     @Override
-    public T get(final long timeout, final TimeUnit unit) throws InterruptedException {
-        if (!latch.await(timeout, unit)) {
-            throw new MongoTimeoutException("Callback timed out");
+    public T get(final long timeout, final TimeUnit unit) {
+        try {
+            if (!latch.await(timeout, unit)) {
+                throw new MongoTimeoutException("Callback timed out");
+            }
+        } catch (InterruptedException e) {
+            throw new MongoException("Latch interrupted");
         }
+
         if (result.hasError()) {
             if (result.getError() instanceof RuntimeException) {
                 throw (RuntimeException) result.getError();
