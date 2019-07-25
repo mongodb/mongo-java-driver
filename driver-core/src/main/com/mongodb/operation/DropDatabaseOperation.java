@@ -36,6 +36,9 @@ import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTransformer;
+import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
+import static com.mongodb.operation.OperationHelper.CallableWithConnection;
+import static com.mongodb.operation.OperationHelper.withAsyncConnection;
 
 /**
  * Operation to drop a database in MongoDB.  The {@code execute} method throws MongoCommandFailureException if something goes wrong, but
@@ -85,7 +88,7 @@ public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOp
 
     @Override
     public Void execute(final WriteBinding binding) {
-        return withConnection(binding, new OperationHelper.CallableWithConnection<Void>() {
+        return withConnection(binding, new CallableWithConnection<Void>() {
             @Override
             public Void call(final Connection connection) {
                 executeCommand(binding, databaseName, getCommand(connection.getDescription()), connection, writeConcernErrorTransformer());
@@ -96,7 +99,7 @@ public class DropDatabaseOperation implements AsyncWriteOperation<Void>, WriteOp
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withConnection(binding, new OperationHelper.AsyncCallableWithConnection() {
+        withAsyncConnection(binding, new AsyncCallableWithConnection() {
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
                 SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);

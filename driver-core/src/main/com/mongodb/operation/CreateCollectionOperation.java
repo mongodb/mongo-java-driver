@@ -45,6 +45,8 @@ import static com.mongodb.operation.OperationHelper.validateCollation;
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTransformer;
+import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
+import static com.mongodb.operation.OperationHelper.withAsyncConnection;
 
 /**
  * An operation to create a collection
@@ -389,7 +391,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withConnection(binding, new OperationHelper.AsyncCallableWithConnection() {
+        withAsyncConnection(binding, new AsyncCallableWithConnection() {
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
                 SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
@@ -397,7 +399,7 @@ public class CreateCollectionOperation implements AsyncWriteOperation<Void>, Wri
                     errHandlingCallback.onResult(null, t);
                 } else {
                     final SingleResultCallback<Void> wrappedCallback = releasingCallback(errHandlingCallback, connection);
-                    validateCollation(connection, collation, new OperationHelper.AsyncCallableWithConnection() {
+                    validateCollation(connection, collation, new AsyncCallableWithConnection() {
                         @Override
                         public void call(final AsyncConnection connection, final Throwable t) {
                             if (t != null) {

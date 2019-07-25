@@ -56,8 +56,9 @@ import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.canRetryRead;
 import static com.mongodb.operation.OperationHelper.canRetryWrite;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
-import static com.mongodb.operation.OperationHelper.withConnection;
-import static com.mongodb.operation.OperationHelper.withConnectionSource;
+import static com.mongodb.operation.OperationHelper.withAsyncConnection;
+import static com.mongodb.operation.OperationHelper.withAsyncReadConnection;
+import static com.mongodb.operation.OperationHelper.withReadConnectionSource;
 import static com.mongodb.operation.OperationHelper.withReleasableConnection;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -198,7 +199,7 @@ final class CommandOperationHelper {
 
     static <D, T> T executeCommand(final ReadBinding binding, final String database, final CommandCreator commandCreator,
                                    final Decoder<D> decoder, final CommandReadTransformer<D, T> transformer, final boolean retryReads) {
-        return withConnectionSource(binding, new CallableWithSource<T>() {
+        return withReadConnectionSource(binding, new CallableWithSource<T>() {
             @Override
             public T call(final ConnectionSource source) {
                 return executeCommandWithConnection(binding, source, database, commandCreator, decoder,
@@ -404,7 +405,7 @@ final class CommandOperationHelper {
                                            final boolean retryReads,
                                            final SingleResultCallback<T> originalCallback) {
         final SingleResultCallback<T> errorHandlingCallback = errorHandlingCallback(originalCallback, LOGGER);
-        withConnection(binding, new AsyncCallableWithConnectionAndSource() {
+        withAsyncReadConnection(binding, new AsyncCallableWithConnectionAndSource() {
             @Override
             public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
                 if (t != null) {
@@ -497,7 +498,7 @@ final class CommandOperationHelper {
             }
 
             private void retryableCommand(final Throwable originalError) {
-                withConnection(binding, new AsyncCallableWithConnectionAndSource() {
+                withAsyncReadConnection(binding, new AsyncCallableWithConnectionAndSource() {
                     @Override
                     public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
                         if (t != null) {
@@ -837,7 +838,7 @@ final class CommandOperationHelper {
             private void retryableCommand(final Throwable originalError) {
                 final BsonDocument retryCommand = retryCommandModifier.apply(command);
                 logRetryExecute(retryCommand.getFirstKey(), originalError);
-                withConnection(binding, new AsyncCallableWithConnectionAndSource() {
+                withAsyncConnection(binding, new AsyncCallableWithConnectionAndSource() {
                     @Override
                     public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
                         if (t != null) {

@@ -70,8 +70,8 @@ import static com.mongodb.operation.OperationHelper.createEmptyBatchCursor;
 import static com.mongodb.operation.OperationHelper.cursorDocumentToAsyncBatchCursor;
 import static com.mongodb.operation.OperationHelper.cursorDocumentToBatchCursor;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
-import static com.mongodb.operation.OperationHelper.withConnection;
-import static com.mongodb.operation.OperationHelper.withConnectionSource;
+import static com.mongodb.operation.OperationHelper.withAsyncReadConnection;
+import static com.mongodb.operation.OperationHelper.withReadConnectionSource;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
@@ -228,7 +228,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return withConnectionSource(binding, new CallableWithSource<BatchCursor<T>>() {
+        return withReadConnectionSource(binding, new CallableWithSource<BatchCursor<T>>() {
             @Override
             public BatchCursor<T> call(final ConnectionSource source) {
                 Connection connection = source.getConnection();
@@ -256,7 +256,7 @@ public class ListCollectionsOperation<T> implements AsyncReadOperation<AsyncBatc
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        withConnection(binding, new AsyncCallableWithConnectionAndSource() {
+        withAsyncReadConnection(binding, new AsyncCallableWithConnectionAndSource() {
             @Override
             public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
                 SingleResultCallback<AsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
