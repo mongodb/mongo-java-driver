@@ -33,7 +33,7 @@ import java.util.List;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
 import static com.mongodb.operation.ChangeStreamBatchCursorHelper.isRetryableError;
 import static com.mongodb.operation.OperationHelper.LOGGER;
-import static com.mongodb.operation.OperationHelper.withConnection;
+import static com.mongodb.operation.OperationHelper.withAsyncReadConnection;
 
 final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBatchCursor<T> {
     private final AsyncReadBinding binding;
@@ -170,7 +170,7 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
     }
 
     private void retryOperation(final AsyncBlock asyncBlock, final SingleResultCallback<List<RawBsonDocument>> callback) {
-        withConnection(binding, new AsyncCallableWithSource() {
+        withAsyncReadConnection(binding, new AsyncCallableWithSource() {
             @Override
             public void call(final AsyncConnectionSource source, final Throwable t) {
                 if (t != null) {

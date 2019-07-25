@@ -457,7 +457,7 @@ final class OperationHelper {
         }
     }
 
-    static <T> T withConnectionSource(final ReadBinding binding, final CallableWithSource<T> callable) {
+    static <T> T withReadConnectionSource(final ReadBinding binding, final CallableWithSource<T> callable) {
         ConnectionSource source = binding.getReadConnectionSource();
         try {
             return callable.call(source);
@@ -542,23 +542,19 @@ final class OperationHelper {
         }
     }
 
-    static void withConnection(final AsyncWriteBinding binding, final AsyncCallableWithConnection callable) {
+    static void withAsyncConnection(final AsyncWriteBinding binding, final AsyncCallableWithConnection callable) {
         binding.getWriteConnectionSource(errorHandlingCallback(new AsyncCallableWithConnectionCallback(callable), LOGGER));
     }
 
-    static void withConnection(final AsyncWriteBinding binding, final AsyncCallableWithConnectionAndSource callable) {
+    static void withAsyncConnection(final AsyncWriteBinding binding, final AsyncCallableWithConnectionAndSource callable) {
         binding.getWriteConnectionSource(errorHandlingCallback(new AsyncCallableWithConnectionAndSourceCallback(callable), LOGGER));
     }
 
-    static void withConnection(final AsyncReadBinding binding, final AsyncCallableWithConnection callable) {
-        binding.getReadConnectionSource(errorHandlingCallback(new AsyncCallableWithConnectionCallback(callable), LOGGER));
-    }
-
-    static void withConnection(final AsyncReadBinding binding, final AsyncCallableWithSource callable) {
+    static void withAsyncReadConnection(final AsyncReadBinding binding, final AsyncCallableWithSource callable) {
         binding.getReadConnectionSource(errorHandlingCallback(new AsyncCallableWithSourceCallback(callable), LOGGER));
     }
 
-    static void withConnection(final AsyncReadBinding binding, final AsyncCallableWithConnectionAndSource callable) {
+    static void withAsyncReadConnection(final AsyncReadBinding binding, final AsyncCallableWithConnectionAndSource callable) {
         binding.getReadConnectionSource(errorHandlingCallback(new AsyncCallableWithConnectionAndSourceCallback(callable), LOGGER));
     }
 
@@ -572,7 +568,7 @@ final class OperationHelper {
             if (t != null) {
                 callable.call(null, t);
             } else {
-                withConnectionSource(source, callable);
+                withAsyncConnectionSourceCallableConnection(source, callable);
             }
         }
     }
@@ -587,12 +583,13 @@ final class OperationHelper {
             if (t != null) {
                 callable.call(null, t);
             } else {
-                withConnectionSource(source, callable);
+                withAsyncConnectionSource(source, callable);
             }
         }
     }
 
-    private static void withConnectionSource(final AsyncConnectionSource source, final AsyncCallableWithConnection callable) {
+    private static void withAsyncConnectionSourceCallableConnection(final AsyncConnectionSource source,
+                                                                    final AsyncCallableWithConnection callable) {
         source.getConnection(new SingleResultCallback<AsyncConnection>() {
             @Override
             public void onResult(final AsyncConnection connection, final Throwable t) {
@@ -606,11 +603,11 @@ final class OperationHelper {
         });
     }
 
-    private static void withConnectionSource(final AsyncConnectionSource source, final AsyncCallableWithSource callable) {
+    private static void withAsyncConnectionSource(final AsyncConnectionSource source, final AsyncCallableWithSource callable) {
         callable.call(source, null);
     }
 
-    private static void withConnectionSource(final AsyncConnectionSource source, final AsyncCallableWithConnectionAndSource callable) {
+    private static void withAsyncConnectionSource(final AsyncConnectionSource source, final AsyncCallableWithConnectionAndSource callable) {
         source.getConnection(new SingleResultCallback<AsyncConnection>() {
             @Override
             public void onResult(final AsyncConnection result, final Throwable t) {
@@ -631,7 +628,7 @@ final class OperationHelper {
             if (t != null) {
                 callable.call(null, null, t);
             } else {
-                withConnectionSource(source, callable);
+                withAsyncConnectionSource(source, callable);
             }
         }
     }

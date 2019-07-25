@@ -59,7 +59,7 @@ import static com.mongodb.operation.OperationHelper.ConnectionReleasingWrappedCa
 import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.isRetryableWrite;
 import static com.mongodb.operation.OperationHelper.validateWriteRequests;
-import static com.mongodb.operation.OperationHelper.withConnection;
+import static com.mongodb.operation.OperationHelper.withAsyncConnection;
 import static com.mongodb.operation.OperationHelper.withReleasableConnection;
 
 /**
@@ -212,7 +212,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<BulkWriteResult> callback) {
         final SingleResultCallback<BulkWriteResult> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-        withConnection(binding, new AsyncCallableWithConnectionAndSource() {
+        withAsyncConnection(binding, new AsyncCallableWithConnectionAndSource() {
             @Override
             public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
                 if (t != null) {
@@ -353,7 +353,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
     private void retryExecuteBatchesAsync(final AsyncWriteBinding binding, final BulkWriteBatch retryBatch,
                                           final Throwable originalError, final SingleResultCallback<BulkWriteResult> callback) {
         logRetryExecute(retryBatch.getPayload().getPayloadType().toString(), originalError);
-        withConnection(binding, new AsyncCallableWithConnectionAndSource() {
+        withAsyncConnection(binding, new AsyncCallableWithConnectionAndSource() {
             @Override
             public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
                 if (t != null) {

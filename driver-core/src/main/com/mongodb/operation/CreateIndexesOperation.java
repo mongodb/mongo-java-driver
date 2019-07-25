@@ -59,6 +59,7 @@ import static com.mongodb.operation.OperationHelper.validateIndexRequestCollatio
 import static com.mongodb.operation.OperationHelper.withConnection;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
 import static com.mongodb.operation.CommandOperationHelper.writeConcernErrorTransformer;
+import static com.mongodb.operation.OperationHelper.withAsyncConnection;
 
 /**
  * An operation that creates one or more indexes.
@@ -185,7 +186,7 @@ public class CreateIndexesOperation implements AsyncWriteOperation<Void>, WriteO
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withConnection(binding, new AsyncCallableWithConnection() {
+        withAsyncConnection(binding, new AsyncCallableWithConnection() {
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
                 SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);

@@ -56,6 +56,7 @@ import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.validateCollation;
 import static com.mongodb.operation.OperationHelper.withConnection;
+import static com.mongodb.operation.OperationHelper.withAsyncConnection;
 
 /**
  * An operation that executes an aggregation that writes its results to a collection (which is what makes this a write operation rather than
@@ -377,7 +378,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withConnection(binding, new AsyncCallableWithConnection() {
+        withAsyncConnection(binding, new AsyncCallableWithConnection() {
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
                 SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);

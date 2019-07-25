@@ -32,7 +32,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.mongodb.operation.ChangeStreamBatchCursorHelper.isRetryableError;
-import static com.mongodb.operation.OperationHelper.withConnectionSource;
+import static com.mongodb.operation.OperationHelper.withReadConnectionSource;
 
 final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T> {
     private final ReadBinding binding;
@@ -167,7 +167,7 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
             }
             wrapped.close();
 
-            withConnectionSource(binding, new CallableWithSource<Void>() {
+            withReadConnectionSource(binding, new CallableWithSource<Void>() {
                 @Override
                 public Void call(final ConnectionSource source) {
                     changeStreamOperation.setChangeStreamOptionsForResume(resumeToken, source.getServerDescription().getMaxWireVersion());

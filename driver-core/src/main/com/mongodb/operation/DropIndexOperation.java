@@ -46,6 +46,7 @@ import static com.mongodb.operation.DocumentHelper.putIfNotZero;
 import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.withConnection;
+import static com.mongodb.operation.OperationHelper.withAsyncConnection;
 
 /**
  * An operation that drops an index.
@@ -170,7 +171,7 @@ public class DropIndexOperation implements AsyncWriteOperation<Void>, WriteOpera
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withConnection(binding, new AsyncCallableWithConnection() {
+        withAsyncConnection(binding, new AsyncCallableWithConnection() {
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
                 SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);

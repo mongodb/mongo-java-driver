@@ -47,8 +47,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.operation.OperationHelper.withConnection;
-import static com.mongodb.operation.OperationHelper.withConnectionSource;
+import static com.mongodb.operation.OperationHelper.withAsyncReadConnection;
+import static com.mongodb.operation.OperationHelper.withReadConnectionSource;
 
 /**
  * An operation that executes an {@code $changeStream} aggregation.
@@ -333,7 +333,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return withConnectionSource(binding, new CallableWithSource<BatchCursor<T>>() {
+        return withReadConnectionSource(binding, new CallableWithSource<BatchCursor<T>>() {
             @Override
             public BatchCursor<T> call(final ConnectionSource source) {
                 AggregateResponseBatchCursor<RawBsonDocument> cursor =
@@ -355,7 +355,7 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
                 } else {
                     final AsyncAggregateResponseBatchCursor<RawBsonDocument> cursor =
                             (AsyncAggregateResponseBatchCursor<RawBsonDocument>) result;
-                    withConnection(binding, new AsyncCallableWithSource() {
+                    withAsyncReadConnection(binding, new AsyncCallableWithSource() {
                         @Override
                         public void call(final AsyncConnectionSource source, final Throwable t) {
                             if (t != null) {
