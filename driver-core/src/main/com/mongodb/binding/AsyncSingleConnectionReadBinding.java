@@ -20,6 +20,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.ServerDescription;
+import com.mongodb.internal.binding.AbstractReferenceCounted;
 import com.mongodb.internal.connection.NoOpSessionContext;
 import com.mongodb.session.SessionContext;
 

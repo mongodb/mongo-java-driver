@@ -18,14 +18,16 @@ package tour;
 
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.MongoClientSettings;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoCollection;
+import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.client.MongoClient;
+import com.mongodb.async.client.MongoClients;
+import com.mongodb.async.client.MongoCollection;
 import org.bson.Document;
 
 import java.security.SecureRandom;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * ClientSideEncryption Simple tour
@@ -39,17 +41,18 @@ public class ClientSideEncryptionSimpleTour {
      * Assumes the schema has already been created in MongoDB.
      *
      * @param args ignored args
+     * @throws InterruptedException if interrupting waiting on a latch
      */
-    public static void main(final String[] args) {
+    public static void main(final String[] args) throws InterruptedException {
 
         // This would have to be the same master key as was used to create the encryption key
         final byte[] localMasterKey = new byte[96];
         new SecureRandom().nextBytes(localMasterKey);
 
         Map<String, Map<String, Object>> kmsProviders = new HashMap<String, Map<String, Object>>() {{
-           put("local", new HashMap<String, Object>() {{
-               put("key", localMasterKey);
-           }});
+            put("local", new HashMap<String, Object>() {{
+                put("key", localMasterKey);
+            }});
         }};
 
         String keyVaultNamespace = "admin.datakeys";
@@ -65,11 +68,35 @@ public class ClientSideEncryptionSimpleTour {
 
         MongoClient mongoClient = MongoClients.create(clientSettings);
         MongoCollection<Document> collection = mongoClient.getDatabase("test").getCollection("coll");
-        collection.drop(); // Clear old data
+        final CountDownLatch dropLatch = new CountDownLatch(1);
+        collection.drop(new SingleResultCallback<Void>() {
+            @Override
+            public void onResult(final Void result, final Throwable t) {
+                dropLatch.countDown();
+            }
+        });
+        dropLatch.await();
 
-        collection.insertOne(new Document("encryptedField", "123456789"));
+        final CountDownLatch insertLatch = new CountDownLatch(1);
+        collection.insertOne(new Document("encryptedField", "123456789"),
+                new SingleResultCallback<Void>() {
+                    @Override
+                    public void onResult(final Void result, final Throwable t) {
+                        System.out.println("Inserted!");
+                        insertLatch.countDown();
+                    }
+                });
+        insertLatch.await();
 
-        System.out.println(collection.find().first().toJson());
+        final CountDownLatch findLatch = new CountDownLatch(1);
+        collection.find().first(new SingleResultCallback<Document>() {
+            @Override
+            public void onResult(final Document result, final Throwable t) {
+                System.out.println(result.toJson());
+                findLatch.countDown();
+            }
+        });
+        findLatch.await();
 
         // release resources
         mongoClient.close();

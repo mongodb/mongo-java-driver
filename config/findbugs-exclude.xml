@@ -141,6 +141,11 @@
         <Bug pattern="NM_SAME_SIMPLE_NAME_AS_INTERFACE"/>
     </Match>
 
+    <Match>
+        <Class name="~com.mongodb.async.client.internal.AsyncCryptConnection.*"/>
+        <Bug pattern="RV_RETURN_VALUE_IGNORED_NO_SIDE_EFFECT"/>
+    </Match>
+
     <!-- Spotbugs assumes that SSLSocket#getSSLParameters never returns null, when that is not the case for all JDKs -->
     <Match>
         <Class name="com.mongodb.internal.connection.SocketStreamHelper"/>

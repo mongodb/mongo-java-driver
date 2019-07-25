@@ -174,6 +174,7 @@ public final class MongoClientSettings {
             readConcern = settings.getReadConcern();
             credential = settings.getCredential();
             streamFactoryFactory = settings.getStreamFactoryFactory();
+            autoEncryptionSettings = settings.getAutoEncryptionSettings();
             clusterSettingsBuilder.applySettings(settings.getClusterSettings());
             serverSettingsBuilder.applySettings(settings.getServerSettings());
             socketSettingsBuilder.applySettings(settings.getSocketSettings());
@@ -436,9 +437,9 @@ public final class MongoClientSettings {
         }
 
         /**
-         * Sets the key vault options.
+         * Sets the auto-encryption settings
          *
-         * @param autoEncryptionSettings key vault settings
+         * @param autoEncryptionSettings the auto-encryption settings
          * @return this
          * @since 3.11
          * @see #getAutoEncryptionSettings()
@@ -588,6 +589,7 @@ public final class MongoClientSettings {
      * <p>
      * Client side encryption enables an application to specify what fields in a collection must be
      * encrypted, and the driver automatically encrypts commands and decrypts results.
+     * </p>
      * <p>
      * Automatic encryption is an enterprise only feature that only applies to operations on a collection. Automatic encryption is not
      * supported for operations on a database or view and will result in error. To bypass automatic encryption,

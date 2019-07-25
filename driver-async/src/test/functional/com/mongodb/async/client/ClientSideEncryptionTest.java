@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package com.mongodb.client;
+package com.mongodb.async.client;
 
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoWriteConcernException;
+import com.mongodb.async.FutureResultCallback;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.test.CollectionHelper;
@@ -31,6 +32,7 @@ import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -45,13 +47,14 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.isNotAtLeastJava8;
 import static com.mongodb.JsonTestServerVersionChecker.skipTest;
+import static com.mongodb.async.client.Fixture.getMongoClient;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
 import static com.mongodb.client.CrudTestHelper.replaceTypeAssertionWithActual;
-import static com.mongodb.client.Fixture.getMongoClient;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -60,7 +63,7 @@ import static org.junit.Assume.assumeTrue;
 
 // See https://github.com/mongodb/specifications/tree/master/source/client-side-encryption/tests
 @RunWith(Parameterized.class)
-public abstract class AbstractClientSideEncryptionTest {
+public class ClientSideEncryptionTest {
 
     @SuppressWarnings({"FieldCanBeLocal", "unused"})
     private final String filename;
@@ -72,9 +75,10 @@ public abstract class AbstractClientSideEncryptionTest {
     private JsonPoweredCrudTestHelper helper;
     private TestCommandListener commandListener;
     private CollectionHelper<BsonDocument> collectionHelper;
+    private MongoClient mongoClient;
 
-    public AbstractClientSideEncryptionTest(final String filename, final String description, final BsonDocument specDocument,
-                                            final BsonArray data, final BsonDocument definition, final boolean skipTest) {
+    public ClientSideEncryptionTest(final String filename, final String description, final BsonDocument specDocument,
+                                    final BsonArray data, final BsonDocument definition, final boolean skipTest) {
         this.filename = filename;
         this.specDocument = specDocument;
         this.description = description;
@@ -125,15 +129,19 @@ public abstract class AbstractClientSideEncryptionTest {
         String collectionName = specDocument.getString("collection_name").getValue();
         collectionHelper = new CollectionHelper<BsonDocument>(new BsonDocumentCodec(), new MongoNamespace(databaseName, collectionName));
         MongoDatabase database = getMongoClient().getDatabase(databaseName);
-        MongoCollection<BsonDocument> collection = database
-                .getCollection(collectionName, BsonDocument.class);
-        collection.drop();
+        MongoCollection<BsonDocument> collection = database.getCollection(collectionName, BsonDocument.class);
+
+        FutureResultCallback<Void> callback = new FutureResultCallback<Void>();
+        collection.drop(callback);
+        callback.get(30, TimeUnit.SECONDS);
 
         /* Create the collection for auto encryption. */
         if (specDocument.containsKey("json_schema")) {
+            callback = new FutureResultCallback<Void>();
             database.createCollection(collectionName, new CreateCollectionOptions()
                     .validationOptions(new ValidationOptions()
-                            .validator(new BsonDocument("$jsonSchema", specDocument.getDocument("json_schema")))));
+                            .validator(new BsonDocument("$jsonSchema", specDocument.getDocument("json_schema")))), callback);
+            callback.get(30, TimeUnit.SECONDS);
         }
 
         /* Insert data into the collection */
@@ -142,31 +150,35 @@ public abstract class AbstractClientSideEncryptionTest {
             for (BsonValue document : data) {
                 documents.add(document.asDocument());
             }
-            database.getCollection(collectionName, BsonDocument.class).insertMany(documents);
+            callback = new FutureResultCallback<Void>();
+            database.getCollection(collectionName, BsonDocument.class).insertMany(documents, callback);
+            callback.get(30, TimeUnit.SECONDS);
         }
 
         /* Insert data into the "admin.datakeys" key vault. */
-        BsonArray data = specDocument.getArray("key_vault_data", new BsonArray());
         collection = getMongoClient().getDatabase("admin").getCollection("datakeys", BsonDocument.class);
-        collection.drop();
+        callback = new FutureResultCallback<Void>();
+        collection.drop(callback);
+        callback.get(30, TimeUnit.SECONDS);
+
+        BsonArray data = specDocument.getArray("key_vault_data", new BsonArray());
         if (!data.isEmpty()) {
             documents = new ArrayList<BsonDocument>();
             for (BsonValue document : data) {
                 documents.add(document.asDocument());
             }
-            collection.insertMany(documents);
+            callback = new FutureResultCallback<Void>();
+            collection.insertMany(documents, callback);
+            callback.get(30, TimeUnit.SECONDS);
         }
 
-
         commandListener = new TestCommandListener();
-
         BsonDocument clientOptions = definition.getDocument("clientOptions");
         BsonDocument cryptOptions = clientOptions.getDocument("autoEncryptOpts");
         BsonDocument kmsProviders = cryptOptions.getDocument("kmsProviders");
         boolean bypassAutoEncryption = cryptOptions.getBoolean("bypassAutoEncryption", BsonBoolean.FALSE).getValue();
 
         Map<String, BsonDocument> namespaceToSchemaMap = new HashMap<String, BsonDocument>();
-
         if (cryptOptions.containsKey("schemaMap")) {
             BsonDocument autoEncryptMapDocument = cryptOptions.getDocument("schemaMap");
 
@@ -218,22 +230,27 @@ public abstract class AbstractClientSideEncryptionTest {
             keyVaultNamespace = cryptOptions.getString("keyVaultNamespace").getValue();
         }
 
-        createMongoClient(AutoEncryptionSettings.builder()
-                .keyVaultNamespace(keyVaultNamespace)
-                .kmsProviders(kmsProvidersMap)
-                .schemaMap(namespaceToSchemaMap)
-                .bypassAutoEncryption(bypassAutoEncryption)
-                .extraOptions(extraOptions)
-                .build(), commandListener);
+        mongoClient = MongoClients.create(Fixture.getMongoClientBuilderFromConnectionString()
+                .autoEncryptionSettings(AutoEncryptionSettings.builder()
+                        .keyVaultNamespace(keyVaultNamespace)
+                        .kmsProviders(kmsProvidersMap)
+                        .schemaMap(namespaceToSchemaMap)
+                        .bypassAutoEncryption(bypassAutoEncryption)
+                        .extraOptions(extraOptions)
+                        .build())
+                .addCommandListener(commandListener)
+                .build());
 
-        database = getDatabase(databaseName);
+        database = mongoClient.getDatabase(databaseName);
         helper = new JsonPoweredCrudTestHelper(description, database, database.getCollection("default", BsonDocument.class));
     }
 
-    protected abstract void createMongoClient(AutoEncryptionSettings build, TestCommandListener commandListener);
-
-    protected abstract MongoDatabase getDatabase(String databaseName);
-
+    @After
+    public void cleanUp() {
+        if (mongoClient != null) {
+            mongoClient.close();
+        }
+    }
 
     @Test
     public void shouldPassAllOutcomes() {
@@ -297,7 +314,6 @@ public abstract class AbstractClientSideEncryptionTest {
                 assertEquals(expected, actual);
             }
         }
-
     }
 
     @Parameterized.Parameters(name = "{0}: {1}")

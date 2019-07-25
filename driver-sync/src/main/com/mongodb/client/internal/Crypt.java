@@ -17,6 +17,7 @@
 package com.mongodb.client.internal;
 
 import com.mongodb.MongoClientException;
+import com.mongodb.MongoException;
 import com.mongodb.MongoInternalException;
 import com.mongodb.MongoSocketReadException;
 import com.mongodb.ServerAddress;
@@ -38,7 +39,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.util.Iterator;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.crypt.capi.MongoCryptContext.State;
@@ -88,7 +88,7 @@ class Crypt implements Closeable {
      *
      * @param databaseName the namespace
      * @param command   the unencrypted command
-     * @return the encyrpted command
+     * @return the encrypted command
      */
     public RawBsonDocument encrypt(final String databaseName, final RawBsonDocument command) {
         notNull("databaseName", databaseName);
@@ -230,16 +230,10 @@ class Crypt implements Closeable {
             State state = cryptContext.getState();
             switch (state) {
                 case NEED_MONGO_COLLINFO:
-                    BsonDocument collectionInfo = collectionInfoRetriever.filter(databaseName, cryptContext.getMongoOperation());
-                    if (collectionInfo != null) {
-                        cryptContext.addMongoOperationResult(collectionInfo);
-                    }
-                    cryptContext.completeMongoOperation();
+                    collInfo(cryptContext, databaseName);
                     break;
                 case NEED_MONGO_MARKINGS:
-                    RawBsonDocument markedCommand = commandMarker.mark(databaseName, cryptContext.getMongoOperation());
-                    cryptContext.addMongoOperationResult(markedCommand);
-                    cryptContext.completeMongoOperation();
+                    mark(cryptContext, databaseName);
                     break;
                 case NEED_MONGO_KEYS:
                     fetchKeys(cryptContext);
@@ -248,28 +242,57 @@ class Crypt implements Closeable {
                     decryptKeys(cryptContext);
                     break;
                 case READY:
-                    return (RawBsonDocument) cryptContext.finish();
+                    return cryptContext.finish();
                 default:
                     throw new MongoInternalException("Unsupported encryptor state + " + state);
             }
         }
     }
 
-    private void fetchKeys(final MongoCryptContext keyBroker) {
-        Iterator<BsonDocument> iterator = keyRetriever.find(keyBroker.getMongoOperation());
-        while (iterator.hasNext()) {
-            keyBroker.addMongoOperationResult(iterator.next());
+    private void collInfo(final MongoCryptContext cryptContext, final String databaseName) {
+        try {
+            BsonDocument collectionInfo = collectionInfoRetriever.filter(databaseName, cryptContext.getMongoOperation());
+            if (collectionInfo != null) {
+                cryptContext.addMongoOperationResult(collectionInfo);
+            }
+            cryptContext.completeMongoOperation();
+        } catch (Throwable t) {
+            throw MongoException.fromThrowableNonNull(t);
         }
-        keyBroker.completeMongoOperation();
+    }
+
+    private void mark(final MongoCryptContext cryptContext, final String databaseName) {
+        try {
+            RawBsonDocument markedCommand = commandMarker.mark(databaseName, cryptContext.getMongoOperation());
+            cryptContext.addMongoOperationResult(markedCommand);
+            cryptContext.completeMongoOperation();
+        } catch (Throwable t) {
+            throw MongoException.fromThrowableNonNull(t);
+        }
+    }
+
+    private void fetchKeys(final MongoCryptContext keyBroker) {
+        try {
+            for (BsonDocument bsonDocument : keyRetriever.find(keyBroker.getMongoOperation())) {
+                keyBroker.addMongoOperationResult(bsonDocument);
+            }
+            keyBroker.completeMongoOperation();
+        } catch (Throwable t) {
+            throw MongoException.fromThrowableNonNull(t);
+        }
     }
 
     private void decryptKeys(final MongoCryptContext cryptContext) {
-        MongoKeyDecryptor keyDecryptor = cryptContext.nextKeyDecryptor();
-        while (keyDecryptor != null) {
-            decryptKey(keyDecryptor);
-            keyDecryptor = cryptContext.nextKeyDecryptor();
+        try {
+            MongoKeyDecryptor keyDecryptor = cryptContext.nextKeyDecryptor();
+            while (keyDecryptor != null) {
+                decryptKey(keyDecryptor);
+                keyDecryptor = cryptContext.nextKeyDecryptor();
+            }
+            cryptContext.completeKeyDecryptors();
+        } catch (Throwable t) {
+            throw MongoException.fromThrowableNonNull(t);
         }
-        cryptContext.completeKeyDecryptors();
     }
 
     private void decryptKey(final MongoKeyDecryptor keyDecryptor) {
