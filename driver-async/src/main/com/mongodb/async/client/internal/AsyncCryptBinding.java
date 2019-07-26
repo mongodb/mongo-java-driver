@@ -23,7 +23,6 @@ import com.mongodb.binding.AsyncReadWriteBinding;
 import com.mongodb.connection.AsyncConnection;
 import com.mongodb.connection.Cluster;
 import com.mongodb.connection.ServerDescription;
-import com.mongodb.internal.binding.AbstractReferenceCounted;
 import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding;
 import com.mongodb.session.SessionContext;
 
@@ -95,7 +94,7 @@ public class AsyncCryptBinding implements AsyncClusterAwareReadWriteBinding {
         return wrapped.getCluster();
     }
 
-    private class AsyncCryptConnectionSource extends AbstractReferenceCounted implements AsyncConnectionSource {
+    private class AsyncCryptConnectionSource implements AsyncConnectionSource {
         private final AsyncConnectionSource wrapped;
 
         AsyncCryptConnectionSource(final AsyncConnectionSource wrapped) {
@@ -128,6 +127,11 @@ public class AsyncCryptBinding implements AsyncClusterAwareReadWriteBinding {
         }
 
         @Override
+        public int getCount() {
+            return wrapped.getCount();
+        }
+
+        @Override
         public AsyncConnectionSource retain() {
             wrapped.retain();
             return this;
@@ -136,9 +140,6 @@ public class AsyncCryptBinding implements AsyncClusterAwareReadWriteBinding {
         @Override
         public void release() {
             wrapped.release();
-            if (wrapped.getCount() == 0) {
-                AsyncCryptBinding.this.release();
-            }
         }
     }
 }
