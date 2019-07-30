@@ -224,50 +224,25 @@ public class ClientSideEncryptionCorpusTest {
             }
 
             boolean allowed = corpusEncryptedActual.getDocument(field).getBoolean("allowed").getValue();
-            String kms = corpusEncryptedActual.getDocument(field).getString("kms").getValue();
-            String type = corpusEncryptedActual.getDocument(field).getString("type").getValue();
             String algorithm = corpusEncryptedActual.getDocument(field).getString("algo").getValue();
-            BsonValue value = corpusEncryptedActual.getDocument(field).get("value");
+            BsonValue actualValue = corpusEncryptedActual.getDocument(field).get("value");
+            BsonValue expectedValue = corpusEncryptedExpected.getDocument(field).get("value");
 
-            // All deterministic fields are an exact match.
-            check(value, kms, type, algorithm, allowed, corpusEncryptedExpected);
+            if (algorithm.equals("det")) {
+                assertEquals(actualValue, expectedValue);
+            } else if (algorithm.equals("rand")) {
+                if (allowed) {
+                    assertNotEquals(actualValue, expectedValue);
+                }
+            } else {
+                throw new UnsupportedOperationException("Unsupported algorithm type: " + algorithm);
+            }
 
             if (allowed) {
-                BsonValue decrypted = clientEncryption.decrypt(value.asBinary());
-                assertEquals("Values should be equal for field " + field, corpus.getDocument(field).get("value"), decrypted);
+                BsonValue decrypted = clientEncryption.decrypt(actualValue.asBinary());
+                assertEquals("Values should be equal for field " + field, clientEncryption.decrypt(expectedValue.asBinary()), decrypted);
             } else {
-                assertEquals("Values should be equal for field " + field, corpus.getDocument(field).get("value"),
-                        corpusEncryptedActual.getDocument(field).get("value"));
-            }
-        }
-    }
-
-    private static void check(final BsonValue actualValue, final String actualKms, final String actualType,
-                              final String actualAlgorithm, final boolean allowed, final BsonDocument expectedDocument) {
-        for (String field : expectedDocument.keySet()) {
-            if (field.equals("_id") || field.equals("altname_aws") || field.equals("altname_local")) {
-                continue;
-            }
-
-            BsonDocument subDocument = expectedDocument.getDocument(field);
-
-            String kms = subDocument.getString("kms").getValue();
-            String type = subDocument.getString("type").getValue();
-            String algorithm = subDocument.getString("algo").getValue();
-            BsonValue expectedValue = subDocument.get("value");
-
-            if (kms.equals(actualKms) && type.equals(actualType)) {
-                if (actualAlgorithm.equals("det")) {
-                    if (algorithm.equals("det")) {
-                        assertEquals(expectedValue, actualValue);
-                    }
-                } else if (actualAlgorithm.equals("rand")) {
-                    if (allowed) {
-                        assertNotEquals(expectedValue, actualValue);
-                    }
-                } else {
-                    throw new UnsupportedOperationException("Unsupported algorithm type: " + actualAlgorithm);
-                }
+                assertEquals("Values should be equal for field " + field, expectedValue, actualValue);
             }
         }
     }
