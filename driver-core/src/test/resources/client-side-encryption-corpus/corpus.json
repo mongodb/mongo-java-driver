@@ -2595,5 +2595,311 @@
     "identifier": "altname",
     "allowed": false,
     "value": { "$maxKey": 1 }
+  },
+  "payload=0,algo=rand": {
+    "kms": "local",
+    "type": "string",
+    "algo": "rand",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": ""
+  },
+  "payload=1,algo=rand": {
+    "kms": "local",
+    "type": "string",
+    "algo": "rand",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "a"
+  },
+  "payload=2,algo=rand": {
+    "kms": "local",
+    "type": "string",
+    "algo": "rand",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aa"
+  },
+  "payload=3,algo=rand": {
+    "kms": "local",
+    "type": "string",
+    "algo": "rand",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaa"
+  },
+  "payload=4,algo=rand": {
+    "kms": "local",
+    "type": "string",
+    "algo": "rand",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaaa"
+  },
+  "payload=5,algo=rand": {
+    "kms": "local",
+    "type": "string",
+    "algo": "rand",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaaaa"
+  },
+  "payload=6,algo=rand": {
+    "kms": "local",
+    "type": "string",
+    "algo": "rand",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaaaaa"
+  },
+  "payload=7,algo=rand": {
+    "kms": "local",
+    "type": "string",
+    "algo": "rand",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaaaaaa"
+  },
+  "payload=8,algo=rand": {
+    "kms": "local",
+    "type": "string",
+    "algo": "rand",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaaaaaaa"
+  },
+  "payload=9,algo=rand": {
+    "kms": "local",
+    "type": "string",
+    "algo": "rand",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaaaaaaaa"
+  },
+  "payload=10,algo=rand": {
+    "kms": "local",
+    "type": "string",
+    "algo": "rand",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaaaaaaaaa"
+  },
+  "payload=11,algo=rand": {
+    "kms": "local",
+    "type": "string",
+    "algo": "rand",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaaaaaaaaaa"
+  },
+  "payload=12,algo=rand": {
+    "kms": "local",
+    "type": "string",
+    "algo": "rand",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaaaaaaaaaaa"
+  },
+  "payload=13,algo=rand": {
+    "kms": "local",
+    "type": "string",
+    "algo": "rand",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaaaaaaaaaaaa"
+  },
+  "payload=14,algo=rand": {
+    "kms": "local",
+    "type": "string",
+    "algo": "rand",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaaaaaaaaaaaaa"
+  },
+  "payload=15,algo=rand": {
+    "kms": "local",
+    "type": "string",
+    "algo": "rand",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaaaaaaaaaaaaaa"
+  },
+  "payload=16,algo=rand": {
+    "kms": "local",
+    "type": "string",
+    "algo": "rand",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaaaaaaaaaaaaaaa"
+  },
+  "payload=0,algo=det": {
+    "kms": "local",
+    "type": "string",
+    "algo": "det",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": ""
+  },
+  "payload=1,algo=det": {
+    "kms": "local",
+    "type": "string",
+    "algo": "det",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "a"
+  },
+  "payload=2,algo=det": {
+    "kms": "local",
+    "type": "string",
+    "algo": "det",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aa"
+  },
+  "payload=3,algo=det": {
+    "kms": "local",
+    "type": "string",
+    "algo": "det",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaa"
+  },
+  "payload=4,algo=det": {
+    "kms": "local",
+    "type": "string",
+    "algo": "det",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaaa"
+  },
+  "payload=5,algo=det": {
+    "kms": "local",
+    "type": "string",
+    "algo": "det",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaaaa"
+  },
+  "payload=6,algo=det": {
+    "kms": "local",
+    "type": "string",
+    "algo": "det",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaaaaa"
+  },
+  "payload=7,algo=det": {
+    "kms": "local",
+    "type": "string",
+    "algo": "det",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaaaaaa"
+  },
+  "payload=8,algo=det": {
+    "kms": "local",
+    "type": "string",
+    "algo": "det",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaaaaaaa"
+  },
+  "payload=9,algo=det": {
+    "kms": "local",
+    "type": "string",
+    "algo": "det",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaaaaaaaa"
+  },
+  "payload=10,algo=det": {
+    "kms": "local",
+    "type": "string",
+    "algo": "det",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaaaaaaaaa"
+  },
+  "payload=11,algo=det": {
+    "kms": "local",
+    "type": "string",
+    "algo": "det",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaaaaaaaaaa"
+  },
+  "payload=12,algo=det": {
+    "kms": "local",
+    "type": "string",
+    "algo": "det",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaaaaaaaaaaa"
+  },
+  "payload=13,algo=det": {
+    "kms": "local",
+    "type": "string",
+    "algo": "det",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaaaaaaaaaaaa"
+  },
+  "payload=14,algo=det": {
+    "kms": "local",
+    "type": "string",
+    "algo": "det",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaaaaaaaaaaaaa"
+  },
+  "payload=15,algo=det": {
+    "kms": "local",
+    "type": "string",
+    "algo": "det",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaaaaaaaaaaaaaa"
+  },
+  "payload=16,algo=det": {
+    "kms": "local",
+    "type": "string",
+    "algo": "det",
+    "method": "explicit",
+    "identifier": "id",
+    "allowed": true,
+    "value": "aaaaaaaaaaaaaaaa"
   }
 }
