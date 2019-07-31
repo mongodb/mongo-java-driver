@@ -26,6 +26,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 abstract class AbstractSubscription<TResult> implements Subscription {
     private static final Logger LOGGER = Loggers.getLogger("client");
+    private static final Object NULL_PLACEHOLDER = new Object();
     private final Observer<? super TResult> observer;
 
     /* protected by `this` */
@@ -36,7 +37,7 @@ abstract class AbstractSubscription<TResult> implements Subscription {
     private boolean isTerminated = false;
     /* protected by `this` */
 
-    private final ConcurrentLinkedQueue<TResult> resultsQueue = new ConcurrentLinkedQueue<TResult>();
+    private final ConcurrentLinkedQueue<Object> resultsQueue = new ConcurrentLinkedQueue<Object>();
 
     AbstractSubscription(final Observer<? super TResult> observer) {
         this.observer = observer;
@@ -109,14 +110,18 @@ abstract class AbstractSubscription<TResult> implements Subscription {
     }
 
     void addToQueue(@Nullable final TResult result) {
-        if (result != null) {
+        if (result == null) {
+            resultsQueue.add(NULL_PLACEHOLDER);
+        } else {
             resultsQueue.add(result);
         }
     }
 
     void addToQueue(@Nullable final List<TResult> results) {
         if (results != null) {
-            resultsQueue.addAll(results);
+            for (TResult cur : results) {
+                addToQueue(cur);
+            }
         }
     }
 
@@ -134,8 +139,11 @@ abstract class AbstractSubscription<TResult> implements Subscription {
         }
     }
 
-    void onNext(final TResult next) {
+    private void onNext(@Nullable final TResult next) {
         if (!isTerminated()) {
+            if (next == null) {
+                throw new NullPointerException();
+            }
             try {
                 observer.onNext(next);
             } catch (Throwable t) {
@@ -145,7 +153,7 @@ abstract class AbstractSubscription<TResult> implements Subscription {
         }
     }
 
-    void onComplete() {
+    private void onComplete() {
         if (terminalAction()) {
             postTerminate();
             try {
@@ -173,6 +181,7 @@ abstract class AbstractSubscription<TResult> implements Subscription {
         }
     }
 
+    @SuppressWarnings("unchecked")
     private void processResultsQueue() {
         boolean mustProcess = false;
 
@@ -207,11 +216,11 @@ abstract class AbstractSubscription<TResult> implements Subscription {
                 processedCount = 0;
 
                 while (localWanted > 0) {
-                    TResult item = resultsQueue.poll();
+                    Object item = resultsQueue.poll();
                     if (item == null) {
                         break;
                     } else {
-                        onNext(item);
+                        onNext(item == NULL_PLACEHOLDER ? null : (TResult) item);
                         localWanted -= 1;
                         processedCount += 1;
                     }
