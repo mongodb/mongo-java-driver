@@ -40,7 +40,6 @@ import static com.mongodb.internal.capi.MongoCryptOptionsHelper.createMongocrypt
 class CommandMarker implements Closeable {
     private MongoClient client;
     private final ProcessBuilder processBuilder;
-    private boolean active;
 
     CommandMarker(final Map<String, Object> options) {
         String connectionString;
@@ -51,7 +50,14 @@ class CommandMarker implements Closeable {
             connectionString = "mongodb://localhost:27020";
         }
 
-        this.client = MongoClients.create(MongoClientSettings.builder()
+        if (!options.containsKey("mongocryptdBypassSpawn") || !((Boolean) options.get("mongocryptdBypassSpawn"))) {
+            processBuilder = new ProcessBuilder(createMongocryptdSpawnArgs(options));
+            startProcess();
+        } else {
+            processBuilder = null;
+        }
+
+        client = MongoClients.create(MongoClientSettings.builder()
                 .applyConnectionString(new ConnectionString(connectionString))
                 .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
                     @Override
@@ -60,18 +66,9 @@ class CommandMarker implements Closeable {
                     }
                 })
                 .build());
-        this.active = false;
-
-        if (!options.containsKey("mongocryptdBypassSpawn") || !((Boolean) options.get("mongocryptdBypassSpawn"))) {
-            processBuilder = new ProcessBuilder(createMongocryptdSpawnArgs(options));
-        } else {
-            processBuilder = null;
-        }
     }
 
     RawBsonDocument mark(final String databaseName, final RawBsonDocument command) {
-        spawnIfNecesary();
-
         try {
             try {
                 return executeCommand(databaseName, command);
@@ -79,7 +76,7 @@ class CommandMarker implements Closeable {
                 if (processBuilder == null) {  // mongocryptdBypassSpawn=true
                     throw e;
                 }
-                spawnIfNecesary();
+                startProcess();
                 return executeCommand(databaseName, command);
             }
         } catch (MongoException e) {
@@ -99,16 +96,9 @@ class CommandMarker implements Closeable {
                 .runCommand(markableCommand, RawBsonDocument.class);
     }
 
-    private synchronized void spawnIfNecesary() {
+    private void startProcess() {
         try {
-            if (processBuilder != null) {
-                synchronized (this) {
-                    if (!active) {
-                        processBuilder.start();
-                        active = true;
-                    }
-                }
-            }
+            processBuilder.start();
         } catch (IOException e) {
             throw new MongoClientException("Exception starting mongocryptd process. Is `mongocryptd` on the system path?", e);
         }
@@ -117,5 +107,4 @@ class CommandMarker implements Closeable {
     private MongoClientException wrapInClientException(final MongoException e) {
         return new MongoClientException("Exception in encryption library: " + e.getMessage(), e);
     }
-
 }

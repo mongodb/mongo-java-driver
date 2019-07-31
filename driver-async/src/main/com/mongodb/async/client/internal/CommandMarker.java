@@ -39,7 +39,6 @@ import static com.mongodb.internal.capi.MongoCryptOptionsHelper.createMongocrypt
 class CommandMarker implements Closeable {
     private MongoClient client;
     private final ProcessBuilder processBuilder;
-    private boolean active;
 
     CommandMarker(final Map<String, Object> options) {
         String connectionString;
@@ -48,6 +47,13 @@ class CommandMarker implements Closeable {
             connectionString = (String) options.get("mongocryptdURI");
         } else {
             connectionString = "mongodb://localhost:27020";
+        }
+
+        if (!options.containsKey("mongocryptdBypassSpawn") || !((Boolean) options.get("mongocryptdBypassSpawn"))) {
+            processBuilder = new ProcessBuilder(createMongocryptdSpawnArgs(options));
+            startProcess();
+        } else {
+            processBuilder = null;
         }
 
         client = MongoClients.create(MongoClientSettings.builder()
@@ -59,13 +65,6 @@ class CommandMarker implements Closeable {
                     }
                 })
                 .build());
-        active = false;
-
-        if (!options.containsKey("mongocryptdBypassSpawn") || !((Boolean) options.get("mongocryptdBypassSpawn"))) {
-            processBuilder = new ProcessBuilder(createMongocryptdSpawnArgs(options));
-        } else {
-            processBuilder = null;
-        }
     }
 
     void mark(final String databaseName, final RawBsonDocument command, final SingleResultCallback<RawBsonDocument> callback) {
@@ -79,13 +78,22 @@ class CommandMarker implements Closeable {
                 }
             }
         };
-        executeCommand(databaseName, command, new SingleResultCallback<RawBsonDocument>() {
+        runCommand(databaseName, command, new SingleResultCallback<RawBsonDocument>() {
             @Override
             public void onResult(final RawBsonDocument result, final Throwable t) {
                 if (t == null) {
                     wrappedCallback.onResult(result, null);
                 } else if (t instanceof MongoTimeoutException && processBuilder != null) {
-                    executeCommand(databaseName, command, wrappedCallback);
+                    startProcessAndContinue(new SingleResultCallback<Void>() {
+                        @Override
+                        public void onResult(final Void result, final Throwable t) {
+                            if (t != null) {
+                                callback.onResult(null, t);
+                            } else {
+                                runCommand(databaseName, command, wrappedCallback);
+                            }
+                        }
+                    });
                 } else {
                     wrappedCallback.onResult(null, t);
                 }
@@ -98,38 +106,28 @@ class CommandMarker implements Closeable {
         client.close();
     }
 
-    private void executeCommand(final String databaseName, final RawBsonDocument markableCommand,
-                                final SingleResultCallback<RawBsonDocument> callback) {
-        spawnIfNecessary(new SingleResultCallback<Void>(){
-            @Override
-            public void onResult(final Void result, final Throwable t) {
-                if (t != null) {
-                    callback.onResult(null, t);
-                } else {
-                    client.getDatabase(databaseName)
-                            .withReadConcern(ReadConcern.DEFAULT)
-                            .withReadPreference(ReadPreference.primary())
-                            .runCommand(markableCommand, RawBsonDocument.class, callback);
-                }
-            }
-        });
+    private void runCommand(final String databaseName, final RawBsonDocument command,
+                            final SingleResultCallback<RawBsonDocument> callback) {
+        client.getDatabase(databaseName)
+                .withReadConcern(ReadConcern.DEFAULT)
+                .withReadPreference(ReadPreference.primary())
+                .runCommand(command, RawBsonDocument.class, callback);
     }
 
-    private synchronized void spawnIfNecessary(final SingleResultCallback<Void> callback) {
+    private void startProcessAndContinue(final SingleResultCallback<Void> callback) {
         try {
-            if (processBuilder != null) {
-                synchronized (this) {
-                    if (!active) {
-                        processBuilder.start();
-                        active = true;
-                    }
-                }
-            }
+            startProcess();
             callback.onResult(null, null);
         } catch (Throwable t) {
-            callback.onResult(null,
-                    new MongoClientException("Exception starting mongocryptd process. Is `mongocryptd` on the system path?", t));
+            callback.onResult(null, t);
         }
     }
 
+    private void startProcess() {
+        try {
+            processBuilder.start();
+        } catch (Throwable t) {
+            throw new MongoClientException("Exception starting mongocryptd process. Is `mongocryptd` on the system path?", t);
+        }
+    }
 }
