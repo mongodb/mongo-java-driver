@@ -67,7 +67,7 @@ public final class Sorts {
     }
 
     /**
-     * Create a sort specification for an ascending sort on the given fields.
+     * Create a sort specification for a descending sort on the given fields.
      *
      * @param fieldNames the field names, which must contain at least one
      * @return the sort specification
@@ -78,7 +78,7 @@ public final class Sorts {
     }
 
     /**
-     * Create a sort specification for an ascending sort on the given fields.
+     * Create a sort specification for a descending sort on the given fields.
      *
      * @param fieldNames the field names, which must contain at least one
      * @return the sort specification
