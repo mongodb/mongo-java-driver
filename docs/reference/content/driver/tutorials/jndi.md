@@ -11,7 +11,7 @@ title = "JNDI"
 ## Java Naming and Directory Interface (JNDI)
 
 The driver includes a [JNDI](http://docs.oracle.com/javase/8/docs/technotes/guides/jndi/index.html) ObjectFactory implementation,
-[`MongoClientFactory`]({{< apiref "com/mongodb/client/jndi/MongoClientFactory" >}}), that returns `MongoClient` instances based on a
+[`MongoClientFactory`]({{< apiref "com/mongodb/client/MongoClientFactory" >}}) ([`legacy version`]({{< apiref "com/mongodb/client/jndi/MongoClientFactory" >}})), that returns `MongoClient` instances based on a
 [connection string](http://docs.mongodb.org/manual/reference/connection-string/).
 
 ## Examples
@@ -43,7 +43,7 @@ connection string for the MongoDB cluster.
                  
         <subsystem xmlns="urn:jboss:domain:naming:2.0">
             <bindings>
-                <object-factory name="java:global/MyMongoClient" module="org.mongodb" class="com.mongodb.client.jndi.MongoClientFactory">
+                <object-factory name="java:global/MyMongoClient" module="org.mongodb" class="com.mongodb.client.MongoClientFactory">
                     <environment>
                         <property name="connectionString" value="mongodb://localhost:27017"/>
                     </environment>
@@ -65,7 +65,7 @@ MongoDB cluster:
                   auth="Container"
                   type="com.mongodb.MongoClient"
                   closeMethod="close"
-                  factory="com.mongodb.client.jndi.MongoClientFactory"
+                  factory="com.mongodb.client.MongoClientFactory"
                   singleton="true"
                   connectionString="mongodb://localhost"/>
 
