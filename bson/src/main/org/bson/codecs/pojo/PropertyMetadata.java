@@ -61,6 +61,9 @@ final class PropertyMetadata<T> {
 
     public PropertyMetadata<T> addReadAnnotation(final Annotation annotation) {
         if (readAnnotations.containsKey(annotation.annotationType())) {
+            if (annotation.equals(readAnnotations.get(annotation.annotationType()))) {
+                return this;
+            }
             throw new CodecConfigurationException(format("Read annotation %s for '%s' already exists in %s", annotation.annotationType(),
                     name, declaringClassName));
         }
@@ -74,6 +77,9 @@ final class PropertyMetadata<T> {
 
     public PropertyMetadata<T> addWriteAnnotation(final Annotation annotation) {
         if (writeAnnotations.containsKey(annotation.annotationType())) {
+            if (annotation.equals(writeAnnotations.get(annotation.annotationType()))) {
+                return this;
+            }
             throw new CodecConfigurationException(format("Write annotation %s for '%s' already exists in %s", annotation.annotationType(),
                     name, declaringClassName));
         }
