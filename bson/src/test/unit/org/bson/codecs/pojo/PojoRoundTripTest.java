@@ -81,6 +81,7 @@ import org.bson.codecs.pojo.entities.conventions.CreatorInSuperClassModelImpl;
 import org.bson.codecs.pojo.entities.conventions.CreatorMethodModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorNoArgsConstructorModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorNoArgsMethodModel;
+import org.bson.codecs.pojo.entities.DuplicateAnnotationAllowedModel;
 import org.bson.codecs.pojo.entities.conventions.InterfaceModel;
 import org.bson.codecs.pojo.entities.conventions.InterfaceModelImplA;
 import org.bson.codecs.pojo.entities.conventions.InterfaceModelImplB;
@@ -420,6 +421,11 @@ public final class PojoRoundTripTest extends PojoTestCase {
                 "{'_id': {'$oid': '123412341234123412341234'}, 'level': 'top',"
                         + "'left': {'level': 'left-1', 'left': {'level': 'left-2'}},"
                         + "'right': {'level': 'right-1'}}"));
+
+        data.add(new TestData("DuplicateAnnotationAllowedModel",
+                new DuplicateAnnotationAllowedModel("abc"),
+                getPojoCodecProviderBuilder(DuplicateAnnotationAllowedModel.class).conventions(Conventions.DEFAULT_CONVENTIONS),
+                "{'_id': 'abc'}"));
 
         return data;
     }
