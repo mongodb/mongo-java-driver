@@ -28,10 +28,6 @@ atlassian-ide-plugin.xml
 # gradle
 .gradle
 
-# android
-.android/
-android/
-
 # code review
 codereview.rc
 
@@ -46,3 +42,7 @@ docs/hugo*
 
 # jenv
 .java-version
+
+#mongocryptd
+**/mongocryptd.pid
+

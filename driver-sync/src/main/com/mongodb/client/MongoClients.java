@@ -19,8 +19,8 @@ package com.mongodb.client;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
-import com.mongodb.lang.Nullable;
 import com.mongodb.client.internal.MongoClientImpl;
+import com.mongodb.lang.Nullable;
 
 
 /**

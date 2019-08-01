@@ -18,6 +18,7 @@ package com.mongodb.operation;
 
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadConcern;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.binding.AsyncWriteBinding;
@@ -41,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.isTrueArgument;
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotFour;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotSix;
 import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeastVersionThreeDotTwo;
 import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConcernToCommand;
@@ -54,6 +56,7 @@ import static com.mongodb.operation.OperationHelper.LOGGER;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.validateCollation;
 import static com.mongodb.operation.OperationHelper.withConnection;
+import static com.mongodb.operation.OperationHelper.withAsyncConnection;
 
 /**
  * An operation that executes an aggregation that writes its results to a collection (which is what makes this a write operation rather than
@@ -68,6 +71,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     private final MongoNamespace namespace;
     private final List<BsonDocument> pipeline;
     private final WriteConcern writeConcern;
+    private final ReadConcern readConcern;
     private final AggregationLevel aggregationLevel;
 
     private Boolean allowDiskUse;
@@ -86,7 +90,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
      */
     @Deprecated
     public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline) {
-        this(namespace, pipeline, null);
+        this(namespace, pipeline, null, null, AggregationLevel.COLLECTION);
     }
 
     /**
@@ -100,7 +104,35 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
      */
     public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
                                           final WriteConcern writeConcern) {
-        this(namespace, pipeline, writeConcern, AggregationLevel.COLLECTION);
+        this(namespace, pipeline, null, writeConcern, AggregationLevel.COLLECTION);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param namespace the database and collection namespace for the operation.
+     * @param pipeline the aggregation pipeline.
+     * @param readConcern the read concern to apply
+     *
+     * @since 3.11
+     */
+    public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
+                                          final ReadConcern readConcern) {
+        this(namespace, pipeline, readConcern, null, AggregationLevel.COLLECTION);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param namespace the database and collection namespace for the operation.
+     * @param pipeline the aggregation pipeline.
+     * @param writeConcern the write concern to apply
+     * @param readConcern the read concern to apply
+     * @since 3.11
+     */
+    public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
+                                          final ReadConcern readConcern, final WriteConcern writeConcern) {
+        this(namespace, pipeline, readConcern, writeConcern, AggregationLevel.COLLECTION);
     }
 
     /**
@@ -114,14 +146,29 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
      */
     public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
                                           final WriteConcern writeConcern, final AggregationLevel aggregationLevel) {
+        this(namespace, pipeline, ReadConcern.DEFAULT, writeConcern, aggregationLevel);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param namespace the database and collection namespace for the operation.
+     * @param pipeline the aggregation pipeline.
+     * @param readConcern the read concern to apply
+     * @param writeConcern the write concern to apply
+     * @param aggregationLevel the aggregation level
+     * @since 3.11
+     */
+    public AggregateToCollectionOperation(final MongoNamespace namespace, final List<BsonDocument> pipeline,
+                                          final ReadConcern readConcern, final WriteConcern writeConcern,
+                                          final AggregationLevel aggregationLevel) {
         this.namespace = notNull("namespace", namespace);
         this.pipeline = notNull("pipeline", pipeline);
         this.writeConcern = writeConcern;
+        this.readConcern = readConcern;
         this.aggregationLevel = notNull("aggregationLevel", aggregationLevel);
 
         isTrueArgument("pipeline is not empty", !pipeline.isEmpty());
-        isTrueArgument("last stage of pipeline contains an output collection",
-                pipeline.get(pipeline.size() - 1).get("$out") != null);
     }
 
     /**
@@ -132,6 +179,17 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
      */
     public List<BsonDocument> getPipeline() {
         return pipeline;
+    }
+
+    /**
+     * Gets the read concern.
+     *
+     * @return the read concern, which may be null
+     *
+     * @since 3.11
+     */
+    public ReadConcern getReadConcern() {
+        return readConcern;
     }
 
     /**
@@ -208,7 +266,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
     /**
      * Sets the bypass document level validation flag.
      *
-     * <p>Note: This only applies when an $out stage is specified</p>.
+     * <p>Note: This only applies when an $out or $merge stage is specified</p>.
      *
      * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
      * @return this
@@ -320,7 +378,7 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
 
     @Override
     public void executeAsync(final AsyncWriteBinding binding, final SingleResultCallback<Void> callback) {
-        withConnection(binding, new AsyncCallableWithConnection() {
+        withAsyncConnection(binding, new AsyncCallableWithConnection() {
             @Override
             public void call(final AsyncConnection connection, final Throwable t) {
                 SingleResultCallback<Void> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
@@ -366,6 +424,10 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
         }
 
         appendWriteConcernToCommand(writeConcern, commandDocument, description);
+        if (readConcern != null && !readConcern.isServerDefault() && serverIsAtLeastVersionThreeDotFour(description)) {
+            commandDocument.put("readConcern", readConcern.asDocument());
+        }
+
         if (collation != null) {
             commandDocument.put("collation", collation.asDocument());
         }

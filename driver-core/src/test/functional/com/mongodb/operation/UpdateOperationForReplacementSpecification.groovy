@@ -69,7 +69,7 @@ class UpdateOperationForReplacementSpecification extends OperationFunctionalSpec
         result.count == 1
         result.upsertedId == null
         result.isUpdateOfExisting()
-        asList(replacement.getUpdate()) == getCollectionHelper().find(new BsonDocumentCodec())
+        asList(replacement.getUpdateValue()) == getCollectionHelper().find(new BsonDocumentCodec())
         getCollectionHelper().find().get(0).keySet().iterator().next() == '_id'
 
         where:
@@ -87,7 +87,7 @@ class UpdateOperationForReplacementSpecification extends OperationFunctionalSpec
         execute(operation, async)
 
         then:
-        asList(replacement.getUpdate()) == getCollectionHelper().find(new BsonDocumentCodec())
+        asList(replacement.getUpdateValue()) == getCollectionHelper().find(new BsonDocumentCodec())
 
         where:
         async << [true, false]

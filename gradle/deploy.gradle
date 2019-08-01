@@ -39,19 +39,11 @@ configure(deployedProjects) {
                 | The project version does not match the git tag.
                 |""".stripMargin()
                 throw new GradleException(cause)
-            } else if (System.getenv("ANDROID_HOME") == null) {
-                def cause = """
-                | Android Home missing:
-                | =====================
-                |
-                | The driver-embedded-android project requires the `ANDROID_HOME` environment variable to be set.
-                |""".stripMargin()
-                throw new GradleException(cause)
             } else {
                 println("Publishing: ${project.name} : ${project.gitVersion}")
             }
         }
-        if (project.gitVersion == version && System.getenv("ANDROID_HOME") != null) {
+        if (project.gitVersion == version) {
             dependsOn tasks.withType(PublishToMavenRepository)
         }
     }

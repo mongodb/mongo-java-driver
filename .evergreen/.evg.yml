@@ -121,26 +121,6 @@ functions:
         permissions: public-read
         content_type: ${content_type|application/x-gzip}
 
-  "upload android logs":
-    # Compress and upload the entire build directory
-    - command: archive.targz_pack
-      params:
-        # Example: mongo_c_driver_releng_9dfb7d741efbca16faa7859b9349d7a942273e43_16_11_08_19_29_52.tar.gz
-        target: "${build_id}.tar.gz"
-        source_dir: ${PROJECT_DIRECTORY}/.android/download_logs
-        include:
-          - "./**"
-    - command: s3.put
-      params:
-        aws_key: ${aws_key}
-        aws_secret: ${aws_secret}
-        local_file: ${build_id}.tar.gz
-        # Example: /mciuploads/${UPLOAD_BUCKET}/gcc49/9dfb7d741efbca16faa7859b9349d7a942273e43/debug-compile-nosasl-nossl/mongo_c_driver_releng_9dfb7d741efbca16faa7859b9349d7a942273e43_16_11_08_19_29_52.tar.gz
-        remote_file: ${UPLOAD_BUCKET}/${build_variant}/${revision}/${task_name}/${build_id}.tar.gz
-        bucket: mciuploads
-        permissions: public-read
-        content_type: ${content_type|application/x-gzip}
-
   "exec script" :
     - command: shell.exec
       type: test
@@ -215,9 +195,6 @@ functions:
     - command: attach.xunit_results
       params:
         file: ./src/*/build/test-results/test/TEST-*.xml
-    - command: attach.xunit_results
-      params:
-        file: ./src/*/build/outputs/androidTest-results/connected/TEST-*.xml
 
   "bootstrap mongo-orchestration":
     - command: shell.exec
@@ -237,7 +214,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" SAFE_FOR_MULTI_MONGOS="${SAFE_FOR_MULTI_MONGOS}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" .evergreen/run-tests.sh
+          AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" SAFE_FOR_MULTI_MONGOS="${SAFE_FOR_MULTI_MONGOS}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" AWS_ACCESS_KEY_ID=${aws_access_key_id} AWS_SECRET_ACCESS_KEY=${aws_secret_access_key} .evergreen/run-tests.sh
 
   "run slow tests":
   - command: shell.exec
@@ -265,15 +242,6 @@ functions:
       script: |
         ${PREPARE_SHELL}
         JDK="${JDK}" .evergreen/run-embedded-tests.sh
-
-  "run embedded tests android":
-  - command: shell.exec
-    type: test
-    params:
-      working_dir: "src"
-      script: |
-        ${PREPARE_SHELL}
-        .evergreen/run-embedded-tests-android.sh
 
   "run plain auth test":
     - command: shell.exec
@@ -384,7 +352,7 @@ functions:
 # Anchors
 
 hosts: &hosts
- - rhel62-small
+ - rhel70-small
 
 pre:
   - func: "fetch source"
@@ -438,11 +406,6 @@ tasks:
       commands:
       - func: "run embedded tests"
 
-    - name: "embedded-test-android"
-      commands:
-#      - func: "run embedded tests android"
-#      - func: "upload android logs"
-
     - name: "atlas-test"
       commands:
         - func: "run atlas test"
@@ -461,8 +424,6 @@ tasks:
           name: "plain-auth-test"
         - variant: ".test-embedded-variant"
           name: "embedded-test"
-        - variant: "embedded-test-android"
-          name: "embedded-test-android"
       commands:
         - func: "publish snapshot"
 
@@ -480,6 +441,13 @@ axes:
         display_name: "latest"
         variables:
            VERSION: "latest"
+           # Multiple mongos instances can be specified in the connection string
+           # for this version.
+           SAFE_FOR_MULTI_MONGOS: true
+      - id: "4.2"
+        display_name: "4.2"
+        variables:
+           VERSION: "4.2"
            # Multiple mongos instances can be specified in the connection string
            # for this version.
            SAFE_FOR_MULTI_MONGOS: true
@@ -603,21 +571,21 @@ buildvariants:
     - name: "static-analysis"
 
 - matrix_name: "tests-zlib-compression"
-  matrix_spec: { compressor : "zlib", auth: "noauth", ssl: "nossl", jdk: "jdk6", version: ["3.6", "4.0", "latest"], topology: "standalone", os: "linux" }
+  matrix_spec: { compressor : "zlib", auth: "noauth", ssl: "nossl", jdk: "jdk6", version: ["3.6", "4.0", "4.2", "latest"], topology: "standalone", os: "linux" }
   display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
      - name: "test"
 
 - matrix_name: "tests-snappy-compression"
-  matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: ["3.4", "3.6", "4.0", "latest"], topology: "standalone", os: "linux" }
+  matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: ["3.4", "3.6", "4.0", "4.2", "latest"], topology: "standalone", os: "linux" }
   display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
      - name: "test"
 
 - matrix_name: "tests-zstd-compression"
-  matrix_spec: { compressor : "zstd", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: "latest", topology: "standalone", os: "linux" }
+  matrix_spec: { compressor : "zstd", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: ["4.2", "latest"], topology: "standalone", os: "linux" }
   display_name: "${version} ${compressor} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
@@ -632,14 +600,14 @@ buildvariants:
 
 - matrix_name: "tests-jdk6-secure"
   matrix_spec:  { auth: "auth", ssl: "ssl", jdk: "jdk6", version: "*", topology: "*", os: "linux" }
-  exclude_spec: { auth: "auth", ssl: "ssl", jdk: "jdk6", version: ["4.0", "latest"], topology: "*", os: "linux" }
+  exclude_spec: { auth: "auth", ssl: "ssl", jdk: "jdk6", version: ["4.0", "4.2", "latest"], topology: "*", os: "linux" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
      - name: "test"
 
 - matrix_name: "tests-jdk-newer-secure"
-  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk8", "jdk11"], version: ["4.0", "latest"], topology: "*", os: "linux" }
+  matrix_spec: { auth: "auth", ssl: "ssl", jdk: ["jdk8", "jdk11"], version: ["4.0", "4.2", "latest"], topology: "*", os: "linux" }
   display_name: "${version} ${topology} ${auth} ${ssl} ${jdk} ${os} "
   tags: ["tests-variant"]
   tasks:
@@ -653,28 +621,28 @@ buildvariants:
      - name: "test"
 
 - matrix_name: "tests-slow"
-  matrix_spec: { auth: "noauth", ssl: "*", jdk: "jdk8", version: ["4.0"], topology: "*", os: "linux" }
+  matrix_spec: { auth: "noauth", ssl: "*", jdk: "jdk8", version: ["4.2"], topology: "*", os: "linux" }
   display_name: "Slow: ${version} ${topology} ${ssl} ${jdk} ${os} "
   tags: ["tests-slow-variant"]
   tasks:
   - name: "slow-test"
 
 - matrix_name: "tests-socket"
-  matrix_spec: { auth: "*", ssl: "nossl", jdk: "jdk8", version: ["4.0"], topology: "standalone", os: "linux" }
+  matrix_spec: { auth: "*", ssl: "nossl", jdk: "jdk8", version: ["4.2"], topology: "standalone", os: "linux" }
   display_name: "Socket: ${version} ${topology} ${auth} ${jdk} ${os} "
   tags: ["tests-socket-variant"]
   tasks:
      - name: "socket-test"
 
 - matrix_name: "tests-socket-snappy-compression"
-  matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: ["4.0"], topology: "standalone", os: "linux" }
+  matrix_spec: { compressor : "snappy", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: ["4.2"], topology: "standalone", os: "linux" }
   display_name: "Socket: ${version} ${compressor} ${topology} ${auth} ${jdk} ${os} "
   tags: ["tests-socket-variant"]
   tasks:
      - name: "socket-test"
 
 - matrix_name: "tests-socket-zstd-compression"
-  matrix_spec: { compressor : "zstd", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: ["latest"], topology: "standalone", os: "linux" }
+  matrix_spec: { compressor : "zstd", auth: "noauth", ssl: "nossl", jdk: "jdk7", version: ["4.2"], topology: "standalone", os: "linux" }
   display_name: "Socket: ${version} ${compressor} ${topology} ${auth} ${jdk} ${os} "
   tags: ["tests-socket-variant"]
   tasks:
@@ -696,18 +664,12 @@ buildvariants:
      - name: "perf"
 
 - matrix_name: "tests-embedded"
-  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "*", version: ["4.0"], topology: "standalone", os: "ubuntu" }
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "*", version: ["4.2"], topology: "standalone", os: "ubuntu" }
   exclude_spec: { auth: "*", ssl: "*", jdk: "jdk6", version: "*", topology: "*", os: "*" }
   display_name: "Embedded: ${jdk}"
   tags: ["test-embedded-variant"]
   tasks:
   - name: "embedded-test"
-
-- name: embedded-test-android
-  display_name: "Embedded: Android"
-  run_on: ubuntu1804-test
-  tasks:
-  - name: "embedded-test-android"
 
 - name: plain-auth-test
   display_name: "PLAIN (LDAP) Auth test"

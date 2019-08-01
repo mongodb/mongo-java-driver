@@ -16,11 +16,14 @@
 
 package com.mongodb.async.client;
 
+import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.Function;
 import com.mongodb.MongoClientException;
 import com.mongodb.ReadPreference;
 import com.mongodb.async.SingleResultCallback;
+import com.mongodb.async.client.internal.Crypt;
+import com.mongodb.async.client.internal.Crypts;
 import com.mongodb.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.connection.Cluster;
 import com.mongodb.diagnostics.logging.Logger;
@@ -48,7 +51,7 @@ class MongoClientImpl implements MongoClient {
     private final Closeable externalResourceCloser;
     private final ServerSessionPool serverSessionPool;
     private final ClientSessionHelper clientSessionHelper;
-
+    private final Crypt crypt;
 
     MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, @Nullable final Closeable externalResourceCloser) {
         this(settings, cluster, null, externalResourceCloser);
@@ -64,6 +67,8 @@ class MongoClientImpl implements MongoClient {
         this.cluster = notNull("cluster", cluster);
         this.serverSessionPool = new ServerSessionPool(cluster);
         this.clientSessionHelper = new ClientSessionHelper(this, serverSessionPool);
+        AutoEncryptionSettings autoEncryptSettings = settings.getAutoEncryptionSettings();
+        this.crypt = autoEncryptSettings != null ? Crypts.createCrypt(this, autoEncryptSettings) : null;
         if (executor == null) {
             this.executor = new OperationExecutorImpl(this, clientSessionHelper);
         } else {
@@ -104,6 +109,9 @@ class MongoClientImpl implements MongoClient {
 
     @Override
     public void close() {
+        if (crypt != null) {
+            crypt.close();
+        }
         serverSessionPool.close();
         cluster.close();
         if (externalResourceCloser != null) {
@@ -223,5 +231,9 @@ class MongoClientImpl implements MongoClient {
 
     ServerSessionPool getServerSessionPool() {
         return serverSessionPool;
+    }
+
+    Crypt getCrypt() {
+        return crypt;
     }
 }

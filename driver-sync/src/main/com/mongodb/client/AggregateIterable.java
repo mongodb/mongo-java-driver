@@ -32,10 +32,11 @@ import java.util.concurrent.TimeUnit;
 public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
 
     /**
-     * Aggregates documents according to the specified aggregation pipeline, which must end with a $out stage.
+     * Aggregates documents according to the specified aggregation pipeline, which must end with a $out or $merge stage.
      *
-     * @throws IllegalStateException if the pipeline does not end with a $out stage
+     * @throws IllegalStateException if the pipeline does not end with a $out or $merge stage
      * @mongodb.driver.manual reference/operator/aggregation/out/ $out stage
+     * @mongodb.driver.manual reference/operator/aggregation/merge/ $merge stage
      * @since 3.4
      */
     void toCollection();
@@ -99,7 +100,7 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
     /**
      * Sets the bypass document level validation flag.
      *
-     * <p>Note: This only applies when an $out stage is specified</p>.
+     * <p>Note: This only applies when an $out or $merge stage is specified</p>.
      *
      * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
      * @return this

@@ -76,7 +76,8 @@ import static com.mongodb.operation.OperationHelper.cursorDocumentToQueryResult;
 import static com.mongodb.operation.OperationHelper.releasingCallback;
 import static com.mongodb.operation.OperationHelper.validateReadConcernAndCollation;
 import static com.mongodb.operation.OperationHelper.withConnection;
-import static com.mongodb.operation.OperationHelper.withConnectionSource;
+import static com.mongodb.operation.OperationHelper.withAsyncReadConnection;
+import static com.mongodb.operation.OperationHelper.withReadConnectionSource;
 import static com.mongodb.operation.OperationReadConcernHelper.appendReadConcernToCommand;
 
 /**
@@ -721,7 +722,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
 
     @Override
     public BatchCursor<T> execute(final ReadBinding binding) {
-        return withConnectionSource(binding, new CallableWithSource<BatchCursor<T>>() {
+        return withReadConnectionSource(binding, new CallableWithSource<BatchCursor<T>>() {
             @Override
             public BatchCursor<T> call(final ConnectionSource source) {
                 Connection connection = source.getConnection();
@@ -760,7 +761,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
 
     @Override
     public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<AsyncBatchCursor<T>> callback) {
-        withConnection(binding, new AsyncCallableWithConnectionAndSource() {
+        withAsyncReadConnection(binding, new AsyncCallableWithConnectionAndSource() {
             @Override
             public void call(final AsyncConnectionSource source, final AsyncConnection connection, final Throwable t) {
                 SingleResultCallback<AsyncBatchCursor<T>> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
@@ -885,7 +886,7 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
         return new AsyncReadOperation<BsonDocument>() {
             @Override
             public void executeAsync(final AsyncReadBinding binding, final SingleResultCallback<BsonDocument> callback) {
-                withConnection(binding, new AsyncCallableWithConnectionAndSource() {
+                withAsyncReadConnection(binding, new AsyncCallableWithConnectionAndSource() {
                     @Override
                     public void call(final AsyncConnectionSource connectionSource, final AsyncConnection connection, final Throwable t) {
                         SingleResultCallback<BsonDocument> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
@@ -1114,12 +1115,13 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
         return cursorType == CursorType.TailableAwait;
     }
 
-    private CommandReadTransformer<BsonDocument, BatchCursor<T>> transformer() {
-        return new CommandReadTransformer<BsonDocument, BatchCursor<T>>() {
+    private CommandReadTransformer<BsonDocument, AggregateResponseBatchCursor<T>> transformer() {
+        return new CommandReadTransformer<BsonDocument, AggregateResponseBatchCursor<T>>() {
             @Override
-            public BatchCursor<T> apply(final BsonDocument result, final ConnectionSource source, final Connection connection) {
+            public AggregateResponseBatchCursor<T> apply(final BsonDocument result, final ConnectionSource source,
+                                                         final Connection connection) {
                 QueryResult<T> queryResult = documentToQueryResult(result, connection.getDescription().getServerAddress());
-                return new QueryBatchCursor<T>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, source, connection);
+                return new QueryBatchCursor<T>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, source, connection, result);
             }
         };
     }
@@ -1134,7 +1136,8 @@ public class FindOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>
             public AsyncBatchCursor<T> apply(final BsonDocument result, final AsyncConnectionSource source,
                                              final AsyncConnection connection) {
                 QueryResult<T> queryResult = documentToQueryResult(result, connection.getDescription().getServerAddress());
-                return new AsyncQueryBatchCursor<T>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, source, connection);
+                return new AsyncQueryBatchCursor<T>(queryResult, limit, batchSize, getMaxTimeForCursor(), decoder, source, connection,
+                        result);
             }
         };
     }

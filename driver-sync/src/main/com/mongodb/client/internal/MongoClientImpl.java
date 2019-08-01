@@ -16,6 +16,7 @@
 
 package com.mongodb.client.internal;
 
+import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.Function;
 import com.mongodb.MongoClientException;
@@ -32,6 +33,7 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.changestream.ChangeStreamLevel;
 import com.mongodb.connection.Cluster;
+import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.DefaultClusterFactory;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SocketStreamFactory;
@@ -46,7 +48,9 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static com.mongodb.client.internal.Crypts.createCrypt;
 import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
+import static java.util.Collections.singletonList;
 
 public final class MongoClientImpl implements MongoClient {
 
@@ -60,8 +64,10 @@ public final class MongoClientImpl implements MongoClient {
     public MongoClientImpl(final Cluster cluster, final MongoClientSettings settings,
                            @Nullable final OperationExecutor operationExecutor) {
         this.settings = notNull("settings", settings);
+        AutoEncryptionSettings autoEncryptionSettings = settings.getAutoEncryptionSettings();
         this.delegate = new MongoClientDelegate(notNull("cluster", cluster),
-                Collections.singletonList(settings.getCredential()), this, operationExecutor);
+                singletonList(settings.getCredential()), this, operationExecutor,
+                autoEncryptionSettings == null ? null : createCrypt(SimpleMongoClients.create(this), autoEncryptionSettings));
     }
 
     @Override
@@ -170,6 +176,11 @@ public final class MongoClientImpl implements MongoClient {
         return createChangeStreamIterable(clientSession, pipeline, resultClass);
     }
 
+    @Override
+    public ClusterDescription getClusterDescription() {
+        return delegate.getCluster().getCurrentDescription();
+    }
+
     private <TResult> ChangeStreamIterable<TResult> createChangeStreamIterable(@Nullable final ClientSession clientSession,
                                                                                final List<? extends Bson> pipeline,
                                                                                final Class<TResult> resultClass) {
@@ -185,7 +196,7 @@ public final class MongoClientImpl implements MongoClient {
     private static Cluster createCluster(final MongoClientSettings settings,
                                          @Nullable final MongoDriverInformation mongoDriverInformation) {
         notNull("settings", settings);
-        List<MongoCredential> credentialList = settings.getCredential() != null ? Collections.singletonList(settings.getCredential())
+        List<MongoCredential> credentialList = settings.getCredential() != null ? singletonList(settings.getCredential())
                 : Collections.<MongoCredential>emptyList();
         return new DefaultClusterFactory().createCluster(settings.getClusterSettings(), settings.getServerSettings(),
                 settings.getConnectionPoolSettings(), getStreamFactory(settings, false), getStreamFactory(settings, true), credentialList,

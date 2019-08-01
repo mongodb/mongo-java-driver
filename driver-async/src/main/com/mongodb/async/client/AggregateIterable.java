@@ -81,10 +81,10 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
     AggregateIterable<TResult> useCursor(@Nullable Boolean useCursor);
 
     /**
-     * Aggregates documents according to the specified aggregation pipeline, which must end with a $out stage.
+     * Aggregates documents according to the specified aggregation pipeline, which must end with a $out or $merge stage.
      *
      * @param callback the callback, which is called when the aggregation completes
-     * @throws IllegalStateException if the pipeline does not end with a $out stage
+     * @throws IllegalStateException if the pipeline does not end with a $out or $merge stage
      * @mongodb.driver.manual aggregation/ Aggregation
      */
     void toCollection(SingleResultCallback<Void> callback);
@@ -101,7 +101,7 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
     /**
      * Sets the bypass document level validation flag.
      *
-     * <p>Note: This only applies when an $out stage is specified</p>.
+     * <p>Note: This only applies when a $out or $merge stage is specified</p>.
      *
      * @param bypassDocumentValidation If true, allows the write to opt-out of document level validation.
      * @return this

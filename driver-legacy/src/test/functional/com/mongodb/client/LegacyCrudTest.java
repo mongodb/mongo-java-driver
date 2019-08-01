@@ -16,10 +16,21 @@
 
 package com.mongodb.client;
 
+import com.mongodb.MongoClientSettings;
+import com.mongodb.MongoNamespace;
+import com.mongodb.WriteConcern;
+import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.test.CollectionHelper;
+import com.mongodb.event.CommandEvent;
+import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonArray;
+import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 import org.bson.BsonValue;
+import org.bson.Document;
+import org.bson.codecs.DocumentCodec;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -33,74 +44,139 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import static com.mongodb.ClusterFixture.serverVersionGreaterThan;
-import static com.mongodb.ClusterFixture.serverVersionLessThan;
+import static com.mongodb.ClusterFixture.isSharded;
+import static com.mongodb.JsonTestServerVersionChecker.skipTest;
+import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
+import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
 import static com.mongodb.client.Fixture.getDefaultDatabaseName;
+import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assume.assumeFalse;
 
 // See https://github.com/mongodb/specifications/tree/master/source/crud/tests
 @RunWith(Parameterized.class)
-public class LegacyCrudTest extends LegacyDatabaseTestCase {
+public class LegacyCrudTest {
     private final String filename;
     private final String description;
     private final String databaseName;
+    private final String collectionName;
     private final BsonArray data;
     private final BsonDocument definition;
+    private final boolean skipTest;
+    private final TestCommandListener commandListener;
     private MongoCollection<BsonDocument> collection;
+    private CollectionHelper<Document> collectionHelper;
+    private MongoClient mongoClient;
+    private MongoDatabase database;
     private JsonPoweredCrudTestHelper helper;
 
-    public LegacyCrudTest(final String filename, final String description, final String databaseName, final BsonArray data,
-                          final BsonDocument definition) {
+    public LegacyCrudTest(final String filename, final String description, final String databaseName, final String collectionName,
+                          final BsonArray data, final BsonDocument definition, final boolean skipTest) {
         this.filename = filename;
         this.description = description;
         this.databaseName = databaseName;
+        this.collectionName = collectionName;
         this.data = data;
         this.definition = definition;
+        this.skipTest = skipTest;
+        this.commandListener = new TestCommandListener();
     }
 
     @Before
     public void setUp() {
-        super.setUp();
+        assumeFalse(skipTest);
+        assumeFalse(isSharded());
+
+        collectionHelper = new CollectionHelper<Document>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
+
+        collectionHelper.killAllSessions();
+        collectionHelper.create(collectionName, new CreateCollectionOptions(), WriteConcern.ACKNOWLEDGED);
+
+        MongoClientSettings settings = MongoClientSettings.builder(getMongoClientSettings())
+                .addCommandListener(commandListener)
+                .build();
+
+        mongoClient = MongoClients.create(settings);
+        database = mongoClient.getDatabase(databaseName);
+
+        collection = database.getCollection(collectionName, BsonDocument.class);
+        helper = new JsonPoweredCrudTestHelper(description, database, collection);
         if (!data.isEmpty()) {
             List<BsonDocument> documents = new ArrayList<BsonDocument>();
             for (BsonValue document : data) {
                 documents.add(document.asDocument());
             }
-            getCollectionHelper().insertDocuments(documents);
+
+            collectionHelper.drop();
+            if (documents.size() > 0) {
+                collectionHelper.insertDocuments(documents, WriteConcern.MAJORITY);
+            }
         }
-        database = client.getDatabase(databaseName);
-        collection = database.getCollection(getClass().getName(), BsonDocument.class);
-        helper = new JsonPoweredCrudTestHelper(description, database, collection);
+        commandListener.reset();
+    }
+
+    @After
+    public void cleanUp() {
+        if (mongoClient != null) {
+            mongoClient.close();
+        }
     }
 
     @Test
     public void shouldPassAllOutcomes() {
-        BsonDocument outcome = helper.getOperationResults(definition.getDocument("operation"));
-        BsonDocument expectedOutcome = definition.getDocument("outcome");
+        BsonDocument expectedOutcome = definition.getDocument("outcome", null);
+        // check if v1 test
+        if (definition.containsKey("operation")) {
+            runOperation(expectedOutcome, definition.getDocument("operation"),
+                    expectedOutcome.containsKey("result") && expectedOutcome.isDocument("result")
+                            ? expectedOutcome.get("result") : null);
+        } else {  // v2 test
+            BsonArray operations = definition.getArray("operations");
+            for (BsonValue operation : operations) {
+                runOperation(expectedOutcome, operation.asDocument(),
+                        operation.asDocument().containsKey("result") ? operation.asDocument().get("result") : null);
+            }
+        }
+    }
 
-        if (expectedOutcome.containsKey("error")) {
-            assertEquals("Expected error", expectedOutcome.getBoolean("error"), outcome.get("error"));
+    private void runOperation(final BsonDocument expectedOutcome, final BsonDocument operation, final BsonValue expectedResult) {
+        BsonDocument outcome = null;
+        boolean wasException = false;
+        try {
+            outcome = helper.getOperationResults(operation);
+        } catch (Exception e) {
+            wasException = true;
         }
 
-        // Hack to workaround the lack of upsertedCount
-        BsonValue expectedResult = expectedOutcome.get("result");
-        BsonValue actualResult = outcome.get("result");
-        if (actualResult.isDocument()
+        if (operation.getBoolean("error", BsonBoolean.FALSE).getValue()) {
+            assertEquals(operation.containsKey("error"), wasException);
+        }
+
+        if (expectedResult != null) {
+            // Hack to workaround the lack of upsertedCount
+            BsonValue actualResult = outcome.get("result");
+            if (actualResult.isDocument()
                     && actualResult.asDocument().containsKey("upsertedCount")
                     && actualResult.asDocument().getNumber("upsertedCount").intValue() == 0
                     && !expectedResult.asDocument().containsKey("upsertedCount")) {
-            expectedResult.asDocument().append("upsertedCount", actualResult.asDocument().get("upsertedCount"));
+                expectedResult.asDocument().append("upsertedCount", actualResult.asDocument().get("upsertedCount"));
+            }
+            // Hack to workaround the lack of insertedIds
+            if (expectedResult.isDocument()
+                    && !expectedResult.asDocument().containsKey("insertedIds")) {
+                actualResult.asDocument().remove("insertedIds");
+            }
+
+            assertEquals(description, expectedResult, actualResult);
         }
+        if (definition.containsKey("expectations")) {
+            List<CommandEvent> expectedEvents = getExpectedEvents(definition.getArray("expectations"), databaseName, null);
+            List<CommandEvent> events = commandListener.getCommandStartedEvents();
 
-        // Hack to workaround the lack of insertedIds
-        if (expectedResult.isDocument()
-                && !expectedResult.asDocument().containsKey("insertedIds")) {
-            actualResult.asDocument().remove("insertedIds");
+
+            assertEventsEquality(expectedEvents, events.subList(0, expectedEvents.size()));
         }
-
-        assertEquals(description, expectedResult, actualResult);
-
-        if (expectedOutcome.containsKey("collection")) {
+        if (expectedOutcome != null && expectedOutcome.containsKey("collection")) {
             assertCollectionEquals(expectedOutcome.getDocument("collection"));
         }
     }
@@ -110,18 +186,11 @@ public class LegacyCrudTest extends LegacyDatabaseTestCase {
         List<Object[]> data = new ArrayList<Object[]>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/crud")) {
             BsonDocument testDocument = util.JsonPoweredTestHelper.getTestDocument(file);
-            if (testDocument.containsKey("minServerVersion")
-                    && serverVersionLessThan(testDocument.getString("minServerVersion").getValue())) {
-                continue;
-            }
-            if (testDocument.containsKey("maxServerVersion")
-                        && serverVersionGreaterThan(testDocument.getString("maxServerVersion").getValue())) {
-                continue;
-            }
             for (BsonValue test: testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
                         testDocument.getString("database_name", new BsonString(getDefaultDatabaseName())).getValue(),
-                        testDocument.getArray("data"), test.asDocument()});
+                        testDocument.getString("collection_name", new BsonString("test")).getValue(),
+                        testDocument.getArray("data", new BsonArray()), test.asDocument(), skipTest(testDocument, test.asDocument())});
             }
         }
         return data;

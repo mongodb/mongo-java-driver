@@ -16,6 +16,7 @@
 
 package com.mongodb.async.client
 
+
 import com.mongodb.MongoCompressor
 import com.mongodb.MongoCredential
 import com.mongodb.MongoDriverInformation
@@ -252,4 +253,5 @@ class MongoClientsSpecification extends FunctionalSpecification {
         }
         client?.close()
     }
+
 }

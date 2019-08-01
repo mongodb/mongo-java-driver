@@ -16,7 +16,7 @@
 
 package com.mongodb.client.model
 
-
+import com.mongodb.MongoNamespace
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document
@@ -46,9 +46,11 @@ import static com.mongodb.client.model.Aggregates.group
 import static com.mongodb.client.model.Aggregates.limit
 import static com.mongodb.client.model.Aggregates.lookup
 import static com.mongodb.client.model.Aggregates.match
+import static com.mongodb.client.model.Aggregates.merge
 import static com.mongodb.client.model.Aggregates.out
 import static com.mongodb.client.model.Aggregates.project
 import static com.mongodb.client.model.Aggregates.replaceRoot
+import static com.mongodb.client.model.Aggregates.replaceWith
 import static com.mongodb.client.model.Aggregates.sample
 import static com.mongodb.client.model.Aggregates.skip
 import static com.mongodb.client.model.Aggregates.sort
@@ -168,12 +170,18 @@ class AggregatesSpecification extends Specification {
         parse('{ $project : { title : 1 , author : 1, lastName : "$author.last" } }')
     }
 
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) })
     def 'should render $replaceRoot'() {
         expect:
         toBson(replaceRoot('$a1')) == parse('{$replaceRoot: {newRoot: "$a1"}}')
         toBson(replaceRoot('$a1.b')) == parse('{$replaceRoot: {newRoot: "$a1.b"}}')
         toBson(replaceRoot('$a1')) == parse('{$replaceRoot: {newRoot: "$a1"}}')
+    }
+
+    def 'should render $replaceWith'() {
+        expect:
+        toBson(replaceWith('$a1')) == parse('{$replaceWith: "$a1"}')
+        toBson(replaceWith('$a1.b')) == parse('{$replaceWith: "$a1.b"}')
+        toBson(replaceWith('$a1')) == parse('{$replaceWith: "$a1"}')
     }
 
     def 'should render $sort'() {
@@ -301,6 +309,50 @@ class AggregatesSpecification extends Specification {
     def 'should render $out'() {
         expect:
         toBson(out('authors')) == parse('{ $out : "authors" }')
+    }
+
+    def 'should render merge'() {
+        expect:
+        toBson(merge('authors')) == parse('{ $merge : {into: "authors" }}')
+        toBson(merge(new MongoNamespace('db1', 'authors'))) ==
+                parse('{ $merge : {into: {db: "db1", coll: "authors" }}}')
+
+        toBson(merge('authors',
+                new MergeOptions().uniqueIdentifier('ssn'))) ==
+                parse('{ $merge : {into: "authors", on: "ssn" }}')
+
+        toBson(merge('authors',
+                new MergeOptions().uniqueIdentifier(['ssn', 'otherId']))) ==
+                parse('{ $merge : {into: "authors", on: ["ssn", "otherId"] }}')
+
+        toBson(merge('authors',
+                new MergeOptions().whenMatched(MergeOptions.WhenMatched.REPLACE))) ==
+                parse('{ $merge : {into: "authors", whenMatched: "replace" }}')
+        toBson(merge('authors',
+                new MergeOptions().whenMatched(MergeOptions.WhenMatched.KEEP_EXISTING))) ==
+                parse('{ $merge : {into: "authors", whenMatched: "keepExisting" }}')
+        toBson(merge('authors',
+                new MergeOptions().whenMatched(MergeOptions.WhenMatched.MERGE))) ==
+                parse('{ $merge : {into: "authors", whenMatched: "merge" }}')
+        toBson(merge('authors',
+                new MergeOptions().whenMatched(MergeOptions.WhenMatched.FAIL))) ==
+                parse('{ $merge : {into: "authors", whenMatched: "fail" }}')
+
+        toBson(merge('authors',
+                new MergeOptions().whenNotMatched(MergeOptions.WhenNotMatched.INSERT))) ==
+                parse('{ $merge : {into: "authors", whenNotMatched: "insert" }}')
+        toBson(merge('authors',
+                new MergeOptions().whenNotMatched(MergeOptions.WhenNotMatched.DISCARD))) ==
+                parse('{ $merge : {into: "authors", whenNotMatched: "discard" }}')
+        toBson(merge('authors',
+                new MergeOptions().whenNotMatched(MergeOptions.WhenNotMatched.FAIL))) ==
+                parse('{ $merge : {into: "authors", whenNotMatched: "fail" }}')
+
+        toBson(merge('authors',
+                new MergeOptions().whenMatched(MergeOptions.WhenMatched.PIPELINE)
+                .variables([new Variable<Integer>('y', 2), new Variable<Integer>('z', 3)])
+                .whenMatchedPipeline([addFields([new Field('x', 1)])]))) ==
+                parse('{ $merge : {into: "authors", let: {y: 2, z: 3}, whenMatched: [{$addFields: {x: 1}}]}}')
     }
 
     def 'should render $group'() {

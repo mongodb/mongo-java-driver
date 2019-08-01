@@ -351,6 +351,11 @@ public final class CollectionHelper<T> {
         new CreateIndexesOperation(namespace, asList(new IndexRequest(wrap(key))), WriteConcern.ACKNOWLEDGED).execute(getBinding());
     }
 
+    public void createUniqueIndex(final Document key) {
+        new CreateIndexesOperation(namespace, asList(new IndexRequest(wrap(key)).unique(true)), WriteConcern.ACKNOWLEDGED)
+                .execute(getBinding());
+    }
+
     public void createIndex(final Document key, final String defaultLanguage) {
         new CreateIndexesOperation(namespace, asList(new IndexRequest(wrap(key)).defaultLanguage(defaultLanguage)),
                                           WriteConcern.ACKNOWLEDGED).execute(getBinding());

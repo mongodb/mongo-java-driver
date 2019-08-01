@@ -22,6 +22,7 @@ import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoWriteConcernException
 import com.mongodb.OperationFunctionalSpecification
+import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
 import com.mongodb.client.model.Aggregates
@@ -79,7 +80,7 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         operation.getCollation() == null
     }
 
-    def 'should set optional values correctly'(){
+    def 'should set optional values correctly (with write concern)'(){
         given:
         def pipeline = [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))]
 
@@ -98,18 +99,28 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         operation.getCollation() == defaultCollation
     }
 
+    def 'should set optional values correctly (with read concern)'(){
+        given:
+        def pipeline = [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))]
+
+        when:
+        AggregateToCollectionOperation operation = new AggregateToCollectionOperation(getNamespace(), pipeline, ReadConcern.DEFAULT)
+                .allowDiskUse(true)
+                .maxTime(10, MILLISECONDS)
+                .bypassDocumentValidation(true)
+                .collation(defaultCollation)
+
+        then:
+        operation.getAllowDiskUse()
+        operation.getMaxTime(MILLISECONDS) == 10
+        operation.getBypassDocumentValidation() == true
+        operation.getReadConcern() == ReadConcern.DEFAULT
+        operation.getCollation() == defaultCollation
+    }
+
     def 'should not accept an empty pipeline'() {
         when:
         new AggregateToCollectionOperation(getNamespace(), [])
-
-
-        then:
-        thrown(IllegalArgumentException)
-    }
-
-    def 'should not accept a pipeline without the last stage specifying an output-collection'() {
-        when:
-        new AggregateToCollectionOperation(getNamespace(), [new BsonDocument('$match', new BsonDocument('job', new BsonString('plumber')))])
 
 
         then:
@@ -121,6 +132,21 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
         AggregateToCollectionOperation operation =
                 new AggregateToCollectionOperation(getNamespace(),
                                                    [new BsonDocument('$out', new BsonString(aggregateCollectionNamespace.collectionName))])
+        execute(operation, async);
+
+        then:
+        getCollectionHelper(aggregateCollectionNamespace).count() == 3
+
+        where:
+        async << [true, false]
+    }
+
+    @IgnoreIf({ !serverVersionAtLeast(4, 2) })
+    def 'should be able to merge into a collection'() {
+        when:
+        AggregateToCollectionOperation operation =
+                new AggregateToCollectionOperation(getNamespace(),
+                        [new BsonDocument('$merge', new BsonDocument('into', new BsonString(aggregateCollectionNamespace.collectionName)))])
         execute(operation, async);
 
         then:
@@ -224,12 +250,16 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
     def 'should create the expected command'() {
         when:
         def pipeline = [BsonDocument.parse('{$out: "collectionOut"}')]
-        def operation = new AggregateToCollectionOperation(getNamespace(), pipeline, WriteConcern.MAJORITY).bypassDocumentValidation(true)
+        def operation = new AggregateToCollectionOperation(getNamespace(), pipeline, ReadConcern.MAJORITY, WriteConcern.MAJORITY)
+                .bypassDocumentValidation(true)
         def expectedCommand = new BsonDocument('aggregate', new BsonString(getNamespace().getCollectionName()))
                 .append('pipeline', new BsonArray(pipeline))
 
         if (includeBypassValidation) {
             expectedCommand.put('bypassDocumentValidation', BsonBoolean.TRUE)
+        }
+        if (includeReadConcern) {
+            expectedCommand.append('readConcern', new BsonDocument('level', new BsonString('majority')))
         }
         if (includeWriteConcern) {
             expectedCommand.append('writeConcern', new BsonDocument('w', new BsonString('majority')))
@@ -247,15 +277,15 @@ class AggregateToCollectionOperationSpecification extends OperationFunctionalSpe
                 true, false, ReadPreference.primary(), false)
 
         where:
-        serverVersion | includeBypassValidation | includeWriteConcern | includeCollation | async  | useCursor
-        [3, 6, 0]     | true                    | true                | true             | true   | true
-        [3, 6, 0]     | true                    | true                | true             | false  | true
-        [3, 4, 0]     | true                    | true                | true             | true   | false
-        [3, 4, 0]     | true                    | true                | true             | false  | false
-        [3, 2, 0]     | true                    | false               | false            | true   | false
-        [3, 2, 0]     | true                    | false               | false            | false  | false
-        [3, 0, 0]     | false                   | false               | false            | true   | false
-        [3, 0, 0]     | false                   | false               | false            | false  | false
+        serverVersion | includeBypassValidation | includeReadConcern | includeWriteConcern | includeCollation | async  | useCursor
+        [3, 6, 0]     | true                    | true               | true                | true             | true   | true
+        [3, 6, 0]     | true                    | true               | true                | true             | false  | true
+        [3, 4, 0]     | true                    | true               | true                | true             | true   | false
+        [3, 4, 0]     | true                    | true               | true                | true             | false  | false
+        [3, 2, 0]     | true                    | false              | false               | false            | true   | false
+        [3, 2, 0]     | true                    | false              | false               | false            | false  | false
+        [3, 0, 0]     | false                   | false              | false               | false            | true   | false
+        [3, 0, 0]     | false                   | false              | false               | false            | false  | false
     }
 
     def 'should throw an exception when passing an unsupported collation'() {

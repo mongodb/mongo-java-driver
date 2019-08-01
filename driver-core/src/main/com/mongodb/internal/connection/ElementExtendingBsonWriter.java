@@ -24,10 +24,10 @@ import java.util.List;
 
 import static com.mongodb.internal.connection.BsonWriterHelper.writeElements;
 
-class ElementExtendingBsonWriter extends LevelCountingBsonWriter {
+public class ElementExtendingBsonWriter extends LevelCountingBsonWriter {
     private final List<BsonElement> extraElements;
 
-    ElementExtendingBsonWriter(final BsonBinaryWriter writer, final List<BsonElement> extraElements) {
+    public ElementExtendingBsonWriter(final BsonBinaryWriter writer, final List<BsonElement> extraElements) {
         super(writer);
         this.extraElements = extraElements;
     }

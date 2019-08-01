@@ -20,18 +20,17 @@ import com.mongodb.ReadPreference
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.binding.AsyncClusterBinding
 import com.mongodb.binding.AsyncConnectionSource
-import com.mongodb.binding.AsyncReadWriteBinding
 import com.mongodb.connection.Cluster
 import com.mongodb.connection.Server
+import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding
 import com.mongodb.internal.session.ClientSessionContext
 import spock.lang.Specification
-
 
 class ClientSessionBindingSpecification extends Specification {
     def 'should return the session context from the binding'() {
         given:
         def session = Stub(ClientSession)
-        def wrappedBinding = Stub(AsyncClusterBinding)
+        def wrappedBinding = Stub(AsyncClusterAwareReadWriteBinding)
         def binding = new ClientSessionBinding(session, false, wrappedBinding)
 
         when:
@@ -44,7 +43,7 @@ class ClientSessionBindingSpecification extends Specification {
     def 'should return the session context from the connection source'() {
         given:
         def session = Stub(ClientSession)
-        def wrappedBinding = Mock(AsyncClusterBinding)
+        def wrappedBinding = Mock(AsyncClusterAwareReadWriteBinding)
         def binding = new ClientSessionBinding(session, false, wrappedBinding)
 
         when:
@@ -164,7 +163,7 @@ class ClientSessionBindingSpecification extends Specification {
         ownsSession << [true, false]
     }
 
-    private AsyncReadWriteBinding createStubBinding() {
+    private AsyncClusterAwareReadWriteBinding createStubBinding() {
         def cluster = Mock(Cluster) {
             selectServerAsync(_, _) >> {
                 it[1].onResult(Stub(Server), null)

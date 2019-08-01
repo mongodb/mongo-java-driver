@@ -18,6 +18,8 @@ package com.mongodb.operation
 
 
 import com.mongodb.binding.ReadBinding
+import org.bson.BsonDocument
+import org.bson.BsonInt32
 import spock.lang.Specification
 
 class ChangeStreamBatchCursorSpecification extends Specification {
@@ -27,7 +29,8 @@ class ChangeStreamBatchCursorSpecification extends Specification {
         def changeStreamOperation = Stub(ChangeStreamOperation)
         def binding = Stub(ReadBinding)
         def wrapped = Mock(QueryBatchCursor)
-        def cursor = new ChangeStreamBatchCursor(changeStreamOperation, wrapped, binding)
+        def resumeToken = new BsonDocument('_id': new BsonInt32(1))
+        def cursor = new ChangeStreamBatchCursor(changeStreamOperation, wrapped, binding, resumeToken)
 
         when:
         cursor.setBatchSize(10)
@@ -40,12 +43,14 @@ class ChangeStreamBatchCursorSpecification extends Specification {
 
         then:
         1 * wrapped.tryNext()
+        1 * wrapped.getPostBatchResumeToken()
 
         when:
         cursor.next()
 
         then:
         1 * wrapped.next()
+        1 * wrapped.getPostBatchResumeToken()
 
         when:
         cursor.close()

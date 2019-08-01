@@ -92,6 +92,11 @@ public abstract class MongoIterableImpl<TResult> implements MongoIterable<TResul
         return new MongoBatchCursorAdapter<TResult>(execute());
     }
 
+    @Override
+    public MongoCursor<TResult> cursor() {
+        return iterator();
+    }
+
     @Nullable
     @Override
     public TResult first() {

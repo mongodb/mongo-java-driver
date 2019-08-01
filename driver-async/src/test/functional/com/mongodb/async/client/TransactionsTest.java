@@ -65,29 +65,32 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
-import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
-import static com.mongodb.ClusterFixture.serverVersionAtLeast;
+import static com.mongodb.JsonTestServerVersionChecker.skipTest;
 import static com.mongodb.async.client.Fixture.getConnectionString;
 import static com.mongodb.async.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.async.client.Fixture.isSharded;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
 import static java.util.Collections.singletonList;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 // See https://github.com/mongodb/specifications/tree/master/source/transactions/tests
 @RunWith(Parameterized.class)
 public class TransactionsTest {
+
     private final String filename;
     private final String description;
     private final String databaseName;
     private final BsonArray data;
     private final BsonDocument definition;
+    private final boolean skipTest;
     private JsonPoweredCrudTestHelper helper;
     private final TestCommandListener commandListener;
     private MongoClient mongoClient;
@@ -100,21 +103,22 @@ public class TransactionsTest {
 
     private static final long MIN_HEARTBEAT_FREQUENCY_MS = 50L;
 
-    public TransactionsTest(final String filename, final String description, final BsonArray data, final BsonDocument definition) {
+    public TransactionsTest(final String filename, final String description, final BsonArray data, final BsonDocument definition,
+                            final boolean skipTest) {
         this.filename = filename;
         this.description = description;
         this.databaseName = getDefaultDatabaseName();
         this.data = data;
         this.definition = definition;
         this.commandListener = new TestCommandListener();
+        this.skipTest = skipTest;
     }
 
     @Before
     public void setUp() {
-        assumeTrue(canRunTests());
+        assumeFalse(skipTest);
         assumeTrue("Skipping test: " + definition.getString("skipReason", new BsonString("")).getValue(),
                 !definition.containsKey("skipReason"));
-
         collectionHelper = new CollectionHelper<Document>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
 
         collectionHelper.killAllSessions();
@@ -262,6 +266,10 @@ public class TransactionsTest {
             if (defaultTransactionOptionsDocument.containsKey("readPreference")) {
                 builder.readPreference(helper.getReadPreference(defaultTransactionOptionsDocument));
             }
+            if (defaultTransactionOptionsDocument.containsKey("maxCommitTimeMS")) {
+                builder.maxCommitTime(defaultTransactionOptionsDocument.getNumber("maxCommitTimeMS").longValue(), MILLISECONDS);
+            }
+
         }
         return builder.build();
     }
@@ -287,8 +295,6 @@ public class TransactionsTest {
             futureResultCallback.get();
         } catch (RuntimeException e) {
             throw e;
-        } catch (InterruptedException e) {
-            throw new RuntimeException("Interrupted", e);
         } finally {
             client.close();
         }
@@ -339,7 +345,6 @@ public class TransactionsTest {
 
     private void executeOperations(final BsonArray operations, final boolean throwExceptions) {
         TargetedFailPoint failPoint = null;
-
         try {
             for (BsonValue cur : operations) {
                 final BsonDocument operation = cur.asDocument();
@@ -466,6 +471,9 @@ public class TransactionsTest {
         if (options.containsKey("readPreference")) {
             builder.readPreference(helper.getReadPreference(options));
         }
+        if (options.containsKey("maxCommitTimeMS")) {
+            builder.maxCommitTime(options.getNumber("maxCommitTimeMS").longValue(), MILLISECONDS);
+        }
         return builder.build();
     }
 
@@ -536,20 +544,10 @@ public class TransactionsTest {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
             for (BsonValue test : testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
-                        testDocument.getArray("data"), test.asDocument()});
+                        testDocument.getArray("data"), test.asDocument(), skipTest(testDocument, test.asDocument())});
             }
         }
         return data;
-    }
-
-    private boolean canRunTests() {
-        if (isSharded()) {
-            return serverVersionAtLeast(4, 1);
-        } else if (isDiscoverableReplicaSet()) {
-            return serverVersionAtLeast(4, 0);
-        } else {
-            return false;
-        }
     }
 
     private class TargetedFailPoint {
@@ -590,13 +588,8 @@ public class TransactionsTest {
         private void executeCommand(final BsonDocument doc) {
             if (adminDB != null) {
                 FutureResultCallback<BsonDocument> futureResultCallback = new FutureResultCallback<BsonDocument>();
-
                 adminDB.runCommand(doc, BsonDocument.class, futureResultCallback);
-                try {
-                    futureResultCallback.get();
-                } catch (InterruptedException e) {
-                    throw new RuntimeException("Interrupted", e);
-                }
+                futureResultCallback.get();
             } else {
                 collectionHelper.runAdminCommand(doc);
             }

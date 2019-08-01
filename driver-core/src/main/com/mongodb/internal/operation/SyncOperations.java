@@ -17,6 +17,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.bulk.BulkWriteResult;
@@ -58,29 +59,29 @@ public final class SyncOperations<TDocument> {
 
     public SyncOperations(final Class<TDocument> documentClass, final ReadPreference readPreference,
                           final CodecRegistry codecRegistry) {
-        this(null, documentClass, readPreference, codecRegistry, WriteConcern.ACKNOWLEDGED, true, true);
+        this(null, documentClass, readPreference, codecRegistry, ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED, true, true);
     }
 
     public SyncOperations(final Class<TDocument> documentClass, final ReadPreference readPreference,
                           final CodecRegistry codecRegistry, final boolean retryReads) {
-        this(null, documentClass, readPreference, codecRegistry, WriteConcern.ACKNOWLEDGED, true, retryReads);
+        this(null, documentClass, readPreference, codecRegistry, ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED, true, retryReads);
     }
 
     public SyncOperations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
                           final CodecRegistry codecRegistry) {
-        this(namespace, documentClass, readPreference, codecRegistry, WriteConcern.ACKNOWLEDGED, true, true);
+        this(namespace, documentClass, readPreference, codecRegistry, ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED, true, true);
     }
 
     public SyncOperations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
                           final CodecRegistry codecRegistry, final boolean retryReads) {
-        this(namespace, documentClass, readPreference, codecRegistry, WriteConcern.ACKNOWLEDGED, true, retryReads);
+        this(namespace, documentClass, readPreference, codecRegistry, ReadConcern.DEFAULT, WriteConcern.ACKNOWLEDGED, true, retryReads);
     }
 
     public SyncOperations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
-                          final CodecRegistry codecRegistry, final WriteConcern writeConcern, final boolean retryWrites,
-                          final boolean retryReads) {
-        this.operations = new Operations<TDocument>(namespace, documentClass, readPreference, codecRegistry, writeConcern, retryWrites,
-                retryReads);
+                          final CodecRegistry codecRegistry, final ReadConcern readConcern, final WriteConcern writeConcern,
+                          final boolean retryWrites, final boolean retryReads) {
+        this.operations = new Operations<TDocument>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
+                retryWrites, retryReads);
     }
 
     public ReadOperation<Long> count(final Bson filter, final CountOptions options, final CountStrategy countStrategy) {
@@ -159,6 +160,11 @@ public final class SyncOperations<TDocument> {
         return operations.findOneAndUpdate(filter, update, options);
     }
 
+    public WriteOperation<TDocument> findOneAndUpdate(final Bson filter, final List<? extends Bson> update,
+                                                      final FindOneAndUpdateOptions options) {
+        return operations.findOneAndUpdate(filter, update, options);
+    }
+
     public WriteOperation<BulkWriteResult> insertOne(final TDocument document, final InsertOneOptions options) {
         return operations.insertOne(document, options);
     }
@@ -180,7 +186,17 @@ public final class SyncOperations<TDocument> {
         return operations.updateOne(filter, update, updateOptions);
     }
 
+    public WriteOperation<BulkWriteResult> updateOne(final Bson filter, final List<? extends Bson> update,
+                                                     final UpdateOptions updateOptions) {
+        return operations.updateOne(filter, update, updateOptions);
+    }
+
     public WriteOperation<BulkWriteResult> updateMany(final Bson filter, final Bson update, final UpdateOptions updateOptions) {
+        return operations.updateMany(filter, update, updateOptions);
+    }
+
+    public WriteOperation<BulkWriteResult> updateMany(final Bson filter, final List<? extends Bson> update,
+                                                      final UpdateOptions updateOptions) {
         return operations.updateMany(filter, update, updateOptions);
     }
 

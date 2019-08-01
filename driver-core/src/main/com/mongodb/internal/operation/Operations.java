@@ -17,6 +17,7 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.bulk.DeleteRequest;
@@ -69,10 +70,12 @@ import com.mongodb.operation.MapReduceToCollectionOperation;
 import com.mongodb.operation.MapReduceWithInlineResultsOperation;
 import com.mongodb.operation.MixedBulkWriteOperation;
 import com.mongodb.operation.RenameCollectionOperation;
+import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWrapper;
 import org.bson.BsonJavaScript;
 import org.bson.BsonString;
+import org.bson.BsonValue;
 import org.bson.codecs.Codec;
 import org.bson.codecs.CollectibleCodec;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -92,17 +95,19 @@ final class Operations<TDocument> {
     private final Class<TDocument> documentClass;
     private final ReadPreference readPreference;
     private final CodecRegistry codecRegistry;
+    private final ReadConcern readConcern;
     private final WriteConcern writeConcern;
     private final boolean retryWrites;
     private boolean retryReads;
 
     Operations(final MongoNamespace namespace, final Class<TDocument> documentClass, final ReadPreference readPreference,
-               final CodecRegistry codecRegistry, final WriteConcern writeConcern, final boolean retryWrites,
+               final CodecRegistry codecRegistry, final ReadConcern readConcern, final WriteConcern writeConcern, final boolean retryWrites,
                final boolean retryReads) {
         this.namespace = namespace;
         this.documentClass = documentClass;
         this.readPreference = readPreference;
         this.codecRegistry = codecRegistry;
+        this.readConcern = readConcern;
         this.writeConcern = writeConcern;
         this.retryWrites = retryWrites;
         this.retryReads = retryReads;
@@ -203,7 +208,7 @@ final class Operations<TDocument> {
                                                          final Boolean allowDiskUse, final Boolean bypassDocumentValidation,
                                                          final Collation collation, final Bson hint, final String comment,
                                                          final AggregationLevel aggregationLevel) {
-        return new AggregateToCollectionOperation(namespace, toBsonDocumentList(pipeline), writeConcern, aggregationLevel)
+        return new AggregateToCollectionOperation(namespace, toBsonDocumentList(pipeline), readConcern, writeConcern, aggregationLevel)
                 .maxTime(maxTimeMS, MILLISECONDS)
                 .allowDiskUse(allowDiskUse)
                 .bypassDocumentValidation(bypassDocumentValidation)
@@ -303,6 +308,20 @@ final class Operations<TDocument> {
                 .arrayFilters(toBsonDocumentList(options.getArrayFilters()));
     }
 
+    FindAndUpdateOperation<TDocument> findOneAndUpdate(final Bson filter, final List<? extends Bson> update,
+                                                       final FindOneAndUpdateOptions options) {
+        return new FindAndUpdateOperation<TDocument>(namespace, writeConcern, retryWrites, getCodec(), update)
+                .filter(toBsonDocument(filter))
+                .projection(toBsonDocument(options.getProjection()))
+                .sort(toBsonDocument(options.getSort()))
+                .returnOriginal(options.getReturnDocument() == ReturnDocument.BEFORE)
+                .upsert(options.isUpsert())
+                .maxTime(options.getMaxTime(MILLISECONDS), MILLISECONDS)
+                .bypassDocumentValidation(options.getBypassDocumentValidation())
+                .collation(options.getCollation())
+                .arrayFilters(toBsonDocumentList(options.getArrayFilters()));
+    }
+
 
     MixedBulkWriteOperation insertOne(final TDocument document, final InsertOneOptions options) {
         return bulkWrite(singletonList(new InsertOneModel<TDocument>(document)),
@@ -328,7 +347,17 @@ final class Operations<TDocument> {
                 new BulkWriteOptions().bypassDocumentValidation(updateOptions.getBypassDocumentValidation()));
     }
 
+    MixedBulkWriteOperation updateOne(final Bson filter, final List<? extends Bson> update, final UpdateOptions updateOptions) {
+        return bulkWrite(singletonList(new UpdateOneModel<TDocument>(filter, update, updateOptions)),
+                new BulkWriteOptions().bypassDocumentValidation(updateOptions.getBypassDocumentValidation()));
+    }
+
     MixedBulkWriteOperation updateMany(final Bson filter, final Bson update, final UpdateOptions updateOptions) {
+        return bulkWrite(singletonList(new UpdateManyModel<TDocument>(filter, update, updateOptions)),
+                new BulkWriteOptions().bypassDocumentValidation(updateOptions.getBypassDocumentValidation()));
+    }
+
+    MixedBulkWriteOperation updateMany(final Bson filter, final List<? extends Bson> update, final UpdateOptions updateOptions) {
         return bulkWrite(singletonList(new UpdateManyModel<TDocument>(filter, update, updateOptions)),
                 new BulkWriteOptions().bypassDocumentValidation(updateOptions.getBypassDocumentValidation()));
     }
@@ -375,16 +404,18 @@ final class Operations<TDocument> {
                         .collation(replaceOneModel.getReplaceOptions().getCollation());
             } else if (writeModel instanceof UpdateOneModel) {
                 UpdateOneModel<TDocument> updateOneModel = (UpdateOneModel<TDocument>) writeModel;
-                writeRequest = new UpdateRequest(toBsonDocument(updateOneModel.getFilter()), toBsonDocument(updateOneModel.getUpdate()),
-                        WriteRequest.Type.UPDATE)
+                BsonValue update = updateOneModel.getUpdate() != null ? toBsonDocument(updateOneModel.getUpdate())
+                        : new BsonArray(toBsonDocumentList(updateOneModel.getUpdatePipeline()));
+                writeRequest = new UpdateRequest(toBsonDocument(updateOneModel.getFilter()), update, WriteRequest.Type.UPDATE)
                         .multi(false)
                         .upsert(updateOneModel.getOptions().isUpsert())
                         .collation(updateOneModel.getOptions().getCollation())
                         .arrayFilters(toBsonDocumentList(updateOneModel.getOptions().getArrayFilters()));
             } else if (writeModel instanceof UpdateManyModel) {
                 UpdateManyModel<TDocument> updateManyModel = (UpdateManyModel<TDocument>) writeModel;
-                writeRequest = new UpdateRequest(toBsonDocument(updateManyModel.getFilter()), toBsonDocument(updateManyModel.getUpdate()),
-                        WriteRequest.Type.UPDATE)
+                BsonValue update = updateManyModel.getUpdate() != null ? toBsonDocument(updateManyModel.getUpdate())
+                        : new BsonArray(toBsonDocumentList(updateManyModel.getUpdatePipeline()));
+                writeRequest = new UpdateRequest(toBsonDocument(updateManyModel.getFilter()), update, WriteRequest.Type.UPDATE)
                         .multi(true)
                         .upsert(updateManyModel.getOptions().isUpsert())
                         .collation(updateManyModel.getOptions().getCollation())

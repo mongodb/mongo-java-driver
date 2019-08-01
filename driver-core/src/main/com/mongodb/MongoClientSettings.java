@@ -88,6 +88,8 @@ public final class MongoClientSettings {
     private final String applicationName;
     private final List<MongoCompressor> compressorList;
 
+    private final AutoEncryptionSettings autoEncryptionSettings;
+
     /**
      * Gets the default codec registry.  It includes the following providers:
      *
@@ -154,6 +156,8 @@ public final class MongoClientSettings {
         private String applicationName;
         private List<MongoCompressor> compressorList = Collections.emptyList();
 
+        private AutoEncryptionSettings autoEncryptionSettings;
+
         private Builder() {
         }
 
@@ -170,6 +174,7 @@ public final class MongoClientSettings {
             readConcern = settings.getReadConcern();
             credential = settings.getCredential();
             streamFactoryFactory = settings.getStreamFactoryFactory();
+            autoEncryptionSettings = settings.getAutoEncryptionSettings();
             clusterSettingsBuilder.applySettings(settings.getClusterSettings());
             serverSettingsBuilder.applySettings(settings.getServerSettings());
             socketSettingsBuilder.applySettings(settings.getSocketSettings());
@@ -432,6 +437,19 @@ public final class MongoClientSettings {
         }
 
         /**
+         * Sets the auto-encryption settings
+         *
+         * @param autoEncryptionSettings the auto-encryption settings
+         * @return this
+         * @since 3.11
+         * @see #getAutoEncryptionSettings()
+         */
+        public Builder autoEncryptionSettings(final AutoEncryptionSettings autoEncryptionSettings) {
+            this.autoEncryptionSettings = autoEncryptionSettings;
+            return this;
+        }
+
+        /**
          * Build an instance of {@code MongoClientSettings}.
          *
          * @return the settings from this builder
@@ -567,6 +585,34 @@ public final class MongoClientSettings {
     }
 
     /**
+     * Gets the auto-encryption settings.
+     * <p>
+     * Client side encryption enables an application to specify what fields in a collection must be
+     * encrypted, and the driver automatically encrypts commands and decrypts results.
+     * </p>
+     * <p>
+     * Automatic encryption is an enterprise only feature that only applies to operations on a collection. Automatic encryption is not
+     * supported for operations on a database or view and will result in error. To bypass automatic encryption,
+     * set bypassAutoEncryption=true in ClientSideEncryptionOptions.
+     * </p>
+     * <p>
+     * Explicit encryption/decryption and automatic decryption is a community feature, enabled with the new
+     * {@code com.mongodb.client.vault .ClientEncryption} type. A MongoClient configured with bypassAutoEncryption=true will still
+     * automatically decrypt.
+     * </p>
+     * <p>
+     * Automatic encryption requires the authenticated user to have the listCollections privilege action.
+     * </p>
+     *
+     * @return the auto-encryption settings, which may be null
+     * @since 3.11
+     */
+    @Nullable
+    public AutoEncryptionSettings getAutoEncryptionSettings() {
+        return autoEncryptionSettings;
+    }
+
+    /**
      * Gets the cluster settings.
      *
      * @return the cluster settings
@@ -647,6 +693,7 @@ public final class MongoClientSettings {
         connectionPoolSettings = builder.connectionPoolSettingsBuilder.build();
         sslSettings = builder.sslSettingsBuilder.build();
         compressorList = builder.compressorList;
+        autoEncryptionSettings = builder.autoEncryptionSettings;
 
         SocketSettings.Builder heartbeatSocketSettingsBuilder = SocketSettings.builder()
                 .readTimeout(socketSettings.getConnectTimeout(MILLISECONDS), MILLISECONDS)

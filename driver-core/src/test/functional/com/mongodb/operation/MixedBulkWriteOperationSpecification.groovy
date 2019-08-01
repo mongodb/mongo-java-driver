@@ -303,6 +303,23 @@ class MixedBulkWriteOperationSpecification extends OperationFunctionalSpecificat
         [async, ordered] << [[true, false], [true, false]].combinations()
     }
 
+    def 'when replacing with an empty document, update should not throw IllegalArgumentException'() {
+        given:
+        def id = new ObjectId()
+        def operation = new MixedBulkWriteOperation(getNamespace(),
+                [new UpdateRequest(new BsonDocument('_id', new BsonObjectId(id)), new BsonDocument(), REPLACE)],
+                true, ACKNOWLEDGED, false)
+
+        when:
+        execute(operation, async)
+
+        then:
+        noExceptionThrown()
+
+        where:
+        [async, ordered] << [[true, false], [true, false]].combinations()
+    }
+
     def 'when updating with an invalid document, update should throw IllegalArgumentException'() {
         given:
         def id = new ObjectId()

@@ -416,9 +416,10 @@ class MongoClientSettingsSpecification extends Specification {
         when:
         // A regression test so that if anymore fields are added then the builder(final MongoClientSettings settings) should be updated
         def actual = MongoClientSettings.Builder.declaredFields.grep {  !it.synthetic } *.name.sort()
-        def expected = ['applicationName', 'clusterSettingsBuilder', 'codecRegistry', 'commandListeners', 'compressorList',
-                        'connectionPoolSettingsBuilder', 'credential', 'readConcern', 'readPreference', 'retryReads', 'retryWrites',
-                        'serverSettingsBuilder', 'socketSettingsBuilder', 'sslSettingsBuilder', 'streamFactoryFactory', 'writeConcern']
+        def expected = ['applicationName', 'autoEncryptionSettings', 'clusterSettingsBuilder', 'codecRegistry', 'commandListeners',
+                        'compressorList', 'connectionPoolSettingsBuilder', 'credential', 'readConcern', 'readPreference', 'retryReads',
+                        'retryWrites', 'serverSettingsBuilder', 'socketSettingsBuilder', 'sslSettingsBuilder', 'streamFactoryFactory',
+                        'writeConcern']
 
         then:
         actual == expected
@@ -430,8 +431,8 @@ class MongoClientSettingsSpecification extends Specification {
         def actual = MongoClientSettings.Builder.declaredMethods.grep {  !it.synthetic } *.name.sort()
         def expected = ['addCommandListener', 'applicationName', 'applyConnectionString', 'applyToClusterSettings',
                         'applyToConnectionPoolSettings', 'applyToServerSettings', 'applyToSocketSettings', 'applyToSslSettings',
-                        'build', 'codecRegistry', 'commandListenerList', 'compressorList', 'credential', 'readConcern', 'readPreference',
-                        'retryReads', 'retryWrites', 'streamFactoryFactory', 'writeConcern']
+                        'autoEncryptionSettings', 'build', 'codecRegistry', 'commandListenerList', 'compressorList', 'credential',
+                        'readConcern', 'readPreference', 'retryReads', 'retryWrites', 'streamFactoryFactory', 'writeConcern']
         then:
         actual == expected
     }

@@ -1,4 +1,4 @@
-baseURL = "/mongo-java-driver/3.10"
+baseURL = "/mongo-java-driver/3.11"
 languageCode = "en-us"
 title = "MongoDB Java Driver"
 theme = "mongodb"

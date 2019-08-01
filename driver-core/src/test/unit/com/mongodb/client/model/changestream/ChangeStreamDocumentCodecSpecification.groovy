@@ -19,6 +19,7 @@ package com.mongodb.client.model.changestream
 import org.bson.BsonDocument
 import org.bson.BsonDocumentReader
 import org.bson.BsonDocumentWriter
+import org.bson.BsonInt64
 import org.bson.BsonReader
 import org.bson.BsonTimestamp
 import org.bson.Document
@@ -142,8 +143,19 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                         ,
                         null
                 ),
+                new ChangeStreamDocument<Document>(OperationType.INSERT,
+                        BsonDocument.parse('{token: true}'),
+                        BsonDocument.parse('{db: "engineering", coll: "users"}'),
+                        null,
+                        Document.parse('{_id: 1, userName: "alice123", name: "Alice"}'),
+                        BsonDocument.parse('{userName: "alice123", _id: 1}'),
+                        new BsonTimestamp(1234, 2),
+                        null,
+                        new BsonInt64(1),
+                        BsonDocument.parse('{id: 1, uid: 2}')
+                ),
         ]
-        clazz << [Document, Document, Document, Document, Document, Document, Document, Document, Document
+        clazz << [Document, Document, Document, Document, Document, Document, Document, Document, Document, Document
         ]
         json << [
                 '''
@@ -286,7 +298,32 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
    operationType: 'invalidate',
    clusterTime: { "$timestamp" : { "t" : 1234, "i" : 2 } }
 }
-'''
+''',
+                '''
+{
+   _id: { token : true },
+   operationType: 'insert',
+   clusterTime: { "$timestamp" : { "t" : 1234, "i" : 2 } },
+   ns: {
+      db: 'engineering',
+      coll: 'users'
+   },
+   documentKey: {
+      userName: 'alice123',
+      _id: 1
+   },
+   fullDocument: {
+      _id: 1,
+      userName: 'alice123',
+      name: 'Alice'
+   },
+   txnNumber: NumberLong('1'),
+   lsid: {
+      id: 1,
+      uid: 2
+   }
+}
+''',
         ]
     }
 }

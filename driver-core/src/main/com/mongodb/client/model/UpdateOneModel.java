@@ -16,7 +16,10 @@
 
 package com.mongodb.client.model;
 
+import com.mongodb.lang.Nullable;
 import org.bson.conversions.Bson;
+
+import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
@@ -33,6 +36,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 public final class UpdateOneModel<T> extends WriteModel<T> {
     private final Bson filter;
     private final Bson update;
+    private final List<? extends Bson> updatePipeline;
     private final UpdateOptions options;
 
     /**
@@ -55,6 +59,35 @@ public final class UpdateOneModel<T> extends WriteModel<T> {
     public UpdateOneModel(final Bson filter, final Bson update, final UpdateOptions options) {
         this.filter = notNull("filter", filter);
         this.update = notNull("update", update);
+        this.updatePipeline = null;
+        this.options = notNull("options", options);
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param filter a document describing the query filter, which may not be null.
+     * @param update a pipeline describing the update, which may not be null.
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     */
+    public UpdateOneModel(final Bson filter, final List<? extends Bson> update) {
+        this(filter, update, new UpdateOptions());
+    }
+
+    /**
+     * Construct a new instance.
+     *
+     * @param filter a document describing the query filter, which may not be null.
+     * @param update a pipeline describing the update, which may not be null.
+     * @param options the options to apply
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     */
+    public UpdateOneModel(final Bson filter, final List<? extends Bson> update, final UpdateOptions options) {
+        this.filter = notNull("filter", filter);
+        this.update = null;
+        this.updatePipeline = update;
         this.options = notNull("options", options);
     }
 
@@ -72,8 +105,21 @@ public final class UpdateOneModel<T> extends WriteModel<T> {
      *
      * @return the document specifying the updates to apply
      */
+    @Nullable
     public Bson getUpdate() {
         return update;
+    }
+
+    /**
+     * Gets the pipeline specifying the updates to apply to the matching document.  The update to apply must include only update operators.
+     *
+     * @return the pipeline specifying the updates to apply
+     * @since 3.11
+     * @mongodb.server.release 4.2
+     */
+    @Nullable
+    public List<? extends Bson> getUpdatePipeline() {
+        return updatePipeline;
     }
 
     /**
@@ -89,7 +135,7 @@ public final class UpdateOneModel<T> extends WriteModel<T> {
     public String toString() {
         return "UpdateOneModel{"
                 + "filter=" + filter
-                + ", update=" + update
+                + ", update=" + (update != null ? update : updatePipeline)
                 + ", options=" + options
                 + '}';
     }

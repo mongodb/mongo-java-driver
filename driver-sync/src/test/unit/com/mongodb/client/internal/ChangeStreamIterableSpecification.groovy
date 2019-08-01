@@ -24,10 +24,9 @@ import com.mongodb.ReadConcern
 import com.mongodb.WriteConcern
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.changestream.ChangeStreamDocument
-import com.mongodb.client.model.changestream.ChangeStreamDocumentCodec
 import com.mongodb.client.model.changestream.ChangeStreamLevel
 import com.mongodb.client.model.changestream.FullDocument
-import com.mongodb.operation.BatchCursor
+import com.mongodb.operation.AggregateResponseBatchCursor
 import com.mongodb.operation.ChangeStreamOperation
 import com.mongodb.client.ClientSession
 import org.bson.BsonDocument
@@ -37,6 +36,7 @@ import org.bson.Document
 import org.bson.RawBsonDocument
 import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodecProvider
+import org.bson.codecs.RawBsonDocumentCodec
 import org.bson.codecs.ValueCodecProvider
 import org.bson.codecs.configuration.CodecConfigurationException
 import spock.lang.Specification
@@ -65,7 +65,7 @@ class ChangeStreamIterableSpecification extends Specification {
         when: 'default input should be as expected'
         changeStreamIterable.iterator()
 
-        def codec = new ChangeStreamDocumentCodec(Document, codecRegistry)
+        def codec = new RawBsonDocumentCodec();
         def operation = executor.getReadOperation() as ChangeStreamOperation<Document>
         def readPreference = executor.getReadPreference()
 
@@ -102,7 +102,7 @@ class ChangeStreamIterableSpecification extends Specification {
 
     def 'should use ClientSession'() {
         given:
-        def batchCursor = Stub(BatchCursor) {
+        def batchCursor = Stub(AggregateResponseBatchCursor) {
             _ * hasNext() >> { false }
         }
         def executor = new TestOperationExecutor([batchCursor, batchCursor])
@@ -157,9 +157,8 @@ class ChangeStreamIterableSpecification extends Specification {
     def 'should follow the MongoIterable interface as expected'() {
         given:
         def count = 0
-        def cannedResults = ['{_id: 1}', '{_id: 2}', '{_id: 3}'].collect {
-            new ChangeStreamDocument(RawBsonDocument.parse(it), new BsonDocument(), Document.parse(it),
-                    BsonDocument.parse(it), null, null, null)
+        def cannedResults = ['{_id: {_data: 1}}', '{_id: {_data: 2}}', '{_id: {_data: 3}}'].collect {
+            RawBsonDocument.parse(it)
         }
         def executor = new TestOperationExecutor([cursor(cannedResults), cursor(cannedResults), cursor(cannedResults),
                                                   cursor(cannedResults)])
@@ -170,7 +169,7 @@ class ChangeStreamIterableSpecification extends Specification {
         def results = mongoIterable.first()
 
         then:
-        results == cannedResults[0]
+        results.getResumeToken().equals(cannedResults[0].getDocument('_id'))
 
         when:
         mongoIterable.forEach(new Block<ChangeStreamDocument<Document>>() {
@@ -188,14 +187,16 @@ class ChangeStreamIterableSpecification extends Specification {
         mongoIterable.into(target)
 
         then:
-        target == cannedResults
+        target[0].getResumeToken().equals(cannedResults[0].getDocument('_id'))
+        target[1].getResumeToken().equals(cannedResults[1].getDocument('_id'))
+        target[2].getResumeToken().equals(cannedResults[2].getDocument('_id'))
 
         when:
         target = []
         mongoIterable.map(new Function<ChangeStreamDocument<Document>, Integer>() {
             @Override
             Integer apply(ChangeStreamDocument<Document> document) {
-                document.getFullDocument().getInteger('_id')
+                document.getResumeToken().getInt32('_data').intValue()
             }
         }).into(target)
 
@@ -206,7 +207,7 @@ class ChangeStreamIterableSpecification extends Specification {
     def 'should be able to return the raw results'() {
         given:
         def count = 0
-        def cannedResults = ['{_id: 1}', '{_id: 2}', '{_id: 3}'].collect { RawBsonDocument.parse(it) }
+        def cannedResults = ['{_id: { _data: 1}}', '{_id: {_data: 2}}', '{_id: {_data: 3}}'].collect { RawBsonDocument.parse(it) }
         def executor = new TestOperationExecutor([cursor(cannedResults), cursor(cannedResults), cursor(cannedResults),
                                                   cursor(cannedResults)])
         def mongoIterable = new ChangeStreamIterableImpl(null, namespace, codecRegistry, readPreference, readConcern, executor, [],
@@ -241,7 +242,7 @@ class ChangeStreamIterableSpecification extends Specification {
         mongoIterable.map(new Function<BsonDocument, Integer>() {
             @Override
             Integer apply(BsonDocument document) {
-                document.getInt32('_id').intValue()
+                document.getDocument('_id').getInt32('_data').intValue()
             }
         }).into(target)
 
@@ -267,7 +268,7 @@ class ChangeStreamIterableSpecification extends Specification {
     }
 
     def cursor(List<?> cannedResults) {
-        Stub(BatchCursor) {
+        Stub(AggregateResponseBatchCursor) {
             def counter = 0
             def results
             def getResult = {

@@ -89,6 +89,11 @@ class GridFSFindIterableImpl implements GridFSFindIterable {
         return underlying.iterator();
     }
 
+    @Override
+    public MongoCursor<GridFSFile> cursor() {
+        return iterator();
+    }
+
     @Nullable
     @Override
     public GridFSFile first() {
