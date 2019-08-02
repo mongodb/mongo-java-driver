@@ -137,6 +137,7 @@ configure(javaCodeCheckedProjects) {
                 'org.mongodb.async.type': System.getProperty('org.mongodb.async.type', 'nio2'),
                 'org.mongodb.test.awsAccessKeyId': System.getProperty('org.mongodb.test.awsAccessKeyId'),
                 'org.mongodb.test.awsSecretAccessKey': System.getProperty('org.mongodb.test.awsSecretAccessKey'),
+                'org.mongodb.test.mongocryptdSpawnPath': System.getProperty('org.mongodb.test.mongocryptdSpawnPath'),
                 'jna.library.path': System.getProperty('jna.library.path')
         )
 
