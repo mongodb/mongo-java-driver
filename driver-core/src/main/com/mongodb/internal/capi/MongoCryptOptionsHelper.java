@@ -59,8 +59,8 @@ public final class MongoCryptOptionsHelper {
     public static List<String> createMongocryptdSpawnArgs(final Map<String, Object> options) {
         List<String> spawnArgs = new ArrayList<String>();
 
-        String path = options.containsKey("mongocryptdPath")
-                ? (String) options.get("mongocryptdPath")
+        String path = options.containsKey("mongocryptdSpawnPath")
+                ? (String) options.get("mongocryptdSpawnPath")
                 : "mongocryptd";
 
         spawnArgs.add(path);

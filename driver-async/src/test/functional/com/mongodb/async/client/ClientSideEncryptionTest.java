@@ -204,9 +204,10 @@ public class ClientSideEncryptionTest {
             if (extraOptionsDocument.containsKey("mongocryptdURI")) {
                 extraOptions.put("mongocryptdURI", extraOptionsDocument.getString("mongocryptdURI").getValue());
             }
-            if (System.getProperty("org.mongodb.test.mongocryptdPath") != null) {
-                extraOptions.put("mongocryptdPath", System.getProperty("org.mongodb.test.mongocryptdPath"));
-            }
+        }
+
+        if (System.getProperty("org.mongodb.test.mongocryptdSpawnPath") != null) {
+            extraOptions.put("mongocryptdSpawnPath", System.getProperty("org.mongodb.test.mongocryptdSpawnPath"));
         }
 
         Map<String, Map<String, Object>> kmsProvidersMap = new HashMap<String, Map<String, Object>>();
