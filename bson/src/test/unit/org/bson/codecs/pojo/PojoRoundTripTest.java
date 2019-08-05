@@ -67,6 +67,7 @@ import org.bson.codecs.pojo.entities.SimpleNestedPojoModel;
 import org.bson.codecs.pojo.entities.TreeWithIdModel;
 import org.bson.codecs.pojo.entities.UpperBoundsConcreteModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationBsonPropertyIdModel;
+import org.bson.codecs.pojo.entities.conventions.BsonIgnoreDuplicatePropertyMultipleTypes;
 import org.bson.codecs.pojo.entities.conventions.BsonIgnoreInvalidMapModel;
 import org.bson.codecs.pojo.entities.conventions.BsonIgnoreSyntheticProperty;
 import org.bson.codecs.pojo.entities.conventions.CollectionDiscriminatorAbstractClassesModel;
@@ -426,6 +427,11 @@ public final class PojoRoundTripTest extends PojoTestCase {
                 new DuplicateAnnotationAllowedModel("abc"),
                 getPojoCodecProviderBuilder(DuplicateAnnotationAllowedModel.class).conventions(Conventions.DEFAULT_CONVENTIONS),
                 "{'_id': 'abc'}"));
+
+        data.add(new TestData("BsonIgnore duplicate property with multiple types",
+                new BsonIgnoreDuplicatePropertyMultipleTypes("string value"),
+                getPojoCodecProviderBuilder(BsonIgnoreDuplicatePropertyMultipleTypes.class).conventions(Conventions.DEFAULT_CONVENTIONS),
+                "{stringField: 'string value'}"));
 
         return data;
     }

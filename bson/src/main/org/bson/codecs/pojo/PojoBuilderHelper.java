@@ -16,8 +16,6 @@
 
 package org.bson.codecs.pojo;
 
-import org.bson.codecs.configuration.CodecConfigurationException;
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -38,11 +36,12 @@ import static java.lang.reflect.Modifier.isPublic;
 import static java.util.Arrays.asList;
 import static java.util.Collections.reverse;
 import static org.bson.assertions.Assertions.notNull;
-import static org.bson.codecs.pojo.PropertyReflectionUtils.isGetter;
 import static org.bson.codecs.pojo.PropertyReflectionUtils.getPropertyMethods;
+import static org.bson.codecs.pojo.PropertyReflectionUtils.isGetter;
 import static org.bson.codecs.pojo.PropertyReflectionUtils.toPropertyName;
 
 final class PojoBuilderHelper {
+
     @SuppressWarnings("unchecked")
     static <T> void configureClassModelBuilder(final ClassModelBuilder<T> classModelBuilder, final Class<T> clazz) {
         classModelBuilder.type(notNull("clazz", clazz));
@@ -158,11 +157,10 @@ final class PojoBuilderHelper {
                                                                   final Type genericType) {
         PropertyMetadata<T> propertyMetadata = getOrCreatePropertyMetadata(propertyName, declaringClassName, propertyNameMap, typeData);
         if (!isAssignableClass(propertyMetadata.getTypeData().getType(), typeData.getType())) {
-            throw new CodecConfigurationException(format("Property '%s' in %s, has differing data types: %s and %s", propertyName,
+            propertyMetadata.setError(format("Property '%s' in %s, has differing data types: %s and %s.", propertyName,
                     declaringClassName, propertyMetadata.getTypeData(), typeData));
         }
-        cachePropertyTypeData(propertyMetadata, propertyTypeParameterMap, parentClassTypeData, genericTypeNames,
-                genericType);
+        cachePropertyTypeData(propertyMetadata, propertyTypeParameterMap, parentClassTypeData, genericTypeNames, genericType);
         return propertyMetadata;
     }
 
@@ -223,7 +221,8 @@ final class PojoBuilderHelper {
                 .readAnnotations(propertyMetadata.getReadAnnotations())
                 .writeAnnotations(propertyMetadata.getWriteAnnotations())
                 .propertySerialization(new PropertyModelSerializationImpl<T>())
-                .propertyAccessor(new PropertyAccessorImpl<T>(propertyMetadata));
+                .propertyAccessor(new PropertyAccessorImpl<T>(propertyMetadata))
+                .setError(propertyMetadata.getError());
 
         if (propertyMetadata.getTypeParameters() != null) {
             specializePropertyModelBuilder(propertyModelBuilder, propertyMetadata);

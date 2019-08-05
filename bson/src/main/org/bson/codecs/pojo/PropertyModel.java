@@ -33,11 +33,12 @@ public final class PropertyModel<T> {
     private final PropertySerialization<T> propertySerialization;
     private final Boolean useDiscriminator;
     private final PropertyAccessor<T> propertyAccessor;
+    private final String error;
     private volatile Codec<T> cachedCodec;
 
     PropertyModel(final String name, final String readName, final String writeName, final TypeData<T> typeData,
                   final Codec<T> codec, final PropertySerialization<T> propertySerialization, final Boolean useDiscriminator,
-                  final PropertyAccessor<T> propertyAccessor) {
+                  final PropertyAccessor<T> propertyAccessor, final String error) {
         this.name = name;
         this.readName = readName;
         this.writeName = writeName;
@@ -47,6 +48,7 @@ public final class PropertyModel<T> {
         this.propertySerialization = propertySerialization;
         this.useDiscriminator = useDiscriminator;
         this.propertyAccessor = propertyAccessor;
+        this.error = error;
     }
 
     /**
@@ -182,6 +184,11 @@ public final class PropertyModel<T> {
                 : that.getPropertyAccessor() != null) {
             return false;
         }
+
+        if (getError() != null ? !getError().equals(that.getError()) : that.getError() != null) {
+            return false;
+        }
+
         if (getCachedCodec() != null ? !getCachedCodec().equals(that.getCachedCodec()) : that.getCachedCodec() != null) {
             return false;
         }
@@ -199,8 +206,17 @@ public final class PropertyModel<T> {
         result = 31 * result + (getPropertySerialization() != null ? getPropertySerialization().hashCode() : 0);
         result = 31 * result + (useDiscriminator != null ? useDiscriminator.hashCode() : 0);
         result = 31 * result + (getPropertyAccessor() != null ? getPropertyAccessor().hashCode() : 0);
+        result = 31 * result + (getError() != null ? getError().hashCode() : 0);
         result = 31 * result + (getCachedCodec() != null ? getCachedCodec().hashCode() : 0);
         return result;
+    }
+
+    boolean hasError() {
+        return error != null;
+    }
+
+    String getError() {
+        return error;
     }
 
     PropertySerialization<T> getPropertySerialization() {

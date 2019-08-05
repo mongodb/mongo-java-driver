@@ -332,7 +332,7 @@ final class PojoCodecImpl<T> extends PojoCodec<T> {
 
         return new PropertyModel<V>(propertyModel.getName(), propertyModel.getReadName(), propertyModel.getWriteName(),
                 specializedPropertyType, null, propertyModel.getPropertySerialization(), propertyModel.useDiscriminator(),
-                propertyModel.getPropertyAccessor());
+                propertyModel.getPropertyAccessor(), propertyModel.getError());
     }
 
     @SuppressWarnings("unchecked")
