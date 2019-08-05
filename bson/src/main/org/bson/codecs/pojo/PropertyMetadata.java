@@ -41,6 +41,7 @@ final class PropertyMetadata<T> {
     private TypeParameterMap typeParameterMap;
     private List<TypeData<?>> typeParameters;
 
+    private String error;
     private Field field;
     private Method getter;
     private Method setter;
@@ -134,6 +135,14 @@ final class PropertyMetadata<T> {
             this.typeParameters = parentTypeData.getTypeParameters();
         }
         return this;
+    }
+
+    String getError() {
+        return error;
+    }
+
+    void setError(final String error) {
+        this.error = error;
     }
 
     public boolean isSerializable() {

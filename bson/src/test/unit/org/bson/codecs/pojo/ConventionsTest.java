@@ -24,6 +24,7 @@ import org.bson.codecs.pojo.entities.conventions.AnnotationDefaultsModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationNameCollision;
 import org.bson.codecs.pojo.entities.conventions.AnnotationWithObjectIdModel;
 import org.bson.codecs.pojo.entities.conventions.AnnotationWriteCollision;
+import org.bson.codecs.pojo.entities.conventions.BsonIgnoreDuplicatePropertyMultipleTypes;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidConstructorModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidMethodModel;
 import org.bson.codecs.pojo.entities.conventions.CreatorInvalidMethodReturnTypeModel;
@@ -40,6 +41,7 @@ import static junit.framework.TestCase.assertTrue;
 import static org.bson.codecs.pojo.Conventions.ANNOTATION_CONVENTION;
 import static org.bson.codecs.pojo.Conventions.CLASS_AND_PROPERTY_CONVENTION;
 import static org.bson.codecs.pojo.Conventions.DEFAULT_CONVENTIONS;
+import static org.bson.codecs.pojo.Conventions.NO_CONVENTIONS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -201,6 +203,12 @@ public final class ConventionsTest {
     public void testCreatorInvalidTypeMethodModel() {
         ClassModel.builder(CreatorInvalidTypeMethodModel.class)
                 .conventions(singletonList(ANNOTATION_CONVENTION)).build();
+    }
+
+    @Test(expected = CodecConfigurationException.class)
+    public void testBsonIgnoreDuplicatePropertyMultipleTypesModel() {
+        ClassModel.builder(BsonIgnoreDuplicatePropertyMultipleTypes.class)
+                .conventions(NO_CONVENTIONS).build();
     }
 
     private class PropertyAccessorTest<T> implements PropertyAccessor<T> {

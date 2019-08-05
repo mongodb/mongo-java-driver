@@ -45,6 +45,7 @@ public final class PropertyModelBuilder<T> {
     private List<Annotation> readAnnotations = emptyList();
     private List<Annotation> writeAnnotations = emptyList();
     private Boolean discriminatorEnabled;
+    private String error;
 
     PropertyModelBuilder() {
     }
@@ -246,7 +247,8 @@ public final class PropertyModelBuilder<T> {
                 codec,
                 stateNotNull("propertySerialization", propertySerialization),
                 discriminatorEnabled,
-                stateNotNull("propertyAccessor", propertyAccessor));
+                stateNotNull("propertyAccessor", propertyAccessor),
+                error);
     }
 
     @Override
@@ -265,6 +267,11 @@ public final class PropertyModelBuilder<T> {
 
     PropertyModelBuilder<T> typeData(final TypeData<T> typeData) {
         this.typeData = notNull("typeData", typeData);
+        return this;
+    }
+
+    PropertyModelBuilder<T> setError(final String error) {
+        this.error = error;
         return this;
     }
 }

@@ -321,6 +321,9 @@ public class ClassModelBuilder<T> {
         Map<String, Integer> propertyWriteNameMap = new HashMap<String, Integer>();
 
         for (PropertyModel<?> propertyModel : propertyModels) {
+            if (propertyModel.hasError()) {
+                throw new CodecConfigurationException(propertyModel.getError());
+            }
             checkForDuplicates("property", propertyModel.getName(), propertyNameMap, declaringClass);
             if (propertyModel.isReadable()) {
                 checkForDuplicates("read property", propertyModel.getReadName(), propertyReadNameMap, declaringClass);
