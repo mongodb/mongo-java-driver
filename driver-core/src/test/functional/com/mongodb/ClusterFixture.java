@@ -140,7 +140,7 @@ public final class ClusterFixture {
     }
 
     public static boolean serverVersionLessThan(final int majorVersion, final int minorVersion) {
-        return serverVersionAtLeast(asList(majorVersion, minorVersion, 0));
+        return serverVersionLessThan(asList(majorVersion, minorVersion, 0));
     }
 
     public static boolean serverVersionLessThan(final String versionString) {

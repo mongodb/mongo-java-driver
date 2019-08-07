@@ -52,6 +52,7 @@ import static com.mongodb.internal.operation.ServerVersionHelper.serverIsAtLeast
 import static com.mongodb.operation.CommandOperationHelper.logRetryExecute;
 import static com.mongodb.operation.CommandOperationHelper.logUnableToRetry;
 import static com.mongodb.operation.CommandOperationHelper.shouldAttemptToRetryWrite;
+import static com.mongodb.operation.CommandOperationHelper.transformWriteException;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnection;
 import static com.mongodb.operation.OperationHelper.AsyncCallableWithConnectionAndSource;
 import static com.mongodb.operation.OperationHelper.CallableWithConnectionAndSource;
@@ -290,7 +291,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
             if (originalBatch.getRetryWrites()) {
                 logUnableToRetry(originalBatch.getPayload().getPayloadType().toString(), exception);
             }
-            throw exception;
+            throw transformWriteException(exception);
         } else {
             return retryExecuteBatches(binding, currentBatch, exception);
         }
@@ -487,7 +488,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                             addBatchResult((BsonDocument) ((MongoWriteConcernWithResponseException) t).getResponse(), binding, connection,
                                     batch, retryWrites, callback);
                         } else {
-                            callback.onResult(null, t);
+                            callback.onResult(null, t instanceof MongoException ? transformWriteException((MongoException) t) : t);
                         }
                     } else {
                         retryExecuteBatchesAsync(binding, batch, t, callback.releaseConnectionAndGetWrapped());
@@ -521,7 +522,7 @@ public class MixedBulkWriteOperation implements AsyncWriteOperation<BulkWriteRes
                 if (retryWrites) {
                     logUnableToRetry(batch.getPayload().getPayloadType().toString(), batch.getError());
                 }
-                callback.onResult(null, batch.getError());
+                callback.onResult(null, transformWriteException(batch.getError()));
             } else {
                 callback.onResult(batch.getResult(), null);
             }

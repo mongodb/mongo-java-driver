@@ -201,7 +201,7 @@ functions:
       params:
         script: |
           ${PREPARE_SHELL}
-          MONGODB_VERSION=${VERSION} TOPOLOGY=${TOPOLOGY} AUTH=${AUTH} SSL=${SSL} sh ${DRIVERS_TOOLS}/.evergreen/run-orchestration.sh
+          MONGODB_VERSION=${VERSION} TOPOLOGY=${TOPOLOGY} AUTH=${AUTH} SSL=${SSL} STORAGE_ENGINE=${STORAGE_ENGINE} sh ${DRIVERS_TOOLS}/.evergreen/run-orchestration.sh
     # run-orchestration generates expansion file with the MONGODB_URI for the cluster
     - command: expansions.update
       params:
@@ -262,6 +262,16 @@ functions:
         script: |
           # DO NOT ECHO WITH XTRACE (which PREPARE_SHELL does)
           PROJECT_DIRECTORY=${PROJECT_DIRECTORY} JDK=${JDK} MONGODB_URI=${gssapi_auth_mongodb_uri} KDC=${gssapi_auth_kdc} REALM=${gssapi_auth_realm} KEYTAB_BASE64=${gssapi_auth_keytab_base64} .evergreen/run-gssapi-auth-test.sh
+
+  "run mmapv1 storage test":
+    - command: shell.exec
+      type: test
+      params:
+        silent: true
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          PROJECT_DIRECTORY=${PROJECT_DIRECTORY} JDK=${JDK} TOPOLOGY=${TOPOLOGY} STORAGE_ENGINE=${STORAGE_ENGINE} MONGODB_URI="${MONGODB_URI}" .evergreen/run-mmapv1-storage-test.sh
 
   "run atlas test":
     - command: shell.exec
@@ -433,6 +443,12 @@ tasks:
         - func: "bootstrap mongo-orchestration"
         - func: "run perf tests"
         - func: "send dashboard data"
+
+    - name: "mmapv1-storage-test"
+      commands:
+        - func: "bootstrap mongo-orchestration"
+        - func: "run mmapv1 storage test"
+
 axes:
   - id: version
     display_name: MongoDB Version
@@ -561,6 +577,15 @@ axes:
         variables:
            JDK: "jdk6"
 
+  # Choice of MongoDB storage engine
+  - id: storage-engine
+    display_name: Storage
+    values:
+      - id: mmapv1
+        display_name: MMAPv1
+        variables:
+           STORAGE_ENGINE: "mmapv1"
+           
 buildvariants:
 
 # Test packaging and other release related routines
@@ -688,3 +713,9 @@ buildvariants:
   run_on: ubuntu1804-test
   tasks:
     - name: "publish-snapshot"
+
+- matrix_name: "tests-storage-engines"
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk8", os: "linux", version: ["3.6", "4.0"], topology: ["replicaset", "sharded-cluster"], storage-engine: "mmapv1" }
+  display_name: "${version} Storage ${storage-engine} ${jdk} ${os} ${topology}"
+  tasks:
+    - name: "mmapv1-storage-test"
