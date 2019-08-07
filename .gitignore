@@ -43,6 +43,8 @@ docs/hugo*
 # jenv
 .java-version
 
-#mongocryptd
+# mongocryptd
 **/mongocryptd.pid
 
+# shell scripts
+*.sh
