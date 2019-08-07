@@ -194,10 +194,6 @@ public abstract class AbstractClientSideEncryptionTest {
             }
         }
 
-        if (System.getProperty("org.mongodb.test.mongocryptdSpawnPath") != null) {
-            extraOptions.put("mongocryptdSpawnPath", System.getProperty("org.mongodb.test.mongocryptdSpawnPath"));
-        }
-
         Map<String, Map<String, Object>> kmsProvidersMap = new HashMap<String, Map<String, Object>>();
 
         for (String kmsProviderKey : kmsProviders.keySet()) {
