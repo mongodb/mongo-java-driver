@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -51,9 +52,13 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <p>
  * Automatic encryption requires the authenticated user to have the listCollections privilege action.
  * </p>
+ * <p>
+ * Note: support for client side encryption is in beta.  Backwards-breaking changes may be made before the final release.
+ * </p>
  *
  * @since 3.11
  */
+@Beta
 public final class AutoEncryptionSettings {
     private final MongoClientSettings keyVaultMongoClientSettings;
     private final String keyVaultNamespace;
@@ -67,6 +72,7 @@ public final class AutoEncryptionSettings {
      * construction through chaining.
      */
     @NotThreadSafe
+    @Beta
     public static final class Builder {
         private MongoClientSettings keyVaultMongoClientSettings;
         private String keyVaultNamespace;

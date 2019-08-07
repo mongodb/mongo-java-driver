@@ -17,12 +17,17 @@
 package com.mongodb.async.client.vault;
 
 import com.mongodb.ClientEncryptionSettings;
+import com.mongodb.annotations.Beta;
 
 /**
  * Factory for ClientEncryption implementations.
  *
+ * <p>
+ * Note: support for client side encryption is in beta.  Backwards-breaking changes may be made before the final release.
+ * </p>
  * @since 3.11
  */
+@Beta
 public final class ClientEncryptions {
 
     /**

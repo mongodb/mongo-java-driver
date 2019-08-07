@@ -16,6 +16,7 @@
 
 package com.mongodb;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.connection.ConnectionPoolSettings;
@@ -741,10 +742,14 @@ public class MongoClientOptions {
     /**
      * Gets the auto-encryption settings
      *
+     * <p>
+     * Note: support for client side encryption is in beta.  Backwards-breaking changes may be made before the final release.
+     * </p>
      * @return the auto-encryption settings, which may be null
      * @since 3.11
      */
     @Nullable
+    @Beta
     public AutoEncryptionSettings getAutoEncryptionSettings() {
         return autoEncryptionSettings;
     }
@@ -1653,10 +1658,14 @@ public class MongoClientOptions {
         /**
          * Set options for auto-encryption.
          *
+         * <p>
+         * Note: support for client side encryption is in beta.  Backwards-breaking changes may be made before the final release.
+         * </p>
          * @param autoEncryptionSettings auto encryption settings
          * @return this
          * @since 3.11
          */
+        @Beta
         public Builder autoEncryptionSettings(final AutoEncryptionSettings autoEncryptionSettings) {
             this.autoEncryptionSettings = autoEncryptionSettings;
             return this;
