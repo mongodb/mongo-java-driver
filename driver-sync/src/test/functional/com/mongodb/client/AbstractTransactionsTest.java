@@ -354,13 +354,13 @@ public abstract class AbstractTransactionsTest {
                                 }
                             });
                         } else {
-                            nonNullClientSession(clientSession).withTransaction(transactionOptions, new TransactionBody<Object>() {
+                            nonNullClientSession(clientSession).withTransaction(new TransactionBody<Object>() {
                                 @Override
                                 public Void execute() {
                                     executeOperations(arguments.getDocument("callback").getArray("operations"), true);
                                     return null;
                                 }
-                            });
+                            }, transactionOptions);
                         }
                     } else if (operationName.equals("targetedFailPoint")) {
                         assertTrue(failPoint == null);

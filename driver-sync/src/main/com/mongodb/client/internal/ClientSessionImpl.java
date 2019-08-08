@@ -179,11 +179,11 @@ final class ClientSessionImpl extends BaseClientSessionImpl implements ClientSes
 
     @Override
     public <T> T withTransaction(final TransactionBody<T> transactionBody) {
-        return withTransaction(TransactionOptions.builder().build(), transactionBody);
+        return withTransaction(transactionBody, TransactionOptions.builder().build());
     }
 
     @Override
-    public <T> T withTransaction(final TransactionOptions options, final TransactionBody<T> transactionBody) {
+    public <T> T withTransaction(final TransactionBody<T> transactionBody, final TransactionOptions options) {
         notNull("transactionBody", transactionBody);
         long startTime = ClientSessionClock.INSTANCE.now();
         outer:
