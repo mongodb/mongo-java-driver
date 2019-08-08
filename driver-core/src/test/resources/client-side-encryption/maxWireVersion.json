@@ -46,6 +46,7 @@
     "tests": [
         {
             "description": "operation fails with maxWireVersion < 8",
+            "skipReason": "waiting on SPEC-1403",
             "clientOptions": {
                 "autoEncryptOpts": {
                     "kmsProviders": {
