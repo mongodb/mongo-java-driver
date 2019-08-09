@@ -514,7 +514,7 @@ public final class MongoCredential {
                 + ", userName='" + userName + '\''
                 + ", source='" + source + '\''
                 + ", password=<hidden>"
-                + ", mechanismProperties=" + mechanismProperties
+                + ", mechanismProperties=<hidden>"
                 + '}';
     }
 }

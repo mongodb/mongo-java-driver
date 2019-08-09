@@ -296,6 +296,11 @@ class MongoCredentialSpecification extends Specification {
         credentialOne.hashCode() != credentialTwo.hashCode()
 
         !credentialOne.toString().contains(password)
+        credentialOne.toString().contains('password=<hidden>')
+
+        !credentialTwo.toString().contains(propertyKey.toLowerCase())
+        !credentialTwo.toString().contains(propertyValue)
+        credentialTwo.toString().contains('mechanismProperties=<hidden>')
     }
 
     def 'testEqualsAndHashCode'() {
