@@ -17,9 +17,14 @@
 /**
  * This package contains the Key Vault API
  *
+ * <p>
+ * Note: support for client-side encryption is in beta.  Backwards-breaking changes may be made before the final release.
+ * </p>
  * @since 3.11
  */
+@Beta
 @NonNullApi
 package com.mongodb.async.client.vault;
 
+import com.mongodb.annotations.Beta;
 import com.mongodb.lang.NonNullApi;
