@@ -39,12 +39,12 @@ public class BsonIgnoreDuplicatePropertyMultipleTypes {
     }
 
     @BsonIgnore
-    public void setAltStringField(String altStringField) {
+    public void setAltStringField(final String altStringField) {
         this.altStringField = altStringField;
     }
 
     @BsonIgnore
-    public void setAltStringField(Integer i) {
+    public void setAltStringField(final Integer i) {
         this.altStringField = i.toString();
     }
 
