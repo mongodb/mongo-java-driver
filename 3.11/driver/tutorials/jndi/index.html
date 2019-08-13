@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2019-07-25T11:19:16.68">
+<meta name="date" content="2019-08-13T13:49:17.52">
 <link rel="shortcut icon" href="/mongo-java-driver/3.11/img/favicon.png">
 
     <title>JNDI</title><link rel="stylesheet" href="/mongo-java-driver/3.11/lib/bootstrap.css" type="text/css" />
@@ -263,8 +263,9 @@
 <h2 id="java-naming-and-directory-interface-jndi">Java Naming and Directory Interface (JNDI)</h2>
 
 <p>The driver includes a <a href="http://docs.oracle.com/javase/8/docs/technotes/guides/jndi/index.html">JNDI</a> ObjectFactory implementation,
-<a href="/mongo-java-driver/3.11/javadoc/com/mongodb/client/jndi/MongoClientFactory.html
-"><code>MongoClientFactory</code></a>, that returns <code>MongoClient</code> instances based on a
+<a href="/mongo-java-driver/3.11/javadoc/com/mongodb/client/MongoClientFactory.html
+"><code>MongoClientFactory</code></a> (<a href="/mongo-java-driver/3.11/javadoc/com/mongodb/client/jndi/MongoClientFactory.html
+"><code>legacy version</code></a>), that returns <code>MongoClient</code> instances based on a
 <a href="http://docs.mongodb.org/manual/reference/connection-string/">connection string</a>.</p>
 
 <h2 id="examples">Examples</h2>
@@ -297,7 +298,7 @@ connection string for the MongoDB cluster.</p>
 
 <pre><code>&lt;subsystem xmlns=&quot;urn:jboss:domain:naming:2.0&quot;&gt;
     &lt;bindings&gt;
-        &lt;object-factory name=&quot;java:global/MyMongoClient&quot; module=&quot;org.mongodb&quot; class=&quot;com.mongodb.client.jndi.MongoClientFactory&quot;&gt;
+        &lt;object-factory name=&quot;java:global/MyMongoClient&quot; module=&quot;org.mongodb&quot; class=&quot;com.mongodb.client.MongoClientFactory&quot;&gt;
             &lt;environment&gt;
                 &lt;property name=&quot;connectionString&quot; value=&quot;mongodb://localhost:27017&quot;/&gt;
             &lt;/environment&gt;
@@ -322,7 +323,7 @@ MongoDB cluster:</p>
           auth=&quot;Container&quot;
           type=&quot;com.mongodb.MongoClient&quot;
           closeMethod=&quot;close&quot;
-          factory=&quot;com.mongodb.client.jndi.MongoClientFactory&quot;
+          factory=&quot;com.mongodb.client.MongoClientFactory&quot;
           singleton=&quot;true&quot;
           connectionString=&quot;mongodb://localhost&quot;/&gt;
 </code></pre></li>

@@ -7,7 +7,8 @@
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     
-	<atom:link href="/mongo-java-driver/index.xml" rel="self" type="application/rss+xml" />    
+	<atom:link href="/mongo-java-driver/index.xml" rel="self" type="application/rss+xml" />
+    
     
   </channel>
 </rss>
