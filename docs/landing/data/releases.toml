@@ -1,13 +1,13 @@
-current = "3.10.2"
+current = "3.11.0"
 
 [[versions]]
-  version = "3.11.0-rc0"
+  version = "3.11.0"
+  status = "current"
   docs = "./3.11"
   api = "./3.11/javadoc"
 
 [[versions]]
   version = "3.10.2"
-  status = "current"
   docs = "./3.10"
   api = "./3.10/javadoc"
 
