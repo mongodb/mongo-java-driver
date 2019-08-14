@@ -55,7 +55,7 @@ def javaCodeCheckedProjects = subprojects.findAll { !['util', 'mongo-java-driver
 configure(coreProjects) {
     evaluationDependsOn(':util')
     group = 'org.mongodb'
-    version = '3.11.1-SNAPSHOT'
+    version = '3.12.0-SNAPSHOT'
 
     repositories {
         mavenLocal()
