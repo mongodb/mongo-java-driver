@@ -42,7 +42,6 @@ class FunctionalSpecification extends Specification {
         database = getDefaultDatabase()
         collection = initializeCollection(new MongoNamespace(database.getName(), getClass().getName()))
         drop(collection.getNamespace())
-
     }
 
     def cleanup() {

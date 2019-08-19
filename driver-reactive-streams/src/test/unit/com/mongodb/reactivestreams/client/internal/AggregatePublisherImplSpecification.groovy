@@ -52,7 +52,6 @@ class AggregatePublisherImplSpecification  extends Specification {
                 .maxTime(1, TimeUnit.SECONDS)
                 .maxAwaitTime(2, TimeUnit.SECONDS)
                 .hint(hint)
-                .useCursor(true)
 
         then:
         1 * wrapped.allowDiskUse(true) >> wrapped
@@ -62,7 +61,6 @@ class AggregatePublisherImplSpecification  extends Specification {
         1 * wrapped.maxTime(1, TimeUnit.SECONDS) >> wrapped
         1 * wrapped.maxAwaitTime(2, TimeUnit.SECONDS) >> wrapped
         1 * wrapped.hint(hint) >> wrapped
-        1 * wrapped.useCursor(true) >> wrapped
 
         when:
         publisher.subscribe(subscriber)

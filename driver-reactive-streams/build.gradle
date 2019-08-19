@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2015 MongoDB, Inc.
+ * Copyright 2008-present MongoDB, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,17 +14,21 @@
  * limitations under the License.
  */
 
-apply plugin: 'idea'
-apply plugin: 'osgi'
-apply plugin: 'de.fuerstenau.buildconfig'
+plugins {
+    id 'de.fuerstenau.buildconfig' version '1.1.8'
+}
 
 description = "A Reactive Streams implementation of the MongoDB Java driver"
 archivesBaseName = 'mongodb-driver-reactivestreams'
 
+
 dependencies {
-    compile 'org.mongodb:mongodb-driver-async:3.11.0'
+    compile project(':bson')
+    compile project(':driver-async')
+
     compile 'org.reactivestreams:reactive-streams:1.0.2'
 
+    testCompile project(':bson').sourceSets.test.output
     testCompile 'org.reactivestreams:reactive-streams-tck:1.0.2'
 }
 
@@ -66,10 +70,12 @@ task tckTest(type: Test) {
     maxParallelForks = 1
 }
 
-modifyPom {
-    project {
-        name 'MongoDB Reactive Streams Driver'
-        description 'The MongoDB Reactive Streams Driver'
-        url 'http://www.mongodb.org'
+jar {
+    manifest {
+        instruction 'Automatic-Module-Name', 'org.mongodb.driver.reactivestreams'
+        instruction 'Build-Version', project.gitVersion
+        instruction 'Import-Package',
+                'org.bson.*',
+                'com.mongodb.*'
     }
 }

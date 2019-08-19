@@ -87,11 +87,6 @@ public final class GridFSBucketImpl implements GridFSBucket {
     }
 
     @Override
-    public boolean getDisableMD5() {
-        return wrapped.getDisableMD5();
-    }
-
-    @Override
     public GridFSBucket withChunkSizeBytes(final int chunkSizeBytes) {
         return new GridFSBucketImpl(wrapped.withChunkSizeBytes(chunkSizeBytes));
     }
@@ -109,11 +104,6 @@ public final class GridFSBucketImpl implements GridFSBucket {
     @Override
     public GridFSBucket withReadConcern(final ReadConcern readConcern) {
         return new GridFSBucketImpl(wrapped.withReadConcern(readConcern));
-    }
-
-    @Override
-    public GridFSBucket withDisableMD5(final boolean disableMD5) {
-        return new GridFSBucketImpl(wrapped.withDisableMD5(disableMD5));
     }
 
     @Override

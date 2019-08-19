@@ -39,8 +39,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import util.Hex;
 
-import javax.xml.bind.DatatypeConverter;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -254,7 +254,7 @@ public class GridFSTest extends DatabaseTestCase {
 
         if (assertion.containsKey("result")) {
             assertNull("Should not have thrown an exception", error);
-            assertEquals(DatatypeConverter.printHexBinary(outputStream.toByteArray()).toLowerCase(),
+            assertEquals(Hex.encode(outputStream.toByteArray()).toLowerCase(),
                     assertion.getDocument("result").getString("$hex").getValue());
         } else if (assertion.containsKey("error")) {
             assertNotNull("Should have thrown an exception", error);
@@ -282,7 +282,7 @@ public class GridFSTest extends DatabaseTestCase {
         }
         if (assertion.containsKey("result")) {
             assertNull("Should not have thrown an exception", error);
-            assertEquals(DatatypeConverter.printHexBinary(outputStream.toByteArray()).toLowerCase(),
+            assertEquals(Hex.encode(outputStream.toByteArray()).toLowerCase(),
                     assertion.getDocument("result").getString("$hex").getValue());
         } else if (assertion.containsKey("error")) {
             assertNotNull("Should have thrown an exception", error);
@@ -305,9 +305,6 @@ public class GridFSTest extends DatabaseTestCase {
                 options.metadata(Document.parse(rawOptions.getDocument("metadata").toJson()));
             }
             GridFSBucket gridFSUploadBucket = gridFSBucket;
-            if (rawOptions.containsKey("disableMD5")) {
-                gridFSUploadBucket = gridFSUploadBucket.withDisableMD5(rawOptions.getBoolean("disableMD5").getValue());
-            }
             ObservableSubscriber<ObjectId> subscriber = new ObservableSubscriber<ObjectId>();
             gridFSUploadBucket.uploadFromStream(filename, toAsyncInputStream(inputStream), options).subscribe(subscriber);
             objectId = subscriber.get(30, SECONDS).get(0);
@@ -337,7 +334,6 @@ public class GridFSTest extends DatabaseTestCase {
                     for (BsonDocument expected : documents) {
                         assertEquals(expected.get("length"), actual.get("length"));
                         assertEquals(expected.get("chunkSize"), actual.get("chunkSize"));
-                        assertEquals(expected.get("md5"), actual.get("md5"));
                         assertEquals(expected.get("filename"), actual.get("filename"));
 
                         if (expected.containsKey("metadata")) {
@@ -414,7 +410,7 @@ public class GridFSTest extends DatabaseTestCase {
 
     private BsonDocument parseHexDocument(final BsonDocument document, final String hexDocument) {
         if (document.containsKey(hexDocument) && document.get(hexDocument).isDocument()) {
-            byte[] bytes = DatatypeConverter.parseHexBinary(document.getDocument(hexDocument).getString("$hex").getValue());
+            byte[] bytes = Hex.decode(document.getDocument(hexDocument).getString("$hex").getValue());
             document.put(hexDocument, new BsonBinary(bytes));
         }
         return document;

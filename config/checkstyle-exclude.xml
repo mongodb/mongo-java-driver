@@ -39,6 +39,7 @@
     <suppress checks="Javadoc*" files="com[\\/]mongodb[\\/]internal[\\/]"/>
     <suppress checks="Javadoc*" files="com[\\/]mongodb[\\/]async[\\/]client[\\/]internal[\\/]"/>
     <suppress checks="Javadoc*" files="com[\\/]mongodb[\\/]client[\\/]internal[\\/]"/>
+    <suppress checks="Javadoc*" files="com[\\/]mongodb[\\/]reactivestreams[\\/]client[\\/]internal[\\/]"/>
     <suppress checks="Javadoc*" files="org[\\/]bson[\\/]internal[\\/]"/>
 
     <!--Do not check primer classes -->

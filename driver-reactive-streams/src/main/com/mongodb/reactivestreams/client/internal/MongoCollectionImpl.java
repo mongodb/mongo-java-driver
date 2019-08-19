@@ -128,56 +128,6 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     }
 
     @Override
-    @Deprecated
-    public Publisher<Long> count() {
-        return count(new BsonDocument(), new CountOptions());
-    }
-
-    @Override
-    @Deprecated
-    public Publisher<Long> count(final Bson filter) {
-        return count(filter, new CountOptions());
-    }
-
-    @Override
-    @Deprecated
-    @SuppressWarnings("deprecation")
-    public Publisher<Long> count(final Bson filter, final CountOptions options) {
-        return new SingleResultObservableToPublisher<Long>(
-                new Block<com.mongodb.async.SingleResultCallback<Long>>() {
-                    @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<Long> callback) {
-                        wrapped.count(filter, options, callback);
-                    }
-                });
-    }
-
-    @Override
-    @Deprecated
-    public Publisher<Long> count(final ClientSession clientSession) {
-        return count(clientSession, new BsonDocument(), new CountOptions());
-    }
-
-    @Override
-    @Deprecated
-    public Publisher<Long> count(final ClientSession clientSession, final Bson filter) {
-        return count(clientSession, filter, new CountOptions());
-    }
-
-    @Override
-    @Deprecated
-    @SuppressWarnings("deprecation")
-    public Publisher<Long> count(final ClientSession clientSession, final Bson filter, final CountOptions options) {
-        return new SingleResultObservableToPublisher<Long>(
-                new Block<com.mongodb.async.SingleResultCallback<Long>>() {
-                    @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<Long> callback) {
-                        wrapped.count(clientSession.getWrapped(), filter, options, callback);
-                    }
-                });
-    }
-
-    @Override
     public Publisher<Long> estimatedDocumentCount() {
         return estimatedDocumentCount(new EstimatedDocumentCountOptions());
     }
@@ -564,19 +514,6 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     }
 
     @Override
-    @Deprecated
-    public Publisher<UpdateResult> replaceOne(final Bson filter, final TDocument replacement, final UpdateOptions options) {
-        return new SingleResultObservableToPublisher<UpdateResult>(
-                new Block<com.mongodb.async.SingleResultCallback<UpdateResult>>() {
-                    @SuppressWarnings("deprecation")
-                    @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<UpdateResult> callback) {
-                        wrapped.replaceOne(filter, replacement, options, callback);
-                    }
-                });
-    }
-
-    @Override
     public Publisher<UpdateResult> replaceOne(final ClientSession clientSession, final Bson filter, final TDocument replacement) {
         return replaceOne(clientSession, filter, replacement, new ReplaceOptions());
     }
@@ -586,20 +523,6 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
                                               final ReplaceOptions options) {
         return new SingleResultObservableToPublisher<UpdateResult>(
                 new Block<com.mongodb.async.SingleResultCallback<UpdateResult>>() {
-                    @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<UpdateResult> callback) {
-                        wrapped.replaceOne(clientSession.getWrapped(), filter, replacement, options, callback);
-                    }
-                });
-    }
-
-    @Override
-    @Deprecated
-    public Publisher<UpdateResult> replaceOne(final ClientSession clientSession, final Bson filter, final TDocument replacement,
-                                              final UpdateOptions options) {
-        return new SingleResultObservableToPublisher<UpdateResult>(
-                new Block<com.mongodb.async.SingleResultCallback<UpdateResult>>() {
-                    @SuppressWarnings("deprecation")
                     @Override
                     public void apply(final com.mongodb.async.SingleResultCallback<UpdateResult> callback) {
                         wrapped.replaceOne(clientSession.getWrapped(), filter, replacement, options, callback);

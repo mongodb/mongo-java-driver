@@ -75,14 +75,6 @@ public interface GridFSBucket {
     ReadConcern getReadConcern();
 
     /**
-     * Returns true if computing MD5 checksums when uploading files is disabled.
-     *
-     * @return true if computing MD5 checksums when uploading files is disabled.
-     * @since 1.9
-     */
-    boolean getDisableMD5();
-
-    /**
      * Create a new GridFSBucket instance with a new chunk size in bytes.
      *
      * @param chunkSizeBytes the new chunk size in bytes.
@@ -115,15 +107,6 @@ public interface GridFSBucket {
      * @mongodb.driver.manual reference/readConcern/ Read Concern
      */
     GridFSBucket withReadConcern(ReadConcern readConcern);
-
-    /**
-     * Create a new GridFSBucket instance with the set disable MD5 value.
-     *
-     * @param disableMD5 true if computing MD5 checksums when uploading files should be disabled.
-     * @return a new GridFSBucket instance with the new disable MD5 value.
-     * @since 1.9
-     */
-    GridFSBucket withDisableMD5(boolean disableMD5);
 
     /**
      * Opens a AsyncOutputStream that the application can write the contents of the file to.

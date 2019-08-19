@@ -41,18 +41,6 @@ public final class MongoClients {
     }
 
     /**
-     * Create a new client with the given client settings.
-     *
-     * @param settings the settings
-     * @return the client
-     * @deprecated use {@link MongoClients#create(com.mongodb.MongoClientSettings)} instead
-     */
-    @Deprecated
-    public static MongoClient create(final com.mongodb.async.client.MongoClientSettings settings) {
-        return create(settings, null);
-    }
-
-    /**
      * Create a new client with the given connection string.
      *
      * @param connectionString the connection
@@ -84,22 +72,6 @@ public final class MongoClients {
      */
     public static MongoClient create(final ConnectionString connectionString, final MongoDriverInformation mongoDriverInformation) {
         return create(com.mongodb.async.client.MongoClients.create(connectionString, getMongoDriverInformation(mongoDriverInformation)));
-    }
-
-    /**
-     * Creates a new client with the given client settings.
-     *
-     * <p>Note: Intended for driver and library authors to associate extra driver metadata with the connections.</p>
-     *
-     * @param settings the settings
-     * @param mongoDriverInformation any driver information to associate with the MongoClient
-     * @return the client
-     * @deprecated use {@link MongoClients#create(com.mongodb.MongoClientSettings)} instead
-     */
-    @Deprecated
-    public static MongoClient create(final com.mongodb.async.client.MongoClientSettings settings,
-                                     final MongoDriverInformation mongoDriverInformation) {
-        return create(com.mongodb.async.client.MongoClients.create(settings, getMongoDriverInformation(mongoDriverInformation)));
     }
 
     /**

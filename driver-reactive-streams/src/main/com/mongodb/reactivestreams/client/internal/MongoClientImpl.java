@@ -64,12 +64,6 @@ public final class MongoClientImpl implements MongoClient {
     }
 
     @Override
-    @Deprecated
-    public com.mongodb.async.client.MongoClientSettings getSettings() {
-        return wrapped.getSettings();
-    }
-
-    @Override
     public Publisher<String> listDatabaseNames() {
         return new ObservableToPublisher<String>(com.mongodb.async.client.Observables.observe(wrapped.listDatabaseNames()));
     }

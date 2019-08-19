@@ -71,7 +71,7 @@ class ObservableToPublisherSpecification extends Specification {
         subscriber.assertTerminalEvent()
     }
 
-    def 'should pass Observer.onNext values to Subscriber.onNext'() {
+    def 'should pass Observer onNext values to Subscriber onNext'() {
         given:
         def subscriber = new TestSubscriber()
 
@@ -104,7 +104,7 @@ class ObservableToPublisherSpecification extends Specification {
         subscriber.assertReceivedOnNext([1, 2, 3])
     }
 
-    def 'should pass Observer.onError values to Subscriber.onError'() {
+    def 'should pass Observer onError values to Subscriber onError'() {
         given:
         def subscriber = new TestSubscriber()
 
@@ -136,7 +136,7 @@ class ObservableToPublisherSpecification extends Specification {
         subscriber.assertTerminalEvent()
     }
 
-    def 'should trigger Subscriber.onComplete when Observer.onComplete is called'() {
+    def 'should trigger Subscriber onComplete when Observer onComplete is called'() {
         given:
         def subscriber = new TestSubscriber()
 

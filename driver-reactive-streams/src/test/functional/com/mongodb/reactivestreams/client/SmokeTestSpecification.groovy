@@ -65,7 +65,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         collectionNames.contains(collectionName)
 
         then:
-        run('The count is zero', collection.&count)[0] == 0
+        run('The count is zero', collection.&countDocuments)[0] == 0
 
         then:
         run('find first should return nothing if no documents', collection.find().&first) == []
@@ -77,7 +77,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         run('Insert a document', collection.&insertOne, document)[0] == Success.SUCCESS
 
         then:
-        run('The count is one', collection.&count)[0] == 1
+        run('The count is one', collection.&countDocuments)[0] == 1
 
         then:
         run('find that document', collection.find().&first)[0] == document
@@ -95,7 +95,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         run('remove all documents', collection.&deleteOne, new Document())[0].getDeletedCount() == 1
 
         then:
-        run('The count is zero', collection.&count)[0] == 0
+        run('The count is zero', collection.&countDocuments)[0] == 0
 
         then:
         run('create an index', collection.&createIndex, new Document('test', 1))[0] == 'test_1'
@@ -161,7 +161,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         run('commit a transaction', session.&commitTransaction)
 
         then:
-        run('The count is one', collection.&count)[0] == 1
+        run('The count is one', collection.&countDocuments)[0] == 1
     }
 
     @IgnoreIf({ !(serverVersionAtLeast(3, 7) && isReplicaSet()) })
@@ -176,7 +176,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         run('abort a transaction', session.&abortTransaction)
 
         then:
-        run('The count is zero', collection.&count)[0] == 0
+        run('The count is zero', collection.&countDocuments)[0] == 0
     }
 
     def 'should not leak exceptions when a client is closed'() {

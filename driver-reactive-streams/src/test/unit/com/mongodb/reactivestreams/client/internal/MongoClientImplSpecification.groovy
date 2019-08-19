@@ -49,14 +49,6 @@ class MongoClientImplSpecification extends Specification {
         wrapped == local
     }
 
-    def 'should call the underlying getSettings'(){
-        when:
-        mongoClient.getSettings()
-
-        then:
-        1 * wrapped.getSettings()
-    }
-
     def 'should call the underlying listDatabases'() {
         given:
         def wrappedResult = Stub(ListDatabasesIterable)

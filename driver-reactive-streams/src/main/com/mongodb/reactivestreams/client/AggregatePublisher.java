@@ -64,20 +64,6 @@ public interface AggregatePublisher<TResult> extends Publisher<TResult> {
     AggregatePublisher<TResult> maxAwaitTime(long maxAwaitTime, TimeUnit timeUnit);
 
     /**
-     * Sets whether the server should use a cursor to return results.
-     *
-     * @param useCursor whether the server should use a cursor to return results
-     * @return this
-     * @mongodb.driver.manual reference/command/aggregate/ Aggregation
-     * @mongodb.server.release 2.6
-     * @deprecated There is no replacement for this.  Applications can assume that the driver will use a cursor for server versions
-     * that support it (&gt;= 2.6).  The driver will ignore this as of MongoDB 3.6, which does not support inline results for the aggregate
-     * command.
-     */
-    @Deprecated
-    AggregatePublisher<TResult> useCursor(Boolean useCursor);
-
-    /**
      * Sets the bypass document level validation flag.
      *
      * <p>Note: This only applies when an $out stage is specified</p>.
