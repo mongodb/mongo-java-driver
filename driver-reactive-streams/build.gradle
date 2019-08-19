@@ -1,0 +1,75 @@
+/*
+ * Copyright 2014-2015 MongoDB, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+apply plugin: 'idea'
+apply plugin: 'osgi'
+apply plugin: 'de.fuerstenau.buildconfig'
+
+description = "A Reactive Streams implementation of the MongoDB Java driver"
+archivesBaseName = 'mongodb-driver-reactivestreams'
+
+dependencies {
+    compile 'org.mongodb:mongodb-driver-async:3.11.0'
+    compile 'org.reactivestreams:reactive-streams:1.0.2'
+
+    testCompile 'org.reactivestreams:reactive-streams-tck:1.0.2'
+}
+
+task uberJar(type: Jar) {
+    classifier = 'all'
+    from sourceSets.main.output
+}
+
+buildConfig {
+    appName = 'mongo-java-driver-reactivestreams'
+    version = getGitVersion()
+
+    clsName = 'MongoDriverVersion'
+    packageName = 'com.mongodb.reactivestreams.client.internal.build'
+}
+
+jar {
+    manifest {
+        instruction 'Build-Version', getGitVersion()
+    }
+}
+
+// Reactive Streams TCK uses TestNG, and Gradle can't run TestNG and JUnit in the same run.
+task tckTest(type: Test) {
+    tasks.check.dependsOn it
+
+    useTestNG()
+    scanForTestClasses = false
+
+    classpath = sourceSets.test.runtimeClasspath
+    testClassesDirs = sourceSets.test.output.classesDirs
+
+    binResultsDir = file("$buildDir/$name-results/binary")
+    reports {
+        html.destination = file("$buildDir/reports/$name")
+        junitXml.destination = binResultsDir.parentFile
+    }
+
+    maxParallelForks = 1
+}
+
+modifyPom {
+    project {
+        name 'MongoDB Reactive Streams Driver'
+        description 'The MongoDB Reactive Streams Driver'
+        url 'http://www.mongodb.org'
+    }
+}
