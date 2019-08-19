@@ -32,7 +32,6 @@ class FindPublisherImplSpecification extends Specification {
     def 'should call the underlying wrapped methods'() {
         given:
         def sort = new Document('sort', 1)
-        def modifiers = new Document('modifier', 1)
         def projection = new Document('projection', 1)
         def collation = Collation.builder().locale('en').build()
         def batchSize = 100
@@ -53,7 +52,6 @@ class FindPublisherImplSpecification extends Specification {
         when: 'setting options'
         publisher = publisher
                 .sort(sort)
-                .modifiers(modifiers)
                 .projection(projection)
                 .maxTime(1, TimeUnit.SECONDS)
                 .maxAwaitTime(2, TimeUnit.SECONDS)
@@ -68,14 +66,11 @@ class FindPublisherImplSpecification extends Specification {
                 .min(new BsonDocument('x', new BsonInt32(1)))
                 .max(new BsonDocument('x', new BsonInt32(5)))
                 .hint(new BsonDocument('y', new BsonInt32(1)))
-                .maxScan(39)
                 .returnKey(true)
                 .showRecordId(true)
-                .snapshot(true)
 
         then:
         1 * wrapped.sort(sort) >> wrapped
-        1 * wrapped.modifiers(modifiers) >> wrapped
         1 * wrapped.projection(projection) >> wrapped
         1 * wrapped.maxTime(1, TimeUnit.SECONDS) >> wrapped
         1 * wrapped.maxAwaitTime(2, TimeUnit.SECONDS) >> wrapped
@@ -90,10 +85,8 @@ class FindPublisherImplSpecification extends Specification {
         1 * wrapped.min(new BsonDocument('x', new BsonInt32(1))) >> wrapped
         1 * wrapped.max(new BsonDocument('x', new BsonInt32(5))) >> wrapped
         1 * wrapped.hint(new BsonDocument('y', new BsonInt32(1))) >> wrapped
-        1 * wrapped.maxScan(39) >> wrapped
         1 * wrapped.returnKey(true) >> wrapped
         1 * wrapped.showRecordId(true) >> wrapped
-        1 * wrapped.snapshot(true) >> wrapped
 
         when:
         publisher.subscribe(subscriber)

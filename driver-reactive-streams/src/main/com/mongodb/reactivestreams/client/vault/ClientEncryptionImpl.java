@@ -30,7 +30,7 @@ import static com.mongodb.assertions.Assertions.notNull;
 class ClientEncryptionImpl implements ClientEncryption {
     private final com.mongodb.async.client.vault.ClientEncryption wrapped;
 
-    public ClientEncryptionImpl(final com.mongodb.async.client.vault.ClientEncryption wrapped) {
+    ClientEncryptionImpl(final com.mongodb.async.client.vault.ClientEncryption wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 

@@ -147,75 +147,6 @@ public interface MongoCollection<TDocument> {
     MongoCollection<TDocument> withReadConcern(ReadConcern readConcern);
 
     /**
-     * Counts the number of documents in the collection.
-     *
-     * @return a publisher with a single element indicating the number of documents
-     * @deprecated use {@link #countDocuments()} or {@link #estimatedDocumentCount()} instead
-     */
-    @Deprecated
-    Publisher<Long> count();
-
-    /**
-     * Counts the number of documents in the collection according to the given options.
-     *
-     * @param filter the query filter
-     * @return a publisher with a single element indicating the number of documents
-     * @deprecated Use {@link #countDocuments(Bson)} instead
-     */
-    @Deprecated
-    Publisher<Long> count(Bson filter);
-
-    /**
-     * Counts the number of documents in the collection according to the given options.
-     *
-     * @param filter  the query filter
-     * @param options the options describing the count
-     * @return a publisher with a single element indicating the number of documents
-     * @deprecated Use {@link #countDocuments(Bson, CountOptions)} instead
-     */
-    @Deprecated
-    Publisher<Long> count(Bson filter, CountOptions options);
-
-    /**
-     * Counts the number of documents in the collection.
-     *
-     * @param clientSession the client session with which to associate this operation
-     * @return a publisher with a single element indicating the number of documents
-     * @mongodb.server.release 3.6
-     * @since 1.7
-     * @deprecated Use {@link #countDocuments(ClientSession)} instead
-     */
-    @Deprecated
-    Publisher<Long> count(ClientSession clientSession);
-
-    /**
-     * Counts the number of documents in the collection according to the given options.
-     *
-     * @param clientSession the client session with which to associate this operation
-     * @param filter the query filter
-     * @return a publisher with a single element indicating the number of documents
-     * @mongodb.server.release 3.6
-     * @since 1.7
-     * @deprecated Use {@link #countDocuments(ClientSession, Bson)} instead
-     */
-    @Deprecated
-    Publisher<Long> count(ClientSession clientSession, Bson filter);
-
-    /**
-     * Counts the number of documents in the collection according to the given options.
-     *
-     * @param clientSession the client session with which to associate this operation
-     * @param filter  the query filter
-     * @param options the options describing the count
-     * @return a publisher with a single element indicating the number of documents
-     * @mongodb.server.release 3.6
-     * @since 1.7
-     * @deprecated Use {@link #countDocuments(ClientSession, Bson, CountOptions)} instead
-     */
-    @Deprecated
-    Publisher<Long> count(ClientSession clientSession, Bson filter, CountOptions options);
-
-    /**
      * Gets an estimate of the count of documents in a collection using collection metadata.
      *
      * @return a publisher with a single element indicating the estimated number of documents
@@ -948,19 +879,6 @@ public interface MongoCollection<TDocument> {
     /**
      * Replace a document in the collection according to the specified arguments.
      *
-     * @param filter      the query filter to apply the the replace operation
-     * @param replacement the replacement document
-     * @param options     the options to apply to the replace operation
-     * @return a publisher with a single element the UpdateResult
-     * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
-     * @deprecated Prefer {@link #replaceOne(Bson, Object, ReplaceOptions)}
-     */
-    @Deprecated
-    Publisher<UpdateResult> replaceOne(Bson filter, TDocument replacement, UpdateOptions options);
-
-    /**
-     * Replace a document in the collection according to the specified arguments.
-     *
      * @param clientSession the client session with which to associate this operation
      * @param filter      the query filter to apply the the replace operation
      * @param replacement the replacement document
@@ -984,22 +902,6 @@ public interface MongoCollection<TDocument> {
      * @since 1.8
      */
     Publisher<UpdateResult> replaceOne(ClientSession clientSession, Bson filter, TDocument replacement, ReplaceOptions options);
-
-    /**
-     * Replace a document in the collection according to the specified arguments.
-     *
-     * @param clientSession the client session with which to associate this operation
-     * @param filter      the query filter to apply the the replace operation
-     * @param replacement the replacement document
-     * @param options     the options to apply to the replace operation
-     * @return a publisher with a single element the UpdateResult
-     * @mongodb.driver.manual tutorial/modify-documents/#replace-the-document Replace
-     * @mongodb.server.release 3.6
-     * @since 1.7
-     * @deprecated Prefer {@link #replaceOne(ClientSession, Bson, Object, ReplaceOptions)}
-     */
-    @Deprecated
-    Publisher<UpdateResult> replaceOne(ClientSession clientSession, Bson filter, TDocument replacement, UpdateOptions options);
 
     /**
      * Update a single document in the collection according to the specified arguments.

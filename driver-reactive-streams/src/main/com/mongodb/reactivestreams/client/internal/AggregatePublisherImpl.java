@@ -59,12 +59,6 @@ final class AggregatePublisherImpl<TResult> implements AggregatePublisher<TResul
     }
 
     @Override
-    public AggregatePublisher<TResult> useCursor(final Boolean useCursor) {
-        wrapped.useCursor(useCursor);
-        return this;
-    }
-
-    @Override
     public AggregatePublisher<TResult> bypassDocumentValidation(final Boolean bypassDocumentValidation) {
         wrapped.bypassDocumentValidation(bypassDocumentValidation);
         return this;

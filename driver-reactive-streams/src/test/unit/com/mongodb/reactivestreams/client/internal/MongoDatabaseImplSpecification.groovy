@@ -109,7 +109,6 @@ class MongoDatabaseImplSpecification extends Specification {
 
         then:
         1 * wrapped.getReadPreference()
-
     }
 
     def 'should call the underlying getWriteConcern'() {
@@ -324,7 +323,6 @@ class MongoDatabaseImplSpecification extends Specification {
 
         then:
         1 * wrapped.listCollectionNames(wrappedClientSession)
-
     }
 
     def 'should call the underlying listCollections'() {

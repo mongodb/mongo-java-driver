@@ -97,7 +97,6 @@ class MongoCollectionImplSpecification extends Specification {
 
         then:
         1 * wrapped.getReadPreference()
-
     }
 
     def 'should call the underlying getWriteConcern'() {
@@ -193,53 +192,6 @@ class MongoCollectionImplSpecification extends Specification {
 
         then:
         expect result, isTheSameAs(new MongoCollectionImpl(wrappedResult))
-    }
-
-    def 'should use the underlying count'() {
-        given:
-        def options = new CountOptions()
-
-        when:
-        mongoCollection.count()
-
-        then: 'only executed when requested'
-        0 * wrapped.count(_, _, _)
-
-        when:
-        mongoCollection.count().subscribe(subscriber)
-
-        then:
-        1 * wrapped.count(_, _, _)
-
-        when:
-        mongoCollection.count(filter).subscribe(subscriber)
-
-        then:
-        1 * wrapped.count(filter, _, _)
-
-        when:
-        mongoCollection.count(filter, options).subscribe(subscriber)
-
-        then:
-        1 * wrapped.count(filter, options, _)
-
-        when:
-        mongoCollection.count(clientSession).subscribe(subscriber)
-
-        then:
-        1 * wrapped.count(wrappedClientSession, _, _, _)
-
-        when:
-        mongoCollection.count(clientSession, filter).subscribe(subscriber)
-
-        then:
-        1 * wrapped.count(wrappedClientSession, filter, _, _)
-
-        when:
-        mongoCollection.count(clientSession, filter, options).subscribe(subscriber)
-
-        then:
-        1 * wrapped.count(wrappedClientSession, filter, options, _)
     }
 
     def 'should use the underlying estimatedDocumentCount'() {
@@ -733,7 +685,6 @@ class MongoCollectionImplSpecification extends Specification {
     def 'should use the underlying replaceOne'() {
         given:
         def replacement = new Document('new', 1)
-        def updateOptions = new UpdateOptions()
         def replaceOptions = new ReplaceOptions()
 
         when:
@@ -755,12 +706,6 @@ class MongoCollectionImplSpecification extends Specification {
         1 * wrapped.replaceOne(filter, replacement, replaceOptions, _)
 
         when:
-        mongoCollection.replaceOne(filter, replacement, updateOptions).subscribe(subscriber)
-
-        then:
-        1 * wrapped.replaceOne(filter, replacement, updateOptions, _)
-
-        when:
         mongoCollection.replaceOne(clientSession, filter, replacement).subscribe(subscriber)
 
         then:
@@ -771,12 +716,6 @@ class MongoCollectionImplSpecification extends Specification {
 
         then:
         1 * wrapped.replaceOne(wrappedClientSession, filter, replacement, replaceOptions, _)
-
-        when:
-        mongoCollection.replaceOne(clientSession, filter, replacement, updateOptions).subscribe(subscriber)
-
-        then:
-        1 * wrapped.replaceOne(wrappedClientSession, filter, replacement, updateOptions, _)
     }
 
 

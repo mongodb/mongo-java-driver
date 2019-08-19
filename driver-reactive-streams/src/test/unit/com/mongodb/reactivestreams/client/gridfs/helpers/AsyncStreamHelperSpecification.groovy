@@ -39,7 +39,6 @@ class AsyncStreamHelperSpecification extends Specification {
     }
 
     def 'should call the underlying InputStream methods'() {
-
         given:
         def inputStream = Mock(InputStream)
         def byteBuffer = ByteBuffer.allocate(10)
@@ -59,7 +58,6 @@ class AsyncStreamHelperSpecification extends Specification {
     }
 
     def 'should call the underlying OutputStream methods'() {
-
         given:
         def outputStream = Mock(OutputStream)
         def byteBuffer = ByteBuffer.wrap(new byte[10])
