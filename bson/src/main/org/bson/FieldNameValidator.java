@@ -37,4 +37,20 @@ public interface FieldNameValidator {
      * @return a non-null validator
      */
     FieldNameValidator getValidatorForField(String fieldName);
+
+    /**
+     * Start validation of a single document.
+     *
+     * @since 4.0
+     */
+    default void start() {
+    }
+
+    /**
+     * End validation of a single document.
+     *
+     * @since 4.0
+     */
+    default void end() {
+    }
 }

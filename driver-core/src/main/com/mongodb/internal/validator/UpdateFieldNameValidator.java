@@ -24,13 +24,28 @@ import org.bson.FieldNameValidator;
  * <p>This class should not be considered a part of the public API.</p>
  */
 public class UpdateFieldNameValidator implements org.bson.FieldNameValidator {
+    private int numFields = 0;
+
     @Override
     public boolean validate(final String fieldName) {
+        numFields++;
         return fieldName.startsWith("$");
     }
 
     @Override
     public FieldNameValidator getValidatorForField(final String fieldName) {
         return new NoOpFieldNameValidator();
+    }
+
+    @Override
+    public void start() {
+        numFields = 0;
+    }
+
+    @Override
+    public void end() {
+        if (numFields == 0) {
+            throw new IllegalArgumentException("Invalid BSON document for an update. The document may not be empty.");
+        }
     }
 }

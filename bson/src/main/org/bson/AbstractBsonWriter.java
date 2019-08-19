@@ -276,7 +276,9 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
     public void writeStartDocument() {
         checkPreconditions("writeStartDocument", State.INITIAL, State.VALUE, State.SCOPE_DOCUMENT, State.DONE);
         if (context != null && context.name != null) {
-            fieldNameValidatorStack.push(fieldNameValidatorStack.peek().getValidatorForField(getName()));
+            FieldNameValidator validator = fieldNameValidatorStack.peek().getValidatorForField(getName());
+            fieldNameValidatorStack.push(validator);
+            validator.start();
         }
         serializationDepth++;
         if (serializationDepth > settings.getMaxSerializationDepth()) {
@@ -298,7 +300,7 @@ public abstract class AbstractBsonWriter implements BsonWriter, Closeable {
         }
 
         if (context.getParentContext() != null && context.getParentContext().name != null) {
-            fieldNameValidatorStack.pop();
+            fieldNameValidatorStack.pop().end();
         }
         serializationDepth--;
 

@@ -39,6 +39,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
 
 public class MongoCollectionTest extends DatabaseTestCase {
 
@@ -61,6 +62,20 @@ public class MongoCollectionTest extends DatabaseTestCase {
 
         assertNotNull(newDoc);
         assertEquals(doc, newDoc);
+    }
+
+    @Test
+    public void testFindOneAndUpdateEmpty() {
+        boolean exceptionFound = false;
+        collection.insertOne(new Document().append("_id", "fakeId").append("one", 1).append("foo", "bar"));
+
+        try {
+            collection.findOneAndUpdate(new Document(), new Document());
+        } catch (IllegalArgumentException e) {
+            assertTrue(e.getMessage().equals("Invalid BSON document for an update. The document may not be empty."));
+            exceptionFound = true;
+        }
+        assertTrue(exceptionFound);
     }
 
     @Test
