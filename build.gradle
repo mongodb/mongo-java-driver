@@ -117,7 +117,7 @@ configure(javaCodeCheckedProjects) {
 
     sourceSets {
         test {
-            groovy.srcDirs = ['src/test/functional', 'src/test/unit']
+            groovy.srcDirs = ['src/test/functional', 'src/test/unit', 'src/test/tck']
         }
     }
 

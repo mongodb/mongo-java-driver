@@ -216,6 +216,15 @@ functions:
           ${PREPARE_SHELL}
           AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" SAFE_FOR_MULTI_MONGOS="${SAFE_FOR_MULTI_MONGOS}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" AWS_ACCESS_KEY_ID=${aws_access_key_id} AWS_SECRET_ACCESS_KEY=${aws_secret_access_key} .evergreen/run-tests.sh
 
+  "run reactive streams tck tests":
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          .evergreen/run-reactive-streams-tck-tests.sh
+
   "run slow tests":
   - command: shell.exec
     type: test
@@ -393,6 +402,14 @@ tasks:
       commands:
         - func: "bootstrap mongo-orchestration"
         - func: "run tests"
+
+    - name: "reactive-streams-tck-test"
+      commands:
+        - func: "bootstrap mongo-orchestration"
+          vars:
+            VERSION: "4.2"
+            TOPOLOGY: "server"
+        - func: "run reactive streams tck tests"
 
     - name: "plain-auth-test"
       commands:
@@ -679,6 +696,12 @@ buildvariants:
   run_on: *hosts
   tasks:
     - name: "atlas-test"
+
+- name: "reactive-streams-tck-test"
+  display_name: "Reactive Streams TCK tests"
+  run_on: ubuntu1804-test
+  tasks:
+    - name: "reactive-streams-tck-test"
 
 - name: publish-snapshot
   display_name: "Publish Snapshot"
