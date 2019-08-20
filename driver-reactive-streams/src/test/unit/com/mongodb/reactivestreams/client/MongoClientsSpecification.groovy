@@ -16,9 +16,8 @@
 
 package com.mongodb.reactivestreams.client
 
-import spock.lang.Specification
 import com.mongodb.async.client.MongoClients as WrappedMongoClients
-
+import spock.lang.Specification
 
 class MongoClientsSpecification extends Specification {
 
@@ -27,7 +26,6 @@ class MongoClientsSpecification extends Specification {
         given:
         def wrapped = (com.mongodb.async.client.MongoClients.methods*.name).sort()
         def local = MongoClients.methods*.name.sort()
-        local.remove(0) // remove 1 extra create method MongoClients.create(async.MongoClient)
 
         expect:
         wrapped == local
