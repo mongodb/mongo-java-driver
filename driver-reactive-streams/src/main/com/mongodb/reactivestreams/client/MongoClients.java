@@ -20,7 +20,6 @@ import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.reactivestreams.client.internal.MongoClientImpl;
-import com.mongodb.reactivestreams.client.internal.build.MongoDriverVersion;
 import org.bson.codecs.configuration.CodecRegistry;
 
 
@@ -71,7 +70,7 @@ public final class MongoClients {
      * @since 1.3
      */
     public static MongoClient create(final ConnectionString connectionString, final MongoDriverInformation mongoDriverInformation) {
-        return create(com.mongodb.async.client.MongoClients.create(connectionString, getMongoDriverInformation(mongoDriverInformation)));
+        return create(com.mongodb.async.client.MongoClients.create(connectionString, mongoDriverInformation));
     }
 
     /**
@@ -96,7 +95,7 @@ public final class MongoClients {
      * @since 1.8
      */
     public static MongoClient create(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation) {
-        return create(com.mongodb.async.client.MongoClients.create(settings, getMongoDriverInformation(mongoDriverInformation)));
+        return create(com.mongodb.async.client.MongoClients.create(settings, mongoDriverInformation));
     }
 
     /**
@@ -113,19 +112,6 @@ public final class MongoClients {
     private static MongoClient create(final com.mongodb.async.client.MongoClient asyncMongoClient) {
         return new MongoClientImpl(asyncMongoClient);
     }
-
-    private static MongoDriverInformation getMongoDriverInformation(final MongoDriverInformation mongoDriverInformation) {
-        if (mongoDriverInformation == null) {
-            return DEFAULT_DRIVER_INFORMATION;
-        } else {
-            return MongoDriverInformation.builder(mongoDriverInformation)
-                    .driverName(MongoDriverVersion.NAME)
-                    .driverVersion(MongoDriverVersion.VERSION).build();
-        }
-    }
-
-    private static final MongoDriverInformation DEFAULT_DRIVER_INFORMATION = MongoDriverInformation.builder()
-            .driverName(MongoDriverVersion.NAME).driverVersion(MongoDriverVersion.VERSION).build();
 
     private MongoClients() {
     }

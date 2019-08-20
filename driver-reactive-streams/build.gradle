@@ -14,13 +14,8 @@
  * limitations under the License.
  */
 
-plugins {
-    id 'de.fuerstenau.buildconfig' version '1.1.8'
-}
-
 description = "A Reactive Streams implementation of the MongoDB Java driver"
 archivesBaseName = 'mongodb-driver-reactivestreams'
-
 
 dependencies {
     compile project(':bson')
@@ -30,25 +25,6 @@ dependencies {
 
     testCompile project(':bson').sourceSets.test.output
     testCompile 'org.reactivestreams:reactive-streams-tck:1.0.2'
-}
-
-task uberJar(type: Jar) {
-    classifier = 'all'
-    from sourceSets.main.output
-}
-
-buildConfig {
-    appName = 'mongo-java-driver-reactivestreams'
-    version = getGitVersion()
-
-    clsName = 'MongoDriverVersion'
-    packageName = 'com.mongodb.reactivestreams.client.internal.build'
-}
-
-jar {
-    manifest {
-        instruction 'Build-Version', getGitVersion()
-    }
 }
 
 // Reactive Streams TCK uses TestNG, and Gradle can't run TestNG and JUnit in the same run.
@@ -68,6 +44,10 @@ task tckTest(type: Test) {
     }
 
     maxParallelForks = 1
+}
+
+ext {
+    pomName = 'The MongoDB Reactive Streams Driver'
 }
 
 jar {
