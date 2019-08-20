@@ -19,6 +19,7 @@ package org.bson.codecs.pojo;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.WildcardType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
@@ -78,6 +79,10 @@ final class TypeData<T> implements TypeWithTypeParameters<T> {
             for (Type argType : pType.getActualTypeArguments()) {
                 getNestedTypeData(paramBuilder, argType);
             }
+            builder.addTypeParameter(paramBuilder.build());
+        } else if (type instanceof WildcardType) {
+            WildcardType wType = (WildcardType) type;
+            TypeData.Builder paramBuilder = TypeData.builder((Class) wType.getUpperBounds()[0]);
             builder.addTypeParameter(paramBuilder.build());
         } else if (type instanceof TypeVariable) {
             builder.addTypeParameter(TypeData.builder(Object.class).build());
