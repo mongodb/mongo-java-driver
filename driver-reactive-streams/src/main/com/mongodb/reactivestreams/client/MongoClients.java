@@ -100,21 +100,6 @@ public final class MongoClients {
     }
 
     /**
-     * Creates a new client with the given async MongoClient.
-     *
-     * <p>Note: This shares the {@code MongoClient} between two APIs. Calling close from either API will close the client.</p>
-     *
-     * @param asyncMongoClient the async MongoClient
-     * @return the client
-     * @since 1.4
-     * @deprecated Deprecated because {@link com.mongodb.async.client.MongoClient} is deprecated.
-     */
-    @Deprecated
-    public static MongoClient create(final com.mongodb.async.client.MongoClient asyncMongoClient) {
-        return new MongoClientImpl(asyncMongoClient);
-    }
-
-    /**
      * Gets the default codec registry.
      *
      * @return the default codec registry
@@ -123,6 +108,10 @@ public final class MongoClients {
      */
     public static CodecRegistry getDefaultCodecRegistry() {
         return com.mongodb.async.client.MongoClients.getDefaultCodecRegistry();
+    }
+
+    private static MongoClient create(final com.mongodb.async.client.MongoClient asyncMongoClient) {
+        return new MongoClientImpl(asyncMongoClient);
     }
 
     private static MongoDriverInformation getMongoDriverInformation(final MongoDriverInformation mongoDriverInformation) {
