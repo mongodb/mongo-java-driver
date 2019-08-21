@@ -176,8 +176,7 @@ authenticate a user whose name is derived from the distinguished name
 of the X.509 certificate.
 
 X.509 authentication requires the use of SSL connections with
-certificate validation and is available in MongoDB 2.6 and later. To
-create a credential of this type use the
+certificate validation. To create a credential of this type use the
 [`createMongoX509Credential`]({{<apiref "com/mongodb/MongoCredential.html#createMongoX509Credential(java.lang.String)">}}) static factory method:
 
 ```java

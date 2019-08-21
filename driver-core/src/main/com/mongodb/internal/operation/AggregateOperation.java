@@ -36,7 +36,6 @@ import java.util.concurrent.TimeUnit;
  *
  * @param <T> the operations result type.
  * @mongodb.driver.manual aggregation/ Aggregation
- * @mongodb.server.release 2.2
  * @since 3.0
  */
 public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {
@@ -81,7 +80,6 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      *
      * @return true if writing to temporary files is enabled
      * @mongodb.driver.manual reference/command/aggregate/ Aggregation
-     * @mongodb.server.release 2.6
      */
     public Boolean getAllowDiskUse() {
         return wrapped.getAllowDiskUse();
@@ -93,7 +91,6 @@ public class AggregateOperation<T> implements AsyncReadOperation<AsyncBatchCurso
      * @param allowDiskUse true if writing to temporary files is enabled
      * @return this
      * @mongodb.driver.manual reference/command/aggregate/ Aggregation
-     * @mongodb.server.release 2.6
      */
     public AggregateOperation<T> allowDiskUse(final Boolean allowDiskUse) {
         wrapped.allowDiskUse(allowDiskUse);

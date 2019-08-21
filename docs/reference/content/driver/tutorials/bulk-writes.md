@@ -47,7 +47,3 @@ collection.bulkWrite(
                                       new Document("_id", 3).append("x", 4))),
   new BulkWriteOptions().ordered(false));
 ```
-
-{{% note class="important" %}}
-Use of the bulkWrite methods is not recommended when connected to pre-2.6 MongoDB servers. Although these methods will work for pre-2.6 servers, performance will suffer as each write operation executes one at a time.
-{{% /note %}}

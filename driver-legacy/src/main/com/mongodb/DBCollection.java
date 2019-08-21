@@ -1247,7 +1247,6 @@ public class DBCollection {
      * @return the command result.  The explain output may change from release to release, so best to simply log this.
      * @mongodb.driver.manual core/aggregation-pipeline/ Aggregation
      * @mongodb.driver.manual reference/operator/meta/explain/ Explain query
-     * @mongodb.server.release 2.6
      */
     public CommandResult explainAggregate(final List<? extends DBObject> pipeline, final AggregationOptions options) {
         AggregateOperation<BsonDocument> operation = new AggregateOperation<BsonDocument>(getNamespace(), preparePipeline(pipeline),
@@ -1490,8 +1489,7 @@ public class DBCollection {
      * @param returnNew   when true, returns the modified document rather than the original
      * @param update      the modifications to apply
      * @param upsert      when true, operation creates a new document if the query returns no documents
-     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it. A non-zero value requires
-     *                    a server version &gt;= 2.6
+     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it.
      * @param maxTimeUnit the unit that maxTime is specified in
      * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
      * after the changes were made
@@ -1521,8 +1519,7 @@ public class DBCollection {
      * @param returnNew   when true, returns the modified document rather than the original
      * @param update      performs an update of the selected document
      * @param upsert      when true, operation creates a new document if the query returns no documents
-     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it. A non-zero value requires
-     *                    a server version &gt;= 2.6
+     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it
      * @param maxTimeUnit the unit that maxTime is specified in
      * @param writeConcern the write concern to apply to this operation
      * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
@@ -1562,8 +1559,7 @@ public class DBCollection {
      * @param update      performs an update of the selected document
      * @param upsert      when true, operation creates a new document if the query returns no documents
      * @param bypassDocumentValidation whether to bypass document validation.
-     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it. A non-zero value requires
-     *                    a server version &gt;= 2.6
+     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it
      * @param maxTimeUnit the unit that maxTime is specified in
      * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document
      * after the changes were made
@@ -1595,8 +1591,7 @@ public class DBCollection {
      * @param update      performs an update of the selected document
      * @param upsert      when true, operation creates a new document if the query returns no documents
      * @param bypassDocumentValidation whether to bypass document validation.
-     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it. A non-zero value requires
-     *                    a server version &gt;= 2.6
+     * @param maxTime     the maximum time that the server will allow this operation to execute before killing it
      * @param maxTimeUnit the unit that maxTime is specified in
      * @param writeConcern the write concern to apply to this operation
      * @return the document as it was before the modifications, unless {@code returnNew} is true, in which case it returns the document

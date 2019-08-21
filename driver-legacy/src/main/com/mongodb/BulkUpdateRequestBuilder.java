@@ -25,7 +25,6 @@ import java.util.List;
 /**
  * A builder for a single update request.
  *
- * @mongodb.server.release 2.6
  * @mongodb.driver.manual /reference/command/update
  * @since 2.12
  */

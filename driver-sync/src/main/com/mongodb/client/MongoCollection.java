@@ -1683,7 +1683,6 @@ public interface MongoCollection<TDocument> {
      * @param indexes the list of indexes
      * @return the list of index names
      * @mongodb.driver.manual reference/command/createIndexes Create indexes
-     * @mongodb.server.release 2.6
      */
     List<String> createIndexes(List<IndexModel> indexes);
 

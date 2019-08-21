@@ -21,7 +21,6 @@ import static com.mongodb.assertions.Assertions.notNull;
 /**
  * Represents an error for an item included in a bulk write operation, e.g. a duplicate key error
  *
- * @mongodb.server.release 2.6
  * @mongodb.driver.manual reference/method/BulkWriteResult/#BulkWriteResult.writeErrors BulkWriteResult.writeErrors
  * @since 2.12
  */

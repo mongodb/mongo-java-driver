@@ -63,8 +63,6 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
 /**
  * An operation that creates one or more indexes.
  *
- * <p>Multiple index creation is supported starting with MongoDB server version 2.6</p>
- *
  * @mongodb.driver.manual reference/command/createIndexes/ Create indexes
  * @since 3.0
  */

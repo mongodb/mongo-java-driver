@@ -114,7 +114,6 @@ public class ConnectionDescription {
      *
      * @return the maximum protocol version supported by this server
      * @since 3.10
-     * @mongodb.server.release 2.6
      */
     public int getMaxWireVersion() {
         return maxWireVersion;

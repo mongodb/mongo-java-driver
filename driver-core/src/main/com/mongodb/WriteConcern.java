@@ -56,8 +56,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <p>Other options:</p>
  * <ul>
  *   <li>{@code journal}: If true block until write operations have been committed to the journal. Cannot be used in combination with
- *   {@code fsync}. Prior to MongoDB 2.6 this option was ignored if the server was running without journaling.  Starting with MongoDB 2.6
- *   write operations will fail with an exception if this option is used when the server is running without journaling.</li>
+ *   {@code fsync}. Write operations will fail with an exception if this option is used when the server is running without journaling.</li>
  * </ul>
  *
  * @mongodb.driver.manual core/write-concern Write Concern

@@ -304,7 +304,6 @@ public class ServerDescription {
          *
          * @param minWireVersion the minimum protocol version supported by this server
          * @return this
-         * @mongodb.server.release 2.6
          */
         public Builder minWireVersion(final int minWireVersion) {
             this.minWireVersion = minWireVersion;
@@ -316,7 +315,6 @@ public class ServerDescription {
          *
          * @param maxWireVersion the maximum protocol version supported by this server
          * @return this
-         * @mongodb.server.release 2.6
          */
         public Builder maxWireVersion(final int maxWireVersion) {
             this.maxWireVersion = maxWireVersion;
@@ -588,7 +586,6 @@ public class ServerDescription {
      * The earliest version of the wire protocol that this MongoDB server is capable of using to communicate with clients.
      *
      * @return the minimum protocol version supported by this server
-     * @mongodb.server.release 2.6
      */
     public int getMinWireVersion() {
         return minWireVersion;
@@ -598,7 +595,6 @@ public class ServerDescription {
      * The latest version of the wire protocol that this MongoDB server is capable of using to communicate with clients.
      *
      * @return the maximum protocol version supported by this server
-     * @mongodb.server.release 2.6
      */
     public int getMaxWireVersion() {
         return maxWireVersion;

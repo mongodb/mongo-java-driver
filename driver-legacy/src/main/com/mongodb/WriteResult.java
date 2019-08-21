@@ -87,8 +87,7 @@ public class WriteResult {
     }
 
     /**
-     * Gets the _id value of an upserted document that resulted from this write.  Note that for MongoDB servers prior to version 2.6,
-     * this method will return null unless the _id of the upserted document was of type ObjectId.
+     * Gets the _id value of an upserted document that resulted from this write.
      *
      * @return the value of the _id of an upserted document, which may be null
      * @throws UnsupportedOperationException if the write was unacknowledged

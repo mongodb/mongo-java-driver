@@ -21,7 +21,6 @@ import java.util.List;
 /**
  * The result of a successful bulk write operation.
  *
- * @mongodb.server.release 2.6
  * @mongodb.driver.manual reference/command/delete/#delete-command-output Delete Result
  * @mongodb.driver.manual reference/command/update/#delete-command-output Delete Result
  * @mongodb.driver.manual reference/command/insert/#delete-command-output Delete Result

@@ -30,7 +30,6 @@ import static com.mongodb.assertions.Assertions.isTrue;
  * @see DBCollection#initializeOrderedBulkOperation()
  * @see com.mongodb.DBCollection#initializeUnorderedBulkOperation()
  *
- * @mongodb.server.release 2.6
  * @mongodb.driver.manual /reference/command/delete/ Delete
  * @mongodb.driver.manual /reference/command/update/ Update
  * @mongodb.driver.manual /reference/command/insert/ Insert
