@@ -17,7 +17,7 @@
 package com.mongodb.client;
 
 import com.mongodb.AutoEncryptionSettings;
-import com.mongodb.internal.connection.TestCommandListener;
+import com.mongodb.event.CommandListener;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.junit.After;
@@ -31,7 +31,7 @@ public class ClientSideEncryptionTest extends AbstractClientSideEncryptionTest {
     }
 
     @Override
-    protected void createMongoClient(final AutoEncryptionSettings autoEncryptionSettings, final TestCommandListener commandListener) {
+    protected void createMongoClient(final AutoEncryptionSettings autoEncryptionSettings, final CommandListener commandListener) {
         mongoClient = MongoClients.create(Fixture.getMongoClientSettingsBuilder()
                 .autoEncryptionSettings(autoEncryptionSettings)
                 .addCommandListener(commandListener)

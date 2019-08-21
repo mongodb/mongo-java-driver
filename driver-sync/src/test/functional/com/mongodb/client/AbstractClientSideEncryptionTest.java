@@ -25,6 +25,7 @@ import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.event.CommandEvent;
+import com.mongodb.event.CommandListener;
 import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -228,7 +229,7 @@ public abstract class AbstractClientSideEncryptionTest {
         helper = new JsonPoweredCrudTestHelper(description, database, database.getCollection("default", BsonDocument.class));
     }
 
-    protected abstract void createMongoClient(AutoEncryptionSettings build, TestCommandListener commandListener);
+    protected abstract void createMongoClient(AutoEncryptionSettings build, CommandListener commandListener);
 
     protected abstract MongoDatabase getDatabase(String databaseName);
 
