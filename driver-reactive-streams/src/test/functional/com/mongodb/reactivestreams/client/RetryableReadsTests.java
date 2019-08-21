@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,21 +14,24 @@
  * limitations under the License.
  */
 
-package com.mongodb.client;
+package com.mongodb.reactivestreams.client;
 
 import com.mongodb.MongoClientSettings;
+import com.mongodb.client.AbstractRetryableReadsTest;
+import com.mongodb.client.MongoClient;
+import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
-public class RetryableReadsTest extends AbstractRetryableReadsTest {
-    public RetryableReadsTest(final String filename, final String description, final String databaseName, final String collectionName,
-                              final BsonArray data, final BsonString bucketName, final BsonDocument definition, final boolean skipTest) {
+public class RetryableReadsTests extends AbstractRetryableReadsTest {
+    public RetryableReadsTests(final String filename, final String description, final String databaseName, final String collectionName,
+                               final BsonArray data, final BsonString bucketName, final BsonDocument definition, final boolean skipTest) {
         super(filename, description, databaseName, collectionName, data, bucketName, definition, skipTest);
     }
 
     @Override
     protected MongoClient createMongoClient(final MongoClientSettings settings) {
-        return MongoClients.create(settings);
+        return new SyncMongoClient(MongoClients.create(settings));
     }
 }

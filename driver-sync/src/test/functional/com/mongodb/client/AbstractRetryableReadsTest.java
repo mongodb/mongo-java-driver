@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.async.client;
+package com.mongodb.client;
 
 import com.mongodb.Block;
 import com.mongodb.ConnectionString;
@@ -25,13 +25,10 @@ import com.mongodb.ReadConcern;
 import com.mongodb.ReadConcernLevel;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
-import com.mongodb.async.client.gridfs.GridFSBucket;
-import com.mongodb.async.client.gridfs.GridFSBuckets;
-import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.gridfs.GridFSBucket;
+import com.mongodb.client.gridfs.GridFSBuckets;
 import com.mongodb.client.test.CollectionHelper;
-import com.mongodb.connection.ServerSettings;
 import com.mongodb.connection.SocketSettings;
-import com.mongodb.connection.SslSettings;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonArray;
@@ -60,22 +57,22 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.ClusterFixture.getConnectionString;
 import static com.mongodb.ClusterFixture.getMultiMongosConnectionString;
+import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.JsonTestServerVersionChecker.skipTest;
-import static com.mongodb.async.client.Fixture.getConnectionString;
-import static com.mongodb.async.client.Fixture.getDefaultDatabaseName;
-import static com.mongodb.async.client.Fixture.isSharded;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
+import static com.mongodb.client.Fixture.getDefaultDatabaseName;
+import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
-// See https://github.com/mongodb/specifications/tree/master/source/transactions/tests
+// See https://github.com/mongodb/specifications/tree/master/source/retryable-writes/tests
 @RunWith(Parameterized.class)
-public class RetryableReadsTest {
+public abstract class AbstractRetryableReadsTest {
     private final String filename;
     private final String description;
     private final String databaseName;
@@ -85,21 +82,19 @@ public class RetryableReadsTest {
     private final BsonArray data;
     private final BsonDocument definition;
     private final boolean skipTest;
-    private JsonPoweredCrudTestHelper helper;
-    private final TestCommandListener commandListener;
     private MongoClient mongoClient;
     private CollectionHelper<Document> collectionHelper;
-    private boolean useMultipleMongoses = false;
-    private ConnectionString connectionString;
+    private MongoCollection<BsonDocument> collection;
+    private final TestCommandListener commandListener;
+    private JsonPoweredCrudTestHelper helper;
     private GridFSBucket gridFSBucket;
     private MongoCollection<BsonDocument> filesCollection;
     private MongoCollection<BsonDocument> chunksCollection;
+    private boolean useMultipleMongoses = false;
 
-    private static final long MIN_HEARTBEAT_FREQUENCY_MS = 50L;
-
-    public RetryableReadsTest(final String filename, final String description, final String databaseName,
-                              final String collectionName, final BsonArray data, final BsonString bucketName,
-                              final BsonDocument definition, final boolean skipTest) {
+    public AbstractRetryableReadsTest(final String filename, final String description, final String databaseName,
+                                      final String collectionName, final BsonArray data, final BsonString bucketName,
+                                      final BsonDocument definition, final boolean skipTest) {
         this.filename = filename;
         this.description = description;
         this.databaseName = databaseName;
@@ -112,6 +107,8 @@ public class RetryableReadsTest {
         this.skipTest = skipTest;
     }
 
+    protected abstract MongoClient createMongoClient(MongoClientSettings settings);
+
     @Before
     public void setUp() {
         assumeFalse(skipTest);
@@ -120,9 +117,33 @@ public class RetryableReadsTest {
         assumeFalse("Skipping count tests", filename.startsWith("count.") || filename.startsWith("count-"));
 
         collectionHelper = new CollectionHelper<Document>(new DocumentCodec(), new MongoNamespace(databaseName, collectionName));
+        final BsonDocument clientOptions = definition.getDocument("clientOptions", new BsonDocument());
 
-        collectionHelper.killAllSessions();
-        collectionHelper.create(collectionName, new CreateCollectionOptions(), WriteConcern.MAJORITY);
+        ConnectionString connectionString = getConnectionString();
+        useMultipleMongoses = definition.getBoolean("useMultipleMongoses", BsonBoolean.FALSE).getValue();
+        if (useMultipleMongoses) {
+            assumeTrue(isSharded());
+            connectionString = getMultiMongosConnectionString();
+            assumeTrue("The system property org.mongodb.test.transaction.uri is not set.", connectionString != null);
+        }
+
+        MongoClientSettings settings = getMongoClientSettingsBuilder()
+                .applyConnectionString(connectionString)
+                .addCommandListener(commandListener)
+                .applyToSocketSettings(new Block<SocketSettings.Builder>() {
+                    @Override
+                    public void apply(final SocketSettings.Builder builder) {
+                        builder.readTimeout(5, TimeUnit.SECONDS);
+                    }
+                })
+                .writeConcern(getWriteConcern(clientOptions))
+                .readConcern(getReadConcern(clientOptions))
+                .readPreference(getReadPreference(clientOptions))
+                .retryWrites(clientOptions.getBoolean("retryWrites", BsonBoolean.FALSE).getValue())
+                .retryReads(clientOptions.getBoolean("retryReads", BsonBoolean.TRUE).getValue())
+                .build();
+
+        mongoClient = createMongoClient(settings);
 
         if (data != null) {
             List<BsonDocument> documents = new ArrayList<BsonDocument>();
@@ -132,72 +153,20 @@ public class RetryableReadsTest {
 
             collectionHelper.drop();
             if (documents.size() > 0) {
-                collectionHelper.insertDocuments(documents, WriteConcern.MAJORITY);
+                collectionHelper.insertDocuments(documents);
             }
         }
-
-        final BsonDocument clientOptions = definition.getDocument("clientOptions", new BsonDocument());
-
-        connectionString = getConnectionString();
-
-        useMultipleMongoses = definition.getBoolean("useMultipleMongoses", BsonBoolean.FALSE).getValue();
-        if (useMultipleMongoses) {
-            assumeTrue(isSharded());
-            connectionString = getMultiMongosConnectionString();
-            assumeTrue("The system property org.mongodb.test.transaction.uri is not set.", connectionString != null);
-        }
-
-        MongoClientSettings.Builder builder = MongoClientSettings.builder().applyConnectionString(connectionString);
-
-        if (System.getProperty("java.version").startsWith("1.6.")) {
-            builder.applyToSslSettings(new Block<SslSettings.Builder>() {
-                @Override
-                public void apply(final SslSettings.Builder builder) {
-                    builder.invalidHostNameAllowed(true);
-                }
-            });
-        }
-        builder.addCommandListener(commandListener)
-                .applyToSocketSettings(new Block<SocketSettings.Builder>() {
-                    @Override
-                    public void apply(final SocketSettings.Builder builder) {
-                        builder.readTimeout(5, TimeUnit.SECONDS);
-                    }
-                })
-                .retryWrites(clientOptions.getBoolean("retryWrites", BsonBoolean.FALSE).getValue())
-                .writeConcern(getWriteConcern(clientOptions))
-                .readConcern(getReadConcern(clientOptions))
-                .readPreference(getReadPreference(clientOptions))
-                .retryReads(clientOptions.getBoolean("retryReads", BsonBoolean.TRUE).getValue())
-                .applyToServerSettings(new Block<ServerSettings.Builder>() {
-                    @Override
-                    public void apply(final ServerSettings.Builder builder) {
-                        builder.minHeartbeatFrequency(MIN_HEARTBEAT_FREQUENCY_MS, TimeUnit.MILLISECONDS);
-                    }
-                });
-
-        if (clientOptions.containsKey("heartbeatFrequencyMS")) {
-            builder.applyToServerSettings(new Block<ServerSettings.Builder>() {
-                @Override
-                public void apply(final ServerSettings.Builder builder) {
-                    builder.heartbeatFrequency(clientOptions.getInt32("heartbeatFrequencyMS").intValue(), TimeUnit.MILLISECONDS);
-                }
-            });
-        }
-
-        mongoClient = MongoClients.create(builder.build());
 
         MongoDatabase database = mongoClient.getDatabase(databaseName);
         if (gridFSBucketName != null) {
             setupGridFSBuckets(database);
             commandListener.reset();
         }
-        helper = new JsonPoweredCrudTestHelper(description, database, database.getCollection(collectionName, BsonDocument.class),
-                gridFSBucket, mongoClient);
+        collection = database.getCollection(collectionName, BsonDocument.class);
+        helper = new JsonPoweredCrudTestHelper(description, database, collection, gridFSBucket, mongoClient);
         if (definition.containsKey("failPoint")) {
             collectionHelper.runAdminCommand(definition.getDocument("failPoint"));
         }
-
     }
 
     private ReadConcern getReadConcern(final BsonDocument clientOptions) {
@@ -230,31 +199,22 @@ public class RetryableReadsTest {
 
     private void setupGridFSBuckets(final MongoDatabase database) {
         gridFSBucket = GridFSBuckets.create(database);
-        filesCollection = Fixture.initializeCollection(new MongoNamespace(databaseName, "fs.files"))
-                .withDocumentClass(BsonDocument.class);
-        chunksCollection = Fixture.initializeCollection(new MongoNamespace(databaseName, "fs.chunks"))
-                .withDocumentClass(BsonDocument.class);
+        filesCollection = database.getCollection("fs.files", BsonDocument.class);
+        chunksCollection = database.getCollection("fs.chunks", BsonDocument.class);
 
-        final List<BsonDocument> filesDocuments = processFiles(gridFSData.getArray("fs.files", new BsonArray()),
-                new ArrayList<BsonDocument>());
+        filesCollection.drop();
+        chunksCollection.drop();
+
+        List<BsonDocument> filesDocuments = processFiles(
+                gridFSData.getArray("fs.files", new BsonArray()), new ArrayList<BsonDocument>());
         if (!filesDocuments.isEmpty()) {
-            new MongoOperation<Void>() {
-                @Override
-                public void execute() {
-                    filesCollection.insertMany(filesDocuments, getCallback());
-                }
-            }.get();
+            filesCollection.insertMany(filesDocuments);
         }
 
-        final List<BsonDocument> chunksDocuments = processChunks(gridFSData.getArray("fs.chunks", new BsonArray()),
-                new ArrayList<BsonDocument>());
+        List<BsonDocument> chunksDocuments = processChunks(
+                gridFSData.getArray("fs.chunks", new BsonArray()), new ArrayList<BsonDocument>());
         if (!chunksDocuments.isEmpty()) {
-            new MongoOperation<Void>() {
-                @Override
-                public void execute() {
-                    chunksCollection.insertMany(chunksDocuments, getCallback());
-                }
-            }.get();
+            chunksCollection.insertMany(chunksDocuments);
         }
     }
 
@@ -263,7 +223,6 @@ public class RetryableReadsTest {
         if (mongoClient != null) {
             mongoClient.close();
         }
-
         if (collectionHelper != null && definition.containsKey("failPoint")) {
             collectionHelper.runAdminCommand(new BsonDocument("configureFailPoint",
                     definition.getDocument("failPoint").getString("configureFailPoint"))
@@ -276,10 +235,8 @@ public class RetryableReadsTest {
         executeOperations(definition.getArray("operations"));
 
         if (definition.containsKey("expectations")) {
-            // TODO: null operation may cause test failures, since it's used to grab the read preference
-            // TODO: though read-pref.json doesn't declare expectations, so maybe not
             List<CommandEvent> expectedEvents = getExpectedEvents(definition.getArray("expectations"), databaseName, null);
-            List<CommandEvent> events = commandListener.getCommandStartedEvents();
+            List<CommandEvent> events = commandListener.waitForStartedEvents(expectedEvents.size());
 
             assertEventsEquality(expectedEvents, events);
         }
@@ -305,12 +262,15 @@ public class RetryableReadsTest {
                     }
                 }
             } catch (MongoException e) {
-                assertTrue("Unexpected error in operation", operation.getBoolean("error", BsonBoolean.FALSE).getValue());
+                // if no error was expected, re-throw it
+                if (!operation.getBoolean("error", BsonBoolean.FALSE).getValue()) {
+                    throw e;
+                }
             }
         }
     }
 
-    @Parameterized.Parameters(name = "{0}: {2}")
+    @Parameterized.Parameters(name = "{0}: {1}")
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<Object[]>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/retryable-reads")) {
