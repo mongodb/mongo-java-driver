@@ -27,19 +27,22 @@ public interface CommandListener {
      *
      * @param event the event
      */
-    void commandStarted(CommandStartedEvent event);
+    default void commandStarted(CommandStartedEvent event) {
+    }
 
     /**
      * Listener for command completed events
      *
      * @param event the event
      */
-    void commandSucceeded(CommandSucceededEvent event);
+    default void commandSucceeded(CommandSucceededEvent event) {
+    }
 
     /**
      * Listener for command failure events
      *
      * @param event the event
      */
-    void commandFailed(CommandFailedEvent event);
+    default void commandFailed(CommandFailedEvent event) {
+    }
 }

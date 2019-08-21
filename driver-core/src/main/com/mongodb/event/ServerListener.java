@@ -30,19 +30,22 @@ public interface ServerListener extends EventListener {
      *
      * @param event the server opening event
      */
-    void serverOpening(ServerOpeningEvent event);
+    default void serverOpening(ServerOpeningEvent event) {
+    }
 
     /**
      * Listener for server closed events.
      *
      * @param event the server closed event
      */
-    void serverClosed(ServerClosedEvent event);
+    default void serverClosed(ServerClosedEvent event) {
+    }
 
     /**
      * Listener for server description changed events.
      *
      * @param event the server description changed event
      */
-    void serverDescriptionChanged(ServerDescriptionChangedEvent event);
+    default void serverDescriptionChanged(ServerDescriptionChangedEvent event) {
+    }
 }
