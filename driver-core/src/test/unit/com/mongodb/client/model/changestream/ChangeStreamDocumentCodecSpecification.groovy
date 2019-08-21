@@ -61,7 +61,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                         BsonDocument.parse('{userName: "alice123", _id: 1}'),
                         new BsonTimestamp(1234, 2)
                         ,
-                        null
+                        null, null, null
                 ),
                 new ChangeStreamDocument<Document>(OperationType.UPDATE,
                         BsonDocument.parse('{token: true}'),
@@ -71,7 +71,8 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                         BsonDocument.parse('{_id: 1}'),
                         new BsonTimestamp(1234, 2)
                         ,
-                        new UpdateDescription(['phoneNumber'], BsonDocument.parse('{email: "alice@10gen.com"}'))
+                        new UpdateDescription(['phoneNumber'], BsonDocument.parse('{email: "alice@10gen.com"}')),
+                        null, null
                 ),
                 new ChangeStreamDocument<Document>(OperationType.UPDATE,
                         BsonDocument.parse('{token: true}'),
@@ -81,7 +82,8 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                         BsonDocument.parse('{_id: 1}'),
                         new BsonTimestamp(1234, 2)
                         ,
-                        new UpdateDescription(['phoneNumber'], BsonDocument.parse('{email: "alice@10gen.com"}'))
+                        new UpdateDescription(['phoneNumber'], BsonDocument.parse('{email: "alice@10gen.com"}')),
+                        null, null
                 ),
                 new ChangeStreamDocument<Document>(OperationType.REPLACE,
                         BsonDocument.parse('{token: true}'),
@@ -91,7 +93,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                         BsonDocument.parse('{_id: 1}'),
                         new BsonTimestamp(1234, 2)
                         ,
-                        null
+                        null, null, null
                 ),
                 new ChangeStreamDocument<Document>(OperationType.DELETE,
                         BsonDocument.parse('{token: true}'),
@@ -101,7 +103,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                         BsonDocument.parse('{_id: 1}'),
                         new BsonTimestamp(1234, 2)
                         ,
-                        null
+                        null, null, null
                 ),
                 new ChangeStreamDocument<Document>(OperationType.DROP,
                         BsonDocument.parse('{token: true}'),
@@ -111,7 +113,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                         null,
                         new BsonTimestamp(1234, 2)
                         ,
-                        null
+                        null, null, null
                 ),
                 new ChangeStreamDocument<Document>(OperationType.RENAME,
                         BsonDocument.parse('{token: true}'),
@@ -121,7 +123,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                         null,
                         new BsonTimestamp(1234, 2)
                         ,
-                        null
+                        null, null, null
                 ),
                 new ChangeStreamDocument<Document>(OperationType.DROP_DATABASE,
                         BsonDocument.parse('{token: true}'),
@@ -131,7 +133,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                         null,
                         new BsonTimestamp(1234, 2)
                         ,
-                        null
+                        null, null, null
                 ),
                 new ChangeStreamDocument<Document>(OperationType.INVALIDATE,
                         BsonDocument.parse('{token: true}'),
@@ -141,7 +143,7 @@ class ChangeStreamDocumentCodecSpecification extends Specification {
                         null,
                         new BsonTimestamp(1234, 2)
                         ,
-                        null
+                        null, null, null
                 ),
                 new ChangeStreamDocument<Document>(OperationType.INSERT,
                         BsonDocument.parse('{token: true}'),

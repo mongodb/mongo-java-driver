@@ -64,33 +64,6 @@ public final class ChangeStreamDocument<TDocument> {
      * @param documentKey a document containing the _id of the changed document
      * @param clusterTime the cluster time at which the change occured
      * @param updateDescription the update description
-     *
-     * @since 3.11
-     */
-    @Deprecated
-    public ChangeStreamDocument(@BsonProperty("operationType") final OperationType operationType,
-                                @BsonProperty("resumeToken") final BsonDocument resumeToken,
-                                @Nullable @BsonProperty("ns") final BsonDocument namespaceDocument,
-                                @Nullable @BsonProperty("to") final BsonDocument destinationNamespaceDocument,
-                                @Nullable @BsonProperty("fullDocument") final TDocument fullDocument,
-                                @Nullable @BsonProperty("documentKey") final BsonDocument documentKey,
-                                @Nullable @BsonProperty("clusterTime") final BsonTimestamp clusterTime,
-                                @Nullable @BsonProperty("updateDescription") final UpdateDescription updateDescription) {
-        this(operationType, resumeToken, namespaceDocument, destinationNamespaceDocument, fullDocument, documentKey, clusterTime,
-                updateDescription, null, null);
-    }
-
-    /**
-     * Creates a new instance
-     *
-     * @param operationType the operation type
-     * @param resumeToken the resume token
-     * @param namespaceDocument the BsonDocument representing the namespace
-     * @param destinationNamespaceDocument the BsonDocument representing the destinatation namespace
-     * @param fullDocument the full document
-     * @param documentKey a document containing the _id of the changed document
-     * @param clusterTime the cluster time at which the change occured
-     * @param updateDescription the update description
      * @param txnNumber the transaction number
      * @param lsid the identifier for the session associated with the transaction
      *

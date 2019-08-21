@@ -130,19 +130,6 @@ public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCu
      *
      * <p>A null value represents the server default.</p>
      *
-     * @return the resumeAfter
-     * @deprecated use {@link #getResumeAfter()} instead
-     */
-    @Deprecated
-    public BsonDocument getResumeToken() {
-        return resumeAfter;
-    }
-
-    /**
-     * Returns the logical starting point for the new change stream.
-     *
-     * <p>A null value represents the server default.</p>
-     *
      * @return the resumeAfter resumeToken
      * @since 3.11
      * @mongodb.server.release 4.2
