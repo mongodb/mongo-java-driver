@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *   http://www.apache.org/licenses/LICENSE-2.0
+ *    http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,14 +14,17 @@
  * limitations under the License.
  */
 
-package com.mongodb.client;
+package com.mongodb.reactivestreams.client;
 
-import com.mongodb.MongoClientSettings;
+import com.mongodb.client.AbstractCrudTest;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoDatabase;
 import com.mongodb.event.CommandListener;
+import com.mongodb.reactivestreams.client.syncadapter.SyncMongoClient;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 
-import static com.mongodb.client.Fixture.getMongoClientSettings;
+import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 
 public class CrudTest extends AbstractCrudTest {
 
@@ -34,9 +37,10 @@ public class CrudTest extends AbstractCrudTest {
 
     @Override
     protected void createMongoClient(final CommandListener commandListener) {
-        mongoClient = MongoClients.create(MongoClientSettings.builder(getMongoClientSettings())
-                .addCommandListener(commandListener)
-                .build());
+        mongoClient = new SyncMongoClient(
+                MongoClients.create(getMongoClientSettingsBuilder()
+                        .addCommandListener(commandListener)
+                        .build()));
     }
 
     @Override

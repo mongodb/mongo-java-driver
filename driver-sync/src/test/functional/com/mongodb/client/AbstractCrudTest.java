@@ -22,6 +22,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.event.CommandEvent;
+import com.mongodb.event.CommandListener;
 import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
@@ -44,18 +45,18 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.JsonTestServerVersionChecker.skipTest;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
-import static com.mongodb.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.Fixture.getMongoClientSettings;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assume.assumeFalse;
 
 // See https://github.com/mongodb/specifications/tree/master/source/crud/tests
 @RunWith(Parameterized.class)
-public class LegacyCrudTest {
+public abstract class AbstractCrudTest {
     private final String filename;
     private final String description;
     private final String databaseName;
@@ -63,15 +64,14 @@ public class LegacyCrudTest {
     private final BsonArray data;
     private final BsonDocument definition;
     private final boolean skipTest;
-    private final TestCommandListener commandListener;
-    private MongoCollection<BsonDocument> collection;
     private CollectionHelper<Document> collectionHelper;
-    private MongoClient mongoClient;
     private MongoDatabase database;
+    private MongoCollection<BsonDocument> collection;
     private JsonPoweredCrudTestHelper helper;
+    private final TestCommandListener commandListener;
 
-    public LegacyCrudTest(final String filename, final String description, final String databaseName, final String collectionName,
-                          final BsonArray data, final BsonDocument definition, final boolean skipTest) {
+    public AbstractCrudTest(final String filename, final String description, final String databaseName, final String collectionName,
+                            final BsonArray data, final BsonDocument definition, final boolean skipTest) {
         this.filename = filename;
         this.description = description;
         this.databaseName = databaseName;
@@ -81,6 +81,11 @@ public class LegacyCrudTest {
         this.skipTest = skipTest;
         this.commandListener = new TestCommandListener();
     }
+
+    protected abstract void createMongoClient(CommandListener commandListener);
+
+    protected abstract MongoDatabase getDatabase(String databaseName);
+
 
     @Before
     public void setUp() {
@@ -96,8 +101,8 @@ public class LegacyCrudTest {
                 .addCommandListener(commandListener)
                 .build();
 
-        mongoClient = MongoClients.create(settings);
-        database = mongoClient.getDatabase(databaseName);
+        createMongoClient(commandListener);
+        database = getDatabase(databaseName);
 
         collection = database.getCollection(collectionName, BsonDocument.class);
         helper = new JsonPoweredCrudTestHelper(description, database, collection);
@@ -116,11 +121,7 @@ public class LegacyCrudTest {
     }
 
     @After
-    public void cleanUp() {
-        if (mongoClient != null) {
-            mongoClient.close();
-        }
-    }
+    public abstract void cleanUp();
 
     @Test
     public void shouldPassAllOutcomes() {
@@ -130,13 +131,12 @@ public class LegacyCrudTest {
         // check if v1 test
         if (definition.containsKey("operation")) {
             runOperation(expectedOutcome, definition.getDocument("operation"),
-                    expectedOutcome.containsKey("result") && expectedOutcome.isDocument("result")
+                    expectedOutcome != null && expectedOutcome.containsKey("result") && expectedOutcome.isDocument("result")
                             ? expectedOutcome.get("result") : null);
         } else {  // v2 test
             BsonArray operations = definition.getArray("operations");
             for (BsonValue operation : operations) {
-                runOperation(expectedOutcome, operation.asDocument(),
-                        operation.asDocument().containsKey("result") ? operation.asDocument().get("result") : null);
+                runOperation(expectedOutcome, operation.asDocument(), operation.asDocument().get("result", null));
             }
         }
     }
@@ -203,8 +203,8 @@ public class LegacyCrudTest {
     public static Collection<Object[]> data() throws URISyntaxException, IOException {
         List<Object[]> data = new ArrayList<Object[]>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/crud")) {
-            BsonDocument testDocument = util.JsonPoweredTestHelper.getTestDocument(file);
-            for (BsonValue test: testDocument.getArray("tests")) {
+            BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
+            for (BsonValue test : testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
                         testDocument.getString("database_name", new BsonString(getDefaultDatabaseName())).getValue(),
                         testDocument.getString("collection_name", new BsonString("test")).getValue(),
