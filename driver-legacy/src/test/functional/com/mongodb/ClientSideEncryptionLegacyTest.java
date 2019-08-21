@@ -18,7 +18,7 @@ package com.mongodb;
 
 import com.mongodb.client.AbstractClientSideEncryptionTest;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.internal.connection.TestCommandListener;
+import com.mongodb.event.CommandListener;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.junit.After;
@@ -39,7 +39,7 @@ public class ClientSideEncryptionLegacyTest extends AbstractClientSideEncryption
     }
 
     @Override
-    protected void createMongoClient(final AutoEncryptionSettings autoEncryptionSettings, final TestCommandListener commandListener) {
+    protected void createMongoClient(final AutoEncryptionSettings autoEncryptionSettings, final CommandListener commandListener) {
         mongoClient = new MongoClient(new MongoClientURI(getConnectionString().getConnectionString(),
                 MongoClientOptions.builder()
                         .autoEncryptionSettings(autoEncryptionSettings)
