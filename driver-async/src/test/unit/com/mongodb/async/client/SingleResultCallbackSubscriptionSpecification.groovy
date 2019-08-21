@@ -257,7 +257,7 @@ class SingleResultCallbackSubscriptionSpecification extends Specification {
         observe(new Block<SingleResultCallback<Void>>(){
             @Override
             void apply(final SingleResultCallback<Void> callback) {
-                callback.onResult(1, null)
+                callback.onResult(null, null)
             }
         }).subscribe(observer)
 
@@ -266,7 +266,7 @@ class SingleResultCallbackSubscriptionSpecification extends Specification {
 
         then:
         observer.assertNoErrors()
-        observer.assertReceivedOnNext([1])
+        observer.assertReceivedOnNext([])
         observer.assertTerminalEvent()
     }
 
@@ -287,25 +287,6 @@ class SingleResultCallbackSubscriptionSpecification extends Specification {
         notThrown(MongoException)
         observer.assertTerminalEvent()
         observer.assertErrored()
-    }
-
-    def 'should call onError on a null result'() {
-        given:
-        def observer = new TestObserver()
-        observe(new Block<SingleResultCallback<Void>>() {
-            @Override
-            void apply(final SingleResultCallback<Void> callback) {
-                callback.onResult(null, null);
-            }
-        }).subscribe(observer)
-
-        when:
-        observer.requestMore(1)
-
-        then:
-        observer.assertTerminalEvent()
-        observer.assertErrored()
-        observer.getOnErrorEvents().first() instanceof NullPointerException
     }
 
     def 'should throw the exception if calling onComplete raises one'() {

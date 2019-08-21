@@ -26,7 +26,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 abstract class AbstractSubscription<TResult> implements Subscription {
     private static final Logger LOGGER = Loggers.getLogger("client");
-    private static final Object NULL_PLACEHOLDER = new Object();
     private final Observer<? super TResult> observer;
 
     /* protected by `this` */
@@ -37,7 +36,7 @@ abstract class AbstractSubscription<TResult> implements Subscription {
     private boolean isTerminated = false;
     /* protected by `this` */
 
-    private final ConcurrentLinkedQueue<Object> resultsQueue = new ConcurrentLinkedQueue<Object>();
+    private final ConcurrentLinkedQueue<TResult> resultsQueue = new ConcurrentLinkedQueue<TResult>();
 
     AbstractSubscription(final Observer<? super TResult> observer) {
         this.observer = observer;
@@ -110,9 +109,7 @@ abstract class AbstractSubscription<TResult> implements Subscription {
     }
 
     void addToQueue(@Nullable final TResult result) {
-        if (result == null) {
-            resultsQueue.add(NULL_PLACEHOLDER);
-        } else {
+        if (result != null) {
             resultsQueue.add(result);
         }
     }
@@ -139,11 +136,8 @@ abstract class AbstractSubscription<TResult> implements Subscription {
         }
     }
 
-    private void onNext(@Nullable final TResult next) {
+    private void onNext(final TResult next) {
         if (!isTerminated()) {
-            if (next == null) {
-                throw new NullPointerException();
-            }
             try {
                 observer.onNext(next);
             } catch (Throwable t) {
@@ -216,11 +210,11 @@ abstract class AbstractSubscription<TResult> implements Subscription {
                 processedCount = 0;
 
                 while (localWanted > 0) {
-                    Object item = resultsQueue.poll();
+                    TResult item = resultsQueue.poll();
                     if (item == null) {
                         break;
                     } else {
-                        onNext(item == NULL_PLACEHOLDER ? null : (TResult) item);
+                        onNext(item);
                         localWanted -= 1;
                         processedCount += 1;
                     }
