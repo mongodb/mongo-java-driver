@@ -24,6 +24,7 @@ dependencies {
     compile 'org.reactivestreams:reactive-streams:1.0.2'
 
     testCompile project(':bson').sourceSets.test.output
+    testCompile project(':driver-sync')
     testCompile 'org.reactivestreams:reactive-streams-tck:1.0.2'
 }
 
