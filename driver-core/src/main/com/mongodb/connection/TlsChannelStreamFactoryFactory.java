@@ -76,7 +76,9 @@ public class TlsChannelStreamFactoryFactory implements StreamFactoryFactory, Clo
      * in order to free up resources.
      *
      * @param group the group
+     * @deprecated Prefer {@link #TlsChannelStreamFactoryFactory()}
      */
+    @Deprecated
     public TlsChannelStreamFactoryFactory(final AsynchronousTlsChannelGroup group) {
         this(group, false);
     }
