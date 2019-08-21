@@ -47,7 +47,6 @@ public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
      * @param allowDiskUse true if writing to temporary files is enabled
      * @return this
      * @mongodb.driver.manual reference/command/aggregate/ Aggregation
-     * @mongodb.server.release 2.6
      */
     AggregateIterable<TResult> allowDiskUse(@Nullable Boolean allowDiskUse);
 

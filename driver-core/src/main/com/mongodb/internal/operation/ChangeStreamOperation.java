@@ -55,7 +55,6 @@ import static com.mongodb.internal.operation.OperationHelper.withReadConnectionS
  *
  * @param <T> the operations result type.
  * @mongodb.driver.manual aggregation/ Aggregation
- * @mongodb.server.release 2.6
  * @since 3.6
  */
 public class ChangeStreamOperation<T> implements AsyncReadOperation<AsyncBatchCursor<T>>, ReadOperation<BatchCursor<T>> {

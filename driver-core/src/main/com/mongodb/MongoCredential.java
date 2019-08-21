@@ -49,7 +49,6 @@ public final class MongoCredential {
     /**
      * The GSSAPI mechanism.  See the <a href="http://tools.ietf.org/html/rfc4752">RFC</a>.
      *
-     * @mongodb.server.release 2.4
      * @mongodb.driver.manual core/authentication/#kerberos-authentication GSSAPI
      */
     public static final String GSSAPI_MECHANISM = AuthenticationMechanism.GSSAPI.getMechanismName();
@@ -58,7 +57,6 @@ public final class MongoCredential {
      * The PLAIN mechanism.  See the <a href="http://www.ietf.org/rfc/rfc4616.txt">RFC</a>.
      *
      * @since 2.12
-     * @mongodb.server.release 2.6
      * @mongodb.driver.manual core/authentication/#ldap-proxy-authority-authentication PLAIN
      */
     public static final String PLAIN_MECHANISM = AuthenticationMechanism.PLAIN.getMechanismName();
@@ -67,7 +65,6 @@ public final class MongoCredential {
      * The MongoDB X.509
      *
      * @since 2.12
-     * @mongodb.server.release 2.6
      * @mongodb.driver.manual core/authentication/#x-509-certificate-authentication X-509
      */
     public static final String MONGODB_X509_MECHANISM = AuthenticationMechanism.MONGODB_X509.getMechanismName();
@@ -204,7 +201,6 @@ public final class MongoCredential {
      * @return the credential
      *
      * @since 2.12
-     * @mongodb.server.release 2.6
      * @mongodb.driver.manual core/authentication/#x-509-certificate-authentication X-509
      */
     public static MongoCredential createMongoX509Credential(final String userName) {
@@ -236,7 +232,6 @@ public final class MongoCredential {
      * @return the credential
      *
      * @since 2.12
-     * @mongodb.server.release 2.6
      * @mongodb.driver.manual core/authentication/#ldap-proxy-authority-authentication PLAIN
      */
     public static MongoCredential createPlainCredential(final String userName, final String source, final char[] password) {

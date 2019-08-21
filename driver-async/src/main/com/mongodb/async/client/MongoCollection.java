@@ -1721,7 +1721,6 @@ public interface MongoCollection<TDocument> {
      * @param indexes the list of indexes
      * @param callback the callback that is completed once the indexes has been created
      * @mongodb.driver.manual reference/command/createIndexes Create indexes
-     * @mongodb.server.release 2.6
      */
     void createIndexes(List<IndexModel> indexes, SingleResultCallback<List<String>> callback);
 

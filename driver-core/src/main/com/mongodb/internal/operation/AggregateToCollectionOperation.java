@@ -62,7 +62,6 @@ import static com.mongodb.internal.operation.WriteConcernHelper.appendWriteConce
  * An operation that executes an aggregation that writes its results to a collection (which is what makes this a write operation rather than
  * a read operation).
  *
- * @mongodb.server.release 2.6
  * @mongodb.driver.manual reference/command/aggregate/ Aggregation
  * @since 3.0
  */
@@ -205,7 +204,6 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
      *
      * @return true if writing to temporary files is enabled
      * @mongodb.driver.manual reference/command/aggregate/ Aggregation
-     * @mongodb.server.release 2.6
      */
     public Boolean getAllowDiskUse() {
         return allowDiskUse;
@@ -217,7 +215,6 @@ public class AggregateToCollectionOperation implements AsyncWriteOperation<Void>
      * @param allowDiskUse true if writing to temporary files is enabled
      * @return this
      * @mongodb.driver.manual reference/command/aggregate/ Aggregation
-     * @mongodb.server.release 2.6
      */
     public AggregateToCollectionOperation allowDiskUse(final Boolean allowDiskUse) {
         this.allowDiskUse = allowDiskUse;

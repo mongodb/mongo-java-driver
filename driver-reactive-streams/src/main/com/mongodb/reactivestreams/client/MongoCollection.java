@@ -721,8 +721,7 @@ public interface MongoCollection<TDocument> {
     Publisher<Success> insertOne(ClientSession clientSession, TDocument document, InsertOneOptions options);
 
     /**
-     * Inserts a batch of documents. The preferred way to perform bulk inserts is to use the BulkWrite API. However, when talking with a
-     * server &lt; 2.6, using this method will be faster due to constraints in the bulk API related to error handling.
+     * Inserts a batch of documents.
      *
      * @param documents the documents to insert
      * @return a publisher with a single element indicating when the operation has completed or with either a
@@ -731,8 +730,7 @@ public interface MongoCollection<TDocument> {
     Publisher<Success> insertMany(List<? extends TDocument> documents);
 
     /**
-     * Inserts a batch of documents. The preferred way to perform bulk inserts is to use the BulkWrite API. However, when talking with a
-     * server &lt; 2.6, using this method will be faster due to constraints in the bulk API related to error handling.
+     * Inserts a batch of documents.
      *
      * @param documents the documents to insert
      * @param options   the options to apply to the operation
@@ -742,8 +740,7 @@ public interface MongoCollection<TDocument> {
     Publisher<Success> insertMany(List<? extends TDocument> documents, InsertManyOptions options);
 
     /**
-     * Inserts a batch of documents. The preferred way to perform bulk inserts is to use the BulkWrite API. However, when talking with a
-     * server &lt; 2.6, using this method will be faster due to constraints in the bulk API related to error handling.
+     * Inserts a batch of documents.
      *
      * @param clientSession the client session with which to associate this operation
      * @param documents the documents to insert
@@ -755,8 +752,7 @@ public interface MongoCollection<TDocument> {
     Publisher<Success> insertMany(ClientSession clientSession, List<? extends TDocument> documents);
 
     /**
-     * Inserts a batch of documents. The preferred way to perform bulk inserts is to use the BulkWrite API. However, when talking with a
-     * server &lt; 2.6, using this method will be faster due to constraints in the bulk API related to error handling.
+     * Inserts a batch of documents.
      *
      * @param clientSession the client session with which to associate this operation
      * @param documents the documents to insert
@@ -1400,7 +1396,6 @@ public interface MongoCollection<TDocument> {
      * @param indexes the list of indexes
      * @return a publisher with a single element indicating when the operation has completed
      * @mongodb.driver.manual reference/command/createIndexes Create indexes
-     * @mongodb.server.release 2.6
      */
     Publisher<String> createIndexes(List<IndexModel> indexes);
 
@@ -1411,7 +1406,6 @@ public interface MongoCollection<TDocument> {
      * @param createIndexOptions options to use when creating indexes
      * @return a publisher with a single element indicating when the operation has completed
      * @mongodb.driver.manual reference/command/createIndexes Create indexes
-     * @mongodb.server.release 2.6
      * @since 1.7
      */
     Publisher<String> createIndexes(List<IndexModel> indexes, CreateIndexOptions createIndexOptions);

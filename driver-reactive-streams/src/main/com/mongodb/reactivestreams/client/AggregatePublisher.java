@@ -36,7 +36,6 @@ public interface AggregatePublisher<TResult> extends Publisher<TResult> {
      * @param allowDiskUse true if writing to temporary files is enabled
      * @return this
      * @mongodb.driver.manual reference/command/aggregate/ Aggregation
-     * @mongodb.server.release 2.6
      */
     AggregatePublisher<TResult> allowDiskUse(Boolean allowDiskUse);
 

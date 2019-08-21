@@ -311,11 +311,9 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
     /**
      * Set the maximum execution time for operations on this cursor.
      *
-     * @param maxTime  the maximum time that the server will allow the query to run, before killing the operation. A non-zero value requires
-     *                 a server version &gt;= 2.6
+     * @param maxTime  the maximum time that the server will allow the query to run, before killing the operation.
      * @param timeUnit the time unit
      * @return same DBCursor for chaining operations
-     * @mongodb.server.release 2.6
      * @mongodb.driver.manual reference/operator/meta/maxTimeMS/ $maxTimeMS
      * @since 2.12.0
      */
