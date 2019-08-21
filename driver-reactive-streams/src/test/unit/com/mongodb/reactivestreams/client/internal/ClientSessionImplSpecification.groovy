@@ -113,6 +113,12 @@ class ClientSessionImplSpecification extends Specification {
         1 * wrapped.advanceOperationTime(expectedOperationTime)
 
         when:
+        session.notifyMessageSent()
+
+        then:
+        1 * wrapped.notifyMessageSent()
+
+        when:
         session.startTransaction()
 
         then:
