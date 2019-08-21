@@ -86,6 +86,11 @@ class ClientSessionImpl implements ClientSession {
     }
 
     @Override
+    public boolean notifyMessageSent() {
+        return wrapped.notifyMessageSent();
+    }
+
+    @Override
     public ServerAddress getPinnedServerAddress() {
         return wrapped.getPinnedServerAddress();
     }

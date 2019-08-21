@@ -36,6 +36,17 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
     boolean hasActiveTransaction();
 
     /**
+     *  Notify the client session that a message has been sent.
+     *  <p>
+     *      For internal use only
+     *  </p>
+     *
+     * @return true if this is the first message sent, false otherwise
+     * @since 4.0
+     */
+    boolean notifyMessageSent();
+
+    /**
      * Gets the transaction options.  Only call this method of the session has an active transaction
      *
      * @return the transaction options
