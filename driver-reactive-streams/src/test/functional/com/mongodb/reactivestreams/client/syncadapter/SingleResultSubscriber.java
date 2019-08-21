@@ -17,36 +17,29 @@
 package com.mongodb.reactivestreams.client.syncadapter;
 
 import com.mongodb.MongoInterruptedException;
+import com.mongodb.MongoTimeoutException;
 import com.mongodb.lang.Nullable;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-class SyncSubscriber<T> implements Subscriber<T> {
-    private final List<T> results = new ArrayList<>();
+class SingleResultSubscriber<T> implements Subscriber<T> {
+    private volatile T result;
     private volatile Throwable exception;
     private final CountDownLatch latch = new CountDownLatch(1);
 
     @Nullable
-    T first() {
-        List<T> all = all();
-        if (all.isEmpty()) {
-            return null;
-        }
-        return all.get(0);
-    }
-
-    List<T> all() {
+    T get() {
         try {
-            latch.await(10, TimeUnit.SECONDS);
+            if (!latch.await(30, TimeUnit.SECONDS)) {
+                throw new MongoTimeoutException("Timeout waiting for single result");
+            }
             if (exception != null) {
                 throw exception;
             }
-            return results;
+            return result;
         } catch (InterruptedException e) {
             throw new MongoInterruptedException("Test interrupted", e);
         } catch (RuntimeException runtimeException) {
@@ -58,12 +51,12 @@ class SyncSubscriber<T> implements Subscriber<T> {
 
     @Override
     public void onSubscribe(final Subscription s) {
-        s.request(Long.MAX_VALUE);
+        s.request(2);
     }
 
     @Override
     public void onNext(final T t) {
-        results.add(t);
+        result = t;
     }
 
     @Override

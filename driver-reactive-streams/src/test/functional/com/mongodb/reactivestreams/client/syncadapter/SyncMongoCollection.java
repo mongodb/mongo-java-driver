@@ -57,7 +57,7 @@ import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 
-public class SyncMongoCollection<T> implements MongoCollection<T> {
+class SyncMongoCollection<T> implements MongoCollection<T> {
 
     private com.mongodb.reactivestreams.client.MongoCollection<T> wrapped;
 
@@ -122,58 +122,58 @@ public class SyncMongoCollection<T> implements MongoCollection<T> {
 
     @Override
     public long countDocuments() {
-        SyncSubscriber<Long> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<Long> subscriber = new SingleResultSubscriber<>();
         wrapped.countDocuments().subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public long countDocuments(final Bson filter) {
-        SyncSubscriber<Long> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<Long> subscriber = new SingleResultSubscriber<>();
         wrapped.countDocuments(filter).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public long countDocuments(final Bson filter, final CountOptions options) {
-        SyncSubscriber<Long> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<Long> subscriber = new SingleResultSubscriber<>();
         wrapped.countDocuments(filter, options).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public long countDocuments(final ClientSession clientSession) {
-        SyncSubscriber<Long> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<Long> subscriber = new SingleResultSubscriber<>();
         wrapped.countDocuments(unwrap(clientSession)).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public long countDocuments(final ClientSession clientSession, final Bson filter) {
-        SyncSubscriber<Long> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<Long> subscriber = new SingleResultSubscriber<>();
         wrapped.countDocuments(unwrap(clientSession), filter).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public long countDocuments(final ClientSession clientSession, final Bson filter, final CountOptions options) {
-        SyncSubscriber<Long> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<Long> subscriber = new SingleResultSubscriber<>();
         wrapped.countDocuments(unwrap(clientSession), filter, options).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public long estimatedDocumentCount() {
-        SyncSubscriber<Long> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<Long> subscriber = new SingleResultSubscriber<>();
         wrapped.estimatedDocumentCount().subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public long estimatedDocumentCount(final EstimatedDocumentCountOptions options) {
-        SyncSubscriber<Long> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<Long> subscriber = new SingleResultSubscriber<>();
         wrapped.estimatedDocumentCount(options).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
@@ -240,7 +240,6 @@ public class SyncMongoCollection<T> implements MongoCollection<T> {
 
     @Override
     public AggregateIterable<T> aggregate(final List<? extends Bson> pipeline) {
-        // TODO: mismatch between sync and async APIs
         return new SyncAggregateIterable<>(wrapped.aggregate(pipeline, wrapped.getDocumentClass()));
     }
 
@@ -251,7 +250,6 @@ public class SyncMongoCollection<T> implements MongoCollection<T> {
 
     @Override
     public AggregateIterable<T> aggregate(final ClientSession clientSession, final List<? extends Bson> pipeline) {
-        // TODO: mismatch between sync and async APIs
         return new SyncAggregateIterable<>(wrapped.aggregate(unwrap(clientSession), pipeline, wrapped.getDocumentClass()));
     }
 
@@ -263,48 +261,48 @@ public class SyncMongoCollection<T> implements MongoCollection<T> {
 
     @Override
     public ChangeStreamIterable<T> watch() {
-        throw new UnsupportedOperationException();
+        return new SyncChangeStreamIterable<>(wrapped.watch(wrapped.getDocumentClass()));
     }
 
     @Override
     public <TResult> ChangeStreamIterable<TResult> watch(final Class<TResult> resultClass) {
-        throw new UnsupportedOperationException();
+        return new SyncChangeStreamIterable<>(wrapped.watch(resultClass));
     }
 
     @Override
     public ChangeStreamIterable<T> watch(final List<? extends Bson> pipeline) {
-        throw new UnsupportedOperationException();
+        return new SyncChangeStreamIterable<>(wrapped.watch(wrapped.getDocumentClass()));
     }
 
     @Override
     public <TResult> ChangeStreamIterable<TResult> watch(final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
-        throw new UnsupportedOperationException();
+        return new SyncChangeStreamIterable<>(wrapped.watch(pipeline, resultClass));
     }
 
     @Override
     public ChangeStreamIterable<T> watch(final ClientSession clientSession) {
-        throw new UnsupportedOperationException();
+        return new SyncChangeStreamIterable<>(wrapped.watch(unwrap(clientSession), wrapped.getDocumentClass()));
     }
 
     @Override
     public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final Class<TResult> resultClass) {
-        throw new UnsupportedOperationException();
+        return new SyncChangeStreamIterable<>(wrapped.watch(unwrap(clientSession), resultClass));
     }
 
     @Override
     public ChangeStreamIterable<T> watch(final ClientSession clientSession, final List<? extends Bson> pipeline) {
-        throw new UnsupportedOperationException();
+        // API inconsistency
+        return new SyncChangeStreamIterable<>(wrapped.watch(unwrap(clientSession), pipeline, wrapped.getDocumentClass()));
     }
 
     @Override
     public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final List<? extends Bson> pipeline,
                                                          final Class<TResult> resultClass) {
-        throw new UnsupportedOperationException();
+        return new SyncChangeStreamIterable<>(wrapped.watch(unwrap(clientSession), pipeline, resultClass));
     }
 
     @Override
     public MapReduceIterable<T> mapReduce(final String mapFunction, final String reduceFunction) {
-        // TODO: mismatch between sync and async APIs
         return new SyncMapReduceIterable<>(wrapped.mapReduce(mapFunction, reduceFunction, wrapped.getDocumentClass()));
     }
 
@@ -316,7 +314,6 @@ public class SyncMongoCollection<T> implements MongoCollection<T> {
 
     @Override
     public MapReduceIterable<T> mapReduce(final ClientSession clientSession, final String mapFunction, final String reduceFunction) {
-        // TODO: mismatch between sync and async APIs
         return new SyncMapReduceIterable<>(wrapped.mapReduce(unwrap(clientSession), mapFunction, reduceFunction,
                 wrapped.getDocumentClass()));
     }
@@ -329,357 +326,417 @@ public class SyncMongoCollection<T> implements MongoCollection<T> {
 
     @Override
     public BulkWriteResult bulkWrite(final List<? extends WriteModel<? extends T>> requests) {
-        SyncSubscriber<BulkWriteResult> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<BulkWriteResult> subscriber = new SingleResultSubscriber<>();
         wrapped.bulkWrite(requests).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public BulkWriteResult bulkWrite(final List<? extends WriteModel<? extends T>> requests, final BulkWriteOptions options) {
-        SyncSubscriber<BulkWriteResult> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<BulkWriteResult> subscriber = new SingleResultSubscriber<>();
         wrapped.bulkWrite(requests, options).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public BulkWriteResult bulkWrite(final ClientSession clientSession, final List<? extends WriteModel<? extends T>> requests) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<BulkWriteResult> subscriber = new SingleResultSubscriber<>();
+        wrapped.bulkWrite(unwrap(clientSession), requests).subscribe(subscriber);
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public BulkWriteResult bulkWrite(final ClientSession clientSession, final List<? extends WriteModel<? extends T>> requests,
                                      final BulkWriteOptions options) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<BulkWriteResult> subscriber = new SingleResultSubscriber<>();
+        wrapped.bulkWrite(unwrap(clientSession), requests, options).subscribe(subscriber);
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public void insertOne(final T t) {
-        SyncSubscriber<Success> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
         wrapped.insertOne(t).subscribe(subscriber);
-        subscriber.first();
+        subscriber.get();
     }
 
     @Override
     public void insertOne(final T t, final InsertOneOptions options) {
-        SyncSubscriber<Success> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
         wrapped.insertOne(t, options).subscribe(subscriber);
-        subscriber.first();
+        subscriber.get();
     }
 
     @Override
     public void insertOne(final ClientSession clientSession, final T t) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
+        wrapped.insertOne(unwrap(clientSession), t).subscribe(subscriber);
+        subscriber.get();
     }
 
     @Override
     public void insertOne(final ClientSession clientSession, final T t, final InsertOneOptions options) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
+        wrapped.insertOne(unwrap(clientSession), t, options).subscribe(subscriber);
+        subscriber.get();
     }
 
     @Override
     public void insertMany(final List<? extends T> documents) {
-        SyncSubscriber<Success> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
         wrapped.insertMany(documents).subscribe(subscriber);
-        subscriber.first();
+        subscriber.get();
     }
 
     @Override
     public void insertMany(final List<? extends T> documents, final InsertManyOptions options) {
-        SyncSubscriber<Success> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
         wrapped.insertMany(documents, options).subscribe(subscriber);
-        subscriber.first();
+        subscriber.get();
     }
 
     @Override
-    public void insertMany(final ClientSession clientSession, final List<? extends T> ts) {
-        throw new UnsupportedOperationException();
+    public void insertMany(final ClientSession clientSession, final List<? extends T> documents) {
+        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
+        wrapped.insertMany(unwrap(clientSession), documents).subscribe(subscriber);
+        subscriber.get();
     }
 
     @Override
-    public void insertMany(final ClientSession clientSession, final List<? extends T> ts, final InsertManyOptions options) {
-        throw new UnsupportedOperationException();
+    public void insertMany(final ClientSession clientSession, final List<? extends T> documents, final InsertManyOptions options) {
+        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
+        wrapped.insertMany(unwrap(clientSession), documents, options).subscribe(subscriber);
+        subscriber.get();
     }
 
     @Override
     public DeleteResult deleteOne(final Bson filter) {
-        SyncSubscriber<DeleteResult> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<DeleteResult> subscriber = new SingleResultSubscriber<>();
         wrapped.deleteOne(filter).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public DeleteResult deleteOne(final Bson filter, final DeleteOptions options) {
-        SyncSubscriber<DeleteResult> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<DeleteResult> subscriber = new SingleResultSubscriber<>();
         wrapped.deleteOne(filter, options).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public DeleteResult deleteOne(final ClientSession clientSession, final Bson filter) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<DeleteResult> subscriber = new SingleResultSubscriber<>();
+        wrapped.deleteOne(unwrap(clientSession), filter).subscribe(subscriber);
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public DeleteResult deleteOne(final ClientSession clientSession, final Bson filter, final DeleteOptions options) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<DeleteResult> subscriber = new SingleResultSubscriber<>();
+        wrapped.deleteOne(unwrap(clientSession), filter, options).subscribe(subscriber);
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public DeleteResult deleteMany(final Bson filter) {
-        SyncSubscriber<DeleteResult> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<DeleteResult> subscriber = new SingleResultSubscriber<>();
         wrapped.deleteMany(filter).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public DeleteResult deleteMany(final Bson filter, final DeleteOptions options) {
-        SyncSubscriber<DeleteResult> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<DeleteResult> subscriber = new SingleResultSubscriber<>();
         wrapped.deleteMany(filter, options).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public DeleteResult deleteMany(final ClientSession clientSession, final Bson filter) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<DeleteResult> subscriber = new SingleResultSubscriber<>();
+        wrapped.deleteMany(unwrap(clientSession), filter).subscribe(subscriber);
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public DeleteResult deleteMany(final ClientSession clientSession, final Bson filter, final DeleteOptions options) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<DeleteResult> subscriber = new SingleResultSubscriber<>();
+        wrapped.deleteMany(unwrap(clientSession), filter, options).subscribe(subscriber);
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public UpdateResult replaceOne(final Bson filter, final T replacement) {
-        SyncSubscriber<UpdateResult> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
         wrapped.replaceOne(filter, replacement).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public UpdateResult replaceOne(final Bson filter, final T replacement, final ReplaceOptions replaceOptions) {
-        SyncSubscriber<UpdateResult> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
         wrapped.replaceOne(filter, replacement, replaceOptions).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public UpdateResult replaceOne(final ClientSession clientSession, final Bson filter, final T replacement) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
+        wrapped.replaceOne(unwrap(clientSession), filter, replacement).subscribe(subscriber);
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public UpdateResult replaceOne(final ClientSession clientSession, final Bson filter, final T replacement,
                                    final ReplaceOptions replaceOptions) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
+        wrapped.replaceOne(unwrap(clientSession), filter, replacement, replaceOptions).subscribe(subscriber);
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public UpdateResult updateOne(final Bson filter, final Bson update) {
-        SyncSubscriber<UpdateResult> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
         wrapped.updateOne(filter, update).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public UpdateResult updateOne(final Bson filter, final Bson update, final UpdateOptions updateOptions) {
-        SyncSubscriber<UpdateResult> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
         wrapped.updateOne(filter, update, updateOptions).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public UpdateResult updateOne(final ClientSession clientSession, final Bson filter, final Bson update) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
+        wrapped.updateOne(unwrap(clientSession), filter, update).subscribe(subscriber);
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public UpdateResult updateOne(final ClientSession clientSession, final Bson filter, final Bson update,
                                   final UpdateOptions updateOptions) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
+        wrapped.updateOne(unwrap(clientSession), filter, update, updateOptions).subscribe(subscriber);
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public UpdateResult updateOne(final Bson filter, final List<? extends Bson> update) {
-        SyncSubscriber<UpdateResult> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
         wrapped.updateOne(filter, update).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public UpdateResult updateOne(final Bson filter, final List<? extends Bson> update, final UpdateOptions updateOptions) {
-        SyncSubscriber<UpdateResult> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
         wrapped.updateOne(filter, update, updateOptions).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public UpdateResult updateOne(final ClientSession clientSession, final Bson filter, final List<? extends Bson> update) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
+        wrapped.updateOne(unwrap(clientSession), filter, update).subscribe(subscriber);
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public UpdateResult updateOne(final ClientSession clientSession, final Bson filter, final List<? extends Bson> update,
                                   final UpdateOptions updateOptions) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
+        wrapped.updateOne(unwrap(clientSession), filter, update, updateOptions).subscribe(subscriber);
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public UpdateResult updateMany(final Bson filter, final Bson update) {
-        SyncSubscriber<UpdateResult> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
         wrapped.updateMany(filter, update).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public UpdateResult updateMany(final Bson filter, final Bson update, final UpdateOptions updateOptions) {
-        SyncSubscriber<UpdateResult> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
         wrapped.updateMany(filter, update, updateOptions).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public UpdateResult updateMany(final ClientSession clientSession, final Bson filter, final Bson update) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
+        wrapped.updateMany(unwrap(clientSession), filter, update).subscribe(subscriber);
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public UpdateResult updateMany(final ClientSession clientSession, final Bson filter, final Bson update,
                                    final UpdateOptions updateOptions) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
+        wrapped.updateMany(unwrap(clientSession), filter, update, updateOptions).subscribe(subscriber);
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public UpdateResult updateMany(final Bson filter, final List<? extends Bson> update) {
-        SyncSubscriber<UpdateResult> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
         wrapped.updateMany(filter, update).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public UpdateResult updateMany(final Bson filter, final List<? extends Bson> update, final UpdateOptions updateOptions) {
-        SyncSubscriber<UpdateResult> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
         wrapped.updateMany(filter, update, updateOptions).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public UpdateResult updateMany(final ClientSession clientSession, final Bson filter, final List<? extends Bson> update) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
+        wrapped.updateMany(unwrap(clientSession), filter, update).subscribe(subscriber);
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public UpdateResult updateMany(final ClientSession clientSession, final Bson filter, final List<? extends Bson> update,
                                    final UpdateOptions updateOptions) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<UpdateResult> subscriber = new SingleResultSubscriber<>();
+        wrapped.updateMany(unwrap(clientSession), filter, update, updateOptions).subscribe(subscriber);
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public T findOneAndDelete(final Bson filter) {
-        SyncSubscriber<T> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
         wrapped.findOneAndDelete(filter).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return subscriber.get();
     }
 
     @Override
     public T findOneAndDelete(final Bson filter, final FindOneAndDeleteOptions options) {
-        SyncSubscriber<T> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
         wrapped.findOneAndDelete(filter, options).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return subscriber.get();
     }
 
     @Override
     public T findOneAndDelete(final ClientSession clientSession, final Bson filter) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
+        wrapped.findOneAndDelete(unwrap(clientSession), filter).subscribe(subscriber);
+        return subscriber.get();
     }
 
     @Override
     public T findOneAndDelete(final ClientSession clientSession, final Bson filter, final FindOneAndDeleteOptions options) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
+        wrapped.findOneAndDelete(unwrap(clientSession), filter, options).subscribe(subscriber);
+        return subscriber.get();
     }
 
     @Override
     public T findOneAndReplace(final Bson filter, final T replacement) {
-        SyncSubscriber<T> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
         wrapped.findOneAndReplace(filter, replacement).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return subscriber.get();
     }
 
     @Override
     public T findOneAndReplace(final Bson filter, final T replacement, final FindOneAndReplaceOptions options) {
-        SyncSubscriber<T> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
         wrapped.findOneAndReplace(filter, replacement, options).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return subscriber.get();
     }
 
     @Override
     public T findOneAndReplace(final ClientSession clientSession, final Bson filter, final T replacement) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
+        wrapped.findOneAndReplace(unwrap(clientSession), filter, replacement).subscribe(subscriber);
+        return subscriber.get();
     }
 
     @Override
     public T findOneAndReplace(final ClientSession clientSession, final Bson filter, final T replacement,
                                final FindOneAndReplaceOptions options) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
+        wrapped.findOneAndReplace(unwrap(clientSession), filter, replacement, options).subscribe(subscriber);
+        return subscriber.get();
     }
 
     @Override
     public T findOneAndUpdate(final Bson filter, final Bson update) {
-        SyncSubscriber<T> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
         wrapped.findOneAndUpdate(filter, update).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return subscriber.get();
     }
 
     @Override
     public T findOneAndUpdate(final Bson filter, final Bson update, final FindOneAndUpdateOptions options) {
-        SyncSubscriber<T> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
         wrapped.findOneAndUpdate(filter, update, options).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return subscriber.get();
     }
 
     @Override
     public T findOneAndUpdate(final ClientSession clientSession, final Bson filter, final Bson update) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
+        wrapped.findOneAndUpdate(unwrap(clientSession), filter, update).subscribe(subscriber);
+        return subscriber.get();
     }
 
     @Override
     public T findOneAndUpdate(final ClientSession clientSession, final Bson filter, final Bson update,
                               final FindOneAndUpdateOptions options) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
+        wrapped.findOneAndUpdate(unwrap(clientSession), filter, update, options).subscribe(subscriber);
+        return subscriber.get();
     }
 
     @Override
     public T findOneAndUpdate(final Bson filter, final List<? extends Bson> update) {
-        SyncSubscriber<T> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
         wrapped.findOneAndUpdate(filter, update).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return subscriber.get();
     }
 
     @Override
     public T findOneAndUpdate(final Bson filter, final List<? extends Bson> update, final FindOneAndUpdateOptions options) {
-        SyncSubscriber<T> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
         wrapped.findOneAndUpdate(filter, update, options).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return subscriber.get();
     }
 
     @Override
     public T findOneAndUpdate(final ClientSession clientSession, final Bson filter, final List<? extends Bson> update) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
+        wrapped.findOneAndUpdate(unwrap(clientSession), filter, update).subscribe(subscriber);
+        return subscriber.get();
     }
 
     @Override
     public T findOneAndUpdate(final ClientSession clientSession, final Bson filter, final List<? extends Bson> update,
                               final FindOneAndUpdateOptions options) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
+        wrapped.findOneAndUpdate(unwrap(clientSession), filter, update).subscribe(subscriber);
+        return subscriber.get();
     }
 
     @Override
     public void drop() {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
+        wrapped.drop().subscribe(subscriber);
+        subscriber.get();
     }
 
     @Override
     public void drop(final ClientSession clientSession) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
+        wrapped.drop(unwrap(clientSession)).subscribe(subscriber);
+        subscriber.get();
     }
 
     @Override
@@ -730,7 +787,7 @@ public class SyncMongoCollection<T> implements MongoCollection<T> {
 
     @Override
     public <TResult> ListIndexesIterable<TResult> listIndexes(final Class<TResult> resultClass) {
-        throw new UnsupportedOperationException();
+        return new SyncListIndexesIterable<>(wrapped.listIndexes(resultClass));
     }
 
     @Override

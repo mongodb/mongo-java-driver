@@ -45,18 +45,20 @@ public class SyncMongoClient implements MongoClient {
 
     @Override
     public ClientSession startSession() {
-        SyncSubscriber<com.mongodb.reactivestreams.client.ClientSession> subscriber = createSubscriber();
+        SingleResultSubscriber<com.mongodb.reactivestreams.client.ClientSession> subscriber = createSubscriber();
         wrapped.startSession().subscribe(subscriber);
-        return new SyncClientSession(requireNonNull(subscriber.first()), this);
+        return new SyncClientSession(requireNonNull(subscriber.get()), this);
     }
 
-    private <TResult> SyncSubscriber<TResult> createSubscriber() {
-        return new SyncSubscriber<>();
+    private <TResult> SingleResultSubscriber<TResult> createSubscriber() {
+        return new SingleResultSubscriber<>();
     }
 
     @Override
     public ClientSession startSession(final ClientSessionOptions options) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<com.mongodb.reactivestreams.client.ClientSession> subscriber = createSubscriber();
+        wrapped.startSession(options).subscribe(subscriber);
+        return new SyncClientSession(requireNonNull(subscriber.get()), this);
     }
 
     @Override
@@ -76,7 +78,7 @@ public class SyncMongoClient implements MongoClient {
 
     @Override
     public ListDatabasesIterable<Document> listDatabases() {
-        throw new UnsupportedOperationException();
+        return new SyncListDatabasesIterable<Document>(wrapped.listDatabases());
     }
 
     @Override
@@ -86,7 +88,7 @@ public class SyncMongoClient implements MongoClient {
 
     @Override
     public <TResult> ListDatabasesIterable<TResult> listDatabases(final Class<TResult> resultClass) {
-        throw new UnsupportedOperationException();
+        return new SyncListDatabasesIterable<TResult>(wrapped.listDatabases(resultClass));
     }
 
     @Override
@@ -96,47 +98,51 @@ public class SyncMongoClient implements MongoClient {
 
     @Override
     public ChangeStreamIterable<Document> watch() {
-        throw new UnsupportedOperationException();
+        return new SyncChangeStreamIterable<>(wrapped.watch());
     }
 
     @Override
     public <TResult> ChangeStreamIterable<TResult> watch(final Class<TResult> resultClass) {
-        throw new UnsupportedOperationException();
+        return new SyncChangeStreamIterable<>(wrapped.watch(resultClass));
     }
 
     @Override
     public ChangeStreamIterable<Document> watch(final List<? extends Bson> pipeline) {
-        throw new UnsupportedOperationException();
+        return new SyncChangeStreamIterable<>(wrapped.watch(pipeline));
     }
 
     @Override
     public <TResult> ChangeStreamIterable<TResult> watch(final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
-        throw new UnsupportedOperationException();
+        return new SyncChangeStreamIterable<>(wrapped.watch(pipeline, resultClass));
     }
 
     @Override
     public ChangeStreamIterable<Document> watch(final ClientSession clientSession) {
-        throw new UnsupportedOperationException();
+        return new SyncChangeStreamIterable<>(wrapped.watch(unwrap(clientSession)));
     }
 
     @Override
     public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final Class<TResult> resultClass) {
-        throw new UnsupportedOperationException();
+        return new SyncChangeStreamIterable<>(wrapped.watch(unwrap(clientSession), resultClass));
     }
 
     @Override
     public ChangeStreamIterable<Document> watch(final ClientSession clientSession, final List<? extends Bson> pipeline) {
-        throw new UnsupportedOperationException();
+        return new SyncChangeStreamIterable<>(wrapped.watch(unwrap(clientSession), pipeline));
     }
 
     @Override
     public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final List<? extends Bson> pipeline,
                                                          final Class<TResult> resultClass) {
-        throw new UnsupportedOperationException();
+        return new SyncChangeStreamIterable<>(wrapped.watch(unwrap(clientSession), pipeline, resultClass));
     }
 
     @Override
     public ClusterDescription getClusterDescription() {
         throw new UnsupportedOperationException();
+    }
+
+    private com.mongodb.reactivestreams.client.ClientSession unwrap(final ClientSession clientSession) {
+        return ((SyncClientSession) clientSession).getWrapped();
     }
 }

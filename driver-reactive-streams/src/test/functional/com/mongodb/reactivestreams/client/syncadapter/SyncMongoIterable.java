@@ -24,7 +24,7 @@ import org.reactivestreams.Publisher;
 import java.util.Collection;
 import java.util.function.Consumer;
 
-public abstract class SyncMongoIterable<T> implements MongoIterable<T> {
+abstract class SyncMongoIterable<T> implements MongoIterable<T> {
     private final Publisher<T> wrapped;
 
     SyncMongoIterable(final Publisher<T> wrapped) {
@@ -43,9 +43,9 @@ public abstract class SyncMongoIterable<T> implements MongoIterable<T> {
 
     @Override
     public T first() {
-        SyncSubscriber<T> syncSubscriber = new SyncSubscriber<>();
-        wrapped.subscribe(syncSubscriber);
-        return syncSubscriber.first();
+        SingleResultSubscriber<T> subscriber = new SingleResultSubscriber<>();
+        wrapped.subscribe(subscriber);
+        return subscriber.get();
     }
 
     @Override
@@ -55,18 +55,20 @@ public abstract class SyncMongoIterable<T> implements MongoIterable<T> {
 
     @Override
     public void forEach(final Consumer<? super T> action) {
-        SyncSubscriber<T> syncSubscriber = new SyncSubscriber<>();
-        wrapped.subscribe(syncSubscriber);
-        for (T cur : syncSubscriber.all()) {
-            action.accept(cur);
+        try (MongoCursor<T> cursor = cursor()) {
+            while (cursor.hasNext()) {
+                action.accept(cursor.next());
+            }
         }
     }
 
     @Override
     public <A extends Collection<? super T>> A into(final A target) {
-        SyncSubscriber<T> syncSubscriber = new SyncSubscriber<>();
-        wrapped.subscribe(syncSubscriber);
-        target.addAll(syncSubscriber.all());
+        try (MongoCursor<T> cursor = cursor()) {
+            while (cursor.hasNext()) {
+                target.add(cursor.next());
+            }
+        }
         return target;
     }
 }

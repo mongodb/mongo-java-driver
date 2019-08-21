@@ -17,6 +17,7 @@
 package com.mongodb.reactivestreams.client.syncadapter;
 
 import com.mongodb.MongoInterruptedException;
+import com.mongodb.MongoTimeoutException;
 import com.mongodb.ServerAddress;
 import com.mongodb.ServerCursor;
 import com.mongodb.client.MongoCursor;
@@ -25,67 +26,78 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
 import java.util.NoSuchElementException;
+import java.util.concurrent.BlockingDeque;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.LinkedBlockingDeque;
 import java.util.concurrent.TimeUnit;
 
-public class SyncMongoCursor<T> implements MongoCursor<T> {
+class SyncMongoCursor<T> implements MongoCursor<T> {
+    private static final Object COMPLETED = new Object();
+
     private volatile Subscription subscription;
-    private volatile CountDownLatch latch;
     private volatile T next;
-    private volatile Throwable error;
-    private volatile boolean complete;
+    private final BlockingDeque<Object> results = new LinkedBlockingDeque<>();
 
     SyncMongoCursor(final Publisher<T> publisher) {
-        initLatch();
+        CountDownLatch latch = new CountDownLatch(1);
         publisher.subscribe(new Subscriber<T>() {
             @Override
             public void onSubscribe(final Subscription s) {
                 subscription = s;
+                subscription.request(Long.MAX_VALUE);
                 latch.countDown();
             }
 
             @Override
             public void onNext(final T t) {
-                next = t;
-                latch.countDown();
+                results.addLast(t);
             }
 
             @Override
             public void onError(final Throwable t) {
-                error = t;
-                latch.countDown();
+                results.addLast(t);
             }
 
             @Override
             public void onComplete() {
-                complete = true;
-                latch.countDown();
+                results.addLast(COMPLETED);
             }
         });
-        awaitLatch();
+        try {
+            if (!latch.await(30, TimeUnit.SECONDS)) {
+                throw new MongoTimeoutException("Timeout waiting for subscription");
+            }
+        } catch (InterruptedException e) {
+            throw new MongoInterruptedException("Interrupted awaiting latch", e);
+        }
     }
 
     @Override
     public void close() {
-        throw new UnsupportedOperationException();  // TODO
+        subscription.cancel();
     }
 
     @Override
+    @SuppressWarnings("unchecked")
     public boolean hasNext() {
         if (next != null) {
             return true;
         }
-        initLatch();
-        subscription.request(1);
-        awaitLatch();
-        return !complete;
-    }
-
-    private RuntimeException translateError() {
-        if (error instanceof RuntimeException) {
-            return (RuntimeException) error;
+        try {
+            Object first = results.pollFirst(30, TimeUnit.SECONDS);
+            if (first == null) {
+                throw new MongoTimeoutException("Time out!!!");
+            } else if (first instanceof Throwable) {
+                throw translateError((Throwable) first);
+            } else if (first == COMPLETED) {
+                return false;
+            } else {
+                next = (T) first;
+                return true;
+            }
+        } catch (InterruptedException e) {
+            throw new MongoInterruptedException("Interrupted waiting for next result", e);
         }
-        return new RuntimeException(error);
     }
 
     @Override
@@ -118,19 +130,10 @@ public class SyncMongoCursor<T> implements MongoCursor<T> {
         throw new UnsupportedOperationException();
     }
 
-    private void initLatch() {
-        latch = new CountDownLatch(1);
-    }
-
-    private void awaitLatch() {
-        try {
-            latch.await(10, TimeUnit.SECONDS);
-            latch = null;
-            if (error != null) {
-                throw translateError();
-            }
-        } catch (InterruptedException e) {
-            throw new MongoInterruptedException("Interrupted awaiting latch", e);
+    private RuntimeException translateError(final Throwable throwable) {
+        if (throwable instanceof RuntimeException) {
+            return (RuntimeException) throwable;
         }
+        return new RuntimeException(throwable);
     }
 }

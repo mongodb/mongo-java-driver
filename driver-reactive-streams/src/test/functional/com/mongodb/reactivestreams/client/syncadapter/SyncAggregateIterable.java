@@ -24,7 +24,7 @@ import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
 
-public class SyncAggregateIterable<T> extends SyncMongoIterable<T> implements AggregateIterable<T> {
+class SyncAggregateIterable<T> extends SyncMongoIterable<T> implements AggregateIterable<T> {
     private final AggregatePublisher<T> wrapped;
 
     SyncAggregateIterable(final AggregatePublisher<T> wrapped) {
@@ -34,9 +34,9 @@ public class SyncAggregateIterable<T> extends SyncMongoIterable<T> implements Ag
 
     @Override
     public void toCollection() {
-        SyncSubscriber<Success> syncSubscriber = new SyncSubscriber<>();
-        wrapped.toCollection().subscribe(syncSubscriber);
-        syncSubscriber.first();
+        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
+        wrapped.toCollection().subscribe(subscriber);
+        subscriber.get();
     }
 
     @Override

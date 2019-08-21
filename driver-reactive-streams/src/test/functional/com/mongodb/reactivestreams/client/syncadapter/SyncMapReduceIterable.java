@@ -36,9 +36,9 @@ class SyncMapReduceIterable<T> extends SyncMongoIterable<T> implements MapReduce
 
     @Override
     public void toCollection() {
-        SyncSubscriber<Success> syncSubscriber = new SyncSubscriber<>();
-        wrapped.toCollection().subscribe(syncSubscriber);
-        syncSubscriber.first();
+        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
+        wrapped.toCollection().subscribe(subscriber);
+        subscriber.get();
     }
 
     @Override

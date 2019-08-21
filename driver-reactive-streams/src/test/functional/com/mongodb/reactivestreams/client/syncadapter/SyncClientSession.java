@@ -26,7 +26,7 @@ import com.mongodb.session.ServerSession;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
 
-public class SyncClientSession implements ClientSession {
+class SyncClientSession implements ClientSession {
     private final com.mongodb.reactivestreams.client.ClientSession wrapped;
     private final Object originator;
 
@@ -131,16 +131,16 @@ public class SyncClientSession implements ClientSession {
 
     @Override
     public void commitTransaction() {
-        SyncSubscriber<Void> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
         wrapped.commitTransaction().subscribe(subscriber);
-        subscriber.first();
+        subscriber.get();
     }
 
     @Override
     public void abortTransaction() {
-        SyncSubscriber<Void> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
         wrapped.abortTransaction().subscribe(subscriber);
-        subscriber.first();
+        subscriber.get();
     }
 
     @Override
