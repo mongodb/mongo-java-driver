@@ -276,7 +276,7 @@ public class ClientSideEncryptionCorpusTest {
     }
 
     private static BsonDocument bsonDocumentFromPath(final String path) throws IOException, URISyntaxException {
-        return getTestDocument(new File(ClientSideEncryptionTest.class
+        return getTestDocument(new File(ClientSideEncryptionCorpusTest.class
                 .getResource("/client-side-encryption-corpus/" + path).toURI()));
     }
 
