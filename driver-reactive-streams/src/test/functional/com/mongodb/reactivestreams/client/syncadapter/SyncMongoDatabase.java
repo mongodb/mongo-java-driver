@@ -37,7 +37,7 @@ import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 
-public class SyncMongoDatabase implements MongoDatabase {
+class SyncMongoDatabase implements MongoDatabase {
     private final com.mongodb.reactivestreams.client.MongoDatabase wrapped;
 
     SyncMongoDatabase(final com.mongodb.reactivestreams.client.MongoDatabase wrapped) {
@@ -51,22 +51,22 @@ public class SyncMongoDatabase implements MongoDatabase {
 
     @Override
     public CodecRegistry getCodecRegistry() {
-        throw new UnsupportedOperationException();
+        return wrapped.getCodecRegistry();
     }
 
     @Override
     public ReadPreference getReadPreference() {
-        throw new UnsupportedOperationException();
+        return wrapped.getReadPreference();
     }
 
     @Override
     public WriteConcern getWriteConcern() {
-        throw new UnsupportedOperationException();
+        return wrapped.getWriteConcern();
     }
 
     @Override
     public ReadConcern getReadConcern() {
-        throw new UnsupportedOperationException();
+        return wrapped.getReadConcern();
     }
 
     @Override
@@ -101,61 +101,73 @@ public class SyncMongoDatabase implements MongoDatabase {
 
     @Override
     public Document runCommand(final Bson command) {
-        SyncSubscriber<Document> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<Document> subscriber = new SingleResultSubscriber<>();
         wrapped.runCommand(command).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public Document runCommand(final Bson command, final ReadPreference readPreference) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<Document> subscriber = new SingleResultSubscriber<>();
+        wrapped.runCommand(command, readPreference).subscribe(subscriber);
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public <TResult> TResult runCommand(final Bson command, final Class<TResult> resultClass) {
-        SyncSubscriber<TResult> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<TResult> subscriber = new SingleResultSubscriber<>();
         wrapped.runCommand(command, resultClass).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public <TResult> TResult runCommand(final Bson command, final ReadPreference readPreference, final Class<TResult> resultClass) {
-        SyncSubscriber<TResult> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<TResult> subscriber = new SingleResultSubscriber<>();
         wrapped.runCommand(command, readPreference, resultClass).subscribe(subscriber);
-        return requireNonNull(subscriber.first());
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public Document runCommand(final ClientSession clientSession, final Bson command) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<Document> subscriber = new SingleResultSubscriber<>();
+        wrapped.runCommand(unwrap(clientSession), command).subscribe(subscriber);
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public Document runCommand(final ClientSession clientSession, final Bson command, final ReadPreference readPreference) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<Document> subscriber = new SingleResultSubscriber<>();
+        wrapped.runCommand(unwrap(clientSession), command, readPreference).subscribe(subscriber);
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public <TResult> TResult runCommand(final ClientSession clientSession, final Bson command, final Class<TResult> resultClass) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<TResult> subscriber = new SingleResultSubscriber<>();
+        wrapped.runCommand(unwrap(clientSession), command, resultClass).subscribe(subscriber);
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public <TResult> TResult runCommand(final ClientSession clientSession, final Bson command, final ReadPreference readPreference,
                                         final Class<TResult> resultClass) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<TResult> subscriber = new SingleResultSubscriber<>();
+        wrapped.runCommand(unwrap(clientSession), command, readPreference, resultClass).subscribe(subscriber);
+        return requireNonNull(subscriber.get());
     }
 
     @Override
     public void drop() {
-        SyncSubscriber<Success> subscriber = new SyncSubscriber<>();
+        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
         wrapped.drop().subscribe(subscriber);
-        subscriber.first();
+        subscriber.get();
     }
 
     @Override
     public void drop(final ClientSession clientSession) {
-        throw new UnsupportedOperationException();
+        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
+        wrapped.drop(unwrap(clientSession)).subscribe(subscriber);
+        subscriber.get();
     }
 
     @Override
@@ -165,12 +177,12 @@ public class SyncMongoDatabase implements MongoDatabase {
 
     @Override
     public ListCollectionsIterable<Document> listCollections() {
-        throw new UnsupportedOperationException();
+        return new SyncListCollectionsIterable<>(wrapped.listCollections());
     }
 
     @Override
     public <TResult> ListCollectionsIterable<TResult> listCollections(final Class<TResult> resultClass) {
-        throw new UnsupportedOperationException();
+        return new SyncListCollectionsIterable<>(wrapped.listCollections(resultClass));
     }
 
     @Override
@@ -234,43 +246,43 @@ public class SyncMongoDatabase implements MongoDatabase {
 
     @Override
     public ChangeStreamIterable<Document> watch() {
-        throw new UnsupportedOperationException();
+        return new SyncChangeStreamIterable<>(wrapped.watch());
     }
 
     @Override
     public <TResult> ChangeStreamIterable<TResult> watch(final Class<TResult> resultClass) {
-        throw new UnsupportedOperationException();
+        return new SyncChangeStreamIterable<>(wrapped.watch(resultClass));
     }
 
     @Override
     public ChangeStreamIterable<Document> watch(final List<? extends Bson> pipeline) {
-        throw new UnsupportedOperationException();
+        return new SyncChangeStreamIterable<>(wrapped.watch(pipeline));
     }
 
     @Override
     public <TResult> ChangeStreamIterable<TResult> watch(final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
-        throw new UnsupportedOperationException();
+        return new SyncChangeStreamIterable<>(wrapped.watch(pipeline, resultClass));
     }
 
     @Override
     public ChangeStreamIterable<Document> watch(final ClientSession clientSession) {
-        throw new UnsupportedOperationException();
+        return new SyncChangeStreamIterable<>(wrapped.watch(unwrap(clientSession)));
     }
 
     @Override
     public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final Class<TResult> resultClass) {
-        throw new UnsupportedOperationException();
+        return new SyncChangeStreamIterable<>(wrapped.watch(unwrap(clientSession), resultClass));
     }
 
     @Override
     public ChangeStreamIterable<Document> watch(final ClientSession clientSession, final List<? extends Bson> pipeline) {
-        throw new UnsupportedOperationException();
+        return new SyncChangeStreamIterable<>(wrapped.watch(unwrap(clientSession), pipeline));
     }
 
     @Override
     public <TResult> ChangeStreamIterable<TResult> watch(final ClientSession clientSession, final List<? extends Bson> pipeline,
                                                          final Class<TResult> resultClass) {
-        throw new UnsupportedOperationException();
+        return new SyncChangeStreamIterable<>(wrapped.watch(unwrap(clientSession), pipeline, resultClass));
     }
 
     @Override

@@ -16,42 +16,36 @@
 
 package com.mongodb.reactivestreams.client.syncadapter;
 
-import com.mongodb.client.DistinctIterable;
-import com.mongodb.client.model.Collation;
+import com.mongodb.client.ListCollectionsIterable;
 import com.mongodb.lang.Nullable;
-import com.mongodb.reactivestreams.client.DistinctPublisher;
+import com.mongodb.reactivestreams.client.ListCollectionsPublisher;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
 
-class SyncDistinctIterable<T> extends SyncMongoIterable<T> implements DistinctIterable<T> {
-    private com.mongodb.reactivestreams.client.DistinctPublisher<T> wrapped;
+class SyncListCollectionsIterable<T> extends SyncMongoIterable<T> implements ListCollectionsIterable<T> {
+    private final ListCollectionsPublisher<T> wrapped;
 
-    SyncDistinctIterable(final DistinctPublisher<T> wrapped) {
+    SyncListCollectionsIterable(final ListCollectionsPublisher<T> wrapped) {
         super(wrapped);
         this.wrapped = wrapped;
     }
+
     @Override
-    public DistinctIterable<T> filter(@Nullable final Bson filter) {
+    public ListCollectionsIterable<T> filter(@Nullable final Bson filter) {
         wrapped.filter(filter);
         return this;
     }
 
     @Override
-    public DistinctIterable<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
+    public ListCollectionsIterable<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         wrapped.maxTime(maxTime, timeUnit);
         return this;
     }
 
     @Override
-    public DistinctIterable<T> batchSize(final int batchSize) {
+    public ListCollectionsIterable<T> batchSize(final int batchSize) {
         wrapped.batchSize(batchSize);
-        return this;
-    }
-
-    @Override
-    public DistinctIterable<T> collation(@Nullable final Collation collation) {
-        wrapped.collation(collation);
         return this;
     }
 }

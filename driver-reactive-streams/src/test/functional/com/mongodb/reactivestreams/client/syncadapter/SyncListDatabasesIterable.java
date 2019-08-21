@@ -16,42 +16,42 @@
 
 package com.mongodb.reactivestreams.client.syncadapter;
 
-import com.mongodb.client.DistinctIterable;
-import com.mongodb.client.model.Collation;
+import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.lang.Nullable;
-import com.mongodb.reactivestreams.client.DistinctPublisher;
+import com.mongodb.reactivestreams.client.ListDatabasesPublisher;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
 
-class SyncDistinctIterable<T> extends SyncMongoIterable<T> implements DistinctIterable<T> {
-    private com.mongodb.reactivestreams.client.DistinctPublisher<T> wrapped;
+class SyncListDatabasesIterable<T> extends SyncMongoIterable<T> implements ListDatabasesIterable<T> {
+    private final ListDatabasesPublisher<T> wrapped;
 
-    SyncDistinctIterable(final DistinctPublisher<T> wrapped) {
+    SyncListDatabasesIterable(final ListDatabasesPublisher<T> wrapped) {
         super(wrapped);
         this.wrapped = wrapped;
     }
-    @Override
-    public DistinctIterable<T> filter(@Nullable final Bson filter) {
-        wrapped.filter(filter);
-        return this;
-    }
 
     @Override
-    public DistinctIterable<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
+    public ListDatabasesIterable<T> maxTime(final long maxTime, final TimeUnit timeUnit) {
         wrapped.maxTime(maxTime, timeUnit);
         return this;
     }
 
     @Override
-    public DistinctIterable<T> batchSize(final int batchSize) {
+    public ListDatabasesIterable<T> batchSize(final int batchSize) {
         wrapped.batchSize(batchSize);
         return this;
     }
 
     @Override
-    public DistinctIterable<T> collation(@Nullable final Collation collation) {
-        wrapped.collation(collation);
+    public ListDatabasesIterable<T> filter(@Nullable final Bson filter) {
+        wrapped.filter(filter);
+        return this;
+    }
+
+    @Override
+    public ListDatabasesIterable<T> nameOnly(@Nullable final Boolean nameOnly) {
+        wrapped.nameOnly(nameOnly);
         return this;
     }
 }
