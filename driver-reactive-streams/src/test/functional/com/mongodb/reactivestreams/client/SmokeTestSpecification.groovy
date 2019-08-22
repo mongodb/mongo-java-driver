@@ -16,15 +16,15 @@
 
 package com.mongodb.reactivestreams.client
 
-import com.mongodb.MongoNamespace
 import com.mongodb.MongoDriverInformation
+import com.mongodb.MongoNamespace
 import com.mongodb.client.model.IndexModel
 import com.mongodb.diagnostics.logging.Loggers
 import org.bson.Document
 import spock.lang.IgnoreIf
 
 import static Fixture.getMongoClient
-import static com.mongodb.reactivestreams.client.Fixture.getConnectionString
+import static com.mongodb.ClusterFixture.getConnectionString
 import static com.mongodb.reactivestreams.client.Fixture.isReplicaSet
 import static com.mongodb.reactivestreams.client.Fixture.serverVersionAtLeast
 import static java.util.concurrent.TimeUnit.SECONDS

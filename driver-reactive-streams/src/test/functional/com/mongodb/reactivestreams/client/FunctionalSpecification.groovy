@@ -20,11 +20,11 @@ import com.mongodb.MongoNamespace
 import org.bson.Document
 import spock.lang.Specification
 
-import static Fixture.getDefaultDatabase
 import static Fixture.initializeCollection
 import static Fixture.dropDatabase
-import static Fixture.getDefaultDatabaseName
+import static com.mongodb.ClusterFixture.getDefaultDatabaseName
 import static com.mongodb.reactivestreams.client.Fixture.drop
+import static com.mongodb.reactivestreams.client.Fixture.getDefaultDatabase
 
 class FunctionalSpecification extends Specification {
     protected MongoDatabase database;

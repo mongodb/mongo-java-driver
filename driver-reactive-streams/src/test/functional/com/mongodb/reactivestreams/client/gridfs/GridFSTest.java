@@ -51,8 +51,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.reactivestreams.client.Fixture.ObservableSubscriber;
-import static com.mongodb.reactivestreams.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.reactivestreams.client.Fixture.initializeCollection;
 import static com.mongodb.reactivestreams.client.gridfs.helpers.AsyncStreamHelper.toAsyncInputStream;
 import static com.mongodb.reactivestreams.client.gridfs.helpers.AsyncStreamHelper.toAsyncOutputStream;
