@@ -14,14 +14,12 @@
  * limitations under the License.
  */
 
-package com.mongodb.async.client;
+package com.mongodb.client;
 
+import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.WriteConcern;
-import com.mongodb.async.AsyncBatchCursor;
-import com.mongodb.async.FutureResultCallback;
-import com.mongodb.client.CommandMonitoringTestHelper;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.OperationType;
 import com.mongodb.client.test.CollectionHelper;
@@ -34,9 +32,7 @@ import org.bson.BsonInt32;
 import org.bson.BsonValue;
 import org.bson.codecs.BsonDocumentCodec;
 import org.junit.After;
-import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -48,37 +44,31 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
-import java.util.Queue;
-import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.JsonTestServerVersionChecker.skipTest;
-import static com.mongodb.async.client.Fixture.getMongoClientBuilderFromConnectionString;
 import static com.mongodb.client.CommandMonitoringTestHelper.getExpectedEvents;
+import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assume.assumeFalse;
-import static org.junit.Assume.assumeNotNull;
 
-// See https://github.com/mongodb/specifications/tree/master/source/retryable-writes/tests
+// See https://github.com/mongodb/specifications/tree/master/source/change-streams/tests
 @RunWith(Parameterized.class)
-public class ChangeStreamsTest extends DatabaseTestCase {
+public abstract class AbstractChangeStreamsTest {
     private final String filename;
     private final String description;
     private final MongoNamespace namespace;
     private final MongoNamespace namespace2;
     private final BsonDocument definition;
     private final boolean skipTest;
-
     private MongoClient mongoClient;
     private TestCommandListener commandListener;
 
-    public ChangeStreamsTest(final String filename, final String description, final MongoNamespace namespace,
-                             final MongoNamespace namespace2, final BsonDocument definition, final boolean skipTest) {
+    public AbstractChangeStreamsTest(final String filename, final String description, final MongoNamespace namespace,
+                                     final MongoNamespace namespace2, final BsonDocument definition, final boolean skipTest) {
         this.filename = filename;
         this.description = description;
         this.namespace = namespace;
@@ -87,13 +77,7 @@ public class ChangeStreamsTest extends DatabaseTestCase {
         this.skipTest = skipTest;
     }
 
-    @BeforeClass
-    public static void beforeClass() {
-    }
-
-    @AfterClass
-    public static void afterClass() {
-    }
+    protected abstract MongoClient createMongoClient(MongoClientSettings settings);
 
     @Before
     public void setUp() {
@@ -113,7 +97,7 @@ public class ChangeStreamsTest extends DatabaseTestCase {
         }
 
         commandListener = new TestCommandListener();
-        mongoClient = MongoClients.create(getMongoClientBuilderFromConnectionString().addCommandListener(commandListener).build());
+        mongoClient = createMongoClient(getMongoClientSettingsBuilder().addCommandListener(commandListener).build());
     }
 
     @After
@@ -124,49 +108,25 @@ public class ChangeStreamsTest extends DatabaseTestCase {
     }
 
     @Test
-    public void shouldPassAllOutcomes() {
+    public void shouldPassAllOutcomes() throws InterruptedException {
         BsonDocument result = definition.getDocument("result");
-        AsyncBatchCursor<ChangeStreamDocument<BsonDocument>> cursor = createCursor(result);
-        if (cursor == null) {
-            return;
+        MongoCursor<ChangeStreamDocument<BsonDocument>> cursor = createCursor(result);
+        commandListener.waitForFirstCommandCompletion();
+        handleOperations();
+        if (cursor != null) {
+            try {
+                checkStreamValues(result, cursor);
+            } finally {
+                cursor.close();
+            }
         }
-
-        try {
-            handleOperations();
-
-            checkStreamValues(result, cursor);
-        } finally {
-            cursor.close();
-        }
-
         checkExpectations();
     }
 
-    private void checkStreamValues(final BsonDocument result, final AsyncBatchCursor<ChangeStreamDocument<BsonDocument>> cursor){
-
-        BsonArray expectedResults = result.getArray("success", new BsonArray());
-        Queue<ChangeStreamDocument<BsonDocument>> results = null;
-
-        try {
-            results = getResults(cursor);
-        } catch (MongoException e) {
-            if (result.containsKey("error")) {
-                final BsonDocument error = result.getDocument("error");
-                assertTrue(e.getCode() == error.getInt32("code").intValue()
-                        || !Collections.disjoint(e.getErrorLabels(), error.getArray("errorLabels")));
-                return;
-            } else {
-                throw e;
-            }
-        }
-        for (BsonValue expectedResult : expectedResults) {
-            BsonDocument expected = expectedResult.asDocument();
-
-            if (results.isEmpty()) {
-                results = getResults(cursor);
-            }
-            ChangeStreamDocument<BsonDocument> actual = results.poll();
-            assumeNotNull(actual);
+    private void checkStreamValues(final BsonDocument result, final MongoCursor<ChangeStreamDocument<BsonDocument>> cursor) {
+        for (BsonValue success : result.getArray("success", new BsonArray())) {
+            BsonDocument expected = success.asDocument();
+            ChangeStreamDocument<BsonDocument> actual = cursor.next();
 
             MongoNamespace expectedNamespace = null;
             if (expected.containsKey("ns")) {
@@ -183,28 +143,26 @@ public class ChangeStreamsTest extends DatabaseTestCase {
 
             assertEquals(expected.get("fullDocument"), actual.getFullDocument());
         }
-    }
-
-    private Queue<ChangeStreamDocument<BsonDocument>> getResults(final AsyncBatchCursor<ChangeStreamDocument<BsonDocument>> cursor) {
-        FutureResultCallback<List<ChangeStreamDocument<BsonDocument>>> callback =
-                new FutureResultCallback<List<ChangeStreamDocument<BsonDocument>>>();
-        cursor.next(callback);
-        return new LinkedList<ChangeStreamDocument<BsonDocument>>(futureResult(callback));
+        if (result.containsKey("error")) {
+            BsonDocument error = result.getDocument("error");
+            try {
+                cursor.next();
+            } catch (MongoException e) {
+                assertTrue(e.getCode() == error.getInt32("code").intValue()
+                        || !Collections.disjoint(e.getErrorLabels(), error.getArray("errorLabels")));
+            }
+        }
     }
 
     @Nullable
-    private AsyncBatchCursor<ChangeStreamDocument<BsonDocument>> createCursor(final BsonDocument result) {
-        AsyncBatchCursor<ChangeStreamDocument<BsonDocument>> cursor;
+    private MongoCursor<ChangeStreamDocument<BsonDocument>> createCursor(final BsonDocument result) {
+        MongoCursor<ChangeStreamDocument<BsonDocument>> cursor;
         try {
             cursor = createChangeStreamCursor();
         } catch (MongoException e) {
             assertEquals(result.getDocument("error", new BsonDocument()).getInt32("code", new BsonInt32(-1)).getValue(), e.getCode());
             return null;
         }
-        FutureResultCallback<List<ChangeStreamDocument<BsonDocument>>> callback =
-                new FutureResultCallback<List<ChangeStreamDocument<BsonDocument>>>();
-        cursor.tryNext(callback);
-        assertNull(futureResult(callback));
         return cursor;
     }
 
@@ -224,7 +182,7 @@ public class ChangeStreamsTest extends DatabaseTestCase {
     }
 
 
-    private AsyncBatchCursor<ChangeStreamDocument<BsonDocument>> createChangeStreamCursor() {
+    private MongoCursor<ChangeStreamDocument<BsonDocument>> createChangeStreamCursor() {
         String target = definition.getString("target").getValue();
         List<BsonDocument> pipeline = new ArrayList<BsonDocument>();
         for (BsonValue bsonValue : definition.getArray("changeStreamPipeline", new BsonArray())) {
@@ -250,13 +208,7 @@ public class ChangeStreamsTest extends DatabaseTestCase {
             changeStreamIterable.batchSize(options.getNumber("batchSize").intValue());
         }
 
-
-        FutureResultCallback<AsyncBatchCursor<ChangeStreamDocument<BsonDocument>>> callback =
-                new FutureResultCallback<AsyncBatchCursor<ChangeStreamDocument<BsonDocument>>>();
-
-
-        changeStreamIterable.batchCursor(callback);
-        return futureResult(callback);
+        return changeStreamIterable.iterator();
     }
 
     private void handleOperations() {
@@ -281,20 +233,13 @@ public class ChangeStreamsTest extends DatabaseTestCase {
                     testDocument.getString("collection_name").getValue());
             MongoNamespace namespace2 = new MongoNamespace(testDocument.getString("database2_name").getValue(),
                     testDocument.getString("collection2_name").getValue());
+
             for (BsonValue test : testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
                         namespace, namespace2, test.asDocument(), skipTest(testDocument, test.asDocument())});
             }
         }
         return data;
-    }
-
-    <T> T futureResult(final FutureResultCallback<T> callback) {
-        try {
-            return callback.get(5, TimeUnit.SECONDS);
-        } catch (Throwable t) {
-            throw MongoException.fromThrowable(t);
-        }
     }
 
 }
