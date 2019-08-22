@@ -16,6 +16,8 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.MongoInterruptedException;
+import com.mongodb.MongoTimeoutException;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandFailedEvent;
 import com.mongodb.event.CommandListener;
@@ -36,55 +38,189 @@ import org.bson.codecs.configuration.CodecRegistry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 public class TestCommandListener implements CommandListener {
-    private final List<CommandEvent> events = new ArrayList<CommandEvent>();
+    private final List<CommandEvent> events = new ArrayList<>();
+    private final Lock lock = new ReentrantLock();
+    private final Condition commandCompletedCondition = lock.newCondition();
 
     private static final CodecRegistry CODEC_REGISTRY_HACK;
 
     static {
         CODEC_REGISTRY_HACK = CodecRegistries.fromProviders(new BsonValueCodecProvider(),
-                                                          new CodecProvider() {
-                                                              @Override
-                                                              @SuppressWarnings("unchecked")
-                                                              public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
-                                                                  // Use BsonDocumentCodec even for a private sub-class of BsonDocument
-                                                                  if (BsonDocument.class.isAssignableFrom(clazz)) {
-                                                                      return (Codec<T>) new BsonDocumentCodec(registry);
-                                                                  }
-                                                                  return null;
-                                                              }
-                                                          });
+                new CodecProvider() {
+                    @Override
+                    @SuppressWarnings("unchecked")
+                    public <T> Codec<T> get(final Class<T> clazz, final CodecRegistry registry) {
+                        // Use BsonDocumentCodec even for a private sub-class of BsonDocument
+                        if (BsonDocument.class.isAssignableFrom(clazz)) {
+                            return (Codec<T>) new BsonDocumentCodec(registry);
+                        }
+                        return null;
+                    }
+                });
     }
 
     public void reset() {
-        events.clear();
+        lock.lock();
+        try {
+            events.clear();
+        } finally {
+            lock.unlock();
+        }
     }
 
     public List<CommandEvent> getEvents() {
-        return events;
+        lock.lock();
+        try {
+            return events;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public List<CommandEvent> getCommandStartedEvents() {
-        List<CommandEvent> commandStartedEvents = new ArrayList<CommandEvent>();
-        for (CommandEvent cur : getEvents()) {
-            if (cur instanceof CommandStartedEvent) {
-                commandStartedEvents.add(cur);
+        return getCommandStartedEvents(Integer.MAX_VALUE);
+    }
+
+    private List<CommandEvent> getCommandStartedEvents(final int maxEvents) {
+        lock.lock();
+        try {
+            List<CommandEvent> commandStartedEvents = new ArrayList<CommandEvent>();
+            for (CommandEvent cur : getEvents()) {
+                if (cur instanceof CommandStartedEvent) {
+                    commandStartedEvents.add(cur);
+                }
+                if (commandStartedEvents.size() == maxEvents) {
+                    break;
+                }
+            }
+            return commandStartedEvents;
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public List<CommandEvent> waitForStartedEvents(final int numEvents) {
+        lock.lock();
+        try {
+            while (!hasCompletedEvents(numEvents)) {
+                try {
+                    if (!commandCompletedCondition.await(10, TimeUnit.SECONDS)) {
+                        throw new MongoTimeoutException("Timeout waiting for event");
+                    }
+                } catch (InterruptedException e) {
+                    throw new MongoInterruptedException("Interrupted waiting for event", e);
+                }
+            }
+            return getCommandStartedEvents(numEvents);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void waitForFirstCommandCompletion() {
+        lock.lock();
+        try {
+            while (!hasCompletedEvents(1)) {
+                try {
+                    if (!commandCompletedCondition.await(10, TimeUnit.SECONDS)) {
+                        throw new MongoTimeoutException("Timeout waiting for event");
+                    }
+                } catch (InterruptedException e) {
+                    throw new MongoInterruptedException("Interrupted waiting for event", e);
+                }
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    private boolean hasCompletedEvents(final int numEventsCompleted) {
+        int count = 0;
+        for (CommandEvent event : events) {
+            if (event instanceof CommandSucceededEvent || event instanceof CommandFailedEvent) {
+                count++;
             }
         }
-        return commandStartedEvents;
+        return count >= numEventsCompleted;
     }
 
 
     @Override
     public void commandStarted(final CommandStartedEvent event) {
-        events.add(new CommandStartedEvent(event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),
-                                           event.getCommandName(),
-                                           event.getCommand() == null ? null : getWritableClone(event.getCommand())));
+        lock.lock();
+        try {
+            events.add(new CommandStartedEvent(event.getRequestId(), event.getConnectionDescription(), event.getDatabaseName(),
+                    event.getCommandName(),
+                    event.getCommand() == null ? null : getWritableClone(event.getCommand())));
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public void commandSucceeded(final CommandSucceededEvent event) {
+        lock.lock();
+        try {
+            events.add(new CommandSucceededEvent(event.getRequestId(), event.getConnectionDescription(), event.getCommandName(),
+                    event.getResponse() == null ? null : event.getResponse().clone(),
+                    event.getElapsedTime(TimeUnit.NANOSECONDS)));
+            commandCompletedCondition.signal();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    @Override
+    public void commandFailed(final CommandFailedEvent event) {
+        lock.lock();
+        try {
+            events.add(event);
+            commandCompletedCondition.signal();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void eventsWereDelivered(final List<CommandEvent> expectedEvents) {
+        lock.lock();
+        try {
+            assertEquals(expectedEvents.size(), events.size());
+
+            int currentlyExpectedRequestId = 0;
+            for (int i = 0; i < events.size(); i++) {
+                CommandEvent actual = events.get(i);
+                CommandEvent expected = expectedEvents.get(i);
+
+                if (actual instanceof CommandStartedEvent) {
+                    currentlyExpectedRequestId = actual.getRequestId();
+                } else {
+                    assertEquals(currentlyExpectedRequestId, actual.getRequestId());
+                }
+
+                assertEventEquivalence(actual, expected);
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void eventWasDelivered(final CommandEvent expectedEvent, final int index) {
+        lock.lock();
+        try {
+            assertTrue(events.size() > index);
+            assertEventEquivalence(events.get(index), expectedEvent);
+        } finally {
+            lock.unlock();
+        }
     }
 
     private BsonDocument getWritableClone(final BsonDocument original) {
@@ -94,42 +230,7 @@ public class TestCommandListener implements CommandListener {
         return clone;
     }
 
-    @Override
-    public void commandSucceeded(final CommandSucceededEvent event) {
-        events.add(new CommandSucceededEvent(event.getRequestId(), event.getConnectionDescription(), event.getCommandName(),
-                                             event.getResponse() == null ? null : event.getResponse().clone(),
-                                             event.getElapsedTime(TimeUnit.NANOSECONDS)));
-    }
-
-    @Override
-    public void commandFailed(final CommandFailedEvent event) {
-        events.add(event);
-    }
-
-    public void eventsWereDelivered(final List<CommandEvent> expectedEvents) {
-        assertEquals(expectedEvents.size(), events.size());
-
-        int currentlyExpectedRequestId = 0;
-        for (int i = 0; i < events.size(); i++) {
-            CommandEvent actual = events.get(i);
-            CommandEvent expected = expectedEvents.get(i);
-
-            if (actual instanceof CommandStartedEvent) {
-                currentlyExpectedRequestId = actual.getRequestId();
-            } else {
-                assertEquals(currentlyExpectedRequestId, actual.getRequestId());
-            }
-
-            assertEventEquivalence(actual, expected);
-        }
-    }
-
-    public void eventWasDelivered(final CommandEvent expectedEvent, final int index) {
-        assertTrue(events.size() > index);
-        assertEventEquivalence(events.get(index), expectedEvent);
-    }
-
-     private void assertEventEquivalence(final CommandEvent actual, final CommandEvent expected) {
+    private void assertEventEquivalence(final CommandEvent actual, final CommandEvent expected) {
         assertEquals(expected.getClass(), actual.getClass());
 
         assertEquals(expected.getConnectionDescription(), actual.getConnectionDescription());
@@ -157,8 +258,8 @@ public class TestCommandListener implements CommandListener {
         } else {
             // ignore extra elements in the actual response
             assertTrue("Expected response contains elements not in the actual response",
-                       massageResponse(actual.getResponse()).entrySet()
-                               .containsAll(massageResponse(expected.getResponse()).entrySet()));
+                    massageResponse(actual.getResponse()).entrySet()
+                            .containsAll(massageResponse(expected.getResponse()).entrySet()));
         }
     }
 
