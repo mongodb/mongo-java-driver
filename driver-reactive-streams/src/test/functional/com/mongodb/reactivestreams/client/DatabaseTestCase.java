@@ -25,9 +25,9 @@ import org.reactivestreams.Publisher;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static com.mongodb.reactivestreams.client.Fixture.ObservableSubscriber;
 import static com.mongodb.reactivestreams.client.Fixture.drop;
-import static com.mongodb.reactivestreams.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.reactivestreams.client.Fixture.getMongoClient;
 
 public class DatabaseTestCase {
