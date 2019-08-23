@@ -255,7 +255,7 @@ abstract class BaseCluster implements Cluster {
         }
 
         description = newDescription;
-        phase.getAndSet(new CountDownLatch(1)).countDown();
+        updatePhase();
     }
 
     protected void fireChangeEvent(final ClusterDescriptionChangedEvent event) {
@@ -265,6 +265,10 @@ abstract class BaseCluster implements Cluster {
     @Override
     public ClusterDescription getCurrentDescription() {
         return description;
+    }
+
+    private synchronized void updatePhase() {
+        phase.getAndSet(new CountDownLatch(1)).countDown();
     }
 
     private long getMaxWaitTimeNanos() {
@@ -463,6 +467,8 @@ abstract class BaseCluster implements Cluster {
                 waitQueueHandler = new Thread(new WaitQueueHandler(), "cluster-" + clusterId.getValue());
                 waitQueueHandler.setDaemon(true);
                 waitQueueHandler.start();
+            } else {
+                updatePhase();
             }
         }
     }
