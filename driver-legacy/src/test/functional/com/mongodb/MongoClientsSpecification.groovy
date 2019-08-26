@@ -22,42 +22,13 @@ import com.mongodb.event.CommandFailedEvent
 import com.mongodb.event.CommandListener
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.event.CommandSucceededEvent
-import org.bson.Document
 import spock.lang.IgnoreIf
 
-import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
-import static com.mongodb.ClusterFixture.isStandalone
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static Fixture.getDefaultDatabaseName
 import static Fixture.getMongoClientURI
+import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 
 class  MongoClientsSpecification extends FunctionalSpecification {
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isStandalone() })
-    def 'application name should appear in the system.profile collection'() {
-        given:
-        def appName = 'appName1'
-        def driverInfo = MongoDriverInformation.builder().driverName('myDriver').driverVersion('42').build()
-        def client = new MongoClient(getMongoClientURI(MongoClientOptions.builder().applicationName(appName)), driverInfo)
-        def database = client.getDatabase(getDatabaseName())
-        def collection = database.getCollection(getCollectionName())
-
-        def profileCollection = database.getCollection('system.profile')
-        profileCollection.drop()
-
-        database.runCommand(new Document('profile', 2))
-
-        when:
-        collection.countDocuments()
-
-        then:
-        Document profileDocument = profileCollection.find().first()
-        profileDocument.get('appName') == appName
-
-        cleanup:
-        database?.runCommand(new Document('profile', 0))
-        profileCollection?.drop()
-        client?.close()
-    }
 
     @IgnoreIf({ !isDiscoverableReplicaSet() })
     def 'should use server selector from MongoClientOptions'() {
