@@ -16,10 +16,8 @@
 
 package com.mongodb.async.client
 
-
 import com.mongodb.MongoCompressor
 import com.mongodb.MongoCredential
-import com.mongodb.MongoDriverInformation
 import com.mongodb.ReadConcern
 import com.mongodb.ServerAddress
 import com.mongodb.WriteConcern
@@ -32,12 +30,8 @@ import static com.mongodb.ClusterFixture.connectionString
 import static com.mongodb.ClusterFixture.getCredentialList
 import static com.mongodb.ClusterFixture.getSslSettings
 import static com.mongodb.ClusterFixture.isNotAtLeastJava8
-import static com.mongodb.ClusterFixture.isStandalone
-import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.secondaryPreferred
-import static com.mongodb.async.client.Fixture.getMongoClientBuilderFromConnectionString
-import static com.mongodb.async.client.TestHelper.run
 import static java.util.concurrent.TimeUnit.MILLISECONDS
 
 class MongoClientsSpecification extends FunctionalSpecification {
@@ -223,35 +217,4 @@ class MongoClientsSpecification extends FunctionalSpecification {
         'mongodb://localhost/?compressors=zlib'     | [MongoCompressor.createZlibCompressor()]
         'mongodb://localhost/?compressors=zstd'     | [MongoCompressor.createZstdCompressor()]
     }
-
-    @IgnoreIf({ !serverVersionAtLeast(3, 4) || !isStandalone() })
-    def 'application name should appear in the system.profile collection'() {
-        given:
-        def appName = 'appName1'
-        def driverInfo = MongoDriverInformation.builder().driverName('myDriver').driverVersion('42').build()
-        def client = MongoClients.create(getMongoClientBuilderFromConnectionString().applicationName(appName).build(), driverInfo)
-        def database = client.getDatabase(getDatabaseName())
-        def collection = database.getCollection(getCollectionName())
-
-        def profileCollection = database.getCollection('system.profile')
-        run(profileCollection.&drop)
-        run(database.&runCommand, new Document('profile', 2))
-
-        when:
-        run(collection.&count)
-
-        then:
-        Document profileDocument = run(profileCollection.find().&first)
-        profileDocument.get('appName') == appName
-
-        cleanup:
-        if (database != null) {
-            run(database.&runCommand, new Document('profile', 0))
-        }
-        if (profileCollection != null) {
-            run(profileCollection.&drop)
-        }
-        client?.close()
-    }
-
 }
