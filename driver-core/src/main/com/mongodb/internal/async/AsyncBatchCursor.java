@@ -24,13 +24,9 @@ import java.util.List;
  * the {@code next} method will return the first batch, and subsequent calls will trigger an asynchronous request to get the next batch
  * of results.  Clients can control the batch size by setting the {@code batchSize} property between calls to {@code next}.
  *
- * @since 3.0
- *
  * @param <T> The type of documents the cursor contains
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#wire-op-get-more OP_GET_MORE
- * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
-@Deprecated
 public interface AsyncBatchCursor<T> extends Closeable {
     /**
      * Returns the next batch of results.  A tailable cursor will block until another batch exists.  After the last batch, the next call

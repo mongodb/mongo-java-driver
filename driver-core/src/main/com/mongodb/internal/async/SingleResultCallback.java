@@ -20,10 +20,7 @@ package com.mongodb.internal.async;
  * An interface to describe the completion of an asynchronous operation.
  *
  * @param <T> the result type
- * @since 3.0
- * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
-@Deprecated
 public interface SingleResultCallback<T> {
     /**
      * Called when the operation completes.

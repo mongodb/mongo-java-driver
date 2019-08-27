@@ -24,9 +24,7 @@ import org.bson.BsonTimestamp;
  *
  * @param <T> The type of documents the cursor contains
  * @mongodb.driver.manual ../meta-driver/latest/legacy/mongodb-wire-protocol/#wire-op-get-more OP_GET_MORE
- * @since 3.11
  */
-@Deprecated
 public interface AsyncAggregateResponseBatchCursor<T> extends AsyncBatchCursor<T> {
     /**
      * Returns the postBatchResumeToken.
