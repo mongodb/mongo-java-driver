@@ -16,42 +16,40 @@
 
 package com.mongodb.event;
 
-import com.mongodb.connection.ConnectionId;
+import com.mongodb.connection.ServerId;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * An event for adding a new connection to the pool.
+ * An event signifying when a connection pool is cleared.
  *
- * @deprecated Prefer {@link ConnectionCreatedEvent}
- * @since 3.5
+ * @since 4.0
  */
-@Deprecated
-public final class ConnectionAddedEvent {
-    private final ConnectionId connectionId;
+public final class ConnectionPoolClearedEvent {
+    private final ServerId serverId;
 
     /**
-     * Construct an instance
+     * Constructs a new instance of the event.
      *
-     * @param connectionId the connectionId
+     * @param serverId the server id
      */
-    public ConnectionAddedEvent(final ConnectionId connectionId) {
-        this.connectionId = notNull("connectionId", connectionId);
+    public ConnectionPoolClearedEvent(final ServerId serverId) {
+        this.serverId = notNull("serverId", serverId);
     }
 
     /**
-     * Gets the connection id
+     * Gets the server id
      *
-     * @return the connection id
+     * @return the server id
      */
-    public ConnectionId getConnectionId() {
-        return connectionId;
+    public ServerId getServerId() {
+        return serverId;
     }
 
     @Override
     public String toString() {
-        return "ConnectionAddedEvent{"
-                       + "connectionId=" + connectionId
+        return "ConnectionPoolClearedEvent{"
+                       + "serverId=" + serverId
                        + '}';
     }
 }
