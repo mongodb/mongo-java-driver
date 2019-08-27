@@ -16,7 +16,7 @@
 
 package com.mongodb.reactivestreams.client.internal
 
-import com.mongodb.async.client.ChangeStreamIterable
+import com.mongodb.internal.async.client.ChangeStreamIterable
 import com.mongodb.client.model.Collation
 import org.bson.BsonDocument
 import org.bson.BsonInt32

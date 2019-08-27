@@ -2,8 +2,8 @@ package com.mongodb.reactivestreams.client.internal
 
 import com.mongodb.Block
 import com.mongodb.async.SingleResultCallback
-import com.mongodb.async.client.gridfs.AsyncInputStream as WrappedAsyncInputStream
-import com.mongodb.async.client.gridfs.AsyncOutputStream as WrappedAsyncOutputStream
+import com.mongodb.internal.async.client.gridfs.AsyncInputStream as WrappedAsyncInputStream
+import com.mongodb.internal.async.client.gridfs.AsyncOutputStream as WrappedAsyncOutputStream
 import com.mongodb.reactivestreams.client.Success
 import com.mongodb.reactivestreams.client.TestSubscriber
 import com.mongodb.reactivestreams.client.gridfs.AsyncInputStream
@@ -15,7 +15,7 @@ import spock.lang.Specification
 
 import java.nio.ByteBuffer
 
-import static com.mongodb.async.client.Observables.observe
+import static com.mongodb.internal.async.client.Observables.observe
 import static com.mongodb.reactivestreams.client.internal.PublisherHelper.voidToSuccessCallback
 
 class GridFSAsyncStreamHelperSpecification extends Specification {

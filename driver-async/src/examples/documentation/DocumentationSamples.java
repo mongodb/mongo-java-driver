@@ -22,11 +22,11 @@ import com.mongodb.MongoNamespace;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.async.FutureResultCallback;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.async.client.DatabaseTestCase;
-import com.mongodb.async.client.FindIterable;
-import com.mongodb.async.client.MongoClient;
-import com.mongodb.async.client.MongoClients;
-import com.mongodb.async.client.MongoCollection;
+import com.mongodb.internal.async.client.DatabaseTestCase;
+import com.mongodb.internal.async.client.FindIterable;
+import com.mongodb.internal.async.client.MongoClient;
+import com.mongodb.internal.async.client.MongoClients;
+import com.mongodb.internal.async.client.MongoCollection;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.BsonType;
@@ -42,8 +42,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static com.mongodb.async.client.Fixture.getDefaultDatabaseName;
-import static com.mongodb.async.client.Fixture.initializeCollection;
+import static com.mongodb.internal.async.client.Fixture.getDefaultDatabaseName;
+import static com.mongodb.internal.async.client.Fixture.initializeCollection;
 
 
 // imports required for filters, projections and updates

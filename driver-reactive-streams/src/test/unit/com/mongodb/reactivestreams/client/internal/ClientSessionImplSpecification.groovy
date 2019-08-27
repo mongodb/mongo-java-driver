@@ -20,7 +20,7 @@ import com.mongodb.ClientSessionOptions
 import com.mongodb.ReadConcern
 import com.mongodb.ServerAddress
 import com.mongodb.TransactionOptions
-import com.mongodb.async.client.ClientSession
+import com.mongodb.internal.async.client.ClientSession
 import com.mongodb.reactivestreams.client.MongoClient
 import com.mongodb.session.ServerSession
 import org.bson.BsonBoolean

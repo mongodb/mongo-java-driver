@@ -17,7 +17,7 @@
 package com.mongodb.reactivestreams.client.internal
 
 import com.mongodb.MongoNamespace
-import com.mongodb.async.client.MapReduceIterable
+import com.mongodb.internal.async.client.MapReduceIterable
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.MapReduceAction
 import org.bson.Document

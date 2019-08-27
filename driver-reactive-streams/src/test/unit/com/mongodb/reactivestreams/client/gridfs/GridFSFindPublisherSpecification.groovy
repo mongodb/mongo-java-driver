@@ -16,7 +16,7 @@
 
 package com.mongodb.reactivestreams.client.gridfs
 
-import com.mongodb.async.client.gridfs.GridFSFindIterable
+import com.mongodb.internal.async.client.gridfs.GridFSFindIterable
 import org.reactivestreams.Publisher
 import spock.lang.Specification
 

@@ -32,9 +32,9 @@ import static com.mongodb.reactivestreams.client.internal.PublisherHelper.voidTo
 @SuppressWarnings("deprecation")
 final class GridFSUploadStreamImpl implements GridFSUploadStream {
 
-    private final com.mongodb.async.client.gridfs.GridFSUploadStream wrapped;
+    private final com.mongodb.internal.async.client.gridfs.GridFSUploadStream wrapped;
 
-    GridFSUploadStreamImpl(final com.mongodb.async.client.gridfs.GridFSUploadStream wrapped) {
+    GridFSUploadStreamImpl(final com.mongodb.internal.async.client.gridfs.GridFSUploadStream wrapped) {
         this.wrapped = notNull("GridFSUploadStream", wrapped);
     }
 

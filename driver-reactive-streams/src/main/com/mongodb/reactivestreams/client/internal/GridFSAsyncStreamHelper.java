@@ -45,7 +45,7 @@ public final class GridFSAsyncStreamHelper {
      * @param wrapper the callback AsyncInputStream
      * @return the Publisher AsyncInputStream
      */
-    public static AsyncInputStream toAsyncInputStream(final com.mongodb.async.client.gridfs.AsyncInputStream wrapper) {
+    public static AsyncInputStream toAsyncInputStream(final com.mongodb.internal.async.client.gridfs.AsyncInputStream wrapper) {
         notNull("wrapper", wrapper);
         return new AsyncInputStream() {
             @Override
@@ -90,7 +90,7 @@ public final class GridFSAsyncStreamHelper {
      * @param wrapper the callback AsyncOutputStream
      * @return the Publisher AsyncOutputStream
      */
-    public static AsyncOutputStream toAsyncOutputStream(final com.mongodb.async.client.gridfs.AsyncOutputStream wrapper) {
+    public static AsyncOutputStream toAsyncOutputStream(final com.mongodb.internal.async.client.gridfs.AsyncOutputStream wrapper) {
         notNull("wrapper", wrapper);
         return new AsyncOutputStream() {
 
@@ -118,9 +118,9 @@ public final class GridFSAsyncStreamHelper {
         };
     }
 
-    static com.mongodb.async.client.gridfs.AsyncInputStream toCallbackAsyncInputStream(final AsyncInputStream wrapped) {
+    static com.mongodb.internal.async.client.gridfs.AsyncInputStream toCallbackAsyncInputStream(final AsyncInputStream wrapped) {
         notNull("wrapped", wrapped);
-        return new com.mongodb.async.client.gridfs.AsyncInputStream() {
+        return new com.mongodb.internal.async.client.gridfs.AsyncInputStream() {
 
             @Override
             public void read(final ByteBuffer dst, final com.mongodb.async.SingleResultCallback<Integer> callback) {
@@ -203,9 +203,9 @@ public final class GridFSAsyncStreamHelper {
         };
     }
 
-    static com.mongodb.async.client.gridfs.AsyncOutputStream toCallbackAsyncOutputStream(final AsyncOutputStream wrapped) {
+    static com.mongodb.internal.async.client.gridfs.AsyncOutputStream toCallbackAsyncOutputStream(final AsyncOutputStream wrapped) {
         notNull("wrapped", wrapped);
-        return new com.mongodb.async.client.gridfs.AsyncOutputStream() {
+        return new com.mongodb.internal.async.client.gridfs.AsyncOutputStream() {
 
             @Override
             public void write(final ByteBuffer src, final com.mongodb.async.SingleResultCallback<Integer> callback) {

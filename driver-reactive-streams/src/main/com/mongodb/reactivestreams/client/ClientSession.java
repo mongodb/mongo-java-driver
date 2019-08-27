@@ -58,7 +58,7 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
      *
      * @return the wrapped session
      */
-    com.mongodb.async.client.ClientSession getWrapped();
+    com.mongodb.internal.async.client.ClientSession getWrapped();
 
     /**
      * Start a transaction in the context of this session with default transaction options. A transaction can not be started if there is

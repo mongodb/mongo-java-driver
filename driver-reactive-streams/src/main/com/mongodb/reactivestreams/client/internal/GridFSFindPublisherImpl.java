@@ -19,6 +19,8 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.Block;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.async.client.Observables;
+import com.mongodb.internal.async.client.gridfs.GridFSFindIterable;
 import com.mongodb.reactivestreams.client.gridfs.GridFSFindPublisher;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
@@ -31,9 +33,9 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 @SuppressWarnings("deprecation")
 final class GridFSFindPublisherImpl implements GridFSFindPublisher {
-    private final com.mongodb.async.client.gridfs.GridFSFindIterable wrapped;
+    private final GridFSFindIterable wrapped;
 
-    GridFSFindPublisherImpl(final com.mongodb.async.client.gridfs.GridFSFindIterable wrapped) {
+    GridFSFindPublisherImpl(final GridFSFindIterable wrapped) {
         this.wrapped = notNull("GridFSFindIterable", wrapped);
     }
 
@@ -98,6 +100,6 @@ final class GridFSFindPublisherImpl implements GridFSFindPublisher {
 
     @Override
     public void subscribe(final Subscriber<? super GridFSFile> s) {
-        new ObservableToPublisher<GridFSFile>(com.mongodb.async.client.Observables.observe(wrapped)).subscribe(s);
+        new ObservableToPublisher<GridFSFile>(Observables.observe(wrapped)).subscribe(s);
     }
 }

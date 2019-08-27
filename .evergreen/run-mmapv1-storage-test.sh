@@ -24,4 +24,4 @@ echo "Running tests with ${JDK}"
 ./gradlew -version
 ./gradlew -PjdkHome=/opt/java/${JDK} --stacktrace --info \
 -Dorg.mongodb.test.uri=${MONGODB_URI} \
--Dtest.single=RetryableWritesProseTest driver-sync:test driver-async:test
+-Dtest.single=RetryableWritesProseTest driver-sync:test driver-core:test

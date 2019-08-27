@@ -22,7 +22,7 @@ import org.junit.Test;
 import org.bson.Document;
 import com.mongodb.Block;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.async.client.FindIterable;
+import com.mongodb.internal.async.client.FindIterable;
 
 import static com.mongodb.client.model.Filters.*;
 import static com.mongodb.client.model.Sorts.ascending;

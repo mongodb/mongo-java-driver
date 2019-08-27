@@ -142,7 +142,7 @@
     </Match>
 
     <Match>
-        <Class name="~com.mongodb.async.client.ClientSession.*"/>
+        <Class name="~com.mongodb.internal.async.client.ClientSession.*"/>
         <Bug pattern="NM_SAME_SIMPLE_NAME_AS_INTERFACE"/>
     </Match>
 

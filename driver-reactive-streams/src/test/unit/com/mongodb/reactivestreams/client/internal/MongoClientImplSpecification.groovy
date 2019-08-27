@@ -17,10 +17,10 @@
 package com.mongodb.reactivestreams.client.internal
 
 import com.mongodb.ClientSessionOptions
-import com.mongodb.async.client.ChangeStreamIterable
-import com.mongodb.async.client.ClientSession as WrappedClientSession
-import com.mongodb.async.client.ListDatabasesIterable
-import com.mongodb.async.client.MongoClient as WrappedMongoClient
+import com.mongodb.internal.async.client.ChangeStreamIterable
+import com.mongodb.internal.async.client.ClientSession as WrappedClientSession
+import com.mongodb.internal.async.client.ListDatabasesIterable
+import com.mongodb.internal.async.client.MongoClient as WrappedMongoClient
 import com.mongodb.reactivestreams.client.ClientSession
 import com.mongodb.reactivestreams.client.MongoClient
 import org.bson.BsonDocument

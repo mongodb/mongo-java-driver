@@ -30,9 +30,9 @@ import static com.mongodb.reactivestreams.client.internal.PublisherHelper.voidTo
 
 @SuppressWarnings("deprecation")
 final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
-    private final com.mongodb.async.client.gridfs.GridFSDownloadStream wrapped;
+    private final com.mongodb.internal.async.client.gridfs.GridFSDownloadStream wrapped;
 
-    GridFSDownloadStreamImpl(final com.mongodb.async.client.gridfs.GridFSDownloadStream wrapped) {
+    GridFSDownloadStreamImpl(final com.mongodb.internal.async.client.gridfs.GridFSDownloadStream wrapped) {
         this.wrapped = notNull("GridFSDownloadStream", wrapped);
     }
 

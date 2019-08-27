@@ -18,6 +18,8 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.Block;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.async.client.AggregateIterable;
+import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.Success;
 import org.bson.conversions.Bson;
@@ -33,9 +35,9 @@ import static com.mongodb.reactivestreams.client.internal.PublisherHelper.voidTo
 @SuppressWarnings("deprecation")
 final class AggregatePublisherImpl<TResult> implements AggregatePublisher<TResult> {
 
-    private final com.mongodb.async.client.AggregateIterable<TResult> wrapped;
+    private final AggregateIterable<TResult> wrapped;
 
-    AggregatePublisherImpl(final com.mongodb.async.client.AggregateIterable<TResult> wrapped) {
+    AggregatePublisherImpl(final AggregateIterable<TResult> wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 
@@ -112,6 +114,6 @@ final class AggregatePublisherImpl<TResult> implements AggregatePublisher<TResul
 
     @Override
     public void subscribe(final Subscriber<? super TResult> s) {
-        new ObservableToPublisher<TResult>(com.mongodb.async.client.Observables.observe(wrapped)).subscribe(s);
+        new ObservableToPublisher<TResult>(Observables.observe(wrapped)).subscribe(s);
     }
 }

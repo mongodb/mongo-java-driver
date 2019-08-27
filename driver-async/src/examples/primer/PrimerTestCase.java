@@ -16,9 +16,9 @@
 
 package primer;
 
-import com.mongodb.async.client.MongoDatabase;
+import com.mongodb.internal.async.client.MongoDatabase;
 
-import static com.mongodb.async.client.Fixture.getMongoClient;
+import static com.mongodb.internal.async.client.Fixture.getMongoClient;
 
 public class PrimerTestCase {
     MongoDatabase db = getMongoClient().getDatabase("test");

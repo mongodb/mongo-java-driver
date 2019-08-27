@@ -16,7 +16,7 @@
 
 package com.mongodb.reactivestreams.client.internal
 
-import com.mongodb.async.client.DistinctIterable
+import com.mongodb.internal.async.client.DistinctIterable
 import com.mongodb.client.model.Collation
 import org.bson.Document
 import org.reactivestreams.Subscriber

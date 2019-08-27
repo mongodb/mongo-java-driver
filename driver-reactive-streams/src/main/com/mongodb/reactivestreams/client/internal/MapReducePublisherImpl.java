@@ -19,6 +19,8 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.Block;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.MapReduceAction;
+import com.mongodb.internal.async.client.MapReduceIterable;
+import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.MapReducePublisher;
 import com.mongodb.reactivestreams.client.Success;
 import org.bson.conversions.Bson;
@@ -33,9 +35,9 @@ import static com.mongodb.reactivestreams.client.internal.PublisherHelper.voidTo
 
 @SuppressWarnings("deprecation")
 final class MapReducePublisherImpl<TResult> implements MapReducePublisher<TResult> {
-    private final com.mongodb.async.client.MapReduceIterable<TResult> wrapped;
+    private final MapReduceIterable<TResult> wrapped;
 
-    MapReducePublisherImpl(final com.mongodb.async.client.MapReduceIterable<TResult> wrapped) {
+    MapReducePublisherImpl(final MapReduceIterable<TResult> wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 
@@ -160,6 +162,6 @@ final class MapReducePublisherImpl<TResult> implements MapReducePublisher<TResul
 
     @Override
     public void subscribe(final Subscriber<? super TResult> s) {
-        new ObservableToPublisher<TResult>(com.mongodb.async.client.Observables.observe(wrapped)).subscribe(s);
+        new ObservableToPublisher<TResult>(Observables.observe(wrapped)).subscribe(s);
     }
 }

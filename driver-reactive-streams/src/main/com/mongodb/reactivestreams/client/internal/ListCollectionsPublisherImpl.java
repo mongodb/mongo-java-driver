@@ -17,6 +17,8 @@
 package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.Block;
+import com.mongodb.internal.async.client.ListCollectionsIterable;
+import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.ListCollectionsPublisher;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
@@ -30,9 +32,9 @@ import static com.mongodb.assertions.Assertions.notNull;
 @SuppressWarnings("deprecation")
 final class ListCollectionsPublisherImpl<TResult> implements ListCollectionsPublisher<TResult> {
 
-    private final com.mongodb.async.client.ListCollectionsIterable<TResult> wrapped;
+    private final ListCollectionsIterable<TResult> wrapped;
 
-    ListCollectionsPublisherImpl(final com.mongodb.async.client.ListCollectionsIterable<TResult> wrapped) {
+    ListCollectionsPublisherImpl(final ListCollectionsIterable<TResult> wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 
@@ -69,6 +71,6 @@ final class ListCollectionsPublisherImpl<TResult> implements ListCollectionsPubl
 
     @Override
     public void subscribe(final Subscriber<? super TResult> s) {
-        new ObservableToPublisher<TResult>(com.mongodb.async.client.Observables.observe(wrapped)).subscribe(s);
+        new ObservableToPublisher<TResult>(Observables.observe(wrapped)).subscribe(s);
     }
 }

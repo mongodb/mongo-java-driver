@@ -27,7 +27,7 @@ class ClientEncryptionImplSpecification extends Specification {
 
     def 'should forward methods to wrapped'() {
         given:
-        def wrapped = Mock(com.mongodb.async.client.vault.ClientEncryption)
+        def wrapped = Mock(com.mongodb.internal.async.client.vault.ClientEncryption)
         def subscriber = Stub(Subscriber) {
             onSubscribe(_) >> { it[0].request(1) }
         }

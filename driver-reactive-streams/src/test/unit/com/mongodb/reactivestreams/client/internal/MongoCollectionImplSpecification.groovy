@@ -20,9 +20,9 @@ import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
-import com.mongodb.async.client.ChangeStreamIterable
-import com.mongodb.async.client.ClientSession as WrappedClientSession
-import com.mongodb.async.client.MongoCollection as WrappedMongoCollection
+import com.mongodb.internal.async.client.ChangeStreamIterable
+import com.mongodb.internal.async.client.ClientSession as WrappedClientSession
+import com.mongodb.internal.async.client.MongoCollection as WrappedMongoCollection
 import com.mongodb.client.model.BulkWriteOptions
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CollationStrength
@@ -42,6 +42,11 @@ import com.mongodb.client.model.InsertOneOptions
 import com.mongodb.client.model.RenameCollectionOptions
 import com.mongodb.client.model.ReplaceOptions
 import com.mongodb.client.model.UpdateOptions
+import com.mongodb.internal.async.client.AggregateIterable
+import com.mongodb.internal.async.client.DistinctIterable
+import com.mongodb.internal.async.client.FindIterable
+import com.mongodb.internal.async.client.ListIndexesIterable
+import com.mongodb.internal.async.client.MapReduceIterable
 import com.mongodb.reactivestreams.client.ClientSession
 import org.bson.BsonDocument
 import org.bson.Document
@@ -267,8 +272,8 @@ class MongoCollectionImplSpecification extends Specification {
     def 'should create DistinctPublisher correctly'() {
         given:
         def wrapped = Stub(WrappedMongoCollection) {
-            distinct(_, _) >> Stub(com.mongodb.async.client.DistinctIterable)
-            distinct(wrappedClientSession, _, _) >> Stub(com.mongodb.async.client.DistinctIterable)
+            distinct(_, _) >> Stub(DistinctIterable)
+            distinct(wrappedClientSession, _, _) >> Stub(DistinctIterable)
         }
         def collection = new MongoCollectionImpl(wrapped)
 
@@ -287,7 +292,7 @@ class MongoCollectionImplSpecification extends Specification {
 
     def 'should create FindPublisher correctly'() {
         given:
-        def wrappedResult = Stub(com.mongodb.async.client.FindIterable)
+        def wrappedResult = Stub(FindIterable)
         def wrapped = Mock(WrappedMongoCollection)
         def collection = new MongoCollectionImpl(wrapped)
 
@@ -354,7 +359,7 @@ class MongoCollectionImplSpecification extends Specification {
 
     def 'should use AggregatePublisher correctly'() {
         given:
-        def wrappedResult = Stub(com.mongodb.async.client.AggregateIterable)
+        def wrappedResult = Stub(AggregateIterable)
         def wrapped = Mock(WrappedMongoCollection)
         def collection = new MongoCollectionImpl(wrapped)
         def pipeline = [new Document('$match', 1)]
@@ -455,7 +460,7 @@ class MongoCollectionImplSpecification extends Specification {
 
     def 'should create MapReducePublisher correctly'() {
         given:
-        def wrappedResult = Stub(com.mongodb.async.client.MapReduceIterable)
+        def wrappedResult = Stub(MapReduceIterable)
         def wrapped = Mock(WrappedMongoCollection)
         def collection = new MongoCollectionImpl(wrapped)
         def mapReducePublisher
@@ -997,7 +1002,7 @@ class MongoCollectionImplSpecification extends Specification {
     }
 
     def 'should use the underlying listIndexes'() {
-        def listIndexesIterable = Stub(com.mongodb.async.client.ListIndexesIterable)
+        def listIndexesIterable = Stub(ListIndexesIterable)
         def wrapped = Mock(WrappedMongoCollection)
         def mongoCollection = new MongoCollectionImpl(wrapped)
 

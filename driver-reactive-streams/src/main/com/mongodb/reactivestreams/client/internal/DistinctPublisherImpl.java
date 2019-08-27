@@ -18,6 +18,8 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.Block;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.async.client.DistinctIterable;
+import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.DistinctPublisher;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
@@ -31,9 +33,9 @@ import static com.mongodb.assertions.Assertions.notNull;
 @SuppressWarnings("deprecation")
 final class DistinctPublisherImpl<TResult> implements DistinctPublisher<TResult> {
 
-    private final com.mongodb.async.client.DistinctIterable<TResult> wrapped;
+    private final DistinctIterable<TResult> wrapped;
 
-    DistinctPublisherImpl(final com.mongodb.async.client.DistinctIterable<TResult> wrapped) {
+    DistinctPublisherImpl(final DistinctIterable<TResult> wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 
@@ -74,6 +76,6 @@ final class DistinctPublisherImpl<TResult> implements DistinctPublisher<TResult>
 
     @Override
     public void subscribe(final Subscriber<? super TResult> s) {
-        new ObservableToPublisher<TResult>(com.mongodb.async.client.Observables.observe(wrapped)).subscribe(s);
+        new ObservableToPublisher<TResult>(Observables.observe(wrapped)).subscribe(s);
     }
 }

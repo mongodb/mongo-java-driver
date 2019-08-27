@@ -30,10 +30,10 @@ import org.reactivestreams.Publisher;
 
 @SuppressWarnings("deprecation")
 class ClientSessionImpl implements ClientSession {
-    private final com.mongodb.async.client.ClientSession wrapped;
+    private final com.mongodb.internal.async.client.ClientSession wrapped;
     private final Object originator;
 
-    ClientSessionImpl(final com.mongodb.async.client.ClientSession wrapped, final Object originator) {
+    ClientSessionImpl(final com.mongodb.internal.async.client.ClientSession wrapped, final Object originator) {
         this.wrapped = wrapped;
         this.originator = originator;
     }
@@ -49,7 +49,7 @@ class ClientSessionImpl implements ClientSession {
     }
 
     @Override
-    public com.mongodb.async.client.ClientSession getWrapped() {
+    public com.mongodb.internal.async.client.ClientSession getWrapped() {
         return wrapped;
     }
 

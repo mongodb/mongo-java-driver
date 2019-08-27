@@ -17,6 +17,7 @@
 package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.Block;
+import com.mongodb.internal.async.client.Observables;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
@@ -26,7 +27,7 @@ public class SingleResultObservableToPublisher<TResult> implements org.reactives
     private final ObservableToPublisher<TResult> observable;
 
     public SingleResultObservableToPublisher(final Block<com.mongodb.async.SingleResultCallback<TResult>> operation) {
-        this.observable = new ObservableToPublisher<TResult>(com.mongodb.async.client.Observables.observe(operation));
+        this.observable = new ObservableToPublisher<TResult>(Observables.observe(operation));
     }
 
     @Override

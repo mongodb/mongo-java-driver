@@ -16,7 +16,7 @@
 
 package com.mongodb.reactivestreams.client.gridfs.helpers
 
-import com.mongodb.async.client.gridfs.helpers.AsyncStreamHelper as WrappedAsyncStreamHelper
+import com.mongodb.internal.async.client.gridfs.helpers.AsyncStreamHelper as WrappedAsyncStreamHelper
 import com.mongodb.reactivestreams.client.TestSubscriber
 import org.reactivestreams.Subscriber
 import spock.lang.Specification

@@ -20,6 +20,8 @@ import com.mongodb.Block;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
+import com.mongodb.internal.async.client.ChangeStreamIterable;
+import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
@@ -34,9 +36,9 @@ import static com.mongodb.assertions.Assertions.notNull;
 @SuppressWarnings("deprecation")
 final class ChangeStreamPublisherImpl<TResult> implements ChangeStreamPublisher<TResult> {
 
-    private final com.mongodb.async.client.ChangeStreamIterable<TResult> wrapped;
+    private final ChangeStreamIterable<TResult> wrapped;
 
-    ChangeStreamPublisherImpl(final com.mongodb.async.client.ChangeStreamIterable<TResult> wrapped) {
+    ChangeStreamPublisherImpl(final ChangeStreamIterable<TResult> wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 
@@ -78,7 +80,7 @@ final class ChangeStreamPublisherImpl<TResult> implements ChangeStreamPublisher<
 
     @Override
     public <TDocument> Publisher<TDocument> withDocumentClass(final Class<TDocument> clazz) {
-        return new ObservableToPublisher<TDocument>(com.mongodb.async.client.Observables.observe(wrapped.withDocumentClass(clazz)));
+        return new ObservableToPublisher<TDocument>(Observables.observe(wrapped.withDocumentClass(clazz)));
     }
 
     @Override
@@ -100,6 +102,6 @@ final class ChangeStreamPublisherImpl<TResult> implements ChangeStreamPublisher<
 
     @Override
     public void subscribe(final Subscriber<? super ChangeStreamDocument<TResult>> s) {
-        new ObservableToPublisher<ChangeStreamDocument<TResult>>(com.mongodb.async.client.Observables.observe(wrapped)).subscribe(s);
+        new ObservableToPublisher<ChangeStreamDocument<TResult>>(Observables.observe(wrapped)).subscribe(s);
     }
 }

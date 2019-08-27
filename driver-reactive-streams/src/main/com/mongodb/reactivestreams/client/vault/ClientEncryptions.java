@@ -38,7 +38,7 @@ public final class ClientEncryptions {
      * @return the key vault
      */
     public static ClientEncryption create(final ClientEncryptionSettings options) {
-        return new ClientEncryptionImpl(com.mongodb.async.client.vault.ClientEncryptions.create(options));
+        return new ClientEncryptionImpl(com.mongodb.internal.async.client.vault.ClientEncryptions.create(options));
     }
 
     private ClientEncryptions() {
