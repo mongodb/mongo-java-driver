@@ -14,8 +14,21 @@
  * limitations under the License.
  */
 
+package com.mongodb.internal.async;
+
 /**
- * This package contains async interfaces
+ * An interface to describe the completion of an asynchronous operation.
+ *
+ * @param <T> the result type
+ * @since 3.0
+ * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
 @Deprecated
-package com.mongodb.async;
+public interface SingleResultCallback<T> {
+    /**
+     * Called when the operation completes.
+     * @param result the result, which may be null.  Always null if e is not null.
+     * @param t      the throwable, or null if the operation completed normally
+     */
+    void onResult(T result, Throwable t);
+}

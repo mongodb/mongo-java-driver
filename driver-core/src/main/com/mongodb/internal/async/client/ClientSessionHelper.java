@@ -18,7 +18,7 @@ package com.mongodb.internal.async.client;
 
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.TransactionOptions;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterType;

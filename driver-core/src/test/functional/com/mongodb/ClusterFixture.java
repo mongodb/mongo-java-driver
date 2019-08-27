@@ -16,9 +16,9 @@
 
 package com.mongodb;
 
-import com.mongodb.async.AsyncBatchCursor;
+import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.async.FutureResultCallback;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.AsynchronousSocketChannelStreamFactory;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ClusterType;

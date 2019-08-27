@@ -19,7 +19,7 @@ package com.mongodb.internal.connection;
 import com.mongodb.AuthenticationMechanism;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoSecurityException;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;

@@ -24,7 +24,7 @@ import com.mongodb.ReadPreference
 import com.mongodb.TransactionOptions
 import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.async.SingleResultCallback
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.internal.connection.TestCommandListener
 import org.bson.BsonBinarySubType

@@ -20,7 +20,7 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoSecurityException;
 import com.mongodb.ServerAddress;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.Nullable;
 import com.mongodb.connection.ConnectionDescription;
 import org.bson.BsonBinary;

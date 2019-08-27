@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.async.client.gridfs.helpers;
 
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.client.gridfs.AsyncInputStream;
 import com.mongodb.internal.async.client.gridfs.AsyncOutputStream;
 

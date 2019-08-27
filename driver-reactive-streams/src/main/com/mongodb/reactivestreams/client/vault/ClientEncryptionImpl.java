@@ -19,6 +19,7 @@ package com.mongodb.reactivestreams.client.vault;
 import com.mongodb.Block;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.reactivestreams.client.internal.SingleResultObservableToPublisher;
 import org.bson.BsonBinary;
 import org.bson.BsonValue;
@@ -41,9 +42,9 @@ class ClientEncryptionImpl implements ClientEncryption {
     @Override
     public Publisher<BsonBinary> createDataKey(final String kmsProvider, final DataKeyOptions dataKeyOptions) {
         return new SingleResultObservableToPublisher<BsonBinary>(
-                new Block<com.mongodb.async.SingleResultCallback<BsonBinary>>(){
+                new Block<SingleResultCallback<BsonBinary>>(){
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<BsonBinary> callback) {
+                    public void apply(final SingleResultCallback<BsonBinary> callback) {
                         wrapped.createDataKey(kmsProvider, dataKeyOptions, callback);
                     }
                 });
@@ -52,9 +53,9 @@ class ClientEncryptionImpl implements ClientEncryption {
     @Override
     public Publisher<BsonBinary> encrypt(final BsonValue value, final EncryptOptions options) {
         return new SingleResultObservableToPublisher<BsonBinary>(
-                new Block<com.mongodb.async.SingleResultCallback<BsonBinary>>(){
+                new Block<SingleResultCallback<BsonBinary>>(){
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<BsonBinary> callback) {
+                    public void apply(final SingleResultCallback<BsonBinary> callback) {
                         wrapped.encrypt(value, options, callback);
                     }
                 });
@@ -63,9 +64,9 @@ class ClientEncryptionImpl implements ClientEncryption {
     @Override
     public Publisher<BsonValue> decrypt(final BsonBinary value) {
         return new SingleResultObservableToPublisher<BsonValue>(
-                new Block<com.mongodb.async.SingleResultCallback<BsonValue>>(){
+                new Block<SingleResultCallback<BsonValue>>(){
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<BsonValue> callback) {
+                    public void apply(final SingleResultCallback<BsonValue> callback) {
                         wrapped.decrypt(value, callback);
                     }
                 });

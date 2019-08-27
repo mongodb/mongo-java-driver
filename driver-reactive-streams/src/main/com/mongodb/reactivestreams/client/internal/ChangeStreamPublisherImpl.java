@@ -20,6 +20,7 @@ import com.mongodb.Block;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.client.ChangeStreamIterable;
 import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
@@ -91,9 +92,9 @@ final class ChangeStreamPublisherImpl<TResult> implements ChangeStreamPublisher<
     @Override
     public Publisher<ChangeStreamDocument<TResult>> first() {
         return new SingleResultObservableToPublisher<ChangeStreamDocument<TResult>>(
-                new Block<com.mongodb.async.SingleResultCallback<ChangeStreamDocument<TResult>>>() {
+                new Block<SingleResultCallback<ChangeStreamDocument<TResult>>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<ChangeStreamDocument<TResult>> callback) {
+                    public void apply(final SingleResultCallback<ChangeStreamDocument<TResult>> callback) {
                         wrapped.first(callback);
                     }
                 });

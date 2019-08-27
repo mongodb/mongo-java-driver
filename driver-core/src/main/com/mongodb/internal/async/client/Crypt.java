@@ -18,7 +18,7 @@ package com.mongodb.internal.async.client;
 
 import com.mongodb.MongoClientException;
 import com.mongodb.MongoInternalException;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.crypt.capi.MongoCrypt;

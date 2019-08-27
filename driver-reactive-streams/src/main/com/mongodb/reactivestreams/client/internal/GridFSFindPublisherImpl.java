@@ -19,6 +19,7 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.Block;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.client.Observables;
 import com.mongodb.internal.async.client.gridfs.GridFSFindIterable;
 import com.mongodb.reactivestreams.client.gridfs.GridFSFindPublisher;
@@ -41,9 +42,9 @@ final class GridFSFindPublisherImpl implements GridFSFindPublisher {
     @Override
     public Publisher<GridFSFile> first() {
         return new SingleResultObservableToPublisher<GridFSFile>(
-                new Block<com.mongodb.async.SingleResultCallback<GridFSFile>>() {
+                new Block<SingleResultCallback<GridFSFile>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<GridFSFile> callback) {
+                    public void apply(final SingleResultCallback<GridFSFile> callback) {
                         wrapped.first(callback);
                     }
                 });

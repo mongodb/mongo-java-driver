@@ -18,7 +18,7 @@ package com.mongodb.internal.async.client
 
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
-import com.mongodb.async.SingleResultCallback
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.connection.ClusterId
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.connection.ConnectionId

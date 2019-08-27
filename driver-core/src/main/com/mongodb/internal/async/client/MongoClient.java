@@ -18,7 +18,7 @@ package com.mongodb.internal.async.client;
 
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.annotations.Immutable;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import org.bson.Document;
 import org.bson.conversions.Bson;
 

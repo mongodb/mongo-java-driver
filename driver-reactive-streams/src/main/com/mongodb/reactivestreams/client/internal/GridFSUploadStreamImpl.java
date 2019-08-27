@@ -17,6 +17,7 @@
 package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.Block;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.reactivestreams.client.Success;
 import com.mongodb.reactivestreams.client.gridfs.GridFSUploadStream;
 import org.bson.BsonValue;
@@ -50,9 +51,9 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
     @Override
     public Publisher<Integer> write(final ByteBuffer src) {
         return new SingleResultObservableToPublisher<Integer>(
-                new Block<com.mongodb.async.SingleResultCallback<Integer>>() {
+                new Block<SingleResultCallback<Integer>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<Integer> callback) {
+                    public void apply(final SingleResultCallback<Integer> callback) {
                         wrapped.write(src, callback);
                     }
                 });
@@ -61,9 +62,9 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
     @Override
     public Publisher<Success> close() {
         return new SingleResultObservableToPublisher<Success>(
-                new Block<com.mongodb.async.SingleResultCallback<Success>>() {
+                new Block<SingleResultCallback<Success>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<Success> callback) {
+                    public void apply(final SingleResultCallback<Success> callback) {
                         wrapped.close(voidToSuccessCallback(callback));
                     }
                 });
@@ -72,9 +73,9 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
     @Override
     public Publisher<Success> abort() {
         return new SingleResultObservableToPublisher<Success>(
-                new Block<com.mongodb.async.SingleResultCallback<Success>>() {
+                new Block<SingleResultCallback<Success>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<Success> callback) {
+                    public void apply(final SingleResultCallback<Success> callback) {
                         wrapped.abort(voidToSuccessCallback(callback));
                     }
                 });

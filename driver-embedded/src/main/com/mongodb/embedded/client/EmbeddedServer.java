@@ -19,7 +19,7 @@ package com.mongodb.embedded.client;
 import com.mongodb.MongoDriverInformation;
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.diagnostics.logging.Logger;

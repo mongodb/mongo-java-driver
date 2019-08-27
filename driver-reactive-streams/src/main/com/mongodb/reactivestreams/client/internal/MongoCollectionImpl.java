@@ -41,6 +41,7 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
@@ -135,9 +136,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<Long> estimatedDocumentCount(final EstimatedDocumentCountOptions options) {
         return new SingleResultObservableToPublisher<Long>(
-                new Block<com.mongodb.async.SingleResultCallback<Long>>() {
+                new Block<SingleResultCallback<Long>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<Long> callback) {
+                    public void apply(final SingleResultCallback<Long> callback) {
                         wrapped.estimatedDocumentCount(options, callback);
                     }
                 });
@@ -156,9 +157,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<Long> countDocuments(final Bson filter, final CountOptions options) {
         return new SingleResultObservableToPublisher<Long>(
-                new Block<com.mongodb.async.SingleResultCallback<Long>>() {
+                new Block<SingleResultCallback<Long>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<Long> callback) {
+                    public void apply(final SingleResultCallback<Long> callback) {
                         wrapped.countDocuments(filter, options, callback);
                     }
                 });
@@ -177,9 +178,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<Long> countDocuments(final ClientSession clientSession, final Bson filter, final CountOptions options) {
         return new SingleResultObservableToPublisher<Long>(
-                new Block<com.mongodb.async.SingleResultCallback<Long>>() {
+                new Block<SingleResultCallback<Long>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<Long> callback) {
+                    public void apply(final SingleResultCallback<Long> callback) {
                         wrapped.countDocuments(clientSession.getWrapped(), filter, options, callback);
                     }
                 });
@@ -341,9 +342,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     public Publisher<BulkWriteResult> bulkWrite(final List<? extends WriteModel<? extends TDocument>> requests,
                                                 final BulkWriteOptions options) {
         return new SingleResultObservableToPublisher<BulkWriteResult>(
-                new Block<com.mongodb.async.SingleResultCallback<BulkWriteResult>>() {
+                new Block<SingleResultCallback<BulkWriteResult>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<BulkWriteResult> callback) {
+                    public void apply(final SingleResultCallback<BulkWriteResult> callback) {
                         wrapped.bulkWrite(requests, options, callback);
                     }
                 });
@@ -360,9 +361,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
                                                 final List<? extends WriteModel<? extends TDocument>> requests,
                                                 final BulkWriteOptions options) {
         return new SingleResultObservableToPublisher<BulkWriteResult>(
-                new Block<com.mongodb.async.SingleResultCallback<BulkWriteResult>>() {
+                new Block<SingleResultCallback<BulkWriteResult>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<BulkWriteResult> callback) {
+                    public void apply(final SingleResultCallback<BulkWriteResult> callback) {
                         wrapped.bulkWrite(clientSession.getWrapped(), requests, options, callback);
                     }
                 });
@@ -376,9 +377,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<Success> insertOne(final TDocument document, final InsertOneOptions options) {
         return new SingleResultObservableToPublisher<Success>(
-                new Block<com.mongodb.async.SingleResultCallback<Success>>() {
+                new Block<SingleResultCallback<Success>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<Success> callback) {
+                    public void apply(final SingleResultCallback<Success> callback) {
                         wrapped.insertOne(document, options, voidToSuccessCallback(callback));
                     }
                 });
@@ -392,9 +393,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<Success> insertOne(final ClientSession clientSession, final TDocument document, final InsertOneOptions options) {
         return new SingleResultObservableToPublisher<Success>(
-                new Block<com.mongodb.async.SingleResultCallback<Success>>() {
+                new Block<SingleResultCallback<Success>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<Success> callback) {
+                    public void apply(final SingleResultCallback<Success> callback) {
                         wrapped.insertOne(clientSession.getWrapped(), document, options, voidToSuccessCallback(callback));
                     }
                 });
@@ -408,9 +409,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<Success> insertMany(final List<? extends TDocument> documents, final InsertManyOptions options) {
         return new SingleResultObservableToPublisher<Success>(
-                new Block<com.mongodb.async.SingleResultCallback<Success>>() {
+                new Block<SingleResultCallback<Success>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<Success> callback) {
+                    public void apply(final SingleResultCallback<Success> callback) {
                         wrapped.insertMany(documents, options, voidToSuccessCallback(callback));
                     }
                 });
@@ -425,9 +426,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     public Publisher<Success> insertMany(final ClientSession clientSession, final List<? extends TDocument> documents,
                                          final InsertManyOptions options) {
         return new SingleResultObservableToPublisher<Success>(
-                new Block<com.mongodb.async.SingleResultCallback<Success>>() {
+                new Block<SingleResultCallback<Success>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<Success> callback) {
+                    public void apply(final SingleResultCallback<Success> callback) {
                         wrapped.insertMany(clientSession.getWrapped(), documents, options, voidToSuccessCallback(callback));
                     }
                 });
@@ -441,9 +442,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<DeleteResult> deleteOne(final Bson filter, final DeleteOptions options) {
         return new SingleResultObservableToPublisher<DeleteResult>(
-                new Block<com.mongodb.async.SingleResultCallback<DeleteResult>>() {
+                new Block<SingleResultCallback<DeleteResult>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<DeleteResult> callback) {
+                    public void apply(final SingleResultCallback<DeleteResult> callback) {
                         wrapped.deleteOne(filter, options, callback);
                     }
                 });
@@ -457,9 +458,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<DeleteResult> deleteOne(final ClientSession clientSession, final Bson filter, final DeleteOptions options) {
         return new SingleResultObservableToPublisher<DeleteResult>(
-                new Block<com.mongodb.async.SingleResultCallback<DeleteResult>>() {
+                new Block<SingleResultCallback<DeleteResult>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<DeleteResult> callback) {
+                    public void apply(final SingleResultCallback<DeleteResult> callback) {
                         wrapped.deleteOne(clientSession.getWrapped(), filter, options, callback);
                     }
                 });
@@ -473,9 +474,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<DeleteResult> deleteMany(final Bson filter, final DeleteOptions options) {
         return new SingleResultObservableToPublisher<DeleteResult>(
-                new Block<com.mongodb.async.SingleResultCallback<DeleteResult>>() {
+                new Block<SingleResultCallback<DeleteResult>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<DeleteResult> callback) {
+                    public void apply(final SingleResultCallback<DeleteResult> callback) {
                         wrapped.deleteMany(filter, options, callback);
                     }
                 });
@@ -489,9 +490,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<DeleteResult> deleteMany(final ClientSession clientSession, final Bson filter, final DeleteOptions options) {
         return new SingleResultObservableToPublisher<DeleteResult>(
-                new Block<com.mongodb.async.SingleResultCallback<DeleteResult>>() {
+                new Block<SingleResultCallback<DeleteResult>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<DeleteResult> callback) {
+                    public void apply(final SingleResultCallback<DeleteResult> callback) {
                         wrapped.deleteMany(clientSession.getWrapped(), filter, options, callback);
                     }
                 });
@@ -505,9 +506,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<UpdateResult> replaceOne(final Bson filter, final TDocument replacement, final ReplaceOptions options) {
         return new SingleResultObservableToPublisher<UpdateResult>(
-                new Block<com.mongodb.async.SingleResultCallback<UpdateResult>>() {
+                new Block<SingleResultCallback<UpdateResult>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<UpdateResult> callback) {
+                    public void apply(final SingleResultCallback<UpdateResult> callback) {
                         wrapped.replaceOne(filter, replacement, options, callback);
                     }
                 });
@@ -522,9 +523,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     public Publisher<UpdateResult> replaceOne(final ClientSession clientSession, final Bson filter, final TDocument replacement,
                                               final ReplaceOptions options) {
         return new SingleResultObservableToPublisher<UpdateResult>(
-                new Block<com.mongodb.async.SingleResultCallback<UpdateResult>>() {
+                new Block<SingleResultCallback<UpdateResult>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<UpdateResult> callback) {
+                    public void apply(final SingleResultCallback<UpdateResult> callback) {
                         wrapped.replaceOne(clientSession.getWrapped(), filter, replacement, options, callback);
                     }
                 });
@@ -538,9 +539,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<UpdateResult> updateOne(final Bson filter, final Bson update, final UpdateOptions options) {
         return new SingleResultObservableToPublisher<UpdateResult>(
-                new Block<com.mongodb.async.SingleResultCallback<UpdateResult>>() {
+                new Block<SingleResultCallback<UpdateResult>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<UpdateResult> callback) {
+                    public void apply(final SingleResultCallback<UpdateResult> callback) {
                         wrapped.updateOne(filter, update, options, callback);
                     }
                 });
@@ -555,9 +556,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     public Publisher<UpdateResult> updateOne(final ClientSession clientSession, final Bson filter, final Bson update,
                                              final UpdateOptions options) {
         return new SingleResultObservableToPublisher<UpdateResult>(
-                new Block<com.mongodb.async.SingleResultCallback<UpdateResult>>() {
+                new Block<SingleResultCallback<UpdateResult>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<UpdateResult> callback) {
+                    public void apply(final SingleResultCallback<UpdateResult> callback) {
                         wrapped.updateOne(clientSession.getWrapped(), filter, update, options, callback);
                     }
                 });
@@ -571,9 +572,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<UpdateResult> updateOne(final Bson filter, final List<? extends Bson> update, final UpdateOptions options) {
         return new SingleResultObservableToPublisher<UpdateResult>(
-                new Block<com.mongodb.async.SingleResultCallback<UpdateResult>>() {
+                new Block<SingleResultCallback<UpdateResult>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<UpdateResult> callback) {
+                    public void apply(final SingleResultCallback<UpdateResult> callback) {
                         wrapped.updateOne(filter, update, options, callback);
                     }
                 });
@@ -588,9 +589,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     public Publisher<UpdateResult> updateOne(final ClientSession clientSession, final Bson filter, final List<? extends Bson> update,
                                              final UpdateOptions options) {
         return new SingleResultObservableToPublisher<UpdateResult>(
-                new Block<com.mongodb.async.SingleResultCallback<UpdateResult>>() {
+                new Block<SingleResultCallback<UpdateResult>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<UpdateResult> callback) {
+                    public void apply(final SingleResultCallback<UpdateResult> callback) {
                         wrapped.updateOne(clientSession.getWrapped(), filter, update, options, callback);
                     }
                 });
@@ -604,9 +605,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<UpdateResult> updateMany(final Bson filter, final Bson update, final UpdateOptions options) {
         return new SingleResultObservableToPublisher<UpdateResult>(
-                new Block<com.mongodb.async.SingleResultCallback<UpdateResult>>() {
+                new Block<SingleResultCallback<UpdateResult>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<UpdateResult> callback) {
+                    public void apply(final SingleResultCallback<UpdateResult> callback) {
                         wrapped.updateMany(filter, update, options, callback);
                     }
                 });
@@ -621,9 +622,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     public Publisher<UpdateResult> updateMany(final ClientSession clientSession, final Bson filter, final Bson update,
                                               final UpdateOptions options) {
         return new SingleResultObservableToPublisher<UpdateResult>(
-                new Block<com.mongodb.async.SingleResultCallback<UpdateResult>>() {
+                new Block<SingleResultCallback<UpdateResult>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<UpdateResult> callback) {
+                    public void apply(final SingleResultCallback<UpdateResult> callback) {
                         wrapped.updateMany(clientSession.getWrapped(), filter, update, options, callback);
                     }
                 });
@@ -637,9 +638,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<UpdateResult> updateMany(final Bson filter, final List<? extends Bson> update, final UpdateOptions options) {
         return new SingleResultObservableToPublisher<UpdateResult>(
-                new Block<com.mongodb.async.SingleResultCallback<UpdateResult>>() {
+                new Block<SingleResultCallback<UpdateResult>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<UpdateResult> callback) {
+                    public void apply(final SingleResultCallback<UpdateResult> callback) {
                         wrapped.updateMany(filter, update, options, callback);
                     }
                 });
@@ -654,9 +655,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     public Publisher<UpdateResult> updateMany(final ClientSession clientSession, final Bson filter, final List<? extends Bson> update,
                                               final UpdateOptions options) {
         return new SingleResultObservableToPublisher<UpdateResult>(
-                new Block<com.mongodb.async.SingleResultCallback<UpdateResult>>() {
+                new Block<SingleResultCallback<UpdateResult>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<UpdateResult> callback) {
+                    public void apply(final SingleResultCallback<UpdateResult> callback) {
                         wrapped.updateMany(clientSession.getWrapped(), filter, update, options, callback);
                     }
                 });
@@ -670,9 +671,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<TDocument> findOneAndDelete(final Bson filter, final FindOneAndDeleteOptions options) {
         return new SingleResultObservableToPublisher<TDocument>(
-                new Block<com.mongodb.async.SingleResultCallback<TDocument>>() {
+                new Block<SingleResultCallback<TDocument>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<TDocument> callback) {
+                    public void apply(final SingleResultCallback<TDocument> callback) {
                         wrapped.findOneAndDelete(filter, options, callback);
                     }
                 });
@@ -687,9 +688,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     public Publisher<TDocument> findOneAndDelete(final ClientSession clientSession, final Bson filter,
                                                  final FindOneAndDeleteOptions options) {
         return new SingleResultObservableToPublisher<TDocument>(
-                new Block<com.mongodb.async.SingleResultCallback<TDocument>>() {
+                new Block<SingleResultCallback<TDocument>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<TDocument> callback) {
+                    public void apply(final SingleResultCallback<TDocument> callback) {
                         wrapped.findOneAndDelete(clientSession.getWrapped(), filter, options, callback);
                     }
                 });
@@ -703,9 +704,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<TDocument> findOneAndReplace(final Bson filter, final TDocument replacement, final FindOneAndReplaceOptions options) {
         return new SingleResultObservableToPublisher<TDocument>(
-                new Block<com.mongodb.async.SingleResultCallback<TDocument>>() {
+                new Block<SingleResultCallback<TDocument>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<TDocument> callback) {
+                    public void apply(final SingleResultCallback<TDocument> callback) {
                         wrapped.findOneAndReplace(filter, replacement, options, callback);
                     }
                 });
@@ -720,9 +721,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     public Publisher<TDocument> findOneAndReplace(final ClientSession clientSession, final Bson filter, final TDocument replacement,
                                                   final FindOneAndReplaceOptions options) {
         return new SingleResultObservableToPublisher<TDocument>(
-                new Block<com.mongodb.async.SingleResultCallback<TDocument>>() {
+                new Block<SingleResultCallback<TDocument>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<TDocument> callback) {
+                    public void apply(final SingleResultCallback<TDocument> callback) {
                         wrapped.findOneAndReplace(clientSession.getWrapped(), filter, replacement, options, callback);
                     }
                 });
@@ -736,9 +737,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<TDocument> findOneAndUpdate(final Bson filter, final Bson update, final FindOneAndUpdateOptions options) {
         return new SingleResultObservableToPublisher<TDocument>(
-                new Block<com.mongodb.async.SingleResultCallback<TDocument>>() {
+                new Block<SingleResultCallback<TDocument>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<TDocument> callback) {
+                    public void apply(final SingleResultCallback<TDocument> callback) {
                         wrapped.findOneAndUpdate(filter, update, options, callback);
                     }
                 });
@@ -753,9 +754,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     public Publisher<TDocument> findOneAndUpdate(final ClientSession clientSession, final Bson filter, final Bson update,
                                                  final FindOneAndUpdateOptions options) {
         return new SingleResultObservableToPublisher<TDocument>(
-                new Block<com.mongodb.async.SingleResultCallback<TDocument>>() {
+                new Block<SingleResultCallback<TDocument>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<TDocument> callback) {
+                    public void apply(final SingleResultCallback<TDocument> callback) {
                         wrapped.findOneAndUpdate(clientSession.getWrapped(), filter, update, options, callback);
                     }
                 });
@@ -770,9 +771,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     public Publisher<TDocument> findOneAndUpdate(final Bson filter, final List<? extends Bson> update,
                                                  final FindOneAndUpdateOptions options) {
         return new SingleResultObservableToPublisher<TDocument>(
-                new Block<com.mongodb.async.SingleResultCallback<TDocument>>() {
+                new Block<SingleResultCallback<TDocument>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<TDocument> callback) {
+                    public void apply(final SingleResultCallback<TDocument> callback) {
                         wrapped.findOneAndUpdate(filter, update, options, callback);
                     }
                 });
@@ -788,9 +789,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     public Publisher<TDocument> findOneAndUpdate(final ClientSession clientSession, final Bson filter,
                                                  final List<? extends Bson> update, final FindOneAndUpdateOptions options) {
         return new SingleResultObservableToPublisher<TDocument>(
-                new Block<com.mongodb.async.SingleResultCallback<TDocument>>() {
+                new Block<SingleResultCallback<TDocument>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<TDocument> callback) {
+                    public void apply(final SingleResultCallback<TDocument> callback) {
                         wrapped.findOneAndUpdate(clientSession.getWrapped(), filter, update, options, callback);
                     }
                 });
@@ -799,9 +800,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<Success> drop() {
         return new SingleResultObservableToPublisher<Success>(
-                new Block<com.mongodb.async.SingleResultCallback<Success>>() {
+                new Block<SingleResultCallback<Success>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<Success> callback) {
+                    public void apply(final SingleResultCallback<Success> callback) {
                         wrapped.drop(voidToSuccessCallback(callback));
                     }
                 });
@@ -810,9 +811,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<Success> drop(final ClientSession clientSession) {
         return new SingleResultObservableToPublisher<Success>(
-                new Block<com.mongodb.async.SingleResultCallback<Success>>() {
+                new Block<SingleResultCallback<Success>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<Success> callback) {
+                    public void apply(final SingleResultCallback<Success> callback) {
                         wrapped.drop(clientSession.getWrapped(), voidToSuccessCallback(callback));
                     }
                 });
@@ -826,9 +827,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<String> createIndex(final Bson key, final IndexOptions options) {
         return new SingleResultObservableToPublisher<String>(
-                new Block<com.mongodb.async.SingleResultCallback<String>>() {
+                new Block<SingleResultCallback<String>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<String> callback) {
+                    public void apply(final SingleResultCallback<String> callback) {
                         wrapped.createIndex(key, options, callback);
                     }
                 });
@@ -842,9 +843,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<String> createIndex(final ClientSession clientSession, final Bson key, final IndexOptions options) {
         return new SingleResultObservableToPublisher<String>(
-                new Block<com.mongodb.async.SingleResultCallback<String>>() {
+                new Block<SingleResultCallback<String>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<String> callback) {
+                    public void apply(final SingleResultCallback<String> callback) {
                         wrapped.createIndex(clientSession.getWrapped(), key, options, callback);
                     }
                 });
@@ -858,9 +859,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<String> createIndexes(final List<IndexModel> indexes, final CreateIndexOptions createIndexOptions) {
         return new ObservableToPublisher<String>(Observables.observeAndFlatten(
-                new Block<com.mongodb.async.SingleResultCallback<List<String>>>() {
+                new Block<SingleResultCallback<List<String>>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<List<String>> callback) {
+                    public void apply(final SingleResultCallback<List<String>> callback) {
                         wrapped.createIndexes(indexes, createIndexOptions, callback);
                     }
                 }));
@@ -875,9 +876,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     public Publisher<String> createIndexes(final ClientSession clientSession, final List<IndexModel> indexes,
                                            final CreateIndexOptions createIndexOptions) {
         return new ObservableToPublisher<String>(Observables.observeAndFlatten(
-                new Block<com.mongodb.async.SingleResultCallback<List<String>>>() {
+                new Block<SingleResultCallback<List<String>>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<List<String>> callback) {
+                    public void apply(final SingleResultCallback<List<String>> callback) {
                         wrapped.createIndexes(clientSession.getWrapped(), indexes, createIndexOptions, callback);
                     }
                 }));
@@ -916,9 +917,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<Success> dropIndex(final String indexName, final DropIndexOptions dropIndexOptions) {
         return new SingleResultObservableToPublisher<Success>(
-                new Block<com.mongodb.async.SingleResultCallback<Success>>() {
+                new Block<SingleResultCallback<Success>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<Success> callback) {
+                    public void apply(final SingleResultCallback<Success> callback) {
                         wrapped.dropIndex(indexName, dropIndexOptions, voidToSuccessCallback(callback));
                     }
                 });
@@ -927,9 +928,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<Success> dropIndex(final Bson keys, final DropIndexOptions dropIndexOptions) {
         return new SingleResultObservableToPublisher<Success>(
-                new Block<com.mongodb.async.SingleResultCallback<Success>>() {
+                new Block<SingleResultCallback<Success>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<Success> callback) {
+                    public void apply(final SingleResultCallback<Success> callback) {
                         wrapped.dropIndex(keys, dropIndexOptions, voidToSuccessCallback(callback));
                     }
                 });
@@ -949,9 +950,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     public Publisher<Success> dropIndex(final ClientSession clientSession, final String indexName,
                                         final DropIndexOptions dropIndexOptions) {
         return new SingleResultObservableToPublisher<Success>(
-                new Block<com.mongodb.async.SingleResultCallback<Success>>() {
+                new Block<SingleResultCallback<Success>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<Success> callback) {
+                    public void apply(final SingleResultCallback<Success> callback) {
                         wrapped.dropIndex(clientSession.getWrapped(), indexName, dropIndexOptions, voidToSuccessCallback(callback));
                     }
                 });
@@ -960,9 +961,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<Success> dropIndex(final ClientSession clientSession, final Bson keys, final DropIndexOptions dropIndexOptions) {
         return new SingleResultObservableToPublisher<Success>(
-                new Block<com.mongodb.async.SingleResultCallback<Success>>() {
+                new Block<SingleResultCallback<Success>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<Success> callback) {
+                    public void apply(final SingleResultCallback<Success> callback) {
                         wrapped.dropIndex(clientSession.getWrapped(), keys, dropIndexOptions, voidToSuccessCallback(callback));
                     }
                 });
@@ -996,9 +997,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<Success> renameCollection(final MongoNamespace newCollectionNamespace, final RenameCollectionOptions options) {
         return new SingleResultObservableToPublisher<Success>(
-                new Block<com.mongodb.async.SingleResultCallback<Success>>() {
+                new Block<SingleResultCallback<Success>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<Success> callback) {
+                    public void apply(final SingleResultCallback<Success> callback) {
                         wrapped.renameCollection(newCollectionNamespace, options, voidToSuccessCallback(callback));
                     }
                 });
@@ -1013,9 +1014,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     public Publisher<Success> renameCollection(final ClientSession clientSession, final MongoNamespace newCollectionNamespace,
                                                final RenameCollectionOptions options) {
         return new SingleResultObservableToPublisher<Success>(
-                new Block<com.mongodb.async.SingleResultCallback<Success>>() {
+                new Block<SingleResultCallback<Success>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<Success> callback) {
+                    public void apply(final SingleResultCallback<Success> callback) {
                         wrapped.renameCollection(clientSession.getWrapped(), newCollectionNamespace, options,
                                 voidToSuccessCallback(callback));
                     }

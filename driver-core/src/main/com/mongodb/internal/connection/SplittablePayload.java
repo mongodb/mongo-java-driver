@@ -37,7 +37,7 @@ import static com.mongodb.internal.connection.SplittablePayload.Type.UPDATE;
  * org.bson.FieldNameValidator)
  * @see AsyncConnection#commandAsync(String, org.bson.BsonDocument, org.bson.FieldNameValidator,
  * com.mongodb.ReadPreference, org.bson.codecs.Decoder, com.mongodb.session.SessionContext, boolean,
- * SplittablePayload, org.bson.FieldNameValidator, com.mongodb.async.SingleResultCallback)
+ * SplittablePayload, org.bson.FieldNameValidator, com.mongodb.internal.async.SingleResultCallback)
  * @since 3.6
  */
 public final class SplittablePayload {

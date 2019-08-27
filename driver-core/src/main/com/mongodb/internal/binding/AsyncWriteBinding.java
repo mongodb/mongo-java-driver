@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.binding;
 
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.session.SessionContext;
 
 /**

@@ -17,9 +17,9 @@
 package com.mongodb.internal.operation;
 
 import com.mongodb.MongoChangeStreamException;
-import com.mongodb.async.AsyncAggregateResponseBatchCursor;
-import com.mongodb.async.AsyncBatchCursor;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.AsyncAggregateResponseBatchCursor;
+import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncConnectionSource;
 import com.mongodb.internal.binding.AsyncReadBinding;
 import com.mongodb.internal.operation.OperationHelper.AsyncCallableWithSource;

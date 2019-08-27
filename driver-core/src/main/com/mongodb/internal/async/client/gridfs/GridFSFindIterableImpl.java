@@ -18,8 +18,8 @@ package com.mongodb.internal.async.client.gridfs;
 
 import com.mongodb.Block;
 import com.mongodb.Function;
-import com.mongodb.async.AsyncBatchCursor;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.client.FindIterable;
 import com.mongodb.internal.async.client.MongoIterable;
 import com.mongodb.client.gridfs.model.GridFSFile;

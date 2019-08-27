@@ -16,7 +16,7 @@
 
 package com.mongodb.embedded.client;
 
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.connection.CommandMessage;
 import com.mongodb.internal.connection.ConcurrentPool;

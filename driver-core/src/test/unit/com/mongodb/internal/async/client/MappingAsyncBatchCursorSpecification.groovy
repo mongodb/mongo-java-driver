@@ -18,7 +18,7 @@ package com.mongodb.internal.async.client
 
 import com.mongodb.Function
 import com.mongodb.MongoException
-import com.mongodb.async.AsyncBatchCursor
+import com.mongodb.internal.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
 import org.bson.Document
 import spock.lang.Specification

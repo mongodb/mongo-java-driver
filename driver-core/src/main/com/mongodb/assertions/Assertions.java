@@ -17,7 +17,7 @@
 
 package com.mongodb.assertions;
 
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 
 /**
  * <p>Design by contract assertions.</p> <p>This class is not part of the public API and may be removed or changed at any time.</p>

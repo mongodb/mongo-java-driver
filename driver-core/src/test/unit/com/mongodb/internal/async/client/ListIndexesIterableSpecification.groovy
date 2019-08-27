@@ -19,9 +19,9 @@ package com.mongodb.internal.async.client
 import com.mongodb.Block
 import com.mongodb.Function
 import com.mongodb.MongoNamespace
-import com.mongodb.async.AsyncBatchCursor
+import com.mongodb.internal.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.async.SingleResultCallback
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.operation.ListIndexesOperation
 import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider

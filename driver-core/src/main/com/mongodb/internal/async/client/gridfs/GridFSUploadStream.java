@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.async.client.gridfs;
 
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import org.bson.BsonValue;
 import org.bson.types.ObjectId;
 

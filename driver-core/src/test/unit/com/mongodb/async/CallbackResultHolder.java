@@ -16,6 +16,8 @@
 
 package com.mongodb.async;
 
+import com.mongodb.internal.async.SingleResultCallback;
+
 import java.io.PrintWriter;
 import java.io.StringWriter;
 

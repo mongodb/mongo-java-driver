@@ -18,6 +18,7 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.Block;
 import com.mongodb.client.gridfs.model.GridFSFile;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.reactivestreams.client.Success;
 import com.mongodb.reactivestreams.client.gridfs.GridFSDownloadStream;
 import org.reactivestreams.Publisher;
@@ -38,9 +39,9 @@ final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
     @Override
     public Publisher<GridFSFile> getGridFSFile() {
         return new SingleResultObservableToPublisher<GridFSFile>(
-                new Block<com.mongodb.async.SingleResultCallback<GridFSFile>>() {
+                new Block<SingleResultCallback<GridFSFile>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<GridFSFile> callback) {
+                    public void apply(final SingleResultCallback<GridFSFile> callback) {
                         wrapped.getGridFSFile(callback);
                     }
                 });
@@ -55,9 +56,9 @@ final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
     @Override
     public Publisher<Integer> read(final ByteBuffer dst) {
         return new SingleResultObservableToPublisher<Integer>(
-                new Block<com.mongodb.async.SingleResultCallback<Integer>>() {
+                new Block<SingleResultCallback<Integer>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<Integer> callback) {
+                    public void apply(final SingleResultCallback<Integer> callback) {
                         wrapped.read(dst, callback);
                     }
                 });
@@ -66,9 +67,9 @@ final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
     @Override
     public Publisher<Long> skip(final long bytesToSkip) {
         return new SingleResultObservableToPublisher<Long>(
-                new Block<com.mongodb.async.SingleResultCallback<Long>>() {
+                new Block<SingleResultCallback<Long>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<Long> callback) {
+                    public void apply(final SingleResultCallback<Long> callback) {
                         wrapped.skip(bytesToSkip, callback);
                     }
                 });
@@ -77,9 +78,9 @@ final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
     @Override
     public Publisher<Success> close() {
         return new SingleResultObservableToPublisher<Success>(
-                new Block<com.mongodb.async.SingleResultCallback<Success>>() {
+                new Block<SingleResultCallback<Success>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<Success> callback) {
+                    public void apply(final SingleResultCallback<Success> callback) {
                         wrapped.close(voidToSuccessCallback(callback));
                     }
                 });

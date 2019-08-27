@@ -18,8 +18,8 @@ package com.mongodb.internal.async.client;
 
 import com.mongodb.Block;
 import com.mongodb.Function;
-import com.mongodb.async.AsyncBatchCursor;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.async.SingleResultCallback;
 
 import java.util.Collection;
 

@@ -18,7 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoServerException;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.validator.NoOpFieldNameValidator;
 import com.mongodb.session.SessionContext;
 import org.bson.BsonDocument;

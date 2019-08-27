@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.async;
+package com.mongodb.internal.async;
 
 import java.io.Closeable;
 import java.util.List;

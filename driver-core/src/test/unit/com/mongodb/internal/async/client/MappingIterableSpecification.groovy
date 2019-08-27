@@ -18,7 +18,7 @@ package com.mongodb.internal.async.client
 
 import com.mongodb.Block
 import com.mongodb.Function
-import com.mongodb.async.SingleResultCallback
+import com.mongodb.internal.async.SingleResultCallback
 import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.isTheSameAs

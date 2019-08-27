@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 
 import java.io.Closeable;
 import java.util.concurrent.TimeUnit;

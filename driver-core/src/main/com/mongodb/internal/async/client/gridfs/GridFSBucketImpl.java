@@ -20,7 +20,7 @@ import com.mongodb.MongoGridFSException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.client.ClientSession;
 import com.mongodb.internal.async.client.FindIterable;
 import com.mongodb.internal.async.client.MongoClients;

@@ -17,7 +17,7 @@
 package com.mongodb.internal.async.client;
 
 import com.mongodb.TransactionOptions;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 
 /**
  * A client session that supports transactions.

@@ -17,7 +17,7 @@
 package com.mongodb.internal.async.client;
 
 import com.mongodb.Block;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 
 import java.util.List;
 

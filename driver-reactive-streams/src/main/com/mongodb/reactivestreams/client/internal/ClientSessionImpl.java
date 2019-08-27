@@ -21,6 +21,7 @@ import com.mongodb.Block;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.ServerAddress;
 import com.mongodb.TransactionOptions;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.session.ServerSession;
 import org.bson.BsonDocument;
@@ -65,9 +66,9 @@ class ClientSessionImpl implements ClientSession {
     @Override
     public Publisher<Void> commitTransaction() {
         return new SingleResultObservableToPublisher<Void>(
-                new Block<com.mongodb.async.SingleResultCallback<Void>>() {
+                new Block<SingleResultCallback<Void>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<Void> callback) {
+                    public void apply(final SingleResultCallback<Void> callback) {
                         wrapped.commitTransaction(callback);
                     }
                 });
@@ -76,9 +77,9 @@ class ClientSessionImpl implements ClientSession {
     @Override
     public Publisher<Void> abortTransaction() {
         return new SingleResultObservableToPublisher<Void>(
-                new Block<com.mongodb.async.SingleResultCallback<Void>>() {
+                new Block<SingleResultCallback<Void>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<Void> callback) {
+                    public void apply(final SingleResultCallback<Void> callback) {
                         wrapped.abortTransaction(callback);
                     }
                 });

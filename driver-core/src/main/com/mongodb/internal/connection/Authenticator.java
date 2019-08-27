@@ -18,7 +18,7 @@ package com.mongodb.internal.connection;
 
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoInternalException;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.lang.NonNull;
 import com.mongodb.lang.Nullable;

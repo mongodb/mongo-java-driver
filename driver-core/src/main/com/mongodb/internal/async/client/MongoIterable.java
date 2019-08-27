@@ -18,8 +18,8 @@ package com.mongodb.internal.async.client;
 
 import com.mongodb.Block;
 import com.mongodb.Function;
-import com.mongodb.async.AsyncBatchCursor;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.lang.Nullable;
 
 import java.util.Collection;
@@ -85,7 +85,7 @@ public interface MongoIterable<TResult> {
     Integer getBatchSize();
 
     /**
-     * Provide the underlying {@link com.mongodb.async.AsyncBatchCursor} allowing fine grained control of the cursor.
+     * Provide the underlying {@link AsyncBatchCursor} allowing fine grained control of the cursor.
      *
      * @param callback a callback that will be passed the AsyncBatchCursor
      */
