@@ -18,14 +18,14 @@ package gridfs;
 
 import com.mongodb.Block;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.async.client.MongoClient;
-import com.mongodb.async.client.MongoClients;
-import com.mongodb.async.client.MongoDatabase;
-import com.mongodb.async.client.gridfs.AsyncInputStream;
-import com.mongodb.async.client.gridfs.GridFSBucket;
-import com.mongodb.async.client.gridfs.GridFSBuckets;
-import com.mongodb.async.client.gridfs.GridFSDownloadStream;
-import com.mongodb.async.client.gridfs.GridFSUploadStream;
+import com.mongodb.internal.async.client.MongoClient;
+import com.mongodb.internal.async.client.MongoClients;
+import com.mongodb.internal.async.client.MongoDatabase;
+import com.mongodb.internal.async.client.gridfs.AsyncInputStream;
+import com.mongodb.internal.async.client.gridfs.GridFSBucket;
+import com.mongodb.internal.async.client.gridfs.GridFSBuckets;
+import com.mongodb.internal.async.client.gridfs.GridFSDownloadStream;
+import com.mongodb.internal.async.client.gridfs.GridFSUploadStream;
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
@@ -43,8 +43,8 @@ import java.nio.file.StandardOpenOption;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static com.mongodb.async.client.gridfs.helpers.AsyncStreamHelper.toAsyncInputStream;
-import static com.mongodb.async.client.gridfs.helpers.AsynchronousChannelHelper.channelToOutputStream;
+import static com.mongodb.internal.async.client.gridfs.helpers.AsyncStreamHelper.toAsyncInputStream;
+import static com.mongodb.internal.async.client.gridfs.helpers.AsynchronousChannelHelper.channelToOutputStream;
 import static com.mongodb.client.model.Filters.eq;
 
 /**

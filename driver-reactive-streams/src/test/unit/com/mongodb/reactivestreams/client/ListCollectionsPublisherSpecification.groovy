@@ -16,6 +16,7 @@
 
 package com.mongodb.reactivestreams.client
 
+import com.mongodb.internal.async.client.ListCollectionsIterable
 import org.reactivestreams.Publisher
 import spock.lang.Specification
 
@@ -23,7 +24,7 @@ class ListCollectionsPublisherSpecification extends Specification {
 
     def 'should have the same methods as the wrapped ListCollectionsIterable'() {
         given:
-        def wrapped = (com.mongodb.async.client.ListCollectionsIterable.methods*.name
+        def wrapped = (ListCollectionsIterable.methods*.name
                 - ['batchCursor', 'forEach', 'getBatchSize', 'into', 'map']).toSet().sort()
         def local = (ListCollectionsPublisher.methods*.name - Publisher.methods*.name).sort()
         expect:

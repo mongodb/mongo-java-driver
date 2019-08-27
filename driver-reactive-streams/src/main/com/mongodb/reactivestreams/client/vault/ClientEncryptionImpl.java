@@ -28,9 +28,9 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 @SuppressWarnings("deprecation")
 class ClientEncryptionImpl implements ClientEncryption {
-    private final com.mongodb.async.client.vault.ClientEncryption wrapped;
+    private final com.mongodb.internal.async.client.vault.ClientEncryption wrapped;
 
-    ClientEncryptionImpl(final com.mongodb.async.client.vault.ClientEncryption wrapped) {
+    ClientEncryptionImpl(final com.mongodb.internal.async.client.vault.ClientEncryption wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 

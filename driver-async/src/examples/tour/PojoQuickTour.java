@@ -18,10 +18,10 @@ package tour;
 
 import com.mongodb.Block;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.async.client.MongoClient;
-import com.mongodb.async.client.MongoClients;
-import com.mongodb.async.client.MongoCollection;
-import com.mongodb.async.client.MongoDatabase;
+import com.mongodb.internal.async.client.MongoClient;
+import com.mongodb.internal.async.client.MongoClients;
+import com.mongodb.internal.async.client.MongoCollection;
+import com.mongodb.internal.async.client.MongoDatabase;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.codecs.configuration.CodecRegistry;

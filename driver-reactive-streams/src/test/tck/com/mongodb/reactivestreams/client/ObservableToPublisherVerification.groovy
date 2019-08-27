@@ -24,7 +24,7 @@ import org.reactivestreams.Publisher
 import org.reactivestreams.tck.PublisherVerification
 import org.reactivestreams.tck.TestEnvironment
 
-import static com.mongodb.async.client.Observables.observeAndFlatten
+import static com.mongodb.internal.async.client.Observables.observeAndFlatten
 
 @SuppressWarnings(['CloseWithoutCloseable', 'UnusedMethodParameter', 'EmptyMethod'])
 class ObservableToPublisherVerification extends PublisherVerification<Integer> {

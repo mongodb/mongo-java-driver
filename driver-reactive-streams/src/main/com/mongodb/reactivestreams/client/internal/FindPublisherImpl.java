@@ -19,6 +19,8 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.Block;
 import com.mongodb.CursorType;
 import com.mongodb.client.model.Collation;
+import com.mongodb.internal.async.client.FindIterable;
+import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.FindPublisher;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
@@ -32,9 +34,9 @@ import static com.mongodb.assertions.Assertions.notNull;
 @SuppressWarnings("deprecation")
 final class FindPublisherImpl<TResult> implements FindPublisher<TResult> {
 
-    private final com.mongodb.async.client.FindIterable<TResult> wrapped;
+    private final FindIterable<TResult> wrapped;
 
-    FindPublisherImpl(final com.mongodb.async.client.FindIterable<TResult> wrapped) {
+    FindPublisherImpl(final FindIterable<TResult> wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 
@@ -171,6 +173,6 @@ final class FindPublisherImpl<TResult> implements FindPublisher<TResult> {
 
     @Override
     public void subscribe(final Subscriber<? super TResult> s) {
-        new ObservableToPublisher<TResult>(com.mongodb.async.client.Observables.observe(wrapped)).subscribe(s);
+        new ObservableToPublisher<TResult>(Observables.observe(wrapped)).subscribe(s);
     }
 }

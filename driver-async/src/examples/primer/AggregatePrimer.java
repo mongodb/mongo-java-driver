@@ -21,7 +21,7 @@ import org.junit.Test;
 // @import: start
 import com.mongodb.Block;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.async.client.AggregateIterable;
+import com.mongodb.internal.async.client.AggregateIterable;
 import org.bson.Document;
 
 import static java.util.Arrays.asList;

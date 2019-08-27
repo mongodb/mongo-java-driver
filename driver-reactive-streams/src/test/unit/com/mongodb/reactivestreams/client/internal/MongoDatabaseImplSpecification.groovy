@@ -19,15 +19,16 @@ package com.mongodb.reactivestreams.client.internal
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
-import com.mongodb.async.client.AggregateIterable
-import com.mongodb.async.client.ChangeStreamIterable
-import com.mongodb.async.client.MongoCollection as WrappedMongoCollection
-import com.mongodb.async.client.MongoDatabase as WrappedMongoDatabase
+import com.mongodb.internal.async.client.AggregateIterable
+import com.mongodb.internal.async.client.ChangeStreamIterable
+import com.mongodb.internal.async.client.MongoCollection as WrappedMongoCollection
+import com.mongodb.internal.async.client.MongoDatabase as WrappedMongoDatabase
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.CreateViewOptions
+import com.mongodb.internal.async.client.ListCollectionsIterable
 import com.mongodb.reactivestreams.client.MongoDatabase
 import com.mongodb.reactivestreams.client.ClientSession
-import com.mongodb.async.client.ClientSession as WrappedClientSession
+import com.mongodb.internal.async.client.ClientSession as WrappedClientSession
 import org.bson.BsonDocument
 import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistry
@@ -327,7 +328,7 @@ class MongoDatabaseImplSpecification extends Specification {
 
     def 'should call the underlying listCollections'() {
         given:
-        def wrappedResult = Stub(com.mongodb.async.client.ListCollectionsIterable)
+        def wrappedResult = Stub(ListCollectionsIterable)
         def wrapped = Mock(WrappedMongoDatabase)
         def mongoDatabase = new MongoDatabaseImpl(wrapped)
 

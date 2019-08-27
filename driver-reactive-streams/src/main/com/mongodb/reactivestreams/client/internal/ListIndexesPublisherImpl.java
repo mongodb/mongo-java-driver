@@ -17,6 +17,8 @@
 package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.Block;
+import com.mongodb.internal.async.client.ListIndexesIterable;
+import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.ListIndexesPublisher;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -29,9 +31,9 @@ import static com.mongodb.assertions.Assertions.notNull;
 @SuppressWarnings("deprecation")
 final class ListIndexesPublisherImpl<TResult> implements ListIndexesPublisher<TResult> {
 
-    private final com.mongodb.async.client.ListIndexesIterable<TResult> wrapped;
+    private final ListIndexesIterable<TResult> wrapped;
 
-    ListIndexesPublisherImpl(final com.mongodb.async.client.ListIndexesIterable<TResult> wrapped) {
+    ListIndexesPublisherImpl(final ListIndexesIterable<TResult> wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 
@@ -61,7 +63,7 @@ final class ListIndexesPublisherImpl<TResult> implements ListIndexesPublisher<TR
 
     @Override
     public void subscribe(final Subscriber<? super TResult> s) {
-        new ObservableToPublisher<TResult>(com.mongodb.async.client.Observables.observe(wrapped)).subscribe(s);
+        new ObservableToPublisher<TResult>(Observables.observe(wrapped)).subscribe(s);
     }
 }
 

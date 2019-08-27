@@ -22,6 +22,7 @@ import com.mongodb.ReadPreference;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateViewOptions;
+import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
 import com.mongodb.reactivestreams.client.ClientSession;
@@ -49,9 +50,9 @@ import static com.mongodb.reactivestreams.client.internal.PublisherHelper.voidTo
 @SuppressWarnings("deprecation")
 public final class MongoDatabaseImpl implements MongoDatabase {
 
-    private final com.mongodb.async.client.MongoDatabase wrapped;
+    private final com.mongodb.internal.async.client.MongoDatabase wrapped;
 
-    MongoDatabaseImpl(final com.mongodb.async.client.MongoDatabase wrapped) {
+    MongoDatabaseImpl(final com.mongodb.internal.async.client.MongoDatabase wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 
@@ -200,12 +201,12 @@ public final class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public Publisher<String> listCollectionNames() {
-        return new ObservableToPublisher<String>(com.mongodb.async.client.Observables.observe(wrapped.listCollectionNames()));
+        return new ObservableToPublisher<String>(Observables.observe(wrapped.listCollectionNames()));
     }
 
     @Override
     public Publisher<String> listCollectionNames(final ClientSession clientSession) {
-        return new ObservableToPublisher<String>(com.mongodb.async.client.Observables.observe(
+        return new ObservableToPublisher<String>(Observables.observe(
                 wrapped.listCollectionNames(clientSession.getWrapped()))
         );
     }
@@ -370,7 +371,7 @@ public final class MongoDatabaseImpl implements MongoDatabase {
      *
      * @return wrapped MongoDatabase
      */
-    public com.mongodb.async.client.MongoDatabase getWrapped() {
+    public com.mongodb.internal.async.client.MongoDatabase getWrapped() {
         return wrapped;
     }
 }

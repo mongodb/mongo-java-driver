@@ -41,6 +41,7 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
+import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
 import com.mongodb.reactivestreams.client.DistinctPublisher;
@@ -66,9 +67,9 @@ import static com.mongodb.reactivestreams.client.internal.PublisherHelper.voidTo
 @SuppressWarnings("deprecation")
 final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
-    private final com.mongodb.async.client.MongoCollection<TDocument> wrapped;
+    private final com.mongodb.internal.async.client.MongoCollection<TDocument> wrapped;
 
-    MongoCollectionImpl(final com.mongodb.async.client.MongoCollection<TDocument> wrapped) {
+    MongoCollectionImpl(final com.mongodb.internal.async.client.MongoCollection<TDocument> wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 
@@ -857,7 +858,7 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
 
     @Override
     public Publisher<String> createIndexes(final List<IndexModel> indexes, final CreateIndexOptions createIndexOptions) {
-        return new ObservableToPublisher<String>(com.mongodb.async.client.Observables.observeAndFlatten(
+        return new ObservableToPublisher<String>(Observables.observeAndFlatten(
                 new Block<com.mongodb.async.SingleResultCallback<List<String>>>() {
                     @Override
                     public void apply(final com.mongodb.async.SingleResultCallback<List<String>> callback) {
@@ -874,7 +875,7 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     @Override
     public Publisher<String> createIndexes(final ClientSession clientSession, final List<IndexModel> indexes,
                                            final CreateIndexOptions createIndexOptions) {
-        return new ObservableToPublisher<String>(com.mongodb.async.client.Observables.observeAndFlatten(
+        return new ObservableToPublisher<String>(Observables.observeAndFlatten(
                 new Block<com.mongodb.async.SingleResultCallback<List<String>>>() {
                     @Override
                     public void apply(final com.mongodb.async.SingleResultCallback<List<String>> callback) {

@@ -17,7 +17,7 @@
 package com.mongodb.reactivestreams.client.gridfs
 
 import spock.lang.Specification
-import com.mongodb.async.client.gridfs.GridFSBucket as WrappedGridFSBucket
+import com.mongodb.internal.async.client.gridfs.GridFSBucket as WrappedGridFSBucket
 
 class GridFSBucketSpecification extends Specification {
 

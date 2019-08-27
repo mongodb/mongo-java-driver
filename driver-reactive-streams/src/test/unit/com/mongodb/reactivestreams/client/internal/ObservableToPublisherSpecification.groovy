@@ -17,9 +17,9 @@
 package com.mongodb.reactivestreams.client.internal
 
 import com.mongodb.MongoException
-import com.mongodb.async.client.Observable
-import com.mongodb.async.client.Observer
-import com.mongodb.async.client.Subscription
+import com.mongodb.internal.async.client.Observable
+import com.mongodb.internal.async.client.Observer
+import com.mongodb.internal.async.client.Subscription
 import com.mongodb.reactivestreams.client.TestSubscriber
 import spock.lang.Specification
 

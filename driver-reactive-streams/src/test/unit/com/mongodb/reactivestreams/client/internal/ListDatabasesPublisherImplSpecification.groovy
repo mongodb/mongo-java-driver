@@ -16,7 +16,7 @@
 
 package com.mongodb.reactivestreams.client.internal
 
-import com.mongodb.async.client.ListDatabasesIterable
+import com.mongodb.internal.async.client.ListDatabasesIterable
 import org.bson.Document
 import org.reactivestreams.Subscriber
 import spock.lang.Specification

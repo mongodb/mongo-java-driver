@@ -19,17 +19,17 @@ package com.mongodb.reactivestreams.client.internal
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
-import com.mongodb.async.client.gridfs.GridFSBucket as WrappedGridFSBucket
-import com.mongodb.async.client.gridfs.GridFSDownloadStream
-import com.mongodb.async.client.gridfs.GridFSFindIterable
-import com.mongodb.async.client.gridfs.GridFSUploadStream
+import com.mongodb.internal.async.client.gridfs.GridFSBucket as WrappedGridFSBucket
+import com.mongodb.internal.async.client.gridfs.GridFSDownloadStream
+import com.mongodb.internal.async.client.gridfs.GridFSFindIterable
+import com.mongodb.internal.async.client.gridfs.GridFSUploadStream
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions
 import com.mongodb.client.gridfs.model.GridFSUploadOptions
 import com.mongodb.reactivestreams.client.gridfs.AsyncInputStream
 import com.mongodb.reactivestreams.client.gridfs.AsyncOutputStream
 import com.mongodb.reactivestreams.client.gridfs.GridFSBucket
 import com.mongodb.reactivestreams.client.ClientSession
-import com.mongodb.async.client.ClientSession as WrappedClientSession
+import com.mongodb.internal.async.client.ClientSession as WrappedClientSession
 import org.bson.BsonObjectId
 import org.bson.Document
 import org.reactivestreams.Subscriber

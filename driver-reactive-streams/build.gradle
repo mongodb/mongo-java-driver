@@ -19,7 +19,7 @@ archivesBaseName = 'mongodb-driver-reactivestreams'
 
 dependencies {
     compile project(':bson')
-    compile project(':driver-async')
+    compile project(':driver-core')
 
     compile 'org.reactivestreams:reactive-streams:1.0.2'
 

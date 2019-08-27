@@ -17,7 +17,7 @@
 package com.mongodb.reactivestreams.client.internal
 
 import com.mongodb.CursorType
-import com.mongodb.async.client.FindIterable
+import com.mongodb.internal.async.client.FindIterable
 import com.mongodb.client.model.Collation
 import org.bson.BsonDocument
 import org.bson.BsonInt32

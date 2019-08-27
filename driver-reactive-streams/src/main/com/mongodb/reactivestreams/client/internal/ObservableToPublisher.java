@@ -16,6 +16,9 @@
 
 package com.mongodb.reactivestreams.client.internal;
 
+import com.mongodb.internal.async.client.Observable;
+import com.mongodb.internal.async.client.Observer;
+import com.mongodb.internal.async.client.Subscription;
 import org.reactivestreams.Subscriber;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -23,17 +26,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @SuppressWarnings("deprecation")
 public class ObservableToPublisher<TResult> implements org.reactivestreams.Publisher<TResult> {
 
-    private final com.mongodb.async.client.Observable<TResult> observable;
+    private final Observable<TResult> observable;
 
-    public ObservableToPublisher(final com.mongodb.async.client.Observable<TResult> observable) {
+    public ObservableToPublisher(final Observable<TResult> observable) {
         this.observable = observable;
     }
 
     @Override
     public void subscribe(final Subscriber<? super TResult> subscriber) {
-        observable.subscribe(new com.mongodb.async.client.Observer<TResult>() {
+        observable.subscribe(new Observer<TResult>() {
             @Override
-            public void onSubscribe(final com.mongodb.async.client.Subscription subscription) {
+            public void onSubscribe(final Subscription subscription) {
                 subscriber.onSubscribe(new org.reactivestreams.Subscription() {
                     private final AtomicBoolean cancelled = new AtomicBoolean();
 

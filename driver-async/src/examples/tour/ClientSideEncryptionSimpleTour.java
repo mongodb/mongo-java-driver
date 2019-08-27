@@ -19,9 +19,9 @@ package tour;
 import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.async.SingleResultCallback;
-import com.mongodb.async.client.MongoClient;
-import com.mongodb.async.client.MongoClients;
-import com.mongodb.async.client.MongoCollection;
+import com.mongodb.internal.async.client.MongoClient;
+import com.mongodb.internal.async.client.MongoClients;
+import com.mongodb.internal.async.client.MongoCollection;
 import org.bson.Document;
 
 import java.security.SecureRandom;

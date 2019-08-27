@@ -48,7 +48,7 @@ public final class AsyncStreamHelper {
      * @return the AsyncInputStream
      */
     public static AsyncInputStream toAsyncInputStream(final byte[] srcBytes) {
-        return GridFSAsyncStreamHelper.toAsyncInputStream(com.mongodb.async.client.gridfs.helpers.AsyncStreamHelper
+        return GridFSAsyncStreamHelper.toAsyncInputStream(com.mongodb.internal.async.client.gridfs.helpers.AsyncStreamHelper
                 .toAsyncInputStream(srcBytes));
     }
 
@@ -59,7 +59,7 @@ public final class AsyncStreamHelper {
      * @return the AsyncOutputStream
      */
     public static AsyncOutputStream toAsyncOutputStream(final byte[] dstBytes) {
-        return GridFSAsyncStreamHelper.toAsyncOutputStream(com.mongodb.async.client.gridfs.helpers.AsyncStreamHelper
+        return GridFSAsyncStreamHelper.toAsyncOutputStream(com.mongodb.internal.async.client.gridfs.helpers.AsyncStreamHelper
                 .toAsyncOutputStream(dstBytes));
     }
 
@@ -70,7 +70,7 @@ public final class AsyncStreamHelper {
      * @return the AsyncInputStream
      */
     public static AsyncInputStream toAsyncInputStream(final ByteBuffer srcByteBuffer) {
-        return GridFSAsyncStreamHelper.toAsyncInputStream(com.mongodb.async.client.gridfs.helpers.AsyncStreamHelper
+        return GridFSAsyncStreamHelper.toAsyncInputStream(com.mongodb.internal.async.client.gridfs.helpers.AsyncStreamHelper
                 .toAsyncInputStream(srcByteBuffer));
     }
 
@@ -81,7 +81,7 @@ public final class AsyncStreamHelper {
      * @return the AsyncOutputStream
      */
     public static AsyncOutputStream toAsyncOutputStream(final ByteBuffer dstByteBuffer) {
-        return GridFSAsyncStreamHelper.toAsyncOutputStream(com.mongodb.async.client.gridfs.helpers.AsyncStreamHelper
+        return GridFSAsyncStreamHelper.toAsyncOutputStream(com.mongodb.internal.async.client.gridfs.helpers.AsyncStreamHelper
                 .toAsyncOutputStream(dstByteBuffer));
     }
 
@@ -92,7 +92,7 @@ public final class AsyncStreamHelper {
      * @return the AsyncInputStream
      */
     public static AsyncInputStream toAsyncInputStream(final InputStream inputStream) {
-        return GridFSAsyncStreamHelper.toAsyncInputStream(com.mongodb.async.client.gridfs.helpers.AsyncStreamHelper
+        return GridFSAsyncStreamHelper.toAsyncInputStream(com.mongodb.internal.async.client.gridfs.helpers.AsyncStreamHelper
                 .toAsyncInputStream(inputStream));
     }
 
@@ -103,7 +103,7 @@ public final class AsyncStreamHelper {
      * @return the AsyncOutputStream
      */
     public static AsyncOutputStream toAsyncOutputStream(final OutputStream outputStream) {
-        return GridFSAsyncStreamHelper.toAsyncOutputStream(com.mongodb.async.client.gridfs.helpers.AsyncStreamHelper
+        return GridFSAsyncStreamHelper.toAsyncOutputStream(com.mongodb.internal.async.client.gridfs.helpers.AsyncStreamHelper
                 .toAsyncOutputStream(outputStream));
     }
 

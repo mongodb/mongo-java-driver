@@ -16,7 +16,7 @@
 
 package com.mongodb.reactivestreams.client
 
-import com.mongodb.async.client.AggregateIterable
+import com.mongodb.internal.async.client.AggregateIterable
 import org.reactivestreams.Publisher
 import spock.lang.Specification
 

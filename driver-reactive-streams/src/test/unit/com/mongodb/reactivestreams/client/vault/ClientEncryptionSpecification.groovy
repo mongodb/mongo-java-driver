@@ -23,7 +23,7 @@ class ClientEncryptionSpecification extends Specification {
 
     def 'should have the same methods as the async ClientEncryption'() {
         given:
-        def wrapped = (com.mongodb.async.client.vault.ClientEncryption.methods*.name).sort()
+        def wrapped = (com.mongodb.internal.async.client.vault.ClientEncryption.methods*.name).sort()
         def local = (ClientEncryption.methods*.name - Publisher.methods*.name).sort()
 
         expect:

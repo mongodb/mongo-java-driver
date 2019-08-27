@@ -48,7 +48,7 @@ import static com.mongodb.reactivestreams.client.internal.PublisherHelper.voidTo
  */
 @SuppressWarnings("deprecation")
 public final class GridFSBucketImpl implements GridFSBucket {
-    private final com.mongodb.async.client.gridfs.GridFSBucket wrapped;
+    private final com.mongodb.internal.async.client.gridfs.GridFSBucket wrapped;
 
     /**
      * The GridFSBucket constructor
@@ -57,7 +57,7 @@ public final class GridFSBucketImpl implements GridFSBucket {
      *
      * @param wrapped the GridFSBucket
      */
-    public GridFSBucketImpl(final com.mongodb.async.client.gridfs.GridFSBucket wrapped) {
+    public GridFSBucketImpl(final com.mongodb.internal.async.client.gridfs.GridFSBucket wrapped) {
         this.wrapped = notNull("GridFSBucket", wrapped);
     }
 
