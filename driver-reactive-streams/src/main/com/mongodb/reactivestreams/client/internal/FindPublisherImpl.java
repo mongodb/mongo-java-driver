@@ -31,7 +31,6 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 
 
-@SuppressWarnings("deprecation")
 final class FindPublisherImpl<TResult> implements FindPublisher<TResult> {
 
     private final FindIterable<TResult> wrapped;

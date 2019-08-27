@@ -30,7 +30,6 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 
 
-@SuppressWarnings("deprecation")
 final class DistinctPublisherImpl<TResult> implements DistinctPublisher<TResult> {
 
     private final DistinctIterable<TResult> wrapped;

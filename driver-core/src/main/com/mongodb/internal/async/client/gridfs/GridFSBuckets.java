@@ -20,11 +20,7 @@ import com.mongodb.internal.async.client.MongoDatabase;
 
 /**
  * A factory for GridFSBucket instances.
- *
- * @since 3.3
- * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
-@Deprecated
 public final class GridFSBuckets {
 
     /**

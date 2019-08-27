@@ -46,7 +46,6 @@ import static com.mongodb.reactivestreams.client.internal.PublisherHelper.voidTo
  *
  * <p>This should not be considered a part of the public API.</p>
  */
-@SuppressWarnings("deprecation")
 public final class GridFSBucketImpl implements GridFSBucket {
     private final com.mongodb.internal.async.client.gridfs.GridFSBucket wrapped;
 

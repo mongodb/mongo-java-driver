@@ -33,7 +33,6 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.reactivestreams.client.internal.PublisherHelper.voidToSuccessCallback;
 
 
-@SuppressWarnings("deprecation")
 final class MapReducePublisherImpl<TResult> implements MapReducePublisher<TResult> {
     private final MapReduceIterable<TResult> wrapped;
 

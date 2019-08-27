@@ -25,7 +25,6 @@ import org.reactivestreams.Publisher;
  *
  * @since 1.9
  */
-@SuppressWarnings("deprecation")
 public interface ClientSession extends com.mongodb.session.ClientSession {
     /**
      * Returns true if there is an active transaction on this session, and false otherwise

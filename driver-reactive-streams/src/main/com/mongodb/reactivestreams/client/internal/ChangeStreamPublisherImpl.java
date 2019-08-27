@@ -33,7 +33,6 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 
 
-@SuppressWarnings("deprecation")
 final class ChangeStreamPublisherImpl<TResult> implements ChangeStreamPublisher<TResult> {
 
     private final ChangeStreamIterable<TResult> wrapped;

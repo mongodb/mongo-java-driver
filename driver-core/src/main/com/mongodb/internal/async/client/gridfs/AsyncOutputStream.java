@@ -25,10 +25,7 @@ import java.nio.ByteBuffer;
  * The Async Output Stream interface represents some asynchronous output stream of bytes.
  *
  * <p>See the {@link com.mongodb.internal.async.client.gridfs.helpers} package for adapters that create an {@code AsyncOutputStream}</p>
- * @since 3.3
- * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
-@Deprecated
 public interface AsyncOutputStream {
 
     /**

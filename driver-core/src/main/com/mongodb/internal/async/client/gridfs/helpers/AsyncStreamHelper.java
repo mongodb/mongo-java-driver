@@ -38,11 +38,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  *     <li>{@link InputStream} - Converts InputStreams into Async Streams (Note: InputStream implementations are blocking)</li>
  *     <li>{@link OutputStream} - Converts OutputStreams into Async Streams (Note: OutputStream implementations are blocking)</li>
  * </ul>
- *
- * @since 3.3
- * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
-@Deprecated
 public final class AsyncStreamHelper {
 
     /**

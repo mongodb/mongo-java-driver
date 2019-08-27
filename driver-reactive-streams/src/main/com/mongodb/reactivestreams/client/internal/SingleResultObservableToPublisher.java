@@ -21,7 +21,6 @@ import com.mongodb.internal.async.client.Observables;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 
-@SuppressWarnings("deprecation")
 public class SingleResultObservableToPublisher<TResult> implements org.reactivestreams.Publisher<TResult> {
 
     private final ObservableToPublisher<TResult> observable;

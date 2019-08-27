@@ -28,7 +28,6 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.reactivestreams.client.internal.PublisherHelper.voidToSuccessCallback;
 
 
-@SuppressWarnings("deprecation")
 final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
     private final com.mongodb.internal.async.client.gridfs.GridFSDownloadStream wrapped;
 

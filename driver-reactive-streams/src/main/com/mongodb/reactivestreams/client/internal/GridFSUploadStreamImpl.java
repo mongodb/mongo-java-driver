@@ -29,7 +29,6 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.reactivestreams.client.internal.PublisherHelper.voidToSuccessCallback;
 
 
-@SuppressWarnings("deprecation")
 final class GridFSUploadStreamImpl implements GridFSUploadStream {
 
     private final com.mongodb.internal.async.client.gridfs.GridFSUploadStream wrapped;

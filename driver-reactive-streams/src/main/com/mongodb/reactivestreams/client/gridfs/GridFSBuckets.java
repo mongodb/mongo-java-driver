@@ -29,7 +29,6 @@ import static com.mongodb.assertions.Assertions.notNull;
  *
  * @since 1.3
  */
-@SuppressWarnings("deprecation")
 public final class GridFSBuckets {
 
     /**

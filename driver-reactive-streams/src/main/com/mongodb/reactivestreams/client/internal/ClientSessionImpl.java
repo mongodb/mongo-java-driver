@@ -28,7 +28,6 @@ import org.bson.BsonTimestamp;
 import org.reactivestreams.Publisher;
 
 
-@SuppressWarnings("deprecation")
 class ClientSessionImpl implements ClientSession {
     private final com.mongodb.internal.async.client.ClientSession wrapped;
     private final Object originator;

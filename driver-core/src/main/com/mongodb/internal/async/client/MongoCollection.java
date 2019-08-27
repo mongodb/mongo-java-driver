@@ -59,11 +59,8 @@ import java.util.List;
  * </p>
  *
  * @param <TDocument> The type that this collection will encode documents from and decode documents to.
- * @since 3.0
- * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
 @ThreadSafe
-@Deprecated
 public interface MongoCollection<TDocument> {
 
     /**

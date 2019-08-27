@@ -27,10 +27,7 @@ import java.util.concurrent.TimeUnit;
  * Iterable for distinct.
  *
  * @param <TResult> The type of the result.
- * @since 3.0
- * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
-@Deprecated
 public interface DistinctIterable<TResult> extends MongoIterable<TResult> {
 
     /**
