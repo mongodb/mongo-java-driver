@@ -20,7 +20,7 @@ import category.Async
 import com.mongodb.MongoExecutionTimeoutException
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
-import com.mongodb.async.SingleResultCallback
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.internal.binding.AsyncConnectionSource
 import com.mongodb.internal.binding.AsyncReadBinding

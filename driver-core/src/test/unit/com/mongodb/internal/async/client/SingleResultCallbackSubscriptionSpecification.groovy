@@ -18,7 +18,7 @@ package com.mongodb.internal.async.client
 
 import com.mongodb.Block
 import com.mongodb.MongoException
-import com.mongodb.async.SingleResultCallback
+import com.mongodb.internal.async.SingleResultCallback
 import spock.lang.Specification
 
 import java.util.concurrent.Executors

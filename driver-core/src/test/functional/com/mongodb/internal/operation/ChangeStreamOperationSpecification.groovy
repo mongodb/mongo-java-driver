@@ -21,7 +21,7 @@ import com.mongodb.MongoNamespace
 import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadConcern
 import com.mongodb.WriteConcern
-import com.mongodb.async.SingleResultCallback
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.changestream.ChangeStreamDocument
 import com.mongodb.client.model.changestream.FullDocument

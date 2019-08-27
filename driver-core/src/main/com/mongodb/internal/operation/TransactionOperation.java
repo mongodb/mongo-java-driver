@@ -18,7 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.Function;
 import com.mongodb.WriteConcern;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.binding.AsyncWriteBinding;

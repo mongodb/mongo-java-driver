@@ -16,7 +16,7 @@
 
 package com.mongodb.internal.async.client;
 
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import org.bson.BsonDocument;
 
 import static com.mongodb.assertions.Assertions.notNull;

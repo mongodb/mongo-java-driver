@@ -23,9 +23,9 @@ import com.mongodb.OperationFunctionalSpecification
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.ServerCursor
-import com.mongodb.async.AsyncBatchCursor
+import com.mongodb.internal.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.async.SingleResultCallback
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.connection.ConnectionDescription
 import com.mongodb.internal.binding.AsyncConnectionSource

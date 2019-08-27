@@ -18,8 +18,8 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.ExplainVerbosity;
 import com.mongodb.MongoNamespace;
-import com.mongodb.async.AsyncBatchCursor;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ServerDescription;

@@ -18,6 +18,7 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.Block;
 import com.mongodb.ClientSessionOptions;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
 import com.mongodb.reactivestreams.client.ClientSession;
@@ -144,11 +145,11 @@ public final class MongoClientImpl implements MongoClient {
     @Override
     public Publisher<ClientSession> startSession(final ClientSessionOptions options) {
         return new SingleResultObservableToPublisher<ClientSession>(
-                new Block<com.mongodb.async.SingleResultCallback<ClientSession>>() {
+                new Block<SingleResultCallback<ClientSession>>() {
                     @Override
-                    public void apply(final com.mongodb.async.SingleResultCallback<ClientSession> clientSessionSingleResultCallback) {
+                    public void apply(final SingleResultCallback<ClientSession> clientSessionSingleResultCallback) {
                         wrapped.startSession(options,
-                                new com.mongodb.async.SingleResultCallback<com.mongodb.internal.async.client.ClientSession>() {
+                                new SingleResultCallback<com.mongodb.internal.async.client.ClientSession>() {
                             @Override
                             public void onResult(final com.mongodb.internal.async.client.ClientSession result, final Throwable t) {
                                 if (t != null) {

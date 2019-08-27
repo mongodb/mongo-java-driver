@@ -19,7 +19,7 @@ package com.mongodb.internal.async.client
 import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.WriteConcern
-import com.mongodb.async.SingleResultCallback
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.CreateViewOptions

@@ -1,7 +1,7 @@
 package com.mongodb.reactivestreams.client.internal
 
 import com.mongodb.Block
-import com.mongodb.async.SingleResultCallback
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.async.client.gridfs.AsyncInputStream as WrappedAsyncInputStream
 import com.mongodb.internal.async.client.gridfs.AsyncOutputStream as WrappedAsyncOutputStream
 import com.mongodb.reactivestreams.client.Success

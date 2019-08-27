@@ -22,7 +22,7 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.SslSettings;

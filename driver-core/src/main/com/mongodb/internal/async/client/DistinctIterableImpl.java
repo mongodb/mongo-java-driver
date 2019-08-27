@@ -19,7 +19,7 @@ package com.mongodb.internal.async.client;
 import com.mongodb.MongoNamespace;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
-import com.mongodb.async.AsyncBatchCursor;
+import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.operation.AsyncOperations;
 import com.mongodb.internal.operation.AsyncReadOperation;

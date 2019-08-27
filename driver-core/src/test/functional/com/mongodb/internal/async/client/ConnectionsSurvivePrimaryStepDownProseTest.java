@@ -22,7 +22,7 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.WriteConcern;
-import com.mongodb.async.AsyncBatchCursor;
+import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.async.FutureResultCallback;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.connection.ConnectionPoolSettings;

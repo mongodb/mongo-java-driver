@@ -17,7 +17,7 @@
 package com.mongodb.internal.async.client.gridfs;
 
 import com.mongodb.MongoGridFSException;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.client.ClientSession;
 import com.mongodb.internal.async.client.MongoCollection;
 import com.mongodb.client.gridfs.model.GridFSFile;

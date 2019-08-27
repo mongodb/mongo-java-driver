@@ -18,7 +18,7 @@ package com.mongodb.internal.operation;
 
 import com.mongodb.MongoClientException;
 import com.mongodb.WriteConcern;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.client.model.Collation;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.internal.binding.AsyncWriteBinding;

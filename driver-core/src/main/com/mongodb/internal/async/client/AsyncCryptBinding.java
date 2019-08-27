@@ -17,7 +17,7 @@
 package com.mongodb.internal.async.client;
 
 import com.mongodb.ReadPreference;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.AsyncConnectionSource;

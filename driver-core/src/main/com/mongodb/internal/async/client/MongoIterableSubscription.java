@@ -17,8 +17,8 @@
 package com.mongodb.internal.async.client;
 
 import com.mongodb.MongoException;
-import com.mongodb.async.AsyncBatchCursor;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.AsyncBatchCursor;
+import com.mongodb.internal.async.SingleResultCallback;
 
 import java.util.List;
 

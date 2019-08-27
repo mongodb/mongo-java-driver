@@ -18,7 +18,7 @@ package com.mongodb.internal.async.client;
 
 import com.mongodb.ClusterFixture;
 import com.mongodb.ReadConcern;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
 import com.mongodb.internal.connection.TestCommandListener;

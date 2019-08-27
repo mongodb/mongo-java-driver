@@ -18,6 +18,7 @@ package com.mongodb.async;
 
 import com.mongodb.MongoException;
 import com.mongodb.MongoTimeoutException;
+import com.mongodb.internal.async.SingleResultCallback;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Future;

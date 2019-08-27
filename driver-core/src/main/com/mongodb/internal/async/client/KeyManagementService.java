@@ -18,7 +18,7 @@ package com.mongodb.internal.async.client;
 
 import com.mongodb.MongoSocketException;
 import com.mongodb.ServerAddress;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.AsyncCompletionHandler;
 import com.mongodb.connection.SocketSettings;
 import com.mongodb.connection.SslSettings;

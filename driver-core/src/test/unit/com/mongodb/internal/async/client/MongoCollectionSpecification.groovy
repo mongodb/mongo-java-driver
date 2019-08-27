@@ -26,8 +26,8 @@ import com.mongodb.ServerAddress
 import com.mongodb.WriteConcern
 import com.mongodb.WriteConcernResult
 import com.mongodb.WriteError
-import com.mongodb.async.AsyncBatchCursor
-import com.mongodb.async.SingleResultCallback
+import com.mongodb.internal.async.AsyncBatchCursor
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.bulk.BulkWriteError
 import com.mongodb.bulk.BulkWriteUpsert
 import com.mongodb.bulk.WriteConcernError

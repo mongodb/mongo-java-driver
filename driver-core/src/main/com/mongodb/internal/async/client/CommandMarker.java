@@ -23,7 +23,7 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ClusterSettings;
 import org.bson.RawBsonDocument;
 

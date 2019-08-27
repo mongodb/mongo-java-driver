@@ -17,7 +17,7 @@
 package com.mongodb.internal.async.client;
 
 
-import com.mongodb.async.SingleResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.MapReduceAction;
 import com.mongodb.lang.Nullable;

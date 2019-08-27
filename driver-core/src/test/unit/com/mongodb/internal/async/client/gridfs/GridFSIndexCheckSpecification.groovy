@@ -18,7 +18,7 @@ package com.mongodb.internal.async.client.gridfs
 
 import com.mongodb.MongoException
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.async.SingleResultCallback
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.async.client.ClientSession
 import com.mongodb.internal.async.client.FindIterable
 import com.mongodb.internal.async.client.ListIndexesIterable
