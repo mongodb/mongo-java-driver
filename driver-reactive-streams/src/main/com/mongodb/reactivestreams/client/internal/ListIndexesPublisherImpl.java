@@ -28,7 +28,6 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 
 
-@SuppressWarnings("deprecation")
 final class ListIndexesPublisherImpl<TResult> implements ListIndexesPublisher<TResult> {
 
     private final ListIndexesIterable<TResult> wrapped;

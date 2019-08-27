@@ -18,5 +18,4 @@
  * Contains helper classes to create {@link com.mongodb.internal.async.client.gridfs.AsyncInputStream} and
  * {@link com.mongodb.internal.async.client.gridfs.AsyncOutputStream}'s from external sources.
  */
-@Deprecated
 package com.mongodb.internal.async.client.gridfs.helpers;

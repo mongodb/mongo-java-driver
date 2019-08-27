@@ -24,11 +24,7 @@ import org.bson.types.ObjectId;
  * A GridFS OutputStream for uploading data into GridFS
  *
  * <p>Provides the {@code id} for the file to be uploaded as well as the {@code write} methods of a {@link AsyncOutputStream}</p>
- *
- * @since 3.3
- * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
-@Deprecated
 public interface GridFSUploadStream extends AsyncOutputStream {
 
     /**

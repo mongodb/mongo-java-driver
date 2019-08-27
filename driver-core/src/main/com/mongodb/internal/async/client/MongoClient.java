@@ -32,11 +32,8 @@ import java.util.List;
  * <p>
  * Instance of this class serve as factories for {@code MongoDatabase} instances.
  * </p>
- * @since 3.0
- * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
 @Immutable
-@Deprecated
 public interface MongoClient extends Closeable {
 
     /**

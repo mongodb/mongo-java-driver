@@ -23,11 +23,7 @@ import com.mongodb.client.gridfs.model.GridFSFile;
  * A GridFS InputStream for downloading data from GridFS
  *
  * <p>Provides the {@code GridFSFile} for the file to being downloaded as well as the {@code read} methods of a {@link AsyncInputStream}</p>
- *
- * @since 3.3
- * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
-@Deprecated
 public interface GridFSDownloadStream extends AsyncInputStream {
 
     /**

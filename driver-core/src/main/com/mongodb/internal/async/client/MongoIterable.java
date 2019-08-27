@@ -28,10 +28,7 @@ import java.util.Collection;
  * Operations that allow asynchronous iteration over a collection view.
  *
  * @param <TResult> the result type
- * @since 3.0
- * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
-@Deprecated
 public interface MongoIterable<TResult> {
 
     /**

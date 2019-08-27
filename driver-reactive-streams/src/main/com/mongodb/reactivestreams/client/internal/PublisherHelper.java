@@ -19,7 +19,6 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.reactivestreams.client.Success;
 
 
-@SuppressWarnings("deprecation")
 final class PublisherHelper {
 
     /**

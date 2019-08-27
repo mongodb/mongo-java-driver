@@ -26,7 +26,6 @@ import org.reactivestreams.Publisher;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-@SuppressWarnings("deprecation")
 class ClientEncryptionImpl implements ClientEncryption {
     private final com.mongodb.internal.async.client.vault.ClientEncryption wrapped;
 

@@ -24,11 +24,7 @@ package com.mongodb.internal.async.client;
  * <p>
  * It is used to both signal desire for data and to allow for unsubscribing.
  * </p>
- *
- * @since 3.1
- * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
-@Deprecated
 public interface Subscription {
 
     /**

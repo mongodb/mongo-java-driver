@@ -27,10 +27,7 @@ import java.util.concurrent.TimeUnit;
  * Iterable for aggregate.
  *
  * @param <TResult> The type of the result.
- * @since 3.0
- * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
-@Deprecated
 public interface AggregateIterable<TResult> extends MongoIterable<TResult> {
 
     /**

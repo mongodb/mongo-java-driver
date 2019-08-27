@@ -27,7 +27,6 @@ import org.bson.codecs.configuration.CodecRegistry;
  * A factory for MongoClient instances.
  *
  */
-@SuppressWarnings("deprecation")
 public final class MongoClients {
 
     /**

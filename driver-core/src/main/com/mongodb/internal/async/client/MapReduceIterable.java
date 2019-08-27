@@ -29,10 +29,7 @@ import java.util.concurrent.TimeUnit;
  * Iterable for map reduce.
  *
  * @param <TResult> The type of the result.
- * @since 3.0
- * @deprecated Prefer the Reactive Streams-based asynchronous driver (mongodb-driver-reactivestreams artifactId)
  */
-@Deprecated
 public interface MapReduceIterable<TResult> extends MongoIterable<TResult> {
 
     /**

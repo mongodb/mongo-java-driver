@@ -29,7 +29,6 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 
 
-@SuppressWarnings("deprecation")
 final class ListDatabasesPublisherImpl<TResult> implements ListDatabasesPublisher<TResult> {
 
     private final ListDatabasesIterable<TResult> wrapped;

@@ -64,7 +64,6 @@ import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.reactivestreams.client.internal.PublisherHelper.voidToSuccessCallback;
 
 
-@SuppressWarnings("deprecation")
 final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
     private final com.mongodb.internal.async.client.MongoCollection<TDocument> wrapped;

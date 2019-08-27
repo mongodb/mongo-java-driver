@@ -35,7 +35,6 @@ import static com.mongodb.reactivestreams.client.internal.PublisherHelper.voidTo
  *
  * <p>This should not be considered a part of the public API.</p>
  */
-@SuppressWarnings("deprecation")
 public final class GridFSAsyncStreamHelper {
 
     /**

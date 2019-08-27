@@ -31,7 +31,6 @@ import java.util.concurrent.TimeUnit;
 import static com.mongodb.assertions.Assertions.notNull;
 
 
-@SuppressWarnings("deprecation")
 final class GridFSFindPublisherImpl implements GridFSFindPublisher {
     private final GridFSFindIterable wrapped;
 
