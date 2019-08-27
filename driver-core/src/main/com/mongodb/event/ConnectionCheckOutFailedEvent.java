@@ -21,20 +21,49 @@ import com.mongodb.connection.ServerId;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * An event signifying the closing of a connection pool.
+ * An event for when checking out a connection fails.
  *
- * @since 3.5
+ * @since 4.0
  */
-public final class ConnectionPoolClosedEvent {
-    private final ServerId serverId;
+public final class ConnectionCheckOutFailedEvent {
 
     /**
-     * Constructs a new instance of the event.
+     * An enumeration of the reasons checking out a connection failed
+     */
+    public enum Reason {
+        /**
+         * The pool was previously closed and cannot provide new connections
+         */
+        POOL_CLOSED,
+
+        /**
+         * The connection check out attempt exceeded the specific timeout
+         */
+        TIMEOUT,
+
+        /**
+         * The connection check out attempt experienced an error while setting up a new connection
+         */
+        CONNECTION_ERROR,
+
+        /**
+         * Reason unknown
+         */
+        UNKNOWN,
+    }
+
+    private final ServerId serverId;
+    private final Reason reason;
+
+    /**
+     * Construct an instance
      *
      * @param serverId the server id
+     * @param reason the reason the connection check out failed
      */
-    public ConnectionPoolClosedEvent(final ServerId serverId) {
+    public ConnectionCheckOutFailedEvent(final ServerId serverId, final Reason reason) {
         this.serverId = notNull("serverId", serverId);
+        this.reason = notNull("reason", reason);
     }
 
     /**
@@ -48,8 +77,9 @@ public final class ConnectionPoolClosedEvent {
 
     @Override
     public String toString() {
-        return "ConnectionPoolClosedEvent{"
+        return "ConnectionCheckOutFailedEvent{"
                        + "serverId=" + serverId
+                       + " reason=" + reason
                        + '}';
     }
 }

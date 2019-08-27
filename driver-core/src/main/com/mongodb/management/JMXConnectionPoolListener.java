@@ -18,15 +18,15 @@ package com.mongodb.management;
 
 import com.mongodb.connection.ConnectionId;
 import com.mongodb.connection.ServerId;
-import com.mongodb.event.ConnectionAddedEvent;
 import com.mongodb.event.ConnectionCheckedInEvent;
 import com.mongodb.event.ConnectionCheckedOutEvent;
+import com.mongodb.event.ConnectionClosedEvent;
+import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.event.ConnectionPoolClosedEvent;
+import com.mongodb.event.ConnectionPoolCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
-import com.mongodb.event.ConnectionPoolOpenedEvent;
 import com.mongodb.event.ConnectionPoolWaitQueueEnteredEvent;
 import com.mongodb.event.ConnectionPoolWaitQueueExitedEvent;
-import com.mongodb.event.ConnectionRemovedEvent;
 
 import javax.management.ObjectName;
 import java.util.List;
@@ -46,7 +46,7 @@ public class JMXConnectionPoolListener implements ConnectionPoolListener {
         new ConcurrentHashMap<ServerId, ConnectionPoolStatistics>();
 
     @Override
-    public void connectionPoolOpened(final ConnectionPoolOpenedEvent event) {
+    public void connectionPoolCreated(final ConnectionPoolCreatedEvent event) {
         ConnectionPoolStatistics statistics = new ConnectionPoolStatistics(event);
         map.put(event.getServerId(), statistics);
         MBeanServerFactory.getMBeanServer().registerMBean(statistics, getMBeanObjectName(event.getServerId()));
@@ -91,18 +91,18 @@ public class JMXConnectionPoolListener implements ConnectionPoolListener {
     }
 
     @Override
-    public void connectionAdded(final ConnectionAddedEvent event) {
+    public void connectionCreated(final ConnectionCreatedEvent event) {
         ConnectionPoolStatistics statistics = getStatistics(event.getConnectionId());
         if (statistics != null) {
-            statistics.connectionAdded(event);
+            statistics.connectionCreated(event);
         }
     }
 
     @Override
-    public void connectionRemoved(final ConnectionRemovedEvent event) {
+    public void connectionClosed(final ConnectionClosedEvent event) {
         ConnectionPoolStatistics statistics = getStatistics(event.getConnectionId());
         if (statistics != null) {
-            statistics.connectionRemoved(event);
+            statistics.connectionClosed(event);
         }
     }
 

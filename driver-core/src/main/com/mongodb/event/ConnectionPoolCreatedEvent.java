@@ -16,25 +16,29 @@
 
 package com.mongodb.event;
 
+import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerId;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * An event signifying the closing of a connection pool.
+ * An event signifying that a connection pool was created.
  *
- * @since 3.5
+ * @since 4.0
  */
-public final class ConnectionPoolClosedEvent {
+public final class ConnectionPoolCreatedEvent {
     private final ServerId serverId;
+    private final ConnectionPoolSettings settings;
 
     /**
      * Constructs a new instance of the event.
      *
      * @param serverId the server id
+     * @param settings the connection pool settings
      */
-    public ConnectionPoolClosedEvent(final ServerId serverId) {
+    public ConnectionPoolCreatedEvent(final ServerId serverId, final ConnectionPoolSettings settings) {
         this.serverId = notNull("serverId", serverId);
+        this.settings = notNull("settings", settings);
     }
 
     /**
@@ -46,10 +50,20 @@ public final class ConnectionPoolClosedEvent {
         return serverId;
     }
 
+    /**
+     * Gets the connection pool settings.
+     *
+     * @return the connection pool setttings.
+     */
+    public ConnectionPoolSettings getSettings() {
+        return settings;
+    }
+
     @Override
     public String toString() {
-        return "ConnectionPoolClosedEvent{"
+        return "ConnectionPoolCreatedEvent{"
                        + "serverId=" + serverId
+                       + " settings=" + settings
                        + '}';
     }
 }

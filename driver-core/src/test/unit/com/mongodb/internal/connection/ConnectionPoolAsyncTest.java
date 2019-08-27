@@ -16,6 +16,8 @@
 
 package com.mongodb.internal.connection;
 
+import com.mongodb.async.FutureResultCallback;
+import com.mongodb.internal.async.SingleResultCallback;
 import org.bson.BsonDocument;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -27,9 +29,9 @@ import java.util.concurrent.Callable;
 // specification tests
 @SuppressWarnings("deprecation")
 @RunWith(Parameterized.class)
-public class ConnectionPoolTest extends AbstractConnectionPoolTest {
+public class ConnectionPoolAsyncTest extends AbstractConnectionPoolTest {
 
-    public ConnectionPoolTest(final String fileName, final String description, final BsonDocument definition) {
+    public ConnectionPoolAsyncTest(final String fileName, final String description, final BsonDocument definition) {
         super(fileName, description, definition);
     }
 
@@ -37,14 +39,25 @@ public class ConnectionPoolTest extends AbstractConnectionPoolTest {
     protected Callable<Exception> createCallable(final BsonDocument operation) {
         String name = operation.getString("name").getValue();
         if (name.equals("checkOut")) {
+            FutureResultCallback<InternalConnection> callback = new FutureResultCallback<InternalConnection>();
             return new Callable<Exception>() {
                 @Override
                 public Exception call() {
                     try {
-                        InternalConnection connection = getPool().get();
-                        if (operation.containsKey("label")) {
-                            getConnectionMap().put(operation.getString("label").getValue(), connection);
-                        }
+                        getPool().getAsync(new SingleResultCallback<InternalConnection>() {
+                            @Override
+                            public void onResult(final InternalConnection connection, final Throwable t) {
+                                if (t != null) {
+                                    callback.onResult(null, t);
+                                } else {
+                                    if (operation.containsKey("label")) {
+                                        getConnectionMap().put(operation.getString("label").getValue(), connection);
+                                    }
+                                    callback.onResult(connection, null);
+                                }
+                            }
+                        });
+                        callback.get();
                         return null;
                     } catch (Exception e) {
                         return e;

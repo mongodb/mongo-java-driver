@@ -21,21 +21,19 @@ import com.mongodb.connection.ConnectionId;
 import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * An event for adding a new connection to the pool.
+ * An event for creating a connection in the pool.
  *
- * @deprecated Prefer {@link ConnectionCreatedEvent}
- * @since 3.5
+ * @since 4.0
  */
-@Deprecated
-public final class ConnectionAddedEvent {
+public final class ConnectionCreatedEvent {
     private final ConnectionId connectionId;
 
     /**
      * Construct an instance
      *
-     * @param connectionId the connectionId
+     * @param connectionId the connection id
      */
-    public ConnectionAddedEvent(final ConnectionId connectionId) {
+    public ConnectionCreatedEvent(final ConnectionId connectionId) {
         this.connectionId = notNull("connectionId", connectionId);
     }
 
@@ -50,8 +48,8 @@ public final class ConnectionAddedEvent {
 
     @Override
     public String toString() {
-        return "ConnectionAddedEvent{"
-                       + "connectionId=" + connectionId
+        return "ConnectionCreatedEvent{"
+                       + " connectionId=" + connectionId
                        + '}';
     }
 }

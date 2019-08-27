@@ -17,41 +17,29 @@
 package com.mongodb.event;
 
 import com.mongodb.connection.ConnectionId;
-import org.bson.assertions.Assertions;
+
+import static com.mongodb.assertions.Assertions.notNull;
 
 /**
- * An event for removing a connection from the pool.
+ * An event for when a connection pool closes a connection.
  *
- * @since 3.5
- * @deprecated Prefer {@link ConnectionClosedEvent}
+ * @since 4.0
  */
-@Deprecated
-public final class ConnectionRemovedEvent {
+public final class ConnectionClosedEvent {
 
     /**
      * An enumeration of the reasons a connection could be closed
-     * @since 3.11
      */
     public enum Reason {
         /**
-         * Reason unknown
-         */
-        UNKNOWN,
-
-        /**
-         * The pool became stale because the pool has been cleared
+         * The connection is no longer valid because the pool has been cleared
          */
         STALE,
 
         /**
          * The connection became stale by being idle for too long
          */
-        MAX_IDLE_TIME_EXCEEDED,
-
-        /**
-         * The connection became stale by being open for too long
-         */
-        MAX_LIFE_TIME_EXCEEDED,
+        IDLE,
 
         /**
          * The connection experienced an error, making it no longer valid
@@ -62,23 +50,21 @@ public final class ConnectionRemovedEvent {
          * The pool was closed, making the connection no longer valid
          */
         POOL_CLOSED,
-   }
+    }
 
     private final ConnectionId connectionId;
     private final Reason reason;
 
     /**
-     * Constructs an instance.
+     * Construct an instance
      *
      * @param connectionId the connection id
      * @param reason the reason the connection was closed
-     * @since 3.11
      */
-    public ConnectionRemovedEvent(final ConnectionId connectionId, final Reason reason) {
-        this.connectionId = Assertions.notNull("connectionId", connectionId);
-        this.reason = Assertions.notNull("reason", reason);
+    public ConnectionClosedEvent(final ConnectionId connectionId, final Reason reason) {
+        this.connectionId = notNull("connectionId", connectionId);
+        this.reason = notNull("reason", reason);
     }
-
 
     /**
      * Gets the connection id
@@ -93,7 +79,6 @@ public final class ConnectionRemovedEvent {
      * Get the reason the connection was removed.
      *
      * @return the reason
-     * @since 3.11
      */
     public Reason getReason() {
         return reason;
@@ -101,9 +86,9 @@ public final class ConnectionRemovedEvent {
 
     @Override
     public String toString() {
-        return "ConnectionRemovedEvent{"
-                + "connectionId=" + connectionId
-                + ", reason=" + reason
-                + '}';
+        return "ConnectionClosedEvent{"
+                       + " connectionId=" + connectionId
+                       + " reason=" + reason
+                       + '}';
     }
 }
