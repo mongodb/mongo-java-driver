@@ -30,6 +30,14 @@ dependencies {
     testCompile 'org.reactivestreams:reactive-streams-tck:1.0.2'
 }
 
+sourceSets {
+    test.groovy.srcDirs += ['src/examples']
+}
+
+test {
+    exclude 'tour/**'
+}
+
 // Reactive Streams TCK uses TestNG, and Gradle can't run TestNG and JUnit in the same run.
 task tckTest(type: Test) {
     useTestNG()

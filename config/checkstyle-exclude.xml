@@ -47,6 +47,7 @@
     <suppress checks="Regexp" files=".*primer.*"/>
     <suppress checks="AvoidStarImportCheck" files=".*primer.*"/>
     <suppress checks="VisibilityModifierCheck" files=".*primer.*"/>
+    <suppress checks="Regexp" files="SubscriberHelpers"/>
 
     <!-- Allow printStackTrace in this file -->
     <suppress checks="Regexp" files="CallbackResultHolder"/>
