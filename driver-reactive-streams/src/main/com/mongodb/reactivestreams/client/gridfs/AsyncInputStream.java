@@ -17,6 +17,7 @@
 package com.mongodb.reactivestreams.client.gridfs;
 
 import com.mongodb.reactivestreams.client.Success;
+import com.mongodb.reactivestreams.client.gridfs.helpers.AsyncStreamHelper;
 import org.reactivestreams.Publisher;
 
 import java.nio.ByteBuffer;
@@ -24,7 +25,8 @@ import java.nio.ByteBuffer;
 /**
  * The Async Input Stream interface represents some asynchronous input stream of bytes.
  *
- * <p>See the {@link com.mongodb.async.client.gridfs.helpers} package for adapters that create an {@code AsyncInputStream}</p>
+ * <p>See the {@link AsyncStreamHelper} class for adapters that create an {@code AsyncInputStream}</p>
+ * 
  * @since 1.3
  */
 public interface AsyncInputStream {

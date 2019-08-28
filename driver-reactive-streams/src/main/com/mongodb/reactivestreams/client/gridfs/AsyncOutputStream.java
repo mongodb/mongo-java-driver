@@ -17,6 +17,7 @@
 package com.mongodb.reactivestreams.client.gridfs;
 
 import com.mongodb.reactivestreams.client.Success;
+import com.mongodb.reactivestreams.client.gridfs.helpers.AsyncStreamHelper;
 import org.reactivestreams.Publisher;
 
 import java.nio.ByteBuffer;
@@ -25,7 +26,8 @@ import java.nio.ByteBuffer;
 /**
  * The Async Output Stream interface represents some asynchronous output stream of bytes.
  *
- * <p>See the {@link com.mongodb.async.client.gridfs.helpers} package for adapters that create an {@code AsyncOutputStream}</p>
+ * <p>See the {@link AsyncStreamHelper} class for adapters that create an {@code AsyncOutputStream}</p>
+ * 
  * @since 1.3
  */
 public interface AsyncOutputStream {
