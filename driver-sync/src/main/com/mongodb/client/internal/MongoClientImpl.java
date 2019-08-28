@@ -185,9 +185,9 @@ public final class MongoClientImpl implements MongoClient {
     private <TResult> ChangeStreamIterable<TResult> createChangeStreamIterable(@Nullable final ClientSession clientSession,
                                                                                final List<? extends Bson> pipeline,
                                                                                final Class<TResult> resultClass) {
-        return MongoIterables.changeStreamOf(clientSession, "admin", settings.getCodecRegistry(),
-                settings.getReadPreference(), settings.getReadConcern(), delegate.getOperationExecutor(), pipeline, resultClass,
-                ChangeStreamLevel.CLIENT, settings.getRetryReads());
+        return new ChangeStreamIterableImpl<>(clientSession, "admin", settings.getCodecRegistry(), settings.getReadPreference(),
+                settings.getReadConcern(), delegate.getOperationExecutor(),
+                pipeline, resultClass, ChangeStreamLevel.CLIENT, settings.getRetryReads());
     }
 
     public Cluster getCluster() {
@@ -218,8 +218,8 @@ public final class MongoClientImpl implements MongoClient {
     }
 
     private <T> ListDatabasesIterable<T> createListDatabasesIterable(@Nullable final ClientSession clientSession, final Class<T> clazz) {
-        return MongoIterables.listDatabasesOf(clientSession, clazz, delegate.getCodecRegistry(),
-                ReadPreference.primary(), delegate.getOperationExecutor(), settings.getRetryReads());
+        return new ListDatabasesIterableImpl<>(clientSession, clazz, delegate.getCodecRegistry(), ReadPreference.primary(),
+                delegate.getOperationExecutor(), settings.getRetryReads());
     }
 
     private MongoIterable<String> createListDatabaseNamesIterable(final @Nullable ClientSession clientSession) {
