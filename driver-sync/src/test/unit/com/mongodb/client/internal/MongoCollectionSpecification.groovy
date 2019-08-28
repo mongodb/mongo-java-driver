@@ -297,15 +297,15 @@ class MongoCollectionSpecification extends Specification {
         def distinctIterable = execute(distinctMethod, session, 'field', String)
 
         then:
-        expect distinctIterable, isTheSameAs(MongoIterables.distinctOf(session, namespace, Document, String,
+        expect distinctIterable, isTheSameAs(new DistinctIterableImpl<>(session, namespace, Document, String,
                 codecRegistry, readPreference, readConcern, executor, 'field', new BsonDocument(), true))
 
         when:
         distinctIterable = execute(distinctMethod, session, 'field', String).filter(filter)
 
         then:
-        expect distinctIterable, isTheSameAs(MongoIterables.distinctOf(session, namespace, Document, String, codecRegistry, readPreference,
-                readConcern, executor, 'field', filter, true))
+        expect distinctIterable, isTheSameAs(new DistinctIterableImpl<>(session, namespace, Document, String,
+                codecRegistry, readPreference, readConcern, executor, 'field', filter, true))
 
         where:
         session << [null, Stub(ClientSession)]
@@ -322,29 +322,29 @@ class MongoCollectionSpecification extends Specification {
         def findIterable = execute(findMethod, session)
 
         then:
-        expect findIterable, isTheSameAs(MongoIterables.findOf(session, namespace, Document, Document, codecRegistry,
+        expect findIterable, isTheSameAs(new FindIterableImpl<>(session, namespace, Document, Document, codecRegistry,
                 readPreference, readConcern, executor, new BsonDocument(), true))
 
         when:
         findIterable = execute(findMethod, session, BsonDocument)
 
         then:
-        expect findIterable, isTheSameAs(MongoIterables.findOf(session, namespace, Document, BsonDocument, codecRegistry,
-                readPreference, readConcern, executor, new BsonDocument(), true))
+        expect findIterable, isTheSameAs(new FindIterableImpl<>(session, namespace, Document, BsonDocument,
+                codecRegistry, readPreference, readConcern, executor, new BsonDocument(), true))
 
         when:
         findIterable = execute(findMethod, session, new Document())
 
         then:
-        expect findIterable, isTheSameAs(MongoIterables.findOf(session, namespace, Document, Document, codecRegistry,
-                readPreference, readConcern, executor, new Document(), true))
+        expect findIterable, isTheSameAs(new FindIterableImpl<>(session, namespace, Document, Document,
+                codecRegistry, readPreference, readConcern, executor, new Document(), true))
 
         when:
         findIterable = execute(findMethod, session, new Document(), BsonDocument)
 
         then:
-        expect findIterable, isTheSameAs(MongoIterables.findOf(session, namespace, Document, BsonDocument, codecRegistry,
-                readPreference, readConcern, executor, new Document(), true))
+        expect findIterable, isTheSameAs(new FindIterableImpl<>(session, namespace, Document, BsonDocument,
+                codecRegistry, readPreference, readConcern, executor, new Document(), true))
 
         where:
         session << [null, Stub(ClientSession)]
@@ -361,15 +361,17 @@ class MongoCollectionSpecification extends Specification {
         def aggregateIterable = execute(aggregateMethod, session, [new Document('$match', 1)])
 
         then:
-        expect aggregateIterable, isTheSameAs(MongoIterables.aggregateOf(session, namespace, Document, Document, codecRegistry,
-                readPreference, readConcern,  ACKNOWLEDGED, executor, [new Document('$match', 1)], AggregationLevel.COLLECTION, true))
+        expect aggregateIterable, isTheSameAs(new AggregateIterableImpl<>(session, namespace, Document, Document,
+                codecRegistry, readPreference, readConcern, ACKNOWLEDGED, executor, [new Document('$match', 1)],
+                AggregationLevel.COLLECTION, true))
 
         when:
         aggregateIterable = execute(aggregateMethod, session, [new Document('$match', 1)], BsonDocument)
 
         then:
-        expect aggregateIterable, isTheSameAs(MongoIterables.aggregateOf(session, namespace, Document, BsonDocument, codecRegistry,
-                readPreference, readConcern,  ACKNOWLEDGED, executor, [new Document('$match', 1)], AggregationLevel.COLLECTION, true))
+        expect aggregateIterable, isTheSameAs(new AggregateIterableImpl<>(session, namespace, Document, BsonDocument,
+                codecRegistry, readPreference, readConcern, ACKNOWLEDGED, executor, [new Document('$match', 1)],
+                AggregationLevel.COLLECTION, true))
 
         where:
         session << [null, Stub(ClientSession)]
@@ -405,22 +407,25 @@ class MongoCollectionSpecification extends Specification {
         def changeStreamIterable = execute(watchMethod, session)
 
         then:
-        expect changeStreamIterable, isTheSameAs(MongoIterables.changeStreamOf(session, namespace, codecRegistry, readPreference,
-                readConcern, executor, [], Document, ChangeStreamLevel.COLLECTION, true), ['codec'])
+        expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace, codecRegistry,
+                readPreference, readConcern, executor, [], Document, ChangeStreamLevel.COLLECTION, true),
+                ['codec'])
 
         when:
         changeStreamIterable = execute(watchMethod, session, [new Document('$match', 1)])
 
         then:
-        expect changeStreamIterable, isTheSameAs(MongoIterables.changeStreamOf(session, namespace, codecRegistry, readPreference,
-                readConcern, executor, [new Document('$match', 1)], Document, ChangeStreamLevel.COLLECTION, true), ['codec'])
+        expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace, codecRegistry,
+                readPreference, readConcern, executor, [new Document('$match', 1)], Document,
+                ChangeStreamLevel.COLLECTION, true), ['codec'])
 
         when:
         changeStreamIterable = execute(watchMethod, session, [new Document('$match', 1)], BsonDocument)
 
         then:
-        expect changeStreamIterable, isTheSameAs(MongoIterables.changeStreamOf(session, namespace, codecRegistry, readPreference,
-                readConcern, executor, [new Document('$match', 1)], BsonDocument, ChangeStreamLevel.COLLECTION, true), ['codec'])
+        expect changeStreamIterable, isTheSameAs(new ChangeStreamIterableImpl<>(session, namespace, codecRegistry,
+                readPreference, readConcern, executor, [new Document('$match', 1)], BsonDocument,
+                ChangeStreamLevel.COLLECTION, true), ['codec'])
 
         where:
         session << [null, Stub(ClientSession)]
@@ -456,16 +461,15 @@ class MongoCollectionSpecification extends Specification {
         def mapReduceIterable = execute(mapReduceMethod, session, 'map', 'reduce')
 
         then:
-        expect mapReduceIterable, isTheSameAs(MongoIterables.mapReduceOf(session, namespace, Document, Document, codecRegistry,
-                readPreference, readConcern,  ACKNOWLEDGED, executor, 'map', 'reduce'))
-
+        expect mapReduceIterable, isTheSameAs(new MapReduceIterableImpl<>(session, namespace, Document, Document,
+                codecRegistry, readPreference, readConcern, ACKNOWLEDGED, executor, 'map', 'reduce'))
 
         when:
         mapReduceIterable = execute(mapReduceMethod, session, 'map', 'reduce', BsonDocument)
 
         then:
-        expect mapReduceIterable, isTheSameAs(MongoIterables.mapReduceOf(session, namespace, Document, BsonDocument, codecRegistry,
-                readPreference, readConcern,  ACKNOWLEDGED, executor, 'map', 'reduce'))
+        expect mapReduceIterable, isTheSameAs(new MapReduceIterableImpl<>(session, namespace, Document, BsonDocument,
+                codecRegistry, readPreference, readConcern, ACKNOWLEDGED, executor, 'map', 'reduce'))
 
         where:
         session << [null, Stub(ClientSession)]

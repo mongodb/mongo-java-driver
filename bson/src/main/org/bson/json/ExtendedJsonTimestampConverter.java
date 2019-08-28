@@ -17,21 +17,18 @@
 package org.bson.json;
 
 import org.bson.BsonTimestamp;
-import org.bson.internal.UnsignedLongs;
+
+import static java.lang.Integer.toUnsignedLong;
+import static java.lang.Long.toUnsignedString;
 
 class ExtendedJsonTimestampConverter implements Converter<BsonTimestamp> {
     @Override
     public void convert(final BsonTimestamp value, final StrictJsonWriter writer) {
         writer.writeStartObject();
         writer.writeStartObject("$timestamp");
-        writer.writeNumber("t", UnsignedLongs.toString(toUnsignedLong(value.getTime())));
-        writer.writeNumber("i", UnsignedLongs.toString(toUnsignedLong(value.getInc())));
+        writer.writeNumber("t", toUnsignedString(toUnsignedLong(value.getTime())));
+        writer.writeNumber("i", toUnsignedString(toUnsignedLong(value.getInc())));
         writer.writeEndObject();
         writer.writeEndObject();
-    }
-
-    // Equivalent to Integer.toUnsignedLong() in Java 8
-    private long toUnsignedLong(final int value) {
-        return ((long) value) & 0xffffffffL;
     }
 }

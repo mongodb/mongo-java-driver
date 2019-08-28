@@ -21,9 +21,10 @@ import com.mongodb.client.ClientSession;
 import com.mongodb.client.ListDatabasesIterable;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
+import com.mongodb.client.internal.ChangeStreamIterableImpl;
+import com.mongodb.client.internal.ListDatabasesIterableImpl;
 import com.mongodb.client.internal.MongoClientDelegate;
 import com.mongodb.client.internal.MongoDatabaseImpl;
-import com.mongodb.client.internal.MongoIterables;
 import com.mongodb.client.internal.SimpleMongoClient;
 import com.mongodb.client.internal.OperationExecutor;
 import com.mongodb.connection.BufferProvider;
@@ -453,8 +454,8 @@ public class MongoClient implements Closeable {
     }
 
     private <T> ListDatabasesIterable<T> createListDatabasesIterable(@Nullable final ClientSession clientSession, final Class<T> clazz) {
-        return MongoIterables.listDatabasesOf(clientSession, clazz, delegate.getCodecRegistry(),
-                ReadPreference.primary(), createOperationExecutor(), getMongoClientOptions().getRetryReads());
+        return new ListDatabasesIterableImpl<T>(clientSession, clazz, delegate.getCodecRegistry(), ReadPreference.primary(),
+                createOperationExecutor(), getMongoClientOptions().getRetryReads());
     }
 
     /**
@@ -861,9 +862,9 @@ public class MongoClient implements Closeable {
                                                                                final List<? extends Bson> pipeline,
                                                                                final Class<TResult> resultClass) {
         MongoClientOptions clientOptions = getMongoClientOptions();
-        return MongoIterables.changeStreamOf(clientSession, "admin",
-                delegate.getCodecRegistry(), clientOptions.getReadPreference(), clientOptions.getReadConcern(),
-                createOperationExecutor(), pipeline, resultClass, ChangeStreamLevel.CLIENT, clientOptions.getRetryReads());
+        return new ChangeStreamIterableImpl<TResult>(clientSession, "admin", delegate.getCodecRegistry(),
+                clientOptions.getReadPreference(), clientOptions.getReadConcern(), createOperationExecutor(),
+                pipeline, resultClass, ChangeStreamLevel.CLIENT, clientOptions.getRetryReads());
     }
 
 

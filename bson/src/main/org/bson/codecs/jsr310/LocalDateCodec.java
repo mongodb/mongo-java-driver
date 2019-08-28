@@ -35,7 +35,6 @@ import static java.lang.String.format;
  *
  * <p>Encodes and decodes {@code LocalDate} objects to and from {@code DateTime}.</p>
  * <p>Converts the {@code LocalDate} values to and from {@link ZoneOffset#UTC}.</p>
- * <p>Note: Requires Java 8 or greater.</p>
  *
  * @mongodb.driver.manual reference/bson-types
  * @since 3.7

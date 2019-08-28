@@ -35,7 +35,6 @@ import java.util.Map;
  * <li>{@link LocalDateTimeCodec}
  * <li>{@link LocalTimeCodec}
  * </ul>
- * <p>Requires Java 8 or greater.</p>
  *
  * @since 3.7
  */

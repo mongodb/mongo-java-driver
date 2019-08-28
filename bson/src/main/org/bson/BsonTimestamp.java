@@ -16,7 +16,7 @@
 
 package org.bson;
 
-import org.bson.internal.UnsignedLongs;
+import static java.lang.Long.compareUnsigned;
 
 /**
  * A value representing the BSON timestamp type.
@@ -99,7 +99,7 @@ public final class BsonTimestamp extends BsonValue implements Comparable<BsonTim
 
     @Override
     public int compareTo(final BsonTimestamp ts) {
-        return UnsignedLongs.compare(value, ts.value);
+        return compareUnsigned(value, ts.value);
     }
 
     @Override
