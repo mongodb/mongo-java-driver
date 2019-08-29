@@ -21,7 +21,7 @@ import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.event.ConnectionAddedEvent;
 import com.mongodb.event.ConnectionCheckedInEvent;
 import com.mongodb.event.ConnectionCheckedOutEvent;
-import com.mongodb.event.ConnectionPoolListenerAdapter;
+import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolOpenedEvent;
 import com.mongodb.event.ConnectionPoolWaitQueueEnteredEvent;
 import com.mongodb.event.ConnectionPoolWaitQueueExitedEvent;
@@ -32,7 +32,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * An MBean implementation for connection pool statistics.
  */
-final class ConnectionPoolStatistics extends ConnectionPoolListenerAdapter implements ConnectionPoolStatisticsMBean {
+final class ConnectionPoolStatistics implements ConnectionPoolListener, ConnectionPoolStatisticsMBean {
     private final ServerAddress serverAddress;
     private final ConnectionPoolSettings settings;
     private final AtomicInteger size = new AtomicInteger();

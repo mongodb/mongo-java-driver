@@ -29,7 +29,7 @@ import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
-import com.mongodb.event.ServerListenerAdapter;
+import com.mongodb.event.ServerListener;
 import org.bson.BsonDocument;
 import org.bson.types.ObjectId;
 
@@ -137,7 +137,7 @@ public abstract class AbstractMultiServerCluster extends BaseCluster {
     }
 
 
-    private final class DefaultServerStateListener extends ServerListenerAdapter {
+    private final class DefaultServerStateListener implements ServerListener {
         @Override
         public void serverDescriptionChanged(final ServerDescriptionChangedEvent event) {
             onChange(event);

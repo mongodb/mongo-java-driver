@@ -20,14 +20,10 @@ import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ConnectionPoolSettings;
 import com.mongodb.connection.ServerSettings;
 import com.mongodb.event.ClusterListener;
-import com.mongodb.event.ClusterListenerAdapter;
 import com.mongodb.event.CommandListener;
 import com.mongodb.event.ConnectionPoolListener;
-import com.mongodb.event.ConnectionPoolListenerAdapter;
 import com.mongodb.event.ServerListener;
-import com.mongodb.event.ServerListenerAdapter;
 import com.mongodb.event.ServerMonitorListener;
-import com.mongodb.event.ServerMonitorListenerAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -95,16 +91,16 @@ public final class EventListenerHelper {
         }
     }
 
-    public static final ServerListener NO_OP_SERVER_LISTENER = new ServerListenerAdapter() {
+    public static final ServerListener NO_OP_SERVER_LISTENER = new ServerListener() {
     };
 
-    public static final ServerMonitorListener NO_OP_SERVER_MONITOR_LISTENER = new ServerMonitorListenerAdapter() {
+    private static final ServerMonitorListener NO_OP_SERVER_MONITOR_LISTENER = new ServerMonitorListener() {
     };
 
-    public static final ClusterListener NO_OP_CLUSTER_LISTENER = new ClusterListenerAdapter() {
+    public static final ClusterListener NO_OP_CLUSTER_LISTENER = new ClusterListener() {
     };
 
-    public static final ConnectionPoolListener NO_OP_CONNECTION_POOL_LISTENER = new ConnectionPoolListenerAdapter() {
+    private static final ConnectionPoolListener NO_OP_CONNECTION_POOL_LISTENER = new ConnectionPoolListener() {
     };
 
     private EventListenerHelper() {

@@ -16,13 +16,13 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.event.ConnectionPoolListenerAdapter;
+import com.mongodb.event.ConnectionPoolListener;
 import com.mongodb.event.ConnectionPoolWaitQueueEnteredEvent;
 import com.mongodb.event.ConnectionPoolWaitQueueExitedEvent;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-class QueueEventsConnectionPoolListener extends ConnectionPoolListenerAdapter {
+class QueueEventsConnectionPoolListener implements ConnectionPoolListener {
     private final AtomicInteger waitQueueSize = new AtomicInteger();
 
     @Override
@@ -35,7 +35,7 @@ class QueueEventsConnectionPoolListener extends ConnectionPoolListenerAdapter {
         waitQueueSize.decrementAndGet();
     }
 
-    public int getWaitQueueSize() {
+    int getWaitQueueSize() {
         return waitQueueSize.get();
     }
 }
