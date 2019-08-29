@@ -27,7 +27,7 @@ import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ServerDescriptionChangedEvent;
-import com.mongodb.event.ServerListenerAdapter;
+import com.mongodb.event.ServerListener;
 
 import java.util.Collections;
 
@@ -79,7 +79,7 @@ public final class SingleServerCluster extends BaseCluster {
         }
     }
 
-    private class DefaultServerStateListener extends ServerListenerAdapter {
+    private class DefaultServerStateListener implements ServerListener {
         @Override
         public void serverDescriptionChanged(final ServerDescriptionChangedEvent event) {
             ServerDescription descriptionToPublish = event.getNewDescription();
