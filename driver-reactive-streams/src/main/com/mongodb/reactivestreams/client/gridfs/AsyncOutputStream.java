@@ -27,7 +27,7 @@ import java.nio.ByteBuffer;
  * The Async Output Stream interface represents some asynchronous output stream of bytes.
  *
  * <p>See the {@link AsyncStreamHelper} class for adapters that create an {@code AsyncOutputStream}</p>
- * 
+ *
  * @since 1.3
  */
 public interface AsyncOutputStream {

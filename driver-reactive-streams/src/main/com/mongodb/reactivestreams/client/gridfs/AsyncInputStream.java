@@ -26,7 +26,7 @@ import java.nio.ByteBuffer;
  * The Async Input Stream interface represents some asynchronous input stream of bytes.
  *
  * <p>See the {@link AsyncStreamHelper} class for adapters that create an {@code AsyncInputStream}</p>
- * 
+ *
  * @since 1.3
  */
 public interface AsyncInputStream {
