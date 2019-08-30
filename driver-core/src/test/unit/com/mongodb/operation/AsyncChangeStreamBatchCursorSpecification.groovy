@@ -25,7 +25,7 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
     def 'should call the underlying AsyncQueryBatchCursor'() {
         given:
         def changeStreamOpertation = Stub(ChangeStreamOperation)
-        def binding = Stub(AsyncReadBinding)
+        def binding = Mock(AsyncReadBinding)
         def wrapped = Mock(AsyncQueryBatchCursor)
         def callback = Stub(SingleResultCallback)
         def cursor = new AsyncChangeStreamBatchCursor(changeStreamOpertation, wrapped, binding, null)
@@ -46,13 +46,26 @@ class AsyncChangeStreamBatchCursorSpecification extends Specification {
         cursor.next(callback)
 
         then:
-        1 * wrapped.next(_) >> { it[0].onResult([], null) }
+        1 * wrapped.next(_) >> { it[0].onResult(null, null) }
 
         when:
         cursor.close()
 
         then:
+        1 * wrapped.isClosed() >> {
+            false
+        }
         1 * wrapped.close()
-    }
+        1 * binding.release()
 
+        when:
+        cursor.close()
+
+        then:
+        1 * wrapped.isClosed() >> {
+            true
+        }
+        0 * wrapped.close()
+        0 * binding.release()
+    }
 }
