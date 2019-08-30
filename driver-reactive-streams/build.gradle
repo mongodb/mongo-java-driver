@@ -32,8 +32,6 @@ dependencies {
 
 // Reactive Streams TCK uses TestNG, and Gradle can't run TestNG and JUnit in the same run.
 task tckTest(type: Test) {
-    tasks.check.dependsOn it
-
     useTestNG()
     scanForTestClasses = false
 
