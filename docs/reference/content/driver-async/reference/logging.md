@@ -10,9 +10,9 @@ title = "Logging"
 
 # Logging
 
-By default, logging is enabled via the popular [SLF4J](http://www.slf4j.org/) API. The use of [SLF4J](http://www.slf4j.org/) is optional;
+By default, logging is enabled via the popular [SLF4J](http://www.slf4j.org/) API. Logging is optional:
 the driver will use SLF4J if the driver detects the presence of SLF4J API (class `org.slf4j.Logger`) in the classpath. 
-Otherwise, the driver will fall back to JUL (`java.util.logging`).
+Otherwise, the driver will log a single warning via JUL (`java.util.logging`) and otherwise logging will be disabled.
 
 The driver uses the following logger names:
 
