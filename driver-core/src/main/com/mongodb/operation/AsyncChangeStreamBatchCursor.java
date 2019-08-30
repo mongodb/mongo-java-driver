@@ -83,8 +83,10 @@ final class AsyncChangeStreamBatchCursor<T> implements AsyncAggregateResponseBat
 
     @Override
     public void close() {
-        wrapped.close();
-        binding.release();
+        if (!isClosed()) {
+            wrapped.close();
+            binding.release();
+        }
     }
 
     @Override
