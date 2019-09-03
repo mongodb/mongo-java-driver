@@ -33,7 +33,7 @@ class SingleResultSubscriber<T> implements Subscriber<T> {
     @Nullable
     T get() {
         try {
-            if (!latch.await(30, TimeUnit.SECONDS)) {
+            if (!latch.await(5, TimeUnit.SECONDS)) {
                 throw new MongoTimeoutException("Timeout waiting for single result");
             }
             if (exception != null) {
