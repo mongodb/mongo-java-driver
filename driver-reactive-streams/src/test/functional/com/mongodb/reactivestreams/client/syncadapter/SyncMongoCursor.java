@@ -64,7 +64,7 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
             }
         });
         try {
-            if (!latch.await(30, TimeUnit.SECONDS)) {
+            if (!latch.await(5, TimeUnit.SECONDS)) {
                 throw new MongoTimeoutException("Timeout waiting for subscription");
             }
         } catch (InterruptedException e) {
@@ -84,7 +84,7 @@ class SyncMongoCursor<T> implements MongoCursor<T> {
             return true;
         }
         try {
-            Object first = results.pollFirst(30, TimeUnit.SECONDS);
+            Object first = results.pollFirst(5, TimeUnit.SECONDS);
             if (first == null) {
                 throw new MongoTimeoutException("Time out!!!");
             } else if (first instanceof Throwable) {
