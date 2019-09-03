@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package org.bson.codecs.configuration;
+package org.bson.internal;
 
 import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecConfigurationException;
 
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;

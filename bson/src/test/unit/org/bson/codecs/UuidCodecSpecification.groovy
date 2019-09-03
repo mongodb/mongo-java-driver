@@ -18,14 +18,19 @@ package org.bson.codecs
 
 import org.bson.BsonBinaryReader
 import org.bson.BsonBinaryWriter
+import org.bson.BsonDocument
+import org.bson.BsonDocumentWriter
 import org.bson.ByteBufNIO
 import org.bson.UuidRepresentation
+import org.bson.codecs.configuration.CodecConfigurationException
 import org.bson.io.BasicOutputBuffer
 import org.bson.io.ByteBufferBsonInput
 import spock.lang.Shared
 import spock.lang.Specification
 
 import java.nio.ByteBuffer
+
+import static org.bson.UuidRepresentation.JAVA_LEGACY
 
 /**
  *
@@ -38,6 +43,11 @@ class UuidCodecSpecification extends Specification {
     def setup() {
         uuidCodec = new UuidCodec();
         outputBuffer = new BasicOutputBuffer();
+    }
+
+    def 'should default to Java legacy representation'() {
+        expect:
+        new UuidCodec().getUuidRepresentation() == JAVA_LEGACY
     }
 
     def 'should decode different types of UUID'(UuidCodec codec, byte[] list) throws IOException {
@@ -148,5 +158,16 @@ class UuidCodecSpecification extends Specification {
                 UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10'), // simulated Python UUID
                 UUID.fromString('04030201-0605-0807-090a-0b0c0d0e0f10') // simulated C# UUID
         ]
+    }
+
+    def 'should throw if representation is unspecified'() {
+        given:
+        def codec = new UuidCodec(UuidRepresentation.UNSPECIFIED)
+
+        when:
+        codec.encode(new BsonDocumentWriter(new BsonDocument()), UUID.randomUUID(), EncoderContext.builder().build())
+
+        then:
+        thrown(CodecConfigurationException)
     }
 }

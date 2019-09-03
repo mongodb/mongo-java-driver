@@ -42,12 +42,14 @@ import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.Document;
+import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.util.Collections;
 import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
+import static org.bson.internal.CodecRegistryHelper.createRegistry;
 import static com.mongodb.client.internal.Crypts.createCrypt;
 import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
 import static java.util.Collections.singletonList;
@@ -66,14 +68,16 @@ public final class MongoClientImpl implements MongoClient {
         this.settings = notNull("settings", settings);
         AutoEncryptionSettings autoEncryptionSettings = settings.getAutoEncryptionSettings();
         this.delegate = new MongoClientDelegate(notNull("cluster", cluster),
+                createRegistry(settings.getCodecRegistry(), settings.getUuidRepresentation()),
                 singletonList(settings.getCredential()), this, operationExecutor,
                 autoEncryptionSettings == null ? null : createCrypt(SimpleMongoClients.create(this), autoEncryptionSettings));
     }
 
     @Override
     public MongoDatabase getDatabase(final String databaseName) {
-        return new MongoDatabaseImpl(databaseName, settings.getCodecRegistry(), settings.getReadPreference(), settings.getWriteConcern(),
-                settings.getRetryWrites(), settings.getRetryReads(), settings.getReadConcern(), delegate.getOperationExecutor());
+        return new MongoDatabaseImpl(databaseName, delegate.getCodecRegistry(), settings.getReadPreference(), settings.getWriteConcern(),
+                settings.getRetryWrites(), settings.getRetryReads(), settings.getReadConcern(),
+                settings.getUuidRepresentation(), delegate.getOperationExecutor());
     }
 
     @Override
@@ -193,6 +197,10 @@ public final class MongoClientImpl implements MongoClient {
         return delegate.getCluster();
     }
 
+    public CodecRegistry getCodecRegistry() {
+        return delegate.getCodecRegistry();
+    }
+
     private static Cluster createCluster(final MongoClientSettings settings,
                                          @Nullable final MongoDriverInformation mongoDriverInformation) {
         notNull("settings", settings);
@@ -215,7 +223,7 @@ public final class MongoClientImpl implements MongoClient {
     }
 
     private <T> ListDatabasesIterable<T> createListDatabasesIterable(@Nullable final ClientSession clientSession, final Class<T> clazz) {
-        return MongoIterables.listDatabasesOf(clientSession, clazz, settings.getCodecRegistry(),
+        return MongoIterables.listDatabasesOf(clientSession, clazz, delegate.getCodecRegistry(),
                 ReadPreference.primary(), delegate.getOperationExecutor(), settings.getRetryReads());
     }
 

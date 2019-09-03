@@ -16,10 +16,10 @@
 
 package org.bson.internal;
 
-import org.bson.UuidRepresentation;
 import org.bson.BSONException;
-import org.bson.BsonSerializationException;
 import org.bson.BsonBinarySubType;
+import org.bson.BsonSerializationException;
+import org.bson.UuidRepresentation;
 
 import java.util.UUID;
 
@@ -79,7 +79,7 @@ public final class UuidHelper {
             case STANDARD:
                 break;
             default:
-                throw new BSONException("Unexpected UUID representation");
+                throw new BSONException("Unexpected UUID representation: " + uuidRepresentation);
         }
 
         return binaryData;
@@ -104,10 +104,10 @@ public final class UuidHelper {
                 case PYTHON_LEGACY:
                     break;
                 case STANDARD:
-                    throw new BSONException("Can not decode a subtype 3 (UUID legacy) BSON binary when the decoder is configured to use " +
-                            "the standard UUID representation");
+                    throw new BSONException("Can not decode a subtype 3 (UUID legacy) BSON binary when the decoder is configured to use "
+                            + "the standard UUID representation");
                 default:
-                    throw new BSONException("Unexpected UUID representation");
+                    throw new BSONException("Unexpected UUID representation: " + uuidRepresentation);
             }
         }
 

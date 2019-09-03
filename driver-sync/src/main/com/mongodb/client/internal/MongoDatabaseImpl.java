@@ -42,6 +42,7 @@ import com.mongodb.operation.CreateViewOperation;
 import com.mongodb.operation.DropDatabaseOperation;
 import org.bson.BsonDocument;
 import org.bson.Document;
+import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -51,6 +52,7 @@ import java.util.List;
 
 import static com.mongodb.MongoNamespace.checkDatabaseNameValidity;
 import static com.mongodb.assertions.Assertions.notNull;
+import static org.bson.internal.CodecRegistryHelper.createRegistry;
 
 /**
  * This class is not part of the public API and may be removed or changed at any time.
@@ -64,10 +66,11 @@ public class MongoDatabaseImpl implements MongoDatabase {
     private final boolean retryReads;
     private final ReadConcern readConcern;
     private final OperationExecutor executor;
+    private UuidRepresentation uuidRepresentation;
 
     public MongoDatabaseImpl(final String name, final CodecRegistry codecRegistry, final ReadPreference readPreference,
                              final WriteConcern writeConcern, final boolean retryWrites, final boolean retryReads,
-                             final ReadConcern readConcern, final OperationExecutor executor) {
+                             final ReadConcern readConcern, final UuidRepresentation uuidRepresentation, final OperationExecutor executor) {
         checkDatabaseNameValidity(name);
         this.name = notNull("name", name);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
@@ -76,6 +79,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
         this.retryWrites = retryWrites;
         this.retryReads = retryReads;
         this.readConcern = notNull("readConcern", readConcern);
+        this.uuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
         this.executor = notNull("executor", executor);
     }
 
@@ -106,22 +110,26 @@ public class MongoDatabaseImpl implements MongoDatabase {
 
     @Override
     public MongoDatabase withCodecRegistry(final CodecRegistry codecRegistry) {
-        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern, executor);
+        return new MongoDatabaseImpl(name, createRegistry(codecRegistry, uuidRepresentation), readPreference, writeConcern, retryWrites,
+                retryReads, readConcern, uuidRepresentation, executor);
     }
 
     @Override
     public MongoDatabase withReadPreference(final ReadPreference readPreference) {
-        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern, executor);
+        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern,
+                uuidRepresentation, executor);
     }
 
     @Override
     public MongoDatabase withWriteConcern(final WriteConcern writeConcern) {
-        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern, executor);
+        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern,
+                uuidRepresentation, executor);
     }
 
     @Override
     public MongoDatabase withReadConcern(final ReadConcern readConcern) {
-        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern, executor);
+        return new MongoDatabaseImpl(name, codecRegistry, readPreference, writeConcern, retryWrites, retryReads, readConcern,
+                uuidRepresentation, executor);
     }
 
     @Override
@@ -132,7 +140,7 @@ public class MongoDatabaseImpl implements MongoDatabase {
     @Override
     public <TDocument> MongoCollection<TDocument> getCollection(final String collectionName, final Class<TDocument> documentClass) {
         return new MongoCollectionImpl<TDocument>(new MongoNamespace(name, collectionName), documentClass, codecRegistry, readPreference,
-                writeConcern, retryWrites, retryReads, readConcern, executor);
+                writeConcern, retryWrites, retryReads, readConcern, uuidRepresentation, executor);
     }
 
     @Override

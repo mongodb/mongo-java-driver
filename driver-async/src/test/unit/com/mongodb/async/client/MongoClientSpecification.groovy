@@ -22,7 +22,9 @@ import com.mongodb.client.model.geojson.MultiPolygon
 import com.mongodb.connection.Cluster
 import org.bson.BsonDocument
 import org.bson.Document
+import org.bson.UuidRepresentation
 import org.bson.codecs.BsonValueCodecProvider
+import org.bson.internal.OverridableUuidRepresentationCodecRegistry
 import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.isTheSameAs
@@ -30,7 +32,9 @@ import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.secondary
 import static com.mongodb.async.client.MongoClients.getDefaultCodecRegistry
 import static com.mongodb.async.client.TestHelper.execute
+import static org.bson.UuidRepresentation.STANDARD
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders
+import static org.bson.internal.CodecRegistryHelper.createRegistry
 import static spock.util.matcher.HamcrestSupport.expect
 
 class MongoClientSpecification extends Specification {
@@ -92,6 +96,7 @@ class MongoClientSpecification extends Specification {
                                           .retryReads(true)
                                           .readConcern(ReadConcern.MAJORITY)
                                           .codecRegistry(codecRegistry)
+                                          .uuidRepresentation(UuidRepresentation.STANDARD)
                                           .build()
         def client = new MongoClientImpl(settings, Stub(Cluster), new TestOperationExecutor([]))
 
@@ -101,9 +106,14 @@ class MongoClientSpecification extends Specification {
         then:
         expect database, isTheSameAs(expectedDatabase)
 
+        cleanup:
+        client?.close()
+
         where:
-        expectedDatabase << new MongoDatabaseImpl('name', fromProviders([new BsonValueCodecProvider()]), secondary(),
-                WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, new TestOperationExecutor([]))
+        expectedDatabase << new MongoDatabaseImpl('name',
+                createRegistry(fromProviders([new BsonValueCodecProvider()]), UuidRepresentation.STANDARD), secondary(),
+                WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, UuidRepresentation.STANDARD,
+                new TestOperationExecutor([]))
     }
 
 
@@ -132,5 +142,26 @@ class MongoClientSpecification extends Specification {
         codecRegistry.get(Integer)
         codecRegistry.get(MultiPolygon)
         codecRegistry.get(Iterable)
+    }
+
+    def 'should create registry reflecting UuidRepresentation'() {
+        given:
+        def codecRegistry = fromProviders([new BsonValueCodecProvider()])
+        def settings = MongoClientSettings.builder()
+                .codecRegistry(codecRegistry)
+                .uuidRepresentation(STANDARD)
+                .build()
+
+        when:
+        def client = new MongoClientImpl(settings, Stub(Cluster), new TestOperationExecutor([]))
+        def registry = client.getCodecRegistry()
+
+        then:
+        registry instanceof OverridableUuidRepresentationCodecRegistry
+        (registry as OverridableUuidRepresentationCodecRegistry).uuidRepresentation == STANDARD
+        (registry as OverridableUuidRepresentationCodecRegistry).wrapped == codecRegistry
+
+        cleanup:
+        client?.close()
     }
 }

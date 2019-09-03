@@ -24,6 +24,7 @@ import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SslSettings
 import com.mongodb.connection.netty.NettyStreamFactoryFactory
 import com.mongodb.event.CommandListener
+import org.bson.UuidRepresentation
 import org.bson.codecs.configuration.CodecRegistry
 import spock.lang.IgnoreIf
 import spock.lang.Specification
@@ -56,7 +57,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.streamFactoryFactory == null
         settings.compressorList == []
         settings.credential == null
-        settings.credential == null
+        settings.uuidRepresentation == UuidRepresentation.JAVA_LEGACY
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')
@@ -103,6 +104,11 @@ class MongoClientSettingsSpecification extends Specification {
         builder.compressorList(null)
         then:
         thrown(IllegalArgumentException)
+
+        when:
+        builder.uuidRepresentation(null)
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'should build with set configuration'() {
@@ -132,6 +138,7 @@ class MongoClientSettingsSpecification extends Specification {
                 })
                 .streamFactoryFactory(streamFactoryFactory)
                 .compressorList([MongoCompressor.createZlibCompressor()])
+                .uuidRepresentation(UuidRepresentation.STANDARD)
                 .build()
 
         then:
@@ -149,6 +156,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.getClusterSettings() == clusterSettings
         settings.getStreamFactoryFactory() == streamFactoryFactory
         settings.getCompressorList() == [MongoCompressor.createZlibCompressor()]
+        settings.getUuidRepresentation() == UuidRepresentation.STANDARD
     }
 
     def 'should be easy to create new settings from existing'() {
@@ -277,6 +285,7 @@ class MongoClientSettingsSpecification extends Specification {
                 + '&readPreference=secondary'
                 + '&readConcernLevel=majority'
                 + '&compressors=zlib&zlibCompressionLevel=5'
+                + '&uuidRepresentation=standard'
         )
         MongoClientSettings settings = MongoClientSettings.builder().applyConnectionString(connectionString).build()
         MongoClientSettings expected = MongoClientSettings.builder()
@@ -330,6 +339,7 @@ class MongoClientSettingsSpecification extends Specification {
             .compressorList([MongoCompressor.createZlibCompressor().withProperty(MongoCompressor.LEVEL, 5)])
             .retryWrites(true)
             .retryReads(true)
+            .uuidRepresentation(UuidRepresentation.STANDARD)
             .build()
 
         then:
@@ -419,7 +429,7 @@ class MongoClientSettingsSpecification extends Specification {
         def expected = ['applicationName', 'autoEncryptionSettings', 'clusterSettingsBuilder', 'codecRegistry', 'commandListeners',
                         'compressorList', 'connectionPoolSettingsBuilder', 'credential', 'readConcern', 'readPreference', 'retryReads',
                         'retryWrites', 'serverSettingsBuilder', 'socketSettingsBuilder', 'sslSettingsBuilder', 'streamFactoryFactory',
-                        'writeConcern']
+                        'uuidRepresentation', 'writeConcern']
 
         then:
         actual == expected
@@ -432,7 +442,8 @@ class MongoClientSettingsSpecification extends Specification {
         def expected = ['addCommandListener', 'applicationName', 'applyConnectionString', 'applyToClusterSettings',
                         'applyToConnectionPoolSettings', 'applyToServerSettings', 'applyToSocketSettings', 'applyToSslSettings',
                         'autoEncryptionSettings', 'build', 'codecRegistry', 'commandListenerList', 'compressorList', 'credential',
-                        'readConcern', 'readPreference', 'retryReads', 'retryWrites', 'streamFactoryFactory', 'writeConcern']
+                        'readConcern', 'readPreference', 'retryReads', 'retryWrites', 'streamFactoryFactory', 'uuidRepresentation',
+                        'writeConcern']
         then:
         actual == expected
     }

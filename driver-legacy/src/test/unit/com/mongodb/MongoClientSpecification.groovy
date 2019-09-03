@@ -18,6 +18,7 @@ package com.mongodb
 
 import com.mongodb.client.ClientSession
 import com.mongodb.client.internal.MongoClientImpl
+import com.mongodb.client.internal.MongoDatabaseImpl
 import com.mongodb.client.internal.MongoIterables
 import com.mongodb.client.internal.TestOperationExecutor
 import com.mongodb.client.model.changestream.ChangeStreamLevel
@@ -25,15 +26,23 @@ import com.mongodb.client.model.geojson.MultiPolygon
 import com.mongodb.connection.Cluster
 import org.bson.BsonDocument
 import org.bson.Document
+import org.bson.codecs.ValueCodecProvider
+import org.bson.codecs.configuration.CodecRegistry
+import org.bson.internal.OverridableUuidRepresentationCodecRegistry
 import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.isTheSameAs
 import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry
 import static com.mongodb.ReadPreference.primary
+import static com.mongodb.ReadPreference.secondary
 import static com.mongodb.client.internal.TestHelper.execute
+import static org.bson.UuidRepresentation.STANDARD
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
 
 class MongoClientSpecification extends Specification {
+
+    private static CodecRegistry codecRegistry = fromProviders(new ValueCodecProvider())
 
     def 'default codec registry should contain all supported providers'() {
         given:
@@ -146,5 +155,45 @@ class MongoClientSpecification extends Specification {
 
         then:
         thrown(IllegalArgumentException)
+    }
+    def 'should pass the correct settings to getDatabase'() {
+        given:
+        def options = MongoClientOptions.builder()
+                .readPreference(secondary())
+                .writeConcern(WriteConcern.MAJORITY)
+                .readConcern(ReadConcern.MAJORITY)
+                .retryWrites(true)
+                .codecRegistry(codecRegistry)
+                .uuidRepresentation(STANDARD)
+                .build()
+        def client = new MongoClient('localhost', options)
+
+        when:
+        def database = client.getDatabase('name')
+
+        then:
+        expect database, isTheSameAs(new MongoDatabaseImpl('name', client.getDelegate().getCodecRegistry(), secondary(),
+                WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, STANDARD,
+                client.getDelegate().getOperationExecutor()))
+    }
+
+    def 'should create registry reflecting UuidRepresentation'() {
+        given:
+        def options = MongoClientOptions.builder()
+                .codecRegistry(codecRegistry)
+                .uuidRepresentation(STANDARD)
+                .build()
+
+        when:
+        def client = new MongoClient('localhost', options)
+        def registry = client.getCodecRegistry()
+
+        then:
+        registry instanceof OverridableUuidRepresentationCodecRegistry
+        (registry as OverridableUuidRepresentationCodecRegistry).uuidRepresentation == STANDARD
+        (registry as OverridableUuidRepresentationCodecRegistry).wrapped == codecRegistry
+
+        cleanup:
+        client?.close()
     }
 }

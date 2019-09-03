@@ -29,6 +29,7 @@ import com.mongodb.event.ServerListener;
 import com.mongodb.event.ServerMonitorListener;
 import com.mongodb.lang.Nullable;
 import com.mongodb.selector.ServerSelector;
+import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import javax.net.SocketFactory;
@@ -68,6 +69,7 @@ public class MongoClientOptions {
     private final boolean retryReads;
     private final ReadConcern readConcern;
     private final CodecRegistry codecRegistry;
+    private final UuidRepresentation uuidRepresentation;
     private final ServerSelector serverSelector;
 
     private final int minConnectionsPerHost;
@@ -128,6 +130,7 @@ public class MongoClientOptions {
         retryReads = builder.retryReads;
         readConcern = builder.readConcern;
         codecRegistry = builder.codecRegistry;
+        uuidRepresentation = builder.uuidRepresentation;
         serverSelector = builder.serverSelector;
         sslEnabled = builder.sslEnabled;
         sslInvalidHostNameAllowed = builder.sslInvalidHostNameAllowed;
@@ -591,6 +594,26 @@ public class MongoClientOptions {
     }
 
     /**
+     * Gets the UUID representation to use when encoding instances of {@link java.util.UUID} and when decoding BSON binary values with
+     * subtype of 3.
+     *
+     * <p>The default is {@link UuidRepresentation#JAVA_LEGACY}, but it will be changing to {@link UuidRepresentation#UNSPECIFIED} in
+     * the next major release.  If your application stores UUID values in MongoDB, consider setting this value to the desired
+     * representation in order to avoid a breaking change when upgrading.  New applications should prefer
+     * {@link UuidRepresentation#STANDARD}, while existing Java applications should prefer {@link UuidRepresentation#JAVA_LEGACY}.
+     * Applications wishing to interoperate with existing Python or .NET applications should prefer
+     * {@link UuidRepresentation#PYTHON_LEGACY} or {@link UuidRepresentation#C_SHARP_LEGACY}, respectively. Applications that do not
+     * store UUID values in MongoDB don't need to set this value.
+     * </p>
+     *
+     * @return the UUID representation, which may not be null
+     * @since 3.12
+     */
+    public UuidRepresentation getUuidRepresentation() {
+        return uuidRepresentation;
+    }
+
+    /**
      * Gets the server selector.
      *
      * <p>The server selector augments the normal server selection rules applied by the driver when determining
@@ -871,6 +894,9 @@ public class MongoClientOptions {
         if (!codecRegistry.equals(that.codecRegistry)) {
             return false;
         }
+        if (!uuidRepresentation.equals(that.uuidRepresentation)) {
+            return false;
+        }
         if (serverSelector != null ? !serverSelector.equals(that.serverSelector) : that.serverSelector != null) {
             return false;
         }
@@ -908,6 +934,7 @@ public class MongoClientOptions {
         result = 31 * result + (retryReads ? 1 : 0);
         result = 31 * result + (readConcern != null ? readConcern.hashCode() : 0);
         result = 31 * result + codecRegistry.hashCode();
+        result = 31 * result + uuidRepresentation.hashCode();
         result = 31 * result + (serverSelector != null ? serverSelector.hashCode() : 0);
         result = 31 * result + clusterListeners.hashCode();
         result = 31 * result + commandListeners.hashCode();
@@ -952,6 +979,7 @@ public class MongoClientOptions {
                 + ", retryReads=" + retryReads
                 + ", readConcern=" + readConcern
                 + ", codecRegistry=" + codecRegistry
+                + ", uuidRepresentation=" + uuidRepresentation
                 + ", serverSelector=" + serverSelector
                 + ", clusterListeners=" + clusterListeners
                 + ", commandListeners=" + commandListeners
@@ -1009,6 +1037,7 @@ public class MongoClientOptions {
         private boolean retryReads = true;
         private ReadConcern readConcern = ReadConcern.DEFAULT;
         private CodecRegistry codecRegistry = MongoClient.getDefaultCodecRegistry();
+        private UuidRepresentation uuidRepresentation = UuidRepresentation.JAVA_LEGACY;
         private ServerSelector serverSelector;
         private int minConnectionsPerHost;
         private int maxConnectionsPerHost = 100;
@@ -1075,6 +1104,7 @@ public class MongoClientOptions {
             retryReads = options.getRetryReads();
             readConcern = options.getReadConcern();
             codecRegistry = options.getCodecRegistry();
+            uuidRepresentation = options.getUuidRepresentation();
             serverSelector = options.getServerSelector();
             sslEnabled = options.isSslEnabled();
             sslInvalidHostNameAllowed = options.isSslInvalidHostNameAllowed();
@@ -1421,6 +1451,21 @@ public class MongoClientOptions {
          */
         public Builder codecRegistry(final CodecRegistry codecRegistry) {
             this.codecRegistry = notNull("codecRegistry", codecRegistry);
+            return this;
+        }
+
+        /**
+         * Sets the UUID representation to use when encoding instances of {@link java.util.UUID} and when decoding BSON binary values with
+         * subtype of 3.
+         *
+         * <p>See {@link #getUuidRepresentation()} for recommendations on settings this value</p>
+         *
+         * @param uuidRepresentation the UUID representation, which may not be null
+         * @return this
+         * @since 3.12
+         */
+        public Builder uuidRepresentation(final UuidRepresentation uuidRepresentation) {
+            this.uuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
             return this;
         }
 

@@ -21,6 +21,7 @@ import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.internal.dns.DefaultDnsResolver;
 import com.mongodb.lang.Nullable;
+import org.bson.UuidRepresentation;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -229,6 +230,9 @@ import static java.util.Collections.unmodifiableList;
  *  Defaults to true.</li>
  * <li>{@code retryReads=true|false}. If true the driver will retry supported read operations if they fail due to a network error.
  *  Defaults to true.</li>
+ * <li>{@code uuidRepresentation=unspecified|standard|javaLegacy|csharpLegacy|pythonLegacy}.  See
+ * {@link MongoClientSettings#getUuidRepresentation()} for documentation of semantics of this parameter.  Defaults to "javaLegacy", but
+ * will change to "unspecified" in the next major release.</li>
  * </ul>
  *
  * @mongodb.driver.manual reference/connection-string Connection String Format
@@ -273,6 +277,7 @@ public class ConnectionString {
     private Integer heartbeatFrequency;
     private String applicationName;
     private List<MongoCompressor> compressorList;
+    private UuidRepresentation uuidRepresentation;
 
     /**
      * Creates a ConnectionString from the given string.
@@ -434,6 +439,8 @@ public class ConnectionString {
 
         GENERAL_OPTIONS_KEYS.add("appname");
 
+        GENERAL_OPTIONS_KEYS.add("uuidrepresentation");
+
         COMPRESSOR_KEYS.add("compressors");
         COMPRESSOR_KEYS.add("zlibcompressionlevel");
 
@@ -539,6 +546,8 @@ public class ConnectionString {
                 retryWrites = parseBoolean(value, "retrywrites");
             } else if (key.equals("retryreads")) {
                 retryReads = parseBoolean(value, "retryreads");
+            } else if (key.equals("uuidrepresentation")) {
+                uuidRepresentation = createUuidRepresentation(value);
             }
         }
 
@@ -654,6 +663,25 @@ public class ConnectionString {
             }
         }
         return buildReadPreference(readPreferenceType, tagSetList, maxStalenessSeconds);
+    }
+
+    private UuidRepresentation createUuidRepresentation(final String value) {
+        if (value.equalsIgnoreCase("unspecified")) {
+            return UuidRepresentation.UNSPECIFIED;
+        }
+        if (value.equalsIgnoreCase("javaLegacy")) {
+            return UuidRepresentation.JAVA_LEGACY;
+        }
+        if (value.equalsIgnoreCase("csharpLegacy")) {
+            return UuidRepresentation.C_SHARP_LEGACY;
+        }
+        if (value.equalsIgnoreCase("pythonLegacy")) {
+            return UuidRepresentation.PYTHON_LEGACY;
+        }
+        if (value.equalsIgnoreCase("standard")) {
+            return UuidRepresentation.STANDARD;
+        }
+        throw new IllegalArgumentException("Unknown uuid representation: " + value);
     }
 
     @Nullable
@@ -1357,6 +1385,19 @@ public class ConnectionString {
      */
     public List<MongoCompressor> getCompressorList() {
         return compressorList;
+    }
+
+    /**
+     * Gets the UUID representation.
+     *
+     * <p>Default is null.</p>
+     *
+     * @return the UUID representation, which may be null if it was unspecified
+     * @since 3.12
+     */
+    @Nullable
+    public UuidRepresentation getUuidRepresentation() {
+        return uuidRepresentation;
     }
 
     @Override

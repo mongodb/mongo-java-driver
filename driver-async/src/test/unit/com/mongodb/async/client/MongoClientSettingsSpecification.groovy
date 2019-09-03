@@ -31,6 +31,7 @@ import com.mongodb.connection.SocketSettings
 import com.mongodb.connection.SslSettings
 import com.mongodb.connection.netty.NettyStreamFactoryFactory
 import com.mongodb.event.CommandListener
+import org.bson.UuidRepresentation
 import org.bson.codecs.configuration.CodecRegistry
 import spock.lang.IgnoreIf
 import spock.lang.Specification
@@ -64,6 +65,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.getCompressorList() == []
         settings.getCredentialList() == []
         settings.getCredential() == null
+        settings.getUuidRepresentation() == UuidRepresentation.JAVA_LEGACY
     }
 
     @SuppressWarnings('UnnecessaryObjectReferences')
@@ -135,6 +137,11 @@ class MongoClientSettingsSpecification extends Specification {
         builder.compressorList(null)
         then:
         thrown(IllegalArgumentException)
+
+        when:
+        builder.uuidRepresentation(null)
+        then:
+        thrown(IllegalArgumentException)
     }
 
     def 'should build with supplied settings'() {
@@ -168,6 +175,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .connectionPoolSettings(connectionPoolSettings)
                 .clusterSettings(clusterSettings).streamFactoryFactory(streamFactoryFactory)
                 .compressorList([MongoCompressor.createZlibCompressor()])
+                .uuidRepresentation(UuidRepresentation.STANDARD)
                 .build()
 
         then:
@@ -189,6 +197,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.getClusterSettings() == clusterSettings
         settings.getStreamFactoryFactory() == streamFactoryFactory
         settings.getCompressorList() == [MongoCompressor.createZlibCompressor()]
+        settings.getUuidRepresentation() == UuidRepresentation.STANDARD
     }
 
     def 'should create from client settings'() {
@@ -218,6 +227,7 @@ class MongoClientSettingsSpecification extends Specification {
                 })
                 .streamFactoryFactory(streamFactoryFactory)
                 .compressorList([MongoCompressor.createZlibCompressor()])
+                .uuidRepresentation(UuidRepresentation.STANDARD)
                 .build()
         def settings = MongoClientSettings.createFromClientSettings(originalSettings)
 
@@ -237,6 +247,7 @@ class MongoClientSettingsSpecification extends Specification {
         settings.getClusterSettings() == clusterSettings
         settings.getStreamFactoryFactory() == streamFactoryFactory
         settings.getCompressorList() == [MongoCompressor.createZlibCompressor()]
+        settings.getUuidRepresentation() == UuidRepresentation.STANDARD
     }
 
     def 'should support deprecated multiple credentials'() {
@@ -299,6 +310,7 @@ class MongoClientSettingsSpecification extends Specification {
                 .codecRegistry(codecRegistry)
                 .clusterSettings(clusterSettings)
                 .compressorList(compressorList)
+                .uuidRepresentation(UuidRepresentation.STANDARD)
                 .build()
 
         then:
