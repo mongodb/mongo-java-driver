@@ -14,30 +14,26 @@
  * limitations under the License.
  */
 
-package org.bson.codecs.configuration
+package org.bson.codecs
 
-import org.bson.codecs.MinKeyCodec
-import org.bson.types.MinKey
+import org.bson.UuidRepresentation
 import spock.lang.Specification
 
-class CodecCacheSpecification extends Specification {
+class OverridableUuidRepresentationUuidCodecSpecification extends Specification{
 
-    def 'should return the cached codec if a codec for the class exists'() {
+    def 'should change uuid representation'() {
         when:
-        def codec = new MinKeyCodec()
-        def cache = new CodecCache()
-        cache.put(MinKey, codec)
+        def codec = new OverridableUuidRepresentationUuidCodec()
 
         then:
-        cache.getOrThrow(MinKey).is(codec)
-    }
+        codec.getUuidRepresentation() == UuidRepresentation.JAVA_LEGACY
 
-    def 'should throw if codec for class does not exist'() {
         when:
-        def cache = new CodecCache()
-        cache.getOrThrow(MinKey)
+        def newCodec = codec.withUuidRepresentation(UuidRepresentation.STANDARD)
 
         then:
-        thrown(CodecConfigurationException)
+        newCodec instanceof OverridableUuidRepresentationCodec
+        (newCodec as OverridableUuidRepresentationCodec).getUuidRepresentation() == UuidRepresentation.STANDARD
     }
+
 }

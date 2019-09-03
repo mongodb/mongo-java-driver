@@ -40,6 +40,7 @@ import org.bson.BsonDocument
 import org.bson.BsonObjectId
 import org.bson.BsonString
 import org.bson.Document
+import org.bson.UuidRepresentation
 import org.bson.codecs.DocumentCodecProvider
 import org.bson.types.Binary
 import org.bson.types.ObjectId
@@ -60,10 +61,11 @@ import static spock.util.matcher.HamcrestSupport.expect
 class GridFSBucketSpecification extends Specification {
 
     def readConcern = ReadConcern.DEFAULT
+    def uuidRepresentation = UuidRepresentation.STANDARD
     def registry = MongoClients.defaultCodecRegistry
     def database = databaseWithExecutor(Stub(OperationExecutor))
     def databaseWithExecutor(OperationExecutor executor) {
-        new MongoDatabaseImpl('test', registry, primary(), WriteConcern.ACKNOWLEDGED, true, true, readConcern, executor)
+        new MongoDatabaseImpl('test', registry, primary(), WriteConcern.ACKNOWLEDGED, true, true, readConcern, uuidRepresentation, executor)
     }
     def disableMD5 = false
 
@@ -173,7 +175,7 @@ class GridFSBucketSpecification extends Specification {
         given:
         def defaultChunkSizeBytes = 255 * 1024
         def database = new MongoDatabaseImpl('test', fromProviders(new DocumentCodecProvider()), secondary(), WriteConcern.ACKNOWLEDGED,
-                true, true, readConcern, new TestOperationExecutor([]))
+                true, true, readConcern, uuidRepresentation, new TestOperationExecutor([]))
 
         when:
         def gridFSBucket = new GridFSBucketImpl(database)

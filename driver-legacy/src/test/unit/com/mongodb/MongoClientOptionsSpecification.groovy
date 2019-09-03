@@ -26,6 +26,7 @@ import com.mongodb.event.ConnectionPoolListener
 import com.mongodb.event.ServerListener
 import com.mongodb.event.ServerMonitorListener
 import com.mongodb.selector.ServerSelector
+import org.bson.UuidRepresentation
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
@@ -54,6 +55,8 @@ class MongoClientOptionsSpecification extends Specification {
         options.getWriteConcern() == WriteConcern.ACKNOWLEDGED
         options.getRetryWrites()
         options.getRetryReads()
+        options.getCodecRegistry() == MongoClientSettings.defaultCodecRegistry
+        options.getUuidRepresentation() == UuidRepresentation.JAVA_LEGACY
         options.getMinConnectionsPerHost() == 0
         options.getConnectionsPerHost() == 100
         options.getConnectTimeout() == 10000
@@ -153,6 +156,11 @@ class MongoClientOptionsSpecification extends Specification {
 
         when:
         builder.compressorList(null)
+        then:
+        thrown(IllegalArgumentException)
+
+        when:
+        builder.uuidRepresentation(null)
         then:
         thrown(IllegalArgumentException)
     }
@@ -314,6 +322,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .applicationName('appName')
                 .readPreference(ReadPreference.secondary())
                 .retryReads(true)
+                .uuidRepresentation(UuidRepresentation.STANDARD)
                 .writeConcern(WriteConcern.JOURNALED)
                 .minConnectionsPerHost(30)
                 .connectionsPerHost(500)
@@ -630,6 +639,7 @@ class MongoClientOptionsSpecification extends Specification {
                 .writeConcern(WriteConcern.JOURNALED)
                 .retryWrites(true)
                 .retryReads(true)
+                .uuidRepresentation(UuidRepresentation.STANDARD)
                 .minConnectionsPerHost(30)
                 .connectionsPerHost(500)
                 .connectTimeout(100)
@@ -681,7 +691,7 @@ class MongoClientOptionsSpecification extends Specification {
                         'readPreference', 'requiredReplicaSetName', 'retryReads', 'retryWrites', 'serverListeners',
                         'serverMonitorListeners', 'serverSelectionTimeout', 'serverSelector', 'socketFactory',
                         'socketKeepAlive', 'socketTimeout', 'sslContext', 'sslEnabled', 'sslInvalidHostNameAllowed',
-                        'threadsAllowedToBlockForConnectionMultiplier', 'writeConcern']
+                        'threadsAllowedToBlockForConnectionMultiplier', 'uuidRepresentation', 'writeConcern']
 
         then:
         actual == expected

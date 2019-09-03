@@ -34,6 +34,7 @@ import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.event.CommandListener;
 import com.mongodb.lang.Nullable;
+import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
@@ -485,6 +486,21 @@ public final class MongoClientSettings {
         }
 
         /**
+         * Sets the UUID representation to use when encoding instances of {@link java.util.UUID} and when decoding BSON binary values with
+         * subtype of 3.
+         *
+         * <p>See {@link #getUuidRepresentation()} for recommendations on settings this value</p>
+         *
+         * @param uuidRepresentation the UUID representation, which may not be null
+         * @return this
+         * @since 3.12
+         */
+        public Builder uuidRepresentation(final UuidRepresentation uuidRepresentation) {
+            wrappedBuilder.uuidRepresentation(uuidRepresentation);
+            return this;
+        }
+
+        /**
          * Build an instance of {@code MongoClientSettings}.
          *
          * @return the settings from this builder
@@ -637,6 +653,26 @@ public final class MongoClientSettings {
      */
     public List<MongoCompressor> getCompressorList() {
         return wrapped.getCompressorList();
+    }
+
+    /**
+     * Gets the UUID representation to use when encoding instances of {@link java.util.UUID} and when decoding BSON binary values with
+     * subtype of 3.
+     *
+     * <p>The default is {@link UuidRepresentation#JAVA_LEGACY}, but it will be changing to {@link UuidRepresentation#UNSPECIFIED} in
+     * the next major release.  If your application stores UUID values in MongoDB, consider setting this value to the desired
+     * representation in order to avoid a breaking change when upgrading.  New applications should prefer
+     * {@link UuidRepresentation#STANDARD}, while existing Java applications should prefer {@link UuidRepresentation#JAVA_LEGACY}.
+     * Applications wishing to interoperate with existing Python or .NET applications should prefer
+     * {@link UuidRepresentation#PYTHON_LEGACY} or {@link UuidRepresentation#C_SHARP_LEGACY}, respectively. Applications that do not
+     * store UUID values in MongoDB don't need to set this value.
+     * </p>
+     *
+     * @return the UUID representation, which may not be null
+     * @since 3.12
+     */
+    public UuidRepresentation getUuidRepresentation() {
+        return wrapped.getUuidRepresentation();
     }
 
     /**

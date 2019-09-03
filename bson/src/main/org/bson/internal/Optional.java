@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bson.codecs.configuration;
+package org.bson.internal;
 
 import java.util.NoSuchElementException;
 

@@ -23,6 +23,7 @@ import org.bson.codecs.IntegerCodec
 import org.bson.codecs.LongCodec
 import org.bson.codecs.UuidCodec
 import org.bson.codecs.ValueCodecProvider
+import org.bson.internal.ProvidersCodecRegistry
 import spock.lang.Specification
 
 import static CodecRegistries.fromCodecs

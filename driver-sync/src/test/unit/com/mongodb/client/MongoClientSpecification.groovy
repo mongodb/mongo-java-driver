@@ -36,6 +36,10 @@ import com.mongodb.connection.ServerType
 import com.mongodb.connection.ServerVersion
 import org.bson.BsonDocument
 import org.bson.Document
+import org.bson.codecs.BsonValueCodecProvider
+import org.bson.codecs.ValueCodecProvider
+import org.bson.codecs.configuration.CodecRegistry
+import org.bson.internal.OverridableUuidRepresentationCodecRegistry
 import spock.lang.Specification
 
 import static com.mongodb.CustomMatchers.isTheSameAs
@@ -43,9 +47,14 @@ import static com.mongodb.MongoClientSettings.getDefaultCodecRegistry
 import static com.mongodb.ReadPreference.primary
 import static com.mongodb.ReadPreference.secondary
 import static com.mongodb.client.internal.TestHelper.execute
+import static org.bson.UuidRepresentation.JAVA_LEGACY
+import static org.bson.UuidRepresentation.STANDARD
+import static org.bson.codecs.configuration.CodecRegistries.fromProviders
 import static spock.util.matcher.HamcrestSupport.expect
 
 class MongoClientSpecification extends Specification {
+
+    private static CodecRegistry codecRegistry = fromProviders(new ValueCodecProvider())
 
     def 'should pass the correct settings to getDatabase'() {
         given:
@@ -54,6 +63,7 @@ class MongoClientSpecification extends Specification {
                 .writeConcern(WriteConcern.MAJORITY)
                 .readConcern(ReadConcern.MAJORITY)
                 .retryWrites(true)
+                .codecRegistry(codecRegistry)
                 .build()
         def client = new MongoClientImpl(Stub(Cluster), settings, new TestOperationExecutor([]))
 
@@ -64,8 +74,8 @@ class MongoClientSpecification extends Specification {
         expect database, isTheSameAs(expectedDatabase)
 
         where:
-        expectedDatabase << new MongoDatabaseImpl('name', getDefaultCodecRegistry(), secondary(),
-                WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, new TestOperationExecutor([]))
+        expectedDatabase << new MongoDatabaseImpl('name', codecRegistry, secondary(),
+                WriteConcern.MAJORITY, true, true, ReadConcern.MAJORITY, JAVA_LEGACY, new TestOperationExecutor([]))
     }
 
     def 'should use ListDatabasesIterableImpl correctly'() {
@@ -181,5 +191,26 @@ class MongoClientSpecification extends Specification {
 
         expect:
         client.getClusterDescription() == clusterDescription
+    }
+
+    def 'should create registry reflecting UuidRepresentation'() {
+        given:
+        def codecRegistry = fromProviders([new BsonValueCodecProvider()])
+        def settings = MongoClientSettings.builder()
+                .codecRegistry(codecRegistry)
+                .uuidRepresentation(STANDARD)
+                .build()
+
+        when:
+        def client = new MongoClientImpl(Stub(Cluster), settings, new TestOperationExecutor([]))
+        def registry = client.getCodecRegistry()
+
+        then:
+        registry instanceof OverridableUuidRepresentationCodecRegistry
+        (registry as OverridableUuidRepresentationCodecRegistry).uuidRepresentation == STANDARD
+        (registry as OverridableUuidRepresentationCodecRegistry).wrapped == codecRegistry
+
+        cleanup:
+        client?.close()
     }
 }

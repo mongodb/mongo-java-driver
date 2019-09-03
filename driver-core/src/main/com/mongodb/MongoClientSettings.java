@@ -28,6 +28,7 @@ import com.mongodb.connection.SslSettings;
 import com.mongodb.connection.StreamFactoryFactory;
 import com.mongodb.event.CommandListener;
 import com.mongodb.lang.Nullable;
+import org.bson.UuidRepresentation;
 import org.bson.codecs.BsonCodecProvider;
 import org.bson.codecs.BsonValueCodecProvider;
 import org.bson.codecs.DocumentCodecProvider;
@@ -87,6 +88,7 @@ public final class MongoClientSettings {
     private final SslSettings sslSettings;
     private final String applicationName;
     private final List<MongoCompressor> compressorList;
+    private final UuidRepresentation uuidRepresentation;
 
     private final AutoEncryptionSettings autoEncryptionSettings;
 
@@ -155,6 +157,7 @@ public final class MongoClientSettings {
         private MongoCredential credential;
         private String applicationName;
         private List<MongoCompressor> compressorList = Collections.emptyList();
+        private UuidRepresentation uuidRepresentation = UuidRepresentation.JAVA_LEGACY;
 
         private AutoEncryptionSettings autoEncryptionSettings;
 
@@ -173,6 +176,7 @@ public final class MongoClientSettings {
             retryReads = settings.getRetryReads();
             readConcern = settings.getReadConcern();
             credential = settings.getCredential();
+            uuidRepresentation = settings.getUuidRepresentation();
             streamFactoryFactory = settings.getStreamFactoryFactory();
             autoEncryptionSettings = settings.getAutoEncryptionSettings();
             clusterSettingsBuilder.applySettings(settings.getClusterSettings());
@@ -209,6 +213,10 @@ public final class MongoClientSettings {
             if (connectionString.getRetryWritesValue() != null) {
                 retryWrites = connectionString.getRetryWrites();
             }
+            if (connectionString.getUuidRepresentation() != null) {
+                uuidRepresentation = connectionString.getUuidRepresentation();
+            }
+
             serverSettingsBuilder.applyConnectionString(connectionString);
             socketSettingsBuilder.applyConnectionString(connectionString);
             sslSettingsBuilder.applyConnectionString(connectionString);
@@ -437,6 +445,21 @@ public final class MongoClientSettings {
         }
 
         /**
+         * Sets the UUID representation to use when encoding instances of {@link java.util.UUID} and when decoding BSON binary values with
+         * subtype of 3.
+         *
+         * <p>See {@link #getUuidRepresentation()} for recommendations on settings this value</p>
+         *
+         * @param uuidRepresentation the UUID representation, which may not be null
+         * @return this
+         * @since 3.12
+         */
+        public Builder uuidRepresentation(final UuidRepresentation uuidRepresentation) {
+            this.uuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
+            return this;
+        }
+
+        /**
          * Sets the auto-encryption settings
          *
          * @param autoEncryptionSettings the auto-encryption settings
@@ -585,6 +608,26 @@ public final class MongoClientSettings {
     }
 
     /**
+     * Gets the UUID representation to use when encoding instances of {@link java.util.UUID} and when decoding BSON binary values with
+     * subtype of 3.
+     *
+     * <p>The default is {@link UuidRepresentation#JAVA_LEGACY}, but it will be changing to {@link UuidRepresentation#UNSPECIFIED} in
+     * the next major release.  If your application stores UUID values in MongoDB, consider setting this value to the desired
+     * representation in order to avoid a breaking change when upgrading.  New applications should prefer
+     * {@link UuidRepresentation#STANDARD}, while existing Java applications should prefer {@link UuidRepresentation#JAVA_LEGACY}.
+     * Applications wishing to interoperate with existing Python or .NET applications should prefer
+     * {@link UuidRepresentation#PYTHON_LEGACY} or {@link UuidRepresentation#C_SHARP_LEGACY}, respectively. Applications that do not
+     * store UUID values in MongoDB don't need to set this value.
+     * </p>
+     *
+     * @return the UUID representation, which may not be null
+     * @since 3.12
+     */
+    public UuidRepresentation getUuidRepresentation() {
+        return uuidRepresentation;
+    }
+
+    /**
      * Gets the auto-encryption settings.
      * <p>
      * Client side encryption enables an application to specify what fields in a collection must be
@@ -696,6 +739,7 @@ public final class MongoClientSettings {
         connectionPoolSettings = builder.connectionPoolSettingsBuilder.build();
         sslSettings = builder.sslSettingsBuilder.build();
         compressorList = builder.compressorList;
+        uuidRepresentation = builder.uuidRepresentation;
         autoEncryptionSettings = builder.autoEncryptionSettings;
 
         SocketSettings.Builder heartbeatSocketSettingsBuilder = SocketSettings.builder()

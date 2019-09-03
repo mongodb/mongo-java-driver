@@ -16,7 +16,6 @@
 
 package org.bson.codecs;
 
-import org.bson.BsonBinarySubType;
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentWriter;
 import org.bson.BsonReader;
@@ -25,6 +24,7 @@ import org.bson.BsonValue;
 import org.bson.BsonWriter;
 import org.bson.Document;
 import org.bson.Transformer;
+import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
@@ -42,7 +42,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
  * @see org.bson.Document
  * @since 3.0
  */
-public class DocumentCodec implements CollectibleCodec<Document> {
+public class DocumentCodec implements CollectibleCodec<Document>, OverridableUuidRepresentationCodec<Document> {
 
     private static final String ID_FIELD_NAME = "_id";
     private static final CodecRegistry DEFAULT_REGISTRY = fromProviders(asList(new ValueCodecProvider(),
@@ -54,6 +54,7 @@ public class DocumentCodec implements CollectibleCodec<Document> {
     private final CodecRegistry registry;
     private final IdGenerator idGenerator;
     private final Transformer valueTransformer;
+    private final UuidRepresentation uuidRepresentation;
 
     /**
      * Construct a new instance with a default {@code CodecRegistry}.
@@ -92,15 +93,27 @@ public class DocumentCodec implements CollectibleCodec<Document> {
      * @param valueTransformer the value transformer to use as a final step when decoding the value of any field in the document
      */
     public DocumentCodec(final CodecRegistry registry, final BsonTypeClassMap bsonTypeClassMap, final Transformer valueTransformer) {
+        this(registry, new BsonTypeCodecMap(notNull("bsonTypeClassMap", bsonTypeClassMap), registry),
+                new ObjectIdGenerator(), valueTransformer, UuidRepresentation.JAVA_LEGACY);
+    }
+
+    private DocumentCodec(final CodecRegistry registry, final BsonTypeCodecMap bsonTypeCodecMap, final IdGenerator idGenerator,
+                          final Transformer valueTransformer, final UuidRepresentation uuidRepresentation) {
         this.registry = notNull("registry", registry);
-        this.bsonTypeCodecMap = new BsonTypeCodecMap(notNull("bsonTypeClassMap", bsonTypeClassMap), registry);
-        this.idGenerator = new ObjectIdGenerator();
+        this.bsonTypeCodecMap = bsonTypeCodecMap;
+        this.idGenerator = idGenerator;
         this.valueTransformer = valueTransformer != null ? valueTransformer : new Transformer() {
             @Override
             public Object transform(final Object value) {
                 return value;
             }
         };
+        this.uuidRepresentation = uuidRepresentation;
+    }
+
+    @Override
+    public Codec<Document> withUuidRepresentation(final UuidRepresentation uuidRepresentation) {
+        return new DocumentCodec(registry, bsonTypeCodecMap, idGenerator, valueTransformer, uuidRepresentation);
     }
 
     @Override
@@ -216,10 +229,29 @@ public class DocumentCodec implements CollectibleCodec<Document> {
             return null;
         } else if (bsonType == BsonType.ARRAY) {
             return readList(reader, decoderContext);
-        } else if (bsonType == BsonType.BINARY && BsonBinarySubType.isUuid(reader.peekBinarySubType()) && reader.peekBinarySize() == 16) {
-            return registry.get(UUID.class).decode(reader, decoderContext);
+        } else {
+            Codec<?> codec = bsonTypeCodecMap.get(bsonType);
+
+            if (bsonType == BsonType.BINARY && reader.peekBinarySize() == 16) {
+                switch (reader.peekBinarySubType()) {
+                    case 3:
+                        if (uuidRepresentation == UuidRepresentation.JAVA_LEGACY
+                                || uuidRepresentation == UuidRepresentation.C_SHARP_LEGACY
+                                || uuidRepresentation == UuidRepresentation.PYTHON_LEGACY) {
+                            codec = registry.get(UUID.class);
+                        }
+                        break;
+                    case 4:
+                        if (uuidRepresentation == UuidRepresentation.JAVA_LEGACY || uuidRepresentation == UuidRepresentation.STANDARD) {
+                            codec = registry.get(UUID.class);
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+            return valueTransformer.transform(codec.decode(reader, decoderContext));
         }
-        return valueTransformer.transform(bsonTypeCodecMap.get(bsonType).decode(reader, decoderContext));
     }
 
     private List<Object> readList(final BsonReader reader, final DecoderContext decoderContext) {

@@ -45,6 +45,7 @@ import com.mongodb.operation.FsyncUnlockOperation;
 import com.mongodb.operation.ListDatabasesOperation;
 import com.mongodb.operation.ReadOperation;
 import org.bson.BsonBoolean;
+import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -67,6 +68,7 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.unmodifiableList;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.bson.internal.CodecRegistryHelper.createRegistry;
 
 /**
  * <p>A database connection with internal connection pooling. For most applications, you should have one Mongo instance for the entire
@@ -324,7 +326,9 @@ public class Mongo {
         this.credentialsList = unmodifiableList(credentialsList);
 
         AutoEncryptionSettings autoEncryptionSettings = options.getAutoEncryptionSettings();
-        this.delegate = new MongoClientDelegate(cluster, credentialsList, this,
+        this.delegate = new MongoClientDelegate(cluster,
+                createRegistry(options.getCodecRegistry(), options.getUuidRepresentation()),
+                credentialsList, this,
                 autoEncryptionSettings == null ? null : createCrypt(asSimpleMongoClient(), autoEncryptionSettings));
 
         cursorCleaningService = options.isCursorFinalizerEnabled() ? createCursorCleaningService() : null;
@@ -784,6 +788,14 @@ public class Mongo {
 
     Cluster getCluster() {
         return delegate.getCluster();
+    }
+
+    MongoClientDelegate getDelegate() {
+        return delegate;
+    }
+
+    CodecRegistry getCodecRegistry() {
+        return delegate.getCodecRegistry();
     }
 
     ServerSessionPool getServerSessionPool() {

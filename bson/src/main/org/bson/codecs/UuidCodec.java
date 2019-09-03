@@ -22,10 +22,12 @@ import org.bson.BsonBinarySubType;
 import org.bson.BsonReader;
 import org.bson.BsonWriter;
 import org.bson.UuidRepresentation;
-
+import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.internal.UuidHelper;
 
 import java.util.UUID;
+
+import static org.bson.assertions.Assertions.notNull;
 
 /**
  * Encodes and decodes {@code UUID} objects.
@@ -34,8 +36,7 @@ import java.util.UUID;
  */
 public class UuidCodec implements Codec<UUID> {
 
-    private final UuidRepresentation encoderUuidRepresentation;
-    private final UuidRepresentation decoderUuidRepresentation;
+    private final UuidRepresentation uuidRepresentation;
 
     /**
      * The default UUIDRepresentation is JAVA_LEGACY to be compatible with existing documents
@@ -44,23 +45,35 @@ public class UuidCodec implements Codec<UUID> {
      * @see org.bson.UuidRepresentation
      */
     public UuidCodec(final UuidRepresentation uuidRepresentation) {
-        this.encoderUuidRepresentation = uuidRepresentation;
-        this.decoderUuidRepresentation = uuidRepresentation;
+        notNull("uuidRepresentation", uuidRepresentation);
+        this.uuidRepresentation = uuidRepresentation;
     }
 
     /**
      * The constructor for UUIDCodec, default is JAVA_LEGACY
      */
     public UuidCodec() {
-        this.encoderUuidRepresentation = UuidRepresentation.JAVA_LEGACY;
-        this.decoderUuidRepresentation = UuidRepresentation.JAVA_LEGACY;
+        this.uuidRepresentation = UuidRepresentation.JAVA_LEGACY;
+    }
+
+    /**
+     * The {@code UuidRepresentation} with which this instance is configured
+     *
+     * @return the uuid representation
+     * @since 3.12
+     */
+    public UuidRepresentation getUuidRepresentation() {
+        return uuidRepresentation;
     }
 
     @Override
     public void encode(final BsonWriter writer, final UUID value, final EncoderContext encoderContext) {
-        byte[] binaryData = UuidHelper.encodeUuidToBinary(value, encoderUuidRepresentation);
+        if (uuidRepresentation == UuidRepresentation.UNSPECIFIED) {
+            throw new CodecConfigurationException("The uuidRepresentation has not been specified, so the UUID cannot be encoded.");
+        }
+        byte[] binaryData = UuidHelper.encodeUuidToBinary(value, uuidRepresentation);
         // changed the default subtype to STANDARD since 3.0
-        if (encoderUuidRepresentation == UuidRepresentation.STANDARD) {
+        if (uuidRepresentation == UuidRepresentation.STANDARD) {
             writer.writeBinaryData(new BsonBinary(BsonBinarySubType.UUID_STANDARD, binaryData));
         } else {
             writer.writeBinaryData(new BsonBinary(BsonBinarySubType.UUID_LEGACY, binaryData));
@@ -77,11 +90,18 @@ public class UuidCodec implements Codec<UUID> {
 
         byte[] bytes = reader.readBinaryData().getData();
 
-        return UuidHelper.decodeBinaryToUuid(bytes, subType, decoderUuidRepresentation);
+        return UuidHelper.decodeBinaryToUuid(bytes, subType, uuidRepresentation);
     }
 
     @Override
     public Class<UUID> getEncoderClass() {
         return UUID.class;
+    }
+
+    @Override
+    public String toString() {
+        return "UuidCodec{"
+                + "uuidRepresentation=" + uuidRepresentation
+                + '}';
     }
 }

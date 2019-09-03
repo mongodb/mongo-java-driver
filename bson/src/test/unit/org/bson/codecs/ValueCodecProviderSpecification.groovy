@@ -63,7 +63,7 @@ class ValueCodecProviderSpecification extends Specification {
         provider.get(Code, registry) instanceof CodeCodec
         provider.get(ObjectId, registry) instanceof ObjectIdCodec
         provider.get(Symbol, registry) instanceof SymbolCodec
-        provider.get(UUID, registry) instanceof UuidCodec
+        provider.get(UUID, registry) instanceof OverridableUuidRepresentationCodec
 
         provider.get(Document, registry) == null
     }

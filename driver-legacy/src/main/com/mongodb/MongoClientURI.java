@@ -213,6 +213,9 @@ import static com.mongodb.assertions.Assertions.notNull;
  *  Defaults to true.</li>
  * <li>{@code retryReads=true|false}. If true the driver will retry supported read operations if they fail due to a network error.
  *  Defaults to true.</li>
+ * <li>{@code uuidRepresentation=unspecified|standard|javaLegacy|csharpLegacy|pythonLegacy}.  See
+ * {@link MongoClientOptions#getUuidRepresentation()} for documentation of semantics of this parameter.  Defaults to "javaLegacy", but
+ * will change to "unspecified" in the next major release.</li>
  * </ul>
  *
  * <p>Note: This class is a replacement for {@code MongoURI}, to be used with {@code MongoClient}.  The main difference in

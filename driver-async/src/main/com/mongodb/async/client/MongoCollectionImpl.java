@@ -58,6 +58,7 @@ import com.mongodb.operation.AsyncWriteOperation;
 import org.bson.BsonDocument;
 import org.bson.BsonValue;
 import org.bson.Document;
+import org.bson.UuidRepresentation;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
@@ -72,6 +73,7 @@ import static com.mongodb.bulk.WriteRequest.Type.UPDATE;
 import static com.mongodb.client.model.ReplaceOptions.createReplaceOptions;
 import static com.mongodb.internal.client.model.CountOptionsHelper.fromEstimatedDocumentCountOptions;
 import static java.util.Collections.singletonList;
+import static org.bson.internal.CodecRegistryHelper.createRegistry;
 
 class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private final MongoNamespace namespace;
@@ -82,12 +84,14 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     private final boolean retryWrites;
     private final boolean retryReads;
     private final ReadConcern readConcern;
+    private final UuidRepresentation uuidRepresentation;
     private final OperationExecutor executor;
     private final AsyncOperations<TDocument> operations;
 
     MongoCollectionImpl(final MongoNamespace namespace, final Class<TDocument> documentClass, final CodecRegistry codecRegistry,
                         final ReadPreference readPreference, final WriteConcern writeConcern, final boolean retryWrites,
-                        final boolean retryReads, final ReadConcern readConcern, final OperationExecutor executor) {
+                        final boolean retryReads, final ReadConcern readConcern, final UuidRepresentation uuidRepresentation,
+                        final OperationExecutor executor) {
         this.namespace = notNull("namespace", namespace);
         this.documentClass = notNull("documentClass", documentClass);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
@@ -96,6 +100,7 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
         this.retryWrites = retryWrites;
         this.retryReads = retryReads;
         this.readConcern = notNull("readConcern", readConcern);
+        this.uuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
         this.executor = notNull("executor", executor);
         this.operations = new AsyncOperations<TDocument>(namespace, documentClass, readPreference, codecRegistry, readConcern, writeConcern,
                 retryWrites, retryReads);
@@ -134,31 +139,31 @@ class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
     @Override
     public <NewTDocument> MongoCollection<NewTDocument> withDocumentClass(final Class<NewTDocument> newDocumentClass) {
         return new MongoCollectionImpl<NewTDocument>(namespace, newDocumentClass, codecRegistry, readPreference, writeConcern, retryWrites,
-                retryReads, readConcern, executor);
+                retryReads, readConcern, uuidRepresentation, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withCodecRegistry(final CodecRegistry codecRegistry) {
-        return new MongoCollectionImpl<TDocument>(namespace, documentClass, codecRegistry, readPreference, writeConcern, retryWrites,
-                retryReads, readConcern, executor);
+        return new MongoCollectionImpl<TDocument>(namespace, documentClass, createRegistry(codecRegistry, uuidRepresentation),
+                readPreference, writeConcern, retryWrites, retryReads, readConcern, uuidRepresentation, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withReadPreference(final ReadPreference readPreference) {
         return new MongoCollectionImpl<TDocument>(namespace, documentClass, codecRegistry, readPreference, writeConcern, retryWrites,
-                retryReads, readConcern, executor);
+                retryReads, readConcern, uuidRepresentation, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withWriteConcern(final WriteConcern writeConcern) {
         return new MongoCollectionImpl<TDocument>(namespace, documentClass, codecRegistry, readPreference, writeConcern, retryWrites,
-                retryReads, readConcern, executor);
+                retryReads, readConcern, uuidRepresentation, executor);
     }
 
     @Override
     public MongoCollection<TDocument> withReadConcern(final ReadConcern readConcern) {
         return new MongoCollectionImpl<TDocument>(namespace, documentClass, codecRegistry, readPreference, writeConcern, retryWrites,
-                retryReads, readConcern, executor);
+                retryReads, readConcern, uuidRepresentation, executor);
     }
 
     @Override

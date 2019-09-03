@@ -16,6 +16,7 @@
 
 package com.mongodb
 
+import org.bson.UuidRepresentation
 import spock.lang.Specification
 import spock.lang.Unroll
 
@@ -124,6 +125,20 @@ class ConnectionStringSpecification extends Specification {
         new ConnectionString('mongodb://localhost/?journal=true')                            | WriteConcern.ACKNOWLEDGED.withJournal(true)
         new ConnectionString('mongodb://localhost/?w=2&wtimeout=5&fsync=true&journal=true')  | new WriteConcern(2, 5, true, true)
         new ConnectionString('mongodb://localhost/?w=majority&wtimeout=5&fsync=true&j=true') | new WriteConcern('majority', 5, true, true)
+    }
+
+    def 'should correctly parse different UUID representations'() {
+        expect:
+        uri.getUuidRepresentation() == uuidRepresentation
+
+        where:
+        uri                                                                           | uuidRepresentation
+        new ConnectionString('mongodb://localhost')                                   | null
+        new ConnectionString('mongodb://localhost/?uuidRepresentation=unspecified')   | UuidRepresentation.UNSPECIFIED
+        new ConnectionString('mongodb://localhost/?uuidRepresentation=javaLegacy')    | UuidRepresentation.JAVA_LEGACY
+        new ConnectionString('mongodb://localhost/?uuidRepresentation=csharpLegacy')  | UuidRepresentation.C_SHARP_LEGACY
+        new ConnectionString('mongodb://localhost/?uuidRepresentation=pythonLegacy')  | UuidRepresentation.PYTHON_LEGACY
+        new ConnectionString('mongodb://localhost/?uuidRepresentation=standard')      | UuidRepresentation.STANDARD
     }
 
     @Unroll

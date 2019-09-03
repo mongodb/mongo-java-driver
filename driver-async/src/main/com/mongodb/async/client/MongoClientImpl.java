@@ -32,6 +32,7 @@ import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
 import org.bson.Document;
+import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
 
 import java.io.Closeable;
@@ -41,6 +42,7 @@ import java.util.List;
 
 import static com.mongodb.assertions.Assertions.notNull;
 import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandlingCallback;
+import static org.bson.internal.CodecRegistryHelper.createRegistry;
 
 @SuppressWarnings("deprecation")
 class MongoClientImpl implements MongoClient {
@@ -51,6 +53,7 @@ class MongoClientImpl implements MongoClient {
     private final Closeable externalResourceCloser;
     private final ServerSessionPool serverSessionPool;
     private final ClientSessionHelper clientSessionHelper;
+    private final CodecRegistry codecRegistry;
     private final Crypt crypt;
 
     MongoClientImpl(final MongoClientSettings settings, final Cluster cluster, @Nullable final Closeable externalResourceCloser) {
@@ -75,6 +78,7 @@ class MongoClientImpl implements MongoClient {
             this.executor = executor;
         }
         this.externalResourceCloser = externalResourceCloser;
+        this.codecRegistry = createRegistry(settings.getCodecRegistry(), settings.getUuidRepresentation());
     }
 
     @Override
@@ -103,8 +107,8 @@ class MongoClientImpl implements MongoClient {
 
     @Override
     public MongoDatabase getDatabase(final String name) {
-        return new MongoDatabaseImpl(name, settings.getCodecRegistry(), settings.getReadPreference(), settings.getWriteConcern(),
-                settings.getRetryWrites(), settings.getRetryReads(), settings.getReadConcern(), executor);
+        return new MongoDatabaseImpl(name, codecRegistry, settings.getReadPreference(), settings.getWriteConcern(),
+                settings.getRetryWrites(), settings.getRetryReads(), settings.getReadConcern(), settings.getUuidRepresentation(), executor);
     }
 
     @Override
@@ -215,13 +219,13 @@ class MongoClientImpl implements MongoClient {
     private <TResult> ChangeStreamIterable<TResult> createChangeStreamIterable(@Nullable final ClientSession clientSession,
                                                                                final List<? extends Bson> pipeline,
                                                                                final Class<TResult> resultClass) {
-        return new ChangeStreamIterableImpl<TResult>(clientSession, "admin", settings.getCodecRegistry(),
+        return new ChangeStreamIterableImpl<TResult>(clientSession, "admin", codecRegistry,
                 settings.getReadPreference(), settings.getReadConcern(), executor, pipeline, resultClass, ChangeStreamLevel.CLIENT,
                 settings.getRetryReads());
     }
 
     private <T> ListDatabasesIterable<T> createListDatabasesIterable(@Nullable final ClientSession clientSession, final Class<T> clazz) {
-        return new ListDatabasesIterableImpl<T>(clientSession, clazz, settings.getCodecRegistry(),
+        return new ListDatabasesIterableImpl<T>(clientSession, clazz, codecRegistry,
                 ReadPreference.primary(), executor, settings.getRetryReads());
     }
 
@@ -235,5 +239,9 @@ class MongoClientImpl implements MongoClient {
 
     Crypt getCrypt() {
         return crypt;
+    }
+
+    public CodecRegistry getCodecRegistry() {
+        return codecRegistry;
     }
 }

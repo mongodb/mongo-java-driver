@@ -27,6 +27,7 @@ import org.bson.BsonReader;
 import org.bson.BsonType;
 import org.bson.BsonValue;
 import org.bson.BsonWriter;
+import org.bson.UuidRepresentation;
 import org.bson.codecs.BsonTypeClassMap;
 import org.bson.codecs.BsonTypeCodecMap;
 import org.bson.codecs.BsonValueCodecProvider;
@@ -36,6 +37,7 @@ import org.bson.codecs.DecoderContext;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.IdGenerator;
 import org.bson.codecs.ObjectIdGenerator;
+import org.bson.codecs.OverridableUuidRepresentationCodec;
 import org.bson.codecs.ValueCodecProvider;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.types.BSONTimestamp;
@@ -63,7 +65,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
  * @since 3.0
  */
 @SuppressWarnings({"rawtypes", "deprecation"})
-public class DBObjectCodec implements CollectibleCodec<DBObject> {
+public class DBObjectCodec implements CollectibleCodec<DBObject>, OverridableUuidRepresentationCodec<DBObject> {
     private static final BsonTypeClassMap DEFAULT_BSON_TYPE_CLASS_MAP = createDefaultBsonTypeClassMap();
     private static final CodecRegistry DEFAULT_REGISTRY =
             fromProviders(asList(new ValueCodecProvider(), new BsonValueCodecProvider(), new DBObjectCodecProvider()));
@@ -74,6 +76,7 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
     private final BsonTypeCodecMap bsonTypeCodecMap;
     private final DBObjectFactory objectFactory;
     private final IdGenerator idGenerator = new ObjectIdGenerator();
+    private final UuidRepresentation uuidRepresentation;
 
     private static BsonTypeClassMap createDefaultBsonTypeClassMap() {
         Map<BsonType, Class<?>> replacements = new HashMap<BsonType, Class<?>>();
@@ -130,9 +133,16 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
      * @param objectFactory the non-null object factory used to create empty DBObject instances when decoding
      */
     public DBObjectCodec(final CodecRegistry codecRegistry, final BsonTypeClassMap bsonTypeClassMap, final DBObjectFactory objectFactory) {
+        this(codecRegistry, new BsonTypeCodecMap(notNull("bsonTypeClassMap", bsonTypeClassMap), codecRegistry), objectFactory,
+                UuidRepresentation.JAVA_LEGACY);
+    }
+
+    private DBObjectCodec(final CodecRegistry codecRegistry, final BsonTypeCodecMap bsonTypeCodecMap, final DBObjectFactory objectFactory,
+                         final UuidRepresentation uuidRepresentation) {
         this.objectFactory = notNull("objectFactory", objectFactory);
         this.codecRegistry = notNull("codecRegistry", codecRegistry);
-        this.bsonTypeCodecMap = new BsonTypeCodecMap(notNull("bsonTypeClassMap", bsonTypeClassMap), codecRegistry);
+        this.uuidRepresentation = notNull("uuidRepresentation", uuidRepresentation);
+        this.bsonTypeCodecMap = bsonTypeCodecMap;
     }
 
     @Override
@@ -193,6 +203,11 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
             document.put(ID_FIELD_NAME, idGenerator.generate());
         }
         return document;
+    }
+
+    @Override
+    public Codec<DBObject> withUuidRepresentation(final UuidRepresentation uuidRepresentation) {
+        return new DBObjectCodec(codecRegistry, bsonTypeCodecMap, objectFactory, uuidRepresentation);
     }
 
     private void beforeFields(final BsonWriter bsonWriter, final EncoderContext encoderContext, final DBObject document) {
@@ -338,14 +353,32 @@ public class DBObjectCodec implements CollectibleCodec<DBObject> {
 
     private Object readBinary(final BsonReader reader, final DecoderContext decoderContext) {
         byte bsonBinarySubType = reader.peekBinarySubType();
+        Codec<?> codec;
 
         if (BsonBinarySubType.isUuid(bsonBinarySubType) && reader.peekBinarySize() == 16) {
-            return codecRegistry.get(UUID.class).decode(reader, decoderContext);
+            codec = codecRegistry.get(Binary.class);
+            switch (bsonBinarySubType) {
+                case 3:
+                    if (uuidRepresentation == UuidRepresentation.JAVA_LEGACY
+                            || uuidRepresentation == UuidRepresentation.C_SHARP_LEGACY
+                            || uuidRepresentation == UuidRepresentation.PYTHON_LEGACY) {
+                        codec = codecRegistry.get(UUID.class);
+                    }
+                    break;
+                case 4:
+                    if (uuidRepresentation == UuidRepresentation.JAVA_LEGACY || uuidRepresentation == UuidRepresentation.STANDARD) {
+                        codec = codecRegistry.get(UUID.class);
+                    }
+                    break;
+                default:
+                    throw new UnsupportedOperationException("Unknown UUID binary subtype " + bsonBinarySubType);
+            }
         } else if (bsonBinarySubType == BINARY.getValue() || bsonBinarySubType == OLD_BINARY.getValue()) {
-            return codecRegistry.get(byte[].class).decode(reader, decoderContext);
+            codec = codecRegistry.get(byte[].class);
         } else {
-            return codecRegistry.get(Binary.class).decode(reader, decoderContext);
+            codec =  codecRegistry.get(Binary.class);
         }
+        return codec.decode(reader, decoderContext);
     }
 
     private List readArray(final BsonReader reader, final DecoderContext decoderContext, final List<String> path) {

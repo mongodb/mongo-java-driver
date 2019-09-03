@@ -45,6 +45,7 @@ import com.mongodb.lang.Nullable;
 import com.mongodb.operation.ReadOperation;
 import com.mongodb.operation.WriteOperation;
 import com.mongodb.selector.ServerSelector;
+import org.bson.codecs.configuration.CodecRegistry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -65,16 +66,18 @@ public class MongoClientDelegate {
     private final Object originator;
     private final OperationExecutor operationExecutor;
     private final Crypt crypt;
+    private final CodecRegistry codecRegistry;
 
-    public MongoClientDelegate(final Cluster cluster, final List<MongoCredential> credentialList, final Object originator,
-                               @Nullable final Crypt crypt) {
-        this(cluster, credentialList, originator, null, crypt);
+    public MongoClientDelegate(final Cluster cluster, final CodecRegistry codecRegistry, final List<MongoCredential> credentialList,
+                               final Object originator, @Nullable final Crypt crypt) {
+        this(cluster, codecRegistry, credentialList, originator, null, crypt);
     }
 
-    MongoClientDelegate(final Cluster cluster, final List<MongoCredential> credentialList,
+    MongoClientDelegate(final Cluster cluster, final CodecRegistry codecRegistry, final List<MongoCredential> credentialList,
                         final Object originator, @Nullable final OperationExecutor operationExecutor,
                         @Nullable final Crypt crypt) {
         this.cluster = cluster;
+        this.codecRegistry = codecRegistry;
         this.serverSessionPool = new ServerSessionPool(cluster);
         this.credentialList = credentialList;
         this.originator = originator;
@@ -135,6 +138,10 @@ public class MongoClientDelegate {
 
     public Cluster getCluster() {
         return cluster;
+    }
+
+    public CodecRegistry getCodecRegistry() {
+        return codecRegistry;
     }
 
     public ServerSessionPool getServerSessionPool() {

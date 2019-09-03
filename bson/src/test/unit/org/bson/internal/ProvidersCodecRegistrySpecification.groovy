@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package org.bson.codecs.configuration
+package org.bson.internal
 
 import org.bson.BsonBinaryReader
 import org.bson.BsonBinaryWriter
@@ -26,6 +26,9 @@ import org.bson.codecs.Codec
 import org.bson.codecs.DecoderContext
 import org.bson.codecs.EncoderContext
 import org.bson.codecs.MinKeyCodec
+import org.bson.codecs.configuration.CodecConfigurationException
+import org.bson.codecs.configuration.CodecProvider
+import org.bson.codecs.configuration.CodecRegistry
 import org.bson.io.BasicOutputBuffer
 import org.bson.io.ByteBufferBsonInput
 import org.bson.types.MaxKey

@@ -5,6 +5,9 @@ packages:
 - io.netty.*
 - org.slf4j.*
 
+classes:
+  - org.bson.codecs.configuration.Optional$Some
+
 members:
   org.bson.AbstractBsonReader:
   - doReadDecimal128()

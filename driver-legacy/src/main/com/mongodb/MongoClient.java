@@ -538,7 +538,7 @@ public class MongoClient extends Mongo implements Closeable {
     }
 
     private <T> ListDatabasesIterable<T> createListDatabasesIterable(@Nullable final ClientSession clientSession, final Class<T> clazz) {
-        return MongoIterables.listDatabasesOf(clientSession, clazz, getMongoClientOptions().getCodecRegistry(),
+        return MongoIterables.listDatabasesOf(clientSession, clazz, getCodecRegistry(),
                 ReadPreference.primary(), createOperationExecutor(), getMongoClientOptions().getRetryReads());
     }
 
@@ -550,9 +550,11 @@ public class MongoClient extends Mongo implements Closeable {
      */
     public MongoDatabase getDatabase(final String databaseName) {
         MongoClientOptions clientOptions = getMongoClientOptions();
-        return new MongoDatabaseImpl(databaseName, clientOptions.getCodecRegistry(), clientOptions.getReadPreference(),
+        return new MongoDatabaseImpl(databaseName, getCodecRegistry(), clientOptions.getReadPreference(),
                 clientOptions.getWriteConcern(), clientOptions.getRetryWrites(), clientOptions.getRetryReads(),
-                clientOptions.getReadConcern(), createOperationExecutor());
+                clientOptions.getReadConcern(),
+                clientOptions.getUuidRepresentation(),
+                createOperationExecutor());
     }
 
     /**
@@ -726,7 +728,7 @@ public class MongoClient extends Mongo implements Closeable {
                                                                                final Class<TResult> resultClass) {
         MongoClientOptions clientOptions = getMongoClientOptions();
         return MongoIterables.changeStreamOf(clientSession, "admin",
-                clientOptions.getCodecRegistry(), clientOptions.getReadPreference(), clientOptions.getReadConcern(),
+                getCodecRegistry(), clientOptions.getReadPreference(), clientOptions.getReadConcern(),
                 createOperationExecutor(), pipeline, resultClass, ChangeStreamLevel.CLIENT, clientOptions.getRetryReads());
     }
 
