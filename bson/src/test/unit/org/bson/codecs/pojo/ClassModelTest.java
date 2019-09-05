@@ -17,7 +17,9 @@
 package org.bson.codecs.pojo;
 
 import org.bson.codecs.pojo.entities.CollectionNestedPojoModel;
+import org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.GenericHolderModel;
+import org.bson.codecs.pojo.entities.InterfaceBasedModel;
 import org.bson.codecs.pojo.entities.NestedGenericHolderMapModel;
 import org.bson.codecs.pojo.entities.PropertySelectionModel;
 import org.bson.codecs.pojo.entities.ShapeHolderCircleModel;
@@ -92,6 +94,15 @@ public final class ClassModelTest {
         assertEquals(listMap, classModel.getPropertyModel("listMapSimple").getTypeData());
         assertEquals(listMapList, classModel.getPropertyModel("listMapListSimple").getTypeData());
         assertEquals(listMapSet, classModel.getPropertyModel("listMapSetSimple").getTypeData());
+    }
+
+    @Test
+    @SuppressWarnings("rawtypes")
+    public void testWildcardModel() {
+        TypeData<InterfaceBasedModel> model = TypeData.builder(InterfaceBasedModel.class).build();
+        TypeData<List> wildcard = TypeData.builder(List.class).addTypeParameter(model).build();
+        ClassModel<?> classModel = ClassModel.builder(ConcreteAndNestedAbstractInterfaceModel.class).build();
+        assertEquals(wildcard, classModel.getPropertyModel("wildcardList").getTypeData());
     }
 
     @Test

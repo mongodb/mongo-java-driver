@@ -21,6 +21,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.lang.reflect.TypeVariable;
+import java.lang.reflect.WildcardType;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -79,6 +80,8 @@ final class TypeData<T> implements TypeWithTypeParameters<T> {
                 getNestedTypeData(paramBuilder, argType);
             }
             builder.addTypeParameter(paramBuilder.build());
+        } else if (type instanceof WildcardType) {
+            builder.addTypeParameter(TypeData.builder((Class) ((WildcardType) type).getUpperBounds()[0]).build());
         } else if (type instanceof TypeVariable) {
             builder.addTypeParameter(TypeData.builder(Object.class).build());
         } else if (type instanceof Class) {
