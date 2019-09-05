@@ -19,9 +19,12 @@ package org.bson.codecs.pojo.entities;
 
 import org.bson.codecs.pojo.annotations.BsonProperty;
 
+import java.util.List;
+
 public final class ConcreteAndNestedAbstractInterfaceModel extends AbstractInterfaceModel {
     @BsonProperty(useDiscriminator = true)
     private InterfaceBasedModel child;
+    private List<? extends InterfaceBasedModel> wildcardList;
 
     public ConcreteAndNestedAbstractInterfaceModel() {
         super();
@@ -32,12 +35,26 @@ public final class ConcreteAndNestedAbstractInterfaceModel extends AbstractInter
         this.child = child;
     }
 
+    public ConcreteAndNestedAbstractInterfaceModel(final String name, final List<? extends InterfaceBasedModel> wildcardList) {
+        super(name);
+        this.child = null;
+        this.wildcardList = wildcardList;
+    }
+
     public InterfaceBasedModel getChild() {
         return child;
     }
 
     public void setChild(final InterfaceBasedModel child) {
         this.child = child;
+    }
+
+    public List<? extends InterfaceBasedModel> getWildcardList() {
+        return wildcardList;
+    }
+
+    public void setWildcardList(final List<? extends InterfaceBasedModel> wildcardList) {
+        this.wildcardList = wildcardList;
     }
 
     @Override

@@ -26,15 +26,19 @@ import org.bson.codecs.LongCodec;
 import org.bson.codecs.MapCodec;
 import org.bson.codecs.configuration.CodecConfigurationException;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.pojo.entities.AbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.AsymmetricalCreatorModel;
 import org.bson.codecs.pojo.entities.AsymmetricalIgnoreModel;
 import org.bson.codecs.pojo.entities.AsymmetricalModel;
+import org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.ConcreteCollectionsModel;
+import org.bson.codecs.pojo.entities.ConcreteStandAloneAbstractInterfaceModel;
 import org.bson.codecs.pojo.entities.ConstructorNotPublicModel;
 import org.bson.codecs.pojo.entities.ConventionModel;
 import org.bson.codecs.pojo.entities.ConverterModel;
 import org.bson.codecs.pojo.entities.CustomPropertyCodecOptionalModel;
 import org.bson.codecs.pojo.entities.GenericTreeModel;
+import org.bson.codecs.pojo.entities.InterfaceBasedModel;
 import org.bson.codecs.pojo.entities.InvalidCollectionModel;
 import org.bson.codecs.pojo.entities.InvalidGetterAndSetterModel;
 import org.bson.codecs.pojo.entities.InvalidMapModel;
@@ -77,6 +81,7 @@ import java.util.Map;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 import static org.bson.codecs.configuration.CodecRegistries.fromCodecs;
 import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 import static org.bson.codecs.configuration.CodecRegistries.fromRegistries;
@@ -251,6 +256,23 @@ public final class PojoCustomTest extends PojoTestCase {
 
         roundTrip(builder, new CollectionsGetterMutableModel(asList(1, 2)), "{listField: [1, 2]}");
         roundTrip(builder, new MapGetterMutableModel(Collections.singletonMap("a", 3)), "{mapField: {a: 3}}");
+    }
+
+    @Test
+    public void testWithWildcardListField() {
+        ClassModel<InterfaceBasedModel> interfaceBasedModelClassModel =
+                ClassModel.builder(InterfaceBasedModel.class).enableDiscriminator(true).build();
+        PojoCodecProvider.Builder builder = PojoCodecProvider.builder().automatic(true)
+                .register(interfaceBasedModelClassModel)
+                .register(AbstractInterfaceModel.class, ConcreteStandAloneAbstractInterfaceModel.class,
+                        ConcreteAndNestedAbstractInterfaceModel.class);
+
+        roundTrip(builder,
+                new ConcreteAndNestedAbstractInterfaceModel("A",
+                        singletonList(new ConcreteStandAloneAbstractInterfaceModel("B"))),
+                "{'_t': 'org.bson.codecs.pojo.entities.ConcreteAndNestedAbstractInterfaceModel', 'name': 'A', "
+                        + "  'wildcardList': [{'_t': 'org.bson.codecs.pojo.entities.ConcreteStandAloneAbstractInterfaceModel', "
+                        + "'name': 'B'}]}");
     }
 
     @Test(expected = CodecConfigurationException.class)
