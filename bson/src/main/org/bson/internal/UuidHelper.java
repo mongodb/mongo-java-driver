@@ -102,8 +102,10 @@ public final class UuidHelper {
                     reverseByteArray(data, 8, 8);
                     break;
                 case PYTHON_LEGACY:
-                case STANDARD:
                     break;
+                case STANDARD:
+                    throw new BSONException("Can not decode a subtype 3 (UUID legacy) BSON binary when the decoder is configured to use " +
+                            "the standard UUID representation");
                 default:
                     throw new BSONException("Unexpected UUID representation");
             }

@@ -1,5 +1,6 @@
 package org.bson.internal
 
+import org.bson.BSONException
 import org.bson.UuidRepresentation
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -31,10 +32,21 @@ class UuidHelperSpecification extends Specification {
         uuid == UuidHelper.decodeBinaryToUuid(expectedBytes, (byte) type, uuidRepresentation)
 
         where:
-        uuid                                                          | type | uuidRepresentation
+        uuid                                                    | type | uuidRepresentation
         UUID.fromString('08070605-0403-0201-100f-0e0d0c0b0a09') | 3    | UuidRepresentation.JAVA_LEGACY
-        UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10') | 4    | UuidRepresentation.STANDARD
         UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10') | 3    | UuidRepresentation.PYTHON_LEGACY
         UUID.fromString('04030201-0605-0807-090a-0b0c0d0e0f10') | 3    | UuidRepresentation.C_SHARP_LEGACY
+        UUID.fromString('01020304-0506-0708-090a-0b0c0d0e0f10') | 4    | UuidRepresentation.STANDARD
+    }
+
+    def 'should error when decoding a subtype 3 binary to standard representation'() {
+        given:
+        byte[] expectedBytes = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
+
+        when:
+        UuidHelper.decodeBinaryToUuid(expectedBytes, (byte) 3, UuidRepresentation.STANDARD)
+
+        then:
+        thrown(BSONException)
     }
 }
