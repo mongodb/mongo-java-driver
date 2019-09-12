@@ -24,4 +24,4 @@ echo "Publishing snapshot with jdk11"
 export JAVA_HOME="/opt/java/jdk11"
 
 ./gradlew -version
-./gradlew publishSnapshots
+./gradlew publishSnapshots -PallScalaVersions=true
