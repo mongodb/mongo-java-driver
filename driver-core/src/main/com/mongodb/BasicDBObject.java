@@ -142,7 +142,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
     }
 
     /**
-     * Gets a JSON representation of this document using the {@link org.bson.json.JsonMode#STRICT} output mode, and otherwise the default
+     * Gets a JSON representation of this document using the {@link org.bson.json.JsonMode#RELAXED} output mode, and otherwise the default
      * settings of {@link JsonWriterSettings.Builder} and {@link DBObjectCodec}.
      *
      * @return a JSON representation of this document
@@ -152,7 +152,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
      */
     @SuppressWarnings("deprecation")
     public String toJson() {
-        return toJson(JsonWriterSettings.builder().outputMode(JsonMode.STRICT).build());
+        return toJson(JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build());
     }
 
     /**
@@ -179,7 +179,7 @@ public class BasicDBObject extends BasicBSONObject implements DBObject, Bson {
      */
     @SuppressWarnings("deprecation")
     public String toJson(final Encoder<BasicDBObject> encoder) {
-        return toJson(JsonWriterSettings.builder().outputMode(JsonMode.STRICT).build(), encoder);
+        return toJson(JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build(), encoder);
     }
 
     /**

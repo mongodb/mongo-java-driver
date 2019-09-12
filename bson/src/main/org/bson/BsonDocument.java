@@ -814,7 +814,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, C
     }
 
     /**
-     * Gets a JSON representation of this document using the {@link org.bson.json.JsonMode#STRICT} output mode, and otherwise the default
+     * Gets a JSON representation of this document using the {@link org.bson.json.JsonMode#RELAXED} output mode, and otherwise the default
      * settings of {@link JsonWriterSettings.Builder}.
      *
      * @return a JSON representation of this document
@@ -823,7 +823,7 @@ public class BsonDocument extends BsonValue implements Map<String, BsonValue>, C
      */
     @SuppressWarnings("deprecation")
     public String toJson() {
-        return toJson(JsonWriterSettings.builder().outputMode(JsonMode.STRICT).build());
+        return toJson(JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build());
     }
 
     /**
