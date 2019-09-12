@@ -16,20 +16,40 @@
 
 def deployedProjects = subprojects.findAll { !['util'].contains(it.name) }
 configure(deployedProjects) {
-    
+
+    def isScala = project.name.contains('scala')
+    def hasAllScalaVersions = project.hasProperty('allScalaVersions')
+    def isInvalidScalaProject = isScala && !hasAllScalaVersions
+
     task publishSnapshots {
         group = 'publishing'
         description = 'Publishes snapshots to Sonatype'
-        if (version.endsWith('-SNAPSHOT')) {
-            dependsOn tasks.withType(PublishToMavenRepository)
+
+        if ( version.endsWith('-SNAPSHOT')) {
+            if (isInvalidScalaProject) {
+                doFirst {
+                    def cause = """
+                    | Not publishing all Scala versions:
+                    | =================================
+                    |
+                    | You must set the -PallScalaVersions flag when publishing
+                    |""".stripMargin()
+                        throw new GradleException(cause)
+                }
+            } else {
+                dependsOn tasks.withType(PublishToMavenRepository)
+            }
         }
     }
 
     task publishArchives {
         group = 'publishing'
         description = 'Publishes a release and uploads to Sonatype / Maven Central'
+
+        def gitVersionMatch = project.gitVersion == version
+
         doFirst { 
-            if (project.gitVersion != version) {
+            if (!gitVersionMatch) {
                 def cause = """
                 | Version mismatch:
                 | =================
@@ -39,11 +59,19 @@ configure(deployedProjects) {
                 | The project version does not match the git tag.
                 |""".stripMargin()
                 throw new GradleException(cause)
+            } else if (isInvalidScalaProject) {
+                def cause = """
+                    | Not publishing all Scala versions:
+                    | =================================
+                    |
+                    | You must set the -PallScalaVersions flag when publishing
+                    |""".stripMargin()
+                throw new GradleException(cause)
             } else {
                 println("Publishing: ${project.name} : ${project.gitVersion}")
             }
         }
-        if (project.gitVersion == version) {
+        if (gitVersionMatch && !isInvalidScalaProject) {
             dependsOn tasks.withType(PublishToMavenRepository)
         }
     }
