@@ -58,6 +58,21 @@ task integrationTest(type: Test) {
 
 check.dependsOn integrationTest
 
+task aggregatedScalaDoc(type: ScalaDoc) {
+    description('Unified Scaladoc for bson-scala and driver-scala')
+    group('documentation')
+    ext.fromProjects = [
+            project(':bson-scala'),
+            project(':driver-scala')
+    ]
+
+    classpath = project.sourceSets.main.compileClasspath
+    source = fromProjects.collect { it.sourceSets.main.allSource }
+
+    scalaDocOptions.additionalParameters = ["-doc-root-content", "${project.rootDir}/driver-scala/rootdoc.txt" as String]
+}
+
+
 idea {
     module {
         testSourceDirs += sourceSets.integrationTest.scala.srcDirs

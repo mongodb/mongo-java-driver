@@ -59,8 +59,10 @@ ext {
     }
 }
 
-def javaMainProjects = subprojects.findAll { !['util', 'driver-benchmarks', 'driver-embedded'].contains(it.name) }
-configure(javaMainProjects) { project ->
+def scalaProjects = subprojects.findAll { it.name.contains('scala') }
+def javaProjects = subprojects.findAll { !scalaProjects.contains(it) && !['util', 'driver-benchmarks', 'driver-embedded'].contains(it.name) }
+
+configure(javaProjects) { project ->
     apply plugin: 'maven-publish'
     apply plugin: 'signing'
 
@@ -82,6 +84,43 @@ configure(javaMainProjects) { project ->
                 artifact sourcesJar
                 artifact javadocJar
 
+                pom configurePom(project)
+            }
+        }
+
+        repositories configureMavenRepositories(project)
+    }
+
+    afterEvaluate {
+        signing {
+            sign publishing.publications.mavenJava
+        }
+    }
+}
+
+configure(scalaProjects) { project ->
+    apply plugin: 'maven-publish'
+    apply plugin: 'signing'
+
+    task sourcesJar(type: Jar) {
+        from project.sourceSets.main.allScala
+        classifier = 'sources'
+    }
+
+    task scaladocJar(type: Jar) {
+        from scaladoc
+        classifier = 'scaladoc'
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                artifactId = project.archivesBaseName
+                from project.components.java
+                artifact sourcesJar
+                if (!scalaVersion.startsWith("2.13")) {
+                    artifact scaladocJar  // https://github.com/gradle/gradle/issues/9855
+                }
                 pom configurePom(project)
             }
         }

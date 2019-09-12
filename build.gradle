@@ -90,6 +90,8 @@ configure(scalaProjects) {
     apply plugin: "com.adtran.scala-multiversion-plugin"
     apply plugin: "com.diffplug.gradle.spotless"
 
+    group = 'org.mongodb.scala'
+
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
 
