@@ -21,7 +21,9 @@ import java.io.Closeable
 import com.mongodb.ConnectionString
 import com.mongodb.reactivestreams.client.{MongoClients, MongoClient => JMongoClient}
 import org.bson.codecs.configuration.CodecRegistry
+import org.bson.codecs.configuration.CodecRegistries.{ fromProviders, fromRegistries }
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
+import org.mongodb.scala.bson.codecs.{DocumentCodecProvider, IterableCodecProvider}
 import org.mongodb.scala.bson.conversions.Bson
 
 import scala.collection.JavaConverters._
@@ -91,7 +93,9 @@ object MongoClient {
     MongoClient(MongoClients.create(clientSettings, builder.build()))
   }
 
-  val DEFAULT_CODEC_REGISTRY: CodecRegistry = org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
+  val DEFAULT_CODEC_REGISTRY: CodecRegistry = fromRegistries(
+    fromProviders(DocumentCodecProvider(), IterableCodecProvider()),
+    com.mongodb.MongoClientSettings.getDefaultCodecRegistry)
 }
 
 /**

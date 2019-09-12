@@ -18,7 +18,8 @@ package org.mongodb.scala
 
 import com.mongodb.Block
 import org.bson.codecs.configuration.CodecRegistries._
-import org.mongodb.scala.bson.codecs.{DEFAULT_CODEC_REGISTRY, DocumentCodecProvider}
+import org.mongodb.scala.MongoClient.DEFAULT_CODEC_REGISTRY
+import org.mongodb.scala.bson.codecs.DocumentCodecProvider
 import org.mongodb.scala.connection.ConnectionPoolSettings.Builder
 import org.scalamock.scalatest.proxy.MockFactory
 import org.scalatest.{FlatSpec, Matchers}
