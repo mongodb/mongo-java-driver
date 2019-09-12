@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 
-include ':bson'
-include ':driver-benchmarks'
-include ':driver-core'
-include ':driver-embedded'
-include ':driver-legacy'
-include ':driver-sync'
-include ':driver-reactive-streams'
-include ':bson-scala'
-include ':util'
+package org.mongodb.scala.bson
+
+/**
+ * The conversions package.
+ */
+package object conversions {
+  /**
+   * Type alias to the Bson interface - an interface for types that are able to render themselves into a `BsonDocument`.
+   */
+  type Bson = org.bson.conversions.Bson
+}
