@@ -9,6 +9,7 @@
 
 # Build artifacts
 build
+target
 out
 mongo*.jar
 
