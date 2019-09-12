@@ -36,12 +36,6 @@ test {
     exclude 'tour/**'
 }
 
-clirr {
-    excludeFilter = new File("$configDir/clirr-exclude.yml")
-    baseline 'org.mongodb:mongodb-driver-sync:3.8.0'
-    failOnErrors = false
-}
-
 tasks.withType(Checkstyle) {
     // needed so the Javadoc checks can find the code in other modules
     classpath = files(project(':driver-core').sourceSets.main.output, sourceSets.main.output)
