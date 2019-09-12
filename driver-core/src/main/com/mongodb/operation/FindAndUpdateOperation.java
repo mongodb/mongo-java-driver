@@ -30,12 +30,9 @@ import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
-import org.bson.BsonValue;
 import org.bson.FieldNameValidator;
 import org.bson.codecs.Decoder;
-import org.bson.conversions.Bson;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,7 +57,7 @@ import static java.util.concurrent.TimeUnit.MILLISECONDS;
 @Deprecated
 public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
     private final BsonDocument update;
-    private final List<? extends Bson> updatePipeline;
+    private final List<BsonDocument> updatePipeline;
     private BsonDocument filter;
     private BsonDocument projection;
     private BsonDocument sort;
@@ -129,7 +126,7 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
      * @mongodb.server.release 4.2
      */
     public FindAndUpdateOperation(final MongoNamespace namespace, final WriteConcern writeConcern, final boolean retryWrites,
-                                  final Decoder<T> decoder, final List<? extends Bson> update) {
+                                  final Decoder<T> decoder, final List<BsonDocument> update) {
         super(namespace, writeConcern, retryWrites, decoder);
         this.updatePipeline = update;
         this.update = null;
@@ -153,7 +150,7 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
      * @mongodb.server.release 4.2
      */
     @Nullable
-    public List<? extends Bson> getUpdatePipeline() {
+    public List<BsonDocument> getUpdatePipeline() {
         return updatePipeline;
     }
 
@@ -384,17 +381,6 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
         };
     }
 
-    private List<BsonValue> toBsonValueList(final List<? extends Bson> bsonList) {
-        if (bsonList == null) {
-            return null;
-        }
-        List<BsonValue> bsonValueList = new ArrayList<BsonValue>(bsonList.size());
-        for (Object cur : bsonList) {
-            bsonValueList.add((BsonValue) cur);
-        }
-        return bsonValueList;
-    }
-
     private BsonDocument createCommand(final SessionContext sessionContext, final ServerDescription serverDescription,
                                        final ConnectionDescription connectionDescription) {
         validateCollation(connectionDescription, collation);
@@ -406,7 +392,7 @@ public class FindAndUpdateOperation<T> extends BaseFindAndModifyOperation<T> {
         putIfTrue(commandDocument, "upsert", isUpsert());
         putIfNotZero(commandDocument, "maxTimeMS", getMaxTime(MILLISECONDS));
         if (getUpdatePipeline() != null) {
-            commandDocument.put("update", new BsonArray(toBsonValueList(getUpdatePipeline())));
+            commandDocument.put("update", new BsonArray(getUpdatePipeline()));
         } else {
             putIfNotNull(commandDocument, "update", getUpdate());
         }
