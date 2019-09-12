@@ -77,23 +77,6 @@ object MongoCredential {
     JMongoCredential.createScramSha256Credential(userName, source, password)
 
   /**
-   * Creates a MongoCredential instance for the MongoDB Challenge Response protocol. Use this method only if you want to ensure that
-   * the driver uses the MONGODB_CR mechanism regardless of whether the server you are connecting to supports a more secure
-   * authentication mechanism.  Otherwise use the [[createCredential]] method to allow the driver to
-   * negotiate the best mechanism based on the server version.
-   *
-   * @param userName the user name
-   * @param database the database where the user is defined
-   * @param password the user's password
-   * @return the credential
-   * @see [[createCredential]]
-   * @see [[http://docs.mongodb.org/manual/core/authentication/#mongodb-cr-authentication MONGODB-CR]]
-   */
-  @deprecated("MONGODB-CR was replaced by SCRAM-SHA-1 in MongoDB 3.0, and is now deprecated.", "2.4")
-  def createMongoCRCredential(userName: String, database: String, password: Array[Char]): JMongoCredential =
-    JMongoCredential.createMongoCRCredential(userName, database, password)
-
-  /**
    * Creates a MongoCredential instance for the MongoDB X.509 protocol.
    *
    * @param userName the user name

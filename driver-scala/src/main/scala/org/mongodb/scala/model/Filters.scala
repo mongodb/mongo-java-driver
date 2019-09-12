@@ -329,18 +329,6 @@ object Filters {
    * Creates a filter that matches all documents matching the given search term using the given language.
    *
    * @param search   the search term
-   * @param language the language to use for stop words
-   * @return the filter
-   * @see [[http://docs.mongodb.org/manual/reference/operator/query/text \$text]]
-   * @deprecated use {{{Filters.text(String, TextSearchOptions)}}} instead.
-   */
-  @deprecated("Use `Filters.text(String, TextSearchOptions)` insread", "1.1")
-  def text(search: String, language: String): Bson = text(search, new TextSearchOptions().language(language))
-
-  /**
-   * Creates a filter that matches all documents matching the given search term using the given language.
-   *
-   * @param search   the search term
    * @param textSearchOptions the text search options to use
    * @return the filter
    * @see [[http://docs.mongodb.org/manual/reference/operator/query/text \$text]]

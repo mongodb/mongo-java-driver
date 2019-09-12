@@ -56,6 +56,7 @@ class ApiAliasAndCompanionSpec extends FlatSpec with Matchers {
         |-com.mongodb.bulk.*,
         |-com.mongodb.client.*,
         |-com.mongodb.connection.*,
+        |-com.mongodb.crypt.*,
         |-com.mongodb.diagnostics.*,
         |-com.mongodb.event.*,
         |-com.mongodb.internal.*,

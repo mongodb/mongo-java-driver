@@ -171,9 +171,6 @@ class FiltersSpec extends FlatSpec with Matchers {
 
   it should "render $text" in {
     toBson(model.Filters.text("mongoDB for GIANT ideas")) should equal(Document("""{$text: {$search: "mongoDB for GIANT ideas"} }"""))
-    toBson(model.Filters.text("mongoDB for GIANT ideas", "english")) should equal(
-      Document("""{$text: {$search: "mongoDB for GIANT ideas", $language : "english"}}""")
-    )
     toBson(model.Filters.text("mongoDB for GIANT ideas", new TextSearchOptions().language("english"))) should equal(
       Document("""{$text : {$search : "mongoDB for GIANT ideas", $language : "english"} }""")
     )

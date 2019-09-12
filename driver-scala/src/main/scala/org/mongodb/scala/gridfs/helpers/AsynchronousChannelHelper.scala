@@ -18,7 +18,7 @@ package org.mongodb.scala.gridfs.helpers
 
 import java.nio.channels.{AsynchronousByteChannel, AsynchronousFileChannel}
 
-import com.mongodb.async.client.gridfs.helpers.{AsynchronousChannelHelper => JAsynchronousChannelHelper}
+import com.mongodb.internal.async.client.gridfs.helpers.{AsynchronousChannelHelper => JAsynchronousChannelHelper}
 import com.mongodb.reactivestreams.client.internal.GridFSAsyncStreamHelper
 import org.mongodb.scala.gridfs.{AsyncInputStream, AsyncOutputStream}
 

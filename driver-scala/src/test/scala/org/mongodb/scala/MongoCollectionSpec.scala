@@ -122,26 +122,8 @@ class MongoCollectionSpec extends FlatSpec with Matchers with MockFactory {
     mongoCollection.withDocumentClass[BsonDocument]()
   }
 
-  it should "return the underlying count" in {
-    val countOptions = CountOptions().hintString("Hint")
-
-    wrapped.expects(Symbol("count"))().once()
-    wrapped.expects(Symbol("count"))(filter).once()
-    wrapped.expects(Symbol("count"))(filter, countOptions).once()
-    wrapped.expects(Symbol("count"))(clientSession).once()
-    wrapped.expects(Symbol("count"))(clientSession, filter).once()
-    wrapped.expects(Symbol("count"))(clientSession, filter, countOptions).once()
-
-    mongoCollection.count()
-    mongoCollection.count(filter)
-    mongoCollection.count(filter, countOptions)
-    mongoCollection.count(clientSession)
-    mongoCollection.count(clientSession, filter)
-    mongoCollection.count(clientSession, filter, countOptions)
-  }
-
   it should "return the underlying countDocuments" in {
-    val countOptions = CountOptions().hintString("Hint")
+    val countOptions = CountOptions()
 
     wrapped.expects(Symbol("countDocuments"))().once()
     wrapped.expects(Symbol("countDocuments"))(filter).once()
@@ -303,23 +285,17 @@ class MongoCollectionSpec extends FlatSpec with Matchers with MockFactory {
   it should "wrap the underlying replaceOne correctly" in {
     val replacement = Document("a" -> 1)
     val replaceOptions = new ReplaceOptions().upsert(true)
-    val updateOptions = new UpdateOptions().upsert(true)
 
     wrapped.expects(Symbol("replaceOne"))(filter, replacement).once()
     wrapped.expects(Symbol("replaceOne"))(filter, replacement, replaceOptions).once()
     wrapped.expects(Symbol("replaceOne"))(clientSession, filter, replacement).once()
     wrapped.expects(Symbol("replaceOne"))(clientSession, filter, replacement, replaceOptions).once()
 
-    wrapped.expects(Symbol("replaceOne"))(filter, replacement, updateOptions).once()
-    wrapped.expects(Symbol("replaceOne"))(clientSession, filter, replacement, updateOptions).once()
 
     mongoCollection.replaceOne(filter, replacement)
     mongoCollection.replaceOne(filter, replacement, replaceOptions)
     mongoCollection.replaceOne(clientSession, filter, replacement)
     mongoCollection.replaceOne(clientSession, filter, replacement, replaceOptions)
-
-    mongoCollection.replaceOne(filter, replacement, updateOptions)
-    mongoCollection.replaceOne(clientSession, filter, replacement, updateOptions)
   }
 
   it should "wrap the underlying updateOne correctly" in {

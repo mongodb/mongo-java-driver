@@ -113,21 +113,6 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
   }
 
   /**
-   * Sets the query modifiers to apply to this operation.
-   *
-   * [[http://docs.mongodb.org/manual/reference/operator/query-modifier/ Query Modifiers]]
-   *
-   * @param modifiers the query modifiers to apply, which may be null.
-   * @return this
-   * @deprecated use the individual setters instead
-   */
-  @deprecated("use the individual setters instead", "2.2")
-  def modifiers(modifiers: Bson): FindObservable[TResult] = {
-    wrapped.modifiers(modifiers)
-    this
-  }
-
-  /**
    * Sets a document describing the fields to return for all matching documents.
    *
    * [[http://docs.mongodb.org/manual/reference/method/db.collection.find/ Projection]]
@@ -259,21 +244,6 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
   }
 
   /**
-   * Sets the maximum number of documents or index keys to scan when executing the query.
-   *
-   * A zero value or less will be ignored, and indicates that the driver should respect the server's default value.
-   *
-   * @param maxScan the maxScan
-   * @return this
-   * @since 2.2
-   */
-  @deprecated("Deprecated as of MongoDB 4.0 release", "2.4")
-  def maxScan(maxScan: Long): FindObservable[TResult] = {
-    wrapped.maxScan(maxScan)
-    this
-  }
-
-  /**
    * Sets the returnKey. If true the find operation will return only the index keys in the resulting documents.
    *
    * @param returnKey the returnKey
@@ -306,21 +276,6 @@ case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) 
    */
   def batchSize(batchSize: Int): FindObservable[TResult] = {
     wrapped.batchSize(batchSize)
-    this
-  }
-
-  /**
-   * Sets the snapshot.
-   *
-   * If true it prevents the cursor from returning a document more than once because of an intervening write operation.
-   *
-   * @param snapshot the snapshot
-   * @return this
-   * @since 2.2
-   */
-  @deprecated("Deprecated in MongoDB 3.6 release and removed in MongoDB 4.0 release", "2.4")
-  def snapshot(snapshot: Boolean): FindObservable[TResult] = {
-    wrapped.snapshot(snapshot)
     this
   }
 

@@ -64,15 +64,15 @@ package object gridfs extends ObservableImplicits {
   }
 
   implicit class ScalaAsyncInputStreamToJava(wrapped: AsyncInputStream) extends JAsyncInputStream {
-    override def read(dst: ByteBuffer): Publisher[java.lang.Integer] = wrapped.read(dst).map(i => new java.lang.Integer(i))
+    override def read(dst: ByteBuffer): Publisher[java.lang.Integer] = wrapped.read(dst).map(i => java.lang.Integer.valueOf(i))
 
-    override def skip(bytesToSkip: Long): Publisher[java.lang.Long] = wrapped.skip(bytesToSkip).map(l => new java.lang.Long(l))
+    override def skip(bytesToSkip: Long): Publisher[java.lang.Long] = wrapped.skip(bytesToSkip).map(l => java.lang.Long.valueOf(l))
 
     override def close(): Publisher[Success] = wrapped.close().map(_ => Success.SUCCESS)
   }
 
   implicit class ScalaAsyncOutputStreamToJava(wrapped: AsyncOutputStream) extends JAsyncOutputStream {
-    override def write(src: ByteBuffer): Publisher[java.lang.Integer] = wrapped.write(src).map(i => new java.lang.Integer(i))
+    override def write(src: ByteBuffer): Publisher[java.lang.Integer] = wrapped.write(src).map(i => java.lang.Integer.valueOf(i))
 
     override def close(): Publisher[Success] = wrapped.close().map(_ => Success.SUCCESS)
   }

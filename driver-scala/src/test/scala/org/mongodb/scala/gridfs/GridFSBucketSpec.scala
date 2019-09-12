@@ -41,14 +41,12 @@ class GridFSBucketSpec extends FlatSpec with Matchers with MockFactory {
 
   it should "call the underlying methods to get bucket values" in {
     wrapper.expects(Symbol("getBucketName"))().once()
-    wrapper.expects(Symbol("getDisableMD5"))().returning(false).once()
     wrapper.expects(Symbol("getChunkSizeBytes"))().returning(1).once()
     wrapper.expects(Symbol("getReadConcern"))().once()
     wrapper.expects(Symbol("getReadPreference"))().once()
     wrapper.expects(Symbol("getWriteConcern"))().once()
 
     gridFSBucket.bucketName
-    gridFSBucket.disableMD5
     gridFSBucket.chunkSizeBytes
     gridFSBucket.readConcern
     gridFSBucket.readPreference
@@ -61,13 +59,11 @@ class GridFSBucketSpec extends FlatSpec with Matchers with MockFactory {
     val readPreference = ReadPreference.secondaryPreferred()
     val writeConcern = WriteConcern.W2
 
-    wrapper.expects(Symbol("withDisableMD5"))(true).once()
     wrapper.expects(Symbol("withChunkSizeBytes"))(chunkSizeInBytes).once()
     wrapper.expects(Symbol("withReadConcern"))(readConcern).once()
     wrapper.expects(Symbol("withReadPreference"))(readPreference).once()
     wrapper.expects(Symbol("withWriteConcern"))(writeConcern).once()
 
-    gridFSBucket.withDisableMD5(true)
     gridFSBucket.withChunkSizeBytes(chunkSizeInBytes)
     gridFSBucket.withReadConcern(readConcern)
     gridFSBucket.withReadPreference(readPreference)

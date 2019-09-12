@@ -191,7 +191,7 @@ class CrudSpec extends RequiresMongoDBISpec with FuturesSpec {
       resultDoc.append("insertedIds", insertedIds)
       resultDoc.append("insertedCount", BsonInt32(insertedIds.size))
       resultDoc.append("matchedCount", BsonInt32(bulkWriteResult.getMatchedCount))
-      if (bulkWriteResult.isModifiedCountAvailable) resultDoc.append("modifiedCount", BsonInt32(bulkWriteResult.getModifiedCount))
+      Try(bulkWriteResult.getModifiedCount).map(r => resultDoc.append("modifiedCount", BsonInt32(r.toInt)))
       resultDoc.append("upsertedCount", if (bulkWriteResult.getUpserts == null) BsonInt32(0)
       else BsonInt32(bulkWriteResult.getUpserts.size))
       val upserts = BsonDocument()
@@ -205,7 +205,7 @@ class CrudSpec extends RequiresMongoDBISpec with FuturesSpec {
     val pipeline = arguments.getArray("pipeline").asScala.map(_.asDocument()).toSeq
     val observable = collection.get.aggregate[BsonDocument](pipeline)
     if (arguments.containsKey("collation")) observable.collation(getCollation(arguments.getDocument("collation")))
-    BsonArray(observable.futureValue)
+    BsonArray.fromIterable(observable.futureValue)
   }
 
   private def doDatabaseAggregate(arguments: BsonDocument) = {
@@ -227,15 +227,11 @@ class CrudSpec extends RequiresMongoDBISpec with FuturesSpec {
         command.put("cursor", BsonDocument())
       }
     }
-    BsonArray(results)
+    BsonArray.fromIterable(results)
   }
 
   private def doCount(arguments: BsonDocument): BsonValue = {
-    val options: CountOptions = CountOptions()
-    if (arguments.containsKey("skip")) options.skip(arguments.getNumber("skip").intValue)
-    if (arguments.containsKey("limit")) options.limit(arguments.getNumber("limit").intValue)
-    if (arguments.containsKey("collation")) options.collation(getCollation(arguments.getDocument("collation")))
-    BsonInt32(collection.get.count(arguments.getDocument("filter"), options).futureValue.toInt)
+    doCountDocuments(arguments) // TODO ignore/ update
   }
 
   private def doCountDocuments(arguments: BsonDocument): BsonValue = {
@@ -292,7 +288,7 @@ class CrudSpec extends RequiresMongoDBISpec with FuturesSpec {
     val observable = collection.get.distinct[BsonValue](arguments.getString("fieldName").getValue)
     if (arguments.containsKey("filter")) observable.filter(arguments.getDocument("filter"))
     if (arguments.containsKey("collation")) observable.collation(getCollation(arguments.getDocument("collation")))
-    BsonArray(observable.futureValue)
+    BsonArray.fromIterable(observable.futureValue)
   }
 
   private def doFind(arguments: BsonDocument): BsonValue = {
@@ -300,7 +296,7 @@ class CrudSpec extends RequiresMongoDBISpec with FuturesSpec {
     if (arguments.containsKey("skip")) observable.skip(arguments.getNumber("skip").intValue)
     if (arguments.containsKey("limit")) observable.limit(arguments.getNumber("limit").intValue)
     if (arguments.containsKey("collation")) observable.collation(getCollation(arguments.getDocument("collation")))
-    BsonArray(observable.futureValue)
+    BsonArray.fromIterable(observable.futureValue)
   }
 
   private def doDeleteMany(arguments: BsonDocument): BsonValue = {
@@ -426,9 +422,7 @@ class CrudSpec extends RequiresMongoDBISpec with FuturesSpec {
 
   private def convertUpdateResult(result: UpdateResult): BsonDocument = {
     val resultDoc: BsonDocument = BsonDocument("matchedCount" -> BsonInt32(result.getMatchedCount.toInt))
-    if (result.isModifiedCountAvailable) {
-      resultDoc.append("modifiedCount", BsonInt32(result.getModifiedCount.toInt))
-    }
+    Try(result.getModifiedCount).map(r => resultDoc.append("modifiedCount", BsonInt32(r.toInt)))
 
     val upsertedCount = result.getUpsertedId match {
       case id: BsonValue if !id.isObjectId => resultDoc.append("upsertedId", id); BsonInt32(1)

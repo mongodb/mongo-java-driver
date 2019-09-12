@@ -124,73 +124,6 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
   def withReadConcern(readConcern: ReadConcern): MongoCollection[TResult] = MongoCollection(wrapped.withReadConcern(readConcern))
 
   /**
-   * Counts the number of documents in the collection.
-   *
-   * @return a Observable with a single element indicating the number of documents
-   */
-  @deprecated("Use `countDocuments` or `estimatedDocumentCount()` instead of `count()`", "2.4")
-  def count(): SingleObservable[Long] = wrapped.count()
-
-  /**
-   * Counts the number of documents in the collection according to the given options.
-   *
-   * @param filter the query filter
-   * @return a Observable with a single element indicating the number of documents
-   */
-  @deprecated("Use `countDocuments` instead of `count()`", "2.4")
-  def count(filter: Bson): SingleObservable[Long] = wrapped.count(filter)
-
-  /**
-   * Counts the number of documents in the collection according to the given options.
-   *
-   * @param filter  the query filter
-   * @param options the options describing the count
-   * @return a Observable with a single element indicating the number of documents
-   */
-  @deprecated("Use `countDocuments` instead of `count()`", "2.4")
-  def count(filter: Bson, options: CountOptions): SingleObservable[Long] =
-    wrapped.count(filter, options)
-
-  /**
-   * Counts the number of documents in the collection.
-   *
-   * @param clientSession the client session with which to associate this operation
-   * @return a Observable with a single element indicating the number of documents
-   * @since 2.2
-   * @note Requires MongoDB 3.6 or greater
-   */
-  @deprecated("Use `countDocuments` instead of `count()`", "2.4")
-  def count(clientSession: ClientSession): SingleObservable[Long] =
-    wrapped.count(clientSession)
-
-  /**
-   * Counts the number of documents in the collection according to the given options.
-   *
-   * @param clientSession the client session with which to associate this operation
-   * @param filter the query filter
-   * @return a Observable with a single element indicating the number of documents
-   * @since 2.2
-   * @note Requires MongoDB 3.6 or greater
-   */
-  @deprecated("Use `countDocuments` instead of `count()`", "2.4")
-  def count(clientSession: ClientSession, filter: Bson): SingleObservable[Long] =
-    wrapped.count(clientSession, filter)
-
-  /**
-   * Counts the number of documents in the collection according to the given options.
-   *
-   * @param clientSession the client session with which to associate this operation
-   * @param filter  the query filter
-   * @param options the options describing the count
-   * @return a Observable with a single element indicating the number of documents
-   * @since 2.2
-   * @note Requires MongoDB 3.6 or greater
-   */
-  @deprecated("Use `countDocuments` instead of `count()`", "2.4")
-  def count(clientSession: ClientSession, filter: Bson, options: CountOptions): SingleObservable[Long] =
-    wrapped.count(clientSession, filter, options)
-
-  /**
    * Gets an estimate of the count of documents in a collection using collection metadata.
    *
    * @return a publisher with a single element indicating the estimated number of documents
@@ -774,19 +707,6 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * Replace a document in the collection according to the specified arguments.
    *
    * [[http://docs.mongodb.org/manual/tutorial/modify-documents/#replace-the-document Replace]]
-   * @param filter      the query filter to apply the the replace operation
-   * @param replacement the replacement document
-   * @param options     the options to apply to the replace operation
-   * @return a Observable with a single element the UpdateResult
-   */
-  @deprecated("Use `ReplaceOptions` instead of `UpdateOptions`", "2.3")
-  def replaceOne(filter: Bson, replacement: TResult, options: UpdateOptions): SingleObservable[UpdateResult] =
-    wrapped.replaceOne(filter, replacement, options)
-
-  /**
-   * Replace a document in the collection according to the specified arguments.
-   *
-   * [[http://docs.mongodb.org/manual/tutorial/modify-documents/#replace-the-document Replace]]
    * @param clientSession the client session with which to associate this operation
    * @param filter      the query filter to apply the the replace operation
    * @param replacement the replacement document
@@ -796,22 +716,6 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    */
   def replaceOne(clientSession: ClientSession, filter: Bson, replacement: TResult): SingleObservable[UpdateResult] =
     wrapped.replaceOne(clientSession, filter, replacement)
-
-  /**
-   * Replace a document in the collection according to the specified arguments.
-   *
-   * [[http://docs.mongodb.org/manual/tutorial/modify-documents/#replace-the-document Replace]]
-   * @param clientSession the client session with which to associate this operation
-   * @param filter      the query filter to apply the the replace operation
-   * @param replacement the replacement document
-   * @param options     the options to apply to the replace operation
-   * @return a Observable with a single element the UpdateResult
-   * @since 2.2
-   * @note Requires MongoDB 3.6 or greater
-   */
-  @deprecated("Use `ReplaceOptions` instead of `UpdateOptions`", "2.3")
-  def replaceOne(clientSession: ClientSession, filter: Bson, replacement: TResult, options: UpdateOptions): SingleObservable[UpdateResult] =
-    wrapped.replaceOne(clientSession, filter, replacement, options)
 
   /**
    * Replace a document in the collection according to the specified arguments.

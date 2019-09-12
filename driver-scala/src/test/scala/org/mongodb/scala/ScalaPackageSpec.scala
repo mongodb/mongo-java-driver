@@ -121,24 +121,20 @@ class ScalaPackageSpec extends FlatSpec with Matchers {
     val javaCredential1 = JMongoCredential.createScramSha1Credential("userName", "database", "password".toCharArray)
     scalaCredential1 should equal(javaCredential1)
 
-    val scalaCredential2 = MongoCredential.createMongoCRCredential("userName", "database", "password".toCharArray)
-    val javaCredential2 = JMongoCredential.createMongoCRCredential("userName", "database", "password".toCharArray)
+    val scalaCredential2 = MongoCredential.createMongoX509Credential("userName")
+    val javaCredential2 = JMongoCredential.createMongoX509Credential("userName")
     scalaCredential2 should equal(javaCredential2)
 
-    val scalaCredential3 = MongoCredential.createMongoX509Credential("userName")
-    val javaCredential3 = JMongoCredential.createMongoX509Credential("userName")
+    val scalaCredential3 = MongoCredential.createMongoX509Credential()
+    val javaCredential3 = JMongoCredential.createMongoX509Credential()
     scalaCredential3 should equal(javaCredential3)
 
-    val scalaCredential4 = MongoCredential.createMongoX509Credential()
-    val javaCredential4 = JMongoCredential.createMongoX509Credential()
+    val scalaCredential4 = MongoCredential.createPlainCredential("userName", "database", "password".toCharArray)
+    val javaCredential4 = JMongoCredential.createPlainCredential("userName", "database", "password".toCharArray)
     scalaCredential4 should equal(javaCredential4)
 
-    val scalaCredential5 = MongoCredential.createPlainCredential("userName", "database", "password".toCharArray)
-    val javaCredential5 = JMongoCredential.createPlainCredential("userName", "database", "password".toCharArray)
+    val scalaCredential5 = MongoCredential.createGSSAPICredential("userName")
+    val javaCredential5 = JMongoCredential.createGSSAPICredential("userName")
     scalaCredential5 should equal(javaCredential5)
-
-    val scalaCredential6 = MongoCredential.createGSSAPICredential("userName")
-    val javaCredential6 = JMongoCredential.createGSSAPICredential("userName")
-    scalaCredential6 should equal(javaCredential6)
   }
 }
