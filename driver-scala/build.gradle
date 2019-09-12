@@ -15,18 +15,22 @@
  */
 
 description = "A Scala wrapper / extension to the bson library"
-archivesBaseName = 'mongo-scala-bson'
+archivesBaseName = 'mongo-scala-driver'
 
 apply plugin: "scala"
 apply plugin: "com.adtran.scala-multiversion-plugin"
 apply plugin: "com.github.maiflai.scalatest"
 
 dependencies {
-    compile project(':bson')
+    compile project(':driver-scala-bson')
     compile ('org.scala-lang:scala-library:%scala-version%')
     compile ('org.scala-lang:scala-reflect:%scala-version%')
 
-    testCompile project(':bson').sourceSets.test.output
+//    testCompile project(':driver-scala-bson').sourceSets.main.output
+//    testCompile project(':driver-scala-bson').sourceSets.test.output
+//    testCompile project(':driver-reactive-streams').sourceSets.test.output
+//    testCompile project(':driver-sync').sourceSets.test.output
+//    testCompile project(':driver-core').sourceSets.test.output
 
     testRuntime 'org.pegdown:pegdown:1.6.0'
     testCompile('org.scalatest:scalatest_%%:3.0.8')
@@ -36,18 +40,27 @@ dependencies {
     testCompile('javax.servlet:servlet-api:2.5')
 }
 
-sourceSets {
-    main {
-        scala {
-            srcDirs += ["src/main/scala"]
-            if(scalaVersion.startsWith("2.13")) {
-                srcDirs += ["src/main/scala-2.13+"]
-            } else {
-                srcDirs += ["src/main/scala-2.13-"]
-            }
-        }
-    }
-}
+
+
+//sourceSets {
+//    integrationTest {
+//        compileClasspath += sourceSets.main.output + configurations.testCompile
+//        runtimeClasspath += output + compileClasspath + configurations.testRuntime
+//    }
+//}
+//
+//
+//task integrationTest(type: Test) {
+//    description = 'Runs the integration tests.'
+//    group = 'verification'
+//    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+//    classpath = sourceSets.integrationTest.runtimeClasspath
+//    outputs.upToDateWhen { false }
+//    mustRunAfter test
+//}
+//
+//check.dependsOn integrationTest
+
 
 tasks.withType(Test) {
     doFirst {
@@ -56,7 +69,7 @@ tasks.withType(Test) {
 }
 
 ext {
-    pomName = 'Mongo Scala Bson Library'
+    pomName = 'Mongo Scala Driver'
 }
 
 test {
@@ -65,9 +78,11 @@ test {
 
 jar {
     manifest {
-        instruction 'Automatic-Module-Name', 'org.mongodb.scala.mongo-scala-bson'
+        instruction 'Automatic-Module-Name', 'org.mongodb.scala.mongo-scala-driver'
         instruction 'Build-Version', project.gitVersion
         instruction 'Import-Package',
-                'org.bson.*'
+                'org.bson.*',
+                'com.mongodb.*',
+                'org.mongo.scala.*'
     }
 }
