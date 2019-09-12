@@ -25,10 +25,12 @@ buildscript {
         maven { url "https://plugins.gradle.org/m2/" }
     }
     dependencies {
-        classpath "com.adtran:scala-multiversion-plugin:1.0.35"
-        classpath "gradle.plugin.com.github.maiflai:gradle-scalatest:0.23"
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:3.0.3'
         classpath 'gradle.plugin.com.github.spotbugs:spotbugs-gradle-plugin:1.6.4'
+
+        // Scala plugins
+        classpath "com.adtran:scala-multiversion-plugin:1.0.35"
+        classpath "com.diffplug.spotless:spotless-plugin-gradle:3.24.2"
     }
 }
 
@@ -48,11 +50,14 @@ ext {
 
 def configDir = ext.configDir
 def coreProjects = subprojects.findAll { !['util'].contains(it.name) }
-def javaProjects = subprojects
-def javaMainProjects = subprojects.findAll { !['util'].contains(it.name) }
-def javaCodeCheckedProjects = subprojects.findAll { !['util', 'driver-benchmarks'].contains(it.name) }
+def javaProjects = subprojects.findAll { !it.name.contains('scala') }
+def scalaProjects = subprojects.findAll { it.name.contains('scala') }
+def javaMainProjects = javaProjects.findAll { !['util'].contains(it.name) }
+def javaCodeCheckedProjects = javaMainProjects.findAll { !['driver-benchmarks'].contains(it.name) }
 
 configure(coreProjects) {
+    apply plugin: 'idea'
+
     evaluationDependsOn(':util')
     group = 'org.mongodb'
     version = '4.0.0-SNAPSHOT'
@@ -78,8 +83,31 @@ configure(javaProjects) {
     }
 }
 
-configure(javaMainProjects) {
+configure(scalaProjects) {
+    apply plugin: 'scala'
+    apply plugin: 'osgi'
     apply plugin: 'idea'
+    apply plugin: "com.adtran.scala-multiversion-plugin"
+    apply plugin: "com.diffplug.gradle.spotless"
+    apply plugin: "com.github.maiflai.scalatest"
+
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+
+    spotless {
+        scala {
+            scalafmt('2.0.0').configFile("$configDir/scalafmt.conf")
+        }
+    }
+    // compileScala.dependsOn('spotlessApply') // TODO add once everything else is ported
+
+    tasks.withType(ScalaCompile) {
+        scalaCompileOptions.deprecation = false
+    }
+
+}
+
+configure(javaMainProjects) {
     apply plugin: 'osgi'
     apply plugin: 'nebula.optional-base'
 
