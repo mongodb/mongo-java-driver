@@ -28,7 +28,3 @@ dependencies {
     testCompile project(':driver-core').sourceSets.test.output
     testCompile project(':driver-sync').sourceSets.test.output
 }
-
-clirr {
-    enabled = false
-}

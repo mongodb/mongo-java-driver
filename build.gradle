@@ -25,7 +25,6 @@ buildscript {
         maven { url "https://plugins.gradle.org/m2/" }
     }
     dependencies {
-        classpath 'org.kordamp.gradle:clirr-gradle-plugin:0.2.5'
         classpath 'com.netflix.nebula:gradle-extra-configurations-plugin:3.0.3'
         classpath 'gradle.plugin.com.github.spotbugs:spotbugs-gradle-plugin:1.6.4'
     }
@@ -100,7 +99,6 @@ configure(javaMainProjects) {
 configure(javaCodeCheckedProjects) {
     apply plugin: 'checkstyle'
     apply plugin: "com.github.spotbugs"
-    apply plugin: 'org.kordamp.gradle.clirr'
     apply plugin: 'jacoco'
     apply plugin: 'groovy'
     apply plugin: 'codenarc'
