@@ -234,6 +234,15 @@ functions:
         ${PREPARE_SHELL}
         AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" SLOW_TESTS_ONLY=true .evergreen/run-tests.sh
 
+  "run scala tests":
+    - command: shell.exec
+      type: test
+      params:
+        working_dir: "src"
+        script: |
+          ${PREPARE_SHELL}
+          SCALA="${SCALA}" .evergreen/run-scala-tests.sh
+
   "run socket tests":
     - command: shell.exec
       type: test
@@ -403,6 +412,11 @@ tasks:
         - func: "bootstrap mongo-orchestration"
         - func: "run tests"
 
+    - name: "scala-tests"
+      commands:
+        - func: "bootstrap mongo-orchestration"
+        - func: "run scala tests"
+
     - name: "reactive-streams-tck-test"
       commands:
         - func: "bootstrap mongo-orchestration"
@@ -449,6 +463,8 @@ tasks:
           name: "gssapi-auth-test"
         - variant: "plain-auth-test"
           name: "plain-auth-test"
+        - variant: ".test-scala-variant"
+          name: "scala-tests"
         - variant: ".test-embedded-variant"
           name: "embedded-test"
       commands:
@@ -582,6 +598,22 @@ axes:
         variables:
            JDK: "jdk8"
 
+  - id: scala
+    display_name: SCALA
+    values:
+      - id: "2.11"
+        display_name: "Scala 2.11"
+        variables:
+          SCALA: "2.11.12"
+      - id: "2.12"
+        display_name: "Scala 2.12"
+        variables:
+          SCALA: "2.12.10"
+      - id: "2.13"
+        display_name: "Scala 2.13"
+        variables:
+          SCALA: "2.13.0"
+
   # Choice of MongoDB storage engine
   - id: storage-engine
     display_name: Storage
@@ -702,6 +734,13 @@ buildvariants:
   run_on: ubuntu1804-test
   tasks:
     - name: "reactive-streams-tck-test"
+
+- matrix_name: "scala-tests"
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk11", version: ["4.2"], topology: "standalone", scala: "*", os: "ubuntu" }
+  display_name: "${scala} ${version} ${topology} ${os}"
+  tags: ["test-scala-variant"]
+  tasks:
+    - name: "scala-tests"
 
 - name: publish-snapshot
   display_name: "Publish Snapshot"
