@@ -27,7 +27,7 @@ import org.reflections.util.{ClasspathHelper, ConfigurationBuilder, FilterBuilde
 import org.scalatest.Inspectors.forEvery
 import org.scalatest.{FlatSpec, Matchers}
 
-class ApiAliasAndCompanionSpec extends FlatSpec with Matchers {
+class ApiAliasAndCompanionSpec extends BaseSpec {
 
   val classFilter = (f: Class[_ <: Object]) => isPublic(f.getModifiers) && !f.getName.contains("$")
 

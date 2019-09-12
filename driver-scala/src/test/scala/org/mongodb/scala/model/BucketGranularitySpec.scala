@@ -18,12 +18,12 @@ package org.mongodb.scala.model
 
 import java.lang.reflect.Modifier._
 
+import org.mongodb.scala.BaseSpec
+import org.scalatest.prop.TableDrivenPropertyChecks._
+
 import scala.util.{Success, Try}
 
-import org.scalatest.prop.TableDrivenPropertyChecks._
-import org.scalatest.{FlatSpec, Matchers}
-
-class BucketGranularitySpec extends FlatSpec with Matchers {
+class BucketGranularitySpec extends BaseSpec {
 
   "BucketGranularity" should "have the same static fields as the wrapped BucketGranularity" in {
     val BucketGranularityClass: Class[BucketGranularity] = classOf[com.mongodb.client.model.BucketGranularity]

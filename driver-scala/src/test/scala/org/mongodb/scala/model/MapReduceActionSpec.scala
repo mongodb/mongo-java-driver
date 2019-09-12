@@ -19,10 +19,9 @@ package org.mongodb.scala.model
 import java.lang.reflect.Modifier._
 
 import com.mongodb.client.model.{MapReduceAction => JMapReduceAction}
+import org.mongodb.scala.BaseSpec
 
-import org.scalatest.{FlatSpec, Matchers}
-
-class MapReduceActionSpec extends FlatSpec with Matchers {
+class MapReduceActionSpec extends BaseSpec {
 
   "MapReduceAction" should "mirror com.mongodb.client.model.MapReduceAction" in {
     val wrapped = classOf[JMapReduceAction].getEnumConstants.map(_.getValue.toUpperCase).toSet

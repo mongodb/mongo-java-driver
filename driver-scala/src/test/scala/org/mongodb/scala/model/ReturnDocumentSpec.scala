@@ -19,10 +19,9 @@ package org.mongodb.scala.model
 import java.lang.reflect.Modifier._
 
 import com.mongodb.client.model.{ReturnDocument => JReturnDocument}
+import org.mongodb.scala.BaseSpec
 
-import org.scalatest.{FlatSpec, Matchers}
-
-class ReturnDocumentSpec extends FlatSpec with Matchers {
+class ReturnDocumentSpec extends BaseSpec {
 
   "ReturnDocument" should "mirror com.mongodb.client.model.ReturnDocument" in {
     val wrapped = classOf[JReturnDocument].getEnumConstants.map(_.toString).toSet

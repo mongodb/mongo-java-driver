@@ -19,10 +19,9 @@ package org.mongodb.scala.model
 import java.lang.reflect.Modifier.isStatic
 
 import com.mongodb.client.model.{Collation => JCollation, CollationAlternate => JCollationAlternate, CollationCaseFirst => JCollationCaseFirst, CollationMaxVariable => JCollationMaxVariable, CollationStrength => JCollationStrength}
+import org.mongodb.scala.BaseSpec
 
-import org.scalatest.{FlatSpec, Matchers}
-
-class CollationSpec extends FlatSpec with Matchers {
+class CollationSpec extends BaseSpec {
 
   "Collation" should "have the same static fields as the wrapped Collation" in {
     val collationClass: Class[Collation] = classOf[com.mongodb.client.model.Collation]

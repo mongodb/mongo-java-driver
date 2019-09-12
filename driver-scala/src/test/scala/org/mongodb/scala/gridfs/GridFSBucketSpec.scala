@@ -16,15 +16,14 @@
 
 package org.mongodb.scala.gridfs
 
-import org.bson.types.ObjectId
 import com.mongodb.reactivestreams.client.gridfs.{GridFSBucket => JGridFSBucket}
+import org.bson.types.ObjectId
 import org.mongodb.scala.bson.BsonObjectId
 import org.mongodb.scala.bson.collection.immutable.Document
-import org.mongodb.scala.{ClientSession, ReadConcern, ReadPreference, WriteConcern}
+import org.mongodb.scala.{BaseSpec, ClientSession, ReadConcern, ReadPreference, WriteConcern}
 import org.scalamock.scalatest.proxy.MockFactory
-import org.scalatest.{FlatSpec, Matchers}
 
-class GridFSBucketSpec extends FlatSpec with Matchers with MockFactory {
+class GridFSBucketSpec extends BaseSpec with MockFactory {
   val wrapper = mock[JGridFSBucket]
   val clientSession = mock[ClientSession]
   val gridFSBucket = new GridFSBucket(wrapper)

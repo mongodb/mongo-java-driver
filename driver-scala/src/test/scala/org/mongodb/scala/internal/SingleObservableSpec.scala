@@ -16,10 +16,9 @@
 
 package org.mongodb.scala.internal
 
-import org.mongodb.scala.{Observer, SingleObservable, Subscription}
-import org.scalatest.{FlatSpec, Matchers}
+import org.mongodb.scala.{BaseSpec, Observer, SingleObservable, Subscription}
 
-class SingleObservableSpec extends FlatSpec with Matchers {
+class SingleObservableSpec extends BaseSpec {
 
   "ScalaObservable" should "allow for inline subscription" in {
     var result = 0

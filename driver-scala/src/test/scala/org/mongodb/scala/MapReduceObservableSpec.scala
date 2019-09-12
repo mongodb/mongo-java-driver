@@ -26,7 +26,7 @@ import org.scalatest.{FlatSpec, Matchers}
 
 import scala.concurrent.duration.Duration
 
-class MapReduceObservableSpec extends FlatSpec with Matchers with MockFactory {
+class MapReduceObservableSpec extends BaseSpec with MockFactory {
 
   "MapReduceObservable" should "have the same methods as the wrapped MapReduceObservable" in {
     val wrapped = classOf[MapReducePublisher[Document]].getMethods.map(_.getName).toSet

@@ -28,7 +28,7 @@ import org.scalatest.{FlatSpec, Matchers}
 
 import scala.collection.JavaConverters._
 
-class MongoCollectionSpec extends FlatSpec with Matchers with MockFactory {
+class MongoCollectionSpec extends BaseSpec with MockFactory {
 
   val wrapped = mock[JMongoCollection[Document]]
   val clientSession = mock[ClientSession]

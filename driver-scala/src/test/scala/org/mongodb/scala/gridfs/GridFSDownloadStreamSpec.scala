@@ -19,11 +19,10 @@ package org.mongodb.scala.gridfs
 import java.nio.ByteBuffer
 
 import com.mongodb.reactivestreams.client.gridfs.{GridFSDownloadStream => JGridFSDownloadStream}
-
+import org.mongodb.scala.BaseSpec
 import org.scalamock.scalatest.proxy.MockFactory
-import org.scalatest.{FlatSpec, Matchers}
 
-class GridFSDownloadStreamSpec extends FlatSpec with Matchers with MockFactory {
+class GridFSDownloadStreamSpec extends BaseSpec with MockFactory {
   val wrapper = mock[JGridFSDownloadStream]
   val gridFSDownloadStream = GridFSDownloadStream(wrapper)
 

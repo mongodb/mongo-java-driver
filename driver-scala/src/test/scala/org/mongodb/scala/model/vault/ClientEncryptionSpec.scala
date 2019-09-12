@@ -19,12 +19,12 @@ package org.mongodb.scala.model.vault
 import java.lang.reflect.Modifier.{isPublic, isStatic}
 
 import com.mongodb.reactivestreams.client.vault.{ClientEncryption => JClientEncryption}
+import org.mongodb.scala.BaseSpec
 import org.mongodb.scala.bson.{BsonBinary, BsonString}
 import org.mongodb.scala.vault.ClientEncryption
 import org.scalamock.scalatest.proxy.MockFactory
-import org.scalatest.{FlatSpec, Matchers}
 
-class ClientEncryptionSpec extends FlatSpec with Matchers with MockFactory {
+class ClientEncryptionSpec extends BaseSpec with MockFactory {
 
   val wrapped = mock[JClientEncryption]
   val clientEncryption = ClientEncryption(wrapped)

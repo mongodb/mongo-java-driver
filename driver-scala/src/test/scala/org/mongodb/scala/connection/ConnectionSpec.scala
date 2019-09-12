@@ -18,15 +18,13 @@ package org.mongodb.scala.connection
 
 import java.net.{InetAddress, InetSocketAddress}
 
+import com.mongodb.{ServerAddress => JServerAddress}
+import org.mongodb.scala.{BaseSpec, ServerAddress}
+import org.scalamock.scalatest.proxy.MockFactory
+
 import scala.collection.JavaConverters._
 
-import com.mongodb.{ServerAddress => JServerAddress}
-
-import org.mongodb.scala.ServerAddress
-import org.scalamock.scalatest.proxy.MockFactory
-import org.scalatest.{FlatSpec, Matchers}
-
-class ConnectionSpec extends FlatSpec with Matchers with MockFactory {
+class ConnectionSpec extends BaseSpec with MockFactory {
 
   "The connection namespace" should "have a AsynchronousSocketChannelStreamFactoryFactory companion" in {
     val asynchronousSocketChannelStreamFactoryFactory = AsynchronousSocketChannelStreamFactoryFactory()

@@ -16,13 +16,12 @@
 
 package org.mongodb.scala.internal
 
-import scala.util.{Failure, Success}
-
 import org.mongodb.scala._
 import org.scalatest.prop.TableDrivenPropertyChecks
-import org.scalatest.{FlatSpec, Matchers}
 
-class ObservableImplementationSpec extends FlatSpec with Matchers with TableDrivenPropertyChecks {
+import scala.util.{Failure, Success}
+
+class ObservableImplementationSpec extends BaseSpec with TableDrivenPropertyChecks {
 
   "Observables" should "call onCompleted once all results are consumed" in {
     forAll(happyObservables) {

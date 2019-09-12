@@ -19,17 +19,6 @@ archivesBaseName = 'mongo-scala-bson'
 
 dependencies {
     compile project(':bson')
-    compile ('org.scala-lang:scala-library:%scala-version%')
-    compile ('org.scala-lang:scala-reflect:%scala-version%')
-
-    testCompile project(':bson').sourceSets.test.output
-
-    testRuntime 'org.pegdown:pegdown:1.6.0'
-    testCompile('org.scalatest:scalatest_%%:3.0.8')
-    testCompile('org.scalamock:scalamock_%%:4.4.0')
-    testCompile('ch.qos.logback:logback-classic:1.1.3')
-    testCompile('org.reflections:reflections:0.9.10')
-    testCompile('javax.servlet:servlet-api:2.5')
 }
 
 sourceSets {

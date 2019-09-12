@@ -25,7 +25,7 @@ import org.scalatest.{FlatSpec, Matchers}
 
 import scala.concurrent.duration.Duration
 
-class AggregateObservableSpec extends FlatSpec with Matchers with MockFactory {
+class AggregateObservableSpec extends BaseSpec with MockFactory {
 
   "AggregateObservable" should "have the same methods as the wrapped AggregateObservable" in {
     val wrapped: Set[String] = classOf[AggregatePublisher[Document]].getMethods.map(_.getName).toSet

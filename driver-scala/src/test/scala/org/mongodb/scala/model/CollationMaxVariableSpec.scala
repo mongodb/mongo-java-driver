@@ -18,12 +18,12 @@ package org.mongodb.scala.model
 
 import java.lang.reflect.Modifier._
 
+import org.mongodb.scala.BaseSpec
+import org.scalatest.prop.TableDrivenPropertyChecks._
+
 import scala.util.{Success, Try}
 
-import org.scalatest.prop.TableDrivenPropertyChecks._
-import org.scalatest.{FlatSpec, Matchers}
-
-class CollationMaxVariableSpec extends FlatSpec with Matchers {
+class CollationMaxVariableSpec extends BaseSpec {
 
   "CollationMaxVariable" should "have the same static fields as the wrapped CollationMaxVariable" in {
     val collationMaxVariableClass: Class[CollationMaxVariable] = classOf[com.mongodb.client.model.CollationMaxVariable]

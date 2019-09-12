@@ -89,10 +89,20 @@ configure(scalaProjects) {
     apply plugin: 'idea'
     apply plugin: "com.adtran.scala-multiversion-plugin"
     apply plugin: "com.diffplug.gradle.spotless"
-    apply plugin: "com.github.maiflai.scalatest"
 
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
+
+    dependencies {
+        compile ('org.scala-lang:scala-library:%scala-version%')
+        compile ('org.scala-lang:scala-reflect:%scala-version%')
+
+        testCompile('junit:junit:4.12')
+        testCompile('org.scalatest:scalatest_%%:3.0.8')
+        testCompile('org.scalamock:scalamock_%%:4.4.0')
+        testCompile('ch.qos.logback:logback-classic:1.1.3')
+        testCompile('org.reflections:reflections:0.9.10')
+    }
 
     spotless {
         scala {

@@ -17,9 +17,8 @@
 package org.mongodb.scala.model
 
 import org.mongodb.scala._
-import org.scalatest.{FlatSpec, Matchers}
 
-class ModelSpec extends FlatSpec with Matchers {
+class ModelSpec extends BaseSpec {
 
   it should "be able to create CountOptions" in {
     val options = CountOptions()

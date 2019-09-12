@@ -27,7 +27,7 @@ import org.mongodb.scala.bson.BsonString
 import org.mongodb.scala.model._
 import org.scalatest.{FlatSpec, Matchers}
 
-class ScalaPackageSpec extends FlatSpec with Matchers {
+class ScalaPackageSpec extends BaseSpec {
 
   it should "be able to create Observable, Observers and Subscriptions" in {
     var success = false

@@ -18,12 +18,12 @@ package org.mongodb.scala.model
 
 import java.lang.reflect.Modifier._
 
+import org.mongodb.scala.BaseSpec
+import org.scalatest.prop.TableDrivenPropertyChecks._
+
 import scala.util.{Success, Try}
 
-import org.scalatest.prop.TableDrivenPropertyChecks._
-import org.scalatest.{FlatSpec, Matchers}
-
-class ValidationLevelSpec extends FlatSpec with Matchers {
+class ValidationLevelSpec extends BaseSpec {
 
   "ValidationLevel" should "have the same static fields as the wrapped ValidationLevel" in {
     val validationLevelClass: Class[ValidationLevel] = classOf[com.mongodb.client.model.ValidationLevel]
