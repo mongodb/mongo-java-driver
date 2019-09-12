@@ -29,7 +29,6 @@ import com.mongodb.client.model.AggregationLevel;
 import com.mongodb.client.model.BulkWriteOptions;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.CountOptions;
-import com.mongodb.internal.client.model.CountStrategy;
 import com.mongodb.client.model.CreateIndexOptions;
 import com.mongodb.client.model.DeleteManyModel;
 import com.mongodb.client.model.DeleteOneModel;
@@ -52,6 +51,7 @@ import com.mongodb.client.model.UpdateManyModel;
 import com.mongodb.client.model.UpdateOneModel;
 import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
+import com.mongodb.internal.client.model.CountStrategy;
 import com.mongodb.operation.AggregateOperation;
 import com.mongodb.operation.AggregateToCollectionOperation;
 import com.mongodb.operation.CountOperation;
@@ -310,7 +310,7 @@ final class Operations<TDocument> {
 
     FindAndUpdateOperation<TDocument> findOneAndUpdate(final Bson filter, final List<? extends Bson> update,
                                                        final FindOneAndUpdateOptions options) {
-        return new FindAndUpdateOperation<TDocument>(namespace, writeConcern, retryWrites, getCodec(), update)
+        return new FindAndUpdateOperation<TDocument>(namespace, writeConcern, retryWrites, getCodec(), toBsonDocumentList(update))
                 .filter(toBsonDocument(filter))
                 .projection(toBsonDocument(options.getProjection()))
                 .sort(toBsonDocument(options.getSort()))
