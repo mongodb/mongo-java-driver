@@ -1,0 +1,78 @@
+{{ $artifactId := .Get "artifactId"}}{{ $version := .Get "version"}}{{ $scalaVersion := .Get "scalaVersion"}}{{ $snapshot := in $version "SNAPSHOT" }}{{ $mongoDriverVersion := .Get "mongoDriverVersion"}}
+{{ if $snapshot }}
+{{$ossUrl := "https://oss.sonatype.org/content/repositories/snapshots"}}
+<section class="maven hidden">
+<pre><code class="ini">
+&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.mongodb.scala&lt;/groupId&gt;
+        &lt;artifactId&gt;{{$artifactId}}_{{$scalaVersion}}&lt;/artifactId&gt;
+        &lt;version&gt;{{$version}}&lt;/version&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;
+&lt;repositories&gt;
+    &lt;repository&gt;
+        &lt;id&gt;sonatype-snapshots&lt;/id&gt;
+        &lt;name&gt;Sontatype Snapshots&lt;/name&gt;
+        &lt;url&gt;https://oss.sonatype.org/content/repositories/snapshots&lt;/url&gt;
+        &lt;snapshots&gt;
+            &lt;enabled&gt;true&lt;/enabled&gt;
+        &lt;/snapshots&gt;
+    &lt;/repository&gt;
+&lt;/repositories&gt;
+</code></pre>
+</section>
+<section class="sbt">
+<pre><code class="ini">
+libraryDependencies += "org.mongodb.scala" %% "{{$artifactId}}" % "{{$version}}"
+
+resolvers += "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+</code></pre>
+</section>
+<section class="downloadInfo small">
+    <p>You can also download the jars
+        <a href="{{$ossUrl}}/org/mongodb/scala/{{$artifactId}}_{{$scalaVersion}}/{{$version}}" target="_blank">directly</a>
+        from sonatype.</a></p>
+    <p>
+        <strong>Note:</strong> <code>{{$artifactId}}</code> requires the following dependencies:
+        <a href="{{$ossUrl}}/org/mongodb/scala/mongo-scala-bson_{{$scalaVersion}}/{{$version}}" target="_blank"><code>mongo-scala-bson</code></a>,
+        <a href="{{$ossUrl}}/org/mongodb/bson/{{$mongoDriverVersion}}" target="_blank"><code>bson</code></a>,
+        <a href="{{$ossUrl}}/org/mongodb/mongodb-driver-core/{{$mongoDriverVersion}}" target="_blank"><code>mongodb-driver-core</code></a>,
+        and
+        <a href="{{$ossUrl}}/org/mongodb/mongodb-driver-async/{{$mongoDriverVersion}}" target="_blank"><code>mongodb-driver-async</code></a>.
+    </p>
+</section>
+{{ else }}
+{{$ossUrl := "https://oss.sonatype.org/content/repositories/releases"}}
+<section class="maven hidden">
+<pre><code class="ini">
+&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.mongodb.scala&lt;/groupId&gt;
+        &lt;artifactId&gt;{{$artifactId}}_{{$scalaVersion}}&lt;/artifactId&gt;
+        &lt;version&gt;{{$version}}&lt;/version&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;
+
+</code></pre>
+</section>
+<section class="sbt">
+<pre><code class="ini">
+libraryDependencies += "org.mongodb.scala" %% "{{$artifactId}}" % "{{$version}}"
+
+</code></pre>
+</section>
+<section class="downloadInfo small">
+    <p>You can also download the jars
+        <a href="{{$ossUrl}}/org/mongodb/scala/{{$artifactId}}_{{$scalaVersion}}/{{$version}}" target="_blank">directly</a>
+        from sonatype.</a></p>
+    <p>
+        <strong>Note:</strong> <code>{{$artifactId}}</code> requires the following dependencies:
+        <a href="{{$ossUrl}}/org/mongodb/scala/mongo-scala-bson_{{$scalaVersion}}/{{$version}}" target="_blank"><code>mongo-scala-bson</code></a>,
+        <a href="{{$ossUrl}}/org/mongodb/bson/{{$mongoDriverVersion}}" target="_blank"><code>bson</code></a>,
+        <a href="{{$ossUrl}}/org/mongodb/mongodb-driver-core/{{$mongoDriverVersion}}" target="_blank"><code>mongodb-driver-core</code></a>,
+        and
+        <a href="{{$ossUrl}}/org/mongodb/mongodb-driver-async/{{$mongoDriverVersion}}" target="_blank"><code>mongodb-driver-async</code></a>.
+    </p>
+</section>
+{{ end }}

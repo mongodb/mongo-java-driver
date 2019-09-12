@@ -1,0 +1,9 @@
+githubUser = "mongodb"
+githubRepo = "mongo-scala-driver"
+githubBranch = "2.7.x"  # Set the branch
+currentVersion = "2.7"
+highlightTheme = "idea.css"
+apiUrl = "/scaladoc"
+coreApiUrl = "http://mongodb.github.io/mongo-java-driver/3.11/javadoc"
+coreDocsUrl = "http://mongodb.github.io/mongo-java-driver/3.11/"
+mongoDriverVersion = "3.11.0"               # Update in installation-guide.md
