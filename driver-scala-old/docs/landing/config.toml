@@ -1,6 +1,0 @@
-baseurl = "/mongo-scala-driver/"
-languageCode = "en-us"
-title = "MongoDB Scala Driver"
-canonifyurls = false
-
-githubRepo = "mongo-scala-driver"
