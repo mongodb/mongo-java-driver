@@ -17,10 +17,6 @@
 description = "A Scala wrapper / extension to the bson library"
 archivesBaseName = 'mongo-scala-bson'
 
-apply plugin: "scala"
-apply plugin: "com.adtran.scala-multiversion-plugin"
-apply plugin: "com.github.maiflai.scalatest"
-
 dependencies {
     compile project(':bson')
     compile ('org.scala-lang:scala-library:%scala-version%')

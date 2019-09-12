@@ -17,20 +17,10 @@
 description = "A Scala wrapper / extension to the bson library"
 archivesBaseName = 'mongo-scala-driver'
 
-apply plugin: "scala"
-apply plugin: "com.adtran.scala-multiversion-plugin"
-apply plugin: "com.github.maiflai.scalatest"
-
 dependencies {
     compile project(':driver-scala-bson')
     compile ('org.scala-lang:scala-library:%scala-version%')
     compile ('org.scala-lang:scala-reflect:%scala-version%')
-
-//    testCompile project(':driver-scala-bson').sourceSets.main.output
-//    testCompile project(':driver-scala-bson').sourceSets.test.output
-//    testCompile project(':driver-reactive-streams').sourceSets.test.output
-//    testCompile project(':driver-sync').sourceSets.test.output
-//    testCompile project(':driver-core').sourceSets.test.output
 
     testRuntime 'org.pegdown:pegdown:1.6.0'
     testCompile('org.scalatest:scalatest_%%:3.0.8')
@@ -41,26 +31,25 @@ dependencies {
 }
 
 
+configurations {
+    integrationTestCompile.extendsFrom testCompile
+    integrationTestRuntime.extendsFrom testRuntime
+}
 
-//sourceSets {
-//    integrationTest {
-//        compileClasspath += sourceSets.main.output + configurations.testCompile
-//        runtimeClasspath += output + compileClasspath + configurations.testRuntime
-//    }
-//}
-//
-//
-//task integrationTest(type: Test) {
-//    description = 'Runs the integration tests.'
-//    group = 'verification'
-//    testClassesDirs = sourceSets.integrationTest.output.classesDirs
-//    classpath = sourceSets.integrationTest.runtimeClasspath
-//    outputs.upToDateWhen { false }
-//    mustRunAfter test
-//}
-//
-//check.dependsOn integrationTest
+sourceSets {
+    integrationTest {
+        scala.srcDir file('src/it/scala')
+        resources.srcDir file('src/it/resources')
+        scala {
+            compileClasspath += main.output + test.output
+            runtimeClasspath += main.output + test.output
+        }
+    }
+}
 
+test {
+    maxParallelForks = 1
+}
 
 tasks.withType(Test) {
     doFirst {
@@ -68,12 +57,26 @@ tasks.withType(Test) {
     }
 }
 
-ext {
-    pomName = 'Mongo Scala Driver'
+task integrationTest(type: Test) {
+    delete 'build/test-it'
+    testClassesDirs = sourceSets.integrationTest.output.classesDirs
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    mustRunAfter test
 }
 
-test {
-    maxParallelForks = 1
+check.dependsOn integrationTest
+
+idea {
+    module {
+        testSourceDirs += sourceSets.integrationTest.scala.srcDirs
+        testResourceDirs += sourceSets.integrationTest.resources.srcDirs
+        scopes.TEST.plus += [ configurations.integrationTestCompile ]
+    }
+}
+
+
+ext {
+    pomName = 'Mongo Scala Driver'
 }
 
 jar {
