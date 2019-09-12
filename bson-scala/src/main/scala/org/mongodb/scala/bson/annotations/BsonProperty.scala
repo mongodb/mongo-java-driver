@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-include ':bson'
-include ':driver-benchmarks'
-include ':driver-core'
-include ':driver-embedded'
-include ':driver-legacy'
-include ':driver-sync'
-include ':driver-reactive-streams'
-include ':bson-scala'
-include ':util'
+package org.mongodb.scala.bson.annotations
+
+import scala.annotation.StaticAnnotation
+
+/**
+ * Annotation to change the stored key of a property
+ *
+ * @param key the key for the stored property
+ */
+case class BsonProperty(key: String) extends StaticAnnotation

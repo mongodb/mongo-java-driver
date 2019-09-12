@@ -14,12 +14,15 @@
  * limitations under the License.
  */
 
-include ':bson'
-include ':driver-benchmarks'
-include ':driver-core'
-include ':driver-embedded'
-include ':driver-legacy'
-include ':driver-sync'
-include ':driver-reactive-streams'
-include ':bson-scala'
-include ':util'
+package org.mongodb.scala.bson
+
+/**
+ * A companion helper for a `BsonElement` - the mapping from a name to a BsonValue.
+ *
+ * Used by the [[BsonMagnets]] and polices valid key/value pairs types for [[Document]].
+ *
+ * @since 1.0
+ */
+object BsonElement {
+  def apply(key: String, value: BsonValue): BsonElement = new BsonElement(key, value)
+}
