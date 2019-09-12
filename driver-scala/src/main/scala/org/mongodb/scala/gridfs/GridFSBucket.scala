@@ -92,14 +92,6 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
   lazy val readConcern: ReadConcern = wrapped.getReadConcern
 
   /**
-   * Returns true if computing MD5 checksums when uploading files is disabled.
-   *
-   * @return true if computing MD5 checksums when uploading files is disabled.
-   * @since 2.4
-   */
-  lazy val disableMD5: Boolean = wrapped.getDisableMD5
-
-  /**
    * Create a new GridFSBucket instance with a new chunk size in bytes.
    *
    * @param chunkSizeBytes the new chunk size in bytes.
@@ -132,15 +124,6 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * @see [[http://docs.mongodb.org/manual/reference/readConcern Read Concern]]
    */
   def withReadConcern(readConcern: ReadConcern): GridFSBucket = GridFSBucket(wrapped.withReadConcern(readConcern))
-
-  /**
-   * Create a new GridFSBucket instance with the set disable MD5 value.
-   *
-   * @param disableMD5 true if computing MD5 checksums when uploading files should be disabled.
-   * @return a new GridFSBucket instance with the new disable MD5 value.
-   * @since 2.4
-   */
-  def withDisableMD5(disableMD5: Boolean): GridFSBucket = GridFSBucket(wrapped.withDisableMD5(disableMD5))
 
   /**
    * Opens a AsyncOutputStream that the application can write the contents of the file to.

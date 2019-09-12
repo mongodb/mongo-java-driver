@@ -296,24 +296,6 @@ package object model {
   }
 
   /**
-   * The options to apply to a find operation.
-   */
-  type FindOptions = com.mongodb.client.model.FindOptions
-
-  /**
-   * The options to apply to a find operation.
-   */
-  object FindOptions {
-    def apply(): FindOptions = new com.mongodb.client.model.FindOptions()
-
-    /**
-     * Construct a new instance by making a shallow copy of the given model.
-     * @param from model to copy
-     */
-    def apply(from: FindOptions): FindOptions = new com.mongodb.client.model.FindOptions(from)
-  }
-
-  /**
    * The options to apply to an operation that atomically finds a document and deletes it.
    */
   type FindOneAndDeleteOptions = com.mongodb.client.model.FindOneAndDeleteOptions
@@ -546,19 +528,6 @@ package object model {
      */
     def apply[TResult](filter: Bson, replacement: TResult): ReplaceOneModel[TResult] =
       new com.mongodb.client.model.ReplaceOneModel[TResult](filter, replacement)
-
-    /**
-     * Construct a new instance.
-     *
-     * @param filter    a document describing the query filter.
-     * @param replacement the replacement document
-     * @param updateOptions the options to apply
-     * @tparam TResult the type of document to insert. This can be of any type for which a `Codec` is registered
-     * @return the new ReplaceOneModel
-     */
-    @deprecated("Use `ReplaceOptions` instead of `UpdateOptions`", "2.3")
-    def apply[TResult](filter: Bson, replacement: TResult, updateOptions: UpdateOptions): ReplaceOneModel[TResult] =
-      new com.mongodb.client.model.ReplaceOneModel[TResult](filter, replacement, updateOptions)
 
     /**
      * Construct a new instance.

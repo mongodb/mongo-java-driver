@@ -92,9 +92,6 @@ class ModelSpec extends FlatSpec with Matchers {
   it should "be able to create ReplaceOneModel" in {
     val model = ReplaceOneModel(Document("a" -> 1), Document("a" -> 2))
     model shouldBe a[com.mongodb.client.model.ReplaceOneModel[_]]
-
-    val model2 = ReplaceOneModel(Document("a" -> 1), Document("a" -> 2), UpdateOptions())
-    model2 shouldBe a[com.mongodb.client.model.ReplaceOneModel[_]]
   }
 
   it should "be able to create UpdateManyModel" in {
@@ -116,13 +113,6 @@ class ModelSpec extends FlatSpec with Matchers {
   it should "be able to create BsonField" in {
     val bsonField = BsonField("key", Document("a" -> 1))
     bsonField shouldBe a[com.mongodb.client.model.BsonField]
-  }
-
-  it should "be able to create FindOptions" in {
-    val findOptions = FindOptions().limit(10)
-    findOptions shouldBe a[com.mongodb.client.model.FindOptions]
-
-    FindOptions(findOptions).getLimit should equal(new com.mongodb.client.model.FindOptions(findOptions).getLimit)
   }
 
 }

@@ -18,8 +18,6 @@ package org.mongodb.scala.gridfs
 
 import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File, InputStream}
 
-import javax.xml.bind.DatatypeConverter
-
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
@@ -164,7 +162,7 @@ class GridFSSpec extends RequiresMongoDBISpec with FuturesSpec {
         result should be a Symbol("failure")
       case false =>
         result should be a Symbol("success")
-        DatatypeConverter.printHexBinary(outputStream.toByteArray).toLowerCase should equal(assertion.getDocument("result").getString("$hex").getValue)
+        outputStream.toByteArray.map("%02x".format(_)).mkString.toLowerCase should equal(assertion.getDocument("result").getString("$hex").getValue)
     }
   }
 
@@ -182,7 +180,7 @@ class GridFSSpec extends RequiresMongoDBISpec with FuturesSpec {
         result should be a Symbol("failure")
       case false =>
         result should be a Symbol("success")
-        DatatypeConverter.printHexBinary(outputStream.toByteArray).toLowerCase should equal(assertion.getDocument("result").getString("$hex").getValue)
+        outputStream.toByteArray.map("%02x".format(_)).mkString.toLowerCase should equal(assertion.getDocument("result").getString("$hex").getValue)
     }
   }
 
@@ -201,8 +199,7 @@ class GridFSSpec extends RequiresMongoDBISpec with FuturesSpec {
 
     val result = Try(
       gridFSBucket.map(bucket =>
-        bucket.withDisableMD5(disableMD5)
-              .uploadFromStream(filename, AsyncStreamHelper.toAsyncInputStream(inputStream), options).head()).get.futureValue
+        bucket.uploadFromStream(filename, AsyncStreamHelper.toAsyncInputStream(inputStream), options).head()).get.futureValue
     )
 
     assertion.containsKey("error") match {
@@ -227,7 +224,6 @@ class GridFSSpec extends RequiresMongoDBISpec with FuturesSpec {
               for (expected <- documents) {
                 expected.get("length") should equal(actual.get("length"))
                 expected.get("chunkSize") should equal(actual.get("chunkSize"))
-                expected.get("md5") should equal(actual.get("md5"))
                 expected.get("filename") should equal(actual.get("filename"))
                 if (expected.contains("metadata")) expected.get("metadata") should equal(actual.get("metadata"))
               }
@@ -278,7 +274,7 @@ class GridFSSpec extends RequiresMongoDBISpec with FuturesSpec {
 
   private def parseHexDocument(document: BsonDocument, hexDocument: String): BsonDocument = {
     if (document.contains(hexDocument) && document.get(hexDocument).isDocument) {
-      val bytes: Array[Byte] = DatatypeConverter.parseHexBinary(document.getDocument(hexDocument).getString("$hex").getValue)
+      val bytes: Array[Byte] = document.getDocument(hexDocument).getString("$hex").getValue.sliding(2,2).map(i => Integer.parseInt(i, 16).toByte).toArray
       document.put(hexDocument, new BsonBinary(bytes))
     }
     document

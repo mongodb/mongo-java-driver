@@ -47,7 +47,6 @@ class AggregateObservableSpec extends FlatSpec with Matchers with MockFactory {
     val batchSize = 10
 
     wrapper.expects(Symbol("allowDiskUse"))(true).once()
-    wrapper.expects(Symbol("useCursor"))(true).once()
     wrapper.expects(Symbol("maxTime"))(duration.toMillis, TimeUnit.MILLISECONDS).once()
     wrapper.expects(Symbol("maxAwaitTime"))(duration.toMillis, TimeUnit.MILLISECONDS).once()
     wrapper.expects(Symbol("bypassDocumentValidation"))(true).once()
@@ -57,7 +56,6 @@ class AggregateObservableSpec extends FlatSpec with Matchers with MockFactory {
     wrapper.expects(Symbol("batchSize"))(batchSize).once()
 
     observable.allowDiskUse(true)
-    observable.useCursor(true)
     observable.maxTime(duration)
     observable.maxAwaitTime(duration)
     observable.bypassDocumentValidation(true)
