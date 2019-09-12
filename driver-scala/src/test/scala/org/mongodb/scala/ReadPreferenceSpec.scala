@@ -24,7 +24,7 @@ import scala.concurrent.duration.Duration
 
 import org.scalatest.{FlatSpec, Matchers}
 
-class ReadPreferenceSpec extends FlatSpec with Matchers {
+class ReadPreferenceSpec extends BaseSpec {
 
   val duration = Duration("95 sec")
 

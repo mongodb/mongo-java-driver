@@ -18,13 +18,13 @@ package org.mongodb.scala.model
 
 import java.lang.reflect.Modifier._
 
-import scala.collection.JavaConverters._
-
+import org.mongodb.scala.BaseSpec
 import org.mongodb.scala.model.geojson.NamedCoordinateReferenceSystem._
 import org.mongodb.scala.model.geojson._
-import org.scalatest.{FlatSpec, Matchers}
 
-class GeoJsonSpec extends FlatSpec with Matchers {
+import scala.collection.JavaConverters._
+
+class GeoJsonSpec extends BaseSpec {
 
   it should "have the same methods as the wrapped CoordinateReferenceSystemType" in {
     val wrapped = classOf[geojson.CoordinateReferenceSystemType].getDeclaredFields

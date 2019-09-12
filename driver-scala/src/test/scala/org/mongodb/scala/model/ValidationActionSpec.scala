@@ -18,12 +18,12 @@ package org.mongodb.scala.model
 
 import java.lang.reflect.Modifier._
 
+import org.mongodb.scala.BaseSpec
+import org.scalatest.prop.TableDrivenPropertyChecks._
+
 import scala.util.{Success, Try}
 
-import org.scalatest.prop.TableDrivenPropertyChecks._
-import org.scalatest.{FlatSpec, Matchers}
-
-class ValidationActionSpec extends FlatSpec with Matchers {
+class ValidationActionSpec extends BaseSpec {
 
   "ValidationAction" should "have the same static fields as the wrapped ValidationAction" in {
     val ValidationActionClass: Class[ValidationAction] = classOf[com.mongodb.client.model.ValidationAction]

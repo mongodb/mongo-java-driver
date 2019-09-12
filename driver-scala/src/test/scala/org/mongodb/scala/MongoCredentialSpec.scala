@@ -19,7 +19,7 @@ package org.mongodb.scala
 import com.mongodb.{MongoCredential => JMongoCredential}
 import org.scalatest.{FlatSpec, Matchers}
 
-class MongoCredentialSpec extends FlatSpec with Matchers {
+class MongoCredentialSpec extends BaseSpec {
 
   "MongoCredential" should "have the same methods as the wrapped MongoClient" in {
     val wrapped = classOf[JMongoCredential].getMethods.map(_.getName)

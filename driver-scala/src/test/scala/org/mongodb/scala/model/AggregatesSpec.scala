@@ -19,16 +19,15 @@ package org.mongodb.scala.model
 import java.lang.reflect.Modifier._
 
 import org.bson.BsonDocument
-import org.mongodb.scala.{MongoClient, MongoNamespace}
 import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Accumulators._
 import org.mongodb.scala.model.Aggregates._
 import org.mongodb.scala.model.Projections._
 import org.mongodb.scala.model.Sorts._
-import org.scalatest.{FlatSpec, Matchers}
+import org.mongodb.scala.{BaseSpec, MongoClient, MongoNamespace}
 
-class AggregatesSpec extends FlatSpec with Matchers {
+class AggregatesSpec extends BaseSpec {
   val registry = MongoClient.DEFAULT_CODEC_REGISTRY
 
   def toBson(bson: Bson): Document = Document(bson.toBsonDocument(classOf[BsonDocument], MongoClient.DEFAULT_CODEC_REGISTRY))

@@ -23,7 +23,7 @@ import scala.util.{Success, Try}
 import org.scalatest.prop.TableDrivenPropertyChecks._
 import org.scalatest.{FlatSpec, Matchers}
 
-class ReadConcernLevelSpec extends FlatSpec with Matchers {
+class ReadConcernLevelSpec extends BaseSpec {
 
   "ReadConcernLevel" should "have the same static fields as the wrapped ReadConcern" in {
     val wrappedFields = classOf[com.mongodb.ReadConcernLevel].getDeclaredFields.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet

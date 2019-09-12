@@ -22,7 +22,6 @@ import com.mongodb.MongoException
 import org.mongodb.scala._
 import org.reactivestreams.{Subscriber, Subscription}
 import org.scalatest.prop.TableDrivenPropertyChecks._
-import org.scalatest.{FlatSpec, Matchers}
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -30,7 +29,7 @@ import scala.concurrent.duration.Duration
 import scala.concurrent.{Await, ExecutionContext}
 import scala.util.{Failure, Success}
 
-class ScalaObservableSpec extends FlatSpec with Matchers {
+class ScalaObservableSpec extends BaseSpec {
 
   "ScalaObservable" should "allow for inline subscription" in {
     val results = ArrayBuffer[Int]()

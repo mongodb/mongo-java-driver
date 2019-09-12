@@ -28,7 +28,7 @@ import org.mongodb.scala.model._
 import org.scalamock.scalatest.proxy.MockFactory
 import org.scalatest.{FlatSpec, Matchers}
 
-class MongoDatabaseSpec extends FlatSpec with Matchers with MockFactory {
+class MongoDatabaseSpec extends BaseSpec with MockFactory {
 
   val wrapped = mock[JMongoDatabase]
   val clientSession = mock[ClientSession]

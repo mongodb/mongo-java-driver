@@ -19,14 +19,13 @@ package org.mongodb.scala.gridfs
 import java.util.concurrent.TimeUnit
 
 import com.mongodb.reactivestreams.client.gridfs.GridFSFindPublisher
-import org.mongodb.scala.Document
+import org.mongodb.scala.{BaseSpec, Document}
 import org.reactivestreams.Publisher
 import org.scalamock.scalatest.proxy.MockFactory
-import org.scalatest.{FlatSpec, Matchers}
 
 import scala.concurrent.duration.Duration
 
-class GridFSFindObservableSpec extends FlatSpec with Matchers with MockFactory {
+class GridFSFindObservableSpec extends BaseSpec with MockFactory {
   val wrapper = mock[GridFSFindPublisher]
   val gridFSFindObservable = GridFSFindObservable(wrapper)
 

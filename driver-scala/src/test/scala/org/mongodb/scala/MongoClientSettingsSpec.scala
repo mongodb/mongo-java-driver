@@ -25,7 +25,7 @@ import org.scalamock.scalatest.proxy.MockFactory
 import org.scalatest.{FlatSpec, Matchers}
 import org.mongodb.scala.connection._
 
-class MongoClientSettingsSpec extends FlatSpec with Matchers with MockFactory {
+class MongoClientSettingsSpec extends BaseSpec with MockFactory {
 
   "MongoClientSettings" should "default with the Scala Codec Registry" in {
     MongoClientSettings.builder().build().getCodecRegistry should equal(DEFAULT_CODEC_REGISTRY)

@@ -19,9 +19,9 @@ package org.mongodb.scala.model
 import java.lang.reflect.Modifier._
 
 import com.mongodb.client.model.{MergeOptions => JMergeOptions}
-import org.scalatest.{FlatSpec, Matchers}
+import org.mongodb.scala.BaseSpec
 
-class MergeOptionsSpec extends FlatSpec with Matchers {
+class MergeOptionsSpec extends BaseSpec {
 
   case class Default(wrapped: String = "")
 

@@ -24,7 +24,7 @@ import org.scalatest.{FlatSpec, Matchers}
 
 import scala.concurrent.duration.Duration
 
-class ListDatabasesObservableSpec extends FlatSpec with Matchers with MockFactory {
+class ListDatabasesObservableSpec extends BaseSpec with MockFactory {
 
   "ListDatabasesObservable" should "have the same methods as the wrapped ListDatabasesObservable" in {
     val mongoPublisher: Set[String] = classOf[Publisher[Document]].getMethods.map(_.getName).toSet

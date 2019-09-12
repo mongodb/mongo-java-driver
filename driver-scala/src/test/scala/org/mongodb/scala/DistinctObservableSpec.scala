@@ -25,7 +25,7 @@ import org.scalatest.{FlatSpec, Matchers}
 
 import scala.concurrent.duration.Duration
 
-class DistinctObservableSpec extends FlatSpec with Matchers with MockFactory {
+class DistinctObservableSpec extends BaseSpec with MockFactory {
 
   "DistinctObservable" should "have the same methods as the wrapped DistinctObservable" in {
     val mongoPublisher: Set[String] = classOf[Publisher[Document]].getMethods.map(_.getName).toSet
