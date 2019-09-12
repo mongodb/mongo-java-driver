@@ -1,0 +1,23 @@
+baseurl = "/mongo-scala-driver/2.7"
+languageCode = "en-us"
+title = "MongoDB Scala Driver"
+theme = "mongodb"
+canonifyurls = false
+
+[blackfriday]
+  plainIdAnchors = true
+
+# Update versions in mongodb.toml as well
+[[menu.main]]
+    name = "API Documentation"
+    pre = "<i class='fa fa-file-text-o'></i>"
+    weight = 100
+    identifier = "apiDocs"
+    url = "/scaladoc"
+
+[[menu.main]]
+    name = "Source Code"
+    pre = "<i class='fa fa-github'></i>"
+    weight = 100
+    identifier = "githubLink"
+    url = "https://github.com/mongodb/mongo-scala-driver/tree/master"

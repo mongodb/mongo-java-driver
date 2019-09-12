@@ -1,0 +1,1 @@
+{{ .Page.Site.Data.mongodb.coreApiUrl }}?{{ with (.Get 0) }}{{ . }}{{ if ne (in . ".html") true}}.html{{ end }}{{ end }}
