@@ -320,7 +320,7 @@ public final class RawBsonDocument extends BsonDocument {
     @Override
     @SuppressWarnings("deprecation")
     public String toJson() {
-        return toJson(JsonWriterSettings.builder().outputMode(JsonMode.STRICT).build());
+        return toJson(JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build());
     }
 
     @Override

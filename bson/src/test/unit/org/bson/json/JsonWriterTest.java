@@ -291,8 +291,7 @@ public class JsonWriterTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
-    public void testInt64Strict() {
+    public void testInt64Relaxed() {
         List<TestData<Long>> tests = asList(new TestData<Long>(Long.MIN_VALUE, "-9223372036854775808"),
                 new TestData<Long>(Integer.MIN_VALUE - 1L, "-2147483649"),
                 new TestData<Long>(Integer.MIN_VALUE - 0L, "-2147483648"),
@@ -303,11 +302,11 @@ public class JsonWriterTest {
 
         for (final TestData<Long> cur : tests) {
             stringWriter = new StringWriter();
-            writer = new JsonWriter(stringWriter, JsonWriterSettings.builder().outputMode(JsonMode.STRICT).build());
+            writer = new JsonWriter(stringWriter, JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build());
             writer.writeStartDocument();
             writer.writeInt64("l", cur.value);
             writer.writeEndDocument();
-            String expected = "{\"l\": {\"$numberLong\": \"" + cur.expected + "\"}}";
+            String expected = "{\"l\": " + cur.expected + "}";
             assertEquals(expected, stringWriter.toString());
         }
     }
@@ -331,8 +330,7 @@ public class JsonWriterTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
-    public void testDecimal128Strict() {
+    public void testDecimal128Relaxed() {
         List<TestData<Decimal128>> tests = asList(
                 new TestData<Decimal128>(Decimal128.parse("1.0"), "1.0"),
                 new TestData<Decimal128>(Decimal128.POSITIVE_INFINITY, Decimal128.POSITIVE_INFINITY.toString()));
@@ -340,7 +338,7 @@ public class JsonWriterTest {
 
         for (final TestData<Decimal128> cur : tests) {
             stringWriter = new StringWriter();
-            writer = new JsonWriter(stringWriter, JsonWriterSettings.builder().outputMode(JsonMode.STRICT).build());
+            writer = new JsonWriter(stringWriter, JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build());
             writer.writeStartDocument();
             writer.writeDecimal128("d", cur.value);
             writer.writeEndDocument();
@@ -363,26 +361,25 @@ public class JsonWriterTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
-    public void testBinaryStrict() {
+    public void testBinaryRelaxed() {
         List<TestData<BsonBinary>> tests = asList(new TestData<BsonBinary>(new BsonBinary(new byte[0]),
-                        "{\"$binary\": \"\", "
-                                + "\"$type\": \"00\"}"),
+                        "{\"$binary\": {\"base64\": \"\", "
+                                + "\"subType\": \"00\"}}"),
                 new TestData<BsonBinary>(new BsonBinary(new byte[]{1}),
-                        "{\"$binary\": \"AQ==\", "
-                                + "\"$type\": \"00\"}"),
+                        "{\"$binary\": {\"base64\": \"AQ==\", "
+                                + "\"subType\": \"00\"}}"),
                 new TestData<BsonBinary>(new BsonBinary(new byte[]{1, 2}),
-                        "{\"$binary\": \"AQI=\", "
-                                + "\"$type\": \"00\"}"),
+                        "{\"$binary\": {\"base64\": \"AQI=\", "
+                                + "\"subType\": \"00\"}}"),
                 new TestData<BsonBinary>(new BsonBinary(new byte[]{1, 2, 3}),
-                        "{\"$binary\": \"AQID\", "
-                                + "\"$type\": \"00\"}"),
+                        "{\"$binary\": {\"base64\": \"AQID\", "
+                                + "\"subType\": \"00\"}}"),
                 new TestData<BsonBinary>(new BsonBinary((byte) 0x80, new byte[]{1, 2, 3}),
-                        "{\"$binary\": \"AQID\", "
-                                + "\"$type\": \"80\"}"));
+                        "{\"$binary\": {\"base64\": \"AQID\", "
+                                + "\"subType\": \"80\"}}"));
         for (final TestData<BsonBinary> cur : tests) {
             stringWriter = new StringWriter();
-            writer = new JsonWriter(stringWriter, JsonWriterSettings.builder().outputMode(JsonMode.STRICT).build());
+            writer = new JsonWriter(stringWriter, JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build());
             writer.writeStartDocument();
             writer.writeBinaryData("binary", cur.value);
             writer.writeEndDocument();
@@ -411,14 +408,13 @@ public class JsonWriterTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
-    public void testDateTimeStrict() {
-        List<TestData<Date>> tests = asList(new TestData<Date>(new Date(0), "{\"$date\": 0}"),
-                new TestData<Date>(new Date(Long.MAX_VALUE), "{\"$date\": 9223372036854775807}"),
-                new TestData<Date>(new Date(Long.MIN_VALUE), "{\"$date\": -9223372036854775808}"));
+    public void testDateTimeRelaxed() {
+        List<TestData<Date>> tests = asList(new TestData<Date>(new Date(0), "{\"$date\": \"1970-01-01T00:00:00Z\"}"),
+                new TestData<Date>(new Date(Long.MAX_VALUE), "{\"$date\": {\"$numberLong\": \"9223372036854775807\"}}"),
+                new TestData<Date>(new Date(Long.MIN_VALUE), "{\"$date\": {\"$numberLong\": \"-9223372036854775808\"}}"));
         for (final TestData<Date> cur : tests) {
             stringWriter = new StringWriter();
-            writer = new JsonWriter(stringWriter, JsonWriterSettings.builder().outputMode(JsonMode.STRICT).build());
+            writer = new JsonWriter(stringWriter, JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build());
             writer.writeStartDocument();
             writer.writeDateTime("date", cur.value.getTime());
             writer.writeEndDocument();
@@ -564,40 +560,29 @@ public class JsonWriterTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
-    public void testRegularExpressionStrict() {
+    public void testRegularExpressionRelaxed() {
         List<TestData<BsonRegularExpression>> tests;
-        tests = asList(new TestData<BsonRegularExpression>(new BsonRegularExpression(""), "{\"$regex\": \"\", "
-                        + "\"$options\": \"\""
-                        + "}"),
-                new TestData<BsonRegularExpression>(new BsonRegularExpression("a"), "{\"$regex\": \"a\", "
-                        + "\"$options\": \"\""
-                        + "}"),
-                new TestData<BsonRegularExpression>(new BsonRegularExpression("a/b"), "{\"$regex\": "
-                        + "\"a/b\", "
-                        + "\"$options\": \"\""
-                        + "}"),
-                new TestData<BsonRegularExpression>(new BsonRegularExpression("a\\b"), "{\"$regex\": "
-                        + "\"a\\\\b\", "
-                        + "\"$options\": \"\""
-                        + "}"),
-                new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "i"), "{\"$regex\": \"a\", "
-                        + "\"$options\": \"i\""
-                        + "}"),
-                new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "m"), "{\"$regex\": \"a\", "
-                        + "\"$options\": \"m\""
-                        + "}"),
-                new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "x"), "{\"$regex\": \"a\", "
-                        + "\"$options\": \"x\""
-                        + "}"),
-                new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "s"), "{\"$regex\": \"a\", "
-                        + "\"$options\": \"s\""
-                        + "}"),
+        tests = asList(new TestData<BsonRegularExpression>(new BsonRegularExpression(""),
+                        "{\"$regularExpression\": {\"pattern\": \"\", \"options\": \"\"}}"),
+                new TestData<BsonRegularExpression>(new BsonRegularExpression("a"),
+                        "{\"$regularExpression\": {\"pattern\": \"a\", \"options\": \"\"}}"),
+                new TestData<BsonRegularExpression>(new BsonRegularExpression("a/b"),
+                        "{\"$regularExpression\": {\"pattern\": \"a/b\", \"options\": \"\"}}"),
+                new TestData<BsonRegularExpression>(new BsonRegularExpression("a\\b"),
+                        "{\"$regularExpression\": {\"pattern\": \"a\\\\b\", \"options\": \"\"}}"),
+                new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "i"),
+                        "{\"$regularExpression\": {\"pattern\": \"a\", \"options\": \"i\"}}"),
+                new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "m"),
+                        "{\"$regularExpression\": {\"pattern\": \"a\", \"options\": \"m\"}}"),
+                new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "x"),
+                        "{\"$regularExpression\": {\"pattern\": \"a\", \"options\": \"x\"}}"),
+                new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "s"),
+                        "{\"$regularExpression\": {\"pattern\": \"a\", \"options\": \"s\"}}"),
                 new TestData<BsonRegularExpression>(new BsonRegularExpression("a", "imxs"),
-                        "{\"$regex\": \"a\", " + "\"$options\": \"imsx\"}"));
+                        "{\"$regularExpression\": {\"pattern\": \"a\", \"options\": \"imsx\"}}"));
         for (final TestData<BsonRegularExpression> cur : tests) {
             stringWriter = new StringWriter();
-            writer = new JsonWriter(stringWriter, JsonWriterSettings.builder().outputMode(JsonMode.STRICT).build());
+            writer = new JsonWriter(stringWriter, JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build());
             writer.writeStartDocument();
             writer.writeRegularExpression("regex", cur.value);
             writer.writeEndDocument();
@@ -636,9 +621,8 @@ public class JsonWriterTest {
     }
 
     @Test
-    @SuppressWarnings("deprecation")
-    public void testUndefinedStrict() {
-        writer = new JsonWriter(stringWriter, JsonWriterSettings.builder().outputMode(JsonMode.STRICT).build());
+    public void testUndefinedRelaxed() {
+        writer = new JsonWriter(stringWriter, JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build());
         writer.writeStartDocument();
         writer.writeUndefined("undefined");
         writer.writeEndDocument();

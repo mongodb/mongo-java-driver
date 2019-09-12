@@ -291,7 +291,7 @@ public final class JsonWriterSettings extends BsonWriterSettings {
     }
 
     /**
-     * The output mode to use.  The default value is {@code }JSONMode.STRICT}.
+     * The output mode to use.  The default value is {@code }JSONMode.RELAXED}.
      *
      * @return the output mode.
      */

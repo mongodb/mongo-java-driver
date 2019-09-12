@@ -30,8 +30,7 @@ import static org.bson.BsonHelper.documentWithValuesOfEveryType
 class JsonWriterSpecification extends Specification {
 
     def stringWriter = new StringWriter();
-    @SuppressWarnings('deprecation')
-    def writer = new JsonWriter(stringWriter, JsonWriterSettings.builder().outputMode(JsonMode.STRICT).build())
+    def writer = new JsonWriter(stringWriter, JsonWriterSettings.builder().outputMode(JsonMode.RELAXED).build())
     def jsonWithValuesOfEveryType = documentWithValuesOfEveryType().toJson(JsonWriterSettings.builder().build())
 
     def 'should pipe all types'() {
