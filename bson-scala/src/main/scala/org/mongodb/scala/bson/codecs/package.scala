@@ -16,13 +16,17 @@
 
 package org.mongodb.scala.bson
 
-import org.bson.codecs.{BsonValueCodecProvider, ValueCodecProvider}
+import org.bson.codecs.{ BsonValueCodecProvider, ValueCodecProvider }
 import org.bson.codecs.configuration.CodecRegistries.fromProviders
 import org.bson.codecs.configuration.CodecRegistry
 
 package object codecs {
-  val DEFAULT_CODEC_REGISTRY: CodecRegistry = fromProviders(DocumentCodecProvider(), IterableCodecProvider(),
-    new ValueCodecProvider(), new BsonValueCodecProvider())
+  val DEFAULT_CODEC_REGISTRY: CodecRegistry = fromProviders(
+    DocumentCodecProvider(),
+    IterableCodecProvider(),
+    new ValueCodecProvider(),
+    new BsonValueCodecProvider()
+  )
 
   /**
    * Type alias to the `BsonTypeClassMap`

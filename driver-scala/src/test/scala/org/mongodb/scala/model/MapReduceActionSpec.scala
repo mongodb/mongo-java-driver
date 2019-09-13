@@ -18,7 +18,7 @@ package org.mongodb.scala.model
 
 import java.lang.reflect.Modifier._
 
-import com.mongodb.client.model.{MapReduceAction => JMapReduceAction}
+import com.mongodb.client.model.{ MapReduceAction => JMapReduceAction }
 import org.mongodb.scala.BaseSpec
 
 class MapReduceActionSpec extends BaseSpec {

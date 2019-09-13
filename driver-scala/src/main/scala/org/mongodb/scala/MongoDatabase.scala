@@ -16,8 +16,8 @@
 
 package org.mongodb.scala
 
-import com.mongodb.client.model.{CreateCollectionOptions, CreateViewOptions}
-import com.mongodb.reactivestreams.client.{MongoDatabase => JMongoDatabase}
+import com.mongodb.client.model.{ CreateCollectionOptions, CreateViewOptions }
+import com.mongodb.reactivestreams.client.{ MongoDatabase => JMongoDatabase }
 import org.bson.codecs.configuration.CodecRegistry
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.bson.conversions.Bson
@@ -113,7 +113,9 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @tparam TResult       the type of the class to use instead of [[Document]].
    * @return the collection
    */
-  def getCollection[TResult](collectionName: String)(implicit e: TResult DefaultsTo Document, ct: ClassTag[TResult]): MongoCollection[TResult] =
+  def getCollection[TResult](
+      collectionName: String
+  )(implicit e: TResult DefaultsTo Document, ct: ClassTag[TResult]): MongoCollection[TResult] =
     MongoCollection(wrapped.getCollection(collectionName, ct))
 
   /**
@@ -123,7 +125,9 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @tparam TResult the type of the class to use instead of [[Document]].
    * @return a Observable containing the command result
    */
-  def runCommand[TResult](command: Bson)(implicit e: TResult DefaultsTo Document, ct: ClassTag[TResult]): SingleObservable[TResult] =
+  def runCommand[TResult](
+      command: Bson
+  )(implicit e: TResult DefaultsTo Document, ct: ClassTag[TResult]): SingleObservable[TResult] =
     wrapped.runCommand[TResult](command, ct)
 
   /**
@@ -135,8 +139,9 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @return a Observable containing the command result
    */
   def runCommand[TResult](command: Bson, readPreference: ReadPreference)(
-    implicit
-    e: TResult DefaultsTo Document, ct: ClassTag[TResult]
+      implicit
+      e: TResult DefaultsTo Document,
+      ct: ClassTag[TResult]
   ): SingleObservable[TResult] =
     wrapped.runCommand(command, readPreference, ct)
 
@@ -151,8 +156,9 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @note Requires MongoDB 3.6 or greater
    */
   def runCommand[TResult](clientSession: ClientSession, command: Bson)(
-    implicit
-    e: TResult DefaultsTo Document, ct: ClassTag[TResult]
+      implicit
+      e: TResult DefaultsTo Document,
+      ct: ClassTag[TResult]
   ): SingleObservable[TResult] =
     wrapped.runCommand[TResult](clientSession, command, ct)
 
@@ -167,8 +173,9 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @note Requires MongoDB 3.6 or greater
    */
   def runCommand[TResult](clientSession: ClientSession, command: Bson, readPreference: ReadPreference)(
-    implicit
-    e: TResult DefaultsTo Document, ct: ClassTag[TResult]
+      implicit
+      e: TResult DefaultsTo Document,
+      ct: ClassTag[TResult]
   ): SingleObservable[TResult] =
     wrapped.runCommand(clientSession, command, readPreference, ct)
 
@@ -205,7 +212,10 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @tparam TResult the target document type of the iterable.
    * @return the fluent list collections interface
    */
-  def listCollections[TResult]()(implicit e: TResult DefaultsTo Document, ct: ClassTag[TResult]): ListCollectionsObservable[TResult] =
+  def listCollections[TResult]()(
+      implicit e: TResult DefaultsTo Document,
+      ct: ClassTag[TResult]
+  ): ListCollectionsObservable[TResult] =
     ListCollectionsObservable(wrapped.listCollections(ct))
 
   /**
@@ -229,8 +239,9 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @note Requires MongoDB 3.6 or greater
    */
   def listCollections[TResult](clientSession: ClientSession)(
-    implicit
-    e: TResult DefaultsTo Document, ct: ClassTag[TResult]
+      implicit
+      e: TResult DefaultsTo Document,
+      ct: ClassTag[TResult]
   ): ListCollectionsObservable[TResult] =
     ListCollectionsObservable(wrapped.listCollections(clientSession, ct))
 
@@ -279,7 +290,11 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def createCollection(clientSession: ClientSession, collectionName: String, options: CreateCollectionOptions): SingleObservable[Completed] =
+  def createCollection(
+      clientSession: ClientSession,
+      collectionName: String,
+      options: CreateCollectionOptions
+  ): SingleObservable[Completed] =
     wrapped.createCollection(clientSession, collectionName, options)
 
   /**
@@ -306,7 +321,12 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
    */
-  def createView(viewName: String, viewOn: String, pipeline: Seq[Bson], createViewOptions: CreateViewOptions): SingleObservable[Completed] =
+  def createView(
+      viewName: String,
+      viewOn: String,
+      pipeline: Seq[Bson],
+      createViewOptions: CreateViewOptions
+  ): SingleObservable[Completed] =
     wrapped.createView(viewName, viewOn, pipeline.asJava, createViewOptions)
 
   /**
@@ -320,7 +340,12 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def createView(clientSession: ClientSession, viewName: String, viewOn: String, pipeline: Seq[Bson]): SingleObservable[Completed] =
+  def createView(
+      clientSession: ClientSession,
+      viewName: String,
+      viewOn: String,
+      pipeline: Seq[Bson]
+  ): SingleObservable[Completed] =
     wrapped.createView(clientSession, viewName, viewOn, pipeline.asJava)
 
   /**
@@ -335,8 +360,13 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def createView(clientSession: ClientSession, viewName: String, viewOn: String, pipeline: Seq[Bson],
-                 createViewOptions: CreateViewOptions): SingleObservable[Completed] =
+  def createView(
+      clientSession: ClientSession,
+      viewName: String,
+      viewOn: String,
+      pipeline: Seq[Bson],
+      createViewOptions: CreateViewOptions
+  ): SingleObservable[Completed] =
     wrapped.createView(clientSession, viewName, viewOn, pipeline.asJava, createViewOptions)
 
   /**
@@ -347,7 +377,8 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @since 2.4
    * @note Requires MongoDB 4.0 or greater
    */
-  def watch[C]()(implicit e: C DefaultsTo Document, ct: ClassTag[C]): ChangeStreamObservable[C] = ChangeStreamObservable(wrapped.watch(ct))
+  def watch[C]()(implicit e: C DefaultsTo Document, ct: ClassTag[C]): ChangeStreamObservable[C] =
+    ChangeStreamObservable(wrapped.watch(ct))
 
   /**
    * Creates a change stream for this collection.
@@ -370,7 +401,9 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @since 2.4
    * @note Requires MongoDB 4.0 or greater
    */
-  def watch[C](clientSession: ClientSession)(implicit e: C DefaultsTo Document, ct: ClassTag[C]): ChangeStreamObservable[C] =
+  def watch[C](
+      clientSession: ClientSession
+  )(implicit e: C DefaultsTo Document, ct: ClassTag[C]): ChangeStreamObservable[C] =
     ChangeStreamObservable(wrapped.watch(clientSession, ct))
 
   /**
@@ -383,7 +416,10 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @since 2.4
    * @note Requires MongoDB 4.0 or greater
    */
-  def watch[C](clientSession: ClientSession, pipeline: Seq[Bson])(implicit e: C DefaultsTo Document, ct: ClassTag[C]): ChangeStreamObservable[C] =
+  def watch[C](
+      clientSession: ClientSession,
+      pipeline: Seq[Bson]
+  )(implicit e: C DefaultsTo Document, ct: ClassTag[C]): ChangeStreamObservable[C] =
     ChangeStreamObservable(wrapped.watch(clientSession, pipeline.asJava, ct))
 
   /**
@@ -408,6 +444,9 @@ case class MongoDatabase(private[scala] val wrapped: JMongoDatabase) {
    * @since 2.6
    * @note Requires MongoDB 3.6 or greater
    */
-  def aggregate[C](clientSession: ClientSession, pipeline: Seq[Bson])(implicit e: C DefaultsTo Document, ct: ClassTag[C]): AggregateObservable[C] =
+  def aggregate[C](
+      clientSession: ClientSession,
+      pipeline: Seq[Bson]
+  )(implicit e: C DefaultsTo Document, ct: ClassTag[C]): AggregateObservable[C] =
     AggregateObservable(wrapped.aggregate[C](clientSession, pipeline.asJava, ct))
 }

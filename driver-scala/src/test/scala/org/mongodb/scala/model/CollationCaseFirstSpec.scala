@@ -21,18 +21,24 @@ import java.lang.reflect.Modifier._
 import org.mongodb.scala.BaseSpec
 import org.scalatest.prop.TableDrivenPropertyChecks._
 
-import scala.util.{Success, Try}
+import scala.util.{ Success, Try }
 
 class CollationCaseFirstSpec extends BaseSpec {
 
   "CollationCaseFirst" should "have the same static fields as the wrapped CollationCaseFirst" in {
     val collationCaseFirstClass: Class[CollationCaseFirst] = classOf[com.mongodb.client.model.CollationCaseFirst]
-    val wrappedFields = collationCaseFirstClass.getDeclaredFields.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
-    val wrappedMethods = collationCaseFirstClass.getDeclaredMethods.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
+    val wrappedFields =
+      collationCaseFirstClass.getDeclaredFields.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
+    val wrappedMethods =
+      collationCaseFirstClass.getDeclaredMethods.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
     val exclusions = Set("$VALUES", "valueOf", "values")
 
     val wrapped = (wrappedFields ++ wrappedMethods) -- exclusions
-    val local = CollationCaseFirst.getClass.getDeclaredMethods.map(_.getName).toSet -- Set("apply", "$deserializeLambda$", "$anonfun$fromString$1")
+    val local = CollationCaseFirst.getClass.getDeclaredMethods.map(_.getName).toSet -- Set(
+      "apply",
+      "$deserializeLambda$",
+      "$anonfun$fromString$1"
+    )
 
     local should equal(wrapped)
   }

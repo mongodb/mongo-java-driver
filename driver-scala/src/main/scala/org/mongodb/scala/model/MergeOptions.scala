@@ -19,7 +19,7 @@ package org.mongodb.scala.model
 import scala.collection.JavaConverters._
 import org.mongodb.scala.bson.conversions.Bson
 
-import com.mongodb.client.model.{MergeOptions => JMergeOptions}
+import com.mongodb.client.model.{ MergeOptions => JMergeOptions }
 
 /**
  * Options to control the behavior of the `\$merge` aggregation stage
@@ -27,11 +27,13 @@ import com.mongodb.client.model.{MergeOptions => JMergeOptions}
  * @since 2.7
  */
 object MergeOptions {
+
   /**
    * The behavior of `\$merge` if a result document and an existing document in the collection have the same value for the specified on
    * field(s).
    */
   object WhenMatched {
+
     /**
      * Replace the existing document in the output collection with the matching results document.
      */
@@ -65,6 +67,7 @@ object MergeOptions {
    * The behavior of `/$merge` if a result document does not match an existing document in the out collection.
    */
   object WhenNotMatched {
+
     /**
      * Insert the document into the output collection.
      */

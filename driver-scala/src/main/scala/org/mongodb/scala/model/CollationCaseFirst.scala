@@ -18,7 +18,7 @@ package org.mongodb.scala.model
 
 import scala.util.Try
 
-import com.mongodb.client.model.{CollationCaseFirst => JCollationCaseFirst}
+import com.mongodb.client.model.{ CollationCaseFirst => JCollationCaseFirst }
 
 /**
  * Collation support allows the specific configuration of how character cases are handled.
@@ -27,6 +27,7 @@ import com.mongodb.client.model.{CollationCaseFirst => JCollationCaseFirst}
  * @since 1.2
  */
 object CollationCaseFirst {
+
   /**
    * Uppercase first
    */
@@ -48,6 +49,7 @@ object CollationCaseFirst {
    * @param collationCaseFirst the string value.
    * @return the read concern
    */
-  def fromString(collationCaseFirst: String): Try[CollationCaseFirst] = Try(JCollationCaseFirst.fromString(collationCaseFirst))
+  def fromString(collationCaseFirst: String): Try[CollationCaseFirst] =
+    Try(JCollationCaseFirst.fromString(collationCaseFirst))
 
 }

@@ -16,10 +16,10 @@
 
 package org.mongodb.scala.connection
 
-import java.net.{InetAddress, InetSocketAddress}
+import java.net.{ InetAddress, InetSocketAddress }
 
-import com.mongodb.{ServerAddress => JServerAddress}
-import org.mongodb.scala.{BaseSpec, ServerAddress}
+import com.mongodb.{ ServerAddress => JServerAddress }
+import org.mongodb.scala.{ BaseSpec, ServerAddress }
 import org.scalamock.scalatest.proxy.MockFactory
 
 import scala.collection.JavaConverters._

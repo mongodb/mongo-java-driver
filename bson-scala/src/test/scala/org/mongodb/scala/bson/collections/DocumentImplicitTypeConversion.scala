@@ -35,14 +35,16 @@ class DocumentImplicitTypeConversion extends FlatSpec with Matchers {
 
   it should "support multiple additions" in {
     val doc1: Document = emptyDoc + ("key" -> "value", "key2" -> 2, "key3" -> true, "key4" -> None)
-    doc1 should equal(Document("key" -> BsonString("value"), "key2" -> BsonInt32(2), "key3" -> BsonBoolean(true),
-      "key4" -> BsonNull()))
+    doc1 should equal(
+      Document("key" -> BsonString("value"), "key2" -> BsonInt32(2), "key3" -> BsonBoolean(true), "key4" -> BsonNull())
+    )
   }
 
   it should "support addition of a traversable" in {
     val doc1: Document = emptyDoc ++ Document("key" -> "value", "key2" -> 2, "key3" -> true, "key4" -> None)
-    doc1 should equal(Document("key" -> BsonString("value"), "key2" -> BsonInt32(2), "key3" -> BsonBoolean(true),
-      "key4" -> BsonNull()))
+    doc1 should equal(
+      Document("key" -> BsonString("value"), "key2" -> BsonInt32(2), "key3" -> BsonBoolean(true), "key4" -> BsonNull())
+    )
   }
 
   it should "support updated" in {
@@ -52,11 +54,20 @@ class DocumentImplicitTypeConversion extends FlatSpec with Matchers {
   }
 
   it should "be creatable from mixed types" in {
-    val doc1: Document = Document("a" -> "string", "b" -> true, "c" -> List("a", "b", "c"), "d" -> Document("a" -> "string", "b" -> true,
-      "c" -> List("a", "b", "c")))
+    val doc1: Document = Document(
+      "a" -> "string",
+      "b" -> true,
+      "c" -> List("a", "b", "c"),
+      "d" -> Document("a" -> "string", "b" -> true, "c" -> List("a", "b", "c"))
+    )
 
-    val doc2: mutable.Document = mutable.Document("a" -> "string", "b" -> true, "c" -> List("a", "b", "c"), "d" ->
-      mutable.Document("a" -> "string", "b" -> true, "c" -> List("a", "b", "c")))
+    val doc2: mutable.Document = mutable.Document(
+      "a" -> "string",
+      "b" -> true,
+      "c" -> List("a", "b", "c"),
+      "d" ->
+        mutable.Document("a" -> "string", "b" -> true, "c" -> List("a", "b", "c"))
+    )
     doc1.toBsonDocument should equal(doc2.toBsonDocument)
   }
 }

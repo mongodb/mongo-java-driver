@@ -16,7 +16,7 @@
 
 package org.mongodb.scala
 
-import com.mongodb.{ClientSessionOptions => JClientSessionOptions}
+import com.mongodb.{ ClientSessionOptions => JClientSessionOptions }
 
 /**
  * The options to apply to a `ClientSession`.

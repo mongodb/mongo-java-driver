@@ -39,7 +39,8 @@ object IterableCodecProvider {
    * @param bsonTypeClassMap the bson type class map
    * @return the new instance
    */
-  def apply(bsonTypeClassMap: BsonTypeClassMap): IterableCodecProvider = new IterableCodecProvider(bsonTypeClassMap, None)
+  def apply(bsonTypeClassMap: BsonTypeClassMap): IterableCodecProvider =
+    new IterableCodecProvider(bsonTypeClassMap, None)
 
   /**
    * Create a `IterableCodecProvider` with the default `BsonTypeClassMap` and the given `Transformer`.
@@ -47,7 +48,8 @@ object IterableCodecProvider {
    * @param valueTransformer the value transformer for decoded values
    * @return the new instance
    */
-  def apply(valueTransformer: Transformer): IterableCodecProvider = new IterableCodecProvider(BsonTypeClassMap(), Option(valueTransformer))
+  def apply(valueTransformer: Transformer): IterableCodecProvider =
+    new IterableCodecProvider(BsonTypeClassMap(), Option(valueTransformer))
 }
 
 /**
@@ -58,7 +60,8 @@ object IterableCodecProvider {
  *
  * @since 1.2
  */
-case class IterableCodecProvider(bsonTypeClassMap: BsonTypeClassMap, valueTransformer: Option[Transformer]) extends CodecProvider {
+case class IterableCodecProvider(bsonTypeClassMap: BsonTypeClassMap, valueTransformer: Option[Transformer])
+    extends CodecProvider {
 
   @SuppressWarnings(Array("unchecked"))
   def get[T](clazz: Class[T], registry: CodecRegistry): Codec[T] = {

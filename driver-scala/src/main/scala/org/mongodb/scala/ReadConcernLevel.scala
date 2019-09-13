@@ -18,7 +18,7 @@ package org.mongodb.scala
 
 import scala.util.Try
 
-import com.mongodb.{ReadConcernLevel => JReadConcernLevel}
+import com.mongodb.{ ReadConcernLevel => JReadConcernLevel }
 
 /**
  * The readConcern level of isolation for reads.
@@ -27,6 +27,7 @@ import com.mongodb.{ReadConcernLevel => JReadConcernLevel}
  * @since 1.1
  */
 object ReadConcernLevel {
+
   /**
    * Return the node's most recent copy of data. Provides no guarantee that the data has been written to a majority of the nodes.
    */

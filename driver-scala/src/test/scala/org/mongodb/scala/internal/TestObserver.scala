@@ -18,7 +18,7 @@ package org.mongodb.scala.internal
 
 import scala.collection.mutable
 
-import org.mongodb.scala.{Observer, Subscription}
+import org.mongodb.scala.{ Observer, Subscription }
 
 object TestObserver {
 

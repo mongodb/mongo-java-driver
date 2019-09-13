@@ -111,7 +111,7 @@ configure(scalaProjects) {
             scalafmt('2.0.0').configFile("$configDir/scalafmt.conf")
         }
     }
-    // compileScala.dependsOn('spotlessApply') // TODO add once everything else is ported
+    compileScala.dependsOn('spotlessApply')
 
     tasks.withType(ScalaCompile) {
         scalaCompileOptions.deprecation = false

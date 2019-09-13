@@ -22,8 +22,8 @@ import scala.collection.JavaConverters._
 import scala.util.matching.Regex
 
 import org.bson._
-import com.mongodb.client.model.geojson.{Geometry, Point}
-import com.mongodb.client.model.{Filters => JFilters}
+import com.mongodb.client.model.geojson.{ Geometry, Point }
+import com.mongodb.client.model.{ Filters => JFilters }
 
 import org.mongodb.scala.bson.conversions.Bson
 
@@ -36,6 +36,7 @@ import org.mongodb.scala.bson.conversions.Bson
  * @since 1.0
  */
 object Filters {
+
   /**
    * Creates a filter that matches all documents where the value of the field name equals the specified value. Note that this doesn't
    * actually generate a `\$eq` operator, as the query language doesn't require it.
@@ -302,7 +303,8 @@ object Filters {
    * @return the filter
    * @see [[http://docs.mongodb.org/manual/reference/operator/query/regex \$regex]]
    */
-  def regex(fieldName: String, pattern: String, options: String): Bson = JFilters.regex(fieldName: String, pattern: String, options: String)
+  def regex(fieldName: String, pattern: String, options: String): Bson =
+    JFilters.regex(fieldName: String, pattern: String, options: String)
 
   /**
    * Creates a filter that matches all documents where the value of the field matches the given regular expression pattern with the given
@@ -458,7 +460,13 @@ object Filters {
    * @see [[http://docs.mongodb.org/manual/reference/operator/query/geoWithin/ \$geoWithin]]
    * @see [[http://docs.mongodb.org/manual/reference/operator/query/box/#op._S_box \$box]]
    */
-  def geoWithinBox(fieldName: String, lowerLeftX: Double, lowerLeftY: Double, upperRightX: Double, upperRightY: Double): Bson =
+  def geoWithinBox(
+      fieldName: String,
+      lowerLeftX: Double,
+      lowerLeftY: Double,
+      upperRightX: Double,
+      upperRightY: Double
+  ): Bson =
     JFilters.geoWithinBox(fieldName, lowerLeftX, lowerLeftY, upperRightX, upperRightY)
 
   /**
@@ -486,7 +494,8 @@ object Filters {
    * @see [[http://docs.mongodb.org/manual/reference/operator/query/geoWithin/ \$geoWithin]]
    * @see [[http://docs.mongodb.org/manual/reference/operator/query/center/#op._S_center \$center]]
    */
-  def geoWithinCenter(fieldName: String, x: Double, y: Double, radius: Double): Bson = JFilters.geoWithinCenter(fieldName, x, y, radius)
+  def geoWithinCenter(fieldName: String, x: Double, y: Double, radius: Double): Bson =
+    JFilters.geoWithinCenter(fieldName, x, y, radius)
 
   /**
    * Creates a filter that matches all documents containing a field with geospatial data (GeoJSON or legacy coordinate pairs) that exist
@@ -500,7 +509,8 @@ object Filters {
    * @see [[http://docs.mongodb.org/manual/reference/operator/query/geoWithin/ \$geoWithin]]
    * @see [[http://docs.mongodb.org/manual/reference/operator/query/centerSphere/#op._S_centerSphere \$centerSphere]]
    */
-  def geoWithinCenterSphere(fieldName: String, x: Double, y: Double, radius: Double): Bson = JFilters.geoWithinCenterSphere(fieldName, x, y, radius)
+  def geoWithinCenterSphere(fieldName: String, x: Double, y: Double, radius: Double): Bson =
+    JFilters.geoWithinCenterSphere(fieldName, x, y, radius)
 
   /**
    * Creates a filter that matches all documents containing a field with geospatial data that intersects with the specified shape.
@@ -569,6 +579,7 @@ object Filters {
   def near(fieldName: String, geometry: Bson, maxDistance: Option[Double], minDistance: Option[Double]): Bson = {
     JFilters.near(fieldName, geometry, maxDistance.asJava, minDistance.asJava)
   }
+
   /**
    * Creates a filter that matches all documents containing a field with geospatial data that is near the specified point.
    *
@@ -671,7 +682,13 @@ object Filters {
    * @return the filter
    * @see [[http://docs.mongodb.org/manual/reference/operator/query/near/ \$near]]
    */
-  def nearSphere(fieldName: String, x: Double, y: Double, maxDistance: Option[Double], minDistance: Option[Double]): Bson = {
+  def nearSphere(
+      fieldName: String,
+      x: Double,
+      y: Double,
+      maxDistance: Option[Double],
+      minDistance: Option[Double]
+  ): Bson = {
     JFilters.nearSphere(fieldName, x, y, maxDistance.asJava, minDistance.asJava)
   }
 

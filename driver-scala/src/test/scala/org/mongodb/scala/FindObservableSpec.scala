@@ -23,7 +23,7 @@ import com.mongodb.reactivestreams.client.FindPublisher
 import org.mongodb.scala.model.Collation
 import org.reactivestreams.Publisher
 import org.scalamock.scalatest.proxy.MockFactory
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{ FlatSpec, Matchers }
 
 import scala.concurrent.duration.Duration
 

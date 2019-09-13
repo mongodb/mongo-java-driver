@@ -18,7 +18,7 @@ package org.mongodb.scala.model
 
 import scala.util.Try
 
-import com.mongodb.client.model.{CollationStrength => JCollationStrength}
+import com.mongodb.client.model.{ CollationStrength => JCollationStrength }
 
 /**
  * Collation support allows the specific configuration of how character cases are handled.
@@ -27,6 +27,7 @@ import com.mongodb.client.model.{CollationStrength => JCollationStrength}
  * @since 1.2
  */
 object CollationStrength {
+
   /**
    * Strongest level, denote difference between base characters
    */

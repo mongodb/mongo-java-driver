@@ -20,12 +20,12 @@ import java.util.concurrent.TimeUnit
 
 import _root_.scala.concurrent.duration.Duration
 
-import com.mongodb.{MongoCredential => JMongoCredential}
+import com.mongodb.{ MongoCredential => JMongoCredential }
 
 import org.mongodb.scala
 import org.mongodb.scala.bson.BsonString
 import org.mongodb.scala.model._
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{ FlatSpec, Matchers }
 
 class ScalaPackageSpec extends BaseSpec {
 
@@ -106,9 +106,13 @@ class ScalaPackageSpec extends BaseSpec {
 
     WriteConcern(1).withJournal(true) should equal(new com.mongodb.WriteConcern(1).withJournal(true))
 
-    WriteConcern("Majority").withWTimeout(Duration(10, TimeUnit.MILLISECONDS)) should equal(new com.mongodb.WriteConcern("Majority").withWTimeout(10, TimeUnit.MILLISECONDS))
+    WriteConcern("Majority").withWTimeout(Duration(10, TimeUnit.MILLISECONDS)) should equal(
+      new com.mongodb.WriteConcern("Majority").withWTimeout(10, TimeUnit.MILLISECONDS)
+    )
 
-    WriteConcern(1).withWTimeout(Duration(10, TimeUnit.MILLISECONDS)) should equal(new com.mongodb.WriteConcern(1).withWTimeout(10, TimeUnit.MILLISECONDS))
+    WriteConcern(1).withWTimeout(Duration(10, TimeUnit.MILLISECONDS)) should equal(
+      new com.mongodb.WriteConcern(1).withWTimeout(10, TimeUnit.MILLISECONDS)
+    )
   }
 
   it should "create MongoCredential" in {

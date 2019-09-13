@@ -16,12 +16,12 @@
 
 package org.mongodb.scala.gridfs.helpers
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
+import java.io.{ ByteArrayInputStream, ByteArrayOutputStream }
 import java.nio.ByteBuffer
 
-import org.mongodb.scala.{FuturesSpec, RequiresMongoDBISpec}
+import org.mongodb.scala.{ FuturesSpec, RequiresMongoDBISpec }
 import org.mongodb.scala.gridfs.helpers.AsyncStreamHelper._
-import org.mongodb.scala.gridfs.{AsyncInputStream, AsyncOutputStream, GridFSBucket}
+import org.mongodb.scala.gridfs.{ AsyncInputStream, AsyncOutputStream, GridFSBucket }
 import org.scalatest.Inspectors.forEvery
 
 class AsyncStreamHelperSpec extends RequiresMongoDBISpec with FuturesSpec {
@@ -61,7 +61,7 @@ class AsyncStreamHelperSpec extends RequiresMongoDBISpec with FuturesSpec {
   val inputOutputStreams = new SourceAndDestination[ByteArrayInputStream, ByteArrayOutputStream] {
     override val description: String = "InputStream and OutputStream"
     override val sourceData: ByteArrayInputStream = new ByteArrayInputStream(content)
-    override val destinationData: ByteArrayOutputStream  = new ByteArrayOutputStream(content.length)
+    override val destinationData: ByteArrayOutputStream = new ByteArrayOutputStream(content.length)
     override def inputStream: AsyncInputStream = toAsyncInputStream(sourceData)
     override def outputStream: AsyncOutputStream = toAsyncOutputStream(destinationData)
     override def roundTripped: Boolean = destinationData.toByteArray sameElements content
@@ -69,31 +69,24 @@ class AsyncStreamHelperSpec extends RequiresMongoDBISpec with FuturesSpec {
   val sourceAndDestination = Seq(arrayOfBytesData, byteBufferData, inputOutputStreams)
 
   forEvery(sourceAndDestination) { (data: SourceAndDestination[_, _]) =>
+    it should s"be able to roundtrip ${data.description}" in withDatabase(databaseName) { database =>
+      val gridFSBucket = GridFSBucket(database, "fs")
+      val filesCollection = database.getCollection("fs.files")
+      val chunksCollection = database.getCollection("fs.chunks")
 
-    it should s"be able to roundtrip ${data.description}" in withDatabase(databaseName) {
-      database =>
+      gridFSBucket.drop().futureValue
 
-        val gridFSBucket = GridFSBucket(database, "fs")
-        val filesCollection = database.getCollection("fs.files")
-        val chunksCollection = database.getCollection("fs.chunks")
+      info("Testing uploading data")
+      val objectId = gridFSBucket.uploadFromStream("myfile", data.inputStream).head().futureValue
 
+      filesCollection.countDocuments().head().futureValue should equal(1)
+      chunksCollection.countDocuments().head().futureValue should equal(1)
 
-        gridFSBucket.drop().futureValue
+      info("Testing downloading data")
+      gridFSBucket.downloadToStream(objectId, data.outputStream).head().futureValue
+      data.outputStream.close().head().futureValue
 
-        info("Testing uploading data")
-        val objectId = gridFSBucket.uploadFromStream("myfile", data.inputStream).head().futureValue
-
-        filesCollection.countDocuments().head().futureValue should equal(1)
-        chunksCollection.countDocuments().head().futureValue should equal(1)
-
-        info("Testing downloading data")
-        gridFSBucket.downloadToStream(objectId, data.outputStream).head().futureValue
-        data.outputStream.close().head().futureValue
-
-        data.roundTripped should be(true)
+      data.roundTripped should be(true)
     }
   }
 }
-
-
-

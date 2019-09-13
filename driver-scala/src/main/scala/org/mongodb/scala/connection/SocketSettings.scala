@@ -16,7 +16,7 @@
 
 package org.mongodb.scala.connection
 
-import com.mongodb.connection.{SocketSettings => JSocketSettings}
+import com.mongodb.connection.{ SocketSettings => JSocketSettings }
 
 /**
  * An immutable class representing socket settings used for connections to a MongoDB server.

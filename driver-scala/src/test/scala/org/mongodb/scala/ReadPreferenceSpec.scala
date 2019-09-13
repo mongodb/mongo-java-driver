@@ -22,14 +22,15 @@ import java.util.concurrent.TimeUnit.SECONDS
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.Duration
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{ FlatSpec, Matchers }
 
 class ReadPreferenceSpec extends BaseSpec {
 
   val duration = Duration("95 sec")
 
   "ReadPreference" should "have the same methods as the wrapped ReadPreference" in {
-    val wrapped = classOf[com.mongodb.ReadPreference].getDeclaredMethods.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
+    val wrapped =
+      classOf[com.mongodb.ReadPreference].getDeclaredMethods.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
     val local = ReadPreference.getClass.getDeclaredMethods.map(_.getName).toSet
 
     local should equal(wrapped)
@@ -60,10 +61,12 @@ class ReadPreferenceSpec extends BaseSpec {
     readPreference5 shouldBe com.mongodb.ReadPreference.primaryPreferred(TagSet(Tag("name", "value")), 95, SECONDS)
 
     val readPreference6 = ReadPreference.primaryPreferred(List(TagSet(List(Tag("name", "value")))))
-    readPreference6 shouldBe com.mongodb.ReadPreference.primaryPreferred(List(TagSet(List(Tag("name", "value")))).asJava)
+    readPreference6 shouldBe com.mongodb.ReadPreference
+      .primaryPreferred(List(TagSet(List(Tag("name", "value")))).asJava)
 
     val readPreference7 = ReadPreference.primaryPreferred(List(TagSet(List(Tag("name", "value")))), duration)
-    readPreference7 shouldBe com.mongodb.ReadPreference.primaryPreferred(List(TagSet(List(Tag("name", "value")))).asJava, 95, SECONDS)
+    readPreference7 shouldBe com.mongodb.ReadPreference
+      .primaryPreferred(List(TagSet(List(Tag("name", "value")))).asJava, 95, SECONDS)
   }
 
   it should "return the correct secondary based ReadPreferences" in {
@@ -89,7 +92,8 @@ class ReadPreferenceSpec extends BaseSpec {
     readPreference6 shouldBe com.mongodb.ReadPreference.secondary(List(TagSet(List(Tag("name", "value")))).asJava)
 
     val readPreference7 = ReadPreference.secondary(List(TagSet(List(Tag("name", "value")))), duration)
-    readPreference7 shouldBe com.mongodb.ReadPreference.secondary(List(TagSet(List(Tag("name", "value")))).asJava, 95, SECONDS)
+    readPreference7 shouldBe com.mongodb.ReadPreference
+      .secondary(List(TagSet(List(Tag("name", "value")))).asJava, 95, SECONDS)
   }
 
   it should "return the correct secondaryPreferred based ReadPreferences" in {
@@ -112,10 +116,12 @@ class ReadPreferenceSpec extends BaseSpec {
     readPreference5 shouldBe com.mongodb.ReadPreference.secondaryPreferred(TagSet(Tag("name", "value")), 95, SECONDS)
 
     val readPreference6 = ReadPreference.secondaryPreferred(List(TagSet(List(Tag("name", "value")))))
-    readPreference6 shouldBe com.mongodb.ReadPreference.secondaryPreferred(List(TagSet(List(Tag("name", "value")))).asJava)
+    readPreference6 shouldBe com.mongodb.ReadPreference
+      .secondaryPreferred(List(TagSet(List(Tag("name", "value")))).asJava)
 
     val readPreference7 = ReadPreference.secondaryPreferred(List(TagSet(List(Tag("name", "value")))), duration)
-    readPreference7 shouldBe com.mongodb.ReadPreference.secondaryPreferred(List(TagSet(List(Tag("name", "value")))).asJava, 95, SECONDS)
+    readPreference7 shouldBe com.mongodb.ReadPreference
+      .secondaryPreferred(List(TagSet(List(Tag("name", "value")))).asJava, 95, SECONDS)
   }
 
   it should "return the correct nearest based ReadPreferences" in {
@@ -135,7 +141,8 @@ class ReadPreferenceSpec extends BaseSpec {
     readPreference4 shouldBe com.mongodb.ReadPreference.nearest(List(TagSet(List(Tag("name", "value")))).asJava)
 
     val readPreference5 = ReadPreference.nearest(List(TagSet(List(Tag("name", "value")))), duration)
-    readPreference5 shouldBe com.mongodb.ReadPreference.nearest(List(TagSet(List(Tag("name", "value")))).asJava, 95, SECONDS)
+    readPreference5 shouldBe com.mongodb.ReadPreference
+      .nearest(List(TagSet(List(Tag("name", "value")))).asJava, 95, SECONDS)
   }
 
   it should "return the correct ReadPreference for valueOf" in {
@@ -146,7 +153,8 @@ class ReadPreferenceSpec extends BaseSpec {
     readPreference2 shouldBe com.mongodb.ReadPreference.primaryPreferred(List(TagSet(Tag("name", "value"))).asJava)
 
     val readPreference3 = ReadPreference.valueOf("PrimaryPreferred", List(TagSet(Tag("name", "value"))), duration)
-    readPreference3 shouldBe com.mongodb.ReadPreference.primaryPreferred(List(TagSet(Tag("name", "value"))).asJava, 95, SECONDS)
+    readPreference3 shouldBe com.mongodb.ReadPreference
+      .primaryPreferred(List(TagSet(Tag("name", "value"))).asJava, 95, SECONDS)
   }
 
 }

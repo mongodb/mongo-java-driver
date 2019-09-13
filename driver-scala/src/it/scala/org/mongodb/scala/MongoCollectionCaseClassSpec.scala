@@ -17,71 +17,72 @@
 package org.mongodb.scala
 
 import org.mongodb.scala.bson.codecs.Macros.createCodecProvider
-import org.bson.codecs.configuration.CodecRegistries.{fromProviders, fromRegistries}
+import org.bson.codecs.configuration.CodecRegistries.{ fromProviders, fromRegistries }
 import org.bson.codecs.configuration.CodecRegistry
 
-class MongoCollectionCaseClassSpec  extends RequiresMongoDBISpec with FuturesSpec {
+class MongoCollectionCaseClassSpec extends RequiresMongoDBISpec with FuturesSpec {
 
   case class Contact(phone: String)
   case class User(_id: Int, username: String, age: Int, hobbies: List[String], contacts: List[Contact])
   case class Optional(_id: Int, optional: Option[Int])
 
-  val codecRegistry: CodecRegistry = fromRegistries(fromProviders(classOf[User], classOf[Contact], classOf[Optional]),
-    MongoClient.DEFAULT_CODEC_REGISTRY)
+  val codecRegistry: CodecRegistry = fromRegistries(
+    fromProviders(classOf[User], classOf[Contact], classOf[Optional]),
+    MongoClient.DEFAULT_CODEC_REGISTRY
+  )
 
-  "The Scala driver" should "handle case classes" in withDatabase(databaseName) {
-    database =>
-      val collection = database.getCollection[User](collectionName).withCodecRegistry(codecRegistry)
+  "The Scala driver" should "handle case classes" in withDatabase(databaseName) { database =>
+    val collection = database.getCollection[User](collectionName).withCodecRegistry(codecRegistry)
 
-      val user = User(
-        _id = 1,
-        age = 30,
-        username = "Bob",
-        hobbies = List[String]("hiking", "music"),
-        contacts = List(Contact("123 12314"), Contact("234 234234"))
-      )
-      collection.insertOne(user).futureValue
+    val user = User(
+      _id = 1,
+      age = 30,
+      username = "Bob",
+      hobbies = List[String]("hiking", "music"),
+      contacts = List(Contact("123 12314"), Contact("234 234234"))
+    )
+    collection.insertOne(user).futureValue
 
-      info("The collection should have the expected document")
-      val expectedDocument = Document(
-        """{_id: 1, age: 30, username: "Bob", hobbies: ["hiking", "music"],
+    info("The collection should have the expected document")
+    val expectedDocument = Document("""{_id: 1, age: 30, username: "Bob", hobbies: ["hiking", "music"],
           | contacts: [{phone: "123 12314"}, {phone: "234 234234"}]}""".stripMargin)
-      collection.find[Document]().first().futureValue should equal(expectedDocument)
+    collection.find[Document]().first().futureValue should equal(expectedDocument)
 
-      info("The collection should find and return the user")
-      collection.find().first().futureValue should equal(user)
+    info("The collection should find and return the user")
+    collection.find().first().futureValue should equal(user)
   }
 
-  it should "handle optional values" in withDatabase(databaseName) {
-    database =>
-      val collection = database.getCollection[Optional](collectionName).withCodecRegistry(codecRegistry)
+  it should "handle optional values" in withDatabase(databaseName) { database =>
+    val collection = database.getCollection[Optional](collectionName).withCodecRegistry(codecRegistry)
 
-      val none = Optional(_id = 1, None)
-      collection.insertOne(none).futureValue
+    val none = Optional(_id = 1, None)
+    collection.insertOne(none).futureValue
 
-      info("The collection should have the expected document")
-      val expectedDocument = Document("{_id: 1, optional: null}")
-      collection.find[Document]().first().futureValue should equal(expectedDocument)
+    info("The collection should have the expected document")
+    val expectedDocument = Document("{_id: 1, optional: null}")
+    collection.find[Document]().first().futureValue should equal(expectedDocument)
 
-      info("The collection should find and return the optional")
-      collection.find().first().futureValue should equal(none)
+    info("The collection should find and return the optional")
+    collection.find().first().futureValue should equal(none)
 
-      collection.drop().futureValue
+    collection.drop().futureValue
 
-      val some = Optional(_id = 1, Some(1))
-      collection.insertOne(some).futureValue
+    val some = Optional(_id = 1, Some(1))
+    collection.insertOne(some).futureValue
 
-      info("The collection should find and return the optional")
-      collection.find().first().futureValue should equal(some)
+    info("The collection should find and return the optional")
+    collection.find().first().futureValue should equal(some)
   }
 
-  it should "handle converting to case classes where there is extra data" in withDatabase(databaseName) {
-    database =>
-      val collection = database.getCollection[Contact](collectionName).withCodecRegistry(codecRegistry)
+  it should "handle converting to case classes where there is extra data" in withDatabase(databaseName) { database =>
+    val collection = database.getCollection[Contact](collectionName).withCodecRegistry(codecRegistry)
 
-      database.getCollection(collectionName).insertOne(Document("""{_id: 5, phone: "555 232323", active: true}""")).futureValue
-      val contact = Contact("555 232323")
-      collection.find().first().futureValue should equal(contact)
+    database
+      .getCollection(collectionName)
+      .insertOne(Document("""{_id: 5, phone: "555 232323", active: true}"""))
+      .futureValue
+    val contact = Contact("555 232323")
+    collection.find().first().futureValue should equal(contact)
   }
 
 }

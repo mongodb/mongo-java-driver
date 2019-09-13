@@ -16,16 +16,16 @@
 
 package org.mongodb.scala.gridfs
 
-import java.io.{ByteArrayInputStream, ByteArrayOutputStream, File, InputStream}
+import java.io.{ ByteArrayInputStream, ByteArrayOutputStream, File, InputStream }
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ListBuffer
 import scala.io.Source
 import scala.util.Try
-import org.bson.{BsonArray, BsonBinary, BsonInt32}
+import org.bson.{ BsonArray, BsonBinary, BsonInt32 }
 import org.mongodb.scala._
 import org.mongodb.scala.bson.collection.mutable
-import org.mongodb.scala.bson.{BsonBoolean, BsonDocument, BsonInt64, BsonObjectId, BsonString}
+import org.mongodb.scala.bson.{ BsonBoolean, BsonDocument, BsonInt64, BsonObjectId, BsonString }
 import org.mongodb.scala.gridfs.helpers.AsyncStreamHelper
 import org.scalatest.Inspectors.forEvery
 
@@ -37,26 +37,24 @@ class GridFSSpec extends RequiresMongoDBISpec with FuturesSpec {
   var filesCollection: Option[MongoCollection[Document]] = None
   var chunksCollection: Option[MongoCollection[Document]] = None
 
-  forEvery (files) { (file: File) =>
-    s"Running ${file.getName} tests" should "pass all scenarios" in withDatabase(databaseName) {
-      database =>
+  forEvery(files) { (file: File) =>
+    s"Running ${file.getName} tests" should "pass all scenarios" in withDatabase(databaseName) { database =>
+      gridFSBucket = Some(GridFSBucket(database))
+      filesCollection = Some(database.getCollection(filesCollectionName))
+      chunksCollection = Some(database.getCollection(chunksCollectionName))
+      val definition = BsonDocument(Source.fromFile(file).getLines.mkString)
+      val data = definition.getDocument("data")
+      val tests = definition.getArray("tests").asScala.map(_.asDocument())
 
-        gridFSBucket = Some(GridFSBucket(database))
-        filesCollection = Some(database.getCollection(filesCollectionName))
-        chunksCollection = Some(database.getCollection(chunksCollectionName))
-        val definition = BsonDocument(Source.fromFile(file).getLines.mkString)
-        val data = definition.getDocument("data")
-        val tests = definition.getArray("tests").asScala.map(_.asDocument())
+      forEvery(tests) { (test: BsonDocument) =>
+        info(test.getString("description").getValue)
+        val arrange: BsonDocument = test.getDocument("arrange", BsonDocument())
+        val action: BsonDocument = test.getDocument("act", BsonDocument())
+        val assertion: BsonDocument = test.getDocument("assert", BsonDocument())
 
-        forEvery(tests) { (test: BsonDocument) =>
-          info(test.getString("description").getValue)
-          val arrange: BsonDocument = test.getDocument("arrange", BsonDocument())
-          val action: BsonDocument = test.getDocument("act", BsonDocument())
-          val assertion: BsonDocument = test.getDocument("assert", BsonDocument())
-
-          arrangeGridFS(data, arrange)
-          actionGridFS(action, assertion)
-        }
+        arrangeGridFS(data, arrange)
+        actionGridFS(action, assertion)
+      }
     }
   }
 
@@ -75,9 +73,9 @@ class GridFSSpec extends RequiresMongoDBISpec with FuturesSpec {
         for (toDelete <- document.getArray("deletes").asScala) {
 
           val collection = document.getString("delete") match {
-            case isFilesCollection(_) => filesCollection.get
+            case isFilesCollection(_)  => filesCollection.get
             case isChunksCollection(_) => chunksCollection.get
-            case x => throw new IllegalArgumentException(s"Unknown collection to delete: $x")
+            case x                     => throw new IllegalArgumentException(s"Unknown collection to delete: $x")
           }
 
           val query = toDelete.asDocument.getDocument("q")
@@ -97,9 +95,9 @@ class GridFSSpec extends RequiresMongoDBISpec with FuturesSpec {
         }
       } else if (document.containsKey("update") && document.containsKey("updates")) {
         val collection = document.getString("update") match {
-          case isFilesCollection(_) => filesCollection.get
+          case isFilesCollection(_)  => filesCollection.get
           case isChunksCollection(_) => chunksCollection.get
-          case x => throw new IllegalArgumentException(s"Unknown collection to update: $x")
+          case x                     => throw new IllegalArgumentException(s"Unknown collection to update: $x")
         }
         for (rawUpdate <- document.getArray("updates").asScala) {
           val query: Document = rawUpdate.asDocument.getDocument("q")
@@ -117,11 +115,11 @@ class GridFSSpec extends RequiresMongoDBISpec with FuturesSpec {
   private def actionGridFS(action: BsonDocument, assertion: BsonDocument): Unit = {
     if (!action.isEmpty) {
       action.getString("operation").getValue match {
-        case "delete" => doDelete(action.getDocument("arguments"), assertion)
-        case "download" => doDownload(action.getDocument("arguments"), assertion)
+        case "delete"           => doDelete(action.getDocument("arguments"), assertion)
+        case "download"         => doDownload(action.getDocument("arguments"), assertion)
         case "download_by_name" => doDownloadByName(action.getDocument("arguments"), assertion)
-        case "upload" => doUpload(action.getDocument("arguments"), assertion)
-        case x => throw new IllegalArgumentException(s"Unknown operation: $x")
+        case "upload"           => doUpload(action.getDocument("arguments"), assertion)
+        case x                  => throw new IllegalArgumentException(s"Unknown operation: $x")
       }
     }
   }
@@ -133,28 +131,35 @@ class GridFSSpec extends RequiresMongoDBISpec with FuturesSpec {
       case false =>
         result should be a Symbol("success")
         for (rawDataItem <- assertion.getArray("data").asScala) {
-        val dataItem: BsonDocument = rawDataItem.asDocument
-        for (deletedItem <- dataItem.getArray("deletes", new BsonArray).asScala) {
-          val delete: String = dataItem.getString("delete", new BsonString("none")).getValue
-          val id: BsonObjectId = delete match {
-            case "expected.files" => deletedItem.asDocument.getDocument("q").getObjectId("_id")
-            case "expected.chunks" => deletedItem.asDocument.getDocument("q").getObjectId("files_id")
+          val dataItem: BsonDocument = rawDataItem.asDocument
+          for (deletedItem <- dataItem.getArray("deletes", new BsonArray).asScala) {
+            val delete: String = dataItem.getString("delete", new BsonString("none")).getValue
+            val id: BsonObjectId = delete match {
+              case "expected.files"  => deletedItem.asDocument.getDocument("q").getObjectId("_id")
+              case "expected.chunks" => deletedItem.asDocument.getDocument("q").getObjectId("files_id")
+            }
+
+            val filesCount: Long = getFilesCount(new BsonDocument("_id", id))
+            val chunksCount: Long = getChunksCount(new BsonDocument("files_id", id))
+
+            filesCount should equal(0)
+            chunksCount should equal(0)
           }
-
-          val filesCount: Long = getFilesCount(new BsonDocument("_id", id))
-          val chunksCount: Long = getChunksCount(new BsonDocument("files_id", id))
-
-          filesCount should equal(0)
-          chunksCount should equal(0)
         }
-      }
     }
   }
 
   private def doDownload(arguments: BsonDocument, assertion: BsonDocument): Unit = {
     val outputStream: ByteArrayOutputStream = new ByteArrayOutputStream
-    val result = Try(gridFSBucket.map(_.downloadToStream(arguments.getObjectId("id").getValue,
-      AsyncStreamHelper.toAsyncOutputStream(outputStream)).head()).get.futureValue)
+    val result = Try(
+      gridFSBucket
+        .map(
+          _.downloadToStream(arguments.getObjectId("id").getValue, AsyncStreamHelper.toAsyncOutputStream(outputStream))
+            .head()
+        )
+        .get
+        .futureValue
+    )
     outputStream.close()
 
     assertion.containsKey("error") match {
@@ -162,7 +167,9 @@ class GridFSSpec extends RequiresMongoDBISpec with FuturesSpec {
         result should be a Symbol("failure")
       case false =>
         result should be a Symbol("success")
-        outputStream.toByteArray.map("%02x".format(_)).mkString.toLowerCase should equal(assertion.getDocument("result").getString("$hex").getValue)
+        outputStream.toByteArray.map("%02x".format(_)).mkString.toLowerCase should equal(
+          assertion.getDocument("result").getString("$hex").getValue
+        )
     }
   }
 
@@ -171,8 +178,18 @@ class GridFSSpec extends RequiresMongoDBISpec with FuturesSpec {
     val options: GridFSDownloadOptions = new GridFSDownloadOptions()
     Option(arguments.get("options")).map(opts => options.revision(opts.asDocument().getInt32("revision").getValue))
 
-    val result = Try(gridFSBucket.map(_.downloadToStream(arguments.getString("filename").getValue,
-      AsyncStreamHelper.toAsyncOutputStream(outputStream), options).head()).get.futureValue)
+    val result = Try(
+      gridFSBucket
+        .map(
+          _.downloadToStream(
+            arguments.getString("filename").getValue,
+            AsyncStreamHelper.toAsyncOutputStream(outputStream),
+            options
+          ).head()
+        )
+        .get
+        .futureValue
+    )
     outputStream.close()
 
     assertion.containsKey("error") match {
@@ -180,7 +197,9 @@ class GridFSSpec extends RequiresMongoDBISpec with FuturesSpec {
         result should be a Symbol("failure")
       case false =>
         result should be a Symbol("success")
-        outputStream.toByteArray.map("%02x".format(_)).mkString.toLowerCase should equal(assertion.getDocument("result").getString("$hex").getValue)
+        outputStream.toByteArray.map("%02x".format(_)).mkString.toLowerCase should equal(
+          assertion.getDocument("result").getString("$hex").getValue
+        )
     }
   }
 
@@ -198,17 +217,21 @@ class GridFSSpec extends RequiresMongoDBISpec with FuturesSpec {
     val disableMD5: Boolean = rawOptions.get[BsonBoolean]("disableMD5").getOrElse(BsonBoolean(false)).getValue
 
     val result = Try(
-      gridFSBucket.map(bucket =>
-        bucket.uploadFromStream(filename, AsyncStreamHelper.toAsyncInputStream(inputStream), options).head()).get.futureValue
+      gridFSBucket
+        .map(
+          bucket => bucket.uploadFromStream(filename, AsyncStreamHelper.toAsyncInputStream(inputStream), options).head()
+        )
+        .get
+        .futureValue
     )
 
     assertion.containsKey("error") match {
       case true =>
         result should be a Symbol("failure")
-        /*
+      /*
          // We don't need to read anything more so don't see the extra chunk
          if (!assertion.getString("error").getValue == "ExtraChunk") assertNotNull("Should have thrown an exception", error)
-         */
+       */
       case false =>
         result should be a Symbol("success")
         val objectId = result.get
@@ -244,8 +267,10 @@ class GridFSSpec extends RequiresMongoDBISpec with FuturesSpec {
   }
   //scalastyle:on method.length
 
-  private def getChunksCount(filter: BsonDocument): Long = chunksCollection.map(col => col.countDocuments(filter).head()).get.futureValue
-  private def getFilesCount(filter: BsonDocument): Long = filesCollection.map(col => col.countDocuments(filter).head()).get.futureValue
+  private def getChunksCount(filter: BsonDocument): Long =
+    chunksCollection.map(col => col.countDocuments(filter).head()).get.futureValue
+  private def getFilesCount(filter: BsonDocument): Long =
+    filesCollection.map(col => col.countDocuments(filter).head()).get.futureValue
 
   private def processFiles(bsonArray: BsonArray): List[Document] = {
     val documents = ListBuffer[Document]()
@@ -254,8 +279,10 @@ class GridFSSpec extends RequiresMongoDBISpec with FuturesSpec {
         val document: BsonDocument = rawDocument.asDocument
         if (document.get("length").isInt32) document.put("length", BsonInt64(document.getInt32("length").getValue))
         if (document.containsKey("metadata") && document.getDocument("metadata").isEmpty) document.remove("metadata")
-        if (document.containsKey("aliases") && document.getArray("aliases").getValues.size == 0) document.remove("aliases")
-        if (document.containsKey("contentType") && document.getString("contentType").getValue.length == 0) document.remove("contentType")
+        if (document.containsKey("aliases") && document.getArray("aliases").getValues.size == 0)
+          document.remove("aliases")
+        if (document.containsKey("contentType") && document.getString("contentType").getValue.length == 0)
+          document.remove("contentType")
         documents += document
       }
     }
@@ -274,7 +301,13 @@ class GridFSSpec extends RequiresMongoDBISpec with FuturesSpec {
 
   private def parseHexDocument(document: BsonDocument, hexDocument: String): BsonDocument = {
     if (document.contains(hexDocument) && document.get(hexDocument).isDocument) {
-      val bytes: Array[Byte] = document.getDocument(hexDocument).getString("$hex").getValue.sliding(2,2).map(i => Integer.parseInt(i, 16).toByte).toArray
+      val bytes: Array[Byte] = document
+        .getDocument(hexDocument)
+        .getString("$hex")
+        .getValue
+        .sliding(2, 2)
+        .map(i => Integer.parseInt(i, 16).toByte)
+        .toArray
       document.put(hexDocument, new BsonBinary(bytes))
     }
     document

@@ -18,7 +18,7 @@ package org.mongodb.scala.model
 
 import scala.collection.JavaConverters._
 
-import com.mongodb.client.model.{Indexes => JIndexes}
+import com.mongodb.client.model.{ Indexes => JIndexes }
 
 import org.mongodb.scala.bson.conversions.Bson
 
@@ -32,6 +32,7 @@ import org.mongodb.scala.bson.conversions.Bson
  * @since 1.0
  */
 object Indexes {
+
   /**
    * Create an index key for an ascending index on the given fields.
    *

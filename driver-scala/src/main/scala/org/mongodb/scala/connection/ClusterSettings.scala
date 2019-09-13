@@ -16,7 +16,7 @@
 
 package org.mongodb.scala.connection
 
-import com.mongodb.connection.{ClusterSettings => JClusterSettings}
+import com.mongodb.connection.{ ClusterSettings => JClusterSettings }
 
 /**
  * Settings for the cluster.
@@ -24,6 +24,7 @@ import com.mongodb.connection.{ClusterSettings => JClusterSettings}
  * @since 1.0
  */
 object ClusterSettings {
+
   /**
    * Get a builder for this class.
    *

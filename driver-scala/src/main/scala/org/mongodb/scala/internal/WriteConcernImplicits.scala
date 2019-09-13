@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 
 import scala.concurrent.duration.Duration
 
-import com.mongodb.{WriteConcern => JWriteConcern}
+import com.mongodb.{ WriteConcern => JWriteConcern }
 
 import org.mongodb.scala.WriteConcern
 
@@ -34,7 +34,8 @@ private[scala] trait WriteConcernImplicits {
      * @param wTimeout the wTimeout, which must be &gt;= 0 and &lt;= Integer.MAX_VALUE after conversion to milliseconds
      * @return the WriteConcern with the given wTimeout
      */
-    def withWTimeout(wTimeout: Duration): WriteConcern = jWriteConcern.withWTimeout(wTimeout.toMillis, TimeUnit.MILLISECONDS)
+    def withWTimeout(wTimeout: Duration): WriteConcern =
+      jWriteConcern.withWTimeout(wTimeout.toMillis, TimeUnit.MILLISECONDS)
   }
 
 }

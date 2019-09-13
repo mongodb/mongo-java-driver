@@ -18,7 +18,7 @@ package org.mongodb.scala.model
 
 import java.lang.reflect.Modifier._
 
-import com.mongodb.client.model.{ReturnDocument => JReturnDocument}
+import com.mongodb.client.model.{ ReturnDocument => JReturnDocument }
 import org.mongodb.scala.BaseSpec
 
 class ReturnDocumentSpec extends BaseSpec {

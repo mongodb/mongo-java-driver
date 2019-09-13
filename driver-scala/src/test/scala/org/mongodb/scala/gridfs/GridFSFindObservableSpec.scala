@@ -19,7 +19,7 @@ package org.mongodb.scala.gridfs
 import java.util.concurrent.TimeUnit
 
 import com.mongodb.reactivestreams.client.gridfs.GridFSFindPublisher
-import org.mongodb.scala.{BaseSpec, Document}
+import org.mongodb.scala.{ BaseSpec, Document }
 import org.reactivestreams.Publisher
 import org.scalamock.scalatest.proxy.MockFactory
 

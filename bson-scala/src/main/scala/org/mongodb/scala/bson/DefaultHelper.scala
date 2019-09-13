@@ -57,6 +57,7 @@ protected[scala] object DefaultHelper {
    * Companion object for [[DefaultsTo]]
    */
   object DefaultsTo extends LowPriorityDefaultsTo {
+
     /**
      * Implicitly sets a default type of B. See [[DefaultsTo]]
      *

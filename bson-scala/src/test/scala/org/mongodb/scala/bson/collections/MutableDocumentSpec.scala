@@ -81,14 +81,22 @@ class MutableDocumentSpec extends FlatSpec with Matchers {
 
   it should "support multiple additions" in {
     val doc1: Document = emptyDoc + ("key" -> BsonString("value"), "key2" -> BsonString("value2"),
-      "key3" -> BsonString("value3"))
+    "key3" -> BsonString("value3"))
     emptyDoc should not be doc1
-    doc1 should equal(Document("key" -> BsonString("value"), "key2" -> BsonString("value2"), "key3" -> BsonString("value3")))
+    doc1 should equal(
+      Document("key" -> BsonString("value"), "key2" -> BsonString("value2"), "key3" -> BsonString("value3"))
+    )
 
     val doc2: Document = doc1 + ("key4" -> BsonString("value4"))
     doc1 should not be doc2
-    doc2 should equal(Document("key" -> BsonString("value"), "key2" -> BsonString("value2"), "key3" -> BsonString("value3"),
-      "key4" -> BsonString("value4")))
+    doc2 should equal(
+      Document(
+        "key" -> BsonString("value"),
+        "key2" -> BsonString("value2"),
+        "key3" -> BsonString("value3"),
+        "key4" -> BsonString("value4")
+      )
+    )
   }
 
   it should "support addition of a traversable" in {
@@ -98,7 +106,9 @@ class MutableDocumentSpec extends FlatSpec with Matchers {
 
     val doc2: Document = doc1 ++ List("key3" -> BsonString("value3"))
     doc1 should not be doc2
-    doc2 should equal(Document("key" -> BsonString("value"), "key2" -> BsonString("value2"), "key3" -> BsonString("value3")))
+    doc2 should equal(
+      Document("key" -> BsonString("value"), "key2" -> BsonString("value2"), "key3" -> BsonString("value3"))
+    )
   }
 
   it should "support updated" in {
@@ -164,14 +174,18 @@ class MutableDocumentSpec extends FlatSpec with Matchers {
     doc.values.toSet should equal(Set(BsonString("value"), BsonString("value2"), BsonString("value3")))
 
     val doc1: Document = doc + ("aNewKey" -> BsonString("1"))
-    doc1.values.toSet should equal(Set(BsonString("value"), BsonString("value2"), BsonString("value3"), BsonString("1")))
+    doc1.values.toSet should equal(
+      Set(BsonString("value"), BsonString("value2"), BsonString("value3"), BsonString("1"))
+    )
   }
 
   it should "provide a valueSet in the order set" in {
     doc.valuesIterator.toSet should equal(Set(BsonString("value"), BsonString("value2"), BsonString("value3")))
 
     val doc1: Document = doc + ("aNewKey" -> BsonString("1"))
-    doc1.valuesIterator.toSet should equal(Set(BsonString("value"), BsonString("value2"), BsonString("value3"), BsonString("1")))
+    doc1.valuesIterator.toSet should equal(
+      Set(BsonString("value"), BsonString("value2"), BsonString("value3"), BsonString("1"))
+    )
   }
 
   "Document transformations" should "be filterable by keys" in {
@@ -228,7 +242,9 @@ class MutableDocumentSpec extends FlatSpec with Matchers {
 
     val doc2: Document = doc1 += ("key3" -> BsonString("value3"))
     doc1 should equal(doc2)
-    doc2 should equal(Document("key" -> BsonString("value"), "key2" -> BsonString("value2"), "key3" -> BsonString("value3")))
+    doc2 should equal(
+      Document("key" -> BsonString("value"), "key2" -> BsonString("value2"), "key3" -> BsonString("value3"))
+    )
   }
 
   it should "support inline addition of a traversable" in {
@@ -237,7 +253,9 @@ class MutableDocumentSpec extends FlatSpec with Matchers {
 
     val doc2: Document = doc1 ++= List("key3" -> BsonString("value3"))
     doc1 should equal(doc2)
-    doc2 should equal(Document("key" -> BsonString("value"), "key2" -> BsonString("value2"), "key3" -> BsonString("value3")))
+    doc2 should equal(
+      Document("key" -> BsonString("value"), "key2" -> BsonString("value2"), "key3" -> BsonString("value3"))
+    )
   }
 
   it should "support put" in {

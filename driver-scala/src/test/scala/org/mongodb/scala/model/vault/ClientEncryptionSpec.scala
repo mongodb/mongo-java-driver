@@ -16,11 +16,11 @@
 
 package org.mongodb.scala.model.vault
 
-import java.lang.reflect.Modifier.{isPublic, isStatic}
+import java.lang.reflect.Modifier.{ isPublic, isStatic }
 
-import com.mongodb.reactivestreams.client.vault.{ClientEncryption => JClientEncryption}
+import com.mongodb.reactivestreams.client.vault.{ ClientEncryption => JClientEncryption }
 import org.mongodb.scala.BaseSpec
-import org.mongodb.scala.bson.{BsonBinary, BsonString}
+import org.mongodb.scala.bson.{ BsonBinary, BsonString }
 import org.mongodb.scala.vault.ClientEncryption
 import org.scalamock.scalatest.proxy.MockFactory
 
@@ -31,9 +31,14 @@ class ClientEncryptionSpec extends BaseSpec with MockFactory {
 
   "ClientEncryption" should "have the same methods as the wrapped Filters" in {
     val wrapped = classOf[JClientEncryption].getDeclaredMethods
-      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers)).map(_.getName).toSet
+      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers))
+      .map(_.getName)
+      .toSet
     val ignore = Set("toString", "apply", "unapply")
-    val local = ClientEncryption.getClass.getDeclaredMethods.filter(f => isPublic(f.getModifiers)).map(_.getName).toSet -- ignore
+    val local = ClientEncryption.getClass.getDeclaredMethods
+      .filter(f => isPublic(f.getModifiers))
+      .map(_.getName)
+      .toSet -- ignore
 
     local should equal(wrapped)
   }

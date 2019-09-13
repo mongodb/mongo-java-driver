@@ -16,7 +16,7 @@
 
 package org.mongodb.scala.model.changestream
 
-import com.mongodb.client.model.changestream.{FullDocument => JFullDocument}
+import com.mongodb.client.model.changestream.{ FullDocument => JFullDocument }
 
 import scala.util.Try
 

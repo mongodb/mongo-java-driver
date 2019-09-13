@@ -21,16 +21,19 @@ import java.lang.reflect.Modifier._
 import org.bson.BsonDocument
 import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.bson.conversions.Bson
-import org.mongodb.scala.{BaseSpec, MongoClient, model}
+import org.mongodb.scala.{ model, BaseSpec, MongoClient }
 
 class ProjectionsSpec extends BaseSpec {
   val registry = MongoClient.DEFAULT_CODEC_REGISTRY
 
-  def toBson(bson: Bson): Document = Document(bson.toBsonDocument(classOf[BsonDocument], MongoClient.DEFAULT_CODEC_REGISTRY))
+  def toBson(bson: Bson): Document =
+    Document(bson.toBsonDocument(classOf[BsonDocument], MongoClient.DEFAULT_CODEC_REGISTRY))
 
   "Projections" should "have the same methods as the wrapped Projections" in {
     val wrapped = classOf[com.mongodb.client.model.Projections].getDeclaredMethods
-      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers)).map(_.getName).toSet
+      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers))
+      .map(_.getName)
+      .toSet
     val local = model.Projections.getClass.getDeclaredMethods.filter(f => isPublic(f.getModifiers)).map(_.getName).toSet
 
     local should equal(wrapped)
@@ -55,7 +58,9 @@ class ProjectionsSpec extends BaseSpec {
   }
 
   it should "elemMatch" in {
-    toBson(model.Projections.elemMatch("x", Filters.and(model.Filters.eq("y", 1), model.Filters.eq("z", 2)))) should equal(Document("""{x : {$elemMatch : {y : 1, z : 2}}}"""))
+    toBson(model.Projections.elemMatch("x", Filters.and(model.Filters.eq("y", 1), model.Filters.eq("z", 2)))) should equal(
+      Document("""{x : {$elemMatch : {y : 1, z : 2}}}""")
+    )
   }
 
   it should "slice" in {
@@ -72,8 +77,12 @@ class ProjectionsSpec extends BaseSpec {
   }
 
   it should "combine fields" in {
-    toBson(model.Projections.fields(model.Projections.include("x", "y"), model.Projections.exclude("_id"))) should equal(Document("""{x : 1, y : 1, _id : 0}"""))
-    toBson(model.Projections.fields(model.Projections.include("x", "y"), model.Projections.exclude("x"))) should equal(Document("""{y : 1, x : 0}"""))
+    toBson(model.Projections.fields(model.Projections.include("x", "y"), model.Projections.exclude("_id"))) should equal(
+      Document("""{x : 1, y : 1, _id : 0}""")
+    )
+    toBson(model.Projections.fields(model.Projections.include("x", "y"), model.Projections.exclude("x"))) should equal(
+      Document("""{y : 1, x : 0}""")
+    )
   }
 
 }

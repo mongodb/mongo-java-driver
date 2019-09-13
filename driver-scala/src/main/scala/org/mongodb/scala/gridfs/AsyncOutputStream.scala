@@ -18,7 +18,7 @@ package org.mongodb.scala.gridfs
 
 import java.nio.ByteBuffer
 
-import org.mongodb.scala.{Completed, Observable, SingleObservable}
+import org.mongodb.scala.{ Completed, Observable, SingleObservable }
 
 /**
  * The Async Output Stream interface represents some asynchronous output stream of bytes.
@@ -28,6 +28,7 @@ import org.mongodb.scala.{Completed, Observable, SingleObservable}
  * @since 1.2
  */
 trait AsyncOutputStream {
+
   /**
    * Writes a sequence of bytes from the given buffer into this stream.
    *

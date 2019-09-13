@@ -18,16 +18,21 @@ package org.mongodb.scala
 
 import java.lang.reflect.Modifier._
 
-import com.mongodb.{ReadConcern => JReadConcern}
+import com.mongodb.{ ReadConcern => JReadConcern }
 
 import org.scalatest.prop.TableDrivenPropertyChecks._
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{ FlatSpec, Matchers }
 
 class ReadConcernSpec extends BaseSpec {
 
   "ReadConcern" should "have the same static fields as the wrapped ReadConcern" in {
-    val wrapped = classOf[com.mongodb.ReadConcern].getDeclaredFields.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
-    val local = ReadConcern.getClass.getDeclaredMethods.map(_.getName).toSet -- Set("apply", "$deserializeLambda$", "$anonfun$fromString$1")
+    val wrapped =
+      classOf[com.mongodb.ReadConcern].getDeclaredFields.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
+    val local = ReadConcern.getClass.getDeclaredMethods.map(_.getName).toSet -- Set(
+      "apply",
+      "$deserializeLambda$",
+      "$anonfun$fromString$1"
+    )
 
     local should equal(wrapped)
   }

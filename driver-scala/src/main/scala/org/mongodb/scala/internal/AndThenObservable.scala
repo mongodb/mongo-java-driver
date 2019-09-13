@@ -16,35 +16,38 @@
 
 package org.mongodb.scala.internal
 
-import scala.util.{Failure, Try}
+import scala.util.{ Failure, Try }
 
-import org.mongodb.scala.{Observable, Observer, Subscription}
+import org.mongodb.scala.{ Observable, Observer, Subscription }
 
-private[scala] case class AndThenObservable[T, U](observable: Observable[T], pf: PartialFunction[Try[T], U]) extends Observable[T] {
+private[scala] case class AndThenObservable[T, U](observable: Observable[T], pf: PartialFunction[Try[T], U])
+    extends Observable[T] {
   override def subscribe(observer: Observer[_ >: T]): Unit = {
-    observable.subscribe(SubscriptionCheckingObserver[T](
-      new Observer[T] {
-        private var finalResult: Option[T] = None
+    observable.subscribe(
+      SubscriptionCheckingObserver[T](
+        new Observer[T] {
+          private var finalResult: Option[T] = None
 
-        override def onError(throwable: Throwable): Unit = {
-          observer.onError(throwable)
-          Try(pf(Failure(throwable)))
-        }
+          override def onError(throwable: Throwable): Unit = {
+            observer.onError(throwable)
+            Try(pf(Failure(throwable)))
+          }
 
-        override def onSubscribe(sub: Subscription): Unit = {
-          observer.onSubscribe(sub)
-        }
+          override def onSubscribe(sub: Subscription): Unit = {
+            observer.onSubscribe(sub)
+          }
 
-        override def onComplete(): Unit = {
-          observer.onComplete()
-          Try(pf(Try(finalResult.get)))
-        }
+          override def onComplete(): Unit = {
+            observer.onComplete()
+            Try(pf(Try(finalResult.get)))
+          }
 
-        override def onNext(tResult: T): Unit = {
-          finalResult = Some(tResult)
-          observer.onNext(tResult)
+          override def onNext(tResult: T): Unit = {
+            finalResult = Some(tResult)
+            observer.onNext(tResult)
+          }
         }
-      }
-    ))
+      )
+    )
   }
 }

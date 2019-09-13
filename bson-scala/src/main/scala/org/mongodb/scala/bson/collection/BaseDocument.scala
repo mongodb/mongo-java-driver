@@ -63,10 +63,12 @@ private[bson] trait BaseDocument[T] extends Traversable[(String, BsonValue)] wit
    * @param  key the key
    * @return     the value associated with the given key, or throws `NoSuchElementException`.
    */
-  def apply[TResult <: BsonValue](key: String)(implicit e: TResult DefaultsTo BsonValue, ct: ClassTag[TResult]): TResult = {
+  def apply[TResult <: BsonValue](
+      key: String
+  )(implicit e: TResult DefaultsTo BsonValue, ct: ClassTag[TResult]): TResult = {
     get[TResult](key) match {
       case Some(value) => value
-      case None => throw new NoSuchElementException("key not found: " + key)
+      case None        => throw new NoSuchElementException("key not found: " + key)
     }
   }
 
@@ -81,7 +83,7 @@ private[bson] trait BaseDocument[T] extends Traversable[(String, BsonValue)] wit
    */
   def getOrElse[B >: BsonValue](key: String, default: CanBeBsonValue): B = get(key) match {
     case Some(v) => v
-    case None => default.value
+    case None    => default.value
   }
 
   //scalastyle:off spaces.after.plus  method.name
@@ -152,12 +154,15 @@ private[bson] trait BaseDocument[T] extends Traversable[(String, BsonValue)] wit
    * @return an option value containing the value associated with `key` in this document,
    *         or `None` if none exists.
    */
-  def get[TResult <: BsonValue](key: String)(implicit e: TResult DefaultsTo BsonValue, ct: ClassTag[TResult]): Option[TResult] = {
+  def get[TResult <: BsonValue](
+      key: String
+  )(implicit e: TResult DefaultsTo BsonValue, ct: ClassTag[TResult]): Option[TResult] = {
     underlying.containsKey(key) match {
-      case true => Try(ct.runtimeClass.cast(underlying.get(key))) match {
-        case Success(v) => Some(v.asInstanceOf[TResult])
-        case Failure(ex) => None
-      }
+      case true =>
+        Try(ct.runtimeClass.cast(underlying.get(key))) match {
+          case Success(v)  => Some(v.asInstanceOf[TResult])
+          case Failure(ex) => None
+        }
       case false => None
     }
   }
@@ -239,7 +244,8 @@ private[bson] trait BaseDocument[T] extends Traversable[(String, BsonValue)] wit
    */
   def toBsonDocument: BsonDocument = copyBsonDocument()
 
-  override def toBsonDocument[TDocument](documentClass: Class[TDocument], codecRegistry: CodecRegistry): BsonDocument = underlying
+  override def toBsonDocument[TDocument](documentClass: Class[TDocument], codecRegistry: CodecRegistry): BsonDocument =
+    underlying
 
   /**
    * Copies the BsonDocument

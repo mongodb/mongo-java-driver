@@ -16,7 +16,7 @@
 
 package org.mongodb.scala
 
-import com.mongodb.{MongoDriverInformation => JMongoDriverInformation}
+import com.mongodb.{ MongoDriverInformation => JMongoDriverInformation }
 
 /**
  * The options regarding collation support in MongoDB 3.4+

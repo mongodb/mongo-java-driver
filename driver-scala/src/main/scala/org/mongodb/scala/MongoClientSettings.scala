@@ -16,8 +16,8 @@
 
 package org.mongodb.scala
 
-import com.mongodb.reactivestreams.client.{MongoClients => JMongoClients}
-import com.mongodb.{MongoClientSettings => JMongoClientSettings}
+import com.mongodb.reactivestreams.client.{ MongoClients => JMongoClients }
+import com.mongodb.{ MongoClientSettings => JMongoClientSettings }
 
 /**
  * A MongoClientSettings companion object

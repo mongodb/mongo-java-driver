@@ -53,8 +53,13 @@ object QuickTour {
     collection.drop().results()
 
     // make a document and insert it
-    val doc: Document = Document("_id" -> 0, "name" -> "MongoDB", "type" -> "database",
-      "count" -> 1, "info" -> Document("x" -> 203, "y" -> 102))
+    val doc: Document = Document(
+      "_id" -> 0,
+      "name" -> "MongoDB",
+      "type" -> "database",
+      "count" -> 1,
+      "info" -> Document("x" -> 203, "y" -> 102)
+    )
 
     collection.insertOne(doc).results()
 
@@ -62,7 +67,9 @@ object QuickTour {
     collection.find.first().printResults()
 
     // now, lets add lots of little documents to the collection so we can explore queries and cursors
-    val documents: IndexedSeq[Document] = (1 to 100) map { i: Int => Document("i" -> i) }
+    val documents: IndexedSeq[Document] = (1 to 100) map { i: Int =>
+      Document("i" -> i)
+    }
     val insertObservable = collection.insertMany(documents)
 
     val insertAndCount = for {
@@ -91,10 +98,14 @@ object QuickTour {
     collection.find().projection(excludeId()).first().printHeadResult()
 
     //Aggregation
-    collection.aggregate(Seq(
-      filter(gt("i", 0)),
-      project(Document("""{ITimes10: {$multiply: ["$i", 10]}}"""))
-    )).printResults()
+    collection
+      .aggregate(
+        Seq(
+          filter(gt("i", 0)),
+          project(Document("""{ITimes10: {$multiply: ["$i", 10]}}"""))
+        )
+      )
+      .printResults()
 
     // Update One
     collection.updateOne(equal("i", 10), set("i", 110)).printHeadResult("Update Result: ")

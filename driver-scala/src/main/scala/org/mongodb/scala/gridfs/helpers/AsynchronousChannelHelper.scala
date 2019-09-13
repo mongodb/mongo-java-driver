@@ -16,11 +16,11 @@
 
 package org.mongodb.scala.gridfs.helpers
 
-import java.nio.channels.{AsynchronousByteChannel, AsynchronousFileChannel}
+import java.nio.channels.{ AsynchronousByteChannel, AsynchronousFileChannel }
 
-import com.mongodb.internal.async.client.gridfs.helpers.{AsynchronousChannelHelper => JAsynchronousChannelHelper}
+import com.mongodb.internal.async.client.gridfs.helpers.{ AsynchronousChannelHelper => JAsynchronousChannelHelper }
 import com.mongodb.reactivestreams.client.internal.GridFSAsyncStreamHelper
-import org.mongodb.scala.gridfs.{AsyncInputStream, AsyncOutputStream}
+import org.mongodb.scala.gridfs.{ AsyncInputStream, AsyncOutputStream }
 
 /**
  * A helper class to convert to AsynchronousByteChannel or AsynchronousFileChannel instances into
@@ -30,6 +30,7 @@ import org.mongodb.scala.gridfs.{AsyncInputStream, AsyncOutputStream}
  * @since 1.2
  */
 object AsynchronousChannelHelper {
+
   /**
    * Converts a AsynchronousByteChannel into a AsyncInputStream
    *
@@ -37,7 +38,9 @@ object AsynchronousChannelHelper {
    * @return the AsyncInputStream
    */
   def channelToInputStream(asynchronousByteChannel: AsynchronousByteChannel): AsyncInputStream =
-    GridFSAsyncStreamHelper.toAsyncInputStream(JAsynchronousChannelHelper.channelToInputStream(asynchronousByteChannel));
+    GridFSAsyncStreamHelper.toAsyncInputStream(
+      JAsynchronousChannelHelper.channelToInputStream(asynchronousByteChannel)
+    );
 
   /**
    * Converts a AsynchronousFileChannel into a AsyncInputStream
@@ -46,7 +49,9 @@ object AsynchronousChannelHelper {
    * @return the AsyncInputStream
    */
   def channelToInputStream(asynchronousFileChannel: AsynchronousFileChannel): AsyncInputStream =
-    GridFSAsyncStreamHelper.toAsyncInputStream(JAsynchronousChannelHelper.channelToInputStream(asynchronousFileChannel));
+    GridFSAsyncStreamHelper.toAsyncInputStream(
+      JAsynchronousChannelHelper.channelToInputStream(asynchronousFileChannel)
+    );
 
   /**
    * Converts a AsynchronousByteChannel into a AsyncOutputStream
@@ -55,7 +60,9 @@ object AsynchronousChannelHelper {
    * @return the AsyncOutputStream
    */
   def channelToOutputStream(asynchronousByteChannel: AsynchronousByteChannel): AsyncOutputStream =
-    GridFSAsyncStreamHelper.toAsyncOutputStream(JAsynchronousChannelHelper.channelToOutputStream(asynchronousByteChannel))
+    GridFSAsyncStreamHelper.toAsyncOutputStream(
+      JAsynchronousChannelHelper.channelToOutputStream(asynchronousByteChannel)
+    )
 
   /**
    * Converts a AsynchronousFileChannel into a AsyncOutputStream
@@ -64,6 +71,8 @@ object AsynchronousChannelHelper {
    * @return the AsyncOutputStream
    */
   def channelToOutputStream(asynchronousFileChannel: AsynchronousFileChannel): AsyncOutputStream =
-    GridFSAsyncStreamHelper.toAsyncOutputStream(JAsynchronousChannelHelper.channelToOutputStream(asynchronousFileChannel));
+    GridFSAsyncStreamHelper.toAsyncOutputStream(
+      JAsynchronousChannelHelper.channelToOutputStream(asynchronousFileChannel)
+    );
 
 }

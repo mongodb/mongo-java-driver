@@ -16,8 +16,8 @@
 
 package org.mongodb.scala.model
 
-import com.mongodb.client.model.vault.{DataKeyOptions => JDataKeyOptions}
-import com.mongodb.client.model.vault.{EncryptOptions => JEncryptOptions}
+import com.mongodb.client.model.vault.{ DataKeyOptions => JDataKeyOptions }
+import com.mongodb.client.model.vault.{ EncryptOptions => JEncryptOptions }
 
 /**
  * This package contains options classes for the key vault API

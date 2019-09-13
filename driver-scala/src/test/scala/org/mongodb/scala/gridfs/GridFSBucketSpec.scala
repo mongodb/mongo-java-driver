@@ -16,11 +16,11 @@
 
 package org.mongodb.scala.gridfs
 
-import com.mongodb.reactivestreams.client.gridfs.{GridFSBucket => JGridFSBucket}
+import com.mongodb.reactivestreams.client.gridfs.{ GridFSBucket => JGridFSBucket }
 import org.bson.types.ObjectId
 import org.mongodb.scala.bson.BsonObjectId
 import org.mongodb.scala.bson.collection.immutable.Document
-import org.mongodb.scala.{BaseSpec, ClientSession, ReadConcern, ReadPreference, WriteConcern}
+import org.mongodb.scala.{ BaseSpec, ClientSession, ReadConcern, ReadPreference, WriteConcern }
 import org.scalamock.scalatest.proxy.MockFactory
 
 class GridFSBucketSpec extends BaseSpec with MockFactory {

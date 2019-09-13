@@ -16,7 +16,7 @@
 
 package org.mongodb.scala.connection
 
-import com.mongodb.connection.{SslSettings => JSslSettings}
+import com.mongodb.connection.{ SslSettings => JSslSettings }
 
 /**
  * Settings for connecting to MongoDB via SSL.

@@ -82,7 +82,8 @@ trait MacroCodec[T] extends Codec[T] {
   val classFieldName = "_t"
   lazy val hasClassFieldName: Boolean = caseClassesMap.size > 1
   lazy val caseClassesMapInv: Map[Class[_], String] = caseClassesMap.map(_.swap)
-  protected val registry: CodecRegistry = CodecRegistries.fromRegistries(List(codecRegistry, CodecRegistries.fromCodecs(this)).asJava)
+  protected val registry: CodecRegistry =
+    CodecRegistries.fromRegistries(List(codecRegistry, CodecRegistries.fromCodecs(this)).asJava)
   protected val bsonNull = BsonNull()
 
   override def encode(writer: BsonWriter, value: T, encoderContext: EncoderContext): Unit = {
@@ -152,7 +153,12 @@ trait MacroCodec[T] extends Codec[T] {
     }
   }
 
-  protected def writeFieldValue[V](fieldName: String, writer: BsonWriter, value: V, encoderContext: EncoderContext): Unit = {
+  protected def writeFieldValue[V](
+      fieldName: String,
+      writer: BsonWriter,
+      value: V,
+      encoderContext: EncoderContext
+  ): Unit = {
     if (value == null) { // scalastyle:ignore
       throw new BsonInvalidOperationException(s"Invalid value for $fieldName found a `null` value.")
     }
@@ -162,19 +168,25 @@ trait MacroCodec[T] extends Codec[T] {
   protected def writeValue[V](writer: BsonWriter, value: V, encoderContext: EncoderContext): Unit = {
     val clazz = value.getClass
     caseClassesMapInv.get(clazz) match {
-      case Some(className) => writeCaseClassData(className: String, writer: BsonWriter, value.asInstanceOf[T], encoderContext: EncoderContext)
+      case Some(className) =>
+        writeCaseClassData(className: String, writer: BsonWriter, value.asInstanceOf[T], encoderContext: EncoderContext)
       case None =>
         val codec = registry.get(clazz).asInstanceOf[Encoder[V]]
         encoderContext.encodeWithChildContext(codec, writer, value)
     }
   }
 
-  protected def readValue[V](reader: BsonReader, decoderContext: DecoderContext, clazz: Class[V], typeArgs: List[Class[_]],
-    fieldTypeArgsMap: Map[String, List[Class[_]]]): V = {
+  protected def readValue[V](
+      reader: BsonReader,
+      decoderContext: DecoderContext,
+      clazz: Class[V],
+      typeArgs: List[Class[_]],
+      fieldTypeArgsMap: Map[String, List[Class[_]]]
+  ): V = {
     val currentType = reader.getCurrentBsonType
     currentType match {
       case BsonType.DOCUMENT => readDocument(reader, decoderContext, clazz, typeArgs, fieldTypeArgsMap)
-      case BsonType.ARRAY => readArray(reader, decoderContext, clazz, typeArgs, fieldTypeArgsMap)
+      case BsonType.ARRAY    => readArray(reader, decoderContext, clazz, typeArgs, fieldTypeArgsMap)
       case BsonType.NULL =>
         reader.readNull()
         null.asInstanceOf[V] // scalastyle:ignore
@@ -182,11 +194,18 @@ trait MacroCodec[T] extends Codec[T] {
     }
   }
 
-  protected def readArray[V](reader: BsonReader, decoderContext: DecoderContext, clazz: Class[V], typeArgs: List[Class[_]],
-    fieldTypeArgsMap: Map[String, List[Class[_]]]): V = {
+  protected def readArray[V](
+      reader: BsonReader,
+      decoderContext: DecoderContext,
+      clazz: Class[V],
+      typeArgs: List[Class[_]],
+      fieldTypeArgsMap: Map[String, List[Class[_]]]
+  ): V = {
 
     if (typeArgs.isEmpty) {
-      throw new BsonInvalidOperationException(s"Invalid Bson format for '${clazz.getSimpleName}'. Found a list but there is no type data.")
+      throw new BsonInvalidOperationException(
+        s"Invalid Bson format for '${clazz.getSimpleName}'. Found a list but there is no type data."
+      )
     }
     reader.readStartArray()
     val list = mutable.ListBuffer[Any]()
@@ -205,8 +224,13 @@ trait MacroCodec[T] extends Codec[T] {
     }
   }
 
-  protected def readDocument[V](reader: BsonReader, decoderContext: DecoderContext, clazz: Class[V], typeArgs: List[Class[_]],
-    fieldTypeArgsMap: Map[String, List[Class[_]]]): V = {
+  protected def readDocument[V](
+      reader: BsonReader,
+      decoderContext: DecoderContext,
+      clazz: Class[V],
+      typeArgs: List[Class[_]],
+      fieldTypeArgsMap: Map[String, List[Class[_]]]
+  ): V = {
     if (classToCaseClassMap.getOrElse(clazz, false) || typeArgs.isEmpty) {
       registry.get(clazz).decode(reader, decoderContext)
     } else {
@@ -218,7 +242,13 @@ trait MacroCodec[T] extends Codec[T] {
         if (fieldClazzTypeArgs.isEmpty) {
           reader.skipValue()
         } else {
-          map += (name -> readValue(reader, decoderContext, fieldClazzTypeArgs.head, fieldClazzTypeArgs.tail, fieldTypeArgsMap))
+          map += (name -> readValue(
+            reader,
+            decoderContext,
+            fieldClazzTypeArgs.head,
+            fieldClazzTypeArgs.tail,
+            fieldTypeArgsMap
+          ))
         }
       }
       reader.readEndDocument()

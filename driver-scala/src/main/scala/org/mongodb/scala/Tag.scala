@@ -16,7 +16,7 @@
 
 package org.mongodb.scala
 
-import com.mongodb.{Tag => JTag}
+import com.mongodb.{ Tag => JTag }
 
 /**
  * A replica set tag.

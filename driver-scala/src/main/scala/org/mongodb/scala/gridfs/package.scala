@@ -19,7 +19,10 @@ package org.mongodb.scala
 import java.nio.ByteBuffer
 
 import com.mongodb.reactivestreams.client.Success
-import com.mongodb.reactivestreams.client.gridfs.{AsyncInputStream => JAsyncInputStream, AsyncOutputStream => JAsyncOutputStream}
+import com.mongodb.reactivestreams.client.gridfs.{
+  AsyncInputStream => JAsyncInputStream,
+  AsyncOutputStream => JAsyncOutputStream
+}
 import org.reactivestreams.Publisher
 
 package object gridfs extends ObservableImplicits {
@@ -40,6 +43,7 @@ package object gridfs extends ObservableImplicits {
    * The GridFSFile
    */
   type GridFSFile = com.mongodb.client.gridfs.model.GridFSFile
+
   /**
    * The GridFS download by name options
    *
@@ -64,15 +68,18 @@ package object gridfs extends ObservableImplicits {
   }
 
   implicit class ScalaAsyncInputStreamToJava(wrapped: AsyncInputStream) extends JAsyncInputStream {
-    override def read(dst: ByteBuffer): Publisher[java.lang.Integer] = wrapped.read(dst).map(i => java.lang.Integer.valueOf(i))
+    override def read(dst: ByteBuffer): Publisher[java.lang.Integer] =
+      wrapped.read(dst).map(i => java.lang.Integer.valueOf(i))
 
-    override def skip(bytesToSkip: Long): Publisher[java.lang.Long] = wrapped.skip(bytesToSkip).map(l => java.lang.Long.valueOf(l))
+    override def skip(bytesToSkip: Long): Publisher[java.lang.Long] =
+      wrapped.skip(bytesToSkip).map(l => java.lang.Long.valueOf(l))
 
     override def close(): Publisher[Success] = wrapped.close().map(_ => Success.SUCCESS)
   }
 
   implicit class ScalaAsyncOutputStreamToJava(wrapped: AsyncOutputStream) extends JAsyncOutputStream {
-    override def write(src: ByteBuffer): Publisher[java.lang.Integer] = wrapped.write(src).map(i => java.lang.Integer.valueOf(i))
+    override def write(src: ByteBuffer): Publisher[java.lang.Integer] =
+      wrapped.write(src).map(i => java.lang.Integer.valueOf(i))
 
     override def close(): Publisher[Success] = wrapped.close().map(_ => Success.SUCCESS)
   }

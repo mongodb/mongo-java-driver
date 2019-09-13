@@ -20,7 +20,7 @@ import java.util.concurrent.TimeUnit
 import com.mongodb.reactivestreams.client.ListDatabasesPublisher
 import org.reactivestreams.Publisher
 import org.scalamock.scalatest.proxy.MockFactory
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{ FlatSpec, Matchers }
 
 import scala.concurrent.duration.Duration
 

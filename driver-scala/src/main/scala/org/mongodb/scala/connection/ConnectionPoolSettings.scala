@@ -16,7 +16,7 @@
 
 package org.mongodb.scala.connection
 
-import com.mongodb.connection.{ConnectionPoolSettings => JConnectionPoolSettings}
+import com.mongodb.connection.{ ConnectionPoolSettings => JConnectionPoolSettings }
 
 /**
  * All settings that relate to the pool of connections to a MongoDB server.

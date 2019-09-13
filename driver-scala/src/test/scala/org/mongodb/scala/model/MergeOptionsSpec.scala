@@ -18,7 +18,7 @@ package org.mongodb.scala.model
 
 import java.lang.reflect.Modifier._
 
-import com.mongodb.client.model.{MergeOptions => JMergeOptions}
+import com.mongodb.client.model.{ MergeOptions => JMergeOptions }
 import org.mongodb.scala.BaseSpec
 
 class MergeOptionsSpec extends BaseSpec {
@@ -26,20 +26,29 @@ class MergeOptionsSpec extends BaseSpec {
   case class Default(wrapped: String = "")
 
   "MergeOptions" should "mirror com.mongodb.client.model.MergeOptions" in {
-    val setters = classOf[JMergeOptions].getDeclaredMethods.filter(f => isPublic(f.getModifiers) && !f.getName.startsWith("get")).map(_.getName).toSet
+    val setters = classOf[JMergeOptions].getDeclaredMethods
+      .filter(f => isPublic(f.getModifiers) && !f.getName.startsWith("get"))
+      .map(_.getName)
+      .toSet
     val enums = classOf[JMergeOptions].getDeclaredFields.map(_.getName).toSet
     val wrapped = (setters ++ enums) -- Set("hashCode", "toString", "equals")
 
-    val exclusions = Default().getClass.getDeclaredMethods.filter(f => isPublic(f.getModifiers)).map(_.getName).toSet ++ Set("apply", "unapply")
-    val local = MergeOptions().getClass.getDeclaredMethods.filter(f => isPublic(f.getModifiers) && !f.getName.contains("$"))
-      .map(_.getName).toSet -- exclusions
+    val exclusions = Default().getClass.getDeclaredMethods
+      .filter(f => isPublic(f.getModifiers))
+      .map(_.getName)
+      .toSet ++ Set("apply", "unapply")
+    val local = MergeOptions().getClass.getDeclaredMethods
+      .filter(f => isPublic(f.getModifiers) && !f.getName.contains("$"))
+      .map(_.getName)
+      .toSet -- exclusions
 
     local should equal(wrapped)
   }
 
   it should "have the same values for WhenMatched" in {
     val wrapped = classOf[JMergeOptions.WhenMatched].getEnumConstants.map(_.toString).toSet
-    val local = MergeOptions.WhenMatched.getClass.getDeclaredMethods.filter(f => isPublic(f.getModifiers)).map(_.getName).toSet
+    val local =
+      MergeOptions.WhenMatched.getClass.getDeclaredMethods.filter(f => isPublic(f.getModifiers)).map(_.getName).toSet
 
     local should equal(wrapped)
 
@@ -54,7 +63,8 @@ class MergeOptionsSpec extends BaseSpec {
 
   it should "have the same values for WhenNotMatched" in {
     val wrapped = classOf[JMergeOptions.WhenNotMatched].getEnumConstants.map(_.toString).toSet
-    val local = MergeOptions.WhenNotMatched.getClass.getDeclaredMethods.filter(f => isPublic(f.getModifiers)).map(_.getName).toSet
+    val local =
+      MergeOptions.WhenNotMatched.getClass.getDeclaredMethods.filter(f => isPublic(f.getModifiers)).map(_.getName).toSet
 
     local should equal(wrapped)
 

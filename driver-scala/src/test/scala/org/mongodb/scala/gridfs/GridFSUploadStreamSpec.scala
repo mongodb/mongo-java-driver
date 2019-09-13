@@ -18,7 +18,7 @@ package org.mongodb.scala.gridfs
 
 import java.nio.ByteBuffer
 
-import com.mongodb.reactivestreams.client.gridfs.{GridFSUploadStream => JGridFSUploadStream}
+import com.mongodb.reactivestreams.client.gridfs.{ GridFSUploadStream => JGridFSUploadStream }
 import org.mongodb.scala.BaseSpec
 import org.scalamock.scalatest.proxy.MockFactory
 

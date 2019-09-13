@@ -22,9 +22,9 @@ import org.mongodb.scala.bson.BsonString
 import org.scalatest._
 
 import scala.collection.JavaConverters._
-import scala.concurrent.duration.{Duration, _}
-import scala.concurrent.{Await, ExecutionContext}
-import scala.util.{Properties, Try}
+import scala.concurrent.duration.{ Duration, _ }
+import scala.concurrent.{ Await, ExecutionContext }
+import scala.util.{ Properties, Try }
 
 trait RequiresMongoDBISpec extends FlatSpec with Matchers with BeforeAndAfterAll {
 
@@ -72,7 +72,7 @@ trait RequiresMongoDBISpec extends FlatSpec with Matchers with BeforeAndAfterAll
   }
 
   def withClient(testCode: MongoClient => Any): Unit = {
-    checkMongoDB ()
+    checkMongoDB()
     val client = mongoClient()
     try testCode(client) // loan the client
     finally {
@@ -81,7 +81,7 @@ trait RequiresMongoDBISpec extends FlatSpec with Matchers with BeforeAndAfterAll
   }
 
   def withDatabase(dbName: String)(testCode: MongoDatabase => Any) {
-    withClient{ client =>
+    withClient { client =>
       val databaseName = if (dbName.startsWith(DB_PREFIX)) dbName.take(63) else s"$DB_PREFIX$dbName".take(63) // scalastyle:ignore
       val mongoDatabase = client.getDatabase(databaseName)
       try testCode(mongoDatabase) // "loan" the fixture to the test
@@ -95,12 +95,12 @@ trait RequiresMongoDBISpec extends FlatSpec with Matchers with BeforeAndAfterAll
   def withDatabase(testCode: MongoDatabase => Any): Unit = withDatabase(databaseName)(testCode: MongoDatabase => Any)
 
   def withCollection(testCode: MongoCollection[Document] => Any) {
-    withDatabase(databaseName){ mongoDatabase =>
+    withDatabase(databaseName) { mongoDatabase =>
       val mongoCollection = mongoDatabase.getCollection(collectionName)
       try testCode(mongoCollection) // "loan" the fixture to the test
       finally {
-      // clean up the fixture
-      Await.result(mongoCollection.drop().toFuture(), WAIT_DURATION)
+        // clean up the fixture
+        Await.result(mongoCollection.drop().toFuture(), WAIT_DURATION)
       }
     }
   }
@@ -108,8 +108,11 @@ trait RequiresMongoDBISpec extends FlatSpec with Matchers with BeforeAndAfterAll
   lazy val isSharded: Boolean = if (!mongoDBOnline) {
     false
   } else {
-    Await.result(mongoClient().getDatabase("admin").runCommand(Document("isMaster" -> 1)).toFuture(), WAIT_DURATION)
-      .getOrElse("msg", BsonString("")).asString().getValue == "isdbgrid"
+    Await
+      .result(mongoClient().getDatabase("admin").runCommand(Document("isMaster" -> 1)).toFuture(), WAIT_DURATION)
+      .getOrElse("msg", BsonString(""))
+      .asString()
+      .getValue == "isdbgrid"
   }
 
   lazy val buildInfo: Document = {
@@ -124,8 +127,8 @@ trait RequiresMongoDBISpec extends FlatSpec with Matchers with BeforeAndAfterAll
     buildInfo.get[BsonString]("version") match {
       case Some(version) =>
         val serverVersion = version.getValue.split("\\D+").map(_.toInt).padTo(3, 0).take(3).toList.asJava
-        new ServerVersion(serverVersion.asInstanceOf[java.util.List[Integer]]).compareTo(
-          new ServerVersion(minServerVersion.asJava.asInstanceOf[java.util.List[Integer]])) >= 0
+        new ServerVersion(serverVersion.asInstanceOf[java.util.List[Integer]])
+          .compareTo(new ServerVersion(minServerVersion.asJava.asInstanceOf[java.util.List[Integer]])) >= 0
       case None => false
     }
   }
@@ -134,8 +137,8 @@ trait RequiresMongoDBISpec extends FlatSpec with Matchers with BeforeAndAfterAll
     buildInfo.get[BsonString]("version") match {
       case Some(version) =>
         val serverVersion = version.getValue.split("\\D+").map(_.toInt).padTo(3, 0).take(3).toList.asJava
-        new ServerVersion(serverVersion.asInstanceOf[java.util.List[Integer]]).compareTo(
-          new ServerVersion(maxServerVersion.asJava.asInstanceOf[java.util.List[Integer]])) < 0
+        new ServerVersion(serverVersion.asInstanceOf[java.util.List[Integer]])
+          .compareTo(new ServerVersion(maxServerVersion.asJava.asInstanceOf[java.util.List[Integer]])) < 0
       case None => false
     }
   }

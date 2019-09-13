@@ -21,18 +21,24 @@ import java.lang.reflect.Modifier._
 import org.mongodb.scala.BaseSpec
 import org.scalatest.prop.TableDrivenPropertyChecks._
 
-import scala.util.{Success, Try}
+import scala.util.{ Success, Try }
 
 class CollationMaxVariableSpec extends BaseSpec {
 
   "CollationMaxVariable" should "have the same static fields as the wrapped CollationMaxVariable" in {
     val collationMaxVariableClass: Class[CollationMaxVariable] = classOf[com.mongodb.client.model.CollationMaxVariable]
-    val wrappedFields = collationMaxVariableClass.getDeclaredFields.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
-    val wrappedMethods = collationMaxVariableClass.getDeclaredMethods.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
+    val wrappedFields =
+      collationMaxVariableClass.getDeclaredFields.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
+    val wrappedMethods =
+      collationMaxVariableClass.getDeclaredMethods.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
     val exclusions = Set("$VALUES", "valueOf", "values")
 
     val wrapped = (wrappedFields ++ wrappedMethods) -- exclusions
-    val local = CollationMaxVariable.getClass.getDeclaredMethods.map(_.getName).toSet -- Set("apply", "$deserializeLambda$", "$anonfun$fromString$1")
+    val local = CollationMaxVariable.getClass.getDeclaredMethods.map(_.getName).toSet -- Set(
+      "apply",
+      "$deserializeLambda$",
+      "$anonfun$fromString$1"
+    )
 
     local should equal(wrapped)
   }

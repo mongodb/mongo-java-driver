@@ -81,14 +81,13 @@ class ImmutableDocumentSpec extends FlatSpec with Matchers {
 
   it should "support multiple additions" in {
     val doc1: Document = emptyDoc + ("key" -> "value", "key2" -> "value2",
-      "key3" -> "value3")
+    "key3" -> "value3")
     emptyDoc should not be doc1
     doc1 should equal(Document("key" -> "value", "key2" -> "value2", "key3" -> "value3"))
 
     val doc2: Document = doc1 + ("key4" -> "value4")
     doc1 should not be doc2
-    doc2 should equal(Document("key" -> "value", "key2" -> "value2", "key3" -> "value3",
-      "key4" -> "value4"))
+    doc2 should equal(Document("key" -> "value", "key2" -> "value2", "key3" -> "value3", "key4" -> "value4"))
   }
 
   it should "support addition of a traversable" in {
@@ -98,7 +97,9 @@ class ImmutableDocumentSpec extends FlatSpec with Matchers {
 
     val doc2: Document = doc1 ++ List("key3" -> BsonString("value3"))
     doc1 should not be doc2
-    doc2 should equal(Document("key" -> BsonString("value"), "key2" -> BsonString("value2"), "key3" -> BsonString("value3")))
+    doc2 should equal(
+      Document("key" -> BsonString("value"), "key2" -> BsonString("value2"), "key3" -> BsonString("value3"))
+    )
   }
 
   it should "support updated" in {
@@ -170,7 +171,9 @@ class ImmutableDocumentSpec extends FlatSpec with Matchers {
     doc.valuesIterator.toSet should equal(Set(BsonString("value"), BsonString("value2"), BsonString("value3")))
 
     val doc1: Document = doc + ("aNewKey" -> 1)
-    doc1.valuesIterator.toSet should equal(Set(BsonString("value"), BsonString("value2"), BsonString("value3"), BsonInt32(1)))
+    doc1.valuesIterator.toSet should equal(
+      Set(BsonString("value"), BsonString("value2"), BsonString("value3"), BsonInt32(1))
+    )
   }
 
   "Document transformations" should "be filterable by keys" in {

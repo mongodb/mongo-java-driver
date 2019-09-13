@@ -80,7 +80,8 @@ object Document extends SpecificIterableFactory[(String, BsonValue), Document] {
     new Document(underlying)
   }
 
-  private def builder: mutable.Builder[(String, BsonValue), Document] = ListBuffer[(String, BsonValue)]() mapResult fromSeq
+  private def builder: mutable.Builder[(String, BsonValue), Document] =
+    ListBuffer[(String, BsonValue)]() mapResult fromSeq
 
   private def fromSeq(ts: Seq[(String, BsonValue)]): Document = {
     val underlying = new BsonDocument()

@@ -16,21 +16,23 @@
 
 package org.mongodb.scala.internal
 
-import org.mongodb.scala.{Observable, Observer, Subscription}
+import org.mongodb.scala.{ Observable, Observer, Subscription }
 
-private[scala] case class MapObservable[T, S](observable: Observable[T], s: T => S,
-                                              f: Throwable => Throwable = t => t) extends Observable[S] {
+private[scala] case class MapObservable[T, S](observable: Observable[T], s: T => S, f: Throwable => Throwable = t => t)
+    extends Observable[S] {
   override def subscribe(observer: Observer[_ >: S]): Unit = {
-    observable.subscribe(SubscriptionCheckingObserver(
-      new Observer[T] {
-        override def onError(throwable: Throwable): Unit = observer.onError(f(throwable))
+    observable.subscribe(
+      SubscriptionCheckingObserver(
+        new Observer[T] {
+          override def onError(throwable: Throwable): Unit = observer.onError(f(throwable))
 
-        override def onSubscribe(subscription: Subscription): Unit = observer.onSubscribe(subscription)
+          override def onSubscribe(subscription: Subscription): Unit = observer.onSubscribe(subscription)
 
-        override def onComplete(): Unit = observer.onComplete()
+          override def onComplete(): Unit = observer.onComplete()
 
-        override def onNext(tResult: T): Unit = observer.onNext(s(tResult))
-      }
-    ))
+          override def onNext(tResult: T): Unit = observer.onNext(s(tResult))
+        }
+      )
+    )
   }
 }

@@ -41,87 +41,108 @@ package object bson {
    * Alias to `org.bson.BsonArray`
    */
   type BsonArray = org.bson.BsonArray
+
   /**
    * Alias to `org.bson.BsonBinary`
    */
   type BsonBinary = org.bson.BsonBinary
+
   /**
    * Alias to `org.bson.BsonBoolean`
    */
   type BsonBoolean = org.bson.BsonBoolean
+
   /**
    * Alias to `org.bson.BsonDateTime`
    */
   type BsonDateTime = org.bson.BsonDateTime
+
   /**
    * Alias to `org.bson.BsonDecimal128`
    * @since 1.2
    */
   type BsonDecimal128 = org.bson.BsonDecimal128
+
   /**
    * Alias to `org.bson.BsonDocument`
    */
   type BsonDocument = org.bson.BsonDocument
+
   /**
    * Alias to `org.bson.BsonDouble`
    */
   type BsonDouble = org.bson.BsonDouble
+
   /**
    * Alias to `org.bson.BsonInt32`
    */
   type BsonInt32 = org.bson.BsonInt32
+
   /**
    * Alias to `org.bson.BsonInt64`
    */
   type BsonInt64 = org.bson.BsonInt64
+
   /**
    * Alias to `org.bson.BsonJavaScript`
    */
   type BsonJavaScript = org.bson.BsonJavaScript
+
   /**
    * Alias to `org.bson.BsonJavaScriptWithScope`
    */
   type BsonJavaScriptWithScope = org.bson.BsonJavaScriptWithScope
+
   /**
    * Alias to `org.bson.BsonMaxKey`
    */
   type BsonMaxKey = org.bson.BsonMaxKey
+
   /**
    * Alias to `org.bson.BsonMinKey`
    */
   type BsonMinKey = org.bson.BsonMinKey
+
   /**
    * Alias to `org.bson.BsonNull`
    */
   type BsonNull = org.bson.BsonNull
+
   /**
    * Alias to `org.bson.BsonNumber`
    */
   type BsonNumber = org.bson.BsonNumber
+
   /**
    * Alias to `org.bson.BsonObjectId`
    */
   type BsonObjectId = org.bson.BsonObjectId
+
   /**
    * Alias to `org.bson.BsonRegularExpression`
    */
   type BsonRegularExpression = org.bson.BsonRegularExpression
+
   /**
    * Alias to `org.bson.BsonString`
    */
   type BsonString = org.bson.BsonString
+
   /**
    * Alias to `org.bson.BsonSymbol`
    */
   type BsonSymbol = org.bson.BsonSymbol
+
   /**
    * Alias to `org.bson.BsonTimestamp`
    */
   type BsonTimestamp = org.bson.BsonTimestamp
+
   /**
    * Alias to `org.bson.BsonUndefined`
    */
   type BsonUndefined = org.bson.BsonUndefined
+
   /**
    * Alias to `org.bson.BsonValue`
    */
@@ -131,11 +152,13 @@ package object bson {
    * Alias to `org.bson.BsonElement`
    */
   type BsonElement = org.bson.BsonElement
+
   /**
    * Alias to `org.bson.ObjectId`
    * @since 1.2
    */
   type ObjectId = org.bson.types.ObjectId
+
   /**
    * Alias to `org.bson.Decimal128`
    * @since 1.2

@@ -16,7 +16,7 @@
 
 package org.mongodb.scala
 
-import com.mongodb.{MongoNamespace => JMongoNamespace}
+import com.mongodb.{ MongoNamespace => JMongoNamespace }
 
 /**
  * A companion object for MongoNamespace
@@ -25,5 +25,6 @@ import com.mongodb.{MongoNamespace => JMongoNamespace}
  */
 object MongoNamespace {
   def apply(namespace: String): JMongoNamespace = new JMongoNamespace(namespace)
-  def apply(databaseName: String, collectionName: String): JMongoNamespace = new JMongoNamespace(databaseName, collectionName)
+  def apply(databaseName: String, collectionName: String): JMongoNamespace =
+    new JMongoNamespace(databaseName, collectionName)
 }

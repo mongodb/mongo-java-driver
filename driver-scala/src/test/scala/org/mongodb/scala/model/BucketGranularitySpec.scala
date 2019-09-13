@@ -21,18 +21,24 @@ import java.lang.reflect.Modifier._
 import org.mongodb.scala.BaseSpec
 import org.scalatest.prop.TableDrivenPropertyChecks._
 
-import scala.util.{Success, Try}
+import scala.util.{ Success, Try }
 
 class BucketGranularitySpec extends BaseSpec {
 
   "BucketGranularity" should "have the same static fields as the wrapped BucketGranularity" in {
     val BucketGranularityClass: Class[BucketGranularity] = classOf[com.mongodb.client.model.BucketGranularity]
-    val wrappedFields = BucketGranularityClass.getDeclaredFields.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
-    val wrappedMethods = BucketGranularityClass.getDeclaredMethods.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
+    val wrappedFields =
+      BucketGranularityClass.getDeclaredFields.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
+    val wrappedMethods =
+      BucketGranularityClass.getDeclaredMethods.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
     val exclusions = Set("$VALUES", "valueOf", "values")
 
     val wrapped = (wrappedFields ++ wrappedMethods) -- exclusions
-    val local = BucketGranularity.getClass.getDeclaredMethods.map(_.getName).toSet -- Set("apply", "$deserializeLambda$", "$anonfun$fromString$1")
+    val local = BucketGranularity.getClass.getDeclaredMethods.map(_.getName).toSet -- Set(
+      "apply",
+      "$deserializeLambda$",
+      "$anonfun$fromString$1"
+    )
 
     local should equal(wrapped)
   }

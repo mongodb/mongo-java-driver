@@ -31,9 +31,14 @@ import org.bson.codecs.configuration.CodecRegistry
  */
 object IterableCodec {
 
-  def apply(registry: CodecRegistry, bsonTypeClassMap: BsonTypeClassMap): IterableCodec = apply(registry, bsonTypeClassMap, None)
+  def apply(registry: CodecRegistry, bsonTypeClassMap: BsonTypeClassMap): IterableCodec =
+    apply(registry, bsonTypeClassMap, None)
 
-  def apply(registry: CodecRegistry, bsonTypeClassMap: BsonTypeClassMap, valueTransformer: Option[Transformer]): IterableCodec = {
+  def apply(
+      registry: CodecRegistry,
+      bsonTypeClassMap: BsonTypeClassMap,
+      valueTransformer: Option[Transformer]
+  ): IterableCodec = {
     new IterableCodec(registry, bsonTypeClassMap, valueTransformer.getOrElse(DEFAULT_TRANSFORMER))
   }
 
@@ -48,7 +53,8 @@ object IterableCodec {
  * @since 1.2
  */
 @SuppressWarnings(Array("rawtypes"))
-case class IterableCodec(registry: CodecRegistry, bsonTypeClassMap: BsonTypeClassMap, valueTransformer: Transformer) extends Codec[Iterable[_ <: Any]] {
+case class IterableCodec(registry: CodecRegistry, bsonTypeClassMap: BsonTypeClassMap, valueTransformer: Transformer)
+    extends Codec[Iterable[_ <: Any]] {
   lazy val bsonTypeCodecMap = new BsonTypeCodecMap(bsonTypeClassMap, registry)
 
   override def decode(reader: BsonReader, decoderContext: DecoderContext): Iterable[_] =
@@ -93,11 +99,12 @@ case class IterableCodec(registry: CodecRegistry, bsonTypeClassMap: BsonTypeClas
       case BsonType.NULL =>
         reader.readNull()
         null // scalastyle:ignore
-      case BsonType.ARRAY => readList(reader, decoderContext)
+      case BsonType.ARRAY    => readList(reader, decoderContext)
       case BsonType.DOCUMENT => readMap(reader, decoderContext)
       case BsonType.BINARY if BsonBinarySubType.isUuid(reader.peekBinarySubType) && reader.peekBinarySize == 16 =>
         registry.get(classOf[UUID]).decode(reader, decoderContext)
-      case bsonType: BsonType => valueTransformer.transform(bsonTypeCodecMap.get(bsonType).decode(reader, decoderContext))
+      case bsonType: BsonType =>
+        valueTransformer.transform(bsonTypeCodecMap.get(bsonType).decode(reader, decoderContext))
     }
   }
 

@@ -16,7 +16,7 @@
 
 package org.mongodb.scala
 
-import org.reactivestreams.{Subscription => JSubscription}
+import org.reactivestreams.{ Subscription => JSubscription }
 
 /**
  * A `Subscription` represents a one-to-one lifecycle of a [[Observer]] subscribing to an [[Observable]].

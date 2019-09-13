@@ -17,17 +17,18 @@
 package org.mongodb.scala
 
 import org.scalatest.concurrent.ScalaFutures
-import org.scalatest.time.{Millis, Seconds, Span}
+import org.scalatest.time.{ Millis, Seconds, Span }
 
 import scala.concurrent.Future
 import scala.language.implicitConversions
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 
 trait FuturesSpec extends ScalaFutures {
 
   implicit val defaultPatience: PatienceConfig = PatienceConfig(timeout = Span(60, Seconds), interval = Span(5, Millis))
 
-  implicit def observableToFuture[TResult](observable: Observable[TResult]): Future[Seq[TResult]] = observable.toFuture()
+  implicit def observableToFuture[TResult](observable: Observable[TResult]): Future[Seq[TResult]] =
+    observable.toFuture()
 
   implicit def observableToFutureConcept[T](observable: Observable[T]): FutureConcept[Seq[T]] = {
     val future: Future[Seq[T]] = observable
@@ -45,7 +46,8 @@ trait FuturesSpec extends ScalaFutures {
     }
   }
 
-  implicit def observableToFuture[TResult](observable: SingleObservable[TResult]): Future[TResult] = observable.toFuture()
+  implicit def observableToFuture[TResult](observable: SingleObservable[TResult]): Future[TResult] =
+    observable.toFuture()
   implicit def observableToFutureConcept[T](observable: SingleObservable[T]): FutureConcept[T] = {
     val future: Future[T] = observable.toFuture()
     new FutureConcept[T] {

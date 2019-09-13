@@ -18,7 +18,7 @@ package org.mongodb.scala
 
 import scala.collection.JavaConverters._
 
-import com.mongodb.{TagSet => JTagSet}
+import com.mongodb.{ TagSet => JTagSet }
 
 /**
  * An immutable set of tags, used to select members of a replica set to use for read operations.

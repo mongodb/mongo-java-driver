@@ -12,9 +12,10 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */ package org.mongodb.scala
+ */
+package org.mongodb.scala
 
-import com.mongodb.{AutoEncryptionSettings => JAutoEncryptionSettings}
+import com.mongodb.{ AutoEncryptionSettings => JAutoEncryptionSettings }
 
 /**
  * The client-side automatic encryption settings. Client side encryption enables an application to specify what fields in a collection

@@ -16,7 +16,7 @@
 
 package org.mongodb.scala
 
-import com.mongodb.{MongoCompressor => JMongoCompressor}
+import com.mongodb.{ MongoCompressor => JMongoCompressor }
 
 /**
  * Metadata describing a compressor to use for sending and receiving messages to a MongoDB server.

@@ -68,28 +68,34 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
    * Represents preferred replica set members to which a query or command can be sent.
    */
   type ReadPreference = com.mongodb.ReadPreference
+
   /**
    * Represents ReadPreferences that can be combined with tags
    */
   type TaggableReadPreference = com.mongodb.TaggableReadPreference
+
   /**
    * A replica set tag
    */
   type Tag = com.mongodb.Tag
+
   /**
    * An immutable set of tags, used to select members of a replica set to use for read operations.
    */
   type TagSet = com.mongodb.TagSet
+
   /**
    * Controls the acknowledgment of write operations with various options.
    */
   type WriteConcern = com.mongodb.WriteConcern
+
   /**
    * Controls the level of isolation for reads.
    *
    * @since 1.1
    */
   type ReadConcern = com.mongodb.ReadConcern
+
   /**
    * The result of a successful write operation.  If the write was unacknowledged, then `wasAcknowledged` will return false and all
    * other methods with throw `MongoUnacknowledgedWriteException`.
@@ -97,15 +103,18 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
    * @see [[WriteConcern]]
    */
   type WriteConcernResult = com.mongodb.WriteConcernResult
+
   /**
    * Represents the details of a write error , e.g. a duplicate key error
    */
   type WriteError = com.mongodb.WriteError
+
   /**
    * Represents credentials to authenticate to a MongoDB server,as well as the source of the credentials and the authentication mechanism to
    * use.
    */
   type MongoCredential = com.mongodb.MongoCredential
+
   /**
    * Represents the location of a MongoDB server
    */
@@ -169,6 +178,7 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
    * Top level Exception for all Exceptions, server-side or client-side, that come from the driver.
    */
   object MongoException {
+
     /**
      * An error label indicating that the exception can be treated as a transient transaction error.
      *
@@ -181,7 +191,8 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
      *
      * @since 2.4
      */
-    val UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL: String = com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL
+    val UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL: String =
+      com.mongodb.MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL
   }
 
   /**
@@ -375,7 +386,8 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
 
   implicit def bsonDocumentToDocument(doc: BsonDocument): Document = new Document(doc)
 
-  implicit def bsonDocumentToUntypedDocument(doc: BsonDocument): org.bson.Document = org.bson.Document.parse(doc.toJson())
+  implicit def bsonDocumentToUntypedDocument(doc: BsonDocument): org.bson.Document =
+    org.bson.Document.parse(doc.toJson())
 
   implicit def documentToUntypedDocument(doc: Document): org.bson.Document = org.bson.Document.parse(doc.toJson())
 

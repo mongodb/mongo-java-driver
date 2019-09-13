@@ -16,7 +16,7 @@
 
 package org.mongodb.scala.internal
 
-import org.mongodb.scala.{BaseSpec, Observer, SingleObservable, Subscription}
+import org.mongodb.scala.{ BaseSpec, Observer, SingleObservable, Subscription }
 
 class SingleObservableSpec extends BaseSpec {
 

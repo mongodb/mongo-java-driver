@@ -18,8 +18,8 @@ package org.mongodb.scala.gridfs
 
 import java.nio.ByteBuffer
 
-import com.mongodb.reactivestreams.client.gridfs.{GridFSDownloadStream => JGridFSDownloadStream}
-import org.mongodb.scala.{Completed, Observable, ObservableImplicits, SingleObservable}
+import com.mongodb.reactivestreams.client.gridfs.{ GridFSDownloadStream => JGridFSDownloadStream }
+import org.mongodb.scala.{ Completed, Observable, ObservableImplicits, SingleObservable }
 
 /**
  * A GridFS InputStream for downloading data from GridFS
@@ -29,6 +29,7 @@ import org.mongodb.scala.{Completed, Observable, ObservableImplicits, SingleObse
  * @since 1.2
  */
 case class GridFSDownloadStream(private val wrapped: JGridFSDownloadStream) extends AsyncInputStream {
+
   /**
    * Gets the corresponding GridFSFile for the file being downloaded
    *

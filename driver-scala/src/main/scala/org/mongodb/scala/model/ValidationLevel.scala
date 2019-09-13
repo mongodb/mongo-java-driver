@@ -18,7 +18,7 @@ package org.mongodb.scala.model
 
 import scala.util.Try
 
-import com.mongodb.client.model.{ValidationLevel => JValidationLevel}
+import com.mongodb.client.model.{ ValidationLevel => JValidationLevel }
 
 /**
  * Determines how strictly MongoDB applies the validation rules to existing documents during an insert or update.
@@ -27,6 +27,7 @@ import com.mongodb.client.model.{ValidationLevel => JValidationLevel}
  * @since 1.1
  */
 object ValidationLevel {
+
   /**
    * No validation for inserts or updates.
    */

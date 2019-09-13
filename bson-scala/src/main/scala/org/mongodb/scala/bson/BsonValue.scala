@@ -69,6 +69,7 @@ object BsonArray {
  * @since 1.0
  */
 object BsonBinary {
+
   /**
    * Creates the BsonBinary form the provided bytes
    *
@@ -83,6 +84,7 @@ object BsonBinary {
  * @since 1.0
  */
 object BsonBoolean {
+
   /**
    * Creates a `BsonBoolean`
    *
@@ -97,6 +99,7 @@ object BsonBoolean {
  * @since 1.0
  */
 object BsonDateTime {
+
   /**
    * Creates a BsonDateTime
    *
@@ -205,6 +208,7 @@ object BsonDocument {
  * @since 1.0
  */
 object BsonDouble {
+
   /**
    * Creates a `BsonDouble`
    *
@@ -219,6 +223,7 @@ object BsonDouble {
  * @since 1.0
  */
 object BsonInt32 {
+
   /**
    * Creates a `BsonInt32`
    *
@@ -233,6 +238,7 @@ object BsonInt32 {
  * @since 1.0
  */
 object BsonInt64 {
+
   /**
    * Creates a `BsonInt64`
    *
@@ -247,6 +253,7 @@ object BsonInt64 {
  * @since 1.0
  */
 object BsonJavaScript {
+
   /**
    * Creates a `BsonJavaScript`
    *
@@ -279,7 +286,8 @@ object BsonJavaScriptWithScope {
    * @param scope the function scope
    * @return the BsonJavaScript
    */
-  def apply(value: String, scope: CanBeBsonElement*): BsonJavaScriptWithScope = new BsonJavaScriptWithScope(value, BsonDocument(scope: _*))
+  def apply(value: String, scope: CanBeBsonElement*): BsonJavaScriptWithScope =
+    new BsonJavaScriptWithScope(value, BsonDocument(scope: _*))
 
   /**
    * Creates a `BsonJavaScript`
@@ -288,7 +296,8 @@ object BsonJavaScriptWithScope {
    * @param scope the function scope
    * @return the BsonJavaScript
    */
-  def apply(value: String, scope: Traversable[(String, BsonValue)]): BsonJavaScriptWithScope = new BsonJavaScriptWithScope(value, BsonDocument(scope))
+  def apply(value: String, scope: Traversable[(String, BsonValue)]): BsonJavaScriptWithScope =
+    new BsonJavaScriptWithScope(value, BsonDocument(scope))
 }
 
 /**
@@ -296,6 +305,7 @@ object BsonJavaScriptWithScope {
  * @since 1.0
  */
 object BsonMaxKey {
+
   /**
    * Creates a `BsonMaxKey`
    * @return the BsonMaxKey
@@ -308,6 +318,7 @@ object BsonMaxKey {
  * @since 1.0
  */
 object BsonMinKey {
+
   /**
    * Creates a `BsonMinKey`
    * @return the BsonMinKey
@@ -320,6 +331,7 @@ object BsonMinKey {
  * @since 1.0
  */
 object BsonNull {
+
   /**
    * Creates a `BsonNull`
    * @return the BsonNull
@@ -425,6 +437,7 @@ object BsonRegularExpression {
  * @since 1.0
  */
 object BsonString {
+
   /**
    * Creates a new `BsonString`
    *
@@ -439,6 +452,7 @@ object BsonString {
  * @since 1.0
  */
 object BsonSymbol {
+
   /**
    * Creates a new `BsonSymbol`
    *
@@ -453,6 +467,7 @@ object BsonSymbol {
  * @since 1.0
  */
 object BsonTimestamp {
+
   /**
    * Creates a new `BsonTimestamp`
    * @return the BsonTimestamp
@@ -473,6 +488,7 @@ object BsonTimestamp {
  * @since 1.0
  */
 object BsonUndefined {
+
   /**
    * Creates a new `BsonUndefined`
    * @return the BsonUndefined

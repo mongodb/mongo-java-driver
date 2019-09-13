@@ -67,4 +67,3 @@ trait SingleObservable[T] extends Observable[T] {
    */
   override def subscribe(observer: Subscriber[_ >: T]): Unit = this.subscribe(BoxedSubscriber(observer))
 }
-

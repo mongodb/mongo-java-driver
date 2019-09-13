@@ -16,39 +16,41 @@
 
 package org.mongodb.scala.internal
 
-import org.mongodb.scala.{Observable, Observer, Subscription}
+import org.mongodb.scala.{ Observable, Observer, Subscription }
 
 private[scala] case class FilterObservable[T](observable: Observable[T], p: T => Boolean) extends Observable[T] {
   override def subscribe(observer: Observer[_ >: T]): Unit = {
-    observable.subscribe(SubscriptionCheckingObserver(
-      new Observer[T] {
+    observable.subscribe(
+      SubscriptionCheckingObserver(
+        new Observer[T] {
 
-        @volatile private var terminated: Boolean = false
-        @volatile private var subscription: Option[Subscription] = None
+          @volatile private var terminated: Boolean = false
+          @volatile private var subscription: Option[Subscription] = None
 
-        override def onError(throwable: Throwable): Unit = {
-          terminated = true
-          observer.onError(throwable)
-        }
+          override def onError(throwable: Throwable): Unit = {
+            terminated = true
+            observer.onError(throwable)
+          }
 
-        override def onSubscribe(subscription: Subscription): Unit = {
-          this.subscription = Some(subscription)
-          observer.onSubscribe(subscription)
-        }
+          override def onSubscribe(subscription: Subscription): Unit = {
+            this.subscription = Some(subscription)
+            observer.onSubscribe(subscription)
+          }
 
-        override def onComplete(): Unit = {
-          terminated = true
-          observer.onComplete()
-        }
+          override def onComplete(): Unit = {
+            terminated = true
+            observer.onComplete()
+          }
 
-        override def onNext(tResult: T): Unit = {
-          if (p(tResult)) {
-            observer.onNext(tResult)
-          } else if (!terminated) {
-            subscription.foreach(_.request(1)) // No match, request more from down stream
+          override def onNext(tResult: T): Unit = {
+            if (p(tResult)) {
+              observer.onNext(tResult)
+            } else if (!terminated) {
+              subscription.foreach(_.request(1)) // No match, request more from down stream
+            }
           }
         }
-      }
-    ))
+      )
+    )
   }
 }

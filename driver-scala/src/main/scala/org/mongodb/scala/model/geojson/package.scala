@@ -19,7 +19,7 @@ package org.mongodb.scala.model
 import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 
-import com.mongodb.client.model.{geojson => Jgeojson}
+import com.mongodb.client.model.{ geojson => Jgeojson }
 
 package object geojson {
 
@@ -37,6 +37,7 @@ package object geojson {
    * GeoJSON coordinate reference system types.
    */
   object CoordinateReferenceSystemType {
+
     /**
      * A coordinate reference system that is specified by name
      */
@@ -57,6 +58,7 @@ package object geojson {
    * The GeoJSON object types.
    */
   object GeoJsonObjectType {
+
     /**
      * A GeometryCollection
      */
@@ -107,12 +109,14 @@ package object geojson {
    * A representation of a GeoJSON GeometryCollection.
    */
   object GeometryCollection {
+
     /**
      * Construct an instance with the given list of Geometry objects
      *
      * @param geometries  the list of Geometry objects
      */
-    def apply(geometries: Seq[geojson.Geometry]): GeometryCollection = new Jgeojson.GeometryCollection(geometries.asJava)
+    def apply(geometries: Seq[geojson.Geometry]): GeometryCollection =
+      new Jgeojson.GeometryCollection(geometries.asJava)
 
     /**
      * Construct an instance with the given list of Geometry objects
@@ -133,6 +137,7 @@ package object geojson {
    * A representation of a GeoJSON LineString.
    */
   object LineString {
+
     /**
      * Construct an instance with the given coordinates.
      *
@@ -219,6 +224,7 @@ package object geojson {
    * A representation of a GeoJSON MultiPolygon.
    */
   object MultiPolygon {
+
     /**
      * Construct an instance.
      *
@@ -247,20 +253,24 @@ package object geojson {
    * A GeoJSON named Coordinate Reference System.
    */
   object NamedCoordinateReferenceSystem {
+
     /**
      * The EPSG:4326 Coordinate Reference System.
      */
     val EPSG_4326: NamedCoordinateReferenceSystem = Jgeojson.NamedCoordinateReferenceSystem.EPSG_4326
+
     /**
      * The urn:ogc:def:crs:OGC:1.3:CRS84 Coordinate Reference System
      */
     val CRS_84: NamedCoordinateReferenceSystem = Jgeojson.NamedCoordinateReferenceSystem.CRS_84
+
     /**
      * A custom MongoDB EPSG:4326 Coordinate Reference System that uses a strict counter-clockwise winding order.
      *
      * [[http://docs.mongodb.org/manual/reference/operator/query/geometry/ Strict Winding]]
      */
-    val EPSG_4326_STRICT_WINDING: NamedCoordinateReferenceSystem = Jgeojson.NamedCoordinateReferenceSystem.EPSG_4326_STRICT_WINDING
+    val EPSG_4326_STRICT_WINDING: NamedCoordinateReferenceSystem =
+      Jgeojson.NamedCoordinateReferenceSystem.EPSG_4326_STRICT_WINDING
 
     /**
      * Construct an instance
@@ -280,6 +290,7 @@ package object geojson {
    * A representation of a GeoJSON Point.
    */
   object Point {
+
     /**
      * Construct an instance with the given coordinate.
      *
@@ -316,7 +327,8 @@ package object geojson {
      * @param holes    optional interior rings of the polygon
      * @return the new Polygon
      */
-    def apply(exterior: Seq[Position], holes: Seq[Position]*): Polygon = new Jgeojson.Polygon(exterior.asJava, holes.map(_.asJava): _*)
+    def apply(exterior: Seq[Position], holes: Seq[Position]*): Polygon =
+      new Jgeojson.Polygon(exterior.asJava, holes.map(_.asJava): _*)
 
     /**
      * Construct an instance with the given coordinates.
@@ -346,6 +358,7 @@ package object geojson {
    * Coordinates for a GeoJSON Polygon.
    */
   object PolygonCoordinates {
+
     /**
      * Construct an instance.
      *
@@ -366,6 +379,7 @@ package object geojson {
    * A representation of a GeoJSON Position.
    */
   object Position {
+
     /**
      * Construct an instance.
      *

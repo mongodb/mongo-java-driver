@@ -12,11 +12,12 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */ package org.mongodb.scala.vault
+ */
+package org.mongodb.scala.vault
 
 import com.mongodb.ClientEncryptionSettings
 import com.mongodb.annotations.Beta
-import com.mongodb.reactivestreams.client.vault.{ClientEncryptions => JClientEncryptions}
+import com.mongodb.reactivestreams.client.vault.{ ClientEncryptions => JClientEncryptions }
 
 /**
  * Factory for ClientEncryption implementations.

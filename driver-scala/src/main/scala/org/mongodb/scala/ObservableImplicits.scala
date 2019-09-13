@@ -22,7 +22,7 @@ import com.mongodb.reactivestreams.client.Success
 import org.mongodb.scala.bson.ObjectId
 import org.mongodb.scala.gridfs.GridFSFile
 import org.mongodb.scala.internal._
-import org.reactivestreams.{Publisher, Subscriber, Subscription => JSubscription}
+import org.reactivestreams.{ Publisher, Subscriber, Subscription => JSubscription }
 
 import scala.concurrent.Future
 
@@ -103,7 +103,9 @@ trait ObservableImplicits {
 
           override def onComplete(): Unit = {
             completeWith("onComplete", { () =>
-              results.foreach { (result: T) => observer.onNext(result) }
+              results.foreach { (result: T) =>
+                observer.onNext(result)
+              }
               observer.onComplete()
             })
           }
@@ -132,32 +134,39 @@ trait ObservableImplicits {
   }
 
   implicit class ToSingleObservableInt(publisher: Publisher[java.lang.Integer]) extends SingleObservable[Int] {
-    override def subscribe(observer: Observer[_ >: Int]): Unit = publisher.toObservable().map(_.intValue()).toSingle().subscribe(observer)
+    override def subscribe(observer: Observer[_ >: Int]): Unit =
+      publisher.toObservable().map(_.intValue()).toSingle().subscribe(observer)
   }
 
   implicit class ToSingleObservableLong(publisher: Publisher[java.lang.Long]) extends SingleObservable[Long] {
-    override def subscribe(observer: Observer[_ >: Long]): Unit = publisher.toObservable().map(_.longValue()).toSingle().subscribe(observer)
+    override def subscribe(observer: Observer[_ >: Long]): Unit =
+      publisher.toObservable().map(_.longValue()).toSingle().subscribe(observer)
   }
 
-  implicit class ToSingleObservableObjectId(publisher: Publisher[org.bson.types.ObjectId]) extends SingleObservable[ObjectId] {
+  implicit class ToSingleObservableObjectId(publisher: Publisher[org.bson.types.ObjectId])
+      extends SingleObservable[ObjectId] {
     override def subscribe(observer: Observer[_ >: ObjectId]): Unit = publisher.toSingle().subscribe(observer)
   }
 
-  implicit class ToSingleObservableGridFS(publisher: Publisher[com.mongodb.client.gridfs.model.GridFSFile]) extends SingleObservable[GridFSFile] {
+  implicit class ToSingleObservableGridFS(publisher: Publisher[com.mongodb.client.gridfs.model.GridFSFile])
+      extends SingleObservable[GridFSFile] {
     override def subscribe(observer: Observer[_ >: GridFSFile]): Unit = publisher.toSingle().subscribe(observer)
   }
 
   implicit class ToSingleObservableCompleted(publisher: Publisher[Success]) extends SingleObservable[Completed] {
-    override def subscribe(observer: Observer[_ >: Completed]): Unit = publisher.toSingle().subscribe(new Observer[Success] {
+    override def subscribe(observer: Observer[_ >: Completed]): Unit =
+      publisher
+        .toSingle()
+        .subscribe(new Observer[Success] {
 
-      override def onSubscribe(subscription: Subscription): Unit = observer.onSubscribe(subscription)
+          override def onSubscribe(subscription: Subscription): Unit = observer.onSubscribe(subscription)
 
-      override def onNext(result: Success): Unit = {}
+          override def onNext(result: Success): Unit = {}
 
-      override def onError(e: Throwable): Unit = observer.onError(e)
+          override def onError(e: Throwable): Unit = observer.onError(e)
 
-      override def onComplete(): Unit = observer.onComplete()
-    })
+          override def onComplete(): Unit = observer.onComplete()
+        })
   }
 
   implicit class ObservableFuture[T](observable: Observable[T]) {

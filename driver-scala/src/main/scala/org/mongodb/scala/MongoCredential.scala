@@ -16,7 +16,7 @@
 
 package org.mongodb.scala
 
-import com.mongodb.{MongoCredential => JMongoCredential}
+import com.mongodb.{ MongoCredential => JMongoCredential }
 
 /**
  * Represents credentials to authenticate to a MongoDB server, as well as the source of the credentials and the authentication mechanism
@@ -83,7 +83,8 @@ object MongoCredential {
    * @return the credential
    * @see [[http://docs.mongodb.org/manual/core/authentication/#x-509-certificate-authentication X-509]]
    */
-  def createMongoX509Credential(userName: String): JMongoCredential = JMongoCredential.createMongoX509Credential(userName)
+  def createMongoX509Credential(userName: String): JMongoCredential =
+    JMongoCredential.createMongoX509Credential(userName)
 
   /**
    * Creates a MongoCredential instance for the MongoDB X.509 protocol where the distinguished subject name of the client certificate

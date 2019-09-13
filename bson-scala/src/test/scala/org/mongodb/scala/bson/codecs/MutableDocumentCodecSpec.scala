@@ -58,7 +58,8 @@ class MutableDocumentCodecSpec extends FlatSpec with Matchers {
 
     info("decoding")
     val buffer: BasicOutputBuffer = writer.getBsonOutput().asInstanceOf[BasicOutputBuffer];
-    val reader: BsonBinaryReader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(buffer.toByteArray))))
+    val reader: BsonBinaryReader =
+      new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(buffer.toByteArray))))
 
     val decodedDocument = MutableDocumentCodec().decode(reader, DecoderContext.builder().build())
 
@@ -67,16 +68,24 @@ class MutableDocumentCodecSpec extends FlatSpec with Matchers {
   }
 
   it should "respect encodeIdFirst property in encoder context" in {
-    val original: mutable.Document = Document("a" -> new BsonString("string"), "_id" -> new BsonInt32(1),
-      "nested" -> Document("a" -> new BsonString("string"), "_id" -> new BsonInt32(1)).toBsonDocument)
+    val original: mutable.Document = Document(
+      "a" -> new BsonString("string"),
+      "_id" -> new BsonInt32(1),
+      "nested" -> Document("a" -> new BsonString("string"), "_id" -> new BsonInt32(1)).toBsonDocument
+    )
 
     info("encoding")
     val writer: BsonBinaryWriter = new BsonBinaryWriter(new BasicOutputBuffer())
-    MutableDocumentCodec(registry).encode(writer, original, EncoderContext.builder().isEncodingCollectibleDocument(true).build())
+    MutableDocumentCodec(registry).encode(
+      writer,
+      original,
+      EncoderContext.builder().isEncodingCollectibleDocument(true).build()
+    )
 
     info("decoding")
     val buffer: BasicOutputBuffer = writer.getBsonOutput().asInstanceOf[BasicOutputBuffer];
-    val reader: BsonBinaryReader = new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(buffer.toByteArray))))
+    val reader: BsonBinaryReader =
+      new BsonBinaryReader(new ByteBufferBsonInput(new ByteBufNIO(ByteBuffer.wrap(buffer.toByteArray))))
 
     val decodedDocument = MutableDocumentCodec().decode(reader, DecoderContext.builder().build())
 
@@ -84,7 +93,10 @@ class MutableDocumentCodecSpec extends FlatSpec with Matchers {
     original should equal(decodedDocument)
     decodedDocument.keys.toList should contain theSameElementsInOrderAs (List("_id", "a", "nested"))
 
-    Document(decodedDocument[BsonDocument]("nested")).keys.toList should contain theSameElementsInOrderAs (List("a", "_id"))
+    Document(decodedDocument[BsonDocument]("nested")).keys.toList should contain theSameElementsInOrderAs (List(
+      "a",
+      "_id"
+    ))
   }
 
   it should "encoder class should work as expected" in {

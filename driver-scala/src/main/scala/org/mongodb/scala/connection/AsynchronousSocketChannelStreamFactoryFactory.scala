@@ -16,7 +16,9 @@
 
 package org.mongodb.scala.connection
 
-import com.mongodb.connection.{AsynchronousSocketChannelStreamFactoryFactory => JAsynchronousSocketChannelStreamFactoryFactory}
+import com.mongodb.connection.{
+  AsynchronousSocketChannelStreamFactoryFactory => JAsynchronousSocketChannelStreamFactoryFactory
+}
 
 /**
  * A `StreamFactoryFactory` implementation for AsynchronousSocketChannel-based streams.
@@ -25,6 +27,7 @@ import com.mongodb.connection.{AsynchronousSocketChannelStreamFactoryFactory => 
  * @since 1.0
  */
 object AsynchronousSocketChannelStreamFactoryFactory {
+
   /**
    * A `StreamFactoryFactory` implementation for AsynchronousSocketChannel-based streams.
    */

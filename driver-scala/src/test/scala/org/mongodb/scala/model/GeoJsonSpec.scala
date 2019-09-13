@@ -28,15 +28,22 @@ class GeoJsonSpec extends BaseSpec {
 
   it should "have the same methods as the wrapped CoordinateReferenceSystemType" in {
     val wrapped = classOf[geojson.CoordinateReferenceSystemType].getDeclaredFields
-      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers)).map(_.getName).toSet
-    val local = CoordinateReferenceSystemType.getClass.getDeclaredMethods.filter(f => isPublic(f.getModifiers)).map(_.getName).toSet
+      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers))
+      .map(_.getName)
+      .toSet
+    val local = CoordinateReferenceSystemType.getClass.getDeclaredMethods
+      .filter(f => isPublic(f.getModifiers))
+      .map(_.getName)
+      .toSet
 
     local should equal(wrapped)
   }
 
   it should "have the same methods as the wrapped GeoJsonObjectType" in {
     val wrapped = classOf[geojson.GeoJsonObjectType].getDeclaredFields
-      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers)).map(_.getName).toSet
+      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers))
+      .map(_.getName)
+      .toSet
     val local = GeoJsonObjectType.getClass.getDeclaredMethods.filter(f => isPublic(f.getModifiers)).map(_.getName).toSet
 
     local should equal(wrapped)
@@ -67,14 +74,18 @@ class GeoJsonSpec extends BaseSpec {
   }
 
   it should "create the same LineString" in {
-    LineString(Seq(Position(1, 2), Position(2, 4))) should equal(new geojson.LineString(Seq(Position(1, 2), Position(2, 4)).asJava))
+    LineString(Seq(Position(1, 2), Position(2, 4))) should equal(
+      new geojson.LineString(Seq(Position(1, 2), Position(2, 4)).asJava)
+    )
     LineString(EPSG_4326_STRICT_WINDING, Seq(Position(1, 2), Position(2, 4))) should equal(
       new geojson.LineString(EPSG_4326_STRICT_WINDING, Seq(Position(1, 2), Position(2, 4)).asJava)
     )
   }
 
   it should "create the same MultiLineString" in {
-    MultiLineString(Seq(Position(1, 2))) should equal(new geojson.MultiLineString(Seq(Seq(Position(1, 2)).asJava).asJava))
+    MultiLineString(Seq(Position(1, 2))) should equal(
+      new geojson.MultiLineString(Seq(Seq(Position(1, 2)).asJava).asJava)
+    )
     MultiLineString(EPSG_4326, Seq(Position(1, 2))) should equal(
       new geojson.MultiLineString(EPSG_4326, Seq(Seq(Position(1, 2)).asJava).asJava)
     )
@@ -94,7 +105,9 @@ class GeoJsonSpec extends BaseSpec {
     val exterior = Seq(Position(10, 20), Position(10, 40), Position(20, 40), Position(10, 20))
     val interior = Seq(Position(15, 16), Position(15, 18), Position(16, 18), Position(15, 16))
 
-    MultiPolygon(PolygonCoordinates(exterior)) should equal(new geojson.MultiPolygon(Seq(PolygonCoordinates(exterior)).asJava))
+    MultiPolygon(PolygonCoordinates(exterior)) should equal(
+      new geojson.MultiPolygon(Seq(PolygonCoordinates(exterior)).asJava)
+    )
 
     MultiPolygon(PolygonCoordinates(exterior, interior)) should equal(
       new geojson.MultiPolygon(Seq(PolygonCoordinates(exterior, interior)).asJava)
@@ -109,7 +122,9 @@ class GeoJsonSpec extends BaseSpec {
     val exterior = Seq(Position(10, 20), Position(10, 40), Position(20, 40), Position(10, 20))
 
     Polygon(PolygonCoordinates(exterior)) should equal(new geojson.Polygon(PolygonCoordinates(exterior)))
-    Polygon(CRS_84, PolygonCoordinates(exterior)) should equal(new geojson.Polygon(CRS_84, PolygonCoordinates(exterior)))
+    Polygon(CRS_84, PolygonCoordinates(exterior)) should equal(
+      new geojson.Polygon(CRS_84, PolygonCoordinates(exterior))
+    )
   }
 
   it should "create a NamedCoordinateReferenceSystem from a string" in {

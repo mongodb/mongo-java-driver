@@ -16,7 +16,7 @@
 
 package org.mongodb.scala.model
 
-import com.mongodb.client.model.{ReturnDocument => JReturnDocument}
+import com.mongodb.client.model.{ ReturnDocument => JReturnDocument }
 
 /**
  * Indicates which document to return, the original document before change or the document after the change
@@ -24,6 +24,7 @@ import com.mongodb.client.model.{ReturnDocument => JReturnDocument}
  * @since 1.0
  */
 object ReturnDocument {
+
   /**
    * Indicates to return the document before the update, replacement, or insert occurred.
    */

@@ -16,7 +16,7 @@
 
 package org.mongodb.scala.internal
 
-import org.mongodb.scala.{Observer, SingleObservable, Subscription}
+import org.mongodb.scala.{ Observer, SingleObservable, Subscription }
 
 private[scala] case class SingleItemObservable[A](item: A) extends SingleObservable[A] {
 
