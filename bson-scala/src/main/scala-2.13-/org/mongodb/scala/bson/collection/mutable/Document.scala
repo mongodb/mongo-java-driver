@@ -47,7 +47,6 @@ object Document {
    * Parses a string in MongoDB Extended JSON format to a `Document`
    *
    * @param json the JSON string
-   * @throws org.bson.json.JsonParseException if passed an invalid json string
    * @return a corresponding `Document` object
    * @see org.bson.json.JsonReader
    * @see [[http://docs.mongodb.com/manual/reference/mongodb-extended-json/ MongoDB Extended JSON]]
@@ -93,7 +92,8 @@ object Document {
     }
   }
 
-  private def builder: mutable.Builder[(String, BsonValue), Document] = ListBuffer[(String, BsonValue)]() mapResult fromSeq
+  private def builder: mutable.Builder[(String, BsonValue), Document] =
+    ListBuffer[(String, BsonValue)]() mapResult fromSeq
 
   private def fromSeq(ts: Seq[(String, BsonValue)]): Document = {
     val underlying = new BsonDocument()
@@ -111,7 +111,9 @@ object Document {
  * @param underlying the underlying BsonDocument which stores the data.
  */
 case class Document(protected[scala] val underlying: BsonDocument)
-    extends BaseDocument[Document] with TraversableLike[(String, BsonValue), Document] with Mutable {
+    extends BaseDocument[Document]
+    with TraversableLike[(String, BsonValue), Document]
+    with Mutable {
 
   import BsonMagnets._
 

@@ -19,7 +19,7 @@ package org.mongodb.scala.bson.collection.immutable
 import scala.collection.JavaConverters._
 import scala.collection.generic.CanBuildFrom
 import scala.collection.mutable.ListBuffer
-import scala.collection.{ Traversable, TraversableLike, mutable }
+import scala.collection.{ mutable, Traversable, TraversableLike }
 
 import org.mongodb.scala.bson._
 import org.mongodb.scala.bson.collection.BaseDocument
@@ -47,7 +47,6 @@ object Document {
    * Parses a string in MongoDB Extended JSON format to a `Document`
    *
    * @param json the JSON string
-   * @throws org.bson.json.JsonParseException if passed an invalid json string
    * @return a corresponding `Document` object
    * @see org.bson.json.JsonReader
    * @see [[http://docs.mongodb.com/manual/reference/mongodb-extended-json/ MongoDB Extended JSON]]
@@ -112,7 +111,8 @@ object Document {
  *
  */
 case class Document(protected[scala] val underlying: BsonDocument)
-    extends BaseDocument[Document] with TraversableLike[(String, BsonValue), Document] {
+    extends BaseDocument[Document]
+    with TraversableLike[(String, BsonValue), Document] {
 
   /**
    * Creates a new immutable document
