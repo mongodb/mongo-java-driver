@@ -34,8 +34,8 @@ case class DocumentCodecProvider() extends CodecProvider {
   def get[T](clazz: Class[T], registry: CodecRegistry): Codec[T] = {
     clazz match {
       case IMMUTABLE => ImmutableDocumentCodec(registry).asInstanceOf[Codec[T]]
-      case MUTABLE => MutableDocumentCodec(registry).asInstanceOf[Codec[T]]
-      case _ => null
+      case MUTABLE   => MutableDocumentCodec(registry).asInstanceOf[Codec[T]]
+      case _         => null
     }
   }
   // scalastyle:on null

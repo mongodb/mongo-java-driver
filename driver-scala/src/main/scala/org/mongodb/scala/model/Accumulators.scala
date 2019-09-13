@@ -16,7 +16,7 @@
 
 package org.mongodb.scala.model
 
-import com.mongodb.client.model.{Accumulators => JAccumulators}
+import com.mongodb.client.model.{ Accumulators => JAccumulators }
 
 /**
  * Builders for accumulators used in the group pipeline stage of an aggregation pipeline.
@@ -63,7 +63,8 @@ object Accumulators {
    * @return the field
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/first/ \$first]]
    */
-  def first[TExpression](fieldName: String, expression: TExpression): BsonField = JAccumulators.first(fieldName, expression)
+  def first[TExpression](fieldName: String, expression: TExpression): BsonField =
+    JAccumulators.first(fieldName, expression)
 
   /**
    * Gets a field name for a `\$group` operation representing the value of the given expression when applied to the last member of
@@ -75,7 +76,8 @@ object Accumulators {
    * @return the field
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/last/ \$last]]
    */
-  def last[TExpression](fieldName: String, expression: TExpression): BsonField = JAccumulators.last(fieldName, expression)
+  def last[TExpression](fieldName: String, expression: TExpression): BsonField =
+    JAccumulators.last(fieldName, expression)
 
   /**
    * Gets a field name for a `\$group` operation representing the maximum of the values of the given expression when applied to all
@@ -111,7 +113,8 @@ object Accumulators {
    * @return the field
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/push/ \$push]]
    */
-  def push[TExpression](fieldName: String, expression: TExpression): BsonField = JAccumulators.push(fieldName, expression)
+  def push[TExpression](fieldName: String, expression: TExpression): BsonField =
+    JAccumulators.push(fieldName, expression)
 
   /**
    * Gets a field name for a `\$group` operation representing all unique values that results from applying the given expression to each
@@ -123,7 +126,8 @@ object Accumulators {
    * @return the field
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/addToSet/ \$addToSet]]
    */
-  def addToSet[TExpression](fieldName: String, expression: TExpression): BsonField = JAccumulators.addToSet(fieldName, expression)
+  def addToSet[TExpression](fieldName: String, expression: TExpression): BsonField =
+    JAccumulators.addToSet(fieldName, expression)
 
   /**
    * Gets a field name for a `\$group` operation representing the sample standard deviation of the values of the given expression
@@ -140,7 +144,8 @@ object Accumulators {
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/stdDevPop/ \$stdDevPop]]
    * @since 1.1
    */
-  def stdDevPop[TExpression](fieldName: String, expression: TExpression): BsonField = JAccumulators.stdDevPop(fieldName, expression)
+  def stdDevPop[TExpression](fieldName: String, expression: TExpression): BsonField =
+    JAccumulators.stdDevPop(fieldName, expression)
 
   /**
    * Gets a field name for a `\$group` operation representing the sample standard deviation of the values of the given expression
@@ -156,5 +161,6 @@ object Accumulators {
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/stdDevSamp/ \$stdDevSamp]]
    * @since 1.1
    */
-  def stdDevSamp[TExpression](fieldName: String, expression: TExpression): BsonField = JAccumulators.stdDevSamp(fieldName, expression)
+  def stdDevSamp[TExpression](fieldName: String, expression: TExpression): BsonField =
+    JAccumulators.stdDevSamp(fieldName, expression)
 }

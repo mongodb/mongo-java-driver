@@ -43,6 +43,7 @@ class MacrosSpec extends FlatSpec with Matchers {
   case class AnnotatedClass(@BsonProperty("annotated_name") name: String)
 
   case class Binary(binary: Array[Byte]) {
+
     /**
      * Custom equals
      *
@@ -53,11 +54,21 @@ class MacrosSpec extends FlatSpec with Matchers {
      */
     override def equals(arg: Any): Boolean = arg match {
       case that: Binary => that.binary.toSeq == binary.toSeq
-      case _ => false
+      case _            => false
     }
   }
-  case class AllTheBsonTypes(documentMap: Map[String, String], array: Seq[String], date: Date, boolean: Boolean,
-    double: Double, int32: Int, int64: Long, string: String, binary: Binary, none: Option[String])
+  case class AllTheBsonTypes(
+      documentMap: Map[String, String],
+      array: Seq[String],
+      date: Date,
+      boolean: Boolean,
+      double: Double,
+      int32: Int,
+      int64: Long,
+      string: String,
+      binary: Binary,
+      none: Option[String]
+  )
 
   case class MapOfStrings(name: String, value: Map[String, String])
   case class SeqOfMapOfStrings(name: String, value: Seq[Map[String, String]])
@@ -110,7 +121,12 @@ class MacrosSpec extends FlatSpec with Matchers {
   case class ContainsADTCaseClassTypeAlias(a: String, b: ADTCaseClassTypeAlias)
 
   trait Tag
-  case class ContainsTaggedTypes(a: Int with Tag, b: String with Tag, c: Map[String with Tag, Int with Tag] with Tag, d: Empty with Tag) extends Tag
+  case class ContainsTaggedTypes(
+      a: Int with Tag,
+      b: String with Tag,
+      c: Map[String with Tag, Int with Tag] with Tag,
+      d: Empty with Tag
+  ) extends Tag
 
   case class ContainsTypeLessMap(a: BsonDocument)
 
@@ -137,13 +153,17 @@ class MacrosSpec extends FlatSpec with Matchers {
   case class ContainsSealedAbstractClass(list: List[SealedAbstractClass])
 
   sealed class SealedClassWithParams(val superField: String)
-  case class SealedClassWithParamsA(stringField: String, override val superField: String) extends SealedClassWithParams(superField)
-  case class SealedClassWithParamsB(intField: Int, override val superField: String) extends SealedClassWithParams(superField)
+  case class SealedClassWithParamsA(stringField: String, override val superField: String)
+      extends SealedClassWithParams(superField)
+  case class SealedClassWithParamsB(intField: Int, override val superField: String)
+      extends SealedClassWithParams(superField)
   case class ContainsSealedClassWithParams(list: List[SealedClassWithParams])
 
   sealed abstract class SealedAbstractClassWithParams(val superField: String)
-  case class SealedAbstractClassWithParamsA(stringField: String, override val superField: String) extends SealedAbstractClassWithParams(superField)
-  case class SealedAbstractClassWithParamsB(intField: Int, override val superField: String) extends SealedAbstractClassWithParams(superField)
+  case class SealedAbstractClassWithParamsA(stringField: String, override val superField: String)
+      extends SealedAbstractClassWithParams(superField)
+  case class SealedAbstractClassWithParamsB(intField: Int, override val superField: String)
+      extends SealedAbstractClassWithParams(superField)
   case class ContainsSealedAbstractClassWithParams(list: List[SealedAbstractClassWithParams])
 
   sealed trait SealedTrait
@@ -153,7 +173,9 @@ class MacrosSpec extends FlatSpec with Matchers {
 
   object CaseObjectEnumCodecProvider extends CodecProvider {
     def isCaseObjectEnum[T](clazz: Class[T]): Boolean = {
-      clazz.isInstance(CaseObjectEnum.Alpha) || clazz.isInstance(CaseObjectEnum.Bravo) || clazz.isInstance(CaseObjectEnum.Charlie)
+      clazz.isInstance(CaseObjectEnum.Alpha) || clazz.isInstance(CaseObjectEnum.Bravo) || clazz.isInstance(
+        CaseObjectEnum.Charlie
+      )
     }
 
     override def get[T](clazz: Class[T], registry: CodecRegistry): Codec[T] = {
@@ -171,17 +193,17 @@ class MacrosSpec extends FlatSpec with Matchers {
         val enumName = reader.readString(identifier)
         reader.readEndDocument()
         enumName match {
-          case "Alpha" => CaseObjectEnum.Alpha
-          case "Bravo" => CaseObjectEnum.Bravo
+          case "Alpha"   => CaseObjectEnum.Alpha
+          case "Bravo"   => CaseObjectEnum.Bravo
           case "Charlie" => CaseObjectEnum.Charlie
-          case _ => throw new BsonInvalidOperationException(s"$enumName is an invalid value for a MyEnum object")
+          case _         => throw new BsonInvalidOperationException(s"$enumName is an invalid value for a MyEnum object")
         }
       }
 
       override def encode(writer: BsonWriter, value: CaseObjectEnum, encoderContext: EncoderContext): Unit = {
         val name = value match {
-          case CaseObjectEnum.Alpha => "Alpha"
-          case CaseObjectEnum.Bravo => "Bravo"
+          case CaseObjectEnum.Alpha   => "Alpha"
+          case CaseObjectEnum.Bravo   => "Bravo"
           case CaseObjectEnum.Charlie => "Charlie"
         }
         writer.writeStartDocument()
@@ -198,23 +220,60 @@ class MacrosSpec extends FlatSpec with Matchers {
     roundTrip(Empty(), "{}", classOf[Empty])
     roundTrip(Person("Bob", "Jones"), """{firstName: "Bob", lastName: "Jones"}""", classOf[Person])
     roundTrip(DefaultValue(name = "Bob"), """{name: "Bob", active: false}""", classOf[DefaultValue])
-    roundTrip(SeqOfStrings("Bob", Seq("scala", "jvm")), """{name: "Bob", value: ["scala", "jvm"]}""", classOf[SeqOfStrings])
-    roundTrip(RecursiveSeq("Bob", Seq(RecursiveSeq("Charlie", Seq.empty[RecursiveSeq]))), """{name: "Bob", value: [{name: "Charlie", value: []}]}""", classOf[RecursiveSeq])
+    roundTrip(
+      SeqOfStrings("Bob", Seq("scala", "jvm")),
+      """{name: "Bob", value: ["scala", "jvm"]}""",
+      classOf[SeqOfStrings]
+    )
+    roundTrip(
+      RecursiveSeq("Bob", Seq(RecursiveSeq("Charlie", Seq.empty[RecursiveSeq]))),
+      """{name: "Bob", value: [{name: "Charlie", value: []}]}""",
+      classOf[RecursiveSeq]
+    )
     roundTrip(AnnotatedClass("Bob"), """{annotated_name: "Bob"}""", classOf[AnnotatedClass])
-    roundTrip(MapOfStrings("Bob", Map("brother" -> "Tom Jones")), """{name: "Bob", value: {brother: "Tom Jones"}}""", classOf[MapOfStrings])
-    roundTrip(MapOfStringAliases("Bob", Map("brother" -> "Tom Jones")), """{name: "Bob", value: {brother: "Tom Jones"}}""", classOf[MapOfStringAliases])
-    roundTrip(SeqOfMapOfStrings("Bob", Seq(Map("brother" -> "Tom Jones"))), """{name: "Bob", value: [{brother: "Tom Jones"}]}""", classOf[SeqOfMapOfStrings])
-    roundTrip(ContainsSet("Bob", Set("Tom", "Charlie")), """{name: "Bob", friends: ["Tom","Charlie"]}""", Macros.createCodecProvider(classOf[ContainsSet]))
-    roundTrip(ContainsVector("Bob", Vector("Tom", "Charlie")), """{name: "Bob", friends: ["Tom","Charlie"]}""", Macros.createCodecProvider(classOf[ContainsVector]))
-    roundTrip(ContainsList("Bob", List("Tom", "Charlie")), """{name: "Bob", friends: ["Tom","Charlie"]}""", Macros.createCodecProvider(classOf[ContainsList]))
-    roundTrip(ContainsStream("Bob", Stream("Tom", "Charlie")), """{name: "Bob", friends: ["Tom","Charlie"]}""", Macros.createCodecProvider(classOf[ContainsStream]))
+    roundTrip(
+      MapOfStrings("Bob", Map("brother" -> "Tom Jones")),
+      """{name: "Bob", value: {brother: "Tom Jones"}}""",
+      classOf[MapOfStrings]
+    )
+    roundTrip(
+      MapOfStringAliases("Bob", Map("brother" -> "Tom Jones")),
+      """{name: "Bob", value: {brother: "Tom Jones"}}""",
+      classOf[MapOfStringAliases]
+    )
+    roundTrip(
+      SeqOfMapOfStrings("Bob", Seq(Map("brother" -> "Tom Jones"))),
+      """{name: "Bob", value: [{brother: "Tom Jones"}]}""",
+      classOf[SeqOfMapOfStrings]
+    )
+    roundTrip(
+      ContainsSet("Bob", Set("Tom", "Charlie")),
+      """{name: "Bob", friends: ["Tom","Charlie"]}""",
+      Macros.createCodecProvider(classOf[ContainsSet])
+    )
+    roundTrip(
+      ContainsVector("Bob", Vector("Tom", "Charlie")),
+      """{name: "Bob", friends: ["Tom","Charlie"]}""",
+      Macros.createCodecProvider(classOf[ContainsVector])
+    )
+    roundTrip(
+      ContainsList("Bob", List("Tom", "Charlie")),
+      """{name: "Bob", friends: ["Tom","Charlie"]}""",
+      Macros.createCodecProvider(classOf[ContainsList])
+    )
+    roundTrip(
+      ContainsStream("Bob", Stream("Tom", "Charlie")),
+      """{name: "Bob", friends: ["Tom","Charlie"]}""",
+      Macros.createCodecProvider(classOf[ContainsStream])
+    )
   }
 
   it should "be able to round trip polymorphic nested case classes in a sealed class" in {
     roundTrip(
       ContainsSealedClass(List(SealedClassA("test"), SealedClassB(12))),
       """{"list" : [{"_t" : "SealedClassA", "stringField" : "test"}, {"_t" : "SealedClassB", "intField" : 12}]}""",
-      classOf[ContainsSealedClass], classOf[SealedClass]
+      classOf[ContainsSealedClass],
+      classOf[SealedClass]
     )
   }
 
@@ -222,23 +281,30 @@ class MacrosSpec extends FlatSpec with Matchers {
     roundTrip(
       ContainsSealedAbstractClass(List(SealedAbstractClassA("test"), SealedAbstractClassB(12))),
       """{"list" : [{"_t" : "SealedAbstractClassA", "stringField" : "test"}, {"_t" : "SealedAbstractClassB", "intField" : 12}]}""",
-      classOf[ContainsSealedAbstractClass], classOf[SealedAbstractClass]
+      classOf[ContainsSealedAbstractClass],
+      classOf[SealedAbstractClass]
     )
   }
 
   it should "be able to round trip polymorphic nested case classes in a sealed class with parameters" in {
     roundTrip(
-      ContainsSealedClassWithParams(List(SealedClassWithParamsA("test", "tested1"), SealedClassWithParamsB(12, "tested2"))),
+      ContainsSealedClassWithParams(
+        List(SealedClassWithParamsA("test", "tested1"), SealedClassWithParamsB(12, "tested2"))
+      ),
       """{"list" : [{"_t" : "SealedClassWithParamsA", "stringField" : "test", "superField" : "tested1"}, {"_t" : "SealedClassWithParamsB", "intField" : 12, "superField" : "tested2"}]}""",
-      classOf[ContainsSealedClassWithParams], classOf[SealedClassWithParams]
+      classOf[ContainsSealedClassWithParams],
+      classOf[SealedClassWithParams]
     )
   }
 
   it should "be able to round trip polymorphic nested case classes in a sealed abstract class with parameters" in {
     roundTrip(
-      ContainsSealedAbstractClassWithParams(List(SealedAbstractClassWithParamsA("test", "tested1"), SealedAbstractClassWithParamsB(12, "tested2"))),
+      ContainsSealedAbstractClassWithParams(
+        List(SealedAbstractClassWithParamsA("test", "tested1"), SealedAbstractClassWithParamsB(12, "tested2"))
+      ),
       """{"list" : [{"_t" : "SealedAbstractClassWithParamsA", "stringField" : "test", "superField" : "tested1"}, {"_t" : "SealedAbstractClassWithParamsB", "intField" : 12, "superField" : "tested2"}]}""",
-      classOf[ContainsSealedAbstractClassWithParams], classOf[SealedAbstractClassWithParams]
+      classOf[ContainsSealedAbstractClassWithParams],
+      classOf[SealedAbstractClassWithParams]
     )
   }
 
@@ -246,28 +312,44 @@ class MacrosSpec extends FlatSpec with Matchers {
     roundTrip(
       ContainsSealedTrait(List(SealedTraitA("test"), SealedTraitB(12))),
       """{"list" : [{"_t" : "SealedTraitA", "stringField" : "test"}, {"_t" : "SealedTraitB", "intField" : 12}]}""",
-      classOf[ContainsSealedTrait], classOf[SealedTrait]
+      classOf[ContainsSealedTrait],
+      classOf[SealedTrait]
     )
   }
 
   it should "be able to round trip nested case classes" in {
-    roundTrip(ContainsCaseClass("Charlie", Person("Bob", "Jones")), """{name: "Charlie", friend: {firstName: "Bob", lastName: "Jones"}}""", classOf[ContainsCaseClass], classOf[Person])
-    roundTrip(ContainsSeqCaseClass("Charlie", Seq(Person("Bob", "Jones"))), """{name: "Charlie", friends: [{firstName: "Bob", lastName: "Jones"}]}""", classOf[ContainsSeqCaseClass], classOf[Person])
+    roundTrip(
+      ContainsCaseClass("Charlie", Person("Bob", "Jones")),
+      """{name: "Charlie", friend: {firstName: "Bob", lastName: "Jones"}}""",
+      classOf[ContainsCaseClass],
+      classOf[Person]
+    )
+    roundTrip(
+      ContainsSeqCaseClass("Charlie", Seq(Person("Bob", "Jones"))),
+      """{name: "Charlie", friends: [{firstName: "Bob", lastName: "Jones"}]}""",
+      classOf[ContainsSeqCaseClass],
+      classOf[Person]
+    )
     roundTrip(
       ContainsNestedSeqCaseClass("Charlie", Seq(Seq(Person("Bob", "Jones")), Seq(Person("Tom", "Jones")))),
-      """{name: "Charlie", friends: [[{firstName: "Bob", lastName: "Jones"}], [{firstName: "Tom", lastName: "Jones"}]]}""", classOf[ContainsNestedSeqCaseClass], classOf[Person]
+      """{name: "Charlie", friends: [[{firstName: "Bob", lastName: "Jones"}], [{firstName: "Tom", lastName: "Jones"}]]}""",
+      classOf[ContainsNestedSeqCaseClass],
+      classOf[Person]
     )
   }
 
   it should "be able to round trip nested case classes in maps" in {
     roundTrip(
       ContainsMapOfCaseClasses("Bob", Map("mother" -> Person("Jane", "Jones"))),
-      """{name: "Bob", friends: {mother: {firstName: "Jane", lastName: "Jones"}}}""", classOf[ContainsMapOfCaseClasses], classOf[Person]
+      """{name: "Bob", friends: {mother: {firstName: "Jane", lastName: "Jones"}}}""",
+      classOf[ContainsMapOfCaseClasses],
+      classOf[Person]
     )
     roundTrip(
       ContainsMapOfMapOfCaseClasses("Bob", Map("maternal" -> Map("mother" -> Person("Jane", "Jones")))),
       """{name: "Bob", friends: {maternal: {mother: {firstName: "Jane", lastName: "Jones"}}}}""",
-      classOf[ContainsMapOfMapOfCaseClasses], classOf[Person]
+      classOf[ContainsMapOfMapOfCaseClasses],
+      classOf[Person]
     )
   }
 
@@ -277,22 +359,30 @@ class MacrosSpec extends FlatSpec with Matchers {
     roundTrip(OptionalCaseClass("Bob", None), """{name: "Bob", value: null}""", classOf[OptionalCaseClass])
     roundTrip(
       OptionalCaseClass("Bob", Some(Person("Charlie", "Jones"))),
-      """{name: "Bob", value: {firstName: "Charlie", lastName: "Jones"}}""", classOf[OptionalCaseClass], classOf[Person]
+      """{name: "Bob", value: {firstName: "Charlie", lastName: "Jones"}}""",
+      classOf[OptionalCaseClass],
+      classOf[Person]
     )
 
     roundTrip(OptionalRecursive("Bob", None), """{name: "Bob", value: null}""", classOf[OptionalRecursive])
     roundTrip(
       OptionalRecursive("Bob", Some(OptionalRecursive("Charlie", None))),
-      """{name: "Bob", value: {name: "Charlie", value: null}}""", classOf[OptionalRecursive]
+      """{name: "Bob", value: {name: "Charlie", value: null}}""",
+      classOf[OptionalRecursive]
     )
   }
 
   it should "be able to round trip Map values where the top level implementations don't include type information" in {
-    roundTrip(ContainsTypeLessMap(BsonDocument.parse("""{b: "c"}""")), """{a: {b: "c"}}""", classOf[ContainsTypeLessMap])
+    roundTrip(
+      ContainsTypeLessMap(BsonDocument.parse("""{b: "c"}""")),
+      """{a: {b: "c"}}""",
+      classOf[ContainsTypeLessMap]
+    )
   }
 
   it should "be able to decode case classes missing optional values" in {
-    val registry = CodecRegistries.fromRegistries(CodecRegistries.fromProviders(classOf[OptionalValue]), DEFAULT_CODEC_REGISTRY)
+    val registry =
+      CodecRegistries.fromRegistries(CodecRegistries.fromProviders(classOf[OptionalValue]), DEFAULT_CODEC_REGISTRY)
     val buffer = encode(registry.get(classOf[Document]), Document("name" -> "Bob"))
 
     decode(registry.get(classOf[OptionalValue]), buffer) should equal(OptionalValue("Bob", None))
@@ -302,13 +392,18 @@ class MacrosSpec extends FlatSpec with Matchers {
     roundTrip(
       ContainsCaseClassWithDefault("Charlie"),
       """{name: "Charlie", friend: { firstName: "Frank", lastName: "Sinatra"}}""",
-      classOf[ContainsCaseClassWithDefault], classOf[Person]
+      classOf[ContainsCaseClassWithDefault],
+      classOf[Person]
     )
   }
 
   it should "rountrip case classes containing vals" in {
     val id = new ObjectId
-    roundTrip(CaseClassWithVal(id, "Bob"), s"""{"_id": {"$$oid": "${id.toHexString}" }, "name" : "Bob"}""", classOf[CaseClassWithVal])
+    roundTrip(
+      CaseClassWithVal(id, "Bob"),
+      s"""{"_id": {"$$oid": "${id.toHexString}" }, "name" : "Bob"}""",
+      classOf[CaseClassWithVal]
+    )
   }
 
   it should "be able to decode case class with vals" in {
@@ -324,35 +419,53 @@ class MacrosSpec extends FlatSpec with Matchers {
     )
 
     decode(
-      registry.get(classOf[CaseClassWithVal]), buffer
+      registry.get(classOf[CaseClassWithVal]),
+      buffer
     ) should equal(CaseClassWithVal(id, "Bob"))
   }
 
   it should "be able to round trip optional values, when None is ignored" in {
     roundTrip(OptionalValue("Bob", None), """{name: "Bob"}""", createCodecProviderIgnoreNone[OptionalValue]())
-    roundTrip(OptionalValue("Bob", Some("value")), """{name: "Bob", value: "value"}""", createCodecProviderIgnoreNone[OptionalValue]())
+    roundTrip(
+      OptionalValue("Bob", Some("value")),
+      """{name: "Bob", value: "value"}""",
+      createCodecProviderIgnoreNone[OptionalValue]()
+    )
     roundTrip(OptionalCaseClass("Bob", None), """{name: "Bob"}""", createCodecProviderIgnoreNone[OptionalCaseClass]())
     roundTrip(
       OptionalCaseClass("Bob", Some(Person("Charlie", "Jones"))),
       """{name: "Bob", value: {firstName: "Charlie", lastName: "Jones"}}""",
-      createCodecProviderIgnoreNone[OptionalCaseClass](), createCodecProviderIgnoreNone[Person]()
+      createCodecProviderIgnoreNone[OptionalCaseClass](),
+      createCodecProviderIgnoreNone[Person]()
     )
 
     roundTrip(OptionalRecursive("Bob", None), """{name: "Bob"}""", createCodecProviderIgnoreNone[OptionalRecursive]())
     roundTrip(
       OptionalRecursive("Bob", Some(OptionalRecursive("Charlie", None))),
-      """{name: "Bob", value: {name: "Charlie"}}""", createCodecProviderIgnoreNone[OptionalRecursive]()
+      """{name: "Bob", value: {name: "Charlie"}}""",
+      createCodecProviderIgnoreNone[OptionalRecursive]()
     )
   }
 
   it should "roundtrip all the supported bson types" in {
     roundTrip(
-      AllTheBsonTypes(Map("a" -> "b"), Seq("a", "b", "c"), new Date(123), boolean = true, 1.0, 10, 100L, "string",
-        Binary(Array[Byte](123)), None),
+      AllTheBsonTypes(
+        Map("a" -> "b"),
+        Seq("a", "b", "c"),
+        new Date(123),
+        boolean = true,
+        1.0,
+        10,
+        100L,
+        "string",
+        Binary(Array[Byte](123)),
+        None
+      ),
       """{"documentMap" : { "a" : "b" }, "array" : ["a", "b", "c"], "date" : { "$date" : 123 }, "boolean" : true,
       | "double" : 1.0, "int32" : 10, "int64" : { "$numberLong" : "100" }, "string" : "string",
       | "binary" : { "binary": { "$binary" : "ew==", "$type" : "00" } }, "none" : null }""".stripMargin,
-      classOf[Binary], classOf[AllTheBsonTypes]
+      classOf[Binary],
+      classOf[AllTheBsonTypes]
     )
   }
 
@@ -368,9 +481,18 @@ class MacrosSpec extends FlatSpec with Matchers {
     roundTrip(ContainsADT("Bob", leaf), s"""{name: "Bob", tree: $leafJson}""", classOf[ContainsADT], classOf[Tree])
     roundTrip(ContainsADT("Bob", branch), s"""{name: "Bob", tree: $branchJson}""", classOf[ContainsADT], classOf[Tree])
 
-    roundTrip(ContainsSeqADT("Bob", List(leaf, branch)), s"""{name: "Bob", trees: [$leafJson, $branchJson]}""", classOf[ContainsSeqADT], classOf[Tree])
-    roundTrip(ContainsNestedSeqADT("Bob", List(List(leaf), List(branch))), s"""{name: "Bob", trees: [[$leafJson], [$branchJson]]}""",
-      classOf[ContainsNestedSeqADT], classOf[Tree])
+    roundTrip(
+      ContainsSeqADT("Bob", List(leaf, branch)),
+      s"""{name: "Bob", trees: [$leafJson, $branchJson]}""",
+      classOf[ContainsSeqADT],
+      classOf[Tree]
+    )
+    roundTrip(
+      ContainsNestedSeqADT("Bob", List(List(leaf), List(branch))),
+      s"""{name: "Bob", trees: [[$leafJson], [$branchJson]]}""",
+      classOf[ContainsNestedSeqADT],
+      classOf[Tree]
+    )
   }
 
   it should "support optional values in ADT sealed classes" in {
@@ -385,14 +507,27 @@ class MacrosSpec extends FlatSpec with Matchers {
   }
 
   it should "support type aliases in case classes" in {
-    roundTrip(ContainsSimpleTypeAlias("c", Map("d" -> "c")), """{a: "c", b: {d: "c"}}""", classOf[ContainsSimpleTypeAlias])
-    roundTrip(ContainsCaseClassTypeAlias("c", Person("Tom", "Jones")), """{a: "c", b: {firstName: "Tom", lastName: "Jones"}}""",
-      classOf[ContainsCaseClassTypeAlias], classOf[CaseClassTypeAlias])
+    roundTrip(
+      ContainsSimpleTypeAlias("c", Map("d" -> "c")),
+      """{a: "c", b: {d: "c"}}""",
+      classOf[ContainsSimpleTypeAlias]
+    )
+    roundTrip(
+      ContainsCaseClassTypeAlias("c", Person("Tom", "Jones")),
+      """{a: "c", b: {firstName: "Tom", lastName: "Jones"}}""",
+      classOf[ContainsCaseClassTypeAlias],
+      classOf[CaseClassTypeAlias]
+    )
 
     val branch = Branch(Branch(Leaf(1), Leaf(2), 3), Branch(Leaf(4), Leaf(5), 6), 3) // scalastyle:ignore
     val branchJson = createTreeJson(branch)
-    roundTrip(ContainsADTCaseClassTypeAlias("c", ContainsADT("Tom", branch)), s"""{a: "c", b: {name: "Tom", tree: $branchJson}}""",
-      classOf[ContainsADTCaseClassTypeAlias], classOf[ADTCaseClassTypeAlias], classOf[Tree])
+    roundTrip(
+      ContainsADTCaseClassTypeAlias("c", ContainsADT("Tom", branch)),
+      s"""{a: "c", b: {name: "Tom", tree: $branchJson}}""",
+      classOf[ContainsADTCaseClassTypeAlias],
+      classOf[ADTCaseClassTypeAlias],
+      classOf[Tree]
+    )
   }
 
   it should "support tagged types in case classes" in {
@@ -400,7 +535,12 @@ class MacrosSpec extends FlatSpec with Matchers {
     val b = "b".asInstanceOf[String with Tag]
     val c = Map("c" -> 0).asInstanceOf[Map[String with Tag, Int with Tag] with Tag]
     val d = Empty().asInstanceOf[Empty with Tag]
-    roundTrip(ContainsTaggedTypes(a, b, c, d), """{a: 1, b: "b", c: {c: 0}, d: {}}""", classOf[ContainsTaggedTypes], classOf[Empty])
+    roundTrip(
+      ContainsTaggedTypes(a, b, c, d),
+      """{a: 1, b: "b", c: {c: 0}, d: {}}""",
+      classOf[ContainsTaggedTypes],
+      classOf[Empty]
+    )
   }
 
   it should "be able to support value classes" in {
@@ -408,22 +548,30 @@ class MacrosSpec extends FlatSpec with Matchers {
       override def get[T](clazz: Class[T], registry: CodecRegistry): Codec[T] = {
         if (clazz == classOf[IsValueClass]) {
           new Codec[IsValueClass] {
-            override def encode(writer: BsonWriter, value: IsValueClass, encoderContext: EncoderContext): Unit = writer.writeInt32(value.id)
+            override def encode(writer: BsonWriter, value: IsValueClass, encoderContext: EncoderContext): Unit =
+              writer.writeInt32(value.id)
 
             override def getEncoderClass: Class[IsValueClass] = classOf[IsValueClass]
 
-            override def decode(reader: BsonReader, decoderContext: DecoderContext): IsValueClass = IsValueClass(reader.readInt32())
+            override def decode(reader: BsonReader, decoderContext: DecoderContext): IsValueClass =
+              IsValueClass(reader.readInt32())
           }.asInstanceOf[Codec[T]]
         } else {
           null // scalastyle:ignore
         }
       }
     }
-    roundTrip(ContainsValueClass(IsValueClass(1), "string value"), """{id: 1, myString: 'string value'}""", classOf[ContainsValueClass], valueClassCodecProvider)
+    roundTrip(
+      ContainsValueClass(IsValueClass(1), "string value"),
+      """{id: 1, myString: 'string value'}""",
+      classOf[ContainsValueClass],
+      valueClassCodecProvider
+    )
   }
 
   it should "support extra fields in the document" in {
-    val json = """{firstName: "Bob", lastName: "Jones", address: {number: 1, street: "Acacia Avenue"}, aliases: ["Robert", "Rob"]}"""
+    val json =
+      """{firstName: "Bob", lastName: "Jones", address: {number: 1, street: "Acacia Avenue"}, aliases: ["Robert", "Rob"]}"""
     decode(Person("Bob", "Jones"), json, Macros.createCodec[Person]())
   }
 
@@ -449,7 +597,8 @@ class MacrosSpec extends FlatSpec with Matchers {
   }
 
   it should "throw a CodecConfigurationException when encountering null values in case classes" in {
-    val registry = CodecRegistries.fromRegistries(CodecRegistries.fromProviders(classOf[Person]), DEFAULT_CODEC_REGISTRY)
+    val registry =
+      CodecRegistries.fromRegistries(CodecRegistries.fromProviders(classOf[Person]), DEFAULT_CODEC_REGISTRY)
     an[BsonInvalidOperationException] should be thrownBy {
       encode(registry.get(classOf[Person]), null)
     }
@@ -476,7 +625,10 @@ class MacrosSpec extends FlatSpec with Matchers {
   }
 
   it should "error when reading unexpected lists" in {
-    val registry = CodecRegistries.fromRegistries(CodecRegistries.fromProviders(classOf[ContainsCaseClass], classOf[Person]), DEFAULT_CODEC_REGISTRY)
+    val registry = CodecRegistries.fromRegistries(
+      CodecRegistries.fromProviders(classOf[ContainsCaseClass], classOf[Person]),
+      DEFAULT_CODEC_REGISTRY
+    )
     an[BsonInvalidOperationException] should be thrownBy {
       val json = """{name: "Bob", friend: [{firstName: "Jane", lastName: "Ada"}]}"""
       decode(ContainsCaseClass("Bob", Person("Jane", "Ada")), json, registry.get(classOf[ContainsCaseClass]))
@@ -484,14 +636,19 @@ class MacrosSpec extends FlatSpec with Matchers {
   }
 
   it should "error when reading unexpected documents" in {
-    val registry = CodecRegistries.fromRegistries(CodecRegistries.fromProviders(classOf[ContainsCaseClass], classOf[Person]), DEFAULT_CODEC_REGISTRY)
+    val registry = CodecRegistries.fromRegistries(
+      CodecRegistries.fromProviders(classOf[ContainsCaseClass], classOf[Person]),
+      DEFAULT_CODEC_REGISTRY
+    )
     an[BsonInvalidOperationException] should be thrownBy {
       val json = """{name: "Bob", friend: {first: {firstName: "Jane", lastName: "Ada"}}}"""
       decode(ContainsCaseClass("Bob", Person("Jane", "Ada")), json, registry.get(classOf[ContainsCaseClass]))
     }
   }
 
-  def roundTrip[T](value: T, expected: String, provider: CodecProvider, providers: CodecProvider*)(implicit ct: ClassTag[T]): Unit = {
+  def roundTrip[T](value: T, expected: String, provider: CodecProvider, providers: CodecProvider*)(
+      implicit ct: ClassTag[T]
+  ): Unit = {
     val codecProviders: util.List[CodecProvider] = (provider +: providers).asJava
     val registry = CodecRegistries.fromRegistries(CodecRegistries.fromProviders(codecProviders), DEFAULT_CODEC_REGISTRY)
     val codec = registry.get(ct.runtimeClass).asInstanceOf[Codec[T]]
@@ -529,7 +686,8 @@ class MacrosSpec extends FlatSpec with Matchers {
   def createTreeJson(tree: Tree): String = {
     tree match {
       case l: Leaf => s"""{_t: "Leaf", value: ${l.value}}"""
-      case b: Branch => s"""{_t: "Branch", l1: ${createTreeJson(b.b1)}, r1: ${createTreeJson(b.b2)}, value: ${b.value}}"""
+      case b: Branch =>
+        s"""{_t: "Branch", l1: ${createTreeJson(b.b1)}, r1: ${createTreeJson(b.b2)}, value: ${b.value}}"""
       case _ => "{}"
     }
   }

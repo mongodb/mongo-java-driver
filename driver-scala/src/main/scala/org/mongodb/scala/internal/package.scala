@@ -23,5 +23,4 @@ package org.mongodb.scala
  *       Mirrors the async package naming convention and locations but under the `org.mongodb.scala` namespace
  * @since 1.0
  */
-package object internal {
-}
+package object internal {}

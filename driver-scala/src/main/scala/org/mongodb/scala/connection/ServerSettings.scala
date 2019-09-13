@@ -16,7 +16,7 @@
 
 package org.mongodb.scala.connection
 
-import com.mongodb.connection.{ServerSettings => JServerSettings}
+import com.mongodb.connection.{ ServerSettings => JServerSettings }
 
 /**
  * Settings relating to monitoring of each server.

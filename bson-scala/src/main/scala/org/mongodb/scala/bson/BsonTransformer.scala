@@ -33,8 +33,11 @@ import org.mongodb.scala.bson.collection.mutable.{ Document => MDocument }
  * @tparam T the type of value to be transformed into a [[BsonValue]].
  * @since 1.0
  */
-@implicitNotFound("No bson implicit transformer found for type ${T}. Implement or import an implicit BsonTransformer for this type.")
+@implicitNotFound(
+  "No bson implicit transformer found for type ${T}. Implement or import an implicit BsonTransformer for this type."
+)
 trait BsonTransformer[-T] {
+
   /**
    * Convert the object into a [[BsonValue]]
    */
@@ -168,7 +171,7 @@ trait DefaultBsonTransformers extends LowPrio {
     new BsonTransformer[Option[T]] {
       def apply(value: Option[T]): BsonValue = value match {
         case Some(transformable) => transformer(transformable)
-        case None => BsonNull()
+        case None                => BsonNull()
       }
     }
   }
@@ -176,6 +179,7 @@ trait DefaultBsonTransformers extends LowPrio {
 }
 
 trait LowPrio {
+
   /**
    * Transforms `immutable.Document` to `BsonDocument`
    */
@@ -197,7 +201,9 @@ trait LowPrio {
    * @tparam T the type of the values
    * @return a BsonDocument containing the values
    */
-  implicit def transformKeyValuePairs[T](implicit transformer: BsonTransformer[T]): BsonTransformer[Seq[(String, T)]] = {
+  implicit def transformKeyValuePairs[T](
+      implicit transformer: BsonTransformer[T]
+  ): BsonTransformer[Seq[(String, T)]] = {
     new BsonTransformer[Seq[(String, T)]] {
       def apply(values: Seq[(String, T)]): BsonDocument = {
         BsonDocument(values.map(kv => (kv._1, transformer(kv._2))).toList)

@@ -24,16 +24,18 @@ import org.mongodb.scala.model.Collation
 import org.mongodb.scala.model.changestream.FullDocument
 import org.reactivestreams.Publisher
 import org.scalamock.scalatest.proxy.MockFactory
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{ FlatSpec, Matchers }
 
 import scala.concurrent.duration.Duration
-import scala.util.{Failure, Success}
+import scala.util.{ Failure, Success }
 
 class ChangeStreamObservableSpec extends BaseSpec with MockFactory {
 
   "ChangeStreamObservable" should "have the same methods as the wrapped ChangeStreamObservable" in {
     val mongoPublisher: Set[String] = classOf[Publisher[Document]].getMethods.map(_.getName).toSet
-    val wrapped: Set[String] = classOf[ChangeStreamPublisher[Document]].getMethods.map(_.getName).toSet -- mongoPublisher
+    val wrapped: Set[String] = classOf[ChangeStreamPublisher[Document]].getMethods
+      .map(_.getName)
+      .toSet -- mongoPublisher
     val local = classOf[ChangeStreamObservable[Document]].getMethods.map(_.getName).toSet
 
     wrapped.foreach((name: String) => {

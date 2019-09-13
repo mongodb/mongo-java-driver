@@ -16,7 +16,7 @@
 
 package org.mongodb.scala
 
-import com.mongodb.{WriteConcern => JWriteConcern}
+import com.mongodb.{ WriteConcern => JWriteConcern }
 
 /**
  * Controls the acknowledgment of write operations with various options.
@@ -49,6 +49,7 @@ import com.mongodb.{WriteConcern => JWriteConcern}
  * @since 1.0
  */
 object WriteConcern {
+
   /**
    * Write operations that use this write concern will wait for acknowledgement from the primary server before returning. Exceptions are
    * raised for network issues, and server errors.

@@ -18,7 +18,7 @@ package org.mongodb.scala.model
 
 import scala.collection.JavaConverters._
 
-import com.mongodb.client.model.{PushOptions => JPushOptions, Updates => JUpdates}
+import com.mongodb.client.model.{ PushOptions => JPushOptions, Updates => JUpdates }
 
 import org.mongodb.scala.bson.conversions.Bson
 
@@ -30,6 +30,7 @@ import org.mongodb.scala.bson.conversions.Bson
  * @since 1.0
  */
 object Updates {
+
   /**
    * Combine a list of updates into a single update.
    *
@@ -70,6 +71,7 @@ object Updates {
    * @see UpdateOptions#upsert(boolean)
    */
   def setOnInsert[TItem](fieldName: String, value: TItem): Bson = JUpdates.setOnInsert(fieldName, value)
+
   /**
    * Creates an update that renames a field.
    *

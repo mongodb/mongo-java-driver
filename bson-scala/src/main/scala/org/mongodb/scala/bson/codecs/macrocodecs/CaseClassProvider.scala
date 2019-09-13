@@ -27,12 +27,16 @@ private[codecs] object CaseClassProvider {
     createCodecProvider[T](c)(c.Expr[Boolean](q"true"))
   }
 
-  def createCodecProviderWithClassEncodeNone[T: c.WeakTypeTag](c: whitebox.Context)(clazz: c.Expr[Class[T]]): c.Expr[CodecProvider] = {
+  def createCodecProviderWithClassEncodeNone[T: c.WeakTypeTag](
+      c: whitebox.Context
+  )(clazz: c.Expr[Class[T]]): c.Expr[CodecProvider] = {
     import c.universe._
     createCodecProvider[T](c)(c.Expr[Boolean](q"true"))
   }
 
-  def createCodecProviderWithClassIgnoreNone[T: c.WeakTypeTag](c: whitebox.Context)(clazz: c.Expr[Class[T]]): c.Expr[CodecProvider] = {
+  def createCodecProviderWithClassIgnoreNone[T: c.WeakTypeTag](
+      c: whitebox.Context
+  )(clazz: c.Expr[Class[T]]): c.Expr[CodecProvider] = {
     import c.universe._
     createCodecProvider[T](c)(c.Expr[Boolean](q"false"))
   }

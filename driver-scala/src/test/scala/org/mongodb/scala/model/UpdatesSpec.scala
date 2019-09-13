@@ -22,16 +22,19 @@ import org.bson.BsonDocument
 import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Updates._
-import org.mongodb.scala.{BaseSpec, MongoClient, model}
+import org.mongodb.scala.{ model, BaseSpec, MongoClient }
 
 class UpdatesSpec extends BaseSpec {
   val registry = MongoClient.DEFAULT_CODEC_REGISTRY
 
-  def toBson(bson: Bson): Document = Document(bson.toBsonDocument(classOf[BsonDocument], MongoClient.DEFAULT_CODEC_REGISTRY))
+  def toBson(bson: Bson): Document =
+    Document(bson.toBsonDocument(classOf[BsonDocument], MongoClient.DEFAULT_CODEC_REGISTRY))
 
   "Updates" should "have the same methods as the wrapped Updates" in {
     val wrapped = classOf[com.mongodb.client.model.Updates].getDeclaredMethods
-      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers)).map(_.getName).toSet
+      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers))
+      .map(_.getName)
+      .toSet
     val local = model.Updates.getClass.getDeclaredMethods.filter(f => isPublic(f.getModifiers)).map(_.getName).toSet
 
     local should equal(wrapped)
@@ -45,7 +48,9 @@ class UpdatesSpec extends BaseSpec {
   it should "should render $setOnInsert" in {
     toBson(setOnInsert("x", 1)) should equal(Document("""{$setOnInsert : { x : 1} }"""))
     toBson(setOnInsert("x", List(1, 2, 3))) should equal(Document("""{$setOnInsert : { x : [1, 2, 3]} }"""))
-    toBson(setOnInsert("x", Map("a" -> 1, "b" -> 2, "c" -> 3))) should equal(Document("""{$setOnInsert : { x : {a: 1, b: 2, c: 3}} }"""))
+    toBson(setOnInsert("x", Map("a" -> 1, "b" -> 2, "c" -> 3))) should equal(
+      Document("""{$setOnInsert : { x : {a: 1, b: 2, c: 3}} }""")
+    )
     toBson(setOnInsert("x", null)) should equal(Document("""{$setOnInsert : { x : null } }"""))
   }
 
@@ -91,9 +96,17 @@ class UpdatesSpec extends BaseSpec {
     toBson(push("x", 1)) should equal(Document("""{$push : { x : 1} }"""))
     toBson(pushEach("x", 1, 2, 3)) should equal(Document("""{$push : { x : { $each : [1, 2, 3] } } }"""))
     toBson(pushEach("x", PushOptions(), 1, 2, 3)) should equal(Document("""{$push : { x : { $each : [1, 2, 3] } } }"""))
-    toBson(pushEach("x", PushOptions().position(0).slice(3).sortDocument(Document("{score : -1}")),
-      Document("""{score : 89}"""), Document("""{score : 65}"""))) should equal(
-      Document("""{$push : { x : { $each : [{score : 89}, {score : 65}], $position : 0, $slice : 3, $sort : { score : -1 } } } }""")
+    toBson(
+      pushEach(
+        "x",
+        PushOptions().position(0).slice(3).sortDocument(Document("{score : -1}")),
+        Document("""{score : 89}"""),
+        Document("""{score : 65}""")
+      )
+    ) should equal(
+      Document(
+        """{$push : { x : { $each : [{score : 89}, {score : 65}], $position : 0, $slice : 3, $sort : { score : -1 } } } }"""
+      )
     )
 
     toBson(pushEach("x", PushOptions().position(0).slice(3).sort(-1), 89, 65)) should equal(
@@ -137,10 +150,12 @@ class UpdatesSpec extends BaseSpec {
     toBson(combine(combine(set("x", 1), set("y", 2)))) should equal(Document("""{$set : { x : 1, y : 2} }"""))
     toBson(combine(combine(set("x", 1), set("x", 2)))) should equal(Document("""{$set : { x : 2} }"""))
 
-    toBson(combine(combine(set("x", 1), inc("z", 3), set("y", 2), inc("a", 4)))) should equal(Document("""{
+    toBson(combine(combine(set("x", 1), inc("z", 3), set("y", 2), inc("a", 4)))) should equal(
+      Document("""{
                                                                                                    $set : { x : 1, y : 2},
                                                                                                    $inc : { z : 3, a : 4}
-                                                                                                  }"""))
+                                                                                                  }""")
+    )
   }
 
 }

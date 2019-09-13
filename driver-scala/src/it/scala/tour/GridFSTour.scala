@@ -55,13 +55,14 @@ object GridFSTour {
     val gridFSBucket = GridFSBucket(database)
 
     /*
-    * UploadFromStream Example
-    */
+     * UploadFromStream Example
+     */
     // Get the input stream
     val streamToUploadFrom: AsyncInputStream = toAsyncInputStream("MongoDB Tutorial..".getBytes(StandardCharsets.UTF_8))
 
     // Create some custom options
-    val options: GridFSUploadOptions = new GridFSUploadOptions().chunkSizeBytes(1024 * 1204).metadata(Document("type" -> "presentation"))
+    val options: GridFSUploadOptions =
+      new GridFSUploadOptions().chunkSizeBytes(1024 * 1204).metadata(Document("type" -> "presentation"))
 
     val fileId: ObjectId = gridFSBucket.uploadFromStream("mongodb-tutorial", streamToUploadFrom, options).headResult()
     streamToUploadFrom.close().headResult()
@@ -85,22 +86,37 @@ object GridFSTour {
     /*
      * Find documents with a filter
      */
-    gridFSBucket.find(Filters.equal("metadata.contentType", "image/png")).results().foreach(file => println(s" > ${file.getFilename}"))
+    gridFSBucket
+      .find(Filters.equal("metadata.contentType", "image/png"))
+      .results()
+      .foreach(file => println(s" > ${file.getFilename}"))
 
     /*
      * DownloadToStream
      */
     val outputPath: Path = Paths.get("/tmp/mongodb-tutorial.txt")
-    var streamToDownloadTo: AsynchronousFileChannel = AsynchronousFileChannel.open(outputPath, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE, StandardOpenOption.DELETE_ON_CLOSE)
+    var streamToDownloadTo: AsynchronousFileChannel = AsynchronousFileChannel.open(
+      outputPath,
+      StandardOpenOption.CREATE_NEW,
+      StandardOpenOption.WRITE,
+      StandardOpenOption.DELETE_ON_CLOSE
+    )
     gridFSBucket.downloadToStream(fileId, channelToOutputStream(streamToDownloadTo)).headResult()
     streamToDownloadTo.close()
 
     /*
      * DownloadToStream by name
      */
-    streamToDownloadTo = AsynchronousFileChannel.open(outputPath, StandardOpenOption.CREATE_NEW, StandardOpenOption.WRITE, StandardOpenOption.DELETE_ON_CLOSE)
+    streamToDownloadTo = AsynchronousFileChannel.open(
+      outputPath,
+      StandardOpenOption.CREATE_NEW,
+      StandardOpenOption.WRITE,
+      StandardOpenOption.DELETE_ON_CLOSE
+    )
     val downloadOptions: GridFSDownloadOptions = new GridFSDownloadOptions().revision(0)
-    gridFSBucket.downloadToStream("mongodb-tutorial", channelToOutputStream(streamToDownloadTo), downloadOptions).headResult()
+    gridFSBucket
+      .downloadToStream("mongodb-tutorial", channelToOutputStream(streamToDownloadTo), downloadOptions)
+      .headResult()
     streamToDownloadTo.close()
 
     /*
@@ -108,12 +124,15 @@ object GridFSTour {
      */
     val dstByteBuffer: ByteBuffer = ByteBuffer.allocate(1024 * 1024)
     val downloadStream: GridFSDownloadStream = gridFSBucket.openDownloadStream(fileId)
-    downloadStream.read(dstByteBuffer).map(result => {
-      dstByteBuffer.flip
-      val bytes: Array[Byte] = new Array[Byte](result)
-      dstByteBuffer.get(bytes)
-      println(new String(bytes, StandardCharsets.UTF_8))
-    }).headResult()
+    downloadStream
+      .read(dstByteBuffer)
+      .map(result => {
+        dstByteBuffer.flip
+        val bytes: Array[Byte] = new Array[Byte](result)
+        dstByteBuffer.get(bytes)
+        println(new String(bytes, StandardCharsets.UTF_8))
+      })
+      .headResult()
 
     /*
      * OpenDownloadStream by name
@@ -121,12 +140,15 @@ object GridFSTour {
     println("By name")
     dstByteBuffer.clear
     val downloadStreamByName: GridFSDownloadStream = gridFSBucket.openDownloadStream("sampleData")
-    downloadStreamByName.read(dstByteBuffer).map(result => {
-      dstByteBuffer.flip
-      val bytes: Array[Byte] = new Array[Byte](result)
-      dstByteBuffer.get(bytes)
-      println(new String(bytes, StandardCharsets.UTF_8))
-    }).headResult()
+    downloadStreamByName
+      .read(dstByteBuffer)
+      .map(result => {
+        dstByteBuffer.flip
+        val bytes: Array[Byte] = new Array[Byte](result)
+        dstByteBuffer.get(bytes)
+        println(new String(bytes, StandardCharsets.UTF_8))
+      })
+      .headResult()
 
     /*
      * Rename

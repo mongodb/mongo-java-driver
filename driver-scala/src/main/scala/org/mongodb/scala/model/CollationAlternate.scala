@@ -18,7 +18,7 @@ package org.mongodb.scala.model
 
 import scala.util.Try
 
-import com.mongodb.client.model.{CollationAlternate => JCollationAlternate}
+import com.mongodb.client.model.{ CollationAlternate => JCollationAlternate }
 
 /**
  * Collation support allows the specific configuration of whether or not spaces and punctuation are considered base characters.
@@ -50,6 +50,7 @@ object CollationAlternate {
    * @param collationAlternate the string value.
    * @return the read concern
    */
-  def fromString(collationAlternate: String): Try[CollationAlternate] = Try(JCollationAlternate.fromString(collationAlternate))
+  def fromString(collationAlternate: String): Try[CollationAlternate] =
+    Try(JCollationAlternate.fromString(collationAlternate))
 
 }

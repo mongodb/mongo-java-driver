@@ -25,25 +25,33 @@ import org.mongodb.scala.model.Accumulators._
 import org.mongodb.scala.model.Aggregates._
 import org.mongodb.scala.model.Projections._
 import org.mongodb.scala.model.Sorts._
-import org.mongodb.scala.{BaseSpec, MongoClient, MongoNamespace}
+import org.mongodb.scala.{ BaseSpec, MongoClient, MongoNamespace }
 
 class AggregatesSpec extends BaseSpec {
   val registry = MongoClient.DEFAULT_CODEC_REGISTRY
 
-  def toBson(bson: Bson): Document = Document(bson.toBsonDocument(classOf[BsonDocument], MongoClient.DEFAULT_CODEC_REGISTRY))
+  def toBson(bson: Bson): Document =
+    Document(bson.toBsonDocument(classOf[BsonDocument], MongoClient.DEFAULT_CODEC_REGISTRY))
 
   "Aggregates" should "have the same methods as the wrapped Aggregates" in {
     val wrapped = classOf[com.mongodb.client.model.Aggregates].getDeclaredMethods
-      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers)).map(_.getName).toSet
+      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers))
+      .map(_.getName)
+      .toSet
     val aliases = Set("filter")
-    val local = Aggregates.getClass.getDeclaredMethods.filter(f => isPublic(f.getModifiers)).map(_.getName).toSet -- aliases
+    val local = Aggregates.getClass.getDeclaredMethods
+      .filter(f => isPublic(f.getModifiers))
+      .map(_.getName)
+      .toSet -- aliases
 
     local should equal(wrapped)
   }
 
   it should "have the same methods as the wrapped Accumulators" in {
     val wrapped = classOf[com.mongodb.client.model.Accumulators].getDeclaredMethods
-      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers)).map(_.getName).toSet
+      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers))
+      .map(_.getName)
+      .toSet
     val local = Accumulators.getClass.getDeclaredMethods.filter(f => isPublic(f.getModifiers)).map(_.getName).toSet
     local should equal(wrapped)
   }
@@ -65,8 +73,15 @@ class AggregatesSpec extends BaseSpec {
 
   it should "render $bucketAuto" in {
     toBson(bucketAuto("$price", 4)) should equal(Document("""{ $bucketAuto: { groupBy: "$price", buckets: 4  } }"""))
-    toBson(bucketAuto("$price", 4, BucketAutoOptions().granularity(BucketGranularity.R5)
-      .output(sum("count", 1), avg("avgPrice", "$price")))) should equal(Document("""{$bucketAuto: {
+    toBson(
+      bucketAuto(
+        "$price",
+        4,
+        BucketAutoOptions()
+          .granularity(BucketGranularity.R5)
+          .output(sum("count", 1), avg("avgPrice", "$price"))
+      )
+    ) should equal(Document("""{$bucketAuto: {
         groupBy: "$price",
         buckets: 4,
         output: {
@@ -89,15 +104,29 @@ class AggregatesSpec extends BaseSpec {
   }
 
   it should "render $facet" in {
-    toBson(facet(
-      Facet("Screen Sizes", unwind("$attributes"), filter(Filters.equal("attributes.name", "screen size")), group(null, sum("count", 1))),
-      Facet("Manufacturer", filter(Filters.equal("attributes.name", "manufacturer")), group("$attributes.value", sum("count", 1)),
-        sort(descending("count")), limit(5))
-    )) should equal(
-      Document("""{$facet: { "Screen Sizes": [{$unwind: "$attributes"}, {$match: {"attributes.name": "screen size"}},
+    toBson(
+      facet(
+        Facet(
+          "Screen Sizes",
+          unwind("$attributes"),
+          filter(Filters.equal("attributes.name", "screen size")),
+          group(null, sum("count", 1))
+        ),
+        Facet(
+          "Manufacturer",
+          filter(Filters.equal("attributes.name", "manufacturer")),
+          group("$attributes.value", sum("count", 1)),
+          sort(descending("count")),
+          limit(5)
+        )
+      )
+    ) should equal(
+      Document(
+        """{$facet: { "Screen Sizes": [{$unwind: "$attributes"}, {$match: {"attributes.name": "screen size"}},
             {$group: { _id: null, count: {$sum: 1} }}],
       "Manufacturer": [ {$match: {"attributes.name": "manufacturer"}}, {$group: {_id: "$attributes.value", count: {$sum: 1}}},
-            {$sort: {count: -1}}, {$limit: 5}]}}""")
+            {$sort: {count: -1}}, {$limit: 5}]}}"""
+      )
     )
   }
 
@@ -116,19 +145,38 @@ class AggregatesSpec extends BaseSpec {
       )
     )
 
-    toBson(graphLookup("contacts", "$friends", "friends", "name", "socialNetwork",
-      GraphLookupOptions().maxDepth(1).depthField("master"))) should equal(
+    toBson(
+      graphLookup(
+        "contacts",
+        "$friends",
+        "friends",
+        "name",
+        "socialNetwork",
+        GraphLookupOptions().maxDepth(1).depthField("master")
+      )
+    ) should equal(
       Document(
         """{ $graphLookup: { from: "contacts", startWith: "$friends", connectFromField: "friends", connectToField: "name",
           |  as: "socialNetwork", maxDepth: 1, depthField: "master" } }""".stripMargin
       )
     )
 
-    toBson(graphLookup("contacts", "$friends", "friends", "name", "socialNetwork", GraphLookupOptions()
-      .depthField("master"))) should equal(Document(
-      """{ $graphLookup: { from: "contacts", startWith: "$friends", connectFromField: "friends",
+    toBson(
+      graphLookup(
+        "contacts",
+        "$friends",
+        "friends",
+        "name",
+        "socialNetwork",
+        GraphLookupOptions()
+          .depthField("master")
+      )
+    ) should equal(
+      Document(
+        """{ $graphLookup: { from: "contacts", startWith: "$friends", connectFromField: "friends",
           |  connectToField: "name", as: "socialNetwork", depthField: "master" } }""".stripMargin
-    ))
+      )
+    )
   }
 
   it should "render $project" in {
@@ -185,15 +233,25 @@ class AggregatesSpec extends BaseSpec {
     toBson(unwind("$sizes", UnwindOptions().preserveNullAndEmptyArrays(null))) should equal(
       Document("""{ $unwind : { path : "$sizes" } }""")
     )
-    toBson(unwind("$sizes", UnwindOptions().preserveNullAndEmptyArrays(false))) should equal(Document("""
-    { $unwind : { path : "$sizes", preserveNullAndEmptyArrays : false } }"""))
-    toBson(unwind("$sizes", UnwindOptions().preserveNullAndEmptyArrays(true))) should equal(Document("""
-    { $unwind : { path : "$sizes", preserveNullAndEmptyArrays : true } }"""))
-    toBson(unwind("$sizes", UnwindOptions().includeArrayIndex(null))) should equal(Document("""{ $unwind : { path : "$sizes" } }"""))
-    toBson(unwind("$sizes", UnwindOptions().includeArrayIndex("$a"))) should equal(Document("""
-    { $unwind : { path : "$sizes", includeArrayIndex : "$a" } }"""))
-    toBson(unwind("$sizes", UnwindOptions().preserveNullAndEmptyArrays(true).includeArrayIndex("$a"))) should equal(Document("""
-    { $unwind : { path : "$sizes", preserveNullAndEmptyArrays : true, includeArrayIndex : "$a" } }"""))
+    toBson(unwind("$sizes", UnwindOptions().preserveNullAndEmptyArrays(false))) should equal(
+      Document("""
+    { $unwind : { path : "$sizes", preserveNullAndEmptyArrays : false } }""")
+    )
+    toBson(unwind("$sizes", UnwindOptions().preserveNullAndEmptyArrays(true))) should equal(
+      Document("""
+    { $unwind : { path : "$sizes", preserveNullAndEmptyArrays : true } }""")
+    )
+    toBson(unwind("$sizes", UnwindOptions().includeArrayIndex(null))) should equal(
+      Document("""{ $unwind : { path : "$sizes" } }""")
+    )
+    toBson(unwind("$sizes", UnwindOptions().includeArrayIndex("$a"))) should equal(
+      Document("""
+    { $unwind : { path : "$sizes", includeArrayIndex : "$a" } }""")
+    )
+    toBson(unwind("$sizes", UnwindOptions().preserveNullAndEmptyArrays(true).includeArrayIndex("$a"))) should equal(
+      Document("""
+    { $unwind : { path : "$sizes", preserveNullAndEmptyArrays : true, includeArrayIndex : "$a" } }""")
+    )
   }
 
   it should "render $out" in {
@@ -206,62 +264,81 @@ class AggregatesSpec extends BaseSpec {
       Document("""{ $merge : {into: {db: "db1", coll: "authors" }}}""")
     )
 
-    toBson(merge("authors", MergeOptions().uniqueIdentifier("ssn"))) should equal(Document("""{ $merge : {into: "authors", on: "ssn" }}"""))
+    toBson(merge("authors", MergeOptions().uniqueIdentifier("ssn"))) should equal(
+      Document("""{ $merge : {into: "authors", on: "ssn" }}""")
+    )
 
     toBson(merge("authors", MergeOptions().uniqueIdentifier("ssn", "otherId"))) should equal(
       Document("""{ $merge : {into: "authors", on: ["ssn", "otherId"] }}""")
     )
 
-    toBson(merge(
-      "authors",
-      MergeOptions().whenMatched(MergeOptions.WhenMatched.REPLACE)
-    )) should equal(
+    toBson(
+      merge(
+        "authors",
+        MergeOptions().whenMatched(MergeOptions.WhenMatched.REPLACE)
+      )
+    ) should equal(
       Document("""{ $merge : {into: "authors", whenMatched: "replace" }}""")
     )
-    toBson(merge(
-      "authors",
-      MergeOptions().whenMatched(MergeOptions.WhenMatched.KEEP_EXISTING)
-    )) should equal(
+    toBson(
+      merge(
+        "authors",
+        MergeOptions().whenMatched(MergeOptions.WhenMatched.KEEP_EXISTING)
+      )
+    ) should equal(
       Document("""{ $merge : {into: "authors", whenMatched: "keepExisting" }}""")
     )
-    toBson(merge(
-      "authors",
-      MergeOptions().whenMatched(MergeOptions.WhenMatched.MERGE)
-    )) should equal(
+    toBson(
+      merge(
+        "authors",
+        MergeOptions().whenMatched(MergeOptions.WhenMatched.MERGE)
+      )
+    ) should equal(
       Document("""{ $merge : {into: "authors", whenMatched: "merge" }}""")
     )
-    toBson(merge(
-      "authors",
-      MergeOptions().whenMatched(MergeOptions.WhenMatched.FAIL)
-    )) should equal(
+    toBson(
+      merge(
+        "authors",
+        MergeOptions().whenMatched(MergeOptions.WhenMatched.FAIL)
+      )
+    ) should equal(
       Document("""{ $merge : {into: "authors", whenMatched: "fail" }}""")
     )
 
-    toBson(merge(
-      "authors",
-      MergeOptions().whenNotMatched(MergeOptions.WhenNotMatched.INSERT)
-    )) should equal(
+    toBson(
+      merge(
+        "authors",
+        MergeOptions().whenNotMatched(MergeOptions.WhenNotMatched.INSERT)
+      )
+    ) should equal(
       Document("""{ $merge : {into: "authors", whenNotMatched: "insert" }}""")
     )
-    toBson(merge(
-      "authors",
-      MergeOptions().whenNotMatched(MergeOptions.WhenNotMatched.DISCARD)
-    )) should equal(
+    toBson(
+      merge(
+        "authors",
+        MergeOptions().whenNotMatched(MergeOptions.WhenNotMatched.DISCARD)
+      )
+    ) should equal(
       Document("""{ $merge : {into: "authors", whenNotMatched: "discard" }}""")
     )
-    toBson(merge(
-      "authors",
-      MergeOptions().whenNotMatched(MergeOptions.WhenNotMatched.FAIL)
-    )) should equal(
+    toBson(
+      merge(
+        "authors",
+        MergeOptions().whenNotMatched(MergeOptions.WhenNotMatched.FAIL)
+      )
+    ) should equal(
       Document("""{ $merge : {into: "authors", whenNotMatched: "fail" }}""")
     )
 
-    toBson(merge(
-      "authors",
-      MergeOptions().whenMatched(MergeOptions.WhenMatched.PIPELINE)
-        .variables(Variable("y", 2), Variable("z", 3))
-        .whenMatchedPipeline(addFields(Field("x", 1)))
-    )) should equal(
+    toBson(
+      merge(
+        "authors",
+        MergeOptions()
+          .whenMatched(MergeOptions.WhenMatched.PIPELINE)
+          .variables(Variable("y", 2), Variable("z", 3))
+          .whenMatchedPipeline(addFields(Field("x", 1)))
+      )
+    ) should equal(
       Document("""{ $merge : {into: "authors", let: {y: 2, z: 3}, whenMatched: [{$addFields: {x: 1}}]}}""")
     )
   }
@@ -270,8 +347,12 @@ class AggregatesSpec extends BaseSpec {
     toBson(group("$customerId")) should equal(Document("""{ $group : { _id : "$customerId" } }"""))
     toBson(group(null)) should equal(Document("""{ $group : { _id : null } }"""))
 
-    toBson(group(Document("""{ month: { $month: "$date" }, day: { $dayOfMonth: "$date" }, year: { $year: "$date" } }"""))) should equal(
-      Document("""{ $group : { _id : { month: { $month: "$date" }, day: { $dayOfMonth: "$date" }, year: { $year: "$date" } } } }""")
+    toBson(
+      group(Document("""{ month: { $month: "$date" }, day: { $dayOfMonth: "$date" }, year: { $year: "$date" } }"""))
+    ) should equal(
+      Document(
+        """{ $group : { _id : { month: { $month: "$date" }, day: { $dayOfMonth: "$date" }, year: { $year: "$date" } } } }"""
+      )
     )
 
     val groupDocument = Document("""{
@@ -290,19 +371,21 @@ class AggregatesSpec extends BaseSpec {
        }
     }""")
 
-    toBson(group(
-      null,
-      sum("sum", Document("""{ $multiply: [ "$price", "$quantity" ] }""")),
-      avg("avg", "$quantity"),
-      min("min", "$quantity"),
-      max("max", "$quantity"),
-      first("first", "$quantity"),
-      last("last", "$quantity"),
-      push("all", "$quantity"),
-      addToSet("unique", "$quantity"),
-      stdDevPop("stdDevPop", "$quantity"),
-      stdDevSamp("stdDevSamp", "$quantity")
-    )) should equal(groupDocument)
+    toBson(
+      group(
+        null,
+        sum("sum", Document("""{ $multiply: [ "$price", "$quantity" ] }""")),
+        avg("avg", "$quantity"),
+        min("min", "$quantity"),
+        max("max", "$quantity"),
+        first("first", "$quantity"),
+        last("last", "$quantity"),
+        push("all", "$quantity"),
+        addToSet("unique", "$quantity"),
+        stdDevPop("stdDevPop", "$quantity"),
+        stdDevSamp("stdDevSamp", "$quantity")
+      )
+    ) should equal(groupDocument)
   }
 
 }

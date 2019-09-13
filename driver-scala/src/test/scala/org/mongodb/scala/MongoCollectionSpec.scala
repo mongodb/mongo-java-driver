@@ -18,13 +18,13 @@ package org.mongodb.scala
 
 import java.util.concurrent.TimeUnit
 
-import com.mongodb.reactivestreams.client.{MongoCollection => JMongoCollection}
+import com.mongodb.reactivestreams.client.{ MongoCollection => JMongoCollection }
 import org.bson.BsonDocument
 import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.configuration.CodecRegistries.fromProviders
 import org.mongodb.scala.model._
 import org.scalamock.scalatest.proxy.MockFactory
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{ FlatSpec, Matchers }
 
 import scala.collection.JavaConverters._
 
@@ -290,7 +290,6 @@ class MongoCollectionSpec extends BaseSpec with MockFactory {
     wrapped.expects(Symbol("replaceOne"))(filter, replacement, replaceOptions).once()
     wrapped.expects(Symbol("replaceOne"))(clientSession, filter, replacement).once()
     wrapped.expects(Symbol("replaceOne"))(clientSession, filter, replacement, replaceOptions).once()
-
 
     mongoCollection.replaceOne(filter, replacement)
     mongoCollection.replaceOne(filter, replacement, replaceOptions)

@@ -46,7 +46,7 @@ object QuickTourCaseClass {
     // Create a codec for the Person case class
     import org.mongodb.scala.bson.codecs.Macros._
     import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
-    import org.bson.codecs.configuration.CodecRegistries.{ fromRegistries, fromProviders }
+    import org.bson.codecs.configuration.CodecRegistries.{ fromProviders, fromRegistries }
     val codecRegistry = fromRegistries(fromProviders(classOf[Person]), DEFAULT_CODEC_REGISTRY)
 
     // Create the client
@@ -93,7 +93,9 @@ object QuickTourCaseClass {
     collection.find(regex("firstName", "^G")).sort(ascending("lastName")).printResults()
 
     // Update One
-    collection.updateOne(equal("lastName", "Berners Lee"), set("lastName", "Berners-Lee")).printHeadResult("Update Result: ")
+    collection
+      .updateOne(equal("lastName", "Berners Lee"), set("lastName", "Berners-Lee"))
+      .printHeadResult("Update Result: ")
 
     // Delete One
     collection.deleteOne(equal("firstName", "Zaphod")).printHeadResult("Delete Result: ")

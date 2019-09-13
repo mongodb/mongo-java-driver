@@ -18,7 +18,7 @@ package org.mongodb.scala.model
 
 import scala.collection.JavaConverters._
 
-import com.mongodb.client.model.{Sorts => JSorts}
+import com.mongodb.client.model.{ Sorts => JSorts }
 
 import org.mongodb.scala.bson.conversions.Bson
 
@@ -31,6 +31,7 @@ import org.mongodb.scala.bson.conversions.Bson
  * @since 1.0
  */
 object Sorts {
+
   /**
    * Create a sort specification for an ascending sort on the given fields.
    *

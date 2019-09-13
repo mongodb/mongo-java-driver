@@ -16,7 +16,7 @@
 
 package org.mongodb.scala
 
-import com.mongodb.{TransactionOptions => JTransactionOptions}
+import com.mongodb.{ TransactionOptions => JTransactionOptions }
 
 /**
  * The options to apply to transactions.

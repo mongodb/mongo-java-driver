@@ -16,12 +16,11 @@
 
 package org.mongodb.scala
 
-import org.mongodb.scala.model.{Filters, Updates}
+import org.mongodb.scala.model.{ Filters, Updates }
 import org.mongodb.scala.result.UpdateResult
 
 import scala.concurrent.Await
 import scala.concurrent.duration.Duration
-
 
 //scalastyle:off magic.number regex
 class DocumentationTransactionsExampleSpec extends RequiresMongoDBISpec {
@@ -47,20 +46,29 @@ class DocumentationTransactionsExampleSpec extends RequiresMongoDBISpec {
     client.getDatabase("hr").drop().execute()
   }
 
-  def updateEmployeeInfo(database: MongoDatabase, observable: SingleObservable[ClientSession]): SingleObservable[ClientSession] = {
+  def updateEmployeeInfo(
+      database: MongoDatabase,
+      observable: SingleObservable[ClientSession]
+  ): SingleObservable[ClientSession] = {
     observable.map(clientSession => {
       val employeesCollection = database.getCollection("employees")
       val eventsCollection = database.getCollection("events")
 
-      val transactionOptions = TransactionOptions.builder()
+      val transactionOptions = TransactionOptions
+        .builder()
         .readPreference(ReadPreference.primary())
         .readConcern(ReadConcern.SNAPSHOT)
         .writeConcern(WriteConcern.MAJORITY)
         .build()
       clientSession.startTransaction(transactionOptions)
-      employeesCollection.updateOne(clientSession, Filters.eq("employee", 3), Updates.set("status", "Inactive"))
+      employeesCollection
+        .updateOne(clientSession, Filters.eq("employee", 3), Updates.set("status", "Inactive"))
         .subscribe((res: UpdateResult) => println(res))
-      eventsCollection.insertOne(clientSession, Document("employee" -> 3, "status" -> Document("new" -> "Inactive", "old" -> "Active")))
+      eventsCollection
+        .insertOne(
+          clientSession,
+          Document("employee" -> 3, "status" -> Document("new" -> "Inactive", "old" -> "Active"))
+        )
         .subscribe((res: Completed) => ())
 
       clientSession
@@ -92,7 +100,8 @@ class DocumentationTransactionsExampleSpec extends RequiresMongoDBISpec {
   def updateEmployeeInfoWithRetry(client: MongoClient): SingleObservable[Completed] = {
 
     val database = client.getDatabase("hr")
-    val updateEmployeeInfoObservable: SingleObservable[ClientSession] = updateEmployeeInfo(database, client.startSession())
+    val updateEmployeeInfoObservable: SingleObservable[ClientSession] =
+      updateEmployeeInfo(database, client.startSession())
     val commitTransactionObservable: SingleObservable[Completed] =
       updateEmployeeInfoObservable.flatMap(clientSession => clientSession.commitTransaction())
     val commitAndRetryObservable: SingleObservable[Completed] = commitAndRetry(commitTransactionObservable)

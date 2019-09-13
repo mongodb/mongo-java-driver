@@ -20,7 +20,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit.SECONDS
 
 import com.mongodb.client.model.changestream.FullDocument
-import org.mongodb.scala.model.{Aggregates, Filters, Updates}
+import org.mongodb.scala.model.{ Aggregates, Filters, Updates }
 import org.mongodb.scala.model.changestream.ChangeStreamDocument
 
 import scala.collection.mutable
@@ -66,7 +66,9 @@ class DocumentationChangeStreamExampleSpec extends RequiresMongoDBISpec with Fut
     observable.subscribe(observer)
 
     // Update the test document.
-    collection.updateOne(Document("{username: 'alice123'}"), Document("{$set : { email: 'alice@example.com'}}")).subscribeAndAwait()
+    collection
+      .updateOne(Document("{username: 'alice123'}"), Document("{$set : { email: 'alice@example.com'}}"))
+      .subscribeAndAwait()
     observer.waitForThenCancel()
 
     /*
@@ -79,8 +81,14 @@ class DocumentationChangeStreamExampleSpec extends RequiresMongoDBISpec with Fut
     collection.insertMany(List(Document("{updateMe: 1}"), Document("{replaceMe: 1}"))).subscribeAndAwait()
 
     // Create $match pipeline stage.
-    val pipeline = List(Aggregates.filter(Filters.or(Document("{'fullDocument.username': 'alice123'}"),
-      Filters.in("operationType", "update", "replace", "delete"))))
+    val pipeline = List(
+      Aggregates.filter(
+        Filters.or(
+          Document("{'fullDocument.username': 'alice123'}"),
+          Filters.in("operationType", "update", "replace", "delete")
+        )
+      )
+    )
 
     // Create the change stream cursor with $match.
     observable = collection.watch(pipeline).fullDocument(FullDocument.UPDATE_LOOKUP)
@@ -97,14 +105,12 @@ class DocumentationChangeStreamExampleSpec extends RequiresMongoDBISpec with Fut
     observer.waitForThenCancel()
 
     val results = observer.results()
-    println(
-      s"""
+    println(s"""
          |Update operationType: ${results.head.getUpdateDescription}
          |                      ${results.head}
    """.stripMargin.trim)
     println(s"Replace operationType: ${results(1)}")
     println(s"Delete operationType: ${results(2)}")
-
 
     /*
      * Example 4
@@ -148,7 +154,8 @@ class DocumentationChangeStreamExampleSpec extends RequiresMongoDBISpec with Fut
 
   // end implicit functions
 
-  private class LatchedObserver[T](val printResults: Boolean = true, val minimumNumberOfResults: Int = 1) extends Observer[T] {
+  private class LatchedObserver[T](val printResults: Boolean = true, val minimumNumberOfResults: Int = 1)
+      extends Observer[T] {
     private val latch: CountDownLatch = new CountDownLatch(1)
     private val resultsBuffer: mutable.ListBuffer[T] = new mutable.ListBuffer[T]
     private var subscription: Option[Subscription] = None
@@ -187,6 +194,5 @@ class DocumentationChangeStreamExampleSpec extends RequiresMongoDBISpec with Fut
       subscription.foreach(_.unsubscribe())
     }
   }
-
 
 }

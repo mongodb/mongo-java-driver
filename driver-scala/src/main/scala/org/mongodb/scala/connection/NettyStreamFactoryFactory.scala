@@ -16,7 +16,7 @@
 
 package org.mongodb.scala.connection
 
-import com.mongodb.connection.netty.{NettyStreamFactoryFactory => JNettyStreamFactoryFactory}
+import com.mongodb.connection.netty.{ NettyStreamFactoryFactory => JNettyStreamFactoryFactory }
 
 /**
  * A `StreamFactoryFactory` implementation for <a href='http://netty.io/'>Netty</a>-based streams.

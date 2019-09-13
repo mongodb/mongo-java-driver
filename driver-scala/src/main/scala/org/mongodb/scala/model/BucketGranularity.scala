@@ -18,7 +18,7 @@ package org.mongodb.scala.model
 
 import scala.util.Try
 
-import com.mongodb.client.model.{BucketGranularity => JBucketGranularity}
+import com.mongodb.client.model.{ BucketGranularity => JBucketGranularity }
 
 /**
  * Granularity values for automatic bucketing.

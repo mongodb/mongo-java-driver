@@ -18,18 +18,24 @@ package org.mongodb.scala
 
 import java.lang.reflect.Modifier.isStatic
 
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{ FlatSpec, Matchers }
 
 class MongoDriverInformationSpec extends BaseSpec {
 
   "MongoDriverInformation" should "have the same static fields as the wrapped MongoDriverInformation" in {
     val MongoDriverInformationClass: Class[MongoDriverInformation] = classOf[com.mongodb.MongoDriverInformation]
-    val wrappedFields = MongoDriverInformationClass.getDeclaredFields.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
-    val wrappedMethods = MongoDriverInformationClass.getDeclaredMethods.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
+    val wrappedFields =
+      MongoDriverInformationClass.getDeclaredFields.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
+    val wrappedMethods =
+      MongoDriverInformationClass.getDeclaredMethods.filter(f => isStatic(f.getModifiers)).map(_.getName).toSet
     val exclusions = Set("$VALUES", "valueOf", "values")
 
     val wrapped = (wrappedFields ++ wrappedMethods) -- exclusions
-    val local = MongoDriverInformation.getClass.getDeclaredMethods.map(_.getName).toSet -- Set("apply", "$deserializeLambda$", "$anonfun$fromString$1")
+    val local = MongoDriverInformation.getClass.getDeclaredMethods.map(_.getName).toSet -- Set(
+      "apply",
+      "$deserializeLambda$",
+      "$anonfun$fromString$1"
+    )
 
     local should equal(wrapped)
   }

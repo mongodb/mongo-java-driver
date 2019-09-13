@@ -34,6 +34,7 @@ package object model {
    * A representation of a BSON document field whose value is another BSON document.
    */
   object BsonField {
+
     /**
      * Construct a new instance.
      *
@@ -97,26 +98,32 @@ package object model {
   object BulkWriteOptions {
     def apply(): BulkWriteOptions = new com.mongodb.client.model.BulkWriteOptions()
   }
+
   /**
    * The collation options.
    */
   type Collation = com.mongodb.client.model.Collation
+
   /**
    * The collation alternative options.
    */
   type CollationAlternate = com.mongodb.client.model.CollationAlternate
+
   /**
    * The collation max variable options
    */
   type CollationMaxVariable = com.mongodb.client.model.CollationMaxVariable
+
   /**
    * The collation configuration of how character cases are handled
    */
   type CollationCaseFirst = com.mongodb.client.model.CollationCaseFirst
+
   /**
    * The collation configuration of how differences between characters are handled.
    */
   type CollationStrength = com.mongodb.client.model.CollationStrength
+
   /**
    * The options to apply to a count operation.
    */
@@ -186,6 +193,7 @@ package object model {
    * Options for creating an index
    */
   object IndexOptionDefaults {
+
     /**
      * Construct a new instance.
      */
@@ -217,7 +225,8 @@ package object model {
    */
   object DeleteManyModel {
     def apply[T](filter: Bson): DeleteManyModel[T] = new com.mongodb.client.model.DeleteManyModel[T](filter)
-    def apply[T](filter: Bson, options: DeleteOptions): DeleteManyModel[T] = new com.mongodb.client.model.DeleteManyModel[T](filter, options)
+    def apply[T](filter: Bson, options: DeleteOptions): DeleteManyModel[T] =
+      new com.mongodb.client.model.DeleteManyModel[T](filter, options)
   }
 
   /**
@@ -408,7 +417,8 @@ package object model {
      * @param indexOptions the index options
      * @return the IndexModel
      */
-    def apply(keys: Bson, indexOptions: IndexOptions): IndexModel = new com.mongodb.client.model.IndexModel(keys, indexOptions)
+    def apply(keys: Bson, indexOptions: IndexOptions): IndexModel =
+      new com.mongodb.client.model.IndexModel(keys, indexOptions)
   }
 
   /**
@@ -452,7 +462,8 @@ package object model {
      * @tparam TResult the type of document to insert. This can be of any type for which a `Codec` is registered
      * @return the new InsertOneModel
      */
-    def apply[TResult](document: TResult): InsertOneModel[TResult] = new com.mongodb.client.model.InsertOneModel[TResult](document)
+    def apply[TResult](document: TResult): InsertOneModel[TResult] =
+      new com.mongodb.client.model.InsertOneModel[TResult](document)
   }
 
   /**
@@ -607,7 +618,8 @@ package object model {
      * @param update a document describing the update. The update to apply must include only update operators.
      * @return the new UpdateManyModel
      */
-    def apply(filter: Bson, update: Bson): UpdateManyModel[Nothing] = new com.mongodb.client.model.UpdateManyModel(filter, update)
+    def apply(filter: Bson, update: Bson): UpdateManyModel[Nothing] =
+      new com.mongodb.client.model.UpdateManyModel(filter, update)
 
     /**
      * Construct a new instance.
@@ -655,7 +667,8 @@ package object model {
      * @param update a document describing the update. The update to apply must include only update operators.
      * @return the new UpdateOneModel
      */
-    def apply(filter: Bson, update: Bson): UpdateOneModel[Nothing] = new com.mongodb.client.model.UpdateOneModel(filter, update)
+    def apply(filter: Bson, update: Bson): UpdateOneModel[Nothing] =
+      new com.mongodb.client.model.UpdateOneModel(filter, update)
 
     /**
      * Construct a new instance.

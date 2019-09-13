@@ -16,12 +16,12 @@
 
 package org.mongodb.scala.gridfs.helpers
 
-import java.io.{InputStream, OutputStream}
+import java.io.{ InputStream, OutputStream }
 import java.nio.ByteBuffer
 
-import com.mongodb.reactivestreams.client.gridfs.helpers.{AsyncStreamHelper => JAsyncStreamHelper}
+import com.mongodb.reactivestreams.client.gridfs.helpers.{ AsyncStreamHelper => JAsyncStreamHelper }
 
-import org.mongodb.scala.gridfs.{AsyncInputStream, AsyncOutputStream}
+import org.mongodb.scala.gridfs.{ AsyncInputStream, AsyncOutputStream }
 
 /**
  * A general helper class that creates [[org.mongodb.scala.gridfs.AsyncInputStream]] or
@@ -61,7 +61,8 @@ object AsyncStreamHelper {
    * @param srcByteBuffer the data source
    * @return the AsyncInputStream
    */
-  def toAsyncInputStream(srcByteBuffer: ByteBuffer): AsyncInputStream = JAsyncStreamHelper.toAsyncInputStream(srcByteBuffer)
+  def toAsyncInputStream(srcByteBuffer: ByteBuffer): AsyncInputStream =
+    JAsyncStreamHelper.toAsyncInputStream(srcByteBuffer)
 
   /**
    * Converts a `ByteBuffer` into a [[AsyncOutputStream]]
@@ -69,7 +70,8 @@ object AsyncStreamHelper {
    * @param dstByteBuffer the data destination
    * @return the AsyncOutputStream
    */
-  def toAsyncOutputStream(dstByteBuffer: ByteBuffer): AsyncOutputStream = JAsyncStreamHelper.toAsyncOutputStream(dstByteBuffer)
+  def toAsyncOutputStream(dstByteBuffer: ByteBuffer): AsyncOutputStream =
+    JAsyncStreamHelper.toAsyncOutputStream(dstByteBuffer)
 
   /**
    * Converts a `InputStream` into a [[AsyncInputStream]]
@@ -77,7 +79,8 @@ object AsyncStreamHelper {
    * @param inputStream the InputStream
    * @return the AsyncInputStream
    */
-  def toAsyncInputStream(inputStream: InputStream): AsyncInputStream = JAsyncStreamHelper.toAsyncInputStream(inputStream)
+  def toAsyncInputStream(inputStream: InputStream): AsyncInputStream =
+    JAsyncStreamHelper.toAsyncInputStream(inputStream)
 
   /**
    * Converts a `OutputStream` into a [[AsyncOutputStream]]
@@ -85,6 +88,7 @@ object AsyncStreamHelper {
    * @param outputStream the OutputStream
    * @return the AsyncOutputStream
    */
-  def toAsyncOutputStream(outputStream: OutputStream): AsyncOutputStream = JAsyncStreamHelper.toAsyncOutputStream(outputStream)
+  def toAsyncOutputStream(outputStream: OutputStream): AsyncOutputStream =
+    JAsyncStreamHelper.toAsyncOutputStream(outputStream)
 
 }

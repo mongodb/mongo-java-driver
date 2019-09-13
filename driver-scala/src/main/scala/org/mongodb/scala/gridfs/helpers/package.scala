@@ -20,6 +20,4 @@ package org.mongodb.scala.gridfs
  * Contains helper classes to create [[org.mongodb.scala.gridfs.AsyncInputStream]] or [[org.mongodb.scala.gridfs.AsyncOutputStream]]
  * instances from external sources.
  */
-package object helpers {
-
-}
+package object helpers {}

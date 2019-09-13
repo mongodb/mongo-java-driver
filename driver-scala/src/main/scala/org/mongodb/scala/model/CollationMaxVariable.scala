@@ -18,7 +18,7 @@ package org.mongodb.scala.model
 
 import scala.util.Try
 
-import com.mongodb.client.model.{CollationMaxVariable => JCollationMaxVariable}
+import com.mongodb.client.model.{ CollationMaxVariable => JCollationMaxVariable }
 
 /**
  * Collation support allows the specific configuration of whether or not spaces and punctuation are considered base characters.
@@ -29,6 +29,7 @@ import com.mongodb.client.model.{CollationMaxVariable => JCollationMaxVariable}
  * @since 1.2
  */
 object CollationMaxVariable {
+
   /**
    * Punct
    *
@@ -49,6 +50,7 @@ object CollationMaxVariable {
    * @param collationMaxVariable the string value.
    * @return the read concern
    */
-  def fromString(collationMaxVariable: String): Try[CollationMaxVariable] = Try(JCollationMaxVariable.fromString(collationMaxVariable))
+  def fromString(collationMaxVariable: String): Try[CollationMaxVariable] =
+    Try(JCollationMaxVariable.fromString(collationMaxVariable))
 
 }

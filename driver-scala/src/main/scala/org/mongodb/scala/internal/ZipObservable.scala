@@ -18,7 +18,7 @@ package org.mongodb.scala.internal
 
 import java.util.concurrent.ConcurrentLinkedQueue
 
-import org.mongodb.scala.{Observable, Observer, Subscription}
+import org.mongodb.scala.{ Observable, Observer, Subscription }
 
 private[scala] case class ZipObservable[T, U](
     observable1: Observable[T],
@@ -43,7 +43,11 @@ private[scala] case class ZipObservable[T, U](
 
     def createSecondObserver: Observer[U] = createSubObserver[U](thatQueue, observer, firstSub = false)
 
-    private def createSubObserver[A](queue: ConcurrentLinkedQueue[(Long, A)], observer: Observer[_ >: (T, U)], firstSub: Boolean): Observer[A] = {
+    private def createSubObserver[A](
+        queue: ConcurrentLinkedQueue[(Long, A)],
+        observer: Observer[_ >: (T, U)],
+        firstSub: Boolean
+    ): Observer[A] = {
       new Observer[A] {
         @volatile private var counter: Long = 0
         override def onError(throwable: Throwable): Unit = {
@@ -81,7 +85,8 @@ private[scala] case class ZipObservable[T, U](
     private def processNext(observer: Observer[_ >: (T, U)]): Unit = {
       (thisQueue.peek, thatQueue.peek) match {
         case ((k1: Long, _), (k2: Long, _)) if k1 == k2 => observer.onNext((thisQueue.poll()._2, thatQueue.poll()._2))
-        case _ => if (!terminated && !jointSubscription.isUnsubscribed) jointSubscription.request(1) // Uneven queues request more data
+        case _ =>
+          if (!terminated && !jointSubscription.isUnsubscribed) jointSubscription.request(1) // Uneven queues request more data
         // from downstream so to honor the original request for data.
       }
     }

@@ -28,7 +28,7 @@ import org.scalatest.exceptions.TestFailedException
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.io.Source
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 // scalastyle:off
 class CrudSpec extends RequiresMongoDBISpec with FuturesSpec {
@@ -40,17 +40,16 @@ class CrudSpec extends RequiresMongoDBISpec with FuturesSpec {
   var database: Option[MongoDatabase] = None
   var collection: Option[MongoCollection[BsonDocument]] = None
 
-  forEvery (files) { (file: File) =>
-    s"Running ${file.getName} tests" should "pass all scenarios" in withClient {
-      client =>
+  forEvery(files) { (file: File) =>
+    s"Running ${file.getName} tests" should "pass all scenarios" in withClient { client =>
+      val definition = BsonDocument(Source.fromFile(file).getLines.mkString)
+      database = Some(client.getDatabase(definition.getString("database_name", BsonString(databaseName)).getValue))
+      collection = Some(database.get.getCollection(collectionName))
+      val data = definition.getArray("data").asScala.map(_.asDocument()).toSeq
+      val tests = definition.getArray("tests").asScala.map(_.asDocument()).toSeq
 
-        val definition = BsonDocument(Source.fromFile(file).getLines.mkString)
-        database = Some(client.getDatabase(definition.getString("database_name", BsonString(databaseName)).getValue))
-        collection = Some(database.get.getCollection(collectionName))
-        val data = definition.getArray("data").asScala.map(_.asDocument()).toSeq
-        val tests = definition.getArray("tests").asScala.map(_.asDocument()).toSeq
-
-        if (serverAtLeastMinVersion(definition) && serverLessThanMaxVersion(definition)) forEvery(tests) { (test: BsonDocument) =>
+      if (serverAtLeastMinVersion(definition) && serverLessThanMaxVersion(definition)) forEvery(tests) {
+        (test: BsonDocument) =>
           val description = test.getString("description").getValue
           val operation: BsonDocument = test.getDocument("operation", BsonDocument())
           val expectedOutcome: BsonDocument = test.getDocument("outcome", BsonDocument())
@@ -81,9 +80,9 @@ class CrudSpec extends RequiresMongoDBISpec with FuturesSpec {
             }
             expectedDocuments should contain theSameElementsInOrderAs coll.find[BsonDocument]().futureValue
           }
-        } else {
-          info(s"Skipped $file: Server version check failed")
-        }
+      } else {
+        info(s"Skipped $file: Server version check failed")
+      }
     }
   }
 
@@ -105,27 +104,28 @@ class CrudSpec extends RequiresMongoDBISpec with FuturesSpec {
 
   // scalastyle:off cyclomatic.complexity
   private def runOperation(operation: BsonDocument): BsonValue = {
-    val methodName = createMethodName(operation.getString("name").getValue, operation.getString("object", BsonString("")).getValue)
+    val methodName =
+      createMethodName(operation.getString("name").getValue, operation.getString("object", BsonString("")).getValue)
     val op = methodName match {
-        case "doAggregate" => doAggregation _
-        case "doDatabaseAggregate" => doDatabaseAggregate _
-        case "doBulkWrite" => doBulkWrite _
-        case "doCount" => doCount _
-        case "doCountDocuments" => doCountDocuments _
-        case "doEstimatedDocumentCount" => doEstimatedDocumentCount _
-        case "doDistinct" => doDistinct _
-        case "doFind" => doFind _
-        case "doDeleteMany" => doDeleteMany _
-        case "doDeleteOne" => doDeleteOne _
-        case "doFindOneAndDelete" => doFindOneAndDelete _
-        case "doFindOneAndReplace" => doFindOneAndReplace _
-        case "doFindOneAndUpdate" => doFindOneAndUpdate _
-        case "doInsertMany" => doInsertMany _
-        case "doInsertOne" => doInsertOne _
-        case "doReplaceOne" => doReplaceOne _
-        case "doUpdateMany" => doUpdateMany _
-        case "doUpdateOne" => doUpdateOne _
-        case x => (args: BsonDocument) => throw new IllegalArgumentException(s"Unknown operation: $x")
+      case "doAggregate"              => doAggregation _
+      case "doDatabaseAggregate"      => doDatabaseAggregate _
+      case "doBulkWrite"              => doBulkWrite _
+      case "doCount"                  => doCount _
+      case "doCountDocuments"         => doCountDocuments _
+      case "doEstimatedDocumentCount" => doEstimatedDocumentCount _
+      case "doDistinct"               => doDistinct _
+      case "doFind"                   => doFind _
+      case "doDeleteMany"             => doDeleteMany _
+      case "doDeleteOne"              => doDeleteOne _
+      case "doFindOneAndDelete"       => doFindOneAndDelete _
+      case "doFindOneAndReplace"      => doFindOneAndReplace _
+      case "doFindOneAndUpdate"       => doFindOneAndUpdate _
+      case "doInsertMany"             => doInsertMany _
+      case "doInsertOne"              => doInsertOne _
+      case "doReplaceOne"             => doReplaceOne _
+      case "doUpdateMany"             => doUpdateMany _
+      case "doUpdateOne"              => doUpdateOne _
+      case x                          => (args: BsonDocument) => throw new IllegalArgumentException(s"Unknown operation: $x")
     }
     op(operation.getDocument("arguments"))
   }
@@ -146,21 +146,25 @@ class CrudSpec extends RequiresMongoDBISpec with FuturesSpec {
   private def getUpdateOptions(requestArguments: BsonDocument): UpdateOptions = {
     val options = UpdateOptions()
     if (requestArguments.containsKey("upsert")) options.upsert(true)
-    if (requestArguments.containsKey("arrayFilters")) options.arrayFilters(getArrayFilters(requestArguments.getArray("arrayFilters")).asJava)
-    if (requestArguments.containsKey("collation")) options.collation(getCollation(requestArguments.getDocument("collation")))
+    if (requestArguments.containsKey("arrayFilters"))
+      options.arrayFilters(getArrayFilters(requestArguments.getArray("arrayFilters")).asJava)
+    if (requestArguments.containsKey("collation"))
+      options.collation(getCollation(requestArguments.getDocument("collation")))
     options
   }
 
   private def getDeleteOptions(requestArguments: BsonDocument): DeleteOptions = {
     val options = DeleteOptions()
-    if (requestArguments.containsKey("collation")) options.collation(getCollation(requestArguments.getDocument("collation")))
+    if (requestArguments.containsKey("collation"))
+      options.collation(getCollation(requestArguments.getDocument("collation")))
     options
   }
 
   private def getReplaceOptions(requestArguments: BsonDocument): ReplaceOptions = {
     val options = new ReplaceOptions
     if (requestArguments.containsKey("upsert")) options.upsert(true)
-    if (requestArguments.containsKey("collation")) options.collation(getCollation(requestArguments.getDocument("collation")))
+    if (requestArguments.containsKey("collation"))
+      options.collation(getCollation(requestArguments.getDocument("collation")))
     options
   }
 
@@ -174,8 +178,11 @@ class CrudSpec extends RequiresMongoDBISpec with FuturesSpec {
     arrayFilters.toSeq
   }
 
-  private def toResult(bulkWriteResult: BulkWriteResult, writeModels: Seq[_ <: WriteModel[BsonDocument]],
-                       writeErrors: Seq[BulkWriteError]): BsonDocument = {
+  private def toResult(
+      bulkWriteResult: BulkWriteResult,
+      writeModels: Seq[_ <: WriteModel[BsonDocument]],
+      writeErrors: Seq[BulkWriteError]
+  ): BsonDocument = {
     val resultDoc = BsonDocument()
     if (bulkWriteResult.wasAcknowledged) {
       resultDoc.append("deletedCount", BsonInt32(bulkWriteResult.getDeletedCount))
@@ -192,10 +199,13 @@ class CrudSpec extends RequiresMongoDBISpec with FuturesSpec {
       resultDoc.append("insertedCount", BsonInt32(insertedIds.size))
       resultDoc.append("matchedCount", BsonInt32(bulkWriteResult.getMatchedCount))
       Try(bulkWriteResult.getModifiedCount).map(r => resultDoc.append("modifiedCount", BsonInt32(r.toInt)))
-      resultDoc.append("upsertedCount", if (bulkWriteResult.getUpserts == null) BsonInt32(0)
-      else BsonInt32(bulkWriteResult.getUpserts.size))
+      resultDoc.append(
+        "upsertedCount",
+        if (bulkWriteResult.getUpserts == null) BsonInt32(0)
+        else BsonInt32(bulkWriteResult.getUpserts.size)
+      )
       val upserts = BsonDocument()
-      bulkWriteResult.getUpserts.asScala.foreach( b => upserts.put(s"${b.getIndex}", b.getId))
+      bulkWriteResult.getUpserts.asScala.foreach(b => upserts.put(s"${b.getIndex}", b.getId))
       resultDoc.append("upsertedIds", upserts)
     }
     if (resultDoc.isEmpty) BsonDocument("result" -> BsonNull()) else BsonDocument("result" -> resultDoc)
@@ -254,29 +264,67 @@ class CrudSpec extends RequiresMongoDBISpec with FuturesSpec {
       val requestArguments: BsonDocument = cur.getDocument("arguments")
 
       name match {
-        case "insertOne" => mutableWriteModels.append(new InsertOneModel[BsonDocument](requestArguments.getDocument("document")))
-        case "updateOne" => mutableWriteModels.append(new UpdateOneModel[BsonDocument](requestArguments.getDocument("filter"),
-          requestArguments.getDocument("update"), getUpdateOptions(requestArguments)))
-        case "updateMany" => mutableWriteModels.append(new UpdateManyModel[BsonDocument](requestArguments.getDocument("filter"),
-          requestArguments.getDocument("update"), getUpdateOptions(requestArguments)))
-        case "deleteOne" => mutableWriteModels.append(new DeleteOneModel[BsonDocument](requestArguments.getDocument("filter"),
-          getDeleteOptions(requestArguments)))
-        case "deleteMany" => mutableWriteModels.append(new DeleteManyModel[BsonDocument](requestArguments.getDocument("filter"),
-          getDeleteOptions(requestArguments)))
-        case "replaceOne" => mutableWriteModels.append(new ReplaceOneModel[BsonDocument](requestArguments.getDocument("filter"),
-          requestArguments.getDocument("replacement"), getReplaceOptions(requestArguments)))
+        case "insertOne" =>
+          mutableWriteModels.append(new InsertOneModel[BsonDocument](requestArguments.getDocument("document")))
+        case "updateOne" =>
+          mutableWriteModels.append(
+            new UpdateOneModel[BsonDocument](
+              requestArguments.getDocument("filter"),
+              requestArguments.getDocument("update"),
+              getUpdateOptions(requestArguments)
+            )
+          )
+        case "updateMany" =>
+          mutableWriteModels.append(
+            new UpdateManyModel[BsonDocument](
+              requestArguments.getDocument("filter"),
+              requestArguments.getDocument("update"),
+              getUpdateOptions(requestArguments)
+            )
+          )
+        case "deleteOne" =>
+          mutableWriteModels.append(
+            new DeleteOneModel[BsonDocument](requestArguments.getDocument("filter"), getDeleteOptions(requestArguments))
+          )
+        case "deleteMany" =>
+          mutableWriteModels.append(
+            new DeleteManyModel[BsonDocument](
+              requestArguments.getDocument("filter"),
+              getDeleteOptions(requestArguments)
+            )
+          )
+        case "replaceOne" =>
+          mutableWriteModels.append(
+            new ReplaceOneModel[BsonDocument](
+              requestArguments.getDocument("filter"),
+              requestArguments.getDocument("replacement"),
+              getReplaceOptions(requestArguments)
+            )
+          )
         case _ => throw new UnsupportedOperationException(s"Unsupported write request type: $name")
       }
     }
 
     val writeModels = mutableWriteModels.toSeq
 
-    Try( collection.get.bulkWrite(writeModels, new BulkWriteOptions().ordered(arguments.getDocument("options", BsonDocument())
-      .getBoolean("ordered", BsonBoolean(true)).getValue)).futureValue) match {
-      case Success(bulkWriteResult: BulkWriteResult) =>  toResult(bulkWriteResult, writeModels, Seq[BulkWriteError]())
+    Try(
+      collection.get
+        .bulkWrite(
+          writeModels,
+          new BulkWriteOptions().ordered(
+            arguments
+              .getDocument("options", BsonDocument())
+              .getBoolean("ordered", BsonBoolean(true))
+              .getValue
+          )
+        )
+        .futureValue
+    ) match {
+      case Success(bulkWriteResult: BulkWriteResult) => toResult(bulkWriteResult, writeModels, Seq[BulkWriteError]())
       case Failure(e: TestFailedException) if e.getCause.isInstanceOf[MongoBulkWriteException] => {
         val exception = e.getCause.asInstanceOf[MongoBulkWriteException]
-        val result: BsonDocument = toResult(exception.getWriteResult, writeModels, exception.getWriteErrors.asScala.toSeq)
+        val result: BsonDocument =
+          toResult(exception.getWriteResult, writeModels, exception.getWriteErrors.asScala.toSeq)
         result.put("error", BsonBoolean(true))
         result
       }
@@ -327,12 +375,16 @@ class CrudSpec extends RequiresMongoDBISpec with FuturesSpec {
     if (arguments.containsKey("sort")) options.sort(arguments.getDocument("sort"))
     if (arguments.containsKey("upsert")) options.upsert(arguments.getBoolean("upsert").getValue)
     if (arguments.containsKey("returnDocument")) {
-      val rd = if (arguments.getString("returnDocument").getValue == "After") ReturnDocument.AFTER else ReturnDocument.BEFORE
+      val rd =
+        if (arguments.getString("returnDocument").getValue == "After") ReturnDocument.AFTER else ReturnDocument.BEFORE
       options.returnDocument(rd)
     }
     if (arguments.containsKey("collation")) options.collation(getCollation(arguments.getDocument("collation")))
-    Option(collection.get.findOneAndReplace(arguments.getDocument("filter"),
-      arguments.getDocument("replacement"), options).futureValue).getOrElse(BsonNull())
+    Option(
+      collection.get
+        .findOneAndReplace(arguments.getDocument("filter"), arguments.getDocument("replacement"), options)
+        .futureValue
+    ).getOrElse(BsonNull())
   }
 
   private def doFindOneAndUpdate(arguments: BsonDocument): BsonValue = {
@@ -341,14 +393,19 @@ class CrudSpec extends RequiresMongoDBISpec with FuturesSpec {
     if (arguments.containsKey("sort")) options.sort(arguments.getDocument("sort"))
     if (arguments.containsKey("upsert")) options.upsert(arguments.getBoolean("upsert").getValue)
     if (arguments.containsKey("returnDocument")) {
-      val rd = if (arguments.getString("returnDocument").getValue == "After") ReturnDocument.AFTER else ReturnDocument.BEFORE
+      val rd =
+        if (arguments.getString("returnDocument").getValue == "After") ReturnDocument.AFTER else ReturnDocument.BEFORE
       options.returnDocument(rd)
     }
     if (arguments.containsKey("collation")) options.collation(getCollation(arguments.getDocument("collation")))
-    if (arguments.containsKey("arrayFilters")) options.arrayFilters(getArrayFilters(arguments.getArray("arrayFilters")).asJava)
+    if (arguments.containsKey("arrayFilters"))
+      options.arrayFilters(getArrayFilters(arguments.getArray("arrayFilters")).asJava)
 
-    Option(collection.get.findOneAndUpdate(arguments.getDocument("filter"),
-      arguments.getDocument("update"), options).futureValue).getOrElse(BsonNull())
+    Option(
+      collection.get
+        .findOneAndUpdate(arguments.getDocument("filter"), arguments.getDocument("update"), options)
+        .futureValue
+    ).getOrElse(BsonNull())
   }
 
   private def doInsertOne(arguments: BsonDocument): BsonValue = {
@@ -359,19 +416,27 @@ class CrudSpec extends RequiresMongoDBISpec with FuturesSpec {
 
   private def doInsertMany(arguments: BsonDocument): BsonValue = {
     val documents = arguments.getArray("documents").asScala.map(_.asDocument()).toSeq
-    val options = new InsertManyOptions().ordered(arguments.getDocument("options", BsonDocument())
-      .getBoolean("ordered", BsonBoolean(true)).getValue)
+    val options = new InsertManyOptions().ordered(
+      arguments
+        .getDocument("options", BsonDocument())
+        .getBoolean("ordered", BsonBoolean(true))
+        .getValue
+    )
     Try(collection.get.insertMany(documents, options).futureValue) match {
       case Success(_) => {
-        val docs = Document(documents.zipWithIndex.map({ case (doc: BsonDocument, i: Int) => (i.toString, doc.get("_id", BsonNull())) }))
+        val docs = Document(documents.zipWithIndex.map({
+          case (doc: BsonDocument, i: Int) => (i.toString, doc.get("_id", BsonNull()))
+        }))
         Document("insertedIds" -> docs).underlying
       }
       case Failure(e: TestFailedException) if e.getCause.isInstanceOf[MongoBulkWriteException] => {
         // Test results are expecting this to look just like bulkWrite error, so translate to InsertOneModel so the result
         // translation code can be reused.
         val exception = e.getCause.asInstanceOf[MongoBulkWriteException]
-        val writeModels = arguments.getArray("documents").asScala.map(doc => new InsertOneModel[BsonDocument](doc.asDocument)).toSeq
-        val result: BsonDocument = toResult(exception.getWriteResult, writeModels, exception.getWriteErrors.asScala.toSeq)
+        val writeModels =
+          arguments.getArray("documents").asScala.map(doc => new InsertOneModel[BsonDocument](doc.asDocument)).toSeq
+        val result: BsonDocument =
+          toResult(exception.getWriteResult, writeModels, exception.getWriteErrors.asScala.toSeq)
         result.put("error", BsonBoolean(true))
         result
       }
@@ -383,7 +448,9 @@ class CrudSpec extends RequiresMongoDBISpec with FuturesSpec {
     val options: ReplaceOptions = ReplaceOptions()
     if (arguments.containsKey("upsert")) options.upsert(arguments.getBoolean("upsert").getValue)
     if (arguments.containsKey("collation")) options.collation(getCollation(arguments.getDocument("collation")))
-    val rawResult = collection.get.replaceOne(arguments.getDocument("filter"), arguments.getDocument("replacement"), options).futureValue
+    val rawResult = collection.get
+      .replaceOne(arguments.getDocument("filter"), arguments.getDocument("replacement"), options)
+      .futureValue
     convertUpdateResult(rawResult)
   }
 
@@ -391,9 +458,10 @@ class CrudSpec extends RequiresMongoDBISpec with FuturesSpec {
     val options: UpdateOptions = UpdateOptions()
     if (arguments.containsKey("upsert")) options.upsert(arguments.getBoolean("upsert").getValue)
     if (arguments.containsKey("collation")) options.collation(getCollation(arguments.getDocument("collation")))
-    if (arguments.containsKey("arrayFilters")) options.arrayFilters(getArrayFilters(arguments.getArray("arrayFilters")).asJava)
-    val result = collection.get.updateMany(arguments.getDocument("filter"),
-      arguments.getDocument("update"), options).futureValue
+    if (arguments.containsKey("arrayFilters"))
+      options.arrayFilters(getArrayFilters(arguments.getArray("arrayFilters")).asJava)
+    val result =
+      collection.get.updateMany(arguments.getDocument("filter"), arguments.getDocument("update"), options).futureValue
     convertUpdateResult(result)
   }
 
@@ -401,8 +469,10 @@ class CrudSpec extends RequiresMongoDBISpec with FuturesSpec {
     val options: UpdateOptions = UpdateOptions()
     if (arguments.containsKey("upsert")) options.upsert(arguments.getBoolean("upsert").getValue)
     if (arguments.containsKey("collation")) options.collation(getCollation(arguments.getDocument("collation")))
-    if (arguments.containsKey("arrayFilters")) options.arrayFilters(getArrayFilters(arguments.getArray("arrayFilters")).asJava)
-    val result = collection.get.updateOne(arguments.getDocument("filter"), arguments.getDocument("update"), options).futureValue
+    if (arguments.containsKey("arrayFilters"))
+      options.arrayFilters(getArrayFilters(arguments.getArray("arrayFilters")).asJava)
+    val result =
+      collection.get.updateOne(arguments.getDocument("filter"), arguments.getDocument("update"), options).futureValue
     convertUpdateResult(result)
   }
 
@@ -410,12 +480,18 @@ class CrudSpec extends RequiresMongoDBISpec with FuturesSpec {
     val builder: Collation.Builder = Collation.builder
     if (bsonCollation.containsKey("locale")) builder.locale(bsonCollation.getString("locale").getValue)
     if (bsonCollation.containsKey("caseLevel")) builder.caseLevel(bsonCollation.getBoolean("caseLevel").getValue)
-    if (bsonCollation.containsKey("caseFirst")) builder.collationCaseFirst(CollationCaseFirst.fromString(bsonCollation.getString("caseFirst").getValue).get)
-    if (bsonCollation.containsKey("numericOrdering")) builder.numericOrdering(bsonCollation.getBoolean("numericOrdering").getValue)
-    if (bsonCollation.containsKey("strength")) builder.collationStrength(CollationStrength.fromInt(bsonCollation.getInt32("strength").getValue).get)
-    if (bsonCollation.containsKey("alternate")) builder.collationAlternate(CollationAlternate.fromString(bsonCollation.getString("alternate").getValue).get)
-    if (bsonCollation.containsKey("maxVariable")) builder.collationMaxVariable(CollationMaxVariable.fromString(bsonCollation.getString("maxVariable").getValue).get)
-    if (bsonCollation.containsKey("normalization")) builder.normalization(bsonCollation.getBoolean("normalization").getValue)
+    if (bsonCollation.containsKey("caseFirst"))
+      builder.collationCaseFirst(CollationCaseFirst.fromString(bsonCollation.getString("caseFirst").getValue).get)
+    if (bsonCollation.containsKey("numericOrdering"))
+      builder.numericOrdering(bsonCollation.getBoolean("numericOrdering").getValue)
+    if (bsonCollation.containsKey("strength"))
+      builder.collationStrength(CollationStrength.fromInt(bsonCollation.getInt32("strength").getValue).get)
+    if (bsonCollation.containsKey("alternate"))
+      builder.collationAlternate(CollationAlternate.fromString(bsonCollation.getString("alternate").getValue).get)
+    if (bsonCollation.containsKey("maxVariable"))
+      builder.collationMaxVariable(CollationMaxVariable.fromString(bsonCollation.getString("maxVariable").getValue).get)
+    if (bsonCollation.containsKey("normalization"))
+      builder.normalization(bsonCollation.getBoolean("normalization").getValue)
     if (bsonCollation.containsKey("backwards")) builder.backwards(bsonCollation.getBoolean("backwards").getValue)
     builder.build
   }
@@ -426,12 +502,11 @@ class CrudSpec extends RequiresMongoDBISpec with FuturesSpec {
 
     val upsertedCount = result.getUpsertedId match {
       case id: BsonValue if !id.isObjectId => resultDoc.append("upsertedId", id); BsonInt32(1)
-      case _: BsonValue  => BsonInt32(1)
-      case _ /* empty */ => BsonInt32(0)
+      case _: BsonValue                    => BsonInt32(1)
+      case _ /* empty */                   => BsonInt32(0)
     }
     resultDoc.append("upsertedCount", upsertedCount)
   }
-
 
   private def serverAtLeastMinVersion(definition: Document): Boolean = {
     definition.get[BsonString]("minServerVersion") match {

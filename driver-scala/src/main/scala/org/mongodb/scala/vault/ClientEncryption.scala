@@ -19,10 +19,10 @@ package org.mongodb.scala.vault
 import java.io.Closeable
 
 import com.mongodb.annotations.Beta
-import com.mongodb.reactivestreams.client.vault.{ClientEncryption => JClientEncryption}
-import org.bson.{BsonBinary, BsonValue}
+import com.mongodb.reactivestreams.client.vault.{ ClientEncryption => JClientEncryption }
+import org.bson.{ BsonBinary, BsonValue }
 import org.mongodb.scala.SingleObservable
-import org.mongodb.scala.model.vault.{DataKeyOptions, EncryptOptions}
+import org.mongodb.scala.model.vault.{ DataKeyOptions, EncryptOptions }
 
 /**
  * The Key vault.

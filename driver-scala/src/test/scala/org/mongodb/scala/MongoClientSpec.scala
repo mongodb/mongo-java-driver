@@ -16,10 +16,10 @@
 
 package org.mongodb.scala
 
-import com.mongodb.reactivestreams.client.{MongoClient => JMongoClient}
+import com.mongodb.reactivestreams.client.{ MongoClient => JMongoClient }
 import org.bson.BsonDocument
 import org.scalamock.scalatest.proxy.MockFactory
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{ FlatSpec, Matchers }
 
 import scala.collection.JavaConverters._
 

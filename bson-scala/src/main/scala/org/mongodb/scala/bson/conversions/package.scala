@@ -20,6 +20,7 @@ package org.mongodb.scala.bson
  * The conversions package.
  */
 package object conversions {
+
   /**
    * Type alias to the Bson interface - an interface for types that are able to render themselves into a `BsonDocument`.
    */

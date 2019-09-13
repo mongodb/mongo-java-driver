@@ -34,6 +34,7 @@ import scala.concurrent.duration.Duration
  * @since 1.0
  */
 case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) extends Observable[TResult] {
+
   /**
    * Sets the collectionName for the output of the MapReduce
    *

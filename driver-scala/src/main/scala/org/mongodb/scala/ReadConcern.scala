@@ -16,7 +16,7 @@
 
 package org.mongodb.scala
 
-import com.mongodb.{ReadConcern => JReadConcern}
+import com.mongodb.{ ReadConcern => JReadConcern }
 
 /**
  * The readConcern option allows clients to choose a level of isolation for their reads.
@@ -25,6 +25,7 @@ import com.mongodb.{ReadConcern => JReadConcern}
  * @since 1.1
  */
 object ReadConcern {
+
   /**
    * Construct a new read concern
    *

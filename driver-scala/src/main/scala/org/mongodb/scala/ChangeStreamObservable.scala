@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher
 import org.mongodb.scala.bson.BsonTimestamp
 import org.mongodb.scala.model.Collation
-import org.mongodb.scala.model.changestream.{ChangeStreamDocument, FullDocument}
+import org.mongodb.scala.model.changestream.{ ChangeStreamDocument, FullDocument }
 
 import scala.concurrent.duration.Duration
 
@@ -37,7 +37,8 @@ import scala.concurrent.duration.Duration
  * @since 2.2
  * @note Requires MongoDB 3.6 or greater
  */
-case class ChangeStreamObservable[TResult](private val wrapped: ChangeStreamPublisher[TResult]) extends Observable[ChangeStreamDocument[TResult]] {
+case class ChangeStreamObservable[TResult](private val wrapped: ChangeStreamPublisher[TResult])
+    extends Observable[ChangeStreamDocument[TResult]] {
 
   /**
    * Sets the fullDocument value.

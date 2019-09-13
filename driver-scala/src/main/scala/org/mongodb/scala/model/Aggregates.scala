@@ -17,7 +17,7 @@
 package org.mongodb.scala.model
 
 import scala.collection.JavaConverters._
-import com.mongodb.client.model.{Aggregates => JAggregates}
+import com.mongodb.client.model.{ Aggregates => JAggregates }
 import org.mongodb.scala.MongoNamespace
 import org.mongodb.scala.bson.conversions.Bson
 
@@ -29,6 +29,7 @@ import org.mongodb.scala.bson.conversions.Bson
  * @since 1.0
  */
 object Aggregates {
+
   /**
    * Creates an \$addFields pipeline stage
    *
@@ -82,7 +83,8 @@ object Aggregates {
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
    */
-  def bucketAuto[TExpression, TBoundary](groupBy: TExpression, buckets: Int): Bson = JAggregates.bucketAuto(groupBy, buckets)
+  def bucketAuto[TExpression, TBoundary](groupBy: TExpression, buckets: Int): Bson =
+    JAggregates.bucketAuto(groupBy, buckets)
 
   /**
    * Creates a \$bucketAuto pipeline stage
@@ -167,7 +169,13 @@ object Aggregates {
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
    */
-  def graphLookup[TExpression](from: String, startWith: TExpression, connectFromField: String, connectToField: String, as: String): Bson =
+  def graphLookup[TExpression](
+      from: String,
+      startWith: TExpression,
+      connectFromField: String,
+      connectToField: String,
+      as: String
+  ): Bson =
     JAggregates.graphLookup(from, startWith, connectFromField, connectToField, as)
 
   /**
@@ -185,8 +193,14 @@ object Aggregates {
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
    */
-  def graphLookup[TExpression](from: String, startWith: TExpression, connectFromField: String, connectToField: String, as: String,
-                               options: GraphLookupOptions): Bson =
+  def graphLookup[TExpression](
+      from: String,
+      startWith: TExpression,
+      connectFromField: String,
+      connectToField: String,
+      as: String,
+      options: GraphLookupOptions
+  ): Bson =
     JAggregates.graphLookup(from, startWith, connectFromField, connectToField, as, options)
 
   /**
@@ -332,7 +346,8 @@ object Aggregates {
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/group/ \$group]]
    * @see [[http://docs.mongodb.org/manual/meta/aggregation-quick-reference/#aggregation-expressions Expressions]]
    */
-  def group[TExpression](id: TExpression, fieldAccumulators: BsonField*): Bson = JAggregates.group(id, fieldAccumulators.asJava)
+  def group[TExpression](id: TExpression, fieldAccumulators: BsonField*): Bson =
+    JAggregates.group(id, fieldAccumulators.asJava)
 
   /**
    * Creates a `\$unwind` pipeline stage for the specified field name, which must be prefixed by a `\$` sign.
@@ -381,7 +396,8 @@ object Aggregates {
    * @since 2.7
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/merge/]]
    */
-  def merge(collectionName: String, mergeOptions: MergeOptions): Bson = JAggregates.merge(collectionName, mergeOptions.wrapped)
+  def merge(collectionName: String, mergeOptions: MergeOptions): Bson =
+    JAggregates.merge(collectionName, mergeOptions.wrapped)
 
   /**
    * Creates a `\$merge` pipeline stage that merges into the specified collection using the specified options.
@@ -402,6 +418,7 @@ object Aggregates {
    * @since 2.7
    * @see [[http://docs.mongodb.org/manual/reference/operator/aggregation/merge/]]
    */
-  def merge(namespace: MongoNamespace, mergeOptions: MergeOptions): Bson = JAggregates.merge(namespace, mergeOptions.wrapped)
+  def merge(namespace: MongoNamespace, mergeOptions: MergeOptions): Bson =
+    JAggregates.merge(namespace, mergeOptions.wrapped)
 
 }

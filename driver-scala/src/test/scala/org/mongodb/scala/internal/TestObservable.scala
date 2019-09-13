@@ -17,7 +17,7 @@
 package org.mongodb.scala.internal
 
 import com.mongodb.MongoException
-import org.mongodb.scala.{Observable, Observer, Subscription}
+import org.mongodb.scala.{ Observable, Observer, Subscription }
 
 object TestObservable {
 
@@ -35,9 +35,9 @@ object TestObservable {
 }
 
 case class TestObservable[A](
-    delegate:     Observable[A] = Observable[Int]((1 to 100).toStream),
-    failOn:       Int           = Int.MaxValue,
-    errorMessage: String        = "Failed"
+    delegate: Observable[A] = Observable[Int]((1 to 100).toStream),
+    failOn: Int = Int.MaxValue,
+    errorMessage: String = "Failed"
 ) extends Observable[A] {
 
   override def subscribe(observer: Observer[_ >: A]): Unit = {

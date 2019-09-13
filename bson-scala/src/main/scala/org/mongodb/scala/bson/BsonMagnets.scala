@@ -78,7 +78,9 @@ protected[bson] object BsonMagnets {
    * @tparam T the type of the value
    * @return a CanBeBsonElement representing the key/value pair
    */
-  implicit def tupleToCanBeBsonElement[T](kv: (String, T))(implicit transformer: BsonTransformer[T]): CanBeBsonElement = {
+  implicit def tupleToCanBeBsonElement[T](
+      kv: (String, T)
+  )(implicit transformer: BsonTransformer[T]): CanBeBsonElement = {
     new CanBeBsonElement {
       override val bsonElement: BsonElement = BsonElement(kv._1, transformer(kv._2))
     }
@@ -91,6 +93,7 @@ protected[bson] object BsonMagnets {
    * [[BsonTransformer]] in scope into a [[BsonValue]] is also a valid pair.
    */
   sealed trait CanBeBsonElements {
+
     /**
      * The `BsonElement` sequence
      */
@@ -105,7 +108,9 @@ protected[bson] object BsonMagnets {
    * @tparam T the type of the values
    * @return CanBeBsonElements representing the key/value pairs
    */
-  implicit def iterableToCanBeBsonElements[T](elems: Iterable[(String, T)])(implicit transformer: BsonTransformer[T]): CanBeBsonElements =
+  implicit def iterableToCanBeBsonElements[T](
+      elems: Iterable[(String, T)]
+  )(implicit transformer: BsonTransformer[T]): CanBeBsonElements =
     new CanBeBsonElements {
       override val values: Iterable[BsonElement] = elems.map(kv => BsonElement(kv._1, transformer(kv._2)))
     }

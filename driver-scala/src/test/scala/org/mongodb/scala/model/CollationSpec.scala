@@ -18,7 +18,13 @@ package org.mongodb.scala.model
 
 import java.lang.reflect.Modifier.isStatic
 
-import com.mongodb.client.model.{Collation => JCollation, CollationAlternate => JCollationAlternate, CollationCaseFirst => JCollationCaseFirst, CollationMaxVariable => JCollationMaxVariable, CollationStrength => JCollationStrength}
+import com.mongodb.client.model.{
+  Collation => JCollation,
+  CollationAlternate => JCollationAlternate,
+  CollationCaseFirst => JCollationCaseFirst,
+  CollationMaxVariable => JCollationMaxVariable,
+  CollationStrength => JCollationStrength
+}
 import org.mongodb.scala.BaseSpec
 
 class CollationSpec extends BaseSpec {
@@ -30,7 +36,11 @@ class CollationSpec extends BaseSpec {
     val exclusions = Set("$VALUES", "valueOf", "values")
 
     val wrapped = (wrappedFields ++ wrappedMethods) -- exclusions
-    val local = Collation.getClass.getDeclaredMethods.map(_.getName).toSet -- Set("apply", "$deserializeLambda$", "$anonfun$fromString$1")
+    val local = Collation.getClass.getDeclaredMethods.map(_.getName).toSet -- Set(
+      "apply",
+      "$deserializeLambda$",
+      "$anonfun$fromString$1"
+    )
 
     local should equal(wrapped)
   }
@@ -40,7 +50,8 @@ class CollationSpec extends BaseSpec {
   }
 
   it should "produce the same collation value when using the Scala helpers" in {
-    val viaScalaHelper = Collation.builder()
+    val viaScalaHelper = Collation
+      .builder()
       .backwards(true)
       .caseLevel(true)
       .collationAlternate(CollationAlternate.NON_IGNORABLE)
@@ -52,7 +63,8 @@ class CollationSpec extends BaseSpec {
       .numericOrdering(true)
       .build()
 
-    val javaNative = JCollation.builder()
+    val javaNative = JCollation
+      .builder()
       .backwards(true)
       .caseLevel(true)
       .collationAlternate(JCollationAlternate.NON_IGNORABLE)

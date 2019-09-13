@@ -18,7 +18,7 @@ package org.mongodb.scala.bson.collection.immutable
 
 import scala.jdk.CollectionConverters._
 import scala.collection.mutable.ListBuffer
-import scala.collection.{ Iterable, IterableOps, SpecificIterableFactory, StrictOptimizedIterableOps, mutable }
+import scala.collection.{ mutable, Iterable, IterableOps, SpecificIterableFactory, StrictOptimizedIterableOps }
 import org.mongodb.scala.bson._
 import org.mongodb.scala.bson.collection.BaseDocument
 

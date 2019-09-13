@@ -16,7 +16,7 @@
 
 package org.mongodb.scala.model
 
-import com.mongodb.client.model.{Collation => JCollation}
+import com.mongodb.client.model.{ Collation => JCollation }
 
 /**
  * The options regarding collation support in MongoDB 3.4+

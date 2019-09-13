@@ -19,7 +19,7 @@ package tour
 import org.mongodb.scala.bson.conversions.Bson
 
 import org.mongodb.scala._
-import org.mongodb.scala.model.{ TextSearchOptions, CreateCollectionOptions }
+import org.mongodb.scala.model.{ CreateCollectionOptions, TextSearchOptions }
 import org.mongodb.scala.model.Filters.text
 import org.mongodb.scala.model.Projections.metaTextScore
 import org.mongodb.scala.model.Sorts.ascending
@@ -55,10 +55,12 @@ object QuickTourAdmin {
     mongoClient.getDatabase("databaseToBeDropped").drop().headResult()
 
     // create a collection
-    database.createCollection(
-      "cappedCollection",
-      CreateCollectionOptions().capped(true).sizeInBytes(0x100000)
-    ).printHeadResult("Collection Created! ")
+    database
+      .createCollection(
+        "cappedCollection",
+        CreateCollectionOptions().capped(true).sizeInBytes(0x100000)
+      )
+      .printHeadResult("Collection Created! ")
 
     database.listCollectionNames().printResults("Collection Names: ")
 
@@ -74,11 +76,13 @@ object QuickTourAdmin {
     // create a text index on the "content" field and insert sample documents
     val indexAndInsert = for {
       indexResults <- collection.createIndex(Document("content" -> "text"))
-      insertResults <- collection.insertMany(List(
-        Document("_id" -> 0, "content" -> "textual content"),
-        Document("_id" -> 1, "content" -> "additional content"),
-        Document("_id" -> 2, "content" -> "irrelevant content")
-      ))
+      insertResults <- collection.insertMany(
+        List(
+          Document("_id" -> 0, "content" -> "textual content"),
+          Document("_id" -> 1, "content" -> "additional content"),
+          Document("_id" -> 2, "content" -> "irrelevant content")
+        )
+      )
     } yield insertResults
 
     indexAndInsert.results()
@@ -91,7 +95,8 @@ object QuickTourAdmin {
     collection.countDocuments(textSearch).printResults("Text search matches (english): ")
 
     // Find the highest scoring match
-    collection.find(textSearch)
+    collection
+      .find(textSearch)
       .projection(metaTextScore("score"))
       .first()
       .printHeadResult("Highest scoring document: ")

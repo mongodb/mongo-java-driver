@@ -16,8 +16,8 @@
 
 package org.mongodb.scala
 
-import com.mongodb.{MongoCredential => JMongoCredential}
-import org.scalatest.{FlatSpec, Matchers}
+import com.mongodb.{ MongoCredential => JMongoCredential }
+import org.scalatest.{ FlatSpec, Matchers }
 
 class MongoCredentialSpec extends BaseSpec {
 

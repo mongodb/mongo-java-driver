@@ -20,14 +20,14 @@ import java.util.concurrent._
 
 import com.mongodb.MongoException
 import org.mongodb.scala._
-import org.reactivestreams.{Subscriber, Subscription}
+import org.reactivestreams.{ Subscriber, Subscription }
 import org.scalatest.prop.TableDrivenPropertyChecks._
 
 import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
-import scala.concurrent.{Await, ExecutionContext}
-import scala.util.{Failure, Success}
+import scala.concurrent.{ Await, ExecutionContext }
+import scala.util.{ Failure, Success }
 
 class ScalaObservableSpec extends BaseSpec {
 
@@ -101,7 +101,8 @@ class ScalaObservableSpec extends BaseSpec {
   }
 
   it should "have a filter method" in {
-    def myObservable(fail: Boolean = false): Observable[Int] = observable[Int](fail = fail).filter((i: Int) => i % 2 != 0)
+    def myObservable(fail: Boolean = false): Observable[Int] =
+      observable[Int](fail = fail).filter((i: Int) => i % 2 != 0)
 
     val results = ArrayBuffer[Int]()
     myObservable().subscribe((i: Int) => results += i)
@@ -117,7 +118,8 @@ class ScalaObservableSpec extends BaseSpec {
   }
 
   it should "have a withFilter method" in {
-    def myObservable(fail: Boolean = false): Observable[Int] = observable[Int](fail = fail).withFilter((i: Int) => i % 2 != 0)
+    def myObservable(fail: Boolean = false): Observable[Int] =
+      observable[Int](fail = fail).withFilter((i: Int) => i % 2 != 0)
 
     val results = ArrayBuffer[Int]()
     myObservable().subscribe((i: Int) => results += i)
@@ -316,7 +318,11 @@ class ScalaObservableSpec extends BaseSpec {
 
     results = ArrayBuffer[Int]()
     completed = false
-    val fh: Observable[Int] = f flatMap { (x: Int) => g map { (y: Int) => x + y } }
+    val fh: Observable[Int] = f flatMap { (x: Int) =>
+      g map { (y: Int) =>
+        x + y
+      }
+    }
     fh.subscribe((s: Int) => results += s, (t: Throwable) => t, () => completed = true)
     results should equal(expectedResults)
     completed should equal(true)
@@ -387,10 +393,15 @@ class ScalaObservableSpec extends BaseSpec {
     Await.result(observable[Int](fail = true).headOption(), Duration(10, TimeUnit.SECONDS)) should equal(Some(1))
 
     intercept[MongoException] {
-      Await.result(TestObservable[Int](Observable[Int](1 to 10), failOn = 1).headOption(), Duration(10, TimeUnit.SECONDS))
+      Await.result(
+        TestObservable[Int](Observable[Int](1 to 10), failOn = 1).headOption(),
+        Duration(10, TimeUnit.SECONDS)
+      )
     }
 
-    Await.result(TestObservable[Int](Observable(List[Int]())).headOption(), Duration(10, TimeUnit.SECONDS)) should equal(None)
+    Await.result(TestObservable[Int](Observable(List[Int]())).headOption(), Duration(10, TimeUnit.SECONDS)) should equal(
+      None
+    )
   }
 
   it should "provide a head method" in {
@@ -401,11 +412,14 @@ class ScalaObservableSpec extends BaseSpec {
       Await.result(TestObservable[Int](Observable[Int](1 to 10), failOn = 1).head(), Duration(10, TimeUnit.SECONDS))
     }
 
-    Option(Await.result(TestObservable[Int](Observable(List[Int]())).head(), Duration(10, TimeUnit.SECONDS))) should equal(None)
+    Option(Await.result(TestObservable[Int](Observable(List[Int]())).head(), Duration(10, TimeUnit.SECONDS))) should equal(
+      None
+    )
   }
 
   it should "not stackoverflow when using flatMap with execution contexts" in {
-    val altContextObservable = Observable(1 to 10000).observeOn(ExecutionContext.global).flatMap((res: Int) => Observable(Seq(res)))
+    val altContextObservable =
+      Observable(1 to 10000).observeOn(ExecutionContext.global).flatMap((res: Int) => Observable(Seq(res)))
     Await.result(altContextObservable.toFuture(), Duration(10, TimeUnit.SECONDS)) should equal(1 to 10000)
   }
 
@@ -439,10 +453,11 @@ class ScalaObservableSpec extends BaseSpec {
       "Bad Observables",
       () => badObservable(1, 2, 3).flatMap((i: Int) => badObservable(i, i)),
       () => badObservable(1, 2, 3).map((i: Int) => badObservable(i, i)),
-      () => badObservable(1, 2, 3).andThen {
-        case Success(r)  => 1
-        case Failure(ex) => 0
-      },
+      () =>
+        badObservable(1, 2, 3).andThen {
+          case Success(r)  => 1
+          case Failure(ex) => 0
+        },
       () => badObservable(1, 2, 3).collect(),
       () => badObservable(1, 2, 3).foldLeft(0)((v: Int, i: Int) => v + i),
       () => badObservable(1, 2, 3).recoverWith { case t: Throwable => badObservable(1, 2, 3) },
@@ -495,16 +510,25 @@ class ScalaObservableSpec extends BaseSpec {
     val ctx1 = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(5))
     val ctx2 = ExecutionContext.fromExecutorService(Executors.newFixedThreadPool(5))
 
-    Await.result(observable().map((i: Int) => {
-      originalThreadId = Thread.currentThread().getId
-      i
-    }).observeOn(ctx1).map((i: Int) => {
-      observeOnThreadId1 = Thread.currentThread().getId
-      i
-    }).observeOn(ctx2).map((i: Int) => {
-      observeOnThreadId2 = Thread.currentThread().getId
-      i
-    }).toFuture(), Duration(10, TimeUnit.SECONDS))
+    Await.result(
+      observable()
+        .map((i: Int) => {
+          originalThreadId = Thread.currentThread().getId
+          i
+        })
+        .observeOn(ctx1)
+        .map((i: Int) => {
+          observeOnThreadId1 = Thread.currentThread().getId
+          i
+        })
+        .observeOn(ctx2)
+        .map((i: Int) => {
+          observeOnThreadId2 = Thread.currentThread().getId
+          i
+        })
+        .toFuture(),
+      Duration(10, TimeUnit.SECONDS)
+    )
     ctx1.shutdown()
     ctx2.shutdown()
 

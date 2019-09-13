@@ -16,10 +16,19 @@
 
 package org.mongodb.scala.gridfs
 
-import com.mongodb.reactivestreams.client.gridfs.{GridFSBuckets, GridFSBucket => JGridFSBucket}
+import com.mongodb.reactivestreams.client.gridfs.{ GridFSBuckets, GridFSBucket => JGridFSBucket }
 import org.mongodb.scala.bson.conversions.Bson
-import org.mongodb.scala.bson.{BsonValue, ObjectId}
-import org.mongodb.scala.{ClientSession, Completed, MongoDatabase, Observable, ReadConcern, ReadPreference, SingleObservable, WriteConcern}
+import org.mongodb.scala.bson.{ BsonValue, ObjectId }
+import org.mongodb.scala.{
+  ClientSession,
+  Completed,
+  MongoDatabase,
+  Observable,
+  ReadConcern,
+  ReadPreference,
+  SingleObservable,
+  WriteConcern
+}
 
 /**
  * A factory for GridFSBucket instances.
@@ -43,7 +52,8 @@ object GridFSBucket {
    * @param bucketName the custom bucket name to use
    * @return the GridFSBucket
    */
-  def apply(database: MongoDatabase, bucketName: String): GridFSBucket = GridFSBucket(GridFSBuckets.create(database.wrapped, bucketName))
+  def apply(database: MongoDatabase, bucketName: String): GridFSBucket =
+    GridFSBucket(GridFSBuckets.create(database.wrapped, bucketName))
 }
 
 // scalastyle:off number.of.methods
@@ -105,7 +115,8 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * @param readPreference the new ReadPreference for the database
    * @return a new GridFSBucket instance with the different readPreference
    */
-  def withReadPreference(readPreference: ReadPreference): GridFSBucket = GridFSBucket(wrapped.withReadPreference(readPreference))
+  def withReadPreference(readPreference: ReadPreference): GridFSBucket =
+    GridFSBucket(wrapped.withReadPreference(readPreference))
 
   /**
    * Create a new GridFSBucket instance with a different write concern.
@@ -165,7 +176,8 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * @return the GridFSUploadStream that provides the ObjectId for the file to be uploaded and the Stream to which the
    *         application will write the contents.
    */
-  def openUploadStream(id: BsonValue, filename: String): GridFSUploadStream = GridFSUploadStream(wrapped.openUploadStream(id, filename))
+  def openUploadStream(id: BsonValue, filename: String): GridFSUploadStream =
+    GridFSUploadStream(wrapped.openUploadStream(id, filename))
 
   /**
    * Opens a AsyncOutputStream that the application can write the contents of the file to.
@@ -215,7 +227,11 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def openUploadStream(clientSession: ClientSession, filename: String, options: GridFSUploadOptions): GridFSUploadStream =
+  def openUploadStream(
+      clientSession: ClientSession,
+      filename: String,
+      options: GridFSUploadOptions
+  ): GridFSUploadStream =
     GridFSUploadStream(wrapped.openUploadStream(clientSession, filename, options))
 
   /**
@@ -252,7 +268,12 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def openUploadStream(clientSession: ClientSession, id: BsonValue, filename: String, options: GridFSUploadOptions): GridFSUploadStream =
+  def openUploadStream(
+      clientSession: ClientSession,
+      id: BsonValue,
+      filename: String,
+      options: GridFSUploadOptions
+  ): GridFSUploadStream =
     GridFSUploadStream(wrapped.openUploadStream(clientSession, id, filename, options))
 
   /**
@@ -265,7 +286,8 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * @param source   the Stream providing the file data
    * @return a Observable returning a single element containing the ObjectId of the uploaded file.
    */
-  def uploadFromStream(filename: String, source: AsyncInputStream): Observable[ObjectId] = wrapped.uploadFromStream(filename, source)
+  def uploadFromStream(filename: String, source: AsyncInputStream): Observable[ObjectId] =
+    wrapped.uploadFromStream(filename, source)
 
   /**
    * Uploads the contents of the given `AsyncInputStream` to a GridFS bucket.
@@ -307,7 +329,12 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * @param options  the GridFSUploadOptions
    * @return a Observable with a single element indicating when the operation has completed
    */
-  def uploadFromStream(id: BsonValue, filename: String, source: AsyncInputStream, options: GridFSUploadOptions): SingleObservable[Completed] =
+  def uploadFromStream(
+      id: BsonValue,
+      filename: String,
+      source: AsyncInputStream,
+      options: GridFSUploadOptions
+  ): SingleObservable[Completed] =
     wrapped.uploadFromStream(id, filename, source, options)
 
   /**
@@ -340,7 +367,12 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def uploadFromStream(clientSession: ClientSession, filename: String, source: AsyncInputStream, options: GridFSUploadOptions): Observable[ObjectId] =
+  def uploadFromStream(
+      clientSession: ClientSession,
+      filename: String,
+      source: AsyncInputStream,
+      options: GridFSUploadOptions
+  ): Observable[ObjectId] =
     wrapped.uploadFromStream(clientSession, filename, source, options)
 
   /**
@@ -357,7 +389,12 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def uploadFromStream(clientSession: ClientSession, id: BsonValue, filename: String, source: AsyncInputStream): SingleObservable[Completed] =
+  def uploadFromStream(
+      clientSession: ClientSession,
+      id: BsonValue,
+      filename: String,
+      source: AsyncInputStream
+  ): SingleObservable[Completed] =
     wrapped.uploadFromStream(clientSession, id, filename, source)
 
   /**
@@ -375,8 +412,13 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def uploadFromStream(clientSession: ClientSession, id: BsonValue, filename: String, source: AsyncInputStream,
-                       options: GridFSUploadOptions): SingleObservable[Completed] =
+  def uploadFromStream(
+      clientSession: ClientSession,
+      id: BsonValue,
+      filename: String,
+      source: AsyncInputStream,
+      options: GridFSUploadOptions
+  ): SingleObservable[Completed] =
     wrapped.uploadFromStream(clientSession, id, filename, source, options)
 
   /**
@@ -402,7 +444,8 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * @param filename the name of the file to be downloaded
    * @return the stream
    */
-  def openDownloadStream(filename: String): GridFSDownloadStream = GridFSDownloadStream(wrapped.openDownloadStream(filename))
+  def openDownloadStream(filename: String): GridFSDownloadStream =
+    GridFSDownloadStream(wrapped.openDownloadStream(filename))
 
   /**
    * Opens a Stream from which the application can read the contents of the stored file specified by `filename` and the revision
@@ -463,7 +506,11 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def openDownloadStream(clientSession: ClientSession, filename: String, options: GridFSDownloadOptions): GridFSDownloadStream =
+  def openDownloadStream(
+      clientSession: ClientSession,
+      filename: String,
+      options: GridFSDownloadOptions
+  ): GridFSDownloadStream =
     GridFSDownloadStream(wrapped.openDownloadStream(clientSession, filename, options))
 
   /**
@@ -508,7 +555,11 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * @param options     the download options
    * @return a Observable with a single element indicating the file has been downloaded
    */
-  def downloadToStream(filename: String, destination: AsyncOutputStream, options: GridFSDownloadOptions): SingleObservable[Long] =
+  def downloadToStream(
+      filename: String,
+      destination: AsyncOutputStream,
+      options: GridFSDownloadOptions
+  ): SingleObservable[Long] =
     wrapped.downloadToStream(filename, destination, options)
 
   /**
@@ -522,7 +573,11 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def downloadToStream(clientSession: ClientSession, id: ObjectId, destination: AsyncOutputStream): SingleObservable[Long] =
+  def downloadToStream(
+      clientSession: ClientSession,
+      id: ObjectId,
+      destination: AsyncOutputStream
+  ): SingleObservable[Long] =
     wrapped.downloadToStream(clientSession, id, destination)
 
   /**
@@ -536,7 +591,11 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def downloadToStream(clientSession: ClientSession, id: BsonValue, destination: AsyncOutputStream): SingleObservable[Long] =
+  def downloadToStream(
+      clientSession: ClientSession,
+      id: BsonValue,
+      destination: AsyncOutputStream
+  ): SingleObservable[Long] =
     wrapped.downloadToStream(clientSession, id, destination)
 
   /**
@@ -550,7 +609,11 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def downloadToStream(clientSession: ClientSession, filename: String, destination: AsyncOutputStream): SingleObservable[Long] =
+  def downloadToStream(
+      clientSession: ClientSession,
+      filename: String,
+      destination: AsyncOutputStream
+  ): SingleObservable[Long] =
     wrapped.downloadToStream(clientSession, filename, destination)
 
   /**
@@ -565,7 +628,12 @@ case class GridFSBucket(private val wrapped: JGridFSBucket) {
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def downloadToStream(clientSession: ClientSession, filename: String, destination: AsyncOutputStream, options: GridFSDownloadOptions): SingleObservable[Long] =
+  def downloadToStream(
+      clientSession: ClientSession,
+      filename: String,
+      destination: AsyncOutputStream,
+      options: GridFSDownloadOptions
+  ): SingleObservable[Long] =
     wrapped.downloadToStream(clientSession, filename, destination, options)
 
   /**

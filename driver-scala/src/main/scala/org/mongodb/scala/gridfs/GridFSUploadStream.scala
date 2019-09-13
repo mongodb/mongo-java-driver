@@ -18,10 +18,10 @@ package org.mongodb.scala.gridfs
 
 import java.nio.ByteBuffer
 
-import com.mongodb.reactivestreams.client.gridfs.{GridFSUploadStream => JGridFSUploadStream}
+import com.mongodb.reactivestreams.client.gridfs.{ GridFSUploadStream => JGridFSUploadStream }
 import org.bson.types.ObjectId
 import org.mongodb.scala.bson.BsonValue
-import org.mongodb.scala.{Completed, SingleObservable}
+import org.mongodb.scala.{ Completed, SingleObservable }
 
 /**
  * A GridFS OutputStream for uploading data into GridFS
@@ -70,4 +70,3 @@ case class GridFSUploadStream(private val wrapped: JGridFSUploadStream) extends 
    */
   override def close(): SingleObservable[Completed] = wrapped.close()
 }
-

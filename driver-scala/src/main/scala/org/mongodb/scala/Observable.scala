@@ -17,10 +17,10 @@
 package org.mongodb.scala
 
 import org.mongodb.scala.internal._
-import org.reactivestreams.{Publisher, Subscriber}
+import org.reactivestreams.{ Publisher, Subscriber }
 
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.{ExecutionContext, Future, Promise}
+import scala.concurrent.{ ExecutionContext, Future, Promise }
 import scala.util.Try
 
 /**
@@ -243,7 +243,8 @@ trait Observable[T] extends Publisher[T] {
    *                    used in the next accumulator call.
    * @return an Observable that emits a single item, the result of accumulator.
    */
-  def foldLeft[S](initialValue: S)(accumulator: (S, T) => S): SingleObservable[S] = FoldLeftObservable(this, initialValue, accumulator)
+  def foldLeft[S](initialValue: S)(accumulator: (S, T) => S): SingleObservable[S] =
+    FoldLeftObservable(this, initialValue, accumulator)
 
   /**
    * Creates a new [[Observable]] that will handle any matching throwable that this Observable might contain.
@@ -291,7 +292,8 @@ trait Observable[T] extends Publisher[T] {
    * @tparam U the type of the returned Observable
    * @return an Observable that will handle any matching throwable and not error but recover with a new observable
    */
-  def recoverWith[U >: T](pf: PartialFunction[Throwable, Observable[U]]): Observable[U] = RecoverWithObservable(this, pf)
+  def recoverWith[U >: T](pf: PartialFunction[Throwable, Observable[U]]): Observable[U] =
+    RecoverWithObservable(this, pf)
 
   /**
    * Zips the values of `this` and `that` [[Observable]], and creates a new Observable holding the tuple of their results.
@@ -331,7 +333,8 @@ trait Observable[T] extends Publisher[T] {
    * @tparam U the type of the returned Observable
    * @return an Observable that will fallback to the `that` Observable should `this` Observable complete with an `onError`.
    */
-  def fallbackTo[U >: T](that: Observable[U]): Observable[U] = RecoverWithObservable(this, { case t: Throwable => that }, true)
+  def fallbackTo[U >: T](that: Observable[U]): Observable[U] =
+    RecoverWithObservable(this, { case t: Throwable => that }, true)
 
   /**
    * Applies the side-effecting function to the final result of this [[Observable]] and, returns a new Observable with the result of
@@ -391,18 +394,26 @@ trait Observable[T] extends Publisher[T] {
         sub.request(1)
       }
 
-      override def onError(throwable: Throwable): Unit = completeWith("onError", { () => promise.failure(throwable) })
+      override def onError(throwable: Throwable): Unit =
+        completeWith("onError", { () =>
+          promise.failure(throwable)
+        })
 
       override def onComplete(): Unit = {
-        if (!terminated) completeWith("onComplete", { () => promise.success(None) }) // Completed with no values
+        if (!terminated) completeWith("onComplete", { () =>
+          promise.success(None)
+        }) // Completed with no values
       }
 
       override def onNext(tResult: T): Unit = {
-        completeWith("onNext", { () => promise.success(Some(tResult)) })
+        completeWith("onNext", { () =>
+          promise.success(Some(tResult))
+        })
       }
 
       private def completeWith(method: String, action: () => Any): Unit = {
-        if (terminated) throw new IllegalStateException(s"$method called after the Observer has already completed or errored.")
+        if (terminated)
+          throw new IllegalStateException(s"$method called after the Observer has already completed or errored.")
         terminated = true
         subscription.foreach((sub: Subscription) => sub.unsubscribe())
         action()

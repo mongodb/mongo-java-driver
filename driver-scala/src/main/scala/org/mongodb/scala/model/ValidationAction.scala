@@ -18,7 +18,7 @@ package org.mongodb.scala.model
 
 import scala.util.Try
 
-import com.mongodb.client.model.{ValidationAction => JValidationAction}
+import com.mongodb.client.model.{ ValidationAction => JValidationAction }
 
 /**
  * Determines how strictly MongoDB applies the validation rules to existing documents during an insert or update.
@@ -27,6 +27,7 @@ import com.mongodb.client.model.{ValidationAction => JValidationAction}
  * @since 1.1
  */
 object ValidationAction {
+
   /**
    * Documents must pass validation before the write occurs. Otherwise, the write operation fails.
    */

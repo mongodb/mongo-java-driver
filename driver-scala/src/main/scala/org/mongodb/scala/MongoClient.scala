@@ -19,11 +19,11 @@ package org.mongodb.scala
 import java.io.Closeable
 
 import com.mongodb.ConnectionString
-import com.mongodb.reactivestreams.client.{MongoClients, MongoClient => JMongoClient}
+import com.mongodb.reactivestreams.client.{ MongoClients, MongoClient => JMongoClient }
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.codecs.configuration.CodecRegistries.{ fromProviders, fromRegistries }
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
-import org.mongodb.scala.bson.codecs.{DocumentCodecProvider, IterableCodecProvider}
+import org.mongodb.scala.bson.codecs.{ DocumentCodecProvider, IterableCodecProvider }
 import org.mongodb.scala.bson.conversions.Bson
 
 import scala.collection.JavaConverters._
@@ -60,10 +60,14 @@ object MongoClient {
    * @note the `mongoDriverInformation` is intended for driver and library authors to associate extra driver metadata with the connections.
    */
   def apply(uri: String, mongoDriverInformation: Option[MongoDriverInformation]): MongoClient = {
-    apply(MongoClientSettings.builder()
-      .applyConnectionString(new ConnectionString(uri))
-      .codecRegistry(DEFAULT_CODEC_REGISTRY)
-      .build(), mongoDriverInformation)
+    apply(
+      MongoClientSettings
+        .builder()
+        .applyConnectionString(new ConnectionString(uri))
+        .codecRegistry(DEFAULT_CODEC_REGISTRY)
+        .build(),
+      mongoDriverInformation
+    )
   }
 
   /**
@@ -84,7 +88,10 @@ object MongoClient {
    * @note the `mongoDriverInformation` is intended for driver and library authors to associate extra driver metadata with the connections.
    * @since 2.3
    */
-  def apply(clientSettings: MongoClientSettings, mongoDriverInformation: Option[MongoDriverInformation]): MongoClient = {
+  def apply(
+      clientSettings: MongoClientSettings,
+      mongoDriverInformation: Option[MongoDriverInformation]
+  ): MongoClient = {
     val builder = mongoDriverInformation match {
       case Some(info) => MongoDriverInformation.builder(info)
       case None       => MongoDriverInformation.builder()
@@ -95,7 +102,8 @@ object MongoClient {
 
   val DEFAULT_CODEC_REGISTRY: CodecRegistry = fromRegistries(
     fromProviders(DocumentCodecProvider(), IterableCodecProvider()),
-    com.mongodb.MongoClientSettings.getDefaultCodecRegistry)
+    com.mongodb.MongoClientSettings.getDefaultCodecRegistry
+  )
 }
 
 /**
@@ -171,7 +179,10 @@ case class MongoClient(private val wrapped: JMongoClient) extends Closeable {
    * @tparam TResult   the type of the class to use instead of `Document`.
    * @return the fluent list databases interface
    */
-  def listDatabases[TResult]()(implicit e: TResult DefaultsTo Document, ct: ClassTag[TResult]): ListDatabasesObservable[TResult] =
+  def listDatabases[TResult]()(
+      implicit e: TResult DefaultsTo Document,
+      ct: ClassTag[TResult]
+  ): ListDatabasesObservable[TResult] =
     ListDatabasesObservable(wrapped.listDatabases(ct))
 
   /**
@@ -183,7 +194,9 @@ case class MongoClient(private val wrapped: JMongoClient) extends Closeable {
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def listDatabases[TResult](clientSession: ClientSession)(implicit e: TResult DefaultsTo Document, ct: ClassTag[TResult]): ListDatabasesObservable[TResult] =
+  def listDatabases[TResult](
+      clientSession: ClientSession
+  )(implicit e: TResult DefaultsTo Document, ct: ClassTag[TResult]): ListDatabasesObservable[TResult] =
     ListDatabasesObservable(wrapped.listDatabases(clientSession, ct))
 
   /**
@@ -194,7 +207,8 @@ case class MongoClient(private val wrapped: JMongoClient) extends Closeable {
    * @since 2.4
    * @note Requires MongoDB 4.0 or greater
    */
-  def watch[C]()(implicit e: C DefaultsTo Document, ct: ClassTag[C]): ChangeStreamObservable[C] = ChangeStreamObservable(wrapped.watch(ct))
+  def watch[C]()(implicit e: C DefaultsTo Document, ct: ClassTag[C]): ChangeStreamObservable[C] =
+    ChangeStreamObservable(wrapped.watch(ct))
 
   /**
    * Creates a change stream for this collection.
@@ -217,7 +231,9 @@ case class MongoClient(private val wrapped: JMongoClient) extends Closeable {
    * @since 2.4
    * @note Requires MongoDB 4.0 or greater
    */
-  def watch[C](clientSession: ClientSession)(implicit e: C DefaultsTo Document, ct: ClassTag[C]): ChangeStreamObservable[C] =
+  def watch[C](
+      clientSession: ClientSession
+  )(implicit e: C DefaultsTo Document, ct: ClassTag[C]): ChangeStreamObservable[C] =
     ChangeStreamObservable(wrapped.watch(clientSession, ct))
 
   /**
@@ -230,7 +246,10 @@ case class MongoClient(private val wrapped: JMongoClient) extends Closeable {
    * @since 2.4
    * @note Requires MongoDB 4.0 or greater
    */
-  def watch[C](clientSession: ClientSession, pipeline: Seq[Bson])(implicit e: C DefaultsTo Document, ct: ClassTag[C]): ChangeStreamObservable[C] =
+  def watch[C](
+      clientSession: ClientSession,
+      pipeline: Seq[Bson]
+  )(implicit e: C DefaultsTo Document, ct: ClassTag[C]): ChangeStreamObservable[C] =
     ChangeStreamObservable(wrapped.watch(clientSession, pipeline.asJava, ct))
 
 }

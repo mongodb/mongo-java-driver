@@ -18,7 +18,7 @@ package org.mongodb.scala
 
 import java.util
 
-import com.mongodb.reactivestreams.client.{MongoCollection => JMongoCollection}
+import com.mongodb.reactivestreams.client.{ MongoCollection => JMongoCollection }
 import org.bson.codecs.configuration.CodecRegistry
 import org.mongodb.scala.bson.DefaultHelper.DefaultsTo
 import org.mongodb.scala.bson.conversions.Bson
@@ -38,6 +38,7 @@ import scala.reflect.ClassTag
  * @since 1.0
  */
 case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResult]) {
+
   /**
    * Gets the namespace of this collection.
    *
@@ -96,7 +97,8 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param codecRegistry the new { @link org.bson.codecs.configuration.CodecRegistry} for the collection
    * @return a new MongoCollection instance with the different codec registry
    */
-  def withCodecRegistry(codecRegistry: CodecRegistry): MongoCollection[TResult] = MongoCollection(wrapped.withCodecRegistry(codecRegistry))
+  def withCodecRegistry(codecRegistry: CodecRegistry): MongoCollection[TResult] =
+    MongoCollection(wrapped.withCodecRegistry(codecRegistry))
 
   /**
    * Create a new MongoCollection instance with a different read preference.
@@ -104,7 +106,8 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param readPreference the new { @link com.mongodb.ReadPreference} for the collection
    * @return a new MongoCollection instance with the different readPreference
    */
-  def withReadPreference(readPreference: ReadPreference): MongoCollection[TResult] = MongoCollection(wrapped.withReadPreference(readPreference))
+  def withReadPreference(readPreference: ReadPreference): MongoCollection[TResult] =
+    MongoCollection(wrapped.withReadPreference(readPreference))
 
   /**
    * Create a new MongoCollection instance with a different write concern.
@@ -112,7 +115,8 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param writeConcern the new { @link com.mongodb.WriteConcern} for the collection
    * @return a new MongoCollection instance with the different writeConcern
    */
-  def withWriteConcern(writeConcern: WriteConcern): MongoCollection[TResult] = MongoCollection(wrapped.withWriteConcern(writeConcern))
+  def withWriteConcern(writeConcern: WriteConcern): MongoCollection[TResult] =
+    MongoCollection(wrapped.withWriteConcern(writeConcern))
 
   /**
    * Create a new MongoCollection instance with a different read concern.
@@ -121,7 +125,8 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @return a new MongoCollection instance with the different ReadConcern
    * @since 1.1
    */
-  def withReadConcern(readConcern: ReadConcern): MongoCollection[TResult] = MongoCollection(wrapped.withReadConcern(readConcern))
+  def withReadConcern(readConcern: ReadConcern): MongoCollection[TResult] =
+    MongoCollection(wrapped.withReadConcern(readConcern))
 
   /**
    * Gets an estimate of the count of documents in a collection using collection metadata.
@@ -352,7 +357,9 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def distinct[C](clientSession: ClientSession, fieldName: String, filter: Bson)(implicit ct: ClassTag[C]): DistinctObservable[C] =
+  def distinct[C](clientSession: ClientSession, fieldName: String, filter: Bson)(
+      implicit ct: ClassTag[C]
+  ): DistinctObservable[C] =
     DistinctObservable(wrapped.distinct(clientSession, fieldName, filter, ct))
 
   /**
@@ -402,7 +409,10 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def find[C](clientSession: ClientSession, filter: Bson)(implicit e: C DefaultsTo TResult, ct: ClassTag[C]): FindObservable[C] =
+  def find[C](
+      clientSession: ClientSession,
+      filter: Bson
+  )(implicit e: C DefaultsTo TResult, ct: ClassTag[C]): FindObservable[C] =
     FindObservable(wrapped.find(clientSession, filter, ct))
 
   /**
@@ -425,7 +435,10 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def aggregate[C](clientSession: ClientSession, pipeline: Seq[Bson])(implicit e: C DefaultsTo TResult, ct: ClassTag[C]): AggregateObservable[C] =
+  def aggregate[C](
+      clientSession: ClientSession,
+      pipeline: Seq[Bson]
+  )(implicit e: C DefaultsTo TResult, ct: ClassTag[C]): AggregateObservable[C] =
     AggregateObservable(wrapped.aggregate[C](clientSession, pipeline.asJava, ct))
 
   /**
@@ -437,7 +450,10 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @return a Observable containing the result of the map-reduce operation
    *         [[http://docs.mongodb.org/manual/reference/command/mapReduce/ map-reduce]]
    */
-  def mapReduce[C](mapFunction: String, reduceFunction: String)(implicit e: C DefaultsTo TResult, ct: ClassTag[C]): MapReduceObservable[C] =
+  def mapReduce[C](
+      mapFunction: String,
+      reduceFunction: String
+  )(implicit e: C DefaultsTo TResult, ct: ClassTag[C]): MapReduceObservable[C] =
     MapReduceObservable(wrapped.mapReduce(mapFunction, reduceFunction, ct))
 
   /**
@@ -453,8 +469,9 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @note Requires MongoDB 3.6 or greater
    */
   def mapReduce[C](clientSession: ClientSession, mapFunction: String, reduceFunction: String)(
-    implicit
-    e: C DefaultsTo TResult, ct: ClassTag[C]
+      implicit
+      e: C DefaultsTo TResult,
+      ct: ClassTag[C]
   ): MapReduceObservable[C] =
     MapReduceObservable(wrapped.mapReduce(clientSession, mapFunction, reduceFunction, ct))
 
@@ -474,7 +491,10 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param options  the options to apply to the bulk write operation
    * @return a Observable with a single element the BulkWriteResult
    */
-  def bulkWrite(requests: Seq[_ <: WriteModel[_ <: TResult]], options: BulkWriteOptions): SingleObservable[BulkWriteResult] =
+  def bulkWrite(
+      requests: Seq[_ <: WriteModel[_ <: TResult]],
+      options: BulkWriteOptions
+  ): SingleObservable[BulkWriteResult] =
     wrapped.bulkWrite(requests.asJava.asInstanceOf[util.List[_ <: WriteModel[_ <: TResult]]], options)
 
   /**
@@ -486,7 +506,10 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def bulkWrite(clientSession: ClientSession, requests: Seq[_ <: WriteModel[_ <: TResult]]): SingleObservable[BulkWriteResult] =
+  def bulkWrite(
+      clientSession: ClientSession,
+      requests: Seq[_ <: WriteModel[_ <: TResult]]
+  ): SingleObservable[BulkWriteResult] =
     wrapped.bulkWrite(clientSession, requests.asJava.asInstanceOf[util.List[_ <: WriteModel[_ <: TResult]]])
 
   /**
@@ -499,7 +522,11 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def bulkWrite(clientSession: ClientSession, requests: Seq[_ <: WriteModel[_ <: TResult]], options: BulkWriteOptions): SingleObservable[BulkWriteResult] =
+  def bulkWrite(
+      clientSession: ClientSession,
+      requests: Seq[_ <: WriteModel[_ <: TResult]],
+      options: BulkWriteOptions
+  ): SingleObservable[BulkWriteResult] =
     wrapped.bulkWrite(clientSession, requests.asJava.asInstanceOf[util.List[_ <: WriteModel[_ <: TResult]]], options)
 
   /**
@@ -547,7 +574,11 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def insertOne(clientSession: ClientSession, document: TResult, options: InsertOneOptions): SingleObservable[Completed] =
+  def insertOne(
+      clientSession: ClientSession,
+      document: TResult,
+      options: InsertOneOptions
+  ): SingleObservable[Completed] =
     wrapped.insertOne(clientSession, document, options)
 
   /**
@@ -597,7 +628,11 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def insertMany(clientSession: ClientSession, documents: Seq[_ <: TResult], options: InsertManyOptions): SingleObservable[Completed] =
+  def insertMany(
+      clientSession: ClientSession,
+      documents: Seq[_ <: TResult],
+      options: InsertManyOptions
+  ): SingleObservable[Completed] =
     wrapped.insertMany(clientSession, documents.asJava, options)
 
   /**
@@ -741,7 +776,12 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def replaceOne(clientSession: ClientSession, filter: Bson, replacement: TResult, options: ReplaceOptions): SingleObservable[UpdateResult] =
+  def replaceOne(
+      clientSession: ClientSession,
+      filter: Bson,
+      replacement: TResult,
+      options: ReplaceOptions
+  ): SingleObservable[UpdateResult] =
     wrapped.replaceOne(clientSession, filter, replacement, options)
 
   /**
@@ -805,7 +845,12 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def updateOne(clientSession: ClientSession, filter: Bson, update: Bson, options: UpdateOptions): SingleObservable[UpdateResult] =
+  def updateOne(
+      clientSession: ClientSession,
+      filter: Bson,
+      update: Bson,
+      options: UpdateOptions
+  ): SingleObservable[UpdateResult] =
     wrapped.updateOne(clientSession, filter, update, options)
 
   /**
@@ -869,7 +914,12 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @since 2.7
    * @note Requires MongoDB 4.2 or greater
    */
-  def updateOne(clientSession: ClientSession, filter: Bson, update: Seq[Bson], options: UpdateOptions): SingleObservable[UpdateResult] =
+  def updateOne(
+      clientSession: ClientSession,
+      filter: Bson,
+      update: Seq[Bson],
+      options: UpdateOptions
+  ): SingleObservable[UpdateResult] =
     wrapped.updateOne(clientSession, filter, update.asJava, options)
 
   /**
@@ -933,7 +983,12 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def updateMany(clientSession: ClientSession, filter: Bson, update: Bson, options: UpdateOptions): SingleObservable[UpdateResult] =
+  def updateMany(
+      clientSession: ClientSession,
+      filter: Bson,
+      update: Bson,
+      options: UpdateOptions
+  ): SingleObservable[UpdateResult] =
     wrapped.updateMany(clientSession, filter, update, options)
 
   /**
@@ -997,7 +1052,12 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @since 2.7
    * @note Requires MongoDB 4.2 or greater
    */
-  def updateMany(clientSession: ClientSession, filter: Bson, update: Seq[Bson], options: UpdateOptions): SingleObservable[UpdateResult] =
+  def updateMany(
+      clientSession: ClientSession,
+      filter: Bson,
+      update: Seq[Bson],
+      options: UpdateOptions
+  ): SingleObservable[UpdateResult] =
     wrapped.updateMany(clientSession, filter, update.asJava, options)
 
   /**
@@ -1044,7 +1104,11 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def findOneAndDelete(clientSession: ClientSession, filter: Bson, options: FindOneAndDeleteOptions): SingleObservable[TResult] =
+  def findOneAndDelete(
+      clientSession: ClientSession,
+      filter: Bson,
+      options: FindOneAndDeleteOptions
+  ): SingleObservable[TResult] =
     wrapped.findOneAndDelete(clientSession, filter, options)
 
   /**
@@ -1069,7 +1133,11 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    *         property, this will either be the document as it was before the update or as it is after the update.  If no documents matched the
    *         query filter, then null will be returned
    */
-  def findOneAndReplace(filter: Bson, replacement: TResult, options: FindOneAndReplaceOptions): SingleObservable[TResult] =
+  def findOneAndReplace(
+      filter: Bson,
+      replacement: TResult,
+      options: FindOneAndReplaceOptions
+  ): SingleObservable[TResult] =
     wrapped.findOneAndReplace(filter, replacement, options)
 
   /**
@@ -1100,7 +1168,12 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def findOneAndReplace(clientSession: ClientSession, filter: Bson, replacement: TResult, options: FindOneAndReplaceOptions): SingleObservable[TResult] =
+  def findOneAndReplace(
+      clientSession: ClientSession,
+      filter: Bson,
+      replacement: TResult,
+      options: FindOneAndReplaceOptions
+  ): SingleObservable[TResult] =
     wrapped.findOneAndReplace(clientSession, filter, replacement, options)
 
   /**
@@ -1164,7 +1237,12 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def findOneAndUpdate(clientSession: ClientSession, filter: Bson, update: Bson, options: FindOneAndUpdateOptions): SingleObservable[TResult] =
+  def findOneAndUpdate(
+      clientSession: ClientSession,
+      filter: Bson,
+      update: Bson,
+      options: FindOneAndUpdateOptions
+  ): SingleObservable[TResult] =
     wrapped.findOneAndUpdate(clientSession, filter, update, options)
 
   /**
@@ -1228,7 +1306,12 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @since 2.7
    * @note Requires MongoDB 4.2 or greater
    */
-  def findOneAndUpdate(clientSession: ClientSession, filter: Bson, update: Seq[Bson], options: FindOneAndUpdateOptions): SingleObservable[TResult] =
+  def findOneAndUpdate(
+      clientSession: ClientSession,
+      filter: Bson,
+      update: Seq[Bson],
+      options: FindOneAndUpdateOptions
+  ): SingleObservable[TResult] =
     wrapped.findOneAndUpdate(clientSession, filter, update.asJava, options)
 
   /**
@@ -1338,7 +1421,11 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def createIndexes(clientSession: ClientSession, models: Seq[IndexModel], createIndexOptions: CreateIndexOptions): Observable[String] =
+  def createIndexes(
+      clientSession: ClientSession,
+      models: Seq[IndexModel],
+      createIndexOptions: CreateIndexOptions
+  ): Observable[String] =
     wrapped.createIndexes(clientSession, models.asJava, createIndexOptions)
 
   /**
@@ -1361,7 +1448,9 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def listIndexes[C](clientSession: ClientSession)(implicit e: C DefaultsTo Document, ct: ClassTag[C]): ListIndexesObservable[C] =
+  def listIndexes[C](
+      clientSession: ClientSession
+  )(implicit e: C DefaultsTo Document, ct: ClassTag[C]): ListIndexesObservable[C] =
     ListIndexesObservable(wrapped.listIndexes(clientSession, ct))
 
   /**
@@ -1428,7 +1517,11 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def dropIndex(clientSession: ClientSession, indexName: String, dropIndexOptions: DropIndexOptions): SingleObservable[Completed] =
+  def dropIndex(
+      clientSession: ClientSession,
+      indexName: String,
+      dropIndexOptions: DropIndexOptions
+  ): SingleObservable[Completed] =
     wrapped.dropIndex(clientSession, indexName, dropIndexOptions)
 
   /**
@@ -1453,7 +1546,11 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def dropIndex(clientSession: ClientSession, keys: Bson, dropIndexOptions: DropIndexOptions): SingleObservable[Completed] =
+  def dropIndex(
+      clientSession: ClientSession,
+      keys: Bson,
+      dropIndexOptions: DropIndexOptions
+  ): SingleObservable[Completed] =
     wrapped.dropIndex(clientSession, keys, dropIndexOptions)
 
   /**
@@ -1518,7 +1615,10 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @param options                the options for renaming a collection
    * @return a Observable with a single element indicating when the operation has completed
    */
-  def renameCollection(newCollectionNamespace: MongoNamespace, options: RenameCollectionOptions): SingleObservable[Completed] =
+  def renameCollection(
+      newCollectionNamespace: MongoNamespace,
+      options: RenameCollectionOptions
+  ): SingleObservable[Completed] =
     wrapped.renameCollection(newCollectionNamespace, options)
 
   /**
@@ -1531,7 +1631,10 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def renameCollection(clientSession: ClientSession, newCollectionNamespace: MongoNamespace): SingleObservable[Completed] =
+  def renameCollection(
+      clientSession: ClientSession,
+      newCollectionNamespace: MongoNamespace
+  ): SingleObservable[Completed] =
     wrapped.renameCollection(clientSession, newCollectionNamespace)
 
   /**
@@ -1545,8 +1648,11 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def renameCollection(clientSession: ClientSession, newCollectionNamespace: MongoNamespace,
-                       options: RenameCollectionOptions): SingleObservable[Completed] =
+  def renameCollection(
+      clientSession: ClientSession,
+      newCollectionNamespace: MongoNamespace,
+      options: RenameCollectionOptions
+  ): SingleObservable[Completed] =
     wrapped.renameCollection(clientSession, newCollectionNamespace, options)
 
   /**
@@ -1557,7 +1663,8 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def watch[C]()(implicit e: C DefaultsTo TResult, ct: ClassTag[C]): ChangeStreamObservable[C] = ChangeStreamObservable(wrapped.watch(ct))
+  def watch[C]()(implicit e: C DefaultsTo TResult, ct: ClassTag[C]): ChangeStreamObservable[C] =
+    ChangeStreamObservable(wrapped.watch(ct))
 
   /**
    * Creates a change stream for this collection.
@@ -1580,7 +1687,9 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def watch[C](clientSession: ClientSession)(implicit e: C DefaultsTo TResult, ct: ClassTag[C]): ChangeStreamObservable[C] =
+  def watch[C](
+      clientSession: ClientSession
+  )(implicit e: C DefaultsTo TResult, ct: ClassTag[C]): ChangeStreamObservable[C] =
     ChangeStreamObservable(wrapped.watch(clientSession, ct))
 
   /**
@@ -1593,7 +1702,10 @@ case class MongoCollection[TResult](private val wrapped: JMongoCollection[TResul
    * @since 2.2
    * @note Requires MongoDB 3.6 or greater
    */
-  def watch[C](clientSession: ClientSession, pipeline: Seq[Bson])(implicit e: C DefaultsTo TResult, ct: ClassTag[C]): ChangeStreamObservable[C] =
+  def watch[C](
+      clientSession: ClientSession,
+      pipeline: Seq[Bson]
+  )(implicit e: C DefaultsTo TResult, ct: ClassTag[C]): ChangeStreamObservable[C] =
     ChangeStreamObservable(wrapped.watch(clientSession, pipeline.asJava, ct))
 
 }

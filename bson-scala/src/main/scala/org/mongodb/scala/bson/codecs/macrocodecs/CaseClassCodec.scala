@@ -30,7 +30,9 @@ private[codecs] object CaseClassCodec {
     createCodecDefaultCodecRegistry[T](c)(c.Expr[Boolean](q"true"))
   }
 
-  def createCodecEncodeNone[T: c.WeakTypeTag](c: whitebox.Context)(codecRegistry: c.Expr[CodecRegistry]): c.Expr[Codec[T]] = {
+  def createCodecEncodeNone[T: c.WeakTypeTag](
+      c: whitebox.Context
+  )(codecRegistry: c.Expr[CodecRegistry]): c.Expr[Codec[T]] = {
     import c.universe._
     createCodec[T](c)(codecRegistry, c.Expr[Boolean](q"true"))
   }
@@ -40,23 +42,32 @@ private[codecs] object CaseClassCodec {
     createCodecDefaultCodecRegistry[T](c)(c.Expr[Boolean](q"false"))
   }
 
-  def createCodecIgnoreNone[T: c.WeakTypeTag](c: whitebox.Context)(codecRegistry: c.Expr[CodecRegistry]): c.Expr[Codec[T]] = {
+  def createCodecIgnoreNone[T: c.WeakTypeTag](
+      c: whitebox.Context
+  )(codecRegistry: c.Expr[CodecRegistry]): c.Expr[Codec[T]] = {
     import c.universe._
     createCodec[T](c)(codecRegistry, c.Expr[Boolean](q"false"))
   }
 
-  def createCodecDefaultCodecRegistry[T: c.WeakTypeTag](c: whitebox.Context)(encodeNone: c.Expr[Boolean]): c.Expr[Codec[T]] = {
+  def createCodecDefaultCodecRegistry[T: c.WeakTypeTag](
+      c: whitebox.Context
+  )(encodeNone: c.Expr[Boolean]): c.Expr[Codec[T]] = {
     import c.universe._
-    createCodec[T](c)(c.Expr[CodecRegistry](
-      q"""
+    createCodec[T](c)(
+      c.Expr[CodecRegistry](
+        q"""
          import org.mongodb.scala.bson.codecs.DEFAULT_CODEC_REGISTRY
          DEFAULT_CODEC_REGISTRY
       """
-    ), encodeNone)
+      ),
+      encodeNone
+    )
   }
 
   // scalastyle:off method.length
-  def createCodec[T: c.WeakTypeTag](c: whitebox.Context)(codecRegistry: c.Expr[CodecRegistry], encodeNone: c.Expr[Boolean]): c.Expr[Codec[T]] = {
+  def createCodec[T: c.WeakTypeTag](
+      c: whitebox.Context
+  )(codecRegistry: c.Expr[CodecRegistry], encodeNone: c.Expr[Boolean]): c.Expr[Codec[T]] = {
     import c.universe._
 
     // Declared types
@@ -70,7 +81,8 @@ private[codecs] object CaseClassCodec {
     val codecName = TypeName(s"${classTypeName}MacroCodec")
 
     // Type checkers
-    def isCaseClass(t: Type): Boolean = t.typeSymbol.isClass && t.typeSymbol.asClass.isCaseClass && !t.typeSymbol.isModuleClass
+    def isCaseClass(t: Type): Boolean =
+      t.typeSymbol.isClass && t.typeSymbol.asClass.isCaseClass && !t.typeSymbol.isModuleClass
     def isMap(t: Type): Boolean = t.baseClasses.contains(mapTypeSymbol)
     def isOption(t: Type): Boolean = t.typeSymbol == definitions.OptionClass
     def isTuple(t: Type): Boolean = definitions.TupleClass.seq.contains(t.typeSymbol)
@@ -80,11 +92,16 @@ private[codecs] object CaseClassCodec {
 
     def allSubclasses(s: Symbol): Set[Symbol] = {
       val directSubClasses = s.asClass.knownDirectSubclasses
-      directSubClasses ++ directSubClasses.flatMap({ s: Symbol => allSubclasses(s) })
+      directSubClasses ++ directSubClasses.flatMap({ s: Symbol =>
+        allSubclasses(s)
+      })
     }
     val subClasses: List[Type] = allSubclasses(mainType.typeSymbol).map(_.asClass.toType).filter(isCaseClass).toList
     if (isSealed(mainType) && subClasses.isEmpty) {
-      c.abort(c.enclosingPosition, s"No known subclasses of the sealed ${if (mainType.typeSymbol.asClass.isTrait) "trait" else "class"}")
+      c.abort(
+        c.enclosingPosition,
+        s"No known subclasses of the sealed ${if (mainType.typeSymbol.asClass.isTrait) "trait" else "class"}"
+      )
     }
     val knownTypes: List[Type] = (mainType +: subClasses).filterNot(_.typeSymbol.isAbstract).reverse
 
@@ -94,7 +111,7 @@ private[codecs] object CaseClassCodec {
         if (!constructor.isMethod) c.abort(c.enclosingPosition, "No constructor, unsupported class type")
         constructor.asMethod.paramLists match {
           case h :: _ => h.map(_.asTerm)
-          case _ => List.empty
+          case _      => List.empty
         }
       } else {
         List.empty
@@ -104,24 +121,34 @@ private[codecs] object CaseClassCodec {
     val terms = knownTypes.flatMap(t => createTerms(t))
 
     val fields: Map[Type, List[(TermName, Type)]] = {
-      knownTypes.map(
-        t => (
-          t,
-          t.members.sorted.filter(_.isMethod).map(_.asMethod).filter(m => m.isGetter && m.isParamAccessor).map(
-            m => (m.name, m.returnType.asSeenFrom(t, t.typeSymbol))
-          )
+      knownTypes
+        .map(
+          t =>
+            (
+              t,
+              t.members.sorted
+                .filter(_.isMethod)
+                .map(_.asMethod)
+                .filter(m => m.isGetter && m.isParamAccessor)
+                .map(
+                  m => (m.name, m.returnType.asSeenFrom(t, t.typeSymbol))
+                )
+            )
         )
-      ).toMap
+        .toMap
     }
 
     val classAnnotatedFieldsMap: Map[TermName, Constant] = {
-      terms.flatMap(t => {
-        t.annotations.find(a => a.tree.tpe eq typeOf[BsonProperty])
-          .flatMap(_.tree.children.lastOption)
-          .map(tree => {
-            t.name -> tree.productElement(0).asInstanceOf[Constant]
-          })
-      }).toMap
+      terms
+        .flatMap(t => {
+          t.annotations
+            .find(a => a.tree.tpe eq typeOf[BsonProperty])
+            .flatMap(_.tree.children.lastOption)
+            .map(tree => {
+              t.name -> tree.productElement(0).asInstanceOf[Constant]
+            })
+        })
+        .toMap
     }
 
     // Data converters
@@ -153,9 +180,10 @@ private[codecs] object CaseClassCodec {
     def flattenTypeArgs(at: Type): List[c.universe.Type] = {
       val t = at.dealias
       val typeArgs = t.typeArgs match {
-        case head :: _ if isMap(t) && !(head.erasure =:= stringType) => c.abort(c.enclosingPosition, "Maps must contain string types for keys")
+        case head :: _ if isMap(t) && !(head.erasure =:= stringType) =>
+          c.abort(c.enclosingPosition, "Maps must contain string types for keys")
         case _ :: tail if isMap(t) /* head.erasure =:= stringType */ => tail
-        case args => args
+        case args                                                    => args
       }
       val types = t +: typeArgs.flatMap(x => flattenTypeArgs(x))
       if (types.exists(isTuple)) c.abort(c.enclosingPosition, "Tuples currently aren't supported in case classes")
@@ -179,7 +207,9 @@ private[codecs] object CaseClassCodec {
           q"""
             typeArgs += ($key -> {
               val tpeArgs = mutable.ListBuffer.empty[Class[_]]
-              ..${flattenTypeArgs(f).map(t => q"tpeArgs += classOf[${if (isCaseClass(t)) t.finalResultType else t.finalResultType.erasure}]")}
+              ..${flattenTypeArgs(f).map(
+            t => q"tpeArgs += classOf[${if (isCaseClass(t)) t.finalResultType else t.finalResultType.erasure}]"
+          )}
               tpeArgs.toList
             })"""
       })
@@ -195,8 +225,7 @@ private[codecs] object CaseClassCodec {
      * For each case class sets the Map of the given field names and their field types.
      */
     def createClassFieldTypeArgsMap = {
-      val setClassFieldTypeArgs = fields.map(field =>
-        q"""
+      val setClassFieldTypeArgs = fields.map(field => q"""
             classFieldTypeArgs += (${keyName(field._1)} -> ${createFieldTypeArgsMap(field._2)})
         """)
 
@@ -213,7 +242,8 @@ private[codecs] object CaseClassCodec {
      * @return the case classes map
      */
     def caseClassesMap = {
-      val setSubClasses = knownTypes.map(t => q"caseClassesMap += (${keyName(t)} -> classOf[${t.finalResultType.erasure}])")
+      val setSubClasses =
+        knownTypes.map(t => q"caseClassesMap += (${keyName(t)} -> classOf[${t.finalResultType.erasure}])")
       q"""
         val caseClassesMap = mutable.Map[String, Class[_]]()
         ..$setSubClasses
@@ -228,10 +258,12 @@ private[codecs] object CaseClassCodec {
      */
     def classToCaseClassMap = {
       val flattenedFieldTypes = fields.flatMap({ case (t, types) => types.map(f => f._2) :+ t })
-      val setClassToCaseClassMap = flattenedFieldTypes.map(t => q"""classToCaseClassMap ++= ${
-        flattenTypeArgs(t).map(t =>
-          q"(classOf[${t.finalResultType.erasure}], ${isCaseClassOrSealed(t)})")
-      }""")
+      val setClassToCaseClassMap = flattenedFieldTypes.map(
+        t =>
+          q"""classToCaseClassMap ++= ${flattenTypeArgs(t).map(
+            t => q"(classOf[${t.finalResultType.erasure}], ${isCaseClassOrSealed(t)})"
+          )}"""
+      )
 
       q"""
         val classToCaseClassMap = mutable.Map[Class[_], Boolean]()
@@ -260,7 +292,7 @@ private[codecs] object CaseClassCodec {
                 writer.writeName($key)
                 this.writeFieldValue($key, writer, this.bsonNull, encoderContext)
               }"""
-            case _ => q"""
+            case _                              => q"""
               val localVal = instanceValue.$name
               writer.writeName($key)
               this.writeFieldValue($key, writer, localVal, encoderContext)
@@ -293,7 +325,8 @@ private[codecs] object CaseClassCodec {
           val key = keyNameTerm(name)
           val missingField = Literal(Constant(s"Missing field: $key"))
           f match {
-            case optional if isOption(optional) => q"$name = (if (fieldData.contains($key)) Option(fieldData($key)) else None).asInstanceOf[$f]"
+            case optional if isOption(optional) =>
+              q"$name = (if (fieldData.contains($key)) Option(fieldData($key)) else None).asInstanceOf[$f]"
             case _ =>
               q"""$name = fieldData.getOrElse($key, throw new BsonInvalidOperationException($missingField)).asInstanceOf[$f]"""
           }

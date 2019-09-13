@@ -18,7 +18,7 @@ package org.mongodb.scala.model
 
 import scala.collection.JavaConverters._
 
-import com.mongodb.client.model.{Projections => JProjections}
+import com.mongodb.client.model.{ Projections => JProjections }
 
 import org.mongodb.scala.bson.conversions.Bson
 
@@ -30,6 +30,7 @@ import org.mongodb.scala.bson.conversions.Bson
  * @since 1.0
  */
 object Projections {
+
   /**
    * Creates a projection of a field whose value is computed from the given expression.  Projection with an expression is only supported
    * using the \$project aggregation pipeline stage.
@@ -40,7 +41,8 @@ object Projections {
    * @return the projection
    * @see Aggregates#project(Bson)
    */
-  def computed[TExpression](fieldName: String, expression: TExpression): Bson = JProjections.computed(fieldName, expression)
+  def computed[TExpression](fieldName: String, expression: TExpression): Bson =
+    JProjections.computed(fieldName, expression)
 
   /**
    * Creates a projection that includes all of the given fields.

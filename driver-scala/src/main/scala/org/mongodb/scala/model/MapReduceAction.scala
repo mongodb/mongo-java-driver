@@ -16,7 +16,7 @@
 
 package org.mongodb.scala.model
 
-import com.mongodb.client.model.{MapReduceAction => JMapReduceAction}
+import com.mongodb.client.model.{ MapReduceAction => JMapReduceAction }
 
 /**
  * The map reduce to collection actions.

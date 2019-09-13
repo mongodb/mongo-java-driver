@@ -62,7 +62,8 @@ object Macros {
    * @return the CodecProvider for the case class
    */
   @compileTimeOnly("Creating a CodecProvider utilises Macros and must be run at compile time.")
-  implicit def createCodecProvider[T](clazz: Class[T]): CodecProvider = macro CaseClassProvider.createCodecProviderWithClassEncodeNone[T]
+  implicit def createCodecProvider[T](clazz: Class[T]): CodecProvider =
+    macro CaseClassProvider.createCodecProviderWithClassEncodeNone[T]
 
   /**
    * Creates a CodecProvider for a case class that ignores any `None` values
@@ -83,7 +84,8 @@ object Macros {
    * @since 2.1
    */
   @compileTimeOnly("Creating a CodecProvider utilises Macros and must be run at compile time.")
-  def createCodecProviderIgnoreNone[T](clazz: Class[T]): CodecProvider = macro CaseClassProvider.createCodecProviderWithClassIgnoreNone[T]
+  def createCodecProviderIgnoreNone[T](clazz: Class[T]): CodecProvider =
+    macro CaseClassProvider.createCodecProviderWithClassIgnoreNone[T]
 
   /**
    * Creates a Codec for a case class

@@ -32,6 +32,7 @@ import scala.concurrent.duration.Duration
  * @since 1.0
  */
 case class DistinctObservable[TResult](private val wrapped: DistinctPublisher[TResult]) extends Observable[TResult] {
+
   /**
    * Sets the query filter to apply to the query.
    *

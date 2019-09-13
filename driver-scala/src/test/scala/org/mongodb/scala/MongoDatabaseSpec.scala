@@ -21,12 +21,12 @@ import scala.collection.JavaConverters._
 import org.bson.BsonDocument
 import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.configuration.CodecRegistries.fromProviders
-import com.mongodb.reactivestreams.client.{ListCollectionsPublisher, MongoDatabase => JMongoDatabase}
+import com.mongodb.reactivestreams.client.{ ListCollectionsPublisher, MongoDatabase => JMongoDatabase }
 
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model._
 import org.scalamock.scalatest.proxy.MockFactory
-import org.scalatest.{FlatSpec, Matchers}
+import org.scalatest.{ FlatSpec, Matchers }
 
 class MongoDatabaseSpec extends BaseSpec with MockFactory {
 
@@ -155,9 +155,18 @@ class MongoDatabaseSpec extends BaseSpec with MockFactory {
 
   it should "call the underlying listCollections()" in {
     wrapped.expects(Symbol("listCollections"))(*).returns(stub[ListCollectionsPublisher[Document]]).once()
-    wrapped.expects(Symbol("listCollections"))(classOf[BsonDocument]).returns(stub[ListCollectionsPublisher[BsonDocument]]).once()
-    wrapped.expects(Symbol("listCollections"))(clientSession, *).returns(stub[ListCollectionsPublisher[Document]]).once()
-    wrapped.expects(Symbol("listCollections"))(clientSession, classOf[BsonDocument]).returns(stub[ListCollectionsPublisher[BsonDocument]]).once()
+    wrapped
+      .expects(Symbol("listCollections"))(classOf[BsonDocument])
+      .returns(stub[ListCollectionsPublisher[BsonDocument]])
+      .once()
+    wrapped
+      .expects(Symbol("listCollections"))(clientSession, *)
+      .returns(stub[ListCollectionsPublisher[Document]])
+      .once()
+    wrapped
+      .expects(Symbol("listCollections"))(clientSession, classOf[BsonDocument])
+      .returns(stub[ListCollectionsPublisher[BsonDocument]])
+      .once()
 
     mongoDatabase.listCollections()
     mongoDatabase.listCollections[BsonDocument]()
@@ -166,11 +175,15 @@ class MongoDatabaseSpec extends BaseSpec with MockFactory {
   }
 
   it should "call the underlying createCollection()" in {
-    val options = CreateCollectionOptions().capped(true).validationOptions(
-      ValidationOptions().validator(Document("""{level: {$gte: 10}}"""))
-        .validationLevel(ValidationLevel.MODERATE)
-        .validationAction(ValidationAction.WARN)
-    ).indexOptionDefaults(IndexOptionDefaults().storageEngine(Document("""{storageEngine: { mmapv1: {}}}""")))
+    val options = CreateCollectionOptions()
+      .capped(true)
+      .validationOptions(
+        ValidationOptions()
+          .validator(Document("""{level: {$gte: 10}}"""))
+          .validationLevel(ValidationLevel.MODERATE)
+          .validationAction(ValidationAction.WARN)
+      )
+      .indexOptionDefaults(IndexOptionDefaults().storageEngine(Document("""{storageEngine: { mmapv1: {}}}""")))
       .storageEngineOptions(Document("""{ wiredTiger: {}}"""))
 
     wrapped.expects(Symbol("createCollection"))("collectionName").once()

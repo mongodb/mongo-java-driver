@@ -18,7 +18,7 @@ package org.mongodb.scala.bson.codecs
 
 import org.bson.codecs.configuration.CodecRegistries.fromProviders
 
-import org.mongodb.scala.bson.collection.{ Document, immutable, mutable }
+import org.mongodb.scala.bson.collection.{ immutable, mutable, Document }
 import org.scalatest.{ FlatSpec, Matchers }
 
 class DocumentCodecProviderSpec extends FlatSpec with Matchers {

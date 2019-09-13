@@ -33,6 +33,7 @@ import scala.concurrent.duration.Duration
  * @since 1.0
  */
 case class FindObservable[TResult](private val wrapped: FindPublisher[TResult]) extends Observable[TResult] {
+
   /**
    * Helper to return a Observable limited to just the first result the query.
    *

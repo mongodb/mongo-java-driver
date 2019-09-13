@@ -22,16 +22,19 @@ import org.bson.BsonDocument
 import org.mongodb.scala.bson.collection.immutable.Document
 import org.mongodb.scala.bson.conversions.Bson
 import org.mongodb.scala.model.Indexes._
-import org.mongodb.scala.{BaseSpec, MongoClient, model}
+import org.mongodb.scala.{ model, BaseSpec, MongoClient }
 
 class IndexesSpec extends BaseSpec {
   val registry = MongoClient.DEFAULT_CODEC_REGISTRY
 
-  def toBson(bson: Bson): Document = Document(bson.toBsonDocument(classOf[BsonDocument], MongoClient.DEFAULT_CODEC_REGISTRY))
+  def toBson(bson: Bson): Document =
+    Document(bson.toBsonDocument(classOf[BsonDocument], MongoClient.DEFAULT_CODEC_REGISTRY))
 
   "Indexes" should "have the same methods as the wrapped Updates" in {
     val wrapped = classOf[com.mongodb.client.model.Indexes].getDeclaredMethods
-      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers)).map(_.getName).toSet
+      .filter(f => isStatic(f.getModifiers) && isPublic(f.getModifiers))
+      .map(_.getName)
+      .toSet
     val local = model.Indexes.getClass.getDeclaredMethods.filter(f => isPublic(f.getModifiers)).map(_.getName).toSet
 
     local should equal(wrapped)
@@ -70,9 +73,12 @@ class IndexesSpec extends BaseSpec {
 
   it should "compoundIndex" in {
     toBson(compoundIndex(ascending("x"), descending("y"))) should equal(Document("""{x : 1, y : -1}"""))
-    toBson(compoundIndex(ascending("x"), descending("y"), descending("x"))) should equal(Document("""{y : -1, x : -1}"""))
-    toBson(compoundIndex(ascending("x", "y"), descending("a", "b"))) should equal(Document("""{x : 1, y : 1, a : -1, b : -1}"""))
+    toBson(compoundIndex(ascending("x"), descending("y"), descending("x"))) should equal(
+      Document("""{y : -1, x : -1}""")
+    )
+    toBson(compoundIndex(ascending("x", "y"), descending("a", "b"))) should equal(
+      Document("""{x : 1, y : 1, a : -1, b : -1}""")
+    )
   }
 
 }
-

@@ -47,7 +47,9 @@ class BsonTransformerSpec extends FlatSpec with Matchers {
     transform(2.0) should equal(BsonDouble(2.0))
   }
   it should "transform ImmutableDocument" in {
-    transform(immutable.Document("a" -> 1, "b" -> "two", "c" -> false)) should equal(BsonDocument("a" -> 1, "b" -> "two", "c" -> false))
+    transform(immutable.Document("a" -> 1, "b" -> "two", "c" -> false)) should equal(
+      BsonDocument("a" -> 1, "b" -> "two", "c" -> false)
+    )
   }
 
   it should "transform Int" in {
@@ -60,7 +62,9 @@ class BsonTransformerSpec extends FlatSpec with Matchers {
     transform(1L) should equal(BsonInt64(1))
   }
   it should "transform MutableDocument" in {
-    transform(mutable.Document("a" -> 1, "b" -> "two", "c" -> false)) should equal(BsonDocument("a" -> 1, "b" -> "two", "c" -> false))
+    transform(mutable.Document("a" -> 1, "b" -> "two", "c" -> false)) should equal(
+      BsonDocument("a" -> 1, "b" -> "two", "c" -> false)
+    )
   }
   it should "transform None" in {
     transform(None) should equal(BsonNull())

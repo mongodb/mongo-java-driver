@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit.MILLISECONDS
 import scala.collection.JavaConverters._
 import scala.concurrent.duration.Duration
 
-import com.mongodb.{ReadPreference => JReadPreference}
+import com.mongodb.{ ReadPreference => JReadPreference }
 
 /**
  * The preferred replica set members to which a query or command can be sent.
@@ -74,7 +74,8 @@ object ReadPreference {
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
    */
-  def primaryPreferred(maxStaleness: Duration): ReadPreference = JReadPreference.primaryPreferred(maxStaleness.toMillis, MILLISECONDS)
+  def primaryPreferred(maxStaleness: Duration): ReadPreference =
+    JReadPreference.primaryPreferred(maxStaleness.toMillis, MILLISECONDS)
 
   /**
    * Gets a read preference that forces reads to a secondary.
@@ -96,7 +97,8 @@ object ReadPreference {
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
    */
-  def secondaryPreferred(maxStaleness: Duration): ReadPreference = JReadPreference.secondaryPreferred(maxStaleness.toMillis, MILLISECONDS)
+  def secondaryPreferred(maxStaleness: Duration): ReadPreference =
+    JReadPreference.secondaryPreferred(maxStaleness.toMillis, MILLISECONDS)
 
   /**
    * Gets a read preference that forces reads to a primary or a secondary.
@@ -190,7 +192,8 @@ object ReadPreference {
    * @since 1.2
    * @note Requires MongoDB 3.4 or greater
    */
-  def nearest(tagSet: TagSet, maxStaleness: Duration): TaggableReadPreference = JReadPreference.nearest(tagSet, maxStaleness.toMillis, MILLISECONDS)
+  def nearest(tagSet: TagSet, maxStaleness: Duration): TaggableReadPreference =
+    JReadPreference.nearest(tagSet, maxStaleness.toMillis, MILLISECONDS)
 
   /**
    * Gets a read preference that forces reads to the primary if available, otherwise to a secondary with one of the given sets of tags.
@@ -200,7 +203,8 @@ object ReadPreference {
    * @param tagSetList the list of tag sets to limit the list of secondaries to
    * @return ReadPreference which reads primary if available, otherwise a secondary respective of tags.
    */
-  def primaryPreferred(tagSetList: Seq[TagSet]): TaggableReadPreference = JReadPreference.primaryPreferred(tagSetList.asJava)
+  def primaryPreferred(tagSetList: Seq[TagSet]): TaggableReadPreference =
+    JReadPreference.primaryPreferred(tagSetList.asJava)
 
   /**
    * Gets a read preference that forces reads to a secondary with one of the given sets of tags.
@@ -220,7 +224,8 @@ object ReadPreference {
    * @param tagSetList the list of tag sets to limit the list of secondaries to
    * @return ReadPreference which reads secondary if available respective of tags, otherwise from primary irrespective of tags.
    */
-  def secondaryPreferred(tagSetList: Seq[TagSet]): TaggableReadPreference = JReadPreference.secondaryPreferred(tagSetList.asJava)
+  def secondaryPreferred(tagSetList: Seq[TagSet]): TaggableReadPreference =
+    JReadPreference.secondaryPreferred(tagSetList.asJava)
 
   /**
    * Gets a read preference that forces reads to the primary or a secondary with one of the given sets of tags.
@@ -307,7 +312,8 @@ object ReadPreference {
    * @param tagSetList the list of tag sets
    * @return the taggable read preference
    */
-  def valueOf(name: String, tagSetList: Seq[TagSet]): TaggableReadPreference = JReadPreference.valueOf(name, tagSetList.asJava)
+  def valueOf(name: String, tagSetList: Seq[TagSet]): TaggableReadPreference =
+    JReadPreference.valueOf(name, tagSetList.asJava)
 
   /**
    * Creates a taggable read preference from the given read preference name and list of tag sets.
@@ -324,4 +330,3 @@ object ReadPreference {
     JReadPreference.valueOf(name, tagSetList.asJava, maxStaleness.toMillis, MILLISECONDS)
 
 }
-
