@@ -32,7 +32,7 @@ else
 fi
 
 # We always compile with the latest version of java
-export JAVA_HOME="/opt/java/jdk9"
+export JAVA_HOME="/opt/java/jdk11"
 
 
 ############################################

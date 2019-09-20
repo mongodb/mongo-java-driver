@@ -20,8 +20,8 @@ export ORG_GRADLE_PROJECT_signing_keyId=${SIGNING_KEY_ID}
 export ORG_GRADLE_PROJECT_signing_password=${SIGNING_PASSWORD}
 export ORG_GRADLE_PROJECT_signing_secretKeyRingFile=${PROJECT_DIRECTORY}/secring.gpg
 
-echo "Publishing snapshot with jdk9"
-export JAVA_HOME="/opt/java/jdk9"
+echo "Publishing snapshot with jdk11"
+export JAVA_HOME="/opt/java/jdk11"
 
 ./gradlew -version
 ./gradlew publishSnapshots
