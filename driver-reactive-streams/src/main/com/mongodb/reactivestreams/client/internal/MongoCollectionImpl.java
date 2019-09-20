@@ -249,8 +249,8 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     }
 
     @Override
-    public AggregatePublisher<Document> aggregate(final List<? extends Bson> pipeline) {
-        return aggregate(pipeline, Document.class);
+    public AggregatePublisher<TDocument> aggregate(final List<? extends Bson> pipeline) {
+        return aggregate(pipeline, getDocumentClass());
     }
 
     @Override
@@ -259,8 +259,8 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     }
 
     @Override
-    public AggregatePublisher<Document> aggregate(final ClientSession clientSession, final List<? extends Bson> pipeline) {
-        return aggregate(clientSession, pipeline, Document.class);
+    public AggregatePublisher<TDocument> aggregate(final ClientSession clientSession, final List<? extends Bson> pipeline) {
+        return aggregate(clientSession, pipeline, getDocumentClass());
     }
 
     @Override
@@ -311,8 +311,8 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     }
 
     @Override
-    public MapReducePublisher<Document> mapReduce(final String mapFunction, final String reduceFunction) {
-        return mapReduce(mapFunction, reduceFunction, Document.class);
+    public MapReducePublisher<TDocument> mapReduce(final String mapFunction, final String reduceFunction) {
+        return mapReduce(mapFunction, reduceFunction, getDocumentClass());
     }
 
     @Override
@@ -322,9 +322,9 @@ final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument>
     }
 
     @Override
-    public MapReducePublisher<Document> mapReduce(final ClientSession clientSession, final String mapFunction,
+    public MapReducePublisher<TDocument> mapReduce(final ClientSession clientSession, final String mapFunction,
                                                   final String reduceFunction) {
-        return mapReduce(clientSession, mapFunction, reduceFunction, Document.class);
+        return mapReduce(clientSession, mapFunction, reduceFunction, getDocumentClass());
     }
 
     @Override
