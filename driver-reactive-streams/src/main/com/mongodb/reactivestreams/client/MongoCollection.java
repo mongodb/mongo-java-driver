@@ -450,7 +450,7 @@ public interface MongoCollection<TDocument> {
      * @return a publisher containing the result of the aggregation operation
      * @mongodb.driver.manual aggregation/ Aggregation
      */
-    AggregatePublisher<Document> aggregate(List<? extends Bson> pipeline);
+    AggregatePublisher<TDocument> aggregate(List<? extends Bson> pipeline);
 
     /**
      * Aggregates documents according to the specified aggregation pipeline.
@@ -473,7 +473,7 @@ public interface MongoCollection<TDocument> {
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    AggregatePublisher<Document> aggregate(ClientSession clientSession, List<? extends Bson> pipeline);
+    AggregatePublisher<TDocument> aggregate(ClientSession clientSession, List<? extends Bson> pipeline);
 
     /**
      * Aggregates documents according to the specified aggregation pipeline.
@@ -591,7 +591,7 @@ public interface MongoCollection<TDocument> {
      * @return an publisher containing the result of the map-reduce operation
      * @mongodb.driver.manual reference/command/mapReduce/ map-reduce
      */
-    MapReducePublisher<Document> mapReduce(String mapFunction, String reduceFunction);
+    MapReducePublisher<TDocument> mapReduce(String mapFunction, String reduceFunction);
 
     /**
      * Aggregates documents according to the specified map-reduce function.
@@ -616,7 +616,7 @@ public interface MongoCollection<TDocument> {
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    MapReducePublisher<Document> mapReduce(ClientSession clientSession, String mapFunction, String reduceFunction);
+    MapReducePublisher<TDocument> mapReduce(ClientSession clientSession, String mapFunction, String reduceFunction);
 
     /**
      * Aggregates documents according to the specified map-reduce function.

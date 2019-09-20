@@ -368,6 +368,7 @@ class MongoCollectionImplSpecification extends Specification {
         def aggregatePublisher = collection.aggregate(pipeline)
 
         then:
+        1 * wrapped.getDocumentClass() >> Document
         1 * wrapped.aggregate(pipeline, Document) >> wrappedResult
         expect aggregatePublisher, isTheSameAs(new AggregatePublisherImpl(wrappedResult))
 
@@ -382,6 +383,7 @@ class MongoCollectionImplSpecification extends Specification {
         aggregatePublisher = collection.aggregate(clientSession, pipeline)
 
         then:
+        1 * wrapped.getDocumentClass() >> Document
         1 * wrapped.aggregate(wrappedClientSession, pipeline, Document) >> wrappedResult
         expect aggregatePublisher, isTheSameAs(new AggregatePublisherImpl(wrappedResult))
 
@@ -469,6 +471,7 @@ class MongoCollectionImplSpecification extends Specification {
         mapReducePublisher = collection.mapReduce('map', 'reduce')
 
         then:
+        1 * wrapped.getDocumentClass() >> Document
         1 * wrapped.mapReduce('map', 'reduce', Document) >> wrappedResult
         expect mapReducePublisher, isTheSameAs(new MapReducePublisherImpl(wrappedResult))
 
@@ -483,6 +486,7 @@ class MongoCollectionImplSpecification extends Specification {
         mapReducePublisher = collection.mapReduce(clientSession, 'map', 'reduce')
 
         then:
+        1 * wrapped.getDocumentClass() >> Document
         1 * wrapped.mapReduce(wrappedClientSession, 'map', 'reduce', Document) >> wrappedResult
         expect mapReducePublisher, isTheSameAs(new MapReducePublisherImpl(wrappedResult))
 
