@@ -7,9 +7,9 @@ set -o errexit  # Exit the script with error if any of the commands fail
 #            Main Program                  #
 ############################################
 
-echo "Compiling java driver with jdk9"
+echo "Compiling java driver with jdk11"
 
 # We always compile with the latest version of java
-export JAVA_HOME="/opt/java/jdk9"
+export JAVA_HOME="/opt/java/jdk11"
 ./gradlew -version
 ./gradlew -PxmlReports.enabled=true --info -x test clean check jar testClasses docs

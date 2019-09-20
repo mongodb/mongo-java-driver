@@ -15,10 +15,10 @@ JDK=${JDK:-jdk}
 
 echo "Running MMAPv1 Storage Test"
 
-echo "Compiling java driver with jdk9"
+echo "Compiling java driver with jdk11"
 
 # We always compile with the latest version of java
-export JAVA_HOME="/opt/java/jdk9"
+export JAVA_HOME="/opt/java/jdk11"
 
 echo "Running tests with ${JDK}"
 ./gradlew -version
