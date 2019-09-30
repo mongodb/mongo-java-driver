@@ -24,7 +24,7 @@ The spec tests format is an extension of `transactions spec tests <https://githu
 
 - A ``key_vault_data`` of data that should be inserted in the key vault collection before each test.
 
-- Introduction ``client_side_encryption_opts`` to `clientOptions`
+- Introduction ``autoEncryptOpts`` to `clientOptions`
 
 - Addition of `$db` to command in `command_started_event`
 
@@ -193,6 +193,15 @@ Prose Tests
 
 Tests for the ClientEncryption type are not included as part of the YAML tests.
 
+In the prose tests LOCAL_MASTERKEY refers to the following base64:
+
+.. code:: javascript
+
+  Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk
+
+Data key and double encryption
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 First, perform the setup.
 
 #. Create a MongoClient without encryption enabled (referred to as ``client``).
@@ -212,12 +221,6 @@ First, perform the setup.
           "aws": { <AWS credentials> },
           "local": { "key": <base64 decoding of LOCAL_MASTERKEY> }
       }
-
-   Where LOCAL_MASTERKEY is the following base64:
-
-   .. code:: javascript
-
-      Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk
 
    Configure both objects with ``keyVaultNamespace`` set to ``admin.datakeys``.
 
@@ -293,6 +296,118 @@ Then, run the following final tests:
    - Expect an exception to be thrown, since this is an attempt to auto encrypt an already encrypted value.
 
 
+
+External Key Vault Test
+~~~~~~~~~~~~~~~~~~~~~~~
+
+Run the following tests twice, parameterized by a boolean ``withExternalKeyVault``.
+
+#. Create a MongoClient without encryption enabled (referred to as ``client``).
+
+#. Using ``client``, drop the collections ``admin.datakeys`` and ``db.coll``.
+   Insert the document `external/external-key.json <../external/external-key.json>`_ into ``admin.datakeys``.
+
+#. Create the following:
+
+   - A MongoClient configured with auto encryption (referred to as ``client_encrypted``)
+   - A ``ClientEncryption`` object (referred to as ``client_encryption``)
+
+   Configure both objects with the ``local`` KMS providers as follows:
+
+   .. code:: javascript
+
+      { "local": { "key": <base64 decoding of LOCAL_MASTERKEY> } }
+
+   Configure both objects with ``keyVaultNamespace`` set to ``admin.datakeys``.
+
+   Configure ``client_encrypted`` to use the schema `external/external-schema.json <../external/external-schema.json>`_  for ``db.coll`` by setting a schema map like: ``{ "db.coll": <contents of external-schema.json>}``
+
+   If ``withExternalKeyVault == true``, configure both objects with an external key vault client. The external client MUST connect to the same
+   MongoDB cluster that is being tested against, except it MUST use the username ``fake-user`` and password ``fake-pwd``.
+
+#. Use ``client_encrypted`` to insert the document ``{"encrypted": "test"}`` into ``db.coll``.
+   If ``withExternalKeyVault == true``, expect an authentication exception to be thrown. Otherwise, expect the insert to succeed.
+
+#. Use ``client_encryption`` to explicitly encrypt the string ``"test"`` with key ID ``LOCALAAAAAAAAAAAAAAAAA==`` and deterministic algorithm.
+   If ``withExternalKeyVault == true``, expect an authentication exception to be thrown. Otherwise, expect the insert to succeed.
+
+
+BSON size limits and batch splitting
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+First, perform the setup.
+
+#. Create a MongoClient without encryption enabled (referred to as ``client``).
+
+#. Using ``client``, drop and create the collection ``db.coll`` configured with the included JSON schema `limits/limits-schema.json <../limits/limits-schema.json>`_.
+
+#. Using ``client``, drop the collection ``admin.datakeys``. Insert the document `limits/limits-key.json <../limits/limits-key.json>`_
+
+#. Create a MongoClient configured with auto encryption (referred to as ``client_encrypted``)
+
+   Configure with the ``local`` KMS provider as follows:
+
+   .. code:: javascript
+
+      { "local": { "key": <base64 decoding of LOCAL_MASTERKEY> } }
+
+   Configure with the ``keyVaultNamespace`` set to ``admin.datakeys``.
+
+Using ``client_encrypted`` perform the following operations:
+
+#. Insert ``{ "_id": "no_encryption_under_2mib", "unencrypted": <the string "a" repeated (2097152 - 1000) times> }``. (Note 2097152 is 2^21 bytes, or 2 MiB).
+
+   Expect this to succeed.
+
+#. Insert ``{ "_id": "no_encryption_over_2mib", "unencrypted": <the string "a" repeated 2097152 times> }``.
+
+   Expect this to throw an exception due to exceeding the reduced maximum BSON document size.
+
+#. Insert the document `limits/limits-doc.json <../limits/limits-doc.json>`_ concatenated with ``{ "_id": "encryption_exceeds_2mib", "unencrypted": < the string "a" repeated (2097152 - 2000) times > }``
+   Note: limits-doc.json is a 1005 byte BSON document that encrypts to a ~10,000 byte document.
+
+   Expect this to succeed since after encryption this still is below the normal maximum BSON document size.
+   Note, before auto encryption this document is under the 2 MiB limit. After encryption it exceeds the 2 MiB limit, but does NOT exceed the 16 MiB limit.
+
+#. Bulk insert the following:
+
+   - ``{ "_id": "no_encryption_under_2mib_1", "unencrypted": <the string "a" repeated (2097152 - 1000) times> }``
+
+   - ``{ "_id": "no_encryption_under_2mib_2", "unencrypted": <the string "a" repeated (2097152 - 1000) times> }``
+
+   Expect the bulk write to succeed and split after first doc (i.e. two inserts occur). This may be verified using `command monitoring <https://github.com/mongodb/specifications/tree/master/source/command-monitoring/command-monitoring.rst>`_.
+
+#. Bulk insert the following:
+
+   - The document `limits/limits-doc.json <../limits/limits-doc.json>`_ concatenated with ``{ "_id": "encryption_exceeds_2mib_1", "unencrypted": < the string "a" repeated (2097152 - 2000) times > }``
+
+   - The document `limits/limits-doc.json <../limits/limits-doc.json>`_ concatenated with ``{ "_id": "encryption_exceeds_2mib_2", "unencrypted": < the string "a" repeated (2097152 - 2000) times > }``
+
+   Expect the bulk write to succeed and split after first doc (i.e. two inserts occur).
+
+Optionally, if it is possible to mock the maxWriteBatchSize (i.e. the maximum number of documents in a batch) test that setting maxWriteBatchSize=1 and inserting the two documents ``{ "_id": "a" }, { "_id": "b" }`` with ``client_encrypted`` splits the operation into two inserts.
+
+
+Views are prohibited
+~~~~~~~~~~~~~~~~~~~~
+
+#. Create a MongoClient without encryption enabled (referred to as ``client``).
+
+#. Using ``client``, drop and create a view named ``db.view`` with an empty pipeline. E.g. using the command ``{ "create": "view", "viewOn": "coll" }``.
+
+#. Create a MongoClient configured with auto encryption (referred to as ``client_encrypted``)
+
+   Configure with the ``local`` KMS provider as follows:
+
+   .. code:: javascript
+
+      { "local": { "key": <base64 decoding of LOCAL_MASTERKEY> } }
+
+   Configure with the ``keyVaultNamespace`` set to ``admin.datakeys``.
+
+#. Using ``client_encrypted``, attempt to insert a document into ``db.view``. Expect an exception to be thrown containing the message: "cannot auto encrypt a view".
+
+
 Corpus Test
 ===========
 
@@ -300,9 +415,9 @@ The corpus test exhaustively enumerates all ways to encrypt all BSON value types
 
 1. Create a MongoClient without encryption enabled (referred to as ``client``).
 
-2. Using ``client``, drop and create the collection ``db.coll`` configured with the included JSON schema `corpus/corpus-schema.json <corpus/corpus-schema.json>`_.
+2. Using ``client``, drop and create the collection ``db.coll`` configured with the included JSON schema `corpus/corpus-schema.json <../corpus/corpus-schema.json>`_.
 
-3. Using ``client``, drop the collection ``admin.datakeys``. Insert the documents `corpus/corpus-key-local.json <corpus/corpus-key-local.json>`_ and `corpus/corpus-key-aws.json <corpus/corpus-key-aws.json>`_.
+3. Using ``client``, drop the collection ``admin.datakeys``. Insert the documents `corpus/corpus-key-local.json <../corpus/corpus-key-local.json>`_ and `corpus/corpus-key-aws.json <../corpus/corpus-key-aws.json>`_.
 
 4. Create the following:
 
@@ -319,14 +434,14 @@ The corpus test exhaustively enumerates all ways to encrypt all BSON value types
       }
 
    Where LOCAL_MASTERKEY is the following base64:
-   
+
    .. code:: javascript
 
       Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN3YkQ5aXRRMkhGRGdQV09wOGVNYUMxT2k3NjZKelhaQmRCZGJkTXVyZG9uSjFk
 
    Configure both objects with ``keyVaultNamespace`` set to ``admin.datakeys``.
 
-5. Load `corpus/corpus.json <corpus/corpus.json>`_ to a variable named ``corpus``. The corpus contains subdocuments with the following fields:
+5. Load `corpus/corpus.json <../corpus/corpus.json>`_ to a variable named ``corpus``. The corpus contains subdocuments with the following fields:
 
    - ``kms`` is either ``aws`` or ``local``
    - ``type`` is a BSON type string `names coming from here <https://docs.mongodb.com/manual/reference/operator/query/type/>`_)
@@ -342,15 +457,18 @@ The corpus test exhaustively enumerates all ways to encrypt all BSON value types
    - If the field name is ``_id``, ``altname_aws`` and ``altname_local``, copy the field to ``corpus_copied``.
    - If ``method`` is ``auto``, copy the field to ``corpus_copied``.
    - If ``method`` is ``explicit``, use ``client_encryption`` to explicitly encrypt the value.
-   
+
      - Encrypt with the algorithm described by ``algo``.
      - If ``identifier`` is ``id``
-        - If ``kms`` is ``local`` set the key_id to the UUID with base64 value ``LOCALAAAAAAAAAAAAAAAAA==``.
-        - If ``kms`` is ``aws`` set the key_id to the UUID with base64 value ``AWSAAAAAAAAAAAAAAAAAAA==``.
+
+       - If ``kms`` is ``local`` set the key_id to the UUID with base64 value ``LOCALAAAAAAAAAAAAAAAAA==``.
+       - If ``kms`` is ``aws`` set the key_id to the UUID with base64 value ``AWSAAAAAAAAAAAAAAAAAAA==``.
+
      - If ``identifier`` is ``altname``
-        - If ``kms`` is ``local`` set the key_alt_name to "local".
-        - If ``kms`` is ``aws`` set the key_alt_name to "aws".
-     
+
+       - If ``kms`` is ``local`` set the key_alt_name to "local".
+       - If ``kms`` is ``aws`` set the key_alt_name to "aws".
+
      If ``allowed`` is true, copy the field and encrypted value to ``corpus_copied``.
      If ``allowed`` is false. verify that an exception is thrown. Copy the unencrypted value to to ``corpus_copied``.
 
@@ -359,16 +477,15 @@ The corpus test exhaustively enumerates all ways to encrypt all BSON value types
 
 7. Using ``client_encrypted``, find the inserted document from ``db.coll`` to a variable named ``corpus_decrypted``. Since it should have been automatically decrypted, assert the document exactly matches ``corpus``.
 
-8. Load `corpus/corpus_encrypted.json <corpus/corpus-encrypted.json>`_ to a variable named ``corpus_encrypted_expected``.
+8. Load `corpus/corpus_encrypted.json <../corpus/corpus-encrypted.json>`_ to a variable named ``corpus_encrypted_expected``.
    Using ``client`` find the inserted document from ``db.coll`` to a variable named ``corpus_encrypted_actual``.
 
    Iterate over each field of ``corpus_encrypted_expected`` and check the following:
 
-   - If the ``algo`` is ``det``, that the value exactly matches all fields in ``corpus_encrypted_actual`` with the same ``kms``, ``type``, and ``algo``.
-   - If the ``algo`` is ``rand`` and ``allowed`` is true, that the value does not match any fields in ``corpus_encrypted_actual`` with the same ``kms`` and ``type``.
-   - If the ``method`` is ``auto`` or ``explicit``, decrypt the value with ``client_encryption`` and validate the value exactly matches the corresponding field of ``corpus``.
-   - If the ``allowed`` is false, validate the value exactly matches the corresponding field of ``corpus``.
+   - If the ``algo`` is ``det``, that the value equals the value of the corresponding field in ``corpus_encrypted_actual``.
+   - If the ``algo`` is ``rand`` and ``allowed`` is true, that the value does not equal the value of the corresponding field in ``corpus_encrypted_actual``.
+   - If ``allowed`` is true, decrypt the value with ``client_encryption``. Decrypt the value of the corresponding field of ``corpus_encrypted`` and validate that they are both equal.
+   - If ``allowed`` is false, validate the value exactly equals the value of the corresponding field of ``corpus`` (neither was encrypted).
 
 9. Repeat steps 1-8 with a local JSON schema. I.e. amend step 4 to configure the schema on ``client_encrypted`` and ``client_encryption`` with the ``schema_map`` option.
 
-   
