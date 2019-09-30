@@ -449,12 +449,17 @@ public class JsonPoweredCrudTestHelper {
     @SuppressWarnings("deprecation")
     BsonDocument getFindOneResult(final BsonDocument collectionOptions, final BsonDocument arguments,
                                   @Nullable final ClientSession clientSession) {
-        return getFindResult(collectionOptions, arguments, clientSession);
+        return toResult(createFindIterable(collectionOptions, arguments, clientSession).first());
     }
 
     @SuppressWarnings("deprecation")
     BsonDocument getFindResult(final BsonDocument collectionOptions, final BsonDocument arguments,
                                @Nullable final ClientSession clientSession) {
+        return toResult(createFindIterable(collectionOptions, arguments, clientSession));
+    }
+
+    private FindIterable<BsonDocument> createFindIterable(final BsonDocument collectionOptions, final BsonDocument arguments,
+                                                          @Nullable final ClientSession clientSession) {
         FindIterable<BsonDocument> iterable;
         if (clientSession == null) {
             iterable = getCollection(collectionOptions).find(arguments.getDocument("filter", new BsonDocument()));
@@ -480,7 +485,7 @@ public class JsonPoweredCrudTestHelper {
         if (arguments.containsKey("collation")) {
             iterable.collation(getCollation(arguments.getDocument("collation")));
         }
-        return toResult(iterable);
+        return iterable;
     }
 
     BsonDocument getMapReduceResult(final BsonDocument collectionOptions, final BsonDocument arguments,
