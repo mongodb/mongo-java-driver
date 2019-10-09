@@ -57,6 +57,12 @@ class ChangeStreamBatchCursorSpecification extends Specification {
 
         then:
         1 * wrapped.close()
+
+        when:
+        cursor.close()
+
+        then:
+        0 * wrapped.close()
     }
 
 }
