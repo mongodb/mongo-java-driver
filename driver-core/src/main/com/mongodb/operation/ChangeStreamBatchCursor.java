@@ -40,6 +40,7 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
 
     private AggregateResponseBatchCursor<RawBsonDocument> wrapped;
     private BsonDocument resumeToken;
+    private volatile boolean closed;
 
     ChangeStreamBatchCursor(final ChangeStreamOperation<T> changeStreamOperation,
                             final AggregateResponseBatchCursor<RawBsonDocument> wrapped,
@@ -91,8 +92,11 @@ final class ChangeStreamBatchCursor<T> implements AggregateResponseBatchCursor<T
 
     @Override
     public void close() {
-        wrapped.close();
-        binding.release();
+        if (!closed) {
+            closed = true;
+            wrapped.close();
+            binding.release();
+        }
     }
 
     @Override
