@@ -8,6 +8,8 @@ AUTH=${AUTH:-noauth}
 SSL=${SSL:-nossl}
 MONGODB_URI=${MONGODB_URI:-}
 JDK=${JDK:-jdk11}
+TOPOLOGY=${TOPOLOGY:-standalone}
+SAFE_FOR_MULTI_MONGOS=${SAFE_FOR_MULTI_MONGOS:-}
 
 export JAVA_HOME="/opt/java/${JDK}"
 
@@ -25,7 +27,11 @@ if [ "$AUTH" != "noauth" ]; then
   exit 1
 fi
 
+if [ "$SAFE_FOR_MULTI_MONGOS" == "true" ]; then
+    export TRANSACTION_URI="-Dorg.mongodb.test.transaction.uri=${MONGODB_URI}"
+fi
+
 echo "Running scala tests with Scala $SCALA"
 
 ./gradlew -version
-./gradlew --stacktrace --info clean :bson-scala:test :driver-scala:test :driver-scala:integrationTest -Dorg.mongodb.test.uri=${MONGODB_URI} -PscalaVersion=$SCALA
+./gradlew -PscalaVersion=$SCALA --stacktrace --info :bson-scala:test :driver-scala:test :driver-scala:integrationTest -Dorg.mongodb.test.uri=${MONGODB_URI} ${TRANSACTION_URI}
