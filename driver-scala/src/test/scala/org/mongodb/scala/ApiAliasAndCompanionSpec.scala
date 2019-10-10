@@ -29,11 +29,13 @@ import org.scalatest.{ FlatSpec, Matchers }
 
 class ApiAliasAndCompanionSpec extends BaseSpec {
 
-  val classFilter = (f: Class[_ <: Object]) => isPublic(f.getModifiers) && !f.getName.contains("$")
+  val classFilter = (f: Class[_ <: Object]) =>
+    isPublic(f.getModifiers) && !f.getName.contains("$") && !f.getSimpleName.contains("Test")
 
   "The scala package" should "mirror the com.mongodb package and com.mongodb.reactivestreams.client" in {
     val packageName = "com.mongodb"
     val javaExclusions = Set(
+      "Address",
       "AsyncAggregateResponseBatchCursor",
       "AsyncBatchCursor",
       "BasicDBList",
@@ -41,6 +43,8 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "BasicDBObjectBuilder",
       "Block",
       "BSONTimestampCodec",
+      "CausalConsistencyExamples",
+      "ChangeStreamSamples",
       "ConnectionString",
       "DBObject",
       "DBObjectCodec",
@@ -50,14 +54,17 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "DBRefCodecProvider",
       "DocumentToDBRefTransformer",
       "Function",
+      "FutureResultCallback",
       "MongoClients",
       "NonNull",
       "NonNullApi",
       "Nullable",
+      "Person",
       "ServerCursor",
       "ServerSession",
       "SessionContext",
       "SingleResultCallback",
+      "TransactionExample",
       "UnixServerAddress"
     )
     val scalaExclusions = Set(
@@ -81,6 +88,9 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       isPublic(f.getModifiers) &&
         !f.getName.contains("$") &&
         !f.getSimpleName.contains("Spec") &&
+        !f.getSimpleName.contains("Test") &&
+        !f.getSimpleName.contains("Tour") &&
+        !f.getSimpleName.contains("Fixture") &&
         !javaExclusions.contains(f.getSimpleName)
     }
     val filters = FilterBuilder.parse(
@@ -201,13 +211,32 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
 
   it should "mirror all com.mongodb.client. into org.mongdb.scala." in {
     val packageName = "com.mongodb.client"
+
+    val javaExclusions = Set(
+      "ClientSession",
+      "ConcreteCodecProvider",
+      "Fixture",
+      "ImmutableDocument",
+      "ImmutableDocumentCodec",
+      "ImmutableDocumentCodecProvider",
+      "ListCollectionsObservable",
+      "MongoChangeStreamCursor",
+      "MongoClientFactory",
+      "MongoClients",
+      "MongoCursor",
+      "MongoObservable",
+      "Name",
+      "NameCodecProvider",
+      "TransactionBody"
+    )
+
     val wrapped = new Reflections(packageName, new SubTypesScanner(false))
       .getSubTypesOf(classOf[Object])
       .asScala
       .filter(_.getPackage.getName == packageName)
       .filter(classFilter)
-      .map(_.getSimpleName)
-      .toSet
+      .map(_.getSimpleName.replace("Iterable", "Observable"))
+      .toSet -- javaExclusions
 
     val scalaPackageName = "org.mongodb.scala"
     val local = new Reflections(scalaPackageName, new SubTypesScanner(false))
