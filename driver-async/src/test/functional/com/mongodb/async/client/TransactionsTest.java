@@ -78,6 +78,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
@@ -390,6 +391,22 @@ public class TransactionsTest {
                         if (isSharded()) {
                             final BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
                             assertNull(sessionsMap.get(arguments.getString("session").getValue()).getPinnedServerAddress());
+                        }
+                    } else if (operationName.equals("assertSessionTransactionState")) {
+                        final BsonDocument arguments = operation.getDocument("arguments", new BsonDocument());
+                        ClientSession session = sessionsMap.get(arguments.getString("session").getValue());
+                        String state = arguments.getString("state").getValue();
+                        if (state.equals("starting") || state.equals("in_progress")) {
+                            assertTrue(session.hasActiveTransaction());
+                        } else {
+                            assertFalse(session.hasActiveTransaction());
+                        }
+                    } else if (operation.getBoolean("error", BsonBoolean.FALSE).getValue()) {
+                        try {
+                            helper.getOperationResults(operation, clientSession);
+                            fail("Error expected but none thrown");
+                        } catch (Exception e) {
+                            // Expected failure ignore
                         }
                     } else {
                         BsonDocument actualOutcome = helper.getOperationResults(operation, clientSession);
