@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import static java.lang.String.format;
 
@@ -131,6 +132,15 @@ public final class SubscriberHelpers {
         /**
          * Get received elements.
          *
+         * @return the list of receive elements
+         */
+        public List<T> get() {
+            return await().getReceived();
+        }
+
+        /**
+         * Get received elements.
+         *
          * @param timeout how long to wait
          * @param unit the time unit
          * @return the list of receive elements
@@ -145,7 +155,7 @@ public final class SubscriberHelpers {
          * @return this
          */
         public ObservableSubscriber<T> await() {
-            return await(Long.MAX_VALUE, TimeUnit.MILLISECONDS);
+            return await(60, TimeUnit.SECONDS);
         }
 
         /**
@@ -212,12 +222,12 @@ public final class SubscriberHelpers {
     /**
      * A Subscriber that prints the json version of each document
      */
-    public static class PrintDocumentSubscriber extends OperationSubscriber<Document> {
-
-        @Override
-        public void onNext(final Document document) {
-            super.onNext(document);
-            System.out.println(document.toJson());
+    public static class PrintDocumentSubscriber extends ConsumerSubscriber<Document> {
+        /**
+         * Construct a new instance
+         */
+        public PrintDocumentSubscriber() {
+            super(t -> System.out.println(t.toJson()));
         }
     }
 
@@ -225,12 +235,35 @@ public final class SubscriberHelpers {
      * A Subscriber that prints the toString version of each element
      * @param <T> the type of the element
      */
-    public static class PrintToStringSubscriber<T> extends OperationSubscriber<T> {
+    public static class PrintToStringSubscriber<T> extends ConsumerSubscriber<T> {
+        /**
+         * Construct a new instance
+         */
+        public PrintToStringSubscriber() {
+            super(System.out::println);
+        }
+    }
+
+    /**
+     * A Subscriber that processes a consumer for each element
+     * @param <T> the type of the element
+     */
+    public static class ConsumerSubscriber<T> extends OperationSubscriber<T> {
+        private final Consumer<T> consumer;
+
+        /**
+         * Construct a new instance
+         * @param consumer the consumer
+         */
+        public ConsumerSubscriber(final Consumer<T> consumer) {
+            this.consumer = consumer;
+        }
+
 
         @Override
         public void onNext(final T document) {
             super.onNext(document);
-            System.out.println(document);
+            consumer.accept(document);
         }
     }
 

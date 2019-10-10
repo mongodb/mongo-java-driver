@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static com.mongodb.ClusterFixture.getDefaultDatabaseName;
 import static java.util.concurrent.TimeUnit.SECONDS;
 
 /**
@@ -55,6 +54,10 @@ public final class Fixture {
             Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         }
         return mongoClient;
+    }
+
+    public static String getDefaultDatabaseName() {
+        return ClusterFixture.getDefaultDatabaseName();
     }
 
     public static MongoDatabase getDefaultDatabase() {
