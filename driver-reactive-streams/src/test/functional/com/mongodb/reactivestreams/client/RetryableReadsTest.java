@@ -24,9 +24,9 @@ import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
 
-public class RetryableReadsTests extends AbstractRetryableReadsTest {
-    public RetryableReadsTests(final String filename, final String description, final String databaseName, final String collectionName,
-                               final BsonArray data, final BsonString bucketName, final BsonDocument definition, final boolean skipTest) {
+public class RetryableReadsTest extends AbstractRetryableReadsTest {
+    public RetryableReadsTest(final String filename, final String description, final String databaseName, final String collectionName,
+                              final BsonArray data, final BsonString bucketName, final BsonDocument definition, final boolean skipTest) {
         super(filename, description, databaseName, collectionName, data, bucketName, definition, skipTest);
     }
 
