@@ -20,6 +20,12 @@ archivesBaseName = 'mongo-scala-driver'
 dependencies {
     compile project(':bson-scala')
     compile project(':driver-reactive-streams')
+
+    testCompile project(':util')
+    testCompile project(':driver-sync')
+    testCompile project(':bson').sourceSets.test.output
+    testCompile project(':driver-sync').sourceSets.test.output
+    testCompile project(':driver-core').sourceSets.test.output
 }
 
 
@@ -31,7 +37,6 @@ configurations {
 sourceSets {
     integrationTest {
         scala.srcDir file('src/it/scala')
-        resources.srcDir file('src/it/resources')
         scala {
             compileClasspath += main.output + test.output
             runtimeClasspath += main.output + test.output
