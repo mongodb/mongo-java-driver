@@ -194,7 +194,7 @@ functions:
   "upload test results":
     - command: attach.xunit_results
       params:
-        file: ./src/*/build/test-results/test/TEST-*.xml
+        file: ./src/*/build/test-results/*/TEST-*.xml
 
   "bootstrap mongo-orchestration":
     - command: shell.exec
@@ -241,7 +241,7 @@ functions:
         working_dir: "src"
         script: |
           ${PREPARE_SHELL}
-          SCALA="${SCALA}" .evergreen/run-scala-tests.sh
+          SCALA="${SCALA}" AUTH="${AUTH}" SSL="${SSL}" MONGODB_URI="${MONGODB_URI}" SAFE_FOR_MULTI_MONGOS="${SAFE_FOR_MULTI_MONGOS}" TOPOLOGY="${TOPOLOGY}" AWS_ACCESS_KEY_ID=${aws_access_key_id} AWS_SECRET_ACCESS_KEY=${aws_secret_access_key} .evergreen/run-scala-tests.sh
 
   "run socket tests":
     - command: shell.exec
@@ -736,7 +736,7 @@ buildvariants:
     - name: "reactive-streams-tck-test"
 
 - matrix_name: "scala-tests"
-  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk11", version: ["4.2"], topology: "standalone", scala: "*", os: "ubuntu" }
+  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "jdk11", version: ["4.2"], topology: "replicaset", scala: "*", os: "ubuntu" }
   display_name: "${scala} ${version} ${topology} ${os}"
   tags: ["test-scala-variant"]
   tasks:
