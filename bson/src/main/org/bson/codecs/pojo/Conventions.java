@@ -60,6 +60,17 @@ public final class Conventions {
     public static final Convention SET_PRIVATE_FIELDS_CONVENTION = new ConventionSetPrivateFieldImpl();
 
     /**
+     * A convention that enables all fields to be set using reflection. Unlike {@link #SET_PRIVATE_FIELDS_CONVENTION},
+     * this will also enable package private and protected fields to be set using reflection.
+     *
+     * <p>This convention mimics how some other JSON libraries directly set a field when there is no setter.</p>
+     * <p>Note: This convention is not part of the {@code DEFAULT_CONVENTIONS} list and must explicitly be set.</p>
+     *
+     * @since 3.11
+     */
+    public static final Convention SET_ALL_FIELDS_CONVENTION = new ConventionSetAllFieldImpl();
+
+    /**
      * A convention that uses getter methods as setters for collections and maps if there is no setter.
      *
      * <p>This convention mimics how JAXB mutate collections and maps.</p>
