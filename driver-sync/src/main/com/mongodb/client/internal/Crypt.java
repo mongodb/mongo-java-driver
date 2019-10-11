@@ -221,7 +221,9 @@ class Crypt implements Closeable {
     @Override
     public void close() {
         mongoCrypt.close();
-        commandMarker.close();
+        if (commandMarker != null) {
+            commandMarker.close();
+        }
         keyRetriever.close();
     }
 
