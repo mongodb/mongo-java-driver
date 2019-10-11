@@ -30,6 +30,7 @@ import org.bson.BsonString;
 import org.bson.BsonValue;
 import org.bson.UuidRepresentation;
 import org.bson.codecs.UuidCodec;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -257,4 +258,30 @@ public class ClientSideEncryptionCorpusTest {
         return Arrays.asList(new Object[]{true}, new Object[]{false});
     }
 
+    @After
+    public void after() {
+        if (client != null) {
+            try {
+                client.close();
+            } catch (Exception e) {
+                // ignore
+            }
+        }
+
+        if (autoEncryptingClient != null) {
+            try {
+                autoEncryptingClient.close();
+            } catch (Exception e) {
+                // ignore
+            }
+        }
+
+        if (clientEncryption != null) {
+            try {
+                clientEncryption.close();
+            } catch (Exception e) {
+                // ignore
+            }
+        }
+    }
 }
