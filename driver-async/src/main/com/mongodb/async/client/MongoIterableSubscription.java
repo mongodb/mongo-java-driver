@@ -65,8 +65,12 @@ final class MongoIterableSubscription<TResult> extends AbstractSubscription<TRes
 
     @Override
     void postTerminate() {
-        if (batchCursor != null) {
-            batchCursor.close();
+        try {
+            if (batchCursor != null) {
+                batchCursor.close();
+            }
+        } catch (Exception e) {
+            // do nothing
         }
     }
 
