@@ -22,7 +22,9 @@ import com.mongodb.connection.ServerId;
  * An event for entering the wait queue of the connection pool.
  *
  * @since 3.5
+ * @deprecated In the next major release, this event will no longer be published
  */
+@Deprecated
 public final class ConnectionPoolWaitQueueExitedEvent {
     private final ServerId serverId;
 

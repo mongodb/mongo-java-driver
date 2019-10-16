@@ -21,7 +21,9 @@ package com.mongodb;
  *
  * @see com.mongodb.connection.ConnectionPoolSettings#getMaxWaitQueueSize()
  * @since 3.0
+ * @deprecated In the next major release the limit on wait queue size will be removed, so this exception will no longer be thrown
  */
+@Deprecated
 public class MongoWaitQueueFullException extends MongoClientException {
 
     private static final long serialVersionUID = 1482094507852255793L;

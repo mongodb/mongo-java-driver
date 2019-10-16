@@ -56,14 +56,18 @@ public interface ConnectionPoolListener extends EventListener {
      * Invoked when a connection pool's wait queue is entered.
      *
      * @param event the event
+     * @deprecated In the next major release, this event will no longer be published
      */
+    @Deprecated
     void waitQueueEntered(ConnectionPoolWaitQueueEnteredEvent event);
 
     /**
      * Invoked when a connection pools wait queue is exited.
      *
      * @param event the event
+     * @deprecated In the next major release, this event will no longer be published
      */
+    @Deprecated
     void waitQueueExited(ConnectionPoolWaitQueueExitedEvent event);
 
     /**
