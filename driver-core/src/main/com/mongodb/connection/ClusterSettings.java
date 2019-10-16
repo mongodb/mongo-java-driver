@@ -261,7 +261,9 @@ public final class ClusterSettings {
          *
          * @param maxWaitQueueSize the number of threads that are allowed to be waiting for a connection.
          * @return this
+         * @deprecated in the next major release, wait queue size limitations will be removed
          */
+        @Deprecated
         public Builder maxWaitQueueSize(final int maxWaitQueueSize) {
             this.maxWaitQueueSize = maxWaitQueueSize;
             return this;
@@ -476,7 +478,9 @@ public final class ClusterSettings {
      * <p>Default is 500.</p>
      *
      * @return the number of threads that are allowed to be waiting for a connection.
+     * @deprecated in the next major release, wait queue size limitations will be removed
      */
+    @Deprecated
     public int getMaxWaitQueueSize() {
         return maxWaitQueueSize;
     }

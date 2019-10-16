@@ -71,6 +71,8 @@ public interface ConnectionPoolStatisticsMBean {
      * Gets the size of the wait queue for a connection from this pool. *
      *
      * @return size of the wait queue
+     * @deprecated In the next major release, wait queue events will no longer be published so this statistic will be unavailable
      */
+    @Deprecated
     int getWaitQueueSize();
 }
