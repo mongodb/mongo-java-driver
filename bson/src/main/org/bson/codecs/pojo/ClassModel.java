@@ -16,7 +16,9 @@
 
 package org.bson.codecs.pojo;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -45,13 +47,14 @@ public final class ClassModel<T> {
         this.name = clazz.getSimpleName();
         this.type = clazz;
         this.hasTypeParameters = clazz.getTypeParameters().length > 0;
-        this.propertyNameToTypeParameterMap = Collections.unmodifiableMap(propertyNameToTypeParameterMap);
+        this.propertyNameToTypeParameterMap = Collections.unmodifiableMap(
+                new HashMap<String, TypeParameterMap>(propertyNameToTypeParameterMap));
         this.instanceCreatorFactory = instanceCreatorFactory;
         this.discriminatorEnabled = discriminatorEnabled;
         this.discriminatorKey = discriminatorKey;
         this.discriminator = discriminator;
         this.idPropertyModelHolder = idPropertyModelHolder;
-        this.propertyModels = Collections.unmodifiableList(propertyModels);
+        this.propertyModels = Collections.unmodifiableList(new ArrayList<PropertyModel<?>>(propertyModels));
     }
 
     /**
