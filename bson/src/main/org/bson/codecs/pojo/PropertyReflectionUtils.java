@@ -60,22 +60,36 @@ final class PropertyReflectionUtils {
     static PropertyMethods getPropertyMethods(final Class<?> clazz) {
         List<Method> setters = new ArrayList<Method>();
         List<Method> getters = new ArrayList<Method>();
-        for (Method method : clazz.getDeclaredMethods()) {
-            // Note that if you override a getter to provide a more specific return type, getting the declared methods
-            // on the subclass will return the overridden method as well as the method that was overridden from
-            // the super class. This original method is copied over into the subclass as a bridge method, so we're
-            // excluding them here to avoid multiple getters of the same property with different return types
-            if (isPublic(method.getModifiers()) && !method.isBridge()) {
-                if (isGetter(method)) {
-                    getters.add(method);
-                } else if (isSetter(method)) {
-                    // Setters are a bit more tricky - don't do anything fancy here
-                    setters.add(method);
+
+        // get all the default method from interface
+        for (Class<?> i : clazz.getInterfaces()) {
+            for (Method method : i.getDeclaredMethods()) {
+                if (method.isDefault()) {
+                    verifyAddMethodToList(method, getters, setters);
                 }
             }
         }
 
+        for (Method method : clazz.getDeclaredMethods()) {
+            verifyAddMethodToList(method, getters, setters);
+        }
+
         return new PropertyMethods(getters, setters);
+    }
+
+    private static void verifyAddMethodToList(final Method method, final List<Method> getters, final List<Method> setters) {
+        // Note that if you override a getter to provide a more specific return type, getting the declared methods
+        // on the subclass will return the overridden method as well as the method that was overridden from
+        // the super class. This original method is copied over into the subclass as a bridge method, so we're
+        // excluding them here to avoid multiple getters of the same property with different return types
+        if (isPublic(method.getModifiers()) && !method.isBridge()) {
+            if (isGetter(method)) {
+                getters.add(method);
+            } else if (isSetter(method)) {
+                // Setters are a bit more tricky - don't do anything fancy here
+                setters.add(method);
+            }
+        }
     }
 
     static class PropertyMethods {
