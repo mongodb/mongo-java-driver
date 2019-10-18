@@ -816,13 +816,25 @@ public class JsonPoweredCrudTestHelper {
             if (name.equals("insertOne")) {
                 writeModels.add(new InsertOneModel<BsonDocument>(requestArguments.getDocument("document")));
             } else if (name.equals("updateOne")) {
-                writeModels.add(new UpdateOneModel<BsonDocument>(requestArguments.getDocument("filter"),
-                        requestArguments.getDocument("update"),
-                        getUpdateOptions(requestArguments)));
+                if (requestArguments.isDocument("update")) {
+                    writeModels.add(new UpdateOneModel<BsonDocument>(requestArguments.getDocument("filter"),
+                            requestArguments.getDocument("update"),
+                            getUpdateOptions(requestArguments)));
+                } else {  // update is a pipeline
+                    writeModels.add(new UpdateOneModel<BsonDocument>(requestArguments.getDocument("filter"),
+                            getListOfDocuments(requestArguments.getArray("update")),
+                            getUpdateOptions(requestArguments)));
+                }
             } else if (name.equals("updateMany")) {
-                writeModels.add(new UpdateManyModel<BsonDocument>(requestArguments.getDocument("filter"),
-                        requestArguments.getDocument("update"),
-                        getUpdateOptions(requestArguments)));
+                if (requestArguments.isDocument("update")) {
+                    writeModels.add(new UpdateManyModel<BsonDocument>(requestArguments.getDocument("filter"),
+                            requestArguments.getDocument("update"),
+                            getUpdateOptions(requestArguments)));
+                } else {  // update is a pipeline
+                    writeModels.add(new UpdateManyModel<BsonDocument>(requestArguments.getDocument("filter"),
+                            getListOfDocuments(requestArguments.getArray("update")),
+                            getUpdateOptions(requestArguments)));
+                }
             } else if (name.equals("deleteOne")) {
                 writeModels.add(new DeleteOneModel<BsonDocument>(requestArguments.getDocument("filter"),
                         getDeleteOptions(requestArguments)));
