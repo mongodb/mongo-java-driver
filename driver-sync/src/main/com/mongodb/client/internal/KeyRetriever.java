@@ -17,6 +17,7 @@
 package com.mongodb.client.internal;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadConcern;
 import org.bson.BsonDocument;
 
 import java.io.Closeable;
@@ -38,6 +39,7 @@ class KeyRetriever implements Closeable {
 
     public List<BsonDocument> find(final BsonDocument keyFilter) {
         return client.getDatabase(namespace.getDatabaseName()).getCollection(namespace.getCollectionName(), BsonDocument.class)
+                .withReadConcern(ReadConcern.MAJORITY)
                 .find(keyFilter).into(new ArrayList<BsonDocument>());
     }
 

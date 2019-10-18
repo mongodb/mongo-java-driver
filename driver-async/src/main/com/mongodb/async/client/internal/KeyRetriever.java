@@ -17,6 +17,7 @@
 package com.mongodb.async.client.internal;
 
 import com.mongodb.MongoNamespace;
+import com.mongodb.ReadConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.client.MongoClient;
 import org.bson.BsonDocument;
@@ -40,6 +41,7 @@ class KeyRetriever implements Closeable {
 
     public void find(final BsonDocument keyFilter, final SingleResultCallback<List<BsonDocument>> callback) {
         client.getDatabase(namespace.getDatabaseName()).getCollection(namespace.getCollectionName(), BsonDocument.class)
+                .withReadConcern(ReadConcern.MAJORITY)
                 .find(keyFilter).into(new ArrayList<BsonDocument>(), callback);
     }
 
