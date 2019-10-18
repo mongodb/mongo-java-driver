@@ -342,7 +342,7 @@ public class Crypt implements Closeable {
                 @Override
                 public void onResult(final Void result, final Throwable t) {
                     if (t != null) {
-                        callback.onResult(null, t);
+                        callback.onResult(null, wrapInClientException(t));
                     } else {
                         decryptKeys(cryptContext, databaseName, callback);
                     }

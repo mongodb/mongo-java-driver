@@ -16,45 +16,36 @@
 
 package com.mongodb.client.internal;
 
-import com.mongodb.MongoSocketOpenException;
-import com.mongodb.MongoSocketReadException;
-import com.mongodb.MongoSocketWriteException;
 import com.mongodb.ServerAddress;
 
 import javax.net.ssl.SSLContext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.ByteBuffer;
 
 class KeyManagementService {
     private final SSLContext sslContext;
-    private final int port;
+    private final int defaultPort;
     private final int timeoutMillis;
 
-    KeyManagementService(final SSLContext sslContext, final int port, final int timeoutMillis) {
+    KeyManagementService(final SSLContext sslContext, final int defaultPort, final int timeoutMillis) {
         this.sslContext = sslContext;
-        this.port = port;
+        this.defaultPort = defaultPort;
         this.timeoutMillis = timeoutMillis;
     }
 
-    public InputStream stream(final String host, final ByteBuffer message) {
-        Socket socket;
-        try {
-            socket = sslContext.getSocketFactory().createSocket();
-        } catch (IOException e) {
-            throw new MongoSocketOpenException("Exception opening connection to Key Management Service", new ServerAddress(host, port), e);
-        }
+    public InputStream stream(final String host, final ByteBuffer message) throws IOException {
+        ServerAddress serverAddress = host.contains(":") ? new ServerAddress(host) : new ServerAddress(host, defaultPort);
+        Socket socket = sslContext.getSocketFactory().createSocket();
 
         try {
             socket.setSoTimeout(timeoutMillis);
-            socket.connect(new InetSocketAddress(InetAddress.getByName(host), port), timeoutMillis);
+            socket.connect(serverAddress.getSocketAddress(), timeoutMillis);
         } catch (IOException e) {
             closeSocket(socket);
-            throw new MongoSocketOpenException("Exception opening connection to Key Management Service", new ServerAddress(host, port), e);
+            throw e;
         }
 
         try {
@@ -66,21 +57,19 @@ class KeyManagementService {
             outputStream.write(bytes);
         } catch (IOException e) {
             closeSocket(socket);
-            throw new MongoSocketWriteException("Exception sending message to Key Management Service",
-                    new ServerAddress(host, port), e);
+            throw e;
         }
 
         try {
             return socket.getInputStream();
         } catch (IOException e) {
             closeSocket(socket);
-            throw new MongoSocketReadException("Exception receiving message from Key Management Service",
-                    new ServerAddress(host, port), e);
+            throw e;
         }
     }
 
-    public int getPort() {
-        return port;
+    public int getDefaultPort() {
+        return defaultPort;
     }
 
     private void closeSocket(final Socket socket) {
