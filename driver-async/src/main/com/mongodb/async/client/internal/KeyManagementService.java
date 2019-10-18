@@ -17,10 +17,6 @@
 package com.mongodb.async.client.internal;
 
 import com.mongodb.MongoSocketException;
-import com.mongodb.MongoSocketOpenException;
-import com.mongodb.MongoSocketReadException;
-import com.mongodb.MongoSocketReadTimeoutException;
-import com.mongodb.MongoSocketWriteException;
 import com.mongodb.ServerAddress;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.connection.AsyncCompletionHandler;
@@ -36,7 +32,6 @@ import org.bson.ByteBufNIO;
 
 import javax.net.ssl.SSLContext;
 import java.nio.channels.CompletionHandler;
-import java.nio.channels.InterruptedByTimeoutException;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -44,11 +39,11 @@ import java.util.concurrent.TimeUnit;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 class KeyManagementService {
-    private final int port;
+    private final int defaultPort;
     private final StreamFactory streamFactory;
 
-    KeyManagementService(final SSLContext sslContext, final int port, final int timeoutMillis) {
-        this.port = port;
+    KeyManagementService(final SSLContext sslContext, final int defaultPort, final int timeoutMillis) {
+        this.defaultPort = defaultPort;
         this.streamFactory = new TlsChannelStreamFactoryFactory().create(SocketSettings.builder()
                         .connectTimeout(timeoutMillis, TimeUnit.MILLISECONDS)
                         .readTimeout(timeoutMillis, TimeUnit.MILLISECONDS)
@@ -61,7 +56,10 @@ class KeyManagementService {
     }
 
     private void streamOpen(final MongoKeyDecryptor keyDecryptor, final SingleResultCallback<Void> callback) {
-        final Stream stream = streamFactory.create(new ServerAddress(keyDecryptor.getHostName(), port));
+        ServerAddress serverAddress = keyDecryptor.getHostName().contains(":")
+                ? new ServerAddress(keyDecryptor.getHostName())
+                : new ServerAddress(keyDecryptor.getHostName(), defaultPort);
+        final Stream stream = streamFactory.create(serverAddress);
         stream.openAsync(new AsyncCompletionHandler<Void>() {
             @Override
             public void completed(final Void aVoid) {
@@ -71,8 +69,7 @@ class KeyManagementService {
             @Override
             public void failed(final Throwable t) {
                 stream.close();
-                callback.onResult(null, new MongoSocketOpenException("Exception opening connection to Key Management Service",
-                        getServerAddress(keyDecryptor), t));
+                callback.onResult(null, wrapException(t));
             }
         });
     }
@@ -88,8 +85,7 @@ class KeyManagementService {
             @Override
             public void failed(final Throwable t) {
                 stream.close();
-                callback.onResult(null, new MongoSocketWriteException("Exception sending message to Key Management Service",
-                        getServerAddress(keyDecryptor), t));
+                callback.onResult(null, wrapException(t));
             }
         });
     }
@@ -105,24 +101,20 @@ class KeyManagementService {
                         @Override
                         public void completed(final Integer integer, final Void aVoid) {
                             buffer.flip();
-                            keyDecryptor.feed(buffer.asNIO());
-                            buffer.release();
-                            streamRead(stream, keyDecryptor, callback);
+                            try {
+                                keyDecryptor.feed(buffer.asNIO());
+                                buffer.release();
+                                streamRead(stream, keyDecryptor, callback);
+                            } catch (Throwable t) {
+                                callback.onResult(null, t);
+                            }
                         }
 
                         @Override
                         public void failed(final Throwable t, final Void aVoid) {
                             buffer.release();
                             stream.close();
-                            MongoSocketException exception;
-                            if (t instanceof InterruptedByTimeoutException) {
-                                exception = new MongoSocketReadTimeoutException("Timeout while receiving message from Key Management "
-                                        + "Service", getServerAddress(keyDecryptor), t);
-                            } else {
-                                exception = new MongoSocketReadException("Exception receiving message from Key Management Service",
-                                                getServerAddress(keyDecryptor), t);
-                            }
-                            callback.onResult(null, exception);
+                            callback.onResult(null, wrapException(t));
                         }
                     });
         } else {
@@ -131,7 +123,7 @@ class KeyManagementService {
         }
     }
 
-    private ServerAddress getServerAddress(final MongoKeyDecryptor keyDecryptor) {
-        return new ServerAddress(keyDecryptor.getHostName(), port);
+    private Throwable wrapException(final Throwable t) {
+        return t instanceof MongoSocketException ? t.getCause() : t;
     }
 }
