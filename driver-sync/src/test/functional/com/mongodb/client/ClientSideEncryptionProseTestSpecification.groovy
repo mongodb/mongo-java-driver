@@ -20,10 +20,13 @@ import com.mongodb.AutoEncryptionSettings
 import com.mongodb.ClientEncryptionSettings
 import com.mongodb.MongoClientException
 import com.mongodb.MongoNamespace
+import com.mongodb.WriteConcern
 import com.mongodb.client.model.vault.DataKeyOptions
 import com.mongodb.client.model.vault.EncryptOptions
 import com.mongodb.client.vault.ClientEncryption
 import com.mongodb.client.vault.ClientEncryptions
+import com.mongodb.event.CommandStartedEvent
+import com.mongodb.internal.connection.TestCommandListener
 import org.bson.BsonBinarySubType
 import org.bson.BsonDocument
 import org.bson.BsonString
@@ -32,7 +35,6 @@ import static com.mongodb.ClusterFixture.isNotAtLeastJava8
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
 import static com.mongodb.client.Fixture.getDefaultDatabaseName
 import static com.mongodb.client.Fixture.getMongoClient
-import static com.mongodb.client.Fixture.getMongoClientSettings
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder
 import static com.mongodb.client.model.Filters.eq
 import static java.util.Collections.singletonMap
@@ -53,6 +55,7 @@ class ClientSideEncryptionProseTestSpecification extends FunctionalSpecification
     private MongoClient autoEncryptingClient
     private ClientEncryption clientEncryption
     private MongoCollection<BsonDocument> autoEncryptingDataCollection
+    private TestCommandListener commandListener
 
     def setup() {
         assumeFalse(isNotAtLeastJava8())
@@ -95,8 +98,11 @@ class ClientSideEncryptionProseTestSpecification extends FunctionalSpecification
         autoEncryptingDataCollection = autoEncryptingClient.getDatabase(autoEncryptingCollectionNamespace.databaseName)
                 .getCollection(autoEncryptingCollectionNamespace.collectionName, BsonDocument)
 
+        commandListener = new TestCommandListener()
         clientEncryption = ClientEncryptions.create(ClientEncryptionSettings.builder()
-                .keyVaultMongoClientSettings(getMongoClientSettings())
+                .keyVaultMongoClientSettings(getMongoClientSettingsBuilder()
+                        .addCommandListener(commandListener)
+                        .build())
                 .keyVaultNamespace(keyVaultNamespace.fullName)
                 .kmsProviders(providerProperties)
                 .build())
@@ -107,6 +113,11 @@ class ClientSideEncryptionProseTestSpecification extends FunctionalSpecification
         def localDataKeyId = clientEncryption.createDataKey('local', new DataKeyOptions().keyAltNames(['local_altname']))
 
         then:
+        commandListener.getCommandStartedEvents().size() == 1
+        def event = commandListener.getCommandStartedEvents().get(0) as CommandStartedEvent
+        event.getCommand().containsKey('writeConcern')
+        event.getCommand().getDocument('writeConcern') == WriteConcern.MAJORITY.asDocument()
+
         localDataKeyId != null
         localDataKeyId.type == BsonBinarySubType.UUID_STANDARD.value
         dataKeyCollection.find(eq('masterKey.provider', 'local')).into([]).size() == 1

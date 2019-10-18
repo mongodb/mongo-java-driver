@@ -18,6 +18,7 @@ package com.mongodb.client.internal;
 
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoNamespace;
+import com.mongodb.WriteConcern;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.model.vault.DataKeyOptions;
@@ -51,6 +52,7 @@ public class ClientEncryptionImpl implements ClientEncryption, Closeable {
 
         MongoNamespace namespace = new MongoNamespace(options.getKeyVaultNamespace());
         keyVaultClient.getDatabase(namespace.getDatabaseName()).getCollection(namespace.getCollectionName(), BsonDocument.class)
+                .withWriteConcern(WriteConcern.MAJORITY)
                 .insertOne(dataKeyDocument);
         return dataKeyDocument.getBinary("_id");
     }

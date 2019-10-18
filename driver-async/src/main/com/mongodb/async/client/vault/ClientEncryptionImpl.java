@@ -18,6 +18,7 @@ package com.mongodb.async.client.vault;
 
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoNamespace;
+import com.mongodb.WriteConcern;
 import com.mongodb.async.SingleResultCallback;
 import com.mongodb.async.client.internal.Crypt;
 import com.mongodb.async.client.internal.Crypts;
@@ -60,6 +61,7 @@ class ClientEncryptionImpl implements ClientEncryption, Closeable {
                     MongoNamespace namespace = new MongoNamespace(options.getKeyVaultNamespace());
                     keyVaultClient.getDatabase(namespace.getDatabaseName())
                             .getCollection(namespace.getCollectionName(), BsonDocument.class)
+                            .withWriteConcern(WriteConcern.MAJORITY)
                             .insertOne(dataKeyDocument, new SingleResultCallback<Void>() {
                                 @Override
                                 public void onResult(final Void result, final Throwable t) {
