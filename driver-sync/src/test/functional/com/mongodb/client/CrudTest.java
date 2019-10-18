@@ -161,6 +161,12 @@ public class CrudTest {
                 expectedResult.asDocument().append("upsertedCount", actualResult.asDocument().get("upsertedCount"));
             }
             // Hack to workaround the lack of insertedIds
+            removeIdList("insertedIds", expectedResult, actualResult);
+            removeIdList("upsertedIds", expectedResult, actualResult);
+
+            removeZeroCountField("deletedCount", expectedResult, actualResult);
+            removeZeroCountField("insertedCount", expectedResult, actualResult);
+
             if (expectedResult.isDocument()
                     && !expectedResult.asDocument().containsKey("insertedIds")) {
                 actualResult.asDocument().remove("insertedIds");
@@ -177,6 +183,21 @@ public class CrudTest {
         }
         if (expectedOutcome != null && expectedOutcome.containsKey("collection")) {
             assertCollectionEquals(expectedOutcome.getDocument("collection"));
+        }
+    }
+
+    private void removeZeroCountField(final String key, final BsonValue expectedResult, final BsonValue actualResult) {
+        if (actualResult.isDocument()
+                && actualResult.asDocument().containsKey(key)
+                && actualResult.asDocument().getNumber(key).intValue() == 0
+                && !expectedResult.asDocument().containsKey(key)) {
+            actualResult.asDocument().remove(key);
+        }
+    }
+
+    private void removeIdList(final String key, final BsonValue expectedResult, final BsonValue actualResult) {
+        if (expectedResult.isDocument() && !expectedResult.asDocument().containsKey(key)) {
+            actualResult.asDocument().remove(key);
         }
     }
 
