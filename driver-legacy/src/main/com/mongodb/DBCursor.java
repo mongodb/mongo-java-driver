@@ -517,8 +517,10 @@ public class DBCursor implements Cursor, Iterable<DBObject> {
      *
      * @return a {@code DBObject} containing the explain output for this DBCursor's query
      * @throws MongoException if the operation failed
-     * @mongodb.driver.manual reference/explain Explain Output
+     * @mongodb.driver.manual reference/command/explain Explain Output
+     * @deprecated Replace with direct use of the explain command using the runCommand helper method
      */
+    @Deprecated
     public DBObject explain() {
         return toDBObject(executor.execute(getQueryOperation(collection.getObjectCodec())
                                            .asExplainableOperation(ExplainVerbosity.QUERY_PLANNER),
