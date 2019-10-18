@@ -16,11 +16,14 @@
 
 package com.mongodb.client.model
 
+
 import com.mongodb.MongoQueryException
 import com.mongodb.OperationFunctionalSpecification
 import org.bson.Document
 import org.bson.conversions.Bson
+import spock.lang.IgnoreIf
 
+import static com.mongodb.ClusterFixture.serverVersionGreaterThan
 import static com.mongodb.client.model.Filters.and
 import static com.mongodb.client.model.Filters.eq
 import static com.mongodb.client.model.Projections.elemMatch
@@ -96,6 +99,7 @@ class ProjectionFunctionalSpecification extends OperationFunctionalSpecification
         find(slice('y', 1, 2)) == [aYSlice12]
     }
 
+    @IgnoreIf({ serverVersionGreaterThan('4.2') })
     def 'metaTextScore'() {
         given:
         getCollectionHelper().createIndex(new Document('y', 'text'))
