@@ -57,7 +57,6 @@ public final class ClusterSettings {
     private final ServerSelector serverSelector;
     private final long localThresholdMS;
     private final long serverSelectionTimeoutMS;
-    private final int maxWaitQueueSize;
     private final List<ClusterListener> clusterListeners;
 
     /**
@@ -94,7 +93,6 @@ public final class ClusterSettings {
         private ServerSelector serverSelector;
         private long serverSelectionTimeoutMS = MILLISECONDS.convert(30, TimeUnit.SECONDS);
         private long localThresholdMS = MILLISECONDS.convert(15, MILLISECONDS);
-        private int maxWaitQueueSize = 500;
         private List<ClusterListener> clusterListeners = new ArrayList<ClusterListener>();
 
         private Builder() {
@@ -118,7 +116,6 @@ public final class ClusterSettings {
             requiredClusterType = clusterSettings.requiredClusterType;
             localThresholdMS = clusterSettings.localThresholdMS;
             serverSelectionTimeoutMS = clusterSettings.serverSelectionTimeoutMS;
-            maxWaitQueueSize = clusterSettings.maxWaitQueueSize;
             clusterListeners = new ArrayList<ClusterListener>(clusterSettings.clusterListeners);
             serverSelector = unpackServerSelector(clusterSettings.serverSelector);
             return this;
@@ -238,22 +235,6 @@ public final class ClusterSettings {
         }
 
         /**
-         * <p>This is the maximum number of concurrent operations allowed to wait for a server to become available. All further operations
-         * will get an exception immediately.</p>
-         *
-         * <p>Default is 500.</p>
-         *
-         * @param maxWaitQueueSize the number of threads that are allowed to be waiting for a connection.
-         * @return this
-         * @deprecated in the next major release, wait queue size limitations will be removed
-         */
-        @Deprecated
-        public Builder maxWaitQueueSize(final int maxWaitQueueSize) {
-            this.maxWaitQueueSize = maxWaitQueueSize;
-            return this;
-        }
-
-        /**
          * Adds a cluster listener.
          *
          * @param clusterListener the non-null cluster listener
@@ -291,11 +272,6 @@ public final class ClusterSettings {
 
             Integer maxConnectionPoolSize = connectionString.getMaxConnectionPoolSize();
             int maxSize = maxConnectionPoolSize != null ? maxConnectionPoolSize : 100;
-
-            Integer threadsAllowedToBlockForConnectionMultiplier = connectionString.getThreadsAllowedToBlockForConnectionMultiplier();
-            int waitQueueMultiple = threadsAllowedToBlockForConnectionMultiplier != null
-                                    ? threadsAllowedToBlockForConnectionMultiplier : 5;
-            maxWaitQueueSize(waitQueueMultiple * maxSize);
 
             Integer serverSelectionTimeout = connectionString.getServerSelectionTimeout();
             if (serverSelectionTimeout != null) {
@@ -445,20 +421,6 @@ public final class ClusterSettings {
     }
 
     /**
-     * <p>This is the maximum number of threads that may be waiting for a connection to become available from the pool. All further threads
-     * will get an exception immediately.</p>
-     *
-     * <p>Default is 500.</p>
-     *
-     * @return the number of threads that are allowed to be waiting for a connection.
-     * @deprecated in the next major release, wait queue size limitations will be removed
-     */
-    @Deprecated
-    public int getMaxWaitQueueSize() {
-        return maxWaitQueueSize;
-    }
-
-    /**
      * Gets the cluster listeners.  The default value is an empty list.
      *
      * @return the cluster listeners
@@ -479,9 +441,6 @@ public final class ClusterSettings {
 
         ClusterSettings that = (ClusterSettings) o;
 
-        if (maxWaitQueueSize != that.maxWaitQueueSize) {
-            return false;
-        }
         if (serverSelectionTimeoutMS != that.serverSelectionTimeoutMS) {
             return false;
         }
@@ -524,7 +483,6 @@ public final class ClusterSettings {
         result = 31 * result + (serverSelector != null ? serverSelector.hashCode() : 0);
         result = 31 * result + (int) (serverSelectionTimeoutMS ^ (serverSelectionTimeoutMS >>> 32));
         result = 31 * result + (int) (localThresholdMS ^ (localThresholdMS >>> 32));
-        result = 31 * result + maxWaitQueueSize;
         result = 31 * result + clusterListeners.hashCode();
         return result;
     }
@@ -541,7 +499,6 @@ public final class ClusterSettings {
                + ", clusterListeners='" + clusterListeners + '\''
                + ", serverSelectionTimeout='" + serverSelectionTimeoutMS + " ms" + '\''
                + ", localThreshold='" + serverSelectionTimeoutMS + " ms" + '\''
-               + ", maxWaitQueueSize=" + maxWaitQueueSize
                + '}';
     }
 
@@ -557,7 +514,6 @@ public final class ClusterSettings {
                + ", mode=" + mode
                + ", requiredClusterType=" + requiredClusterType
                + ", serverSelectionTimeout='" + serverSelectionTimeoutMS + " ms" + '\''
-               + ", maxWaitQueueSize=" + maxWaitQueueSize
                + (requiredReplicaSetName == null ? "" : ", requiredReplicaSetName='" + requiredReplicaSetName + '\'')
                + '}';
     }
@@ -600,7 +556,6 @@ public final class ClusterSettings {
         localThresholdMS = builder.localThresholdMS;
         serverSelector = builder.packServerSelector();
         serverSelectionTimeoutMS = builder.serverSelectionTimeoutMS;
-        maxWaitQueueSize = builder.maxWaitQueueSize;
         clusterListeners = unmodifiableList(builder.clusterListeners);
     }
 }

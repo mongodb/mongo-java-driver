@@ -56,7 +56,6 @@ class MongoClientOptionsSpecification extends Specification {
         options.getConnectTimeout() == 10000
         options.getReadPreference() == ReadPreference.primary()
         options.getServerSelector() == null;
-        options.getThreadsAllowedToBlockForConnectionMultiplier() == 5
         !options.isSslEnabled()
         !options.isSslInvalidHostNameAllowed()
         options.getSslContext() == null
@@ -131,11 +130,6 @@ class MongoClientOptionsSpecification extends Specification {
         thrown(IllegalArgumentException)
 
         when:
-        builder.threadsAllowedToBlockForConnectionMultiplier(0)
-        then:
-        thrown(IllegalArgumentException)
-
-        when:
         builder.dbDecoderFactory(null)
         then:
         thrown(IllegalArgumentException)
@@ -179,7 +173,6 @@ class MongoClientOptionsSpecification extends Specification {
                                         .maxWaitTime(200)
                                         .maxConnectionIdleTime(300)
                                         .maxConnectionLifeTime(400)
-                                        .threadsAllowedToBlockForConnectionMultiplier(2)
                                         .sslEnabled(true)
                                         .sslInvalidHostNameAllowed(true)
                                         .sslContext(SSLContext.getDefault())
@@ -211,7 +204,6 @@ class MongoClientOptionsSpecification extends Specification {
         options.getConnectionsPerHost() == 500
         options.getConnectTimeout() == 100
         options.getSocketTimeout() == 700
-        options.getThreadsAllowedToBlockForConnectionMultiplier() == 2
         options.isSslEnabled()
         options.isSslInvalidHostNameAllowed()
         options.getSslContext() == SSLContext.getDefault()
@@ -227,7 +219,7 @@ class MongoClientOptionsSpecification extends Specification {
         options.getServerSettings().getHeartbeatFrequency(MILLISECONDS) == 5
         options.getServerSettings().getMinHeartbeatFrequency(MILLISECONDS) == 11
 
-        options.connectionPoolSettings == ConnectionPoolSettings.builder().maxSize(500).minSize(30).maxWaitQueueSize(1000)
+        options.connectionPoolSettings == ConnectionPoolSettings.builder().maxSize(500).minSize(30)
                                                                 .maxWaitTime(200, MILLISECONDS).maxConnectionLifeTime(400, MILLISECONDS)
                                                                 .maxConnectionIdleTime(300, MILLISECONDS).build()
         options.socketSettings == SocketSettings.builder().connectTimeout(100, MILLISECONDS).readTimeout(700, MILLISECONDS)
@@ -265,7 +257,6 @@ class MongoClientOptionsSpecification extends Specification {
                 .maxWaitTime(200)
                 .maxConnectionIdleTime(300)
                 .maxConnectionLifeTime(400)
-                .threadsAllowedToBlockForConnectionMultiplier(2)
                 .sslEnabled(true)
                 .sslInvalidHostNameAllowed(true)
                 .sslContext(SSLContext.getDefault())
@@ -563,7 +554,6 @@ class MongoClientOptionsSpecification extends Specification {
                 .maxWaitTime(200)
                 .maxConnectionIdleTime(300)
                 .maxConnectionLifeTime(400)
-                .threadsAllowedToBlockForConnectionMultiplier(2)
                 .sslEnabled(true)
                 .sslInvalidHostNameAllowed(true)
                 .sslContext(SSLContext.getDefault())
@@ -603,7 +593,7 @@ class MongoClientOptionsSpecification extends Specification {
                         'minHeartbeatFrequency', 'readConcern', 'readPreference', 'requiredReplicaSetName', 'retryReads', 'retryWrites',
                         'serverListeners', 'serverMonitorListeners', 'serverSelectionTimeout', 'serverSelector',
                         'socketKeepAlive', 'socketTimeout', 'sslContext', 'sslEnabled', 'sslInvalidHostNameAllowed',
-                        'threadsAllowedToBlockForConnectionMultiplier', 'uuidRepresentation', 'writeConcern']
+                        'uuidRepresentation', 'writeConcern']
 
         then:
         actual == expected

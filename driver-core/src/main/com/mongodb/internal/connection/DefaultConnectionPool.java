@@ -21,13 +21,9 @@ import com.mongodb.MongoInterruptedException;
 import com.mongodb.MongoSocketException;
 import com.mongodb.MongoSocketReadTimeoutException;
 import com.mongodb.MongoTimeoutException;
-import com.mongodb.MongoWaitQueueFullException;
-import com.mongodb.event.ConnectionAddedEvent;
 import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.event.ConnectionPoolCreatedEvent;
-import com.mongodb.event.ConnectionPoolOpenedEvent;
 import com.mongodb.event.ConnectionReadyEvent;
-import com.mongodb.event.ConnectionRemovedEvent;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ConnectionDescription;
 import com.mongodb.connection.ConnectionId;
@@ -71,7 +67,6 @@ class DefaultConnectionPool implements ConnectionPool {
 
     private final ConcurrentPool<UsageTrackingInternalConnection> pool;
     private final ConnectionPoolSettings settings;
-    private final AtomicInteger waitQueueSize = new AtomicInteger(0);
     private final AtomicInteger generation = new AtomicInteger(0);
     private final AtomicInteger lastPrunedGeneration = new AtomicInteger(0);
     private final ScheduledExecutorService sizeMaintenanceTimer;
@@ -111,33 +106,26 @@ class DefaultConnectionPool implements ConnectionPool {
     public InternalConnection get(final long timeout, final TimeUnit timeUnit) {
         PooledConnection pooledConnection;
         try {
-            if (waitQueueSize.incrementAndGet() > settings.getMaxWaitQueueSize()) {
-                throw createWaitQueueFullException();
-            }
+            connectionPoolListener.connectionCheckOutStarted(new ConnectionCheckOutStartedEvent(serverId));
+            pooledConnection = getPooledConnection(timeout, timeUnit);
+        } catch (Throwable t) {
+            emitCheckOutFailedEvent(t);
+            throw t;
+        }
+        if (!pooledConnection.opened()) {
             try {
-                connectionPoolListener.connectionCheckOutStarted(new ConnectionCheckOutStartedEvent(serverId));
-                pooledConnection = getPooledConnection(timeout, timeUnit);
+                pooledConnection.open();
             } catch (Throwable t) {
-                emitCheckOutFailedEvent(t);
+                pool.release(pooledConnection.wrapped, true);
+                connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId,
+                        Reason.CONNECTION_ERROR));
                 throw t;
             }
-            if (!pooledConnection.opened()) {
-                try {
-                    pooledConnection.open();
-                } catch (Throwable t) {
-                    pool.release(pooledConnection.wrapped, true);
-                    connectionPoolListener.connectionCheckOutFailed(new ConnectionCheckOutFailedEvent(serverId,
-                            Reason.CONNECTION_ERROR));
-                    throw t;
-                }
-            }
-            connectionPoolListener.connectionCheckedOut(
-                    new ConnectionCheckedOutEvent(pooledConnection.getDescription().getConnectionId()));
-
-            return pooledConnection;
-        } finally {
-            waitQueueSize.decrementAndGet();
         }
+        connectionPoolListener.connectionCheckedOut(
+                new ConnectionCheckedOutEvent(pooledConnection.getDescription().getConnectionId()));
+
+        return pooledConnection;
     }
 
     @Override
@@ -166,13 +154,6 @@ class DefaultConnectionPool implements ConnectionPool {
                                            connection.getDescription().getConnectionId(), serverId));
             }
             openAsync(connection, errHandlingCallback);
-        } else if (waitQueueSize.incrementAndGet() > settings.getMaxWaitQueueSize()) {
-            waitQueueSize.decrementAndGet();
-            if (LOGGER.isTraceEnabled()) {
-                LOGGER.trace(format("Asynchronously failing to get a pooled connection to %s because the wait queue is full",
-                                           serverId));
-            }
-            callback.onResult(null, createWaitQueueFullException());
         } else {
             final long startTimeMillis = System.currentTimeMillis();
             getAsyncGetter().submit(new Runnable() {
@@ -188,8 +169,6 @@ class DefaultConnectionPool implements ConnectionPool {
                     } catch (Throwable t) {
                         emitCheckOutFailedEvent(t);
                         errHandlingCallback.onResult(null, t);
-                    } finally {
-                        waitQueueSize.decrementAndGet();
                     }
                 }
 
@@ -310,12 +289,6 @@ class DefaultConnectionPool implements ConnectionPool {
                                                 settings.getMaxWaitTime(MILLISECONDS), serverId.getAddress()));
     }
 
-    private MongoWaitQueueFullException createWaitQueueFullException() {
-        return new MongoWaitQueueFullException(format("Too many operations are already waiting for a connection. "
-                                                      + "Max number of operations (maxWaitQueueSize) of %d has been exceeded.",
-                                                      settings.getMaxWaitQueueSize()));
-    }
-
     ConcurrentPool<UsageTrackingInternalConnection> getPool() {
         return pool;
     }
@@ -392,34 +365,34 @@ class DefaultConnectionPool implements ConnectionPool {
     private void connectionPoolCreated(final ConnectionPoolListener connectionPoolListener, final ServerId serverId,
                                              final ConnectionPoolSettings settings) {
         connectionPoolListener.connectionPoolCreated(new ConnectionPoolCreatedEvent(serverId, settings));
-        connectionPoolListener.connectionPoolOpened(new ConnectionPoolOpenedEvent(serverId, settings));
+        connectionPoolListener.connectionPoolOpened(new com.mongodb.event.ConnectionPoolOpenedEvent(serverId, settings));
     }
 
     private void connectionCreated(final ConnectionPoolListener connectionPoolListener, final ConnectionId connectionId) {
-        connectionPoolListener.connectionAdded(new ConnectionAddedEvent(connectionId));
+        connectionPoolListener.connectionAdded(new com.mongodb.event.ConnectionAddedEvent(connectionId));
         connectionPoolListener.connectionCreated(new ConnectionCreatedEvent(connectionId));
     }
 
     private void connectionClosed(final ConnectionPoolListener connectionPoolListener, final ConnectionId connectionId,
                                   final ConnectionClosedEvent.Reason reason) {
-        connectionPoolListener.connectionRemoved(new ConnectionRemovedEvent(connectionId, getReasonForRemoved(reason)));
+        connectionPoolListener.connectionRemoved(new com.mongodb.event.ConnectionRemovedEvent(connectionId, getReasonForRemoved(reason)));
         connectionPoolListener.connectionClosed(new ConnectionClosedEvent(connectionId, reason));
     }
 
-    private ConnectionRemovedEvent.Reason getReasonForRemoved(final ConnectionClosedEvent.Reason reason) {
-        ConnectionRemovedEvent.Reason removedReason = ConnectionRemovedEvent.Reason.UNKNOWN;
+    private com.mongodb.event.ConnectionRemovedEvent.Reason getReasonForRemoved(final ConnectionClosedEvent.Reason reason) {
+        com.mongodb.event.ConnectionRemovedEvent.Reason removedReason = com.mongodb.event.ConnectionRemovedEvent.Reason.UNKNOWN;
         switch (reason) {
             case STALE:
-                removedReason = ConnectionRemovedEvent.Reason.STALE;
+                removedReason = com.mongodb.event.ConnectionRemovedEvent.Reason.STALE;
                 break;
             case IDLE:
-                removedReason = ConnectionRemovedEvent.Reason.MAX_IDLE_TIME_EXCEEDED;
+                removedReason = com.mongodb.event.ConnectionRemovedEvent.Reason.MAX_IDLE_TIME_EXCEEDED;
                 break;
             case ERROR:
-                removedReason = ConnectionRemovedEvent.Reason.ERROR;
+                removedReason = com.mongodb.event.ConnectionRemovedEvent.Reason.ERROR;
                 break;
             case POOL_CLOSED:
-                removedReason = ConnectionRemovedEvent.Reason.POOL_CLOSED;
+                removedReason = com.mongodb.event.ConnectionRemovedEvent.Reason.POOL_CLOSED;
                 break;
             default:
                 break;

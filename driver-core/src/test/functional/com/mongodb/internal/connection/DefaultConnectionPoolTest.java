@@ -16,7 +16,6 @@
 
 package com.mongodb.internal.connection;
 
-import com.mongodb.MongoWaitQueueFullException;
 import com.mongodb.ServerAddress;
 import com.mongodb.connection.ClusterId;
 import com.mongodb.connection.ConnectionPoolSettings;
@@ -30,7 +29,6 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
 
 /**
  * These tests are racy, so doing them in Java instead of Groovy to reduce chance of failure.
@@ -58,7 +56,6 @@ public class DefaultConnectionPoolTest {
         provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
-                        .maxWaitQueueSize(1)
                         .maxWaitTime(50, MILLISECONDS)
                         .build());
         provider.start();
@@ -76,38 +73,11 @@ public class DefaultConnectionPoolTest {
     }
 
     @Test
-    public void shouldThrowOnWaitQueueFull() throws InterruptedException {
-        // given
-        provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
-                ConnectionPoolSettings.builder()
-                        .maxSize(1)
-                        .maxWaitQueueSize(1)
-                        .maxWaitTime(500, MILLISECONDS)
-                        .build());
-        provider.start();
-
-        provider.get();
-
-        new Thread(new TimeoutTrackingConnectionGetter(provider)).start();
-        Thread.sleep(100);
-
-        // when
-        try {
-            provider.get();
-            fail();
-        } catch (MongoWaitQueueFullException e) {
-            // then
-            // all good
-        }
-    }
-
-    @Test
     public void shouldExpireConnectionAfterMaxLifeTime() throws InterruptedException {
         // given
         provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
-                        .maxWaitQueueSize(1)
                         .maintenanceInitialDelay(5, MINUTES)
                         .maxConnectionLifeTime(50, MILLISECONDS)
                         .build());
@@ -130,7 +100,6 @@ public class DefaultConnectionPoolTest {
                 connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
-                        .maxWaitQueueSize(1)
                         .maxConnectionLifeTime(20, MILLISECONDS).build());
         provider.start();
 
@@ -150,7 +119,6 @@ public class DefaultConnectionPoolTest {
                 connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
-                        .maxWaitQueueSize(1)
                         .maintenanceInitialDelay(5, MINUTES)
                         .maxConnectionIdleTime(50, MILLISECONDS).build());
         provider.start();
@@ -172,7 +140,6 @@ public class DefaultConnectionPoolTest {
                 connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
-                        .maxWaitQueueSize(1)
                         .maintenanceInitialDelay(5, MINUTES)
                         .maxConnectionLifeTime(20, MILLISECONDS).build());
         provider.start();
@@ -194,7 +161,6 @@ public class DefaultConnectionPoolTest {
                 connectionFactory,
                 ConnectionPoolSettings.builder()
                         .maxSize(1)
-                        .maxWaitQueueSize(1)
                         .maintenanceInitialDelay(5, MINUTES)
                         .maxConnectionLifeTime(20, MILLISECONDS).build());
         provider.start();
@@ -219,7 +185,6 @@ public class DefaultConnectionPoolTest {
                         .maxSize(10)
                         .maxConnectionLifeTime(1, MILLISECONDS)
                         .maintenanceInitialDelay(5, MINUTES)
-                        .maxWaitQueueSize(1)
                         .build());
         provider.get().close();
         provider.start();

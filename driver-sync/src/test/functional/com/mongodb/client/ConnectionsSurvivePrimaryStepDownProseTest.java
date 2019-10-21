@@ -24,7 +24,6 @@ import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.connection.ConnectionPoolSettings;
-import com.mongodb.event.ConnectionAddedEvent;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
@@ -45,6 +44,7 @@ import static org.junit.Assume.assumeFalse;
 import static org.junit.Assume.assumeTrue;
 
 // See https://github.com/mongodb/specifications/tree/master/source/connections-survive-step-down/tests
+@SuppressWarnings("deprecation")
 public class ConnectionsSurvivePrimaryStepDownProseTest {
     private static final String COLLECTION_NAME = "step-down";
 
@@ -98,14 +98,14 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
                 Document.parse("{_id: 4}"), Document.parse("{_id: 5}"));
         collection.withWriteConcern(WriteConcern.MAJORITY).insertMany(documents);
 
-        int connectionCount = connectionPoolListener.countEvents(ConnectionAddedEvent.class);
+        int connectionCount = connectionPoolListener.countEvents(com.mongodb.event.ConnectionAddedEvent.class);
         MongoCursor<Document> cursor = collection.find().batchSize(2).iterator();
         assertEquals(asList(documents.get(0), documents.get(1)), asList(cursor.next(), cursor.next()));
 
         collectionHelper.runAdminCommand("{replSetStepDown: 5, force: true}");
 
         assertEquals(asList(documents.get(2), documents.get(3), documents.get(4)), asList(cursor.next(), cursor.next(), cursor.next()));
-        assertEquals(connectionCount, connectionPoolListener.countEvents(ConnectionAddedEvent.class));
+        assertEquals(connectionCount, connectionPoolListener.countEvents(com.mongodb.event.ConnectionAddedEvent.class));
     }
 
     @Test
@@ -114,7 +114,7 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
 
         collectionHelper.runAdminCommand("{configureFailPoint: 'failCommand',  mode: {times: 1}, data: {failCommands: ['insert'], "
                 + "errorCode: 10107}}");
-        int connectionCount = connectionPoolListener.countEvents(ConnectionAddedEvent.class);
+        int connectionCount = connectionPoolListener.countEvents(com.mongodb.event.ConnectionAddedEvent.class);
 
         try {
             collection.insertOne(new Document());
@@ -124,7 +124,7 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
         }
 
         collection.insertOne(new Document());
-        assertEquals(connectionCount, connectionPoolListener.countEvents(ConnectionAddedEvent.class));
+        assertEquals(connectionCount, connectionPoolListener.countEvents(com.mongodb.event.ConnectionAddedEvent.class));
     }
 
     @Test
@@ -133,7 +133,7 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
 
         collectionHelper.runAdminCommand("{configureFailPoint: 'failCommand',  mode: {times: 1}, data: {failCommands: ['insert'], "
                 + "errorCode: 10107}}");
-        int connectionCount = connectionPoolListener.countEvents(ConnectionAddedEvent.class);
+        int connectionCount = connectionPoolListener.countEvents(com.mongodb.event.ConnectionAddedEvent.class);
 
         try {
             collection.insertOne(new Document());
@@ -143,14 +143,14 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
         }
 
         collection.insertOne(new Document());
-        assertEquals(connectionCount + 1, connectionPoolListener.countEvents(ConnectionAddedEvent.class));
+        assertEquals(connectionCount + 1, connectionPoolListener.countEvents(com.mongodb.event.ConnectionAddedEvent.class));
     }
 
     @Test
     public void testInterruptedAtShutdownResetsConnectionPool() {
         collectionHelper.runAdminCommand("{configureFailPoint: 'failCommand',  mode: {times: 1}, data: {failCommands: ['insert'], "
                 + "errorCode: 11600}}");
-        int connectionCount = connectionPoolListener.countEvents(ConnectionAddedEvent.class);
+        int connectionCount = connectionPoolListener.countEvents(com.mongodb.event.ConnectionAddedEvent.class);
 
         try {
             collection.insertOne(new Document());
@@ -160,14 +160,14 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
         }
 
         collection.insertOne(new Document());
-        assertEquals(connectionCount + 1, connectionPoolListener.countEvents(ConnectionAddedEvent.class));
+        assertEquals(connectionCount + 1, connectionPoolListener.countEvents(com.mongodb.event.ConnectionAddedEvent.class));
     }
 
     @Test
     public void testShutdownInProgressResetsConnectionPool() {
         collectionHelper.runAdminCommand("{configureFailPoint: 'failCommand',  mode: {times: 1}, data: {failCommands: ['insert'], "
                 + "errorCode: 91}}");
-        int connectionCount = connectionPoolListener.countEvents(ConnectionAddedEvent.class);
+        int connectionCount = connectionPoolListener.countEvents(com.mongodb.event.ConnectionAddedEvent.class);
 
         try {
             collection.insertOne(new Document());
@@ -177,7 +177,7 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
         }
 
         collection.insertOne(new Document());
-        assertEquals(connectionCount + 1, connectionPoolListener.countEvents(ConnectionAddedEvent.class));
+        assertEquals(connectionCount + 1, connectionPoolListener.countEvents(com.mongodb.event.ConnectionAddedEvent.class));
     }
 
 }

@@ -127,7 +127,7 @@ class MongoClientURISpecification extends Specification {
 
     def 'should correctly parse URI options for #type'() {
         given:
-        def uri = new MongoClientURI('mongodb://localhost/?minPoolSize=5&maxPoolSize=10&waitQueueMultiple=7&waitQueueTimeoutMS=150&'
+        def uri = new MongoClientURI('mongodb://localhost/?minPoolSize=5&maxPoolSize=10&waitQueueTimeoutMS=150&'
                 + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test&'
                 + 'connectTimeoutMS=2500&socketTimeoutMS=5500&'
                 + 'safe=false&w=1&wtimeout=2500&ssl=true&readPreference=secondary&'
@@ -148,7 +148,6 @@ class MongoClientURISpecification extends Specification {
         options.getConnectionsPerHost() == 10
         options.getMinConnectionsPerHost() == 5
         options.getMaxWaitTime() == 150
-        options.getThreadsAllowedToBlockForConnectionMultiplier() == 7
         options.getMaxConnectionIdleTime() == 200
         options.getMaxConnectionLifeTime() == 300
         options.getSocketTimeout() == 5500
@@ -170,7 +169,6 @@ class MongoClientURISpecification extends Specification {
 
         then:
         options.getConnectionsPerHost() == 100
-        options.getThreadsAllowedToBlockForConnectionMultiplier() == 5
         options.getMaxWaitTime() == 120000
         options.getConnectTimeout() == 10000
         options.getSocketTimeout() == 0
@@ -197,7 +195,6 @@ class MongoClientURISpecification extends Specification {
                 .maxWaitTime(200)
                 .maxConnectionIdleTime(300)
                 .maxConnectionLifeTime(400)
-                .threadsAllowedToBlockForConnectionMultiplier(2)
                 .sslEnabled(true)
                 .sslInvalidHostNameAllowed(true)
                 .sslContext(SSLContext.getDefault())
@@ -226,7 +223,6 @@ class MongoClientURISpecification extends Specification {
         options.getConnectionsPerHost() == 500
         options.getConnectTimeout() == 100
         options.getSocketTimeout() == 700
-        options.getThreadsAllowedToBlockForConnectionMultiplier() == 2
         options.isSslEnabled()
         options.isSslInvalidHostNameAllowed()
         options.getHeartbeatFrequency() == 5
@@ -340,7 +336,7 @@ class MongoClientURISpecification extends Specification {
                                                                                        + 'authMechanism=SCRAM-SHA-1')
         new MongoClientURI('mongodb://localhost/db.coll'
                          + '?minPoolSize=5;'
-                         + 'maxPoolSize=10;waitQueueMultiple=7;'
+                         + 'maxPoolSize=10;'
                          + 'waitQueueTimeoutMS=150;'
                          + 'maxIdleTimeMS=200;'
                          + 'maxLifeTimeMS=300;replicaSet=test;'
@@ -349,7 +345,7 @@ class MongoClientURISpecification extends Specification {
                          + 'safe=false;w=1;wtimeout=2500;'
                          + 'fsync=true;readPreference=primary;'
                          + 'ssl=true')                               |  new MongoClientURI('mongodb://localhost/db.coll?minPoolSize=5;'
-                                                                                         + 'maxPoolSize=10&waitQueueMultiple=7;'
+                                                                                         + 'maxPoolSize=10;'
                                                                                          + 'waitQueueTimeoutMS=150;'
                                                                                          + 'maxIdleTimeMS=200&maxLifeTimeMS=300'
                                                                                          + '&replicaSet=test;connectTimeoutMS=2500;'
@@ -389,14 +385,13 @@ class MongoClientURISpecification extends Specification {
     def 'should be equal to another MongoClientURI with options'() {
         when:
         MongoClientURI uri1 = new MongoClientURI('mongodb://user:pass@host1:1,host2:2,host3:3/bar?'
-                                                        + 'maxPoolSize=10;waitQueueMultiple=5;waitQueueTimeoutMS=150;'
+                                                        + 'maxPoolSize=10;waitQueueTimeoutMS=150;'
                                                         + 'minPoolSize=7;maxIdleTimeMS=1000;maxLifeTimeMS=2000;replicaSet=test;'
                                                         + 'connectTimeoutMS=2500;socketTimeoutMS=5500;autoConnectRetry=true;'
                                                         + 'slaveOk=true;safe=false;w=1;wtimeout=2600')
 
         MongoClientOptions.Builder builder = MongoClientOptions.builder()
                                                                .connectionsPerHost(10)
-                                                               .threadsAllowedToBlockForConnectionMultiplier(5)
                                                                .maxWaitTime(150)
                                                                .minConnectionsPerHost(7)
                                                                .maxConnectionIdleTime(1000)

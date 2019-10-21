@@ -123,9 +123,6 @@ import static java.util.Collections.unmodifiableList;
  * <p>Connection pool configuration:</p>
  * <ul>
  * <li>{@code maxPoolSize=n}: The maximum number of connections in the connection pool.</li>
- * <li>{@code waitQueueMultiple=n} : this multiplier, multiplied with the maxPoolSize setting, gives the maximum number of
- * threads that may be waiting for a connection to become available from the pool.  All further threads will get an
- * exception right away. Note that this configuration option is deprecated and will be removed in the next major release.</li>
  * <li>{@code waitQueueTimeoutMS=ms}: The maximum wait time in milliseconds that a thread may wait for a connection to
  * become available.</li>
  * </ul>
@@ -258,7 +255,6 @@ public class ConnectionString {
 
     private Integer minConnectionPoolSize;
     private Integer maxConnectionPoolSize;
-    private Integer threadsAllowedToBlockForConnectionMultiplier;
     private Integer maxWaitTime;
     private Integer maxConnectionIdleTime;
     private Integer maxConnectionLifeTime;
@@ -402,7 +398,6 @@ public class ConnectionString {
     static {
         GENERAL_OPTIONS_KEYS.add("minpoolsize");
         GENERAL_OPTIONS_KEYS.add("maxpoolsize");
-        GENERAL_OPTIONS_KEYS.add("waitqueuemultiple");
         GENERAL_OPTIONS_KEYS.add("waitqueuetimeoutms");
         GENERAL_OPTIONS_KEYS.add("connecttimeoutms");
         GENERAL_OPTIONS_KEYS.add("maxidletimems");
@@ -499,8 +494,6 @@ public class ConnectionString {
                 maxConnectionIdleTime = parseInteger(value, "maxidletimems");
             } else if (key.equals("maxlifetimems")) {
                 maxConnectionLifeTime = parseInteger(value, "maxlifetimems");
-            } else if (key.equals("waitqueuemultiple")) {
-                threadsAllowedToBlockForConnectionMultiplier  = parseInteger(value, "waitqueuemultiple");
             } else if (key.equals("waitqueuetimeoutms")) {
                 maxWaitTime = parseInteger(value, "waitqueuetimeoutms");
             } else if (key.equals("connecttimeoutms")) {
@@ -1186,17 +1179,6 @@ public class ConnectionString {
     }
 
     /**
-     * Gets the multiplier for the number of threads allowed to block waiting for a connection specified in the connection string.
-     * @return the multiplier for the number of threads allowed to block waiting for a connection
-     * @deprecated in the next major release, wait queue size limitations will be removed
-     */
-    @Deprecated
-    @Nullable
-    public Integer getThreadsAllowedToBlockForConnectionMultiplier() {
-        return threadsAllowedToBlockForConnectionMultiplier;
-    }
-
-    /**
      * Gets the maximum wait time of a thread waiting for a connection specified in the connection string.
      * @return the maximum wait time of a thread waiting for a connection
      */
@@ -1401,11 +1383,6 @@ public class ConnectionString {
         if (sslEnabled != null ? !sslEnabled.equals(that.sslEnabled) : that.sslEnabled != null) {
             return false;
         }
-        if (threadsAllowedToBlockForConnectionMultiplier != null
-            ? !threadsAllowedToBlockForConnectionMultiplier.equals(that.threadsAllowedToBlockForConnectionMultiplier)
-            : that.threadsAllowedToBlockForConnectionMultiplier != null) {
-            return false;
-        }
         if (writeConcern != null ? !writeConcern.equals(that.writeConcern) : that.writeConcern != null) {
             return false;
         }
@@ -1429,9 +1406,6 @@ public class ConnectionString {
         result = 31 * result + (writeConcern != null ? writeConcern.hashCode() : 0);
         result = 31 * result + (minConnectionPoolSize != null ? minConnectionPoolSize.hashCode() : 0);
         result = 31 * result + (maxConnectionPoolSize != null ? maxConnectionPoolSize.hashCode() : 0);
-        result = 31 * result + (threadsAllowedToBlockForConnectionMultiplier != null
-                                ? threadsAllowedToBlockForConnectionMultiplier.hashCode()
-                                : 0);
         result = 31 * result + (maxWaitTime != null ? maxWaitTime.hashCode() : 0);
         result = 31 * result + (maxConnectionIdleTime != null ? maxConnectionIdleTime.hashCode() : 0);
         result = 31 * result + (maxConnectionLifeTime != null ? maxConnectionLifeTime.hashCode() : 0);

@@ -23,7 +23,7 @@ import com.mongodb.MongoException
 import com.mongodb.MongoInternalException
 import com.mongodb.MongoInterruptedException
 import com.mongodb.MongoTimeoutException
-import com.mongodb.MongoWaitQueueFullException
+
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterDescription
@@ -351,27 +351,6 @@ class BaseClusterSpecification extends Specification {
 
         where:
         serverSelectionTimeoutMS << [100, 0]
-    }
-
-    def 'when selecting server asynchronously should send MongoWaitQueueFullException to callback if there are too many waiters'() {
-        given:
-        def cluster = new MultiServerCluster(new ClusterId(),
-                builder().mode(MULTIPLE)
-                        .hosts([firstServer, secondServer, thirdServer])
-                        .serverSelectionTimeout(1, SECONDS)
-                        .maxWaitQueueSize(1)
-                        .build(),
-                factory)
-
-        when:
-        selectServerAsync(cluster, firstServer)
-        selectServerAsyncAndGet(cluster, firstServer)
-
-        then:
-        thrown(MongoWaitQueueFullException)
-
-        cleanup:
-        cluster?.close()
     }
 
     def selectServerAsyncAndGet(BaseCluster cluster, ServerAddress serverAddress) {

@@ -41,7 +41,6 @@ public class ConnectionPoolSettings {
     private final List<ConnectionPoolListener> connectionPoolListeners;
     private final int maxSize;
     private final int minSize;
-    private final int maxWaitQueueSize;
     private final long maxWaitTimeMS;
     private final long maxConnectionLifeTimeMS;
     private final long maxConnectionIdleTimeMS;
@@ -76,7 +75,6 @@ public class ConnectionPoolSettings {
         private List<ConnectionPoolListener> connectionPoolListeners = new ArrayList<ConnectionPoolListener>();
         private int maxSize = 100;
         private int minSize;
-        private int maxWaitQueueSize = 500;
         private long maxWaitTimeMS = 1000 * 60 * 2;
         private long maxConnectionLifeTimeMS;
         private long maxConnectionIdleTimeMS;
@@ -100,7 +98,6 @@ public class ConnectionPoolSettings {
             connectionPoolListeners = new ArrayList<ConnectionPoolListener>(connectionPoolSettings.connectionPoolListeners);
             maxSize = connectionPoolSettings.maxSize;
             minSize = connectionPoolSettings.minSize;
-            maxWaitQueueSize = connectionPoolSettings.maxWaitQueueSize;
             maxWaitTimeMS = connectionPoolSettings.maxWaitTimeMS;
             maxConnectionLifeTimeMS = connectionPoolSettings.maxConnectionLifeTimeMS;
             maxConnectionIdleTimeMS = connectionPoolSettings.maxConnectionIdleTimeMS;
@@ -134,22 +131,6 @@ public class ConnectionPoolSettings {
          */
         public Builder minSize(final int minSize) {
             this.minSize = minSize;
-            return this;
-        }
-
-        /**
-         * <p>This is the maximum number of waiters for a connection to become available from the pool. All further operations will get an
-         * exception immediately.</p>
-         *
-         * <p>Default is 500.</p>
-         *
-         * @param maxWaitQueueSize the number of threads that are allowed to be waiting for a connection.
-         * @return this
-         * @deprecated in the next major release, wait queue size limitations will be removed
-         */
-        @Deprecated
-        public Builder maxWaitQueueSize(final int maxWaitQueueSize) {
-            this.maxWaitQueueSize = maxWaitQueueSize;
             return this;
         }
 
@@ -270,11 +251,6 @@ public class ConnectionPoolSettings {
                 maxConnectionLifeTime(maxConnectionLifeTime, MILLISECONDS);
             }
 
-            Integer threadsAllowedToBlockForConnectionMultiplier = connectionString.getThreadsAllowedToBlockForConnectionMultiplier();
-            if (threadsAllowedToBlockForConnectionMultiplier != null) {
-                maxWaitQueueSize(threadsAllowedToBlockForConnectionMultiplier * maxSize);
-            }
-
             return this;
         }
     }
@@ -301,20 +277,6 @@ public class ConnectionPoolSettings {
      */
     public int getMinSize() {
         return minSize;
-    }
-
-    /**
-     * <p>This is the maximum number of operations that may be waiting for a connection to become available from the pool. All further
-     * operations will get an exception immediately.</p>
-     *
-     * <p>Default is 500.</p>
-     *
-     * @return the number of threads that are allowed to be waiting for a connection.
-     * @deprecated in the next major release, wait queue size limitations will be removed
-     */
-    @Deprecated
-    public int getMaxWaitQueueSize() {
-        return maxWaitQueueSize;
     }
 
     /**
@@ -410,9 +372,6 @@ public class ConnectionPoolSettings {
         if (maintenanceFrequencyMS != that.maintenanceFrequencyMS) {
             return false;
         }
-        if (maxWaitQueueSize != that.maxWaitQueueSize) {
-            return false;
-        }
         if (maxWaitTimeMS != that.maxWaitTimeMS) {
             return false;
         }
@@ -427,7 +386,6 @@ public class ConnectionPoolSettings {
     public int hashCode() {
         int result = maxSize;
         result = 31 * result + minSize;
-        result = 31 * result + maxWaitQueueSize;
         result = 31 * result + (int) (maxWaitTimeMS ^ (maxWaitTimeMS >>> 32));
         result = 31 * result + (int) (maxConnectionLifeTimeMS ^ (maxConnectionLifeTimeMS >>> 32));
         result = 31 * result + (int) (maxConnectionIdleTimeMS ^ (maxConnectionIdleTimeMS >>> 32));
@@ -442,7 +400,6 @@ public class ConnectionPoolSettings {
         return "ConnectionPoolSettings{"
                + "maxSize=" + maxSize
                + ", minSize=" + minSize
-               + ", maxWaitQueueSize=" + maxWaitQueueSize
                + ", maxWaitTimeMS=" + maxWaitTimeMS
                + ", maxConnectionLifeTimeMS=" + maxConnectionLifeTimeMS
                + ", maxConnectionIdleTimeMS=" + maxConnectionIdleTimeMS
@@ -455,7 +412,6 @@ public class ConnectionPoolSettings {
     ConnectionPoolSettings(final Builder builder) {
         isTrue("maxSize > 0", builder.maxSize > 0);
         isTrue("minSize >= 0", builder.minSize >= 0);
-        isTrue("maxWaitQueueSize >= 0", builder.maxWaitQueueSize >= 0);
         isTrue("maintenanceInitialDelayMS >= 0", builder.maintenanceInitialDelayMS >= 0);
         isTrue("maxConnectionLifeTime >= 0", builder.maxConnectionLifeTimeMS >= 0);
         isTrue("maxConnectionIdleTime >= 0", builder.maxConnectionIdleTimeMS >= 0);
@@ -464,7 +420,6 @@ public class ConnectionPoolSettings {
 
         maxSize = builder.maxSize;
         minSize = builder.minSize;
-        maxWaitQueueSize = builder.maxWaitQueueSize;
         maxWaitTimeMS = builder.maxWaitTimeMS;
         maxConnectionLifeTimeMS = builder.maxConnectionLifeTimeMS;
         maxConnectionIdleTimeMS = builder.maxConnectionIdleTimeMS;

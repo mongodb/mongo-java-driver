@@ -328,7 +328,7 @@ public final class ClusterFixture {
     private static Cluster createCluster(final MongoCredential credential, final StreamFactory streamFactory) {
         return new DefaultClusterFactory().createCluster(ClusterSettings.builder().hosts(asList(getPrimary())).build(),
                 ServerSettings.builder().build(),
-                ConnectionPoolSettings.builder().maxSize(1).maxWaitQueueSize(1).build(),
+                ConnectionPoolSettings.builder().maxSize(1).build(),
                 streamFactory, streamFactory, credential, null, null, null,
                 Collections.<MongoCompressor>emptyList());
     }

@@ -743,8 +743,7 @@ public class MongoClient implements Closeable {
         builder.requiredReplicaSetName(options.getRequiredReplicaSetName())
                 .serverSelectionTimeout(options.getServerSelectionTimeout(), MILLISECONDS)
                 .localThreshold(options.getLocalThreshold(), MILLISECONDS)
-                .serverSelector(options.getServerSelector())
-                .maxWaitQueueSize(options.getConnectionPoolSettings().getMaxWaitQueueSize());
+                .serverSelector(options.getServerSelector());
         for (ClusterListener clusterListener: options.getClusterListeners()) {
             builder.addClusterListener(clusterListener);
         }

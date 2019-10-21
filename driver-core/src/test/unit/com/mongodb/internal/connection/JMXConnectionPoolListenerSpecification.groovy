@@ -41,7 +41,7 @@ class JMXConnectionPoolListenerSpecification extends Specification {
     def 'statistics should reflect values from the provider'() {
         given:
         provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
-                ConnectionPoolSettings.builder().minSize(0).maxSize(5).maxWaitQueueSize(1)
+                ConnectionPoolSettings.builder().minSize(0).maxSize(5)
                         .addConnectionPoolListener(jmxListener).build())
         provider.start();
 
@@ -57,7 +57,6 @@ class JMXConnectionPoolListenerSpecification extends Specification {
             maxSize == 5
             size == 2
             checkedOutCount == 1
-            waitQueueSize == 0
         }
 
         cleanup:
@@ -67,7 +66,7 @@ class JMXConnectionPoolListenerSpecification extends Specification {
     def 'should add MBean'() {
         when:
         provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
-                ConnectionPoolSettings.builder().minSize(0).maxSize(5).maxWaitQueueSize(1)
+                ConnectionPoolSettings.builder().minSize(0).maxSize(5)
                         .addConnectionPoolListener(jmxListener).build())
         provider.start();
 
@@ -82,7 +81,7 @@ class JMXConnectionPoolListenerSpecification extends Specification {
     def 'should remove MBean'() {
         given:
         provider = new DefaultConnectionPool(SERVER_ID, connectionFactory,
-                ConnectionPoolSettings.builder().minSize(0).maxSize(5).maxWaitQueueSize(1)
+                ConnectionPoolSettings.builder().minSize(0).maxSize(5)
                         .addConnectionPoolListener(jmxListener).build())
         provider.start();
 

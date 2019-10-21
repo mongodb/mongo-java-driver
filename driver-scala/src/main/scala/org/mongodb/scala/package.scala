@@ -305,13 +305,6 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
   type MongoTimeoutException = com.mongodb.MongoTimeoutException
 
   /**
-   * An exception indicating that the queue for waiting for a pooled connection is full.
-   *
-   * @see [[http://api.mongodb.org/java/current/com/mongodb/connection/ConnectionPoolSettings.html#getMaxWaitQueueSize--]]
-   */
-  type MongoWaitQueueFullException = com.mongodb.MongoWaitQueueFullException
-
-  /**
    * An exception indicating a failure to apply the write concern to the requested write operation
    *
    * @see [[WriteConcern]]
