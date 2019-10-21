@@ -700,8 +700,7 @@ public final class MongoClientSettings {
 
     /**
      * Gets the settings for the connection provider in a settings object.  This settings object wraps the values for minConnectionPoolSize,
-     * maxConnectionPoolSize, maxWaitTime, maxConnectionIdleTime and maxConnectionLifeTime, and uses maxConnectionPoolSize and
-     * threadsAllowedToBlockForConnectionMultiplier to calculate maxWaitQueueSize.
+     * maxConnectionPoolSize, maxWaitTime, maxConnectionIdleTime and maxConnectionLifeTime.
      *
      * @return a ConnectionPoolSettings populated with the settings from this {@code MongoClientSettings} instance that relate to the
      * connection provider.

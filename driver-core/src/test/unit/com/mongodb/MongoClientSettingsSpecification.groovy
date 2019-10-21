@@ -266,7 +266,7 @@ class MongoClientSettingsSpecification extends Specification {
         when:
         ConnectionString connectionString = new ConnectionString('mongodb://user:pass@host1:1,host2:2/'
                 + '?authMechanism=SCRAM-SHA-1&authSource=test'
-                + '&minPoolSize=5&maxPoolSize=10&waitQueueMultiple=7'
+                + '&minPoolSize=5&maxPoolSize=10'
                 + '&waitQueueTimeoutMS=150&maxIdleTimeMS=200&maxLifeTimeMS=300'
                 + '&connectTimeoutMS=2500'
                 + '&socketTimeoutMS=5500'
@@ -293,7 +293,6 @@ class MongoClientSettingsSpecification extends Specification {
                         .mode(ClusterConnectionMode.MULTIPLE)
                         .requiredReplicaSetName('test')
                         .serverSelectionTimeout(25000, TimeUnit.MILLISECONDS)
-                        .maxWaitQueueSize(10 * 7) // maxPoolSize * waitQueueMultiple
                         .localThreshold(30, TimeUnit.MILLISECONDS)
             }
         })
@@ -302,7 +301,6 @@ class MongoClientSettingsSpecification extends Specification {
             void apply(final ConnectionPoolSettings.Builder builder) {
                 builder.minSize(5)
                         .maxSize(10)
-                        .maxWaitQueueSize(10 * 7) // maxPoolSize * waitQueueMultiple
                         .maxWaitTime(150, TimeUnit.MILLISECONDS)
                         .maxConnectionLifeTime(300, TimeUnit.MILLISECONDS)
                         .maxConnectionIdleTime(200, TimeUnit.MILLISECONDS)
@@ -360,7 +358,6 @@ class MongoClientSettingsSpecification extends Specification {
             void apply(final ConnectionPoolSettings.Builder builder) {
                 builder.minSize(5)
                         .maxSize(10)
-                        .maxWaitQueueSize(10 * 7) // maxPoolSize * waitQueueMultiple
                         .maxWaitTime(150, TimeUnit.MILLISECONDS)
                         .maxConnectionLifeTime(300, TimeUnit.MILLISECONDS)
                         .maxConnectionIdleTime(200, TimeUnit.MILLISECONDS)

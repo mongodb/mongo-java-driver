@@ -18,7 +18,6 @@ package com.mongodb.internal.event;
 
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
-import com.mongodb.event.ConnectionAddedEvent;
 import com.mongodb.event.ConnectionCheckOutFailedEvent;
 import com.mongodb.event.ConnectionCheckedInEvent;
 import com.mongodb.event.ConnectionCheckedOutEvent;
@@ -28,11 +27,7 @@ import com.mongodb.event.ConnectionPoolClearedEvent;
 import com.mongodb.event.ConnectionPoolClosedEvent;
 import com.mongodb.event.ConnectionPoolCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
-import com.mongodb.event.ConnectionPoolOpenedEvent;
-import com.mongodb.event.ConnectionPoolWaitQueueEnteredEvent;
-import com.mongodb.event.ConnectionPoolWaitQueueExitedEvent;
 import com.mongodb.event.ConnectionReadyEvent;
-import com.mongodb.event.ConnectionRemovedEvent;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -52,7 +47,7 @@ final class ConnectionPoolListenerMulticaster implements ConnectionPoolListener 
     }
 
     @Override
-    public void connectionPoolOpened(final ConnectionPoolOpenedEvent event) {
+    public void connectionPoolOpened(final com.mongodb.event.ConnectionPoolOpenedEvent event) {
         for (ConnectionPoolListener cur : connectionPoolListeners) {
             try {
                 cur.connectionPoolOpened(event);
@@ -143,7 +138,7 @@ final class ConnectionPoolListenerMulticaster implements ConnectionPoolListener 
     }
 
     @Override
-    public void connectionRemoved(final ConnectionRemovedEvent event) {
+    public void connectionRemoved(final com.mongodb.event.ConnectionRemovedEvent event) {
         for (ConnectionPoolListener cur : connectionPoolListeners) {
             try {
                 cur.connectionRemoved(event);
@@ -156,33 +151,7 @@ final class ConnectionPoolListenerMulticaster implements ConnectionPoolListener 
     }
 
     @Override
-    public void waitQueueEntered(final ConnectionPoolWaitQueueEnteredEvent event) {
-        for (ConnectionPoolListener cur : connectionPoolListeners) {
-            try {
-                cur.waitQueueEntered(event);
-            } catch (Exception e) {
-                if (LOGGER.isWarnEnabled()) {
-                    LOGGER.warn(format("Exception thrown raising connection pool wait queue entered event to listener %s", cur), e);
-                }
-            }
-        }
-    }
-
-    @Override
-    public void waitQueueExited(final ConnectionPoolWaitQueueExitedEvent event) {
-        for (ConnectionPoolListener cur : connectionPoolListeners) {
-            try {
-                cur.waitQueueExited(event);
-            } catch (Exception e) {
-                if (LOGGER.isWarnEnabled()) {
-                    LOGGER.warn(format("Exception thrown raising connection pool wait queue exited event to listener %s", cur), e);
-                }
-            }
-        }
-    }
-
-    @Override
-    public void connectionAdded(final ConnectionAddedEvent event) {
+    public void connectionAdded(final com.mongodb.event.ConnectionAddedEvent event) {
         for (ConnectionPoolListener cur : connectionPoolListeners) {
             try {
                 cur.connectionAdded(event);

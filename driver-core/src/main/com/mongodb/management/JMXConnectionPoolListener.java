@@ -25,8 +25,6 @@ import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.event.ConnectionPoolClosedEvent;
 import com.mongodb.event.ConnectionPoolCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
-import com.mongodb.event.ConnectionPoolWaitQueueEnteredEvent;
-import com.mongodb.event.ConnectionPoolWaitQueueExitedEvent;
 
 import javax.management.ObjectName;
 import java.util.List;
@@ -71,22 +69,6 @@ public class JMXConnectionPoolListener implements ConnectionPoolListener {
         ConnectionPoolStatistics statistics = getStatistics(event.getConnectionId());
         if (statistics != null) {
             statistics.connectionCheckedIn(event);
-        }
-    }
-
-    @Override
-    public void waitQueueEntered(final ConnectionPoolWaitQueueEnteredEvent event) {
-        ConnectionPoolListener statistics = getStatistics(event.getServerId());
-        if (statistics != null) {
-            statistics.waitQueueEntered(event);
-        }
-    }
-
-    @Override
-    public void waitQueueExited(final ConnectionPoolWaitQueueExitedEvent event) {
-        ConnectionPoolListener statistics = getStatistics(event.getServerId());
-        if (statistics != null) {
-            statistics.waitQueueExited(event);
         }
     }
 

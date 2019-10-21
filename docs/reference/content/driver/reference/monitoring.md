@@ -30,7 +30,6 @@ application has multiple `MongoClient` instances connected to the same MongoDB s
 - `minSize`: the minimum allowed size of the pool, including idle and in-use members
 - `maxSize`: the maximum allowed size of the pool, including idle and in-use members
 - `size`: the current size of the pool, including idle and and in-use members
-- `waitQueueSize`: the current size of the wait queue for a connection from this pool
 - `checkedOutCount`: the current count of connections that are currently in use
 
 
@@ -221,16 +220,6 @@ public class TestConnectionPoolListener implements ConnectionPoolListener {
 
     @Override
     public void connectionCheckedIn(final ConnectionCheckedInEvent event) {
-        System.out.println(event);
-    }
-
-    @Override
-    public void waitQueueEntered(final ConnectionPoolWaitQueueEnteredEvent event) {
-        System.out.println(event);
-    }
-
-    @Override
-    public void waitQueueExited(final ConnectionPoolWaitQueueExitedEvent event) {
         System.out.println(event);
     }
 

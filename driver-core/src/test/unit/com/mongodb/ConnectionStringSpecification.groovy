@@ -188,7 +188,6 @@ class ConnectionStringSpecification extends Specification {
         expect:
         connectionString.getMinConnectionPoolSize() == 5
         connectionString.getMaxConnectionPoolSize() == 10;
-        connectionString.getThreadsAllowedToBlockForConnectionMultiplier() == 7;
         connectionString.getMaxWaitTime() == 150;
         connectionString.getMaxConnectionIdleTime() == 200
         connectionString.getMaxConnectionLifeTime() == 300
@@ -206,7 +205,7 @@ class ConnectionStringSpecification extends Specification {
 
         where:
         connectionString <<
-                [new ConnectionString('mongodb://localhost/?minPoolSize=5&maxPoolSize=10&waitQueueMultiple=7&waitQueueTimeoutMS=150&'
+                [new ConnectionString('mongodb://localhost/?minPoolSize=5&maxPoolSize=10&waitQueueTimeoutMS=150&'
                                             + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test&'
                                             + 'connectTimeoutMS=2500&socketTimeoutMS=5500&'
                                             + 'safe=false&w=1&wtimeout=2500&readPreference=primary&ssl=true&'
@@ -215,7 +214,7 @@ class ConnectionStringSpecification extends Specification {
                                             + 'localThresholdMS=30&'
                                             + 'heartbeatFrequencyMS=20000&'
                                             + 'appName=app1'),
-                 new ConnectionString('mongodb://localhost/?minPoolSize=5;maxPoolSize=10;waitQueueMultiple=7;waitQueueTimeoutMS=150;'
+                 new ConnectionString('mongodb://localhost/?minPoolSize=5;maxPoolSize=10;waitQueueTimeoutMS=150;'
                                             + 'maxIdleTimeMS=200;maxLifeTimeMS=300;replicaSet=test;'
                                             + 'connectTimeoutMS=2500;socketTimeoutMS=5500;'
                                             + 'safe=false;w=1;wtimeout=2500;readPreference=primary;ssl=true;'
@@ -224,7 +223,7 @@ class ConnectionStringSpecification extends Specification {
                                             + 'localThresholdMS=30;'
                                             + 'heartbeatFrequencyMS=20000;'
                                             + 'appName=app1'),
-                 new ConnectionString('mongodb://localhost/test?minPoolSize=5;maxPoolSize=10&waitQueueMultiple=7;waitQueueTimeoutMS=150;'
+                 new ConnectionString('mongodb://localhost/test?minPoolSize=5;maxPoolSize=10;waitQueueTimeoutMS=150;'
                                             + 'maxIdleTimeMS=200&maxLifeTimeMS=300&replicaSet=test;'
                                             + 'connectTimeoutMS=2500;'
                                             + 'socketTimeoutMS=5500&'
@@ -409,7 +408,6 @@ class ConnectionStringSpecification extends Specification {
 
         then:
         connectionString.getMaxConnectionPoolSize() == null;
-        connectionString.getThreadsAllowedToBlockForConnectionMultiplier() == null;
         connectionString.getMaxWaitTime() == null;
         connectionString.getConnectTimeout() == null;
         connectionString.getSocketTimeout() == null;
@@ -607,7 +605,7 @@ class ConnectionStringSpecification extends Specification {
                                                                                            + 'authMechanism=SCRAM-SHA-1')
         new ConnectionString('mongodb://localhost/db.coll'
                              + '?minPoolSize=5;'
-                             + 'maxPoolSize=10;waitQueueMultiple=7;'
+                             + 'maxPoolSize=10;'
                              + 'waitQueueTimeoutMS=150;'
                              + 'maxIdleTimeMS=200;'
                              + 'maxLifeTimeMS=300;replicaSet=test;'
@@ -616,7 +614,7 @@ class ConnectionStringSpecification extends Specification {
                              + 'safe=false;w=1;wtimeout=2500;'
                              + 'fsync=true;readPreference=primary;'
                              + 'ssl=true')                           |  new ConnectionString('mongodb://localhost/db.coll?minPoolSize=5;'
-                                                                                             + 'maxPoolSize=10&waitQueueMultiple=7;'
+                                                                                             + 'maxPoolSize=10;'
                                                                                              + 'waitQueueTimeoutMS=150;'
                                                                                              + 'maxIdleTimeMS=200&maxLifeTimeMS=300'
                                                                                              + '&replicaSet=test;connectTimeoutMS=2500;'

@@ -24,8 +24,6 @@ import com.mongodb.event.ConnectionClosedEvent;
 import com.mongodb.event.ConnectionCreatedEvent;
 import com.mongodb.event.ConnectionPoolCreatedEvent;
 import com.mongodb.event.ConnectionPoolListener;
-import com.mongodb.event.ConnectionPoolWaitQueueEnteredEvent;
-import com.mongodb.event.ConnectionPoolWaitQueueExitedEvent;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -37,7 +35,6 @@ final class ConnectionPoolStatistics implements ConnectionPoolListener, Connecti
     private final ConnectionPoolSettings settings;
     private final AtomicInteger size = new AtomicInteger();
     private final AtomicInteger checkedOutCount = new AtomicInteger();
-    private final AtomicInteger waitQueueSize = new AtomicInteger();
 
     ConnectionPoolStatistics(final ConnectionPoolCreatedEvent event) {
         serverAddress = event.getServerId().getAddress();
@@ -75,11 +72,6 @@ final class ConnectionPoolStatistics implements ConnectionPoolListener, Connecti
     }
 
     @Override
-    public int getWaitQueueSize() {
-        return waitQueueSize.get();
-    }
-
-    @Override
     public void connectionCheckedOut(final ConnectionCheckedOutEvent event) {
         checkedOutCount.incrementAndGet();
     }
@@ -99,13 +91,4 @@ final class ConnectionPoolStatistics implements ConnectionPoolListener, Connecti
         size.decrementAndGet();
     }
 
-    @Override
-    public void waitQueueEntered(final ConnectionPoolWaitQueueEnteredEvent event) {
-        waitQueueSize.incrementAndGet();
-    }
-
-    @Override
-    public void waitQueueExited(final ConnectionPoolWaitQueueExitedEvent event) {
-        waitQueueSize.decrementAndGet();
-    }
 }
