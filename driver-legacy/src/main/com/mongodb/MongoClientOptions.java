@@ -271,7 +271,6 @@ public class MongoClientOptions {
      * <p>Default is 100.</p>
      *
      * @return the maximum size of the connection pool per host
-     * @see MongoClientOptions#getThreadsAllowedToBlockForConnectionMultiplier()
      */
     public int getConnectionsPerHost() {
         return maxConnectionsPerHost;
@@ -296,8 +295,10 @@ public class MongoClientOptions {
      *
      * <p>Default is 5.</p>
      *
+     * @deprecated in the next major release, wait queue size limitations will be removed
      * @return the multiplier
      */
+    @Deprecated
     public int getThreadsAllowedToBlockForConnectionMultiplier() {
         return threadsAllowedToBlockForConnectionMultiplier;
     }
@@ -1188,7 +1189,9 @@ public class MongoClientOptions {
          * @return {@code this}
          * @throws IllegalArgumentException if {@code threadsAllowedToBlockForConnectionMultiplier < 1}
          * @see MongoClientOptions#getThreadsAllowedToBlockForConnectionMultiplier()
+         * @deprecated in the next major release, wait queue size limitations will be removed
          */
+        @Deprecated
         public Builder threadsAllowedToBlockForConnectionMultiplier(final int threadsAllowedToBlockForConnectionMultiplier) {
             isTrueArgument("threadsAllowedToBlockForConnectionMultiplier must be > 0", threadsAllowedToBlockForConnectionMultiplier > 0);
             this.threadsAllowedToBlockForConnectionMultiplier = threadsAllowedToBlockForConnectionMultiplier;

@@ -128,7 +128,7 @@ import static java.util.Collections.unmodifiableList;
  * <li>{@code maxPoolSize=n}: The maximum number of connections in the connection pool.</li>
  * <li>{@code waitQueueMultiple=n} : this multiplier, multiplied with the maxPoolSize setting, gives the maximum number of
  * threads that may be waiting for a connection to become available from the pool.  All further threads will get an
- * exception right away.</li>
+ * exception right away. Note that this configuration option is deprecated and will be removed in the next major release.</li>
  * <li>{@code waitQueueTimeoutMS=ms}: The maximum wait time in milliseconds that a thread may wait for a connection to
  * become available.</li>
  * </ul>
@@ -1209,7 +1209,9 @@ public class ConnectionString {
     /**
      * Gets the multiplier for the number of threads allowed to block waiting for a connection specified in the connection string.
      * @return the multiplier for the number of threads allowed to block waiting for a connection
+     * @deprecated in the next major release, wait queue size limitations will be removed
      */
+    @Deprecated
     @Nullable
     public Integer getThreadsAllowedToBlockForConnectionMultiplier() {
         return threadsAllowedToBlockForConnectionMultiplier;
