@@ -145,7 +145,7 @@ public final class CommandMessage extends RequestMessage {
                 bsonOutput.writeInt32(0);         // size
                 bsonOutput.writeCString(payload.getPayloadName());
                 writePayload(new BsonBinaryWriter(bsonOutput, payloadFieldNameValidator), bsonOutput, getSettings(),
-                        messageStartPosition, payload);
+                        messageStartPosition, payload, getSettings().getMaxDocumentSize());
 
                 int payloadBsonOutputLength = bsonOutput.getPosition() - payloadBsonOutputStartPosition;
                 bsonOutput.writeInt32(payloadBsonOutputStartPosition, payloadBsonOutputLength);
