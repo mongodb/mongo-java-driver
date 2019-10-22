@@ -14,18 +14,17 @@
  * limitations under the License.
  */
 
-package com.mongodb.async.client
+package com.mongodb.client
 
 import com.mongodb.AutoEncryptionSettings
 import com.mongodb.ClientEncryptionSettings
 import com.mongodb.MongoClientException
 import com.mongodb.MongoNamespace
 import com.mongodb.WriteConcern
-import com.mongodb.async.FutureResultCallback
-import com.mongodb.async.client.vault.ClientEncryption
-import com.mongodb.async.client.vault.ClientEncryptions
 import com.mongodb.client.model.vault.DataKeyOptions
 import com.mongodb.client.model.vault.EncryptOptions
+import com.mongodb.client.vault.ClientEncryption
+import com.mongodb.client.vault.ClientEncryptions
 import com.mongodb.event.CommandStartedEvent
 import com.mongodb.internal.connection.TestCommandListener
 import org.bson.BsonBinarySubType
@@ -34,21 +33,24 @@ import org.bson.BsonString
 
 import static com.mongodb.ClusterFixture.isNotAtLeastJava8
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static com.mongodb.async.client.Fixture.getDefaultDatabaseName
-import static com.mongodb.async.client.Fixture.getMongoClient
-import static com.mongodb.async.client.Fixture.getMongoClientBuilderFromConnectionString
+import static com.mongodb.client.Fixture.getDefaultDatabaseName
+import static com.mongodb.client.Fixture.getMongoClient
+import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder
 import static com.mongodb.client.model.Filters.eq
 import static java.util.Collections.singletonMap
 import static org.junit.Assume.assumeFalse
 import static org.junit.Assume.assumeTrue
 
-class ClientSideEncryptionProseTestSpecification extends FunctionalSpecification {
+class ClientSideEncryptionExternalKeyVaultSpecification extends FunctionalSpecification {
 
     private final MongoNamespace keyVaultNamespace = new MongoNamespace('test.datakeys')
     private final MongoNamespace autoEncryptingCollectionNamespace = new MongoNamespace(getDefaultDatabaseName(),
             'ClientSideEncryptionProseTestSpecification')
     private final MongoCollection dataKeyCollection = getMongoClient()
             .getDatabase(keyVaultNamespace.databaseName).getCollection(keyVaultNamespace.collectionName, BsonDocument)
+    private final MongoCollection<BsonDocument> dataCollection = getMongoClient()
+            .getDatabase(autoEncryptingCollectionNamespace.databaseName).getCollection(autoEncryptingCollectionNamespace.collectionName,
+            BsonDocument)
 
     private MongoClient autoEncryptingClient
     private ClientEncryption clientEncryption
@@ -61,8 +63,8 @@ class ClientSideEncryptionProseTestSpecification extends FunctionalSpecification
         assumeTrue('Key vault tests disabled',
                 System.getProperty('org.mongodb.test.awsAccessKeyId') != null
                         && !System.getProperty('org.mongodb.test.awsAccessKeyId').isEmpty())
-        Fixture.drop(keyVaultNamespace)
-        Fixture.drop(autoEncryptingCollectionNamespace)
+        dataKeyCollection.drop()
+        dataCollection.drop()
 
         def providerProperties =
                 ['local': ['key': Base64.getDecoder().decode('Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN'
@@ -71,7 +73,7 @@ class ClientSideEncryptionProseTestSpecification extends FunctionalSpecification
                            'secretAccessKey': System.getProperty('org.mongodb.test.awsSecretAccessKey')]
                 ]
 
-        autoEncryptingClient = MongoClients.create(getMongoClientBuilderFromConnectionString()
+        autoEncryptingClient = MongoClients.create(getMongoClientSettingsBuilder()
                 .autoEncryptionSettings(AutoEncryptionSettings.builder()
                         .keyVaultNamespace(keyVaultNamespace.fullName)
                         .kmsProviders(providerProperties)
@@ -97,9 +99,8 @@ class ClientSideEncryptionProseTestSpecification extends FunctionalSpecification
                 .getCollection(autoEncryptingCollectionNamespace.collectionName, BsonDocument)
 
         commandListener = new TestCommandListener()
-
         clientEncryption = ClientEncryptions.create(ClientEncryptionSettings.builder()
-                .keyVaultMongoClientSettings(getMongoClientBuilderFromConnectionString()
+                .keyVaultMongoClientSettings(getMongoClientSettingsBuilder()
                         .addCommandListener(commandListener)
                         .build())
                 .keyVaultNamespace(keyVaultNamespace.fullName)
@@ -107,11 +108,9 @@ class ClientSideEncryptionProseTestSpecification extends FunctionalSpecification
                 .build())
     }
 
-    def 'client encryption prose test'() {
+    def 'test external key vault'() {
         when:
-        def callback = new FutureResultCallback()
-        clientEncryption.createDataKey('local', new DataKeyOptions().keyAltNames(['local_altname']), callback)
-        def localDataKeyId = callback.get()
+        def localDataKeyId = clientEncryption.createDataKey('local', new DataKeyOptions().keyAltNames(['local_altname']))
 
         then:
         commandListener.getCommandStartedEvents().size() == 1
@@ -121,100 +120,69 @@ class ClientSideEncryptionProseTestSpecification extends FunctionalSpecification
 
         localDataKeyId != null
         localDataKeyId.type == BsonBinarySubType.UUID_STANDARD.value
+        dataKeyCollection.find(eq('masterKey.provider', 'local')).into([]).size() == 1
 
         when:
-        callback = new FutureResultCallback()
-        dataKeyCollection.find(eq('masterKey.provider', 'local')).into([], callback)
-
-        then:
-        callback.get().size() == 1
-
-        when:
-        callback = new FutureResultCallback()
-        clientEncryption.encrypt(new BsonString('hello local'),
+        def localEncrypted = clientEncryption.encrypt(new BsonString('hello local'),
                 new EncryptOptions('AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic')
-                        .keyId(localDataKeyId), callback)
+                .keyId(localDataKeyId))
 
         then:
-        def localEncrypted = callback.get()
         localEncrypted.asBinary().getType() == (byte) 6
 
         when:
-        callback = new FutureResultCallback()
         autoEncryptingDataCollection.insertOne(new BsonDocument('_id', new BsonString('local'))
-                .append('value', localEncrypted), callback)
-        callback.get()
-
-        callback = new FutureResultCallback()
-        autoEncryptingDataCollection.find(eq('_id', new BsonString('local'))).first(callback)
+                .append('value', localEncrypted))
 
         then:
-        callback.get().getString('value').value == 'hello local'
+        autoEncryptingDataCollection.find(eq('_id', new BsonString('local'))).first().getString('value')
+                .value == 'hello local'
 
         when:
-        callback = new FutureResultCallback()
-        clientEncryption.encrypt(new BsonString('hello local'),
+        def localEncryptedWithAltName = clientEncryption.encrypt(new BsonString('hello local'),
                 new EncryptOptions('AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic')
-                        .keyAltName('local_altname'), callback)
-        def localEncryptedWithAltName = callback.get()
+                .keyAltName('local_altname'))
 
         then:
         localEncryptedWithAltName == localEncrypted
 
         when:
-        callback = new FutureResultCallback()
-        clientEncryption.createDataKey('aws', new DataKeyOptions().keyAltNames(['aws_altname'])
+        def awsDataKeyId = clientEncryption.createDataKey('aws',
+                new DataKeyOptions().keyAltNames(['aws_altname'])
                 .masterKey(new BsonDocument('region', new BsonString('us-east-1'))
-                        .append('key', new BsonString('arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0'))),
-                callback)
-        def awsDataKeyId = callback.get()
+                .append('key', new BsonString('arn:aws:kms:us-east-1:579766882180:key/89fcc2c4-08b0-4bd9-9f25-e30687b580d0'))))
 
         then:
         awsDataKeyId != null
         awsDataKeyId.type == BsonBinarySubType.UUID_STANDARD.value
+        dataKeyCollection.find(eq('masterKey.provider', 'aws')).into([]).size() == 1
 
         when:
-        callback = new FutureResultCallback()
-        dataKeyCollection.find(eq('masterKey.provider', 'aws')).into([], callback)
-
-        then:
-        callback.get().size() == 1
-
-        when:
-        callback = new FutureResultCallback()
-        clientEncryption.encrypt(new BsonString('hello aws'), new EncryptOptions('AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic')
-                .keyId(awsDataKeyId), callback)
-        def awsEncrypted = callback.get()
+        def awsEncrypted = clientEncryption.encrypt(new BsonString('hello aws'),
+                new EncryptOptions('AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic')
+                        .keyId(awsDataKeyId))
 
         then:
         awsEncrypted.asBinary().getType() == (byte) 6
 
         when:
-        callback = new FutureResultCallback()
         autoEncryptingDataCollection.insertOne(new BsonDocument('_id', new BsonString('aws'))
-                .append('value', awsEncrypted), callback)
-        callback.get()
-
-        callback = new FutureResultCallback()
-        autoEncryptingDataCollection.find(eq('_id', new BsonString('aws'))).first(callback)
+                .append('value', awsEncrypted))
 
         then:
-        callback.get().getString('value').value == 'hello aws'
+        autoEncryptingDataCollection.find(eq('_id', new BsonString('aws'))).first().getString('value')
+                .value == 'hello aws'
 
         when:
-        callback = new FutureResultCallback()
-        clientEncryption.encrypt(new BsonString('hello aws'),
+        def awsEncryptedWithAltName = clientEncryption.encrypt(new BsonString('hello aws'),
                 new EncryptOptions('AEAD_AES_256_CBC_HMAC_SHA_512-Deterministic')
-                        .keyAltName('aws_altname'), callback)
-        def awsEncryptedWithAltName = callback.get()
+                        .keyAltName('aws_altname'))
 
         then:
         awsEncryptedWithAltName == awsEncrypted
 
         when:
-        callback = new FutureResultCallback()
-        autoEncryptingDataCollection.insertOne(new BsonDocument('encrypted_placeholder', localEncrypted), callback)
-        callback.get()
+        autoEncryptingDataCollection.insertOne(new BsonDocument('encrypted_placeholder', localEncrypted))
 
         then:
         thrown(MongoClientException)

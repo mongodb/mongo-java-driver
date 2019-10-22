@@ -37,6 +37,10 @@ public final class JsonPoweredTestHelper {
         return new BsonDocumentCodec().decode(new JsonReader(getFileAsString(file)), DecoderContext.builder().build());
     }
 
+    public static BsonDocument getTestDocument(final String resourcePath) throws IOException, URISyntaxException {
+        return getTestDocument(new File(JsonPoweredTestHelper.class.getResource(resourcePath).toURI()));
+    }
+
     public static List<File> getTestFiles(final String resourcePath) throws URISyntaxException {
         List<File> files = new ArrayList<File>();
         addFilesFromDirectory(new File(JsonPoweredTestHelper.class.getResource(resourcePath).toURI()), files);

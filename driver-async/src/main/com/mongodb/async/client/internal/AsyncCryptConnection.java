@@ -31,6 +31,7 @@ import com.mongodb.connection.SplittablePayload;
 import com.mongodb.internal.connection.MessageSettings;
 import com.mongodb.internal.connection.SplittablePayloadBsonWriter;
 import com.mongodb.internal.validator.MappedFieldNameValidator;
+import com.mongodb.lang.Nullable;
 import com.mongodb.session.SessionContext;
 import org.bson.BsonBinaryReader;
 import org.bson.BsonBinaryWriter;
@@ -59,8 +60,7 @@ import static org.bson.codecs.configuration.CodecRegistries.fromProviders;
 @SuppressWarnings("deprecation")
 class AsyncCryptConnection implements AsyncConnection {
     private static final CodecRegistry REGISTRY = fromProviders(new BsonValueCodecProvider());
-    private static final int MAX_MESSAGE_SIZE = 6000000;
-    private static final int MAX_DOCUMENT_SIZE = 2097152;
+    private static final int MAX_SPLITTABLE_DOCUMENT_SIZE = 2097152;
 
     private final AsyncConnection wrapped;
     private final Crypt crypt;
@@ -103,7 +103,7 @@ class AsyncCryptConnection implements AsyncConnection {
     public <T> void commandAsync(final String database, final BsonDocument command, final FieldNameValidator commandFieldNameValidator,
                                  final ReadPreference readPreference, final Decoder<T> commandResultDecoder,
                                  final SessionContext sessionContext, final boolean responseExpected,
-                                 final SplittablePayload payload, final FieldNameValidator payloadFieldNameValidator,
+                                 @Nullable final SplittablePayload payload, @Nullable final FieldNameValidator payloadFieldNameValidator,
                                  final SingleResultCallback<T> callback) {
 
         if (serverIsLessThanVersionFourDotTwo(wrapped.getDescription())) {
@@ -111,11 +111,13 @@ class AsyncCryptConnection implements AsyncConnection {
         }
 
         BasicOutputBuffer bsonOutput = new BasicOutputBuffer();
-        BsonBinaryWriter bsonBinaryWriter = new BsonBinaryWriter(new BsonWriterSettings(), new BsonBinaryWriterSettings(MAX_DOCUMENT_SIZE),
+        BsonBinaryWriter bsonBinaryWriter = new BsonBinaryWriter(new BsonWriterSettings(),
+                new BsonBinaryWriterSettings(getDescription().getMaxDocumentSize()),
                 bsonOutput, getFieldNameValidator(payload, commandFieldNameValidator, payloadFieldNameValidator));
         BsonWriter writer = payload == null
                 ? bsonBinaryWriter
-                : new SplittablePayloadBsonWriter(bsonBinaryWriter, bsonOutput, createSplittablePayloadMessageSettings(), payload);
+                : new SplittablePayloadBsonWriter(bsonBinaryWriter, bsonOutput, createSplittablePayloadMessageSettings(), payload,
+                MAX_SPLITTABLE_DOCUMENT_SIZE);
 
         try {
             getEncoder(command).encode(writer, command, EncoderContext.builder().build());
@@ -174,9 +176,9 @@ class AsyncCryptConnection implements AsyncConnection {
         return (Codec<BsonDocument>) REGISTRY.get(command.getClass());
     }
 
-    private FieldNameValidator getFieldNameValidator(final SplittablePayload payload,
+    private FieldNameValidator getFieldNameValidator(@Nullable final SplittablePayload payload,
                                                      final FieldNameValidator commandFieldNameValidator,
-                                                     final FieldNameValidator payloadFieldNameValidator) {
+                                                     @Nullable final FieldNameValidator payloadFieldNameValidator) {
         if (payload == null) {
             return commandFieldNameValidator;
         }
@@ -188,9 +190,9 @@ class AsyncCryptConnection implements AsyncConnection {
 
     private MessageSettings createSplittablePayloadMessageSettings() {
         return MessageSettings.builder()
-                .maxBatchCount(wrapped.getDescription().getMaxBatchCount())
-                .maxMessageSize(MAX_MESSAGE_SIZE)
-                .maxDocumentSize(MAX_DOCUMENT_SIZE)
+                .maxBatchCount(getDescription().getMaxBatchCount())
+                .maxMessageSize(getDescription().getMaxMessageSize())
+                .maxDocumentSize(getDescription().getMaxDocumentSize())
                 .build();
     }
 

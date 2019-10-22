@@ -16,7 +16,6 @@
 
 package com.mongodb.client.internal
 
-
 import com.mongodb.ReadPreference
 import com.mongodb.ServerAddress
 import com.mongodb.connection.ClusterId
@@ -34,7 +33,6 @@ import org.bson.BsonBinaryWriter
 import org.bson.BsonDocument
 import org.bson.BsonDocumentWrapper
 import org.bson.BsonInt32
-import org.bson.BsonMaximumSizeExceededException
 import org.bson.BsonString
 import org.bson.Document
 import org.bson.RawBsonDocument
@@ -206,33 +204,6 @@ class CryptConnectionSpecification extends Specification {
         }
         response == rawToBsonDocument(decryptedResponse)
         payload.getPosition() == 2
-    }
-
-    def 'should throw if command document is large than 2 MiB'() {
-        given:
-        def wrappedConnection = Mock(Connection)
-        def crypt = Mock(Crypt)
-        def cryptConnection = new CryptConnection(wrappedConnection, crypt)
-        def codec = new DocumentCodec()
-        def bytes = new byte[2097152 - 84]
-        def payload = new SplittablePayload(INSERT, [
-                new BsonDocumentWrapper(new Document('_id', 1).append('ssid', '555-55-5555').append('b', bytes), codec),
-        ])
-
-        when:
-        cryptConnection.command('db',
-                new BsonDocumentWrapper(new Document('insert', 'test'), codec),
-                new NoOpFieldNameValidator(), ReadPreference.primary(), new BsonDocumentCodec(),
-                NoOpSessionContext.INSTANCE, true,
-                payload,
-                new NoOpFieldNameValidator())
-
-        then:
-        _ * wrappedConnection.getDescription() >> {
-            new ConnectionDescription(new ConnectionId(new ServerId(new ClusterId(), new ServerAddress())), 8, STANDALONE,
-                    1000, 1024 * 16_000, 1024 * 48_000, [])
-        }
-        thrown(BsonMaximumSizeExceededException)
     }
 
     RawBsonDocument toRaw(BsonDocument document) {
