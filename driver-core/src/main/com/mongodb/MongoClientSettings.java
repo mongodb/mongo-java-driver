@@ -16,7 +16,6 @@
 
 package com.mongodb;
 
-import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.Immutable;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.client.gridfs.codecs.GridFSFileCodecProvider;
@@ -440,15 +439,11 @@ public final class MongoClientSettings {
         /**
          * Sets the auto-encryption settings
          *
-         * <p>
-         * Note: support for client side encryption is in beta.  Backwards-breaking changes may be made before the final release.
-         * </p>
          * @param autoEncryptionSettings the auto-encryption settings
          * @return this
          * @since 3.11
          * @see #getAutoEncryptionSettings()
          */
-        @Beta
         public Builder autoEncryptionSettings(final AutoEncryptionSettings autoEncryptionSettings) {
             this.autoEncryptionSettings = autoEncryptionSettings;
             return this;
@@ -616,7 +611,6 @@ public final class MongoClientSettings {
      * @since 3.11
      */
     @Nullable
-    @Beta
     public AutoEncryptionSettings getAutoEncryptionSettings() {
         return autoEncryptionSettings;
     }

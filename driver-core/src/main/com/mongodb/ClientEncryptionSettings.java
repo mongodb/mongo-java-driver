@@ -16,7 +16,6 @@
 
 package com.mongodb;
 
-import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.NotThreadSafe;
 
 import java.util.Map;
@@ -30,14 +29,9 @@ import static com.mongodb.assertions.Assertions.notNull;
  * Explicit encryption/decryption is a community feature, enabled with the new {@code com.mongodb.client.vault.ClientEncryption} type,
  * for which this is the settings.
  * </p>
- * <p>
- * Note: support for client side encryption is in beta.  Backwards-breaking changes may be made before the final
- * release.
- * </p>
  *
  * @since 3.11
  */
-@Beta
 public final class ClientEncryptionSettings {
     private final MongoClientSettings keyVaultMongoClientSettings;
     private final String keyVaultNamespace;

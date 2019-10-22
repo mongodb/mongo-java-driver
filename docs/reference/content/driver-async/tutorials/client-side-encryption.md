@@ -18,10 +18,6 @@ configuration or directives. Client-side field level encryption supports workloa
 unauthorized parties, including server administrators, cannot read the encrypted data.
 
 {{% note class="important" %}}
-Support for client side encryption is in beta.  Backwards-breaking changes may be made before the final release.
-{{% /note %}}
-
-{{% note class="important" %}}
 Java 8 is the minimum required version that supports Async client side encryption. 
 {{% /note %}}
 

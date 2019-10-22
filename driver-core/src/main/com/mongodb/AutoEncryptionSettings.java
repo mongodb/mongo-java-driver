@@ -16,7 +16,6 @@
 
 package com.mongodb;
 
-import com.mongodb.annotations.Beta;
 import com.mongodb.annotations.NotThreadSafe;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonDocument;
@@ -52,13 +51,9 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <p>
  * Automatic encryption requires the authenticated user to have the listCollections privilege action.
  * </p>
- * <p>
- * Note: support for client side encryption is in beta.  Backwards-breaking changes may be made before the final release.
- * </p>
  *
  * @since 3.11
  */
-@Beta
 public final class AutoEncryptionSettings {
     private final MongoClientSettings keyVaultMongoClientSettings;
     private final String keyVaultNamespace;
@@ -72,7 +67,6 @@ public final class AutoEncryptionSettings {
      * construction through chaining.
      */
     @NotThreadSafe
-    @Beta
     public static final class Builder {
         private MongoClientSettings keyVaultMongoClientSettings;
         private String keyVaultNamespace;
@@ -183,6 +177,7 @@ public final class AutoEncryptionSettings {
      * keyVaultMongoClientSettings can be used to route data key queries to a separate MongoDB cluster, or the same cluster but using a
      * different credential.
      * </p>
+     *
      * @return the key vault settings, which may be null to indicate that the same {@code MongoClient} should be used to access the key
      * vault collection as is used for the rest of the application.
      */
@@ -253,6 +248,7 @@ public final class AutoEncryptionSettings {
      * Schemas supplied in the schemaMap only apply to configuring automatic encryption for client side encryption. Other validation
      * rules in the JSON schema will not be enforced by the driver and will result in an error.
      * </p>
+     *
      * @return map of namespace to local JSON schema
      */
     public Map<String, BsonDocument> getSchemaMap() {
@@ -289,6 +285,7 @@ public final class AutoEncryptionSettings {
      * cases, the application can construct a {@code MongoClient} with {@code AutoEncryptionSettings} with {@code bypassAutoEncryption}
      * enabled.
      * </p>
+     *
      * @return true if auto-encryption should be bypassed
      */
     public boolean isBypassAutoEncryption() {
