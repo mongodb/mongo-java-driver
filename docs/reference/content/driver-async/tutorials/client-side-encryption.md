@@ -37,7 +37,7 @@ See the [installation]({{< relref "driver-async/getting-started/installation.md"
 
 There is a separate jar file containing`libmongocrypt` bindings.
 
-{{< install artifactId="mongodb-crypt" version="1.0.0-beta5">}}
+{{< install artifactId="mongodb-crypt" version="1.0.0-rc1">}}
 
 ### mongocryptd configuration
 
