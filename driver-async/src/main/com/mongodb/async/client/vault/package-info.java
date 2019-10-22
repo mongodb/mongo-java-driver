@@ -22,9 +22,8 @@
  * </p>
  * @since 3.11
  */
-@Beta
+
 @NonNullApi
 package com.mongodb.async.client.vault;
 
-import com.mongodb.annotations.Beta;
 import com.mongodb.lang.NonNullApi;
