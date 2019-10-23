@@ -263,7 +263,7 @@ final class BulkWriteBatch {
 
     public FieldNameValidator getFieldNameValidator() {
         if (batchType == INSERT) {
-            return new CollectibleDocumentFieldNameValidator();
+            return NO_OP_FIELD_NAME_VALIDATOR;
         } else if (batchType == UPDATE || batchType == REPLACE) {
             Map<String, FieldNameValidator> rootMap = new HashMap<String, FieldNameValidator>();
             if (batchType == WriteRequest.Type.REPLACE) {

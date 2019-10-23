@@ -30,6 +30,7 @@ import org.bson.types.CodeWScope;
 import org.bson.types.MaxKey;
 import org.bson.types.MinKey;
 import org.bson.types.ObjectId;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -192,30 +193,16 @@ public class DBCollectionTest extends DatabaseTestCase {
 
     @Test
     public void testDotInDBObject() {
-        try {
-            collection.save(new BasicDBObject("x.y", 1));
-            fail("Should throw exception");
-        } catch (IllegalArgumentException e) {
-            // all good
-        }
+        collection.save(new BasicDBObject("x.y", 1));
 
-        try {
-            collection.save(new BasicDBObject("x", new BasicDBObject("a.b", 1)));
-            fail("Should throw exception");
-        } catch (IllegalArgumentException e) {
-            // all good
-        }
+        collection.save(new BasicDBObject("x", new BasicDBObject("a.b", 1)));
 
-        try {
-            Map<String, Integer> map = new HashMap<String, Integer>();
-            map.put("a.b", 1);
-            collection.save(new BasicDBObject("x", map));
-            fail("Should throw exception");
-        } catch (IllegalArgumentException e) {
-            // all good
-        }
+        Map<String, Integer> map = new HashMap<String, Integer>();
+        map.put("a.b", 1);
+        collection.save(new BasicDBObject("x", map));
     }
 
+    @Ignore
     @Test(expected = IllegalArgumentException.class)
     public void testJAVA794() {
         Map<String, String> nested = new HashMap<String, String>();
@@ -509,24 +496,24 @@ public class DBCollectionTest extends DatabaseTestCase {
         assertEquals(uuid, collection.findOne().get("uuid"));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testDotKeysArrayFail() {
+    @Test
+    public void testDotKeysArraySucceed() {
         //JAVA-794
         DBObject obj = new BasicDBObject("x", 1).append("y", 2)
                                                 .append("array", new Object[]{new BasicDBObject("foo.bar", "baz")});
         collection.insert(obj);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testDotKeysListFail() {
+    @Test
+    public void testDotKeysListSucceed() {
         //JAVA-794
         DBObject obj = new BasicDBObject("x", 1).append("y", 2)
                                                 .append("array", asList(new BasicDBObject("foo.bar", "baz")));
         collection.insert(obj);
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testDotKeysMapInArrayFail() {
+    @Test
+    public void testDotKeysMapInArraySucceed() {
         final Map<String, Object> map = new HashMap<String, Object>(1);
         map.put("foo.bar", 2);
         DBObject obj = new BasicDBObject("x", 1).append("y", 2).append("array", new Object[]{map});
