@@ -40,6 +40,7 @@ import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
+import static com.mongodb.internal.connection.tlschannel.util.Util.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 public class TransactionExample {
@@ -66,12 +67,7 @@ public class TransactionExample {
 
     @Test
     public void updateEmployeeInfoWithRetry() {
-        runTransactionWithRetry(new Runnable() {
-            @Override
-            public void run() {
-                updateEmployeeInfo();
-            }
-        });
+        runTransactionWithRetry(this::updateEmployeeInfo);
     }
 
     private void runTransactionWithRetry(final Runnable transactional) {
@@ -119,8 +115,7 @@ public class TransactionExample {
                 .writeConcern(WriteConcern.MAJORITY)
                 .build();
 
-        ClientSession clientSession = client.startSession();
-        try {
+        try (ClientSession clientSession = client.startSession()) {
             clientSession.startTransaction(txnOptions);
 
             employeesCollection.updateOne(clientSession,
@@ -130,8 +125,32 @@ public class TransactionExample {
                     new Document("employee", 3).append("status", new Document("new", "Inactive").append("old", "Active")));
 
             commitWithRetry(clientSession);
-        } finally {
-            clientSession.close();
+        }
+    }
+
+    @Test
+    public void updateEmployeeInfoUsingWithTransactionHelper() {
+        MongoCollection<Document> employeesCollection = client.getDatabase("hr").getCollection("employees");
+        MongoCollection<Document> eventsCollection = client.getDatabase("reporting").getCollection("events");
+
+        TransactionOptions txnOptions = TransactionOptions.builder()
+                .readPreference(ReadPreference.primary())
+                .readConcern(ReadConcern.MAJORITY)
+                .writeConcern(WriteConcern.MAJORITY)
+                .build();
+
+        try (ClientSession clientSession = client.startSession()) {
+            clientSession.withTransaction(() -> {
+                employeesCollection.updateOne(clientSession,
+                        Filters.eq("employee", 3),
+                        Updates.set("status", "Inactive"));
+                eventsCollection.insertOne(clientSession,
+                        new Document("employee", 3).append("status", new Document("new", "Inactive").append("old", "Active")));
+                return null;
+            }, txnOptions);
+        } catch (MongoException e) {
+            System.out.println("Transaction aborted. Caught exception during transaction.");
+            throw e;
         }
     }
 
