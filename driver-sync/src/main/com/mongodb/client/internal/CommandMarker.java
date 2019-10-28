@@ -31,7 +31,6 @@ import org.bson.RawBsonDocument;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.lang.ProcessBuilder.Redirect;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -52,9 +51,7 @@ class CommandMarker implements Closeable {
         }
 
         if (!options.containsKey("mongocryptdBypassSpawn") || !((Boolean) options.get("mongocryptdBypassSpawn"))) {
-            processBuilder = new ProcessBuilder(createMongocryptdSpawnArgs(options))
-                    .redirectOutput(Redirect.DISCARD)
-                    .redirectError(Redirect.DISCARD);
+            processBuilder = new ProcessBuilder(createMongocryptdSpawnArgs(options));
             startProcess();
         } else {
             processBuilder = null;

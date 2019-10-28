@@ -23,7 +23,6 @@ import com.mongodb.async.client.vault.ClientEncryption;
 import com.mongodb.async.client.vault.ClientEncryptions;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
-import com.mongodb.crypt.capi.MongoCryptException;
 import com.mongodb.lang.Nullable;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
@@ -34,7 +33,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -57,17 +55,19 @@ public class ClientEncryptionCustomEndpointTest {
     private ClientEncryption clientEncryption;
     private BsonDocument masterKey;
     private final Class<? extends RuntimeException> exceptionClass;
-    private final Class<? extends RuntimeException> wrappedExceptionClass;
+    // Delay loading this class because one of the expected classes is MongoCryptException, which should only be loaded after we
+    // determine that we're running on Java 8+ (since MongoCryptException is compiled with Java 8 target version)
+    private final String wrappedExceptionClassName;
     private final String messageContainedInException;
 
     public ClientEncryptionCustomEndpointTest(@SuppressWarnings("unused") final String name,
                                               final BsonDocument masterKey,
                                               @Nullable final Class<? extends RuntimeException> exceptionClass,
-                                              @Nullable final Class<? extends RuntimeException> wrappedExceptionClass,
+                                              @Nullable final String wrappedExceptionClassName,
                                               @Nullable final String messageContainedInException) {
         this.masterKey = masterKey;
         this.exceptionClass = exceptionClass;
-        this.wrappedExceptionClass = wrappedExceptionClass;
+        this.wrappedExceptionClassName = wrappedExceptionClassName;
         this.messageContainedInException = messageContainedInException;
     }
 
@@ -126,7 +126,7 @@ public class ClientEncryptionCustomEndpointTest {
             }
             try {
                 assertEquals(exceptionClass, e.getClass());
-                assertEquals(wrappedExceptionClass, e.getCause().getClass());
+                assertEquals(wrappedExceptionClassName, e.getCause().getClass().getName());
             } catch (AssertionError ae) {
                 throw e;
             }
@@ -151,13 +151,13 @@ public class ClientEncryptionCustomEndpointTest {
                 null, null, null});
         data.add(new Object[]{"invalid endpoint port",
                 getDefaultMasterKey().append("endpoint", new BsonString("kms.us-east-1.amazonaws.com:12345")),
-                MongoClientException.class, ConnectException.class, "Connection refused"});
+                MongoClientException.class, "java.net.ConnectException", "Connection refused"});
         data.add(new Object[]{"invalid amazon region in endpoint",
                 getDefaultMasterKey().append("endpoint", new BsonString("kms.us-east-2.amazonaws.com")),
-                MongoClientException.class, MongoCryptException.class, "us-east-1"});
+                MongoClientException.class, "com.mongodb.crypt.capi.MongoCryptException", "us-east-1"});
         data.add(new Object[]{"invalid endpoint host",
                 getDefaultMasterKey().append("endpoint", new BsonString("example.com")),
-                MongoClientException.class, MongoCryptException.class, "parse error"});
+                MongoClientException.class, "com.mongodb.crypt.capi.MongoCryptException", "parse error"});
 
         return data;
     }
