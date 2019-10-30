@@ -24,6 +24,7 @@ import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.connection.ConnectionPoolSettings;
+import com.mongodb.event.ConnectionPoolClearedEvent;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
@@ -141,8 +142,8 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
         } catch (MongoException e) {
             assertEquals(10107, e.getCode());
         }
-
-        collection.insertOne(new Document());
+        assertEquals(1, connectionPoolListener.countEvents(ConnectionPoolClearedEvent.class));
+        collection.insertOne(new Document("test", 1));
         assertEquals(connectionCount + 1, connectionPoolListener.countEvents(com.mongodb.event.ConnectionAddedEvent.class));
     }
 
@@ -158,8 +159,8 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
         } catch (MongoException e) {
             assertEquals(11600, e.getCode());
         }
-
-        collection.insertOne(new Document());
+        assertEquals(1, connectionPoolListener.countEvents(ConnectionPoolClearedEvent.class));
+        collection.insertOne(new Document("test", 1));
         assertEquals(connectionCount + 1, connectionPoolListener.countEvents(com.mongodb.event.ConnectionAddedEvent.class));
     }
 
@@ -175,8 +176,8 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
         } catch (MongoException e) {
             assertEquals(91, e.getCode());
         }
-
-        collection.insertOne(new Document());
+        assertEquals(1, connectionPoolListener.countEvents(ConnectionPoolClearedEvent.class));
+        collection.insertOne(new Document("test", 1));
         assertEquals(connectionCount + 1, connectionPoolListener.countEvents(com.mongodb.event.ConnectionAddedEvent.class));
     }
 

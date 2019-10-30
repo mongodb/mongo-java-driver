@@ -40,7 +40,6 @@ import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet;
 import static com.mongodb.ClusterFixture.isSharded;
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
 import static com.mongodb.client.Fixture.getMongoClientSettingsBuilder;
-import static com.mongodb.internal.connection.tlschannel.util.Util.assertTrue;
 import static org.junit.Assume.assumeTrue;
 
 public class TransactionExample {
