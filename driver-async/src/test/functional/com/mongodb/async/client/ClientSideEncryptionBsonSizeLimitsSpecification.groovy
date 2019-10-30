@@ -20,6 +20,7 @@ import com.mongodb.AutoEncryptionSettings
 import com.mongodb.ClientEncryptionSettings
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoWriteException
+import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.async.client.vault.ClientEncryption
 import com.mongodb.async.client.vault.ClientEncryptions
@@ -60,7 +61,8 @@ class ClientSideEncryptionBsonSizeLimitsSpecification extends FunctionalSpecific
         Fixture.drop(autoEncryptingCollectionNamespace)
 
         new CollectionHelper<>(new BsonDocumentCodec(), keyVaultNamespace).insertDocuments(
-                getTestDocument('/client-side-encryption-limits/limits-key.json'))
+                [getTestDocument('/client-side-encryption-limits/limits-key.json')],
+                WriteConcern.MAJORITY)
 
         def providerProperties =
                 ['local': ['key': Base64.getDecoder().decode('Mng0NCt4ZHVUYUJCa1kxNkVyNUR1QURhZ2h2UzR2d2RrZzh0cFBwM3R6NmdWMDFBMUN'

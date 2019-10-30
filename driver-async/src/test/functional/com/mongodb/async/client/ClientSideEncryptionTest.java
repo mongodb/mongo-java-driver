@@ -20,6 +20,7 @@ import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoWriteConcernException;
+import com.mongodb.WriteConcern;
 import com.mongodb.async.FutureResultCallback;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.ValidationOptions;
@@ -156,7 +157,8 @@ public class ClientSideEncryptionTest {
         }
 
         /* Insert data into the "admin.datakeys" key vault. */
-        collection = getMongoClient().getDatabase("admin").getCollection("datakeys", BsonDocument.class);
+        collection = getMongoClient().getDatabase("admin").getCollection("datakeys", BsonDocument.class)
+                .withWriteConcern(WriteConcern.MAJORITY);
         callback = new FutureResultCallback<Void>();
         collection.drop(callback);
         callback.get(30, TimeUnit.SECONDS);

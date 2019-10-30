@@ -20,6 +20,7 @@ import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
+import com.mongodb.WriteConcern;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.client.vault.ClientEncryptions;
@@ -94,7 +95,8 @@ public class ClientSideEncryptionCorpusTest {
 
         // Step 3: Drop and create admin.datakeys
         MongoDatabase adminDatabase = client.getDatabase("admin");
-        MongoCollection<BsonDocument> dataKeysCollection = adminDatabase.getCollection("datakeys", BsonDocument.class);
+        MongoCollection<BsonDocument> dataKeysCollection = adminDatabase.getCollection("datakeys", BsonDocument.class)
+                .withWriteConcern(WriteConcern.MAJORITY);
         dataKeysCollection.drop();
         dataKeysCollection.insertOne(bsonDocumentFromPath("corpus-key-aws.json"));
         dataKeysCollection.insertOne(bsonDocumentFromPath("corpus-key-local.json"));

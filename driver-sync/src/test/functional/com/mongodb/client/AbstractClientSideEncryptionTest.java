@@ -20,6 +20,7 @@ import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.MongoCommandException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoWriteConcernException;
+import com.mongodb.WriteConcern;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.ValidationOptions;
 import com.mongodb.client.test.CollectionHelper;
@@ -147,7 +148,8 @@ public abstract class AbstractClientSideEncryptionTest {
 
         /* Insert data into the "admin.datakeys" key vault. */
         BsonArray data = specDocument.getArray("key_vault_data", new BsonArray());
-        collection = getMongoClient().getDatabase("admin").getCollection("datakeys", BsonDocument.class);
+        collection = getMongoClient().getDatabase("admin").getCollection("datakeys", BsonDocument.class)
+                .withWriteConcern(WriteConcern.MAJORITY);
         collection.drop();
         if (!data.isEmpty()) {
             documents = new ArrayList<BsonDocument>();

@@ -21,6 +21,7 @@ import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoCredential;
 import com.mongodb.MongoSecurityException;
+import com.mongodb.WriteConcern;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.client.vault.ClientEncryption;
 import com.mongodb.client.vault.ClientEncryptions;
@@ -73,7 +74,8 @@ public class ClientSideEncryptionExternalKeyVaultTest {
         /* Step 1: get unencrypted client and recreate keys collection */
         client = getMongoClient();
         MongoDatabase admin = client.getDatabase("admin");
-        MongoCollection<BsonDocument> datakeys = admin.getCollection("datakeys", BsonDocument.class);
+        MongoCollection<BsonDocument> datakeys = admin.getCollection("datakeys", BsonDocument.class)
+                .withWriteConcern(WriteConcern.MAJORITY);
         datakeys.drop();
         datakeys.insertOne(bsonDocumentFromPath("external-key.json"));
 
