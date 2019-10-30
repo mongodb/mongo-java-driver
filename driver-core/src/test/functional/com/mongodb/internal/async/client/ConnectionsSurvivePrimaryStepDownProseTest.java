@@ -22,6 +22,7 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.WriteConcern;
+import com.mongodb.event.ConnectionPoolClearedEvent;
 import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.async.FutureResultCallback;
 import com.mongodb.client.test.CollectionHelper;
@@ -174,9 +175,10 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
         } catch (MongoException e) {
             assertEquals(10107, e.getCode());
         }
+        assertEquals(1, connectionPoolListener.countEvents(ConnectionPoolClearedEvent.class));
 
         FutureResultCallback<Void> callback = new FutureResultCallback<Void>();
-        collection.insertOne(new Document(), callback);
+        collection.insertOne(new Document("test", 1), callback);
         callback.get(30, TimeUnit.SECONDS);
         assertEquals(connectionCount + 1, connectionPoolListener.countEvents(com.mongodb.event.ConnectionAddedEvent.class));
     }
@@ -194,9 +196,10 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
         } catch (MongoException e) {
             assertEquals(11600, e.getCode());
         }
+        assertEquals(1, connectionPoolListener.countEvents(ConnectionPoolClearedEvent.class));
 
         FutureResultCallback<Void> callback = new FutureResultCallback<Void>();
-        collection.insertOne(new Document(), callback);
+        collection.insertOne(new Document("test", 1), callback);
         callback.get(30, TimeUnit.SECONDS);
         assertEquals(connectionCount + 1, connectionPoolListener.countEvents(com.mongodb.event.ConnectionAddedEvent.class));
     }
@@ -214,9 +217,10 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
         } catch (MongoException e) {
             assertEquals(91, e.getCode());
         }
+        assertEquals(1, connectionPoolListener.countEvents(ConnectionPoolClearedEvent.class));
 
         FutureResultCallback<Void> callback = new FutureResultCallback<Void>();
-        collection.insertOne(new Document(), callback);
+        collection.insertOne(new Document("test", 1), callback);
         callback.get(30, TimeUnit.SECONDS);
         assertEquals(connectionCount + 1, connectionPoolListener.countEvents(com.mongodb.event.ConnectionAddedEvent.class));
     }
