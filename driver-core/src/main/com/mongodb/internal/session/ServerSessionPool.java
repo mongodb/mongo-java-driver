@@ -94,7 +94,13 @@ public class ServerSessionPool {
         try {
             closing = true;
             serverSessionPool.close();
-            endClosedSessions();
+
+            List<BsonDocument> identifiers;
+            synchronized (this) {
+                identifiers = new ArrayList<BsonDocument>(closedSessionIdentifiers);
+                closedSessionIdentifiers.clear();
+            }
+            endClosedSessions(identifiers);
         } finally {
             closed = true;
         }
@@ -111,14 +117,21 @@ public class ServerSessionPool {
             return;
         }
 
-        closedSessionIdentifiers.add(serverSession.getIdentifier());
-        if (closedSessionIdentifiers.size() == END_SESSIONS_BATCH_SIZE) {
-            endClosedSessions();
+        List<BsonDocument> identifiers = null;
+        synchronized (this) {
+            closedSessionIdentifiers.add(serverSession.getIdentifier());
+            if (closedSessionIdentifiers.size() == END_SESSIONS_BATCH_SIZE) {
+                identifiers = new ArrayList<BsonDocument>(closedSessionIdentifiers);
+                closedSessionIdentifiers.clear();
+            }
+        }
+        if (identifiers != null) {
+            endClosedSessions(identifiers);
         }
     }
 
-    private void endClosedSessions() {
-        if (closedSessionIdentifiers.isEmpty()) {
+    private void endClosedSessions(final List<BsonDocument> identifiers) {
+        if (identifiers.isEmpty()) {
             return;
         }
 
@@ -141,12 +154,11 @@ public class ServerSessionPool {
         }).getConnection();
         try {
             connection.command("admin",
-                    new BsonDocument("endSessions", new BsonArray(closedSessionIdentifiers)), new NoOpFieldNameValidator(),
+                    new BsonDocument("endSessions", new BsonArray(identifiers)), new NoOpFieldNameValidator(),
                     ReadPreference.primaryPreferred(), new BsonDocumentCodec(), NoOpSessionContext.INSTANCE);
         } catch (MongoException e) {
             // ignore exceptions
         } finally {
-            closedSessionIdentifiers.clear();
             connection.release();
         }
     }
