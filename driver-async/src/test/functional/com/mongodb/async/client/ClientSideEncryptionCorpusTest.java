@@ -20,6 +20,7 @@ import com.mongodb.AutoEncryptionSettings;
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
+import com.mongodb.WriteConcern;
 import com.mongodb.async.FutureResultCallback;
 import com.mongodb.async.client.vault.ClientEncryption;
 import com.mongodb.async.client.vault.ClientEncryptions;
@@ -101,7 +102,8 @@ public class ClientSideEncryptionCorpusTest {
 
         // Step 3: Drop and create admin.datakeys
         MongoDatabase adminDatabase = client.getDatabase("admin");
-        MongoCollection<BsonDocument> dataKeysCollection = adminDatabase.getCollection("datakeys", BsonDocument.class);
+        MongoCollection<BsonDocument> dataKeysCollection = adminDatabase.getCollection("datakeys", BsonDocument.class)
+                .withWriteConcern(WriteConcern.MAJORITY);
 
         voidCallback = new FutureResultCallback<Void>();
         dataKeysCollection.drop(voidCallback);

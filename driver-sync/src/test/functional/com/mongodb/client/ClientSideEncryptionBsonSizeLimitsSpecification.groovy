@@ -20,6 +20,7 @@ import com.mongodb.AutoEncryptionSettings
 import com.mongodb.ClientEncryptionSettings
 import com.mongodb.MongoNamespace
 import com.mongodb.MongoWriteException
+import com.mongodb.WriteConcern
 import com.mongodb.client.vault.ClientEncryption
 import com.mongodb.client.vault.ClientEncryptions
 import com.mongodb.internal.connection.TestCommandListener
@@ -45,6 +46,7 @@ class ClientSideEncryptionBsonSizeLimitsSpecification extends FunctionalSpecific
             collectionName)
     private final MongoCollection dataKeyCollection = getMongoClient()
             .getDatabase(keyVaultNamespace.databaseName).getCollection(keyVaultNamespace.collectionName, BsonDocument)
+            .withWriteConcern(WriteConcern.MAJORITY)
     private final MongoCollection<BsonDocument> dataCollection = getMongoClient()
             .getDatabase(autoEncryptingCollectionNamespace.databaseName).getCollection(autoEncryptingCollectionNamespace.collectionName,
             BsonDocument)

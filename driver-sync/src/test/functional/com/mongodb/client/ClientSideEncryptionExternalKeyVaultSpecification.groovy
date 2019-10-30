@@ -48,6 +48,7 @@ class ClientSideEncryptionExternalKeyVaultSpecification extends FunctionalSpecif
             'ClientSideEncryptionProseTestSpecification')
     private final MongoCollection dataKeyCollection = getMongoClient()
             .getDatabase(keyVaultNamespace.databaseName).getCollection(keyVaultNamespace.collectionName, BsonDocument)
+            .withWriteConcern(WriteConcern.MAJORITY)
     private final MongoCollection<BsonDocument> dataCollection = getMongoClient()
             .getDatabase(autoEncryptingCollectionNamespace.databaseName).getCollection(autoEncryptingCollectionNamespace.collectionName,
             BsonDocument)
