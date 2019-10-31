@@ -25,8 +25,8 @@ import static Fixture.initializeCollection
 import static Fixture.waitForLastServerSessionPoolRelease
 
 class FunctionalSpecification extends Specification {
-    protected MongoDatabase database;
-    protected MongoCollection<Document> collection;
+    protected AsyncMongoDatabase database;
+    protected AsyncMongoCollection<Document> collection;
 
     def setup() {
         database = getDefaultDatabase()

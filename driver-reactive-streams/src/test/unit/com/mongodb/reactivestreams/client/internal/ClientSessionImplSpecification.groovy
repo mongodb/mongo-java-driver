@@ -20,7 +20,7 @@ import com.mongodb.ClientSessionOptions
 import com.mongodb.ReadConcern
 import com.mongodb.ServerAddress
 import com.mongodb.TransactionOptions
-import com.mongodb.internal.async.client.ClientSession
+import com.mongodb.internal.async.client.AsyncClientSession
 import com.mongodb.reactivestreams.client.MongoClient
 import com.mongodb.session.ServerSession
 import org.bson.BsonBoolean
@@ -34,7 +34,7 @@ class ClientSessionImplSpecification extends Specification {
     def 'should forward methods to wrapped'() {
         given:
         def originator = Stub(MongoClient)
-        def wrapped = Mock(ClientSession)
+        def wrapped = Mock(AsyncClientSession)
         def session = new ClientSessionImpl(wrapped, originator)
         def expectedTransactionOptions = TransactionOptions.builder().readConcern(ReadConcern.MAJORITY).build()
         def expectedSessionOptions = ClientSessionOptions.builder().causallyConsistent(false).build()

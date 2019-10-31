@@ -16,7 +16,7 @@
 
 package com.mongodb.reactivestreams.client
 
-import com.mongodb.internal.async.client.MapReduceIterable
+import com.mongodb.internal.async.client.AsyncMapReduceIterable
 import org.reactivestreams.Publisher
 import spock.lang.Specification
 
@@ -24,7 +24,7 @@ class MapReducePublisherSpecification extends Specification {
 
     def 'should have the same methods as the wrapped MapReduceIterable'() {
         given:
-        def wrapped = (MapReduceIterable.methods*.name - ['batchCursor', 'forEach', 'getBatchSize', 'into', 'map']).toSet().sort()
+        def wrapped = (AsyncMapReduceIterable.methods*.name - ['batchCursor', 'forEach', 'getBatchSize', 'into', 'map']).toSet().sort()
         def local = (MapReducePublisher.methods*.name - Publisher.methods*.name).sort()
 
         expect:

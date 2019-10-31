@@ -20,6 +20,7 @@ import com.mongodb.Block;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.async.client.vault.AsyncClientEncryption;
 import com.mongodb.reactivestreams.client.internal.SingleResultObservableToPublisher;
 import org.bson.BsonBinary;
 import org.bson.BsonValue;
@@ -28,9 +29,9 @@ import org.reactivestreams.Publisher;
 import static com.mongodb.assertions.Assertions.notNull;
 
 class ClientEncryptionImpl implements ClientEncryption {
-    private final com.mongodb.internal.async.client.vault.ClientEncryption wrapped;
+    private final AsyncClientEncryption wrapped;
 
-    ClientEncryptionImpl(final com.mongodb.internal.async.client.vault.ClientEncryption wrapped) {
+    ClientEncryptionImpl(final AsyncClientEncryption wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 

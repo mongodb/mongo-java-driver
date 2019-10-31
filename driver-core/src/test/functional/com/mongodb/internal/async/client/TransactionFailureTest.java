@@ -39,7 +39,7 @@ public class TransactionFailureTest extends DatabaseTestCase {
 
     @Test(expected = MongoClientException.class)
     public void testTransactionFails() throws InterruptedException {
-        final ClientSession clientSession = createSession();
+        final AsyncClientSession clientSession = createSession();
 
         try {
             clientSession.startTransaction();
@@ -52,9 +52,9 @@ public class TransactionFailureTest extends DatabaseTestCase {
         }
     }
 
-    private ClientSession createSession() {
+    private AsyncClientSession createSession() {
         final ClientSessionOptions options = ClientSessionOptions.builder().build();
-        return new MongoOperation<ClientSession>() {
+        return new MongoOperation<AsyncClientSession>() {
             @Override
             public void execute() {
                 client.startSession(options, getCallback());

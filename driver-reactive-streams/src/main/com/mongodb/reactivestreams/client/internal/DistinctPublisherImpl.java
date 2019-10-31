@@ -19,7 +19,7 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.Block;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.async.client.DistinctIterable;
+import com.mongodb.internal.async.client.AsyncDistinctIterable;
 import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.DistinctPublisher;
 import org.bson.conversions.Bson;
@@ -33,9 +33,9 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 final class DistinctPublisherImpl<TResult> implements DistinctPublisher<TResult> {
 
-    private final DistinctIterable<TResult> wrapped;
+    private final AsyncDistinctIterable<TResult> wrapped;
 
-    DistinctPublisherImpl(final DistinctIterable<TResult> wrapped) {
+    DistinctPublisherImpl(final AsyncDistinctIterable<TResult> wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 

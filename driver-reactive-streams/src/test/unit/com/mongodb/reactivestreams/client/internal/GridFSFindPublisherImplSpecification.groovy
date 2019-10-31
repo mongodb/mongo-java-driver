@@ -16,8 +16,8 @@
 
 package com.mongodb.reactivestreams.client.internal
 
-import com.mongodb.internal.async.client.gridfs.GridFSFindIterable
 import com.mongodb.client.model.Collation
+import com.mongodb.internal.async.client.gridfs.AsyncGridFSFindIterable
 import org.bson.Document
 import org.reactivestreams.Subscriber
 import spock.lang.Specification
@@ -36,7 +36,7 @@ class GridFSFindPublisherImplSpecification extends Specification {
             onSubscribe(_) >> { args -> args[0].request(100) }
         }
 
-        def wrapped = Mock(GridFSFindIterable)
+        def wrapped = Mock(AsyncGridFSFindIterable)
         def gridFSPublisher = new GridFSFindPublisherImpl(wrapped)
 
         when:

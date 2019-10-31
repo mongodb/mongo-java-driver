@@ -16,8 +16,8 @@
 
 package com.mongodb.reactivestreams.client.gridfs
 
+import com.mongodb.internal.async.client.gridfs.AsyncGridFSDownloadStream as WrappedGridFSDownloadStream
 import spock.lang.Specification
-import com.mongodb.internal.async.client.gridfs.GridFSDownloadStream as WrappedGridFSDownloadStream
 
 class GridFSDownloadStreamSpecification extends Specification {
 

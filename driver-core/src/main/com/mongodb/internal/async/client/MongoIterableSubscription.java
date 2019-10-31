@@ -25,7 +25,7 @@ import java.util.List;
 
 final class MongoIterableSubscription<TResult> extends AbstractSubscription<TResult> {
 
-    private final MongoIterable<TResult> mongoIterable;
+    private final AsyncMongoIterable<TResult> mongoIterable;
 
     /* protected by `this` */
     private boolean isReading;
@@ -34,7 +34,7 @@ final class MongoIterableSubscription<TResult> extends AbstractSubscription<TRes
 
     private volatile AsyncBatchCursor<TResult> batchCursor;
 
-    MongoIterableSubscription(final MongoIterable<TResult> mongoIterable, final Observer<? super TResult> observer) {
+    MongoIterableSubscription(final AsyncMongoIterable<TResult> mongoIterable, final Observer<? super TResult> observer) {
         super(observer);
         this.mongoIterable = mongoIterable;
         observer.onSubscribe(this);

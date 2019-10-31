@@ -16,7 +16,7 @@
 
 package com.mongodb.reactivestreams.client.internal
 
-import com.mongodb.internal.async.client.ListDatabasesIterable
+import com.mongodb.internal.async.client.AsyncListDatabasesIterable
 import org.bson.Document
 import org.reactivestreams.Subscriber
 import spock.lang.Specification
@@ -31,7 +31,7 @@ class ListDatabasesPublisherImplSpecification extends Specification {
             onSubscribe(_) >> { args -> args[0].request(100) }
         }
 
-        def wrapped = Mock(ListDatabasesIterable)
+        def wrapped = Mock(AsyncListDatabasesIterable)
         def publisher = new ListDatabasesPublisherImpl(wrapped)
         def filter = new Document('a', 1)
 

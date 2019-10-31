@@ -19,16 +19,16 @@ package com.mongodb.reactivestreams.client.internal
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
-import com.mongodb.internal.async.client.AggregateIterable
-import com.mongodb.internal.async.client.ChangeStreamIterable
-import com.mongodb.internal.async.client.MongoCollection as WrappedMongoCollection
-import com.mongodb.internal.async.client.MongoDatabase as WrappedMongoDatabase
 import com.mongodb.client.model.CreateCollectionOptions
 import com.mongodb.client.model.CreateViewOptions
-import com.mongodb.internal.async.client.ListCollectionsIterable
-import com.mongodb.reactivestreams.client.MongoDatabase
+import com.mongodb.internal.async.client.AsyncAggregateIterable
+import com.mongodb.internal.async.client.AsyncChangeStreamIterable
+import com.mongodb.internal.async.client.AsyncClientSession as WrappedClientSession
+import com.mongodb.internal.async.client.AsyncListCollectionsIterable
+import com.mongodb.internal.async.client.AsyncMongoCollection as WrappedMongoCollection
+import com.mongodb.internal.async.client.AsyncMongoDatabase as WrappedMongoDatabase
 import com.mongodb.reactivestreams.client.ClientSession
-import com.mongodb.internal.async.client.ClientSession as WrappedClientSession
+import com.mongodb.reactivestreams.client.MongoDatabase
 import org.bson.BsonDocument
 import org.bson.Document
 import org.bson.codecs.configuration.CodecRegistry
@@ -328,7 +328,7 @@ class MongoDatabaseImplSpecification extends Specification {
 
     def 'should call the underlying listCollections'() {
         given:
-        def wrappedResult = Stub(ListCollectionsIterable)
+        def wrappedResult = Stub(AsyncListCollectionsIterable)
         def wrapped = Mock(WrappedMongoDatabase)
         def mongoDatabase = new MongoDatabaseImpl(wrapped)
 
@@ -447,7 +447,7 @@ class MongoDatabaseImplSpecification extends Specification {
     def 'should use ChangeStreamPublisher correctly'() {
         given:
         def pipeline = [new Document('$match', 1)]
-        def wrappedResult = Stub(ChangeStreamIterable)
+        def wrappedResult = Stub(AsyncChangeStreamIterable)
         def wrapped = Mock(WrappedMongoDatabase)
         def mongoDatabase = new MongoDatabaseImpl(wrapped)
         def changeStreamPublisher
@@ -512,7 +512,7 @@ class MongoDatabaseImplSpecification extends Specification {
     def 'should use AggregatePublisher correctly'() {
         given:
         def pipeline = [new Document('$match', 1)]
-        def wrappedResult = Stub(AggregateIterable)
+        def wrappedResult = Stub(AsyncAggregateIterable)
         def wrapped = Mock(WrappedMongoDatabase)
         def mongoDatabase = new MongoDatabaseImpl(wrapped)
         def aggregatePublisher

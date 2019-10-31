@@ -42,16 +42,17 @@ import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.async.client.AsyncMongoCollection;
 import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
+import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.DistinctPublisher;
 import com.mongodb.reactivestreams.client.FindPublisher;
 import com.mongodb.reactivestreams.client.ListIndexesPublisher;
 import com.mongodb.reactivestreams.client.MapReducePublisher;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.Success;
-import com.mongodb.reactivestreams.client.ClientSession;
 import org.bson.BsonDocument;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
@@ -67,9 +68,9 @@ import static com.mongodb.reactivestreams.client.internal.PublisherHelper.voidTo
 
 final class MongoCollectionImpl<TDocument> implements MongoCollection<TDocument> {
 
-    private final com.mongodb.internal.async.client.MongoCollection<TDocument> wrapped;
+    private final AsyncMongoCollection<TDocument> wrapped;
 
-    MongoCollectionImpl(final com.mongodb.internal.async.client.MongoCollection<TDocument> wrapped) {
+    MongoCollectionImpl(final AsyncMongoCollection<TDocument> wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 

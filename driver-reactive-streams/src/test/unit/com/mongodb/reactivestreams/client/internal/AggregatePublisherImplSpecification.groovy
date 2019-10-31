@@ -16,8 +16,8 @@
 
 package com.mongodb.reactivestreams.client.internal
 
-import com.mongodb.internal.async.client.AggregateIterable
 import com.mongodb.client.model.Collation
+import com.mongodb.internal.async.client.AsyncAggregateIterable
 import org.bson.Document
 import org.reactivestreams.Subscriber
 import spock.lang.Specification
@@ -34,7 +34,7 @@ class AggregatePublisherImplSpecification  extends Specification {
             onSubscribe(_) >> { args -> args[0].request(100) }
         }
 
-        def wrapped = Mock(AggregateIterable)
+        def wrapped = Mock(AsyncAggregateIterable)
         def publisher = new AggregatePublisherImpl<Document>(wrapped)
 
         when:

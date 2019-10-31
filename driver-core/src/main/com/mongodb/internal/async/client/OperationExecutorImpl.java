@@ -24,9 +24,9 @@ import com.mongodb.MongoSocketException;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.binding.AsyncClusterAwareReadWriteBinding;
 import com.mongodb.internal.binding.AsyncClusterBinding;
 import com.mongodb.internal.binding.AsyncReadWriteBinding;
@@ -42,10 +42,10 @@ import static com.mongodb.internal.async.ErrorHandlingResultCallback.errorHandli
 
 class OperationExecutorImpl implements OperationExecutor {
     private static final Logger LOGGER = Loggers.getLogger("client");
-    private final MongoClientImpl mongoClient;
+    private final AsyncMongoClientImpl mongoClient;
     private final ClientSessionHelper clientSessionHelper;
 
-    OperationExecutorImpl(final MongoClientImpl mongoClient, final ClientSessionHelper clientSessionHelper) {
+    OperationExecutorImpl(final AsyncMongoClientImpl mongoClient, final ClientSessionHelper clientSessionHelper) {
         this.mongoClient = mongoClient;
         this.clientSessionHelper = clientSessionHelper;
     }
@@ -58,14 +58,14 @@ class OperationExecutorImpl implements OperationExecutor {
 
     @Override
     public <T> void execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
-                            @Nullable final ClientSession session, final SingleResultCallback<T> callback) {
+                            @Nullable final AsyncClientSession session, final SingleResultCallback<T> callback) {
         notNull("operation", operation);
         notNull("readPreference", readPreference);
         notNull("callback", callback);
         final SingleResultCallback<T> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-        clientSessionHelper.withClientSession(session, this, new SingleResultCallback<ClientSession>(){
+        clientSessionHelper.withClientSession(session, this, new SingleResultCallback<AsyncClientSession>(){
             @Override
-            public void onResult(final ClientSession clientSession, final Throwable t) {
+            public void onResult(final AsyncClientSession clientSession, final Throwable t) {
                 if (t != null) {
                     errHandlingCallback.onResult(null, t);
                 } else {
@@ -110,14 +110,14 @@ class OperationExecutorImpl implements OperationExecutor {
     }
 
     @Override
-    public <T> void execute(final AsyncWriteOperation<T> operation, final ReadConcern readConcern, @Nullable final ClientSession session,
-                            final SingleResultCallback<T> callback) {
+    public <T> void execute(final AsyncWriteOperation<T> operation, final ReadConcern readConcern,
+                            @Nullable final AsyncClientSession session, final SingleResultCallback<T> callback) {
         notNull("operation", operation);
         notNull("callback", callback);
         final SingleResultCallback<T> errHandlingCallback = errorHandlingCallback(callback, LOGGER);
-        clientSessionHelper.withClientSession(session, this, new SingleResultCallback<ClientSession>() {
+        clientSessionHelper.withClientSession(session, this, new SingleResultCallback<AsyncClientSession>() {
             @Override
-            public void onResult(final ClientSession clientSession, final Throwable t) {
+            public void onResult(final AsyncClientSession clientSession, final Throwable t) {
                 if (t != null) {
                     errHandlingCallback.onResult(null, t);
                 } else {
@@ -149,7 +149,7 @@ class OperationExecutorImpl implements OperationExecutor {
         });
     }
 
-    private void labelException(final Throwable t, final ClientSession session) {
+    private void labelException(final Throwable t, final AsyncClientSession session) {
         if (session != null && session.hasActiveTransaction()
                 && (t instanceof MongoSocketException || t instanceof MongoTimeoutException
                 || (t instanceof MongoQueryException && ((MongoQueryException) t).getErrorCode() == 91))
@@ -158,7 +158,7 @@ class OperationExecutorImpl implements OperationExecutor {
         }
     }
 
-    private void unpinServerAddressOnTransientTransactionError(final @Nullable ClientSession session, final Throwable throwable) {
+    private void unpinServerAddressOnTransientTransactionError(final @Nullable AsyncClientSession session, final Throwable throwable) {
         if (session != null && throwable != null && throwable instanceof MongoException
                 && ((MongoException) throwable).hasErrorLabel(TRANSIENT_TRANSACTION_ERROR_LABEL)) {
             session.setPinnedServerAddress(null);
@@ -167,7 +167,7 @@ class OperationExecutorImpl implements OperationExecutor {
 
 
     private void getReadWriteBinding(final ReadPreference readPreference, final ReadConcern readConcern,
-                                     @Nullable final ClientSession session, final boolean ownsSession,
+                                     @Nullable final AsyncClientSession session, final boolean ownsSession,
                                      final SingleResultCallback<AsyncReadWriteBinding> callback) {
         notNull("readPreference", readPreference);
         AsyncClusterAwareReadWriteBinding readWriteBinding = new AsyncClusterBinding(mongoClient.getCluster(),
@@ -185,7 +185,7 @@ class OperationExecutorImpl implements OperationExecutor {
         }
     }
 
-    private ReadPreference getReadPreferenceForBinding(final ReadPreference readPreference, @Nullable final ClientSession session) {
+    private ReadPreference getReadPreferenceForBinding(final ReadPreference readPreference, @Nullable final AsyncClientSession session) {
         if (session == null) {
             return readPreference;
         }

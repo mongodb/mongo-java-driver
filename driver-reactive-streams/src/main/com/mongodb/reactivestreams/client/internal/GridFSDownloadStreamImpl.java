@@ -19,6 +19,7 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.Block;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.async.client.gridfs.AsyncGridFSDownloadStream;
 import com.mongodb.reactivestreams.client.Success;
 import com.mongodb.reactivestreams.client.gridfs.GridFSDownloadStream;
 import org.reactivestreams.Publisher;
@@ -30,9 +31,9 @@ import static com.mongodb.reactivestreams.client.internal.PublisherHelper.voidTo
 
 
 final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
-    private final com.mongodb.internal.async.client.gridfs.GridFSDownloadStream wrapped;
+    private final AsyncGridFSDownloadStream wrapped;
 
-    GridFSDownloadStreamImpl(final com.mongodb.internal.async.client.gridfs.GridFSDownloadStream wrapped) {
+    GridFSDownloadStreamImpl(final AsyncGridFSDownloadStream wrapped) {
         this.wrapped = notNull("GridFSDownloadStream", wrapped);
     }
 

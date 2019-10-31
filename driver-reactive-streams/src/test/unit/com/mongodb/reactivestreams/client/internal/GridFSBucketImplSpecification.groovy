@@ -19,17 +19,17 @@ package com.mongodb.reactivestreams.client.internal
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
-import com.mongodb.internal.async.client.gridfs.GridFSBucket as WrappedGridFSBucket
-import com.mongodb.internal.async.client.gridfs.GridFSDownloadStream
-import com.mongodb.internal.async.client.gridfs.GridFSFindIterable
-import com.mongodb.internal.async.client.gridfs.GridFSUploadStream
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions
 import com.mongodb.client.gridfs.model.GridFSUploadOptions
+import com.mongodb.internal.async.client.AsyncClientSession as WrappedClientSession
+import com.mongodb.internal.async.client.gridfs.AsyncGridFSBucket as WrappedGridFSBucket
+import com.mongodb.internal.async.client.gridfs.AsyncGridFSDownloadStream
+import com.mongodb.internal.async.client.gridfs.AsyncGridFSFindIterable
+import com.mongodb.internal.async.client.gridfs.AsyncGridFSUploadStream
+import com.mongodb.reactivestreams.client.ClientSession
 import com.mongodb.reactivestreams.client.gridfs.AsyncInputStream
 import com.mongodb.reactivestreams.client.gridfs.AsyncOutputStream
 import com.mongodb.reactivestreams.client.gridfs.GridFSBucket
-import com.mongodb.reactivestreams.client.ClientSession
-import com.mongodb.internal.async.client.ClientSession as WrappedClientSession
 import org.bson.BsonObjectId
 import org.bson.Document
 import org.reactivestreams.Subscriber
@@ -131,7 +131,7 @@ class GridFSBucketImplSpecification extends Specification {
         def filename = 'filename'
         def options = new GridFSUploadOptions()
         def fileId = new BsonObjectId()
-        def uploadStream = Stub(GridFSUploadStream)
+        def uploadStream = Stub(AsyncGridFSUploadStream)
         def wrapped = Mock(WrappedGridFSBucket)
         def bucket = new GridFSBucketImpl(wrapped)
 
@@ -260,7 +260,7 @@ class GridFSBucketImplSpecification extends Specification {
         def filename = 'filename'
         def options = new GridFSDownloadOptions()
         def fileId = new BsonObjectId()
-        def downloadStream = Stub(GridFSDownloadStream)
+        def downloadStream = Stub(AsyncGridFSDownloadStream)
         def wrapped = Mock(WrappedGridFSBucket)
         def bucket = new GridFSBucketImpl(wrapped)
 
@@ -387,7 +387,7 @@ class GridFSBucketImplSpecification extends Specification {
     def 'should call the underlying find method'() {
         given:
         def filter = new Document('filter', 2)
-        def findIterable = Stub(GridFSFindIterable)
+        def findIterable = Stub(AsyncGridFSFindIterable)
         def wrapped = Mock(WrappedGridFSBucket)
         def bucket = new GridFSBucketImpl(wrapped)
 

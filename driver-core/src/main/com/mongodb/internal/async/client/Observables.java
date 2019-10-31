@@ -30,13 +30,13 @@ import java.util.List;
 public final class Observables {
 
     /**
-     * Convert a {@link MongoIterable} into an {@link Observable}.
+     * Convert a {@link AsyncMongoIterable} into an {@link Observable}.
      *
      * @param mongoIterable the MongoIterable to subscribe to
      * @param <TResult>     The type of result being observed
      * @return the observable version of the mongoIterable
      */
-    public static <TResult> Observable<TResult> observe(final MongoIterable<TResult> mongoIterable) {
+    public static <TResult> Observable<TResult> observe(final AsyncMongoIterable<TResult> mongoIterable) {
         return new Observable<TResult>() {
             @Override
             public void subscribe(final Observer<? super TResult> observer) {
@@ -52,7 +52,7 @@ public final class Observables {
      * This is required to make sure that the operation only occurs once the {@link Subscription} signals for data.</p>
      * <p>
      * A typical example would be when wrapping callback based methods to make them observable. <br>
-     * For example, converting {@link MongoCollection#countDocuments(SingleResultCallback)} into an {@link Observable}:
+     * For example, converting {@link AsyncMongoCollection#countDocuments(SingleResultCallback)} into an {@link Observable}:
      * <pre>
      * {@code
      *    Observable<Long> countObservable = observe(new Block<SingleResultCallback<Long>>() {

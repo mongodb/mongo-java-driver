@@ -23,8 +23,8 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoTimeoutException;
 import com.mongodb.ReadConcern;
 import com.mongodb.ReadPreference;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ClusterSettings;
+import com.mongodb.internal.async.SingleResultCallback;
 import org.bson.RawBsonDocument;
 
 import java.io.Closeable;
@@ -35,7 +35,7 @@ import static com.mongodb.internal.capi.MongoCryptOptionsHelper.createMongocrypt
 
 @SuppressWarnings("UseOfProcessBuilder")
 class CommandMarker implements Closeable {
-    private MongoClient client;
+    private AsyncMongoClient client;
     private final ProcessBuilder processBuilder;
 
     CommandMarker(final Map<String, Object> options) {
@@ -54,7 +54,7 @@ class CommandMarker implements Closeable {
             processBuilder = null;
         }
 
-        client = MongoClients.create(MongoClientSettings.builder()
+        client = AsyncMongoClients.create(MongoClientSettings.builder()
                 .applyConnectionString(new ConnectionString(connectionString))
                 .applyToClusterSettings(new Block<ClusterSettings.Builder>() {
                     @Override

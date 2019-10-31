@@ -22,9 +22,9 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
 import com.mongodb.WriteConcern;
 import com.mongodb.async.FutureResultCallback;
-import com.mongodb.internal.async.client.vault.ClientEncryption;
-import com.mongodb.internal.async.client.vault.ClientEncryptions;
 import com.mongodb.client.model.vault.EncryptOptions;
+import com.mongodb.internal.async.client.vault.AsyncClientEncryption;
+import com.mongodb.internal.async.client.vault.AsyncClientEncryptions;
 import org.bson.BsonBinary;
 import org.bson.BsonBinarySubType;
 import org.bson.BsonDocument;
@@ -62,9 +62,9 @@ import static util.JsonPoweredTestHelper.getTestDocument;
 @RunWith(Parameterized.class)
 public class ClientSideEncryptionCorpusTest {
     private final boolean useLocalSchema;
-    private MongoClient client;
-    private MongoClient autoEncryptingClient;
-    private ClientEncryption clientEncryption;
+    private AsyncMongoClient client;
+    private AsyncMongoClient autoEncryptingClient;
+    private AsyncClientEncryption clientEncryption;
 
     public ClientSideEncryptionCorpusTest(final boolean useLocalSchema) {
         this.useLocalSchema = useLocalSchema;
@@ -82,8 +82,8 @@ public class ClientSideEncryptionCorpusTest {
                         MongoClientSettings.getDefaultCodecRegistry())).build();
 
         // Step 1: create unencrypted client
-        client = MongoClients.create(clientSettings);
-        MongoDatabase db = client.getDatabase("db");
+        client = AsyncMongoClients.create(clientSettings);
+        AsyncMongoDatabase db = client.getDatabase("db");
 
         // Step 2: Drop and recreate db.coll with schema
         BsonDocument schemaDocument = bsonDocumentFromPath("corpus-schema.json");
@@ -98,8 +98,8 @@ public class ClientSideEncryptionCorpusTest {
         documentCallback.get();
 
         // Step 3: Drop and create admin.datakeys
-        MongoDatabase adminDatabase = client.getDatabase("admin");
-        MongoCollection<BsonDocument> dataKeysCollection = adminDatabase.getCollection("datakeys", BsonDocument.class)
+        AsyncMongoDatabase adminDatabase = client.getDatabase("admin");
+        AsyncMongoCollection<BsonDocument> dataKeysCollection = adminDatabase.getCollection("datakeys", BsonDocument.class)
                 .withWriteConcern(WriteConcern.MAJORITY);
 
         voidCallback = new FutureResultCallback<Void>();
@@ -142,13 +142,13 @@ public class ClientSideEncryptionCorpusTest {
                         fromCodecs(new UuidCodec(UuidRepresentation.STANDARD)), MongoClientSettings.getDefaultCodecRegistry()))
                 .autoEncryptionSettings(autoEncryptionSettingsBuilder.build())
                 .build();
-        autoEncryptingClient = MongoClients.create(clientSettings);
+        autoEncryptingClient = AsyncMongoClients.create(clientSettings);
 
         ClientEncryptionSettings clientEncryptionSettings = ClientEncryptionSettings.builder().
                 keyVaultMongoClientSettings(getMongoClientSettings()).
                 kmsProviders(kmsProviders).
                 keyVaultNamespace("admin.datakeys").build();
-        clientEncryption = ClientEncryptions.create(clientEncryptionSettings);
+        clientEncryption = AsyncClientEncryptions.create(clientEncryptionSettings);
     }
 
     @Test
@@ -222,7 +222,7 @@ public class ClientSideEncryptionCorpusTest {
         }
 
         // Step 6: insert corpusCopied
-        MongoCollection<BsonDocument> encryptedCollection = autoEncryptingClient.getDatabase("db")
+        AsyncMongoCollection<BsonDocument> encryptedCollection = autoEncryptingClient.getDatabase("db")
                 .getCollection("coll", BsonDocument.class);
         FutureResultCallback<Void> voidCallback = new FutureResultCallback<Void>();
         encryptedCollection.insertOne(corpusCopied, voidCallback);
@@ -235,7 +235,7 @@ public class ClientSideEncryptionCorpusTest {
         assertEquals(corpus, corpusDecrypted);
 
         // Step 8: check the document with an unencrypted client
-        MongoCollection<BsonDocument> coll = client.getDatabase("db").getCollection("coll", BsonDocument.class);
+        AsyncMongoCollection<BsonDocument> coll = client.getDatabase("db").getCollection("coll", BsonDocument.class);
         bsonDocumentCallback = new FutureResultCallback<BsonDocument>();
         coll.find(new BsonDocument()).first(bsonDocumentCallback);
         BsonDocument corpusEncryptedActual = bsonDocumentCallback.get();

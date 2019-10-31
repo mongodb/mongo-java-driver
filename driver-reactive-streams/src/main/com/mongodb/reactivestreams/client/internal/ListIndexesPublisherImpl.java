@@ -18,7 +18,7 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.Block;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.async.client.ListIndexesIterable;
+import com.mongodb.internal.async.client.AsyncListIndexesIterable;
 import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.ListIndexesPublisher;
 import org.reactivestreams.Publisher;
@@ -31,9 +31,9 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 final class ListIndexesPublisherImpl<TResult> implements ListIndexesPublisher<TResult> {
 
-    private final ListIndexesIterable<TResult> wrapped;
+    private final AsyncListIndexesIterable<TResult> wrapped;
 
-    ListIndexesPublisherImpl(final ListIndexesIterable<TResult> wrapped) {
+    ListIndexesPublisherImpl(final AsyncListIndexesIterable<TResult> wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 

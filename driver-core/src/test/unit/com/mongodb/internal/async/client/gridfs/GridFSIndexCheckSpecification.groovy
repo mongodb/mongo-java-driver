@@ -19,10 +19,10 @@ package com.mongodb.internal.async.client.gridfs
 import com.mongodb.MongoException
 import com.mongodb.async.FutureResultCallback
 import com.mongodb.internal.async.SingleResultCallback
-import com.mongodb.internal.async.client.ClientSession
-import com.mongodb.internal.async.client.FindIterable
-import com.mongodb.internal.async.client.ListIndexesIterable
-import com.mongodb.internal.async.client.MongoCollection
+import com.mongodb.internal.async.client.AsyncClientSession
+import com.mongodb.internal.async.client.AsyncFindIterable
+import com.mongodb.internal.async.client.AsyncListIndexesIterable
+import com.mongodb.internal.async.client.AsyncMongoCollection
 import org.bson.Document
 import spock.lang.Specification
 
@@ -34,9 +34,9 @@ class GridFSIndexCheckSpecification extends Specification {
 
     def 'should do nothing more if files collection contains any documents'() {
         given:
-        def filesCollection = Mock(MongoCollection)
-        def chunksCollection = Mock(MongoCollection)
-        def findIterable = Mock(FindIterable)
+        def filesCollection = Mock(AsyncMongoCollection)
+        def chunksCollection = Mock(AsyncMongoCollection)
+        def findIterable = Mock(AsyncFindIterable)
         def indexChecker = new GridFSIndexCheckImpl(clientSession, filesCollection, chunksCollection)
 
         when:
@@ -54,15 +54,15 @@ class GridFSIndexCheckSpecification extends Specification {
         1 * findIterable.first(_) >> { it.last().onResult(new Document(), null) }
 
         where:
-        clientSession << [null, Stub(ClientSession)]
+        clientSession << [null, Stub(AsyncClientSession)]
     }
 
     def 'should not do anything if indexes exist'() {
         given:
-        def filesCollection = Mock(MongoCollection)
-        def chunksCollection = Mock(MongoCollection)
-        def listIndexesIterable = Mock(ListIndexesIterable)
-        def findIterable = Mock(FindIterable)
+        def filesCollection = Mock(AsyncMongoCollection)
+        def chunksCollection = Mock(AsyncMongoCollection)
+        def listIndexesIterable = Mock(AsyncListIndexesIterable)
+        def findIterable = Mock(AsyncFindIterable)
         def indexChecker = new GridFSIndexCheckImpl(clientSession, filesCollection, chunksCollection)
 
         when:
@@ -106,15 +106,15 @@ class GridFSIndexCheckSpecification extends Specification {
         0 * chunksCollection.createIndex(*_)
 
         where:
-        clientSession << [null, Stub(ClientSession)]
+        clientSession << [null, Stub(AsyncClientSession)]
     }
 
     def 'should create a chunks index but not a files index if it exists'() {
         given:
-        def filesCollection = Mock(MongoCollection)
-        def chunksCollection = Mock(MongoCollection)
-        def listIndexesIterable = Mock(ListIndexesIterable)
-        def findIterable = Mock(FindIterable)
+        def filesCollection = Mock(AsyncMongoCollection)
+        def chunksCollection = Mock(AsyncMongoCollection)
+        def listIndexesIterable = Mock(AsyncListIndexesIterable)
+        def findIterable = Mock(AsyncFindIterable)
         def indexChecker = new GridFSIndexCheckImpl(clientSession, filesCollection, chunksCollection)
 
         when:
@@ -161,15 +161,15 @@ class GridFSIndexCheckSpecification extends Specification {
         }
 
         where:
-        clientSession << [null, Stub(ClientSession)]
+        clientSession << [null, Stub(AsyncClientSession)]
     }
 
     def 'should create a files index but not a chunks index if it exists'() {
         given:
-        def filesCollection = Mock(MongoCollection)
-        def chunksCollection = Mock(MongoCollection)
-        def listIndexesIterable = Mock(ListIndexesIterable)
-        def findIterable = Mock(FindIterable)
+        def filesCollection = Mock(AsyncMongoCollection)
+        def chunksCollection = Mock(AsyncMongoCollection)
+        def listIndexesIterable = Mock(AsyncListIndexesIterable)
+        def findIterable = Mock(AsyncFindIterable)
         def indexChecker = new GridFSIndexCheckImpl(clientSession, filesCollection, chunksCollection)
 
         when:
@@ -216,15 +216,15 @@ class GridFSIndexCheckSpecification extends Specification {
         0 * chunksCollection.createIndex(*_)
 
         where:
-        clientSession << [null, Stub(ClientSession)]
+        clientSession << [null, Stub(AsyncClientSession)]
     }
 
     def 'should create indexes if empty files collection and no indexes'() {
         given:
-        def filesCollection = Mock(MongoCollection)
-        def chunksCollection = Mock(MongoCollection)
-        def listIndexesIterable = Mock(ListIndexesIterable)
-        def findIterable = Mock(FindIterable)
+        def filesCollection = Mock(AsyncMongoCollection)
+        def chunksCollection = Mock(AsyncMongoCollection)
+        def listIndexesIterable = Mock(AsyncListIndexesIterable)
+        def findIterable = Mock(AsyncFindIterable)
         def indexChecker = new GridFSIndexCheckImpl(clientSession, filesCollection, chunksCollection)
 
         when:
@@ -275,14 +275,14 @@ class GridFSIndexCheckSpecification extends Specification {
         }
 
         where:
-        clientSession << [null, Stub(ClientSession)]
+        clientSession << [null, Stub(AsyncClientSession)]
     }
 
     def 'should propagate errors if error when checking files collection'() {
         given:
-        def filesCollection = Mock(MongoCollection)
-        def chunksCollection = Mock(MongoCollection)
-        def findIterable = Mock(FindIterable)
+        def filesCollection = Mock(AsyncMongoCollection)
+        def chunksCollection = Mock(AsyncMongoCollection)
+        def findIterable = Mock(AsyncFindIterable)
         def indexChecker = new GridFSIndexCheckImpl(clientSession, filesCollection, chunksCollection)
         def futureResult = new FutureResultCallback()
 
@@ -308,15 +308,15 @@ class GridFSIndexCheckSpecification extends Specification {
         ex == exception
 
         where:
-        clientSession << [null, Stub(ClientSession)]
+        clientSession << [null, Stub(AsyncClientSession)]
     }
 
     def 'should propagate errors if error when checking has files index'() {
         given:
-        def filesCollection = Mock(MongoCollection)
-        def chunksCollection = Mock(MongoCollection)
-        def listIndexesIterable = Mock(ListIndexesIterable)
-        def findIterable = Mock(FindIterable)
+        def filesCollection = Mock(AsyncMongoCollection)
+        def chunksCollection = Mock(AsyncMongoCollection)
+        def listIndexesIterable = Mock(AsyncListIndexesIterable)
+        def findIterable = Mock(AsyncFindIterable)
         def indexChecker = new GridFSIndexCheckImpl(clientSession, filesCollection, chunksCollection)
         def futureResult = new FutureResultCallback()
 
@@ -351,15 +351,15 @@ class GridFSIndexCheckSpecification extends Specification {
         ex == exception
 
         where:
-        clientSession << [null, Stub(ClientSession)]
+        clientSession << [null, Stub(AsyncClientSession)]
     }
 
     def 'should propagate errors if error when creating files index'() {
         given:
-        def filesCollection = Mock(MongoCollection)
-        def chunksCollection = Mock(MongoCollection)
-        def listIndexesIterable = Mock(ListIndexesIterable)
-        def findIterable = Mock(FindIterable)
+        def filesCollection = Mock(AsyncMongoCollection)
+        def chunksCollection = Mock(AsyncMongoCollection)
+        def listIndexesIterable = Mock(AsyncListIndexesIterable)
+        def findIterable = Mock(AsyncFindIterable)
         def indexChecker = new GridFSIndexCheckImpl(clientSession, filesCollection, chunksCollection)
         def futureResult = new FutureResultCallback()
 
@@ -401,15 +401,15 @@ class GridFSIndexCheckSpecification extends Specification {
         ex == exception
 
         where:
-        clientSession << [null, Stub(ClientSession)]
+        clientSession << [null, Stub(AsyncClientSession)]
     }
 
     def 'should propagate errors if error when checking has chunks index'() {
         given:
-        def filesCollection = Mock(MongoCollection)
-        def chunksCollection = Mock(MongoCollection)
-        def listIndexesIterable = Mock(ListIndexesIterable)
-        def findIterable = Mock(FindIterable)
+        def filesCollection = Mock(AsyncMongoCollection)
+        def chunksCollection = Mock(AsyncMongoCollection)
+        def listIndexesIterable = Mock(AsyncListIndexesIterable)
+        def findIterable = Mock(AsyncFindIterable)
         def indexChecker = new GridFSIndexCheckImpl(clientSession, filesCollection, chunksCollection)
         def futureResult = new FutureResultCallback()
 
@@ -460,15 +460,15 @@ class GridFSIndexCheckSpecification extends Specification {
         ex == exception
 
         where:
-        clientSession << [null, Stub(ClientSession)]
+        clientSession << [null, Stub(AsyncClientSession)]
     }
 
     def 'should propagate errors if error when creating chunks index'() {
         given:
-        def filesCollection = Mock(MongoCollection)
-        def chunksCollection = Mock(MongoCollection)
-        def listIndexesIterable = Mock(ListIndexesIterable)
-        def findIterable = Mock(FindIterable)
+        def filesCollection = Mock(AsyncMongoCollection)
+        def chunksCollection = Mock(AsyncMongoCollection)
+        def listIndexesIterable = Mock(AsyncListIndexesIterable)
+        def findIterable = Mock(AsyncFindIterable)
         def indexChecker = new GridFSIndexCheckImpl(clientSession, filesCollection, chunksCollection)
         def futureResult = new FutureResultCallback()
 
@@ -527,6 +527,6 @@ class GridFSIndexCheckSpecification extends Specification {
         ex == exception
 
         where:
-        clientSession << [null, Stub(ClientSession)]
+        clientSession << [null, Stub(AsyncClientSession)]
     }
 }

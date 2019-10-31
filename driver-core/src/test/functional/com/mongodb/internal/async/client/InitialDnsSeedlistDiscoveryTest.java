@@ -22,7 +22,6 @@ import com.mongodb.MongoClientException;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoException;
 import com.mongodb.ServerAddress;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ClusterSettings;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.SslSettings;
@@ -31,6 +30,7 @@ import com.mongodb.event.ClusterClosedEvent;
 import com.mongodb.event.ClusterDescriptionChangedEvent;
 import com.mongodb.event.ClusterListener;
 import com.mongodb.event.ClusterOpeningEvent;
+import com.mongodb.internal.async.SingleResultCallback;
 import org.bson.BsonArray;
 import org.bson.BsonBoolean;
 import org.bson.BsonDocument;
@@ -85,7 +85,7 @@ public class InitialDnsSeedlistDiscoveryTest {
     public void shouldResolve() throws InterruptedException {
 
         if (isError) {
-            MongoClient client = null;
+            AsyncMongoClient client = null;
             try {
                 final AtomicReference<MongoException> exceptionReference = new AtomicReference<MongoException>();
                 final CountDownLatch latch = new CountDownLatch(1);
@@ -124,7 +124,7 @@ public class InitialDnsSeedlistDiscoveryTest {
                             }
                         })
                         .build();
-                client = MongoClients.create(settings);
+                client = AsyncMongoClients.create(settings);
                 if (!latch.await(5, TimeUnit.SECONDS)) {
                     fail("");
                 }
@@ -210,7 +210,7 @@ public class InitialDnsSeedlistDiscoveryTest {
                 })
                 .build();
 
-        MongoClient client = MongoClients.create(settings);
+        AsyncMongoClient client = AsyncMongoClients.create(settings);
 
         try {
             assertTrue(latch.await(5, TimeUnit.SECONDS));

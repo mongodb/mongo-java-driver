@@ -26,7 +26,7 @@ public class ConnectivityTest {
     // the test succeeds if no exception is thrown, and fail otherwise
     @Test
     public void testConnectivity() throws InterruptedException {
-        MongoClient client = MongoClients.create(Fixture.getMongoClientSettings());
+        AsyncMongoClient client = AsyncMongoClients.create(Fixture.getMongoClientSettings());
 
         try {
             FutureResultCallback<Document> commandCallback = new FutureResultCallback<Document>();

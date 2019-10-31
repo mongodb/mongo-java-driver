@@ -30,7 +30,7 @@ import static com.mongodb.internal.capi.MongoCryptOptionsHelper.createMongoCrypt
 
 public final class Crypts {
 
-    public static Crypt createCrypt(final MongoClient client, final AutoEncryptionSettings options) {
+    public static Crypt createCrypt(final AsyncMongoClient client, final AutoEncryptionSettings options) {
         return new Crypt(MongoCrypts.create(createMongoCryptOptions(options.getKmsProviders(), options.getSchemaMap())),
                 new CollectionInfoRetriever(client),
                 new CommandMarker(options.getExtraOptions()),
@@ -39,20 +39,20 @@ public final class Crypts {
                 options.isBypassAutoEncryption());
     }
 
-    public static Crypt create(final MongoClient keyVaultClient, final ClientEncryptionSettings options) {
+    public static Crypt create(final AsyncMongoClient keyVaultClient, final ClientEncryptionSettings options) {
         return new Crypt(MongoCrypts.create(
                 createMongoCryptOptions(options.getKmsProviders(), null)),
                 createKeyRetriever(keyVaultClient, false, options.getKeyVaultNamespace()),
                 createKeyManagementService());
     }
 
-    private static KeyRetriever createKeyRetriever(final MongoClient defaultKeyVaultClient,
+    private static KeyRetriever createKeyRetriever(final AsyncMongoClient defaultKeyVaultClient,
                                                    final MongoClientSettings keyVaultMongoClientSettings,
                                                    final String keyVaultNamespaceString) {
-        MongoClient keyVaultClient;
+        AsyncMongoClient keyVaultClient;
         boolean keyRetrieverOwnsClient;
         if (keyVaultMongoClientSettings != null) {
-            keyVaultClient = MongoClients.create(keyVaultMongoClientSettings);
+            keyVaultClient = AsyncMongoClients.create(keyVaultMongoClientSettings);
             keyRetrieverOwnsClient = true;
         } else {
             keyVaultClient = defaultKeyVaultClient;
@@ -62,7 +62,7 @@ public final class Crypts {
         return createKeyRetriever(keyVaultClient, keyRetrieverOwnsClient, keyVaultNamespaceString);
     }
 
-    private static KeyRetriever createKeyRetriever(final MongoClient keyVaultClient, final boolean keyRetrieverOwnsClient,
+    private static KeyRetriever createKeyRetriever(final AsyncMongoClient keyVaultClient, final boolean keyRetrieverOwnsClient,
                                                    final String keyVaultNamespaceString) {
         return new KeyRetriever(keyVaultClient, keyRetrieverOwnsClient, new MongoNamespace(keyVaultNamespaceString));
     }

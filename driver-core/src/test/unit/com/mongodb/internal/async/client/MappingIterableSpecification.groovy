@@ -29,7 +29,7 @@ class MappingIterableSpecification extends Specification {
     def 'should follow the MongoIterable interface as expected'() {
         given:
         def callback = Stub(SingleResultCallback)
-        def iterable = Mock(MongoIterable)
+        def iterable = Mock(AsyncMongoIterable)
         def mapper = { doc -> doc }
         def mappingIterable = new MappingIterable(iterable, mapper)
 

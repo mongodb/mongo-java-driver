@@ -18,6 +18,7 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.Block;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.async.client.gridfs.AsyncGridFSUploadStream;
 import com.mongodb.reactivestreams.client.Success;
 import com.mongodb.reactivestreams.client.gridfs.GridFSUploadStream;
 import org.bson.BsonValue;
@@ -32,9 +33,9 @@ import static com.mongodb.reactivestreams.client.internal.PublisherHelper.voidTo
 
 final class GridFSUploadStreamImpl implements GridFSUploadStream {
 
-    private final com.mongodb.internal.async.client.gridfs.GridFSUploadStream wrapped;
+    private final AsyncGridFSUploadStream wrapped;
 
-    GridFSUploadStreamImpl(final com.mongodb.internal.async.client.gridfs.GridFSUploadStream wrapped) {
+    GridFSUploadStreamImpl(final AsyncGridFSUploadStream wrapped) {
         this.wrapped = notNull("GridFSUploadStream", wrapped);
     }
 

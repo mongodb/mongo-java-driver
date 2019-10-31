@@ -22,7 +22,7 @@ import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
-import com.mongodb.internal.async.client.MongoCollection;
+import com.mongodb.internal.async.client.AsyncMongoCollection;
 import com.mongodb.internal.async.client.DatabaseTestCase;
 import com.mongodb.internal.async.client.Fixture;
 import com.mongodb.internal.async.client.MongoOperation;
@@ -66,9 +66,9 @@ public class GridFSTest extends DatabaseTestCase {
     private final String description;
     private final BsonDocument data;
     private final BsonDocument definition;
-    private MongoCollection<BsonDocument> filesCollection;
-    private MongoCollection<BsonDocument> chunksCollection;
-    private GridFSBucket gridFSBucket;
+    private AsyncMongoCollection<BsonDocument> filesCollection;
+    private AsyncMongoCollection<BsonDocument> chunksCollection;
+    private AsyncGridFSBucket gridFSBucket;
 
     public GridFSTest(final String filename, final String description, final BsonDocument data, final BsonDocument definition) {
         this.filename = filename;
@@ -81,7 +81,7 @@ public class GridFSTest extends DatabaseTestCase {
     @Override
     public void setUp() {
         super.setUp();
-        gridFSBucket = GridFSBuckets.create(database);
+        gridFSBucket = AsyncGridFSBuckets.create(database);
         filesCollection = Fixture.initializeCollection(new MongoNamespace(getDefaultDatabaseName(), "fs.files"))
                 .withDocumentClass(BsonDocument.class);
         chunksCollection = Fixture.initializeCollection(new MongoNamespace(getDefaultDatabaseName(), "fs.chunks"))
@@ -138,7 +138,7 @@ public class GridFSTest extends DatabaseTestCase {
                     final BsonDocument query = toDelete.asDocument().getDocument("q");
                     int limit = toDelete.asDocument().getInt32("limit").getValue();
 
-                    final MongoCollection<BsonDocument> collection;
+                    final AsyncMongoCollection<BsonDocument> collection;
                     if (document.getString("delete").getValue().equals("fs.files")) {
                         collection = filesCollection;
                     } else {
@@ -180,7 +180,7 @@ public class GridFSTest extends DatabaseTestCase {
                     }.get();
                 }
             } else if (document.containsKey("update") && document.containsKey("updates")) {
-                final MongoCollection<BsonDocument> collection;
+                final AsyncMongoCollection<BsonDocument> collection;
                 if (document.getString("update").getValue().equals("fs.files")) {
                     collection = filesCollection;
                 } else {
@@ -326,7 +326,7 @@ public class GridFSTest extends DatabaseTestCase {
             final String filename = arguments.getString("filename").getValue();
             final InputStream inputStream = new ByteArrayInputStream(arguments.getBinary("source").getData());
             final GridFSUploadOptions options = new GridFSUploadOptions();
-            GridFSBucket bucket = gridFSBucket;
+            AsyncGridFSBucket bucket = gridFSBucket;
             BsonDocument rawOptions = arguments.getDocument("options", new BsonDocument());
             if (rawOptions.containsKey("chunkSizeBytes")) {
                 options.chunkSizeBytes(rawOptions.getInt32("chunkSizeBytes").getValue());
@@ -334,7 +334,7 @@ public class GridFSTest extends DatabaseTestCase {
             if (rawOptions.containsKey("metadata")) {
                 options.metadata(Document.parse(rawOptions.getDocument("metadata").toJson()));
             }
-            final GridFSBucket gridFSUploadBucket = bucket;
+            final AsyncGridFSBucket gridFSUploadBucket = bucket;
 
             objectId = new MongoOperation<ObjectId>() {
                 @Override

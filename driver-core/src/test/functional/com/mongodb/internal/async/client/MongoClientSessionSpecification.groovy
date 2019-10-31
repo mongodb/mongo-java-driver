@@ -24,8 +24,8 @@ import com.mongodb.ReadPreference
 import com.mongodb.TransactionOptions
 import com.mongodb.WriteConcern
 import com.mongodb.async.FutureResultCallback
-import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.event.CommandStartedEvent
+import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.connection.TestCommandListener
 import org.bson.BsonBinarySubType
 import org.bson.BsonDocument
@@ -38,11 +38,11 @@ import spock.lang.IgnoreIf
 
 import java.util.concurrent.TimeUnit
 
+import static Fixture.getMongoClient
+import static TestHelper.run
 import static com.mongodb.ClusterFixture.isDiscoverableReplicaSet
 import static com.mongodb.ClusterFixture.isStandalone
 import static com.mongodb.ClusterFixture.serverVersionAtLeast
-import static Fixture.getMongoClient
-import static TestHelper.run
 
 class MongoClientSessionSpecification extends FunctionalSpecification {
 
@@ -259,7 +259,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         given:
         def commandListener = new TestCommandListener()
         def options = Fixture.getMongoClientBuilderFromConnectionString().addCommandListener(commandListener).build()
-        def client = MongoClients.create(options)
+        def client = AsyncMongoClients.create(options)
 
         when:
         run(client.getDatabase('admin').&runCommand, new BsonDocument('ping', new BsonInt32(1)))
@@ -278,7 +278,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         given:
         def commandListener = new TestCommandListener()
         def options = Fixture.getMongoClientBuilderFromConnectionString().addCommandListener(commandListener).build()
-        def client = MongoClients.create(options)
+        def client = AsyncMongoClients.create(options)
 
         when:
         run(client.getDatabase('admin').&runCommand, new BsonDocument('ping', new BsonInt32(1)))
@@ -364,7 +364,7 @@ class MongoClientSessionSpecification extends FunctionalSpecification {
         readConcern << [ReadConcern.DEFAULT, ReadConcern.LOCAL, ReadConcern.MAJORITY]
     }
 
-    static ClientSession startSession(... args) {
+    static AsyncClientSession startSession(... args) {
         FutureResultCallback futureResultCallback = new FutureResultCallback()
         List opArgs = (args != null) ? args : []
         Fixture.getMongoClient().&startSession.call(*opArgs + futureResultCallback)

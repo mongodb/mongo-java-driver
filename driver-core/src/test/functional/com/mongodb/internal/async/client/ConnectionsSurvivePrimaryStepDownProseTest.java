@@ -22,11 +22,11 @@ import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoNotPrimaryException;
 import com.mongodb.WriteConcern;
-import com.mongodb.event.ConnectionPoolClearedEvent;
-import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.async.FutureResultCallback;
 import com.mongodb.client.test.CollectionHelper;
 import com.mongodb.connection.ConnectionPoolSettings;
+import com.mongodb.event.ConnectionPoolClearedEvent;
+import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.internal.connection.TestConnectionPoolListener;
 import org.bson.Document;
 import org.bson.codecs.DocumentCodec;
@@ -55,8 +55,8 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
 
     private TestConnectionPoolListener connectionPoolListener;
     private CollectionHelper<Document> collectionHelper;
-    private MongoClient client;
-    private MongoCollection<Document> collection;
+    private AsyncMongoClient client;
+    private AsyncMongoCollection<Document> collection;
 
     @Before
     public void setUp() throws InterruptedException {
@@ -72,8 +72,8 @@ public class ConnectionsSurvivePrimaryStepDownProseTest {
 
         collectionHelper = new CollectionHelper<Document>(new DocumentCodec(),
                 new MongoNamespace(getDefaultDatabaseName(), COLLECTION_NAME));
-        client = MongoClients.create(settings);
-        MongoDatabase database = client.getDatabase(getDefaultDatabaseName());
+        client = AsyncMongoClients.create(settings);
+        AsyncMongoDatabase database = client.getDatabase(getDefaultDatabaseName());
         collection = client.getDatabase(getDefaultDatabaseName()).getCollection(COLLECTION_NAME);
 
         FutureResultCallback<Void> callback = new FutureResultCallback<Void>();

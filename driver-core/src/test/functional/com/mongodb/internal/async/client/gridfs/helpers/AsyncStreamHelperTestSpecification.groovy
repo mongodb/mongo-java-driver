@@ -17,11 +17,11 @@
 package com.mongodb.internal.async.client.gridfs.helpers
 
 import com.mongodb.MongoGridFSException
-import com.mongodb.internal.async.client.gridfs.GridFSBucketImpl
+import com.mongodb.internal.async.client.AsyncMongoCollection
+import com.mongodb.internal.async.client.AsyncMongoDatabase
 import com.mongodb.internal.async.client.FunctionalSpecification
-import com.mongodb.internal.async.client.MongoCollection
-import com.mongodb.internal.async.client.MongoDatabase
-import com.mongodb.internal.async.client.gridfs.GridFSBucket
+import com.mongodb.internal.async.client.gridfs.AsyncGridFSBucket
+import com.mongodb.internal.async.client.gridfs.AsyncGridFSBucketImpl
 import org.bson.Document
 import spock.lang.Shared
 
@@ -34,10 +34,10 @@ import static com.mongodb.internal.async.client.gridfs.helpers.AsyncStreamHelper
 import static com.mongodb.internal.async.client.gridfs.helpers.AsyncStreamHelper.toAsyncOutputStream
 
 class AsyncStreamHelperTestSpecification extends FunctionalSpecification {
-    protected MongoDatabase mongoDatabase;
-    protected MongoCollection<Document> filesCollection;
-    protected MongoCollection<Document> chunksCollection;
-    protected GridFSBucket gridFSBucket;
+    protected AsyncMongoDatabase mongoDatabase;
+    protected AsyncMongoCollection<Document> filesCollection;
+    protected AsyncMongoCollection<Document> chunksCollection;
+    protected AsyncGridFSBucket gridFSBucket;
     @Shared
     def content = 'Hello GridFS Round Trip'.getBytes()
 
@@ -47,7 +47,7 @@ class AsyncStreamHelperTestSpecification extends FunctionalSpecification {
         chunksCollection = mongoDatabase.getCollection('fs.chunks')
         run(filesCollection.&drop)
         run(chunksCollection.&drop)
-        gridFSBucket = new GridFSBucketImpl(mongoDatabase)
+        gridFSBucket = new AsyncGridFSBucketImpl(mongoDatabase)
     }
 
     def cleanup() {

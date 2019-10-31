@@ -16,6 +16,7 @@
 
 package com.mongodb.reactivestreams.client.vault
 
+import com.mongodb.internal.async.client.vault.AsyncClientEncryption
 import org.reactivestreams.Publisher
 import spock.lang.Specification
 
@@ -23,7 +24,7 @@ class ClientEncryptionSpecification extends Specification {
 
     def 'should have the same methods as the async ClientEncryption'() {
         given:
-        def wrapped = (com.mongodb.internal.async.client.vault.ClientEncryption.methods*.name).sort()
+        def wrapped = (AsyncClientEncryption.methods*.name).sort()
         def local = (ClientEncryption.methods*.name - Publisher.methods*.name).sort()
 
         expect:

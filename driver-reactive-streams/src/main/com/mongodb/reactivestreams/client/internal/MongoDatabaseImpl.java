@@ -23,6 +23,7 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateViewOptions;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.async.client.AsyncMongoDatabase;
 import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
@@ -50,9 +51,9 @@ import static com.mongodb.reactivestreams.client.internal.PublisherHelper.voidTo
  */
 public final class MongoDatabaseImpl implements MongoDatabase {
 
-    private final com.mongodb.internal.async.client.MongoDatabase wrapped;
+    private final AsyncMongoDatabase wrapped;
 
-    MongoDatabaseImpl(final com.mongodb.internal.async.client.MongoDatabase wrapped) {
+    MongoDatabaseImpl(final AsyncMongoDatabase wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 
@@ -371,7 +372,7 @@ public final class MongoDatabaseImpl implements MongoDatabase {
      *
      * @return wrapped MongoDatabase
      */
-    public com.mongodb.internal.async.client.MongoDatabase getWrapped() {
+    public AsyncMongoDatabase getWrapped() {
         return wrapped;
     }
 }

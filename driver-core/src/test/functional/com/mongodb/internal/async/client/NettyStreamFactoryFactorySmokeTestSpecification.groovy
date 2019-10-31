@@ -27,7 +27,7 @@ import static java.util.concurrent.TimeUnit.SECONDS
 
 class NettyStreamFactoryFactorySmokeTestSpecification extends FunctionalSpecification {
 
-    private MongoClient mongoClient
+    private AsyncMongoClient mongoClient
 
     def 'should allow a custom Event Loop Group and Socket Channel'() {
         given:
@@ -39,7 +39,7 @@ class NettyStreamFactoryFactorySmokeTestSpecification extends FunctionalSpecific
         def document = new Document('a', 1)
 
         when:
-        mongoClient = MongoClients.create(settings)
+        mongoClient = AsyncMongoClients.create(settings)
         def collection = mongoClient.getDatabase(databaseName).getCollection(collectionName)
 
 

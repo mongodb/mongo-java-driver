@@ -22,6 +22,7 @@ import com.mongodb.ClientSessionOptions;
 import com.mongodb.ServerAddress;
 import com.mongodb.TransactionOptions;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.async.client.AsyncClientSession;
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.session.ServerSession;
 import org.bson.BsonDocument;
@@ -30,10 +31,10 @@ import org.reactivestreams.Publisher;
 
 
 class ClientSessionImpl implements ClientSession {
-    private final com.mongodb.internal.async.client.ClientSession wrapped;
+    private final AsyncClientSession wrapped;
     private final Object originator;
 
-    ClientSessionImpl(final com.mongodb.internal.async.client.ClientSession wrapped, final Object originator) {
+    ClientSessionImpl(final AsyncClientSession wrapped, final Object originator) {
         this.wrapped = wrapped;
         this.originator = originator;
     }
@@ -49,7 +50,7 @@ class ClientSessionImpl implements ClientSession {
     }
 
     @Override
-    public com.mongodb.internal.async.client.ClientSession getWrapped() {
+    public AsyncClientSession getWrapped() {
         return wrapped;
     }
 

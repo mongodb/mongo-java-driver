@@ -18,12 +18,12 @@ package com.mongodb.internal.async.client;
 
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.TransactionOptions;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.connection.ClusterConnectionMode;
 import com.mongodb.connection.ClusterDescription;
 import com.mongodb.connection.ClusterType;
 import com.mongodb.connection.ServerDescription;
 import com.mongodb.connection.ServerType;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.Server;
 import com.mongodb.internal.session.ServerSessionPool;
 import com.mongodb.lang.Nullable;
@@ -36,16 +36,16 @@ import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAny;
 import static com.mongodb.internal.connection.ClusterDescriptionHelper.getAnyPrimaryOrSecondary;
 
 class ClientSessionHelper {
-    private final MongoClientImpl mongoClient;
+    private final AsyncMongoClientImpl mongoClient;
     private final ServerSessionPool serverSessionPool;
 
-    ClientSessionHelper(final MongoClientImpl mongoClient, final ServerSessionPool serverSessionPool) {
+    ClientSessionHelper(final AsyncMongoClientImpl mongoClient, final ServerSessionPool serverSessionPool) {
         this.mongoClient = mongoClient;
         this.serverSessionPool = serverSessionPool;
     }
 
-    void withClientSession(@Nullable final ClientSession clientSessionFromOperation, final OperationExecutor executor,
-                           final SingleResultCallback<ClientSession> callback) {
+    void withClientSession(@Nullable final AsyncClientSession clientSessionFromOperation, final OperationExecutor executor,
+                           final SingleResultCallback<AsyncClientSession> callback) {
         if (clientSessionFromOperation != null) {
             isTrue("ClientSession from same MongoClient", clientSessionFromOperation.getOriginator() == mongoClient);
             callback.onResult(clientSessionFromOperation, null);
@@ -55,7 +55,7 @@ class ClientSessionHelper {
     }
 
     void createClientSession(final ClientSessionOptions options, final OperationExecutor executor,
-                             final SingleResultCallback<ClientSession> callback) {
+                             final SingleResultCallback<AsyncClientSession> callback) {
         ClusterDescription clusterDescription = mongoClient.getCluster().getCurrentDescription();
         if (!getServerDescriptionListToConsiderForSessionSupport(clusterDescription).isEmpty()
                 && clusterDescription.getLogicalSessionTimeoutMinutes() != null
@@ -83,7 +83,7 @@ class ClientSessionHelper {
         }
     }
 
-    private ClientSession createClientSession(final ClientSessionOptions options, final OperationExecutor executor) {
+    private AsyncClientSession createClientSession(final ClientSessionOptions options, final OperationExecutor executor) {
         ClientSessionOptions mergedOptions = ClientSessionOptions.builder(options)
                 .defaultTransactionOptions(
                         TransactionOptions.merge(
@@ -94,7 +94,7 @@ class ClientSessionHelper {
                                         .readPreference(mongoClient.getSettings().getReadPreference())
                                         .build()))
                 .build();
-        return new ClientSessionImpl(serverSessionPool, mongoClient, mergedOptions, executor);
+        return new AsyncClientSessionImpl(serverSessionPool, mongoClient, mergedOptions, executor);
     }
 
     private List<ServerDescription> getServerDescriptionListToConsiderForSessionSupport(final ClusterDescription clusterDescription) {

@@ -17,9 +17,9 @@
 package com.mongodb.reactivestreams.client.internal
 
 import com.mongodb.MongoNamespace
-import com.mongodb.internal.async.client.MapReduceIterable
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.MapReduceAction
+import com.mongodb.internal.async.client.AsyncMapReduceIterable
 import org.bson.Document
 import org.bson.codecs.BsonValueCodecProvider
 import org.bson.codecs.DocumentCodecProvider
@@ -49,7 +49,7 @@ class MapReducePublisherImplSpecification extends Specification {
             onSubscribe(_) >> { args -> args[0].request(100) }
         }
 
-        def wrapped = Mock(MapReduceIterable)
+        def wrapped = Mock(AsyncMapReduceIterable)
         def publisher = new MapReducePublisherImpl(wrapped)
 
         when:

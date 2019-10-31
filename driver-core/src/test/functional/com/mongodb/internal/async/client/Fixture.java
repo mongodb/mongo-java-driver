@@ -42,15 +42,15 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 public final class Fixture {
     private static final String DEFAULT_DATABASE_NAME = "JavaDriverTest";
 
-    private static MongoClientImpl mongoClient;
+    private static AsyncMongoClientImpl mongoClient;
 
 
     private Fixture() {
     }
 
-    public static synchronized MongoClient getMongoClient() {
+    public static synchronized AsyncMongoClient getMongoClient() {
         if (mongoClient == null) {
-            mongoClient = (MongoClientImpl) MongoClients.create(getMongoClientBuilderFromConnectionString().build());
+            mongoClient = (AsyncMongoClientImpl) AsyncMongoClients.create(getMongoClientBuilderFromConnectionString().build());
             Runtime.getRuntime().addShutdownHook(new ShutdownHook());
         }
         return mongoClient;
@@ -91,12 +91,12 @@ public final class Fixture {
         return DEFAULT_DATABASE_NAME;
     }
 
-    public static MongoDatabase getDefaultDatabase() {
+    public static AsyncMongoDatabase getDefaultDatabase() {
         return getMongoClient().getDatabase(getDefaultDatabaseName());
     }
 
-    public static MongoCollection<Document> initializeCollection(final MongoNamespace namespace) {
-        MongoDatabase database = getMongoClient().getDatabase(namespace.getDatabaseName());
+    public static AsyncMongoCollection<Document> initializeCollection(final MongoNamespace namespace) {
+        AsyncMongoDatabase database = getMongoClient().getDatabase(namespace.getDatabaseName());
         try {
             FutureResultCallback<Document> futureResultCallback = new FutureResultCallback<Document>();
             database.runCommand(new Document("drop", namespace.getCollectionName()), futureResultCallback);

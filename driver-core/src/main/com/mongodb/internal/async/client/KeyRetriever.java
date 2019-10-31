@@ -28,11 +28,11 @@ import java.util.List;
 import static com.mongodb.assertions.Assertions.notNull;
 
 class KeyRetriever implements Closeable {
-    private final MongoClient client;
+    private final AsyncMongoClient client;
     private final boolean ownsClient;
     private final MongoNamespace namespace;
 
-    KeyRetriever(final MongoClient client, final boolean ownsClient, final MongoNamespace namespace) {
+    KeyRetriever(final AsyncMongoClient client, final boolean ownsClient, final MongoNamespace namespace) {
         this.client = notNull("client", client);
         this.ownsClient = ownsClient;
         this.namespace = notNull("namespace", namespace);

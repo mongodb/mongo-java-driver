@@ -16,7 +16,7 @@
 
 package com.mongodb.reactivestreams.client.internal
 
-import com.mongodb.internal.async.client.gridfs.GridFSUploadStream as WrappedGridFSUploadStream
+import com.mongodb.internal.async.client.gridfs.AsyncGridFSUploadStream as WrappedGridFSUploadStream
 import org.bson.BsonObjectId
 import org.reactivestreams.Subscriber
 import spock.lang.Specification

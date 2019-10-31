@@ -16,7 +16,7 @@
 
 package com.mongodb.reactivestreams.client
 
-import com.mongodb.internal.async.client.ChangeStreamIterable
+import com.mongodb.internal.async.client.AsyncChangeStreamIterable
 import org.reactivestreams.Publisher
 import spock.lang.Specification
 
@@ -24,7 +24,7 @@ class ChangeStreamPublisherSpecification extends Specification {
 
     def 'should have the same methods as the wrapped ChangeStreamIterable'() {
         given:
-        def wrapped = (ChangeStreamIterable.methods*.name - ['batchCursor', 'forEach', 'getBatchSize', 'into', 'map']).toSet().sort()
+        def wrapped = (AsyncChangeStreamIterable.methods*.name - ['batchCursor', 'forEach', 'getBatchSize', 'into', 'map']).toSet().sort()
         def local = (ChangeStreamPublisher.methods*.name - Publisher.methods*.name).sort()
 
         expect:

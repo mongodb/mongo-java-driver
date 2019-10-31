@@ -23,9 +23,9 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 class CollectionInfoRetriever {
 
-    private final MongoClient client;
+    private final AsyncMongoClient client;
 
-    CollectionInfoRetriever(final MongoClient client) {
+    CollectionInfoRetriever(final AsyncMongoClient client) {
         this.client = notNull("client", client);
     }
 
