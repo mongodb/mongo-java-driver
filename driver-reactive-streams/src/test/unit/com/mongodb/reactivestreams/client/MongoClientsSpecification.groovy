@@ -16,7 +16,7 @@
 
 package com.mongodb.reactivestreams.client
 
-import com.mongodb.internal.async.client.MongoClients as WrappedMongoClients
+import com.mongodb.internal.async.client.AsyncMongoClients
 import spock.lang.Specification
 
 class MongoClientsSpecification extends Specification {
@@ -24,7 +24,7 @@ class MongoClientsSpecification extends Specification {
 
     def 'should have the same methods as the wrapped MongoClients'() {
         given:
-        def wrapped = (com.mongodb.internal.async.client.MongoClients.methods*.name).sort()
+        def wrapped = (AsyncMongoClients.methods*.name).sort()
         def local = MongoClients.methods*.name.sort()
 
         expect:
@@ -33,7 +33,7 @@ class MongoClientsSpecification extends Specification {
 
     def 'should return the same default codec registry'() {
         expect:
-        MongoClients.getDefaultCodecRegistry() == WrappedMongoClients.getDefaultCodecRegistry()
+        MongoClients.getDefaultCodecRegistry() == AsyncMongoClients.getDefaultCodecRegistry()
     }
 
 }

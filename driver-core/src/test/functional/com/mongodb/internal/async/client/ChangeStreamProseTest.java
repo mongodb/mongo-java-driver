@@ -21,11 +21,11 @@ import com.mongodb.MongoCommandException;
 import com.mongodb.MongoException;
 import com.mongodb.MongoNamespace;
 import com.mongodb.MongoQueryException;
-import com.mongodb.internal.async.AsyncBatchCursor;
 import com.mongodb.async.FutureResultCallback;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.test.CollectionHelper;
+import com.mongodb.internal.async.AsyncBatchCursor;
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
 import org.bson.BsonInt32;
@@ -164,7 +164,7 @@ public class ChangeStreamProseTest extends DatabaseTestCase {
     }
 
     private AsyncBatchCursor<ChangeStreamDocument<Document>> createChangeStreamCursor(
-            final ChangeStreamIterable<Document> changeStreamIterable) {
+            final AsyncChangeStreamIterable<Document> changeStreamIterable) {
         FutureResultCallback<AsyncBatchCursor<ChangeStreamDocument<Document>>> callback =
                 new FutureResultCallback<AsyncBatchCursor<ChangeStreamDocument<Document>>>();
 

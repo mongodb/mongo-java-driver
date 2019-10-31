@@ -30,7 +30,7 @@ import spock.lang.Specification
 class ClientSessionBindingSpecification extends Specification {
     def 'should return the session context from the binding'() {
         given:
-        def session = Stub(ClientSession)
+        def session = Stub(AsyncClientSession)
         def wrappedBinding = Stub(AsyncClusterAwareReadWriteBinding)
         def binding = new ClientSessionBinding(session, false, wrappedBinding)
 
@@ -43,7 +43,7 @@ class ClientSessionBindingSpecification extends Specification {
 
     def 'should return the session context from the connection source'() {
         given:
-        def session = Stub(ClientSession)
+        def session = Stub(AsyncClientSession)
         def wrappedBinding = Mock(AsyncClusterAwareReadWriteBinding)
         def binding = new ClientSessionBinding(session, false, wrappedBinding)
 
@@ -80,7 +80,7 @@ class ClientSessionBindingSpecification extends Specification {
 
     def 'should close client session when binding reference count drops to zero if it is owned by the binding'() {
         given:
-        def session = Mock(ClientSession)
+        def session = Mock(AsyncClientSession)
         def wrappedBinding = createStubBinding()
         def binding = new ClientSessionBinding(session, true, wrappedBinding)
         binding.retain()
@@ -100,7 +100,7 @@ class ClientSessionBindingSpecification extends Specification {
 
     def 'should close client session when binding reference count drops to zero due to connection source if it is owned by the binding'() {
         given:
-        def session = Mock(ClientSession)
+        def session = Mock(AsyncClientSession)
         def wrappedBinding = createStubBinding()
         def binding = new ClientSessionBinding(session, true, wrappedBinding)
         def futureResultCallback = new FutureResultCallback<AsyncConnectionSource>()
@@ -131,7 +131,7 @@ class ClientSessionBindingSpecification extends Specification {
 
     def 'should not close client session when binding reference count drops to zero if it is not owned by the binding'() {
         given:
-        def session = Mock(ClientSession)
+        def session = Mock(AsyncClientSession)
         def wrappedBinding = createStubBinding()
         def binding = new ClientSessionBinding(session, false, wrappedBinding)
         binding.retain()
@@ -151,7 +151,7 @@ class ClientSessionBindingSpecification extends Specification {
 
     def 'owned session is implicit'() {
         given:
-        def session = Mock(ClientSession)
+        def session = Mock(AsyncClientSession)
         def wrappedBinding = createStubBinding()
 
         when:

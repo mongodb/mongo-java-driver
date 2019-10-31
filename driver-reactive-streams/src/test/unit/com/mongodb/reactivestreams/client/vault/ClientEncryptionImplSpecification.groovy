@@ -19,6 +19,7 @@ package com.mongodb.reactivestreams.client.vault
 
 import com.mongodb.client.model.vault.DataKeyOptions
 import com.mongodb.client.model.vault.EncryptOptions
+import com.mongodb.internal.async.client.vault.AsyncClientEncryption
 import org.bson.BsonBinary
 import org.reactivestreams.Subscriber
 import spock.lang.Specification
@@ -27,7 +28,7 @@ class ClientEncryptionImplSpecification extends Specification {
 
     def 'should forward methods to wrapped'() {
         given:
-        def wrapped = Mock(com.mongodb.internal.async.client.vault.ClientEncryption)
+        def wrapped = Mock(AsyncClientEncryption)
         def subscriber = Stub(Subscriber) {
             onSubscribe(_) >> { it[0].request(1) }
         }

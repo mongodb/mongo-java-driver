@@ -16,8 +16,8 @@
 
 package com.mongodb.reactivestreams.client.internal
 
-import com.mongodb.internal.async.client.DistinctIterable
 import com.mongodb.client.model.Collation
+import com.mongodb.internal.async.client.AsyncDistinctIterable
 import org.bson.Document
 import org.reactivestreams.Subscriber
 import spock.lang.Specification
@@ -35,7 +35,7 @@ class DistinctPublisherImplSpecification extends Specification {
         }
 
 
-        def wrapped = Mock(DistinctIterable)
+        def wrapped = Mock(AsyncDistinctIterable)
         def publisher = new DistinctPublisherImpl(wrapped)
 
         when:

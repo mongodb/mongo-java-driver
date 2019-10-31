@@ -17,10 +17,10 @@
 package com.mongodb.reactivestreams.client.internal
 
 import com.mongodb.ClientSessionOptions
-import com.mongodb.internal.async.client.ChangeStreamIterable
-import com.mongodb.internal.async.client.ClientSession as WrappedClientSession
-import com.mongodb.internal.async.client.ListDatabasesIterable
-import com.mongodb.internal.async.client.MongoClient as WrappedMongoClient
+import com.mongodb.internal.async.client.AsyncChangeStreamIterable
+import com.mongodb.internal.async.client.AsyncClientSession as WrappedClientSession
+import com.mongodb.internal.async.client.AsyncListDatabasesIterable
+import com.mongodb.internal.async.client.AsyncMongoClient as WrappedMongoClient
 import com.mongodb.reactivestreams.client.ClientSession
 import com.mongodb.reactivestreams.client.MongoClient
 import org.bson.BsonDocument
@@ -51,7 +51,7 @@ class MongoClientImplSpecification extends Specification {
 
     def 'should call the underlying listDatabases'() {
         given:
-        def wrappedResult = Stub(ListDatabasesIterable)
+        def wrappedResult = Stub(AsyncListDatabasesIterable)
         def wrapped = Mock(WrappedMongoClient)
         def mongoClient = new MongoClientImpl(wrapped)
 
@@ -102,7 +102,7 @@ class MongoClientImplSpecification extends Specification {
     def 'should use ChangeStreamPublisher correctly'() {
         given:
         def pipeline = [new Document('$match', 1)]
-        def wrappedResult = Stub(ChangeStreamIterable)
+        def wrappedResult = Stub(AsyncChangeStreamIterable)
         def changeStreamPublisher
 
         when:

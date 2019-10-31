@@ -16,8 +16,8 @@
 
 package com.mongodb.internal.async.client
 
-import com.mongodb.internal.async.AsyncBatchCursor
 import com.mongodb.async.FutureResultCallback
+import com.mongodb.internal.async.AsyncBatchCursor
 import com.mongodb.internal.async.SingleResultCallback
 
 import java.util.concurrent.TimeUnit
@@ -38,7 +38,7 @@ class TestHelper {
         futureResultCallback.get(timeout, TimeUnit.SECONDS)
     }
 
-    static <T> T execute(final Closure<T> method, final ClientSession session, ... args) {
+    static <T> T execute(final Closure<T> method, final AsyncClientSession session, ... args) {
         List opArgs = (args != null) ? args : []
         if (session != null) {
             opArgs = [session, *opArgs]
@@ -50,7 +50,7 @@ class TestHelper {
         }
     }
 
-    static <T> void execute(final MongoIterable method) {
+    static <T> void execute(final AsyncMongoIterable method) {
         method.batchCursor(new SingleResultCallback<AsyncBatchCursor>() {
             @Override
             void onResult(final AsyncBatchCursor result, final Throwable t) {
@@ -58,7 +58,7 @@ class TestHelper {
         })
     }
 
-    static <T> MongoIterable<T> createIterable(final Closure<T> method, ClientSession session, ... args) {
+    static <T> AsyncMongoIterable<T> createIterable(final Closure<T> method, AsyncClientSession session, ... args) {
         List opArgs = (args != null) ? args : []
         if (session != null) {
             opArgs = [session, *opArgs]

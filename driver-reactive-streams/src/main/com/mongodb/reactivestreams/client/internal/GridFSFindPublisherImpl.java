@@ -21,7 +21,7 @@ import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.client.Observables;
-import com.mongodb.internal.async.client.gridfs.GridFSFindIterable;
+import com.mongodb.internal.async.client.gridfs.AsyncGridFSFindIterable;
 import com.mongodb.reactivestreams.client.gridfs.GridFSFindPublisher;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
@@ -33,9 +33,9 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 
 final class GridFSFindPublisherImpl implements GridFSFindPublisher {
-    private final GridFSFindIterable wrapped;
+    private final AsyncGridFSFindIterable wrapped;
 
-    GridFSFindPublisherImpl(final GridFSFindIterable wrapped) {
+    GridFSFindPublisherImpl(final AsyncGridFSFindIterable wrapped) {
         this.wrapped = notNull("GridFSFindIterable", wrapped);
     }
 

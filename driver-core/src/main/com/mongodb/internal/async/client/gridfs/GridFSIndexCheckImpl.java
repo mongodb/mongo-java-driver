@@ -16,13 +16,13 @@
 
 package com.mongodb.internal.async.client.gridfs;
 
-import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.async.client.ClientSession;
-import com.mongodb.internal.async.client.FindIterable;
-import com.mongodb.internal.async.client.ListIndexesIterable;
-import com.mongodb.internal.async.client.MongoCollection;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.model.IndexOptions;
+import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.async.client.AsyncClientSession;
+import com.mongodb.internal.async.client.AsyncFindIterable;
+import com.mongodb.internal.async.client.AsyncListIndexesIterable;
+import com.mongodb.internal.async.client.AsyncMongoCollection;
 import com.mongodb.lang.Nullable;
 import org.bson.Document;
 
@@ -33,12 +33,12 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 final class GridFSIndexCheckImpl implements GridFSIndexCheck {
     private static final Document PROJECTION = new Document("_id", 1);
-    private final ClientSession clientSession;
-    private final MongoCollection<GridFSFile> filesCollection;
-    private final MongoCollection<Document> chunksCollection;
+    private final AsyncClientSession clientSession;
+    private final AsyncMongoCollection<GridFSFile> filesCollection;
+    private final AsyncMongoCollection<Document> chunksCollection;
 
-    GridFSIndexCheckImpl(@Nullable final ClientSession clientSession, final MongoCollection<GridFSFile> filesCollection,
-                         final MongoCollection<Document> chunksCollection) {
+    GridFSIndexCheckImpl(@Nullable final AsyncClientSession clientSession, final AsyncMongoCollection<GridFSFile> filesCollection,
+                         final AsyncMongoCollection<Document> chunksCollection) {
         this.clientSession = clientSession;
         this.filesCollection = notNull("files collection", filesCollection);
         this.chunksCollection = notNull("chunks collection", chunksCollection);
@@ -46,8 +46,8 @@ final class GridFSIndexCheckImpl implements GridFSIndexCheck {
 
     @Override
     public void checkAndCreateIndex(final SingleResultCallback<Void> callback) {
-        MongoCollection<Document> collection = filesCollection.withDocumentClass(Document.class).withReadPreference(primary());
-        FindIterable<Document> findIterable;
+        AsyncMongoCollection<Document> collection = filesCollection.withDocumentClass(Document.class).withReadPreference(primary());
+        AsyncFindIterable<Document> findIterable;
         if (clientSession != null) {
             findIterable = collection.find(clientSession);
         } else {
@@ -69,8 +69,9 @@ final class GridFSIndexCheckImpl implements GridFSIndexCheck {
                 });
     }
 
-    private <T> void hasIndex(final MongoCollection<T> collection, final Document index, final SingleResultCallback<Boolean> callback) {
-        ListIndexesIterable<Document> listIndexesIterable;
+    private <T> void hasIndex(final AsyncMongoCollection<T> collection, final Document index,
+                              final SingleResultCallback<Boolean> callback) {
+        AsyncListIndexesIterable<Document> listIndexesIterable;
         if (clientSession != null) {
             listIndexesIterable = collection.listIndexes(clientSession);
         } else {

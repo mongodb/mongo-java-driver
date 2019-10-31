@@ -20,9 +20,6 @@ import com.mongodb.MongoNamespace
 import com.mongodb.ReadConcern
 import com.mongodb.ReadPreference
 import com.mongodb.WriteConcern
-import com.mongodb.internal.async.client.ChangeStreamIterable
-import com.mongodb.internal.async.client.ClientSession as WrappedClientSession
-import com.mongodb.internal.async.client.MongoCollection as WrappedMongoCollection
 import com.mongodb.client.model.BulkWriteOptions
 import com.mongodb.client.model.Collation
 import com.mongodb.client.model.CollationStrength
@@ -42,11 +39,14 @@ import com.mongodb.client.model.InsertOneOptions
 import com.mongodb.client.model.RenameCollectionOptions
 import com.mongodb.client.model.ReplaceOptions
 import com.mongodb.client.model.UpdateOptions
-import com.mongodb.internal.async.client.AggregateIterable
-import com.mongodb.internal.async.client.DistinctIterable
-import com.mongodb.internal.async.client.FindIterable
-import com.mongodb.internal.async.client.ListIndexesIterable
-import com.mongodb.internal.async.client.MapReduceIterable
+import com.mongodb.internal.async.client.AsyncAggregateIterable
+import com.mongodb.internal.async.client.AsyncChangeStreamIterable
+import com.mongodb.internal.async.client.AsyncClientSession as WrappedClientSession
+import com.mongodb.internal.async.client.AsyncDistinctIterable
+import com.mongodb.internal.async.client.AsyncFindIterable
+import com.mongodb.internal.async.client.AsyncListIndexesIterable
+import com.mongodb.internal.async.client.AsyncMapReduceIterable
+import com.mongodb.internal.async.client.AsyncMongoCollection as WrappedMongoCollection
 import com.mongodb.reactivestreams.client.ClientSession
 import org.bson.BsonDocument
 import org.bson.Document
@@ -272,8 +272,8 @@ class MongoCollectionImplSpecification extends Specification {
     def 'should create DistinctPublisher correctly'() {
         given:
         def wrapped = Stub(WrappedMongoCollection) {
-            distinct(_, _) >> Stub(DistinctIterable)
-            distinct(wrappedClientSession, _, _) >> Stub(DistinctIterable)
+            distinct(_, _) >> Stub(AsyncDistinctIterable)
+            distinct(wrappedClientSession, _, _) >> Stub(AsyncDistinctIterable)
         }
         def collection = new MongoCollectionImpl(wrapped)
 
@@ -292,7 +292,7 @@ class MongoCollectionImplSpecification extends Specification {
 
     def 'should create FindPublisher correctly'() {
         given:
-        def wrappedResult = Stub(FindIterable)
+        def wrappedResult = Stub(AsyncFindIterable)
         def wrapped = Mock(WrappedMongoCollection)
         def collection = new MongoCollectionImpl(wrapped)
 
@@ -359,7 +359,7 @@ class MongoCollectionImplSpecification extends Specification {
 
     def 'should use AggregatePublisher correctly'() {
         given:
-        def wrappedResult = Stub(AggregateIterable)
+        def wrappedResult = Stub(AsyncAggregateIterable)
         def wrapped = Mock(WrappedMongoCollection)
         def collection = new MongoCollectionImpl(wrapped)
         def pipeline = [new Document('$match', 1)]
@@ -398,7 +398,7 @@ class MongoCollectionImplSpecification extends Specification {
     def 'should use ChangeStreamPublisher correctly'() {
         given:
         def pipeline = [new Document('$match', 1)]
-        def wrappedResult = Stub(ChangeStreamIterable)
+        def wrappedResult = Stub(AsyncChangeStreamIterable)
         def wrapped = Mock(WrappedMongoCollection)
         def collection = new MongoCollectionImpl(wrapped)
         def changeStreamPublisher
@@ -462,7 +462,7 @@ class MongoCollectionImplSpecification extends Specification {
 
     def 'should create MapReducePublisher correctly'() {
         given:
-        def wrappedResult = Stub(MapReduceIterable)
+        def wrappedResult = Stub(AsyncMapReduceIterable)
         def wrapped = Mock(WrappedMongoCollection)
         def collection = new MongoCollectionImpl(wrapped)
         def mapReducePublisher
@@ -1006,7 +1006,7 @@ class MongoCollectionImplSpecification extends Specification {
     }
 
     def 'should use the underlying listIndexes'() {
-        def listIndexesIterable = Stub(ListIndexesIterable)
+        def listIndexesIterable = Stub(AsyncListIndexesIterable)
         def wrapped = Mock(WrappedMongoCollection)
         def mongoCollection = new MongoCollectionImpl(wrapped)
 

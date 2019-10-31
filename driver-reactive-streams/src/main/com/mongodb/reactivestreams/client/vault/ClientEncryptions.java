@@ -18,6 +18,7 @@ package com.mongodb.reactivestreams.client.vault;
 
 import com.mongodb.ClientEncryptionSettings;
 import com.mongodb.annotations.Beta;
+import com.mongodb.internal.async.client.vault.AsyncClientEncryptions;
 
 /**
  * Factory for ClientEncryption implementations.
@@ -38,7 +39,7 @@ public final class ClientEncryptions {
      * @return the key vault
      */
     public static ClientEncryption create(final ClientEncryptionSettings options) {
-        return new ClientEncryptionImpl(com.mongodb.internal.async.client.vault.ClientEncryptions.create(options));
+        return new ClientEncryptionImpl(AsyncClientEncryptions.create(options));
     }
 
     private ClientEncryptions() {

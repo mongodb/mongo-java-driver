@@ -18,9 +18,9 @@ package com.mongodb.internal.async.client;
 
 import com.mongodb.ClusterFixture;
 import com.mongodb.ReadConcern;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.event.CommandEvent;
 import com.mongodb.event.CommandStartedEvent;
+import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.connection.TestCommandListener;
 import org.bson.BsonDocument;
 import org.bson.BsonString;
@@ -34,19 +34,19 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.ClusterFixture.serverVersionAtLeast;
-import static com.mongodb.internal.async.client.Fixture.getDefaultDatabaseName;
 import static com.mongodb.client.CommandMonitoringTestHelper.assertEventsEquality;
+import static com.mongodb.internal.async.client.Fixture.getDefaultDatabaseName;
 import static org.junit.Assume.assumeTrue;
 
 public class ReadConcernTest {
     private TestCommandListener commandListener;
-    private MongoClient mongoClient;
+    private AsyncMongoClient mongoClient;
 
     @Before
     public void setUp() {
         assumeTrue(canRunTests());
         commandListener = new TestCommandListener();
-        mongoClient = MongoClients.create(Fixture.getMongoClientBuilderFromConnectionString()
+        mongoClient = AsyncMongoClients.create(Fixture.getMongoClientBuilderFromConnectionString()
                 .addCommandListener(commandListener)
                 .build());
     }

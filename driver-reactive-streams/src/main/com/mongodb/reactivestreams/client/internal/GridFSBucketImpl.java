@@ -23,6 +23,8 @@ import com.mongodb.WriteConcern;
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.async.client.gridfs.AsyncGridFSBucket;
+import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.Success;
 import com.mongodb.reactivestreams.client.gridfs.AsyncInputStream;
 import com.mongodb.reactivestreams.client.gridfs.AsyncOutputStream;
@@ -30,7 +32,6 @@ import com.mongodb.reactivestreams.client.gridfs.GridFSBucket;
 import com.mongodb.reactivestreams.client.gridfs.GridFSDownloadStream;
 import com.mongodb.reactivestreams.client.gridfs.GridFSFindPublisher;
 import com.mongodb.reactivestreams.client.gridfs.GridFSUploadStream;
-import com.mongodb.reactivestreams.client.ClientSession;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
@@ -48,7 +49,7 @@ import static com.mongodb.reactivestreams.client.internal.PublisherHelper.voidTo
  * <p>This should not be considered a part of the public API.</p>
  */
 public final class GridFSBucketImpl implements GridFSBucket {
-    private final com.mongodb.internal.async.client.gridfs.GridFSBucket wrapped;
+    private final AsyncGridFSBucket wrapped;
 
     /**
      * The GridFSBucket constructor
@@ -57,7 +58,7 @@ public final class GridFSBucketImpl implements GridFSBucket {
      *
      * @param wrapped the GridFSBucket
      */
-    public GridFSBucketImpl(final com.mongodb.internal.async.client.gridfs.GridFSBucket wrapped) {
+    public GridFSBucketImpl(final AsyncGridFSBucket wrapped) {
         this.wrapped = notNull("GridFSBucket", wrapped);
     }
 

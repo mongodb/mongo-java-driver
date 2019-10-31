@@ -16,7 +16,7 @@
 
 package com.mongodb.reactivestreams.client.internal
 
-import com.mongodb.internal.async.client.ListIndexesIterable
+import com.mongodb.internal.async.client.AsyncListIndexesIterable
 import org.reactivestreams.Subscriber
 import spock.lang.Specification
 
@@ -31,7 +31,7 @@ class ListIndexesPublisherImplSpecification extends Specification {
             onSubscribe(_) >> { args -> args[0].request(100) }
         }
 
-        def wrapped = Mock(ListIndexesIterable)
+        def wrapped = Mock(AsyncListIndexesIterable)
         def publisher = new ListIndexesPublisherImpl(wrapped)
 
         when:

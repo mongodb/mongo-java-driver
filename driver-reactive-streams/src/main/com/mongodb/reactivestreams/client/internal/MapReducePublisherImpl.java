@@ -20,7 +20,7 @@ import com.mongodb.Block;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.MapReduceAction;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.async.client.MapReduceIterable;
+import com.mongodb.internal.async.client.AsyncMapReduceIterable;
 import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.MapReducePublisher;
 import com.mongodb.reactivestreams.client.Success;
@@ -35,9 +35,9 @@ import static com.mongodb.reactivestreams.client.internal.PublisherHelper.voidTo
 
 
 final class MapReducePublisherImpl<TResult> implements MapReducePublisher<TResult> {
-    private final MapReduceIterable<TResult> wrapped;
+    private final AsyncMapReduceIterable<TResult> wrapped;
 
-    MapReducePublisherImpl(final MapReduceIterable<TResult> wrapped) {
+    MapReducePublisherImpl(final AsyncMapReduceIterable<TResult> wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 

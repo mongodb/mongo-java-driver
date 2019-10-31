@@ -19,7 +19,7 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.Block;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.async.client.AggregateIterable;
+import com.mongodb.internal.async.client.AsyncAggregateIterable;
 import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
 import com.mongodb.reactivestreams.client.Success;
@@ -35,9 +35,9 @@ import static com.mongodb.reactivestreams.client.internal.PublisherHelper.voidTo
 
 final class AggregatePublisherImpl<TResult> implements AggregatePublisher<TResult> {
 
-    private final AggregateIterable<TResult> wrapped;
+    private final AsyncAggregateIterable<TResult> wrapped;
 
-    AggregatePublisherImpl(final AggregateIterable<TResult> wrapped) {
+    AggregatePublisherImpl(final AsyncAggregateIterable<TResult> wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 

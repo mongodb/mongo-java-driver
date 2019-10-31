@@ -21,7 +21,7 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.async.client.ChangeStreamIterable;
+import com.mongodb.internal.async.client.AsyncChangeStreamIterable;
 import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
 import org.bson.BsonDocument;
@@ -36,9 +36,9 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 final class ChangeStreamPublisherImpl<TResult> implements ChangeStreamPublisher<TResult> {
 
-    private final ChangeStreamIterable<TResult> wrapped;
+    private final AsyncChangeStreamIterable<TResult> wrapped;
 
-    ChangeStreamPublisherImpl(final ChangeStreamIterable<TResult> wrapped) {
+    ChangeStreamPublisherImpl(final AsyncChangeStreamIterable<TResult> wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 

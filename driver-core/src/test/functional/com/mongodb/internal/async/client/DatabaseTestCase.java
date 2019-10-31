@@ -28,9 +28,9 @@ import static com.mongodb.internal.async.client.Fixture.waitForLastServerSession
 public class DatabaseTestCase {
     //For ease of use and readability, in this specific case we'll allow protected variables
     //CHECKSTYLE:OFF
-    protected MongoClient client;
-    protected MongoDatabase database;
-    protected MongoCollection<Document> collection;
+    protected AsyncMongoClient client;
+    protected AsyncMongoDatabase database;
+    protected AsyncMongoCollection<Document> collection;
     //CHECKSTYLE:ON
 
     @Before

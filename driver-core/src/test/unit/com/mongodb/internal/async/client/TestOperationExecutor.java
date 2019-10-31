@@ -31,7 +31,7 @@ public class TestOperationExecutor implements OperationExecutor {
 
     private final List<Object> responses;
     private final boolean queueExecution;
-    private List<ClientSession> clientSessions = new ArrayList<ClientSession>();
+    private List<AsyncClientSession> clientSessions = new ArrayList<AsyncClientSession>();
     private final List<ReadPreference> readPreferences = new ArrayList<ReadPreference>();
     private final List<AsyncReadOperation> queuedReadOperations = new ArrayList<AsyncReadOperation>();
     private final List<AsyncWriteOperation> queuedWriteOperations = new ArrayList<AsyncWriteOperation>();
@@ -57,7 +57,7 @@ public class TestOperationExecutor implements OperationExecutor {
 
     @Override
     public <T> void execute(final AsyncReadOperation<T> operation, final ReadPreference readPreference, final ReadConcern readConcern,
-                            final ClientSession session, final SingleResultCallback<T> callback) {
+                            final AsyncClientSession session, final SingleResultCallback<T> callback) {
         readPreferences.add(readPreference);
         clientSessions.add(session);
         if (queueExecution) {
@@ -76,7 +76,7 @@ public class TestOperationExecutor implements OperationExecutor {
     }
 
     @Override
-    public <T> void execute(final AsyncWriteOperation<T> operation, final ReadConcern readConcern, final ClientSession session,
+    public <T> void execute(final AsyncWriteOperation<T> operation, final ReadConcern readConcern, final AsyncClientSession session,
                             final SingleResultCallback<T> callback) {
         clientSessions.add(session);
         if (queueExecution) {
@@ -108,7 +108,7 @@ public class TestOperationExecutor implements OperationExecutor {
     }
 
     @Nullable
-    ClientSession getClientSession() {
+    AsyncClientSession getClientSession() {
         return clientSessions.isEmpty() ? null : clientSessions.remove(0);
     }
 

@@ -20,7 +20,7 @@ import com.mongodb.Block;
 import com.mongodb.CursorType;
 import com.mongodb.client.model.Collation;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.async.client.FindIterable;
+import com.mongodb.internal.async.client.AsyncFindIterable;
 import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.FindPublisher;
 import org.bson.conversions.Bson;
@@ -34,9 +34,9 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 final class FindPublisherImpl<TResult> implements FindPublisher<TResult> {
 
-    private final FindIterable<TResult> wrapped;
+    private final AsyncFindIterable<TResult> wrapped;
 
-    FindPublisherImpl(final FindIterable<TResult> wrapped) {
+    FindPublisherImpl(final AsyncFindIterable<TResult> wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 

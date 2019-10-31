@@ -18,7 +18,7 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.Block;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.async.client.ListDatabasesIterable;
+import com.mongodb.internal.async.client.AsyncListDatabasesIterable;
 import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.ListDatabasesPublisher;
 import org.bson.conversions.Bson;
@@ -32,9 +32,9 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 final class ListDatabasesPublisherImpl<TResult> implements ListDatabasesPublisher<TResult> {
 
-    private final ListDatabasesIterable<TResult> wrapped;
+    private final AsyncListDatabasesIterable<TResult> wrapped;
 
-    ListDatabasesPublisherImpl(final ListDatabasesIterable<TResult> wrapped) {
+    ListDatabasesPublisherImpl(final AsyncListDatabasesIterable<TResult> wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 

@@ -19,6 +19,8 @@ package com.mongodb.reactivestreams.client;
 import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.MongoDriverInformation;
+import com.mongodb.internal.async.client.AsyncMongoClient;
+import com.mongodb.internal.async.client.AsyncMongoClients;
 import com.mongodb.reactivestreams.client.internal.MongoClientImpl;
 import org.bson.codecs.configuration.CodecRegistry;
 
@@ -69,8 +71,7 @@ public final class MongoClients {
      * @since 1.3
      */
     public static MongoClient create(final ConnectionString connectionString, final MongoDriverInformation mongoDriverInformation) {
-        return create(com.mongodb.internal.async.client.MongoClients.create(connectionString,
-                wrapMongoDriverInformation(mongoDriverInformation)));
+        return create(AsyncMongoClients.create(connectionString, wrapMongoDriverInformation(mongoDriverInformation)));
     }
 
     /**
@@ -95,7 +96,7 @@ public final class MongoClients {
      * @since 1.8
      */
     public static MongoClient create(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation) {
-        return create(com.mongodb.internal.async.client.MongoClients.create(settings, wrapMongoDriverInformation(mongoDriverInformation)));
+        return create(AsyncMongoClients.create(settings, wrapMongoDriverInformation(mongoDriverInformation)));
     }
 
     /**
@@ -106,10 +107,10 @@ public final class MongoClients {
      * @since 1.4
      */
     public static CodecRegistry getDefaultCodecRegistry() {
-        return com.mongodb.internal.async.client.MongoClients.getDefaultCodecRegistry();
+        return AsyncMongoClients.getDefaultCodecRegistry();
     }
 
-    private static MongoClient create(final com.mongodb.internal.async.client.MongoClient asyncMongoClient) {
+    private static MongoClient create(final AsyncMongoClient asyncMongoClient) {
         return new MongoClientImpl(asyncMongoClient);
     }
 

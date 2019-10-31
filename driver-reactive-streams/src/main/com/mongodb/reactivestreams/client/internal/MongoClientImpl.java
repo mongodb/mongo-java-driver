@@ -19,6 +19,8 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.Block;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.async.client.AsyncClientSession;
+import com.mongodb.internal.async.client.AsyncMongoClient;
 import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
 import com.mongodb.reactivestreams.client.ClientSession;
@@ -41,7 +43,7 @@ import static com.mongodb.assertions.Assertions.notNull;
  * <p>This should not be considered a part of the public API.</p>
  */
 public final class MongoClientImpl implements MongoClient {
-    private final com.mongodb.internal.async.client.MongoClient wrapped;
+    private final AsyncMongoClient wrapped;
 
     /**
      * The internal MongoClientImpl constructor.
@@ -50,7 +52,7 @@ public final class MongoClientImpl implements MongoClient {
      *
      * @param wrapped the underlying MongoClient
      */
-    public MongoClientImpl(final com.mongodb.internal.async.client.MongoClient wrapped) {
+    public MongoClientImpl(final AsyncMongoClient wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 
@@ -149,9 +151,9 @@ public final class MongoClientImpl implements MongoClient {
                     @Override
                     public void apply(final SingleResultCallback<ClientSession> clientSessionSingleResultCallback) {
                         wrapped.startSession(options,
-                                new SingleResultCallback<com.mongodb.internal.async.client.ClientSession>() {
+                                new SingleResultCallback<AsyncClientSession>() {
                             @Override
-                            public void onResult(final com.mongodb.internal.async.client.ClientSession result, final Throwable t) {
+                            public void onResult(final AsyncClientSession result, final Throwable t) {
                                 if (t != null) {
                                     clientSessionSingleResultCallback.onResult(null, t);
                                 } else {

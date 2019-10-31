@@ -17,8 +17,8 @@
 package com.mongodb.reactivestreams.client.internal
 
 import com.mongodb.CursorType
-import com.mongodb.internal.async.client.FindIterable
 import com.mongodb.client.model.Collation
+import com.mongodb.internal.async.client.AsyncFindIterable
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.Document
@@ -40,7 +40,7 @@ class FindPublisherImplSpecification extends Specification {
             onSubscribe(_) >> { args -> args[0].request(batchSize) }
         }
 
-        def wrapped = Mock(FindIterable)
+        def wrapped = Mock(AsyncFindIterable)
         def publisher = new FindPublisherImpl<Document>(wrapped)
 
         when:

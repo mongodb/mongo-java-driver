@@ -53,7 +53,7 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
                 .applyToServerSettings { it.addServerListener(serverListener).addServerMonitorListener(serverMonitorListener) }
                 .addCommandListener(commandListener)
         def settings = builder.build()
-        def client = MongoClients.create(settings)
+        def client = AsyncMongoClients.create(settings)
 
         then:
         run(client.getDatabase('admin').&runCommand, new Document('ping', 1))
@@ -63,7 +63,7 @@ class MongoClientListenerRegistrationSpecification extends FunctionalSpecificati
         given:
         def first = Mock(CommandListener)
         def second = Mock(CommandListener)
-        def client =  MongoClients.create(Fixture.mongoClientBuilderFromConnectionString
+        def client =  AsyncMongoClients.create(Fixture.mongoClientBuilderFromConnectionString
                 .addCommandListener(first).addCommandListener(second).build())
 
         when:

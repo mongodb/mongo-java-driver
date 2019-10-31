@@ -47,7 +47,7 @@ public interface Observer<TResult> {
      * It is the responsibility of this Subscriber instance to call {@link Subscription#request(long)} whenever more data is wanted.
      * </p>
      * <p>
-     * The {@link MongoIterable} will send notifications only in response to {@link Subscription#request(long)}.
+     * The {@link AsyncMongoIterable} will send notifications only in response to {@link Subscription#request(long)}.
      * </p>
      *
      * @param subscription {@link Subscription} that allows requesting data via {@link Subscription#request(long)}

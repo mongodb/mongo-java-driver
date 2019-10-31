@@ -16,8 +16,8 @@
 
 package com.mongodb.reactivestreams.client.internal
 
-import com.mongodb.internal.async.client.ChangeStreamIterable
 import com.mongodb.client.model.Collation
+import com.mongodb.internal.async.client.AsyncChangeStreamIterable
 import org.bson.BsonDocument
 import org.bson.BsonInt32
 import org.bson.BsonTimestamp
@@ -38,7 +38,7 @@ class ChangeStreamPublisherImplSpecification extends Specification {
             onSubscribe(_) >> { args -> args[0].request(100) }
         }
 
-        def wrapped = Mock(ChangeStreamIterable)
+        def wrapped = Mock(AsyncChangeStreamIterable)
         def publisher = new ChangeStreamPublisherImpl<Document>(wrapped)
 
         when:

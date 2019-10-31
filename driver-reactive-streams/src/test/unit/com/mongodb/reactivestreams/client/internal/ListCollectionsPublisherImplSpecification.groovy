@@ -16,7 +16,7 @@
 
 package com.mongodb.reactivestreams.client.internal
 
-import com.mongodb.internal.async.client.ListCollectionsIterable
+import com.mongodb.internal.async.client.AsyncListCollectionsIterable
 import org.bson.Document
 import org.reactivestreams.Subscriber
 import spock.lang.Specification
@@ -33,7 +33,7 @@ class ListCollectionsPublisherImplSpecification extends Specification {
         }
 
 
-        def wrapped = Mock(ListCollectionsIterable)
+        def wrapped = Mock(AsyncListCollectionsIterable)
         def publisher = new ListCollectionsPublisherImpl(wrapped)
 
         when:

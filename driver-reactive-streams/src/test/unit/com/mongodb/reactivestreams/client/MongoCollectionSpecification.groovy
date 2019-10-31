@@ -16,7 +16,7 @@
 
 package com.mongodb.reactivestreams.client
 
-import com.mongodb.internal.async.client.MongoCollection as WrappedMongoCollection
+import com.mongodb.internal.async.client.AsyncMongoCollection as WrappedMongoCollection
 import spock.lang.Specification
 
 class MongoCollectionSpecification extends Specification {

@@ -18,7 +18,7 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.Block;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.internal.async.client.ListCollectionsIterable;
+import com.mongodb.internal.async.client.AsyncListCollectionsIterable;
 import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.ListCollectionsPublisher;
 import org.bson.conversions.Bson;
@@ -32,9 +32,9 @@ import static com.mongodb.assertions.Assertions.notNull;
 
 final class ListCollectionsPublisherImpl<TResult> implements ListCollectionsPublisher<TResult> {
 
-    private final ListCollectionsIterable<TResult> wrapped;
+    private final AsyncListCollectionsIterable<TResult> wrapped;
 
-    ListCollectionsPublisherImpl(final ListCollectionsIterable<TResult> wrapped) {
+    ListCollectionsPublisherImpl(final AsyncListCollectionsIterable<TResult> wrapped) {
         this.wrapped = notNull("wrapped", wrapped);
     }
 

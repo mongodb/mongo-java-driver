@@ -25,11 +25,11 @@ import java.util.Collection;
 
 import static com.mongodb.assertions.Assertions.notNull;
 
-class MappingIterable<U, V> implements MongoIterable<V> {
-    private final MongoIterable<U> iterable;
+class MappingIterable<U, V> implements AsyncMongoIterable<V> {
+    private final AsyncMongoIterable<U> iterable;
     private final Function<U, V> mapper;
 
-    MappingIterable(final MongoIterable<U> iterable, final Function<U, V> mapper) {
+    MappingIterable(final AsyncMongoIterable<U> iterable, final Function<U, V> mapper) {
         this.iterable = notNull("iterable", iterable);
         this.mapper = notNull("mapper", mapper);
     }
@@ -94,12 +94,12 @@ class MappingIterable<U, V> implements MongoIterable<V> {
     }
 
     @Override
-    public <W> MongoIterable<W> map(final Function<V, W> mapper) {
+    public <W> AsyncMongoIterable<W> map(final Function<V, W> mapper) {
         return new MappingIterable<V, W>(this, mapper);
     }
 
     @Override
-    public MongoIterable<V> batchSize(final int batchSize) {
+    public AsyncMongoIterable<V> batchSize(final int batchSize) {
         iterable.batchSize(batchSize);
         return this;
     }
@@ -124,7 +124,7 @@ class MappingIterable<U, V> implements MongoIterable<V> {
         });
     }
 
-    MongoIterable<U> getMapped() {
+    AsyncMongoIterable<U> getMapped() {
         return iterable;
     }
 }
