@@ -52,6 +52,7 @@ import static com.mongodb.internal.connection.ClientMetadataHelper.createClientM
 import static com.mongodb.internal.event.EventListenerHelper.getCommandListener;
 import static java.lang.String.format;
 
+@SuppressWarnings("deprecation")
 class EmbeddedServer implements Server, Closeable {
     private static final Logger LOGGER = Loggers.getLogger("embedded.client");
     private static final MongoDriverInformation MONGO_DRIVER_INFORMATION = MongoDriverInformation.builder().driverName("embedded").build();

@@ -24,7 +24,9 @@ import static java.lang.String.format;
  * Exceptions indicating a failure condition with the embedded MongoClient.
  *
  * @since 3.8
+ * @deprecated the embedded driver will be removed in the next major release
  */
+@Deprecated
 public final class MongoClientEmbeddedException extends MongoException {
     private static final long serialVersionUID = 8314840681404996248L;
 

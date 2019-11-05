@@ -37,7 +37,9 @@ import static java.lang.String.format;
  *
  * @since 3.8
  * @mongodb.server.release 4.0
+ * @deprecated the embedded driver will be removed in the next major release
  */
+@Deprecated
 @Immutable
 public final class MongoClientSettings {
     private static final CodecRegistry DEFAULT_CODEC_REGISTRY = com.mongodb.MongoClientSettings.getDefaultCodecRegistry();

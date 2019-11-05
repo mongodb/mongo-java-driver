@@ -29,7 +29,9 @@ import static java.lang.String.format;
  *
  * @see MongoClient
  * @since 3.8
+ * @deprecated the embedded driver will be removed in the next major release
  */
+@Deprecated
 public final class MongoClients {
 
     private static MongoEmbeddedLibrary mongoEmbeddedLibrary;
