@@ -69,7 +69,8 @@ public final class MongoClients {
      * @since 1.3
      */
     public static MongoClient create(final ConnectionString connectionString, final MongoDriverInformation mongoDriverInformation) {
-        return create(com.mongodb.internal.async.client.MongoClients.create(connectionString, mongoDriverInformation));
+        return create(com.mongodb.internal.async.client.MongoClients.create(connectionString,
+                wrapMongoDriverInformation(mongoDriverInformation)));
     }
 
     /**
@@ -94,7 +95,7 @@ public final class MongoClients {
      * @since 1.8
      */
     public static MongoClient create(final MongoClientSettings settings, final MongoDriverInformation mongoDriverInformation) {
-        return create(com.mongodb.internal.async.client.MongoClients.create(settings, mongoDriverInformation));
+        return create(com.mongodb.internal.async.client.MongoClients.create(settings, wrapMongoDriverInformation(mongoDriverInformation)));
     }
 
     /**
@@ -110,6 +111,11 @@ public final class MongoClients {
 
     private static MongoClient create(final com.mongodb.internal.async.client.MongoClient asyncMongoClient) {
         return new MongoClientImpl(asyncMongoClient);
+    }
+
+    private static MongoDriverInformation wrapMongoDriverInformation(final MongoDriverInformation mongoDriverInformation) {
+        return (mongoDriverInformation == null ? MongoDriverInformation.builder() : MongoDriverInformation.builder(mongoDriverInformation))
+                .driverName("reactive-streams").build();
     }
 
     private MongoClients() {
