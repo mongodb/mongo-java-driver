@@ -5,7 +5,7 @@
 <meta name="description" content="MongoDB Java Driver documentation">
 <meta name="author" content="MongoDB Drivers Team">
 <meta name="keyword" content="MongoDB, Java, JVM, NoSQL, Document Database">
-<meta name="date" content="2019-08-13T14:02:46.07">
+<meta name="date" content="2019-11-05T13:59:54.72">
 <link rel="shortcut icon" href="/mongo-java-driver/3.11/img/favicon.png">
 
     <title>Client Side Encryption</title><link rel="stylesheet" href="/mongo-java-driver/3.11/lib/bootstrap.css" type="text/css" />
@@ -271,13 +271,6 @@ unauthorized parties, including server administrators, cannot read the encrypted
 
 <div class="admonition important">
 <h5 class="admonition-title">important</h5>
-<p>Support for client side encryption is in beta.  Backwards-breaking changes may be made before the final release.</p>
-
-</div>
-
-
-<div class="admonition important">
-<h5 class="admonition-title">important</h5>
 <p>Java 8 is the minimum required version that supports Async client side encryption.</p>
 
 </div>
@@ -304,7 +297,7 @@ See the <a href="/mongo-java-driver/3.11/driver-async/getting-started/installati
     &lt;dependency&gt;
         &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
         &lt;artifactId&gt;mongodb-crypt&lt;/artifactId&gt;
-        &lt;version&gt;1.0.0-beta4&lt;/version&gt;
+        &lt;version&gt;1.0.0-rc1&lt;/version&gt;
     &lt;/dependency&gt;
 &lt;/dependencies&gt;
 
@@ -313,14 +306,14 @@ See the <a href="/mongo-java-driver/3.11/driver-async/getting-started/installati
 <section class="gradle hidden">
 <pre><code>
   dependencies {
-      compile 'org.mongodb:mongodb-crypt:1.0.0-beta4'
+      compile 'org.mongodb:mongodb-crypt:1.0.0-rc1'
   }
 
 </code></pre>
 </section>
 <section class="downloadInfo small">
     <p><strong>Note:</strong> You can also download the <code>mongodb-crypt</code> jar
-        <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongodb-crypt/1.0.0-beta4" target="_blank">directly</a>
+        <a href="https://oss.sonatype.org/content/repositories/releases/org/mongodb/mongodb-crypt/1.0.0-rc1" target="_blank">directly</a>
         from sonatype.</a></p></section>
 
 <h3 id="mongocryptd-configuration">mongocryptd configuration</h3>
