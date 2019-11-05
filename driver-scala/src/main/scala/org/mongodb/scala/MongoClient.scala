@@ -96,7 +96,7 @@ object MongoClient {
       case Some(info) => MongoDriverInformation.builder(info)
       case None       => MongoDriverInformation.builder()
     }
-    builder.driverName("mongo-scala-driver").driverPlatform(s"Scala/${scala.util.Properties.versionString}")
+    builder.driverName("scala").driverPlatform(s"Scala/${scala.util.Properties.versionString}")
     MongoClient(MongoClients.create(clientSettings, builder.build()))
   }
 

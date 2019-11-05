@@ -149,11 +149,9 @@ public final class MongoClients {
                                          @Nullable final MongoDriverInformation mongoDriverInformation,
                                          final StreamFactory streamFactory, final StreamFactory heartbeatStreamFactory) {
         notNull("settings", settings);
-        MongoDriverInformation.Builder builder = mongoDriverInformation == null ? MongoDriverInformation.builder()
-                : MongoDriverInformation.builder(mongoDriverInformation);
         return new DefaultClusterFactory().createCluster(settings.getClusterSettings(), settings.getServerSettings(),
                 settings.getConnectionPoolSettings(), streamFactory, heartbeatStreamFactory, settings.getCredential(),
-                getCommandListener(settings.getCommandListeners()), settings.getApplicationName(), builder.driverName("async").build(),
+                getCommandListener(settings.getCommandListeners()), settings.getApplicationName(), mongoDriverInformation,
                 settings.getCompressorList());
     }
 

@@ -735,8 +735,13 @@ public class MongoClient implements Closeable {
                 credential,
                 getCommandListener(options.getCommandListeners()),
                 options.getApplicationName(),
-                mongoDriverInformation,
+                wrapMongoDriverInformation(mongoDriverInformation),
                 options.getCompressorList());
+    }
+
+    private static MongoDriverInformation wrapMongoDriverInformation(@Nullable final MongoDriverInformation mongoDriverInformation) {
+        return (mongoDriverInformation == null ? MongoDriverInformation.builder() : MongoDriverInformation.builder(mongoDriverInformation))
+                .driverName("legacy").build();
     }
 
     private static ClusterSettings getClusterSettings(final ClusterSettings.Builder builder, final MongoClientOptions options) {
