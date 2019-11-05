@@ -252,15 +252,6 @@ functions:
           ${PREPARE_SHELL}
           AUTH="${AUTH}" MONGODB_URI="${MONGODB_URI}" TOPOLOGY="${TOPOLOGY}" COMPRESSOR="${COMPRESSOR}" JDK="${JDK}" .evergreen/run-socket-tests.sh
 
-  "run embedded tests":
-  - command: shell.exec
-    type: test
-    params:
-      working_dir: "src"
-      script: |
-        ${PREPARE_SHELL}
-        JDK="${JDK}" .evergreen/run-embedded-tests.sh
-
   "run plain auth test":
     - command: shell.exec
       type: test
@@ -443,10 +434,6 @@ tasks:
         - func: "bootstrap mongo-orchestration"
         - func: "run socket tests"
 
-    - name: "embedded-test"
-      commands:
-      - func: "run embedded tests"
-
     - name: "atlas-test"
       commands:
         - func: "run atlas test"
@@ -465,8 +452,6 @@ tasks:
           name: "plain-auth-test"
         - variant: ".test-scala-variant"
           name: "scala-tests"
-        - variant: ".test-embedded-variant"
-          name: "embedded-test"
       commands:
         - func: "publish snapshot"
 
@@ -709,13 +694,6 @@ buildvariants:
   tags: ["perf-variant"]
   tasks:
      - name: "perf"
-
-- matrix_name: "tests-embedded"
-  matrix_spec: { auth: "noauth", ssl: "nossl", jdk: "*", version: ["4.2"], topology: "standalone", os: "ubuntu" }
-  display_name: "Embedded: ${jdk}"
-  tags: ["test-embedded-variant"]
-  tasks:
-  - name: "embedded-test"
 
 - name: plain-auth-test
   display_name: "PLAIN (LDAP) Auth test"
