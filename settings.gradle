@@ -17,7 +17,6 @@
 include ':bson'
 include ':driver-benchmarks'
 include ':driver-core'
-include ':driver-embedded'
 include ':driver-legacy'
 include ':driver-sync'
 include ':driver-reactive-streams'
