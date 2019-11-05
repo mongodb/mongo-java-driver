@@ -25,7 +25,9 @@ import static java.lang.String.format;
  * The EmbeddedLogLevel represents the supported logging levels for the embedded mongod
  *
  * @since 3.8
+ * @deprecated the embedded driver will be removed in the next major release
  */
+@Deprecated
 public enum MongoEmbeddedLogLevel {
     /**
      * Turn off logging

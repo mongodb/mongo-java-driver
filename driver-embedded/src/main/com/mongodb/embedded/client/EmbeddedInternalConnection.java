@@ -46,6 +46,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+@SuppressWarnings("deprecation")
 class EmbeddedInternalConnection implements InternalConnection {
     private final InternalConnection wrapped;
     private final MongoEmbeddedClient client;

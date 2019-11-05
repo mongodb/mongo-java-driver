@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.mongodb.assertions.Assertions.isTrue;
 
+@SuppressWarnings("deprecation")
 class EmbeddedInternalConnectionPool {
     private final ConcurrentPool<EmbeddedInternalConnection> pool;
     private volatile boolean closed;

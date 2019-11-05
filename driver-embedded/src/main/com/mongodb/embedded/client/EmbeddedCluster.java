@@ -38,6 +38,7 @@ import static com.mongodb.assertions.Assertions.isTrue;
 import static java.lang.String.format;
 import static java.util.Collections.singletonList;
 
+@SuppressWarnings("deprecation")
 final class EmbeddedCluster implements Cluster {
 
     private static final Logger LOGGER = Loggers.getLogger("cluster");

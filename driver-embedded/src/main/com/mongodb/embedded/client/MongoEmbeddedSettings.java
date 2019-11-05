@@ -26,7 +26,9 @@ import static com.mongodb.assertions.Assertions.notNull;
  * Various settings to configure the underlying mongod library
  *
  * @since 3.8
+ * @deprecated the embedded driver will be removed in the next major release
  */
+@Deprecated
 @Immutable
 public final class MongoEmbeddedSettings {
     private final String libraryPath;
