@@ -113,6 +113,15 @@ class SimpleSessionContext implements SessionContext {
         throw new UnsupportedOperationException();
     }
 
+    @Override
+    public void markSessionDirty() {
+    }
+
+    @Override
+    public boolean isSessionMarkedDirty() {
+        return false;
+    }
+
     private static BsonDocument createNewServerSessionIdentifier() {
         UuidCodec uuidCodec = new UuidCodec(UuidRepresentation.STANDARD);
         BsonDocument holder = new BsonDocument();

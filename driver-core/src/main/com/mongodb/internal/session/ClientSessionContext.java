@@ -89,4 +89,14 @@ public abstract class ClientSessionContext implements SessionContext {
     public void unpinServerAddress() {
         clientSession.setPinnedServerAddress(null);
     }
+
+    @Override
+    public void markSessionDirty() {
+        clientSession.getServerSession().markDirty();
+    }
+
+    @Override
+    public boolean isSessionMarkedDirty() {
+        return clientSession.getServerSession().isMarkedDirty();
+    }
 }

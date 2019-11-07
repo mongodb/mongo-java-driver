@@ -106,4 +106,14 @@ public final class ClusterClockAdvancingSessionContext implements SessionContext
     public void unpinServerAddress() {
         wrapped.unpinServerAddress();
     }
+
+    @Override
+    public void markSessionDirty() {
+        wrapped.markSessionDirty();
+    }
+
+    @Override
+    public boolean isSessionMarkedDirty() {
+        return wrapped.isSessionMarkedDirty();
+    }
 }

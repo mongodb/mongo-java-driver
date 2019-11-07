@@ -140,4 +140,20 @@ public interface SessionContext {
      * @since 3.11
      */
     void unpinServerAddress();
+
+    /**
+     * Mark the session as dirty. This happens when a command fails with a network
+     * error. Dirty sessions are later discarded from the server session pool.
+     *
+     * @since 3.12
+     */
+    void markSessionDirty();
+
+    /**
+     * Whether the server session is marked dirty.
+     *
+     * @return true if the session has been marked dirty
+     * @since 3.12
+     */
+    boolean isSessionMarkedDirty();
 }
