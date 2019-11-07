@@ -169,6 +169,9 @@ public class ServerSessionPool {
         if (logicalSessionTimeoutMinutes == null) {
             return false;
         }
+        if (serverSession.isMarkedDirty()) {
+            return true;
+        }
         long currentTimeMillis = clock.millis();
         final long timeSinceLastUse = currentTimeMillis - serverSession.getLastUsedAtMillis();
         final long oneMinuteFromTimeout = MINUTES.toMillis(logicalSessionTimeoutMinutes - 1);
@@ -181,6 +184,7 @@ public class ServerSessionPool {
         private long transactionNumber = 0;
         private volatile long lastUsedAtMillis = clock.millis();
         private volatile boolean closed;
+        private volatile boolean dirty = false;
 
         ServerSessionImpl(final BsonBinary identifier) {
             this.identifier = new BsonDocument("id", identifier);
@@ -214,6 +218,16 @@ public class ServerSessionPool {
         @Override
         public boolean isClosed() {
             return closed;
+        }
+
+        @Override
+        public void markDirty() {
+            dirty = true;
+        }
+
+        @Override
+        public boolean isMarkedDirty() {
+            return dirty;
         }
     }
 

@@ -105,4 +105,14 @@ public class NoOpSessionContext implements SessionContext {
     public void unpinServerAddress() {
         throw new UnsupportedOperationException();
     }
+
+    @Override
+    public void markSessionDirty() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isSessionMarkedDirty() {
+        return false;
+    }
 }

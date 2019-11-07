@@ -251,7 +251,7 @@ public final class CommandMonitoringTestHelper {
 
         if (lsidMap == null) {
             command.remove("lsid");
-        } else {
+        } else if (command.containsKey("lsid")) {
             command.put("lsid", lsidMap.get(command.getString("lsid").getValue()));
         }
 

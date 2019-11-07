@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongodb.client;
+package com.mongodb.async.client;
 
 import org.bson.BsonArray;
 import org.bson.BsonDocument;
@@ -45,7 +45,6 @@ public class MainTransactionsTest extends AbstractUnifiedTest {
         List<Object[]> data = new ArrayList<Object[]>();
         for (File file : JsonPoweredTestHelper.getTestFiles("/transactions")) {
             BsonDocument testDocument = JsonPoweredTestHelper.getTestDocument(file);
-
             for (BsonValue test : testDocument.getArray("tests")) {
                 data.add(new Object[]{file.getName(), test.asDocument().getString("description").getValue(),
                         testDocument.getArray("data"), test.asDocument(), skipTest(testDocument, test.asDocument())});
@@ -53,6 +52,4 @@ public class MainTransactionsTest extends AbstractUnifiedTest {
         }
         return data;
     }
-
-
 }

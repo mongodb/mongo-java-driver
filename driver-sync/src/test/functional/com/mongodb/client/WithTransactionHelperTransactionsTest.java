@@ -34,7 +34,7 @@ import static com.mongodb.JsonTestServerVersionChecker.skipTest;
 
 // See https://github.com/mongodb/specifications/tree/master/source/transactions-convenient-api/tests
 @RunWith(Parameterized.class)
-public class WithTransactionHelperTransactionsTest extends AbstractTransactionsTest {
+public class WithTransactionHelperTransactionsTest extends AbstractUnifiedTest {
     public WithTransactionHelperTransactionsTest(final String filename, final String description, final BsonArray data,
                                                  final BsonDocument definition, final boolean skipTest) {
         super(filename, description, data, definition, skipTest);
