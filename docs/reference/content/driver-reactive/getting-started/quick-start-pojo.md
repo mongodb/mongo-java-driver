@@ -39,7 +39,6 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
-import com.mongodb.reactivestreams.client.Success;
 
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.codecs.pojo.PojoCodecProvider;
@@ -193,7 +192,7 @@ To insert a Person into the collection, you can use the collection's [`insertOne
 ```java
 Person ada = new Person("Ada Byron", 20, new Address("St James Square", "London", "W1"));
 
-collection.insertOne(ada).subscribe(new OperationSubscriber<Success>());
+collection.insertOne(ada).subscribe(new OperationSubscriber<Void>());
 ```
 
 ### Insert Many Persons
@@ -210,7 +209,7 @@ List<Person> people = asList(
         new Person("Timothy Berners-Lee", 61, new Address("Colehill", "Wimborne", null))
 );
 
-collection.insertMany(people).subscribe(new OperationSubscriber<Success>());
+collection.insertMany(people).subscribe(new OperationSubscriber<Void>());
 ```
 
 ## Query the Collection

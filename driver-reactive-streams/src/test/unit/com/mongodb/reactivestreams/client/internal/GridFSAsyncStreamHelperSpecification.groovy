@@ -4,7 +4,6 @@ import com.mongodb.Block
 import com.mongodb.internal.async.SingleResultCallback
 import com.mongodb.internal.async.client.gridfs.AsyncInputStream as WrappedAsyncInputStream
 import com.mongodb.internal.async.client.gridfs.AsyncOutputStream as WrappedAsyncOutputStream
-import com.mongodb.reactivestreams.client.Success
 import com.mongodb.reactivestreams.client.TestSubscriber
 import com.mongodb.reactivestreams.client.gridfs.AsyncInputStream
 import com.mongodb.reactivestreams.client.gridfs.AsyncOutputStream
@@ -16,7 +15,6 @@ import spock.lang.Specification
 import java.nio.ByteBuffer
 
 import static com.mongodb.internal.async.client.Observables.observe
-import static com.mongodb.reactivestreams.client.internal.PublisherHelper.voidToSuccessCallback
 
 class GridFSAsyncStreamHelperSpecification extends Specification {
 
@@ -140,11 +138,11 @@ class GridFSAsyncStreamHelperSpecification extends Specification {
         subscriber.assertTerminalEvent()
 
         when:
-        subscriber = new TestSubscriber<Success>()
+        subscriber = new TestSubscriber<Void>()
         new ObservableToPublisher<Void>(observe(new Block<SingleResultCallback<Void>>() {
             @Override
             void apply(final SingleResultCallback<Void> callback) {
-                callbackBasedInputStream.close(voidToSuccessCallback(callback))
+                callbackBasedInputStream.close(callback)
             }
         })).subscribe(subscriber)
         subscriber.requestMore(1)
@@ -153,7 +151,7 @@ class GridFSAsyncStreamHelperSpecification extends Specification {
         1 *  inputStream.close()
 
         then:
-        subscriber.assertReceivedOnNext([Success.SUCCESS])
+        subscriber.assertReceivedOnNext([])
         subscriber.assertTerminalEvent()
     }
 
@@ -181,11 +179,11 @@ class GridFSAsyncStreamHelperSpecification extends Specification {
         subscriber.assertTerminalEvent()
 
         when:
-        subscriber = new TestSubscriber<Success>()
+        subscriber = new TestSubscriber<Void>()
         new ObservableToPublisher<Void>(observe(new Block<SingleResultCallback<Void>>() {
             @Override
             void apply(final SingleResultCallback<Void> callback) {
-                callbackBasedOutputStream.close(voidToSuccessCallback(callback))
+                callbackBasedOutputStream.close(callback)
             }
         })).subscribe(subscriber)
         subscriber.requestMore(1)
@@ -194,7 +192,7 @@ class GridFSAsyncStreamHelperSpecification extends Specification {
         1 *  outputStream.close()
 
         then:
-        subscriber.assertReceivedOnNext([Success.SUCCESS])
+        subscriber.assertReceivedOnNext([])
         subscriber.assertTerminalEvent()
     }
 
@@ -221,11 +219,11 @@ class GridFSAsyncStreamHelperSpecification extends Specification {
         subscriber.assertErrored()
 
         when:
-        subscriber = new TestSubscriber<Success>()
+        subscriber = new TestSubscriber<Void>()
         new ObservableToPublisher<Void>(observe(new Block<SingleResultCallback<Void>>() {
             @Override
             void apply(final SingleResultCallback<Void> callback) {
-                callbackBasedInputStream.close(voidToSuccessCallback(callback))
+                callbackBasedInputStream.close(callback)
             }
         })).subscribe(subscriber)
         subscriber.requestMore(1)
@@ -260,11 +258,11 @@ class GridFSAsyncStreamHelperSpecification extends Specification {
         subscriber.assertErrored()
 
         when:
-        subscriber = new TestSubscriber<Success>()
+        subscriber = new TestSubscriber<Void>()
         new ObservableToPublisher<Void>(observe(new Block<SingleResultCallback<Void>>() {
             @Override
             void apply(final SingleResultCallback<Void> callback) {
-                callbackBasedOutputStream.close(voidToSuccessCallback(callback))
+                callbackBasedOutputStream.close(callback)
             }
         })).subscribe(subscriber)
         subscriber.requestMore(1)

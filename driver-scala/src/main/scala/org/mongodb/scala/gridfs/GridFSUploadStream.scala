@@ -20,8 +20,8 @@ import java.nio.ByteBuffer
 
 import com.mongodb.reactivestreams.client.gridfs.{ GridFSUploadStream => JGridFSUploadStream }
 import org.bson.types.ObjectId
+import org.mongodb.scala.SingleObservable
 import org.mongodb.scala.bson.BsonValue
-import org.mongodb.scala.{ Completed, SingleObservable }
 
 /**
  * A GridFS OutputStream for uploading data into GridFS
@@ -53,7 +53,7 @@ case class GridFSUploadStream(private val wrapped: JGridFSUploadStream) extends 
    *
    * @return an Observable identifying when the abort and cleanup has finished
    */
-  def abort(): SingleObservable[Completed] = wrapped.abort()
+  def abort(): SingleObservable[Void] = wrapped.abort()
 
   /**
    * Writes a sequence of bytes from the given buffer into this stream.
@@ -68,5 +68,5 @@ case class GridFSUploadStream(private val wrapped: JGridFSUploadStream) extends 
    *
    * @return an Observable identifying when the AsyncOutptStream has been closed
    */
-  override def close(): SingleObservable[Completed] = wrapped.close()
+  override def close(): SingleObservable[Void] = wrapped.close()
 }

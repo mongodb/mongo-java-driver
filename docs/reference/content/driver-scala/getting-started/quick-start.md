@@ -176,17 +176,17 @@ In the API all methods returning a `Observables` are "cold" streams meaning that
 The example below does nothing:
 
 ```scala
-val observable: Observable[Completed] = collection.insertOne(doc)
+val observable: Observable[Void] = collection.insertOne(doc)
 ```
 
 Only when a `Observable` is subscribed to and data requested will the operation happen:
 
 ```scala
-observable.subscribe(new Observer[Completed] {
+observable.subscribe(new Observer[Void] {
 
   override def onSubscribe(subscription: Subscription): Unit = subscription.request(1)
 
-  override def onNext(result: Completed): Unit = println("onNext")
+  override def onNext(result: Void): Unit = println("onNext")
 
   override def onError(e: Throwable): Unit = println("Failed")
   
@@ -195,8 +195,8 @@ observable.subscribe(new Observer[Completed] {
 ```
 
 Once the document has been inserted the `onComplete` method which will print "Completed".  
-If there was an error for any reason the `onError` method would print "Failed". Note, `Observable[Completed]` will never call
-`onNext` as `Completed` is a type alias for `Void`.
+If there was an error for any reason the `onError` method would print "Failed". Note, `Observable[Void]` will never call
+`onNext` as `null` is not a valid value for an `Observer`.
 
 {{% /note %}}
 

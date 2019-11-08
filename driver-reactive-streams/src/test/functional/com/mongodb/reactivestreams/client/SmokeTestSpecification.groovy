@@ -48,7 +48,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         !names.contains(null)
 
         then:
-        run('Create a collection and the created database is in the list', database.&createCollection, collectionName)[0] == Success.SUCCESS
+        run('Create a collection and the created database is in the list', database.&createCollection, collectionName) == []
 
         when:
         def updatedNames = run('get database names', mongoClient.&listDatabaseNames)
@@ -74,7 +74,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         run('find should return an empty list', collection.&find) == []
 
         then:
-        run('Insert a document', collection.&insertOne, document)[0] == Success.SUCCESS
+        run('Insert a document', collection.&insertOne, document) == []
 
         then:
         run('The count is one', collection.&countDocuments)[0] == 1
@@ -116,21 +116,20 @@ class SmokeTestSpecification extends FunctionalSpecification {
         indexNamesUpdated.containsAll('_id_', 'test_1', 'multi_1')
 
         then:
-        run('drop the index', collection.&dropIndex, 'multi_1')[0] == Success.SUCCESS
+        run('drop the index', collection.&dropIndex, 'multi_1') == []
 
         then:
         run('has a single index left "_id" ', collection.&listIndexes).size == 2
 
         then:
-        run('drop the index', collection.&dropIndex, 'test_1')[0] == Success.SUCCESS
+        run('drop the index', collection.&dropIndex, 'test_1') == []
 
         then:
         run('has a single index left "_id" ', collection.&listIndexes).size == 1
 
         then:
         def newCollectionName = 'new' + collectionName.capitalize()
-        run('can rename the collection', collection.&renameCollection, new MongoNamespace(databaseName, newCollectionName)
-            )[0] == Success.SUCCESS
+        run('can rename the collection', collection.&renameCollection, new MongoNamespace(databaseName, newCollectionName)) == []
 
         then:
         !run('the new collection name is in the collection names list', database.&listCollectionNames).contains(collectionName)
@@ -140,7 +139,7 @@ class SmokeTestSpecification extends FunctionalSpecification {
         collection = database.getCollection(newCollectionName)
 
         then:
-        run('drop the collection', collection.&drop)[0] == Success.SUCCESS
+        run('drop the collection', collection.&drop) == []
 
         then:
         run('there are no indexes', collection.&listIndexes).size == 0

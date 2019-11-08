@@ -182,6 +182,7 @@ class AsynchronousChannelHelperSmokeTestSpecification extends FunctionalSpecific
     def run(operation, ... args) {
         def subscriber = new SubscriberHelpers.OperationSubscriber()
         operation.call(args).subscribe(subscriber)
-        subscriber.get().head()
+        def results = subscriber.get()
+        results.isEmpty() ? null : results.head()
     }
 }

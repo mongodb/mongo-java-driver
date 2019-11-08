@@ -18,7 +18,6 @@ package org.mongodb.scala
 
 import java.util.concurrent.atomic.AtomicBoolean
 
-import com.mongodb.reactivestreams.client.Success
 import org.mongodb.scala.bson.ObjectId
 import org.mongodb.scala.gridfs.GridFSFile
 import org.mongodb.scala.internal._
@@ -129,10 +128,6 @@ trait ObservableImplicits {
     }
   }
 
-  implicit class ToSingleObservableVoid(publisher: Publisher[Void]) extends SingleObservable[Completed] {
-    override def subscribe(observer: Observer[_ >: Completed]): Unit = publisher.toSingle().subscribe(observer)
-  }
-
   implicit class ToSingleObservableInt(publisher: Publisher[java.lang.Integer]) extends SingleObservable[Int] {
     override def subscribe(observer: Observer[_ >: Int]): Unit =
       publisher.toObservable().map(_.intValue()).toSingle().subscribe(observer)
@@ -153,15 +148,15 @@ trait ObservableImplicits {
     override def subscribe(observer: Observer[_ >: GridFSFile]): Unit = publisher.toSingle().subscribe(observer)
   }
 
-  implicit class ToSingleObservableCompleted(publisher: Publisher[Success]) extends SingleObservable[Completed] {
-    override def subscribe(observer: Observer[_ >: Completed]): Unit =
+  implicit class ToSingleObservableVoid(publisher: Publisher[Void]) extends SingleObservable[Void] {
+    override def subscribe(observer: Observer[_ >: Void]): Unit =
       publisher
         .toSingle()
-        .subscribe(new Observer[Success] {
+        .subscribe(new Observer[Void] {
 
           override def onSubscribe(subscription: Subscription): Unit = observer.onSubscribe(subscription)
 
-          override def onNext(result: Success): Unit = {}
+          override def onNext(result: Void): Unit = {}
 
           override def onError(e: Throwable): Unit = observer.onError(e)
 

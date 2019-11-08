@@ -70,7 +70,6 @@ class ApiAliasAndCompanionSpec extends BaseSpec {
       "BuildInfo",
       "BulkWriteResult",
       "ClientSessionImplicits",
-      "Completed",
       "Document",
       "Helpers",
       "internal",

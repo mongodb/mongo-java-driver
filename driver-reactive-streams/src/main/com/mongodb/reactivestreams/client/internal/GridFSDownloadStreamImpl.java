@@ -16,18 +16,14 @@
 
 package com.mongodb.reactivestreams.client.internal;
 
-import com.mongodb.Block;
 import com.mongodb.client.gridfs.model.GridFSFile;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.client.gridfs.AsyncGridFSDownloadStream;
-import com.mongodb.reactivestreams.client.Success;
 import com.mongodb.reactivestreams.client.gridfs.GridFSDownloadStream;
 import org.reactivestreams.Publisher;
 
 import java.nio.ByteBuffer;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.reactivestreams.client.internal.PublisherHelper.voidToSuccessCallback;
 
 
 final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
@@ -39,13 +35,7 @@ final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
 
     @Override
     public Publisher<GridFSFile> getGridFSFile() {
-        return new SingleResultObservableToPublisher<GridFSFile>(
-                new Block<SingleResultCallback<GridFSFile>>() {
-                    @Override
-                    public void apply(final SingleResultCallback<GridFSFile> callback) {
-                        wrapped.getGridFSFile(callback);
-                    }
-                });
+        return new SingleResultObservableToPublisher<>(wrapped::getGridFSFile);
     }
 
     @Override
@@ -56,34 +46,17 @@ final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
 
     @Override
     public Publisher<Integer> read(final ByteBuffer dst) {
-        return new SingleResultObservableToPublisher<Integer>(
-                new Block<SingleResultCallback<Integer>>() {
-                    @Override
-                    public void apply(final SingleResultCallback<Integer> callback) {
-                        wrapped.read(dst, callback);
-                    }
-                });
+        return new SingleResultObservableToPublisher<>(callback -> wrapped.read(dst, callback));
     }
 
     @Override
     public Publisher<Long> skip(final long bytesToSkip) {
-        return new SingleResultObservableToPublisher<Long>(
-                new Block<SingleResultCallback<Long>>() {
-                    @Override
-                    public void apply(final SingleResultCallback<Long> callback) {
-                        wrapped.skip(bytesToSkip, callback);
-                    }
-                });
+        return new SingleResultObservableToPublisher<>(
+                callback -> wrapped.skip(bytesToSkip, callback));
     }
 
     @Override
-    public Publisher<Success> close() {
-        return new SingleResultObservableToPublisher<Success>(
-                new Block<SingleResultCallback<Success>>() {
-                    @Override
-                    public void apply(final SingleResultCallback<Success> callback) {
-                        wrapped.close(voidToSuccessCallback(callback));
-                    }
-                });
+    public Publisher<Void> close() {
+        return new SingleResultObservableToPublisher<>(wrapped::close);
     }
 }

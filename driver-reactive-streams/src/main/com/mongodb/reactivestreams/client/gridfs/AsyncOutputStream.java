@@ -16,7 +16,6 @@
 
 package com.mongodb.reactivestreams.client.gridfs;
 
-import com.mongodb.reactivestreams.client.Success;
 import com.mongodb.reactivestreams.client.gridfs.helpers.AsyncStreamHelper;
 import org.reactivestreams.Publisher;
 
@@ -45,5 +44,5 @@ public interface AsyncOutputStream {
      *
      * @return a publisher with a single element indicating when the stream has been closed
      */
-    Publisher<Success> close();
+    Publisher<Void> close();
 }

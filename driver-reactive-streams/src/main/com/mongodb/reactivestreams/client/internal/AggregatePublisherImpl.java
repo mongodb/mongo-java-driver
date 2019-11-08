@@ -16,13 +16,10 @@
 
 package com.mongodb.reactivestreams.client.internal;
 
-import com.mongodb.Block;
 import com.mongodb.client.model.Collation;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.client.AsyncAggregateIterable;
 import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.AggregatePublisher;
-import com.mongodb.reactivestreams.client.Success;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
 import org.reactivestreams.Subscriber;
@@ -30,7 +27,6 @@ import org.reactivestreams.Subscriber;
 import java.util.concurrent.TimeUnit;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.reactivestreams.client.internal.PublisherHelper.voidToSuccessCallback;
 
 
 final class AggregatePublisherImpl<TResult> implements AggregatePublisher<TResult> {
@@ -67,14 +63,8 @@ final class AggregatePublisherImpl<TResult> implements AggregatePublisher<TResul
     }
 
     @Override
-    public Publisher<Success> toCollection() {
-        return new SingleResultObservableToPublisher<Success>(
-                new Block<SingleResultCallback<Success>>(){
-                    @Override
-                    public void apply(final SingleResultCallback<Success> callback) {
-                        wrapped.toCollection(voidToSuccessCallback(callback));
-                    }
-                });
+    public Publisher<Void> toCollection() {
+        return new SingleResultObservableToPublisher<>(wrapped::toCollection);
     }
 
     @Override
@@ -103,17 +93,11 @@ final class AggregatePublisherImpl<TResult> implements AggregatePublisher<TResul
 
     @Override
     public Publisher<TResult> first() {
-        return new SingleResultObservableToPublisher<TResult>(
-                new Block<SingleResultCallback<TResult>>() {
-                    @Override
-                    public void apply(final SingleResultCallback<TResult> callback) {
-                        wrapped.first(callback);
-                    }
-                });
+        return new SingleResultObservableToPublisher<>(wrapped::first);
     }
 
     @Override
     public void subscribe(final Subscriber<? super TResult> s) {
-        new ObservableToPublisher<TResult>(Observables.observe(wrapped)).subscribe(s);
+        new ObservableToPublisher<>(Observables.observe(wrapped)).subscribe(s);
     }
 }

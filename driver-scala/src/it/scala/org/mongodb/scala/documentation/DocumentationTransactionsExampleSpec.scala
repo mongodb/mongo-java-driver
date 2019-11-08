@@ -70,13 +70,13 @@ class DocumentationTransactionsExampleSpec extends RequiresMongoDBISpec {
           clientSession,
           Document("employee" -> 3, "status" -> Document("new" -> "Inactive", "old" -> "Active"))
         )
-        .subscribe((res: Completed) => ())
+        .subscribe((res: Void) => ())
 
       clientSession
     })
   }
 
-  def commitAndRetry(observable: SingleObservable[Completed]): SingleObservable[Completed] = {
+  def commitAndRetry(observable: SingleObservable[Void]): SingleObservable[Void] = {
     observable.recoverWith({
       case e: MongoException if e.hasErrorLabel(MongoException.UNKNOWN_TRANSACTION_COMMIT_RESULT_LABEL) => {
         println("UnknownTransactionCommitResult, retrying commit operation ...")
@@ -89,7 +89,7 @@ class DocumentationTransactionsExampleSpec extends RequiresMongoDBISpec {
     })
   }
 
-  def runTransactionAndRetry(observable: SingleObservable[Completed]): SingleObservable[Completed] = {
+  def runTransactionAndRetry(observable: SingleObservable[Void]): SingleObservable[Void] = {
     observable.recoverWith({
       case e: MongoException if e.hasErrorLabel(MongoException.TRANSIENT_TRANSACTION_ERROR_LABEL) => {
         println("TransientTransactionError, aborting transaction and retrying ...")
@@ -98,14 +98,14 @@ class DocumentationTransactionsExampleSpec extends RequiresMongoDBISpec {
     })
   }
 
-  def updateEmployeeInfoWithRetry(client: MongoClient): SingleObservable[Completed] = {
+  def updateEmployeeInfoWithRetry(client: MongoClient): SingleObservable[Void] = {
 
     val database = client.getDatabase("hr")
     val updateEmployeeInfoObservable: SingleObservable[ClientSession] =
       updateEmployeeInfo(database, client.startSession())
-    val commitTransactionObservable: SingleObservable[Completed] =
+    val commitTransactionObservable: SingleObservable[Void] =
       updateEmployeeInfoObservable.flatMap(clientSession => clientSession.commitTransaction())
-    val commitAndRetryObservable: SingleObservable[Completed] = commitAndRetry(commitTransactionObservable)
+    val commitAndRetryObservable: SingleObservable[Void] = commitAndRetry(commitTransactionObservable)
 
     runTransactionAndRetry(commitAndRetryObservable)
   }

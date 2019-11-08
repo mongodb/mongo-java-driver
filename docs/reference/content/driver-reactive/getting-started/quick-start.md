@@ -189,7 +189,7 @@ Once you have the `MongoCollection` object, you can insert documents into the co
 To insert a single document into the collection, you can use the collection's [`insertOne()`]({{< apiref "com/mongodb/reactivestreams/client/MongoCollection.html#insertOne(TDocument)" >}}) method.
 
 ```java
-collection.insertOne(doc).subscribe(new OperationSubscriber<Success>());
+collection.insertOne(doc).subscribe(new OperationSubscriber<Void>());
 ```
 
 {{% note %}}
@@ -202,21 +202,20 @@ In the API all methods returning a `Publisher` are "cold" streams meaning that n
 The example below does nothing:
 
 ```java
-Publisher<Success> publisher = collection.insertOne(doc);
+Publisher<Void> publisher = collection.insertOne(doc);
 ```
 
 Only when a `Publisher` is subscribed to and data requested will the operation happen:
 
 ```java
-publisher.subscribe(new Subscriber<Success>() {
+publisher.subscribe(new Subscriber<Void>() {
     @Override
     public void onSubscribe(final Subscription s) {
         s.request(1);  // <--- Data requested and the insertion will now occur
     }
 
     @Override
-    public void onNext(final Success success) {
-        System.out.println("Inserted");
+    public void onNext(final Void success) {
     }
 
     @Override
@@ -226,7 +225,7 @@ publisher.subscribe(new Subscriber<Success>() {
 
     @Override
     public void onComplete() {
-        System.out.println("Completed");
+        System.out.println("Inserted");
     }
 });
 ```
@@ -261,7 +260,7 @@ To insert these documents to the collection, pass the list of documents to the
 [`insertMany()`]({{< apiref "com/mongodb/reactivestreams/client/MongoCollection.html#insertMany(java.util.List)" >}}) method.
 
 ```java
-collection.insertMany(documents).subscribe(new ObservableSubscriber<Success>());
+collection.insertMany(documents).subscribe(new ObservableSubscriber<Void>());
 ```
 
 Here we block on the `Publisher` to finish so that when we call the next operation we know the data has been inserted into the database!

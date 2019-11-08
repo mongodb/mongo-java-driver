@@ -48,7 +48,6 @@ import com.mongodb.client.model.UpdateOptions;
 import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
-import com.mongodb.reactivestreams.client.Success;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -355,56 +354,56 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
 
     @Override
     public void insertOne(final T t) {
-        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
+        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
         wrapped.insertOne(t).subscribe(subscriber);
         subscriber.get();
     }
 
     @Override
     public void insertOne(final T t, final InsertOneOptions options) {
-        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
+        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
         wrapped.insertOne(t, options).subscribe(subscriber);
         subscriber.get();
     }
 
     @Override
     public void insertOne(final ClientSession clientSession, final T t) {
-        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
+        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
         wrapped.insertOne(unwrap(clientSession), t).subscribe(subscriber);
         subscriber.get();
     }
 
     @Override
     public void insertOne(final ClientSession clientSession, final T t, final InsertOneOptions options) {
-        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
+        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
         wrapped.insertOne(unwrap(clientSession), t, options).subscribe(subscriber);
         subscriber.get();
     }
 
     @Override
     public void insertMany(final List<? extends T> documents) {
-        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
+        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
         wrapped.insertMany(documents).subscribe(subscriber);
         subscriber.get();
     }
 
     @Override
     public void insertMany(final List<? extends T> documents, final InsertManyOptions options) {
-        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
+        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
         wrapped.insertMany(documents, options).subscribe(subscriber);
         subscriber.get();
     }
 
     @Override
     public void insertMany(final ClientSession clientSession, final List<? extends T> documents) {
-        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
+        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
         wrapped.insertMany(unwrap(clientSession), documents).subscribe(subscriber);
         subscriber.get();
     }
 
     @Override
     public void insertMany(final ClientSession clientSession, final List<? extends T> documents, final InsertManyOptions options) {
-        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
+        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
         wrapped.insertMany(unwrap(clientSession), documents, options).subscribe(subscriber);
         subscriber.get();
     }
@@ -727,14 +726,14 @@ class SyncMongoCollection<T> implements MongoCollection<T> {
 
     @Override
     public void drop() {
-        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
+        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
         wrapped.drop().subscribe(subscriber);
         subscriber.get();
     }
 
     @Override
     public void drop(final ClientSession clientSession) {
-        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
+        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
         wrapped.drop(unwrap(clientSession)).subscribe(subscriber);
         subscriber.get();
     }

@@ -22,7 +22,6 @@ import com.mongodb.WriteConcern;
 import com.mongodb.annotations.ThreadSafe;
 import com.mongodb.client.gridfs.model.GridFSDownloadOptions;
 import com.mongodb.client.gridfs.model.GridFSUploadOptions;
-import com.mongodb.reactivestreams.client.Success;
 import com.mongodb.reactivestreams.client.ClientSession;
 import org.bson.BsonValue;
 import org.bson.conversions.Bson;
@@ -279,7 +278,7 @@ public interface GridFSBucket {
      * @param source   the Stream providing the file data
      * @return a publisher with a single element, representing when the successful upload of the source.
      */
-    Publisher<Success> uploadFromStream(BsonValue id, String filename, AsyncInputStream source);
+    Publisher<Void> uploadFromStream(BsonValue id, String filename, AsyncInputStream source);
 
     /**
      * Uploads the contents of the given {@code AsyncInputStream} to a GridFS bucket.
@@ -294,7 +293,7 @@ public interface GridFSBucket {
      * @param options  the GridFSUploadOptions
      * @return a publisher with a single element, representing when the successful upload of the source.
      */
-    Publisher<Success> uploadFromStream(BsonValue id, String filename, AsyncInputStream source, GridFSUploadOptions options);
+    Publisher<Void> uploadFromStream(BsonValue id, String filename, AsyncInputStream source, GridFSUploadOptions options);
 
     /**
      * Uploads the contents of the given {@code AsyncInputStream} to a GridFS bucket.
@@ -345,7 +344,7 @@ public interface GridFSBucket {
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Success> uploadFromStream(ClientSession clientSession, BsonValue id, String filename, AsyncInputStream source);
+    Publisher<Void> uploadFromStream(ClientSession clientSession, BsonValue id, String filename, AsyncInputStream source);
 
     /**
      * Uploads the contents of the given {@code AsyncInputStream} to a GridFS bucket.
@@ -363,7 +362,7 @@ public interface GridFSBucket {
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Success> uploadFromStream(ClientSession clientSession, BsonValue id, String filename, AsyncInputStream source,
+    Publisher<Void> uploadFromStream(ClientSession clientSession, BsonValue id, String filename, AsyncInputStream source,
                                         GridFSUploadOptions options);
 
     /**
@@ -603,7 +602,7 @@ public interface GridFSBucket {
      * @param id       the ObjectId of the file to be deleted
      * @return a publisher with a single element, representing that the file has been deleted
      */
-    Publisher<Success> delete(ObjectId id);
+    Publisher<Void> delete(ObjectId id);
 
     /**
      * Given a {@code id}, delete this stored file's files collection document and associated chunks from a GridFS bucket.
@@ -611,18 +610,7 @@ public interface GridFSBucket {
      * @param id       the ObjectId of the file to be deleted
      * @return a publisher with a single element, representing that the file has been deleted
      */
-    Publisher<Success> delete(BsonValue id);
-
-    /**
-     * Given a {@code id}, delete this stored file's files collection document and associated chunks from a GridFS bucket.
-     *
-     * @param clientSession the client session with which to associate this operation
-     * @param id       the ObjectId of the file to be deleted
-     * @return a publisher with a single element, representing that the file has been deleted
-     * @mongodb.server.release 3.6
-     * @since 1.7
-     */
-    Publisher<Success> delete(ClientSession clientSession, ObjectId id);
+    Publisher<Void> delete(BsonValue id);
 
     /**
      * Given a {@code id}, delete this stored file's files collection document and associated chunks from a GridFS bucket.
@@ -633,7 +621,18 @@ public interface GridFSBucket {
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Success> delete(ClientSession clientSession, BsonValue id);
+    Publisher<Void> delete(ClientSession clientSession, ObjectId id);
+
+    /**
+     * Given a {@code id}, delete this stored file's files collection document and associated chunks from a GridFS bucket.
+     *
+     * @param clientSession the client session with which to associate this operation
+     * @param id       the ObjectId of the file to be deleted
+     * @return a publisher with a single element, representing that the file has been deleted
+     * @mongodb.server.release 3.6
+     * @since 1.7
+     */
+    Publisher<Void> delete(ClientSession clientSession, BsonValue id);
 
     /**
      * Renames the stored file with the specified {@code id}.
@@ -642,7 +641,7 @@ public interface GridFSBucket {
      * @param newFilename the new filename for the file
      * @return a publisher with a single element, representing that the file has been renamed
      */
-    Publisher<Success> rename(ObjectId id, String newFilename);
+    Publisher<Void> rename(ObjectId id, String newFilename);
 
     /**
      * Renames the stored file with the specified {@code id}.
@@ -651,7 +650,7 @@ public interface GridFSBucket {
      * @param newFilename the new filename for the file
      * @return a publisher with a single element, representing that the file has been renamed
      */
-    Publisher<Success> rename(BsonValue id, String newFilename);
+    Publisher<Void> rename(BsonValue id, String newFilename);
 
     /**
      * Renames the stored file with the specified {@code id}.
@@ -663,7 +662,7 @@ public interface GridFSBucket {
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Success> rename(ClientSession clientSession, ObjectId id, String newFilename);
+    Publisher<Void> rename(ClientSession clientSession, ObjectId id, String newFilename);
 
     /**
      * Renames the stored file with the specified {@code id}.
@@ -675,14 +674,14 @@ public interface GridFSBucket {
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Success> rename(ClientSession clientSession, BsonValue id, String newFilename);
+    Publisher<Void> rename(ClientSession clientSession, BsonValue id, String newFilename);
 
     /**
      * Drops the data associated with this bucket from the database.
      *
      * @return a publisher with a single element, representing that the collections have been dropped
      */
-    Publisher<Success> drop();
+    Publisher<Void> drop();
 
     /**
      * Drops the data associated with this bucket from the database.
@@ -692,5 +691,5 @@ public interface GridFSBucket {
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Success> drop(ClientSession clientSession);
+    Publisher<Void> drop(ClientSession clientSession);
 }
