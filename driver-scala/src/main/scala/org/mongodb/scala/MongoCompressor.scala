@@ -40,4 +40,13 @@ object MongoCompressor {
    * @note Requires MongoDB 3.6 or greater
    */
   def createZlibCompressor: MongoCompressor = JMongoCompressor.createZlibCompressor()
+
+  /**
+   * Create an instance for zstd compression.
+   *
+   * @return A compressor based on the zstd compression algorithm
+   * @note Requires MongoDB 4.2 or greater
+   * @since 4.0
+   */
+  def createZstdCompressor: MongoCompressor = JMongoCompressor.createZstdCompressor()
 }
