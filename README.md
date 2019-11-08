@@ -2,9 +2,9 @@
 
 Release notes are available [here](https://github.com/mongodb/mongo-java-driver/releases).
 
-## API Documentation:
+## Documentation
 
-Javadoc for all major and minor releases is available [here](http://api.mongodb.com/java/).
+Reference and API documentation is available [here](http://mongodb.github.io/mongo-java-driver/).
 
 ## Support / Feedback
 
@@ -65,28 +65,17 @@ time.
 ## Binaries
 
 Binaries and dependency information for Maven, Gradle, Ivy and others can be found at
-[http://search.maven.org](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.mongodb%22%20AND%20a%3A%22mongo-java-driver%22).
+[http://search.maven.org](http://search.maven.org/#search%7Cga%7C1%7Cg%3A%22org.mongodb%22%20AND%20a%3A%22mongodb-driver-sync%22).
 
 Example for Maven:
 
 ```xml
 <dependency>
     <groupId>org.mongodb</groupId>
-    <artifactId>mongodb-driver</artifactId>
+    <artifactId>mongodb-driver-sync</artifactId>
     <version>x.y.z</version>
 </dependency>
 ```
-
-For an all-in-one jar (which embeds the core driver and bson):
-
-```xml
-<dependency>
-    <groupId>org.mongodb</groupId>
-    <artifactId>mongo-java-driver</artifactId>
-    <version>x.y.z</version>
-</dependency>
-```
-
 Snapshot builds are also published regulary via Sonatype.
 
 Example for Maven:
@@ -99,8 +88,6 @@ Example for Maven:
         </repository>
     </repositories>
 ```
-
-For binaries containing the asynchronous API, see the [driver-async README](driver-async/#binaries).
 
 ## Build
 
@@ -144,18 +131,11 @@ A couple of manual configuration steps are required to run the code in IntelliJ:
 
 * Jeff Yemin           jeff.yemin@mongodb.com
 * Ross Lawley          ross@mongodb.com
-
-## Contributors:
-* Trisha Gee           trisha.gee@gmail.com
-* Uladzmir Mihura      trnl.me@gmail.com
-* Justin Lee           justin.lee@mongodb.com
-* Craig Wilson         craig.wilson@mongodb.com
+* John Stewart         john.stewart@mongodb.com
 
 Additional contributors can be found [here](https://github.com/mongodb/mongo-java-driver/graphs/contributors).
 
 ## Supporters
-
-YourKit is supporting this open source project with its [YourKit Java Profiler](http://www.yourkit.com/java/profiler/index.jsp).
 
 JetBrains is supporting this open source project with:
 
