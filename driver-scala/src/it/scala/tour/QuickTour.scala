@@ -16,17 +16,36 @@
 
 package tour
 
-import scala.collection.immutable.IndexedSeq
+import java.util.concurrent.CountDownLatch
 
+import com.mongodb.Block
+import com.mongodb.connection.{ ClusterSettings, SslSettings }
+import org.bson.UuidRepresentation
+import org.bson.codecs.UuidCodec
+import org.bson.codecs.configuration.CodecRegistries
 import org.mongodb.scala._
+import org.mongodb.scala.bson.BsonDocument
+import org.mongodb.scala.model.{
+  Accumulators,
+  Aggregates,
+  BulkWriteOptions,
+  CreateCollectionOptions,
+  DeleteOneModel,
+  Filters,
+  InsertOneModel,
+  Projections,
+  ReplaceOneModel,
+  UpdateOneModel
+}
 import org.mongodb.scala.model.Aggregates._
 import org.mongodb.scala.model.Filters._
 import org.mongodb.scala.model.Projections._
 import org.mongodb.scala.model.Sorts._
 import org.mongodb.scala.model.Updates._
-import org.mongodb.scala.model._
-
+import org.mongodb.scala.model.changestream.ChangeStreamDocument
 import tour.Helpers._
+
+import scala.collection.immutable.IndexedSeq
 
 /**
  * The QuickTour code example
@@ -119,31 +138,23 @@ object QuickTour {
     // Delete Many
     collection.deleteMany(gte("i", 100)).printHeadResult("Delete Result: ")
 
-    collection.drop().results()
-
-    // ordered bulk writes
-    val writes: List[WriteModel[_ <: Document]] = List(
-      InsertOneModel(Document("_id" -> 4)),
-      InsertOneModel(Document("_id" -> 5)),
-      InsertOneModel(Document("_id" -> 6)),
-      UpdateOneModel(Document("_id" -> 1), set("x", 2)),
-      DeleteOneModel(Document("_id" -> 2)),
-      ReplaceOneModel(Document("_id" -> 3), Document("_id" -> 3, "x" -> 4))
-    )
-
-    collection.bulkWrite(writes).printHeadResult("Bulk write results: ")
-
-    collection.drop().results()
-
-    collection.bulkWrite(writes, BulkWriteOptions().ordered(false)).printHeadResult("Bulk write results (unordered): ")
-
-    collection.find().printResults("Documents in collection: ")
+    // Create Index
+    collection.createIndex(Document("i" -> 1)).printHeadResult("Create Index Result: %s")
 
     // Clean up
     collection.drop().results()
 
     // release resources
     mongoClient.close()
+
+    import scala.collection.JavaConverters._
+    import org.mongodb.scala.bson._
+
+    val codecRegistry =
+      CodecRegistries.fromRegistries(
+        CodecRegistries.fromCodecs(new UuidCodec(UuidRepresentation.STANDARD)),
+        MongoClient.DEFAULT_CODEC_REGISTRY
+      )
   }
 
 }

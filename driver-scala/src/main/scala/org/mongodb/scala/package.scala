@@ -47,6 +47,18 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
   val Document = bson.Document
 
   /**
+   * The Connection String
+   */
+  type ConnectionString = com.mongodb.ConnectionString
+
+  /**
+   * Connection String companion object
+   */
+  object ConnectionString {
+    def apply(connectionString: String): ConnectionString = new com.mongodb.ConnectionString(connectionString)
+  }
+
+  /**
    * The result of a successful bulk write operation.
    */
   type BulkWriteResult = com.mongodb.bulk.BulkWriteResult

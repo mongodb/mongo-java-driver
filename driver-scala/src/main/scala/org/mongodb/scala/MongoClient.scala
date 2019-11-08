@@ -18,7 +18,6 @@ package org.mongodb.scala
 
 import java.io.Closeable
 
-import com.mongodb.ConnectionString
 import com.mongodb.reactivestreams.client.{ MongoClients, MongoClient => JMongoClient }
 import org.bson.codecs.configuration.CodecRegistry
 import org.bson.codecs.configuration.CodecRegistries.{ fromProviders, fromRegistries }

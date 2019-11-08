@@ -22,9 +22,7 @@ import java.nio.charset.StandardCharsets
 import java.nio.file.{ Path, Paths, StandardOpenOption }
 
 import scala.util.Success
-
 import org.bson.types.ObjectId
-
 import org.mongodb.scala.model.Filters
 import org.mongodb.scala.gridfs._
 import org.mongodb.scala.gridfs.helpers.AsynchronousChannelHelper.channelToOutputStream
