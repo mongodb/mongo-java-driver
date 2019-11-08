@@ -35,7 +35,7 @@ final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
 
     @Override
     public Publisher<GridFSFile> getGridFSFile() {
-        return new SingleResultObservableToPublisher<>(wrapped::getGridFSFile);
+        return Publishers.publish(wrapped::getGridFSFile);
     }
 
     @Override
@@ -46,17 +46,17 @@ final class GridFSDownloadStreamImpl implements GridFSDownloadStream {
 
     @Override
     public Publisher<Integer> read(final ByteBuffer dst) {
-        return new SingleResultObservableToPublisher<>(callback -> wrapped.read(dst, callback));
+        return Publishers.publish(callback -> wrapped.read(dst, callback));
     }
 
     @Override
     public Publisher<Long> skip(final long bytesToSkip) {
-        return new SingleResultObservableToPublisher<>(
+        return Publishers.publish(
                 callback -> wrapped.skip(bytesToSkip, callback));
     }
 
     @Override
     public Publisher<Void> close() {
-        return new SingleResultObservableToPublisher<>(wrapped::close);
+        return Publishers.publish(wrapped::close);
     }
 }

@@ -17,7 +17,6 @@
 package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.internal.async.client.AsyncListCollectionsIterable;
-import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.ListCollectionsPublisher;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
@@ -58,11 +57,11 @@ final class ListCollectionsPublisherImpl<TResult> implements ListCollectionsPubl
 
     @Override
     public Publisher<TResult> first() {
-        return new SingleResultObservableToPublisher<>(wrapped::first);
+        return Publishers.publish(wrapped::first);
     }
 
     @Override
     public void subscribe(final Subscriber<? super TResult> s) {
-        new ObservableToPublisher<>(Observables.observe(wrapped)).subscribe(s);
+        Publishers.publish(wrapped).subscribe(s);
     }
 }

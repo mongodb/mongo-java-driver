@@ -14,19 +14,22 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.async.client;
+package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.MongoException;
 import com.mongodb.diagnostics.logging.Logger;
 import com.mongodb.diagnostics.logging.Loggers;
 import com.mongodb.lang.Nullable;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 
 import java.util.List;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
+
 abstract class AbstractSubscription<TResult> implements Subscription {
     private static final Logger LOGGER = Loggers.getLogger("client");
-    private final Observer<? super TResult> observer;
+    private final Subscriber<? super TResult> subscriber;
 
     /* protected by `this` */
     private boolean requestedData;
@@ -38,11 +41,10 @@ abstract class AbstractSubscription<TResult> implements Subscription {
 
     private final ConcurrentLinkedQueue<TResult> resultsQueue = new ConcurrentLinkedQueue<TResult>();
 
-    AbstractSubscription(final Observer<? super TResult> observer) {
-        this.observer = observer;
+    AbstractSubscription(final Subscriber<? super TResult> subscriber) {
+        this.subscriber = subscriber;
     }
 
-    @Override
     public void unsubscribe() {
         boolean unsubscribe = false;
 
@@ -59,15 +61,23 @@ abstract class AbstractSubscription<TResult> implements Subscription {
         }
     }
 
-    @Override
     public synchronized boolean isUnsubscribed() {
         return isUnsubscribed;
     }
 
     @Override
+    public void cancel() {
+        unsubscribe();
+    }
+
+    @Override
     public void request(final long n) {
-        if (n < 1) {
-            throw new IllegalArgumentException("Number requested must be > 0: " + n);
+
+        if (!isUnsubscribed() && n < 1) {
+            onError(new IllegalArgumentException("3.9 While the Subscription is not cancelled, "
+                    + "Subscription.request(long n) MUST throw a java.lang.IllegalArgumentException if the "
+                    + "argument is <= 0."));
+            return;
         }
 
         boolean requestData = false;
@@ -126,7 +136,7 @@ abstract class AbstractSubscription<TResult> implements Subscription {
         if (terminalAction()) {
             postTerminate();
             try {
-                observer.onError(t);
+                subscriber.onError(t);
             } catch (Throwable t1) {
                 LOGGER.error("Calling onError threw an exception", t1);
                 throw MongoException.fromThrowableNonNull(t1);
@@ -139,7 +149,7 @@ abstract class AbstractSubscription<TResult> implements Subscription {
     private void onNext(final TResult next) {
         if (!isTerminated()) {
             try {
-                observer.onNext(next);
+                subscriber.onNext(next);
             } catch (Throwable t) {
                 LOGGER.error("Calling onNext threw an exception", t);
                 onError(t);
@@ -151,7 +161,7 @@ abstract class AbstractSubscription<TResult> implements Subscription {
         if (terminalAction()) {
             postTerminate();
             try {
-                observer.onComplete();
+                subscriber.onComplete();
             } catch (Throwable t) {
                 LOGGER.error("Calling onComplete threw an exception", t);
                 throw MongoException.fromThrowableNonNull(t);

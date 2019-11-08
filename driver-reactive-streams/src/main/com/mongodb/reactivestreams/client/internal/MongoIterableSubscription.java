@@ -14,13 +14,12 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.async.client;
+package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.MongoException;
 import com.mongodb.internal.async.AsyncBatchCursor;
-import com.mongodb.internal.async.SingleResultCallback;
-
-import java.util.List;
+import com.mongodb.internal.async.client.AsyncMongoIterable;
+import org.reactivestreams.Subscriber;
 
 
 final class MongoIterableSubscription<TResult> extends AbstractSubscription<TResult> {
@@ -34,26 +33,23 @@ final class MongoIterableSubscription<TResult> extends AbstractSubscription<TRes
 
     private volatile AsyncBatchCursor<TResult> batchCursor;
 
-    MongoIterableSubscription(final AsyncMongoIterable<TResult> mongoIterable, final Observer<? super TResult> observer) {
-        super(observer);
+    MongoIterableSubscription(final AsyncMongoIterable<TResult> mongoIterable, final Subscriber<? super TResult> subscriber) {
+        super(subscriber);
         this.mongoIterable = mongoIterable;
-        observer.onSubscribe(this);
+        subscriber.onSubscribe(this);
     }
 
     @Override
     void requestInitialData() {
         mongoIterable.batchSize(calculateBatchSize());
-        mongoIterable.batchCursor(new SingleResultCallback<AsyncBatchCursor<TResult>>() {
-            @Override
-            public void onResult(final AsyncBatchCursor<TResult> result, final Throwable t) {
-                if (t != null) {
-                    onError(t);
-                } else if (result != null) {
-                    batchCursor = result;
-                    requestMoreData();
-                } else {
-                    onError(new MongoException("Unexpected error, no AsyncBatchCursor returned from the MongoIterable."));
-                }
+        mongoIterable.batchCursor((result, t) -> {
+            if (t != null) {
+                onError(t);
+            } else if (result != null) {
+                batchCursor = result;
+                requestMoreData();
+            } else {
+                onError(new MongoException("Unexpected error, no AsyncBatchCursor returned from the MongoIterable."));
             }
         });
     }
@@ -86,24 +82,21 @@ final class MongoIterableSubscription<TResult> extends AbstractSubscription<TRes
 
         if (mustRead) {
             batchCursor.setBatchSize(calculateBatchSize());
-            batchCursor.next(new SingleResultCallback<List<TResult>>() {
-                @Override
-                public void onResult(final List<TResult> result, final Throwable t) {
-                    synchronized (MongoIterableSubscription.this) {
-                        isReading = false;
-                    }
+            batchCursor.next((result, t) -> {
+                synchronized (MongoIterableSubscription.this) {
+                    isReading = false;
+                }
 
-                    if (t != null) {
-                        onError(t);
-                    } else {
-                        addToQueue(result);
-                        synchronized (MongoIterableSubscription.this) {
-                            if (result == null) {
-                                completed = true;
-                            }
+                if (t != null) {
+                    onError(t);
+                } else {
+                    addToQueue(result);
+                    synchronized (MongoIterableSubscription.this) {
+                        if (result == null) {
+                            completed = true;
                         }
-                        tryProcessResultsQueue();
                     }
+                    tryProcessResultsQueue();
                 }
             });
         }

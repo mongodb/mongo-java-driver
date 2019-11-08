@@ -14,8 +14,6 @@ import spock.lang.Specification
 
 import java.nio.ByteBuffer
 
-import static com.mongodb.internal.async.client.Observables.observe
-
 class GridFSAsyncStreamHelperSpecification extends Specification {
 
     def subscriber = Stub(Subscriber) {
@@ -122,12 +120,12 @@ class GridFSAsyncStreamHelperSpecification extends Specification {
 
         when:
         def subscriber = new TestSubscriber<Integer>()
-        new ObservableToPublisher<Integer>(observe(new Block<SingleResultCallback<Integer>>() {
+        Publishers.publish(new Block<SingleResultCallback<Integer>>() {
             @Override
             void apply(final SingleResultCallback<Integer> callback) {
                 callbackBasedInputStream.read(ByteBuffer.allocate(1024), callback)
             }
-        })).subscribe(subscriber)
+        }).subscribe(subscriber)
         subscriber.requestMore(1)
 
         then:
@@ -139,12 +137,12 @@ class GridFSAsyncStreamHelperSpecification extends Specification {
 
         when:
         subscriber = new TestSubscriber<Void>()
-        new ObservableToPublisher<Void>(observe(new Block<SingleResultCallback<Void>>() {
+        Publishers.publish(new Block<SingleResultCallback<Void>>() {
             @Override
             void apply(final SingleResultCallback<Void> callback) {
                 callbackBasedInputStream.close(callback)
             }
-        })).subscribe(subscriber)
+        }).subscribe(subscriber)
         subscriber.requestMore(1)
 
         then:
@@ -163,12 +161,12 @@ class GridFSAsyncStreamHelperSpecification extends Specification {
 
         when:
         def subscriber = new TestSubscriber<Integer>()
-        new ObservableToPublisher<Integer>(observe(new Block<SingleResultCallback<Integer>>() {
+        Publishers.publish(new Block<SingleResultCallback<Integer>>() {
             @Override
             void apply(final SingleResultCallback<Integer> callback) {
                 callbackBasedOutputStream.write(ByteBuffer.allocate(1024), callback)
             }
-        })).subscribe(subscriber)
+        }).subscribe(subscriber)
         subscriber.requestMore(1)
 
         then:
@@ -180,12 +178,12 @@ class GridFSAsyncStreamHelperSpecification extends Specification {
 
         when:
         subscriber = new TestSubscriber<Void>()
-        new ObservableToPublisher<Void>(observe(new Block<SingleResultCallback<Void>>() {
+        Publishers.publish(new Block<SingleResultCallback<Void>>() {
             @Override
             void apply(final SingleResultCallback<Void> callback) {
                 callbackBasedOutputStream.close(callback)
             }
-        })).subscribe(subscriber)
+        }).subscribe(subscriber)
         subscriber.requestMore(1)
 
         then:
@@ -204,12 +202,12 @@ class GridFSAsyncStreamHelperSpecification extends Specification {
 
         when:
         def subscriber = new TestSubscriber<Integer>()
-        new ObservableToPublisher<Integer>(observe(new Block<SingleResultCallback<Integer>>() {
+        Publishers.publish(new Block<SingleResultCallback<Integer>>() {
             @Override
             void apply(final SingleResultCallback<Integer> callback) {
                 callbackBasedInputStream.read(ByteBuffer.allocate(1024), callback)
             }
-        })).subscribe(subscriber)
+        }).subscribe(subscriber)
         subscriber.requestMore(1)
 
         then:
@@ -220,12 +218,12 @@ class GridFSAsyncStreamHelperSpecification extends Specification {
 
         when:
         subscriber = new TestSubscriber<Void>()
-        new ObservableToPublisher<Void>(observe(new Block<SingleResultCallback<Void>>() {
+        Publishers.publish(new Block<SingleResultCallback<Void>>() {
             @Override
             void apply(final SingleResultCallback<Void> callback) {
                 callbackBasedInputStream.close(callback)
             }
-        })).subscribe(subscriber)
+        }).subscribe(subscriber)
         subscriber.requestMore(1)
 
         then:
@@ -243,12 +241,12 @@ class GridFSAsyncStreamHelperSpecification extends Specification {
 
         when:
         def subscriber = new TestSubscriber<Integer>()
-        new ObservableToPublisher<Integer>(observe(new Block<SingleResultCallback<Integer>>() {
+        Publishers.publish(new Block<SingleResultCallback<Integer>>() {
             @Override
             void apply(final SingleResultCallback<Integer> callback) {
                 callbackBasedOutputStream.write(ByteBuffer.allocate(1024), callback)
             }
-        })).subscribe(subscriber)
+        }).subscribe(subscriber)
         subscriber.requestMore(1)
 
         then:
@@ -259,12 +257,12 @@ class GridFSAsyncStreamHelperSpecification extends Specification {
 
         when:
         subscriber = new TestSubscriber<Void>()
-        new ObservableToPublisher<Void>(observe(new Block<SingleResultCallback<Void>>() {
+        Publishers.publish(new Block<SingleResultCallback<Void>>() {
             @Override
             void apply(final SingleResultCallback<Void> callback) {
                 callbackBasedOutputStream.close(callback)
             }
-        })).subscribe(subscriber)
+        }).subscribe(subscriber)
         subscriber.requestMore(1)
 
         then:

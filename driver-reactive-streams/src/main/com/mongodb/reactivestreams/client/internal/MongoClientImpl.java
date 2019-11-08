@@ -16,12 +16,10 @@
 
 package com.mongodb.reactivestreams.client.internal;
 
-import com.mongodb.Block;
 import com.mongodb.ClientSessionOptions;
 import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.client.AsyncClientSession;
 import com.mongodb.internal.async.client.AsyncMongoClient;
-import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
 import com.mongodb.reactivestreams.client.ClientSession;
 import com.mongodb.reactivestreams.client.ListDatabasesPublisher;
@@ -68,13 +66,12 @@ public final class MongoClientImpl implements MongoClient {
 
     @Override
     public Publisher<String> listDatabaseNames() {
-        return new ObservableToPublisher<>(Observables.observe(wrapped.listDatabaseNames()));
+        return Publishers.publish(wrapped.listDatabaseNames());
     }
 
     @Override
     public Publisher<String> listDatabaseNames(final ClientSession clientSession) {
-        return new ObservableToPublisher<>(
-                Observables.observe(wrapped.listDatabaseNames(clientSession.getWrapped())));
+        return Publishers.publish(wrapped.listDatabaseNames(clientSession.getWrapped()));
     }
 
     @Override
@@ -146,22 +143,16 @@ public final class MongoClientImpl implements MongoClient {
 
     @Override
     public Publisher<ClientSession> startSession(final ClientSessionOptions options) {
-        return new SingleResultObservableToPublisher<>(
-                new Block<SingleResultCallback<ClientSession>>() {
+        return Publishers.publish(clientSessionSingleResultCallback -> wrapped.startSession(options,
+                new SingleResultCallback<AsyncClientSession>() {
                     @Override
-                    public void apply(final SingleResultCallback<ClientSession> clientSessionSingleResultCallback) {
-                        wrapped.startSession(options,
-                                new SingleResultCallback<AsyncClientSession>() {
-                            @Override
-                            public void onResult(final AsyncClientSession result, final Throwable t) {
-                                if (t != null) {
-                                    clientSessionSingleResultCallback.onResult(null, t);
-                                } else {
-                                    clientSessionSingleResultCallback.onResult(new ClientSessionImpl(result, this), null);
-                                }
-                            }
-                        });
+                    public void onResult(final AsyncClientSession result, final Throwable t) {
+                        if (t != null) {
+                            clientSessionSingleResultCallback.onResult(null, t);
+                        } else {
+                            clientSessionSingleResultCallback.onResult(new ClientSessionImpl(result, this), null);
+                        }
                     }
-                });
+                }));
     }
 }

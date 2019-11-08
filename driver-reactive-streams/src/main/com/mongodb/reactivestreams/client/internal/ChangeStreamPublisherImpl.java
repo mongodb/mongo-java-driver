@@ -20,7 +20,6 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
 import com.mongodb.internal.async.client.AsyncChangeStreamIterable;
-import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
 import org.bson.BsonDocument;
 import org.bson.BsonTimestamp;
@@ -78,7 +77,7 @@ final class ChangeStreamPublisherImpl<TResult> implements ChangeStreamPublisher<
 
     @Override
     public <TDocument> Publisher<TDocument> withDocumentClass(final Class<TDocument> clazz) {
-        return new ObservableToPublisher<>(Observables.observe(wrapped.withDocumentClass(clazz)));
+        return Publishers.publish(wrapped.withDocumentClass(clazz));
     }
 
     @Override
@@ -89,11 +88,11 @@ final class ChangeStreamPublisherImpl<TResult> implements ChangeStreamPublisher<
 
     @Override
     public Publisher<ChangeStreamDocument<TResult>> first() {
-        return new SingleResultObservableToPublisher<>(wrapped::first);
+        return Publishers.publish(wrapped::first);
     }
 
     @Override
     public void subscribe(final Subscriber<? super ChangeStreamDocument<TResult>> s) {
-        new ObservableToPublisher<>(Observables.observe(wrapped)).subscribe(s);
+        Publishers.publish(wrapped).subscribe(s);
     }
 }

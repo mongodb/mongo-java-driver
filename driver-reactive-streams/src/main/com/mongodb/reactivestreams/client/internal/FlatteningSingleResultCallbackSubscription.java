@@ -14,39 +14,40 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.async.client;
+package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.Block;
 import com.mongodb.internal.async.SingleResultCallback;
+import org.reactivestreams.Subscriber;
 
-class SingleResultCallbackSubscription<TResult> extends AbstractSubscription<TResult> {
+import java.util.List;
 
-    private final Block<SingleResultCallback<TResult>> block;
+class FlatteningSingleResultCallbackSubscription<TResult> extends AbstractSubscription<TResult> {
+
+    private final Block<SingleResultCallback<List<TResult>>> block;
 
     /* protected by `this` */
     private boolean completed;
     /* protected by `this` */
 
-    SingleResultCallbackSubscription(final Block<SingleResultCallback<TResult>> block, final Observer<? super TResult> observer) {
-        super(observer);
+    FlatteningSingleResultCallbackSubscription(final Block<SingleResultCallback<List<TResult>>> block,
+                                               final Subscriber<? super TResult> subscriber) {
+        super(subscriber);
         this.block = block;
-        observer.onSubscribe(this);
+        subscriber.onSubscribe(this);
     }
 
     @Override
     void requestInitialData() {
-        block.apply(new SingleResultCallback<TResult>() {
-            @Override
-            public void onResult(final TResult result, final Throwable t) {
-                if (t != null) {
-                    onError(t);
-                } else {
-                    addToQueue(result);
-                    synchronized (SingleResultCallbackSubscription.this) {
-                        completed = true;
-                    }
-                    tryProcessResultsQueue();
+        block.apply((result, t) -> {
+            if (t != null) {
+                onError(t);
+            } else {
+                addToQueue(result);
+                synchronized (FlatteningSingleResultCallbackSubscription.this) {
+                    completed = true;
                 }
+                tryProcessResultsQueue();
             }
         });
     }

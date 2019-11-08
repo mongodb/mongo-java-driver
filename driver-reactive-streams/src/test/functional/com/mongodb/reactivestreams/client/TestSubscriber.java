@@ -65,6 +65,7 @@ public class TestSubscriber<T> implements Subscriber<T> {
     @Override
     public void onSubscribe(final Subscription subscription) {
         this.subscription = subscription;
+        delegate.onSubscribe(subscription);
     }
 
     /**

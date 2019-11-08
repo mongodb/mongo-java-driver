@@ -18,38 +18,35 @@ package com.mongodb.reactivestreams.client
 
 import com.mongodb.Block
 import com.mongodb.internal.async.SingleResultCallback
-import com.mongodb.reactivestreams.client.internal.ObservableToPublisher
-import org.bson.Document
+import com.mongodb.reactivestreams.client.internal.Publishers
 import org.reactivestreams.Publisher
 import org.reactivestreams.tck.PublisherVerification
 import org.reactivestreams.tck.TestEnvironment
 
-import static com.mongodb.internal.async.client.Observables.observeAndFlatten
-
 @SuppressWarnings(['CloseWithoutCloseable', 'UnusedMethodParameter', 'EmptyMethod'])
-class ObservableToPublisherVerification extends PublisherVerification<Integer> {
+class PublishersVerification extends PublisherVerification<Integer> {
 
     public static final long DEFAULT_TIMEOUT_MILLIS = 5000L
     public static final long PUBLISHER_REFERENCE_CLEANUP_TIMEOUT_MILLIS = 1000L
 
-    ObservableToPublisherVerification() {
+    PublishersVerification() {
         super(new TestEnvironment(DEFAULT_TIMEOUT_MILLIS), PUBLISHER_REFERENCE_CLEANUP_TIMEOUT_MILLIS)
     }
 
     @Override
-    Publisher<Document> createPublisher(long elements) {
+    Publisher<Integer> createPublisher(long elements) {
         assert (elements <= maxElementsFromPublisher())
 
-        new ObservableToPublisher<Integer>(observeAndFlatten(new Block<SingleResultCallback<List<Integer>>>(){
+        Publishers.publishAndFlatten(new Block<SingleResultCallback<List<Integer>>>() {
             @Override
             void apply(final SingleResultCallback<List<Integer>> callback) {
-                callback.onResult((0..<elements), null)
+                callback.onResult((0..<elements) as List<Integer>, null)
             }
-        }))
+        });
     }
 
     @Override
-    Publisher<Document> createFailedPublisher() {
+    Publisher<Integer> createFailedPublisher() {
         null
     }
 
