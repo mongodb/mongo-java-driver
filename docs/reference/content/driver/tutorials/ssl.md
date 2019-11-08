@@ -207,7 +207,7 @@ updates:
 * Java 7
   - Starting with
     [Update 131](http://www.oracle.com/technetwork/java/javaseproducts/documentation/javase7supportreleasenotes-1601161.html#R170_131),
-    released October 8, 2016, TSL 1.1 and TLS 1.2 are enabled by default.
+    released October 8, 2016, TLS 1.1 and TLS 1.2 are enabled by default.
   - Starting with
     [Update 95](http://www.oracle.com/technetwork/java/javaseproducts/documentation/javase7supportreleasenotes-1601161.html#R170_95),
     released January 19, 2016, TLS 1.1 and TLS 1.2 can be enabled by applications via the `jdk.tls.client.protocols` system property.
@@ -222,3 +222,9 @@ updates:
 
 Note that these updates are only available from Oracle via its Java SE commercial support program.  Java 7 Update 131
 is available via [OpenJDK](http://openjdk.java.net/install/).
+
+### Forcing TLS 1.2
+
+Some applications may want to force only the TLS 1.2 protocol. To do this, set the `jdk.tls.client.protocols` system property to "TLSv1.2".
+
+Java runtime environments prior to Java 8 started to enable the TLS 1.2 protocol only in later updates, as shown in the previous section. For the driver to force the use of the TLS 1.2 protocol with a Java runtime environment prior to Java 8, ensure that the update has TLS 1.2 enabled.
