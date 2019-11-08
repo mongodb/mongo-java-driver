@@ -10,7 +10,7 @@ title = "Projections"
 
 ## Projections
 
-The [`Projections`]({{< apiref "org/mongodb/scala/model/Projections$" >}}) class provides static factory methods for all the MongoDB 
+The [`Projections`]({{< scapiref "org/mongodb/scala/model/Projections$" >}}) class provides static factory methods for all the MongoDB 
 projection opererators.  Each method returns an instance of the [`Bson`]({{< relref "bson/documents.md#bson" >}}) type, which can in turn
 be passed to any method that expects a projection.
 

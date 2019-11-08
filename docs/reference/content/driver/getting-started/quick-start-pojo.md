@@ -270,7 +270,7 @@ collection.find(gt("age", 30)).forEach(printBlock);
 
 ## Update Documents
 
-To update documents in a collection, you can use the collection's [`updateOne`]({{<apiref "com/mongodb/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)">}})  and  [`updateMany`]({{<apiref "com/mongodb/async/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) methods.
+To update documents in a collection, you can use the collection's [`updateOne`]({{<apiref "com/mongodb/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)">}})  and  [`updateMany`]({{<apiref "com/mongodb/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) methods.
 
 Pass to the methods:
 
@@ -292,7 +292,7 @@ collection.updateOne(eq("name", "Ada Byron"), combine(set("age", 23), set("name"
 
 ### Update Multiple Persons
 
-To update all Persons that match a filter, use the [`updateMany`]({{<apiref "com/mongodb/async/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) method.
+To update all Persons that match a filter, use the [`updateMany`]({{<apiref "com/mongodb/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) method.
 
 The following example sets the zip field to `null` for all documents that have a `zip` value:
 

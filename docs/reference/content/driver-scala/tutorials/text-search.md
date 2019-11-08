@@ -12,7 +12,7 @@ pre = "<i class='fa'></i>"
 
 MongoDB supports query operations that perform a [text search]({{<docsref "text-search">}}) of string content. To perform text search, MongoDB uses a [text index]({{<docsref "core/index-text">}}) and the [`$text` query operator]({{<docsref "reference/operator/query/text">}}).
 
-The Scala driver provides the [`Filters.text()`]({{<apiref "org/mongodb/scala/model/Filters$.html#text(search:String):org.mongodb.scala.bson.conversions.Bson">}}) helper to facilitate the creation of text search query filters.
+The Scala driver provides the [`Filters.text()`]({{<scapiref "org/mongodb/scala/model/Filters$.html#text(search:String):org.mongodb.scala.bson.conversions.Bson">}}) helper to facilitate the creation of text search query filters.
 
 ## Prerequisites
 
@@ -45,7 +45,7 @@ For additional information on connecting to MongoDB, see [Connect to MongoDB]({{
 ## Create the `text` Index
 
 To create a [text index]({{<docsref "core/index-text">}}), use the [`Indexes.text`]({{< relref "builders/indexes.md#text-index">}})
-static helper to create a specification for a text index and pass to [`MongoCollection.createIndex()`]({{<apiref "org/mongodb/scala/MongoCollection.html#createIndex-org.bson.conversions.Bson-">}}) method.
+static helper to create a specification for a text index and pass to [`MongoCollection.createIndex()`]({{<scapiref "org/mongodb/scala/MongoCollection.html#createIndex-org.bson.conversions.Bson-">}}) method.
 
 The following example creates a text index on the `name` field for the `restaurants` collection.
 
@@ -56,7 +56,7 @@ collection.createIndex(Indexes.text("name")).printResults()
 
 ## Perform Text Search
 
-To perform text search, use the [`Filters.text()`]({{<apiref "org/mongodb/scala/model/Filters$.html#text(search:String,textSearchOptions:org.mongodb.scala.model.TextSearchOptions):org.mongodb.scala.bson.conversions.Bson">}}) helper to specify the text search query filter.
+To perform text search, use the [`Filters.text()`]({{<scapiref "org/mongodb/scala/model/Filters$.html#text(search:String,textSearchOptions:org.mongodb.scala.model.TextSearchOptions):org.mongodb.scala.bson.conversions.Bson">}}) helper to specify the text search query filter.
 
 For example, the following code performs a text search on the `name` field for the word `"bakery"` or `"coffee"`.
 
@@ -86,7 +86,7 @@ collection.find(Filters.text("bakery cafe"))
 
 ### Specify a Text Search Option
 
-The  [`Filters.text()`]({{<apiref "org/mongodb/scala/model/Filters$.html#text(search:String,textSearchOptions:org.mongodb.scala.model.TextSearchOptions):org.mongodb.scala.bson.conversions.Bson">}}) helper can accept various [text search options]({{<docsref "reference/operator/query/text">}}). The Scala driver provides [`TextSearchOptions`]({{<apiref "org/mongodb/scala/model/package$$TextSearchOptions$.html">}}) class to specify these options.
+The  [`Filters.text()`]({{<scapiref "org/mongodb/scala/model/Filters$.html#text(search:String,textSearchOptions:org.mongodb.scala.model.TextSearchOptions):org.mongodb.scala.bson.conversions.Bson">}}) helper can accept various [text search options]({{<docsref "reference/operator/query/text">}}). The Scala driver provides [`TextSearchOptions`]({{<scapiref "org/mongodb/scala/model/package$$TextSearchOptions$.html">}}) class to specify these options.
 
 For example, the following text search specifies the [text search language]({{<docsref "reference/text-search-languages">}}) option when performing text search for the word `cafe`:
 

@@ -6,12 +6,12 @@ type = "index"
 
 ## MongoDB Java Driver Documentation
 
-Welcome to the MongoDB Java driver documentation hub for the 3.12 driver release.
+Welcome to the MongoDB JVM driver documentation hub for the 4.0 drivers release.
 
 
-### What's New in 3.12
+### What's New in 4.0
 
-For key new features of 3.12, see [What's New]({{< relref "whats-new.md" >}}).
+For key new features of 4.0, see [What's New]({{< relref "whats-new.md" >}}).
 
 ### Upgrade
 
@@ -23,9 +23,11 @@ For the synchronous MongoDB Driver, see [MongoDB Driver section]({{< relref "dri
 
 ### MongoDB Reactive Streams Driver
 
-For the callback-based asynchronous MongoDB Reactive Streams Driver, see [MongoDB Reactive Streams Driver section]({{< relref "driver-reactive/index.md" >}}). Note 
-that this driver has been deprecated in favor of the 
-[Reactive Streams Java Driver](http://mongodb.github.io/mongo-java-driver-reactivestreams/). 
+For the MongoDB Reactive Streams Driver, see [MongoDB Reactive Streams Driver section]({{< relref "driver-reactive/index.md" >}}).
+
+### MongoDB Scala Driver
+
+For the MongoDB Scala Driver, see [MongoDB Scala Driver section]({{< relref "driver-scala/index.md" >}}).
 
 ### BSON Library
 

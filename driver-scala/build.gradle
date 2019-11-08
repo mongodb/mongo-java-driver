@@ -70,7 +70,7 @@ task aggregatedScalaDoc(type: ScalaDoc) {
             project(':bson-scala'),
             project(':driver-scala')
     ]
-
+    destinationDir = file("${project.rootDir}/build/scaladoc")
     classpath = project.sourceSets.main.compileClasspath
     source = fromProjects.collect { it.sourceSets.main.allSource }
 

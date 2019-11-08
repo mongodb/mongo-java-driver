@@ -39,7 +39,7 @@ For more information on connecting to running MongoDB deployments, see
 
 ## Access a Database
 
-Once you have a `MongoClient` instance connected to a MongoDB deployment, use its [`getDatabase()`]({{<apiref "org/mongodb/scala/MongoClient.html#getDatabase(name:String):org.mongodb.scala.MongoDatabase">}}) method to access a database.
+Once you have a `MongoClient` instance connected to a MongoDB deployment, use its [`getDatabase()`]({{<scapiref "org/mongodb/scala/MongoClient.html#getDatabase(name:String):org.mongodb.scala.MongoDatabase">}}) method to access a database.
 
 Specify the name of the database to the `getDatabase()` method. If a database does not exist, MongoDB creates the database when you first store data for that database.
 
@@ -55,7 +55,7 @@ val database: MongoDatabase = mongoClient.getDatabase("test")
 
 ## Access a Collection
 
-Once you have a `MongoDatabase` instance, use its [`getCollection()`]({{< apiref "org/mongodb/scala/MongoDatabase.html#getCollection[TResult](collectionName:String)(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[TResult,org.mongodb.scala.Document],implicitct:scala.reflect.ClassTag[TResult]):org.mongodb.scala.MongoCollection[TResult]">}})
+Once you have a `MongoDatabase` instance, use its [`getCollection()`]({{< scapiref "org/mongodb/scala/MongoDatabase.html#getCollection[TResult](collectionName:String)(implicite:org.mongodb.scala.bson.DefaultHelper.DefaultsTo[TResult,org.mongodb.scala.Document],implicitct:scala.reflect.ClassTag[TResult]):org.mongodb.scala.MongoCollection[TResult]">}})
 method to access a collection.
 
 Specify the name of the collection to the `getCollection()` method.
@@ -76,7 +76,7 @@ You can also explicitly create a collection with various options, such as settin
 
 ## Explicitly Create a Collection
 
-The MongoDB driver provides the [`createCollection()`]({{<apiref "org/mongodb/scala/MongoDatabase.html#createCollection-java.lang.String-com.mongodb.client.model.CreateCollectionOptions-">}}) method to explicitly create a collection. When you explicitly create a collection, you can specify various collection options, such as a maximum size or the documentation validation rules, with the [`CreateCollectionOptions`]({{<apiref "org/mongodb/scala/model/package$$CreateCollectionOptions$.html">}}) class. If you are not specifying these options, you do not need to explicitly create the collection since MongoDB creates new collections when you first store data for the collections.
+The MongoDB driver provides the [`createCollection()`]({{<scapiref "org/mongodb/scala/MongoDatabase.html#createCollection-java.lang.String-com.mongodb.client.model.CreateCollectionOptions-">}}) method to explicitly create a collection. When you explicitly create a collection, you can specify various collection options, such as a maximum size or the documentation validation rules, with the [`CreateCollectionOptions`]({{<scapiref "org/mongodb/scala/model/package$$CreateCollectionOptions$.html">}}) class. If you are not specifying these options, you do not need to explicitly create the collection since MongoDB creates new collections when you first store data for the collections.
 
 ### Capped Collection
 
@@ -89,7 +89,7 @@ database.createCollection("cappedCollection", CreateCollectionOptions().capped(t
 
 ### Document Validation
 
-MongoDB provides the capability to [validate documents]({{<docsref "core/document-validation">}}) during updates and insertions. Validation rules are specified on a per-collection basis using the [`ValidationOptions`]({{< apiref "org/mongodb/scala/model/package$$ValidationOptions$.html">}}), which takes a filter document that specifies the validation rules or expressions.
+MongoDB provides the capability to [validate documents]({{<docsref "core/document-validation">}}) during updates and insertions. Validation rules are specified on a per-collection basis using the [`ValidationOptions`]({{< scapiref "org/mongodb/scala/model/package$$ValidationOptions$.html">}}), which takes a filter document that specifies the validation rules or expressions.
 
 ```scala
 ValidationOptions collOptions = ValidationOptions().validator(
@@ -101,7 +101,7 @@ database.createCollection("contacts", CreateCollectionOptions().validationOption
 
 ## Get A List of Collections
 
-You can get a list of the collections in a database using the [`MongoDatabase.listCollectionNames()`]({{<apiref "org/mongodb/scala/MongoDatabase.html#listCollectionNames--">}}) method:
+You can get a list of the collections in a database using the [`MongoDatabase.listCollectionNames()`]({{<scapiref "org/mongodb/scala/MongoDatabase.html#listCollectionNames--">}}) method:
 
 ```scala
 database.listCollectionNames().printResults()
@@ -109,7 +109,7 @@ database.listCollectionNames().printResults()
 
 ## Drop a Collection
 
-You can drop a collection by using the [`MongoCollection.drop()`]({{<apiref "org/mongodb/scala/MongoCollection.html#drop--">}}) method:
+You can drop a collection by using the [`MongoCollection.drop()`]({{<scapiref "org/mongodb/scala/MongoCollection.html#drop--">}}) method:
 
 ```scala
 val collection: MongoCollection[Document] = database.getCollection("contacts")
@@ -121,17 +121,17 @@ collection.drop().printResults()
 `MongoDatabase` and `MongoCollection` instances are immutable. To create new instances from existing instances that
 have different property values, such as [read concern]({{<docsref "reference/read-concern">}}), [read preference]({{<docsref "reference/read-preference">}}), and [write concern]({{<docsref "reference/write-concern">}}), the `MongoDatabase` and `MongoCollection` class provides various methods:
 
-- [`MongoDatabase.withReadConcern`]({{<apiref "org/mongodb/scala/MongoDatabase.html#withReadConcern(readConcern:org.mongodb.scala.ReadConcern):org.mongodb.scala.MongoDatabase">}})
+- [`MongoDatabase.withReadConcern`]({{<scapiref "org/mongodb/scala/MongoDatabase.html#withReadConcern(readConcern:org.mongodb.scala.ReadConcern):org.mongodb.scala.MongoDatabase">}})
 
-- [`MongoDatabase.withReadPreference`]({{<apiref "org/mongodb/scala/MongoDatabase.html#withReadPreference(readPreference:org.mongodb.scala.ReadPreference):org.mongodb.scala.MongoDatabase">}})
+- [`MongoDatabase.withReadPreference`]({{<scapiref "org/mongodb/scala/MongoDatabase.html#withReadPreference(readPreference:org.mongodb.scala.ReadPreference):org.mongodb.scala.MongoDatabase">}})
 
-- [`MongoDatabase.withWriteConcern`]({{<apiref "org/mongodb/scala/MongoDatabase.html#withWriteConcern(writeConcern:org.mongodb.scala.WriteConcern):org.mongodb.scala.MongoDatabase">}})
+- [`MongoDatabase.withWriteConcern`]({{<scapiref "org/mongodb/scala/MongoDatabase.html#withWriteConcern(writeConcern:org.mongodb.scala.WriteConcern):org.mongodb.scala.MongoDatabase">}})
 
-- [`MongoCollection.withReadConcern`]({{<apiref "org/mongodb/scala/MongoCollection.html#withReadPreference(readPreference:org.mongodb.scala.ReadPreference):org.mongodb.scala.MongoCollection[TResult]">}})
+- [`MongoCollection.withReadConcern`]({{<scapiref "org/mongodb/scala/MongoCollection.html#withReadPreference(readPreference:org.mongodb.scala.ReadPreference):org.mongodb.scala.MongoCollection[TResult]">}})
 
-- [`MongoCollection.withReadPreference`]({{<apiref "org/mongodb/scala/MongoCollection.html#withReadPreference(readPreference:org.mongodb.scala.ReadPreference):org.mongodb.scala.MongoCollection[TResult]">}})
+- [`MongoCollection.withReadPreference`]({{<scapiref "org/mongodb/scala/MongoCollection.html#withReadPreference(readPreference:org.mongodb.scala.ReadPreference):org.mongodb.scala.MongoCollection[TResult]">}})
 
-- [`MongoCollection.withWriteConcern`]({{<apiref "org/mongodb/scala/MongoCollection.html#withWriteConcern(writeConcern:org.mongodb.scala.WriteConcern):org.mongodb.scala.MongoCollection[TResult]">}})
+- [`MongoCollection.withWriteConcern`]({{<scapiref "org/mongodb/scala/MongoCollection.html#withWriteConcern(writeConcern:org.mongodb.scala.WriteConcern):org.mongodb.scala.MongoCollection[TResult]">}})
 
 For details, see [Read Operations]({{< relref  "driver/tutorials/perform-read-operations.md" >}}) and [Write Operations]({{< relref  "driver/tutorials/perform-write-operations.md" >}}).
 

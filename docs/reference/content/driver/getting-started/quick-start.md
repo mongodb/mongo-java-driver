@@ -113,7 +113,7 @@ MongoClient mongoClient = MongoClients.create(
 - You can specify the [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString.html">}}):
 
 ```java
-MongoClient mongoClient = MongoClients.create("mongodb://hostOne:27017,hostTwo:27018");
+MongoClient mongoClient = MongoClients.create("mongodb://hostOne:27017");
 ```
 
 
@@ -198,7 +198,7 @@ For example, consider the following JSON document:
 ```
 
 To create the document using the Java driver, instantiate a `Document` object with a field and value, and use its
- [`append()`]({{< apiref "org/bson/Document.html#append" >}}) method to include additional fields and values to the document object. The value can be another `Document` object to specify an embedded document:
+ [`append()`]({{< apiref "org/bson/Document.html#append()" >}}) method to include additional fields and values to the document object. The value can be another `Document` object to specify an embedded document:
 
  ```java
  Document doc = new Document("name", "MongoDB")
@@ -384,7 +384,7 @@ collection.find(and(gt("i", 50), lte("i", 100))).forEach(printBlock);
 
 ## Update Documents
 
-To update documents in a collection, you can use the collection's [`updateOne`]({{<apiref "com/mongodb/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)">}})  and  [`updateMany`]({{<apiref "com/mongodb/async/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) methods.
+To update documents in a collection, you can use the collection's [`updateOne`]({{<apiref "com/mongodb/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson)">}})  and  [`updateMany`]({{<apiref "com/mongodb/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) methods.
 
 Pass to the methods:
 
@@ -401,13 +401,13 @@ To update at most a single document, use the [`updateOne`]({{<apiref "com/mongod
 The following example updates the first document that meets the filter ``i`` equals ``10`` and sets the value of ``i`` to ``110``:
 
 ```java
-collection.updateOne(eq("i", 10), new Document("$set", new Document("i", 110)));
+collection.updateOne(eq("i", 10), set("i", 110));
 ```
 
 
 ### Update Multiple Documents
 
-To update all documents matching the filter, use the [`updateMany`]({{<apiref "com/mongodb/async/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) method.
+To update all documents matching the filter, use the [`updateMany`]({{<apiref "com/mongodb/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) method.
 
 The following example increments the value of ``i`` by ``100`` for all documents where  =``i`` is less than ``100``:
 

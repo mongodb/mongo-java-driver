@@ -148,7 +148,7 @@ In some cases where you may need to update many fields in a document, it may be 
 
 ### Update Multiple Documents
 
-The [`updateMany`]({{<apiref "com/mongodb/async/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) method updates all documents that match the filter condition.
+The [`updateMany`]({{<apiref "com/mongodb/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) method updates all documents that match the filter condition.
 
 The following operation on the `restaurants` collection updates all documents whose `stars` field equals `2`.
 
@@ -166,7 +166,7 @@ Specifically, the operation uses:
 
 ### Update Options
 
-With the [`updateOne()`]({{<apiref "com/mongodb/client/MongoCollection.html#updateOne(org.bson.conversions.Bsonorg.bson.conversions.Bson)">}}) and [`updateMany`]({{<apiref "com/mongodb/async/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) methods, you can include an [`UpdateOptions`]({{<apiref "com/mongodb/client/model/UpdateOptions.html">}}) document to specify the [`upsert`]({{<docsref "reference/method/db.collection.update/#upsert-option">}}) option or the [`bypassDocumentationValidation`]({{<docsref "core/document-validation/#bypass-document-validation">}}) option.
+With the [`updateOne()`]({{<apiref "com/mongodb/client/MongoCollection.html#updateOne(org.bson.conversions.Bson,org.bson.conversions.Bson )">}}) and [`updateMany`]({{<apiref "com/mongodb/client/MongoCollection.html#updateMany(org.bson.conversions.Bson,org.bson.conversions.Bson)">}}) methods, you can include an [`UpdateOptions`]({{<apiref "com/mongodb/client/model/UpdateOptions.html">}}) document to specify the [`upsert`]({{<docsref "reference/method/db.collection.update/#upsert-option">}}) option or the [`bypassDocumentationValidation`]({{<docsref "core/document-validation/#bypass-document-validation">}}) option.
 
 ```java
 collection.updateOne(

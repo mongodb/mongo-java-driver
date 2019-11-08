@@ -10,7 +10,7 @@ title = "Indexes"
 
 ## Indexes
 
-The [`Indexes`]({{< apiref "org/mongodb/scala/model/Indexes$" >}}) class provides static factory methods for all the MongoDB Index key types.  
+The [`Indexes`]({{< scapiref "org/mongodb/scala/model/Indexes$" >}}) class provides static factory methods for all the MongoDB Index key types.  
 Each method returns an instance of the [`Bson`]({{< relref "bson/documents.md#bson" >}}) type, which can in turn be used with the `createIndex`
 methods.
 

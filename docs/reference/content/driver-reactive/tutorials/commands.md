@@ -10,7 +10,7 @@ pre = "<i class='fa'></i>"
 
 ## Run Commands
 
-Not all commands have a specific helper. However you can run any [MongoDB command]({{<docsref "reference/command">}}) by using the MongoDatabase's [`runCommand()`]({{<apiref "com/mongodb/reactivestreams/client/MongoDatabase.html#runCommand-org.bson.conversions.Bson-com.mongodb.ReadPreference-">}}) method.
+Not all commands have a specific helper. However you can run any [MongoDB command]({{<docsref "reference/command">}}) by using the MongoDatabase's [`runCommand()`]({{<apiref "com/mongodb/reactivestreams/client/MongoDatabase.html#runCommand(org.bson.conversions.Bson,com.mongodb.ReadPreference)">}}) method.
 
 ## Prerequisites
 

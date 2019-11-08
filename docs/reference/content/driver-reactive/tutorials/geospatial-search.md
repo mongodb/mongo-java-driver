@@ -47,7 +47,7 @@ For additional information on connecting to MongoDB, see [Connect to MongoDB]({{
 
 ## Create the `2dsphere` Index
 
-To create a [`2dsphere` index]({{<docsref "core/2dsphere">}}), use the [`Indexes.geo2dsphere`]({{<apiref "com/mongodb/client/model/Indexes.html#geo2dspherejava.lang.String...)">}})
+To create a [`2dsphere` index]({{<docsref "core/2dsphere">}}), use the [`Indexes.geo2dsphere`]({{<apiref "com/mongodb/client/model/Indexes.html#geo2dsphere(java.lang.String...)">}})
 helper to create a specification for the `2dsphere` index and pass to [`MongoCollection.createIndex()`]({{<apiref "com/mongodb /reactivestreams/client/MongoCollection.html#createIndex(org.bson.conversions.Bson)">}}) method.
 
 The following example creates a `2dsphere` index on the `"contact.location"` field for the `restaurants` collection.
@@ -59,7 +59,7 @@ collection.createIndex(Indexes.geo2dsphere("contact.location")).subscribe(new Pr
 
 ## Query for Locations Near a GeoJSON Point
 
-MongoDB provides various [geospatial query operators]({{<apiref "reference/operator/query-geospatial">}}). To facilitate the creation of geospatial queries filters, the Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) class and the ``com.mongodb.client.model.geojson`` package.
+MongoDB provides various [geospatial query operators]({{<docsref "reference/operator/query-geospatial">}}). To facilitate the creation of geospatial queries filters, the Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) class and the ``com.mongodb.client.model.geojson`` package.
 
 The following example returns documents that are at least 1000 meters from and at most 5000 meters from the specified GeoJSON point ``com.mongodb.client.model.geojson.Point``, sorted from nearest to farthest:
 

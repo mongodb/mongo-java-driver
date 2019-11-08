@@ -10,12 +10,12 @@ title = "Connect to MongoDB"
 
 ## Connect to MongoDB
 
-Use [`MongoClient()`]({{< apiref "org/mongodb/scala/MongoClient.html">}}) to make a connection to a running MongoDB instance.
+Use [`MongoClient()`]({{< scapiref "org/mongodb/scala/MongoClient.html">}}) to make a connection to a running MongoDB instance.
 
 {{% note class="important" %}}
 The following examples are not meant to provide an exhaustive list
 of ways to instantiate `MongoClient`. For a complete list of MongoClient companion methods, see the 
-[`MongoClient API documentation`]({{< apiref "org/mongodb/scala/MongoClient.html">}}).
+[`MongoClient API documentation`]({{< scapiref "org/mongodb/scala/MongoClient.html">}}).
 
 {{% /note %}}
 
@@ -43,8 +43,8 @@ import scala.collection.JavaConverters._
 
 ## `MongoClient`
 
-A [`MongoClient`]({{< apiref "org/mongodb/scala/MongoClient.html">}}) instance represents a pool of connections
-to the database; you will only need one instance of class `MongoClient` even with multiple threads.
+A [`MongoClient`]({{< scapiref "org/mongodb/scala/MongoClient.html">}}) instance represents a pool of connections
+to the database; you will only need one instance of class `MongoClient` even with multiple concurrent operations.
 
 {{% note class="important" %}}
 
@@ -88,7 +88,7 @@ To connect to a [replica set]({{<docsref "replication/">}}), you must specify on
 MongoDB will auto-discover the primary and the secondaries.
 {{% /note %}}
 
-- You can specify the members using a [`ConnectionString`]({{< apiref "org/mongodb/scala/ConnectionString$.html">}}):
+- You can specify the members using a [`ConnectionString`]({{< scapiref "org/mongodb/scala/ConnectionString$.html">}}):
 
   - To specify at least two members of the replica set:
 
@@ -102,7 +102,7 @@ val mongoClient = MongoClient("mongodb://host1:27017,host2:27017,host3:27017")
 val mongoClient = MongoClient("mongodb://host1:27017,host2:27017,host3:27017/?replicaSet=myReplicaSet")
 ```
 
-- You can specify a list of the all the replica set members' [`ServerAddress`]({{<apiref "org/mongodb/scala/ServerAddress$.html">}}):
+- You can specify a list of the all the replica set members' [`ServerAddress`]({{<scapiref "org/mongodb/scala/ServerAddress$.html">}}):
 
 ```scala
 val mongoClient = MongoClient(
@@ -122,7 +122,7 @@ or instances to a `MongoClients` create method.
 
 To connect to a single `mongos` instance:
 
-- You can specify the hostname and the port in a [`ConnectionString`]({{< apiref "org/mongodb/scala/ConnectionString$.html">}})
+- You can specify the hostname and the port in a [`ConnectionString`]({{< scapiref "org/mongodb/scala/ConnectionString$.html">}})
 
 ```scala
 val mongoClient = MongoClient( "mongodb://localhost:27017" )
@@ -136,7 +136,7 @@ val mongoClient = MongoClient()
 
 To connect to multiple `mongos` instances:
 
-- You can specify the [`ConnectionString`]({{< apiref "org/mongodb/scala/ConnectionString$.html">}}) with their hostnames and ports:
+- You can specify the [`ConnectionString`]({{< scapiref "org/mongodb/scala/ConnectionString$.html">}}) with their hostnames and ports:
 
     ```scala
     val mongoClient = MongoClient("mongodb://host1:27017,host2:27017")
