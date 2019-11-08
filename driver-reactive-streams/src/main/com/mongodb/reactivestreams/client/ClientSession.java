@@ -81,7 +81,7 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
     /**
      * Commit a transaction in the context of this session.  A transaction can only be commmited if one has first been started.
      *
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.server.release 4.0
      */
     Publisher<Void> commitTransaction();
@@ -89,7 +89,7 @@ public interface ClientSession extends com.mongodb.session.ClientSession {
     /**
      * Abort a transaction in the context of this session.  A transaction can only be aborted if one has first been started.
      *
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.server.release 4.0
      */
     Publisher<Void> abortTransaction();

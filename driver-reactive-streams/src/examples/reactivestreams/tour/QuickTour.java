@@ -23,7 +23,6 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
-import com.mongodb.reactivestreams.client.Success;
 import reactivestreams.helpers.SubscriberHelpers.ObservableSubscriber;
 import reactivestreams.helpers.SubscriberHelpers.OperationSubscriber;
 import reactivestreams.helpers.SubscriberHelpers.PrintDocumentSubscriber;
@@ -77,7 +76,7 @@ public class QuickTour {
         final MongoCollection<Document> collection = database.getCollection("test");
 
         // drop all the data in it
-        ObservableSubscriber<Success> successSubscriber = new OperationSubscriber<>();
+        ObservableSubscriber<Void> successSubscriber = new OperationSubscriber<>();
         collection.drop().subscribe(successSubscriber);
         successSubscriber.await();
 

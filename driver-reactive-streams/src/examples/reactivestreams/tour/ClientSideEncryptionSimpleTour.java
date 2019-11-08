@@ -22,7 +22,6 @@ import com.mongodb.MongoClientSettings;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoCollection;
-import com.mongodb.reactivestreams.client.Success;
 import org.bson.Document;
 import reactivestreams.helpers.SubscriberHelpers.ObservableSubscriber;
 import reactivestreams.helpers.SubscriberHelpers.OperationSubscriber;
@@ -71,7 +70,7 @@ public class ClientSideEncryptionSimpleTour {
         MongoClient mongoClient = MongoClients.create(clientSettings);
         MongoCollection<Document> collection = mongoClient.getDatabase("test").getCollection("coll");
 
-        ObservableSubscriber<Success> successSubscriber = new OperationSubscriber<>();
+        ObservableSubscriber<Void> successSubscriber = new OperationSubscriber<>();
         collection.drop().subscribe(successSubscriber);
         successSubscriber.await();
 

@@ -16,10 +16,7 @@
 
 package com.mongodb.reactivestreams.client.internal;
 
-import com.mongodb.Block;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.client.gridfs.AsyncGridFSUploadStream;
-import com.mongodb.reactivestreams.client.Success;
 import com.mongodb.reactivestreams.client.gridfs.GridFSUploadStream;
 import org.bson.BsonValue;
 import org.bson.types.ObjectId;
@@ -28,7 +25,6 @@ import org.reactivestreams.Publisher;
 import java.nio.ByteBuffer;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.reactivestreams.client.internal.PublisherHelper.voidToSuccessCallback;
 
 
 final class GridFSUploadStreamImpl implements GridFSUploadStream {
@@ -51,34 +47,16 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
 
     @Override
     public Publisher<Integer> write(final ByteBuffer src) {
-        return new SingleResultObservableToPublisher<Integer>(
-                new Block<SingleResultCallback<Integer>>() {
-                    @Override
-                    public void apply(final SingleResultCallback<Integer> callback) {
-                        wrapped.write(src, callback);
-                    }
-                });
+        return new SingleResultObservableToPublisher<>(callback -> wrapped.write(src, callback));
     }
 
     @Override
-    public Publisher<Success> close() {
-        return new SingleResultObservableToPublisher<Success>(
-                new Block<SingleResultCallback<Success>>() {
-                    @Override
-                    public void apply(final SingleResultCallback<Success> callback) {
-                        wrapped.close(voidToSuccessCallback(callback));
-                    }
-                });
+    public Publisher<Void> close() {
+        return new SingleResultObservableToPublisher<>(wrapped::close);
     }
 
     @Override
-    public Publisher<Success> abort() {
-        return new SingleResultObservableToPublisher<Success>(
-                new Block<SingleResultCallback<Success>>() {
-                    @Override
-                    public void apply(final SingleResultCallback<Success> callback) {
-                        wrapped.abort(voidToSuccessCallback(callback));
-                    }
-                });
+    public Publisher<Void> abort() {
+        return new SingleResultObservableToPublisher<>(wrapped::abort);
     }
 }

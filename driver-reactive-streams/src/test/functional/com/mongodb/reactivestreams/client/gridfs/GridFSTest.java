@@ -25,7 +25,6 @@ import com.mongodb.client.result.UpdateResult;
 import com.mongodb.reactivestreams.client.DatabaseTestCase;
 import com.mongodb.reactivestreams.client.JsonPoweredTestHelper;
 import com.mongodb.reactivestreams.client.MongoCollection;
-import com.mongodb.reactivestreams.client.Success;
 import org.bson.BsonArray;
 import org.bson.BsonBinary;
 import org.bson.BsonDocument;
@@ -91,14 +90,14 @@ public class GridFSTest extends DatabaseTestCase {
 
         List<BsonDocument> filesDocuments = processFiles(data.getArray("files", new BsonArray()), new ArrayList<BsonDocument>());
         if (!filesDocuments.isEmpty()) {
-            ObservableSubscriber<Success> filesInsertSubscriber = new ObservableSubscriber<Success>();
+            ObservableSubscriber<Void> filesInsertSubscriber = new ObservableSubscriber<>();
             filesCollection.insertMany(filesDocuments).subscribe(filesInsertSubscriber);
             filesInsertSubscriber.await(30, SECONDS);
         }
 
         List<BsonDocument> chunksDocuments = processChunks(data.getArray("chunks", new BsonArray()), new ArrayList<BsonDocument>());
         if (!chunksDocuments.isEmpty()) {
-            ObservableSubscriber<Success> chunksInsertSubscriber = new ObservableSubscriber<Success>();
+            ObservableSubscriber<Void> chunksInsertSubscriber = new ObservableSubscriber<>();
             chunksCollection.insertMany(chunksDocuments).subscribe(chunksInsertSubscriber);
             chunksInsertSubscriber.await(30, SECONDS);
         }
@@ -142,23 +141,23 @@ public class GridFSTest extends DatabaseTestCase {
                     }
 
                     if (limit == 1) {
-                        ObservableSubscriber<DeleteResult> deleteSubscriber = new ObservableSubscriber<DeleteResult>();
+                        ObservableSubscriber<DeleteResult> deleteSubscriber = new ObservableSubscriber<>();
                         collection.deleteOne(query).subscribe(deleteSubscriber);
                         deleteSubscriber.await(30, SECONDS);
                     } else {
-                        ObservableSubscriber<DeleteResult> deleteSubscriber = new ObservableSubscriber<DeleteResult>();
+                        ObservableSubscriber<DeleteResult> deleteSubscriber = new ObservableSubscriber<>();
                         collection.deleteMany(query).subscribe(deleteSubscriber);
                         deleteSubscriber.await(30, SECONDS);
                     }
                 }
             } else if (document.containsKey("insert") && document.containsKey("documents")) {
                 if (document.getString("insert").getValue().equals("fs.files")) {
-                    ObservableSubscriber<Success> insertSubscriber = new ObservableSubscriber<Success>();
+                    ObservableSubscriber<Void> insertSubscriber = new ObservableSubscriber<>();
                     filesCollection.insertMany(processFiles(document.getArray("documents"), new ArrayList<BsonDocument>()))
                             .subscribe(insertSubscriber);
                     insertSubscriber.await(30, SECONDS);
                 } else {
-                    ObservableSubscriber<Success> insertSubscriber = new ObservableSubscriber<Success>();
+                    ObservableSubscriber<Void> insertSubscriber = new ObservableSubscriber<>();
                     chunksCollection.insertMany(processChunks(document.getArray("documents"), new ArrayList<BsonDocument>()))
                             .subscribe(insertSubscriber);
                     insertSubscriber.await(30, SECONDS);
@@ -175,7 +174,7 @@ public class GridFSTest extends DatabaseTestCase {
                     BsonDocument query = rawUpdate.asDocument().getDocument("q");
                     BsonDocument update = rawUpdate.asDocument().getDocument("u");
                     update.put("$set", parseHexDocument(update.getDocument("$set")));
-                    ObservableSubscriber<UpdateResult> updateSubscriber = new ObservableSubscriber<UpdateResult>();
+                    ObservableSubscriber<UpdateResult> updateSubscriber = new ObservableSubscriber<>();
                     collection.updateMany(query, update).subscribe(updateSubscriber);
                     updateSubscriber.await(30, SECONDS);
                 }
@@ -208,7 +207,7 @@ public class GridFSTest extends DatabaseTestCase {
         Throwable error = null;
 
         try {
-            ObservableSubscriber<Success> subscriber = new ObservableSubscriber<Success>();
+            ObservableSubscriber<Void> subscriber = new ObservableSubscriber<>();
             gridFSBucket.delete(arguments.getObjectId("id").getValue()).subscribe(subscriber);
             subscriber.get(30, SECONDS);
         } catch (MongoGridFSException e) {
@@ -244,7 +243,7 @@ public class GridFSTest extends DatabaseTestCase {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
         try {
-            ObservableSubscriber<Long> subscriber = new ObservableSubscriber<Long>();
+            ObservableSubscriber<Long> subscriber = new ObservableSubscriber<>();
             gridFSBucket.downloadToStream(arguments.getObjectId("id").getValue(), toAsyncOutputStream(outputStream)).subscribe(subscriber);
             subscriber.get(30, SECONDS);
             outputStream.close();
@@ -272,7 +271,7 @@ public class GridFSTest extends DatabaseTestCase {
                 options.revision(revision);
             }
 
-            ObservableSubscriber<Long> subscriber = new ObservableSubscriber<Long>();
+            ObservableSubscriber<Long> subscriber = new ObservableSubscriber<>();
             gridFSBucket.downloadToStream(arguments.getString("filename").getValue(), toAsyncOutputStream(outputStream),
                     options).subscribe(subscriber);
             subscriber.get(30, SECONDS);
@@ -305,7 +304,7 @@ public class GridFSTest extends DatabaseTestCase {
                 options.metadata(Document.parse(rawOptions.getDocument("metadata").toJson()));
             }
             GridFSBucket gridFSUploadBucket = gridFSBucket;
-            ObservableSubscriber<ObjectId> subscriber = new ObservableSubscriber<ObjectId>();
+            ObservableSubscriber<ObjectId> subscriber = new ObservableSubscriber<>();
             gridFSUploadBucket.uploadFromStream(filename, toAsyncInputStream(inputStream), options).subscribe(subscriber);
             objectId = subscriber.get(30, SECONDS).get(0);
         } catch (Throwable e) {
@@ -328,7 +327,7 @@ public class GridFSTest extends DatabaseTestCase {
 
                     assertEquals(getFilesCount(new BsonDocument()), documents.size());
 
-                    ObservableSubscriber<BsonDocument> findSubscriber = new ObservableSubscriber<BsonDocument>();
+                    ObservableSubscriber<BsonDocument> findSubscriber = new ObservableSubscriber<>();
                     filesCollection.find().first().subscribe(findSubscriber);
                     BsonDocument actual = findSubscriber.get(30, SECONDS).get(0);
                     for (BsonDocument expected : documents) {
@@ -345,7 +344,7 @@ public class GridFSTest extends DatabaseTestCase {
                             new ArrayList<BsonDocument>());
                     assertEquals(getChunksCount(new BsonDocument()), documents.size());
 
-                    ObservableSubscriber<BsonDocument> chunksSubscriber = new ObservableSubscriber<BsonDocument>();
+                    ObservableSubscriber<BsonDocument> chunksSubscriber = new ObservableSubscriber<>();
                     chunksCollection.find().subscribe(chunksSubscriber);
                     List<BsonDocument> actualDocuments = chunksSubscriber.get(30, SECONDS);
                     for (int i = 0; i < documents.size(); i++) {
@@ -362,13 +361,13 @@ public class GridFSTest extends DatabaseTestCase {
     }
 
     private long getChunksCount(final BsonDocument filter) throws Throwable {
-        ObservableSubscriber<Long> subscriber = new ObservableSubscriber<Long>();
+        ObservableSubscriber<Long> subscriber = new ObservableSubscriber<>();
         chunksCollection.countDocuments(filter).subscribe(subscriber);
         return subscriber.get(30, SECONDS).get(0);
     }
 
     private long getFilesCount(final BsonDocument filter) throws Throwable {
-        ObservableSubscriber<Long> subscriber = new ObservableSubscriber<Long>();
+        ObservableSubscriber<Long> subscriber = new ObservableSubscriber<>();
         filesCollection.countDocuments(filter).subscribe(subscriber);
         return subscriber.get(30, SECONDS).get(0);
     }

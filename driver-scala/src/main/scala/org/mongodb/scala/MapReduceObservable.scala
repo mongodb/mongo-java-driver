@@ -244,7 +244,7 @@ case class MapReduceObservable[TResult](wrapped: MapReducePublisher[TResult]) ex
    * @return a Observable with a single element indicating when the operation has completed
    * [[http://docs.mongodb.org/manual/aggregation/ Aggregation]]
    */
-  def toCollection(): SingleObservable[Completed] = wrapped.toCollection()
+  def toCollection(): SingleObservable[Void] = wrapped.toCollection()
 
   /**
    * Helper to return a single observable limited to the first result.

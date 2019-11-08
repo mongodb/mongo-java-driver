@@ -25,7 +25,6 @@ import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoCollection;
-import com.mongodb.reactivestreams.client.Success;
 import com.mongodb.reactivestreams.client.vault.ClientEncryption;
 import com.mongodb.reactivestreams.client.vault.ClientEncryptions;
 import org.bson.BsonBinary;
@@ -114,7 +113,7 @@ public class ClientSideEncryptionAutoEncryptionSettingsTour {
         MongoClient mongoClient = MongoClients.create(clientSettings);
         MongoCollection<Document> collection = mongoClient.getDatabase("test").getCollection("coll");
 
-        ObservableSubscriber<Success> successSubscriber = new OperationSubscriber<>();
+        ObservableSubscriber<Void> successSubscriber = new OperationSubscriber<>();
         collection.drop().subscribe(successSubscriber);
         successSubscriber.await();
 

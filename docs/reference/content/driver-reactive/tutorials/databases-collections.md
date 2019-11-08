@@ -89,7 +89,7 @@ For example, the following operation creates a [capped collection]({{<docsref "c
 
 ```java
 database.createCollection("cappedCollection", new CreateCollectionOptions().capped(true).sizeInBytes(0x100000))
-        .subscribe(new OperationSubscriber<Success>());
+        .subscribe(new OperationSubscriber<Void>());
 ```
 
 ### Document Validation
@@ -101,7 +101,7 @@ ValidationOptions collOptions = new ValidationOptions().validator(
         Filters.or(Filters.exists("email"), Filters.exists("phone")));
 
 database.createCollection("contacts", new CreateCollectionOptions().validationOptions(collOptions))
-        .subscribe(new OperationSubscriber<Success>());
+        .subscribe(new OperationSubscriber<Void>());
 ```
 
 ## Get A List of Collections
@@ -118,7 +118,7 @@ You can drop a collection by using the [`MongoCollection.drop()`]({{<apiref "com
 
 ```java
 MongoCollection<Document> collection = database.getCollection("contacts");
-collection.drop().subscribe(new OperationSubscriber<Success>());
+collection.drop().subscribe(new OperationSubscriber<Void>());
 ```
 
 ## Immutability
@@ -151,7 +151,7 @@ MongoCollection<BsonDocument> collection = database.getCollection("mycoll", Bson
 
 // insert a document
 BsonDocument document = BsonDocument.parse("{x: 1}");
-collection.insertOne(document).subscribe(new OperationSubscriber<Success>());
+collection.insertOne(document).subscribe(new OperationSubscriber<Void>());
 document.append("x", new BsonInt32(2)).append("y", new BsonInt32(3));
 
 // replace a document

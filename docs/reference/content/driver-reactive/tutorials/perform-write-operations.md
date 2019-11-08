@@ -67,7 +67,7 @@ Document document = new Document("name", "Café Con Leche")
                .append("stars", 3)
                .append("categories", Arrays.asList("Bakery", "Coffee", "Pastries"));
 
-collection.insertOne(document).subscribe(new ObservableSubscriber<Success>());
+collection.insertOne(document).subscribe(new ObservableSubscriber<Void>());
 ```
 
 {{% note %}}
@@ -100,7 +100,7 @@ List<Document> documents = new ArrayList<Document>();
 documents.add(doc1);
 documents.add(doc2);
 
-collection.insertMany(documents).subscribe(new ObservableSubscriber<Success>());;
+collection.insertMany(documents).subscribe(new ObservableSubscriber<Void>());;
 ```
 {{% note %}}
 If no top-level `_id` field is specified in the documents, the Java driver automatically adds the `_id` field to the inserted documents.

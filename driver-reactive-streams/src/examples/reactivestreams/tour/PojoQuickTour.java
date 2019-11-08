@@ -23,12 +23,11 @@ import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoCollection;
 import com.mongodb.reactivestreams.client.MongoDatabase;
-import com.mongodb.reactivestreams.client.Success;
+import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.pojo.PojoCodecProvider;
 import reactivestreams.helpers.SubscriberHelpers.ObservableSubscriber;
 import reactivestreams.helpers.SubscriberHelpers.OperationSubscriber;
 import reactivestreams.helpers.SubscriberHelpers.PrintToStringSubscriber;
-import org.bson.codecs.configuration.CodecRegistry;
-import org.bson.codecs.pojo.PojoCodecProvider;
 
 import java.util.List;
 
@@ -71,7 +70,7 @@ public class PojoQuickTour {
         final MongoCollection<Person> collection = database.getCollection("people", Person.class);
 
         // drop all the data in it
-        ObservableSubscriber<Success> successSubscriber = new OperationSubscriber<>();
+        ObservableSubscriber<Void> successSubscriber = new OperationSubscriber<>();
         collection.drop().subscribe(successSubscriber);
         successSubscriber.await();
 

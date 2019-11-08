@@ -2,79 +2,38 @@
 date = "2015-03-19T12:53:39-04:00"
 title = "Upgrade Considerations"
 [menu.main]
-  identifier = "Upgrading to 3.9"
+  identifier = "Upgrading"
   weight = 80
   pre = "<i class='fa fa-level-up'></i>"
 +++
 
-{{% note class="important" %}}
-Please note that the 3.x series of releases (which includes support through MongoDB 4.2) will be the last releases that are compatible
-with *Java 6 or Java 7*.  The 4.0 Java driver will require a minimum of Java 8. 
+## Upgrading from 3.x
 
-Please also note that support for new features in MongoDB 4.4 will likely only be available via a 4.x driver release.
-{{% /note %}}
+... TODO ...
 
-## Upgrading from 3.11.x
+## Upgrading from mongo-java-driver-reactivestreams 1.12
 
-In the upcoming 4.0 release, all deprecated API elements except those documented as "not currently scheduled for removal" will be removed.
-Currently the only deprecated API elements _not_ scheduled for removal are:
+The main change to the MongoDB Reactive Streams Java Driver 1.12 driver is the removal of the `Success` type.
 
-* [`Mongo.getDB`]({{<apiref "com/mongodb/Mongo.html#getDB(java.lang.String)">}})
-* [`JsonMode.STRICT`]({{<apiref "org/bson/json/JsonMode.html#STRICT">}})
+Breaking changes are as follows:
 
-To prepare for the 4.0 release, please compile with deprecation warnings enabled and replace all usage of deprecated API elements with their
-recommended replacements.
+  * `Publisher<Success>` has been migrated to `Publisher<Void>`. 
+    Please note that `onNext` will not be called just `onComplete` if the operation is successful or `onError` if there is an error.
+  * Removal of deprecated methods
 
-The 3.12 release is binary and source compatible with the 3.11 release, except for methods that have been added to interfaces that
-have been marked as unstable, and changes to classes or interfaces that have been marked as internal or annotated as Beta.
+## Upgrading from mongo-scala-driver 2.7
 
-## Upgrading from 3.10.x
+As the mongodb-driver-async package was deprecated in 3.x. The 4.0 version of the MongoDB Scala Driver is now built upon the
+mongo-java-driver-reactivestreams 4.0 driver. One major benefit is now the Scala driver is also a reactive streams driver.
 
-Please note that the 3.11 driver enables both retryable reads and retryable writes by default, so users upgrading to the 3.11 driver may
-wish to adjust any custom retry logic in order to prevent applications from retrying for too long.
+Breaking changes are as follows:
 
-In the upcoming 4.0 release, all deprecated API elements except those documented as "not currently scheduled for removal" will be removed.
-Currently the only deprecated API elements _not_ scheduled for removal are:
+  * `Observable` is now a reactive streams `Publisher` implementations
+    `Observable` implicits extend any `Publisher` implementation and can be imported from `org.mongodb.scala._`
+  * Completed type has now been removed. `Observable[Completed]` has been migrated to `Observable[Void]`. 
+    Please note that `onNext` will not be called just `onComplete` if the operation is successful or `onError` if there is an error.
+  * Removal of deprecated methods
 
-* [`Mongo.getDB`]({{<apiref "com/mongodb/Mongo.html#getDB(java.lang.String)">}})
-* [`JsonMode.STRICT`]({{<apiref "org/bson/json/JsonMode.html#STRICT">}})
-
-To prepare for the 4.0 release, please compile with deprecation warnings enabled and replace all usage of deprecated API elements with their
-recommended replacements.
-
-The 3.11 release is binary and source compatible with the 3.10 release, except for methods that have been added to interfaces that
-have been marked as unstable, and changes to classes or interfaces that have been marked as internal or annotated as Beta.
-
-## Upgrading from 3.9.x
-
-Please note that two large portions of the current driver have been deprecated as of the 3.9.0 release:
-
-* The callback-based asynchronous driver has been deprecated in favor of the 
-[Reactive Streams Java Driver](http://mongodb.github.io/mongo-java-driver-reactivestreams/).
-* Much of the "core" driver on which the both the asynchronous and synchronous drivers are built has been deprecated.  In 3.0 we made most
-of this "core" driver a public API, but the benefit to users has turned out to be small and the maintenance costs of maintaining backwards 
-compatibility has turned out to be high.  For that reason we've decided to remove it from the public API (though it will still continue 
-to exist as an implementation artifact).
-
-In the upcoming 4.0 release, all deprecated API elements except those documented as "not currently scheduled for removal" will be removed. 
-Currently the only deprecated API elements _not_ scheduled for removal are:
-
-* [`Mongo.getDB`]({{<apiref "com/mongodb/Mongo.html#getDB(java.lang.String)">}})
-* [`JsonMode.STRICT`]({{<apiref "org/bson/json/JsonMode.html#STRICT">}}) 
-
-To prepare for the 4.0 release, please compile with deprecation warnings enabled and replace all usage of deprecated API elements with their
-recommended replacements.
-
-Also, note that the 3.11 release (which will include support for MongoDB 4.2) will be the last release that is compatible with *Java 6
-or Java 7*.  The 4.0 Java driver will require a minimum of Java 8. The 3.11 release will also be the last non-patch release in the 3.x 
-line. In particular, support for MongoDB 4.4 will only be made available via a 4.x driver release.
-
-The 3.10 release is binary and source compatible with the 3.9 release, except for methods that have been added to interfaces that
-have been marked as unstable, and changes to classes or interfaces that have been marked as internal or annotated as Beta.
-
-## Upgrading from 2.x
-
-See the Upgrade guide in the 3.0 driver reference documentation for breaking changes in 3.0.
 
 ## System Requirements
 

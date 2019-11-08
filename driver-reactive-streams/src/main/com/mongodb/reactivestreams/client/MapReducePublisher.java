@@ -169,10 +169,10 @@ public interface MapReducePublisher<TResult> extends Publisher<TResult> {
      * Aggregates documents to a collection according to the specified map-reduce function with the given options, which must specify a
      * non-inline result.
      *
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual aggregation/ Aggregation
      */
-    Publisher<Success> toCollection();
+    Publisher<Void> toCollection();
 
     /**
      * Sets the collation options

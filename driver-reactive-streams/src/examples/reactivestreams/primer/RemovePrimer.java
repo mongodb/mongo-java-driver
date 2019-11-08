@@ -18,8 +18,8 @@
 package reactivestreams.primer;
 
 // @import: start
+
 import com.mongodb.client.result.DeleteResult;
-import com.mongodb.reactivestreams.client.Success;
 import org.bson.Document;
 import org.junit.Test;
 import reactivestreams.helpers.SubscriberHelpers.ObservableSubscriber;
@@ -66,7 +66,7 @@ public class RemovePrimer extends PrimerTestCase {
     @Test
     public void dropCollection() {
         // @begin: drop-collection
-        ObservableSubscriber<Success> successSubscriber = new OperationSubscriber<>();
+        ObservableSubscriber<Void> successSubscriber = new OperationSubscriber<>();
         db.getCollection("restaurants").drop()
                 .subscribe(successSubscriber);
         successSubscriber.await();

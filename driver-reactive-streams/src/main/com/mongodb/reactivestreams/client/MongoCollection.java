@@ -679,33 +679,33 @@ public interface MongoCollection<TDocument> {
      * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
      *
      * @param document the document to insert
-     * @return a publisher with a single element indicating when the operation has completed or with either a
+     * @return an empty publisher that indicates when the operation has completed or errors with either a
      * com.mongodb.DuplicateKeyException or com.mongodb.MongoException
      */
-    Publisher<Success> insertOne(TDocument document);
+    Publisher<Void> insertOne(TDocument document);
 
     /**
      * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
      *
      * @param document the document to insert
      * @param options  the options to apply to the operation
-     * @return a publisher with a single element indicating when the operation has completed or with either a
+     * @return an empty publisher that indicates when the operation has completed or errors with either a
      * com.mongodb.DuplicateKeyException or com.mongodb.MongoException
      * @since 1.2
      */
-    Publisher<Success> insertOne(TDocument document, InsertOneOptions options);
+    Publisher<Void> insertOne(TDocument document, InsertOneOptions options);
 
     /**
      * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
      *
      * @param clientSession the client session with which to associate this operation
      * @param document the document to insert
-     * @return a publisher with a single element indicating when the operation has completed or with either a
+     * @return an empty publisher that indicates when the operation has completed or errors with either a
      * com.mongodb.DuplicateKeyException or com.mongodb.MongoException
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Success> insertOne(ClientSession clientSession, TDocument document);
+    Publisher<Void> insertOne(ClientSession clientSession, TDocument document);
 
     /**
      * Inserts the provided document. If the document is missing an identifier, the driver should generate one.
@@ -713,43 +713,43 @@ public interface MongoCollection<TDocument> {
      * @param clientSession the client session with which to associate this operation
      * @param document the document to insert
      * @param options  the options to apply to the operation
-     * @return a publisher with a single element indicating when the operation has completed or with either a
+     * @return an empty publisher that indicates when the operation has completed or errors with either a
      * com.mongodb.DuplicateKeyException or com.mongodb.MongoException
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Success> insertOne(ClientSession clientSession, TDocument document, InsertOneOptions options);
+    Publisher<Void> insertOne(ClientSession clientSession, TDocument document, InsertOneOptions options);
 
     /**
      * Inserts a batch of documents.
      *
      * @param documents the documents to insert
-     * @return a publisher with a single element indicating when the operation has completed or with either a
+     * @return an empty publisher that indicates when the operation has completed or errors with either a
      * com.mongodb.DuplicateKeyException or com.mongodb.MongoException
      */
-    Publisher<Success> insertMany(List<? extends TDocument> documents);
+    Publisher<Void> insertMany(List<? extends TDocument> documents);
 
     /**
      * Inserts a batch of documents.
      *
      * @param documents the documents to insert
      * @param options   the options to apply to the operation
-     * @return a publisher with a single element indicating when the operation has completed or with either a
+     * @return an empty publisher that indicates when the operation has completed or errors with either a
      * com.mongodb.DuplicateKeyException or com.mongodb.MongoException
      */
-    Publisher<Success> insertMany(List<? extends TDocument> documents, InsertManyOptions options);
+    Publisher<Void> insertMany(List<? extends TDocument> documents, InsertManyOptions options);
 
     /**
      * Inserts a batch of documents.
      *
      * @param clientSession the client session with which to associate this operation
      * @param documents the documents to insert
-     * @return a publisher with a single element indicating when the operation has completed or with either a
+     * @return an empty publisher that indicates when the operation has completed or errors with either a
      * com.mongodb.DuplicateKeyException or com.mongodb.MongoException
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Success> insertMany(ClientSession clientSession, List<? extends TDocument> documents);
+    Publisher<Void> insertMany(ClientSession clientSession, List<? extends TDocument> documents);
 
     /**
      * Inserts a batch of documents.
@@ -757,12 +757,12 @@ public interface MongoCollection<TDocument> {
      * @param clientSession the client session with which to associate this operation
      * @param documents the documents to insert
      * @param options   the options to apply to the operation
-     * @return a publisher with a single element indicating when the operation has completed or with either a
+     * @return an empty publisher that indicates when the operation has completed or errors with either a
      * com.mongodb.DuplicateKeyException or com.mongodb.MongoException
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Success> insertMany(ClientSession clientSession, List<? extends TDocument> documents, InsertManyOptions options);
+    Publisher<Void> insertMany(ClientSession clientSession, List<? extends TDocument> documents, InsertManyOptions options);
 
     /**
      * Removes at most one document from the collection that matches the given filter.  If no documents match, the collection is not
@@ -1330,27 +1330,27 @@ public interface MongoCollection<TDocument> {
     /**
      * Drops this collection from the Database.
      *
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/command/drop/ Drop Collection
      */
-    Publisher<Success> drop();
+    Publisher<Void> drop();
 
     /**
      * Drops this collection from the Database.
      *
      * @param clientSession the client session with which to associate this operation
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/command/drop/ Drop Collection
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Success> drop(ClientSession clientSession);
+    Publisher<Void> drop(ClientSession clientSession);
 
     /**
      * Creates an index.
      *
      * @param key an object describing the index key(s), which may not be null.
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/method/db.collection.ensureIndex Ensure Index
      */
     Publisher<String> createIndex(Bson key);
@@ -1360,7 +1360,7 @@ public interface MongoCollection<TDocument> {
      *
      * @param key     an object describing the index key(s), which may not be null.
      * @param options the options for the index
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/method/db.collection.ensureIndex Ensure Index
      */
     Publisher<String> createIndex(Bson key, IndexOptions options);
@@ -1370,7 +1370,7 @@ public interface MongoCollection<TDocument> {
      *
      * @param clientSession the client session with which to associate this operation
      * @param key an object describing the index key(s), which may not be null.
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/method/db.collection.ensureIndex Ensure Index
      * @mongodb.server.release 3.6
      * @since 1.7
@@ -1383,7 +1383,7 @@ public interface MongoCollection<TDocument> {
      * @param clientSession the client session with which to associate this operation
      * @param key     an object describing the index key(s), which may not be null.
      * @param options the options for the index
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/method/db.collection.ensureIndex Ensure Index
      * @mongodb.server.release 3.6
      * @since 1.7
@@ -1394,7 +1394,7 @@ public interface MongoCollection<TDocument> {
      * Create multiple indexes.
      *
      * @param indexes the list of indexes
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/command/createIndexes Create indexes
      */
     Publisher<String> createIndexes(List<IndexModel> indexes);
@@ -1404,7 +1404,7 @@ public interface MongoCollection<TDocument> {
      *
      * @param indexes the list of indexes
      * @param createIndexOptions options to use when creating indexes
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/command/createIndexes Create indexes
      * @since 1.7
      */
@@ -1415,7 +1415,7 @@ public interface MongoCollection<TDocument> {
      *
      * @param clientSession the client session with which to associate this operation
      * @param indexes the list of indexes
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/command/createIndexes Create indexes
      * @mongodb.server.release 3.6
      * @since 1.7
@@ -1428,7 +1428,7 @@ public interface MongoCollection<TDocument> {
      * @param clientSession the client session with which to associate this operation
      * @param indexes the list of indexes
      * @param createIndexOptions options to use when creating indexes
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/command/createIndexes Create indexes
      * @mongodb.server.release 3.6
      * @since 1.7
@@ -1481,65 +1481,65 @@ public interface MongoCollection<TDocument> {
      * Drops the given index.
      *
      * @param indexName the name of the index to remove
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/command/dropIndexes/ Drop Indexes
      */
-    Publisher<Success> dropIndex(String indexName);
+    Publisher<Void> dropIndex(String indexName);
 
     /**
      * Drops the index given the keys used to create it.
      *
      * @param keys the keys of the index to remove
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/command/dropIndexes/ Drop indexes
      */
-    Publisher<Success> dropIndex(Bson keys);
+    Publisher<Void> dropIndex(Bson keys);
 
     /**
      * Drops the given index.
      *
      * @param indexName the name of the index to remove
      * @param dropIndexOptions options to use when dropping indexes
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/command/dropIndexes/ Drop Indexes
      * @since 1.7
      */
-    Publisher<Success> dropIndex(String indexName, DropIndexOptions dropIndexOptions);
+    Publisher<Void> dropIndex(String indexName, DropIndexOptions dropIndexOptions);
 
     /**
      * Drops the index given the keys used to create it.
      *
      * @param keys the keys of the index to remove
      * @param dropIndexOptions options to use when dropping indexes
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/command/dropIndexes/ Drop indexes
      * @since 1.7
      */
-    Publisher<Success> dropIndex(Bson keys, DropIndexOptions dropIndexOptions);
+    Publisher<Void> dropIndex(Bson keys, DropIndexOptions dropIndexOptions);
 
     /**
      * Drops the given index.
      *
      * @param clientSession the client session with which to associate this operation
      * @param indexName the name of the index to remove
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/command/dropIndexes/ Drop Indexes
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Success> dropIndex(ClientSession clientSession, String indexName);
+    Publisher<Void> dropIndex(ClientSession clientSession, String indexName);
 
     /**
      * Drops the index given the keys used to create it.
      *
      * @param clientSession the client session with which to associate this operation
      * @param keys the keys of the index to remove
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/command/dropIndexes/ Drop indexes
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Success> dropIndex(ClientSession clientSession, Bson keys);
+    Publisher<Void> dropIndex(ClientSession clientSession, Bson keys);
 
     /**
      * Drops the given index.
@@ -1547,12 +1547,12 @@ public interface MongoCollection<TDocument> {
      * @param clientSession the client session with which to associate this operation
      * @param indexName the name of the index to remove
      * @param dropIndexOptions options to use when dropping indexes
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/command/dropIndexes/ Drop Indexes
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Success> dropIndex(ClientSession clientSession, String indexName, DropIndexOptions dropIndexOptions);
+    Publisher<Void> dropIndex(ClientSession clientSession, String indexName, DropIndexOptions dropIndexOptions);
 
     /**
      * Drops the index given the keys used to create it.
@@ -1560,72 +1560,72 @@ public interface MongoCollection<TDocument> {
      * @param clientSession the client session with which to associate this operation
      * @param keys the keys of the index to remove
      * @param dropIndexOptions options to use when dropping indexes
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/command/dropIndexes/ Drop indexes
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Success> dropIndex(ClientSession clientSession, Bson keys, DropIndexOptions dropIndexOptions);
+    Publisher<Void> dropIndex(ClientSession clientSession, Bson keys, DropIndexOptions dropIndexOptions);
 
     /**
      * Drop all the indexes on this collection, except for the default on _id.
      *
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/command/dropIndexes/ Drop Indexes
      */
-    Publisher<Success> dropIndexes();
+    Publisher<Void> dropIndexes();
 
     /**
      * Drop all the indexes on this collection, except for the default on _id.
      *
      * @param dropIndexOptions options to use when dropping indexes
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/command/dropIndexes/ Drop Indexes
      * @since 1.7
      */
-    Publisher<Success> dropIndexes(DropIndexOptions dropIndexOptions);
+    Publisher<Void> dropIndexes(DropIndexOptions dropIndexOptions);
 
     /**
      * Drop all the indexes on this collection, except for the default on _id.
      *
      * @param clientSession the client session with which to associate this operation
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/command/dropIndexes/ Drop Indexes
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Success> dropIndexes(ClientSession clientSession);
+    Publisher<Void> dropIndexes(ClientSession clientSession);
 
     /**
      * Drop all the indexes on this collection, except for the default on _id.
      *
      * @param clientSession the client session with which to associate this operation
      * @param dropIndexOptions options to use when dropping indexes
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/command/dropIndexes/ Drop Indexes
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Success> dropIndexes(ClientSession clientSession, DropIndexOptions dropIndexOptions);
+    Publisher<Void> dropIndexes(ClientSession clientSession, DropIndexOptions dropIndexOptions);
 
     /**
      * Rename the collection with oldCollectionName to the newCollectionName.
      *
      * @param newCollectionNamespace the namespace the collection will be renamed to
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/commands/renameCollection Rename collection
      */
-    Publisher<Success> renameCollection(MongoNamespace newCollectionNamespace);
+    Publisher<Void> renameCollection(MongoNamespace newCollectionNamespace);
 
     /**
      * Rename the collection with oldCollectionName to the newCollectionName.
      *
      * @param newCollectionNamespace the name the collection will be renamed to
      * @param options                the options for renaming a collection
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/commands/renameCollection Rename collection
      */
-    Publisher<Success> renameCollection(MongoNamespace newCollectionNamespace, RenameCollectionOptions options);
+    Publisher<Void> renameCollection(MongoNamespace newCollectionNamespace, RenameCollectionOptions options);
 
 
     /**
@@ -1633,12 +1633,12 @@ public interface MongoCollection<TDocument> {
      *
      * @param clientSession the client session with which to associate this operation
      * @param newCollectionNamespace the namespace the collection will be renamed to
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/commands/renameCollection Rename collection
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Success> renameCollection(ClientSession clientSession, MongoNamespace newCollectionNamespace);
+    Publisher<Void> renameCollection(ClientSession clientSession, MongoNamespace newCollectionNamespace);
 
     /**
      * Rename the collection with oldCollectionName to the newCollectionName.
@@ -1646,11 +1646,11 @@ public interface MongoCollection<TDocument> {
      * @param clientSession the client session with which to associate this operation
      * @param newCollectionNamespace the name the collection will be renamed to
      * @param options                the options for renaming a collection
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual reference/commands/renameCollection Rename collection
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Success> renameCollection(ClientSession clientSession, MongoNamespace newCollectionNamespace,
+    Publisher<Void> renameCollection(ClientSession clientSession, MongoNamespace newCollectionNamespace,
                                         RenameCollectionOptions options);
 }

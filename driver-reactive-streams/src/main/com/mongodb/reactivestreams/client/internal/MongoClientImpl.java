@@ -68,12 +68,12 @@ public final class MongoClientImpl implements MongoClient {
 
     @Override
     public Publisher<String> listDatabaseNames() {
-        return new ObservableToPublisher<String>(Observables.observe(wrapped.listDatabaseNames()));
+        return new ObservableToPublisher<>(Observables.observe(wrapped.listDatabaseNames()));
     }
 
     @Override
     public Publisher<String> listDatabaseNames(final ClientSession clientSession) {
-        return new ObservableToPublisher<String>(
+        return new ObservableToPublisher<>(
                 Observables.observe(wrapped.listDatabaseNames(clientSession.getWrapped())));
     }
 
@@ -84,7 +84,7 @@ public final class MongoClientImpl implements MongoClient {
 
     @Override
     public <TResult> ListDatabasesPublisher<TResult> listDatabases(final Class<TResult> clazz) {
-        return new ListDatabasesPublisherImpl<TResult>(wrapped.listDatabases(clazz));
+        return new ListDatabasesPublisherImpl<>(wrapped.listDatabases(clazz));
     }
 
     @Override
@@ -94,17 +94,17 @@ public final class MongoClientImpl implements MongoClient {
 
     @Override
     public <TResult> ListDatabasesPublisher<TResult> listDatabases(final ClientSession clientSession, final Class<TResult> clazz) {
-        return new ListDatabasesPublisherImpl<TResult>(wrapped.listDatabases(clientSession.getWrapped(), clazz));
+        return new ListDatabasesPublisherImpl<>(wrapped.listDatabases(clientSession.getWrapped(), clazz));
     }
 
     @Override
     public ChangeStreamPublisher<Document> watch() {
-        return watch(Collections.<Bson>emptyList());
+        return watch(Collections.emptyList());
     }
 
     @Override
     public <TResult> ChangeStreamPublisher<TResult> watch(final Class<TResult> resultClass) {
-        return watch(Collections.<Bson>emptyList(), resultClass);
+        return watch(Collections.emptyList(), resultClass);
     }
 
     @Override
@@ -114,17 +114,17 @@ public final class MongoClientImpl implements MongoClient {
 
     @Override
     public <TResult> ChangeStreamPublisher<TResult> watch(final List<? extends Bson> pipeline, final Class<TResult> resultClass) {
-        return new ChangeStreamPublisherImpl<TResult>(wrapped.watch(pipeline, resultClass));
+        return new ChangeStreamPublisherImpl<>(wrapped.watch(pipeline, resultClass));
     }
 
     @Override
     public ChangeStreamPublisher<Document> watch(final ClientSession clientSession) {
-        return watch(clientSession, Collections.<Bson>emptyList(), Document.class);
+        return watch(clientSession, Collections.emptyList(), Document.class);
     }
 
     @Override
     public <TResult> ChangeStreamPublisher<TResult> watch(final ClientSession clientSession, final Class<TResult> resultClass) {
-        return watch(clientSession, Collections.<Bson>emptyList(), resultClass);
+        return watch(clientSession, Collections.emptyList(), resultClass);
     }
 
     @Override
@@ -136,7 +136,7 @@ public final class MongoClientImpl implements MongoClient {
     public <TResult> ChangeStreamPublisher<TResult> watch(final ClientSession clientSession, final List<? extends Bson> pipeline,
                                                           final Class<TResult> resultClass) {
         notNull("clientSession", clientSession);
-        return new ChangeStreamPublisherImpl<TResult>(wrapped.watch(clientSession.getWrapped(), pipeline, resultClass));
+        return new ChangeStreamPublisherImpl<>(wrapped.watch(clientSession.getWrapped(), pipeline, resultClass));
     }
 
     @Override
@@ -146,7 +146,7 @@ public final class MongoClientImpl implements MongoClient {
 
     @Override
     public Publisher<ClientSession> startSession(final ClientSessionOptions options) {
-        return new SingleResultObservableToPublisher<ClientSession>(
+        return new SingleResultObservableToPublisher<>(
                 new Block<SingleResultCallback<ClientSession>>() {
                     @Override
                     public void apply(final SingleResultCallback<ClientSession> clientSessionSingleResultCallback) {

@@ -75,7 +75,7 @@ public class ClientSideEncryptionExternalKeyVaultTest {
         MongoDatabase admin = client.getDatabase("admin");
         MongoCollection<BsonDocument> datakeys = admin.getCollection("datakeys", BsonDocument.class)
                 .withWriteConcern(WriteConcern.MAJORITY);
-        ObservableSubscriber<Success> subscriber = new ObservableSubscriber<>();
+        ObservableSubscriber<Void> subscriber = new ObservableSubscriber<>();
         datakeys.drop().subscribe(subscriber);
         subscriber.await(5, TimeUnit.SECONDS);
 
@@ -134,7 +134,7 @@ public class ClientSideEncryptionExternalKeyVaultTest {
                 .getDatabase("db")
                 .getCollection("coll", BsonDocument.class);
         try {
-            ObservableSubscriber<Success> subscriber = new ObservableSubscriber<>();
+            ObservableSubscriber<Void> subscriber = new ObservableSubscriber<>();
             coll.insertOne(new BsonDocument().append("encrypted", new BsonString("test"))).subscribe(subscriber);
             subscriber.await(5, TimeUnit.SECONDS);
         } catch (MongoSecurityException mse) {

@@ -21,7 +21,6 @@ import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.MapReduceAction;
 import com.mongodb.lang.Nullable;
 import com.mongodb.reactivestreams.client.MapReducePublisher;
-import com.mongodb.reactivestreams.client.Success;
 import org.bson.conversions.Bson;
 
 import java.util.concurrent.TimeUnit;
@@ -36,7 +35,7 @@ class SyncMapReduceIterable<T> extends SyncMongoIterable<T> implements MapReduce
 
     @Override
     public void toCollection() {
-        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
+        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
         wrapped.toCollection().subscribe(subscriber);
         subscriber.get();
     }

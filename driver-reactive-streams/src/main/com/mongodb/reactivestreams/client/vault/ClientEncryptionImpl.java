@@ -16,10 +16,8 @@
 
 package com.mongodb.reactivestreams.client.vault;
 
-import com.mongodb.Block;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.client.vault.AsyncClientEncryption;
 import com.mongodb.reactivestreams.client.internal.SingleResultObservableToPublisher;
 import org.bson.BsonBinary;
@@ -42,35 +40,20 @@ class ClientEncryptionImpl implements ClientEncryption {
 
     @Override
     public Publisher<BsonBinary> createDataKey(final String kmsProvider, final DataKeyOptions dataKeyOptions) {
-        return new SingleResultObservableToPublisher<BsonBinary>(
-                new Block<SingleResultCallback<BsonBinary>>(){
-                    @Override
-                    public void apply(final SingleResultCallback<BsonBinary> callback) {
-                        wrapped.createDataKey(kmsProvider, dataKeyOptions, callback);
-                    }
-                });
+        return new SingleResultObservableToPublisher<>(
+                callback -> wrapped.createDataKey(kmsProvider, dataKeyOptions, callback));
     }
 
     @Override
     public Publisher<BsonBinary> encrypt(final BsonValue value, final EncryptOptions options) {
-        return new SingleResultObservableToPublisher<BsonBinary>(
-                new Block<SingleResultCallback<BsonBinary>>(){
-                    @Override
-                    public void apply(final SingleResultCallback<BsonBinary> callback) {
-                        wrapped.encrypt(value, options, callback);
-                    }
-                });
+        return new SingleResultObservableToPublisher<>(
+                callback -> wrapped.encrypt(value, options, callback));
     }
 
     @Override
     public Publisher<BsonValue> decrypt(final BsonBinary value) {
-        return new SingleResultObservableToPublisher<BsonValue>(
-                new Block<SingleResultCallback<BsonValue>>(){
-                    @Override
-                    public void apply(final SingleResultCallback<BsonValue> callback) {
-                        wrapped.decrypt(value, callback);
-                    }
-                });
+        return new SingleResultObservableToPublisher<>(
+                callback -> wrapped.decrypt(value, callback));
     }
 
     @Override

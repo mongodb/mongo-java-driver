@@ -16,11 +16,9 @@
 
 package com.mongodb.reactivestreams.client.internal;
 
-import com.mongodb.Block;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.client.AsyncChangeStreamIterable;
 import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.ChangeStreamPublisher;
@@ -80,7 +78,7 @@ final class ChangeStreamPublisherImpl<TResult> implements ChangeStreamPublisher<
 
     @Override
     public <TDocument> Publisher<TDocument> withDocumentClass(final Class<TDocument> clazz) {
-        return new ObservableToPublisher<TDocument>(Observables.observe(wrapped.withDocumentClass(clazz)));
+        return new ObservableToPublisher<>(Observables.observe(wrapped.withDocumentClass(clazz)));
     }
 
     @Override
@@ -91,17 +89,11 @@ final class ChangeStreamPublisherImpl<TResult> implements ChangeStreamPublisher<
 
     @Override
     public Publisher<ChangeStreamDocument<TResult>> first() {
-        return new SingleResultObservableToPublisher<ChangeStreamDocument<TResult>>(
-                new Block<SingleResultCallback<ChangeStreamDocument<TResult>>>() {
-                    @Override
-                    public void apply(final SingleResultCallback<ChangeStreamDocument<TResult>> callback) {
-                        wrapped.first(callback);
-                    }
-                });
+        return new SingleResultObservableToPublisher<>(wrapped::first);
     }
 
     @Override
     public void subscribe(final Subscriber<? super ChangeStreamDocument<TResult>> s) {
-        new ObservableToPublisher<ChangeStreamDocument<TResult>>(Observables.observe(wrapped)).subscribe(s);
+        new ObservableToPublisher<>(Observables.observe(wrapped)).subscribe(s);
     }
 }

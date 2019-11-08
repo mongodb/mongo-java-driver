@@ -18,7 +18,7 @@ package org.mongodb.scala.gridfs
 
 import java.nio.ByteBuffer
 
-import org.mongodb.scala.{ Completed, Observable, SingleObservable }
+import org.mongodb.scala.SingleObservable
 
 /**
  * The Async Input Stream interface represents some asynchronous input stream of bytes.
@@ -52,5 +52,5 @@ trait AsyncInputStream {
    *
    * @return a Observable with a single element indicating when the operation has completed
    */
-  def close(): SingleObservable[Completed]
+  def close(): SingleObservable[Void]
 }

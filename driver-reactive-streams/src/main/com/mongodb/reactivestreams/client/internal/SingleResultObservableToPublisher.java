@@ -27,7 +27,7 @@ public class SingleResultObservableToPublisher<TResult> implements org.reactives
     private final ObservableToPublisher<TResult> observable;
 
     public SingleResultObservableToPublisher(final Block<SingleResultCallback<TResult>> operation) {
-        this.observable = new ObservableToPublisher<TResult>(Observables.observe(operation));
+        this.observable = new ObservableToPublisher<>(Observables.observe(operation));
     }
 
     @Override

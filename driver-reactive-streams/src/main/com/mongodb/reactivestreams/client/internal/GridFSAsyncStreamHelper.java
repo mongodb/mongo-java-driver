@@ -16,9 +16,7 @@
 
 package com.mongodb.reactivestreams.client.internal;
 
-import com.mongodb.Block;
 import com.mongodb.internal.async.SingleResultCallback;
-import com.mongodb.reactivestreams.client.Success;
 import com.mongodb.reactivestreams.client.gridfs.AsyncInputStream;
 import com.mongodb.reactivestreams.client.gridfs.AsyncOutputStream;
 import org.reactivestreams.Publisher;
@@ -28,7 +26,6 @@ import org.reactivestreams.Subscription;
 import java.nio.ByteBuffer;
 
 import static com.mongodb.assertions.Assertions.notNull;
-import static com.mongodb.reactivestreams.client.internal.PublisherHelper.voidToSuccessCallback;
 
 
 /**
@@ -50,35 +47,17 @@ public final class GridFSAsyncStreamHelper {
         return new AsyncInputStream() {
             @Override
             public Publisher<Integer> read(final ByteBuffer dst) {
-                return new SingleResultObservableToPublisher<Integer>(
-                        new Block<SingleResultCallback<Integer>>() {
-                            @Override
-                            public void apply(final SingleResultCallback<Integer> callback) {
-                                wrapper.read(dst, callback);
-                            }
-                        });
+                return new SingleResultObservableToPublisher<>(callback -> wrapper.read(dst, callback));
             }
 
             @Override
             public Publisher<Long> skip(final long bytesToSkip) {
-                return new SingleResultObservableToPublisher<Long>(
-                        new Block<SingleResultCallback<Long>>() {
-                            @Override
-                            public void apply(final SingleResultCallback<Long> callback) {
-                                wrapper.skip(bytesToSkip, callback);
-                            }
-                        });
+                return new SingleResultObservableToPublisher<>(callback -> wrapper.skip(bytesToSkip, callback));
             }
 
             @Override
-            public Publisher<Success> close() {
-                return new SingleResultObservableToPublisher<Success>(
-                        new Block<SingleResultCallback<Success>>() {
-                            @Override
-                            public void apply(final SingleResultCallback<Success> callback) {
-                                wrapper.close(voidToSuccessCallback(callback));
-                            }
-                        });
+            public Publisher<Void> close() {
+                return new SingleResultObservableToPublisher<>(wrapper::close);
             }
         };
     }
@@ -96,24 +75,12 @@ public final class GridFSAsyncStreamHelper {
 
             @Override
             public Publisher<Integer> write(final ByteBuffer src) {
-                return new SingleResultObservableToPublisher<Integer>(
-                        new Block<SingleResultCallback<Integer>>() {
-                            @Override
-                            public void apply(final SingleResultCallback<Integer> callback) {
-                                wrapper.write(src, callback);
-                            }
-                        });
+                return new SingleResultObservableToPublisher<>(callback -> wrapper.write(src, callback));
             }
 
             @Override
-            public Publisher<Success> close() {
-                return new SingleResultObservableToPublisher<Success>(
-                        new Block<SingleResultCallback<Success>>() {
-                            @Override
-                            public void apply(final SingleResultCallback<Success> callback) {
-                                wrapper.close(voidToSuccessCallback(callback));
-                            }
-                        });
+            public Publisher<Void> close() {
+                return new SingleResultObservableToPublisher<>(wrapper::close);
             }
         };
     }
@@ -178,7 +145,7 @@ public final class GridFSAsyncStreamHelper {
 
             @Override
             public void close(final SingleResultCallback<Void> callback) {
-                wrapped.close().subscribe(new Subscriber<Success>() {
+                wrapped.close().subscribe(new Subscriber<Void>() {
 
                     @Override
                     public void onSubscribe(final Subscription s) {
@@ -186,7 +153,7 @@ public final class GridFSAsyncStreamHelper {
                     }
 
                     @Override
-                    public void onNext(final Success success) {
+                    public void onNext(final Void success) {
                     }
 
                     @Override
@@ -236,7 +203,7 @@ public final class GridFSAsyncStreamHelper {
 
             @Override
             public void close(final SingleResultCallback<Void> callback) {
-                wrapped.close().subscribe(new Subscriber<Success>() {
+                wrapped.close().subscribe(new Subscriber<Void>() {
 
                     @Override
                     public void onSubscribe(final Subscription s) {
@@ -244,7 +211,7 @@ public final class GridFSAsyncStreamHelper {
                     }
 
                     @Override
-                    public void onNext(final Success success) {
+                    public void onNext(final Void success) {
                     }
 
                     @Override

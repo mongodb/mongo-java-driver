@@ -16,8 +16,6 @@
 
 package com.mongodb.reactivestreams.client.internal;
 
-import com.mongodb.Block;
-import com.mongodb.internal.async.SingleResultCallback;
 import com.mongodb.internal.async.client.AsyncListIndexesIterable;
 import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.ListIndexesPublisher;
@@ -52,18 +50,12 @@ final class ListIndexesPublisherImpl<TResult> implements ListIndexesPublisher<TR
 
     @Override
     public Publisher<TResult> first() {
-        return new SingleResultObservableToPublisher<TResult>(
-                new Block<SingleResultCallback<TResult>>() {
-                    @Override
-                    public void apply(final SingleResultCallback<TResult> callback) {
-                        wrapped.first(callback);
-                    }
-                });
+        return new SingleResultObservableToPublisher<>(wrapped::first);
     }
 
     @Override
     public void subscribe(final Subscriber<? super TResult> s) {
-        new ObservableToPublisher<TResult>(Observables.observe(wrapped)).subscribe(s);
+        new ObservableToPublisher<>(Observables.observe(wrapped)).subscribe(s);
     }
 }
 

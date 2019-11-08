@@ -28,7 +28,6 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.MongoIterable;
 import com.mongodb.client.model.CreateCollectionOptions;
 import com.mongodb.client.model.CreateViewOptions;
-import com.mongodb.reactivestreams.client.Success;
 import org.bson.Document;
 import org.bson.codecs.configuration.CodecRegistry;
 import org.bson.conversions.Bson;
@@ -158,14 +157,14 @@ class SyncMongoDatabase implements MongoDatabase {
 
     @Override
     public void drop() {
-        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
+        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
         wrapped.drop().subscribe(subscriber);
         subscriber.get();
     }
 
     @Override
     public void drop(final ClientSession clientSession) {
-        SingleResultSubscriber<Success> subscriber = new SingleResultSubscriber<>();
+        SingleResultSubscriber<Void> subscriber = new SingleResultSubscriber<>();
         wrapped.drop(unwrap(clientSession)).subscribe(subscriber);
         subscriber.get();
     }

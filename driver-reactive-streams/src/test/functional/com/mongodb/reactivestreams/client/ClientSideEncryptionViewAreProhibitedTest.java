@@ -53,7 +53,7 @@ public class ClientSideEncryptionViewAreProhibitedTest {
         MongoClient client = getMongoClient();
 
         MongoDatabase db = client.getDatabase("db");
-        ObservableSubscriber<Success> subscriber = new ObservableSubscriber<>();
+        ObservableSubscriber<Void> subscriber = new ObservableSubscriber<>();
         db.getCollection("view").drop().subscribe(subscriber);
         subscriber.await(5, TimeUnit.SECONDS);
 
@@ -88,7 +88,7 @@ public class ClientSideEncryptionViewAreProhibitedTest {
                 .getDatabase("db")
                 .getCollection("view", BsonDocument.class);
         try {
-            ObservableSubscriber<Success> subscriber = new ObservableSubscriber<>();
+            ObservableSubscriber<Void> subscriber = new ObservableSubscriber<>();
             coll.insertOne(new BsonDocument().append("encrypted", new BsonString("test"))).subscribe(subscriber);
             subscriber.await(ClusterFixture.TIMEOUT, TimeUnit.SECONDS);
             fail();

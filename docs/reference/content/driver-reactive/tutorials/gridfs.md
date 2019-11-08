@@ -131,7 +131,7 @@ byte[] data = Files.readAllBytes(new File("/tmp/MongoDB-manual-master.pdf").toPa
 
 final GridFSUploadStream uploadStream = gridFSBucket.openUploadStream("mongodb-tutorial-2", options);
 ObservableSubscriber<Integer> writeSubscriber = new OperationSubscriber<>();
-ObservableSubscriber<Success> closedStreamSubscriber = new OperationSubscriber<>();
+ObservableSubscriber<Void> closedStreamSubscriber = new OperationSubscriber<>();
 
 uploadStream.write(data).subscribe(writeSubscriber);
 writeSubscriber.await();  // Ensure data is written before closing!
@@ -247,7 +247,7 @@ The following example renames a file to "mongodbTutorial":
 ```java
 ObjectId fileId; //ObjectId of a file uploaded to GridFS
 
-gridFSBucket.rename(fileId, "mongodbTutorial").subscribe(new ObservableSubscriber<Success>());
+gridFSBucket.rename(fileId, "mongodbTutorial").subscribe(new ObservableSubscriber<Void>());
 ```
 
 {{% note %}}
@@ -265,5 +265,5 @@ The following example deletes a file from the `GridFSBucket`:
 ```java
 ObjectId fileId; //ObjectId of a file uploaded to GridFS
 
-gridFSBucket.delete(fileId).subscribe(new ObservableSubscriber<Success>());
+gridFSBucket.delete(fileId).subscribe(new ObservableSubscriber<Void>());
 ```

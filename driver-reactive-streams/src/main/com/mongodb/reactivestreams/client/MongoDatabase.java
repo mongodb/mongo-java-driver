@@ -220,7 +220,7 @@ public interface MongoDatabase {
      * @return a publisher identifying when the database has been dropped
      * @mongodb.driver.manual reference/commands/dropDatabase/#dbcmd.dropDatabase Drop database
      */
-    Publisher<Success> drop();
+    Publisher<Void> drop();
 
     /**
      * Drops this database.
@@ -231,7 +231,7 @@ public interface MongoDatabase {
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Success> drop(ClientSession clientSession);
+    Publisher<Void> drop(ClientSession clientSession);
 
     /**
      * Gets the names of all the collections in this database.
@@ -299,7 +299,7 @@ public interface MongoDatabase {
      * @return a publisher identifying when the collection has been created
      * @mongodb.driver.manual reference/commands/create Create Command
      */
-    Publisher<Success> createCollection(String collectionName);
+    Publisher<Void> createCollection(String collectionName);
 
     /**
      * Create a new collection with the selected options
@@ -309,7 +309,7 @@ public interface MongoDatabase {
      * @return a publisher identifying when the collection has been created
      * @mongodb.driver.manual reference/commands/create Create Command
      */
-    Publisher<Success> createCollection(String collectionName, CreateCollectionOptions options);
+    Publisher<Void> createCollection(String collectionName, CreateCollectionOptions options);
 
     /**
      * Create a new collection with the given name.
@@ -321,7 +321,7 @@ public interface MongoDatabase {
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Success> createCollection(ClientSession clientSession, String collectionName);
+    Publisher<Void> createCollection(ClientSession clientSession, String collectionName);
 
     /**
      * Create a new collection with the selected options
@@ -334,7 +334,7 @@ public interface MongoDatabase {
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Success> createCollection(ClientSession clientSession, String collectionName, CreateCollectionOptions options);
+    Publisher<Void> createCollection(ClientSession clientSession, String collectionName, CreateCollectionOptions options);
 
     /**
      * Creates a view with the given name, backing collection/view name, and aggregation pipeline that defines the view.
@@ -347,7 +347,7 @@ public interface MongoDatabase {
      * @mongodb.server.release 3.4
      * @mongodb.driver.manual reference/command/create Create Command
      */
-    Publisher<Success> createView(String viewName, String viewOn, List<? extends Bson> pipeline);
+    Publisher<Void> createView(String viewName, String viewOn, List<? extends Bson> pipeline);
 
     /**
      * Creates a view with the given name, backing collection/view name, aggregation pipeline, and options that defines the view.
@@ -361,7 +361,7 @@ public interface MongoDatabase {
      * @mongodb.server.release 3.4
      * @mongodb.driver.manual reference/command/create Create Command
      */
-    Publisher<Success> createView(String viewName, String viewOn, List<? extends Bson> pipeline, CreateViewOptions createViewOptions);
+    Publisher<Void> createView(String viewName, String viewOn, List<? extends Bson> pipeline, CreateViewOptions createViewOptions);
 
     /**
      * Creates a view with the given name, backing collection/view name, and aggregation pipeline that defines the view.
@@ -375,7 +375,7 @@ public interface MongoDatabase {
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Success> createView(ClientSession clientSession, String viewName, String viewOn, List<? extends Bson> pipeline);
+    Publisher<Void> createView(ClientSession clientSession, String viewName, String viewOn, List<? extends Bson> pipeline);
 
     /**
      * Creates a view with the given name, backing collection/view name, aggregation pipeline, and options that defines the view.
@@ -390,7 +390,7 @@ public interface MongoDatabase {
      * @mongodb.server.release 3.6
      * @since 1.7
      */
-    Publisher<Success> createView(ClientSession clientSession, String viewName, String viewOn, List<? extends Bson> pipeline,
+    Publisher<Void> createView(ClientSession clientSession, String viewName, String viewOn, List<? extends Bson> pipeline,
                                   CreateViewOptions createViewOptions);
 
     /**

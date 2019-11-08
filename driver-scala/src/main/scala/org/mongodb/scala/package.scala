@@ -374,13 +374,6 @@ package object scala extends ClientSessionImplicits with ObservableImplicits wit
   type ClientEncryptionSettings = com.mongodb.ClientEncryptionSettings
 
   /**
-   * Alias to Void
-   *
-   * @since 4.0
-   */
-  type Completed = Void
-
-  /**
    * Helper to get the class from a classTag
    *
    * @param ct the classTag we want to implicitly get the class of

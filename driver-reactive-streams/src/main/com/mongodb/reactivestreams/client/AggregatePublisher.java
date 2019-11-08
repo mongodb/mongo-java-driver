@@ -78,10 +78,10 @@ public interface AggregatePublisher<TResult> extends Publisher<TResult> {
     /**
      * Aggregates documents according to the specified aggregation pipeline, which must end with a $out stage.
      *
-     * @return a publisher with a single element indicating when the operation has completed
+     * @return an empty publisher that indicates when the operation has completed
      * @mongodb.driver.manual aggregation/ Aggregation
      */
-    Publisher<Success> toCollection();
+    Publisher<Void> toCollection();
 
     /**
      * Sets the collation options

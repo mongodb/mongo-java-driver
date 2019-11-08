@@ -16,7 +16,6 @@
 
 package com.mongodb.reactivestreams.client.gridfs;
 
-import com.mongodb.reactivestreams.client.Success;
 import org.bson.BsonValue;
 import org.bson.types.ObjectId;
 import org.reactivestreams.Publisher;
@@ -51,6 +50,6 @@ public interface GridFSUploadStream extends AsyncOutputStream {
      *
      * @return a publisher with a single element, signifying the abort and cleanup has finished
      */
-    Publisher<Success> abort();
+    Publisher<Void> abort();
 
 }

@@ -146,7 +146,7 @@ case class AggregateObservable[TResult](private val wrapped: AggregatePublisher[
    * [[http://docs.mongodb.org/manual/aggregation/ Aggregation]]
    * @return a Observable with a single element indicating when the operation has completed
    */
-  def toCollection(): SingleObservable[Completed] = wrapped.toCollection()
+  def toCollection(): SingleObservable[Void] = wrapped.toCollection()
 
   /**
    * Helper to return a single observable limited to the first result.

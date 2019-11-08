@@ -24,7 +24,6 @@ import com.mongodb.client.gridfs.model.GridFSUploadOptions;
 import com.mongodb.reactivestreams.client.MongoClient;
 import com.mongodb.reactivestreams.client.MongoClients;
 import com.mongodb.reactivestreams.client.MongoDatabase;
-import com.mongodb.reactivestreams.client.Success;
 import com.mongodb.reactivestreams.client.gridfs.AsyncInputStream;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBucket;
 import com.mongodb.reactivestreams.client.gridfs.GridFSBuckets;
@@ -73,7 +72,7 @@ public final class GridFSTour {
 
         // get handle to "mydb" database
         MongoDatabase database = mongoClient.getDatabase("mydb");
-        ObservableSubscriber<Success> dropSubscriber = new OperationSubscriber<>();
+        ObservableSubscriber<Void> dropSubscriber = new OperationSubscriber<>();
         database.drop().subscribe(dropSubscriber);
         dropSubscriber.await();
 
@@ -103,7 +102,7 @@ public final class GridFSTour {
 
         final GridFSUploadStream uploadStream = gridFSBucket.openUploadStream("sampleData");
         ObservableSubscriber<Integer> writeSubscriber = new OperationSubscriber<>();
-        ObservableSubscriber<Success> closedStreamSubscriber = new OperationSubscriber<>();
+        ObservableSubscriber<Void> closedStreamSubscriber = new OperationSubscriber<>();
         uploadStream.write(data).subscribe(writeSubscriber);
         writeSubscriber.await();
         uploadStream.close().subscribe(closedStreamSubscriber);
@@ -184,7 +183,7 @@ public final class GridFSTour {
         /*
          * Rename
          */
-        OperationSubscriber<Success> successSubscriber = new OperationSubscriber<>();
+        OperationSubscriber<Void> successSubscriber = new OperationSubscriber<>();
         gridFSBucket.rename(fileId, "mongodbTutorial").subscribe(successSubscriber);
         successSubscriber.await();
         System.out.println("Renamed file");

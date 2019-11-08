@@ -19,7 +19,7 @@ package org.mongodb.scala.gridfs
 import java.nio.ByteBuffer
 
 import com.mongodb.reactivestreams.client.gridfs.{ GridFSDownloadStream => JGridFSDownloadStream }
-import org.mongodb.scala.{ Completed, Observable, ObservableImplicits, SingleObservable }
+import org.mongodb.scala.SingleObservable
 
 /**
  * A GridFS InputStream for downloading data from GridFS
@@ -75,5 +75,5 @@ case class GridFSDownloadStream(private val wrapped: JGridFSDownloadStream) exte
    *
    * @return a Observable with a single element indicating when the operation has completed
    */
-  override def close(): SingleObservable[Completed] = wrapped.close()
+  override def close(): SingleObservable[Void] = wrapped.close()
 }
