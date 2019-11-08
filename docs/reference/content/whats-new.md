@@ -77,9 +77,9 @@ the new pipeline stage.
 
 ### Full list of changes
 
-* [New Features](https://jira.mongodb.org/issues/?jql=project%20%3D%20JAVA%20AND%20issuetype%20%3D%20%22New%20Feature%22%20AND%20resolution%20%3D%20Fixed%20AND%20fixVersion%20%3D%203.11.0%20ORDER%20BY%20component%20DESC%2C%20key%20ASC)
-* [Improvements](https://jira.mongodb.org/issues/?jql=project%20%3D%20JAVA%20AND%20issuetype%20%3D%20Improvement%20AND%20resolution%20%3D%20Fixed%20AND%20fixVersion%20%3D%203.11.0%20ORDER%20BY%20component%20DESC%2C%20key%20ASC)
-* [Bug Fixes](https://jira.mongodb.org/issues/?jql=project%20%3D%20JAVA%20AND%20issuetype%20%3D%20Bug%20AND%20resolution%20%3D%20Fixed%20AND%20fixVersion%20%3D%203.11.0%20ORDER%20BY%20component%20DESC%2C%20key%20ASC)
+* [New Features](https://jira.mongodb.org/issues/?jql=project%20%3D%20JAVA%20AND%20issuetype%20%3D%20%22New%20Feature%22%20AND%20resolution%20%3D%20Fixed%20AND%20fixVersion%20%3D%204.0.0%20ORDER%20BY%20component%20DESC%2C%20key%20ASC)
+* [Improvements](https://jira.mongodb.org/issues/?jql=project%20%3D%20JAVA%20AND%20issuetype%20%3D%20Improvement%20AND%20resolution%20%3D%20Fixed%20AND%20fixVersion%20%3D%204.0.0%20ORDER%20BY%20component%20DESC%2C%20key%20ASC)
+* [Bug Fixes](https://jira.mongodb.org/issues/?jql=project%20%3D%20JAVA%20AND%20issuetype%20%3D%20Bug%20AND%20resolution%20%3D%20Fixed%20AND%20fixVersion%20%3D%204.0.0%20ORDER%20BY%20component%20DESC%2C%20key%20ASC)
 
 ## What's new in 3.10
 
@@ -260,7 +260,7 @@ Key new features of the 3.6 Java driver release:
 The 3.6 release adds support for [change streams](http://dochub.mongodb.org/core/changestreams).
 
 * [Change Stream Quick Start]({{<ref "driver/tutorials/change-streams.md">}}) 
-* [Change Stream Quick Start (Async)]({{<ref "driver-async/tutorials/change-streams.md">}})
+* [Change Stream Quick Start (Async)]({{<ref "driver-reactive/tutorials/change-streams.md">}})
 
 ### Retryable writes
 
@@ -272,7 +272,7 @@ The 3.6 release adds support for retryable writes using the `retryWrites` option
 The 3.6 release adds support for compression of messages to and from appropriately configured MongoDB servers:
 
 * [Compression Tutorial]({{<ref "driver/tutorials/compression.md">}})
-* [Compression Tutorial (Async)]({{<ref "driver-async/tutorials/compression.md">}})
+* [Compression Tutorial (Async)]({{<ref "driver-reactive/tutorials/compression.md">}})
 
 ### Causal consistency
               
@@ -308,7 +308,7 @@ The 3.5 release adds support for [POJO](https://en.wikipedia.org/wiki/Plain_old_
 used by the synchronous and asynchronous drivers.  See the POJO Quick start pages for details.
 
 * [POJO Quick Start]({{<ref "driver/getting-started/quick-start-pojo.md">}}) 
-* [POJO Quick Start (Async)]({{<ref "driver-async/getting-started/quick-start-pojo.md">}})
+* [POJO Quick Start (Async)]({{<ref "driver-reactive/getting-started/quick-start-pojo.md">}})
 * [POJO Reference]({{<ref "bson/pojos.md">}}) 
 
 ### Improved JSON support
@@ -325,14 +325,14 @@ See the [JSON reference]({{<ref "bson/extended-json.md">}}) for details.
 The 3.5 release adds support for monitoring connection pool-related events.
 
 * [Connection pool monitoring in the driver]({{<ref "driver/reference/monitoring.md">}})
-* [Connection pool monitoring in the async driver]({{<ref "driver-async/reference/monitoring.md">}})
+* [Connection pool monitoring in the async driver]({{<ref "driver-reactive/reference/monitoring.md">}})
 
 ### SSLContext configuration
 
 The 3.5 release supports overriding the default `javax.net.ssl.SSLContext` used for SSL connections to MongoDB.
 
 * [SSL configuration in the driver]({{<ref "driver/tutorials/ssl.md">}})
-* [SSL configuration in the async driver]({{<ref "driver-async/tutorials/ssl.md">}})
+* [SSL configuration in the async driver]({{<ref "driver-reactive/tutorials/ssl.md">}})
 
 ### KeepAlive configuration deprecated
 

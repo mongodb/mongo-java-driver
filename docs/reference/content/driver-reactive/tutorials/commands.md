@@ -2,15 +2,15 @@
 date = "2016-05-31T13:07:04-04:00"
 title = "Run Commands"
 [menu.main]
-parent = "Sync Tutorials"
-identifier = "Run Commands"
+parent = "Reactive Tutorials"
+identifier = "Reactive Run Commands"
 weight = 90
 pre = "<i class='fa'></i>"
 +++
 
 ## Run Commands
 
-Not all commands have a specific helper. However you can run any [MongoDB command]({{<docsref "reference/command">}}) by using the MongoDatabase's [`runCommand()`]({{<apiref "com/mongodb/client/MongoDatabase.html#runCommand(org.bson.conversions.Bson,com.mongodb.ReadPreference)">}}) method.
+Not all commands have a specific helper. However you can run any [MongoDB command]({{<docsref "reference/command">}}) by using the MongoDatabase's [`runCommand()`]({{<apiref "com/mongodb/reactivestreams/client/MongoDatabase.html#runCommand-org.bson.conversions.Bson-com.mongodb.ReadPreference-">}}) method.
 
 ## Prerequisites
 
@@ -19,11 +19,15 @@ Not all commands have a specific helper. However you can run any [MongoDB comman
 - Include the following import statements:
 
      ```java
-     import com.mongodb.client.MongoClients;
-     import com.mongodb.client.MongoClient;
-     import com.mongodb.client.MongoDatabase;
+     import com.mongodb.reactivestreams.client.MongoClients;
+     import com.mongodb.reactivestreams.client.MongoClient;
+     import com.mongodb.reactivestreams.client.MongoDatabase;
      import org.bson.Document;
      ```
+
+{{% note class="important" %}}
+This guide uses the `Subscriber` implementations as covered in the [Quick Start Primer]({{< relref "driver-reactive/getting-started/quick-start-primer.md" >}}).
+{{% /note %}}
 
 ## Connect to a MongoDB Deployment
 
@@ -46,11 +50,9 @@ object that specifies the command and pass it to the `runCommand()` method.
 The following runs the [`buildInfo`]({{<docsref "reference/command/buildInfo">}}) command and the [`collStats`]({{<docsref "reference/command/collStats">}}) command:
 
 ```java
-Document buildInfoResults = database.runCommand(new Document("buildInfo", 1));
-System.out.println(buildInfoResults.toJson());
+database.runCommand(new Document("buildInfo", 1)).subscribe(new PrintDocumentSubscriber());
 
-Document collStatsResults = database.runCommand(new Document("collStats", "restaurants"));
-System.out.println(collStatsResults.toJson());
+database.runCommand(new Document("collStats", "restaurants")).subscribe(new PrintDocumentSubscriber());
 ```
 
 For a list of available MongoDB commands, see [MongoDB commands]({{<docsref "reference/command">}}).

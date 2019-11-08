@@ -2,8 +2,8 @@
 date = "2016-05-29T22:05:03-04:00"
 title = "TLS/SSL"
 [menu.main]
-  parent = "Connect to MongoDB"
-  identifier = "SSL"
+  parent = "Reactive Connect to MongoDB"
+  identifier = "Reactive SSL"
   weight = 10
   pre = "<i class='fa'></i>"
 +++
@@ -14,16 +14,14 @@ The Java driver supports TLS/SSL connections to MongoDB servers using
 the underlying support for TLS/SSL provided by the JDK. 
 You can configure the driver to use TLS/SSL either with [`ConnectionString`]({{<apiref "com/mongodb/ConnectionString">}}) or with
 [`MongoClientSettings`]({{<apiref "com/mongodb/MongoClientSettings">}}).
-With the legacy MongoClient API you can use either [`MongoClientURI`]({{<apiref "com/mongodb/MongoClientURI">}}) or 
-[`MongoClientOptions`]({{<apiref "com/mongodb/MongoClientOptions">}}).
 
 ## MongoClient API (since 3.7)
 
 ### Specify TLS/SSL via `ConnectionString`
 
 ```java
-com.mongodb.client.MongoClients;
-com.mongodb.client.MongoClient;
+com.mongodb.reactivestreams.client.MongoClients;
+com.mongodb.reactivestreams.client.MongoClient;
 ```
 
 To specify TLS/SSL with [`ConnectionString`]({{<apiref "com/mongodb/ConnectionString">}}), specify `ssl=true` as part of the connection
@@ -37,8 +35,8 @@ MongoClient mongoClient = MongoClients.create("mongodb://localhost/?ssl=true");
 
 ```java
 import com.mongodb.MongoClientSettings;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoClient;
+import com.mongodb.reactivestreams.client.MongoClients;
+import com.mongodb.reactivestreams.client.MongoClient;
 ```
 
 To specify TLS/SSL with with [`MongoClientSettings`]({{<apiref "com/mongodb/MongoClientSettings">}}), set the `enabled` property to 
@@ -46,8 +44,7 @@ To specify TLS/SSL with with [`MongoClientSettings`]({{<apiref "com/mongodb/Mong
 
 ```java
 MongoClientSettings settings = MongoClientSettings.builder()
-        .applyToSslSettings(builder -> 
-            builder.enabled(true))
+        .applyToSslSettings(builder -> builder.enabled(true))
         .build();
 MongoClient client = MongoClients.create(settings);
 ```
@@ -57,8 +54,8 @@ MongoClient client = MongoClients.create(settings);
 ```java
 import javax.net.ssl.SSLContext;
 import com.mongodb.MongoClientSettings;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoClient;
+import com.mongodb.reactivestreams.client.MongoClients;
+import com.mongodb.reactivestreams.client.MongoClient;
 ```
 
 To specify the [`javax.net.ssl.SSLContext`](https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLContext.html) with 
@@ -75,64 +72,11 @@ MongoClientSettings settings = MongoClientSettings.builder()
 MongoClient client = MongoClients.create(settings);
 ```
 
-## Legacy MongoClient API
-
-### Specify TLS/SSL via `MongoClientURI`
-
-```java
-import com.mongodb.MongoClientURI;
-import com.mongodb.MongoClient;
-```
-
-To specify TLS/SSL with [`MongoClientURI`]({{<apiref "com/mongodb/MongoClientURI">}}), specify `ssl=true` as part of the connection
-string, as in:
-
-```java
-MongoClientURI uri = new MongoClientURI("mongodb://localhost/?ssl=true");
-MongoClient mongoClient = new MongoClient(uri);
-```
-
-### Specify TLS/SSL via `MongoClientOptions`
-
-```java
-import com.mongodb.MongoClientOptions;
-import com.mongodb.MongoClient;
-```
-
-To specify TLS/SSL with with [`MongoClientOptions`]({{<apiref "com/mongodb/MongoClientOptions">}}), set the `sslEnabled` property to `true`, as in:
-
-```java
-MongoClientOptions options = MongoClientOptions.builder()
-        .sslEnabled(true)
-        .build();
-MongoClient client = new MongoClient("localhost", options);
-```
-
-### Specify `SSLContext` via `MongoClientOptions`
-
-```java
-import javax.net.ssl.SSLContext;
-import com.mongodb.MongoClientOptions;
-import com.mongodb.MongoClient;
-```
-
-To specify the [`javax.net.ssl.SSLContext`](https://docs.oracle.com/javase/8/docs/api/javax/net/ssl/SSLContext.html) with 
-[`MongoClientOptions`]({{<apiref "com/mongodb/MongoClientOptions">}}), set the `sslContext` property, as in:
-
-```java
-SSLContext sslContext = ...
-MongoClientOptions options = MongoClientOptions.builder()
-        .sslEnabled(true)
-        .sslContext(sslContext)
-        .build();
- MongoClient client = new MongoClient("localhost", options);
-```
-
 ## Disable Hostname Verification
 
 By default, the driver ensures that the hostname included in the
 server's SSL certificate(s) matches the hostname(s) provided when
-constructing a [`MongoClient()`]({{< apiref "com/mongodb/MongoClient.html">}}).
+constructing a [`MongoClient()`]({{< apiref "com/mongodb/reactivestreams/client/MongoClient.html">}}).
 
 If your application needs to disable hostname verification, you must explicitly indicate
 this in `MongoClientSettings`]({{<apiref "com/mongodb/MongoClientSettings">}}) 
@@ -143,15 +87,6 @@ MongoClientSettings settings = MongoClientSettings.builder()
                     builder.enabled(true);
                     builder.invalidHostNameAllowed(true);
                 })
-        .build();
-```
-
-or, with the legacy `MongoClientOptions`]({{<apiref "com/mongodb/MongoClientOptions">}}), using the `sslInvalidHostNameAllowed` property:
-
-```java
-MongoClientOptions.builder()
-        .sslEnabled(true)
-        .sslInvalidHostNameAllowed(true)
         .build();
 ```
 
@@ -194,10 +129,3 @@ command line program.
 For more information on configuring a Java application for TLS/SSL, please
 refer to the [`JSSE Reference Guide`](http://docs.oracle.com/javase/8/docs/technotes/guides/security/jsse/JSS
 ERefGuide.html).
-
-
-### Forcing TLS 1.2
-
-Some applications may want to force only the TLS 1.2 protocol. To do this, set the `jdk.tls.client.protocols` system property to "TLSv1.2".
-
-Java runtime environments prior to Java 8 started to enable the TLS 1.2 protocol only in later updates, as shown in the previous section. For the driver to force the use of the TLS 1.2 protocol with a Java runtime environment prior to Java 8, ensure that the update has TLS 1.2 enabled.

@@ -104,7 +104,10 @@ try {
 
 ### OpenUploadStream
 
-You can write data to a [`GridFSUploadStream`]({{< apiref "mongodb/client/gridfs/GridFSUploadStream.html">}}) which extends [`OutputStream`](http://docs.oracle.com/javase/8/docs/api/index.html?java/io/OutputStream.html). The [`GridFSBucket.openUploadStream`]({{< apiref "com/mongodb/client/gridfs/GridFSBucket.html#openUploadStream(java.lang.String,com.mongodb.client.gridfs.model.GridFSUploadOptions)">}}) method returns a [`GridFSUploadStream`]({{< apiref "mongodb/client/gridfs/GridFSUploadStream.html">}}).
+You can write data to a [`GridFSUploadStream`]({{< apiref "com/mongodb/client/gridfs/GridFSUploadStream.html">}}) which extends
+ [`OutputStream`](http://docs.oracle.com/javase/8/docs/api/index.html?java/io/OutputStream.html). The 
+ [`GridFSBucket.openUploadStream `]({{< apiref "com/mongodb/client/gridfs/GridFSBucket.html#openUploadStream(java.lang.String,com.mongodb.client.gridfs.model.GridFSUploadOptions)">}}) 
+ method returns a [`GridFSUploadStream`]({{< apiref "com/mongodb/client/gridfs/GridFSUploadStream.html">}}).
 
 The `GridFSUploadStream` buffers data until it reaches the `chunkSizeBytes` and then inserts the chunk into the `chunks` collection.  When the `GridFSUploadStream` is closed, the final chunk is written and the file metadata is inserted into the `files` collection.
 

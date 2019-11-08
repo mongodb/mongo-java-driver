@@ -1,33 +1,32 @@
 +++
-date = "2015-03-19T14:27:51-04:00"
+date = "2016-05-29T23:27:26-04:00"
 title = "Authentication"
 [menu.main]
-  parent = "Async Connection Settings"
-  identifier = "Async Authentication"
+  parent = "Reactive Connect to MongoDB"
+  identifier = "Reactive Authentication"
   weight = 20
   pre = "<i class='fa'></i>"
 +++
 
 ## Authentication
 
-The Java driver supports all MongoDB [authentication mechanisms](http://docs.mongodb.org/manual/core/authentication/), including those
-only available in the MongoDB [Enterprise Edition](http://docs.mongodb.org/manual/administration/install-enterprise/).
+The Java driver supports all [MongoDB authentication mechanisms]({{<docsref "core/authentication/">}}), including those only available in the
+[MongoDB Enterprise Edition]({{<docsref "administration/install-enterprise/">}}).
 
 ## `MongoCredential`
 
 ```java
 import com.mongodb.MongoCredential;
+import com.mongodb.ConnectionString;
+import com.mongodb.reactivestreams.client.MongoClients;
+import com.mongodb.reactivestreams.client.MongoClient;
 ```
 
 An authentication credential is represented as an instance of the
-[`MongoCredential`]({{< apiref "com/mongodb/MongoCredential" >}}) class. The [`MongoCredential`]({{<apiref "com/mongodb/MongoCredential.html">}}) class includes static
-factory methods for each of the supported authentication mechanisms.  
-
-You can also use a connection string and pass it to a
-[`MongoClients.create()`]({{< apiref "com/mongodb/async/client/MongoClients.html#create(String)" >}}) method.
+[`MongoCredential`]({{<apiref "com/mongodb/MongoCredential.html">}}) class. The [`MongoCredential`]({{<apiref "com/mongodb/MongoCredential.html">}}) class includes static
+factory methods for each of the supported authentication mechanisms.
 
 ## Default Authentication Mechanism
-
 
 In MongoDB 3.0, MongoDB changed the default authentication mechanism from [`MONGODB-CR`]({{<docsref "core/security-mongodb-cr">}}) to
 [`SCRAM-SHA-1`]({{<docsref "core/security-scram">}}). In MongoDB 4.0 support for the deprecated
@@ -45,18 +44,17 @@ String user;     // the user name
 String source;   // the source where the user is defined
 char[] password; // the password as a character array
 // ...
-
 MongoCredential credential = MongoCredential.createCredential(user, source, password);
 
 MongoClient mongoClient = MongoClients.create(
         MongoClientSettings.builder()
-                .applyToClusterSettings(builder ->
+                .applyToClusterSettings(builder -> 
                         builder.hosts(Arrays.asList(new ServerAddress("host1", 27017))))
                 .credential(credential)
                 .build());
 ```
 
-Or use a connection string that does not  specify the authentication mechanism:
+Or use a connection string without explicitly specifying the authentication mechanism:
 
 ```java
 MongoClient mongoClient = MongoClients.create("mongodb://user1:pwd1@host1/?authSource=db1");
@@ -89,7 +87,6 @@ String user;     // the user name
 String source;   // the source where the user is defined
 char[] password; // the password as a character array
 // ...
-
 MongoCredential credential = MongoCredential.createScramSha256Credential(user, source, password);
 
 MongoClient mongoClient = MongoClients.create(
@@ -108,7 +105,7 @@ MongoClient mongoClient = MongoClients.create("mongodb://user1:pwd1@host1/?authS
 
 ### SCRAM-SHA-1
 
-To explicitly create a credential of type [`SCRAM-SHA-1`]({{<docsref "core/security-scram-sha-1/">}}), use the
+To explicitly create a credential of type [`SCRAM-SHA-1`]({{<docsref "core/security-scram/">}}), use the
 [`createScramSha1Credential`]({{<apiref "com/mongodb/MongoCredential.html#createScramSha1Credential(java.lang.String,java.lang.String,char[])">}}) method:
 
 
@@ -117,18 +114,17 @@ String user;     // the user name
 String source;   // the source where the user is defined
 char[] password; // the password as a character array
 // ...
-
 MongoCredential credential = MongoCredential.createScramSha1Credential(user, source, password);
 
 MongoClient mongoClient = MongoClients.create(
         MongoClientSettings.builder()
-                .applyToClusterSettings(builder ->
+                .applyToClusterSettings(builder -> 
                         builder.hosts(Arrays.asList(new ServerAddress("host1", 27017))))
                 .credential(credential)
                 .build());
+```
 
 Or use a connection string that explicitly specifies the `authMechanism=SCRAM-SHA-1`:
-
 
 ```java
 MongoClient mongoClient = MongoClients.create("mongodb://user1:pwd1@host1/?authSource=db1&authMechanism=SCRAM-SHA-1");
@@ -147,11 +143,15 @@ To explicitly create a credential of type [`MONGODB-CR`]({{<docsref "core/securi
 static factory method:
 
 ```java
-MongoCredential credential = MongoCredential.createMongoCRCredential(user, source, password);
+String user; // the user name
+String database; // the name of the database in which the user is defined
+char[] password; // the password as a character array
+// ...
+MongoCredential credential = MongoCredential.createMongoCRCredential(user, database, password);
 
 MongoClient mongoClient = MongoClients.create(
         MongoClientSettings.builder()
-                .applyToClusterSettings(builder ->
+                .applyToClusterSettings(builder -> 
                         builder.hosts(Arrays.asList(new ServerAddress("host1", 27017))))
                 .credential(credential)
                 .build());
@@ -180,36 +180,29 @@ certificate validation. To create a credential of this type use the
 [`createMongoX509Credential`]({{<apiref "com/mongodb/MongoCredential.html#createMongoX509Credential(java.lang.String)">}}) static factory method:
 
 ```java
-String user;     // The x.509 certificate derived user name, e.g. "CN=user,OU=OrgUnit,O=myOrg,..."
+String user;     // The X.509 certificate derived user name, e.g. "CN=user,OU=OrgUnit,O=myOrg,..."
+// ...
 MongoCredential credential = MongoCredential.createMongoX509Credential(user);
-
-EventLoopGroup eventLoopGroup = new NioEventLoopGroup();  // make sure application shuts this down
 
 MongoClient mongoClient = MongoClients.create(
         MongoClientSettings.builder()
                 .applyToClusterSettings(builder ->
                         builder.hosts(Arrays.asList(new ServerAddress("host1", 27017))))
                 .credential(credential)
-                .streamFactoryFactory(NettyStreamFactoryFactory.builder().eventLoopGroup(eventLoopGroup).build())
-                .applyToSslSettings(builder -> builder.enabled(true))
                 .build());
 ```
 
 Or use a connection string that explicitly specifies the `authMechanism=MONGODB-X509`:
 
 ```java
-MongoClient mongoClient = MongoClients.create("mongodb://subjectName@host1/?authMechanism=MONGODB-X509&streamType=netty&ssl=true");
+MongoClient mongoClient = MongoClients.create("mongodb://subjectName@host1/?authMechanism=MONGODB-X509&ssl=true");
 ```
 
-{{% note %}}
-The streamType connection string query parameter is deprecated as of the 3.10 release and will be removed in the next major release.
-{{% /note %}}
+See the MongoDB server [x.509 tutorial]({{<apiref "tutorial/configure-x509-client-authentication/#add-x-509-certificate-subject-as-a-user">}})
+for more information about determining the subject
+name from the certificate.
 
-See the MongoDB server
-[x.509 tutorial](http://docs.mongodb.org/manual/tutorial/configure-x509-client-authentication/#add-x-509-certificate-subject-as-a-user) for
-more information about determining the subject name from the certificate.
-
-## Kerberos (GSSAPI)
+## Kerberos (GSSAPI) {#gssapi}
 
 [MongoDB Enterprise](http://www.mongodb.com/products/mongodb-enterprise) supports proxy
 authentication through Kerberos service. To create a credential of type
@@ -221,24 +214,27 @@ static factory method:
 String user;   // The Kerberos user name, including the realm, e.g. "user1@MYREALM.ME"
 // ...
 MongoCredential credential = MongoCredential.createGSSAPICredential(user);
+
 MongoClient mongoClient = MongoClients.create(
         MongoClientSettings.builder()
                 .applyToClusterSettings(builder ->
                         builder.hosts(Arrays.asList(new ServerAddress("host1", 27017))))
                 .credential(credential)
                 .build());
-
 ```
 
 Or use a connection string that explicitly specifies the `authMechanism=GSSAPI`:
 
 ```java
-MongoClient mongoClient = MongoClients.create("mongodb://username%40MYREALM.ME@host1/?authMechanism=GSSAPI");
+MongoClient mongoClient = MongoClients.create("mongodb://username%40REALM.ME@host1/?authMechanism=GSSAPI");
 ```
 
 {{% note %}}
-The method refers to the `GSSAPI` authentication mechanism instead of `Kerberos` because technically the driver is authenticating via the
-[GSSAPI](https://tools.ietf.org/html/rfc4752) SASL mechanism.
+
+The method refers to the `GSSAPI` authentication mechanism instead
+of `Kerberos` because technically the driver authenticates via
+the [`GSSAPI`](https://tools.ietf.org/html/rfc4752) SASL mechanism.
+
 {{% /note %}}
 
 To successfully authenticate via Kerberos, the application typically
@@ -269,7 +265,7 @@ For example, to specify the `SERVICE_NAME` property via the `MongoCredential` ob
 credential = credential.withMechanismProperty(MongoCredential.SERVICE_NAME_KEY, "othername");
 ```
 
-Or via a connection string:
+Or via the `ConnectionString`:
 
 ```
 mongodb://username%40MYREALM.com@myserver/?authMechanism=GSSAPI&authMechanismProperties=SERVICE_NAME:othername
@@ -304,12 +300,14 @@ MongoClient mongoClient = MongoClients.create(
                 .build());
 ```
 
-or with a connection string:
+Or use a connection string that explicitly specifies the `authMechanism=PLAIN`:
 
 ```java
 MongoClient mongoClient = MongoClients.create("mongodb://user1@host1/?authSource=$external&authMechanism=PLAIN");
 ```
 
 {{% note %}}
-The method refers to the `plain` authentication mechanism instead of `LDAP` because technically the driver is authenticating via the [PLAIN](https://www.ietf.org/rfc/rfc4616.txt) SASL mechanism.
+The method refers to the `plain` authentication mechanism instead
+of `LDAP` because technically the driver authenticates via the
+[`PLAIN`](https://www.ietf.org/rfc/rfc4616.txt) SASL mechanism.
 {{% /note %}}

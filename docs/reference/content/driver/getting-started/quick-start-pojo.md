@@ -236,7 +236,7 @@ Person{id='591dbc2550852fa685b3ad1a', name='Timothy Berners-Lee', age=61, addres
 ## Specify a Query Filter
 
 To query for Person instance that match certain conditions, pass a filter object to the [`find()`]({{< apiref "com/mongodb/client/MongoCollection.html#find()">}}) method. 
-To facilitate creating filter objects, Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper.
+To facilitate creating filter objects, the Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html ">}}) helper.
 
 {{% note class="important" %}}
 When querying POJOs you *must* query against the document field name and not the Pojo's property name. 
@@ -274,7 +274,7 @@ To update documents in a collection, you can use the collection's [`updateOne`](
 
 Pass to the methods:
 
-- A filter object to determine the document or documents to update. To facilitate creating filter objects, Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper. To specify an empty filter (i.e. match all Persons in a collection), use an empty [`Document`]({{< apiref "org/bson/Document.html" >}}) object.
+- A filter object to determine the document or documents to update. To facilitate creating filter objects, the Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper. To specify an empty filter (i.e. match all Persons in a collection), use an empty [`Document`]({{< apiref "org/bson/Document.html" >}}) object.
 
 - An update document that specifies the modifications. For a list of the available operators, see [update operators]({{<docsref "reference/operator/update-field">}}).
 
@@ -316,7 +316,7 @@ collection.replaceOne(eq("name", "Ada Lovelace"), ada);
 
 To delete documents from a collection, you can use the collection's [`deleteOne`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteOne(org.bson.conversions.Bson)">}}) and [`deleteMany`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteMany(org.bson.conversions.Bson)">}}) methods.
 
-Pass to the methods a filter object to determine the document or documents to delete. To facilitate creating filter objects, Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper. To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "org/bson/Document.html" >}}) object.
+Pass to the methods a filter object to determine the document or documents to delete. To facilitate creating filter objects, the Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper. To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "org/bson/Document.html" >}}) object.
 
 The delete methods return a [`DeleteResult`]({{< apiref "com/mongodb/client/result/DeleteResult.html">}})
 which provides information about the operation including the number of documents deleted.

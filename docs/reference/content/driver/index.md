@@ -1,23 +1,21 @@
 +++
 date = "2015-03-17T15:36:56Z"
-title = "MongoDB Driver"
+title = "Java Driver"
 [menu.main]
   weight = 20
   Identifier = "MongoDB Driver"
   pre = "<i class='fa fa-arrows-h'></i>"
 +++
 
-## MongoDB Driver 3.12 Documentation
+## MongoDB Driver 4.0 Documentation
 
-The following guide provides information on using the synchronous
-MongoDB Java Driver 3.12.
+The following guide provides information on using the synchronous MongoDB Java Driver 4.0.
 
-### What's New in 3.12
+### What's New in 4.0
 
-The [What's New]({{< relref "whats-new.md" >}}) guide explains
-the major new features of the driver.
+The [What's New]({{< relref "whats-new.md" >}}) guide explains the major new features of the driver.
 
-If you are upgrading from the 2.x series of the driver, consult the
+If you are upgrading from the 3.x series of the driver, consult the
 [Upgrading]({{< relref "upgrading.md" >}}) documentation for
 information on breaking changes.
 
@@ -28,3 +26,13 @@ To get started, see the [Installation Guide]({{< relref "driver/getting-started/
 ## Tutorials
 
 For tutorials for some frequently used operations, see the [Tutorials section]({{<relref "driver/tutorials/index.md">}}).
+
+### Previous Releases
+
+| Release | Documentation |
+|---------|---------------|
+|  3.11.2 | {{< releases version="3.11" >}} |
+|  3.10.2 | {{< releases version="3.10" >}} |
+|  3.9.0  | {{< releases version="3.9"  >}} |
+|  3.8.2  | {{< releases version="3.8"  >}} |
+|  3.7.1  | {{< releases version="3.7"  >}} |

@@ -2,8 +2,8 @@
 date = "2017-06-16T22:05:03-04:00"
 title = "Compression"
 [menu.main]
-  parent = "Connect to MongoDB"
-  identifier = "Compression"
+  parent = "Reactive Connect to MongoDB"
+  identifier = "Reactive Compression"
   weight = 25
   pre = "<i class='fa'></i>"
 +++
@@ -21,12 +21,12 @@ release.
 The driver will negotiate which, if any, compression algorithm is used based on capabilities advertised by the server in
 the [ismaster]({{<docsref "reference/command/isMaster/">}}) command response. 
 
-### Specify compression via `MongoClientURI`
+### Specify compression via `ConnectionString`
 
 ```java
 import com.mongodb.ConnectionString;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoClient;
+import com.mongodb.reactivestreams.client.MongoClients;
+import com.mongodb.reactivestreams.client.MongoClient;
 ```
 
 To specify compression with [`ConnectionString`]({{<apiref "com/mongodb/ConnectionString">}}), specify `compressors` as part of the connection
@@ -118,5 +118,4 @@ As with configuration with a URI, the driver will use the first compressor in th
 As the JDK has no built-in support for Snappy or Zstandard, the driver takes a dependency on existing open-source Snappy and Zstandard implementations.  See the
 [snappy-java Github repository](https://github.com/xerial/snappy-java) and the
 [zstd-java Github repository](https://github.com/luben/zstd-jni) for details.
-
  

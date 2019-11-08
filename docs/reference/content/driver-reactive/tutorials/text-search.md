@@ -2,8 +2,8 @@
 date = "2016-06-07T23:28:50-04:00"
 title = "Text Search"
 [menu.main]
-parent = "Sync Tutorials"
-identifier = "Text Search"
+parent = "Reactive Tutorials"
+identifier = "Reactive Text Search"
 weight = 80
 pre = "<i class='fa'></i>"
 +++
@@ -21,7 +21,6 @@ The Java driver provides the [`Filters.text()`]({{<apiref "com/mongodb/client/mo
 - Include the following import statements:
 
      ```java
-     import com.mongodb.Block;
      import com.mongodb.client.MongoClients;
      import com.mongodb.client.MongoClient;
      import com.mongodb.client.MongoCollection;
@@ -35,16 +34,9 @@ The Java driver provides the [`Filters.text()`]({{<apiref "com/mongodb/client/mo
      import org.bson.Document;
      ```
 
-- Include the following code which the examples in the tutorials will use to print the results of the text search:
-
-     ```java
-     Block<Document> printBlock = new Block<Document>() {
-            @Override
-            public void apply(final Document document) {
-                System.out.println(document.toJson());
-            }
-        };
-     ```
+{{% note class="important" %}}
+This guide uses the `Subscriber` implementations as covered in the [Quick Start Primer]({{< relref "driver-reactive/getting-started/quick-start-primer.md" >}}).
+{{% /note %}}
 
 ## Connect to a MongoDB Deployment
 
@@ -62,13 +54,13 @@ For additional information on connecting to MongoDB, see [Connect to MongoDB]({{
 ## Create the `text` Index
 
 To create a [text index]({{<docsref "core/index-text">}}), use the [`Indexes.text`]({{< relref "builders/indexes.md#text-index">}})
-static helper to create a specification for a text index and pass to [`MongoCollection.createIndex()`]({{<apiref "com/mongodb/client/MongoCollection.html#createIndex(org.bson.conversions.Bson)">}}) method.
+static helper to create a specification for a text index and pass to [`MongoCollection.createIndex()`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html#createIndex(org.bson.conversions.Bson)">}}) method.
 
 The following example creates a text index on the `name` field for the `restaurants` collection.
 
 ```java
 MongoCollection<Document> collection = database.getCollection("restaurants");
-collection.createIndex(Indexes.text("name"));
+collection.createIndex(Indexes.text("name")).subscribe(new PrintToStringSubscriber<String>());
 ```
 
 ## Perform Text Search
@@ -78,14 +70,13 @@ To perform text search, use the [`Filters.text()`]({{<apiref "com/mongodb/client
 For example, the following code performs a text search on the `name` field for the word `"bakery"` or `"coffee"`.
 
 ```java
-long matchCount = collection.countDocuments(Filters.text("bakery coffee"));
-System.out.println("Text search matches: " + matchCount);
+collection.countDocuments(Filters.text("bakery coffee")).subscribe(new PrintSubscriber<Long>("Text search matches: %s"));
 ```
 
 The example should print the following output:
 
 ```json
-Text search matches: 2
+Text search matches: [2]
 ```
 
 For more information on the text search, see [`$text` operator]({{<docsref "reference/operator/query/text">}}).
@@ -98,7 +89,8 @@ For each matching document, text search assigns a score, representing the releva
 ```java
 collection.find(Filters.text("bakery cafe"))
                        .projection(Projections.metaTextScore("score"))
-                       .sort(Sorts.metaTextScore("score")).forEach(printBlock);
+                       .sort(Sorts.metaTextScore("score"))
+                       .subscribe(new PrintDocumentSubscriber());
 ```
 
 ### Specify a Text Search Option
@@ -108,14 +100,14 @@ The  [`Filters.text()`]({{<apiref "com/mongodb/client/model/Filters.html#text(ja
 For example, the following text search specifies the [text search language]({{<docsref "reference/text-search-languages">}}) option when performing text search for the word `cafe`:
 
 ```java
-long matchCountEnglish = collection.countDocuments(Filters.text("cafe", new TextSearchOptions().language("english")));
-System.out.println("Text search matches (english): " + matchCountEnglish);
+collection.countDocuments(Filters.text("cafe", new TextSearchOptions().language("english")))
+                                 .subscribe(new PrintSubscriber<Long>("Text search matches (english): %s"));
 ```
 
 The example should print the following output:
 
 ```json
-Text search matches (english): 1
+Text search matches (english): [1]
 ```
 
 For more information about text search see the following sections in the MongoDB Server Manual:

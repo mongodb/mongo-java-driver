@@ -147,23 +147,6 @@ The following example creates a `2dsphere` index on the `"contact.location"` fie
 collection.createIndex(Indexes.geo2dsphere("contact.location"));
 ```
 
-### `2d`
-
-To create a specification for a [`2d` index]({{<docsref "core/2d/">}}) index, use the [`Indexes.geo2d`]({{<apiref "com/mongodb/client/model/Indexes.html#geo2d(java.lang.String)">}})
-static helper method.
-
-{{% note class="important" %}}
-A 2d index is for data stored as points on a two-dimensional plane
-and is intended for legacy coordinate pairs used in MongoDB 2.2 and
-earlier.
-{{% /note %}}
-
-The following example creates a `2d` index on the `"contact.location"` field:
-
-```java
-collection.createIndex(Indexes.geo2d("contact.location"));
-```
-
 ### geoHaystack
 
 To create a specification for a [`geoHaystack` index]({{<docsref "core/geohaystack/">}}), use the [`Indexes.geoHaystack`]({{<apiref "com/mongodb/client/model/Indexes.html#geoHaystack(java.lang.String,org.bson.conversions.Bson)">}}) method. `geoHaystack` indexes can improve performance on queries that use flat geometries.

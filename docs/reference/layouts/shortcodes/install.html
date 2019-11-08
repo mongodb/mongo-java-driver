@@ -1,7 +1,7 @@
-{{- $artifactId := .Get "artifactId"}}
+{{- $groupId := .Get "groupId" | default "org.mongodb" -}}
+{{- $artifactId := .Get "artifactId" -}}
 {{- $version := .Get "version" -}}
 {{- $classifier := .Get "classifier" -}}
-{{- $dependencies := .Get "dependencies" -}}
 {{- $snapshot := in $version "SNAPSHOT" -}}
 
 {{- if $snapshot -}}
@@ -10,7 +10,7 @@
 <pre><code class="ini">
 &lt;dependencies&gt;
     &lt;dependency&gt;
-        &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
+        &lt;groupId&gt;{{$groupId}}&lt;/groupId&gt;
         &lt;artifactId&gt;{{$artifactId}}&lt;/artifactId&gt;
         &lt;version&gt;{{$version}}&lt;/version&gt;
     &lt;/dependency&gt;
@@ -30,7 +30,7 @@
 <section class="gradle hidden">
 <pre><code>
   dependencies {
-      compile 'org.mongodb:{{$artifactId}}:{{$version}}{{- if $classifier -}}:{{$classifier}}{{- end -}}'
+      compile '{{$groupId}}:{{$artifactId}}:{{$version}}{{- if $classifier -}}:{{$classifier}}{{- end -}}'
   }
   repositories {
     maven {
@@ -40,25 +40,13 @@
 
 </code></pre>
 </section>
-<section class="downloadInfo small">
-    <p><strong>Note:</strong> You can also download the jars
-        <a href="{{$ossUrl}}/org/mongodb/{{$artifactId}}/{{$version}}" target="_blank">directly</a>
-        from sonatype.</a></p>
-    {{- with $dependencies -}}
-    <p>
-        <code>{{$artifactId}}</code> requires the following dependencies:
-        <a href="{{$ossUrl}}/org/mongodb/bson/{{$version}}" target="_blank"><code>bson</code></a> and
-        <a href="{{$ossUrl}}/org/mongodb/mongodb-driver-core/{{$version}}" target="_blank"><code>mongodb-driver-core</code></a>
-    </p>
-    {{- end -}}
-</section>
 {{- else -}}
 {{- $ossUrl := "https://oss.sonatype.org/content/repositories/releases" -}}
 <section class="maven">
 <pre><code class="ini">
 &lt;dependencies&gt;
     &lt;dependency&gt;
-        &lt;groupId&gt;org.mongodb&lt;/groupId&gt;
+        &lt;groupId&gt;{{$groupId}}&lt;/groupId&gt;
         &lt;artifactId&gt;{{$artifactId}}&lt;/artifactId&gt;
         &lt;version&gt;{{$version}}&lt;/version&gt;{{- if $classifier }}
         &lt;classifier&gt;{{$classifier}}&lt;/classifier&gt;{{- end }}
@@ -70,22 +58,9 @@
 <section class="gradle hidden">
 <pre><code>
   dependencies {
-      compile 'org.mongodb:{{$artifactId}}:{{$version}}{{- if $classifier -}}:{{$classifier}}{{- end -}}'
+      compile '{{$groupId}}:{{$artifactId}}:{{$version}}{{- if $classifier -}}:{{$classifier}}{{- end -}}'
   }
 
 </code></pre>
-</section>
-<section class="downloadInfo small">
-    <p><strong>Note:</strong> You can also download the <code>{{$artifactId}}</code> jar
-        <a href="{{$ossUrl}}/org/mongodb/{{$artifactId}}/{{$version}}" target="_blank">directly</a>
-        from sonatype.</a></p>
-    {{- with $dependencies -}}
-    <p>
-        If downloading <code>{{$artifactId}}</code> manually,
-        you must also download its dependencies:
-        <a href="{{$ossUrl}}/org/mongodb/bson/{{$version}}" target="_blank"><code>bson</code></a> and
-        <a href="{{$ossUrl}}/org/mongodb/mongodb-driver-core/{{$version}}" target="_blank"><code>mongodb-driver-core</code></a>
-    </p>
-    {{- end -}}
 </section>
 {{- end -}}

@@ -16,7 +16,7 @@ Use [`MongoClients.create()`]({{< apiref "com/mongodb/client/MongoClients.html">
 {{% note class="important" %}}
 The following examples are not meant to provide an exhaustive list
 of ways to instantiate `MongoClient`. For a complete list of MongoClients factory methods, see the 
-[`MongoClients API documentation`]({{< apiref "com/mongodb/client/MongoClient.html">}}), or for the legacy MongoClient API see 
+[`MongoClients API documentation`]({{< apiref "com/mongodb/client/MongoClients.html">}}), or for the legacy MongoClient API see 
 the [`MongoClient() API documentation`]({{< apiref "com/mongodb/MongoClient.html">}}).
 
 {{% /note %}}
@@ -109,7 +109,7 @@ To connect to a [replica set]({{<docsref "replication/">}}), you must specify on
 MongoDB will auto-discover the primary and the secondaries.
 {{% /note %}}
 
-- You can specify the members using a [`ConnectionString`]({{< apiref "/com/mongodb/ConnectionString.html">}}):
+- You can specify the members using a [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString.html">}}):
 
   - To specify at least two members of the replica set:
 
@@ -144,7 +144,7 @@ or instances to a `MongoClients` create method.
 
 To connect to a single `mongos` instance:
 
-- You can specify the hostname and the port in a [`ConnectionString`]({{< apiref "/com/mongodb/ConnectionString.html">}})
+- You can specify the hostname and the port in a [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString.html">}})
 
 ```java
     MongoClient mongoClient = MongoClients.create( "mongodb://localhost:27017" );
@@ -158,7 +158,7 @@ or leave the connection string out if the `mongos` is running on localhost:27017
 
 To connect to multiple `mongos` instances:
 
-- You can specify the [`ConnectionString`]({{< apiref "/com/mongodb/ConnectionString.html">}}) with their hostnames and ports:
+- You can specify the [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString.html">}}) with their hostnames and ports:
 
     ```java
     MongoClient mongoClient = MongoClients.create("mongodb://host1:27017,host2:27017");
@@ -181,8 +181,7 @@ To connect to multiple `mongos` instances:
 You can specify the connection settings using either the
 `ConnectionString` or `MongoClientSettings` or both.
 
-For example, you can specify TLS/SSL and authentication setting in the
-`MongoClientURI` connection string:
+For example, you can specify TLS/SSL and authentication setting in the connection string:
 
 ```java
     MongoClient mongoClient = MongoClients.create("mongodb://user1:pwd1@host1/?authSource=db1&ssl=true");

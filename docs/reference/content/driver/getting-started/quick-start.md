@@ -110,7 +110,7 @@ MongoClient mongoClient = MongoClients.create(
                 .build());
 ```
 
-- You can specify the [`ConnectionString`]({{< apiref "/com/mongodb/ConnectionString.html">}}):
+- You can specify the [`ConnectionString`]({{< apiref "com/mongodb/ConnectionString.html">}}):
 
 ```java
 MongoClient mongoClient = MongoClients.create("mongodb://hostOne:27017,hostTwo:27018");
@@ -209,14 +209,13 @@ To create the document using the Java driver, instantiate a `Document` object wi
  ```
 
 {{% note %}}
-The BSON type of array corresponds to the Java type `java.util.List`. For a list of the BSON type and the corresponding type in Java, see .
+The BSON type of array corresponds to the Java type `java.util.List`. For a list of the BSON type and the corresponding type in Java, see the [Document]({{< relref "bson/documents.md#document" >}}) mapping.
 {{% /note %}}
 
 
 ## Insert a Document
 
-Once you have the `MongoCollection` object, you can insert documents into the
-collection.
+Once you have the `MongoCollection` object, you can insert documents into the collection.
 
 ### Insert One Document
 
@@ -342,7 +341,9 @@ for (Document cur : collection.find()) {
 
 ## Specify a Query Filter
 
-To query for documents that match certain conditions, pass a filter object to the [`find()`]({{< apiref "com/mongodb/client/MongoCollection.html#find()">}}) method. To facilitate creating filter objects, Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper.
+To query for documents that match certain conditions, pass a filter object to the 
+[`find()`]({{< apiref "com/mongodb/client/MongoCollection.html#find()">}}) method. To facilitate creating filter objects, the Java driver 
+provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper.
 
 ### Get A Single Document That Matches a Filter
 
@@ -387,7 +388,7 @@ To update documents in a collection, you can use the collection's [`updateOne`](
 
 Pass to the methods:
 
-- A filter object to determine the document or documents to update. To facilitate creating filter objects, Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper. To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "org/bson/Document.html" >}}) object.
+- A filter object to determine the document or documents to update. To facilitate creating filter objects, the Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper. To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "org/bson/Document.html" >}}) object.
 
 - An update document that specifies the modifications. For a list of the available operators, see [update operators]({{<docsref "reference/operator/update-field">}}).
 
@@ -420,7 +421,7 @@ System.out.println(updateResult.getModifiedCount());
 
 To delete documents from a collection, you can use the collection's [`deleteOne`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteOne(org.bson.conversions.Bson)">}}) and [`deleteMany`]({{< apiref "com/mongodb/client/MongoCollection.html#deleteMany(org.bson.conversions.Bson)">}}) methods.
 
-Pass to the methods a filter object to determine the document or documents to delete. To facilitate creating filter objects, Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper. To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "org/bson/Document.html" >}}) object.
+Pass to the methods a filter object to determine the document or documents to delete. To facilitate creating filter objects, the Java driver provides the [`Filters`]({{< apiref "com/mongodb/client/model/Filters.html">}}) helper. To specify an empty filter (i.e. match all documents in a collection), use an empty [`Document`]({{< apiref "org/bson/Document.html" >}}) object.
 
 The delete methods return a [`DeleteResult`]({{< apiref "com/mongodb/client/result/DeleteResult.html">}})
 which provides information about the operation including the number of documents deleted.

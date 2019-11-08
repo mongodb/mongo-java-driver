@@ -21,9 +21,9 @@ To upgrade, refer to the [Upgrade Considerations]({{< relref "upgrading.md" >}})
 
 For the synchronous MongoDB Driver, see [MongoDB Driver section]({{< relref "driver/index.md" >}}).
 
-### MongoDB Async Driver
+### MongoDB Reactive Streams Driver
 
-For the callback-based asynchronous MongoDB Async Driver, see [MongoDB Async Driver section]({{< relref "driver-async/index.md" >}}). Note 
+For the callback-based asynchronous MongoDB Reactive Streams Driver, see [MongoDB Reactive Streams Driver section]({{< relref "driver-reactive/index.md" >}}). Note 
 that this driver has been deprecated in favor of the 
 [Reactive Streams Java Driver](http://mongodb.github.io/mongo-java-driver-reactivestreams/). 
 
