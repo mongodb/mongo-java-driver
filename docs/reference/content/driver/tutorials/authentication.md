@@ -269,7 +269,6 @@ create a credential of this type use the
 String user;     // The X.509 certificate derived user name, e.g. "CN=user,OU=OrgUnit,O=myOrg,..."
 // ...
 MongoCredential credential = MongoCredential.createMongoX509Credential(user);
-MongoClientOptions options = MongoClientOptions.builder().sslEnabled(true).build();
 ```
 
 and then construct a MongoClient with that credential.  Using the new (since 3.7) MongoClient API:
@@ -286,6 +285,7 @@ MongoClient mongoClient = MongoClients.create(
 or using the legacy MongoClient API:
 
 ```java
+MongoClientOptions options = MongoClientOptions.builder().sslEnabled(true).build();
 MongoClient mongoClient = new MongoClient(new ServerAddress("host1", 27017), credential, options);
 ```
 
@@ -348,13 +348,13 @@ or using the legacy MongoClient API:
 ```java
 MongoClientURI uri = new MongoClientURI("mongodb://username%40REALM.ME@host1/?authMechanism=GSSAPI");
 ```
-{{%note%}}
+{{% note %}}
 
 The method refers to the `GSSAPI` authentication mechanism instead
 of `Kerberos` because technically the driver authenticates via
 the [`GSSAPI`](https://tools.ietf.org/html/rfc4752) SASL mechanism.
 
-{{%/note%}}
+{{% /note %}}
 
 To successfully authenticate via Kerberos, the application typically
 must specify several system properties so that the underlying GSSAPI
@@ -442,8 +442,8 @@ or using the legacy MongoClient API:
 MongoClientURI uri = new MongoClientURI("mongodb://user1@host1/?authSource=$external&authMechanism=PLAIN");
 ```
 
-{{%note%}}
+{{% note %}}
 The method refers to the `plain` authentication mechanism instead
 of `LDAP` because technically the driver authenticates via the
 [`PLAIN`](https://www.ietf.org/rfc/rfc4616.txt) SASL mechanism.
-{{%/note%}}
+{{% /note %}}

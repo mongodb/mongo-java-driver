@@ -2,8 +2,8 @@
 date = "2015-03-19T12:53:26-04:00"
 title = "Monitoring"
 [menu.main]
-  parent = "Async Reference"
-  identifier = "Async Monitoring"
+  parent = "Reactive Reference"
+  identifier = "Reactive Monitoring"
   weight = 20
   pre = "<i class='fa'></i>"
 +++
@@ -16,11 +16,11 @@ application or end user to monitor various aspects of the driver.
 
 The driver creates MXBean instances of a single type:
 [ConnectionPoolStatisticsMBean]({{< apiref "com/mongodb/management/ConnectionPoolStatisticsMBean" >}}).
- The driver registers one `ConnectionPoolStatisticsMBean` instance per each server it connects to. For example, in the case of a replica 
+ The driver registers one `ConnectionPoolStatisticsMBean` instance per each server it connects to. For example, in the case of a replica
  set, the driver creates an instance per each non-hidden member of the replica set.
 
-Each MXBean instance is required to be registered with a unique object name, which consists of a domain and a set of named properties. All 
-MXBean instances created by the driver are under the domain `"org.mongodb.driver"`.  Instances of `ConnectionPoolStatisticsMBean` will have 
+Each MXBean instance is required to be registered with a unique object name, which consists of a domain and a set of named properties. All
+MXBean instances created by the driver are under the domain `"org.mongodb.driver"`.  Instances of `ConnectionPoolStatisticsMBean` will have
 the following properties:
 
 - `clusterId`: a client-generated unique identifier, required to ensure object name uniqueness in situations where an
@@ -31,6 +31,7 @@ application has multiple `MongoClient` instances connected to the same MongoDB s
 - `maxSize`: the maximum allowed size of the pool, including idle and in-use members
 - `size`: the current size of the pool, including idle and and in-use members
 - `checkedOutCount`: the current count of connections that are currently in use
+
 
 JMX connection pool monitoring is disabled by default. To enable it add a `com.mongodb.management.JMXConnectionPoolListener` instance via 
 `MongoClientSettings`:
@@ -51,56 +52,56 @@ allowing an application to be notified when a command starts and when it either 
 An application registers command listeners with a `MongoClient` by configuring `MongoClientSettings` with instances of classes
 that implement the [`CommandListener`]({{< apiref "com/mongodb/event/CommandListener" >}}) interface. Consider the following, somewhat
 simplistic, implementation of the `CommandListener` interface:
-
+ 
 ```java
-public class TestCommandListener implements CommandListener {
-    @Override
-    public void commandStarted(final CommandStartedEvent event) {
-        System.out.println(String.format("Sent command '%s:%s' with id %s to database '%s' "
-                                         + "on connection '%s' to server '%s'",
-                                         event.getCommandName(),
-                                         event.getCommand().get(event.getCommandName()),
-                                         event.getRequestId(),
-                                         event.getDatabaseName(),
-                                         event.getConnectionDescription()
-                                              .getConnectionId(),
-                                         event.getConnectionDescription().getServerAddress()));
-    }
+public class TestCommandListener implements CommandListener {                        
+    @Override                                                                                                        
+    public void commandStarted(final CommandStartedEvent event) {                                                    
+        System.out.println(String.format("Sent command '%s:%s' with id %s to database '%s' "                         
+                                         + "on connection '%s' to server '%s'",                                      
+                                         event.getCommandName(),                                                     
+                                         event.getCommand().get(event.getCommandName()),                             
+                                         event.getRequestId(),                                                       
+                                         event.getDatabaseName(),                                                    
+                                         event.getConnectionDescription()                                            
+                                              .getConnectionId(),                                                    
+                                         event.getConnectionDescription().getServerAddress()));                      
+    }                                                                                                                
 
-    @Override
-    public void commandSucceeded(final CommandSucceededEvent event) {
-        System.out.println(String.format("Successfully executed command '%s' with id %s "
-                                         + "on connection '%s' to server '%s'",
-                                         event.getCommandName(),
-                                         event.getRequestId(),
-                                         event.getConnectionDescription()
-                                              .getConnectionId(),
-                                         event.getConnectionDescription().getServerAddress()));
-    }
+    @Override                                                                                                        
+    public void commandSucceeded(final CommandSucceededEvent event) {                                                
+        System.out.println(String.format("Successfully executed command '%s' with id %s "                            
+                                         + "on connection '%s' to server '%s'",                                      
+                                         event.getCommandName(),                                                     
+                                         event.getRequestId(),                                                       
+                                         event.getConnectionDescription()                                            
+                                              .getConnectionId(),                                                    
+                                         event.getConnectionDescription().getServerAddress()));                      
+    }                                                                                                                
 
-    @Override
-    public void commandFailed(final CommandFailedEvent event) {
-        System.out.println(String.format("Failed execution of command '%s' with id %s "
-                                         + "on connection '%s' to server '%s' with exception '%s'",
-                                         event.getCommandName(),
-                                         event.getRequestId(),
-                                         event.getConnectionDescription()
-                                              .getConnectionId(),
-                                         event.getConnectionDescription().getServerAddress(),
-                                         event.getThrowable()));
-    }
-}
+    @Override                                                                                                        
+    public void commandFailed(final CommandFailedEvent event) {                                                      
+        System.out.println(String.format("Failed execution of command '%s' with id %s "                              
+                                         + "on connection '%s' to server '%s' with exception '%s'",                  
+                                         event.getCommandName(),                                                     
+                                         event.getRequestId(),                                                       
+                                         event.getConnectionDescription()                                            
+                                              .getConnectionId(),                                                    
+                                         event.getConnectionDescription().getServerAddress(),                        
+                                         event.getThrowable()));                                                     
+    }                                                                                                                
+}                                                                                                                            
 ```
+
 
 and an instance of `MongoClientSettings` configured with an instance of `TestCommandListener`:
 
 ```java
-ClusterSettings clusterSettings = ...
 MongoClientSettings settings = MongoClientSettings.builder()
-                                       .clusterSettings(clusterSettings)
-                                       .addCommandListener(new TestCommandListener())
-                                       .build();
+        .addCommandListener(new TestCommandListener())
+        .build();
 MongoClient client = MongoClients.create(settings);
+
 ```
 
 A `MongoClient` configured with these options will print a message to `System.out` before sending each command to a MongoDB server, and
@@ -174,17 +175,14 @@ and an instance of `MongoClientSettings` configured with an instance of `TestClu
 
 ```java
 List<ServerAddress> seedList = ...
-ClusterSettings clusterSettings = ClusterSettings.builder()
-                                          .hosts(seedList)
-                                          .addClusterListener(new TestClusterListener(ReadPreference.secondary()))
-                                          .build();
 MongoClientSettings settings = MongoClientSettings.builder()
-                                       .clusterSettings(clusterSettings)
-                                       .build();
+        .applyToClusterSettings(builder -> 
+                builder.addClusterListener(new TestClusterListener(ReadPreference.secondary())))
+        .build();
 MongoClient client = MongoClients.create(settings);
 ```
 
-A `MongoClient` configured with these settings will print a message to `System.out` when the MongoClient is created with these options,
+A `MongoClient` configured with these options will print a message to `System.out` when the MongoClient is created with these options,
 and when that MongoClient is closed.  In addition, it will print a message when the client enters a state:
 
 * with an available server that will accept writes
@@ -239,18 +237,10 @@ and an instance of `MongoClientSettings` configured with an instance of `TestCon
 
 ```java
 List<ServerAddress> seedList = ...
-TestConnectionPoolListener connectionPoolListener = new TestConnectionPoolListener();
-ClusterSettings clusterSettings = ClusterSettings.builder()
-                                          .hosts(seedList)
-                                          .build();
-ConnectionPoolSettings connectionPoolSettings = 
-        ConnectionPoolSettings.builder()
-                              .addConnectionPoolListener(connectionPoolListener)
-                              .build();
 MongoClientSettings settings = MongoClientSettings.builder()
-                                       .clusterSettings(clusterSettings)
-                                       .connectionPoolSettings(connectionPoolSettings)
-                                       .build();
+        .applyToConnectionPoolSettings(builder -> 
+                builder.addConnectionPoolListener(new TestConnectionPoolListener()))
+        .build();
 MongoClient client = MongoClients.create(settings);
 ```
 

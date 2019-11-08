@@ -21,12 +21,6 @@ import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.BulkWriteOptions;
-import com.mongodb.client.model.DeleteOneModel;
-import com.mongodb.client.model.InsertOneModel;
-import com.mongodb.client.model.ReplaceOneModel;
-import com.mongodb.client.model.UpdateOneModel;
-import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import org.bson.Document;
@@ -193,23 +187,8 @@ public class QuickTour {
         DeleteResult deleteResult = collection.deleteMany(gte("i", 100));
         System.out.println(deleteResult.getDeletedCount());
 
-        collection.drop();
-
-        // ordered bulk writes
-        List<WriteModel<Document>> writes = new ArrayList<WriteModel<Document>>();
-        writes.add(new InsertOneModel<Document>(new Document("_id", 4)));
-        writes.add(new InsertOneModel<Document>(new Document("_id", 5)));
-        writes.add(new InsertOneModel<Document>(new Document("_id", 6)));
-        writes.add(new UpdateOneModel<Document>(new Document("_id", 1), new Document("$set", new Document("x", 2))));
-        writes.add(new DeleteOneModel<Document>(new Document("_id", 2)));
-        writes.add(new ReplaceOneModel<Document>(new Document("_id", 3), new Document("_id", 3).append("x", 4)));
-
-        collection.bulkWrite(writes);
-
-        collection.drop();
-
-        collection.bulkWrite(writes, new BulkWriteOptions().ordered(false));
-        //collection.find().forEach(printBlock);
+        // Create Index
+        collection.createIndex(new Document("i", 1));
 
         // Clean up
         database.drop();

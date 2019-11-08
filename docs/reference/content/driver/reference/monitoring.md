@@ -34,15 +34,13 @@ application has multiple `MongoClient` instances connected to the same MongoDB s
 
 
 JMX connection pool monitoring is disabled by default. To enable it add a `com.mongodb.management.JMXConnectionPoolListener` instance via 
-`MongoClientOptions`:
+`MongoClientSettings`:
 
 ```java
-MongoClientOptions options =
-        MongoClientOptions.builder()
-                .addConnectionPoolListener(new JMXConnectionPoolListener())
-                .build();
-
-
+MongoClientSettings settings =
+        MongoClientSettings.builder()
+        .applyToConnectionPoolSettings(builder -> builder.addConnectionPoolListener(new JMXConnectionPoolListener()))
+        .build();
 ```
 
 # Command Monitoring
@@ -96,7 +94,7 @@ public class TestCommandListener implements CommandListener {
 ```
 
 
-and an instance of `MongoClientOptions` configured with an instance of `TestCommandListener`:
+and an instance of `MongoClientSettings` configured with an instance of `TestCommandListener`:
 
 ```java
 MongoClientSettings settings = MongoClientSettings.builder()
@@ -173,7 +171,7 @@ public class TestClusterListener implements ClusterListener {
 }
 ```
 
-and an instance of `MongoClientOptions` configured with an instance of `TestClusterListener`:
+and an instance of `MongoClientSettings` configured with an instance of `TestClusterListener`:
 
 ```java
 List<ServerAddress> seedList = ...
@@ -235,7 +233,7 @@ public class TestConnectionPoolListener implements ConnectionPoolListener {
 }
 ```
 
-and an instance of `MongoClientOptions` configured with an instance of `TestConnectionPoolListener`:
+and an instance of `MongoClientSettings` configured with an instance of `TestConnectionPoolListener`:
 
 ```java
 List<ServerAddress> seedList = ...

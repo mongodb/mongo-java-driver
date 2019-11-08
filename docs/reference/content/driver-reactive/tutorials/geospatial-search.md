@@ -2,8 +2,8 @@
 date = "2016-06-12T17:26:54-04:00"
 title = "Geospatial Search"
 [menu.main]
-parent = "Sync Tutorials"
-identifier = "Geospatial Search"
+parent = "Reactive Tutorials"
+identifier = "Reactive Geospatial Search"
 weight = 85
 pre = "<i class='fa'></i>"
 +++
@@ -19,28 +19,18 @@ To support geospatial queries, MongoDB provides various geospatial indexes as we
 - Include the following import statements:
 
      ```java
-     import com.mongodb.Block;
-     import com.mongodb.client.MongoClients;
-     import com.mongodb.client.MongoClient;
-     import com.mongodb.client.MongoCollection;
-     import com.mongodb.client.MongoDatabase;
-     import com.mongodb.client.MongoCursor;
+     import com.mongodb.reactivestreams.client.MongoClients;
+     import com.mongodb.reactivestreams.client.MongoClient;
+     import com.mongodb.reactivestreams.client.MongoCollection;
+     import com.mongodb.reactivestreams.client.MongoDatabase;
      import com.mongodb.client.model.geojson.*;
      import com.mongodb.client.model.Indexes;
      import com.mongodb.client.model.Filters;
      import org.bson.Document;
      ```
-
-- Include the following code which the examples in the tutorials will use to print the results of the geospatial search:
-
-     ```java
-     Block<Document> printBlock = new Block<Document>() {
-            @Override
-            public void apply(final Document document) {
-                System.out.println(document.toJson());
-            }
-        };
-     ```
+{{% note class="important" %}}
+This guide uses the `Subscriber` implementations as covered in the [Quick Start Primer]({{< relref "driver-reactive/getting-started/quick-start-primer.md" >}}).
+{{% /note %}}
 
 ## Connect to a MongoDB Deployment
 
@@ -57,14 +47,14 @@ For additional information on connecting to MongoDB, see [Connect to MongoDB]({{
 
 ## Create the `2dsphere` Index
 
-To create a [`2dsphere` index]({{<docsref "core/2dsphere">}}), use the [`Indexes.geo2dsphere`]({{<apiref "com/mongodb/client/model/Indexes.html#geo2dsphere(java.lang.String...)">}})
-helper to create a specification for the `2dsphere` index and pass to [`MongoCollection.createIndex()`]({{<apiref "com/mongodb/client/MongoCollection.html#createIndex(org.bson.conversions.Bson)">}}) method.
+To create a [`2dsphere` index]({{<docsref "core/2dsphere">}}), use the [`Indexes.geo2dsphere`]({{<apiref "com/mongodb/client/model/Indexes.html#geo2dspherejava.lang.String...)">}})
+helper to create a specification for the `2dsphere` index and pass to [`MongoCollection.createIndex()`]({{<apiref "com/mongodb /reactivestreams/client/MongoCollection.html#createIndex(org.bson.conversions.Bson)">}}) method.
 
 The following example creates a `2dsphere` index on the `"contact.location"` field for the `restaurants` collection.
 
 ```java
 MongoCollection<Document> collection = database.getCollection("restaurants");
-collection.createIndex(Indexes.geo2dsphere("contact.location"));
+collection.createIndex(Indexes.geo2dsphere("contact.location")).subscribe(new PrintSubscriber<String>());
 ```
 
 ## Query for Locations Near a GeoJSON Point
@@ -75,5 +65,5 @@ The following example returns documents that are at least 1000 meters from and a
 
 ```java
 Point refPoint = new Point(new Position(-73.9667, 40.78));
-collection.find(Filters.near("contact.location", refPoint, 5000.0, 1000.0)).forEach(printBlock);
+collection.find(Filters.near("contact.location", refPoint, 5000.0, 1000.0)).subscribe(new PrintDocumentSubscriber());
 ```

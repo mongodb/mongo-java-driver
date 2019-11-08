@@ -17,13 +17,6 @@
 
 package reactivestreams.tour;
 
-import com.mongodb.bulk.BulkWriteResult;
-import com.mongodb.client.model.BulkWriteOptions;
-import com.mongodb.client.model.DeleteOneModel;
-import com.mongodb.client.model.InsertOneModel;
-import com.mongodb.client.model.ReplaceOneModel;
-import com.mongodb.client.model.UpdateOneModel;
-import com.mongodb.client.model.WriteModel;
 import com.mongodb.client.result.DeleteResult;
 import com.mongodb.client.result.UpdateResult;
 import com.mongodb.reactivestreams.client.MongoClient;
@@ -183,30 +176,10 @@ public class QuickTour {
         collection.deleteMany(gte("i", 100)).subscribe(deleteSubscriber);
         deleteSubscriber.await();
 
-        successSubscriber = new OperationSubscriber<>();
-        collection.drop().subscribe(successSubscriber);
-        successSubscriber.await();
-
-        // ordered bulk writes
-        List<WriteModel<Document>> writes = new ArrayList<>();
-        writes.add(new InsertOneModel<>(new Document("_id", 4)));
-        writes.add(new InsertOneModel<>(new Document("_id", 5)));
-        writes.add(new InsertOneModel<>(new Document("_id", 6)));
-        writes.add(new UpdateOneModel<>(new Document("_id", 1), new Document("$set", new Document("x", 2))));
-        writes.add(new DeleteOneModel<>(new Document("_id", 2)));
-        writes.add(new ReplaceOneModel<>(new Document("_id", 3), new Document("_id", 3).append("x", 4)));
-
-        ObservableSubscriber<BulkWriteResult> bulkWriteSubscriber = new PrintSubscriber<>("Bulk write results: %s");
-        collection.bulkWrite(writes).subscribe(bulkWriteSubscriber);
-        bulkWriteSubscriber.await();
-
-        successSubscriber = new OperationSubscriber<>();
-        collection.drop().subscribe(successSubscriber);
-        successSubscriber.await();
-
-        bulkWriteSubscriber = new PrintSubscriber<>("Bulk write results: %s");
-        collection.bulkWrite(writes, new BulkWriteOptions().ordered(false)).subscribe(bulkWriteSubscriber);
-        bulkWriteSubscriber.await();
+        // Create Index
+        OperationSubscriber<String> createIndexSubscriber = new PrintSubscriber<>("Create Index Result: %s");
+        collection.createIndex(new Document("i", 1)).subscribe(createIndexSubscriber);
+        createIndexSubscriber.await();
 
         // Clean up
         successSubscriber = new OperationSubscriber<>();

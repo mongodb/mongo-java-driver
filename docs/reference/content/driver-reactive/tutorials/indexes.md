@@ -1,61 +1,48 @@
 +++
-date = "2016-08-01T14:13:59-04:00"
+date = "2016-05-31T10:10:30-04:00"
 title = "Create Indexes"
 [menu.main]
-  parent = "Async Tutorials"
-  identifier = "Async Create Indexes"
-  weight = 12
-  pre = "<i class='fa'></i>"
+parent = "Reactive Tutorials"
+identifier = "Reactive Create Indexes"
+weight = 15
+pre = "<i class='fa'></i>"
 +++
-
 
 ## Create Indexes
 
-[Indexes]({{<docsref "indexes">}}) support the efficient execution of queries in MongoDB. To create an [index]({{<docsref "indexes">}}) on a field or fields, pass an index specification document to the [`MongoCollection.createIndex`]({{< apiref "com/mongodb/async/client/MongoCollection.html#createIndex(org.bson.conversions.Bson,com.mongodb.async.SingleResultCallback)">}}) method.
+[Indexes]({{<docsref "indexes">}}) support the efficient execution of queries in MongoDB. To create an 
+[index]({{<docsref "indexes ">}}) on a field or fields, pass an index specification document to the 
+[`MongoCollection.createIndex()`]({{< apiref "com/mongodb/client/MongoCollection.html#createIndex(org.bson.conversions.Bson)">}}) 
+method.
 
-
-The MongoDB Java Async Driver provides the [`Indexes`]({{< relref "builders/indexes.md">}}) helper class that
-provides static factory methods to create index specification
+The MongoDB Java Driver provides
+the [`Indexes`]({{<apiref "com/mongodb/client/model/Indexes.html">}}) class that
+includes static factory methods to create index specification
 documents for the various MongoDB Index key types.
 
 {{% note %}}
 MongoDB only creates an index if an index of the same specification does not already exist.
 {{% /note %}}
 
-## Consideration
-
-{{% note class="important" %}}
-Always check for errors in any [`SingleResultCallback<T>`]({{< apiref "com/mongodb/async/SingleResultCallback.html">}}) implementation
-and handle them appropriately.
-
-For sake of brevity, this tutorial omits the error check logic in the code examples.
-{{% /note %}}
-
 ## Prerequisites
 
 - Include the following import statements:
 
-    ```java
-    import com.mongodb.Block;
-    import com.mongodb.async.SingleResultCallback;
-    import com.mongodb.async.client.MongoClient;
-    import com.mongodb.async.client.MongoClients;
-    import com.mongodb.async.client.MongoCollection;
-    import com.mongodb.async.client.MongoDatabase;
-    import com.mongodb.client.model.*;
-    import org.bson.Document;
-    ```
+     ```java
+     import com.mongodb.reactivestreams.client.MongoClient;
+     import com.mongodb.reactivestreams.client.MongoClients;
+     import com.mongodb.reactivestreams.client.MongoDatabase;
+     import com.mongodb.reactivestreams.client.MongoCollection;
+     import org.bson.Document;
 
-- Include the following callback code which the examples in the tutorials will use:
+     import com.mongodb.client.model.Indexes;
+     import com.mongodb.client.model.IndexOptions;
+     import com.mongodb.client.model.Filters;
+     ```
 
-    ```java
-    SingleResultCallback<String> callbackWhenFinished = new SingleResultCallback<String>() {
-               @Override
-               public void onResult(final String result, final Throwable t) {
-                   System.out.println("Operation Finished!");
-               }
-           };
-    ```
+{{% note class="important" %}}
+This guide uses the `Subscriber` implementations as covered in the [Quick Start Primer]({{< relref "driver-reactive/getting-started/quick-start-primer.md" >}}).
+{{% /note %}}
 
 ## Connect to a MongoDB Deployment
 
@@ -69,7 +56,7 @@ MongoDatabase database = mongoClient.getDatabase("test");
 MongoCollection<Document> collection = database.getCollection("restaurants");
 ```
 
-For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< relref "driver-async/tutorials/connect-to-mongodb.md" >}}).
+For additional information on connecting to MongoDB, see [Connect to MongoDB]({{< ref "connect-to-mongodb.md">}}).
 
 ## Ascending Index
 
@@ -77,11 +64,11 @@ To create a specification for an ascending index, use the [`Indexes.ascending`](
 
 ### Single Ascending Index
 
-The following example creates an ascending index on the
-`name` field:
+The following example creates an ascending index on the `name` field:
 
 ```java
-collection.createIndex(Indexes.ascending("name"), callbackWhenFinished);
+collection.createIndex(Indexes.ascending("name"))
+          .subscribe(new PrintToStringSubscriber<String>());
 ```
 
 ### Compound Ascending Index
@@ -90,11 +77,11 @@ The following example creates an ascending [compound index]({{<docsref "core/ind
  field:
 
 ```java
-collection.createIndex(Indexes.ascending("stars", "name"), callbackWhenFinished);
+collection.createIndex(Indexes.ascending("stars", "name"))
+          .subscribe(new PrintToStringSubscriber<String>());
 ```
 
 For an alternative way to create a compound index, see [Compound Indexes](#compound-indexes).
-
 
 ## Descending Index
 
@@ -105,7 +92,8 @@ To create a specification of a descending index, use the [`Indexes.descending`](
 The following example creates a descending index on the `stars` field:
 
 ```java
-collection.createIndex(Indexes.descending("stars"), callbackWhenFinished);
+collection.createIndex(Indexes.descending("stars"))
+          .subscribe(new PrintToStringSubscriber<String>());
 ```
 
 ### Compound Descending Key Index
@@ -113,7 +101,8 @@ collection.createIndex(Indexes.descending("stars"), callbackWhenFinished);
 The following example creates a descending [compound index]({{<docsref "core/index-compound">}}) on the `stars` field and the `name` field:
 
 ```java
-collection.createIndex(Indexes.descending("stars", "name"), callbackWhenFinished);
+collection.createIndex(Indexes.descending("stars", "name"))
+          .subscribe(new PrintToStringSubscriber<String>());
 ```
 
 For an alternative way to create a compound index, see [Compound Indexes](#compound-indexes).
@@ -129,8 +118,10 @@ To create a specification for a compound index where all the keys are ascending,
 The following example creates a compound index with the `stars` field in descending order and the `name` field in ascending order:
 
 ```java
-collection.createIndex(Indexes.compoundIndex(Indexes.descending("stars"),
-                       Indexes.ascending("name")), callbackWhenFinished);
+collection.createIndex(
+              Indexes.compoundIndex(Indexes.descending("stars"), 
+                                    Indexes.ascending("name")))
+          .subscribe(new PrintToStringSubscriber<String>());
 ```
 
 ## Text Indexes
@@ -141,7 +132,8 @@ MongoDB provides [text indexes]({{<docsref "core/index-text">}}) to support text
 The following example creates a text index on the `name` field:
 
 ```java
-collection.createIndex(Indexes.text("name"), callbackWhenFinished);
+collection.createIndex(Indexes.text("name"))
+          .subscribe(new PrintToStringSubscriber<String>());
 ```
 
 ## Hashed Index
@@ -151,7 +143,8 @@ To create a specification for a [hashed index]({{<docsref "core/index-hashed">}}
 The following example creates a hashed index on the `_id` field:
 
 ```java
-collection.createIndex(Indexes.hashed("_id"), callbackWhenFinished);
+collection.createIndex(Indexes.hashed("_id"))
+          .subscribe(new PrintToStringSubscriber<String>());
 ```
 
 ## Geospatial Indexes
@@ -166,24 +159,8 @@ To create a specification for a [`2dsphere` index]({{<docsref "core/2dsphere">}}
 The following example creates a `2dsphere` index on the `"contact.location"` field:
 
 ```java
-collection.createIndex(Indexes.geo2dsphere("contact.location"), callbackWhenFinished);
-```
-
-### `2d`
-
-To create a specification for a [`2d` index]({{<docsref "core/2d/">}}) index, use the [`Indexes.geo2d`]({{<apiref "com/mongodb/client/model/Indexes.html#geo2d(java.lang.String)">}})
-static helper method.
-
-{{% note class="important" %}}
-A 2d index is for data stored as points on a two-dimensional plane
-and is intended for legacy coordinate pairs used in MongoDB 2.2 and
-earlier.
-{{% /note %}}
-
-The following example creates a `2d` index on the `"contact.location"` field:
-
-```java
-collection.createIndex(Indexes.geo2d("contact.location"), callbackWhenFinished);
+collection.createIndex(Indexes.geo2dsphere("contact.location"))
+          .subscribe(new PrintToStringSubscriber<String>());
 ```
 
 ### geoHaystack
@@ -195,9 +172,11 @@ The following example creates a `geoHaystack` index on the `contact.location` fi
 ```java
 IndexOptions haystackOption = new IndexOptions().bucketSize(1.0);
 collection.createIndex(
-         Indexes.geoHaystack("contact.location", Indexes.ascending("stars")),
-         haystackOption, callbackWhenFinished);
+            Indexes.geoHaystack("contact.location", Indexes.ascending("stars")),
+            haystackOption)
+        .subscribe(new PrintToStringSubscriber<String>());
 ```
+
 
 To query a haystack index, use the [`geoSearch`]({{<docsref "reference/command/geoSearch">}}) command.
 
@@ -208,7 +187,8 @@ import com.mongodb.client.model.IndexOptions;
 ```
 
 In addition to the index specification document, the
-[`createIndex()`]({{<apiref "com/mongodb/async/client/MongoCollection.html#createIndex(org.bson.conversions.Bson,com.mongodb.client.model.IndexOptions,com.mongodb.async.SingleResultCallback)">}}) method can take an index options document, such as to create unique indexes or partial indexes.
+[`createIndex()`]({{<apiref "com/mongodb/reactivestreams/client/MongoCollection.html#createIndex(org.bson.conversions.Bson,com.mongodb.client.model.IndexOptions)">}}) 
+method can take an index options document, such as to create unique indexes or partial indexes.
 
 The Java Driver provides the [IndexOptions]({{<apiref "com/mongodb/client/model/IndexOptions.html">}}) class to specify various index options.
 
@@ -218,9 +198,8 @@ The following specifies a [`unique(true)`]({{<apiref "com/mongodb/client/model/I
 
 ```java
 IndexOptions indexOptions = new IndexOptions().unique(true);
-collection.createIndex(Indexes.ascending("name", "stars"),
-                       indexOptions,
-                       callbackWhenFinished);
+collection.createIndex(Indexes.ascending("name", "stars"), indexOptions)
+          .subscribe(new PrintToStringSubscriber<String>());
 ```
 
 For more information on unique indexes, see [Unique Indexes]({{<docsref "core/index-unique">}}).
@@ -233,31 +212,20 @@ The following example creates a partial index on documents that have `status` fi
 
 ```java
 IndexOptions partialFilterIndexOptions = new IndexOptions()
-                       .partialFilterExpression(Filters.exists("contact.email"));
-collection.createIndex(Indexes.descending("name", "stars"),
-                       partialFilterIndexOptions,
-                       callbackWhenFinished);
+                .partialFilterExpression(Filters.exists("contact.email"));
+collection.createIndex(
+                Indexes.descending("name", "stars"), partialFilterIndexOptions)
+          .subscribe(new PrintToStringSubscriber<String>());
 ```
 
 For more information on partial indexes, see [Partial Indexes]({{<docsref "core/index-partial/">}}).
-
 
 ## Get a List of Indexes on a Collection
 
 Use the `listIndexes()` method to get a list of indexes. The following lists the indexes on the collection:
 
 ```java
-Block<Document> printBlock = new Block<Document>() {
-            @Override
-            public void apply(final Document document) {
-                System.out.println(document.toJson());
-            }
-        };
-
-collection.listIndexes().forEach(printBlock, new SingleResultCallback<Void>() {
-            @Override
-            public void onResult(final Void result, final Throwable t) {
-                System.out.println("Operation Finished!");
-            }
-        });
+collection.listIndexes().subscribe(new PrintDocumentSubscriber());
 ```
+
+For other index options, see [MongoDB Manual]({{<docsref "core/index-properties">}}).
