@@ -19,7 +19,7 @@ package com.mongodb.reactivestreams.client.vault;
 import com.mongodb.client.model.vault.DataKeyOptions;
 import com.mongodb.client.model.vault.EncryptOptions;
 import com.mongodb.internal.async.client.vault.AsyncClientEncryption;
-import com.mongodb.reactivestreams.client.internal.SingleResultObservableToPublisher;
+import com.mongodb.reactivestreams.client.internal.Publishers;
 import org.bson.BsonBinary;
 import org.bson.BsonValue;
 import org.reactivestreams.Publisher;
@@ -40,19 +40,19 @@ class ClientEncryptionImpl implements ClientEncryption {
 
     @Override
     public Publisher<BsonBinary> createDataKey(final String kmsProvider, final DataKeyOptions dataKeyOptions) {
-        return new SingleResultObservableToPublisher<>(
+        return Publishers.publish(
                 callback -> wrapped.createDataKey(kmsProvider, dataKeyOptions, callback));
     }
 
     @Override
     public Publisher<BsonBinary> encrypt(final BsonValue value, final EncryptOptions options) {
-        return new SingleResultObservableToPublisher<>(
+        return Publishers.publish(
                 callback -> wrapped.encrypt(value, options, callback));
     }
 
     @Override
     public Publisher<BsonValue> decrypt(final BsonBinary value) {
-        return new SingleResultObservableToPublisher<>(
+        return Publishers.publish(
                 callback -> wrapped.decrypt(value, callback));
     }
 

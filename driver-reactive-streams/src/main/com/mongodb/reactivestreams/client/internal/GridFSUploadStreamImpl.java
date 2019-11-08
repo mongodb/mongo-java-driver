@@ -47,16 +47,16 @@ final class GridFSUploadStreamImpl implements GridFSUploadStream {
 
     @Override
     public Publisher<Integer> write(final ByteBuffer src) {
-        return new SingleResultObservableToPublisher<>(callback -> wrapped.write(src, callback));
+        return Publishers.publish(callback -> wrapped.write(src, callback));
     }
 
     @Override
     public Publisher<Void> close() {
-        return new SingleResultObservableToPublisher<>(wrapped::close);
+        return Publishers.publish(wrapped::close);
     }
 
     @Override
     public Publisher<Void> abort() {
-        return new SingleResultObservableToPublisher<>(wrapped::abort);
+        return Publishers.publish(wrapped::abort);
     }
 }

@@ -152,7 +152,7 @@ public final class GridFSBucketImpl implements GridFSBucket {
 
     @Override
     public Publisher<ObjectId> uploadFromStream(final String filename, final AsyncInputStream source, final GridFSUploadOptions options) {
-        return new SingleResultObservableToPublisher<>(
+        return Publishers.publish(
                 callback -> wrapped.uploadFromStream(filename, toCallbackAsyncInputStream(source), options, callback));
     }
 
@@ -164,7 +164,7 @@ public final class GridFSBucketImpl implements GridFSBucket {
     @Override
     public Publisher<Void> uploadFromStream(final BsonValue id, final String filename, final AsyncInputStream source,
                                                final GridFSUploadOptions options) {
-        return new SingleResultObservableToPublisher<>(
+        return Publishers.publish(
                 callback -> wrapped.uploadFromStream(id, filename, toCallbackAsyncInputStream(source), options, callback));
     }
 
@@ -176,7 +176,7 @@ public final class GridFSBucketImpl implements GridFSBucket {
     @Override
     public Publisher<ObjectId> uploadFromStream(final ClientSession clientSession, final String filename, final AsyncInputStream source,
                                                 final GridFSUploadOptions options) {
-        return new SingleResultObservableToPublisher<>(
+        return Publishers.publish(
                 callback -> wrapped.uploadFromStream(clientSession.getWrapped(), filename, toCallbackAsyncInputStream(source),
                         options, callback));
     }
@@ -190,7 +190,7 @@ public final class GridFSBucketImpl implements GridFSBucket {
     @Override
     public Publisher<Void> uploadFromStream(final ClientSession clientSession, final BsonValue id, final String filename,
                                                final AsyncInputStream source, final GridFSUploadOptions options) {
-        return new SingleResultObservableToPublisher<>(
+        return Publishers.publish(
                 callback -> wrapped.uploadFromStream(clientSession.getWrapped(), id, filename,
                         toCallbackAsyncInputStream(source), options, callback));
     }
@@ -238,14 +238,14 @@ public final class GridFSBucketImpl implements GridFSBucket {
 
     @Override
     public Publisher<Long> downloadToStream(final ObjectId id, final AsyncOutputStream destination) {
-        return new SingleResultObservableToPublisher<>(
+        return Publishers.publish(
                 callback -> wrapped.downloadToStream(id, toCallbackAsyncOutputStream(destination), callback));
     }
 
 
     @Override
     public Publisher<Long> downloadToStream(final BsonValue id, final AsyncOutputStream destination) {
-        return new SingleResultObservableToPublisher<>(
+        return Publishers.publish(
                 callback -> wrapped.downloadToStream(id, toCallbackAsyncOutputStream(destination), callback));
     }
 
@@ -257,19 +257,19 @@ public final class GridFSBucketImpl implements GridFSBucket {
     @Override
     public Publisher<Long> downloadToStream(final String filename, final AsyncOutputStream destination,
                                             final GridFSDownloadOptions options) {
-        return new SingleResultObservableToPublisher<>(
+        return Publishers.publish(
                 callback -> wrapped.downloadToStream(filename, toCallbackAsyncOutputStream(destination), options, callback));
     }
 
     @Override
     public Publisher<Long> downloadToStream(final ClientSession clientSession, final ObjectId id, final AsyncOutputStream destination) {
-        return new SingleResultObservableToPublisher<>(
+        return Publishers.publish(
                 callback -> wrapped.downloadToStream(clientSession.getWrapped(), id, toCallbackAsyncOutputStream(destination), callback));
     }
 
     @Override
     public Publisher<Long> downloadToStream(final ClientSession clientSession, final BsonValue id, final AsyncOutputStream destination) {
-        return new SingleResultObservableToPublisher<>(
+        return Publishers.publish(
                 callback -> wrapped.downloadToStream(clientSession.getWrapped(), id, toCallbackAsyncOutputStream(destination), callback));
     }
 
@@ -282,7 +282,7 @@ public final class GridFSBucketImpl implements GridFSBucket {
     @Override
     public Publisher<Long> downloadToStream(final ClientSession clientSession, final String filename, final AsyncOutputStream destination,
                                             final GridFSDownloadOptions options) {
-        return new SingleResultObservableToPublisher<>(
+        return Publishers.publish(
                 callback -> wrapped.downloadToStream(clientSession.getWrapped(), filename,
                         toCallbackAsyncOutputStream(destination), options, callback));
     }
@@ -309,54 +309,54 @@ public final class GridFSBucketImpl implements GridFSBucket {
 
     @Override
     public Publisher<Void> delete(final ObjectId id) {
-        return new SingleResultObservableToPublisher<>(callback -> wrapped.delete(id, callback));
+        return Publishers.publish(callback -> wrapped.delete(id, callback));
     }
 
     @Override
     public Publisher<Void> delete(final BsonValue id) {
-        return new SingleResultObservableToPublisher<>(callback -> wrapped.delete(id, callback));
+        return Publishers.publish(callback -> wrapped.delete(id, callback));
     }
 
     @Override
     public Publisher<Void> delete(final ClientSession clientSession, final ObjectId id) {
-        return new SingleResultObservableToPublisher<>(callback -> wrapped.delete(clientSession.getWrapped(), id, callback));
+        return Publishers.publish(callback -> wrapped.delete(clientSession.getWrapped(), id, callback));
     }
 
     @Override
     public Publisher<Void> delete(final ClientSession clientSession, final BsonValue id) {
-        return new SingleResultObservableToPublisher<>(callback -> wrapped.delete(clientSession.getWrapped(), id, callback));
+        return Publishers.publish(callback -> wrapped.delete(clientSession.getWrapped(), id, callback));
     }
 
     @Override
     public Publisher<Void> rename(final ObjectId id, final String newFilename) {
-        return new SingleResultObservableToPublisher<>(callback -> wrapped.rename(id, newFilename, callback));
+        return Publishers.publish(callback -> wrapped.rename(id, newFilename, callback));
     }
 
     @Override
     public Publisher<Void> rename(final BsonValue id, final String newFilename) {
-        return new SingleResultObservableToPublisher<>(callback -> wrapped.rename(id, newFilename, callback));
+        return Publishers.publish(callback -> wrapped.rename(id, newFilename, callback));
     }
 
     @Override
     public Publisher<Void> rename(final ClientSession clientSession, final ObjectId id, final String newFilename) {
-        return new SingleResultObservableToPublisher<>(callback ->
+        return Publishers.publish(callback ->
                 wrapped.rename(clientSession.getWrapped(), id, newFilename, callback));
     }
 
     @Override
     public Publisher<Void> rename(final ClientSession clientSession, final BsonValue id, final String newFilename) {
-        return new SingleResultObservableToPublisher<>(callback ->
+        return Publishers.publish(callback ->
                 wrapped.rename(clientSession.getWrapped(), id, newFilename, callback));
     }
 
     @Override
     public Publisher<Void> drop() {
-        return new SingleResultObservableToPublisher<>(wrapped::drop);
+        return Publishers.publish(wrapped::drop);
     }
 
     @Override
     public Publisher<Void> drop(final ClientSession clientSession) {
-        return new SingleResultObservableToPublisher<>(callback -> wrapped.drop(clientSession.getWrapped(), callback));
+        return Publishers.publish(callback -> wrapped.drop(clientSession.getWrapped(), callback));
     }
 
 }

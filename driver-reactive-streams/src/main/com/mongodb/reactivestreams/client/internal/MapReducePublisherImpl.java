@@ -19,7 +19,6 @@ package com.mongodb.reactivestreams.client.internal;
 import com.mongodb.client.model.Collation;
 import com.mongodb.client.model.MapReduceAction;
 import com.mongodb.internal.async.client.AsyncMapReduceIterable;
-import com.mongodb.internal.async.client.Observables;
 import com.mongodb.reactivestreams.client.MapReducePublisher;
 import org.bson.conversions.Bson;
 import org.reactivestreams.Publisher;
@@ -124,7 +123,7 @@ final class MapReducePublisherImpl<TResult> implements MapReducePublisher<TResul
 
     @Override
     public Publisher<Void> toCollection() {
-        return new SingleResultObservableToPublisher<>(wrapped::toCollection);
+        return Publishers.publish(wrapped::toCollection);
     }
 
     @Override
@@ -141,11 +140,11 @@ final class MapReducePublisherImpl<TResult> implements MapReducePublisher<TResul
 
     @Override
     public Publisher<TResult> first() {
-        return new SingleResultObservableToPublisher<>(wrapped::first);
+        return Publishers.publish(wrapped::first);
     }
 
     @Override
     public void subscribe(final Subscriber<? super TResult> s) {
-        new ObservableToPublisher<>(Observables.observe(wrapped)).subscribe(s);
+        Publishers.publish(wrapped).subscribe(s);
     }
 }

@@ -47,17 +47,17 @@ public final class GridFSAsyncStreamHelper {
         return new AsyncInputStream() {
             @Override
             public Publisher<Integer> read(final ByteBuffer dst) {
-                return new SingleResultObservableToPublisher<>(callback -> wrapper.read(dst, callback));
+                return Publishers.publish(callback -> wrapper.read(dst, callback));
             }
 
             @Override
             public Publisher<Long> skip(final long bytesToSkip) {
-                return new SingleResultObservableToPublisher<>(callback -> wrapper.skip(bytesToSkip, callback));
+                return Publishers.publish(callback -> wrapper.skip(bytesToSkip, callback));
             }
 
             @Override
             public Publisher<Void> close() {
-                return new SingleResultObservableToPublisher<>(wrapper::close);
+                return Publishers.publish(wrapper::close);
             }
         };
     }
@@ -75,12 +75,12 @@ public final class GridFSAsyncStreamHelper {
 
             @Override
             public Publisher<Integer> write(final ByteBuffer src) {
-                return new SingleResultObservableToPublisher<>(callback -> wrapper.write(src, callback));
+                return Publishers.publish(callback -> wrapper.write(src, callback));
             }
 
             @Override
             public Publisher<Void> close() {
-                return new SingleResultObservableToPublisher<>(wrapper::close);
+                return Publishers.publish(wrapper::close);
             }
         };
     }

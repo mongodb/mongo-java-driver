@@ -14,48 +14,46 @@
  * limitations under the License.
  */
 
-package com.mongodb.internal.async.client;
+package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.Block;
 import com.mongodb.internal.async.SingleResultCallback;
+import com.mongodb.internal.async.client.AsyncMongoCollection;
+import com.mongodb.internal.async.client.AsyncMongoIterable;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscription;
 
 import java.util.List;
 
-
 /**
- * Observable helpers.
+ * Publisher helpers.
  *
- * <p>Allows async methods to be converted into event-based {@link Observable}s.</p>
+ * <p>Allows async methods to be converted into event-based {@link Publisher}s.</p>
  */
-public final class Observables {
+public final class Publishers {
 
     /**
-     * Convert a {@link AsyncMongoIterable} into an {@link Observable}.
+     * Convert a {@link AsyncMongoIterable} into an {@link Publisher}.
      *
      * @param mongoIterable the MongoIterable to subscribe to
      * @param <TResult>     The type of result being observed
      * @return the observable version of the mongoIterable
      */
-    public static <TResult> Observable<TResult> observe(final AsyncMongoIterable<TResult> mongoIterable) {
-        return new Observable<TResult>() {
-            @Override
-            public void subscribe(final Observer<? super TResult> observer) {
-                new MongoIterableSubscription<TResult>(mongoIterable, observer);
-            }
-        };
+    public static <TResult> Publisher<TResult> publish(final AsyncMongoIterable<TResult> mongoIterable) {
+        return subscriber -> new MongoIterableSubscription<>(mongoIterable, subscriber);
     }
 
     /**
-     * Allows the conversion of {@link SingleResultCallback} based operations into an {@link Observable}
+     * Allows the conversion of {@link SingleResultCallback} based operations into an {@link Publisher}
      *
      * <p>Requires a {@link Block} that is passed the callback to be used with the operation.
      * This is required to make sure that the operation only occurs once the {@link Subscription} signals for data.</p>
      * <p>
      * A typical example would be when wrapping callback based methods to make them observable. <br>
-     * For example, converting {@link AsyncMongoCollection#countDocuments(SingleResultCallback)} into an {@link Observable}:
+     * For example, converting {@link AsyncMongoCollection#countDocuments(SingleResultCallback)} into an {@link Publisher}:
      * <pre>
      * {@code
-     *    Observable<Long> countObservable = observe(new Block<SingleResultCallback<Long>>() {
+     *    Publisher<Long> countPublisher = observe(new Block<SingleResultCallback<Long>>() {
      *        public void apply(final SingleResultCallback<Long> callback) {
      *            collection.countDocuments(callback);
      *        }
@@ -67,17 +65,12 @@ public final class Observables {
      * @param <TResult> The type of result being observed
      * @return the observable version of the callback based operation
      */
-    public static <TResult> Observable<TResult> observe(final Block<SingleResultCallback<TResult>> operation) {
-        return new Observable<TResult>() {
-            @Override
-            public void subscribe(final Observer<? super TResult> observer) {
-                new SingleResultCallbackSubscription<TResult>(operation, observer);
-            }
-        };
+    public static <TResult> Publisher<TResult> publish(final Block<SingleResultCallback<TResult>> operation) {
+        return subscriber -> new SingleResultCallbackSubscription<>(operation, subscriber);
     }
 
     /**
-     * Allows the conversion of {@link SingleResultCallback} based operations and flattens the results in an {@link Observable}.
+     * Allows the conversion of {@link SingleResultCallback} based operations and flattens the results in an {@link Publisher}.
      *
      * <p>Requires a {@link Block} that is passed the callback to be used with the operation.
      * This is required to make sure that the operation only occurs once the {@link Subscription} signals for data.</p>
@@ -86,15 +79,10 @@ public final class Observables {
      * @param <TResult> The type of result being observed
      * @return a subscription
      */
-    public static <TResult> Observable<TResult> observeAndFlatten(final Block<SingleResultCallback<List<TResult>>> operation) {
-        return new Observable<TResult>() {
-            @Override
-            public void subscribe(final Observer<? super TResult> observer) {
-                new FlatteningSingleResultCallbackSubscription<TResult>(operation, observer);
-            }
-        };
+    public static <TResult> Publisher<TResult> publishAndFlatten(final Block<SingleResultCallback<List<TResult>>> operation) {
+        return subscriber -> new FlatteningSingleResultCallbackSubscription<>(operation, subscriber);
     }
 
-    private Observables() {
+    private Publishers() {
     }
 }

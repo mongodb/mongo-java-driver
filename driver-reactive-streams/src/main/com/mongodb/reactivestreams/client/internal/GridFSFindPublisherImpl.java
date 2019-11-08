@@ -18,7 +18,6 @@ package com.mongodb.reactivestreams.client.internal;
 
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.mongodb.client.model.Collation;
-import com.mongodb.internal.async.client.Observables;
 import com.mongodb.internal.async.client.gridfs.AsyncGridFSFindIterable;
 import com.mongodb.reactivestreams.client.gridfs.GridFSFindPublisher;
 import org.bson.conversions.Bson;
@@ -39,7 +38,7 @@ final class GridFSFindPublisherImpl implements GridFSFindPublisher {
 
     @Override
     public Publisher<GridFSFile> first() {
-        return new SingleResultObservableToPublisher<>(wrapped::first);
+        return Publishers.publish(wrapped::first);
     }
 
     @Override
@@ -92,6 +91,6 @@ final class GridFSFindPublisherImpl implements GridFSFindPublisher {
 
     @Override
     public void subscribe(final Subscriber<? super GridFSFile> s) {
-        new ObservableToPublisher<>(Observables.observe(wrapped)).subscribe(s);
+        Publishers.publish(wrapped).subscribe(s);
     }
 }
